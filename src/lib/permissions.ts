@@ -1,0 +1,182 @@
+import { normalizeUserRole, type AppUserRole } from '@/lib/auth/roles';
+
+/**
+ * Sistema de permisos basado en roles para el sistema de inventario
+ * Define qué rutas y funcionalidades puede acceder cada rol
+ */
+
+// Tipos de roles disponibles
+export type UserRole = AppUserRole;
+
+// Definición de permisos por rol
+export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
+  admin: [
+    // Acceso completo a todas las rutas
+    '/api/*',
+    '/busy/*',
+  ],
+  regularUser: [
+    // Acceso limitado, sin administración
+    '/api/ventas',
+    '/api/venta-servicios',
+    '/api/servicios',
+    '/api/ventas/stats',
+    '/api/dashboard/stats',
+    '/api/productos',
+    '/api/productos/*',
+    '/api/compras-productos',
+    '/api/restaurante/*',
+    'GET /api/mi-empresa',
+    'GET /api/facturas/*',
+    'POST /api/productos/restock',
+    '/busy/dashboard',
+    '/busy/productos',
+    '/busy/compras-productos',
+    '/busy/servicios',
+    '/busy/ventas',
+    '/busy/reportes',
+    '/busy/restaurante',
+    '/busy/restaurante/*',
+  ],
+  dependiente: [
+    // Acceso limitado solo a ventas, servicios y reportes, más restock
+    'GET /api/ventas',
+    'POST /api/ventas',
+    'GET /api/venta-servicios',
+    'POST /api/venta-servicios',
+    'GET /api/servicios',
+    'GET /api/mi-empresa',
+    'GET /api/facturas/*',
+    'GET /api/reportes-financieros',
+    '/api/restaurante/*',
+    'POST /api/productos/restock',
+    '/busy/sales',
+    '/busy/servicios',
+    '/busy/reportes',
+    '/busy/reportes/venta-diaria',
+    '/busy/restaurante',
+    '/busy/restaurante/*',
+  ],
+
+}
+
+/**
+ * Verifica si un usuario con el rol especificado tiene acceso a una ruta
+ * @param userRole - Rol del usuario
+ * @param path - Ruta a verificar
+ * @param method - Método HTTP (GET, POST, PUT, DELETE)
+ * @returns true si tiene acceso, false en caso contrario
+ */
+export function hasPermission(userRole: UserRole | string, path: string, method?: string): boolean {
+  const normalizedRole = normalizeUserRole(userRole);
+  if (!normalizedRole) {
+    return false;
+  }
+
+  const permissions = ROLE_PERMISSIONS[normalizedRole]
+  if (!permissions) return false
+
+  // Admin tiene acceso a todo
+  if (normalizedRole === 'admin') return true
+
+  // Verificar permisos específicos
+  for (const permission of permissions) {
+    // Manejar wildcards
+    if (permission.includes('/*')) {
+      const basePath = permission.replace('/*', '')
+      if (path.startsWith(basePath)) {
+        return true
+      }
+    }
+    
+    // Manejar rutas específicas con método
+    if (method && permission.includes(' ')) {
+      const [permMethod, permPath] = permission.split(' ')
+      if (permMethod === method && path === permPath) {
+        return true
+      }
+    }
+    
+    // Manejar rutas sin método específico
+    if (path === permission || path.startsWith(permission + '/')) {
+      return true
+    }
+  }
+
+  return false
+}
+
+/**
+ * Middleware para verificar permisos en rutas de API
+ * @param userRole - Rol del usuario autenticado
+ * @param requestPath - Ruta de la petición
+ * @param requestMethod - Método HTTP de la petición
+ * @returns Response de error si no tiene permisos, null si está autorizado
+ */
+export function checkApiPermission(
+  userRole: UserRole | string, 
+  requestPath: string, 
+  requestMethod: string
+): Response | null {
+  if (!hasPermission(userRole, requestPath, requestMethod)) {
+    return new Response(
+      JSON.stringify({ 
+        error: 'No tienes permisos para acceder a esta ruta',
+        requiredRole: 'dependiente',
+        message: 'Los dependientes solo pueden acceder a ventas, servicios y reportes'
+      }), 
+      { 
+        status: 403,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    )
+  }
+  return null
+}
+
+/**
+ * Filtra elementos del menú basados en el rol del usuario
+ * @param menuItems - Items del menú a filtrar
+ * @param userRole - Rol del usuario
+ * @returns Items del menú filtrados
+ */
+export function filterMenuItems(menuItems: any[], userRole: UserRole): any[] {
+  if (userRole === 'admin') return menuItems
+  
+  if (userRole === 'dependiente') {
+    // Solo mostrar secciones permitidas para dependientes
+    const allowedSections = ['Ventas', 'Servicios', 'Reportes']
+    return menuItems.filter(item => 
+      allowedSections.includes(item.title)
+    )
+  }
+  
+  // regularUser: excluir solo administración
+  return menuItems.filter(item => item.title !== 'Administración')
+}
+
+/**
+ * Verifica si una ruta del frontend es accesible para el rol
+ * @param userRole - Rol del usuario
+ * @param frontendPath - Ruta del frontend (ej: '/busy/ventas')
+ * @returns true si es accesible
+ */
+export function isFrontendRouteAccessible(userRole: UserRole, frontendPath: string): boolean {
+  return hasPermission(userRole, frontendPath)
+}
+
+/**
+ * Mensajes de error personalizados por rol
+ * @param userRole - Rol del usuario
+ * @returns Mensaje de error apropiado
+ */
+export function getRoleErrorMessage(userRole: UserRole): string {
+  switch (userRole) {
+    case 'dependiente':
+      return 'Los dependientes solo tienen acceso a ventas, servicios y reportes'
+    case 'regularUser':
+      return 'No tienes permisos de administrador'
+    default:
+      return 'Acceso denegado'
+  }
+}

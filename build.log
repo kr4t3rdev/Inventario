@@ -1,0 +1,9 @@
+
+> invent-sys@0.1.0 build /Users/arturo/Documents/Proyecto Inventario/TCP
+> next build
+
+   ▲ Next.js 15.5.9
+   - Environments: .env.local, .env
+
+   Creating an optimized production build ...
+ ELIFECYCLE  Command failed with exit code 143.

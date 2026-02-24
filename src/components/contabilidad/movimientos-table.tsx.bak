@@ -1,0 +1,367 @@
+"use client"
+
+import { useState } from "react"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Search, Filter, Download, ArrowUpDown, TrendingUp, TrendingDown } from "lucide-react"
+import { useGetMovimientosQuery, useGetCuentasBancariasQuery } from "@/lib/redux/services/contabilidadApi"
+import { formatCurrencySimple, formatDate } from "@/lib/redux/utils/contabilidadUtils"
+import { DateRangePicker } from "./date-range-picker"
+
+interface MovimientosTableProps {
+  cuentaId?: string
+  fechaInicio?: string
+  fechaFin?: string
+  onExport?: (tipo: 'csv' | 'pdf') => void
+}
+
+export function MovimientosTable({
+  cuentaId: initialCuentaId,
+  fechaInicio: initialFechaInicio,
+  fechaFin: initialFechaFin,
+  onExport
+}: MovimientosTableProps) {
+  const [filtros, setFiltros] = useState({
+    busqueda: "",
+    cuentaId: initialCuentaId || "all",
+    tipoMovimiento: "all",
+    fechaInicio: initialFechaInicio || "",
+    fechaFin: initialFechaFin || "",
+    moneda: "all",
+    page: 1,
+    limit: 50
+  })
+
+  const { data: movimientos, isLoading, error } = useGetMovimientosQuery({
+    ...filtros,
+  cuentaId: filtros.cuentaId === 'all' ? undefined : filtros.cuentaId,
+  })
+  const { data: cuentas } = useGetCuentasBancariasQuery()
+  console.log('movimientos:',movimientos)
+
+  const handleFiltroChange = (key: string, value: string) => {
+    setFiltros(prev => ({
+      ...prev,
+      [key]: value,
+      page: 1 // Reset page when filters change
+    }))
+  }
+
+  const handleDateRangeChange = (fechaInicio: string, fechaFin: string) => {
+    setFiltros(prev => ({
+      ...prev,
+      fechaInicio,
+      fechaFin,
+      page: 1
+    }))
+  }
+
+  const limpiarFiltros = () => {
+    setFiltros({
+      busqueda: "",
+      cuentaId: initialCuentaId || "all",
+      tipoMovimiento: "all",
+      fechaInicio: initialFechaInicio || "",
+      fechaFin: initialFechaFin || "",
+      moneda: "all",
+      page: 1,
+      limit: 50
+    })
+  }
+
+  const getTipoMovimientoColor = (tipo: string) => {
+    switch (tipo) {
+      case 'venta':
+      case 'servicio':
+        return 'bg-green-100 text-green-800'
+      case 'gasto':
+      case 'salario':
+        return 'bg-red-100 text-red-800'
+      case 'transferencia_entrada':
+        return 'bg-blue-100 text-blue-800'
+      case 'transferencia_salida':
+        return 'bg-orange-100 text-orange-800'
+      case 'ajuste_ingreso':
+        return 'bg-emerald-100 text-emerald-800'
+      case 'ajuste_egreso':
+        return 'bg-rose-100 text-rose-800'
+      default:
+        return 'bg-gray-100 text-gray-800'
+    }
+  }
+
+  const getTipoMovimientoIcon = (tipo: string) => {
+    switch (tipo) {
+      case 'venta':
+      case 'servicio':
+      case 'ajuste_ingreso':
+      case 'transferencia_entrada':
+        return <TrendingUp className="h-4 w-4" />
+      case 'gasto':
+      case 'salario':
+      case 'ajuste_egreso':
+      case 'transferencia_salida':
+        return <TrendingDown className="h-4 w-4" />
+      default:
+        return <ArrowUpDown className="h-4 w-4" />
+    }
+  }
+
+  const getTipoMovimientoLabel = (tipo: string) => {
+    const labels: Record<string, string> = {
+      'venta': 'Venta',
+      'servicio': 'Servicio',
+      'gasto': 'Gasto',
+      'salario': 'Salario',
+      'transferencia_entrada': 'Transferencia Entrada',
+      'transferencia_salida': 'Transferencia Salida',
+      'ajuste_ingreso': 'Ajuste Ingreso',
+      'ajuste_egreso': 'Ajuste Egreso'
+    }
+    return labels[tipo] || tipo
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <p className="text-destructive">Error al cargar los movimientos</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <ArrowUpDown className="h-5 w-5" />
+          Movimientos Bancarios
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* Filtros */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por descripción..."
+              value={filtros.busqueda}
+              onChange={(e) => handleFiltroChange('busqueda', e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          <Select
+            value={filtros.cuentaId || 'all'}
+            onValueChange={(value) => handleFiltroChange('cuentaId', value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Todas las cuentas" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas las cuentas</SelectItem>
+              {cuentas?.map((cuenta) => (
+                <SelectItem key={cuenta.cuentaId} value={cuenta.cuentaId}>
+                  {cuenta.nombreBanco} - {cuenta.numeroCuenta}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={filtros.tipoMovimiento}
+            onValueChange={(value) => handleFiltroChange('tipoMovimiento', value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Tipo de movimiento" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los tipos</SelectItem>
+              <SelectItem value="venta">Ventas</SelectItem>
+              <SelectItem value="servicio">Servicios</SelectItem>
+              <SelectItem value="gasto">Gastos</SelectItem>
+              <SelectItem value="salario">Salarios</SelectItem>
+              <SelectItem value="transferencia_entrada">Transferencias Entrada</SelectItem>
+              <SelectItem value="transferencia_salida">Transferencias Salida</SelectItem>
+              <SelectItem value="ajuste_ingreso">Ajustes Ingreso</SelectItem>
+              <SelectItem value="ajuste_egreso">Ajustes Egreso</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select
+            value={filtros.moneda}
+            onValueChange={(value) => handleFiltroChange('moneda', value)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Moneda" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas las monedas</SelectItem>
+              <SelectItem value="CUP">CUP</SelectItem>
+              <SelectItem value="USD">USD</SelectItem>
+              <SelectItem value="EUR">EUR</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Rango de fechas y acciones */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-between">
+          <DateRangePicker
+            fechaInicio={filtros.fechaInicio}
+            fechaFin={filtros.fechaFin}
+            onChange={handleDateRangeChange}
+          />
+
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={limpiarFiltros}>
+              <Filter className="h-4 w-4 mr-2" />
+              Limpiar
+            </Button>
+            {onExport && (
+              <>
+                <Button variant="outline" onClick={() => onExport('csv')}>
+                  <Download className="h-4 w-4 mr-2" />
+                  CSV
+                </Button>
+                <Button variant="outline" onClick={() => onExport('pdf')}>
+                  <Download className="h-4 w-4 mr-2" />
+                  PDF
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Tabla */}
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Fecha</TableHead>
+                <TableHead>Cuenta</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Descripción</TableHead>
+                <TableHead>Moneda Original</TableHead>
+                <TableHead>Monto Original</TableHead>
+                <TableHead>Tasa</TableHead>
+                <TableHead className="text-right">Monto CUP</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                Array.from({ length: 10 }).map((_, i) => (
+                  <TableRow key={i}>
+                    <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-32" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-40" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-12" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-16" /></TableCell>
+                    <TableCell><Skeleton className="h-4 w-20" /></TableCell>
+                  </TableRow>
+                ))
+              ) : movimientos?.data?.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                    No se encontraron movimientos
+                  </TableCell>
+                </TableRow>
+              ) : (
+                movimientos?.data?.map((movimiento) => (
+                  <TableRow key={movimiento.id}>
+                    <TableCell>
+                      {formatDate(movimiento.fecha)}
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium">{movimiento.cuentaBancaria?.nombreBanco}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {movimiento.cuentaBancaria?.numeroCuenta}
+                        </p>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={getTipoMovimientoColor(movimiento.tipo)}>
+                        <span className="flex items-center gap-1">
+                          {getTipoMovimientoIcon(movimiento.tipo)}
+                          {getTipoMovimientoLabel(movimiento.tipo)}
+                        </span>
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium">{movimiento.descripcion}</p>
+                        {movimiento.referencia && (
+                          <p className="text-xs text-muted-foreground">
+                            Ref: {movimiento.referencia}
+                          </p>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline">{movimiento.moneda}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      {formatCurrencySimple(movimiento.monto, movimiento.moneda)}
+                    </TableCell>
+                    <TableCell>
+                      -
+                    </TableCell>
+                    <TableCell className="text-right font-medium">
+                      <span className={
+                        movimiento.tipo.includes('ingreso') ||
+                          movimiento.tipo === 'venta' ||
+                          movimiento.tipo === 'servicio' ||
+                          movimiento.tipo === 'transferencia_entrada'
+                          ? 'text-green-600'
+                          : 'text-red-600'
+                      }>
+                        {formatCurrencySimple(movimiento.monto, movimiento.moneda)}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Paginación */}
+        {movimientos?.pagination && (
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">
+              Mostrando {((movimientos.pagination.page - 1) * movimientos.pagination.limit) + 1} a{' '}
+              {Math.min(movimientos.pagination.page * movimientos.pagination.limit, movimientos.pagination.total)} de{' '}
+              {movimientos.pagination.total} movimientos
+            </p>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={movimientos.pagination.page <= 1}
+                onClick={() => handleFiltroChange('page', String(filtros.page - 1))}
+              >
+                Anterior
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={movimientos.pagination.page >= movimientos.pagination.totalPages}
+                onClick={() => handleFiltroChange('page', String(filtros.page + 1))}
+              >
+                Siguiente
+              </Button>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}

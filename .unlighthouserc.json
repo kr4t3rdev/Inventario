@@ -1,0 +1,62 @@
+{
+  "site": "http://localhost:3000",
+  "urls": [
+    "/",
+    "/login",
+    "/register",
+    "/demo/bulk-stock-minimo",
+    "/busy/dashboard",
+    "/busy/products",
+    "/busy/products/new",
+    "/busy/products/bulk-stock-minimo",
+    "/busy/categoria",
+    "/busy/categoria/new",
+    "/busy/cliente",
+    "/busy/cliente/new",
+    "/busy/almacen",
+    "/busy/almacen/new",
+    "/busy/empleados",
+    "/busy/empleados/new",
+    "/busy/servicios",
+    "/busy/servicios/new",
+    "/busy/unidad",
+    "/busy/unidad/new",
+    "/busy/puntosDeVenta",
+    "/busy/puntosDeVenta/new",
+    "/busy/transferencias",
+    "/busy/transferencias/new",
+    "/busy/sales",
+    "/busy/sales/new",
+    "/busy/gastosDE",
+    "/busy/gastosDE/new",
+    "/busy/mermas",
+    "/busy/mermas/new",
+    "/busy/contabilidad",
+    "/busy/contabilidad/configuracion",
+    "/busy/contabilidad/cuentas",
+    "/busy/contabilidad/exchange",
+    "/busy/contabilidad/reconciliacion",
+    "/busy/contabilidad/reconciliacion/gastos",
+    "/busy/contabilidad/reconciliacion/servicios",
+    "/busy/contabilidad/reconciliacion/ventas",
+    "/busy/contabilidad/reportes",
+    "/busy/contabilidad/transferencias",
+    "/busy/currency",
+    "/busy/economy",
+    "/busy/reportes",
+    "/busy/reportes/venta-diaria",
+    "/busy/notificaciones",
+    "/busy/perfil",
+    "/busy/admin/usuarios",
+    "/busy/invoice/print"
+  ],
+  "auth": {
+    "login": {
+      "url": "http://localhost:3001/api/auth/login",
+      "data": {
+        "email": "admin@correo.com",
+        "password": "123456"
+      }
+    }
+  }
+}

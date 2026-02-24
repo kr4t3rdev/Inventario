@@ -1,0 +1,92 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+#more
+/.kilocode
+/.lol
+/.trae
+/.codex
+/.agent
+/.agents
+/.claude
+/.codex
+/.cursor
+/.gemini
+/.kilocode
+/.kiro
+/.opencode
+/.trae
+/e2e
+/docs
+/sistema_inventario_tcp
+/onprem
+/plans
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env
+.env.local
+.mcp.json
+env
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+#test y cambios
+test y cambios/*
+# large files (exceed GitHub limit)
+/tcp-postgres.tar
+/tcp-app.tar
+/tcp-database-backup.sql
+/tcp-ngnix-secure.tar
+/tcp-ngnix-fixed.tar
+/docker-tcp.tar
+/administracion/backups/
+*.sql.gz
+
+# public uploads
+public/uploads
+
+# query engine binaries
+libquery_engine-darwin-arm64.dylib.node
+libquery_engine-linux-arm64-openssl-3.0.x.so.node
+query_engine-windows.dll.node
+query_engine-windows.dll.node.tmp4604
+query_engine-windows.dll.node.tmp14584
+
+# Worktrees
+.worktrees
+worktrees
+
+.env

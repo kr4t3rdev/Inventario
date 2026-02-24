@@ -1,0 +1,29 @@
+
+> invent-sys@0.1.0 build /Users/arturo/Documents/Proyecto Inventario/TCP
+> NODE_OPTIONS='--max-old-space-size=4096' NEXT_TELEMETRY_DISABLED=1 next build
+
+   ▲ Next.js 15.5.9
+   - Environments: .env.local, .env
+   - Experiments (use with caution):
+     · optimizePackageImports
+
+   Creating an optimized production build ...
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Can't resolve '/Users/arturo/Documents/Proyecto Inventario/TCP/next.config.compiled.js' in '/Users/arturo/Documents/Proyecto Inventario/TCP'
+<w> while resolving '/Users/arturo/Documents/Proyecto Inventario/TCP/next.config.compiled.js' in /Users/arturo/Documents/Proyecto Inventario/TCP as file
+<w>  at resolve commonjs /Users/arturo/Documents/Proyecto Inventario/TCP/next.config.compiled.js
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Can't resolve '/Users/arturo/Documents/Proyecto Inventario/TCP/next.config.compiled.js' in '/Users/arturo/Documents/Proyecto Inventario/TCP'
+<w> while resolving '/Users/arturo/Documents/Proyecto Inventario/TCP/next.config.compiled.js' in /Users/arturo/Documents/Proyecto Inventario/TCP as file
+<w>  at resolve commonjs /Users/arturo/Documents/Proyecto Inventario/TCP/next.config.compiled.js
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: Can't resolve '/Users/arturo/Documents/Proyecto Inventario/TCP/next.config.compiled.js' in '/Users/arturo/Documents/Proyecto Inventario/TCP'
+<w> while resolving '/Users/arturo/Documents/Proyecto Inventario/TCP/next.config.compiled.js' in /Users/arturo/Documents/Proyecto Inventario/TCP as file
+<w>  at resolve commonjs /Users/arturo/Documents/Proyecto Inventario/TCP/next.config.compiled.js
+ ✓ Compiled successfully in 94s
+   Skipping validation of types
+   Skipping linting
+   Collecting page data ...
+lol
+   Generating static pages (0/193) ...
+   Generating static pages (48/193) 
+   Generating static pages (96/193) 
+ ⨯ Next.js build worker exited with code: null and signal: SIGTERM
+ ELIFECYCLE  Command failed with exit code 1.

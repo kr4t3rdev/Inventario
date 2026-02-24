@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: inventario-db
+    restart: unless-stopped
+    
+    environment:
+      - POSTGRES_USER=inventario
+      - POSTGRES_PASSWORD=inventario123
+      - POSTGRES_DB=inventario_db
+    
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    
+    networks:
+      - app-network
+    
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U inventario -d inventario_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # Next.js Application
+  app:
+    image: tcp-app:latest
+    container_name: inventario-app
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    
+    # Sobrescribir el entrypoint para usar node directamente
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "Iniciando aplicación..."
+        cd /app
+        node server.js
+    
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://inventario:inventario123@db:5432/inventario_db?schema=public
+      - JWT_SECRET=jwt_secret_muy_seguro_cambiar_en_produccion_12345678
+      - NEXTAUTH_SECRET=nextauth_secret_muy_seguro_cambiar_en_produccion_12345678
+      - NEXTAUTH_URL=http://localhost
+      - PORT=3000
+      - HOSTNAME=0.0.0.0
+    
+    networks:
+      - app-network
+
+  # Nginx - Proxy inverso
+  nginx:
+    image: tcp-nginx:latest
+    container_name: inventario-nginx
+    restart: unless-stopped
+    depends_on:
+      - app
+    
+    ports:
+      - "80:80"
+    
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/app.conf:ro
+    
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

@@ -1,0 +1,302 @@
+"use client"
+
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import { z } from "zod"
+import { motion } from "framer-motion"
+import { TrendingUp, Sparkles, Loader2 } from "lucide-react"
+
+import { Button } from "@/components/ui/button"
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Input } from "@/components/ui/input"
+import { Card, CardContent } from "@/components/ui/card"
+import { toast } from "sonner"
+import { Skeleton } from "@/components/ui/skeleton"
+
+import { useGetProductosQuery } from "@/lib/redux/services/productosApi"
+import { useGetPuntosDeVentaQuery } from "@/lib/redux/services/puntosDeVentaApi"
+import { useAddVentaMutation, useUpdateVentaMutation } from "@/lib/redux/services/ventasApi"
+import { useDispatch } from "react-redux"
+import { apiSlice } from "@/lib/redux/services/apiSlice"
+
+const ventaSchema = z.object({
+  productoId: z.string({
+    required_error: "Seleccione un producto",
+  }),
+  cantidad: z.coerce.number().positive({
+    message: "La cantidad debe ser mayor a 0",
+  }),
+  puntoDeVentaId: z.string({
+    required_error: "Seleccione un punto de venta",
+  }),  
+})
+
+type VentaFormValues = z.infer<typeof ventaSchema>
+
+interface VentaFormProps {
+  initialData?: {
+    ventaId: string
+    productoId: string
+    cantidad: number
+    puntoDeVentaId: string
+  }
+}
+
+export function VentaForm({ initialData }: VentaFormProps) {
+  const router = useRouter()
+  const dispatch = useDispatch()
+  const [isLoading, setIsLoading] = useState(false)
+
+  const { data: productos, isLoading: isLoadingProductos } = useGetProductosQuery()
+  const { data: puntosDeVenta, isLoading: isLoadingPuntosDeVenta } = useGetPuntosDeVentaQuery()
+
+  const [addVenta] = useAddVentaMutation()
+  const [updateVenta] = useUpdateVentaMutation()
+
+  const form = useForm<VentaFormValues>({
+    resolver: zodResolver(ventaSchema),
+    defaultValues: {
+      productoId: initialData?.productoId || "",
+      cantidad: initialData?.cantidad || 1,
+      puntoDeVentaId: initialData?.puntoDeVentaId || "",
+    },
+  })
+
+  async function onSubmit(data: VentaFormValues) {
+    setIsLoading(true)
+    try {
+      if (initialData) {
+        await updateVenta({
+          ventaId: initialData.ventaId,
+          ...data,
+        }).unwrap()
+        toast('La venta ha sido actualizada exitosamente')
+      } else {
+        await addVenta({
+          ...data,
+        }).unwrap()
+        toast('La venta ha sido registrada exitosamente')
+        dispatch(apiSlice.util.invalidateTags(['Productos']))
+      }
+    } catch (error) {
+      console.error("Error al guardar la venta:", error)
+      toast('Hubo un error al guardar la venta.y')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  if (isLoadingProductos || isLoadingPuntosDeVenta) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+      >
+        <Card className="border-dashed">
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-center py-8 mb-6">
+              <motion.div
+                className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full"
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+              />
+            </div>
+            <div className="space-y-6">
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}>
+                <Skeleton className="h-10 w-full" />
+              </motion.div>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}>
+                <Skeleton className="h-10 w-full" />
+              </motion.div>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
+                <Skeleton className="h-10 w-full" />
+              </motion.div>
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
+                <Skeleton className="h-10 w-full" />
+              </motion.div>
+              <div className="flex justify-end space-x-4">
+                <Skeleton className="h-10 w-24" />
+                <Skeleton className="h-10 w-24" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+    )
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+    >
+      <Card className="border-dashed overflow-hidden">
+        <div className="h-1 bg-gradient-to-r from-primary via-purple-500 to-primary" />
+        <CardContent className="pt-6">
+          <motion.div 
+            className="flex items-center gap-3 mb-6"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.1 }}
+          >
+            <motion.div 
+              className="w-10 h-10 bg-gradient-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
+              whileHover={{ scale: 1.05, rotate: 5 }}
+              transition={{ type: "spring", stiffness: 400, damping: 10 }}
+            >
+              <TrendingUp className="h-5 w-5 text-white" />
+            </motion.div>
+            <div className="relative">
+              <h2 className="text-lg font-semibold">
+                {initialData ? "Editar Venta" : "Nueva Venta"}
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                {initialData ? "Modifique los datos de la venta" : "Ingrese los datos de la venta"}
+              </p>
+              <motion.div
+                className="absolute -right-4 -top-1"
+                animate={{ rotate: 360, scale: [1, 1.2, 1] }}
+                transition={{ 
+                  rotate: { duration: 20, repeat: Infinity, ease: "linear" },
+                  scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
+                }}
+              >
+                <Sparkles className="h-4 w-4 text-yellow-500" />
+              </motion.div>
+            </div>
+          </motion.div>
+
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <FormField
+                  control={form.control}
+                  name="productoId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Producto</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="transition-all duration-200 focus:scale-[1.01]">
+                            <SelectValue placeholder="Seleccione un producto" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {productos?.map((producto) => (
+                            <SelectItem key={producto.id} value={producto.id}>
+                              {producto.nombre} - Stock: {producto.stock} {producto.unidad?.simbolo}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>Seleccione el producto que se vendió.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <FormField
+                  control={form.control}
+                  name="cantidad"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cantidad</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          min={1} 
+                          {...field} 
+                          className="transition-all duration-200 focus:scale-[1.01]"
+                        />
+                      </FormControl>
+                      <FormDescription>Ingrese la cantidad vendida.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.4 }}
+              >
+                <FormField
+                  control={form.control}
+                  name="puntoDeVentaId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Punto de Venta</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="transition-all duration-200 focus:scale-[1.01]">
+                            <SelectValue placeholder="Seleccione un punto de venta" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {puntosDeVenta?.map((puntoDeVenta) => (
+                            <SelectItem key={puntoDeVenta.pvId} value={puntoDeVenta.pvId}>
+                              {puntoDeVenta.nombre}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>Seleccione el punto de venta donde se realizó la venta.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </motion.div>
+
+              <motion.div 
+                className="flex justify-end space-x-4 pt-4"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.5 }}
+              >
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <Button type="button" variant="outline" onClick={() => router.push("/busy/sales")}>
+                    Cancelar
+                  </Button>
+                </motion.div>
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <Button 
+                    type="submit" 
+                    disabled={isLoading}
+                    className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Guardando...
+                      </>
+                    ) : initialData ? (
+                      "Actualizar Venta"
+                    ) : (
+                      "Registrar Venta"
+                    )}
+                  </Button>
+                </motion.div>
+              </motion.div>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
+    </motion.div>
+  )
+}

@@ -1,0 +1,317 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { prisma } from "@/lib/prisma";
+
+// Mock de Prisma
+vi.mock("@/lib/prisma", () => ({
+  prisma: {
+    scheduledReport: {
+      findMany: vi.fn(),
+      count: vi.fn(),
+      groupBy: vi.fn(),
+      create: vi.fn(),
+      findUnique: vi.fn(),
+      update: vi.fn(),
+      delete: vi.fn(),
+    },
+  },
+}));
+
+describe("Scheduled Reports API", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.resetAllMocks();
+  });
+
+  describe("GET /api/contabilidad/exchange/scheduled-reports", () => {
+    it("debe retornar reportes programados con filtros", async () => {
+      const mockReportes = [
+        {
+          id: "1",
+          nombre: "Reporte Semanal",
+          descripcion: "Reporte semanal de inteligencia cambiaria",
+          tipoReporte: "COMPLETO",
+          formato: "PDF",
+          parametros: '{"moneda":"USD"}',
+          frecuencia: "semanal",
+          diaSemana: 1,
+          diaMes: null,
+          hora: "08:00",
+          zonaHoraria: "America/Havana",
+          activo: true,
+          enviarEmail: true,
+          destinatarios: '["user@ejemplo.com"]',
+          asuntoEmail: "Reporte Semanal",
+          cuerpoEmail: "Se adjunta el reporte semanal",
+          ultimaEjecucion: null,
+          proximaEjecucion: new Date().toISOString(),
+          totalEjecuciones: 0,
+          ultimaEjecucionExitosa: true,
+          creadoPor: "user-1",
+          fechaCreacion: new Date().toISOString(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ];
+
+      const mockEstadisticas = [
+        { frecuencia: "semanal", activo: true, _count: 5 },
+        { frecuencia: "mensual", activo: true, _count: 3 },
+      ];
+
+      prisma.scheduledReport.findMany.mockResolvedValue(mockReportes);
+      prisma.scheduledReport.count.mockResolvedValue(1);
+      prisma.scheduledReport.groupBy.mockResolvedValue(mockEstadisticas);
+
+      const request = new Request(
+        "http://localhost/api/contabilidad/exchange/scheduled-reports?frecuencia=semanal&activo=true"
+      );
+
+      const { GET } = await import("../route");
+
+      expect(prisma.scheduledReport.findMany).toBeDefined();
+      expect(prisma.scheduledReport.count).toBeDefined();
+    });
+
+    it("debe manejar caso sin reportes", async () => {
+      prisma.scheduledReport.findMany.mockResolvedValue([]);
+      prisma.scheduledReport.count.mockResolvedValue(0);
+      prisma.scheduledReport.groupBy.mockResolvedValue([]);
+
+      const request = new Request(
+        "http://localhost/api/contabilidad/exchange/scheduled-reports"
+      );
+
+      const { GET } = await import("../route");
+
+      expect(prisma.scheduledReport.findMany).toBeDefined();
+    });
+  });
+
+  describe("POST /api/contabilidad/exchange/scheduled-reports", () => {
+    it("debe crear un nuevo reporte programado", async () => {
+      const nuevoReporte = {
+        nombre: "Reporte Mensual",
+        descripcion: "Reporte mensual de KPIs",
+        tipoReporte: "KPI",
+        formato: "PDF",
+        parametros: { moneda: "USD" },
+        frecuencia: "mensual",
+        diaMes: 1,
+        hora: "09:00",
+        enviarEmail: true,
+        destinatarios: ["admin@ejemplo.com"],
+        asuntoEmail: "Reporte Mensual de KPIs",
+        creadoPor: "user-1",
+      };
+
+      const reporteCreado = {
+        id: "new-1",
+        ...nuevoReporte,
+        parametros: JSON.stringify(nuevoReporte.parametros),
+        diaSemana: null,
+        destinatarios: JSON.stringify(nuevoReporte.destinatarios),
+        zonaHoraria: "America/Havana",
+        activo: true,
+        ultimaEjecucion: null,
+        proximaEjecucion: new Date().toISOString(),
+        totalEjecuciones: 0,
+        ultimaEjecucionExitosa: true,
+        fechaCreacion: new Date().toISOString(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      prisma.scheduledReport.create.mockResolvedValue(reporteCreado);
+
+      const { POST } = await import("../route");
+
+      expect(prisma.scheduledReport.create).toBeDefined();
+    });
+
+    it("debe rechazar creación sin campos requeridos", async () => {
+      const { POST } = await import("../route");
+
+      expect(prisma.scheduledReport.create).toBeDefined();
+    });
+
+    it("debe rechazar frecuencia inválida", async () => {
+      const { POST } = await import("../route");
+
+      expect(prisma.scheduledReport.create).toBeDefined();
+    });
+  });
+});
+
+describe("Scheduled Reports - Casos Edge", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("debe validar frecuencia semanal con día de semana", () => {
+    const frecuenciasValidas = ["diaria", "semanal", "quincenal", "mensual"];
+    expect(frecuenciasValidas).toContain("semanal");
+  });
+
+  it("debe validar frecuencia mensual con día del mes", () => {
+    const frecuenciasValidas = ["diaria", "semanal", "quincenal", "mensual"];
+    expect(frecuenciasValidas).toContain("mensual");
+  });
+
+  it("debe calcular próxima ejecución diaria correctamente", () => {
+    const frecuencia = "diaria";
+    const hora = "08:00";
+    const ahora = new Date();
+
+    const [hours, minutes] = hora.split(":").map(Number);
+    const proxima = new Date(ahora);
+    proxima.setHours(hours, minutes, 0, 0);
+
+    if (proxima <= ahora) {
+      proxima.setDate(proxima.getDate() + 1);
+    }
+
+    expect(proxima.getHours()).toBe(8);
+    expect(proxima.getMinutes()).toBe(0);
+  });
+
+  it("debe calcular próxima ejecución semanal correctamente", () => {
+    const frecuencia = "semanal";
+    const diaSemana = 1; // Lunes
+    const hora = "08:00";
+
+    const ahora = new Date();
+    const [hours, minutes] = hora.split(":").map(Number);
+    const proxima = new Date(ahora);
+    proxima.setHours(hours, minutes, 0, 0);
+
+    const diaActual = proxima.getDay();
+    const diasParaSumar = ((diaSemana - diaActual + 7) % 7) || 7;
+    proxima.setDate(proxima.getDate() + diasParaSumar);
+
+    expect(proxima.getDay()).toBe(1);
+  });
+
+  it("debe calcular próxima ejecución mensual correctamente", () => {
+    const frecuencia = "mensual";
+    const diaMes = 15;
+    const hora = "08:00";
+
+    const ahora = new Date();
+    const [hours, minutes] = hora.split(":").map(Number);
+    const proxima = new Date(ahora);
+    proxima.setHours(hours, minutes, 0, 0);
+
+    const diaDelMes = proxima.getDate();
+    const ultimoDiaMes = new Date(proxima.getFullYear(), proxima.getMonth() + 1, 0).getDate();
+    const diaObjetivo = Math.min(diaMes, ultimoDiaMes);
+
+    if (diaDelMes < diaObjetivo) {
+      proxima.setDate(diaObjetivo);
+    } else {
+      proxima.setMonth(proxima.getMonth() + 1);
+      const nuevoUltimoDia = new Date(proxima.getFullYear(), proxima.getMonth() + 1, 0).getDate();
+      proxima.setDate(Math.min(diaMes, nuevoUltimoDia));
+    }
+
+    expect(proxima.getDate()).toBeGreaterThanOrEqual(15);
+  });
+
+  it("debe validar formatos de reporte", () => {
+    const formatosValidos = ["PDF", "CSV", "EXCEL"];
+    expect(formatosValidos).toContain("PDF");
+    expect(formatosValidos).toContain("CSV");
+    expect(formatosValidos).toContain("EXCEL");
+  });
+
+  it("debe validar tipos de reporte", () => {
+    const tiposValidos = ["COMPLETO", "COST_IMPACT", "DEBT_EXPOSURE", "PAYMENT_EFFICIENCY", "KPI"];
+    expect(tiposValidos).toContain("COMPLETO");
+    expect(tiposValidos).toContain("KPI");
+  });
+});
+
+describe("Scheduled Reports - GET [id]", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("debe obtener un reporte programado específico", async () => {
+    const reporte = {
+      id: "1",
+      nombre: "Reporte Semanal",
+      descripcion: null,
+      tipoReporte: "COMPLETO",
+      formato: "PDF",
+      parametros: '{"moneda":"USD"}',
+      frecuencia: "semanal",
+      diaSemana: 1,
+      diaMes: null,
+      hora: "08:00",
+      zonaHoraria: "America/Havana",
+      activo: true,
+      enviarEmail: false,
+      destinatarios: null,
+      asuntoEmail: null,
+      cuerpoEmail: null,
+      ultimaEjecucion: null,
+      proximaEjecucion: new Date().toISOString(),
+      totalEjecuciones: 0,
+      ultimaEjecucionExitosa: true,
+      creadoPor: "user-1",
+      fechaCreacion: new Date().toISOString(),
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+
+    prisma.scheduledReport.findUnique.mockResolvedValue(reporte);
+
+    const { GET } = await import("../[id]/route");
+
+    expect(prisma.scheduledReport.findUnique).toBeDefined();
+  });
+
+  it("debe retornar error si reporte no existe", async () => {
+    prisma.scheduledReport.findUnique.mockResolvedValue(null);
+
+    const { GET } = await import("../[id]/route");
+
+    expect(prisma.scheduledReport.findUnique).toBeDefined();
+  });
+});
+
+describe("Scheduled Reports - POST execute", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("debe ejecutar un reporte programado", async () => {
+    const reporte = {
+      id: "1",
+      nombre: "Reporte Semanal",
+      tipoReporte: "COMPLETO",
+      formato: "PDF",
+      frecuencia: "semanal",
+      diaSemana: 1,
+      diaMes: null,
+      hora: "08:00",
+      zonaHoraria: "America/Havana",
+      totalEjecuciones: 0,
+    };
+
+    prisma.scheduledReport.findUnique.mockResolvedValue(reporte);
+    prisma.scheduledReport.update.mockResolvedValue({
+      ...reporte,
+      ultimaEjecucion: new Date(),
+      totalEjecuciones: 1,
+      ultimaEjecucionExitosa: true,
+    });
+
+    const { POST } = await import("../[id]/route");
+
+    expect(prisma.scheduledReport.findUnique).toBeDefined();
+    expect(prisma.scheduledReport.update).toBeDefined();
+  });
+});

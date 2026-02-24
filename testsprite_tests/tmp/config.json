@@ -1,0 +1,35 @@
+{
+  "testType": "vitest",
+  "targetDir": "./src",
+  "outputDir": "./tests",
+  "testFramework": "vitest",
+  "executionArgs": {
+    "command": "pnpm test -- tests/e2e/inventario.spec.ts --run"
+  },
+  "targetUrl": "http://localhost:3000",
+  "pages": [
+    "/",
+    "/login",
+    "/register",
+    "/busy/dashboard",
+    "/busy/products",
+    "/busy/categoria",
+    "/busy/almacen",
+    "/busy/vendor",
+    "/busy/empleados",
+    "/busy/servicios",
+    "/busy/sales",
+    "/busy/cuadre",
+    "/busy/contabilidad",
+    "/busy/notificaciones",
+    "/busy/finanzas",
+    "/busy/perfil",
+    "/busy/admin/usuarios",
+    "/busy/puntosDeVenta",
+    "/busy/cliente",
+    "/busy/transferencias",
+    "/busy/mermas",
+    "/busy/currency",
+    "/busy/unidad"
+  ]
+}

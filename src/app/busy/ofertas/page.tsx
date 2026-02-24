@@ -1,0 +1,119 @@
+"use client"
+
+import Link from "next/link"
+import { useGetOfertasQuery } from "@/lib/redux/services/ofertasApi"
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+import { Button } from "@/components/ui/button"
+import { PlusCircle, Tag, Sparkles, Loader2 } from "lucide-react"
+import { OfertasTable } from "@/components/ofertas/ofertas-table"
+import { motion } from "framer-motion"
+import { Skeleton } from "@/components/ui/skeleton"
+
+export default function OfertasPage() {
+  const { data: ofertas, isLoading, error } = useGetOfertasQuery()
+
+  return (
+    <SidebarProvider>
+      <SidebarInset>
+        <div className="container mx-auto py-4">
+          {/* Header */}
+          <motion.div 
+            className="flex justify-between items-center mb-6"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <motion.div 
+              className="flex items-center gap-3"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <motion.div 
+                className="w-10 h-10 bg-gradient-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
+                whileHover={{ scale: 1.05, rotate: 5 }}
+                transition={{ type: "spring", stiffness: 400, damping: 10 }}
+              >
+                <Tag className="h-5 w-5 text-white" />
+              </motion.div>
+              <div className="relative">
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+                  Ofertas
+                </h1>
+                <motion.div
+                  className="absolute -right-4 -top-1"
+                  animate={{ rotate: 360, scale: [1, 1.2, 1] }}
+                  transition={{ 
+                    rotate: { duration: 20, repeat: Infinity, ease: "linear" },
+                    scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
+                  }}
+                >
+                  <Sparkles className="h-4 w-4 text-yellow-500" />
+                </motion.div>
+              </div>
+            </motion.div>
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <Button 
+                asChild 
+                className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+              >
+                <Link href="/busy/ofertas/new">
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Nueva Oferta
+                </Link>
+              </Button>
+            </motion.div>
+          </motion.div>
+
+          {/* Table */}
+          {isLoading ? (
+            <motion.div 
+              className="space-y-4"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="flex items-center justify-center py-12">
+                <motion.div
+                  className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full"
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                />
+              </div>
+              <div className="space-y-3">
+                {[...Array(5)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: i * 0.1 }}
+                  >
+                    <Skeleton className="h-12 w-full" />
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              <OfertasTable
+                ofertas={ofertas || []}
+                isLoading={isLoading}
+                error={error}
+              />
+            </motion.div>
+          )}
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
+  )
+}

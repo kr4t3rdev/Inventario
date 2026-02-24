@@ -1,0 +1,259 @@
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
+
+async function main() {
+  // Seed Categorias
+  const categoria1 = await prisma.categoria.create({
+    data: {
+      nombre: 'Electronics',
+      productos: {
+        create: [
+          {
+            nombre: 'Smartphone',
+            descripcion: 'Latest model smartphone',
+            precioCosto: 300,
+            precioVenta: 500,
+            stock: 100,
+            unidad: {
+              create: {
+                nombre: 'Piece',
+                simbolo: 'pc',
+              },
+            },
+            vendor: {
+              create: {
+                nombre: 'TechVendor',
+                contacto: 'contact@techvendor.com',
+              },
+            },
+            almacen: {
+              create: {
+                nombre: 'Main Warehouse',
+              },
+            },
+            puntoDeVenta: {
+              create: {
+                nombre: 'Downtown Store',
+                ubicacion: '123 Main St',
+              },
+            },
+          },
+        ],
+      },
+    },
+  });
+
+  // Seed Unidades
+  const unidad1 = await prisma.unidad.create({
+    data: {
+      nombre: 'Kilogram',
+      simbolo: 'kg',
+    },
+  });
+
+  // Seed Vendors
+  const vendor1 = await prisma.vendor.create({
+    data: {
+      nombre: 'Office Supplies Co.',
+      contacto: 'sales@officesupplies.com',
+    },
+  });
+
+  // Seed Productos
+  const producto1 = await prisma.producto.create({
+    data: {
+      nombre: 'Laptop',
+      descripcion: 'High performance laptop',
+      precioCosto: 800,
+      precioVenta: 1200,
+      stock: 50,
+      categoria: {
+        connect: { catId: categoria1.catId },
+      },
+      unidad: {
+        connect: { unidadId: unidad1.unidadId },
+      },
+      vendor: {
+        connect: { vendorId: vendor1.vendorId },
+      },
+      almacen: {
+        create: {
+          nombre: 'Secondary Warehouse',
+        },
+      },
+    },
+  });
+
+  // Seed PuntoDeVenta
+  const puntoDeVenta1 = await prisma.puntoDeVenta.create({
+    data: {
+      nombre: 'Uptown Store',
+      ubicacion: '456 Elm St',
+    },
+  });
+
+  // Seed Ventas
+  await prisma.venta.create({
+    data: {
+      producto: {
+        connect: { id: producto1.id },
+      },
+      cantidad: 5,
+      total: 6000,
+      puntoDeVenta: {
+        connect: { pvId: puntoDeVenta1.pvId },
+      },
+    },
+  });
+
+  // Seed Mermas
+  await prisma.merma.create({
+    data: {
+      producto: {
+        connect: { id: producto1.id },
+      },
+      cantidad: 2,
+      motivo: 'Damaged during transport',
+      costoTotal: 1600,
+    },
+  });
+
+  // Seed Transferencias
+  await prisma.transferencia.create({
+    data: {
+      producto: {
+        connect: { id: producto1.id },
+      },
+      cantidad: 10,
+      origen: {
+        connect: { almacenId: producto1.almacenId },
+      },
+      destino: {
+        connect: { almacenId: producto1.almacenId },
+      },
+    },
+  });
+
+  // Seed Users
+  const user1 = await prisma.user.create({
+    data: {
+      name: 'John Doe',
+      email: 'john.doe@example.com',
+      password: 'securepassword',
+      role: 'admin',
+    },
+  });
+
+  // Seed Notifications
+  await prisma.notification.create({
+    data: {
+      title: 'Welcome to the system',
+      message: 'Your account has been created successfully.',
+      user: {
+        connect: { userId: user1.userId },
+      },
+      prioridad: 'alta',
+    },
+  });
+
+  // Seed Almacen
+  await prisma.almacen.create({
+    data: {
+      nombre: 'Central Warehouse',
+    },
+  });
+
+  // Seed Empleados
+  const empleado1 = await prisma.empleado.create({
+    data: {
+      nombre: 'Jane Smith',
+      apellido: 'Smith',
+      email: 'jane.smith@example.com',
+      cargo: 'Manager',
+      salarioBase: 50000,
+      puntoDeVenta: {
+        connect: { pvId: puntoDeVenta1.pvId },
+      },
+    },
+  });
+
+  // Seed GastoCompra
+  await prisma.gastoCompra.create({
+    data: {
+      producto: {
+        connect: { id: producto1.id },
+      },
+      vendor: {
+        connect: { vendorId: vendor1.vendorId },
+      },
+      cantidad: 20,
+      precioUnitario: 750,
+      total: 15000,
+    },
+  });
+
+  // Seed GastoSalario
+  await prisma.gastoSalario.create({
+    data: {
+      empleado: {
+        connect: { empleadoId: empleado1.empleadoId },
+      },
+      monto: 52000,
+      periodo: '2024-01',
+    },
+  });
+
+  // Seed GastoUtilitario
+  await prisma.gastoUtilitario.create({
+    data: {
+      tipo: 'electricidad',
+      proveedor: 'Electric Co.',
+      monto: 200,
+      periodo: '2024-01',
+      puntoDeVenta: {
+        connect: { pvId: puntoDeVenta1.pvId },
+      },
+    },
+  });
+
+  // Seed Presupuesto
+  await prisma.presupuesto.create({
+    data: {
+      nombre: 'Annual Budget 2024',
+      periodo: '2024',
+      tipoPresupuesto: 'anual',
+      ingresosVentas: 100000,
+      gastosCompras: 50000,
+      gastosSalarios: 30000,
+      gastosUtilitarios: 10000,
+      totalIngresos: 100000,
+      totalGastos: 90000,
+      utilidadNeta: 10000,
+    },
+  });
+
+  // Seed ReporteFinanciero
+  await prisma.reporteFinanciero.create({
+    data: {
+      periodo: '2024-Q1',
+      tipoReporte: 'trimestral',
+      ingresosVentas: 25000,
+      gastosCompras: 12000,
+      gastosSalarios: 8000,
+      gastosUtilitarios: 2000,
+      totalIngresos: 25000,
+      totalGastos: 22000,
+      utilidadBruta: 3000,
+      utilidadNeta: 3000,
+    },
+  });
+}
+
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });

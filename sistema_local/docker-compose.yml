@@ -1,0 +1,58 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: tcp
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: tcp
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - appnet
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks:
+      - appnet
+
+  app:
+    build: ..
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://tcp:${POSTGRES_PASSWORD}@db:5432/tcp
+      REDIS_URL: redis://redis:6379
+      NEXTAUTH_URL: https://localhost
+    depends_on:
+      - db
+      - redis
+    ports:
+      - "3000:3000"  # Expuesto para acceso local; detrás de nginx si se usa TLS
+    networks:
+      - appnet
+
+  nginx:
+    image: nginx:latest
+    restart: unless-stopped
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/certs:/etc/ssl/certs
+      - ./nginx/private:/etc/ssl/private
+    ports:
+      - "443:443"
+    depends_on:
+      - app
+    networks:
+      - appnet
+
+volumes:
+  db_data:
+  redis_data:
+
+networks:
+  appnet:

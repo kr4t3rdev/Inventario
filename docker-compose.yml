@@ -1,0 +1,143 @@
+version: '3.8'
+
+services:
+  # Nginx - Proxy inverso y servidor web
+  nginx:
+    image: tcp-nginx:latest
+    container_name: inventario-nginx
+    restart: unless-stopped
+    
+    security_opt:
+      - no-new-privileges:true
+    
+    # Solo Nginx expone puertos al mundo exterior
+    ports:
+      - "80:80"
+      # - "443:443"  # HTTPS (descomentar cuando tengas SSL)
+    
+    # Copiar archivos estáticos de Next.js
+    volumes:
+      - next_static:/usr/share/nginx/html/_next/static:ro
+      - next_public:/usr/share/nginx/html/static:ro
+      - ./nginx.conf:/etc/nginx/conf.d/app.conf:ro
+    
+    depends_on:
+      app:
+        condition: service_healthy
+    
+    networks:
+      - app-network
+    
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Next.js Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+    container_name: inventario-app
+    restart: unless-stopped
+    
+    security_opt:
+      - no-new-privileges:true
+    
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    
+    # NO exponer puertos (acceso solo interno via Nginx)
+    # ports:
+    #   - "3000:3000"  # Debug
+    #   - "5555:5555"  # Prisma Studio - DESACTIVADO por seguridad
+    
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
+      - NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+      - PORT=3000
+    
+    # Volumen compartido para archivos estáticos
+    volumes:
+      - next_static:/app/.next/static
+      - next_public:/app/public
+    
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    networks:
+      - app-network
+    
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # PostgreSQL Database
+  postgres:
+    image: tcp-postgres:latest
+    container_name: inventario-postgres
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    
+    # Restringir acceso externo
+    expose:
+      - "5432"
+    
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+      # Restringir conexiones solo a la red interna
+      - POSTGRES_HOST_AUTH_METHOD=md5
+    
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    
+    networks:
+      - app-network
+    
+    # PUERTO 5432 NO EXPUESTO - Solo accesible internamente
+    # No hay ports configurado - acceso solo desde app-network
+    
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  next_static:
+  next_public:

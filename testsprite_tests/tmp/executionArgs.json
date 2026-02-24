@@ -1,0 +1,1 @@
+{"executionArgs": {"command": "pnpm test:run tests/pages-accessibility.test.ts"}}

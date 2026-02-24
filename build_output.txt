@@ -1,0 +1,10 @@
+
+> invent-sys@0.1.0 build /Users/arturo/Documents/Proyecto Inventario/TCP
+> NODE_OPTIONS='--max-old-space-size=4096' NEXT_TELEMETRY_DISABLED=1 next build
+
+   ▲ Next.js 15.5.9
+   - Environments: .env.local, .env
+   - Experiments (use with caution):
+     · optimizePackageImports
+
+   Creating an optimized production build ...

@@ -1,0 +1,92 @@
+# ============================================
+# Imagen unificada: PostgreSQL + Next.js + Nginx
+# ============================================
+
+FROM node AS builder
+WORKDIR /app
+
+# Instalar dependencias del sistema
+RUN apt-get update && apt-get install -y \
+    openssl \
+    libssl-dev \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN npm install -g pnpm
+
+# Copiar y construir la app
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
+
+COPY . .
+RUN pnpm prisma generate || pnpm prisma generate || pnpm prisma generate
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_OPTIONS="--max-old-space-size=3072"
+RUN pnpm build
+
+# ============================================
+# Runtime unificado
+# ============================================
+FROM node
+WORKDIR /app
+
+# Instalar todos los servicios necesarios
+RUN apt-get update && apt-get install -y \
+    postgresql \
+    postgresql-contrib \
+    nginx \
+    openssl \
+    libssl-dev \
+    supervisor \
+    curl \
+    && rm -rf /var/lib/apt/lists/* \
+    && npm install -g npx
+
+# Configurar PostgreSQL - sin password hardcodeado
+USER postgres
+RUN /etc/init.d/postgresql start && \
+    psql --command "CREATE USER inventario WITH SUPERUSER;" && \
+    createdb -O inventario inventario_db && \
+    /etc/init.d/postgresql stop
+USER root
+
+# Configurar Nginx
+RUN rm -f /etc/nginx/sites-enabled/default
+COPY nginx-unified.conf /etc/nginx/sites-available/app
+RUN ln -s /etc/nginx/sites-available/app /etc/nginx/sites-enabled/app
+
+# Copiar la aplicación
+COPY --from=builder /app/.next /app/.next
+COPY --from=builder /app/node_modules /app/node_modules
+COPY --from=builder /app/package.json /app/package.json
+COPY --from=builder /app/public /app/public
+COPY --from=builder /app/prisma /app/prisma
+
+# Copiar script de inicio
+COPY entrypoint-unified.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# Copiar configuración de supervisor
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Crear directorios para persistencia
+RUN mkdir -p /var/log/tcp && \
+    chown -R postgres:postgres /var/lib/postgresql
+
+# Variables de entorno por defecto (sin secrets)
+ENV NODE_ENV=production
+ENV NEXTAUTH_URL=http://localhost
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+
+# Secrets se pasan en runtime via -e
+# DATABASE_URL, JWT_SECRET, NEXTAUTH_SECRET
+
+EXPOSE 80
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost/api/health || exit 1
+
+ENTRYPOINT ["/entrypoint.sh"]

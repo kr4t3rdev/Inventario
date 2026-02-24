@@ -1,0 +1,54 @@
+# Builder - Usar node del sistema
+FROM node AS builder
+WORKDIR /app
+
+# Instalar dependencias del sistema (apt-get para Debian/Ubuntu)
+RUN apt-get update && apt-get install -y \
+    openssl \
+    libssl-dev \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Usar npm/npx que ya viene con node
+RUN npm install -g pnpm
+
+# Copiar package files
+COPY package.json pnpm-lock.yaml ./
+
+# Instalar todas las dependencias (esto se hace una vez con internet)
+RUN pnpm install --frozen-lockfile
+
+# Copiar código fuente
+COPY . .
+
+# Generar cliente Prisma
+RUN pnpm prisma generate
+
+# Build
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV NODE_OPTIONS="--max-http-header-size=80000"
+RUN pnpm build
+
+# ============================================
+# Runtime - Usar node del sistema
+# ============================================
+FROM node
+WORKDIR /app
+ENV NODE_ENV=production
+
+# Instalar runtime deps
+RUN apt-get update && apt-get install -y \
+    openssl \
+    libssl-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copiar todo lo necesario del builder
+COPY --from=builder /app/.next /app/.next
+COPY --from=builder /app/node_modules /app/node_modules
+COPY --from=builder /app/package.json /app/package.json
+COPY --from=builder /app/public /app/public
+
+EXPOSE 3000
+CMD ["pnpm", "start"]

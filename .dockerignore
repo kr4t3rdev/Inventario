@@ -1,0 +1,55 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build outputs
+.next
+dist
+build
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Development files
+.git
+.gitignore
+.vscode
+.idea
+*.md
+!README.md
+
+# Testing
+tests
+test
+*.test.ts
+*.test.tsx
+e2e
+playwright.config.ts
+
+# Logs
+*.log
+logs
+npm-debug.log*
+pnpm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Temporary files
+tmp
+temp
+.cache
+
+# Misc
+*.pem
+*.key
+coverage
+.nyc_output

@@ -1,0 +1,36 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true
+  },
+  "include": [
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx",
+    "src/**/__tests__/**/*.ts",
+    "src/**/__tests__/**/*.tsx",
+    "test/**/*.test.ts",
+    "test/**/*.test.tsx",
+    "tests/**/*.test.ts",
+    "tests/**/*.test.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    "e2e",
+    "playwright.config.ts",
+    "src/app/api/contabilidad/exchange/report-history/__tests__/route.test.ts",
+    "src/app/api/dashboard/__tests__/stats-minimum-stock.test.ts",
+    "src/app/api/gastos-compra/__tests__/restock-integration.test.ts",
+    "src/app/api/productos/[id]/restock-history/__tests__/route.test.ts",
+    "src/app/api/productos/__tests__/validation.test.ts",
+    "src/app/api/productos/bulk-stock-minimo/__tests__/bulk-update-comprehensive.test.ts",
+    "src/app/api/productos/restock/__tests__/error-handling-integration.test.ts",
+    "src/app/api/productos/restock/__tests__/integration-flow.test.ts",
+    "src/components/contabilidad/exchange-intelligence/__tests__/accessibility.test.tsx",
+    "src/components/contabilidad/exchange-intelligence/__tests__/responsive-design.test.tsx",
+    "src/lib/services/__tests__/exchange_intelligence_service.test.ts",
+    "src/lib/services/__tests__/payment_efficiency.test.ts",
+    "src/lib/services/__tests__/treasury_integration_service.integration.test.ts",
+    "test/ordenesReparacionApi.test.ts",
+    "test/reparacionesApi.test.ts"
+  ]
+}

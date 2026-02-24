@@ -1,0 +1,126 @@
+version: '3.8'
+
+services:
+  nginx:
+    image: tcp-nginx:latest
+    container_name: inventario-nginx
+    restart: unless-stopped
+    
+    security_opt:
+      - no-new-privileges:true
+    
+    ports:
+      - "80:80"
+      # - "443:443"  # HTTPS
+    
+    volumes:
+      - next_static:/usr/share/nginx/html/_next/static:ro
+      - next_public:/usr/share/nginx/html/static:ro
+    
+    depends_on:
+      app:
+        condition: service_healthy
+    
+    networks:
+      - app-network
+    
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  app:
+    image: tcp-app:latest
+    container_name: inventario-app
+    restart: unless-stopped
+    
+    security_opt:
+      - no-new-privileges:true
+    
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+    
+    # NO exponer puertos (acceso solo interno via Nginx)
+    # ports:
+    #   - "3000:3000"
+    #   - "5555:5555"
+    
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
+      - PORT=3000
+    
+    volumes:
+      - next_static:/app/.next/static
+      - next_public:/app/public
+    
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    
+    networks:
+      - app-network
+    
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  db:
+    image: postgres:16-alpine
+    container_name: inventario-db
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=${DB_NAME}
+    
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./tcp-database-backup.sql:/docker-entrypoint-initdb.d/backup.sql:ro
+    
+    networks:
+      - app-network
+    
+    # NO exponer puerto (acceso solo interno)
+    # ports:
+    #   - "5432:5432"
+    
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  next_static:
+  next_public:
