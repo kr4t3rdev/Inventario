@@ -106,7 +106,7 @@ export function CuentasPorPagarTable() {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-3">
-        <Card className={cn(surfaceCardClass, "border-l-4 border-l-blue-500")}>
+        <Card className={cn(surfaceCardClass, "border-l-4 border-l-primary")}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Deuda total</CardTitle>
             <DollarSign className="h-4 w-4 text-blue-500" />
@@ -118,7 +118,7 @@ export function CuentasPorPagarTable() {
             <p className="text-xs text-muted-foreground mt-1">Total de facturas entrantes</p>
           </CardContent>
         </Card>
-        <Card className={cn(surfaceCardClass, "border-l-4 border-l-emerald-500")}>
+        <Card className={cn(surfaceCardClass, "border-l-4 border-l-chart-2")}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Pagado</CardTitle>
             <CheckCircle2 className="h-4 w-4 text-emerald-500" />
@@ -130,7 +130,7 @@ export function CuentasPorPagarTable() {
             <p className="text-xs text-muted-foreground mt-1">Pagos aplicados</p>
           </CardContent>
         </Card>
-        <Card className={cn(surfaceCardClass, "border-l-4 border-l-amber-500")}>
+        <Card className={cn(surfaceCardClass, "border-l-4 border-l-accent")}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Saldo pendiente</CardTitle>
             <AlertCircle className="h-4 w-4 text-amber-500" />

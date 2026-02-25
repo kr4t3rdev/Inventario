@@ -36,7 +36,7 @@ export const ventasApi = apiSlice.injectEndpoints({
         method: "POST",
         body: venta,
       }),
-      invalidatesTags: ["Ventas", "Dashboard"],
+      invalidatesTags: ["Ventas", "Dashboard", "ReconciliacionVentas"],
     }),
     updateVenta: builder.mutation<Venta, Partial<Venta> & { ventaId: string }>({
       query: ({ ventaId, ...patch }) => ({
@@ -44,14 +44,14 @@ export const ventasApi = apiSlice.injectEndpoints({
         method: "PATCH",
         body: patch,
       }),
-      invalidatesTags: (result, error, { ventaId }) => [{ type: "Ventas", ventaId }, "Dashboard"],
+      invalidatesTags: (result, error, { ventaId }) => [{ type: "Ventas", ventaId }, "Dashboard", "ReconciliacionVentas"],
     }),
     deleteVenta: builder.mutation<{ success: boolean; id: string }, string>({
       query: (id) => ({
         url: `/ventas/${id}`,
         method: "DELETE",
       }),
-      invalidatesTags: ["Ventas", "Dashboard"],
+      invalidatesTags: ["Ventas", "Dashboard", "ReconciliacionVentas"],
     }),
   }),
 })

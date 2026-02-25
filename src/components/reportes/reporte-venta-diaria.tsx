@@ -482,7 +482,7 @@ export function ReporteVentaDiaria() {
       {/* Tarjetas de estadísticas */}
       <StaggerItem className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <AnimatedCard>
-        <Card className={cn(surfaceCardClass, "border-l-4 border-l-blue-500")}>
+        <Card className={cn(surfaceCardClass, "border-l-4 border-l-primary")}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardDescription className="text-sm font-medium">Total de Ventas</CardDescription>
             <Package className="h-4 w-4 text-muted-foreground" />
@@ -497,7 +497,7 @@ export function ReporteVentaDiaria() {
         </AnimatedCard>
 
         <AnimatedCard>
-        <Card className={cn(surfaceCardClass, "border-l-4 border-l-emerald-500")}>
+        <Card className={cn(surfaceCardClass, "border-l-4 border-l-chart-2")}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardDescription className="text-sm font-medium">Ingresos Netos</CardDescription>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -512,7 +512,7 @@ export function ReporteVentaDiaria() {
         </AnimatedCard>
 
         <AnimatedCard>
-        <Card className={cn(surfaceCardClass, "border-l-4 border-l-amber-500")}>
+        <Card className={cn(surfaceCardClass, "border-l-4 border-l-accent")}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardDescription className="text-sm font-medium">Ganancia</CardDescription>
             <TrendingUpIcon className="h-4 w-4 text-muted-foreground" />
@@ -527,7 +527,7 @@ export function ReporteVentaDiaria() {
         </AnimatedCard>
 
         <AnimatedCard>
-        <Card className={cn(surfaceCardClass, "border-l-4 border-l-slate-500")}>
+        <Card className={cn(surfaceCardClass, "border-l-4 border-l-muted")}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardDescription className="text-sm font-medium">Ticket Promedio</CardDescription>
             <Calendar className="h-4 w-4 text-muted-foreground" />

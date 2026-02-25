@@ -171,7 +171,7 @@ export function NominaView() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <Card className="border-l-4 border-l-emerald-500 shadow-sm bg-gradient-to-br from-card to-emerald-50/50 dark:to-emerald-950/10">
+          <Card className="border-l-4 border-l-chart-2 shadow-sm bg-gradient-to-br from-card to-chart-2/10 dark:to-chart-2/5">
             <CardContent className="p-6">
               <div className="flex justify-between items-start">
                 <div>
@@ -193,7 +193,7 @@ export function NominaView() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <Card className="border-l-4 border-l-blue-500 shadow-sm bg-gradient-to-br from-card to-blue-50/50 dark:to-blue-950/10">
+          <Card className="border-l-4 border-l-primary shadow-sm bg-gradient-to-br from-card to-primary/10 dark:to-primary/5">
             <CardContent className="p-6">
               <div className="flex justify-between items-start">
                 <div>
@@ -215,7 +215,7 @@ export function NominaView() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <Card className="border-l-4 border-l-violet-500 shadow-sm bg-gradient-to-br from-card to-violet-50/50 dark:to-violet-950/10">
+          <Card className="border-l-4 border-l-chart-3 shadow-sm bg-gradient-to-br from-card to-chart-3/10 dark:to-chart-3/5">
             <CardContent className="p-6">
               <div className="flex justify-between items-start">
                 <div>

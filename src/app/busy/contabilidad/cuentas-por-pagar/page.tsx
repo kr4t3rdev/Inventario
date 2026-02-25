@@ -285,7 +285,7 @@ export default function CuentasPorPagarPage() {
               {/* Cards de métricas */}
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <AnimatedCard>
-                  <Card className={cn(surfaceCardClass, "border-l-4 border-l-blue-500 hover:shadow-md transition-shadow")}>
+                  <Card className={cn(surfaceCardClass, "border-l-4 border-l-primary hover:shadow-md transition-shadow")}>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium text-muted-foreground">
                         Total Facturado
@@ -304,7 +304,7 @@ export default function CuentasPorPagarPage() {
                 </AnimatedCard>
 
                 <AnimatedCard>
-                  <Card className={cn(surfaceCardClass, "border-l-4 border-l-green-500 hover:shadow-md transition-shadow")}>
+                  <Card className={cn(surfaceCardClass, "border-l-4 border-l-chart-2 hover:shadow-md transition-shadow")}>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium text-muted-foreground">
                         Total Pagado
@@ -323,7 +323,7 @@ export default function CuentasPorPagarPage() {
                 </AnimatedCard>
 
                 <AnimatedCard>
-                  <Card className={cn(surfaceCardClass, "border-l-4 border-l-red-500 hover:shadow-md transition-shadow")}>
+                  <Card className={cn(surfaceCardClass, "border-l-4 border-l-destructive hover:shadow-md transition-shadow")}>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium text-muted-foreground">
                         Saldo Pendiente
@@ -342,7 +342,7 @@ export default function CuentasPorPagarPage() {
                 </AnimatedCard>
 
                 <AnimatedCard>
-                  <Card className={cn(surfaceCardClass, "border-l-4 border-l-amber-500 hover:shadow-md transition-shadow")}>
+                  <Card className={cn(surfaceCardClass, "border-l-4 border-l-accent hover:shadow-md transition-shadow")}>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium text-muted-foreground">
                         Estado General

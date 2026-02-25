@@ -166,6 +166,56 @@ async function resolveCuentaYTipoPago(
   }
 }
 
+export interface ReconciliacionDirectaParams {
+  ventaId: string
+  montoTotal: number
+  usuarioId: string
+  observaciones?: string | null
+  cuentaBancariaId?: string | null
+}
+
+export async function reconciliarVentaDirecta(
+  tx: Prisma.TransactionClient,
+  params: ReconciliacionDirectaParams
+): Promise<string> {
+  const montoTotal = Number(params.montoTotal || 0)
+  if (!Number.isFinite(montoTotal) || montoTotal <= 0) {
+    throw new Error('El monto total de la venta debe ser mayor que cero')
+  }
+
+  const { cuenta, tipoPago } = await resolveCuentaYTipoPago(tx, params.cuentaBancariaId)
+  
+  // Para ventas directas sin factura, usamos una referencia genérica
+  const referenciaCobro = `AUTO-${params.ventaId.slice(-8)}`
+
+  const reconciliacion = await tx.reconciliacionVenta.create({
+    data: {
+      ventaId: params.ventaId,
+      cuentaId: cuenta.cuentaId,
+      tipoPagoId: tipoPago.tipoId,
+      monto: montoTotal,
+      moneda: cuenta.moneda,
+      tasaCambio: 1,
+      montoConvertido: montoTotal,
+      verificacionTransferenciaId: referenciaCobro,
+      idTransferencia: referenciaCobro,
+      observaciones: params.observaciones || `Venta directa al contado`,
+      reconciliadoPor: params.usuarioId
+    }
+  })
+
+  await tx.cuentaBancaria.update({
+    where: { cuentaId: cuenta.cuentaId },
+    data: {
+      saldo: {
+        increment: montoTotal
+      }
+    }
+  })
+
+  return reconciliacion.reconciliacionId
+}
+
 export async function applyFacturacionCobroWorkflow(
   tx: Prisma.TransactionClient,
   params: FacturacionCobroWorkflowParams

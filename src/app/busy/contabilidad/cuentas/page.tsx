@@ -172,7 +172,7 @@ export default function CuentasBancariasPage(): React.JSX.Element {
 
             <StaggerItem className="grid gap-4 md:grid-cols-3">
               <AnimatedCard>
-                <Card className={cn(surfaceCardClass, "border-l-4 border-l-blue-500")}>
+                <Card className={cn(surfaceCardClass, "border-l-4 border-l-primary")}>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Total Cuentas</CardTitle>
                     <Wallet className="h-4 w-4 text-blue-500" />
@@ -195,7 +195,7 @@ export default function CuentasBancariasPage(): React.JSX.Element {
               </AnimatedCard>
 
               <AnimatedCard>
-                <Card className={cn(surfaceCardClass, "border-l-4 border-l-emerald-500")}>
+                <Card className={cn(surfaceCardClass, "border-l-4 border-l-chart-2")}>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Cuentas Activas</CardTitle>
                     <CreditCard className="h-4 w-4 text-emerald-500" />
@@ -218,7 +218,7 @@ export default function CuentasBancariasPage(): React.JSX.Element {
               </AnimatedCard>
 
               <AnimatedCard>
-                <Card className={cn(surfaceCardClass, "border-l-4 border-l-amber-500")}>
+                <Card className={cn(surfaceCardClass, "border-l-4 border-l-accent")}>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Saldo Total Estimado</CardTitle>
                     <TrendingUp className="h-4 w-4 text-amber-500" />

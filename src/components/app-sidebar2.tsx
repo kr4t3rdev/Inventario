@@ -467,12 +467,15 @@ export function AppSidebar2({
   // Filter groups based on user role
   const filteredGroups = (() => {
     // First, filter out Administración unless user is admin
-    const baseGroups = data.groups.filter(group => {
-      if (group.title === "Administración") {
-        return user?.role === "admin"
+    const baseGroups = data.groups.map(group => {
+      if (group.title === "Administración" && user?.role !== "admin") {
+        return {
+          ...group,
+          items: group.items.filter(item => item.title === "Mi Empresa")
+        }
       }
-      return true
-    })
+      return group
+    }).filter(group => group.items.length > 0)
 
     switch (user?.role) {
       case "dependiente":

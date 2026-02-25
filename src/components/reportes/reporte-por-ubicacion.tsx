@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge"
 import { FileIcon as FilePdf, FileText, Warehouse, Store } from "lucide-react"
 import { exportToPdf, exportToCsv } from "@/lib/export-utils"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts"
+import { StaggerContainer, StaggerItem, AnimatedCard } from "@/components/ui/animations"
 import { cn } from "@/lib/utils"
 
 const surfaceCardClass = cn(
@@ -90,8 +91,8 @@ export function ReportePorUbicacion() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+    <StaggerContainer className="space-y-4">
+      <StaggerItem className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
           <Select value={`${tipoUbicacion}:${ubicacionId}`} onValueChange={handleUbicacionChange}>
             <SelectTrigger className="w-[300px]">
@@ -133,36 +134,42 @@ export function ReportePorUbicacion() {
             CSV
           </Button>
         </div>
-      </div>
+      </StaggerItem>
 
       {!ubicacionId ? (
-        <div>
-          <div className="flex h-[400px] items-center justify-center rounded-md border border-dashed">
-            <div className="text-center">
-              <h3 className="text-lg font-medium">Selecciona una ubicación</h3>
-              <p className="text-sm text-muted-foreground">Elige un almacén o punto de venta para ver su inventario</p>
+        <StaggerItem>
+          <div>
+            <div className="flex h-[400px] items-center justify-center rounded-md border border-dashed">
+              <div className="text-center">
+                <h3 className="text-lg font-medium">Selecciona una ubicación</h3>
+                <p className="text-sm text-muted-foreground">Elige un almacén o punto de venta para ver su inventario</p>
+              </div>
             </div>
           </div>
-        </div>
+        </StaggerItem>
       ) : isError ? (
-        <div>
-          <div className="flex h-[400px] items-center justify-center rounded-md border border-dashed border-red-200 bg-red-50/50">
-            <div className="text-center text-red-600">
-              <h3 className="text-lg font-medium">Error al cargar datos</h3>
-              <p className="text-sm">
-                No se pudo obtener el inventario de la ubicación seleccionada.
-                <br />
-                {JSON.stringify(error)}
-              </p>
+        <StaggerItem>
+          <div>
+            <div className="flex h-[400px] items-center justify-center rounded-md border border-dashed border-destructive/30 bg-destructive/10">
+              <div className="text-center text-destructive">
+                <h3 className="text-lg font-medium">Error al cargar datos</h3>
+                <p className="text-sm">
+                  No se pudo obtener el inventario de la ubicación seleccionada.
+                  <br />
+                  {JSON.stringify(error)}
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        </StaggerItem>
       ) : isLoadingProductosUbicacion ? (
-        <Skeleton className="h-[400px] w-full" />
+        <StaggerItem>
+          <Skeleton className="h-[400px] w-full" />
+        </StaggerItem>
       ) : (
-        <>
-          <div className="grid gap-4 md:grid-cols-3">
-            <Card className={cn(surfaceCardClass, "border-l-4 border-l-blue-500")}>
+        <StaggerItem className="grid gap-4 md:grid-cols-3">
+          <AnimatedCard>
+            <Card className={cn(surfaceCardClass, "border-l-4 border-l-primary")}>
               <CardContent className="p-4">
                 <div className="text-2xl font-bold">
                   {productosUbicacion?.filter((p) => p.stockUbicacion > 0).length || 0}
@@ -170,7 +177,9 @@ export function ReportePorUbicacion() {
                 <p className="text-xs text-muted-foreground">Productos en ubicación</p>
               </CardContent>
             </Card>
-            <Card className={cn(surfaceCardClass, "border-l-4 border-l-emerald-500")}>
+          </AnimatedCard>
+          <AnimatedCard>
+            <Card className={cn(surfaceCardClass, "border-l-4 border-l-chart-2")}>
               <CardContent className="p-4">
                 <div className="text-2xl font-bold">
                   {productosUbicacion?.reduce((sum, p) => sum + p.stockUbicacion, 0) || 0}
@@ -178,7 +187,9 @@ export function ReportePorUbicacion() {
                 <p className="text-xs text-muted-foreground">Unidades totales</p>
               </CardContent>
             </Card>
-            <Card className={cn(surfaceCardClass, "border-l-4 border-l-amber-500")}>
+          </AnimatedCard>
+          <AnimatedCard>
+            <Card className={cn(surfaceCardClass, "border-l-4 border-l-accent")}>
               <CardContent className="p-4">
                 <div className="text-2xl font-bold">
                   $
@@ -188,76 +199,88 @@ export function ReportePorUbicacion() {
                 <p className="text-xs text-muted-foreground">Valor del inventario</p>
               </CardContent>
             </Card>
-          </div>
+          </AnimatedCard>
+        </StaggerItem>
+      )}
 
-          <Card className={surfaceCardClass}>
-            <CardContent className="p-4">
-              <h3 className="mb-4 text-lg font-medium">Top 10 Productos por Stock</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip
-                    formatter={(value, name) => [
-                      name === 'stock' ? value : `${Number(value)}`,
-                      name === "Stock" ? 'Stock' : 'Valor ($)',
-                    ]}
-                  />
-                  <Legend />
-                  <Bar dataKey="stock" name="Stock" fill="#8884d8" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="valor" name="Valor ($)" fill="#82ca9d" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+      {ubicacionId && !isError && !isLoadingProductosUbicacion && (
+        <>
+          <StaggerItem>
+            <AnimatedCard>
+              <Card className={surfaceCardClass}>
+                <CardContent className="p-4">
+                  <h3 className="mb-4 text-lg font-medium">Top 10 Productos por Stock</h3>
+                  <ResponsiveContainer width="100%" height={300}>
+                    <BarChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="name" />
+                      <YAxis />
+                      <Tooltip
+                        formatter={(value, name) => [
+                          name === 'stock' ? value : `${Number(value)}`,
+                          name === "Stock" ? 'Stock' : 'Valor ($)',
+                        ]}
+                      />
+                      <Legend />
+                      <Bar dataKey="stock" name="Stock" fill="#8884d8" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="valor" name="Valor ($)" fill="#82ca9d" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            </AnimatedCard>
+          </StaggerItem>
 
-          <Card className={surfaceCardClass}>
-            <CardContent className="p-0">
-              <div className="rounded-md border-0">
-                <Table>
-                  <TableHeader className="bg-muted/50">
-                    <TableRow>
-                      <TableHead>Producto</TableHead>
-                      <TableHead>Categoría</TableHead>
-                      <TableHead>Subcategoría</TableHead>
-                      <TableHead className="text-right">Stock en Ubicación</TableHead>
-                      <TableHead className="text-right">Precio Costo</TableHead>
-                      <TableHead className="text-right">Valor en Ubicación</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {productosUbicacion && productosUbicacion.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                          No hay productos con stock en esta ubicación
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      productosUbicacion?.map((producto) => (
-                        <TableRow key={producto.id} className="hover:bg-muted/50 transition-colors">
-                          <TableCell className="font-medium">{producto.nombre}</TableCell>
-                          <TableCell>{(producto as any)?.categoria?.nombre ?? '-'}</TableCell>
-                          <TableCell>{(producto as any)?.subcategoria?.nombre ?? '-'}</TableCell>
-                          <TableCell className="text-right">
-                            <Badge variant={producto.stockUbicacion > 5 ? "default" : "destructive"}>
-                              {producto.stockUbicacion}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">${producto.precioCosto}</TableCell>
-                          <TableCell className="text-right">
-                            ${(producto.stockUbicacion * producto.precioCosto)}
-                          </TableCell>
+          <StaggerItem>
+            <AnimatedCard>
+              <Card className={surfaceCardClass}>
+                <CardContent className="p-0">
+                  <div className="rounded-md border-0">
+                    <Table>
+                      <TableHeader className="bg-muted/50">
+                        <TableRow>
+                          <TableHead>Producto</TableHead>
+                          <TableHead>Categoría</TableHead>
+                          <TableHead>Subcategoría</TableHead>
+                          <TableHead className="text-right">Stock en Ubicación</TableHead>
+                          <TableHead className="text-right">Precio Costo</TableHead>
+                          <TableHead className="text-right">Valor en Ubicación</TableHead>
                         </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
+                      </TableHeader>
+                      <TableBody>
+                        {productosUbicacion && productosUbicacion.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                              No hay productos con stock en esta ubicación
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          productosUbicacion?.map((producto) => (
+                            <TableRow key={producto.id} className="hover:bg-muted/50 transition-colors">
+                              <TableCell className="font-medium">{producto.nombre}</TableCell>
+                              <TableCell>{(producto as any)?.categoria?.nombre ?? '-'}</TableCell>
+                              <TableCell>{(producto as any)?.subcategoria?.nombre ?? '-'}</TableCell>
+                              <TableCell className="text-right">
+                                <Badge variant={producto.stockUbicacion > 5 ? "default" : "destructive"}>
+                                  {producto.stockUbicacion}
+                                </Badge>
+                              </TableCell>
+                              <TableCell className="text-right">${producto.precioCosto}</TableCell>
+                              <TableCell className="text-right">
+                                ${(producto.stockUbicacion * producto.precioCosto)}
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            </AnimatedCard>
+          </StaggerItem>
         </>
       )}
-    </div>
+    </StaggerContainer>
   )
 }

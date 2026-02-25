@@ -209,7 +209,7 @@ export default function CuentasPorCobrarPage() {
 
             {/* Cards de métricas */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Card className={cn(surfaceCardClass, "border-l-4 border-l-blue-500 shadow-sm hover:shadow-md transition-shadow")}>
+              <Card className={cn(surfaceCardClass, "border-l-4 border-l-primary shadow-sm hover:shadow-md transition-shadow")}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
                     Total Facturado
@@ -226,7 +226,7 @@ export default function CuentasPorCobrarPage() {
                 </CardContent>
               </Card>
 
-              <Card className={cn(surfaceCardClass, "border-l-4 border-l-green-500 shadow-sm hover:shadow-md transition-shadow")}>
+              <Card className={cn(surfaceCardClass, "border-l-4 border-l-chart-2 shadow-sm hover:shadow-md transition-shadow")}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
                     Total Cobrado
@@ -243,7 +243,7 @@ export default function CuentasPorCobrarPage() {
                 </CardContent>
               </Card>
 
-              <Card className={cn(surfaceCardClass, "border-l-4 border-l-red-500 shadow-sm hover:shadow-md transition-shadow")}>
+              <Card className={cn(surfaceCardClass, "border-l-4 border-l-destructive shadow-sm hover:shadow-md transition-shadow")}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
                     Por Cobrar
@@ -260,7 +260,7 @@ export default function CuentasPorCobrarPage() {
                 </CardContent>
               </Card>
 
-              <Card className={cn(surfaceCardClass, "border-l-4 border-l-amber-500 shadow-sm hover:shadow-md transition-shadow")}>
+              <Card className={cn(surfaceCardClass, "border-l-4 border-l-accent shadow-sm hover:shadow-md transition-shadow")}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium text-muted-foreground">
                     Estado General

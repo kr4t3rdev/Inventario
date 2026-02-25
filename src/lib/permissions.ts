@@ -27,6 +27,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
     '/api/compras-productos',
     '/api/restaurante/*',
     'GET /api/mi-empresa',
+    'PUT /api/mi-empresa',
     'GET /api/facturas/*',
     'POST /api/productos/restock',
     '/busy/dashboard',

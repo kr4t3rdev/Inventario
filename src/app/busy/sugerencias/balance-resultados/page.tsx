@@ -156,7 +156,7 @@ export default function BalanceResultadosPage() {
                   <div className="grid gap-4 md:grid-cols-3">
                     <StaggerItem>
                       <AnimatedCard>
-                        <Card className={cn(surfaceCardClass, "border-l-4 border-l-blue-500")}>
+                        <Card className={cn(surfaceCardClass, "border-l-4 border-l-primary")}>
                           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Total Activos</CardTitle>
                             <Wallet className="h-4 w-4 text-blue-500" />
@@ -171,7 +171,7 @@ export default function BalanceResultadosPage() {
                     
                     <StaggerItem>
                       <AnimatedCard>
-                        <Card className={cn(surfaceCardClass, "border-l-4 border-l-red-500")}>
+                        <Card className={cn(surfaceCardClass, "border-l-4 border-l-destructive")}>
                           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Total Pasivos</CardTitle>
                             <Landmark className="h-4 w-4 text-red-500" />
@@ -186,7 +186,7 @@ export default function BalanceResultadosPage() {
                     
                     <StaggerItem>
                       <AnimatedCard>
-                        <Card className={cn(surfaceCardClass, "border-l-4 border-l-green-500")}>
+                        <Card className={cn(surfaceCardClass, "border-l-4 border-l-chart-2")}>
                           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Patrimonio Neto</CardTitle>
                             <Building2 className="h-4 w-4 text-green-500" />
@@ -284,7 +284,7 @@ export default function BalanceResultadosPage() {
                   <div className="grid gap-4 md:grid-cols-3">
                     <StaggerItem>
                       <AnimatedCard>
-                        <Card className={cn(surfaceCardClass, "border-l-4 border-l-green-500")}>
+                        <Card className={cn(surfaceCardClass, "border-l-4 border-l-chart-2")}>
                           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Ingresos Totales</CardTitle>
                             <TrendingUp className="h-4 w-4 text-green-500" />
@@ -299,7 +299,7 @@ export default function BalanceResultadosPage() {
                     
                     <StaggerItem>
                       <AnimatedCard>
-                        <Card className={cn(surfaceCardClass, "border-l-4 border-l-red-500")}>
+                        <Card className={cn(surfaceCardClass, "border-l-4 border-l-destructive")}>
                           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Gastos Totales</CardTitle>
                             <TrendingDown className="h-4 w-4 text-red-500" />
@@ -314,7 +314,7 @@ export default function BalanceResultadosPage() {
                     
                     <StaggerItem>
                       <AnimatedCard>
-                        <Card className={cn(surfaceCardClass, "border-l-4 border-l-blue-500")}>
+                        <Card className={cn(surfaceCardClass, "border-l-4 border-l-primary")}>
                           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">Utilidad Neta</CardTitle>
                             <DollarSign className="h-4 w-4 text-blue-500" />

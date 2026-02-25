@@ -19,8 +19,7 @@ const surfaceCardClass = cn(
 
 const tabTriggerClass = cn(
   'gap-2 rounded-lg border border-transparent text-xs sm:text-sm',
-  'data-[state=active]:border-slate-200 data-[state=active]:bg-white data-[state=active]:shadow-sm',
-  'dark:data-[state=active]:border-slate-700 dark:data-[state=active]:bg-slate-900/70',
+  'data-[state=active]:border-slate-200 data-[state=active]:bg-white data-[state=active]:shadow-sm'
 );
 
 /**
@@ -93,7 +92,7 @@ export default function ReportesInventario() {
         <Card className={surfaceCardClass}>
           <CardContent className='p-4 sm:p-5'>
             <Tabs value={activeTab} onValueChange={setActiveTab} className='w-full space-y-4'>
-              <TabsList className='grid h-auto w-full grid-cols-2 gap-2 rounded-xl bg-slate-100/80 p-1 sm:grid-cols-4 dark:bg-slate-900/70'>
+              <TabsList className='grid h-auto w-full grid-cols-2 gap-2 rounded-xl bg-slate-100/80 p-1 sm:grid-cols-4'>
                 <TabsTrigger value='general' className={tabTriggerClass}>
                   <BarChart3 className='h-3.5 w-3.5' />
                   General

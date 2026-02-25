@@ -249,7 +249,7 @@ export default function AnalisisCuentaClientePage() {
             {selectedClientId && (
               <>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                  <Card className={cn(surfaceCardClass, "border-l-4 border-l-blue-500")}>
+                  <Card className={cn(surfaceCardClass, "border-l-4 border-l-primary")}>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium">
                         Deuda Total
@@ -263,7 +263,7 @@ export default function AnalisisCuentaClientePage() {
                       </p>
                     </CardContent>
                   </Card>
-                  <Card className={cn(surfaceCardClass, "border-l-4 border-l-red-500")}>
+                  <Card className={cn(surfaceCardClass, "border-l-4 border-l-destructive")}>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium">
                         Deuda Vencida
@@ -277,7 +277,7 @@ export default function AnalisisCuentaClientePage() {
                       </p>
                     </CardContent>
                   </Card>
-                  <Card className={cn(surfaceCardClass, "border-l-4 border-l-amber-500")}>
+                  <Card className={cn(surfaceCardClass, "border-l-4 border-l-accent")}>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium">
                         Facturas Pendientes
@@ -291,7 +291,7 @@ export default function AnalisisCuentaClientePage() {
                       </p>
                     </CardContent>
                   </Card>
-                  <Card className={cn(surfaceCardClass, "border-l-4 border-l-emerald-500")}>
+                  <Card className={cn(surfaceCardClass, "border-l-4 border-l-chart-2")}>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium">
                         Última Actividad

@@ -221,9 +221,9 @@ export default function ContabilidadDashboard(): React.JSX.Element {
     <PageTransition className="relative min-h-screen w-full bg-slate-50/50 dark:bg-slate-950">
       {/* Background Decor */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl dark:bg-blue-500/5 mix-blend-multiply dark:mix-blend-screen animate-blob" />
-        <div className="absolute top-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl dark:bg-purple-500/5 mix-blend-multiply dark:mix-blend-screen animate-blob animation-delay-2000" />
-        <div className="absolute -bottom-8 left-1/3 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl dark:bg-emerald-500/5 mix-blend-multiply dark:mix-blend-screen animate-blob animation-delay-4000" />
+        <div className="absolute top-0 left-1/4 w-96 h-96  rounded-full blur-3xl mix-blend-multiply dark:mix-blend-screen animate-blob" />
+        <div className="absolute top-0 right-1/4 w-96 h-96  rounded-full blur-3xl  mix-blend-multiply dark:mix-blend-screen animate-blob animation-delay-2000" />
+        <div className="absolute -bottom-8 left-1/3 w-96 h-96  rounded-full blur-3xl mix-blend-multiply dark:mix-blend-screen animate-blob animation-delay-4000" />
       </div>
 
       <StaggerContainer className="container mx-auto p-6 space-y-10">
@@ -243,7 +243,7 @@ export default function ContabilidadDashboard(): React.JSX.Element {
             <Button
               asChild
               variant="outline"
-              className="border-slate-200 hover:bg-slate-100 dark:border-slate-800 dark:hover:bg-slate-800"
+              className="border-slate-200 hover:bg-slate-100  dark:hover:bg-slate-800"
             >
               <Link href="/busy/contabilidad/reportes" className="flex items-center gap-2">
                 <PieChart className="h-4 w-4" />
@@ -253,7 +253,7 @@ export default function ContabilidadDashboard(): React.JSX.Element {
             <Button
               asChild
               variant="outline"
-              className="border-slate-200 hover:bg-slate-100 dark:border-slate-800 dark:hover:bg-slate-800"
+              className="border-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
             >
               <Link href="/busy/contabilidad/configuracion" className="flex items-center gap-2">
                 <Settings className="h-4 w-4" />

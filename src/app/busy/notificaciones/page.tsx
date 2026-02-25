@@ -307,7 +307,7 @@ export default function NotificationsPage() {
                   <Card
                     className={`transition-all ${
                       !notification.isRead
-                        ? "border-l-4 border-l-blue-500 bg-blue-50/50 dark:bg-blue-950/20"
+                        ? "border-l-4 border-l-primary bg-primary/10 dark:bg-primary/5"
                         : ""
                     }`}
                   >

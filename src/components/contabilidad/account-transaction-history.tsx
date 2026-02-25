@@ -340,7 +340,7 @@ export function AccountTransactionHistory({
         <StaggerItem>
           <AnimatedCard>
             <div className="grid gap-4 md:grid-cols-4">
-              <Card className={cn(surfaceCardClass, 'border-l-4 border-l-green-500')}>
+              <Card className={cn(surfaceCardClass, 'border-l-4 border-l-chart-2')}>
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/30">
@@ -356,7 +356,7 @@ export function AccountTransactionHistory({
                 </CardContent>
               </Card>
 
-              <Card className={cn(surfaceCardClass, 'border-l-4 border-l-red-500')}>
+              <Card className={cn(surfaceCardClass, 'border-l-4 border-l-destructive')}>
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-red-100 dark:bg-red-900/30">
@@ -372,7 +372,7 @@ export function AccountTransactionHistory({
                 </CardContent>
               </Card>
 
-              <Card className={cn(surfaceCardClass, 'border-l-4 border-l-blue-500')}>
+              <Card className={cn(surfaceCardClass, 'border-l-4 border-l-primary')}>
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
@@ -388,7 +388,7 @@ export function AccountTransactionHistory({
                 </CardContent>
               </Card>
 
-              <Card className={cn(surfaceCardClass, 'border-l-4 border-l-purple-500')}>
+              <Card className={cn(surfaceCardClass, 'border-l-4 border-l-chart-3')}>
                 <CardContent className="pt-4">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30">

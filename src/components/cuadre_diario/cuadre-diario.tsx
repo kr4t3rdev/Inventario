@@ -292,7 +292,7 @@ export function CuadreDiarioFinanciero({
       </motion.div>
 
       <motion.div variants={itemVariants} className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className={cn(surfaceCardClass, "border-l-4 border-l-emerald-500")}>
+        <Card className={cn(surfaceCardClass, "border-l-4 border-l-chart-2")}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Ingresos</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -305,7 +305,7 @@ export function CuadreDiarioFinanciero({
             </Badge>
           </CardContent>
         </Card>
-        <Card className={cn(surfaceCardClass, "border-l-4 border-l-red-500")}>
+        <Card className={cn(surfaceCardClass, "border-l-4 border-l-destructive")}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Gastos</CardTitle>
             <TrendingDown className="h-4 w-4 text-muted-foreground" />
@@ -319,7 +319,7 @@ export function CuadreDiarioFinanciero({
             </Badge>
           </CardContent>
         </Card>
-        <Card className={cn(surfaceCardClass, "border-l-4 border-l-amber-500")}>
+        <Card className={cn(surfaceCardClass, "border-l-4 border-l-accent")}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Diferencia Neta</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
@@ -333,7 +333,7 @@ export function CuadreDiarioFinanciero({
             </Badge>
           </CardContent>
         </Card>
-        <Card className={cn(surfaceCardClass, "border-l-4 border-l-blue-500")}>
+        <Card className={cn(surfaceCardClass, "border-l-4 border-l-primary")}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Transacciones</CardTitle>
             <CreditCard className="h-4 w-4 text-muted-foreground" />

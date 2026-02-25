@@ -202,12 +202,13 @@ export function MiEmpresaForm() {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <motion.div 
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              className="space-y-5"
-            >
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+              <motion.div 
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                className="space-y-5"
+              >
               <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -504,7 +505,8 @@ export function MiEmpresaForm() {
                   </Button>
                 </motion.div>
               </motion.div>
-            </motion.div>
+              </motion.div>
+            </form>
           </Form>
         </CardContent>
       </Card>

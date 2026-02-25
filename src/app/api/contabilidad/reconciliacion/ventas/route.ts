@@ -126,7 +126,9 @@ export async function GET(request: NextRequest) {
     }
 
     if (fechaHasta) {
-      whereParts.push(Prisma.sql`v."createdAt" <= ${new Date(fechaHasta)}`)
+      const fechaHastaDate = new Date(fechaHasta)
+      fechaHastaDate.setUTCHours(23, 59, 59, 999)
+      whereParts.push(Prisma.sql`v."createdAt" <= ${fechaHastaDate}`)
     }
 
     if (puntoDeVentaId) {

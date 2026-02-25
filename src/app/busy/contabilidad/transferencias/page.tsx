@@ -175,7 +175,7 @@ export default function TransferenciasBancariasPage(): React.JSX.Element {
 
             <motion.div className="grid grid-cols-1 gap-4 md:grid-cols-3" variants={stagger}>
               <motion.div variants={fadeInUp}>
-                <Card className={cn(surfaceCardClass, "border-l-4 border-l-emerald-500")}>
+                <Card className={cn(surfaceCardClass, "border-l-4 border-l-chart-2")}>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
                       Monto Total CUP
@@ -194,7 +194,7 @@ export default function TransferenciasBancariasPage(): React.JSX.Element {
               </motion.div>
 
               <motion.div variants={fadeInUp}>
-                <Card className={cn(surfaceCardClass, "border-l-4 border-l-blue-500")}>
+                <Card className={cn(surfaceCardClass, "border-l-4 border-l-primary")}>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
                       Monto Total USD
@@ -213,7 +213,7 @@ export default function TransferenciasBancariasPage(): React.JSX.Element {
               </motion.div>
 
               <motion.div variants={fadeInUp}>
-                <Card className={cn(surfaceCardClass, "border-l-4 border-l-amber-500")}>
+                <Card className={cn(surfaceCardClass, "border-l-4 border-l-accent")}>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
                       Pendientes
