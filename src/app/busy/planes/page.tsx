@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { toast } from 'sonner'
+import { getAuthToken } from "@/lib/token"
 
 interface Plan {
   planId: string
@@ -59,7 +60,11 @@ export default function PlanesPage() {
 
   async function fetchPlanes() {
     try {
-      const res = await fetch(`/api/planes?page=${pagination.page}&limit=${pagination.limit}`)
+      const res = await fetch(`/api/planes?page=${pagination.page}&limit=${pagination.limit}`, {
+        headers: {
+          "Authorization": getAuthToken()
+        }
+      })
       const data = await res.json()
       if (data.data) {
         setPlanes(data.data)
@@ -76,7 +81,12 @@ export default function PlanesPage() {
 
   async function handleInicializarPlanes() {
     try {
-      const res = await fetch("/api/admin/licencias/init", { method: "POST" })
+      const res = await fetch("/api/admin/licencias/init", { 
+        method: "POST",
+        headers: {
+          "Authorization": getAuthToken()
+        }
+      })
       const data = await res.json()
       
       if (res.ok) {
@@ -92,6 +102,13 @@ export default function PlanesPage() {
 
   async function handleGuardarPlan() {
     try {
+      const token = getAuthToken()
+      
+      if (!token || token === 'Bearer undefined' || token === 'Bearer null') {
+        toast.error("Sesión inválida, por favor recargue la página")
+        return
+      }
+
       const body = {
         nombre: formData.nombre,
         descripcion: formData.descripcion || null,
@@ -107,7 +124,10 @@ export default function PlanesPage() {
 
       const res = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": token
+        },
         body: JSON.stringify(body),
       })
 
@@ -129,7 +149,12 @@ export default function PlanesPage() {
     if (!confirm("¿Está seguro de eliminar este plan?")) return
 
     try {
-      const res = await fetch(`/api/planes/${planId}`, { method: "DELETE" })
+      const res = await fetch(`/api/planes/${planId}`, { 
+        method: "DELETE",
+        headers: {
+          "Authorization": getAuthToken()
+        }
+      })
       if (!res.ok) throw new Error("Error eliminando plan")
 
       toast.success("Plan eliminado")

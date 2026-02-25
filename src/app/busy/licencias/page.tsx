@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { toast } from 'sonner'
+import { getAuthToken } from "@/lib/token"
 
 interface Plan {
   planId: string
@@ -76,8 +77,6 @@ export default function LicenciasPage() {
   })
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
 
-  const getToken = () => sessionStorage.getItem("token")
-
   useEffect(() => {
     fetchLicencias()
     fetchPlanes()
@@ -86,10 +85,9 @@ export default function LicenciasPage() {
 
   async function fetchLicencias() {
     try {
-      const token = getToken()
       const res = await fetch("/api/licencias", {
         headers: {
-          "Authorization": `Bearer ${token}`
+          "Authorization": getAuthToken()
         }
       })
       const data = await res.json()
@@ -105,10 +103,9 @@ export default function LicenciasPage() {
 
   async function fetchPlanes() {
     try {
-      const token = getToken()
       const res = await fetch("/api/planes?page=1&limit=100", {
         headers: {
-          "Authorization": `Bearer ${token}`
+          "Authorization": getAuthToken()
         }
       })
       const data = await res.json()
@@ -124,10 +121,9 @@ export default function LicenciasPage() {
 
   async function fetchUsuarios() {
     try {
-      const token = getToken()
       const res = await fetch("/api/admin/users", {
         headers: {
-          "Authorization": `Bearer ${token}`
+          "Authorization": getAuthToken()
         }
       })
       const data = await res.json()
@@ -139,12 +135,11 @@ export default function LicenciasPage() {
 
   async function handleCrearLicencia() {
     try {
-      const token = getToken()
       const res = await fetch("/api/licencias", {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+          "Authorization": getAuthToken()
         },
         body: JSON.stringify({
           clave: formData.clave,
@@ -170,12 +165,11 @@ export default function LicenciasPage() {
 
   async function handleGenerarLicencias() {
     try {
-      const token = getToken()
       const res = await fetch("/api/licencias/generar", {
         method: "POST",
         headers: { 
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+          "Authorization": getAuthToken()
         },
         body: JSON.stringify({
           planId: generarData.planId,
@@ -204,12 +198,11 @@ export default function LicenciasPage() {
       const licencia = licencias.find((l) => l.licenciaId === licenciaId)
       if (!licencia) return
 
-      const token = getToken()
       const res = await fetch(`/api/licencias/${licenciaId}`, {
         method: "PUT",
         headers: { 
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
+          "Authorization": getAuthToken()
         },
         body: JSON.stringify({ activa: !licencia.activa }),
       })

@@ -34,12 +34,40 @@ export const clearAuthToken = () => {
           if (refreshRes.ok) {
             const data = await refreshRes.json()
             const newToken = data?.token
-            if (newToken) {
+            console.log('[Interceptor] Token refresh response:', { ok: refreshRes.ok, hasToken: !!newToken })
+            
+            if (newToken && newToken !== 'undefined' && newToken !== 'null') {
               // Guardar token nuevo en sessionStorage
               sessionStorage.setItem('token', newToken)
-              // Reintentar la petición original
-              return await originalFetch(...args)
-            }
+              
+              console.log('[Interceptor] Reintentando petición original con nuevo token')
+              
+              // Recuperar argumentos originales
+              const [resource, config] = args
+              
+              // Asegurar que tenemos un objeto de configuración
+              const newConfig = { ...(config || {}) }
+              
+              // Crear o actualizar headers
+              // Nota: config.headers puede ser Headers object, array de arrays, u objeto plano
+              const headers = new Headers(newConfig.headers)
+              headers.set('Authorization', `Bearer ${newToken}`)
+              newConfig.headers = headers
+              
+              console.log('[Interceptor] Headers actualizados:', headers.get('Authorization')?.substring(0, 20) + '...')
+              
+              // Si el recurso es un objeto Request, necesitamos clonarlo o crear uno nuevo con los nuevos headers
+              if (resource instanceof Request) {
+                 // Si es un objeto Request, es mejor crear una nueva request con la misma info pero nuevos headers
+                 const newRequest = new Request(resource, {
+                   ...newConfig,
+                   headers: headers // Los headers de init tienen prioridad
+                 })
+                 return await originalFetch(newRequest)
+              }
+              
+              return await originalFetch(resource, newConfig)
+             }
           }
         } catch {
           // fall back a bloqueo de sesión
