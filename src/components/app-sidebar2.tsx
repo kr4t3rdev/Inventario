@@ -305,6 +305,16 @@ export function AppSidebar2({
             url: "/busy/configuracion/contratos",
             icon: FileText,
           },
+          {
+            title: "Licencias",
+            url: "/busy/licencias",
+            icon: Logs,
+          },
+          {
+            title: "Plan ",
+            url: "/busy/planes",
+            icon: Wrench
+          },
         ],
       },
       {

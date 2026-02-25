@@ -1,6 +1,5 @@
 'use client';
 
-import { Metadata } from 'next';
 import { motion, type Variants } from 'framer-motion';
 import { Sparkles, Shield, Info, Database, ArrowDownToLine } from 'lucide-react';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
@@ -13,11 +12,6 @@ import {
   StaggerItem,
   AnimatedCard,
 } from '@/components/ui/animations';
-
-export const metadata: Metadata = {
-  title: 'Migración de Datos | Admin',
-  description: 'Herramientas de migración de datos del sistema',
-};
 
 const headerIconVariants: Variants = {
   initial: { scale: 1, rotate: 0 },

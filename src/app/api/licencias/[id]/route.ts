@@ -31,17 +31,40 @@ export const PUT = withAuthPost(
     const body = await request.json()
     const { activa, expiracion, usuarioId } = body
 
-    const licencia = await prisma.licencia.update({
+    const licenciaActual = await prisma.licencia.findUnique({
       where: { licenciaId: id },
-      data: {
-        ...(activa !== undefined && { activa }),
-        ...(expiracion && { expiracion: new Date(expiracion) }),
-        ...(usuarioId && { usuarioId }),
-      },
-      include: {
-        usuario: { select: { userId: true, name: true, email: true } },
-        plan: true,
-      },
+      select: { usuarioId: true, expiracion: true },
+    })
+
+    if (!licenciaActual) {
+      return NextResponse.json({ error: "Licencia no encontrada" }, { status: 404 })
+    }
+
+    const nuevaExpiracion = expiracion ? new Date(expiracion) : licenciaActual.expiracion
+
+    const licencia = await prisma.$transaction(async (tx) => {
+      const licUpdated = await tx.licencia.update({
+        where: { licenciaId: id },
+        data: {
+          ...(activa !== undefined && { activa }),
+          ...(expiracion && { expiracion: nuevaExpiracion }),
+          ...(usuarioId && { usuarioId }),
+        },
+        include: {
+          usuario: { select: { userId: true, name: true, email: true } },
+          plan: true,
+        },
+      })
+
+      if (activa === true || expiracion) {
+        const targetUserId = usuarioId || licenciaActual.usuarioId
+        await tx.user.update({
+          where: { userId: targetUserId },
+          data: { expiresAt: nuevaExpiracion },
+        })
+      }
+
+      return licUpdated
     })
 
     return NextResponse.json(licencia)

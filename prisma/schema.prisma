@@ -1523,4 +1523,22 @@ model Licencia {
 
   @@index([usuarioId])
   @@index([clave])
+  auditorias   LicenciaAudit[]
+}
+
+model LicenciaAudit {
+  auditId      String   @id @default(cuid())
+  licenciaId   String
+  accion       String   // "CREACION", "REVOCACION", "ACTIVACION", "VALIDACION_FALLIDA", "VALIDACION_EXITOSA"
+  detalles     String?  // JSON string con detalles extra
+  realizadoPor String?  // ID del usuario que realizó la acción (si aplica)
+  ip           String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+  
+  licencia     Licencia @relation(fields: [licenciaId], references: [licenciaId], onDelete: Cascade)
+
+  @@index([licenciaId])
+  @@index([accion])
+  @@index([createdAt])
 }

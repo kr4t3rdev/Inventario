@@ -274,7 +274,7 @@ export function PanelNotificaciones() {
                           <div className="flex items-start justify-between gap-2 mb-1">
                             <h4 className="text-sm font-medium truncate">{notificacion.title}</h4>
                             <div className="flex items-center gap-2">
-                              <Badge size="sm" variant={coloresPrioridad[notificacion.prioridad]}>
+                              <Badge variant={coloresPrioridad[notificacion.prioridad]}>
                                 {notificacion.prioridad}
                               </Badge>
                               <motion.div

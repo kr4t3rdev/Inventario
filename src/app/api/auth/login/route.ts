@@ -28,6 +28,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Su usuario está inactivo, por favor contacte con el administrador.' }, { status: 403 })
     }
 
+    if (user.expiresAt && new Date(user.expiresAt) < new Date() && user.role !== "admin") {
+      const diasRestantes = 0
+      return NextResponse.json({
+        error: "Licencia expirada o no válida",
+        licenciaExpirada: true,
+        diasRestantes,
+        plan: undefined,
+      }, { status: 403 })
+    }
+
     const licenciaActiva = await prisma.licencia.findFirst({
       where: {
         usuarioId: user.userId,
@@ -39,15 +49,20 @@ export async function POST(request: NextRequest) {
     })
 
     if (!licenciaActiva && user.role !== "admin") {
-      const diasRestantes = licenciaActiva
-        ? Math.ceil((licenciaActiva.expiracion.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
-        : 0
+      const diasRestantes = 0
       return NextResponse.json({
         error: "Licencia expirada o no válida",
         licenciaExpirada: true,
         diasRestantes,
-        plan: licenciaActiva?.plan.nombre,
+        plan: undefined,
       }, { status: 403 })
+    }
+
+    if (licenciaActiva) {
+      await prisma.user.update({
+        where: { userId: user.userId },
+        data: { expiresAt: licenciaActiva.expiracion },
+      })
     }
 
     if (user.lockedUntil && new Date(user.lockedUntil) > new Date()) {

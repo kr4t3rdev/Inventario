@@ -76,6 +76,8 @@ export default function LicenciasPage() {
   })
   const [copiedKey, setCopiedKey] = useState<string | null>(null)
 
+  const getToken = () => sessionStorage.getItem("token")
+
   useEffect(() => {
     fetchLicencias()
     fetchPlanes()
@@ -84,7 +86,12 @@ export default function LicenciasPage() {
 
   async function fetchLicencias() {
     try {
-      const res = await fetch("/api/licencias")
+      const token = getToken()
+      const res = await fetch("/api/licencias", {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      })
       const data = await res.json()
       if (Array.isArray(data)) {
         setLicencias(data)
@@ -98,10 +105,17 @@ export default function LicenciasPage() {
 
   async function fetchPlanes() {
     try {
-      const res = await fetch("/api/planes")
+      const token = getToken()
+      const res = await fetch("/api/planes?page=1&limit=100", {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      })
       const data = await res.json()
       if (Array.isArray(data)) {
         setPlanes(data)
+      } else if (data.data && Array.isArray(data.data)) {
+        setPlanes(data.data)
       }
     } catch (error) {
       console.error("Error fetching planes:", error)
@@ -110,7 +124,12 @@ export default function LicenciasPage() {
 
   async function fetchUsuarios() {
     try {
-      const res = await fetch("/api/admin/users")
+      const token = getToken()
+      const res = await fetch("/api/admin/users", {
+        headers: {
+          "Authorization": `Bearer ${token}`
+        }
+      })
       const data = await res.json()
       setUsuarios(Array.isArray(data) ? data : data.users || [])
     } catch (error) {
@@ -120,9 +139,13 @@ export default function LicenciasPage() {
 
   async function handleCrearLicencia() {
     try {
+      const token = getToken()
       const res = await fetch("/api/licencias", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({
           clave: formData.clave,
           usuarioId: formData.usuarioId,
@@ -147,9 +170,13 @@ export default function LicenciasPage() {
 
   async function handleGenerarLicencias() {
     try {
+      const token = getToken()
       const res = await fetch("/api/licencias/generar", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({
           planId: generarData.planId,
           cantidad: parseInt(String(generarData.cantidad)),
@@ -177,9 +204,13 @@ export default function LicenciasPage() {
       const licencia = licencias.find((l) => l.licenciaId === licenciaId)
       if (!licencia) return
 
+      const token = getToken()
       const res = await fetch(`/api/licencias/${licenciaId}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
         body: JSON.stringify({ activa: !licencia.activa }),
       })
 
@@ -342,13 +373,19 @@ export default function LicenciasPage() {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="clave">Clave de Licencia</Label>
+              <div className="flex justify-between items-center">
+                <Label htmlFor="clave">Clave de Licencia</Label>
+                <span className="text-xs text-muted-foreground">Opcional</span>
+              </div>
               <Input
                 id="clave"
                 value={formData.clave}
                 onChange={(e) => setFormData({ ...formData, clave: e.target.value })}
-                placeholder="XXXXX-XXXXX-XXXXX-XXXXX"
+                placeholder="Dejar vacío para generar automáticamente"
               />
+              <p className="text-[0.8rem] text-muted-foreground">
+                Si se deja vacío, se generará una clave única automáticamente.
+              </p>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="plan">Plan</Label>

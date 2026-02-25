@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { withAuthPost } from "@/lib/auth-middleware"
+import { getIdempotentResult, setIdempotentResult } from "@/lib/idempotency"
+import { idempotencyCounter, licenseCreationCounter } from "@/lib/metrics"
 
 function generarClave(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
@@ -25,7 +27,9 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
   }
 
   const body = await request.json()
-  const { planId, cantidad = 1, duracionDias } = body
+  const { planId, cantidad = 1, duracionDias, idempotencyKey: keyFromBody } = body
+  const idemHeader = request.headers.get("idempotency-key") || undefined
+  const idempotencyKey = (keyFromBody || idemHeader)?.toString().trim()
 
   if (!planId) {
     return NextResponse.json({ error: "Plan requerido" }, { status: 400 })
@@ -36,32 +40,63 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
     return NextResponse.json({ error: "Plan no encontrado" }, { status: 404 })
   }
 
-  const dias = duracionDias || plan.duracionDias
-  const licencias: { clave: string; expiracion: Date }[] = []
-
-  for (let i = 0; i < cantidad; i++) {
-    const clave = generarClave()
-    const expiracion = new Date()
-    expiracion.setDate(expiracion.getDate() + dias)
-
-    const licencia = await prisma.licencia.create({
-      data: {
-        clave,
-        planId,
-        expiracion,
-        activa: true,
-        usuarioId: user.userId,
-      },
-      select: { clave: true, expiracion: true },
-    })
-
-    licencias.push(licencia)
+  const dias = typeof duracionDias === "number" && duracionDias > 0 ? duracionDias : plan.duracionDias
+  if (!Number.isFinite(dias) || dias <= 0) {
+    return NextResponse.json({ error: "Duración inválida" }, { status: 400 })
   }
 
-  return NextResponse.json({
-    cantidad: licencias.length,
+  const target = Math.max(1, Math.min(1000, Number(cantidad) || 1))
+  const resultados: { clave: string; expiracion: Date }[] = []
+
+  if (idempotencyKey) {
+    const cached = await getIdempotentResult<{ cantidad: number; plan: string; dias: number; licencias: { clave: string; expiracion: string }[] }>(`idem:licencias:generar:${idempotencyKey}`)
+    if (cached) {
+      return NextResponse.json(cached)
+    }
+  }
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      for (let i = 0; i < target; i++) {
+        let clave = generarClave()
+        // Intentar hasta 5 veces por colisiones de clave
+        for (let intentos = 0; intentos < 5; intentos++) {
+          const existente = await tx.licencia.findUnique({ where: { clave } })
+          if (!existente) break
+          clave = generarClave()
+        }
+
+        const expiracion = new Date()
+        expiracion.setDate(expiracion.getDate() + dias)
+
+        const licencia = await tx.licencia.create({
+          data: {
+            clave,
+            planId,
+            expiracion,
+            activa: true,
+            usuarioId: user.userId,
+          },
+          select: { clave: true, expiracion: true },
+        })
+        licenseCreationCounter.inc({ plan: plan.nombre, origen: 'api' })
+        resultados.push(licencia)
+      }
+    })
+  } catch (e) {
+    return NextResponse.json({ error: "Error generando licencias" }, { status: 500 })
+  }
+
+  const responsePayload = {
+    cantidad: resultados.length,
     plan: plan.nombre,
     dias,
-    licencias,
-  })
+    licencias: resultados.map(r => ({ ...r, expiracion: r.expiracion.toISOString() })),
+  }
+
+  if (idempotencyKey) {
+    await setIdempotentResult(`idem:licencias:generar:${idempotencyKey}`, responsePayload)
+  }
+
+  return NextResponse.json(responsePayload)
 })

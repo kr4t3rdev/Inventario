@@ -409,6 +409,11 @@ export type Plan = $Result.DefaultSelection<Prisma.$PlanPayload>
  * 
  */
 export type Licencia = $Result.DefaultSelection<Prisma.$LicenciaPayload>
+/**
+ * Model LicenciaAudit
+ * 
+ */
+export type LicenciaAudit = $Result.DefaultSelection<Prisma.$LicenciaAuditPayload>
 
 /**
  * Enums
@@ -1569,6 +1574,16 @@ export class PrismaClient<
     * ```
     */
   get licencia(): Prisma.LicenciaDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.licenciaAudit`: Exposes CRUD operations for the **LicenciaAudit** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more LicenciaAudits
+    * const licenciaAudits = await prisma.licenciaAudit.findMany()
+    * ```
+    */
+  get licenciaAudit(): Prisma.LicenciaAuditDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -2088,7 +2103,8 @@ export namespace Prisma {
     ComandaItem: 'ComandaItem',
     OrdenProduccion: 'OrdenProduccion',
     Plan: 'Plan',
-    Licencia: 'Licencia'
+    Licencia: 'Licencia',
+    LicenciaAudit: 'LicenciaAudit'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -2107,7 +2123,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "categoria" | "unidad" | "vendor" | "inyeccionCapital" | "pagoDeuda" | "cliente" | "miEmpresa" | "almacen" | "puntoDeVenta" | "stockUbicacion" | "producto" | "venta" | "ventaItem" | "merma" | "transferencia" | "user" | "notification" | "userActivityLog" | "userSession" | "attendance" | "employeeWorkSchedule" | "vacationRequest" | "vacationAccrual" | "empleado" | "pagosalario" | "cierreContable" | "gastoCompra" | "compraProducto" | "servicios" | "ventaServicios" | "gastosDE" | "moneda" | "catalogoReparacionConfig" | "tasaCambio" | "transaccionMoneda" | "cuentaBancaria" | "tipoPago" | "reconciliacionVenta" | "reconciliacionServicio" | "reconciliacionGasto" | "ajusteBancario" | "transferenciaBancaria" | "alertHistory" | "auditLog" | "reportHistory" | "scheduledReport" | "scenarioSimulation" | "contrato" | "contratoVersion" | "contratoFirma" | "contratoAprobacion" | "contratoArchivo" | "contratoAlerta" | "factura" | "serieFacturacion" | "oferta" | "ofertaItem" | "cuentaPorCobrar" | "cuentaPorPagar" | "pagoCuentaPorPagar" | "equipoReparacion" | "piezaReparacion" | "ordenReparacion" | "ordenReparacionEquipo" | "ordenReparacionItem" | "ordenReparacionMaterial" | "reciboOrdenReparacion" | "defectacionCatalogo" | "configuracionSistema" | "categoriaPlato" | "plato" | "receta" | "recetaIngrediente" | "mesa" | "comanda" | "comandaItem" | "ordenProduccion" | "plan" | "licencia"
+      modelProps: "categoria" | "unidad" | "vendor" | "inyeccionCapital" | "pagoDeuda" | "cliente" | "miEmpresa" | "almacen" | "puntoDeVenta" | "stockUbicacion" | "producto" | "venta" | "ventaItem" | "merma" | "transferencia" | "user" | "notification" | "userActivityLog" | "userSession" | "attendance" | "employeeWorkSchedule" | "vacationRequest" | "vacationAccrual" | "empleado" | "pagosalario" | "cierreContable" | "gastoCompra" | "compraProducto" | "servicios" | "ventaServicios" | "gastosDE" | "moneda" | "catalogoReparacionConfig" | "tasaCambio" | "transaccionMoneda" | "cuentaBancaria" | "tipoPago" | "reconciliacionVenta" | "reconciliacionServicio" | "reconciliacionGasto" | "ajusteBancario" | "transferenciaBancaria" | "alertHistory" | "auditLog" | "reportHistory" | "scheduledReport" | "scenarioSimulation" | "contrato" | "contratoVersion" | "contratoFirma" | "contratoAprobacion" | "contratoArchivo" | "contratoAlerta" | "factura" | "serieFacturacion" | "oferta" | "ofertaItem" | "cuentaPorCobrar" | "cuentaPorPagar" | "pagoCuentaPorPagar" | "equipoReparacion" | "piezaReparacion" | "ordenReparacion" | "ordenReparacionEquipo" | "ordenReparacionItem" | "ordenReparacionMaterial" | "reciboOrdenReparacion" | "defectacionCatalogo" | "configuracionSistema" | "categoriaPlato" | "plato" | "receta" | "recetaIngrediente" | "mesa" | "comanda" | "comandaItem" | "ordenProduccion" | "plan" | "licencia" | "licenciaAudit"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -7957,6 +7973,80 @@ export namespace Prisma {
           }
         }
       }
+      LicenciaAudit: {
+        payload: Prisma.$LicenciaAuditPayload<ExtArgs>
+        fields: Prisma.LicenciaAuditFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.LicenciaAuditFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LicenciaAuditPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.LicenciaAuditFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LicenciaAuditPayload>
+          }
+          findFirst: {
+            args: Prisma.LicenciaAuditFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LicenciaAuditPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.LicenciaAuditFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LicenciaAuditPayload>
+          }
+          findMany: {
+            args: Prisma.LicenciaAuditFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LicenciaAuditPayload>[]
+          }
+          create: {
+            args: Prisma.LicenciaAuditCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LicenciaAuditPayload>
+          }
+          createMany: {
+            args: Prisma.LicenciaAuditCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.LicenciaAuditCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LicenciaAuditPayload>[]
+          }
+          delete: {
+            args: Prisma.LicenciaAuditDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LicenciaAuditPayload>
+          }
+          update: {
+            args: Prisma.LicenciaAuditUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LicenciaAuditPayload>
+          }
+          deleteMany: {
+            args: Prisma.LicenciaAuditDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.LicenciaAuditUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.LicenciaAuditUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LicenciaAuditPayload>[]
+          }
+          upsert: {
+            args: Prisma.LicenciaAuditUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$LicenciaAuditPayload>
+          }
+          aggregate: {
+            args: Prisma.LicenciaAuditAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateLicenciaAudit>
+          }
+          groupBy: {
+            args: Prisma.LicenciaAuditGroupByArgs<ExtArgs>
+            result: $Utils.Optional<LicenciaAuditGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.LicenciaAuditCountArgs<ExtArgs>
+            result: $Utils.Optional<LicenciaAuditCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -8132,6 +8222,7 @@ export namespace Prisma {
     ordenProduccion?: OrdenProduccionOmit
     plan?: PlanOmit
     licencia?: LicenciaOmit
+    licenciaAudit?: LicenciaAuditOmit
   }
 
   /* Types for Logging */
@@ -9910,6 +10001,37 @@ export namespace Prisma {
    */
   export type PlanCountOutputTypeCountLicenciasArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: LicenciaWhereInput
+  }
+
+
+  /**
+   * Count Type LicenciaCountOutputType
+   */
+
+  export type LicenciaCountOutputType = {
+    auditorias: number
+  }
+
+  export type LicenciaCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    auditorias?: boolean | LicenciaCountOutputTypeCountAuditoriasArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * LicenciaCountOutputType without action
+   */
+  export type LicenciaCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LicenciaCountOutputType
+     */
+    select?: LicenciaCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * LicenciaCountOutputType without action
+   */
+  export type LicenciaCountOutputTypeCountAuditoriasArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: LicenciaAuditWhereInput
   }
 
 
@@ -105053,6 +105175,8 @@ export namespace Prisma {
     updatedAt?: boolean
     usuario?: boolean | UserDefaultArgs<ExtArgs>
     plan?: boolean | PlanDefaultArgs<ExtArgs>
+    auditorias?: boolean | Licencia$auditoriasArgs<ExtArgs>
+    _count?: boolean | LicenciaCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["licencia"]>
 
   export type LicenciaSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -105099,6 +105223,8 @@ export namespace Prisma {
   export type LicenciaInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     usuario?: boolean | UserDefaultArgs<ExtArgs>
     plan?: boolean | PlanDefaultArgs<ExtArgs>
+    auditorias?: boolean | Licencia$auditoriasArgs<ExtArgs>
+    _count?: boolean | LicenciaCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type LicenciaIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     usuario?: boolean | UserDefaultArgs<ExtArgs>
@@ -105114,6 +105240,7 @@ export namespace Prisma {
     objects: {
       usuario: Prisma.$UserPayload<ExtArgs>
       plan: Prisma.$PlanPayload<ExtArgs>
+      auditorias: Prisma.$LicenciaAuditPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       licenciaId: string
@@ -105521,6 +105648,7 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     usuario<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     plan<T extends PlanDefaultArgs<ExtArgs> = {}>(args?: Subset<T, PlanDefaultArgs<ExtArgs>>): Prisma__PlanClient<$Result.GetResult<Prisma.$PlanPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    auditorias<T extends Licencia$auditoriasArgs<ExtArgs> = {}>(args?: Subset<T, Licencia$auditoriasArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LicenciaAuditPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -105955,6 +106083,30 @@ export namespace Prisma {
   }
 
   /**
+   * Licencia.auditorias
+   */
+  export type Licencia$auditoriasArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LicenciaAudit
+     */
+    select?: LicenciaAuditSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LicenciaAudit
+     */
+    omit?: LicenciaAuditOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LicenciaAuditInclude<ExtArgs> | null
+    where?: LicenciaAuditWhereInput
+    orderBy?: LicenciaAuditOrderByWithRelationInput | LicenciaAuditOrderByWithRelationInput[]
+    cursor?: LicenciaAuditWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: LicenciaAuditScalarFieldEnum | LicenciaAuditScalarFieldEnum[]
+  }
+
+  /**
    * Licencia without action
    */
   export type LicenciaDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -105970,6 +106122,1103 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: LicenciaInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model LicenciaAudit
+   */
+
+  export type AggregateLicenciaAudit = {
+    _count: LicenciaAuditCountAggregateOutputType | null
+    _min: LicenciaAuditMinAggregateOutputType | null
+    _max: LicenciaAuditMaxAggregateOutputType | null
+  }
+
+  export type LicenciaAuditMinAggregateOutputType = {
+    auditId: string | null
+    licenciaId: string | null
+    accion: string | null
+    detalles: string | null
+    realizadoPor: string | null
+    ip: string | null
+    userAgent: string | null
+    createdAt: Date | null
+  }
+
+  export type LicenciaAuditMaxAggregateOutputType = {
+    auditId: string | null
+    licenciaId: string | null
+    accion: string | null
+    detalles: string | null
+    realizadoPor: string | null
+    ip: string | null
+    userAgent: string | null
+    createdAt: Date | null
+  }
+
+  export type LicenciaAuditCountAggregateOutputType = {
+    auditId: number
+    licenciaId: number
+    accion: number
+    detalles: number
+    realizadoPor: number
+    ip: number
+    userAgent: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type LicenciaAuditMinAggregateInputType = {
+    auditId?: true
+    licenciaId?: true
+    accion?: true
+    detalles?: true
+    realizadoPor?: true
+    ip?: true
+    userAgent?: true
+    createdAt?: true
+  }
+
+  export type LicenciaAuditMaxAggregateInputType = {
+    auditId?: true
+    licenciaId?: true
+    accion?: true
+    detalles?: true
+    realizadoPor?: true
+    ip?: true
+    userAgent?: true
+    createdAt?: true
+  }
+
+  export type LicenciaAuditCountAggregateInputType = {
+    auditId?: true
+    licenciaId?: true
+    accion?: true
+    detalles?: true
+    realizadoPor?: true
+    ip?: true
+    userAgent?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type LicenciaAuditAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which LicenciaAudit to aggregate.
+     */
+    where?: LicenciaAuditWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LicenciaAudits to fetch.
+     */
+    orderBy?: LicenciaAuditOrderByWithRelationInput | LicenciaAuditOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: LicenciaAuditWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LicenciaAudits from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LicenciaAudits.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned LicenciaAudits
+    **/
+    _count?: true | LicenciaAuditCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: LicenciaAuditMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: LicenciaAuditMaxAggregateInputType
+  }
+
+  export type GetLicenciaAuditAggregateType<T extends LicenciaAuditAggregateArgs> = {
+        [P in keyof T & keyof AggregateLicenciaAudit]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateLicenciaAudit[P]>
+      : GetScalarType<T[P], AggregateLicenciaAudit[P]>
+  }
+
+
+
+
+  export type LicenciaAuditGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: LicenciaAuditWhereInput
+    orderBy?: LicenciaAuditOrderByWithAggregationInput | LicenciaAuditOrderByWithAggregationInput[]
+    by: LicenciaAuditScalarFieldEnum[] | LicenciaAuditScalarFieldEnum
+    having?: LicenciaAuditScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: LicenciaAuditCountAggregateInputType | true
+    _min?: LicenciaAuditMinAggregateInputType
+    _max?: LicenciaAuditMaxAggregateInputType
+  }
+
+  export type LicenciaAuditGroupByOutputType = {
+    auditId: string
+    licenciaId: string
+    accion: string
+    detalles: string | null
+    realizadoPor: string | null
+    ip: string | null
+    userAgent: string | null
+    createdAt: Date
+    _count: LicenciaAuditCountAggregateOutputType | null
+    _min: LicenciaAuditMinAggregateOutputType | null
+    _max: LicenciaAuditMaxAggregateOutputType | null
+  }
+
+  type GetLicenciaAuditGroupByPayload<T extends LicenciaAuditGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<LicenciaAuditGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof LicenciaAuditGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], LicenciaAuditGroupByOutputType[P]>
+            : GetScalarType<T[P], LicenciaAuditGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type LicenciaAuditSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    auditId?: boolean
+    licenciaId?: boolean
+    accion?: boolean
+    detalles?: boolean
+    realizadoPor?: boolean
+    ip?: boolean
+    userAgent?: boolean
+    createdAt?: boolean
+    licencia?: boolean | LicenciaDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["licenciaAudit"]>
+
+  export type LicenciaAuditSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    auditId?: boolean
+    licenciaId?: boolean
+    accion?: boolean
+    detalles?: boolean
+    realizadoPor?: boolean
+    ip?: boolean
+    userAgent?: boolean
+    createdAt?: boolean
+    licencia?: boolean | LicenciaDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["licenciaAudit"]>
+
+  export type LicenciaAuditSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    auditId?: boolean
+    licenciaId?: boolean
+    accion?: boolean
+    detalles?: boolean
+    realizadoPor?: boolean
+    ip?: boolean
+    userAgent?: boolean
+    createdAt?: boolean
+    licencia?: boolean | LicenciaDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["licenciaAudit"]>
+
+  export type LicenciaAuditSelectScalar = {
+    auditId?: boolean
+    licenciaId?: boolean
+    accion?: boolean
+    detalles?: boolean
+    realizadoPor?: boolean
+    ip?: boolean
+    userAgent?: boolean
+    createdAt?: boolean
+  }
+
+  export type LicenciaAuditOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"auditId" | "licenciaId" | "accion" | "detalles" | "realizadoPor" | "ip" | "userAgent" | "createdAt", ExtArgs["result"]["licenciaAudit"]>
+  export type LicenciaAuditInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    licencia?: boolean | LicenciaDefaultArgs<ExtArgs>
+  }
+  export type LicenciaAuditIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    licencia?: boolean | LicenciaDefaultArgs<ExtArgs>
+  }
+  export type LicenciaAuditIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    licencia?: boolean | LicenciaDefaultArgs<ExtArgs>
+  }
+
+  export type $LicenciaAuditPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "LicenciaAudit"
+    objects: {
+      licencia: Prisma.$LicenciaPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      auditId: string
+      licenciaId: string
+      accion: string
+      detalles: string | null
+      realizadoPor: string | null
+      ip: string | null
+      userAgent: string | null
+      createdAt: Date
+    }, ExtArgs["result"]["licenciaAudit"]>
+    composites: {}
+  }
+
+  type LicenciaAuditGetPayload<S extends boolean | null | undefined | LicenciaAuditDefaultArgs> = $Result.GetResult<Prisma.$LicenciaAuditPayload, S>
+
+  type LicenciaAuditCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<LicenciaAuditFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: LicenciaAuditCountAggregateInputType | true
+    }
+
+  export interface LicenciaAuditDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['LicenciaAudit'], meta: { name: 'LicenciaAudit' } }
+    /**
+     * Find zero or one LicenciaAudit that matches the filter.
+     * @param {LicenciaAuditFindUniqueArgs} args - Arguments to find a LicenciaAudit
+     * @example
+     * // Get one LicenciaAudit
+     * const licenciaAudit = await prisma.licenciaAudit.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends LicenciaAuditFindUniqueArgs>(args: SelectSubset<T, LicenciaAuditFindUniqueArgs<ExtArgs>>): Prisma__LicenciaAuditClient<$Result.GetResult<Prisma.$LicenciaAuditPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one LicenciaAudit that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {LicenciaAuditFindUniqueOrThrowArgs} args - Arguments to find a LicenciaAudit
+     * @example
+     * // Get one LicenciaAudit
+     * const licenciaAudit = await prisma.licenciaAudit.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends LicenciaAuditFindUniqueOrThrowArgs>(args: SelectSubset<T, LicenciaAuditFindUniqueOrThrowArgs<ExtArgs>>): Prisma__LicenciaAuditClient<$Result.GetResult<Prisma.$LicenciaAuditPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first LicenciaAudit that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LicenciaAuditFindFirstArgs} args - Arguments to find a LicenciaAudit
+     * @example
+     * // Get one LicenciaAudit
+     * const licenciaAudit = await prisma.licenciaAudit.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends LicenciaAuditFindFirstArgs>(args?: SelectSubset<T, LicenciaAuditFindFirstArgs<ExtArgs>>): Prisma__LicenciaAuditClient<$Result.GetResult<Prisma.$LicenciaAuditPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first LicenciaAudit that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LicenciaAuditFindFirstOrThrowArgs} args - Arguments to find a LicenciaAudit
+     * @example
+     * // Get one LicenciaAudit
+     * const licenciaAudit = await prisma.licenciaAudit.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends LicenciaAuditFindFirstOrThrowArgs>(args?: SelectSubset<T, LicenciaAuditFindFirstOrThrowArgs<ExtArgs>>): Prisma__LicenciaAuditClient<$Result.GetResult<Prisma.$LicenciaAuditPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more LicenciaAudits that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LicenciaAuditFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all LicenciaAudits
+     * const licenciaAudits = await prisma.licenciaAudit.findMany()
+     * 
+     * // Get first 10 LicenciaAudits
+     * const licenciaAudits = await prisma.licenciaAudit.findMany({ take: 10 })
+     * 
+     * // Only select the `auditId`
+     * const licenciaAuditWithAuditIdOnly = await prisma.licenciaAudit.findMany({ select: { auditId: true } })
+     * 
+     */
+    findMany<T extends LicenciaAuditFindManyArgs>(args?: SelectSubset<T, LicenciaAuditFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LicenciaAuditPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a LicenciaAudit.
+     * @param {LicenciaAuditCreateArgs} args - Arguments to create a LicenciaAudit.
+     * @example
+     * // Create one LicenciaAudit
+     * const LicenciaAudit = await prisma.licenciaAudit.create({
+     *   data: {
+     *     // ... data to create a LicenciaAudit
+     *   }
+     * })
+     * 
+     */
+    create<T extends LicenciaAuditCreateArgs>(args: SelectSubset<T, LicenciaAuditCreateArgs<ExtArgs>>): Prisma__LicenciaAuditClient<$Result.GetResult<Prisma.$LicenciaAuditPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many LicenciaAudits.
+     * @param {LicenciaAuditCreateManyArgs} args - Arguments to create many LicenciaAudits.
+     * @example
+     * // Create many LicenciaAudits
+     * const licenciaAudit = await prisma.licenciaAudit.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends LicenciaAuditCreateManyArgs>(args?: SelectSubset<T, LicenciaAuditCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many LicenciaAudits and returns the data saved in the database.
+     * @param {LicenciaAuditCreateManyAndReturnArgs} args - Arguments to create many LicenciaAudits.
+     * @example
+     * // Create many LicenciaAudits
+     * const licenciaAudit = await prisma.licenciaAudit.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many LicenciaAudits and only return the `auditId`
+     * const licenciaAuditWithAuditIdOnly = await prisma.licenciaAudit.createManyAndReturn({
+     *   select: { auditId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends LicenciaAuditCreateManyAndReturnArgs>(args?: SelectSubset<T, LicenciaAuditCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LicenciaAuditPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a LicenciaAudit.
+     * @param {LicenciaAuditDeleteArgs} args - Arguments to delete one LicenciaAudit.
+     * @example
+     * // Delete one LicenciaAudit
+     * const LicenciaAudit = await prisma.licenciaAudit.delete({
+     *   where: {
+     *     // ... filter to delete one LicenciaAudit
+     *   }
+     * })
+     * 
+     */
+    delete<T extends LicenciaAuditDeleteArgs>(args: SelectSubset<T, LicenciaAuditDeleteArgs<ExtArgs>>): Prisma__LicenciaAuditClient<$Result.GetResult<Prisma.$LicenciaAuditPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one LicenciaAudit.
+     * @param {LicenciaAuditUpdateArgs} args - Arguments to update one LicenciaAudit.
+     * @example
+     * // Update one LicenciaAudit
+     * const licenciaAudit = await prisma.licenciaAudit.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends LicenciaAuditUpdateArgs>(args: SelectSubset<T, LicenciaAuditUpdateArgs<ExtArgs>>): Prisma__LicenciaAuditClient<$Result.GetResult<Prisma.$LicenciaAuditPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more LicenciaAudits.
+     * @param {LicenciaAuditDeleteManyArgs} args - Arguments to filter LicenciaAudits to delete.
+     * @example
+     * // Delete a few LicenciaAudits
+     * const { count } = await prisma.licenciaAudit.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends LicenciaAuditDeleteManyArgs>(args?: SelectSubset<T, LicenciaAuditDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more LicenciaAudits.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LicenciaAuditUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many LicenciaAudits
+     * const licenciaAudit = await prisma.licenciaAudit.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends LicenciaAuditUpdateManyArgs>(args: SelectSubset<T, LicenciaAuditUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more LicenciaAudits and returns the data updated in the database.
+     * @param {LicenciaAuditUpdateManyAndReturnArgs} args - Arguments to update many LicenciaAudits.
+     * @example
+     * // Update many LicenciaAudits
+     * const licenciaAudit = await prisma.licenciaAudit.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more LicenciaAudits and only return the `auditId`
+     * const licenciaAuditWithAuditIdOnly = await prisma.licenciaAudit.updateManyAndReturn({
+     *   select: { auditId: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends LicenciaAuditUpdateManyAndReturnArgs>(args: SelectSubset<T, LicenciaAuditUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LicenciaAuditPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one LicenciaAudit.
+     * @param {LicenciaAuditUpsertArgs} args - Arguments to update or create a LicenciaAudit.
+     * @example
+     * // Update or create a LicenciaAudit
+     * const licenciaAudit = await prisma.licenciaAudit.upsert({
+     *   create: {
+     *     // ... data to create a LicenciaAudit
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the LicenciaAudit we want to update
+     *   }
+     * })
+     */
+    upsert<T extends LicenciaAuditUpsertArgs>(args: SelectSubset<T, LicenciaAuditUpsertArgs<ExtArgs>>): Prisma__LicenciaAuditClient<$Result.GetResult<Prisma.$LicenciaAuditPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of LicenciaAudits.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LicenciaAuditCountArgs} args - Arguments to filter LicenciaAudits to count.
+     * @example
+     * // Count the number of LicenciaAudits
+     * const count = await prisma.licenciaAudit.count({
+     *   where: {
+     *     // ... the filter for the LicenciaAudits we want to count
+     *   }
+     * })
+    **/
+    count<T extends LicenciaAuditCountArgs>(
+      args?: Subset<T, LicenciaAuditCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], LicenciaAuditCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a LicenciaAudit.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LicenciaAuditAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends LicenciaAuditAggregateArgs>(args: Subset<T, LicenciaAuditAggregateArgs>): Prisma.PrismaPromise<GetLicenciaAuditAggregateType<T>>
+
+    /**
+     * Group by LicenciaAudit.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {LicenciaAuditGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends LicenciaAuditGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: LicenciaAuditGroupByArgs['orderBy'] }
+        : { orderBy?: LicenciaAuditGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, LicenciaAuditGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetLicenciaAuditGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the LicenciaAudit model
+   */
+  readonly fields: LicenciaAuditFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for LicenciaAudit.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__LicenciaAuditClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    licencia<T extends LicenciaDefaultArgs<ExtArgs> = {}>(args?: Subset<T, LicenciaDefaultArgs<ExtArgs>>): Prisma__LicenciaClient<$Result.GetResult<Prisma.$LicenciaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the LicenciaAudit model
+   */
+  interface LicenciaAuditFieldRefs {
+    readonly auditId: FieldRef<"LicenciaAudit", 'String'>
+    readonly licenciaId: FieldRef<"LicenciaAudit", 'String'>
+    readonly accion: FieldRef<"LicenciaAudit", 'String'>
+    readonly detalles: FieldRef<"LicenciaAudit", 'String'>
+    readonly realizadoPor: FieldRef<"LicenciaAudit", 'String'>
+    readonly ip: FieldRef<"LicenciaAudit", 'String'>
+    readonly userAgent: FieldRef<"LicenciaAudit", 'String'>
+    readonly createdAt: FieldRef<"LicenciaAudit", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * LicenciaAudit findUnique
+   */
+  export type LicenciaAuditFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LicenciaAudit
+     */
+    select?: LicenciaAuditSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LicenciaAudit
+     */
+    omit?: LicenciaAuditOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LicenciaAuditInclude<ExtArgs> | null
+    /**
+     * Filter, which LicenciaAudit to fetch.
+     */
+    where: LicenciaAuditWhereUniqueInput
+  }
+
+  /**
+   * LicenciaAudit findUniqueOrThrow
+   */
+  export type LicenciaAuditFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LicenciaAudit
+     */
+    select?: LicenciaAuditSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LicenciaAudit
+     */
+    omit?: LicenciaAuditOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LicenciaAuditInclude<ExtArgs> | null
+    /**
+     * Filter, which LicenciaAudit to fetch.
+     */
+    where: LicenciaAuditWhereUniqueInput
+  }
+
+  /**
+   * LicenciaAudit findFirst
+   */
+  export type LicenciaAuditFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LicenciaAudit
+     */
+    select?: LicenciaAuditSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LicenciaAudit
+     */
+    omit?: LicenciaAuditOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LicenciaAuditInclude<ExtArgs> | null
+    /**
+     * Filter, which LicenciaAudit to fetch.
+     */
+    where?: LicenciaAuditWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LicenciaAudits to fetch.
+     */
+    orderBy?: LicenciaAuditOrderByWithRelationInput | LicenciaAuditOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for LicenciaAudits.
+     */
+    cursor?: LicenciaAuditWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LicenciaAudits from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LicenciaAudits.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of LicenciaAudits.
+     */
+    distinct?: LicenciaAuditScalarFieldEnum | LicenciaAuditScalarFieldEnum[]
+  }
+
+  /**
+   * LicenciaAudit findFirstOrThrow
+   */
+  export type LicenciaAuditFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LicenciaAudit
+     */
+    select?: LicenciaAuditSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LicenciaAudit
+     */
+    omit?: LicenciaAuditOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LicenciaAuditInclude<ExtArgs> | null
+    /**
+     * Filter, which LicenciaAudit to fetch.
+     */
+    where?: LicenciaAuditWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LicenciaAudits to fetch.
+     */
+    orderBy?: LicenciaAuditOrderByWithRelationInput | LicenciaAuditOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for LicenciaAudits.
+     */
+    cursor?: LicenciaAuditWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LicenciaAudits from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LicenciaAudits.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of LicenciaAudits.
+     */
+    distinct?: LicenciaAuditScalarFieldEnum | LicenciaAuditScalarFieldEnum[]
+  }
+
+  /**
+   * LicenciaAudit findMany
+   */
+  export type LicenciaAuditFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LicenciaAudit
+     */
+    select?: LicenciaAuditSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LicenciaAudit
+     */
+    omit?: LicenciaAuditOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LicenciaAuditInclude<ExtArgs> | null
+    /**
+     * Filter, which LicenciaAudits to fetch.
+     */
+    where?: LicenciaAuditWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of LicenciaAudits to fetch.
+     */
+    orderBy?: LicenciaAuditOrderByWithRelationInput | LicenciaAuditOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing LicenciaAudits.
+     */
+    cursor?: LicenciaAuditWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` LicenciaAudits from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` LicenciaAudits.
+     */
+    skip?: number
+    distinct?: LicenciaAuditScalarFieldEnum | LicenciaAuditScalarFieldEnum[]
+  }
+
+  /**
+   * LicenciaAudit create
+   */
+  export type LicenciaAuditCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LicenciaAudit
+     */
+    select?: LicenciaAuditSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LicenciaAudit
+     */
+    omit?: LicenciaAuditOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LicenciaAuditInclude<ExtArgs> | null
+    /**
+     * The data needed to create a LicenciaAudit.
+     */
+    data: XOR<LicenciaAuditCreateInput, LicenciaAuditUncheckedCreateInput>
+  }
+
+  /**
+   * LicenciaAudit createMany
+   */
+  export type LicenciaAuditCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many LicenciaAudits.
+     */
+    data: LicenciaAuditCreateManyInput | LicenciaAuditCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * LicenciaAudit createManyAndReturn
+   */
+  export type LicenciaAuditCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LicenciaAudit
+     */
+    select?: LicenciaAuditSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the LicenciaAudit
+     */
+    omit?: LicenciaAuditOmit<ExtArgs> | null
+    /**
+     * The data used to create many LicenciaAudits.
+     */
+    data: LicenciaAuditCreateManyInput | LicenciaAuditCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LicenciaAuditIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * LicenciaAudit update
+   */
+  export type LicenciaAuditUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LicenciaAudit
+     */
+    select?: LicenciaAuditSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LicenciaAudit
+     */
+    omit?: LicenciaAuditOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LicenciaAuditInclude<ExtArgs> | null
+    /**
+     * The data needed to update a LicenciaAudit.
+     */
+    data: XOR<LicenciaAuditUpdateInput, LicenciaAuditUncheckedUpdateInput>
+    /**
+     * Choose, which LicenciaAudit to update.
+     */
+    where: LicenciaAuditWhereUniqueInput
+  }
+
+  /**
+   * LicenciaAudit updateMany
+   */
+  export type LicenciaAuditUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update LicenciaAudits.
+     */
+    data: XOR<LicenciaAuditUpdateManyMutationInput, LicenciaAuditUncheckedUpdateManyInput>
+    /**
+     * Filter which LicenciaAudits to update
+     */
+    where?: LicenciaAuditWhereInput
+    /**
+     * Limit how many LicenciaAudits to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * LicenciaAudit updateManyAndReturn
+   */
+  export type LicenciaAuditUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LicenciaAudit
+     */
+    select?: LicenciaAuditSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the LicenciaAudit
+     */
+    omit?: LicenciaAuditOmit<ExtArgs> | null
+    /**
+     * The data used to update LicenciaAudits.
+     */
+    data: XOR<LicenciaAuditUpdateManyMutationInput, LicenciaAuditUncheckedUpdateManyInput>
+    /**
+     * Filter which LicenciaAudits to update
+     */
+    where?: LicenciaAuditWhereInput
+    /**
+     * Limit how many LicenciaAudits to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LicenciaAuditIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * LicenciaAudit upsert
+   */
+  export type LicenciaAuditUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LicenciaAudit
+     */
+    select?: LicenciaAuditSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LicenciaAudit
+     */
+    omit?: LicenciaAuditOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LicenciaAuditInclude<ExtArgs> | null
+    /**
+     * The filter to search for the LicenciaAudit to update in case it exists.
+     */
+    where: LicenciaAuditWhereUniqueInput
+    /**
+     * In case the LicenciaAudit found by the `where` argument doesn't exist, create a new LicenciaAudit with this data.
+     */
+    create: XOR<LicenciaAuditCreateInput, LicenciaAuditUncheckedCreateInput>
+    /**
+     * In case the LicenciaAudit was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<LicenciaAuditUpdateInput, LicenciaAuditUncheckedUpdateInput>
+  }
+
+  /**
+   * LicenciaAudit delete
+   */
+  export type LicenciaAuditDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LicenciaAudit
+     */
+    select?: LicenciaAuditSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LicenciaAudit
+     */
+    omit?: LicenciaAuditOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LicenciaAuditInclude<ExtArgs> | null
+    /**
+     * Filter which LicenciaAudit to delete.
+     */
+    where: LicenciaAuditWhereUniqueInput
+  }
+
+  /**
+   * LicenciaAudit deleteMany
+   */
+  export type LicenciaAuditDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which LicenciaAudits to delete
+     */
+    where?: LicenciaAuditWhereInput
+    /**
+     * Limit how many LicenciaAudits to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * LicenciaAudit without action
+   */
+  export type LicenciaAuditDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the LicenciaAudit
+     */
+    select?: LicenciaAuditSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the LicenciaAudit
+     */
+    omit?: LicenciaAuditOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: LicenciaAuditInclude<ExtArgs> | null
   }
 
 
@@ -107340,6 +108589,20 @@ export namespace Prisma {
   };
 
   export type LicenciaScalarFieldEnum = (typeof LicenciaScalarFieldEnum)[keyof typeof LicenciaScalarFieldEnum]
+
+
+  export const LicenciaAuditScalarFieldEnum: {
+    auditId: 'auditId',
+    licenciaId: 'licenciaId',
+    accion: 'accion',
+    detalles: 'detalles',
+    realizadoPor: 'realizadoPor',
+    ip: 'ip',
+    userAgent: 'userAgent',
+    createdAt: 'createdAt'
+  };
+
+  export type LicenciaAuditScalarFieldEnum = (typeof LicenciaAuditScalarFieldEnum)[keyof typeof LicenciaAuditScalarFieldEnum]
 
 
   export const SortOrder: {
@@ -115030,6 +116293,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Licencia"> | Date | string
     usuario?: XOR<UserScalarRelationFilter, UserWhereInput>
     plan?: XOR<PlanScalarRelationFilter, PlanWhereInput>
+    auditorias?: LicenciaAuditListRelationFilter
   }
 
   export type LicenciaOrderByWithRelationInput = {
@@ -115044,6 +116308,7 @@ export namespace Prisma {
     updatedAt?: SortOrder
     usuario?: UserOrderByWithRelationInput
     plan?: PlanOrderByWithRelationInput
+    auditorias?: LicenciaAuditOrderByRelationAggregateInput
   }
 
   export type LicenciaWhereUniqueInput = Prisma.AtLeast<{
@@ -115061,6 +116326,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Licencia"> | Date | string
     usuario?: XOR<UserScalarRelationFilter, UserWhereInput>
     plan?: XOR<PlanScalarRelationFilter, PlanWhereInput>
+    auditorias?: LicenciaAuditListRelationFilter
   }, "licenciaId" | "clave">
 
   export type LicenciaOrderByWithAggregationInput = {
@@ -115091,6 +116357,76 @@ export namespace Prisma {
     expiracion?: DateTimeWithAggregatesFilter<"Licencia"> | Date | string
     createdAt?: DateTimeWithAggregatesFilter<"Licencia"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Licencia"> | Date | string
+  }
+
+  export type LicenciaAuditWhereInput = {
+    AND?: LicenciaAuditWhereInput | LicenciaAuditWhereInput[]
+    OR?: LicenciaAuditWhereInput[]
+    NOT?: LicenciaAuditWhereInput | LicenciaAuditWhereInput[]
+    auditId?: StringFilter<"LicenciaAudit"> | string
+    licenciaId?: StringFilter<"LicenciaAudit"> | string
+    accion?: StringFilter<"LicenciaAudit"> | string
+    detalles?: StringNullableFilter<"LicenciaAudit"> | string | null
+    realizadoPor?: StringNullableFilter<"LicenciaAudit"> | string | null
+    ip?: StringNullableFilter<"LicenciaAudit"> | string | null
+    userAgent?: StringNullableFilter<"LicenciaAudit"> | string | null
+    createdAt?: DateTimeFilter<"LicenciaAudit"> | Date | string
+    licencia?: XOR<LicenciaScalarRelationFilter, LicenciaWhereInput>
+  }
+
+  export type LicenciaAuditOrderByWithRelationInput = {
+    auditId?: SortOrder
+    licenciaId?: SortOrder
+    accion?: SortOrder
+    detalles?: SortOrderInput | SortOrder
+    realizadoPor?: SortOrderInput | SortOrder
+    ip?: SortOrderInput | SortOrder
+    userAgent?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    licencia?: LicenciaOrderByWithRelationInput
+  }
+
+  export type LicenciaAuditWhereUniqueInput = Prisma.AtLeast<{
+    auditId?: string
+    AND?: LicenciaAuditWhereInput | LicenciaAuditWhereInput[]
+    OR?: LicenciaAuditWhereInput[]
+    NOT?: LicenciaAuditWhereInput | LicenciaAuditWhereInput[]
+    licenciaId?: StringFilter<"LicenciaAudit"> | string
+    accion?: StringFilter<"LicenciaAudit"> | string
+    detalles?: StringNullableFilter<"LicenciaAudit"> | string | null
+    realizadoPor?: StringNullableFilter<"LicenciaAudit"> | string | null
+    ip?: StringNullableFilter<"LicenciaAudit"> | string | null
+    userAgent?: StringNullableFilter<"LicenciaAudit"> | string | null
+    createdAt?: DateTimeFilter<"LicenciaAudit"> | Date | string
+    licencia?: XOR<LicenciaScalarRelationFilter, LicenciaWhereInput>
+  }, "auditId">
+
+  export type LicenciaAuditOrderByWithAggregationInput = {
+    auditId?: SortOrder
+    licenciaId?: SortOrder
+    accion?: SortOrder
+    detalles?: SortOrderInput | SortOrder
+    realizadoPor?: SortOrderInput | SortOrder
+    ip?: SortOrderInput | SortOrder
+    userAgent?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: LicenciaAuditCountOrderByAggregateInput
+    _max?: LicenciaAuditMaxOrderByAggregateInput
+    _min?: LicenciaAuditMinOrderByAggregateInput
+  }
+
+  export type LicenciaAuditScalarWhereWithAggregatesInput = {
+    AND?: LicenciaAuditScalarWhereWithAggregatesInput | LicenciaAuditScalarWhereWithAggregatesInput[]
+    OR?: LicenciaAuditScalarWhereWithAggregatesInput[]
+    NOT?: LicenciaAuditScalarWhereWithAggregatesInput | LicenciaAuditScalarWhereWithAggregatesInput[]
+    auditId?: StringWithAggregatesFilter<"LicenciaAudit"> | string
+    licenciaId?: StringWithAggregatesFilter<"LicenciaAudit"> | string
+    accion?: StringWithAggregatesFilter<"LicenciaAudit"> | string
+    detalles?: StringNullableWithAggregatesFilter<"LicenciaAudit"> | string | null
+    realizadoPor?: StringNullableWithAggregatesFilter<"LicenciaAudit"> | string | null
+    ip?: StringNullableWithAggregatesFilter<"LicenciaAudit"> | string | null
+    userAgent?: StringNullableWithAggregatesFilter<"LicenciaAudit"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"LicenciaAudit"> | Date | string
   }
 
   export type CategoriaCreateInput = {
@@ -123192,6 +124528,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     usuario: UserCreateNestedOneWithoutLicenciasInput
     plan: PlanCreateNestedOneWithoutLicenciasInput
+    auditorias?: LicenciaAuditCreateNestedManyWithoutLicenciaInput
   }
 
   export type LicenciaUncheckedCreateInput = {
@@ -123204,6 +124541,7 @@ export namespace Prisma {
     expiracion: Date | string
     createdAt?: Date | string
     updatedAt?: Date | string
+    auditorias?: LicenciaAuditUncheckedCreateNestedManyWithoutLicenciaInput
   }
 
   export type LicenciaUpdateInput = {
@@ -123216,6 +124554,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     usuario?: UserUpdateOneRequiredWithoutLicenciasNestedInput
     plan?: PlanUpdateOneRequiredWithoutLicenciasNestedInput
+    auditorias?: LicenciaAuditUpdateManyWithoutLicenciaNestedInput
   }
 
   export type LicenciaUncheckedUpdateInput = {
@@ -123228,6 +124567,7 @@ export namespace Prisma {
     expiracion?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    auditorias?: LicenciaAuditUncheckedUpdateManyWithoutLicenciaNestedInput
   }
 
   export type LicenciaCreateManyInput = {
@@ -123262,6 +124602,82 @@ export namespace Prisma {
     expiracion?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LicenciaAuditCreateInput = {
+    auditId?: string
+    accion: string
+    detalles?: string | null
+    realizadoPor?: string | null
+    ip?: string | null
+    userAgent?: string | null
+    createdAt?: Date | string
+    licencia: LicenciaCreateNestedOneWithoutAuditoriasInput
+  }
+
+  export type LicenciaAuditUncheckedCreateInput = {
+    auditId?: string
+    licenciaId: string
+    accion: string
+    detalles?: string | null
+    realizadoPor?: string | null
+    ip?: string | null
+    userAgent?: string | null
+    createdAt?: Date | string
+  }
+
+  export type LicenciaAuditUpdateInput = {
+    auditId?: StringFieldUpdateOperationsInput | string
+    accion?: StringFieldUpdateOperationsInput | string
+    detalles?: NullableStringFieldUpdateOperationsInput | string | null
+    realizadoPor?: NullableStringFieldUpdateOperationsInput | string | null
+    ip?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    licencia?: LicenciaUpdateOneRequiredWithoutAuditoriasNestedInput
+  }
+
+  export type LicenciaAuditUncheckedUpdateInput = {
+    auditId?: StringFieldUpdateOperationsInput | string
+    licenciaId?: StringFieldUpdateOperationsInput | string
+    accion?: StringFieldUpdateOperationsInput | string
+    detalles?: NullableStringFieldUpdateOperationsInput | string | null
+    realizadoPor?: NullableStringFieldUpdateOperationsInput | string | null
+    ip?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LicenciaAuditCreateManyInput = {
+    auditId?: string
+    licenciaId: string
+    accion: string
+    detalles?: string | null
+    realizadoPor?: string | null
+    ip?: string | null
+    userAgent?: string | null
+    createdAt?: Date | string
+  }
+
+  export type LicenciaAuditUpdateManyMutationInput = {
+    auditId?: StringFieldUpdateOperationsInput | string
+    accion?: StringFieldUpdateOperationsInput | string
+    detalles?: NullableStringFieldUpdateOperationsInput | string | null
+    realizadoPor?: NullableStringFieldUpdateOperationsInput | string | null
+    ip?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LicenciaAuditUncheckedUpdateManyInput = {
+    auditId?: StringFieldUpdateOperationsInput | string
+    licenciaId?: StringFieldUpdateOperationsInput | string
+    accion?: StringFieldUpdateOperationsInput | string
+    detalles?: NullableStringFieldUpdateOperationsInput | string | null
+    realizadoPor?: NullableStringFieldUpdateOperationsInput | string | null
+    ip?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type StringFilter<$PrismaModel = never> = {
@@ -128733,6 +130149,16 @@ export namespace Prisma {
     isNot?: PlanWhereInput
   }
 
+  export type LicenciaAuditListRelationFilter = {
+    every?: LicenciaAuditWhereInput
+    some?: LicenciaAuditWhereInput
+    none?: LicenciaAuditWhereInput
+  }
+
+  export type LicenciaAuditOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type LicenciaCountOrderByAggregateInput = {
     licenciaId?: SortOrder
     clave?: SortOrder
@@ -128767,6 +130193,44 @@ export namespace Prisma {
     expiracion?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+  }
+
+  export type LicenciaScalarRelationFilter = {
+    is?: LicenciaWhereInput
+    isNot?: LicenciaWhereInput
+  }
+
+  export type LicenciaAuditCountOrderByAggregateInput = {
+    auditId?: SortOrder
+    licenciaId?: SortOrder
+    accion?: SortOrder
+    detalles?: SortOrder
+    realizadoPor?: SortOrder
+    ip?: SortOrder
+    userAgent?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type LicenciaAuditMaxOrderByAggregateInput = {
+    auditId?: SortOrder
+    licenciaId?: SortOrder
+    accion?: SortOrder
+    detalles?: SortOrder
+    realizadoPor?: SortOrder
+    ip?: SortOrder
+    userAgent?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type LicenciaAuditMinOrderByAggregateInput = {
+    auditId?: SortOrder
+    licenciaId?: SortOrder
+    accion?: SortOrder
+    detalles?: SortOrder
+    realizadoPor?: SortOrder
+    ip?: SortOrder
+    userAgent?: SortOrder
+    createdAt?: SortOrder
   }
 
   export type CategoriaCreateNestedOneWithoutSubcategoriasInput = {
@@ -135343,6 +136807,20 @@ export namespace Prisma {
     connect?: PlanWhereUniqueInput
   }
 
+  export type LicenciaAuditCreateNestedManyWithoutLicenciaInput = {
+    create?: XOR<LicenciaAuditCreateWithoutLicenciaInput, LicenciaAuditUncheckedCreateWithoutLicenciaInput> | LicenciaAuditCreateWithoutLicenciaInput[] | LicenciaAuditUncheckedCreateWithoutLicenciaInput[]
+    connectOrCreate?: LicenciaAuditCreateOrConnectWithoutLicenciaInput | LicenciaAuditCreateOrConnectWithoutLicenciaInput[]
+    createMany?: LicenciaAuditCreateManyLicenciaInputEnvelope
+    connect?: LicenciaAuditWhereUniqueInput | LicenciaAuditWhereUniqueInput[]
+  }
+
+  export type LicenciaAuditUncheckedCreateNestedManyWithoutLicenciaInput = {
+    create?: XOR<LicenciaAuditCreateWithoutLicenciaInput, LicenciaAuditUncheckedCreateWithoutLicenciaInput> | LicenciaAuditCreateWithoutLicenciaInput[] | LicenciaAuditUncheckedCreateWithoutLicenciaInput[]
+    connectOrCreate?: LicenciaAuditCreateOrConnectWithoutLicenciaInput | LicenciaAuditCreateOrConnectWithoutLicenciaInput[]
+    createMany?: LicenciaAuditCreateManyLicenciaInputEnvelope
+    connect?: LicenciaAuditWhereUniqueInput | LicenciaAuditWhereUniqueInput[]
+  }
+
   export type UserUpdateOneRequiredWithoutLicenciasNestedInput = {
     create?: XOR<UserCreateWithoutLicenciasInput, UserUncheckedCreateWithoutLicenciasInput>
     connectOrCreate?: UserCreateOrConnectWithoutLicenciasInput
@@ -135357,6 +136835,48 @@ export namespace Prisma {
     upsert?: PlanUpsertWithoutLicenciasInput
     connect?: PlanWhereUniqueInput
     update?: XOR<XOR<PlanUpdateToOneWithWhereWithoutLicenciasInput, PlanUpdateWithoutLicenciasInput>, PlanUncheckedUpdateWithoutLicenciasInput>
+  }
+
+  export type LicenciaAuditUpdateManyWithoutLicenciaNestedInput = {
+    create?: XOR<LicenciaAuditCreateWithoutLicenciaInput, LicenciaAuditUncheckedCreateWithoutLicenciaInput> | LicenciaAuditCreateWithoutLicenciaInput[] | LicenciaAuditUncheckedCreateWithoutLicenciaInput[]
+    connectOrCreate?: LicenciaAuditCreateOrConnectWithoutLicenciaInput | LicenciaAuditCreateOrConnectWithoutLicenciaInput[]
+    upsert?: LicenciaAuditUpsertWithWhereUniqueWithoutLicenciaInput | LicenciaAuditUpsertWithWhereUniqueWithoutLicenciaInput[]
+    createMany?: LicenciaAuditCreateManyLicenciaInputEnvelope
+    set?: LicenciaAuditWhereUniqueInput | LicenciaAuditWhereUniqueInput[]
+    disconnect?: LicenciaAuditWhereUniqueInput | LicenciaAuditWhereUniqueInput[]
+    delete?: LicenciaAuditWhereUniqueInput | LicenciaAuditWhereUniqueInput[]
+    connect?: LicenciaAuditWhereUniqueInput | LicenciaAuditWhereUniqueInput[]
+    update?: LicenciaAuditUpdateWithWhereUniqueWithoutLicenciaInput | LicenciaAuditUpdateWithWhereUniqueWithoutLicenciaInput[]
+    updateMany?: LicenciaAuditUpdateManyWithWhereWithoutLicenciaInput | LicenciaAuditUpdateManyWithWhereWithoutLicenciaInput[]
+    deleteMany?: LicenciaAuditScalarWhereInput | LicenciaAuditScalarWhereInput[]
+  }
+
+  export type LicenciaAuditUncheckedUpdateManyWithoutLicenciaNestedInput = {
+    create?: XOR<LicenciaAuditCreateWithoutLicenciaInput, LicenciaAuditUncheckedCreateWithoutLicenciaInput> | LicenciaAuditCreateWithoutLicenciaInput[] | LicenciaAuditUncheckedCreateWithoutLicenciaInput[]
+    connectOrCreate?: LicenciaAuditCreateOrConnectWithoutLicenciaInput | LicenciaAuditCreateOrConnectWithoutLicenciaInput[]
+    upsert?: LicenciaAuditUpsertWithWhereUniqueWithoutLicenciaInput | LicenciaAuditUpsertWithWhereUniqueWithoutLicenciaInput[]
+    createMany?: LicenciaAuditCreateManyLicenciaInputEnvelope
+    set?: LicenciaAuditWhereUniqueInput | LicenciaAuditWhereUniqueInput[]
+    disconnect?: LicenciaAuditWhereUniqueInput | LicenciaAuditWhereUniqueInput[]
+    delete?: LicenciaAuditWhereUniqueInput | LicenciaAuditWhereUniqueInput[]
+    connect?: LicenciaAuditWhereUniqueInput | LicenciaAuditWhereUniqueInput[]
+    update?: LicenciaAuditUpdateWithWhereUniqueWithoutLicenciaInput | LicenciaAuditUpdateWithWhereUniqueWithoutLicenciaInput[]
+    updateMany?: LicenciaAuditUpdateManyWithWhereWithoutLicenciaInput | LicenciaAuditUpdateManyWithWhereWithoutLicenciaInput[]
+    deleteMany?: LicenciaAuditScalarWhereInput | LicenciaAuditScalarWhereInput[]
+  }
+
+  export type LicenciaCreateNestedOneWithoutAuditoriasInput = {
+    create?: XOR<LicenciaCreateWithoutAuditoriasInput, LicenciaUncheckedCreateWithoutAuditoriasInput>
+    connectOrCreate?: LicenciaCreateOrConnectWithoutAuditoriasInput
+    connect?: LicenciaWhereUniqueInput
+  }
+
+  export type LicenciaUpdateOneRequiredWithoutAuditoriasNestedInput = {
+    create?: XOR<LicenciaCreateWithoutAuditoriasInput, LicenciaUncheckedCreateWithoutAuditoriasInput>
+    connectOrCreate?: LicenciaCreateOrConnectWithoutAuditoriasInput
+    upsert?: LicenciaUpsertWithoutAuditoriasInput
+    connect?: LicenciaWhereUniqueInput
+    update?: XOR<XOR<LicenciaUpdateToOneWithWhereWithoutAuditoriasInput, LicenciaUpdateWithoutAuditoriasInput>, LicenciaUncheckedUpdateWithoutAuditoriasInput>
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -141762,6 +143282,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     plan: PlanCreateNestedOneWithoutLicenciasInput
+    auditorias?: LicenciaAuditCreateNestedManyWithoutLicenciaInput
   }
 
   export type LicenciaUncheckedCreateWithoutUsuarioInput = {
@@ -141773,6 +143294,7 @@ export namespace Prisma {
     expiracion: Date | string
     createdAt?: Date | string
     updatedAt?: Date | string
+    auditorias?: LicenciaAuditUncheckedCreateNestedManyWithoutLicenciaInput
   }
 
   export type LicenciaCreateOrConnectWithoutUsuarioInput = {
@@ -154863,6 +156385,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     usuario: UserCreateNestedOneWithoutLicenciasInput
+    auditorias?: LicenciaAuditCreateNestedManyWithoutLicenciaInput
   }
 
   export type LicenciaUncheckedCreateWithoutPlanInput = {
@@ -154874,6 +156397,7 @@ export namespace Prisma {
     expiracion: Date | string
     createdAt?: Date | string
     updatedAt?: Date | string
+    auditorias?: LicenciaAuditUncheckedCreateNestedManyWithoutLicenciaInput
   }
 
   export type LicenciaCreateOrConnectWithoutPlanInput = {
@@ -155000,6 +156524,36 @@ export namespace Prisma {
     create: XOR<PlanCreateWithoutLicenciasInput, PlanUncheckedCreateWithoutLicenciasInput>
   }
 
+  export type LicenciaAuditCreateWithoutLicenciaInput = {
+    auditId?: string
+    accion: string
+    detalles?: string | null
+    realizadoPor?: string | null
+    ip?: string | null
+    userAgent?: string | null
+    createdAt?: Date | string
+  }
+
+  export type LicenciaAuditUncheckedCreateWithoutLicenciaInput = {
+    auditId?: string
+    accion: string
+    detalles?: string | null
+    realizadoPor?: string | null
+    ip?: string | null
+    userAgent?: string | null
+    createdAt?: Date | string
+  }
+
+  export type LicenciaAuditCreateOrConnectWithoutLicenciaInput = {
+    where: LicenciaAuditWhereUniqueInput
+    create: XOR<LicenciaAuditCreateWithoutLicenciaInput, LicenciaAuditUncheckedCreateWithoutLicenciaInput>
+  }
+
+  export type LicenciaAuditCreateManyLicenciaInputEnvelope = {
+    data: LicenciaAuditCreateManyLicenciaInput | LicenciaAuditCreateManyLicenciaInput[]
+    skipDuplicates?: boolean
+  }
+
   export type UserUpsertWithoutLicenciasInput = {
     update: XOR<UserUpdateWithoutLicenciasInput, UserUncheckedUpdateWithoutLicenciasInput>
     create: XOR<UserCreateWithoutLicenciasInput, UserUncheckedCreateWithoutLicenciasInput>
@@ -155106,6 +156660,100 @@ export namespace Prisma {
     maxUsuarios?: IntFieldUpdateOperationsInput | number
     maxAlmacenes?: IntFieldUpdateOperationsInput | number
     maxProductos?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LicenciaAuditUpsertWithWhereUniqueWithoutLicenciaInput = {
+    where: LicenciaAuditWhereUniqueInput
+    update: XOR<LicenciaAuditUpdateWithoutLicenciaInput, LicenciaAuditUncheckedUpdateWithoutLicenciaInput>
+    create: XOR<LicenciaAuditCreateWithoutLicenciaInput, LicenciaAuditUncheckedCreateWithoutLicenciaInput>
+  }
+
+  export type LicenciaAuditUpdateWithWhereUniqueWithoutLicenciaInput = {
+    where: LicenciaAuditWhereUniqueInput
+    data: XOR<LicenciaAuditUpdateWithoutLicenciaInput, LicenciaAuditUncheckedUpdateWithoutLicenciaInput>
+  }
+
+  export type LicenciaAuditUpdateManyWithWhereWithoutLicenciaInput = {
+    where: LicenciaAuditScalarWhereInput
+    data: XOR<LicenciaAuditUpdateManyMutationInput, LicenciaAuditUncheckedUpdateManyWithoutLicenciaInput>
+  }
+
+  export type LicenciaAuditScalarWhereInput = {
+    AND?: LicenciaAuditScalarWhereInput | LicenciaAuditScalarWhereInput[]
+    OR?: LicenciaAuditScalarWhereInput[]
+    NOT?: LicenciaAuditScalarWhereInput | LicenciaAuditScalarWhereInput[]
+    auditId?: StringFilter<"LicenciaAudit"> | string
+    licenciaId?: StringFilter<"LicenciaAudit"> | string
+    accion?: StringFilter<"LicenciaAudit"> | string
+    detalles?: StringNullableFilter<"LicenciaAudit"> | string | null
+    realizadoPor?: StringNullableFilter<"LicenciaAudit"> | string | null
+    ip?: StringNullableFilter<"LicenciaAudit"> | string | null
+    userAgent?: StringNullableFilter<"LicenciaAudit"> | string | null
+    createdAt?: DateTimeFilter<"LicenciaAudit"> | Date | string
+  }
+
+  export type LicenciaCreateWithoutAuditoriasInput = {
+    licenciaId?: string
+    clave: string
+    activa?: boolean
+    inicio?: Date | string
+    expiracion: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    usuario: UserCreateNestedOneWithoutLicenciasInput
+    plan: PlanCreateNestedOneWithoutLicenciasInput
+  }
+
+  export type LicenciaUncheckedCreateWithoutAuditoriasInput = {
+    licenciaId?: string
+    clave: string
+    usuarioId: string
+    planId: string
+    activa?: boolean
+    inicio?: Date | string
+    expiracion: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type LicenciaCreateOrConnectWithoutAuditoriasInput = {
+    where: LicenciaWhereUniqueInput
+    create: XOR<LicenciaCreateWithoutAuditoriasInput, LicenciaUncheckedCreateWithoutAuditoriasInput>
+  }
+
+  export type LicenciaUpsertWithoutAuditoriasInput = {
+    update: XOR<LicenciaUpdateWithoutAuditoriasInput, LicenciaUncheckedUpdateWithoutAuditoriasInput>
+    create: XOR<LicenciaCreateWithoutAuditoriasInput, LicenciaUncheckedCreateWithoutAuditoriasInput>
+    where?: LicenciaWhereInput
+  }
+
+  export type LicenciaUpdateToOneWithWhereWithoutAuditoriasInput = {
+    where?: LicenciaWhereInput
+    data: XOR<LicenciaUpdateWithoutAuditoriasInput, LicenciaUncheckedUpdateWithoutAuditoriasInput>
+  }
+
+  export type LicenciaUpdateWithoutAuditoriasInput = {
+    licenciaId?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    activa?: BoolFieldUpdateOperationsInput | boolean
+    inicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    expiracion?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    usuario?: UserUpdateOneRequiredWithoutLicenciasNestedInput
+    plan?: PlanUpdateOneRequiredWithoutLicenciasNestedInput
+  }
+
+  export type LicenciaUncheckedUpdateWithoutAuditoriasInput = {
+    licenciaId?: StringFieldUpdateOperationsInput | string
+    clave?: StringFieldUpdateOperationsInput | string
+    usuarioId?: StringFieldUpdateOperationsInput | string
+    planId?: StringFieldUpdateOperationsInput | string
+    activa?: BoolFieldUpdateOperationsInput | boolean
+    inicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    expiracion?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -158376,6 +160024,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     plan?: PlanUpdateOneRequiredWithoutLicenciasNestedInput
+    auditorias?: LicenciaAuditUpdateManyWithoutLicenciaNestedInput
   }
 
   export type LicenciaUncheckedUpdateWithoutUsuarioInput = {
@@ -158387,6 +160036,7 @@ export namespace Prisma {
     expiracion?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    auditorias?: LicenciaAuditUncheckedUpdateManyWithoutLicenciaNestedInput
   }
 
   export type LicenciaUncheckedUpdateManyWithoutUsuarioInput = {
@@ -161716,6 +163366,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     usuario?: UserUpdateOneRequiredWithoutLicenciasNestedInput
+    auditorias?: LicenciaAuditUpdateManyWithoutLicenciaNestedInput
   }
 
   export type LicenciaUncheckedUpdateWithoutPlanInput = {
@@ -161727,6 +163378,7 @@ export namespace Prisma {
     expiracion?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    auditorias?: LicenciaAuditUncheckedUpdateManyWithoutLicenciaNestedInput
   }
 
   export type LicenciaUncheckedUpdateManyWithoutPlanInput = {
@@ -161738,6 +163390,46 @@ export namespace Prisma {
     expiracion?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LicenciaAuditCreateManyLicenciaInput = {
+    auditId?: string
+    accion: string
+    detalles?: string | null
+    realizadoPor?: string | null
+    ip?: string | null
+    userAgent?: string | null
+    createdAt?: Date | string
+  }
+
+  export type LicenciaAuditUpdateWithoutLicenciaInput = {
+    auditId?: StringFieldUpdateOperationsInput | string
+    accion?: StringFieldUpdateOperationsInput | string
+    detalles?: NullableStringFieldUpdateOperationsInput | string | null
+    realizadoPor?: NullableStringFieldUpdateOperationsInput | string | null
+    ip?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LicenciaAuditUncheckedUpdateWithoutLicenciaInput = {
+    auditId?: StringFieldUpdateOperationsInput | string
+    accion?: StringFieldUpdateOperationsInput | string
+    detalles?: NullableStringFieldUpdateOperationsInput | string | null
+    realizadoPor?: NullableStringFieldUpdateOperationsInput | string | null
+    ip?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type LicenciaAuditUncheckedUpdateManyWithoutLicenciaInput = {
+    auditId?: StringFieldUpdateOperationsInput | string
+    accion?: StringFieldUpdateOperationsInput | string
+    detalles?: NullableStringFieldUpdateOperationsInput | string | null
+    realizadoPor?: NullableStringFieldUpdateOperationsInput | string | null
+    ip?: NullableStringFieldUpdateOperationsInput | string | null
+    userAgent?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
 

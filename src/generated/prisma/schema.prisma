@@ -1509,18 +1509,36 @@ model Plan {
 }
 
 model Licencia {
-  licenciaId String   @id @default(cuid())
-  clave      String   @unique
+  licenciaId String          @id @default(cuid())
+  clave      String          @unique
   usuarioId  String
   planId     String
-  activa     Boolean  @default(true)
-  inicio     DateTime @default(now())
+  activa     Boolean         @default(true)
+  inicio     DateTime        @default(now())
   expiracion DateTime
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  usuario    User     @relation(fields: [usuarioId], references: [userId], onDelete: Cascade)
-  plan       Plan     @relation(fields: [planId], references: [planId])
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  usuario    User            @relation(fields: [usuarioId], references: [userId], onDelete: Cascade)
+  plan       Plan            @relation(fields: [planId], references: [planId])
+  auditorias LicenciaAudit[]
 
   @@index([usuarioId])
   @@index([clave])
+}
+
+model LicenciaAudit {
+  auditId      String   @id @default(cuid())
+  licenciaId   String
+  accion       String // "CREACION", "REVOCACION", "ACTIVACION", "VALIDACION_FALLIDA", "VALIDACION_EXITOSA"
+  detalles     String? // JSON string con detalles extra
+  realizadoPor String? // ID del usuario que realizó la acción (si aplica)
+  ip           String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+
+  licencia Licencia @relation(fields: [licenciaId], references: [licenciaId], onDelete: Cascade)
+
+  @@index([licenciaId])
+  @@index([accion])
+  @@index([createdAt])
 }

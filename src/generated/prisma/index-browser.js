@@ -1239,6 +1239,17 @@ exports.Prisma.LicenciaScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.LicenciaAuditScalarFieldEnum = {
+  auditId: 'auditId',
+  licenciaId: 'licenciaId',
+  accion: 'accion',
+  detalles: 'detalles',
+  realizadoPor: 'realizadoPor',
+  ip: 'ip',
+  userAgent: 'userAgent',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1468,7 +1479,8 @@ exports.Prisma.ModelName = {
   ComandaItem: 'ComandaItem',
   OrdenProduccion: 'OrdenProduccion',
   Plan: 'Plan',
-  Licencia: 'Licencia'
+  Licencia: 'Licencia',
+  LicenciaAudit: 'LicenciaAudit'
 };
 
 /**

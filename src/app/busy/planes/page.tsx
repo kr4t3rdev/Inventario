@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
-import { Plus, Edit, Trash2, RefreshCw, DollarSign, Users, Archive, Package } from "lucide-react"
+import { Plus, Edit, Trash2, RefreshCw, DollarSign, Users, Archive, Package, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -42,6 +42,7 @@ export default function PlanesPage() {
   const [loading, setLoading] = useState(true)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editandoPlan, setEditandoPlan] = useState<Plan | null>(null)
+  const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 0 })
   const [formData, setFormData] = useState({
     nombre: "",
     descripcion: "",
@@ -54,13 +55,18 @@ export default function PlanesPage() {
 
   useEffect(() => {
     fetchPlanes()
-  }, [])
+  }, [pagination.page])
 
   async function fetchPlanes() {
     try {
-      const res = await fetch("/api/planes")
+      const res = await fetch(`/api/planes?page=${pagination.page}&limit=${pagination.limit}`)
       const data = await res.json()
-      setPlanes(data)
+      if (data.data) {
+        setPlanes(data.data)
+        setPagination(data.pagination)
+      } else {
+        setPlanes(data)
+      }
     } catch (error) {
       console.error("Error fetching planes:", error)
     } finally {
@@ -262,6 +268,30 @@ export default function PlanesPage() {
               </div>
             </motion.div>
           ))}
+        </div>
+      )}
+
+      {pagination.totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={pagination.page <= 1}
+            onClick={() => setPagination(p => ({ ...p, page: p.page - 1 }))}
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            Página {pagination.page} de {pagination.totalPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={pagination.page >= pagination.totalPages}
+            onClick={() => setPagination(p => ({ ...p, page: p.page + 1 }))}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
       )}
 
