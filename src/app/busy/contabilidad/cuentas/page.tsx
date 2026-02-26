@@ -78,8 +78,9 @@ export default function CuentasBancariasPage(): React.JSX.Element {
   const saldoTotal = cuentas.reduce((sum, cuenta) => sum + Number(cuenta.saldo ?? 0), 0);
 
   const surfaceCardClass = cn(
-    'relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl',
-    'dark:border-slate-800/60 dark:bg-slate-950/50',
+    'relative overflow-hidden border-slate-600/10 shadow-sm backdrop-blur-xl',
+    'bg-slate-900/70'
+    
   );
 
   const handleCreateSuccess = (): void => {
@@ -155,7 +156,7 @@ export default function CuentasBancariasPage(): React.JSX.Element {
                     Nueva Cuenta
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl backdrop-blur-xl bg-white/90 dark:bg-slate-950/90">
+                <DialogContent className="max-w-2xl backdrop-blur-xl bg-slate-900/5">
                   <DialogHeader>
                     <DialogTitle>Crear nueva cuenta bancaria</DialogTitle>
                     <DialogDescription>

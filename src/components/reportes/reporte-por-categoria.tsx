@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils"
 
 const surfaceCardClass = cn(
   "relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl",
-  "dark:border-slate-800/60 dark:bg-slate-950/50",
+  "dark:border-slate-800/60 dark:bg-slate-900/10",
 )
 
 export function ReportePorCategoria() {
@@ -153,8 +153,8 @@ export function ReportePorCategoria() {
               <Skeleton className="h-[300px] w-full" />
             ) : (
               <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
+                <Table >
+                  <TableHeader className={surfaceCardClass}>
                     <TableRow>
                       <TableHead>Categoría</TableHead>
                       <TableHead className="text-right">Productos</TableHead>

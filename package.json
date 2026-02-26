@@ -23,7 +23,9 @@
     "test:e2e:debug": "playwright test --debug",
     "test:e2e:report": "playwright show-report",
     "remotion:preview": "remotion preview remotion/index.ts",
-    "remotion:render": "remotion render remotion/index.ts Battle-Short out/battle-short.mp4"
+    "remotion:render": "remotion render remotion/index.ts Battle-Short out/battle-short.mp4",
+    "remotion:render-404": "remotion render remotion/index.ts NotFoundAnimation out/404-animation.mp4",
+    "remotion:render-404-gif": "remotion render remotion/index.ts NotFoundAnimation out/404-animation.gif --format gif"
   },
   "dependencies": {
     "@clerk/nextjs": "^6.22.0",
@@ -55,6 +57,7 @@
     "@radix-ui/react-toggle-group": "^1.1.9",
     "@radix-ui/react-tooltip": "^1.2.6",
     "@reduxjs/toolkit": "^2.8.1",
+    "@remotion/player": "^4.0.417",
     "@tanstack/react-query": "^5.80.7",
     "@tanstack/react-table": "^8.21.3",
     "@types/bcryptjs": "^2.4.6",

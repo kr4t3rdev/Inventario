@@ -29,20 +29,29 @@ RUN pnpm build
 # ============================================
 # Runtime unificado
 # ============================================
-FROM node
+FROM node:20
 WORKDIR /app
 
-# Instalar todos los servicios necesarios
-RUN apt-get update && apt-get install -y \
+# Usar mirror de Debian para arm64
+RUN echo 'Acquire::Queue-Mode "host";' > /etc/apt/apt.conf.d/99mirrors && \
+    echo 'Acquire::Retries "3";' >> /etc/apt/apt.conf.d/99mirrors && \
+    echo 'Acquire::http::Pipeline-Depth "5";' >> /etc/apt/apt.conf.d/99mirrors && \
+    sed -i 's/deb.debian.org/mirror.us.debian.org/g' /etc/apt/sources.list 2>/dev/null || true
+
+# Instalar todos los servicios necesarios con reintentos
+RUN apt-get update || true && \
+    apt-get update || true && \
+    apt-get install -y --no-install-recommends \
     postgresql \
     postgresql-contrib \
     nginx \
-    openssl \
-    libssl-dev \
     supervisor \
     curl \
-    && rm -rf /var/lib/apt/lists/* \
-    && npm install -g npx
+    || (sleep 10 && apt-get update && apt-get install -y --no-install-recommends \
+    postgresql postgresql-contrib nginx supervisor curl) \
+    || (sleep 30 && apt-get update && apt-get install -y --no-install-recommends \
+    postgresql postgresql-contrib nginx supervisor curl) \
+    && rm -rf /var/lib/apt/lists/*
 
 # Configurar PostgreSQL - sin password hardcodeado
 USER postgres

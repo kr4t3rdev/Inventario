@@ -776,6 +776,7 @@ export interface RestockRequest {
   monedaOriginal?: string
   montoOriginal?: number
   cuentaId?: string
+  tipoRestock?: 'nueva_instancia' | 'sumar_stock' | 'auto'
 }
 
 export interface RestockResponse {

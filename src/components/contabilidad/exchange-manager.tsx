@@ -19,7 +19,7 @@ import { TasaCambioForm } from './tasa-cambio-form';
 
 const surfaceCardClass = cn(
   'relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl',
-  'dark:border-slate-800/60 dark:bg-slate-950/50',
+  'dark:border-slate-800/60 dark:bg-slate-900/10',
 );
 
 const interactiveCardClass = cn(
@@ -182,7 +182,7 @@ export function ExchangeManager() {
             </CardHeader>
             <CardContent className="flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-4">
-                <div className="rounded-xl bg-blue-100 p-3 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300">
+                <div className="rounded-xl bg-blue-100 p-3 text-blue-600 dark:bg-blue-900/10 dark:text-blue-300">
                   <Sparkles className="h-5 w-5" />
                 </div>
                 <div>
@@ -194,7 +194,7 @@ export function ExchangeManager() {
               </div>
               <Badge
                 variant="outline"
-                className="border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/60 dark:bg-blue-900/20 dark:text-blue-300"
+                className="border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/60 dark:bg-blue-900/10 dark:text-blue-300"
               >
                 Símbolo {monedaPrincipal.simbolo}
               </Badge>
@@ -205,7 +205,7 @@ export function ExchangeManager() {
 
       <motion.div variants={itemVariants}>
         <Tabs defaultValue="monedas" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3 rounded-xl bg-slate-100/80 p-1 dark:bg-slate-900/70">
+          <TabsList className="grid w-full grid-cols-3 rounded-xl bg-slate-100/80 p-1 dark:bg-slate-900/10">
             <TabsTrigger value="monedas">Monedas</TabsTrigger>
             <TabsTrigger value="tasas">Tasas de cambio</TabsTrigger>
             <TabsTrigger value="historial">Historial</TabsTrigger>

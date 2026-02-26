@@ -87,22 +87,22 @@ const sectionKickerClass = cn(
 const surfaceCardClass = cn(
   'group relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm',
   'transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg',
-  'dark:border-slate-800/60 dark:bg-slate-950/50',
+  'dark:border-slate-800/60 dark:bg-slate-900/10',
 );
 
 const staticCardClass = cn(
   'relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm',
-  'dark:border-slate-800/60 dark:bg-slate-950/50',
+  'dark:border-slate-800/60 dark:bg-slate-900/10',
 );
 
 const metaBadgeClass = cn(
   'border border-slate-200/70 bg-white/80 text-slate-700 shadow-sm',
-  'dark:border-slate-800/60 dark:bg-slate-950/60 dark:text-slate-200',
+  'dark:border-slate-800/60 dark:bg-slate-900/10 dark:text-slate-200',
 );
 
 const outlineButtonClass = cn(
   'border-slate-200/70 bg-white/80 text-slate-700 shadow-sm transition-all',
-  'dark:border-slate-800/60 dark:bg-slate-950/60 dark:text-slate-200',
+  'dark:border-slate-800/60 dark:bg-slate-900/10 dark:text-slate-200',
 );
 
 const bodyTextClass = 'text-sm text-slate-600 dark:text-slate-300';
@@ -258,7 +258,7 @@ export default function ReconciliacionHubPage(): React.JSX.Element {
         <SidebarInset className="bg-background">
           <motion.div className="relative space-y-6 p-8" variants={fadeIn} initial="hidden" animate="show">
             <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950" />
+              <div className="absolute inset-0 bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950/5 dark:via-slate-900/5 dark:to-slate-950/5" />
             </div>
             <Button variant="ghost" size="sm" asChild>
               <Link href="/busy/contabilidad" className="flex items-center text-slate-600 dark:text-slate-300">
@@ -525,7 +525,7 @@ export default function ReconciliacionHubPage(): React.JSX.Element {
                       className={cn(
                         'flex items-center justify-between rounded-lg border px-3 py-3',
                         'border-slate-200/60 bg-white/70 text-sm shadow-sm',
-                        'dark:border-slate-800/60 dark:bg-slate-950/60',
+                        'dark:border-slate-800/60 dark:bg-slate-900/10',
                       )}
                     >
                       <div className="flex items-center gap-3">

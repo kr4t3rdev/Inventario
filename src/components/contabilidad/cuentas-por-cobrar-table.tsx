@@ -41,7 +41,7 @@ interface CuentasPorCobrarTableProps {
 
 const surfaceCardClass = cn(
   'relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl',
-  'dark:border-slate-800/60 dark:bg-slate-950/50',
+  'dark:border-slate-800/60 dark:bg-slate-950/10',
 );
 
 /**
@@ -566,7 +566,7 @@ export function CuentasPorCobrarTable({ cuentas, isLoading, error, onPagar }: Cu
                     placeholder="Buscar por ID, factura o cliente..."
                     value={(table.getColumn("facturaFiltro")?.getFilterValue() as string) ?? ""}
                     onChange={(event) => table.getColumn("facturaFiltro")?.setFilterValue(event.target.value)}
-                    className="pl-9 bg-white/50 dark:bg-slate-950/50"
+                    className="pl-9 bg-white/50 dark:bg-slate-900/5"
                   />
                 </div>
               </div>
@@ -579,7 +579,7 @@ export function CuentasPorCobrarTable({ cuentas, isLoading, error, onPagar }: Cu
                   <SelectTrigger
                     id="cuentas-por-cobrar-estado"
                     aria-label="Filtrar cuentas por cobrar por estado"
-                    className="w-[140px] bg-white/50 dark:bg-slate-900/50"
+                    className="w-[140px] bg-white/50 dark:bg-slate-900/5"
                   >
                     <SelectValue placeholder="Filtrar por estado" />
                   </SelectTrigger>
@@ -600,7 +600,7 @@ export function CuentasPorCobrarTable({ cuentas, isLoading, error, onPagar }: Cu
           <CardContent className="p-0">
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader className="bg-slate-50/50 dark:bg-slate-900/50">
+                <TableHeader className="bg-slate-50/50 dark:bg-slate-900/5">
                   {table.getHeaderGroups().map((headerGroup) => (
                     <TableRow key={headerGroup.id} className="hover:bg-transparent border-slate-200/60 dark:border-slate-800/60">
                       {headerGroup.headers.map((header) => (
@@ -625,7 +625,7 @@ export function CuentasPorCobrarTable({ cuentas, isLoading, error, onPagar }: Cu
                               duration: shouldReduceMotion ? 0 : 0.18
                             }}
                             data-state={row.getIsSelected() && "selected"}
-                            className="transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-900/50 border-b border-slate-200/60 dark:border-slate-800/60 last:border-0"
+                            className="transition-colors hover:bg-slate-50/50 dark:hover:bg-slate-900/5 border-b border-slate-200/60 dark:border-slate-800/60 last:border-0"
                           >
                           {row.getVisibleCells().map((cell) => (
                             <TableCell key={cell.id} className="py-3">

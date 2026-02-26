@@ -74,6 +74,11 @@ export const RestockRequestSchema = z.object({
   cuentaId: z
     .string()
     .optional(),
+  // Tipo de restock: nueva_instancia (crear nuevo producto), sumar_stock (promediar precios), auto (comportamiento actual)
+  tipoRestock: z
+    .enum(['nueva_instancia', 'sumar_stock', 'auto'])
+    .optional()
+    .default("auto"),
 }).refine(
   (data) => {
     // Business rule: selling price should be >= cost price * 1.1 (10% margin)

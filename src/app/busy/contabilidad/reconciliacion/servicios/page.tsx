@@ -16,7 +16,7 @@ const sectionKickerClass = cn(
 
 const metaBadgeClass = cn(
   'border border-slate-200/70 bg-white/80 text-slate-700 shadow-sm',
-  'dark:border-slate-800/60 dark:bg-slate-950/60 dark:text-slate-200',
+  'dark:border-slate-800/60 dark:bg-slate-900/10 dark:text-slate-200',
 );
 
 /**

@@ -64,7 +64,7 @@ interface CuentasBancariasTableProps {
 
 const surfaceCardClass = cn(
   'relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl',
-  'dark:border-slate-800/60 dark:bg-slate-950/50',
+  'dark:border-slate-800/60 dark:bg-zinc-950/10',
 );
 
 export function CuentasBancariasTable({
@@ -100,7 +100,7 @@ export function CuentasBancariasTable({
           <div className="flex items-center gap-3">
             <div className={cn(
               "flex h-9 w-9 items-center justify-center rounded-lg border shadow-sm",
-              "bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800",
+              "bg-white dark:bg-slate-950/15 border-slate-200 dark:border-slate-800",
               "text-slate-500 dark:text-slate-400"
             )}>
               <Building2 className="h-5 w-5" />
@@ -122,7 +122,7 @@ export function CuentasBancariasTable({
       header: "Número de Cuenta",
       cell: ({ row }) => {
         return (
-          <div className="flex items-center gap-2 font-mono text-xs text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-900 px-2 py-1 rounded w-fit">
+          <div className="flex items-center gap-2 font-mono text-xs text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-900/15 px-2 py-1 rounded w-fit">
             <CreditCard className="h-3 w-3" />
             {row.getValue("numeroCuenta")}
           </div>
@@ -134,7 +134,7 @@ export function CuentasBancariasTable({
       header: "Tipo",
       cell: ({ row }) => {
         return (
-          <Badge variant="outline" className="capitalize font-normal bg-white dark:bg-slate-950">
+          <Badge variant="outline" className="capitalize font-normal bg-white dark:bg-slate-950/15">
             {row.getValue("tipoCuenta")}
           </Badge>
         )
@@ -281,7 +281,7 @@ export function CuentasBancariasTable({
         <div className="flex items-center justify-between">
           <Skeleton className="h-10 w-[250px]" />
         </div>
-        <div className="rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
+        <div className="rounded-md border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950/10">
           <Table>
             <TableHeader>
               <TableRow>
@@ -317,7 +317,7 @@ export function CuentasBancariasTable({
                 placeholder="Buscar por banco, número o tipo..."
                 value={globalFilter ?? ""}
                 onChange={(event) => setGlobalFilter(event.target.value)}
-                className="pl-9 bg-white/50 dark:bg-slate-950/50 backdrop-blur-sm transition-all focus:bg-white dark:focus:bg-slate-950"
+                className="pl-9 dark:bg-slate-800/10 backdrop-blur-sm transition-all focus:bg-white dark:focus:bg-slate-950"
               />
             </div>
           </div>
@@ -329,7 +329,7 @@ export function CuentasBancariasTable({
         <CardContent className="p-0">
           <div className="rounded-md border-0 overflow-hidden">
             <Table>
-              <TableHeader className="bg-slate-50/50 dark:bg-slate-900/50">
+              <TableHeader className="bg-slate-50/50 dark:bg-slate-900/10">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id} className="hover:bg-transparent border-slate-200/60 dark:border-slate-800/60">
                     {headerGroup.headers.map((header) => {

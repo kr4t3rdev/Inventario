@@ -55,26 +55,26 @@ function ResumenSkeleton() {
       {/* Header Skeleton */}
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div className="space-y-2">
-           <div className="h-4 w-32 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
-           <div className="h-8 w-64 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
-           <div className="h-4 w-96 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
+           <div className="h-4 w-32 bg-slate-100 dark:bg-slate-800/5 rounded animate-pulse" />
+           <div className="h-8 w-64 bg-slate-100 dark:bg-slate-800/5 rounded animate-pulse" />
+           <div className="h-4 w-96 bg-slate-100 dark:bg-slate-800/5 rounded animate-pulse" />
         </div>
         <div className="flex gap-2">
-           <div className="h-9 w-24 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
-           <div className="h-9 w-24 bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
+           <div className="h-9 w-24 bg-slate-100 dark:bg-slate-800/5 rounded animate-pulse" />
+           <div className="h-9 w-24 bg-slate-100 dark:bg-slate-800/5 rounded animate-pulse" />
         </div>
       </div>
 
       {/* Cards Skeleton */}
       <div className="grid gap-6 md:grid-cols-3">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-40 rounded-xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
+          <div key={i} className="h-40 rounded-xl bg-slate-100 dark:bg-slate-800/5 animate-pulse" />
         ))}
       </div>
        {/* Secondary Cards Skeleton */}
       <div className="grid gap-6 md:grid-cols-3">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-24 rounded-xl bg-slate-100 dark:bg-slate-800 animate-pulse" />
+          <div key={i} className="h-24 rounded-xl bg-slate-100 dark:bg-slate-800/5 animate-pulse" />
         ))}
       </div>
     </div>
@@ -218,7 +218,7 @@ export default function ContabilidadDashboard(): React.JSX.Element {
   ] as const;
 
   return (
-    <PageTransition className="relative min-h-screen w-full bg-slate-50/50 dark:bg-slate-950">
+    <PageTransition className="relative min-h-screen w-full  ">/5
       {/* Background Decor */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
         <div className="absolute top-0 left-1/4 w-96 h-96  rounded-full blur-3xl mix-blend-multiply dark:mix-blend-screen animate-blob" />
@@ -292,10 +292,10 @@ export default function ContabilidadDashboard(): React.JSX.Element {
             {reconciliationModules.map((module) => {
               const styles = accentStyles[module.tone];
               return (
-                <Link key={module.href} href={module.href} className="group block h-full">
+                <div key={'#'}>
                   <AnimatedCard className="h-full">
                     <Card className={cn(
-                      "h-full overflow-hidden transition-all duration-300 border-slate-200 dark:border-slate-800",
+                      "h-full overflow-hidden transition-all duration-300 border-slate-200 dark:border-slate-800 dark:bg-slate-900/15",
                       "hover:shadow-lg dark:hover:shadow-blue-900/10",
                       styles.border
                     )}>
@@ -329,7 +329,7 @@ export default function ContabilidadDashboard(): React.JSX.Element {
                       </CardContent>
                     </Card>
                   </AnimatedCard>
-                </Link>
+                </div>
               );
             })}
           </div>
@@ -351,7 +351,7 @@ export default function ContabilidadDashboard(): React.JSX.Element {
                 <Link key={action.href} href={action.href} className="group">
                   <AnimatedCard className="h-full" hoverEffect={false}>
                     <Card className={cn(
-                      "h-full overflow-hidden border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/50",
+                      "h-full overflow-hidden border-slate-200 dark:border-slate-800 bg-white dark:bg-zinc-800/2",
                       "hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300",
                       "hover:shadow-md dark:hover:shadow-slate-900/20"
                     )}>

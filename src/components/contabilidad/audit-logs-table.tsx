@@ -4,6 +4,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import {
   Calendar,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   Eye,
   FileText,
   Filter,
@@ -146,7 +150,7 @@ export function AuditLogsTable() {
   const [error, setError] = useState<string | null>(null);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(0);
-  const [limit] = useState(20);
+  const [limit, setLimit] = useState(20);
   const [entidad, setEntidad] = useState<string>('all');
   const [accion, setAccion] = useState<string>('all');
   const [search, setSearch] = useState('');
@@ -198,6 +202,15 @@ export function AuditLogsTable() {
     }
   }, [accion, entidad, limit, page]);
 
+  /**
+   * @description Maneja el cambio de tamaño de página.
+   * @param {number} newLimit - Nuevo límite de registros por página.
+   */
+  const handleLimitChange = useCallback((newLimit: number) => {
+    setLimit(newLimit);
+    setPage(0); // Resetear a la primera página
+  }, []);
+
   useEffect(() => {
     fetchLogs();
   }, [fetchLogs]);
@@ -220,6 +233,10 @@ export function AuditLogsTable() {
   const canGoPrev = page > 0 && !loading;
   const canGoNext = (page + 1) * limit < total && !loading;
   const showEmpty = !loading && !error && filteredLogs.length === 0;
+
+  // Calcular rango de registros mostrados
+  const startItem = page * limit + 1;
+  const endItem = Math.min((page + 1) * limit, total);
 
   return (
     <motion.div
@@ -424,19 +441,70 @@ export function AuditLogsTable() {
       </div>
 
       <div className="flex flex-col gap-3 border-t border-slate-200/70 pt-4 text-sm text-muted-foreground dark:border-slate-800/70 md:flex-row md:items-center md:justify-between">
-        <span>
-          Mostrando {filteredLogs.length} de {total} registros
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs md:text-sm">
+            Mostrando {startItem} a {endItem} de {total} registros
+          </span>
+          <Select value={limit.toString()} onValueChange={(value) => handleLimitChange(parseInt(value))}>
+            <SelectTrigger className="h-8 w-[70px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent side="top">
+              {[10, 20, 30, 50, 100].map((size) => (
+                <SelectItem key={size} value={size.toString()}>
+                  {size}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <span className="text-xs text-muted-foreground">por página</span>
+        </div>
         <div className="flex items-center gap-2">
           <span className="text-xs md:text-sm">
             Página {Math.min(page + 1, totalPages)} de {totalPages}
           </span>
-          <Button variant="outline" size="sm" onClick={() => setPage((value) => value - 1)} disabled={!canGoPrev}>
-            Anterior
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => setPage((value) => value + 1)} disabled={!canGoNext}>
-            Siguiente
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setPage(0)}
+              disabled={!canGoPrev}
+              title="Primera página"
+            >
+              <ChevronsLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setPage((value) => value - 1)}
+              disabled={!canGoPrev}
+              title="Página anterior"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setPage((value) => value + 1)}
+              disabled={!canGoNext}
+              title="Página siguiente"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={() => setPage(totalPages - 1)}
+              disabled={!canGoNext}
+              title="Última página"
+            >
+              <ChevronsRight className="h-4 w-4" />
+            </Button>
+          </div>
         </div>
       </div>
     </motion.div>

@@ -15,6 +15,14 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { ProductPhotoUpload } from "./product-photo-upload"
 
 import { useRestockProductoMutation } from "@/lib/redux/services/productosApi"
@@ -44,6 +52,7 @@ const restockSchema = z.object({
   formaPago: z.enum(["PAGO_PARCIAL", "PAGO_COMPLETO"]),
   estado: z.enum(["PENDIENTE", "PAGADA"]),
   cuentaId: z.string().optional(),
+  tipoRestock: z.enum(["nueva_instancia", "sumar_stock", "auto"]).optional(),
 }).refine(
   (data) => {
     const costPrice = typeof data.precioCosto === "number" ? data.precioCosto : undefined
@@ -104,6 +113,9 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
   const [isLoading, setIsLoading] = useState(false)
   const [showTasaCambioDialog, setShowTasaCambioDialog] = useState(false)
   const [pendingSubmission, setPendingSubmission] = useState<RestockFormValues | null>(null)
+  // Estado para el diálogo de selección de tipo de restock
+  const [showTipoRestockDialog, setShowTipoRestockDialog] = useState(false)
+  const [preciosCambiados, setPreciosCambiados] = useState(false)
 
   const [restockProducto] = useRestockProductoMutation()
   const { data: monedasData } = useGetMonedasQuery()
@@ -178,6 +190,20 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
 
 
   async function onSubmit(data: RestockFormValues) {
+    // Check if prices have changed
+    const precioCostoChanged = data.precioCosto && Number(data.precioCosto) !== producto.precioCosto
+    const precioVentaChanged = data.precioVenta && Number(data.precioVenta) !== producto.precioVenta
+    const hasPriceChanges = precioCostoChanged || precioVentaChanged
+    
+    setPreciosCambiados(hasPriceChanges)
+    
+    // If prices changed and no tipoRestock selected yet, show selection dialog
+    if (hasPriceChanges && !data.tipoRestock) {
+      setPendingSubmission(data)
+      setShowTipoRestockDialog(true)
+      return
+    }
+    
     // If currency is different from principal, show exchange rate dialog
     if (requiresExchangeConfirmation) {
       setPendingSubmission(data)
@@ -213,6 +239,8 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
         estado: estadoFinal,
         descripcion: data.descripcion || undefined,
         cuentaId: data.cuentaId || undefined,
+        // Include tipoRestock selection from user
+        tipoRestock: data.tipoRestock || 'auto',
         // Include exchange rate data if applicable
         ...(tasaCambio && montoConvertido && {
           moneda: data.moneda,
@@ -259,6 +287,27 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
 
   const handleExchangeCancel = () => {
     setShowTasaCambioDialog(false)
+    setPendingSubmission(null)
+  }
+  
+  // Handler for tipo restock selection
+  const handleTipoRestockSelect = (tipo: 'nueva_instancia' | 'sumar_stock') => {
+    if (pendingSubmission) {
+      const dataConTipo = { ...pendingSubmission, tipoRestock: tipo }
+      setShowTipoRestockDialog(false)
+      
+      // If also needs exchange confirmation, show that dialog
+      if (requiresExchangeConfirmation) {
+        setPendingSubmission(dataConTipo)
+        setShowTasaCambioDialog(true)
+      } else {
+        submitRestock(dataConTipo)
+      }
+    }
+  }
+
+  const handleTipoRestockCancel = () => {
+    setShowTipoRestockDialog(false)
     setPendingSubmission(null)
   }
 
@@ -687,6 +736,86 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
           titulo="Confirmar Tasa de Cambio para Compra"
           descripcion={`Restock de ${producto.nombre} - ${totalCosto.toFixed(2)} ${selectedMoneda?.simbolo || pendingSubmission.moneda}`}
         />
+      )}
+
+      {/* Tipo de Restock Selection Dialog */}
+      {showTipoRestockDialog && (
+        <Dialog open={showTipoRestockDialog} onOpenChange={setShowTipoRestockDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-purple-500" />
+                ¿Cómo desea realizar el restock?
+              </DialogTitle>
+              <DialogDescription>
+                Ha modificado los precios del producto. Elija cómo desea proceder con el stock.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 py-4">
+              {/* Opción 1: Nueva Instancia */}
+              <button
+                type="button"
+                onClick={() => handleTipoRestockSelect('nueva_instancia')}
+                className="w-full p-4 text-left border rounded-lg hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/30 transition-colors group"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center flex-shrink-0 group-hover:bg-purple-200 dark:group-hover:bg-purple-800 transition-colors">
+                    <Package className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-foreground">Crear nueva instancia</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      El stock agregado va a un nuevo producto relacionado con los nuevos precios.
+                      El producto original mantiene sus precios actuales.
+                    </p>
+                    <div className="mt-2 flex gap-2">
+                      <Badge variant="outline" className="text-xs">
+                        Nuevo precio costo: ${Number(watchedValues.precioCosto || 0).toFixed(2)}
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">
+                        Nuevo precio venta: ${Number(watchedValues.precioVenta || 0).toFixed(2)}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </button>
+
+              {/* Opción 2: Sumar al stock actual */}
+              <button
+                type="button"
+                onClick={() => handleTipoRestockSelect('sumar_stock')}
+                className="w-full p-4 text-left border rounded-lg hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors group"
+              >
+                <div className="flex items-start gap-3">
+                  <div className="h-10 w-10 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center flex-shrink-0 group-hover:bg-green-200 dark:group-hover:bg-green-800 transition-colors">
+                    <Calculator className="h-5 w-5 text-green-600 dark:text-green-400" />
+                  </div>
+                  <div>
+                    <p className="font-medium text-foreground">Sumar al stock actual</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Se suma la cantidad al inventario existente y se calcula el promedio ponderado de precios.
+                    </p>
+                    <div className="mt-2 flex gap-2">
+                      <Badge variant="outline" className="text-xs">
+                        Precio costo promedio: ${weightedCostPrice.toFixed(2)}
+                      </Badge>
+                      <Badge variant="outline" className="text-xs">
+                        Precio venta promedio: ${weightedSellingPrice.toFixed(2)}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </button>
+            </div>
+
+            <DialogFooter className="sm:justify-between">
+              <Button variant="ghost" onClick={handleTipoRestockCancel}>
+                Cancelar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       )}
     </Card>
     </motion.div>

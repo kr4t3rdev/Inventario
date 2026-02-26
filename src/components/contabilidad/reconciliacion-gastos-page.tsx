@@ -40,7 +40,7 @@ const MONEDA_SIMBOLOS: Record<string, string> = {
 
 const surfaceCardClass = cn(
   'relative overflow-hidden rounded-2xl border border-slate-200/60 bg-white/75 shadow-sm backdrop-blur-xl',
-  'dark:border-slate-800/60 dark:bg-slate-950/50',
+  'dark:border-slate-800/60 dark:bg-slate-900/10',
 )
 
 export function ReconciliacionGastosPage() {
@@ -258,9 +258,9 @@ export function ReconciliacionGastosPage() {
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="flex items-center justify-between p-4 border rounded-lg bg-slate-50 dark:bg-slate-900/50">
+                  <div className="flex items-center justify-between p-4 border rounded-lg bg-slate-50 dark:bg-slate-900/10">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                      <div className="p-2 bg-blue-100 dark:bg-blue-900/10 rounded-lg">
                         <Users className="h-5 w-5 text-blue-600 dark:text-blue-300" />
                       </div>
                       <div>
@@ -278,7 +278,7 @@ export function ReconciliacionGastosPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between p-4 border rounded-lg bg-slate-50 dark:bg-slate-900/50">
+                  <div className="flex items-center justify-between p-4 border rounded-lg bg-slate-50 dark:bg-slate-900/10">
                     <div className="flex items-center gap-3">
                       <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
                         <Building2 className="h-5 w-5 text-orange-600 dark:text-orange-300" />

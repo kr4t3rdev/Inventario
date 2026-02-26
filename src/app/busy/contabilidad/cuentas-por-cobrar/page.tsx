@@ -24,7 +24,7 @@ export const dynamic = 'force-dynamic'
 
 const surfaceCardClass = cn(
   'relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl',
-  'dark:border-slate-800/60 dark:bg-slate-950/50',
+  'dark:border-slate-800/6 dark:bg-slate-900/15',
 );
 
 /**

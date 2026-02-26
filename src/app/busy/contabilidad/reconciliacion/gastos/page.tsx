@@ -16,7 +16,7 @@ const sectionKickerClass = cn(
 
 const metaBadgeClass = cn(
   'border border-slate-200/70 bg-white/80 text-slate-700 shadow-sm',
-  'dark:border-slate-800/60 dark:bg-slate-950/60 dark:text-slate-200',
+  'dark:border-slate-800/60 dark:bg-slate-900/10 dark:text-slate-200',
 );
 
 /**
@@ -55,7 +55,7 @@ export default function GastosReconciliacionPage(): React.JSX.Element {
         <div
           className={cn(
             'absolute inset-0 bg-gradient-to-b from-slate-50 via-white to-slate-100',
-            'dark:from-slate-950 dark:via-slate-900 dark:to-slate-950',
+            'dark:from-slate-900/10 dark:via-slate-900/10 dark:to-slate-900/10',
           )}
         />
         <div

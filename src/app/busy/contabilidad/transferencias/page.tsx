@@ -97,7 +97,7 @@ export default function TransferenciasBancariasPage(): React.JSX.Element {
 
   const surfaceCardClass = cn(
     'relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl',
-    'dark:border-slate-800/60 dark:bg-slate-950/50',
+    'dark:border-slate-800/60 dark:bg-slate-900/10',
   );
 
   return (
@@ -147,7 +147,7 @@ export default function TransferenciasBancariasPage(): React.JSX.Element {
                   Nueva transferencia
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-4xl backdrop-blur-xl bg-white/90 dark:bg-slate-950/90">
+              <DialogContent className="max-w-4xl backdrop-blur-xl bg-white/90 dark:bg-slate-500/10">
                 <DialogHeader>
                   <DialogTitle>Crear nueva transferencia</DialogTitle>
                   <DialogDescription>
@@ -165,7 +165,7 @@ export default function TransferenciasBancariasPage(): React.JSX.Element {
           <motion.div className="space-y-6" variants={stagger}>
             <motion.div className="flex flex-wrap items-center gap-2" variants={fadeInUp}>
               <Badge variant="outline" className="h-8 px-3">Total: {transferenciasList.length}</Badge>
-              <Badge variant="outline" className="h-8 px-3 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
+              <Badge variant="outline" className="h-8 px-3 bg-blue-50 dark:bg-blue-900/5 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800">
                 Hoy: {transferenciasHoy.length}
               </Badge>
               <Badge variant="outline" className="h-8 px-3 bg-amber-50 dark:bg-amber-900/20 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800">

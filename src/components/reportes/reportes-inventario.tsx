@@ -14,7 +14,7 @@ import { StaggerContainer, StaggerItem, AnimatedCard } from '@/components/ui/ani
 
 const surfaceCardClass = cn(
   'relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl',
-  'dark:border-slate-800/60 dark:bg-slate-950/50',
+  'dark:border-slate-800/60 dark:bg-slate-900/10',
 );
 
 const tabTriggerClass = cn(
@@ -92,7 +92,7 @@ export default function ReportesInventario() {
         <Card className={surfaceCardClass}>
           <CardContent className='p-4 sm:p-5'>
             <Tabs value={activeTab} onValueChange={setActiveTab} className='w-full space-y-4'>
-              <TabsList className='grid h-auto w-full grid-cols-2 gap-2 rounded-xl bg-slate-100/80 p-1 sm:grid-cols-4'>
+              <TabsList className='grid h-auto w-full grid-cols-2 gap-2 rounded-xl p-1 sm:grid-cols-4 dark:bg-slate-900/10'>
                 <TabsTrigger value='general' className={tabTriggerClass}>
                   <BarChart3 className='h-3.5 w-3.5' />
                   General

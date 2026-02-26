@@ -9,15 +9,24 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
-import {  FileIcon as FilePdf, FileText, PieChart as PieChartIcon, Package } from "lucide-react"
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination"
+import { FileIcon as FilePdf, FileText, PieChart as PieChartIcon, Package } from "lucide-react"
 import {  exportToPdf, exportToCsv } from "@/lib/export-utils"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts"
 import { StaggerContainer, StaggerItem, AnimatedCard } from "@/components/ui/animations"
 import { cn } from "@/lib/utils"
 
 const surfaceCardClass = cn(
-  "relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl",
-  "dark:border-slate-800/60 dark:bg-slate-950/50",
+  "relative overflow-hidden border-slate-200/60 shadow-sm backdrop-blur-xl",
+  "dark:border-slate-800/20 dark:bg-slate-900/5",
 )
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#8dd1e1', '#a4de6c', '#d0ed57'];
@@ -26,6 +35,8 @@ export function ReporteGeneral() {
   const { data: productos, isLoading: isLoadingProductos } = useGetProductosQuery()
   const { data: categorias } = useGetCategoriasQuery()
   const [filtroCategoria, setFiltroCategoria] = useState<string>("todas")
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
 
   // Filtrar productos considerando que categorias puede estar cargando
   const productosFiltrados = useMemo(() => productos?.filter((producto) => {
@@ -39,6 +50,21 @@ export function ReporteGeneral() {
   const totalProductos = productosFiltrados?.length || 0
   const valorTotal = productosFiltrados?.reduce((sum, producto) => sum + producto.precioCosto * producto.stock, 0) || 0
   const valorVenta = productosFiltrados?.reduce((sum, producto) => sum + producto.precioVenta * producto.stock, 0) || 0
+
+  // Paginación
+  const totalPages = Math.ceil(productosFiltrados.length / pageSize)
+  const startIndex = (currentPage - 1) * pageSize
+  const endIndex = startIndex + pageSize
+  const productosPaginados = productosFiltrados.slice(startIndex, endIndex)
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page)
+  }
+
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size)
+    setCurrentPage(1)
+  }
 
   const valorPorCategoria = useMemo(() => {
     if (!productos || !categorias) return [];
@@ -222,9 +248,9 @@ export function ReporteGeneral() {
                   )}
                 </div>
               ) : (
-                <Table>
+                <Table className={surfaceCardClass}>
                   <TableHeader className="bg-muted/50">
-                    <TableRow>
+                    <TableRow className={surfaceCardClass}>
                       <TableHead>Producto</TableHead>
                       <TableHead>Categoría</TableHead>
                       <TableHead className="text-right">Stock</TableHead>
@@ -235,8 +261,8 @@ export function ReporteGeneral() {
                       <TableHead className="text-right">Valor Venta</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
-                    {productosFiltrados?.map((producto) => {
+                  <TableBody className={surfaceCardClass}>
+                    {productosPaginados?.map((producto) => {
                       const categoriaNombre = categorias?.find((c) => c.catId === producto.categoriaId || c.catId === producto.categoria?.catId)?.nombre || "Sin categoría"
                       return (
                       <TableRow key={producto.id} className="hover:bg-muted/50 transition-colors">
@@ -276,6 +302,90 @@ export function ReporteGeneral() {
           </CardContent>
         </Card>
         </AnimatedCard>
+
+        {/* Paginación */}
+        {totalPages > 1 && (
+          <div className="flex flex-col items-center justify-between gap-4 border-t px-4 py-4 md:flex-row">
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Filas por página:</span>
+              <Select
+                value={String(pageSize)}
+                onValueChange={(value) => handlePageSizeChange(Number(value))}
+              >
+                <SelectTrigger className="h-8 w-[70px]">
+                  <SelectValue placeholder={pageSize} />
+                </SelectTrigger>
+                <SelectContent side="top">
+                  {[5, 10, 20, 50].map((size) => (
+                    <SelectItem key={size} value={String(size)}>
+                      {size}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+              <span>
+                Página {currentPage} de {totalPages}
+              </span>
+              <span className="ml-2">
+                ({startIndex + 1}-{Math.min(endIndex, productosFiltrados.length)} de {productosFiltrados.length})
+              </span>
+            </div>
+
+            <Pagination className="justify-end">
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                    disabled={currentPage === 1}
+                  />
+                </PaginationItem>
+                
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                  const showPage = totalPages <= 7 || page === 1 || page === totalPages || (page >= currentPage - 1 && page <= currentPage + 1)
+                  
+                  if (!showPage && page === currentPage - 2) {
+                    return (
+                      <PaginationItem key="ellipsis-start">
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    )
+                  }
+                  if (!showPage && page === currentPage + 2) {
+                    return (
+                      <PaginationItem key="ellipsis-end">
+                        <PaginationEllipsis />
+                      </PaginationItem>
+                    )
+                  }
+                  
+                  if (showPage) {
+                    return (
+                      <PaginationItem key={page}>
+                        <PaginationLink
+                          onClick={() => handlePageChange(page)}
+                          isActive={currentPage === page}
+                        >
+                          {page}
+                        </PaginationLink>
+                      </PaginationItem>
+                    )
+                  }
+                  return null
+                })}
+
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                    disabled={currentPage === totalPages}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        )}
       </StaggerItem>
     </StaggerContainer>
   )

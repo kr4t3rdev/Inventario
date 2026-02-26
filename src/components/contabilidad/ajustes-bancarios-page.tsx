@@ -26,7 +26,7 @@ import { HistorialAjustesTable } from './historial-ajustes-table';
 
 const surfaceCardClass = cn(
   'relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl',
-  'dark:border-slate-800/60 dark:bg-slate-950/50',
+  'dark:border-slate-800/60 dark:bg-slate-700/10',
 );
 
 /**
@@ -93,7 +93,7 @@ export function AjustesBancariosPage() {
         </div>
         <Badge
           variant="outline"
-          className="w-fit border-slate-300 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-900/70 dark:text-slate-200"
+          className="w-fit border-slate-300 bg-slate-100 text-slate-700 dark:border-slate-700 dark:bg-slate-900/10 dark:text-slate-200"
         >
           <Settings className="mr-1.5 h-3.5 w-3.5" />
           Proceso controlado
@@ -155,7 +155,7 @@ export function AjustesBancariosPage() {
 
       <motion.div variants={itemVariants}>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2 rounded-xl bg-slate-100/80 p-1 dark:bg-slate-900/70">
+          <TabsList className="grid w-full grid-cols-2 rounded-xl bg-slate-100/80 p-1 dark:bg-slate-900/10">
             <TabsTrigger value="nuevo" className="flex items-center gap-2">
               <Plus className="h-4 w-4" />
               Nuevo ajuste

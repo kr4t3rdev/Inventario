@@ -248,33 +248,33 @@ export function AppSidebar2({
           //     },
           //   ],
           // },
-           {
-             title: "Servicios Reparacion",
-             url: "/busy/reparaciones/ordenes",
-             icon: Wrench,
-             subItems: [
-              {
-                title: "Órdenes de Reparación",
-                url: "/busy/reparaciones/ordenes",
-                icon: ClipboardList,
-              },
-              {
-                title: "Historial Series",
-                url: "/busy/reparaciones/historial",
-                icon: History,
-              },
-              {
-                title: "Dashboard Técnicos",
-                url: "/busy/reparaciones/tecnicos",
-                icon: Users,
-              },
-              {
-                title: "Configuración",
-                url: "/busy/reparaciones",
-                icon: Settings,
-              },
-             ]
-           },
+          //  {
+          //    title: "Servicios Reparacion",
+          //    url: "/busy/reparaciones/ordenes",
+          //    icon: Wrench,
+          //    subItems: [
+          //     {
+          //       title: "Órdenes de Reparación",
+          //       url: "/busy/reparaciones/ordenes",
+          //       icon: ClipboardList,
+          //     },
+          //     {
+          //       title: "Historial Series",
+          //       url: "/busy/reparaciones/historial",
+          //       icon: History,
+          //     },
+          //     {
+          //       title: "Dashboard Técnicos",
+          //       url: "/busy/reparaciones/tecnicos",
+          //       icon: Users,
+          //     },
+          //     {
+          //       title: "Configuración",
+          //       url: "/busy/reparaciones",
+          //       icon: Settings,
+          //     },
+          //    ]
+          //  },
            {
             title: "Contratos",
             url: "/busy/contratos",
@@ -552,7 +552,7 @@ export function AppSidebar2({
                   </span>
                 </Link>
               </SidebarHeader>
-              <SidebarSeparator className="mx-3 mb-1" />
+              <SidebarSeparator className="mx-0.5 mb-0.5" />
             </motion.div>
           )}
         </AnimatePresence>
@@ -594,7 +594,7 @@ export function AppSidebar2({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: shouldReduceMotion ? 0 : 0.22, ease: "easeOut" as const }}
         >
-          <SidebarSeparator className="mx-3 mt-1" />
+          <SidebarSeparator className="mx-0.5 mt-1" />
           <SidebarFooter className="p-3 pt-2 group-data-[collapsible=icon]:p-1">
              <NavUser />
           </SidebarFooter>

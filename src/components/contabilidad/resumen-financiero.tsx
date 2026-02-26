@@ -307,7 +307,7 @@ export function ResumenFinanciero({
 
         <div className="grid gap-6 md:grid-cols-3">
           {[1, 2, 3].map((i) => (
-            <Card key={i} className="overflow-hidden border-slate-200/60 bg-white/50 dark:border-slate-800/60 dark:bg-slate-950/50">
+            <Card key={i} className="overflow-hidden border-slate-200/60  dark:border-slate-800/60 ">
               <CardContent className="p-6">
                 <div className="flex justify-between items-start mb-4">
                   <Skeleton className="h-12 w-12 rounded-xl" />
@@ -327,7 +327,7 @@ export function ResumenFinanciero({
 
         <div className="grid gap-6 md:grid-cols-3">
           {[1, 2, 3].map((i) => (
-            <Card key={i} className="h-full border-slate-200/60 bg-white/60 dark:border-slate-800/60 dark:bg-slate-900/40">
+            <Card key={i} className="h-full border-slate-200/60  dark:border-slate-800/60 ">
               <CardContent className="p-5 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <Skeleton className="h-10 w-10 rounded-lg" />
@@ -485,7 +485,7 @@ export function ResumenFinanciero({
 
         <div className="flex flex-wrap items-center gap-3">
           {periodoResumen && (
-            <Badge variant="outline" className="h-9 px-3 gap-2 border-slate-200 bg-white/50 dark:border-slate-800 dark:bg-slate-900/50">
+            <Badge variant="outline" className="h-9 px-3 gap-2 border-slate-200  dark:border-slate-800 ">
               <Calendar className="h-3.5 w-3.5 text-slate-500" />
               {periodoResumen}
             </Badge>
@@ -514,7 +514,7 @@ export function ResumenFinanciero({
                   <TooltipTrigger asChild>
                     <Card className={cn(
                       "relative overflow-hidden border-0 shadow-lg h-full cursor-help",
-                      "bg-white dark:bg-slate-950",
+                      
                       "transition-all duration-300"
                     )}>
                       {/* Background Gradient */}
@@ -577,7 +577,7 @@ export function ResumenFinanciero({
           
           return (
             <motion.div key={stat.label} whileHover={{ scale: 1.02 }} className="h-full">
-              <Card className="h-full border-slate-200/60 bg-white/60 dark:border-slate-800/60 dark:bg-slate-900/40 backdrop-blur-sm">
+              <Card className="h-full border-slate-200/60 bg-white/60 dark:border-slate-800/60 dark:bg-slate-900/20 backdrop-blur-sm">
                 <CardContent className="p-5 flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     <div className={cn("p-2.5 rounded-lg", style.icon)}>

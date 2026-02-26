@@ -59,13 +59,13 @@ interface TransferenciasTableProps {
 
 const surfaceCardClass = cn(
   'relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl',
-  'dark:border-slate-800/60 dark:bg-slate-950/50',
+  'dark:border-slate-800/60 dark:bg-slate-900/10',
 );
 
 const inputClass = cn(
   'bg-white/50 text-slate-900 placeholder:text-slate-400 transition-all duration-300',
   'border-slate-200/60 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/40',
-  'dark:bg-slate-950/50 dark:text-slate-100 dark:border-slate-800/60 dark:focus:bg-slate-950',
+  'dark:bg-slate-900/10 dark:text-slate-100 dark:border-slate-800/60 dark:focus:bg-slate-950',
 );
 
 export function TransferenciasTable({ 

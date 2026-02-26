@@ -179,6 +179,9 @@ export interface ProductInstanceParams {
   }
   newCostPrice?: number
   newSellingPrice?: number
+  // Force options for manual selection
+  forceNewInstance?: boolean
+  forceSumStock?: boolean
 }
 
 /**
@@ -210,15 +213,57 @@ export type ProductInstanceResult =
     }
 
 /**
- * Determines if a new product instance is needed based on price changes
+ * Determines if a new product instance is needed based on price changes or user selection
  * 
  * @param params - Product instance parameters
  * @returns ProductInstanceResult indicating if new instance is needed and the data
  */
 export function determineProductInstanceNeed(params: ProductInstanceParams): ProductInstanceResult {
-  const { currentProduct, newCostPrice, newSellingPrice } = params
+  const { currentProduct, newCostPrice, newSellingPrice, forceNewInstance, forceSumStock } = params
   
-  // Check if prices are actually changing
+  // If user explicitly selected new instance, respect that choice
+  if (forceNewInstance) {
+    // Determine the reason
+    const costPriceChanged = newCostPrice !== undefined && newCostPrice !== currentProduct.precioCosto
+    const sellingPriceChanged = newSellingPrice !== undefined && newSellingPrice !== currentProduct.precioVenta
+    
+    let reason: 'cost_price_changed' | 'selling_price_changed' | 'both_prices_changed' = 'cost_price_changed'
+    if (costPriceChanged && sellingPriceChanged) {
+      reason = 'both_prices_changed'
+    } else if (sellingPriceChanged) {
+      reason = 'selling_price_changed'
+    }
+    
+    // Create new instance data with updated prices
+    const newInstanceData = {
+      nombre: currentProduct.nombre,
+      descripcion: currentProduct.descripcion,
+      precioCosto: newCostPrice ?? currentProduct.precioCosto,
+      precioVenta: newSellingPrice ?? currentProduct.precioVenta,
+      stock: 0,
+      fotos: currentProduct.fotos,
+      categoriaId: currentProduct.categoriaId,
+      unidadId: currentProduct.unidadId,
+      vendorId: currentProduct.vendorId,
+      almacenId: currentProduct.almacenId,
+      puntoDeVentaId: currentProduct.puntoDeVentaId,
+    }
+    
+    return {
+      needsNewInstance: true,
+      reason,
+      newInstanceData
+    }
+  }
+  
+  // If user explicitly selected sum stock, respect that choice
+  if (forceSumStock) {
+    return {
+      needsNewInstance: false
+    }
+  }
+  
+  // Original behavior: determine based on price changes
   const costPriceChanged = newCostPrice !== undefined && newCostPrice !== currentProduct.precioCosto
   const sellingPriceChanged = newSellingPrice !== undefined && newSellingPrice !== currentProduct.precioVenta
   
@@ -303,6 +348,9 @@ export interface ProductInstanceCreationWorkflow {
   restockQuantity: number
   newCostPrice?: number
   newSellingPrice?: number
+  // Force options for manual selection
+  forceNewInstance?: boolean
+  forceSumStock?: boolean
 }
 
 /**
@@ -339,16 +387,18 @@ export interface ProductInstanceCreationResult {
 export function executeProductInstanceCreationWorkflow(
   workflow: ProductInstanceCreationWorkflow
 ): ProductInstanceCreationResult {
-  const { currentProduct, restockQuantity, newCostPrice, newSellingPrice } = workflow
+  const { currentProduct, restockQuantity, newCostPrice, newSellingPrice, forceNewInstance, forceSumStock } = workflow
   
   // Validate inputs
   validateRestockInput(restockQuantity, newCostPrice, newSellingPrice)
   
-  // Determine if new instance is needed
+  // Determine if new instance is needed (pass force parameters)
   const instanceResult = determineProductInstanceNeed({
     currentProduct,
     newCostPrice,
-    newSellingPrice
+    newSellingPrice,
+    forceNewInstance,
+    forceSumStock
   })
   
   // Calculate weighted averages for the original product

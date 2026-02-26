@@ -52,7 +52,7 @@ interface TransferenciaBancariaFormProps {
 
 const surfaceCardClass = cn(
   'w-full border-slate-200/60 bg-white/80 shadow-sm backdrop-blur-xl',
-  'dark:border-slate-800/60 dark:bg-slate-950/60',
+  'dark:border-slate-800/60 dark:bg-slate-900/10',
 );
 
 const labelClass = cn(
@@ -63,14 +63,14 @@ const labelClass = cn(
 const inputClass = cn(
   'bg-white/50 text-slate-900 placeholder:text-slate-400 transition-all duration-300',
   'border-slate-200/60 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/40',
-  'dark:bg-slate-950/50 dark:text-slate-100 dark:border-slate-800/60 dark:focus:bg-slate-950',
+  'dark:bg-slate-900/10 dark:text-slate-100 dark:border-slate-800/60 dark:focus:bg-slate-950',
 );
 
 const outlineButtonClass = cn(
   'border-slate-200/70 bg-white/50 text-slate-700 shadow-sm transition-all duration-300',
   'hover:bg-white hover:border-blue-500/40 hover:text-blue-600 hover:shadow-md',
-  'dark:border-slate-800/60 dark:bg-slate-950/50 dark:text-slate-200',
-  'dark:hover:bg-slate-950 dark:hover:border-blue-400/40 dark:hover:text-blue-400',
+  'dark:border-slate-800/60 dark:bg-slate-900/10 dark:text-slate-200',
+  'dark:hover:bg-slate-900/10 dark:hover:border-blue-400/40 dark:hover:text-blue-400',
 );
 
 export function TransferenciaBancariaForm({ onSuccess, onCancel }: TransferenciaBancariaFormProps) {

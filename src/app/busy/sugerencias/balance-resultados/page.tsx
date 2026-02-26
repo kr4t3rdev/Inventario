@@ -51,7 +51,7 @@ interface FinancialData {
 }
 
 // Common styles for "surface" cards to match other pages
-const surfaceCardClass = "bg-white/80 dark:bg-slate-950/50 backdrop-blur-xl border-slate-200/60 dark:border-slate-800/60 shadow-sm"
+const surfaceCardClass = "bg-white/80 dark:bg-slate-900/10 backdrop-blur-xl border-slate-200/60 dark:border-slate-800/60 shadow-sm"
 
 export default function BalanceResultadosPage() {
   const [year, setYear] = useState<string>(new Date().getFullYear().toString())

@@ -50,14 +50,14 @@ export function CapitalTable() {
     return (
       <div className="space-y-4">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="h-16 w-full bg-slate-100 dark:bg-slate-800 rounded animate-pulse" />
+          <div key={i} className="h-16 w-full bg-slate-100 dark:bg-slate-800/10 rounded animate-pulse" />
         ))}
       </div>
     )
   }
 
   return (
-    <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-sm">
+    <Card className="border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/10 shadow-sm">
       <CardHeader>
         <CardTitle>Historial de Transacciones</CardTitle>
         <CardDescription>
@@ -68,7 +68,7 @@ export function CapitalTable() {
         <div className="rounded-md border border-slate-200 dark:border-slate-800">
           <Table>
             <TableHeader>
-              <TableRow className="bg-slate-50 dark:bg-slate-900/50 hover:bg-slate-50 dark:hover:bg-slate-900/50">
+              <TableRow className="bg-slate-50 dark:bg-slate-900/20 hover:bg-slate-50 dark:hover:bg-slate-900/50">
                 <TableHead>Fecha</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead>Entidad / Socio</TableHead>

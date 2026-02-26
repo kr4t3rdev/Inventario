@@ -49,7 +49,7 @@ const ReporteVentaDiaria = dynamic(
 const EASE_OUT = [0.16, 1, 0.3, 1] as const;
 const surfaceCardClass = cn(
   'relative overflow-hidden rounded-2xl border border-slate-200/60 bg-white/75 shadow-sm backdrop-blur-xl',
-  'dark:border-slate-800/60 dark:bg-slate-950/50',
+  'dark:border-slate-800/60 dark:bg-slate-900/10',
 );
 const statusBadgeClass = cn(
   'border border-emerald-200/80 bg-emerald-50/80 text-emerald-700',
@@ -97,7 +97,7 @@ export default function VentaDiariaPage() {
       <SidebarInset className='bg-background'>
         <PageTransition className='space-y-8 p-8'>
           <div className='pointer-events-none absolute inset-0 -z-10 overflow-hidden'>
-            <div className='absolute inset-0 bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950' />
+            <div className='absolute inset-0 bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950/10 dark:via-slate-900/10 dark:to-slate-950/10' />
             <div className='absolute -top-24 right-[-8%] h-72 w-72 rounded-full bg-emerald-500/10 blur-3xl' />
             <div className='absolute bottom-0 left-[-8%] h-72 w-72 rounded-full bg-blue-500/10 blur-3xl' />
           </div>

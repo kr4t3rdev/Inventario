@@ -43,7 +43,7 @@ const ExchangeManager = dynamic(
 const EASE_OUT = [0.16, 1, 0.3, 1] as const;
 const surfaceCardClass = cn(
   'relative overflow-hidden rounded-2xl border border-slate-200/60 bg-white/75 shadow-sm backdrop-blur-xl',
-  'dark:border-slate-800/60 dark:bg-slate-950/50',
+  'dark:border-slate-800/60 dark:bg-slate-900/10',
 );
 const statusBadgeClass = cn(
   'border border-blue-200/80 bg-blue-50/80 text-blue-700',

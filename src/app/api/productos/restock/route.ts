@@ -34,7 +34,11 @@ export async function POST(request: NextRequest) {
       return RestockApiErrorHandler.handleValidationErrors(validation.errors || [])
     }
 
-    const { productoId, cantidad, precioCosto, precioVenta, descripcion, numeroFactura, facturaUrl, formaPago, estado, moneda, tasaCambio, montoConvertido, monedaOriginal, montoOriginal, cuentaId: cuentaIdParam } = validation.data!
+    const { productoId, cantidad, precioCosto, precioVenta, descripcion, numeroFactura, facturaUrl, formaPago, estado, moneda, tasaCambio, montoConvertido, monedaOriginal, montoOriginal, cuentaId: cuentaIdParam, tipoRestock } = validation.data!
+
+    // Determine force parameters based on tipoRestock
+    const forceNewInstance = tipoRestock === 'nueva_instancia'
+    const forceSumStock = tipoRestock === 'sumar_stock'
 
     // Verify product exists and validate business rules
     const producto = await prisma.producto.findUnique({
@@ -76,6 +80,8 @@ export async function POST(request: NextRequest) {
       restockQuantity: cantidad,
       newCostPrice: precioCosto,
       newSellingPrice: precioVenta,
+      forceNewInstance,
+      forceSumStock,
     })
 
     // Validate calculation results
@@ -246,7 +252,7 @@ export async function POST(request: NextRequest) {
 
           const cuentaBancaria = await tx.cuentaBancaria.findUnique({
             where: { cuentaId },
-            select: { cuentaId: true, isActive: true, moneda: true, tipoPagoId: true }
+            select: { cuentaId: true, isActive: true, moneda: true }
           })
 
           if (!cuentaBancaria || !cuentaBancaria.isActive) {
@@ -257,16 +263,13 @@ export async function POST(request: NextRequest) {
             )
           }
 
-          // Get tipoPago from account or fallback
-          let tipoPagoId = cuentaBancaria.tipoPagoId
-          if (!tipoPagoId) {
-            const tipoPago = await tx.tipoPago.findFirst({
-              where: { isActive: true },
-              orderBy: { createdAt: 'asc' },
-              select: { tipoId: true }
-            })
-            tipoPagoId = tipoPago?.tipoId
-          }
+          // Get tipoPago for reconciliacion
+          const tipoPagoData = await tx.tipoPago.findFirst({
+            where: { isActive: true },
+            orderBy: { createdAt: 'asc' },
+            select: { tipoId: true }
+          })
+          const tipoPagoId = tipoPagoData?.tipoId
 
           // Create reconciliacionGasto for full payment
           console.log('[RESTOCK DEBUG] Creating reconciliacionGasto for PAGO_COMPLETO...')
@@ -478,7 +481,7 @@ export async function POST(request: NextRequest) {
 
           const cuentaBancaria = await tx.cuentaBancaria.findUnique({
             where: { cuentaId },
-            select: { cuentaId: true, isActive: true, moneda: true, tipoPagoId: true }
+            select: { cuentaId: true, isActive: true, moneda: true }
           })
 
           if (!cuentaBancaria || !cuentaBancaria.isActive) {
@@ -489,16 +492,13 @@ export async function POST(request: NextRequest) {
             )
           }
 
-          // Get tipoPago from account or fallback
-          let tipoPagoId = cuentaBancaria.tipoPagoId
-          if (!tipoPagoId) {
-            const tipoPago = await tx.tipoPago.findFirst({
-              where: { isActive: true },
-              orderBy: { createdAt: 'asc' },
-              select: { tipoId: true }
-            })
-            tipoPagoId = tipoPago?.tipoId
-          }
+          // Get tipoPago for reconciliacion
+          const tipoPagoData = await tx.tipoPago.findFirst({
+            where: { isActive: true },
+            orderBy: { createdAt: 'asc' },
+            select: { tipoId: true }
+          })
+          const tipoPagoId = tipoPagoData?.tipoId
 
           // Create reconciliacionGasto for full payment
           console.log('[RESTOCK DEBUG] ELSE BLOCK: Creating reconciliacionGasto for PAGO_COMPLETO...')
