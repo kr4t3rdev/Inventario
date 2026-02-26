@@ -384,17 +384,17 @@ export function AppSidebar2({
           },
           {
             title: "Analisis Estado Cuenta",
-            url: "/busy/sugerencias/analisis-cuenta-cliente",
+            url: "/busy/contabilidad/analisis-cuenta-cliente",
             icon: FileText,
           },
           {
             title: "Facturas Vencidas",
-            url: "/busy/sugerencias/facturas-vencidas",
+            url: "/busy/contabilidad/facturas-vencidas",
             icon: AlertTriangle,
           },
           {
             title: "Balance y Resultados",
-            url: "/busy/sugerencias/balance-resultados",
+            url: "/busy/contabilidad/balance-resultados",
             icon: Calculator,
           },
           {

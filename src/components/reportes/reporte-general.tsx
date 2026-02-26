@@ -26,7 +26,7 @@ import { cn } from "@/lib/utils"
 
 const surfaceCardClass = cn(
   "relative overflow-hidden border-slate-200/60 shadow-sm backdrop-blur-xl",
-  "dark:border-slate-800/20 dark:bg-slate-900/5",
+  "dark:border-slate-800/20 dark:bg-slate-900/10",
 )
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#8dd1e1', '#a4de6c', '#d0ed57'];
@@ -339,7 +339,7 @@ export function ReporteGeneral() {
                 <PaginationItem>
                   <PaginationPrevious
                     onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                    disabled={currentPage === 1}
+                    //disabled={currentPage === 1}
                   />
                 </PaginationItem>
                 
@@ -379,7 +379,7 @@ export function ReporteGeneral() {
                 <PaginationItem>
                   <PaginationNext
                     onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-                    disabled={currentPage === totalPages}
+                    //disabled={currentPage === totalPages}
                   />
                 </PaginationItem>
               </PaginationContent>

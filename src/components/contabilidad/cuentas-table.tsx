@@ -76,7 +76,6 @@ export function CuentasTable({ onEdit, onAdd }: CuentasTableProps) {
 
   const cuentas = cuentasData.cuentas || []
 
-  console.log('cuentas:', cuentas)
   // Filter cuentas based on search term and active status
   const filteredCuentas = cuentas.filter((cuenta: CuentaBancaria) => {
     const matchesSearch =

@@ -64,7 +64,7 @@ interface CuentasBancariasTableProps {
 
 const surfaceCardClass = cn(
   'relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl',
-  'dark:border-slate-800/60 dark:bg-zinc-950/10',
+  'dark:border-slate-800/60 dark:bg-zinc-900/10',
 );
 
 export function CuentasBancariasTable({

@@ -19,11 +19,11 @@ export default function NotFound() {
             component={NotFoundAnimation}
             durationInFrames={180}
             fps={30}
-            compositionWidth={800}
+            compositionWidth={600}
             compositionHeight={600}
             style={{
               width: '100%',
-              aspectRatio: '4/3',
+              aspectRatio: '10/10',
             }}
             autoPlay
             loop

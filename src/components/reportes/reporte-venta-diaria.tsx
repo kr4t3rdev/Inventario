@@ -23,7 +23,7 @@ import { AnimatedCard, StaggerContainer, StaggerItem } from "@/components/ui/ani
 
 const surfaceCardClass = cn(
   "relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl",
-  "dark:border-slate-800/60 dark:bg-slate-800/5",
+  "dark:border-slate-800/60 dark:bg-slate-900/10",
 )
 
 /**

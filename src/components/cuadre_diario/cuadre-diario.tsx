@@ -29,15 +29,15 @@ import { useGetCuadreDiarioQuery } from "@/lib/redux/services/cuadreDiarioApi"
 import { cn } from "@/lib/utils"
 
 const METODO_PAGO_MAP: Record<string, { label: string; className: string }> = {
-  efectivo: { label: "Efectivo", className: "bg-green-100 text-green-800" },
-  tarjeta: { label: "Tarjeta", className: "bg-blue-100 text-blue-800" },
-  transferencia: { label: "Transferencia", className: "bg-sky-100 text-sky-800" },
-  credito: { label: "Crédito", className: "bg-orange-100 text-orange-800" }
+  efectivo: { label: "Efectivo", className: "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800" },
+  tarjeta: { label: "Tarjeta", className: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800" },
+  transferencia: { label: "Transferencia", className: "bg-sky-100 text-sky-800 border-sky-200 dark:bg-sky-900/30 dark:text-sky-300 dark:border-sky-800" },
+  credito: { label: "Crédito", className: "bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800" }
 }
 
 const surfaceCardClass = cn(
-  "relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl",
-  "dark:border-slate-800/60 dark:bg-slate-900/10",
+  'relative overflow-hidden rounded-2xl border border-slate-200/60 bg-white/75 shadow-sm backdrop-blur-xl',
+  'dark:border-slate-800/60 dark:bg-slate-900/10',
 )
   
 interface CuadreDiarioFinancieroProps {
@@ -299,7 +299,7 @@ export function CuadreDiarioFinanciero({
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">{formatCurrency(resumen.totalIngresos)}</div>
-            <Badge className="text-xs border-green-700 mt-2.5 flex flex-col text-green-600" variant='outline'>
+            <Badge className="text-xs border-green-700 mt-2.5 flex flex-col text-green-600 dark:text-green-400" variant='outline'>
                 <p> Ventas: {formatCurrency(resumen.totalVentas)}</p>
                 <p> Servicios: {formatCurrency(resumen.totalServicios)}</p>
             </Badge>
@@ -312,7 +312,7 @@ export function CuadreDiarioFinanciero({
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">{formatCurrency(resumen.totalGastos)}</div>
-            <Badge className="text-xs flex flex-col mt-2.5 border-red-700 text-red-500" variant='outline'>
+            <Badge className="text-xs flex flex-col mt-2.5 border-red-700 text-red-500 dark:text-red-400" variant='outline'>
                 <p> DE: {formatCurrency(resumen.totalGastosDE)}</p>
                 <p> Compras: {formatCurrency(resumen.totalGastosCompra)}</p>
                 <p> Salarios: {formatCurrency(resumen.totalGastosSalarios)}</p>
@@ -328,7 +328,7 @@ export function CuadreDiarioFinanciero({
             <div className={`text-2xl font-bold ${resumen.diferencia >= 0 ? 'text-green-600' : 'text-red-600'}`}>
               {formatCurrency(resumen.diferencia)}
             </div>
-            <Badge className={`text-xs ${resumen.variacionPorcentual >= 0 ? 'text-green-600' : 'text-red-600'} border border-green-600`} variant='outline'>
+            <Badge className={`text-xs ${resumen.variacionPorcentual >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'} border border-green-600 dark:border-green-700`} variant='outline'>
               {resumen.variacionPorcentual >= 0 ? '+' : ''}{resumen.variacionPorcentual.toFixed(1)}% vs ayer
             </Badge>
           </CardContent>
@@ -340,7 +340,7 @@ export function CuadreDiarioFinanciero({
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-yellow-600">{ventas.length}</div>
-            <Badge className="text-xs mt-2.5 flex flex-col text-yellow-600 border-yellow-600" variant='outline'>
+            <Badge className="text-xs mt-2.5 flex flex-col text-yellow-600 dark:text-yellow-400 border-yellow-600" variant='outline'>
               <p>
               {gastos.length} movimientos de caja
              </p>
@@ -391,7 +391,7 @@ export function CuadreDiarioFinanciero({
               </div>
               <div className="rounded-md border">
                 <Table>
-                  <TableHeader>
+                  <TableHeader className="bg-slate-50/80 dark:bg-slate-900/50">
                     <TableRow>
                       <TableHead>ID</TableHead>
                       <TableHead>Hora</TableHead>
@@ -461,7 +461,7 @@ export function CuadreDiarioFinanciero({
             <CardContent>
               <div className="rounded-md border">
                 <Table>
-                  <TableHeader>
+                  <TableHeader className="bg-slate-50/80 dark:bg-slate-900/50">
                     <TableRow>
                       <TableHead>Hora</TableHead>
                       <TableHead>Tipo</TableHead>
@@ -500,13 +500,13 @@ export function CuadreDiarioFinanciero({
               </div>
               <div className="grid grid-cols-2 gap-4 mt-4">
                 <div className="rounded-lg bg-emerald-50/90 p-4 dark:bg-emerald-900/20">
-                  <p className="text-sm text-green-800 font-medium">Total Entradas</p>
+                  <p className="text-sm text-green-800 font-medium dark:text-green-300">Total Entradas</p>
                   <p className="text-2xl font-bold text-green-600">
                     {formatCurrency(totalEntradas)}
                   </p>
                 </div>
                 <div className="rounded-lg bg-red-50/90 p-4 dark:bg-red-900/20">
-                  <p className="text-sm text-red-800 font-medium">Total Salidas</p>
+                  <p className="text-sm text-red-800 font-medium dark:text-red-300">Total Salidas</p>
                   <p className="text-2xl font-bold text-red-600">
                     {formatCurrency(totalSalidas)}
                   </p>
@@ -527,7 +527,7 @@ export function CuadreDiarioFinanciero({
             <CardContent>
               <div className="rounded-md border">
                 <Table>
-                  <TableHeader>
+                  <TableHeader className="bg-slate-50/80 dark:bg-slate-900/50">
                     <TableRow>
                       <TableHead>Método de Pago</TableHead>
                       <TableHead className="text-right">Transacciones</TableHead>

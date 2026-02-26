@@ -14,7 +14,7 @@ echo "============================================"
 # Configuración por defecto
 ADMIN_EMAIL="${1:-admin@tcp.com}"
 ADMIN_NAME="${2:-Administrador}"
-ADMIN_PASSWORD="${3:-Soyelamo32+!}"
+ADMIN_PASSWORD="${3:-Soyelamo32++}"
 
 echo ""
 echo "Datos del administrador:"
@@ -34,7 +34,7 @@ CONTAINER_NAME=""
 if docker ps --format "{{.Names}}" | grep -q "tcp-sistema"; then
     CONTAINER_NAME="tcp-sistema"
 elif docker ps --format "{{.Names}}" | grep -q "inventario-app"; then
-    CONTAINER_NAME="inventario-app"
+    CONTAINER_NAME="tcp-sistema"
 else
     echo "Error: No hay contenedor de la aplicación corriendo"
     echo "Inicie el sistema primero con: ./start-system.sh"
@@ -76,7 +76,7 @@ else
 fi
 
 # Ejecutar SQL con password
-docker exec -i $DB_CONTAINER psql "postgresql://inventario:inventario123@localhost:5432/inventario_db" <<EOF
+docker exec -i $DB_CONTAINER psql "postgresql://inventario:Soyelamo32++@localhost:5432/inventario_db" <<EOF
 -- Crear usuario administrador o actualizar si existe
 INSERT INTO "User" (
     "userId",
@@ -110,7 +110,7 @@ EOF
 # Verificar que se creó
 echo ""
 echo "Verificando usuario..."
-docker exec -i $DB_CONTAINER psql "postgresql://inventario:inventario123@localhost:5432/inventario_db" -c "
+docker exec -i $DB_CONTAINER psql "postgresql://inventario:Soyelamo32++@localhost:5432/inventario_db" -c "
 SELECT \"userId\", \"name\", \"email\", \"role\", \"isActive\" 
 FROM \"User\" 
 WHERE \"email\" = '${ADMIN_EMAIL}';

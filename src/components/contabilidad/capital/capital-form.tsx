@@ -110,7 +110,7 @@ export function CapitalForm({ onSuccess, onCancel }: CapitalFormProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <Card className="w-full border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 shadow-sm">
+      <Card className="w-full border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/10 shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-xl">
             Nueva Inyección de Capital

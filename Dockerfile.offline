@@ -20,11 +20,14 @@ COPY package.json pnpm-lock.yaml ./
 # Instalar todas las dependencias (esto se hace una vez con internet)
 RUN pnpm install --frozen-lockfile
 
+# Copiar solo prisma para generar el cliente
+COPY prisma ./prisma/
+
+# Generar cliente Prisma con reintentos
+RUN pnpm prisma generate || pnpm prisma generate || pnpm prisma generate
+
 # Copiar código fuente
 COPY . .
-
-# Generar cliente Prisma
-RUN pnpm prisma generate
 
 # Build
 ENV NEXT_TELEMETRY_DISABLED=1

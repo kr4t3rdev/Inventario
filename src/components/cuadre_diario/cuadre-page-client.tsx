@@ -48,11 +48,11 @@ const CuadreDiarioFinanciero = dynamic(
 const EASE_OUT = [0.16, 1, 0.3, 1] as const;
 const surfaceCardClass = cn(
   'relative overflow-hidden rounded-2xl border border-slate-200/60 bg-white/75 shadow-sm backdrop-blur-xl',
-  'dark:border-slate-800/60 dark:bg-slate-950/50',
+  'dark:border-slate-800/60 dark:bg-slate-900/10',
 );
 const statusBadgeClass = cn(
-  'border border-amber-200/80 bg-amber-50/80 text-amber-700',
-  'dark:border-amber-900/60 dark:bg-amber-900/20 dark:text-amber-300',
+  'border border-blue-200/80 bg-blue-50/80 text-blue-700',
+  'dark:border-blue-900/60 dark:bg-blue-900/20 dark:text-blue-300',
 );
 
 /**
@@ -117,8 +117,7 @@ export function CuadrePageClient() {
         <motion.div className='space-y-8 p-8' variants={fadeIn} initial='hidden' animate='show'>
           <div className='pointer-events-none absolute inset-0 -z-10 overflow-hidden'>
             <div className='absolute inset-0 bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950' />
-            <div className='absolute -top-24 right-[-8%] h-72 w-72 rounded-full bg-amber-500/10 blur-3xl' />
-            <div className='absolute bottom-0 left-[-8%] h-72 w-72 rounded-full bg-emerald-500/10 blur-3xl' />
+            <div className='absolute -top-24 right-[-10%] h-72 w-72 rounded-full bg-blue-500/10 blur-3xl' />
           </div>
 
           <motion.div variants={fadeInUp}>
@@ -142,7 +141,7 @@ export function CuadrePageClient() {
                   </Link>
                 </Button>
                 <div className='flex items-center gap-3'>
-                  <div className='rounded-xl bg-amber-100 p-2 text-amber-600 dark:bg-amber-900/30 dark:text-amber-300'>
+                  <div className='rounded-xl bg-blue-100 p-2 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300'>
                     <BriefcaseBusiness className='h-5 w-5' />
                   </div>
                   <h1 className='bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-3xl font-bold tracking-tight text-transparent dark:from-white dark:to-slate-300'>

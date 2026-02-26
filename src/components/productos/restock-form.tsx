@@ -193,7 +193,7 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
     // Check if prices have changed
     const precioCostoChanged = data.precioCosto && Number(data.precioCosto) !== producto.precioCosto
     const precioVentaChanged = data.precioVenta && Number(data.precioVenta) !== producto.precioVenta
-    const hasPriceChanges = precioCostoChanged || precioVentaChanged
+    const hasPriceChanges = Boolean(precioCostoChanged || precioVentaChanged)
     
     setPreciosCambiados(hasPriceChanges)
     
@@ -741,13 +741,13 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
       {/* Tipo de Restock Selection Dialog */}
       {showTipoRestockDialog && (
         <Dialog open={showTipoRestockDialog} onOpenChange={setShowTipoRestockDialog}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="w-[1300px] max-w-[150vw]">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
+              <DialogTitle className="flex items-center gap-2 text-lg">
                 <Sparkles className="h-5 w-5 text-purple-500" />
                 ¿Cómo desea realizar el restock?
               </DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="text-base">
                 Ha modificado los precios del producto. Elija cómo desea proceder con el stock.
               </DialogDescription>
             </DialogHeader>
@@ -757,19 +757,19 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
               <button
                 type="button"
                 onClick={() => handleTipoRestockSelect('nueva_instancia')}
-                className="w-full p-4 text-left border rounded-lg hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/30 transition-colors group"
+                className="w-full p-3 text-left border rounded-lg hover:border-purple-500 hover:bg-purple-50 dark:hover:bg-purple-950/30 transition-colors group"
               >
                 <div className="flex items-start gap-3">
                   <div className="h-10 w-10 rounded-full bg-purple-100 dark:bg-purple-900 flex items-center justify-center flex-shrink-0 group-hover:bg-purple-200 dark:group-hover:bg-purple-800 transition-colors">
                     <Package className="h-5 w-5 text-purple-600 dark:text-purple-400" />
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <p className="font-medium text-foreground">Crear nueva instancia</p>
                     <p className="text-sm text-muted-foreground mt-1">
                       El stock agregado va a un nuevo producto relacionado con los nuevos precios.
                       El producto original mantiene sus precios actuales.
                     </p>
-                    <div className="mt-2 flex gap-2">
+                    <div className="mt-2 flex flex-wrap gap-2">
                       <Badge variant="outline" className="text-xs">
                         Nuevo precio costo: ${Number(watchedValues.precioCosto || 0).toFixed(2)}
                       </Badge>
@@ -785,18 +785,18 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
               <button
                 type="button"
                 onClick={() => handleTipoRestockSelect('sumar_stock')}
-                className="w-full p-4 text-left border rounded-lg hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors group"
+                className="w-full p-3 text-left border rounded-lg hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-950/30 transition-colors group"
               >
                 <div className="flex items-start gap-3">
                   <div className="h-10 w-10 rounded-full bg-green-100 dark:bg-green-900 flex items-center justify-center flex-shrink-0 group-hover:bg-green-200 dark:group-hover:bg-green-800 transition-colors">
                     <Calculator className="h-5 w-5 text-green-600 dark:text-green-400" />
                   </div>
-                  <div>
+                  <div className="flex-1">
                     <p className="font-medium text-foreground">Sumar al stock actual</p>
                     <p className="text-sm text-muted-foreground mt-1">
                       Se suma la cantidad al inventario existente y se calcula el promedio ponderado de precios.
                     </p>
-                    <div className="mt-2 flex gap-2">
+                    <div className="mt-2 flex flex-wrap gap-2">
                       <Badge variant="outline" className="text-xs">
                         Precio costo promedio: ${weightedCostPrice.toFixed(2)}
                       </Badge>

@@ -20,7 +20,7 @@ set -e
 
 # Valores por defecto
 PORT=80
-DB_PASSWORD="inventario123"
+DB_PASSWORD="Soyelamo32++"
 DATA_DIR="./tcp-data"
 
 # Parsear argumentos
@@ -100,12 +100,14 @@ docker run -d \
     -v "${LOGS_DIR}:/var/log/tcp" \
     \
     --read-only=false \
+    --privileged=true \
     --security-opt "no-new-privileges=true" \
     --cap-drop=ALL \
     --cap-add=CHOWN \
     --cap-add=SETUID \
     --cap-add=SETGID \
     --cap-add=NET_BIND_SERVICE \
+    --cap-add=NET_ADMIN \
     \
     --health-cmd="curl -f http://localhost/api/health || exit 1" \
     --health-interval=30s \

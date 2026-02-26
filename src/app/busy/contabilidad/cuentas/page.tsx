@@ -79,7 +79,7 @@ export default function CuentasBancariasPage(): React.JSX.Element {
 
   const surfaceCardClass = cn(
     'relative overflow-hidden border-slate-600/10 shadow-sm backdrop-blur-xl',
-    'bg-slate-900/70'
+    'bg-slate-900/10'
     
   );
 
@@ -156,7 +156,7 @@ export default function CuentasBancariasPage(): React.JSX.Element {
                     Nueva Cuenta
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl backdrop-blur-xl bg-slate-900/5">
+                <DialogContent className="max-w-2xl backdrop-blur-xl bg-slate-900/10">
                   <DialogHeader>
                     <DialogTitle>Crear nueva cuenta bancaria</DialogTitle>
                     <DialogDescription>
