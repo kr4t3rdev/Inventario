@@ -86,23 +86,27 @@ export async function POST(request: NextRequest) {
       tipoReporte,
       formato,
       nombre,
+      nombreArchivo,
       descripcion,
       parametros,
       resumenEjecutivo,
       numeroAlertas,
       metricasClave,
       rutaArchivo,
+      tamanoBytes,
       tamanhoArchivo,
       generadoPor,
       reporteBaseId,
       comparacion,
     } = body;
 
-    if (!tipoReporte || !formato || !nombre || !generadoPor) {
+    const nombreFinal = nombre || nombreArchivo;
+    const generadoPorFinal = generadoPor || "system";
+    if (!tipoReporte || !formato || !nombreFinal) {
       return NextResponse.json(
         {
           success: false,
-          error: "tipoReporte, formato, nombre y generadoPor son requeridos",
+          error: "tipoReporte, formato y nombreArchivo son requeridos",
         },
         { status: 400 }
       );
@@ -112,15 +116,15 @@ export async function POST(request: NextRequest) {
       data: {
         tipoReporte,
         formato,
-        nombre,
+        nombre: nombreFinal,
         descripcion: descripcion || null,
         parametros: parametros ? JSON.stringify(parametros) : null,
         resumenEjecutivo: resumenEjecutivo || null,
         numeroAlertas: numeroAlertas || 0,
         metricasClave: metricasClave ? JSON.stringify(metricasClave) : null,
         rutaArchivo: rutaArchivo || null,
-        tamanhoArchivo: tamanhoArchivo ? parseInt(String(tamanhoArchivo)) : null,
-        generadoPor,
+        tamanhoArchivo: (tamanhoArchivo || tamanoBytes) ? parseInt(String(tamanhoArchivo || tamanoBytes)) : null,
+        generadoPor: generadoPorFinal,
         reporteBaseId: reporteBaseId || null,
         comparacion: comparacion ? JSON.stringify(comparacion) : null,
       },
@@ -129,7 +133,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       data: reporte,
-    }, { status: 201 });
+    }, { status: 200 });
   } catch (error) {
     console.error("Error al registrar reporte:", error);
     return NextResponse.json(

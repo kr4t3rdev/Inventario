@@ -1,6 +1,6 @@
 
 import { apiSlice } from "./apiSlice"
-import { Oferta } from "../../../app/models/model";
+import { FormaPagoAnticipo, Oferta } from "../../../app/models/model";
 
 export const ofertasApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
@@ -37,7 +37,20 @@ export const ofertasApi = apiSlice.injectEndpoints({
       transformResponse: (response: { oferta: Oferta }) => response.oferta,
       invalidatesTags: (result, error, { id }) => [{ type: "Ofertas", id }],
     }),
-    facturarOferta: builder.mutation<any, { id: string, puntoDeVentaId: string, empleadoId?: string, observaciones?: string, cargoTransporte?: number, serieId?: string, fechaVencimiento?: string | null, tipoVencimiento?: string }>({
+    facturarOferta: builder.mutation<any, {
+      id: string
+      puntoDeVentaId: string
+      empleadoId?: string
+      observaciones?: string
+      cargoTransporte?: number
+      serieId?: string
+      cuentaBancariaId?: string
+      fechaVencimiento?: string | null
+      tipoVencimiento?: string
+      anticipoCobroId?: string
+      formaPagoAnticipo?: FormaPagoAnticipo
+      idempotencyKey?: string
+    }>({
       query: ({ id, ...body }) => ({
         url: `/ofertas/${id}/facturar`,
         method: "POST",

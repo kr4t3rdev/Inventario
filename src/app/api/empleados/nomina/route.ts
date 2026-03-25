@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
 import { VacationAccrualService } from "@/lib/vacation-accrual-service";
+import { calculateEmployeeDeductions, calculateEmployerContributions } from "@/lib/payroll-utils";
+import { calculatePayrollFormulas, getPayrollConfig } from "@/lib/payroll-formulas";
 
 /**
  * Esquema de validación para cálculo de nómina
@@ -77,6 +79,9 @@ export async function POST(request: NextRequest) {
     const validatedData = calculatePayrollSchema.parse(body);
 
     const { periodo, employeeIds, includeVacationAccrual = true, forceRecalculate = false } = validatedData;
+    const [year, month] = periodo.split("-").map(Number);
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0);
 
     // Verificar si ya existe nómina para este período (a menos que se fuerce el recálculo)
     if (!forceRecalculate) {
@@ -132,16 +137,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Obtener configuración de nómina para el período
+    const payrollConfig = await getPayrollConfig(periodo);
+
     const payrollRecords = [];
     const vacationResults = [];
 
     for (const empleado of empleados) {
       try {
-        // Calcular horas extras y deducciones basadas en asistencia
-        const [year, month] = periodo.split('-').map(Number);
-        const startDate = new Date(year, month - 1, 1);
-        const endDate = new Date(year, month, 0); // Último día del mes
-
         // Obtener registros de asistencia del período
         const attendances = await prisma.attendance.findMany({
           where: {
@@ -170,29 +173,36 @@ export async function POST(request: NextRequest) {
 
         // Calcular salario
         const baseSalary = empleado.salarioBases;
-        const overtimePay = overtimeHours * (baseSalary / 240) * 1.5; // Asumiendo 240 horas/mes, 1.5x para extras
-        const grossSalary = baseSalary + overtimePay;
+        // Asumiendo horas mensuales estándar de 190.6 horas (promedio mensual laboral) o 24/192 como en el excel
+        // El excel muestra 24 días / 192 horas para salario completo. 192 horas.
+        const standardHours = 192; 
+        
+        const hourlyRate = baseSalary / standardHours;
+        // Si hay horas extras, se suman (asumiendo 1.0x o factor configurable, usaremos 1.0 por defecto o lo que diga el excel implícitamente)
+        // El excel no muestra cálculo explícito de horas extras con factor, solo "Devengado Real".
+        // Asumiremos Devengado Real = (Horas Trabajadas / Horas Estándar) * Salario Base
+        // Si Horas Trabajadas > Estándar, cobra más.
+        
+        const hoursWorked = totalHours > 0 ? totalHours : standardHours; // Si no hay asistencia registrada, asumir completo
+        const bonificaciones = 0;
+        const devengadoReal = (hoursWorked / standardHours) * baseSalary + bonificaciones;
 
-        const pagoSalarios = prisma.pagosalario.findMany({
-          orderBy: { createdAt: 'desc'}
-        })
-
-        const bonificaciones = Number((await pagoSalarios).find((ps: any) => ps.empleadoId === empleado.empleadoId)?.bonificaciones || 0);
-
-        // Deducciones básicas (pueden ser configurables)
-        const deductions = Math.round(grossSalary * 0.1); // 10% deducciones
-        const netSalary = grossSalary - deductions;
+        // Calcular fórmulas según Excel
+        const calculations = calculatePayrollFormulas(devengadoReal, payrollConfig);
 
         // Crear registro de nómina
         const payroll = await prisma.pagosalario.create({
           data: {
             empleadoId: empleado.empleadoId,
-            salario: baseSalary,
+            salario: Math.round(calculations.netoACobrar), 
             bonificaciones,
-            deducciones: deductions,
+            deducciones: Math.round(calculations.deducciones.total),
+            aportes: 0, // En este modelo del Excel, todo parece ser deducción al empleado
             horasExtras: Math.round(overtimeHours),
             periodo,
-            observaciones: `Horas trabajadas: ${totalHours.toFixed(2)}, Horas extras: ${overtimeHours.toFixed(2)}`
+            observaciones: `Devengado: ${devengadoReal.toFixed(2)}, Vacaciones (9.09%): ${calculations.vacaciones.toFixed(2)}. ` +
+                           `Deducciones: 5%($${calculations.deducciones.p5.toFixed(2)}), 3%($${calculations.deducciones.p3.toFixed(2)})` +
+                           (payrollConfig.aplicar12_5y1_5 ? `, 12.5%($${calculations.deducciones.p12_5.toFixed(2)}), 1.5%($${calculations.deducciones.p1_5.toFixed(2)})` : '')
           },
           include: {
             empleado: {

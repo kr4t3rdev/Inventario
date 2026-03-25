@@ -2,6 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest } from 'next/server'
 import { POST } from '../route'
 
+vi.mock('@/lib/auth-middleware', () => ({
+  withAuth: (handler: any) => async (request: NextRequest, context: any) =>
+    handler(request, context, { userId: 'test-user', role: 'admin' })
+}))
+
 // Mock Prisma
 vi.mock('@/lib/prisma', () => ({
   default: {

@@ -606,7 +606,7 @@ describe('Restock API - Transaction Handling', () => {
                 },
             })
 
-            const updatedProduct = { ...mockProduct, precioCosto: 105, precioVenta: 155 }
+            const updatedProduct = { ...mockProduct }
             const newInstance = {
                 id: 'prod2',
                 nombre: 'Test Product',

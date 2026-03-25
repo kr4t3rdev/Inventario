@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { withAuthGet, withAuthPost } from "@/lib/auth-middleware"
 import { Prisma } from "@/generated/prisma"
-import { applyFacturacionCobroWorkflow } from "@/lib/services/facturacion-ventas-workflow"
+import {
+  applyFacturacionCobroWorkflow,
+  reconciliarVentaDirecta
+} from "@/lib/services/facturacion-ventas-workflow"
+import { executeAnticipo, isAnticipoWorkflowError } from "@/lib/services/anticipos-workflow"
 
 // Function to invalidate dashboard cache after creating sales
 async function invalidateDashboardCache() {
@@ -16,6 +20,37 @@ async function invalidateDashboardCache() {
     console.error('Error invalidating dashboard cache:', error)
     // Don't throw error to avoid breaking the sale creation
   }
+}
+
+/**
+ * @description Resuelve precio de venta para un producto según lista de precio del punto de venta.
+ * @param {string | null | undefined} listaPrecioId - Lista aplicada al punto de venta.
+ * @param {string} productoId - Producto a cotizar.
+ * @param {number} precioBase - Precio base del producto.
+ * @returns {Promise<number>} Precio final para registrar la venta.
+ */
+async function resolverPrecioVenta(
+  listaPrecioId: string | null | undefined,
+  productoId: string,
+  precioBase: number,
+): Promise<number> {
+  if (!listaPrecioId) {
+    return precioBase
+  }
+
+  const precioLista = await prisma.precioProducto.findUnique({
+    where: {
+      listaPrecioId_productoId: {
+        listaPrecioId,
+        productoId,
+      },
+    },
+    select: {
+      precio: true,
+    },
+  })
+
+  return precioLista?.precio ?? precioBase
 }
 
 /**
@@ -50,7 +85,9 @@ async function crearFacturaParaVenta(
   serieId?: string,
   fechaVencimiento?: string | null,
   tipoVencimiento?: string,
-  cuentaBancariaId?: string
+  cuentaBancariaId?: string,
+  anticipoCobroId?: string,
+  idempotencyKey?: string
 ) {
   // Determinar qué serie usar
   let serie
@@ -109,17 +146,50 @@ async function crearFacturaParaVenta(
     },
   })
 
-  await applyFacturacionCobroWorkflow(tx, {
-    ventaId,
-    facturaId: factura.idFactura,
-    clienteId,
-    montoTotal: Number(total),
-    usuarioId: creadoPor,
-    observaciones,
-    tipoVencimiento,
-    fechaVencimiento,
-    cuentaBancariaId
-  })
+  if (anticipoCobroId && idempotencyKey) {
+    await executeAnticipo(
+      tx,
+      {
+        anticipoId: anticipoCobroId,
+        contexto: 'FACTURA_DIRECTA',
+        documentoDestinoId: factura.idFactura,
+        montoObjetivo: Number(total),
+        monedaObjetivo: 'CUP',
+        idempotencyKey,
+        usuarioId: creadoPor,
+        observaciones: observaciones || `Cobro anticipado aplicado a factura ${factura.idFactura}`
+      },
+      async (trx) => {
+        const reconciliacionVentaId = await reconciliarVentaDirecta(trx, {
+          ventaId,
+          montoTotal: Number(total),
+          usuarioId: creadoPor,
+          observaciones: observaciones || `Cobro anticipado factura ${factura.idFactura}`,
+          cuentaBancariaId
+        })
+        await trx.factura.update({
+          where: { idFactura: factura.idFactura },
+          data: {
+            estado: 'PAGADA',
+            fechaVencimiento: null
+          }
+        })
+        return { reconciliacionVentaId }
+      }
+    )
+  } else {
+    await applyFacturacionCobroWorkflow(tx, {
+      ventaId,
+      facturaId: factura.idFactura,
+      clienteId,
+      montoTotal: Number(total),
+      usuarioId: creadoPor,
+      observaciones,
+      tipoVencimiento,
+      fechaVencimiento,
+      cuentaBancariaId
+    })
+  }
 
   return factura
 }
@@ -133,6 +203,7 @@ export const GET = withAuthGet(async (request: NextRequest, context: any, user: 
            select: {
              id: true,
              nombre: true,
+             codigoInterno: true,
              precioVenta: true,
              precioCosto: true,
              categoria: {
@@ -177,6 +248,7 @@ export const GET = withAuthGet(async (request: NextRequest, context: any, user: 
               select: {
                 id: true,
                 nombre: true,
+                codigoInterno: true,
                 precioVenta: true,
                 precioCosto: true,
                 categoria: { select: { catId: true, nombre: true } },
@@ -202,6 +274,11 @@ export const GET = withAuthGet(async (request: NextRequest, context: any, user: 
 export const POST = withAuthPost(async (request: NextRequest, context: any, user: any) => {
   try {
     const body = await request.json()
+
+    // Venta mixta con líneas de producto + servicio (fase de transición)
+    if (body.lineas && Array.isArray(body.lineas)) {
+      return await crearVentaMixta(body, user)
+    }
      
     // Verificar si es una venta única con múltiples productos o una venta individual
     if (body.productos && Array.isArray(body.productos)) {
@@ -213,6 +290,9 @@ export const POST = withAuthPost(async (request: NextRequest, context: any, user
     }
   } catch (error) {
     console.error("Error al crear venta:", error)
+    if (isAnticipoWorkflowError(error)) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.status })
+    }
 
     const errorMessage = error instanceof Error ? error.message : ""
     const shouldReturnBadRequest =
@@ -231,6 +311,79 @@ export const POST = withAuthPost(async (request: NextRequest, context: any, user
   }
 })
 
+async function crearVentaMixta(body: any, user: any) {
+  const lineas = Array.isArray(body.lineas) ? body.lineas : []
+  const lineasProducto = lineas.filter((linea: any) => linea.tipoLinea === 'PRODUCTO')
+  const lineasServicio = lineas.filter((linea: any) => linea.tipoLinea === 'SERVICIO')
+
+  // Si solo hay servicios, registrar por módulo de servicios
+  if (lineasProducto.length === 0 && lineasServicio.length > 0) {
+    const ventasServicios = await prisma.$transaction(
+      lineasServicio.map((linea: any) =>
+        prisma.ventaServicios.create({
+          data: {
+            servicioId: linea.servicioId,
+            cantidad: linea.cantidad,
+            total: linea.cantidad * linea.precioUnitario,
+            observaciones: linea.observaciones ?? body.observaciones ?? null,
+            clienteId: body.clienteId ?? null,
+          },
+        })
+      )
+    )
+
+    await invalidateDashboardCache()
+    return NextResponse.json({
+      tipo: 'venta_mixta_servicios',
+      ventasServicios,
+      lineasProductoProcesadas: 0,
+    }, { status: 201 })
+  }
+
+  const ventaProductosResponse = await crearVentaUnica(
+    {
+      ...body,
+      productos: lineasProducto.map((linea: any) => ({
+        productoId: linea.productoId,
+        cantidad: linea.cantidad,
+      })),
+    },
+    user
+  )
+
+  if (ventaProductosResponse.status >= 400) {
+    return ventaProductosResponse
+  }
+
+  const ventaProductosData = await ventaProductosResponse.json()
+
+  const ventasServicios = lineasServicio.length > 0
+    ? await prisma.$transaction(
+        lineasServicio.map((linea: any) =>
+          prisma.ventaServicios.create({
+            data: {
+              servicioId: linea.servicioId,
+              cantidad: linea.cantidad,
+              total: linea.cantidad * linea.precioUnitario,
+              observaciones: linea.observaciones ?? body.observaciones ?? null,
+              clienteId: body.clienteId ?? null,
+            },
+          })
+        )
+      )
+    : []
+
+  await invalidateDashboardCache()
+
+  return NextResponse.json({
+    tipo: 'venta_mixta',
+    ventaProductos: ventaProductosData,
+    ventasServicios,
+    lineasProductoProcesadas: lineasProducto.length,
+    lineasServicioProcesadas: lineasServicio.length,
+  }, { status: 201 })
+}
+
 async function crearVentaUnica(body: any, user: any) {
   const {
     productos,
@@ -243,8 +396,18 @@ async function crearVentaUnica(body: any, user: any) {
     serieId,
     fechaVencimiento,
     tipoVencimiento,
-    cuentaBancariaId
+    cuentaBancariaId,
+    formaPagoAnticipo,
+    anticipoCobroId,
+    idempotencyKey
   } = body
+
+  if (anticipoCobroId && formaPagoAnticipo !== 'ANTICIPO_COBRO') {
+    return NextResponse.json(
+      { error: 'formaPagoAnticipo debe ser ANTICIPO_COBRO cuando se usa anticipo' },
+      { status: 400 }
+    )
+  }
 
   // Verificar que el punto de venta existe
   const puntoDeVenta = await prisma.puntoDeVenta.findUnique({
@@ -330,18 +493,28 @@ async function crearVentaUnica(body: any, user: any) {
   for (const item of productos) {
     const producto = await prisma.producto.findUnique({
       where: { id: item.productoId },
-      select: { precioVenta: true, nombre: true }
+      select: { id: true, precioVenta: true, nombre: true },
     })
 
     if (!producto) {
       return NextResponse.json({ error: `Producto ${item.productoId} no encontrado` }, { status: 404 })
     }
 
-    const subtotal = item.cantidad * producto.precioVenta
+    let precioAplicado: number;
+    if (item.precioVenta !== undefined && item.precioVenta !== null) {
+      precioAplicado = Number(item.precioVenta);
+    } else {
+      precioAplicado = await resolverPrecioVenta(
+        puntoDeVenta.listaPrecioId,
+        producto.id,
+        Number(producto.precioVenta),
+      );
+    }
+    const subtotal = item.cantidad * precioAplicado
     subtotalVenta += subtotal
     productosConPrecio.push({
       ...item,
-      precioVenta: producto.precioVenta,
+      precioVenta: precioAplicado,
       nombre: producto.nombre,
       subtotal
     })
@@ -416,7 +589,9 @@ async function crearVentaUnica(body: any, user: any) {
         serieId,
         fechaVencimiento,
         tipoVencimiento,
-        cuentaBancariaId
+        cuentaBancariaId,
+        anticipoCobroId,
+        idempotencyKey
       )
     }
 
@@ -439,6 +614,7 @@ async function crearVentaIndividual(body: any, user: any) {
   const {
     productoId,
     cantidad,
+    precioVenta,
     puntoDeVentaId,
     descuento,
     impuestos,
@@ -448,8 +624,18 @@ async function crearVentaIndividual(body: any, user: any) {
     serieId,
     fechaVencimiento,
     tipoVencimiento,
-    cuentaBancariaId
+    cuentaBancariaId,
+    formaPagoAnticipo,
+    anticipoCobroId,
+    idempotencyKey
   } = body
+
+  if (anticipoCobroId && formaPagoAnticipo !== 'ANTICIPO_COBRO') {
+    return NextResponse.json(
+      { error: 'formaPagoAnticipo debe ser ANTICIPO_COBRO cuando se usa anticipo' },
+      { status: 400 }
+    )
+  }
 
   // Verificar que el punto de venta existe
   const puntoDeVenta = await prisma.puntoDeVenta.findUnique({
@@ -526,7 +712,7 @@ async function crearVentaIndividual(body: any, user: any) {
   // Obtener el precio de venta del producto
   const producto = await prisma.producto.findUnique({
     where: { id: productoId },
-    select: { precioVenta: true }
+    select: { id: true, precioVenta: true },
   })
 
   if (!producto) {
@@ -534,7 +720,17 @@ async function crearVentaIndividual(body: any, user: any) {
   }
 
   // Calcular los totales de la venta
-  const subtotalVenta = cantidad * producto.precioVenta
+  let precioAplicado: number;
+  if (precioVenta !== undefined && precioVenta !== null) {
+    precioAplicado = Number(precioVenta);
+  } else {
+    precioAplicado = await resolverPrecioVenta(
+      puntoDeVenta.listaPrecioId,
+      producto.id,
+      Number(producto.precioVenta),
+    )
+  }
+  const subtotalVenta = cantidad * precioAplicado
   const descuentoNum = Number(descuento || 0)
   const impuestosNum = Number(impuestos || 0)
   const cargoTransporteNum = Number(cargoTransporte || 0)
@@ -560,7 +756,7 @@ async function crearVentaIndividual(body: any, user: any) {
             {
               productoId,
               cantidad,
-              precioUnitario: Number(producto.precioVenta),
+              precioUnitario: Number(precioAplicado),
               total: Number(subtotalVenta),
             },
           ],
@@ -609,7 +805,9 @@ async function crearVentaIndividual(body: any, user: any) {
         serieId,
         fechaVencimiento,
         tipoVencimiento,
-        cuentaBancariaId
+        cuentaBancariaId,
+        anticipoCobroId,
+        idempotencyKey
       )
     }
 

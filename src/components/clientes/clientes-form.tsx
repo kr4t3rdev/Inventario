@@ -15,7 +15,9 @@ import { Card, CardContent } from "@/components/ui/card"
 import { toast } from "sonner"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAddClienteMutation, useGetClientesQuery, useUpdateClienteMutation } from "@/lib/redux/services/ClienteApi"
+import { useGetListasPreciosQuery } from "@/lib/redux/services/listasPreciosApi"
 import { ClienteLogoUpload } from "./cliente-logo-upload"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const clienteSchema = z
   .object({
@@ -24,18 +26,20 @@ const clienteSchema = z
     }),
     direccion: z.string().optional(),
     telefono: z.string().optional(),
-    numeroCuentaCUP: z.string(),
-    numeroCuentaUSD: z.string(),
+    numeroCuentaCUP: z.string().optional(),
+    numeroCuentaUSD: z.string().optional(),
     logoUrl: z.string().optional(),
+    listaPrecioId: z.string().optional(),
   })
 
 type ClienteFormValues = {
   nombre: string
   direccion?: string
   telefono?: string
-  numeroCuentaCUP: string
-  numeroCuentaUSD: string
+  numeroCuentaCUP?: string
+  numeroCuentaUSD?: string
   logoUrl?: string
+  listaPrecioId?: string
 }
 
 interface ClienteFormProps {
@@ -48,6 +52,7 @@ interface ClienteFormProps {
     numeroCuentaUSD?: string
     numeroContrato?: string
     logoUrl?: string | null
+    listaPrecioId?: string | null
     Venta?: any[]
     ventasServicios?: any[]
     createdAt?: string
@@ -60,6 +65,7 @@ export function ClienteForm({ initialData }: ClienteFormProps) {
   const [isLoading, setIsLoading] = useState(false)
 
   const { data: cliente, isLoading: isLoadingClientes } = useGetClientesQuery()
+  const { data: listasPrecios, isLoading: isLoadingListas } = useGetListasPreciosQuery()
   
   const [ addCliente ] = useAddClienteMutation()
   const [updateCliente] = useUpdateClienteMutation()
@@ -73,11 +79,14 @@ export function ClienteForm({ initialData }: ClienteFormProps) {
       numeroCuentaCUP: initialData?.numeroCuentaCUP ?? "",
       numeroCuentaUSD: initialData?.numeroCuentaUSD ?? "",
       logoUrl: initialData?.logoUrl ?? undefined,
+      listaPrecioId: initialData?.listaPrecioId ?? "none",
     }
   })
 
   async function onSubmit(data: ClienteFormValues) {
     setIsLoading(true)
+    const payloadListaPrecioId = data.listaPrecioId === "none" ? null : data.listaPrecioId;
+
     try {
       if (initialData) {
         await updateCliente({
@@ -88,6 +97,7 @@ export function ClienteForm({ initialData }: ClienteFormProps) {
           numeroCuentaCUP: data.numeroCuentaCUP,
           numeroCuentaUSD: data.numeroCuentaUSD,
           logoUrl: data.logoUrl,
+          listaPrecioId: payloadListaPrecioId,
         } as any).unwrap()
         toast("El cliente ha sido actualizado exitosamente.")
       } else {
@@ -98,6 +108,7 @@ export function ClienteForm({ initialData }: ClienteFormProps) {
           numeroCuentaCUP: data.numeroCuentaCUP,
           numeroCuentaUSD: data.numeroCuentaUSD,
           logoUrl: data.logoUrl,
+          listaPrecioId: payloadListaPrecioId,
         } as any).unwrap()
         toast("El cliente ha sido registrado exitosamente.")
       }
@@ -336,6 +347,43 @@ export function ClienteForm({ initialData }: ClienteFormProps) {
                         />
                       </FormControl>
                       <FormDescription>Ingrese el número de cuenta en USD.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.48 }}
+              >
+                <FormField
+                  control={form.control}
+                  name="listaPrecioId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Lista de Precios</FormLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        disabled={isLoading || isLoadingListas}
+                      >
+                        <FormControl>
+                          <SelectTrigger className="transition-all duration-200 focus:scale-[1.01]">
+                            <SelectValue placeholder="Seleccionar lista de precios..." />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="none">Sin lista (usa precio sucursal/base)</SelectItem>
+                          {listasPrecios?.map((lista) => (
+                            <SelectItem key={lista.id} value={lista.id}>
+                              {lista.nombre}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>Lista de precios preferencial para este cliente.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

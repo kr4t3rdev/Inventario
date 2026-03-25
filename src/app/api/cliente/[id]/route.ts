@@ -6,7 +6,10 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
     const { id } = await context.params
     const cliente = await prisma.cliente.findUnique({
       where: { clienteId: id },
-      include: { Venta: true },
+      include: { 
+        Venta: true,
+        listaPrecio: true,
+      },
     })
 
     if (!cliente) {
@@ -24,7 +27,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   try {
     const { id } = await params;
     const body = await request.json()
-    const { nombre, numeroCuentaCUP, numeroCuentaUSD, numeroContrato, direccion, telefono } = body
+    const { nombre, numeroCuentaCUP, numeroCuentaUSD, numeroContrato, direccion, telefono, listaPrecioId } = body
 
     const cliente = await prisma.cliente.update({
       where: { clienteId: id },
@@ -35,6 +38,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         numeroCuentaCUP,
         numeroCuentaUSD,
         numeroContrato,
+        listaPrecioId,
       },
     })
 

@@ -229,6 +229,16 @@ export default function ProductosPage() {
       ),
     },
     {
+      accessorKey: "codigoInterno",
+      header: ({ column }) => (
+        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          Código interno
+          <ArrowUpDown className="text-center h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => <div className="text-center font-medium">{row.original.codigoInterno || "-"}</div>,
+    },
+    {
       accessorKey: "descripcion",
       header: "Descripción",
       cell: ({ row }) => <div className="truncate max-w-[200px]">{row.getValue("descripcion") || "-"}</div>,
@@ -793,7 +803,7 @@ export default function ProductosPage() {
               <EnhancedDataTable
                 columns={columns as ColumnDef<unknown>[]}
                 data={(datosAMostrar || []) as Producto[]}
-                searchPlaceholder="Buscar productos, categorías, subcategorías..."
+                searchPlaceholder="Buscar por código, nombre, categoría o subcategoría..."
                 isLoading={isLoadingStock}
               />
             </motion.div>

@@ -29,6 +29,16 @@ const empleadoSchema = z.object({
   cargo: z.string({
     required_error: "escriba un cargo",
   }),
+  carnetIdentidad: z.string({
+    required_error: "El carné de identidad es obligatorio",
+  }).min(11, "El carné debe tener 11 dígitos"),
+  fechaBaja: z.string().optional().refine((date) => {
+    if (!date) return true;
+    return new Date(date) <= new Date();
+  }, {
+    message: "La fecha de baja no puede ser futura",
+  }),
+  motivoBaja: z.string().optional(),
 })
 
 type EmpleadoFormValues = z.infer<typeof empleadoSchema>
@@ -40,6 +50,9 @@ type EmpleadoSubmitData = {
   cargo: string
   periodo: string
   salarioBases: number
+  carnetIdentidad?: string
+  fechaBaja?: Date | null
+  motivoBaja?: string | null
 }
 
 interface EmpleadoFormProps {
@@ -51,6 +64,9 @@ interface EmpleadoFormProps {
     periodo: string
     salarioBases: number
     cargo: string
+    carnetIdentidad?: string | null
+    fechaBaja?: string | Date | null
+    motivoBaja?: string | null
     ventas?: any[]
     PagoSalario?: any[]
     createdAt?: string
@@ -87,13 +103,23 @@ export function EmpleadoForm({ initialData }: EmpleadoFormProps) {
       apellido: initialData?.apellido || '',
       telefono: initialData?.telefono || '',
       cargo: initialData?.cargo || '',
+      carnetIdentidad: initialData?.carnetIdentidad || '',
+      fechaBaja: initialData?.fechaBaja ? new Date(initialData.fechaBaja).toISOString().split('T')[0] : '',
+      motivoBaja: initialData?.motivoBaja || '',
     },
   })
 
   async function onSubmit(data: EmpleadoFormValues) {
     setIsLoading(true)
     try {
-      const submitData: EmpleadoSubmitData = { ...data, periodo: '', salarioBases: 0 }
+      const submitData: EmpleadoSubmitData = { 
+        ...data, 
+        periodo: '', 
+        salarioBases: 0,
+        fechaBaja: data.fechaBaja ? new Date(data.fechaBaja) : null,
+        motivoBaja: data.motivoBaja || null,
+        carnetIdentidad: data.carnetIdentidad || undefined
+      }
       if (!initialData) {
         submitData.periodo = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`
         submitData.salarioBases = 0
@@ -289,6 +315,97 @@ export function EmpleadoForm({ initialData }: EmpleadoFormProps) {
                 )}
               />
             </motion.div>
+
+            <motion.div
+              custom={4}
+              variants={formFieldVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              <FormField
+                control={form.control}
+                name="carnetIdentidad"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="dark:text-slate-200">Carne de Identidad</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="text"
+                        {...field}
+                        className="dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500"
+                      />
+                    </FormControl>
+                    <FormDescription className="dark:text-slate-400">
+                      Ingrese el carne de identidad del empleado.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </motion.div>
+
+            {initialData && (
+              <div className="border-t border-slate-200 dark:border-slate-700 pt-4 mt-4">
+                <h3 className="text-lg font-medium dark:text-slate-200 mb-4">Baja del Empleado</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <motion.div
+                    custom={5}
+                    variants={formFieldVariants}
+                    initial="hidden"
+                    animate="visible"
+                  >
+                    <FormField
+                      control={form.control}
+                      name="fechaBaja"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="dark:text-slate-200">Fecha de Baja</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="date"
+                              {...field}
+                              className="dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500"
+                            />
+                          </FormControl>
+                          <FormDescription className="dark:text-slate-400">
+                            Seleccione la fecha de baja si aplica.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </motion.div>
+
+                  <motion.div
+                    custom={6}
+                    variants={formFieldVariants}
+                    initial="hidden"
+                    animate="visible"
+                  >
+                    <FormField
+                      control={form.control}
+                      name="motivoBaja"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="dark:text-slate-200">Motivo de Baja</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="text"
+                              {...field}
+                              className="dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500"
+                            />
+                          </FormControl>
+                          <FormDescription className="dark:text-slate-400">
+                            Ingrese el motivo de la baja.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </motion.div>
+                </div>
+              </div>
+            )}
 
             <motion.div
               className="flex justify-end space-x-4 pt-4"

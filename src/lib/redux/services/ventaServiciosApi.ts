@@ -20,6 +20,22 @@ interface VentaServicio {
   updatedAt?: string;
 }
 
+interface CreateVentaServicioRequest {
+  servicioId?: string;
+  clienteId?: string;
+  cantidad?: number;
+  total?: number;
+  observaciones?: string;
+  lineas?: Array<{
+    tipoLinea: 'SERVICIO' | 'PRODUCTO';
+    servicioId?: string;
+    productoId?: string;
+    cantidad: number;
+    precioUnitario: number;
+    observaciones?: string;
+  }>;
+}
+
 export const ventaServiciosApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     getVentaServicios: builder.query<VentaServicio[], void>({
@@ -41,7 +57,7 @@ export const ventaServiciosApi = apiSlice.injectEndpoints({
       providesTags: (result, error, id) => [{ type: 'VentaServicios' as const, id }]
     }),
     
-    addVentaServicio: builder.mutation<VentaServicio, Omit<VentaServicio, 'ventaServicioId'>>({
+    addVentaServicio: builder.mutation<VentaServicio, CreateVentaServicioRequest>({
       query: (ventaServicio) => ({
         url: '/venta-servicios',
         method: 'POST',

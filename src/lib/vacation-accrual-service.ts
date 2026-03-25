@@ -66,11 +66,11 @@ export class VacationAccrualService {
       );
       const diasPeriodo = this.config.mesesParaPrimerPeriodo * 30;
       
-      return Math.floor((diasTrabajados / diasPeriodo) * diasAnuales);
+      return (diasTrabajados / diasPeriodo) * diasAnuales;
     }
     
-    // Para períodos completos, usar días anuales completos
-    return diasAnuales;
+    // Para períodos completos, usar la parte proporcional mensual (1/12 del anual)
+    return diasAnuales / 12;
   }
 
   /**

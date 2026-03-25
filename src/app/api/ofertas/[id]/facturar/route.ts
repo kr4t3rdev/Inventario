@@ -4,7 +4,11 @@ import prisma from '@/lib/prisma'
 import { z } from 'zod'
 import { verify_token } from "@/lib/auth-utils"
 import { Prisma } from '@/generated/prisma'
-import { applyFacturacionCobroWorkflow } from '@/lib/services/facturacion-ventas-workflow'
+import {
+  applyFacturacionCobroWorkflow,
+  reconciliarVentaDirecta
+} from '@/lib/services/facturacion-ventas-workflow'
+import { executeAnticipo, isAnticipoWorkflowError } from '@/lib/services/anticipos-workflow'
 
 const facturarSchema = z.object({
   puntoDeVentaId: z.string().min(1, "Punto de Venta requerido"),
@@ -14,8 +18,23 @@ const facturarSchema = z.object({
   serieId: z.string().optional(),
   cuentaBancariaId: z.string().optional(),
   fechaVencimiento: z.string().nullable().optional(),
-  tipoVencimiento: z.string().optional()
-})
+  tipoVencimiento: z.string().optional(),
+  anticipoCobroId: z.string().optional(),
+  formaPagoAnticipo: z.enum(['ANTICIPO_COBRO']).optional(),
+  idempotencyKey: z.string().optional()
+}).refine(
+  (data) => (data.anticipoCobroId ? !!data.idempotencyKey : true),
+  {
+    message: 'idempotencyKey es obligatorio cuando se ejecuta cobro anticipado',
+    path: ['idempotencyKey']
+  }
+).refine(
+  (data) => (data.anticipoCobroId ? data.formaPagoAnticipo === 'ANTICIPO_COBRO' : true),
+  {
+    message: 'formaPagoAnticipo debe ser ANTICIPO_COBRO cuando se usa anticipo',
+    path: ['formaPagoAnticipo']
+  }
+)
 
 /**
  * @description Crea una factura de oferta y ejecuta workflow de cobro según vencimiento.
@@ -49,7 +68,9 @@ async function crearFacturaParaVenta(
   serieId?: string,
   fechaVencimiento?: string | null,
   tipoVencimiento?: string,
-  cuentaBancariaId?: string
+  cuentaBancariaId?: string,
+  anticipoCobroId?: string,
+  idempotencyKey?: string
 ) {
   // Determinar qué serie usar
   let serie
@@ -108,17 +129,50 @@ async function crearFacturaParaVenta(
     },
   })
 
-  await applyFacturacionCobroWorkflow(tx, {
-    ventaId,
-    facturaId: factura.idFactura,
-    clienteId,
-    montoTotal: Number(total),
-    usuarioId: creadoPor,
-    observaciones,
-    tipoVencimiento,
-    fechaVencimiento,
-    cuentaBancariaId
-  })
+  if (anticipoCobroId && idempotencyKey) {
+    await executeAnticipo(
+      tx,
+      {
+        anticipoId: anticipoCobroId,
+        contexto: 'FACTURA_OFERTA',
+        documentoDestinoId: factura.idFactura,
+        montoObjetivo: Number(total),
+        monedaObjetivo: 'CUP',
+        idempotencyKey,
+        usuarioId: creadoPor,
+        observaciones: observaciones || `Cobro anticipado aplicado a factura ${factura.idFactura}`
+      },
+      async (trx) => {
+        const reconciliacionVentaId = await reconciliarVentaDirecta(trx, {
+          ventaId,
+          montoTotal: Number(total),
+          usuarioId: creadoPor,
+          observaciones: observaciones || `Cobro anticipado factura ${factura.idFactura}`,
+          cuentaBancariaId
+        })
+        await trx.factura.update({
+          where: { idFactura: factura.idFactura },
+          data: {
+            estado: 'PAGADA',
+            fechaVencimiento: null
+          }
+        })
+        return { reconciliacionVentaId }
+      }
+    )
+  } else {
+    await applyFacturacionCobroWorkflow(tx, {
+      ventaId,
+      facturaId: factura.idFactura,
+      clienteId,
+      montoTotal: Number(total),
+      usuarioId: creadoPor,
+      observaciones,
+      tipoVencimiento,
+      fechaVencimiento,
+      cuentaBancariaId
+    })
+  }
 
   return factura
 }
@@ -217,7 +271,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           validatedData.serieId,
           validatedData.fechaVencimiento,
           validatedData.tipoVencimiento,
-          validatedData.cuentaBancariaId
+          validatedData.cuentaBancariaId,
+          validatedData.anticipoCobroId,
+          validatedData.idempotencyKey
         )
       }
 
@@ -233,6 +289,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     console.error('Error facturando oferta:', error)
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Validation error', details: error.errors }, { status: 400 })
+    }
+    if (isAnticipoWorkflowError(error)) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.status })
     }
 
     const errorMessage = error instanceof Error ? error.message : ''

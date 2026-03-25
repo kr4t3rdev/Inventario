@@ -31,10 +31,12 @@ const resultados_arbitrary = fc.record({
 })
 
 const escenario_arbitrary = fc.record({
-  nombre: fc.string({ minLength: 3, maxLength: 100 }),
+  nombre: fc.string({ minLength: 3, maxLength: 100 }).filter((value) => value.trim().length >= 3),
   descripcion: fc.option(fc.string({ minLength: 10, maxLength: 500 }), { nil: null }),
   tasas_simuladas: tasas_simuladas_arbitrary,
-  fecha_proyeccion: fc.date({ min: new Date('2024-01-01'), max: new Date('2030-12-31') }),
+  fecha_proyeccion: fc
+    .date({ min: new Date('2024-01-01'), max: new Date('2030-12-31') })
+    .filter((value) => !Number.isNaN(value.getTime())),
   resultados: resultados_arbitrary,
   alertas: fc.array(alerta_arbitrary, { minLength: 0, maxLength: 10 }),
   etiquetas: fc.array(fc.string({ minLength: 3, maxLength: 20 }), { minLength: 0, maxLength: 5 }),

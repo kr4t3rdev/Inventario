@@ -4,6 +4,7 @@ import { Producto, Categoria } from "../../../app/models/model"
 export interface ProductoConStockUbicacion {
   id:string
   nombre:string
+  codigoInterno?: string | null
   precioCosto:number
   precioVenta:number
   stock: number

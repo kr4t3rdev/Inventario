@@ -7,17 +7,27 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Calculator, DollarSign, Download, Calendar, Filter, RefreshCw, TrendingUp, Users, Wallet } from "lucide-react";
+import { Calculator, DollarSign, Download, Calendar, Filter, RefreshCw, TrendingUp, Users, Wallet, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { useGetPagoSalariosQuery } from "@/lib/redux/services/pagoSalarioApi";
 import { motion, AnimatePresence } from "framer-motion";
 import { Switch } from "@/components/ui/switch";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface PayrollRecord {
   pgId: string;
+  empleadoId: string;
   salario: number;
   bonificaciones: number;
   deducciones: number;
+  aportes?: number;
   horasExtras: number;
   observaciones: string | null;
   periodo: string;
@@ -29,6 +39,150 @@ interface PayrollRecord {
     salarioBases: number;
   };
 }
+
+function EditPayrollDialog({ 
+  open, 
+  onOpenChange, 
+  record, 
+  onSave 
+}: { 
+  open: boolean; 
+  onOpenChange: (open: boolean) => void; 
+  record: PayrollRecord | null; 
+  onSave: (id: string, updates: Partial<PayrollRecord>) => void; 
+}) {
+  const [bonificaciones, setBonificaciones] = useState(0);
+  const [deducciones, setDeducciones] = useState(0);
+  const [aportes, setAportes] = useState(0);
+  const [horasExtras, setHorasExtras] = useState(0);
+  const [netSalary, setNetSalary] = useState(0);
+
+  useEffect(() => {
+    if (record) {
+      setBonificaciones(record.bonificaciones);
+      setDeducciones(record.deducciones);
+      setAportes(record.aportes || 0);
+      setHorasExtras(record.horasExtras);
+      setNetSalary(record.salario);
+    }
+  }, [record]);
+
+  useEffect(() => {
+    if (record) {
+      // Calculate Net Salary dynamically
+      // Defaults: 240 hours/month, 1.5x overtime. 
+      // Ideally should match backend config but this is a good approximation for UI feedback
+      const hourlyRate = record.empleado.salarioBases / 240;
+      const overtimePay = horasExtras * hourlyRate * 1.5;
+      const gross = record.empleado.salarioBases + overtimePay + bonificaciones;
+      const net = gross - deducciones;
+      setNetSalary(Math.round(net));
+    }
+  }, [bonificaciones, deducciones, horasExtras, record]);
+
+  const handleSave = () => {
+    if (record) {
+      onSave(record.pgId, {
+        empleadoId: record.empleadoId,
+        bonificaciones,
+        deducciones,
+        aportes,
+        horasExtras,
+        salario: netSalary
+      });
+      onOpenChange(false);
+    }
+  };
+
+  if (!record) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Editar Nómina</DialogTitle>
+          <DialogDescription>
+            Ajustar detalles para {record.empleado.nombre} {record.empleado.apellido}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="base" className="text-right">
+              Salario Base
+            </Label>
+            <Input
+              id="base"
+              value={new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'CUP' }).format(record.empleado.salarioBases)}
+              disabled
+              className="col-span-3 bg-muted"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="horas" className="text-right">
+              Horas Extras
+            </Label>
+            <Input
+              id="horas"
+              type="number"
+              value={horasExtras}
+              onChange={(e) => setHorasExtras(Number(e.target.value))}
+              className="col-span-3"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="bonos" className="text-right">
+              Bonificaciones
+            </Label>
+            <Input
+              id="bonos"
+              type="number"
+              value={bonificaciones}
+              onChange={(e) => setBonificaciones(Number(e.target.value))}
+              className="col-span-3"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="deducciones" className="text-right">
+              Deducciones
+            </Label>
+            <Input
+              id="deducciones"
+              type="number"
+              value={deducciones}
+              onChange={(e) => setDeducciones(Number(e.target.value))}
+              className="col-span-3"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="aportes" className="text-right">
+              Aportes Patronales
+            </Label>
+            <Input
+              id="aportes"
+              type="number"
+              value={aportes}
+              onChange={(e) => setAportes(Number(e.target.value))}
+              className="col-span-3"
+            />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="neto" className="text-right font-bold">
+              Total Neto
+            </Label>
+            <div className="col-span-3 font-mono text-lg font-bold text-emerald-600">
+               {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'CUP' }).format(netSalary)}
+            </div>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
+          <Button type="submit" onClick={handleSave}>Guardar Cambios</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
 
 /**
  * Componente para visualización y cálculo de nómina con UI/UX Pro Max
@@ -44,6 +198,9 @@ export function NominaView() {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   });
+  
+  const [editingRecord, setEditingRecord] = useState<PayrollRecord | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
   // Cargar registros de nómina
   useEffect(() => {
@@ -160,6 +317,36 @@ export function NominaView() {
   const calculateAverage = () => {
     if (payrollRecords.length === 0) return 0;
     return calculateTotal() / payrollRecords.length;
+  };
+
+  const handleEdit = (record: PayrollRecord) => {
+    setEditingRecord(record);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleSaveEdit = async (id: string, updates: Partial<PayrollRecord>) => {
+    try {
+      const token = sessionStorage.getItem('token');
+      const response = await fetch(`/api/pago-salario/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
+        },
+        body: JSON.stringify(updates),
+      });
+
+      if (response.ok) {
+        const updatedRecord = await response.json();
+        setPayrollRecords(prev => prev.map(r => r.pgId === id ? { ...r, ...updatedRecord, empleado: r.empleado } : r));
+        toast.success("Registro actualizado");
+      } else {
+        toast.error("Error al actualizar");
+      }
+    } catch (error) {
+      console.error("Error updating:", error);
+      toast.error("Error al actualizar");
+    }
   };
 
   return (
@@ -304,7 +491,7 @@ export function NominaView() {
                 <TableHead className="py-4 text-red-600 dark:text-red-400">Deducciones</TableHead>
                 <TableHead className="py-4">Horas Extras</TableHead>
                 <TableHead className="py-4 text-right">Total Neto</TableHead>
-                <TableHead className="py-4 text-center">Estado</TableHead>
+                <TableHead className="py-4 text-center">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -373,9 +560,19 @@ export function NominaView() {
                         </span>
                       </TableCell>
                       <TableCell className="py-4 text-center">
-                        <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-transparent">
-                          Procesado
-                        </Badge>
+                        <div className="flex items-center justify-center gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 hover:bg-muted"
+                            onClick={() => handleEdit(record)}
+                          >
+                            <Pencil className="h-4 w-4 text-muted-foreground" />
+                          </Button>
+                          <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-transparent">
+                            Procesado
+                          </Badge>
+                        </div>
                       </TableCell>
                     </motion.tr>
                   ))
@@ -385,6 +582,13 @@ export function NominaView() {
           </Table>
         </div>
       </Card>
+      
+      <EditPayrollDialog 
+        open={isEditDialogOpen} 
+        onOpenChange={setIsEditDialogOpen} 
+        record={editingRecord} 
+        onSave={handleSaveEdit} 
+      />
     </div>
   );
 }

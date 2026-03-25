@@ -40,10 +40,10 @@ done
 # Crear directorio de logs
 mkdir -p logs
 
-# Construir imagen
+# Construir imagen para AMD64
 echo ""
-echo "[2/4] Construyendo imagen docker-tcp:latest..."
-docker build -t docker-tcp:latest -f Dockerfile.unified .
+echo "[2/4] Construyendo imagen docker-tcp:latest para AMD64..."
+docker build --platform linux/amd64 -t docker-tcp:latest -f Dockerfile.unified .
 
 # Asegurar permisos de ejecución en scripts
 echo ""
@@ -54,14 +54,14 @@ echo "  ✓ Scripts con permisos de ejecución"
 
 # Exportar imagen
 echo ""
-echo "[4/4] Exportando imagen a docker-tcp.tar..."
-docker save -o docker-tcp.tar docker-tcp:latest
+echo "[4/4] Exportando imagen a docker-tcp-amd64.tar..."
+docker save -o docker-tcp-amd64.tar docker-tcp:latest
 
 echo ""
 echo "============================================"
 echo "  ✓ Imagen creada correctamente"
 echo "============================================"
-ls -lh docker-tcp.tar
+ls -lh docker-tcp-amd64.tar
 echo ""
 echo "=== ARCHIVOS INCLUIDOS ==="
 echo "  ✓ Dockerfile.unified    - Imagen sin secrets hardcodeados"
@@ -72,8 +72,9 @@ echo "  ✓ supervisord.conf      - Gestión de procesos"
 echo ""
 echo "=== SEGURIDAD ==="
 echo "  ✓ Secrets NO incluidos en la imagen"
-echo "  ✓ Secrets se pasan en runtime via -e"
-echo "  ✓ Capacidades de Docker limitadas (--cap-drop=ALL)"
+echo "  ✓ Admin creado automáticamente en runtime"
+echo "  ✓ DATABASE_URL passado a Next.js"
+echo "  ✓ Passwords ocultos en logs"
 echo ""
 echo "=== PERSISTENCIA ==="
 echo "  ✓ Datos de BD en volumen externo"

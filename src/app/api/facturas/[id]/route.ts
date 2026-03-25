@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { withAuth } from "@/lib/auth-middleware"
 import { z } from "zod"
+import { hasUnrevertedAnticipoExecution } from "@/lib/services/anticipos-guards"
 
 // Schema para actualizar factura
 const UpdateFacturaSchema = z.object({
@@ -175,6 +176,16 @@ export const PATCH = withAuth(async (request: NextRequest, context: any, user: a
       )
     }
 
+    if (validatedData.estado === 'ANULADA') {
+      const requiresReversion = await hasUnrevertedAnticipoExecution(prisma, id)
+      if (requiresReversion) {
+        return NextResponse.json(
+          { error: 'Debe revertir el anticipo ejecutado antes de anular la factura' },
+          { status: 409 }
+        )
+      }
+    }
+
     // Preparar datos para actualizar
     const updateData: any = {}
     if (validatedData.estado !== undefined) {
@@ -235,6 +246,14 @@ export const DELETE = withAuth(async (request: NextRequest, context: any, user: 
       return NextResponse.json(
         { error: "Factura no encontrada" },
         { status: 404 }
+      )
+    }
+
+    const requiresReversion = await hasUnrevertedAnticipoExecution(prisma, id)
+    if (requiresReversion) {
+      return NextResponse.json(
+        { error: 'Debe revertir el anticipo ejecutado antes de eliminar la factura' },
+        { status: 409 }
       )
     }
 

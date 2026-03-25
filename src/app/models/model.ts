@@ -2,6 +2,13 @@ export interface Producto {
     id: string
     nombre: string
     descripcion: string | null
+    codigoInterno?: string | null
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     precioCosto: number
     precioVenta: number
     stock: number
@@ -14,6 +21,10 @@ export interface Producto {
     createdAt: string
     updatedAt: string
     almacenId: string
+    // Campos para productos compuestos
+    esCompuesto?: boolean
+    cantidadEnPack?: number | null
+    productoPadreId?: string | null
     categoria?: {
       catId: string
       nombre: string
@@ -36,6 +47,13 @@ export interface Producto {
       almacenId: string
       nombre: string
     }
+    precios?: Array<{
+      listaPrecioId: string
+      precio: number
+    }>
+    // Relaciones para productos compuestos
+    productoPadre?: Producto
+    productosHijos?: Producto[]
   }
 
 export interface Unidad {
@@ -132,6 +150,12 @@ export interface CompraProducto {
 export interface CompraProductoResponse {
   success: boolean
   producto: Producto
+  productoActualizado?: Producto
+  stockAntes?: number
+  stockDespues?: number
+  precioCostoAntes?: number
+  precioCostoDespues?: number
+  metodoCosto?: 'PRIMERA_COMPRA' | 'PONDERADO'
   compraProducto: CompraProducto
   gastoCompra?: any
   cuentaPorPagar?: any
@@ -150,6 +174,11 @@ export interface PuntoDeVenta {
   nombre: string
   ubicacion: string | null
   stockPuntoVenta: number
+  listaPrecioId?: string | null
+  listaPrecio?: {
+    id: string
+    nombre: string
+  } | null
   createdAt: string
   updatedAt: string
 }
@@ -442,6 +471,7 @@ export interface Merma {
   producto?: {
     id: string
     nombre: string
+    codigoInterno?: string | null
     precioCosto: number
   }
 }
@@ -471,9 +501,13 @@ export interface Transferencia {
   numeroTransferencia?: string | null
   createdAt: string
   updatedAt: string
+  productoCodigoInterno?: string | null
+  origenNombre?: string
+  destinoNombre?: string
   producto?: {
     id: string
     nombre: string
+    codigoInterno?: string | null
   }
   origen?: {
     almacenId?: string
@@ -713,22 +747,56 @@ export interface GastosCompra {
 export interface GastosDE {
   gastosDEId: string
   tipo: string
+  numeroFactura?: string | null
   proveedor: string
   monto: number
   descripcion: string
   periodo: string
+  isPagado?: string | null
   createdAt:   Date
   updatedAt:   Date
-
 }
 
 export interface Servicios {
   servicioId: string
   nombre: string
-  precio: number
   descripcion: string
+  precio: number
+  precioCosto?: number | null
+  precioVenta?: number | null
+  codigoInterno?: string | null
+  codigoNegocio?: string | null
+  proveedorCodigo?: string | null
+  idSeccionCodigo?: string | null
+  especificoCodigo?: string | null
+  surtidoCodigo?: string | null
+  dcCodigo?: string | null
+  categoriaId?: string | null
+  subcategoriaId?: string | null
+  unidadId?: string | null
+  vendorId?: string | null
+  activo?: boolean
+  deletedAt?: string | null
   createdAt: string
   updatedAt: string
+}
+
+export interface CompraServicio {
+  compraServicioId: string
+  servicioId: string
+  proveedorId?: string | null
+  numeroFactura?: string | null
+  costoUnitario: number
+  cantidad: number
+  total: number
+  formaPago: 'PAGO_PARCIAL' | 'PAGO_COMPLETO'
+  estado: 'PENDIENTE' | 'PAGADA'
+  descripcion?: string | null
+  fechaServicio: string
+  fechaVencimiento?: string | null
+  createdAt: string
+  updatedAt: string
+  servicio?: Servicios
 }
 export interface Currency {
   id: string
@@ -1017,6 +1085,91 @@ export interface TipoPago {
   isActive: boolean
   createdAt: string
   updatedAt: string
+}
+
+export type TipoAnticipo = 'PAGO' | 'COBRO'
+export type EstadoAnticipo = 'RESERVADO' | 'EJECUTADO' | 'ANULADO'
+export type FormaPagoAnticipo = 'ANTICIPO_PAGO' | 'ANTICIPO_COBRO'
+export type ContextoAnticipo =
+  | 'COMPRA_PRODUCTO'
+  | 'COMPRA_SERVICIO'
+  | 'FACTURA_OFERTA'
+  | 'FACTURA_DIRECTA'
+export type TipoMovimientoAnticipo = 'CREACION_RESERVA' | 'EJECUCION' | 'REVERSO' | 'ANULACION'
+
+export interface AnticipoMovimiento {
+  movimientoId: string
+  anticipoId: string
+  tipoMovimiento: TipoMovimientoAnticipo
+  contexto?: ContextoAnticipo
+  documentoDestinoId?: string
+  reconciliacionVentaId?: string
+  reconciliacionGastoId?: string
+  monto: number
+  moneda: string
+  tasaAplicada?: number
+  montoConvertido?: number
+  saldoAntes: number
+  saldoDespues: number
+  usuarioId: string
+  idempotencyKey?: string
+  observaciones?: string
+  createdAt: string
+}
+
+export interface Anticipo {
+  anticipoId: string
+  tipo: TipoAnticipo
+  estado: EstadoAnticipo
+  montoOriginal: number
+  saldoDisponible: number
+  moneda: string
+  contratoId: string
+  proveedorId?: string
+  clienteId?: string
+  cuentaOrigenId?: string
+  tipoPagoOrigenId?: string
+  referenciaExterna?: string
+  vigenciaHasta?: string
+  fechaReserva: string
+  fechaEjecucion?: string
+  createdById: string
+  createdAt: string
+  updatedAt: string
+  movimientos?: AnticipoMovimiento[]
+}
+
+export interface CreateAnticipoRequest {
+  tipo: TipoAnticipo
+  contratoId: string
+  proveedorId?: string
+  clienteId?: string
+  monto: number
+  moneda: string
+  cuentaOrigenId?: string
+  tipoPagoOrigenId?: string
+  referenciaExterna?: string
+  vigenciaHasta?: string
+}
+
+export interface ExecuteAnticipoRequest {
+  contexto: ContextoAnticipo
+  documentoDestinoId: string
+  montoObjetivo: number
+  monedaObjetivo: string
+  tasaAplicada?: number
+  idempotencyKey: string
+  observaciones?: string
+}
+
+export interface ExecuteAnticipoResponse {
+  anticipoId: string
+  estado: EstadoAnticipo
+  saldoDisponible: number
+  movimientoId: string
+  reconciliacionVentaId?: string
+  reconciliacionGastoId?: string
+  idempotentReplay: boolean
 }
 
 export interface TransferenciaBancaria {
@@ -1709,4 +1862,134 @@ export interface FacturarOrdenResponse {
 }
 
 export interface AuditLog {
+}
+
+// ============================================
+// TIPOS DE PRODUCCIÓN
+// ============================================
+
+// Enum para estados de orden de producción
+export type EstadoProduccion =
+  | 'pendiente'
+  | 'en_proceso'
+  | 'completada'
+  | 'cancelada'
+
+// Enum para estados de vale de salida
+export type EstadoValeSalida =
+  | 'pendiente'
+  | 'completada'
+  | 'anulada'
+
+// Ingrediente de receta para producción
+export interface RecetaProduccionIngrediente {
+  recetaIngredienteId: string
+  recetaId: string
+  productoId: string
+  cantidad: number
+  desperdicio: number
+  createdAt: string
+  updatedAt: string
+  producto?: Producto
+}
+
+// Receta para producción de productos
+export interface RecetaProduccion {
+  recetaId: string
+  nombre: string
+  rendimiento: number
+  costoUnitario: number
+  instrucciones: string | null
+  tiempoPrep: number | null
+  productoId: string | null
+  createdAt: string
+  updatedAt: string
+  producto?: Producto | null
+  ingredientes: RecetaProduccionIngrediente[]
+}
+
+// Orden de producción
+export interface OrdenProduccion {
+  ordenProduccionId: string
+  recetaId: string
+  cantidad: number
+  estado: EstadoProduccion
+  observaciones: string | null
+  fechaProduccion: string
+  costoMateriales: number | null
+  costoUnitario: number | null
+  createdAt: string
+  updatedAt: string
+  receta?: RecetaProduccion
+}
+
+// Historial de estados de orden de producción
+export interface OrdenProduccionHistorial {
+  historialId: string
+  ordenProduccionId: string
+  estadoAnterior: string | null
+  estadoNuevo: string
+  observaciones: string | null
+  usuarioId: string
+  createdAt: string
+}
+
+// Item de vale de salida
+export interface ValeSalidaItem {
+  valeSalidaItemId: string
+  valeSalidaId: string
+  productoId: string
+  cantidad: number
+  createdAt: string
+  updatedAt: string
+  producto?: Producto
+}
+
+// Vale de salida
+export interface ValeSalida {
+  valeSalidaId: string
+  concepto: string
+  observaciones: string | null
+  estado: EstadoValeSalida
+  createdAt: string
+  updatedAt: string
+  usuarioId: string
+  items: ValeSalidaItem[]
+}
+
+// Payload para crear vale de salida
+export interface CreateValeSalidaPayload {
+  concepto: string
+  observaciones?: string
+  items: Array<{
+    productoId: string
+    cantidad: number
+  }>
+}
+
+// Payload para crear orden de producción
+export interface CreateOrdenProduccionPayload {
+  recetaId: string
+  cantidad: number
+  observaciones?: string
+  fechaProduccion?: string
+}
+
+// Payload para crear receta de producción
+export interface CreateRecetaProduccionPayload {
+  nombre: string
+  rendimiento: number
+  productoId?: string
+  instrucciones?: string
+  tiempoPrep?: number
+}
+
+// Payload para setear ingredientes de receta
+export interface SetIngredientesPayload {
+  recetaId: string
+  ingredientes: Array<{
+    productoId: string
+    cantidad: number
+    desperdicio?: number
+  }>
 }

@@ -26,6 +26,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useGetProductosQuery } from "@/lib/redux/services/productosApi";
 import { useGetClientesQuery } from "@/lib/redux/services/ClienteApi";
 import { useAddOfertaMutation } from "@/lib/redux/services/ofertasApi";
+import { useGetAnticiposDisponiblesQuery } from "@/lib/redux/services/contabilidadApi";
 import { formatCurrency } from "@/lib/utils";
 import { getAuthToken } from "@/lib/token";
 import type { OfertaItem, Oferta } from "@/app/models/model";
@@ -91,6 +92,8 @@ function LoadingSpinner({ size = 24 }: { size?: number }) {
 export function OfertaForm() {
   const router = useRouter()
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [selectedAnticipoCobroId, setSelectedAnticipoCobroId] = useState<string>("")
+  const anticiposFeatureEnabled = process.env.NEXT_PUBLIC_ENABLE_ANTICIPOS !== "false"
 
   const { data: productos, isLoading: isLoadingProductos } = useGetProductosQuery()
   const { data: clientes, isLoading: isLoadingClientes } = useGetClientesQuery()
@@ -114,6 +117,17 @@ export function OfertaForm() {
 
   const watchedItems = useWatch({ control: form.control, name: "items" })
   const watchedImpuestos = useWatch({ control: form.control, name: "impuestos" }) || 0
+  const watchedClienteId = useWatch({ control: form.control, name: "clienteId" })
+  const { data: anticiposCobroDisponibles, isFetching: isLoadingAnticiposCobro } = useGetAnticiposDisponiblesQuery(
+    {
+      contexto: 'factura',
+      clienteId: watchedClienteId || undefined,
+      moneda: 'CUP'
+    },
+    {
+      skip: !anticiposFeatureEnabled || !watchedClienteId
+    }
+  )
 
   // Calculate totals
   useEffect(() => {
@@ -196,7 +210,10 @@ export function OfertaForm() {
       const createdOferta = await addOferta(payload).unwrap();
       await openOfertaPdf(createdOferta.id, printWindow);
       toast.success("Oferta creada exitosamente");
-      router.push(`/busy/ofertas/${createdOferta.id}`);
+      const nextUrl = selectedAnticipoCobroId
+        ? `/busy/ofertas/${createdOferta.id}?anticipoCobroId=${encodeURIComponent(selectedAnticipoCobroId)}`
+        : `/busy/ofertas/${createdOferta.id}`
+      router.push(nextUrl);
     } catch (error) {
       if (printWindow) {
         printWindow.close()
@@ -336,6 +353,38 @@ export function OfertaForm() {
                     )}
                   />
                 </motion.div>
+
+              {anticiposFeatureEnabled && (
+                <motion.div variants={fadeInUp}>
+                  <FormItem>
+                    <FormLabel>Cobro anticipado sugerido (opcional)</FormLabel>
+                    <Select
+                      value={selectedAnticipoCobroId || "__none__"}
+                      onValueChange={(value) => setSelectedAnticipoCobroId(value === "__none__" ? "" : value)}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="transition-all duration-200 focus:scale-[1.01]">
+                          <SelectValue placeholder="Sin anticipo" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="__none__">Sin anticipo</SelectItem>
+                        {(anticiposCobroDisponibles?.anticipos || []).map((anticipo) => (
+                          <SelectItem key={anticipo.anticipoId} value={anticipo.anticipoId}>
+                            {`${anticipo.anticipoId.slice(0, 8)} · Saldo ${Number(anticipo.saldoDisponible).toFixed(2)} ${anticipo.moneda}`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {isLoadingAnticiposCobro
+                      ? "Cargando anticipos..."
+                      : "Se preseleccionará al facturar la oferta"}
+                  </p>
+                </motion.div>
+              )}
               </motion.div>
 
               {/* Items Section */}

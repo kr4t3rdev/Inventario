@@ -32,22 +32,25 @@ model Unidad {
 }
 
 model Vendor {
-  vendorId        String           @id @default(cuid())
-  nombre          String
-  contacto        String?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  logo            String?
-  contrato        String?
-  cuentaCUP       String?
-  cuentaUSD       String?
-  direccion       String?
-  telefono        String?
-  compras         CompraProducto[]
-  contratos       Contrato[]       @relation("ContratoVendor")
-  cuentasPorPagar CuentaPorPagar[]
-  gastoCompras    GastoCompra[]
-  productos       Producto[]
+  vendorId         String           @id @default(cuid())
+  nombre           String
+  contacto         String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  logo             String?
+  contrato         String?
+  cuentaCUP        String?
+  cuentaUSD        String?
+  direccion        String?
+  telefono         String?
+  compras          CompraProducto[]
+  contratos        Contrato[]       @relation("ContratoVendor")
+  cuentasPorPagar  CuentaPorPagar[]
+  gastoCompras     GastoCompra[]
+  servicios        Servicios[]
+  comprasServicios CompraServicio[]
+  productos        Producto[]
+  anticipos        Anticipo[]       @relation("AnticipoVendor")
 }
 
 model InyeccionCapital {
@@ -99,6 +102,8 @@ model Cliente {
   numeroCuentaUSD   String?
   telefono          String?
   logoUrl           String?
+  listaPrecioId     String?
+  listaPrecio       ListaPrecio?      @relation(fields: [listaPrecioId], references: [id])
   contratos         Contrato[]        @relation("ContratoCliente")
   cuentasPorCobrar  CuentaPorCobrar[]
   ofertas           Oferta[]
@@ -106,23 +111,28 @@ model Cliente {
   Venta             Venta[]
   ventasServicios   VentaServicios[]
   facturas          Factura[]
+  anticipos         Anticipo[]        @relation("AnticipoCliente")
 }
 
 model MiEmpresa {
-  id                Int             @id @default(1)
-  nombre            String          @default("Mi Empresa")
-  propietario       String?
-  direccion         String?
-  telefono          String?
-  email             String?
-  carnetIdentidad   String?
-  nit               String?
-  licenciaOperacion String?
-  logoUrl           String?
-  cuentaBancariaId  String?         @unique
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-  cuentaBancaria    CuentaBancaria? @relation("MiEmpresaCuenta", fields: [cuentaBancariaId], references: [cuentaId])
+  id                        Int             @id @default(1)
+  nombre                    String          @default("Mi Empresa")
+  propietario               String?
+  direccion                 String?
+  telefono                  String?
+  email                     String?
+  carnetIdentidad           String?
+  nit                       String?
+  licenciaOperacion         String?
+  logoUrl                   String?
+  cuentaBancariaId          String?         @unique
+  nominaHorasMensuales      Int             @default(240)
+  nominaFactorHorasExtras   Float           @default(1.5)
+  nominaPorcentajeDeduccion Float           @default(10.0)
+  nominaPorcentajeAporte    Float           @default(5.0)
+  createdAt                 DateTime        @default(now())
+  updatedAt                 DateTime        @updatedAt
+  cuentaBancaria            CuentaBancaria? @relation("MiEmpresaCuenta", fields: [cuentaBancariaId], references: [cuentaId])
 }
 
 model Almacen {
@@ -141,10 +151,37 @@ model PuntoDeVenta {
   ubicacion             String?
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
+  listaPrecioId         String?
+  listaPrecio           ListaPrecio?    @relation(fields: [listaPrecioId], references: [id])
   productos             Producto[]
   transferenciasDestino Transferencia[] @relation("TransferenciasDestino")
   transferenciasOrigen  Transferencia[] @relation("TransferenciasOrigen")
   ventas                Venta[]
+}
+
+model ListaPrecio {
+  id            String           @id @default(cuid())
+  nombre        String
+  descripcion   String?
+  esDefault     Boolean          @default(false)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  puntosDeVenta PuntoDeVenta[]
+  precios       PrecioProducto[]
+  clientes      Cliente[]
+}
+
+model PrecioProducto {
+  id            String      @id @default(cuid())
+  listaPrecioId String
+  productoId    String
+  precio        Int
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  listaPrecio   ListaPrecio @relation(fields: [listaPrecioId], references: [id], onDelete: Cascade)
+  producto      Producto    @relation(fields: [productoId], references: [id], onDelete: Cascade)
+
+  @@unique([listaPrecioId, productoId])
 }
 
 model StockUbicacion {
@@ -170,6 +207,13 @@ model StockUbicacion {
 model Producto {
   nombre             String
   descripcion        String?
+  codigoInterno      String?                   @unique @db.VarChar(11)
+  codigoNegocio      String?                   @unique @db.VarChar(40)
+  proveedorCodigo    String?                   @db.VarChar(2)
+  idSeccionCodigo    String?                   @db.VarChar(2)
+  especificoCodigo   String?                   @db.VarChar(4)
+  surtidoCodigo      String?                   @db.VarChar(4)
+  dcCodigo           String?                   @db.VarChar(1)
   precioCosto        Int
   precioVenta        Int
   stock              Int
@@ -185,6 +229,14 @@ model Producto {
   stockMinimo        Int                       @default(0)
   subcategoriaId     String?
   fotos              String[]                  @default([])
+  // Campos para productos compuestos
+  esCompuesto        Boolean                   @default(false)
+  cantidadEnPack     Int?
+  productoPadreId    String?
+  // Relaciones
+  productoPadre      Producto?                 @relation("ProductoCompuesto", fields: [productoPadreId], references: [id], onDelete: Cascade)
+  productosHijos     Producto[]                @relation("ProductoCompuesto")
+  // Relaciones existentes
   compras            CompraProducto[]
   gastoCompras       GastoCompra[]
   mermas             Merma[]
@@ -197,12 +249,17 @@ model Producto {
   unidad             Unidad?                   @relation(fields: [unidadId], references: [unidadId], onDelete: Cascade)
   vendor             Vendor?                   @relation(fields: [vendorId], references: [vendorId], onDelete: Cascade)
   stockUbicaciones   StockUbicacion[]
+  precios            PrecioProducto[]
   transferencias     Transferencia[]
   ventas             Venta[]
   ventaItems         VentaItem[]
   recetaIngredientes RecetaIngrediente[]
+  receta             Receta?
+  valeSalidaItems    ValeSalidaItem[]
 
   @@index([deletedAt])
+  @@index([esCompuesto])
+  @@index([productoPadreId])
 }
 
 model Venta {
@@ -269,6 +326,8 @@ model Transferencia {
   descripcion           String?
   puntoDeVentaDestinoId String?
   puntoDeVentaOrigenId  String?
+  costoUnitario         Int?
+  costoTotal            Int?
   creadoPorId           String?
   deletedAt             DateTime?
   estado                String        @default("COMPLETADA")
@@ -290,34 +349,36 @@ model Transferencia {
 }
 
 model User {
-  userId               String               @id @default(cuid())
-  name                 String
-  email                String               @unique
-  password             String
-  role                 String               @default("regularUser")
-  createdAt            DateTime             @default(now())
-  updatedAt            DateTime             @updatedAt
-  activatedAt          DateTime?
-  avatar               String?
-  expiresAt            DateTime?
-  isActive             Boolean              @default(true)
-  lastFailedLogin      DateTime?
-  lastModifiedBy       String?
-  lockedUntil          DateTime?
-  loginAttempts        Int                  @default(0)
-  comprasCreadas       CompraProducto[]     @relation("CompraProductoCreatedBy")
-  comprasActualizadas  CompraProducto[]     @relation("CompraProductoUpdatedBy")
-  contratosAprobados   Contrato[]           @relation("AprobadorContrato")
-  contratosCreados     Contrato[]           @relation("CreadorContrato")
-  contratoAprobaciones ContratoAprobacion[]
-  contratoArchivos     ContratoArchivo[]
-  contratoFirmas       ContratoFirma[]
-  contratoVersiones    ContratoVersion[]
-  notifications        Notification[]
-  transferencias       Transferencia[]
-  activityLogs         UserActivityLog[]
-  sessions             UserSession[]
-  licencias            Licencia[]
+  userId                       String               @id @default(cuid())
+  name                         String
+  email                        String               @unique
+  password                     String
+  role                         String               @default("regularUser")
+  createdAt                    DateTime             @default(now())
+  updatedAt                    DateTime             @updatedAt
+  activatedAt                  DateTime?
+  avatar                       String?
+  expiresAt                    DateTime?
+  isActive                     Boolean              @default(true)
+  lastFailedLogin              DateTime?
+  lastModifiedBy               String?
+  lockedUntil                  DateTime?
+  loginAttempts                Int                  @default(0)
+  comprasCreadas               CompraProducto[]     @relation("CompraProductoCreatedBy")
+  comprasActualizadas          CompraProducto[]     @relation("CompraProductoUpdatedBy")
+  comprasServiciosCreadas      CompraServicio[]     @relation("CompraServicioCreatedBy")
+  comprasServiciosActualizadas CompraServicio[]     @relation("CompraServicioUpdatedBy")
+  contratosAprobados           Contrato[]           @relation("AprobadorContrato")
+  contratosCreados             Contrato[]           @relation("CreadorContrato")
+  contratoAprobaciones         ContratoAprobacion[]
+  contratoArchivos             ContratoArchivo[]
+  contratoFirmas               ContratoFirma[]
+  contratoVersiones            ContratoVersion[]
+  notifications                Notification[]
+  transferencias               Transferencia[]
+  activityLogs                 UserActivityLog[]
+  sessions                     UserSession[]
+  licencias                    Licencia[]
 }
 
 model Notification {
@@ -418,9 +479,9 @@ model VacationAccrual {
   accrualId              String   @id @default(cuid())
   employeeId             String
   periodo                String
-  diasAcumulados         Int
+  diasAcumulados         Float
   diasPorAntiguedad      Int
-  diasPorTiempoTrabajado Int
+  diasPorTiempoTrabajado Float
   tipoAcumulacion        String
   fechaCalculo           DateTime @default(now())
   procesado              Boolean  @default(false)
@@ -441,8 +502,11 @@ model Empleado {
   diasVacacionesAnuales Int                    @default(15)
   esTiempoCompleto      Boolean                @default(true)
   fechaContratacion     DateTime
-  vacationDaysAccrued   Int                    @default(0)
-  vacationDaysUsed      Int                    @default(0)
+  fechaBaja             DateTime?
+  motivoBaja            String?
+  carnetIdentidad       String?
+  vacationDaysAccrued   Float                  @default(0)
+  vacationDaysUsed      Float                  @default(0)
   attendances           Attendance[]
   workSchedules         EmployeeWorkSchedule[]
   ordenesAsignadas      OrdenReparacion[]
@@ -459,6 +523,8 @@ model Pagosalario {
   salario             Int
   bonificaciones      Int?                  @default(0)
   deducciones         Int?                  @default(0)
+  retenciones         Int?                  @default(0)
+  aportes             Int?                  @default(0)
   horasExtras         Int?                  @default(0)
   observaciones       String?
   periodo             String
@@ -553,14 +619,60 @@ model CompraProducto {
 }
 
 model Servicios {
-  servicioId      String           @id @default(cuid())
-  nombre          String
-  precio          Int
-  descripcion     String
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  ofertaItems     OfertaItem[]
-  ventasServicios VentaServicios[]
+  servicioId       String           @id @default(cuid())
+  nombre           String
+  descripcion      String?
+  codigoInterno    String?          @unique @db.VarChar(11)
+  codigoNegocio    String?          @unique @db.VarChar(40)
+  precioCosto      Int?
+  precioVenta      Int?
+  precio           Int              @default(0)
+  categoriaId      String?
+  subcategoriaId   String?
+  unidadId         String?
+  vendorId         String?
+  activo           Boolean          @default(true)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  deletedAt        DateTime?
+  vendor           Vendor?          @relation(fields: [vendorId], references: [vendorId], onDelete: SetNull)
+  ofertaItems      OfertaItem[]
+  comprasServicios CompraServicio[]
+  ventasServicios  VentaServicios[]
+
+  @@index([deletedAt])
+  @@index([nombre])
+  @@index([codigoNegocio])
+  @@index([vendorId])
+}
+
+model CompraServicio {
+  compraServicioId String    @id @default(cuid())
+  servicioId       String
+  proveedorId      String?
+  numeroFactura    String?
+  costoUnitario    Int
+  cantidad         Int       @default(1)
+  total            Int
+  formaPago        String
+  estado           String
+  descripcion      String?
+  fechaServicio    DateTime  @default(now())
+  fechaVencimiento DateTime?
+  createdById      String?
+  updatedById      String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  deletedAt        DateTime?
+  createdBy        User?     @relation("CompraServicioCreatedBy", fields: [createdById], references: [userId])
+  proveedor        Vendor?   @relation(fields: [proveedorId], references: [vendorId], onDelete: SetNull)
+  servicio         Servicios @relation(fields: [servicioId], references: [servicioId], onDelete: Cascade)
+  updatedBy        User?     @relation("CompraServicioUpdatedBy", fields: [updatedById], references: [userId])
+
+  @@index([deletedAt])
+  @@index([servicioId])
+  @@index([proveedorId])
+  @@index([estado])
 }
 
 model VentaServicios {
@@ -745,6 +857,59 @@ model ReconciliacionGasto {
   tipoPago            TipoPago        @relation(fields: [tipoPagoId], references: [tipoId])
 }
 
+model Anticipo {
+  anticipoId        String               @id @default(cuid())
+  tipo              TipoAnticipo
+  estado            EstadoAnticipo       @default(RESERVADO)
+  montoOriginal     Decimal
+  saldoDisponible   Decimal
+  moneda            String               @default("CUP")
+  contratoId        String
+  proveedorId       String?
+  clienteId         String?
+  cuentaOrigenId    String?
+  tipoPagoOrigenId  String?
+  referenciaExterna String?
+  vigenciaHasta     DateTime?
+  fechaReserva      DateTime             @default(now())
+  fechaEjecucion    DateTime?
+  createdById       String
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  cliente           Cliente?             @relation("AnticipoCliente", fields: [clienteId], references: [clienteId])
+  contrato          Contrato             @relation("ContratoAnticipos", fields: [contratoId], references: [contratoId])
+  proveedor         Vendor?              @relation("AnticipoVendor", fields: [proveedorId], references: [vendorId])
+  movimientos       AnticipoMovimiento[]
+
+  @@index([tipo, estado])
+  @@index([proveedorId, estado])
+  @@index([clienteId, estado])
+}
+
+model AnticipoMovimiento {
+  movimientoId          String                 @id @default(cuid())
+  anticipoId            String
+  tipoMovimiento        TipoMovimientoAnticipo
+  contexto              ContextoAnticipo?
+  documentoDestinoId    String?
+  reconciliacionVentaId String?
+  reconciliacionGastoId String?
+  monto                 Decimal
+  moneda                String                 @default("CUP")
+  tasaAplicada          Decimal?
+  montoConvertido       Decimal?
+  saldoAntes            Decimal
+  saldoDespues          Decimal
+  usuarioId             String
+  idempotencyKey        String?
+  observaciones         String?
+  createdAt             DateTime               @default(now())
+  anticipo              Anticipo               @relation(fields: [anticipoId], references: [anticipoId], onDelete: Cascade)
+
+  @@unique([anticipoId, idempotencyKey])
+  @@index([anticipoId, createdAt])
+}
+
 model AjusteBancario {
   ajusteId        String         @id @default(cuid())
   cuentaId        String
@@ -909,6 +1074,7 @@ model Contrato {
   archivos             ContratoArchivo[]
   firmas               ContratoFirma[]
   versiones            ContratoVersion[]
+  anticipos            Anticipo[]           @relation("ContratoAnticipos")
 }
 
 model ContratoVersion {
@@ -1334,6 +1500,31 @@ enum EstadoCuentaPorPagar {
   PARCIAL
 }
 
+enum TipoAnticipo {
+  PAGO
+  COBRO
+}
+
+enum EstadoAnticipo {
+  RESERVADO
+  EJECUTADO
+  ANULADO
+}
+
+enum ContextoAnticipo {
+  COMPRA_PRODUCTO
+  COMPRA_SERVICIO
+  FACTURA_OFERTA
+  FACTURA_DIRECTA
+}
+
+enum TipoMovimientoAnticipo {
+  CREACION_RESERVA
+  EJECUCION
+  REVERSO
+  ANULACION
+}
+
 enum EstadoOrden {
   RECIBIDO
   EN_DIAGNOSTICO
@@ -1423,6 +1614,8 @@ model Receta {
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
   plato             Plato?
+  producto          Producto?           @relation(fields: [productoId], references: [id])
+  productoId        String?             @unique
   ingredientes      RecetaIngrediente[]
   ordenesProduccion OrdenProduccion[]
 }
@@ -1490,7 +1683,22 @@ model OrdenProduccion {
   fechaProduccion   DateTime         @default(now())
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
+  costoMateriales   Int?
+  costoUnitario     Int?
   receta            Receta           @relation(fields: [recetaId], references: [recetaId])
+}
+
+model NominaConfig {
+  configId               String   @id @default(cuid())
+  periodo                String   @unique // YYYY-MM
+  vacacionesPorcentaje   Float    @default(9.09)
+  impuesto3Porcentaje    Float    @default(3.0)
+  impuesto5Porcentaje    Float    @default(5.0)
+  impuesto12_5Porcentaje Float    @default(12.5)
+  impuesto1_5Porcentaje  Float    @default(1.5)
+  aplicar12_5y1_5        Boolean  @default(true) // Cambiado a true por defecto
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
 }
 
 model Plan {
@@ -1540,5 +1748,51 @@ model LicenciaAudit {
 
   @@index([licenciaId])
   @@index([accion])
+  @@index([createdAt])
+}
+
+// ============================================
+// MODELOS DE PRODUCCIÓN
+// ============================================
+
+model ValeSalida {
+  valeSalidaId  String           @id @default(cuid())
+  concepto      String
+  observaciones String?
+  estado        String           @default("pendiente")
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  usuarioId     String
+  items         ValeSalidaItem[]
+
+  @@index([estado])
+  @@index([createdAt])
+  @@index([usuarioId])
+}
+
+model ValeSalidaItem {
+  valeSalidaItemId String     @id @default(cuid())
+  valeSalidaId     String
+  productoId       String
+  cantidad         Int
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+  valeSalida       ValeSalida @relation(fields: [valeSalidaId], references: [valeSalidaId], onDelete: Cascade)
+  producto         Producto   @relation(fields: [productoId], references: [id])
+
+  @@index([valeSalidaId])
+  @@index([productoId])
+}
+
+model OrdenProduccionHistorial {
+  historialId       String   @id @default(cuid())
+  ordenProduccionId String
+  estadoAnterior    String?
+  estadoNuevo       String
+  observaciones     String?
+  usuarioId         String
+  createdAt         DateTime @default(now())
+
+  @@index([ordenProduccionId])
   @@index([createdAt])
 }

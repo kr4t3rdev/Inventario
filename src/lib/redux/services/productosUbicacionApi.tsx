@@ -6,6 +6,9 @@ export interface ProductoConStock {
   descripcion: string | null
   precioCosto: number
   precioVenta: number
+  precioVentaResuelto: number
+  precioFuente: "LISTA" | "BASE"
+  listaPrecioIdAplicada: string | null
   stock: number
   stockEnUbicacion: number
   fotos: string[]

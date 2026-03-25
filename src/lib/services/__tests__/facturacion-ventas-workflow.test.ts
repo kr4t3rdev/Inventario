@@ -233,4 +233,42 @@ describe('facturacion-ventas-workflow', () => {
       }
     })
   })
+
+  it('contra pago permite cuenta bancaria explícita y mantiene flujo de reconciliación', async () => {
+    const tx = createTxMock()
+    tx.tipoPago.findMany.mockResolvedValue([
+      {
+        tipoId: 'tipo-1',
+        nombre: 'Transferencia',
+        cuentaDefecto: 'cuenta-default'
+      }
+    ])
+    tx.cuentaBancaria.findFirst.mockResolvedValue({
+      cuentaId: 'cuenta-explicita',
+      moneda: 'CUP'
+    })
+    tx.reconciliacionVenta.create.mockResolvedValue({
+      reconciliacionId: 'rec-exp-1'
+    })
+    tx.cuentaBancaria.update.mockResolvedValue({})
+    tx.factura.update.mockResolvedValue({})
+
+    const result = await applyFacturacionCobroWorkflow(tx as any, {
+      ventaId: 'venta-2',
+      facturaId: 'factura-2',
+      clienteId: 'cliente-2',
+      montoTotal: 500,
+      usuarioId: 'user-2',
+      tipoVencimiento: 'contra_pago',
+      cuentaBancariaId: 'cuenta-explicita'
+    })
+
+    expect(result.reconciliacionId).toBe('rec-exp-1')
+    expect(tx.cuentaPorCobrar.upsert).not.toHaveBeenCalled()
+    expect(tx.factura.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ estado: 'PAGADA' })
+      })
+    )
+  })
 })

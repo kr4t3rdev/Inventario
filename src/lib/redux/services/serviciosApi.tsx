@@ -1,6 +1,10 @@
 import { apiSlice } from "./apiSlice";
 import { Servicios } from "../../../app/models/model";
 
+type CreateServicioRequest = Omit<Servicios, 'createdAt' | 'updatedAt' | 'deletedAt'> & {
+  servicioId?: string
+}
+
 export const ServicioApi = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
         getServicios: builder.query<Servicios[], void>({
@@ -11,7 +15,7 @@ export const ServicioApi = apiSlice.injectEndpoints({
             query: (id) => `/servicios/${id}`,
             providesTags: (result, error, id) => [{ type: "Servicios", id }],
         }),
-        addServicios: builder.mutation<Servicios, Omit<Servicios, "id" | "createdAt" | "updatedAt">>({
+        addServicios: builder.mutation<Servicios, CreateServicioRequest>({
             query: (Servicios) => ({
                 url: '/servicios',
                 method: 'POST',

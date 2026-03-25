@@ -35,7 +35,11 @@ import {
   CreatePagoDeudaRequest,
   CreateCuentaPorCobrarRequest,
   CuentaPorCobrar,
-  AuditLog
+  AuditLog,
+  Anticipo,
+  CreateAnticipoRequest,
+  ExecuteAnticipoRequest,
+  ExecuteAnticipoResponse
 } from "../../../app/models/model"
 
 // Tipo para Cierres Contables
@@ -194,6 +198,65 @@ export const contabilidadApi = apiSlice.injectEndpoints({
         body: data,
       }),
       invalidatesTags: ["CuentasPorCobrar", "Ventas", "ReportesContabilidad"],
+    }),
+
+    getAnticipos: builder.query<{ anticipos: Anticipo[] }, {
+      tipo?: 'PAGO' | 'COBRO'
+      estado?: 'RESERVADO' | 'EJECUTADO' | 'ANULADO'
+      proveedorId?: string
+      clienteId?: string
+      moneda?: string
+    }>({
+      query: (params) => ({
+        url: "contabilidad/anticipos",
+        params
+      }),
+      providesTags: ["Anticipos"],
+    }),
+
+    getAnticiposDisponibles: builder.query<{ anticipos: Anticipo[] }, {
+      contexto: 'compra' | 'factura'
+      proveedorId?: string
+      clienteId?: string
+      moneda?: string
+    }>({
+      query: (params) => ({
+        url: "contabilidad/anticipos/disponibles",
+        params
+      }),
+      providesTags: ["Anticipos"],
+    }),
+
+    createAnticipo: builder.mutation<{ anticipo: Anticipo }, CreateAnticipoRequest>({
+      query: (data) => ({
+        url: "contabilidad/anticipos",
+        method: "POST",
+        body: data
+      }),
+      invalidatesTags: ["Anticipos", "ReportesContabilidad"],
+    }),
+
+    executeAnticipo: builder.mutation<{ result: ExecuteAnticipoResponse }, { id: string } & ExecuteAnticipoRequest>({
+      query: ({ id, ...data }) => ({
+        url: `contabilidad/anticipos/${id}/ejecutar`,
+        method: "POST",
+        body: data
+      }),
+      invalidatesTags: ["Anticipos", "ReconciliacionVentas", "ReconciliacionGastos", "ReportesContabilidad"],
+      transformErrorResponse: (response) => serializeApiError(response),
+    }),
+
+    reverseAnticipo: builder.mutation<
+      { result: { anticipoId: string; estado: string; saldoDisponible: number; movimientoId: string } },
+      { id: string; documentoDestinoId: string; montoReverso: number; observaciones?: string }
+    >({
+      query: ({ id, ...data }) => ({
+        url: `contabilidad/anticipos/${id}/revertir`,
+        method: "POST",
+        body: data
+      }),
+      invalidatesTags: ["Anticipos", "ReconciliacionVentas", "ReconciliacionGastos", "ReportesContabilidad"],
+      transformErrorResponse: (response) => serializeApiError(response),
     }),
 
     // Reconciliación Stats
@@ -857,7 +920,8 @@ export const invalidateContabilidadCache = () => {
     { type: "ExchangeRates" as const, id: "LIST" },
     { type: "CierresContables" as const, id: "LIST" },
     { type: "InyeccionesCapital" as const, id: "LIST" },
-    { type: "AuditLogs" as const, id: "LIST" }
+    { type: "AuditLogs" as const, id: "LIST" },
+    { type: "Anticipos" as const, id: "LIST" }
   ]
 }
 
@@ -928,6 +992,11 @@ export const {
   useDeleteCierreMutation,
   useGetReconciliacionStatsQuery,
   useCreateCuentaPorCobrarMutation,
+  useGetAnticiposQuery,
+  useGetAnticiposDisponiblesQuery,
+  useCreateAnticipoMutation,
+  useExecuteAnticipoMutation,
+  useReverseAnticipoMutation,
   useGetInyeccionesCapitalQuery,
   useCreateInyeccionCapitalMutation,
   useRegistrarPagoDeudaMutation,

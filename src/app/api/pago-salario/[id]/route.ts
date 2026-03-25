@@ -69,6 +69,7 @@ export async function PUT(
         salario: data.salario,
         ...(data.bonificaciones !== undefined && { bonificaciones: data.bonificaciones }),
         ...(data.deducciones !== undefined && { deducciones: data.deducciones }),
+        ...(data.aportes !== undefined && { aportes: data.aportes }),
         ...(data.horasExtras !== undefined && { horasExtras: data.horasExtras }),
         ...(data.observaciones !== undefined && { observaciones: data.observaciones }),
       }

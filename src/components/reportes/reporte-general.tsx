@@ -23,6 +23,7 @@ import {  exportToPdf, exportToCsv } from "@/lib/export-utils"
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts"
 import { StaggerContainer, StaggerItem, AnimatedCard } from "@/components/ui/animations"
 import { cn } from "@/lib/utils"
+import { getProductDisplayIdentifier } from "@/lib/product-display-utils"
 
 const surfaceCardClass = cn(
   "relative overflow-hidden border-slate-200/60 shadow-sm backdrop-blur-xl",
@@ -87,7 +88,8 @@ export function ReporteGeneral() {
     if (!productosFiltrados || productosFiltrados.length === 0) return
 
     const data = productosFiltrados.map((producto) => ({
-      Producto: producto.nombre,
+      Producto: getProductDisplayIdentifier(producto),
+      Nombre: producto.nombre,
       Categoría: categorias?.find((c) => c.catId === producto.categoriaId || c.catId === producto.categoria?.catId)?.nombre || "Sin categoría",
       Stock: producto.stock,
       "Stock Mínimo": producto.stockMinimo > 0 ? producto.stockMinimo : "Por defecto (10)",
@@ -105,7 +107,9 @@ export function ReporteGeneral() {
 
     const data = productosFiltrados.map((producto) => ({
       ID: producto.id,
+      "Código Interno": producto.codigoInterno || "",
       Nombre: producto.nombre,
+      Producto: getProductDisplayIdentifier(producto),
       Categoría: categorias?.find((c) => c.catId === producto.categoriaId || c.catId === producto.categoria?.catId)?.nombre || "",
       Stock: producto.stock,
       "Stock Mínimo": producto.stockMinimo > 0 ? producto.stockMinimo : "Por defecto (10)",
@@ -266,7 +270,7 @@ export function ReporteGeneral() {
                       const categoriaNombre = categorias?.find((c) => c.catId === producto.categoriaId || c.catId === producto.categoria?.catId)?.nombre || "Sin categoría"
                       return (
                       <TableRow key={producto.id} className="hover:bg-muted/50 transition-colors">
-                        <TableCell className="font-medium">{producto.nombre}</TableCell>
+                        <TableCell className="font-medium">{getProductDisplayIdentifier(producto)}</TableCell>
                         <TableCell>{categoriaNombre}</TableCell>
                         <TableCell className="text-right">
                           {(() => {

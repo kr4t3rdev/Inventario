@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { 
   ArrowLeft, 
   Check, 
@@ -18,6 +18,7 @@ import { toast } from "sonner"
 
 import { useGetOfertaQuery, useUpdateOfertaMutation, useFacturarOfertaMutation } from "@/lib/redux/services/ofertasApi"
 import { useGetPuntosDeVentaQuery } from "@/lib/redux/services/puntosDeVentaApi"
+import { useGetAnticiposDisponiblesQuery } from "@/lib/redux/services/contabilidadApi"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -43,8 +44,10 @@ function LoadingSpinner({ size = 24 }: { size?: number }) {
 
 export default function OfertaDetailPage() {
   const params = useParams()
+  const searchParams = useSearchParams()
   const router = useRouter()
   const id = params.id as string
+  const anticiposFeatureEnabled = process.env.NEXT_PUBLIC_ENABLE_ANTICIPOS !== "false"
   const { data: oferta, isLoading, error } = useGetOfertaQuery(id)
   const [updateOferta] = useUpdateOfertaMutation()
   const [facturarOferta, { isLoading: isFacturing }] = useFacturarOfertaMutation()
@@ -57,6 +60,28 @@ export default function OfertaDetailPage() {
   const [selectedSerieId, setSelectedSerieId] = useState<string>("")
   const [tipoVencimiento, setTipoVencimiento] = useState<"fecha" | "plazo" | "contra_pago">("contra_pago")
   const [fechaVencimiento, setFechaVencimiento] = useState<string>(new Date().toISOString().split('T')[0])
+  const [selectedAnticipoCobroId, setSelectedAnticipoCobroId] = useState<string>("")
+
+  const { data: anticiposCobroDisponibles, isFetching: isLoadingAnticiposCobro } = useGetAnticiposDisponiblesQuery(
+    {
+      contexto: 'factura',
+      clienteId: oferta?.clienteId || undefined,
+      moneda: 'CUP'
+    },
+    {
+      skip: !isFacturarDialogOpen || !oferta?.clienteId
+    }
+  )
+
+  useEffect(() => {
+    if (!anticiposFeatureEnabled) {
+      return
+    }
+    const anticipoFromQuery = searchParams.get('anticipoCobroId')
+    if (anticipoFromQuery) {
+      setSelectedAnticipoCobroId(anticipoFromQuery)
+    }
+  }, [searchParams, anticiposFeatureEnabled])
 
   useEffect(() => {
     const fetchSeries = async () => {
@@ -110,7 +135,14 @@ export default function OfertaDetailPage() {
         cargoTransporte: Number(cargoTransporte),
         serieId: selectedSerieId,
         fechaVencimiento: fechaVencimientoISO,
-        tipoVencimiento
+        tipoVencimiento,
+        formaPagoAnticipo: selectedAnticipoCobroId ? 'ANTICIPO_COBRO' : undefined,
+        anticipoCobroId: selectedAnticipoCobroId || undefined,
+        idempotencyKey: selectedAnticipoCobroId
+          ? (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+              ? crypto.randomUUID()
+              : `${Date.now()}-${Math.random()}`)
+          : undefined
       }).unwrap()
       
       toast.success("Oferta facturada exitosamente")
@@ -443,6 +475,41 @@ export default function OfertaDetailPage() {
                     </RadioGroup>
                   </div>
                 </div>
+
+                {anticiposFeatureEnabled && (
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <label className="text-right text-sm font-medium">
+                    Cobro anticipado
+                  </label>
+                  <div className="col-span-3">
+                    <Select
+                      value={selectedAnticipoCobroId || '__none__'}
+                      onValueChange={(value) => {
+                        const nextValue = value === '__none__' ? '' : value
+                        setSelectedAnticipoCobroId(nextValue)
+                        if (nextValue) {
+                          setTipoVencimiento('contra_pago')
+                        }
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sin anticipo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none__">Sin anticipo</SelectItem>
+                        {(anticiposCobroDisponibles?.anticipos || []).map((anticipo) => (
+                          <SelectItem key={anticipo.anticipoId} value={anticipo.anticipoId}>
+                            {`${anticipo.anticipoId.slice(0, 8)} · Saldo ${Number(anticipo.saldoDisponible).toFixed(2)} ${anticipo.moneda}`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {isLoadingAnticiposCobro ? 'Cargando anticipos...' : 'Opcional: ejecuta cobro anticipado al facturar'}
+                    </p>
+                  </div>
+                </div>
+                )}
 
                 <div className="grid grid-cols-4 items-center gap-4">
                   <label className="text-right text-sm font-medium">

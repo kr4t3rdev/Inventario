@@ -3,6 +3,10 @@ import { z } from 'zod'
 
 import { prisma } from '@/lib/prisma'
 import { withAuthGet, withAuthPost } from '@/lib/auth-middleware'
+import { calcularPrecioCostoCompra } from '@/lib/inventory-cost-utils'
+import { applyPagoGastoWorkflow } from '@/lib/services/pago-gastos-workflow'
+import { executeAnticipo, isAnticipoWorkflowError } from '@/lib/services/anticipos-workflow'
+import { FORMA_PAGO_ANTICIPO_PAGO } from '@/lib/constants/anticipos'
 
 /**
  * @description Valida el contrato del proveedor antes de realizar una compra
@@ -101,27 +105,21 @@ const querySchema = z.object({
 })
 
 const createSchema = z.object({
-  nombre: z.string().min(1, 'El nombre es obligatorio'),
-  descripcion: z.string().optional(),
-  categoriaId: z.string().min(1, 'Seleccione una categoría'),
-  subcategoriaId: z.string().optional(),
+  productoId: z.string().min(1, 'Seleccione un producto'),
   precioCosto: z.coerce.number().positive('El precio de costo debe ser mayor a 0'),
-  precioVenta: z.coerce.number().positive('El precio de venta debe ser mayor a 0'),
-  stock: z.coerce.number().int('La cantidad debe ser un entero').positive('La cantidad debe ser mayor a 0'),
-  stockMinimo: z.coerce.number().int().min(0).optional(),
-  fotos: z.array(z.string()).optional(),
-  unidadId: z.string().min(1, 'Seleccione una unidad'),
+  cantidad: z.coerce.number().int('La cantidad debe ser un entero').positive('La cantidad debe ser mayor a 0'),
   vendorId: z.string().min(1, 'Seleccione un proveedor'),
-  almacenId: z.string().min(1, 'Seleccione un almacén'),
   numeroFactura: z.string().optional().default(''),
   facturaUrl: z.string().optional().default(''),
-  formaPago: z.enum(['PAGO_PARCIAL', 'PAGO_COMPLETO']),
+  formaPago: z.enum(['PAGO_PARCIAL', 'PAGO_COMPLETO', FORMA_PAGO_ANTICIPO_PAGO]),
   estado: z.enum(['PENDIENTE', 'PAGADA']),
   descripcionCompra: z.string().max(500).optional(),
   fechaVencimiento: z.string().optional(),
+  anticipoPagoId: z.string().optional(),
+  idempotencyKey: z.string().optional()
 }).refine(
   (data) => {
-    if (data.formaPago === 'PAGO_COMPLETO') {
+    if (data.formaPago === 'PAGO_COMPLETO' || data.formaPago === FORMA_PAGO_ANTICIPO_PAGO) {
       return data.estado === 'PAGADA'
     }
     return data.estado === 'PENDIENTE'
@@ -131,10 +129,22 @@ const createSchema = z.object({
     path: ['estado'],
   }
 ).refine(
-  (data) => data.precioVenta >= data.precioCosto * 1.1,
+  (data) => (data.formaPago === FORMA_PAGO_ANTICIPO_PAGO ? !!data.anticipoPagoId : true),
   {
-    message: 'El precio de venta debe tener al menos un 10% de margen sobre el costo',
-    path: ['precioVenta'],
+    message: `Debe indicar un anticipo para forma de pago ${FORMA_PAGO_ANTICIPO_PAGO}`,
+    path: ['anticipoPagoId'],
+  }
+).refine(
+  (data) => (data.formaPago === FORMA_PAGO_ANTICIPO_PAGO ? !!data.idempotencyKey : true),
+  {
+    message: 'Debe indicar idempotencyKey para ejecutar anticipo',
+    path: ['idempotencyKey'],
+  }
+).refine(
+  (data) => data.cantidad > 0,
+  {
+    message: 'La cantidad debe ser mayor a 0',
+    path: ['cantidad'],
   }
 )
 
@@ -244,7 +254,7 @@ export const GET = withAuthGet(async (request: NextRequest, _context: any, _user
 })
 
 /**
- * @description Crear una compra de producto y registrar el stock inicial.
+ * @description Crear una compra de producto existente, incrementando inventario en Producto y StockUbicacion.
  * @param {NextRequest} request - Request de Next.js
  * @returns {Promise<NextResponse>} Compra creada
  */
@@ -252,19 +262,6 @@ export const POST = withAuthPost(async (request: NextRequest, _context: any, use
   try {
     const body = await request.json()
     const data = createSchema.parse(body)
-
-    if (data.subcategoriaId && data.categoriaId) {
-      const subcategoria = await prisma.categoria.findUnique({
-        where: { catId: data.subcategoriaId },
-        select: { parentId: true }
-      })
-
-      if (!subcategoria || subcategoria.parentId !== data.categoriaId) {
-        return NextResponse.json({
-          error: 'La subcategoría debe pertenecer a la categoría seleccionada'
-        }, { status: 400 })
-      }
-    }
 
     // Validación del contrato del proveedor
     const contratoValidacion = await validarContratoProveedor(data.vendorId)
@@ -292,30 +289,69 @@ export const POST = withAuthPost(async (request: NextRequest, _context: any, use
       }
     }
 
-    const resolvedEstado = data.formaPago === 'PAGO_COMPLETO' ? 'PAGADA' : 'PENDIENTE'
+    const resolvedEstado =
+      data.formaPago === 'PAGO_COMPLETO' || data.formaPago === FORMA_PAGO_ANTICIPO_PAGO
+        ? 'PAGADA'
+        : 'PENDIENTE'
 
     const result = await prisma.$transaction(async (tx: any) => {
-      const producto = await tx.producto.create({
+      const producto = await tx.producto.findUnique({
+        where: { id: data.productoId },
+        include: { vendor: true }
+      })
+
+      if (!producto) {
+        throw new Error('PRODUCTO_NOT_FOUND')
+      }
+
+      const stockAntes = producto.stock
+      const stockDespues = stockAntes + data.cantidad
+      const precioCostoAntes = producto.precioCosto
+      const { precioCostoNuevo, metodoCosto } = calcularPrecioCostoCompra({
+        stockAntes,
+        precioCostoActual: precioCostoAntes,
+        cantidadCompra: data.cantidad,
+        costoUnitario: data.precioCosto
+      })
+
+      const productoActualizado = await tx.producto.update({
+        where: { id: producto.id },
         data: {
-          nombre: data.nombre,
-          descripcion: data.descripcion,
-          precioCosto: data.precioCosto,
-          precioVenta: data.precioVenta,
-          stock: data.stock,
-          stockMinimo: data.stockMinimo ?? 0,
-          fotos: data.fotos ?? [],
-          categoriaId: data.categoriaId,
-          subcategoriaId: data.subcategoriaId || null,
-          unidadId: data.unidadId,
-          vendorId: data.vendorId,
-          almacenId: data.almacenId,
-        },
-        include: {
-          vendor: true
+          precioCosto: precioCostoNuevo,
+          stock: {
+            increment: data.cantidad
+          }
         }
       })
 
-      const totalCost = data.stock * data.precioCosto
+      await tx.stockUbicacion.upsert({
+        where: {
+          productoId_tipoUbicacion_ubicacionId: {
+            productoId: producto.id,
+            tipoUbicacion: 'almacen',
+            ubicacionId: producto.almacenId
+          }
+        },
+        update: {
+          cantidad: {
+            increment: data.cantidad
+          },
+          cantidadDisponible: {
+            increment: data.cantidad
+          },
+          ultimaActualizacion: new Date()
+        },
+        create: {
+          productoId: producto.id,
+          tipoUbicacion: 'almacen',
+          ubicacionId: producto.almacenId,
+          cantidad: stockDespues,
+          cantidadReservada: 0,
+          cantidadDisponible: stockDespues
+        }
+      })
+
+      const totalCost = data.cantidad * data.precioCosto
       if (totalCost <= 0 || !Number.isFinite(totalCost)) {
         throw new Error('Invalid total cost')
       }
@@ -327,13 +363,13 @@ export const POST = withAuthPost(async (request: NextRequest, _context: any, use
       let gastoCompra = null
       let cuentaPorPagar = null
 
-      if (data.formaPago === 'PAGO_COMPLETO') {
+      if (data.formaPago === 'PAGO_COMPLETO' || data.formaPago === FORMA_PAGO_ANTICIPO_PAGO) {
         gastoCompra = await tx.gastoCompra.create({
           data: {
             productoId: producto.id,
-            vendorId: producto.vendorId,
+            vendorId: data.vendorId,
             numeroFactura: data.numeroFactura,
-            cantidad: data.stock,
+            cantidad: data.cantidad,
             precioUnitario: data.precioCosto,
             total: totalCost,
             fechaCompra: now,
@@ -350,9 +386,9 @@ export const POST = withAuthPost(async (request: NextRequest, _context: any, use
         gastoCompra = await tx.gastoCompra.create({
           data: {
             productoId: producto.id,
-            vendorId: producto.vendorId,
+            vendorId: data.vendorId,
             numeroFactura: data.numeroFactura,
-            cantidad: data.stock,
+            cantidad: data.cantidad,
             precioUnitario: data.precioCosto,
             total: totalCost,
             fechaCompra: now,
@@ -371,8 +407,8 @@ export const POST = withAuthPost(async (request: NextRequest, _context: any, use
             numeroFactura: data.numeroFactura,
             tipo: 'compra',
             gastoCompraId: gastoCompra.gastoCompraId,
-            proveedorId: producto.vendorId,
-            proveedorNombre: producto.vendor?.nombre,
+            proveedorId: data.vendorId,
+            proveedorNombre: gastoCompra.vendor?.nombre,
             montoDeuda: totalCost,
             saldoPendiente: totalCost,
             estado: 'PENDIENTE',
@@ -385,10 +421,10 @@ export const POST = withAuthPost(async (request: NextRequest, _context: any, use
       const compraProducto = await tx.compraProducto.create({
         data: {
           productoId: producto.id,
-          proveedorId: producto.vendorId,
+          proveedorId: data.vendorId,
           numeroFactura: data.numeroFactura,
           facturaUrl: data.facturaUrl,
-          cantidad: data.stock,
+          cantidad: data.cantidad,
           precioUnitario: data.precioCosto,
           total: totalCost,
           formaPago: data.formaPago,
@@ -406,11 +442,50 @@ export const POST = withAuthPost(async (request: NextRequest, _context: any, use
         }
       })
 
+      let ejecucionAnticipo: any = null
+      if (data.formaPago === FORMA_PAGO_ANTICIPO_PAGO && data.anticipoPagoId && data.idempotencyKey) {
+        ejecucionAnticipo = await executeAnticipo(
+          tx,
+          {
+            anticipoId: data.anticipoPagoId,
+            contexto: 'COMPRA_PRODUCTO',
+            documentoDestinoId: compraProducto.compraProductoId,
+            montoObjetivo: totalCost,
+            monedaObjetivo: 'CUP',
+            idempotencyKey: data.idempotencyKey,
+            usuarioId: user.userId || user.id,
+            observaciones: `Ejecución en compra ${compraProducto.compraProductoId}`
+          },
+          async (trx) => {
+            const workflowResult = await applyPagoGastoWorkflow(trx, {
+              tipoGasto: 'compra',
+              referenciaId: gastoCompra.gastoCompraId,
+              reconciliadoPor: user.userId || user.id,
+              descripcion: `Pago anticipado de compra ${compraProducto.compraProductoId}`,
+              monto: totalCost,
+              moneda: 'CUP',
+              estado: 'PAGADA',
+              gastoCompraId: gastoCompra.gastoCompraId
+            })
+            return {
+              reconciliacionGastoId: workflowResult.reconciliaciones[0]?.reconciliacionId
+            }
+          }
+        )
+      }
+
       return {
         producto,
+        productoActualizado,
+        stockAntes,
+        stockDespues,
+        precioCostoAntes,
+        precioCostoDespues: precioCostoNuevo,
+        metodoCosto,
         compraProducto,
         gastoCompra,
-        cuentaPorPagar
+        cuentaPorPagar,
+        ejecucionAnticipo
       }
     })
 
@@ -428,6 +503,12 @@ export const POST = withAuthPost(async (request: NextRequest, _context: any, use
     return NextResponse.json(response, { status: 201 })
   } catch (error) {
     console.error('Error al crear compra de producto:', error)
+    if (isAnticipoWorkflowError(error)) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.status })
+    }
+    if (error instanceof Error && error.message === 'PRODUCTO_NOT_FOUND') {
+      return NextResponse.json({ error: 'El producto seleccionado no existe' }, { status: 404 })
+    }
     return NextResponse.json({ error: 'Error al crear compra de producto' }, { status: 500 })
   }
 })

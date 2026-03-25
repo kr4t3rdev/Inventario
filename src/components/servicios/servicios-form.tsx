@@ -14,6 +14,7 @@ import { toast } from 'sonner'
 import { Skeleton } from '@/components/ui/skeleton'
 import { v4 } from 'uuid'
 import { useAddServiciosMutation, useGetServiciosQuery, useUpdateServiciosMutation } from '@/lib/redux/services/serviciosApi'
+import { useGetVendorsQuery } from '@/lib/redux/services/vendorsApi'
 import { ArrowLeft, Package, Save, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -25,9 +26,15 @@ const servicioSchema = z.object({
     message: 'El monto debe ser mayor a 0',
   }),
   descripcion: z.string().min(1, 'La descripción es requerida'),
+  precioCosto: z.coerce.number().nonnegative().optional(),
+  codigoInterno: z.string().max(11).optional(),
+  codigoNegocio: z.string().max(40).optional(),
+  vendorId: z.string().optional(),
 })
 
 type ServicioFormValues = z.infer<typeof servicioSchema>
+
+const servicioInputClassName = 'bg-slate-50 dark:bg-slate-900/10 border-slate-200 dark:border-orange-900/20 focus:border-transparent focus:ring-2 focus:ring-orange-500 focus-visible:border-transparent focus-visible:ring-0 h-12 text-base transition-all'
 
 interface ServicioFormProps {
   initialData?: {
@@ -48,6 +55,7 @@ export function ServicioForm({ initialData }: ServicioFormProps) {
   const [isLoading, setIsLoading] = useState(false)
 
   const { data: servicios, isLoading: isLoadingServicios } = useGetServiciosQuery()
+  const { data: vendors } = useGetVendorsQuery()
 
   const [addServicios] = useAddServiciosMutation()
   const [updateServicios] = useUpdateServiciosMutation()
@@ -58,6 +66,10 @@ export function ServicioForm({ initialData }: ServicioFormProps) {
       nombre: initialData?.nombre || '',
       descripcion: initialData?.descripcion || '',
       precio: initialData?.precio ?? undefined,
+      precioCosto: undefined,
+      codigoInterno: '',
+      codigoNegocio: '',
+      vendorId: '',
     },
   })
 
@@ -88,18 +100,17 @@ export function ServicioForm({ initialData }: ServicioFormProps) {
 
   if (isLoadingServicios) {
     return (
-      <div className='min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 py-8 px-4'>
+      <div className='min-h-screen bg-gradient-to-br  py-8 px-4'>
         <div className='container mx-auto max-w-2xl'>
-          <Card className='border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm shadow-xl'>
+          <Card className='border-slate-200 backdrop-blur-sm shadow-xl'>
             <CardContent className='pt-8'>
               <div className='space-y-6'>
-                <Skeleton className='h-12 w-full bg-slate-200 dark:bg-slate-700' />
-                <Skeleton className='h-12 w-full bg-slate-200 dark:bg-slate-700' />
-                <Skeleton className='h-24 w-full bg-slate-200 dark:bg-slate-700' />
-                <Skeleton className='h-12 w-full bg-slate-200 dark:bg-slate-700' />
+                <Skeleton className='h-12 w-full bg-slate-200 dark:bg-slate-800/60' />
+                <Skeleton className='h-12 w-full bg-slate-200 dark:bg-slate-800/60' />
+                <Skeleton className='h-24 w-full bg-slate-200 dark:bg-slate-800/60' />
                 <div className='flex justify-end space-x-4'>
-                  <Skeleton className='h-10 w-24 bg-slate-200 dark:bg-slate-700' />
-                  <Skeleton className='h-10 w-32 bg-slate-200 dark:bg-slate-700' />
+                  <Skeleton className='h-10 w-24 bg-slate-200 dark:bg-slate-800/60' />
+                  <Skeleton className='h-10 w-32 bg-slate-200 dark:bg-slate-800/60' />
                 </div>
               </div>
             </CardContent>
@@ -110,7 +121,7 @@ export function ServicioForm({ initialData }: ServicioFormProps) {
   }
 
   return (
-    <div className='min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 py-8 px-4'>
+    <div className='min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900/10 dark:to-slate-800/10 py-8 px-4'>
       <motion.div 
         className='container mx-auto max-w-2xl'
         initial={{ opacity: 0, y: 20 }}
@@ -132,14 +143,14 @@ export function ServicioForm({ initialData }: ServicioFormProps) {
           </Link>
         </motion.div>
 
-        <Card className='border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm shadow-xl overflow-hidden'>
-          <CardHeader className='border-b border-slate-100 dark:border-slate-700 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 pb-6'>
+        <Card className='border-slate-200 dark:border-slate-700/10 bg-white/80 dark:bg-slate-900/10 backdrop-blur-sm shadow-xl overflow-hidden'>
+          <CardHeader className='border-b border-slate-100 dark:border-slate-700/10 bg-gradient-to-r pb-6'>
             <div className='flex items-center gap-3'>
               <motion.div
                 initial={{ scale: 0, rotate: -180 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
-                className='p-3 bg-gradient-to-br from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-700 rounded-xl shadow-lg shadow-blue-500/25'
+                className='p-3 bg-gradient-to-br from-orange-500 to-red-600 dark:from-orange-600 dark:to-red-700 rounded-xl shadow-lg shadow-orange-500/25'
               >
                 <Package className='h-6 w-6 text-white' />
               </motion.div>
@@ -173,7 +184,7 @@ export function ServicioForm({ initialData }: ServicioFormProps) {
                             type='text' 
                             {...field} 
                             placeholder='Ej: Instalación de Aire Acondicionado'
-                            className='bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent h-12 text-base transition-all'
+                            className={servicioInputClassName}
                           />
                         </FormControl>
                         <FormDescription className='text-slate-500 dark:text-slate-500'>
@@ -201,7 +212,7 @@ export function ServicioForm({ initialData }: ServicioFormProps) {
                             type='text' 
                             {...field} 
                             placeholder='Describe los detalles del servicio...'
-                            className='bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent h-12 text-base transition-all'
+                            className={servicioInputClassName}
                           />
                         </FormControl>
                         <FormDescription className='text-slate-500 dark:text-slate-500'>
@@ -231,7 +242,7 @@ export function ServicioForm({ initialData }: ServicioFormProps) {
                               type='number' 
                               {...field} 
                               placeholder='0.00'
-                              className='bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent h-12 text-base pl-8 transition-all'
+                              className={`${servicioInputClassName} pl-8`}
                             />
                           </div>
                         </FormControl>
@@ -244,6 +255,51 @@ export function ServicioForm({ initialData }: ServicioFormProps) {
                   />
                 </motion.div>
 
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                  <FormField
+                    control={form.control}
+                    name='precioCosto'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className='text-slate-700 dark:text-slate-300 text-base'>Costo de referencia</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type='number' 
+                            min='0' 
+                            {...field} 
+                            className={servicioInputClassName}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name='vendorId'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className='text-slate-700 dark:text-slate-300 text-base'>Proveedor (opcional)</FormLabel>
+                        <FormControl>
+                          <select
+                            className='h-12 w-full rounded-md border border-slate-200 dark:border-orange-900/20 bg-slate-50 dark:bg-slate-900/10 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all'
+                            {...field}
+                          >
+                            <option value=''>Sin proveedor</option>
+                            {vendors?.map((vendor: any) => (
+                              <option key={vendor.vendorId} value={vendor.vendorId}>
+                                {vendor.nombre}
+                              </option>
+                            ))}
+                          </select>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
                 <motion.div 
                   className='flex justify-end space-x-4 pt-6 border-t border-slate-100 dark:border-slate-700'
                   initial={{ opacity: 0, y: 20 }}
@@ -253,9 +309,9 @@ export function ServicioForm({ initialData }: ServicioFormProps) {
                   <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                     <Button 
                       type='button' 
-                      variant='outline' 
+                      variant='destructive' 
                       onClick={() => router.back()}
-                      className='border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+                      className='border-slate-200 dark:border-slate-700 hover:bg-red-150 dark:hover:bg-orange-700'
                     >
                       Cancelar
                     </Button>
@@ -264,7 +320,7 @@ export function ServicioForm({ initialData }: ServicioFormProps) {
                     <Button 
                       type='submit' 
                       disabled={isLoading}
-                      className='bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white shadow-lg shadow-blue-500/25 disabled:opacity-50'
+                      className='bg-gradient-to-r from-orange-600 to-red-700 hover:from-orange-700 hover:to-red-800 text-white shadow-lg shadow-orange-500/25 disabled:opacity-50'
                     >
                       {isLoading ? (
                         <>

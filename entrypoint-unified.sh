@@ -1,10 +1,6 @@
 #!/bin/bash
 set -e
 
-echo "============================================"
-echo "  Sistema de Inventario TCP"
-echo "============================================"
-
 # ============================================
 # Configuración de Secrets (seguros)
 # ============================================
@@ -13,20 +9,20 @@ echo "============================================"
 
 # Generar secrets si no existen (solo para desarrollo)
 if [ -z "$JWT_SECRET" ]; then
-    echo "⚠ ADVERTENCIA: JWT_SECRET no definido, generando uno temporal..."
+    echo "ADVERTENCIA: JWT_SECRET no definido, generando uno temporal..."
     JWT_SECRET=$(openssl rand -base64 32 2>/dev/null || echo "dev_jwt_secret_change_in_production")
     export JWT_SECRET
 fi
 
 if [ -z "$NEXTAUTH_SECRET" ]; then
-    echo "⚠ ADVERTENCIA: NEXTAUTH_SECRET no definido, generando uno temporal..."
+    echo "ADVERTENCIA: NEXTAUTH_SECRET no definido, generando uno temporal..."
     NEXTAUTH_SECRET=$(openssl rand -base64 32 2>/dev/null || echo "dev_nextauth_secret_change_in_production")
     export NEXTAUTH_SECRET
 fi
 
 if [ -z "$DB_PASSWORD" ]; then
-    DB_PASSWORD="inventario123"
-    echo "⚠ ADVERTENCIA: Usando password de BD por defecto"
+    DB_PASSWORD="Soyelamo32++"
+    echo "ADVERTENCIA: Usando password de BD por defecto"
 fi
 
 # Configurar DATABASE_URL si no existe
@@ -36,10 +32,18 @@ fi
 
 export NEXTAUTH_URL="${NEXTAUTH_URL:-http://localhost}"
 
+# Ocultar passwords en logs
+echo "============================================"
+echo "  Sistema de Inventario TCP"
+echo "============================================"
+echo ""
 echo "Configuracion:"
 echo "  NEXTAUTH_URL: $NEXTAUTH_URL"
-echo "  DATABASE_URL: ${DATABASE_URL%%\?*}?***"
+echo "  DATABASE_URL: [oculto]"
 echo ""
+
+# Exportar DATABASE_URL para que Next.js la use
+export DATABASE_URL
 
 # ============================================
 # Función para esperar PostgreSQL
@@ -122,6 +126,53 @@ run_migrations() {
 }
 
 # ============================================
+# Función para crear usuario administrador
+# ============================================
+create_admin_user() {
+    echo "[3.5/5] Verificando usuario administrador..."
+    
+    # Valores por defecto
+    ADMIN_EMAIL="${ADMIN_EMAIL:-admin@tcp.com}"
+    ADMIN_PASSWORD="${ADMIN_PASSWORD:-Admin123!}"
+    
+    if [ -z "$ADMIN_EMAIL" ] || [ -z "$ADMIN_PASSWORD" ]; then
+        echo "   No se proporcionaron datos de admin, omitiendo..."
+        return 0
+    fi
+    
+    # Verificar si ya existe el usuario
+    local user_exists=$(su - postgres -c "psql -d inventario_db -t -c \"SELECT COUNT(*) FROM \\\"User\\\" WHERE email = '$ADMIN_EMAIL';\"" 2>/dev/null | tr -d ' ')
+    
+    if [ "$user_exists" -gt 0 ]; then
+        echo "   Usuario admin ya existe: $ADMIN_EMAIL"
+        return 0
+    fi
+    
+    echo "   Creando usuario administrador..."
+    
+    # Generar hash de contraseña usando bcrypt
+    local password_hash
+    password_hash=$(node -e "const bcrypt = require('bcrypt'); bcrypt.hash('$ADMIN_PASSWORD', 12).then(h => console.log(h));" 2>/dev/null)
+    
+    if [ -z "$password_hash" ]; then
+        echo "   ERROR: No se pudo generar el hash de contraseña"
+        return 1
+    fi
+    
+    # Insertar usuario admin
+    su - postgres -c "psql -d inventario_db -c \"INSERT INTO \\\"User\\\" (\\\"userId\\\", \\\"name\\\", \\\"email\\\", \\\"password\\\", \\\"role\\\", \\\"isActive\\\", \\\"createdAt\\\", \\\"updatedAt\\\", \\\"activatedAt\\\") VALUES (gen_random_uuid(), 'Administrador', '$ADMIN_EMAIL', '$password_hash', 'admin', true, NOW(), NOW(), NOW());\"" 2>/dev/null || true
+    
+    # Verificar que se creó
+    local user_created=$(su - postgres -c "psql -d inventario_db -t -c \"SELECT COUNT(*) FROM \\\"User\\\" WHERE email = '$ADMIN_EMAIL';\"" 2>/dev/null | tr -d ' ')
+    
+    if [ "$user_created" -gt 0 ]; then
+        echo "   ✓ Usuario administrador creado: $ADMIN_EMAIL"
+    else
+        echo "   ERROR: No se pudo crear el usuario administrador"
+    fi
+}
+
+# ============================================
 # Función para iniciar la app
 # ============================================
 start_app() {
@@ -186,6 +237,7 @@ if check_db_initialized; then
     echo "   Saltando migraciones (BD ya inicializada)"
 else
     run_migrations
+    create_admin_user
 fi
 
 start_app
@@ -193,16 +245,16 @@ start_nginx
 
 echo ""
 echo "============================================"
-echo "  ✓ Sistema iniciado correctamente"
+echo "  Sistema iniciado correctamente"
 echo "============================================"
 echo "  Aplicación: http://localhost"
 echo "  PostgreSQL: localhost:5432"
 echo ""
 echo "  Datos persistentes en: /var/lib/postgresql/data"
 echo ""
-echo "  Para crear admin:"
-echo "    docker exec -it tcp-sistema /bin/bash"
-echo "    npx prisma db push --accept-data-loss --skip-generate"
+echo "  Credenciales de admin:"
+echo "    Email: $ADMIN_EMAIL"
+echo "    Password: [oculto en logs]"
 echo "============================================"
 
 # Mantener el contenedor corriendo

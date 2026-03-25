@@ -18,6 +18,7 @@ import {
   Globe,
   ChefHat,
   CheckCircle,
+  Factory,
   CreditCard,
   FileText,
   Receipt,
@@ -130,6 +131,11 @@ export function AppSidebar2({
             icon: Store,
           },
           {
+            title: "Listas de Precios",
+            url: "/busy/listas-precios",
+            icon: Tag,
+          },
+          {
             title: "Proveedores",
             url: "/busy/vendor",
             icon: User2Icon,
@@ -195,6 +201,11 @@ export function AppSidebar2({
             title: "Gastos DE",
             url: "/busy/gastosDE",
             icon: Receipt,
+          },
+          {
+            title: "Producción",
+            url: "/busy/produccion",
+            icon: Factory,
           },
           {
             title: "Clientes",

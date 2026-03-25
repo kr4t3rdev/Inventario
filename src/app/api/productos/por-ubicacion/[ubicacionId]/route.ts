@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
+import type { PrecioFuente } from "@/lib/types/pricing"
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ ubicacionId: string }> }) {
   try {
@@ -9,6 +10,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     let isPuntoVenta = false
     const puntoVenta = await prisma.puntoDeVenta.findUnique({
       where: { pvId: ubicacionId },
+      select: { pvId: true, listaPrecioId: true },
     })
     if (puntoVenta) {
       isPuntoVenta = true
@@ -42,7 +44,29 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       },
     })
 
-    // Para cada producto, calcular su stock en la ubicación específica
+    const listaPrecioIdAplicada = isPuntoVenta ? puntoVenta?.listaPrecioId ?? null : null
+    const preciosPorListaMap = new Map<string, number>()
+
+    if (isPuntoVenta && listaPrecioIdAplicada && productos.length > 0) {
+      const preciosPorLista = await prisma.precioProducto.findMany({
+        where: {
+          listaPrecioId: listaPrecioIdAplicada,
+          productoId: {
+            in: productos.map((p) => p.id),
+          },
+        },
+        select: {
+          productoId: true,
+          precio: true,
+        },
+      })
+
+      for (const precioLista of preciosPorLista) {
+        preciosPorListaMap.set(precioLista.productoId, Number(precioLista.precio))
+      }
+    }
+
+    // Para cada producto, calcular su stock y precio efectivo en la ubicación específica
     const productosConStock = await Promise.all(
       productos.map(async (producto) => {
         let stockEnUbicacion = 0
@@ -154,9 +178,16 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         // Asegurarse de que el stock no sea negativo
         stockEnUbicacion = Math.max(0, stockEnUbicacion)
 
+        const precioLista = preciosPorListaMap.get(producto.id)
+        const precioVentaResuelto = precioLista ?? Number(producto.precioVenta)
+        const precioFuente: PrecioFuente = precioLista !== undefined ? "LISTA" : "BASE"
+
         return {
           ...producto,
           stockEnUbicacion,
+          precioVentaResuelto,
+          precioFuente,
+          listaPrecioIdAplicada,
         }
       }),
     )

@@ -27,18 +27,18 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json()
-    const createdAt = new Date()
-    const periodo = `${createdAt.getFullYear()}-${String(createdAt.getMonth() + 1).padStart(2, '0')}`
+    const periodo = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`
 
     const gastoServicio = await prisma.gastosDE.create({
       data: {
-        gastosDEId: data.gastoSId,
+        gastosDEId: data.gastosDEId, // Fixed: use correct field name
         tipo: data.tipo,
         proveedor: data.proveedor,
         monto: data.monto,
         periodo: periodo,
-        createdAt: createdAt,
+        numeroFactura: data.numeroFactura || null, // Added: invoice number (optional)
         descripcion: data.descripcion,
+        // Prisma handles createdAt/updatedAt automatically via @default(now()) in schema
       },
     })
 

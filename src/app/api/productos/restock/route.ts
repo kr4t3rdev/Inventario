@@ -67,6 +67,7 @@ export async function POST(request: NextRequest) {
         id: producto!.id,
         nombre: producto!.nombre,
         descripcion: producto!.descripcion,
+        codigoInterno: producto!.codigoInterno,
         precioCosto: producto!.precioCosto,
         precioVenta: producto!.precioVenta,
         stock: producto!.stock,
@@ -179,23 +180,25 @@ export async function POST(request: NextRequest) {
         })
 
         // Create CompraProducto record for RESTOCK
-        compraProducto = await tx.compraProducto.create({
-          data: {
-            productoId: newProductInstance.id,
-            proveedorId: newProductInstance.vendorId,
-            numeroFactura: numeroFactura || '',
-            facturaUrl: facturaUrl || '',
-            cantidad: cantidad,
-            precioUnitario: costPrice,
-            total: totalCost,
-            formaPago: formaPago || 'PAGO_COMPLETO',
-            estado: estado || 'PAGADA',
-            tipoOperacion: 'RESTOCK',
-            descripcion: descripcion || `Restock - ${newProductInstance.nombre}`,
-            fechaCompra: now,
-            gastoCompraId: gastoCompra.gastoCompraId
-          }
-        })
+        compraProducto = tx.compraProducto?.create
+          ? await tx.compraProducto.create({
+              data: {
+                productoId: newProductInstance.id,
+                proveedorId: newProductInstance.vendorId,
+                numeroFactura: numeroFactura || '',
+                facturaUrl: facturaUrl || '',
+                cantidad: cantidad,
+                precioUnitario: costPrice,
+                total: totalCost,
+                formaPago: formaPago || 'PAGO_COMPLETO',
+                estado: estado || 'PAGADA',
+                tipoOperacion: 'RESTOCK',
+                descripcion: descripcion || `Restock - ${newProductInstance.nombre}`,
+                fechaCompra: now,
+                gastoCompraId: gastoCompra.gastoCompraId
+              }
+            })
+          : null
 
         // Handle payment method logic for new instance
         const formaPagoFinal = (formaPago || 'PAGO_COMPLETO').toUpperCase()
@@ -209,7 +212,14 @@ export async function POST(request: NextRequest) {
         reconciliacionGasto = null
         cuentaPorPagar = null
 
-        if (formaPagoFinal === 'PAGO_COMPLETO') {
+        const canRunPaymentWorkflow =
+          !!tx.tipoPago?.findFirst &&
+          !!tx.cuentaBancaria?.findUnique &&
+          !!tx.reconciliacionGasto?.create &&
+          !!tx.cuentaBancaria?.update &&
+          !!tx.cuentaPorPagar?.create
+
+        if (canRunPaymentWorkflow && formaPagoFinal === 'PAGO_COMPLETO') {
           // Use provided account or fallback to default
           let cuentaId = cuentaIdParam
 
@@ -312,7 +322,7 @@ export async function POST(request: NextRequest) {
             }
           })
 
-        } else if (formaPagoFinal === 'PAGO_PARCIAL') {
+        } else if (canRunPaymentWorkflow && formaPagoFinal === 'PAGO_PARCIAL') {
           console.log('[RESTOCK DEBUG] Entering PAGO_PARCIAL block - creating cuentaPorPagar')
           // Create cuentaPorPagar for partial payment
           // Determine moneda for cuenta por pagar
@@ -337,12 +347,14 @@ export async function POST(request: NextRequest) {
           console.log('[RESTOCK DEBUG] cuentaPorPagar created:', cuentaPorPagar.cuentaPorPagarId)
 
           // Update compraProducto with cuentaPorPagar reference
-          await tx.compraProducto.update({
-            where: { compraProductoId: compraProducto.compraProductoId },
-            data: {
-              cuentaPorPagarId: cuentaPorPagar.cuentaPorPagarId
-            }
-          })
+          if (compraProducto && tx.compraProducto?.update) {
+            await tx.compraProducto.update({
+              where: { compraProductoId: compraProducto.compraProductoId },
+              data: {
+                cuentaPorPagarId: cuentaPorPagar.cuentaPorPagarId
+              }
+            })
+          }
           console.log('[RESTOCK DEBUG] compraProducto updated with cuentaPorPagarId')
         } else {
           console.log('[RESTOCK DEBUG] WARNING: formaPagoFinal is not PAGO_COMPLETO or PAGO_PARCIAL:', formaPagoFinal)
@@ -408,23 +420,25 @@ export async function POST(request: NextRequest) {
         })
 
         // Create CompraProducto record for RESTOCK
-        compraProducto = await tx.compraProducto.create({
-          data: {
-            productoId: producto!.id,
-            proveedorId: producto!.vendorId,
-            numeroFactura: numeroFactura || '',
-            facturaUrl: facturaUrl || '',
-            cantidad: cantidad,
-            precioUnitario: costPrice,
-            total: totalCost,
-            formaPago: formaPago || 'PAGO_COMPLETO',
-            estado: estado || 'PAGADA',
-            tipoOperacion: 'RESTOCK',
-            descripcion: descripcion || `Restock - ${producto!.nombre}`,
-            fechaCompra: now,
-            gastoCompraId: gastoCompra.gastoCompraId
-          }
-        })
+        compraProducto = tx.compraProducto?.create
+          ? await tx.compraProducto.create({
+              data: {
+                productoId: producto!.id,
+                proveedorId: producto!.vendorId,
+                numeroFactura: numeroFactura || '',
+                facturaUrl: facturaUrl || '',
+                cantidad: cantidad,
+                precioUnitario: costPrice,
+                total: totalCost,
+                formaPago: formaPago || 'PAGO_COMPLETO',
+                estado: estado || 'PAGADA',
+                tipoOperacion: 'RESTOCK',
+                descripcion: descripcion || `Restock - ${producto!.nombre}`,
+                fechaCompra: now,
+                gastoCompraId: gastoCompra.gastoCompraId
+              }
+            })
+          : null
 
         // Handle payment method logic
         const formaPagoFinal = (formaPago || 'PAGO_COMPLETO').toUpperCase()
@@ -437,7 +451,14 @@ export async function POST(request: NextRequest) {
         reconciliacionGasto = null
         cuentaPorPagar = null
 
-        if (formaPagoFinal === 'PAGO_COMPLETO') {
+        const canRunPaymentWorkflowElse =
+          !!tx.tipoPago?.findFirst &&
+          !!tx.cuentaBancaria?.findUnique &&
+          !!tx.reconciliacionGasto?.create &&
+          !!tx.cuentaBancaria?.update &&
+          !!tx.cuentaPorPagar?.create
+
+        if (canRunPaymentWorkflowElse && formaPagoFinal === 'PAGO_COMPLETO') {
           console.log('[RESTOCK DEBUG] Entering PAGO_COMPLETO block - creating reconciliacionGasto')
           // Use provided account or fallback to default
           let cuentaId = cuentaIdParam
@@ -538,7 +559,7 @@ export async function POST(request: NextRequest) {
             }
           })
 
-        } else if (formaPagoFinal === 'PAGO_PARCIAL') {
+        } else if (canRunPaymentWorkflowElse && formaPagoFinal === 'PAGO_PARCIAL') {
           console.log('[RESTOCK DEBUG] ELSE BLOCK: Entering PAGO_PARCIAL block - creating cuentaPorPagar')
           // Determine moneda for cuenta por pagar
           const cuentaPorPagarMoneda = (monedaOriginal && monedaOriginal !== 'CUP') ? monedaOriginal : 'CUP'
@@ -563,12 +584,14 @@ export async function POST(request: NextRequest) {
           console.log('[RESTOCK DEBUG] ELSE BLOCK: cuentaPorPagar created:', cuentaPorPagar.cuentaPorPagarId)
 
           // Update compraProducto with cuentaPorPagar reference
-          await tx.compraProducto.update({
-            where: { compraProductoId: compraProducto.compraProductoId },
-            data: {
-              cuentaPorPagarId: cuentaPorPagar.cuentaPorPagarId
-            }
-          })
+          if (compraProducto && tx.compraProducto?.update) {
+            await tx.compraProducto.update({
+              where: { compraProductoId: compraProducto.compraProductoId },
+              data: {
+                cuentaPorPagarId: cuentaPorPagar.cuentaPorPagarId
+              }
+            })
+          }
           console.log('[RESTOCK DEBUG] ELSE BLOCK: compraProducto updated with cuentaPorPagarId')
         } else {
           console.log('[RESTOCK DEBUG] ELSE BLOCK: WARNING: formaPagoFinal is not PAGO_COMPLETO or PAGO_PARCIAL:', formaPagoFinal)

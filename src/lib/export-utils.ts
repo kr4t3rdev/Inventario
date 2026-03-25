@@ -2,6 +2,7 @@
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
 import { format } from "date-fns"
+import { getProductDisplayIdentifier } from "@/lib/product-display-utils"
 
 //(jsPDF as any).prototype.autoTable = autoTable
 
@@ -157,7 +158,7 @@ export function exportToPdf(data: any[], categorias: any[] | null, title: string
       ]
 
       tableData = data.map((item) => ({
-        nombre: item.nombre,
+        nombre: getProductDisplayIdentifier(item),
         categoria: (item as any)?.categoria?.nombre || "",
         subcategoria: (item as any)?.subcategoria?.nombre || "",
         stock: item.stockUbicacion !== undefined ? item.stockUbicacion : (item.stock || 0),
@@ -175,7 +176,11 @@ export function exportToPdf(data: any[], categorias: any[] | null, title: string
 
       tableData = data.map((item) => ({
         id: item.ventaId,
-        producto: item.productoNombre || item.productoId,
+        producto: getProductDisplayIdentifier({
+          id: item.productoId,
+          nombre: item.productoNombre || item.producto?.nombre,
+          codigoInterno: item.productoCodigoInterno || item.producto?.codigoInterno,
+        }),
         cantidad: item.cantidad,
         fecha: format(new Date(item.createdAt), "dd/MM/yyyy"),
         puntoVenta: item.puntoDeVentaNombre || "",
@@ -191,7 +196,11 @@ export function exportToPdf(data: any[], categorias: any[] | null, title: string
 
       tableData = data.map((item) => ({
         id: item.mermaId,
-        producto: item.productoNombre || item.productoId,
+        producto: getProductDisplayIdentifier({
+          id: item.productoId,
+          nombre: item.productoNombre || item.producto?.nombre,
+          codigoInterno: item.productoCodigoInterno || item.producto?.codigoInterno,
+        }),
         cantidad: item.cantidad,
         fecha: format(new Date(item.createdAt), "dd/MM/yyyy"),
         motivo: item.motivo,
@@ -208,7 +217,11 @@ export function exportToPdf(data: any[], categorias: any[] | null, title: string
 
       tableData = data.map((item) => ({
         id: item.transferenciaId,
-        producto: item.productoNombre || item.productoId,
+        producto: getProductDisplayIdentifier({
+          id: item.productoId,
+          nombre: item.productoNombre || item.producto?.nombre,
+          codigoInterno: item.productoCodigoInterno || item.producto?.codigoInterno,
+        }),
         cantidad: item.cantidad,
         fecha: format(new Date(item.createdAt), "dd/MM/yyyy"),
         origen: item.origenNombre || item.puntoDeVentaOrigenNombre || "N/A",

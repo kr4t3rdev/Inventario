@@ -137,7 +137,10 @@ export const GET = withAuthGet(async (request: NextRequest) => {
         numeroTransferencia: t.numeroTransferencia,
         productoId: t.productoId,
         productoNombre: t.producto.nombre,
+        productoCodigoInterno: t.producto.codigoInterno,
         cantidad: t.cantidad,
+        costoUnitario: t.costoUnitario,
+        costoTotal: t.costoTotal,
         tipoTransferencia,
         origenNombre,
         destinoNombre,
@@ -287,10 +290,16 @@ export const POST = withAuthPost(async (request: NextRequest, _context: any, use
       for (const item of productosValidados) {
         const { producto, cantidad } = item
 
+        // Calcular costos
+        const costoUnitario = producto.precioCosto
+        const costoTotal = cantidad * costoUnitario
+
         // Crear la transferencia con los campos correctos según el tipo
         const transferenciaData: any = {
           productoId: producto.id,
           cantidad,
+          costoUnitario,
+          costoTotal,
           descripcion: descripcion || `Transferencia múltiple - ${producto.nombre}`,
           estado: 'COMPLETADA',
           creadoPorId: user.userId,

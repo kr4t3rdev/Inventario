@@ -16,6 +16,7 @@ import { toast } from "sonner"
 import { Skeleton } from "@/components/ui/skeleton"
 import { v4 } from "uuid"
 import { useAddGastosDEMutation, useGetGastosDEQuery, useUpdateGastosDEMutation } from "@/lib/redux/services/gastosDEApi"
+import { useGetVendorsQuery } from "@/lib/redux/services/vendorsApi"
 
 const gastosDESchema = z.object({
   tipo: z.string({
@@ -29,7 +30,7 @@ const gastosDESchema = z.object({
     message: "El monto debe ser mayor a 0",
   }),
   descripcion: z.string({
-    message: "Escriba un descipcion"
+    message: "Escriba una descripción"
   }),
 })
 
@@ -51,6 +52,7 @@ export function GastoDEForm({ initialData }: GastosDEFormProps) {
   const [isLoading, setIsLoading] = useState(false)
 
   const { data: gastosDE, isLoading: isLoadingGastosDE } = useGetGastosDEQuery()
+  const { data: vendors, isLoading: isLoadingVendors } = useGetVendorsQuery()
 
   const [addGastoGastosDE] = useAddGastosDEMutation()
   const [updateGastosDE] = useUpdateGastosDEMutation()
@@ -244,13 +246,19 @@ export function GastoDEForm({ initialData }: GastosDEFormProps) {
                     <FormItem>
                       <FormLabel>Proveedor</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="text" 
-                          {...field} 
-                          className="transition-all duration-200 focus:scale-[1.01]"
-                        />
+                        <select
+                          {...field}
+                          className="h-12 w-full rounded-md border border-slate-200 dark:border-orange-900/20 bg-slate-50 dark:bg-slate-900/10 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
+                        >
+                          <option value="">Seleccionar proveedor</option>
+                          {vendors?.map((vendor: any) => (
+                            <option key={vendor.vendorId} value={vendor.nombre}>
+                              {vendor.nombre}
+                            </option>
+                          ))}
+                        </select>
                       </FormControl>
-                      <FormDescription>Ingrese el proveedor para del gasto.</FormDescription>
+                      <FormDescription>Seleccione el proveedor del gasto.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}

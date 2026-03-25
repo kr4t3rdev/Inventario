@@ -18,6 +18,7 @@ export interface VentaLinea {
   cliente?: Venta["cliente"]
   producto?: Venta["producto"]
   productoNombre?: string
+  productoCodigoInterno?: string
 }
 
 /**
@@ -69,6 +70,7 @@ export function flattenVentas(ventas?: Venta[]): VentaLinea[] {
           cliente: venta.cliente,
           producto: item.producto ?? venta.producto,
           productoNombre: item.producto?.nombre || venta.producto?.nombre,
+          productoCodigoInterno: item.producto?.codigoInterno || venta.producto?.codigoInterno || undefined,
         })
       })
       return
@@ -97,6 +99,7 @@ export function flattenVentas(ventas?: Venta[]): VentaLinea[] {
       cliente: venta.cliente,
       producto: venta.producto,
       productoNombre: venta.producto?.nombre,
+      productoCodigoInterno: venta.producto?.codigoInterno || undefined,
     })
   })
 

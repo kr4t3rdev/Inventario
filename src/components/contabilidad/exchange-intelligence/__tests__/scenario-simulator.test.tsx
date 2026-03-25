@@ -5,7 +5,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
-import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import ScenarioSimulator from '../scenario-simulator';
 import { KPIData } from '@/lib/types/exchange-intelligence';
 
@@ -48,54 +48,10 @@ const mockKPIData: KPIData = {
   ],
 };
 
-const mockSimulationResult = {
-  costo_reposicion_proyectado: 150000,
-  perdida_no_realizada_proyectada: 25000,
-  margen_real_proyectado: 750,
-  utilidad_neta_proyectada: 120000,
-  alertas_generadas: [
-    {
-      tipo: 'cost_increase',
-      mensaje: 'Incremento significativo en costos de reposición',
-      severidad: 'warning' as const,
-    },
-  ],
-};
-
-// Mock de useSimulateScenarioMutation
-const mockSimulateScenario = vi.fn();
-const mockUseSimulateScenarioMutation = vi.fn();
-
-vi.mock('@/lib/redux/services/exchangeIntelligenceApi', () => ({
-  useSimulateScenarioMutation: (...args: any[]) => mockUseSimulateScenarioMutation(...args),
-}));
-
-// Mock de Recharts
-vi.mock('recharts', () => ({
-  LineChart: ({ children }: any) => <div data-testid="line-chart">{children}</div>,
-  Line: () => <div data-testid="line" />,
-  XAxis: () => <div data-testid="x-axis" />,
-  YAxis: () => <div data-testid="y-axis" />,
-  CartesianGrid: () => <div data-testid="cartesian-grid" />,
-  Tooltip: () => <div data-testid="tooltip" />,
-  ResponsiveContainer: ({ children }: any) => <div data-testid="responsive-container">{children}</div>,
-}));
-
 describe('ScenarioSimulator', () => {
   let store: ReturnType<typeof configureStore>;
 
   beforeEach(() => {
-    vi.clearAllMocks();
-    
-    mockUseSimulateScenarioMutation.mockReturnValue([
-      mockSimulateScenario,
-      {
-        data: null,
-        isLoading: false,
-        error: null,
-      },
-    ]);
-
     store = configureStore({
       reducer: {
         exchangeIntelligence: (state = {}) => state,
@@ -103,219 +59,56 @@ describe('ScenarioSimulator', () => {
     });
   });
 
-  it('debe renderizar correctamente con datos iniciales', () => {
+  it('debe renderizar configuración e impacto base', () => {
     render(
       <Provider store={store}>
         <ScenarioSimulator datos_actuales={mockKPIData} />
       </Provider>
     );
 
-    expect(screen.getByText('Simulador de Escenarios')).toBeInTheDocument();
-    expect(screen.getByText('Ajusta las tasas de cambio y observa el impacto en tiempo real')).toBeInTheDocument();
-    expect(screen.getByText('Tasa USD')).toBeInTheDocument();
-    expect(screen.getByText('Escenarios Predefinidos')).toBeInTheDocument();
+    expect(screen.getByText('Configuración del Escenario')).toBeTruthy();
+    expect(screen.getByText('Impacto Proyectado')).toBeTruthy();
+    expect(screen.getByText('Variación del T/C (%)')).toBeTruthy();
+    expect(screen.getByText('Escenario Controlado')).toBeTruthy();
   });
 
-  it('debe renderizar sin datos', () => {
-    const emptyKPIData: KPIData = {
-      tasa_equilibrio: { productos: [] },
-      margen_real_vs_nominal: {
-        margen_nominal: 0,
-        margen_real: 0,
-        diferencia_porcentual: 0,
-        tendencia_historica: [],
-      },
-      diferencial_cambiario_acumulado: {
-        ytd: 0,
-        desglose_mensual: [],
-        comparacion_anio_anterior: 0,
-      },
-      envejecimiento_deuda: [],
-    };
-
-    render(
-      <Provider store={store}>
-        <ScenarioSimulator datos_actuales={emptyKPIData} />
-      </Provider>
-    );
-
-    expect(screen.getByText('Simulador de Escenarios')).toBeInTheDocument();
-    expect(screen.getByText('Tasa USD')).toBeInTheDocument();
-  });
-
-  it('debe mostrar mensaje cuando no hay simulación', () => {
+  it('debe actualizar métricas cuando cambia la variación por input directo', () => {
     render(
       <Provider store={store}>
         <ScenarioSimulator datos_actuales={mockKPIData} />
       </Provider>
     );
 
-    expect(screen.getByText('Ajusta las tasas para ver la simulación')).toBeInTheDocument();
+    const input = screen.getByRole('spinbutton');
+    fireEvent.change(input, { target: { value: '10' } });
+
+    expect(screen.getByText('Advertencia de Riesgo')).toBeTruthy();
+    expect(screen.getByText(/erosión moderada de márgenes/i)).toBeTruthy();
+    expect(screen.getAllByText('640.00%').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('$55,000').length).toBeGreaterThan(0);
   });
 
-  it('debe aplicar preset optimista correctamente', () => {
+  it('debe mostrar estado de riesgo crítico en variaciones altas', () => {
     render(
       <Provider store={store}>
         <ScenarioSimulator datos_actuales={mockKPIData} />
       </Provider>
     );
 
-    const optimistaButton = screen.getByText('Optimista (-10%)');
-    fireEvent.click(optimistaButton);
+    const input = screen.getByRole('spinbutton');
+    fireEvent.change(input, { target: { value: '15' } });
 
-    // Verificar que se llama a la simulación
-    expect(mockSimulateScenario).toHaveBeenCalled();
+    expect(screen.getByText('Riesgo Crítico')).toBeTruthy();
+    expect(screen.getByText(/depreciación superior al 10%/i)).toBeTruthy();
   });
 
-  it('debe aplicar preset pesimista correctamente', () => {
+  it('debe mostrar mensaje cuando no hay datos', () => {
     render(
       <Provider store={store}>
-        <ScenarioSimulator datos_actuales={mockKPIData} />
+        <ScenarioSimulator datos_actuales={undefined as any} />
       </Provider>
     );
 
-    const pesimistaButton = screen.getByText('Pesimista (+10%)');
-    fireEvent.click(pesimistaButton);
-
-    expect(mockSimulateScenario).toHaveBeenCalled();
-  });
-
-  it('debe resetear simulación correctamente', () => {
-    render(
-      <Provider store={store}>
-        <ScenarioSimulator datos_actuales={mockKPIData} />
-      </Provider>
-    );
-
-    const resetButton = screen.getByText('Reset');
-    fireEvent.click(resetButton);
-
-    expect(mockSimulateScenario).toHaveBeenCalled();
-  });
-
-  it('debe mostrar resultados de simulación cuando hay datos', () => {
-    mockUseSimulateScenarioMutation.mockReturnValue([
-      mockSimulateScenario,
-      {
-        data: mockSimulationResult,
-        isLoading: false,
-        error: null,
-      },
-    ]);
-
-    render(
-      <Provider store={store}>
-        <ScenarioSimulator datos_actuales={mockKPIData} />
-      </Provider>
-    );
-
-    expect(screen.getByText('Impacto Proyectado')).toBeInTheDocument();
-    expect(screen.getByText('$150,000')).toBeInTheDocument();
-    expect(screen.getByText('$25,000')).toBeInTheDocument();
-    expect(screen.getByText('$750')).toBeInTheDocument();
-    expect(screen.getByText('$120,000')).toBeInTheDocument();
-  });
-
-  it('debe mostrar alertas generadas', () => {
-    mockUseSimulateScenarioMutation.mockReturnValue([
-      mockSimulateScenario,
-      {
-        data: mockSimulationResult,
-        isLoading: false,
-        error: null,
-      },
-    ]);
-
-    render(
-      <Provider store={store}>
-        <ScenarioSimulator datos_actuales={mockKPIData} />
-      </Provider>
-    );
-
-    expect(screen.getByText('Alertas Generadas')).toBeInTheDocument();
-    expect(screen.getByText('Incremento significativo en costos de reposición')).toBeInTheDocument();
-    expect(screen.getByText('Advertencia')).toBeInTheDocument();
-  });
-
-  it('debe mostrar loading state', () => {
-    mockUseSimulateScenarioMutation.mockReturnValue([
-      mockSimulateScenario,
-      {
-        data: null,
-        isLoading: true,
-        error: null,
-      },
-    ]);
-
-    render(
-      <Provider store={store}>
-        <ScenarioSimulator datos_actuales={mockKPIData} />
-      </Provider>
-    );
-
-    expect(screen.getByTestId('loader')).toBeInTheDocument();
-  });
-
-  it('debe mostrar error state', () => {
-    mockUseSimulateScenarioMutation.mockReturnValue([
-      mockSimulateScenario,
-      {
-        data: null,
-        isLoading: false,
-        error: { message: 'Error de simulación' },
-      },
-    ]);
-
-    render(
-      <Provider store={store}>
-        <ScenarioSimulator datos_actuales={mockKPIData} />
-      </Provider>
-    );
-
-    expect(screen.getByText('Error en la simulación')).toBeInTheDocument();
-  });
-
-  it('debe guardar escenario correctamente', () => {
-    const alertMock = vi.spyOn(window, 'alert').mockImplementation(() => {});
-
-    render(
-      <Provider store={store}>
-        <ScenarioSimulator datos_actuales={mockKPIData} />
-      </Provider>
-    );
-
-    const input = screen.getByPlaceholderText('Nombre del escenario');
-    const saveButton = screen.getByText('Guardar');
-
-    // Intentar guardar sin nombre
-    fireEvent.click(saveButton);
-    expect(alertMock).toHaveBeenCalledWith('Por favor ingrese un nombre para el escenario');
-
-    // Guardar con nombre
-    fireEvent.change(input, { target: { value: 'Escenario de Prueba' } });
-    fireEvent.click(saveButton);
-    expect(alertMock).toHaveBeenCalledWith('Escenario "Escenario de Prueba" guardado exitosamente');
-
-    alertMock.mockRestore();
-  });
-
-  it('debe renderizar gráfico de utilidad neta', () => {
-    mockUseSimulateScenarioMutation.mockReturnValue([
-      mockSimulateScenario,
-      {
-        data: mockSimulationResult,
-        isLoading: false,
-        error: null,
-      },
-    ]);
-
-    render(
-      <Provider store={store}>
-        <ScenarioSimulator datos_actuales={mockKPIData} />
-      </Provider>
-    );
-
-    expect(screen.getByTestId('line-chart')).toBeInTheDocument();
-    expect(screen.getByTestId('responsive-container')).toBeInTheDocument();
+    expect(screen.getByText('No hay datos suficientes para realizar simulaciones.')).toBeTruthy();
   });
 });

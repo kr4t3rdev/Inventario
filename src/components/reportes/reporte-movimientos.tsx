@@ -12,14 +12,14 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { DateRangePicker } from "@/components/ui/date-range-picker"
-import { FileSpreadsheet, FileIcon as FilePdf, FileText } from "lucide-react"
+import { FileIcon as FilePdf, FileText } from "lucide-react"
 import { exportToPdf, exportToCsv } from "@/lib/export-utils"
 import { flattenVentas } from "@/lib/ventas-utils"
 import { format } from "date-fns"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts"
-import { useGetPuntosDeVentaQuery } from "@/lib/redux/services/puntosDeVentaApi"
 import { StaggerContainer, StaggerItem, AnimatedCard } from "@/components/ui/animations"
 import { cn } from "@/lib/utils"
+import { getProductDisplayIdentifier } from "@/lib/product-display-utils"
 
 const surfaceCardClass = cn(
   "relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl",
@@ -39,7 +39,8 @@ export function ReporteMovimientos() {
   const { data: transferenciasData, isLoading: isLoadingTransferencias } = useGetTransferenciasQuery()
   const transferencias = transferenciasData?.transferencias || []
   const { data: productos, isLoading: isLoadingProductos } = useGetProductosQuery()
-  const { data: ptoVenta } = useGetPuntosDeVentaQuery()
+
+  const getProductoById = (id: string) => productos?.find((producto) => producto.id === id)
 
   // Filtrar movimientos por fecha y producto
   const filtrarPorFecha = (fecha: string) => {
@@ -60,9 +61,6 @@ export function ReporteMovimientos() {
   const transferenciasFiltradas = transferencias?.filter(
     (transferencia) =>
       filtrarPorFecha(transferencia.createdAt) && (productoId === "todos" || transferencia.productoId === productoId),
-  )
-  const ptoVentaFiltrados = ptoVenta?.filter(
-    (pv) => filtrarPorFecha(pv.createdAt) && (productoId === 'todos')
   )
 
   // Datos para el gráfico
@@ -168,7 +166,11 @@ export function ReporteMovimientos() {
     if (tipoMovimiento === "ventas" && ventasFiltradas) {
       data = ventasFiltradas.map((venta) => ({
         ID: venta.ventaId,
-        Producto: venta.producto?.nombre || venta.productoNombre || venta.productoId,
+        Producto: getProductDisplayIdentifier({
+          id: venta.productoId,
+          nombre: venta.producto?.nombre || venta.productoNombre,
+          codigoInterno: venta.producto?.codigoInterno || venta.productoCodigoInterno,
+        }),
         Cantidad: venta.cantidad,
         Fecha: format(new Date(venta.createdAt), "dd/MM/yyyy"),
         "Punto de Venta": venta.puntoDeVenta?.nombre,
@@ -177,7 +179,12 @@ export function ReporteMovimientos() {
     } else if (tipoMovimiento === "mermas" && mermasFiltradas) {
       data = mermasFiltradas.map((merma) => ({
         ID: merma.mermaId,
-        Producto: productos?.find((p) => p.id === merma.productoId)?.nombre || merma.productoId,
+        Producto: getProductDisplayIdentifier({
+          id: merma.productoId,
+          nombre: getProductoById(merma.productoId)?.nombre || merma.producto?.nombre,
+          codigoInterno:
+            getProductoById(merma.productoId)?.codigoInterno || merma.producto?.codigoInterno,
+        }),
         Cantidad: merma.cantidad,
         Fecha: format(new Date(merma.createdAt), "dd/MM/yyyy"),
         Motivo: merma.motivo,
@@ -186,11 +193,18 @@ export function ReporteMovimientos() {
     } else if (tipoMovimiento === "transferencias" && transferenciasFiltradas) {
       data = transferenciasFiltradas.map((transferencia) => ({
         ID: transferencia.transferenciaId,
-        Producto: productos?.find((p) => p.id === transferencia.productoId)?.nombre || transferencia.productoId,
+        Producto: getProductDisplayIdentifier({
+          id: transferencia.productoId,
+          nombre: getProductoById(transferencia.productoId)?.nombre || transferencia.producto?.nombre,
+          codigoInterno:
+            transferencia.productoCodigoInterno ||
+            getProductoById(transferencia.productoId)?.codigoInterno ||
+            transferencia.producto?.codigoInterno,
+        }),
         Cantidad: transferencia.cantidad,
         Fecha: format(new Date(transferencia.createdAt), "dd/MM/yyyy"),
-        Origen: transferencia.origen?.nombre  || ptoVentaFiltrados|| "N/A",
-        Destino: transferencia.destino?.nombre || "N/A",
+        Origen: transferencia.origenNombre || transferencia.origen?.nombre || "N/A",
+        Destino: transferencia.destinoNombre || transferencia.destino?.nombre || "N/A",
       }))
       filename = "Reporte_Transferencias"
     }
@@ -225,7 +239,7 @@ export function ReporteMovimientos() {
               <SelectItem value="todos">Todos los productos</SelectItem>
               {productos?.map((producto) => (
           <SelectItem key={producto.id} value={producto.id}>
-            {producto.nombre}
+            {getProductDisplayIdentifier(producto)}
           </SelectItem>
               ))}
             </SelectContent>
@@ -314,7 +328,13 @@ export function ReporteMovimientos() {
                       ventasFiltradas.map((venta) => (
                         <TableRow key={venta.id} className="hover:bg-muted/50 transition-colors">
                           <TableCell className="font-medium">{venta.ventaId}</TableCell>
-                          <TableCell>{venta.producto?.nombre || venta.productoNombre || venta.productoId}</TableCell>
+                          <TableCell>
+                            {getProductDisplayIdentifier({
+                              id: venta.productoId,
+                              nombre: venta.producto?.nombre || venta.productoNombre,
+                              codigoInterno: venta.producto?.codigoInterno || venta.productoCodigoInterno,
+                            })}
+                          </TableCell>
                           <TableCell className="text-right">
                             <Badge>{venta.cantidad}</Badge>
                           </TableCell>
@@ -347,7 +367,15 @@ export function ReporteMovimientos() {
                       mermasFiltradas?.map((merma) => (
                         <TableRow key={merma.mermaId} className="hover:bg-muted/50 transition-colors">
                           <TableCell className="font-medium">{merma.mermaId}</TableCell>
-                          <TableCell>{productos?.find((p) => p.id === merma.productoId)?.nombre}</TableCell>
+                          <TableCell>
+                            {getProductDisplayIdentifier({
+                              id: merma.productoId,
+                              nombre: getProductoById(merma.productoId)?.nombre || merma.producto?.nombre,
+                              codigoInterno:
+                                getProductoById(merma.productoId)?.codigoInterno ||
+                                merma.producto?.codigoInterno,
+                            })}
+                          </TableCell>
                           <TableCell className="text-right">
                             <Badge variant="destructive">{merma.cantidad}</Badge>
                           </TableCell>
@@ -379,7 +407,18 @@ export function ReporteMovimientos() {
                       transferenciasFiltradas?.map((transferencia) => (
                         <TableRow key={transferencia.transferenciaId} className="hover:bg-muted/50 transition-colors">
                           <TableCell className="font-medium">{transferencia.transferenciaId}</TableCell>
-                          <TableCell>{productos?.find((p) => p.id === transferencia.productoId)?.nombre}</TableCell>
+                          <TableCell>
+                            {getProductDisplayIdentifier({
+                              id: transferencia.productoId,
+                              nombre:
+                                getProductoById(transferencia.productoId)?.nombre ||
+                                transferencia.producto?.nombre,
+                              codigoInterno:
+                                transferencia.productoCodigoInterno ||
+                                getProductoById(transferencia.productoId)?.codigoInterno ||
+                                transferencia.producto?.codigoInterno,
+                            })}
+                          </TableCell>
                           <TableCell className="text-right">
                             <Badge variant="secondary">{transferencia.cantidad}</Badge>
                           </TableCell>

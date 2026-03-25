@@ -11,6 +11,7 @@ vi.mock('@/lib/prisma', () => ({
     },
     userSession: {
       findFirst: vi.fn(),
+      deleteMany: vi.fn(),
       create: vi.fn(),
     },
   },
@@ -108,6 +109,7 @@ describe('auth refresh route', () => {
       expiresAt: null,
     } as never);
     vi.mocked(prisma.userSession.findFirst).mockResolvedValue({ id: 's1' } as never);
+    vi.mocked(prisma.userSession.deleteMany).mockResolvedValue({ count: 1 } as never);
 
     const request = new NextRequest('http://localhost/api/auth/refresh', {
       method: 'POST',
@@ -119,6 +121,7 @@ describe('auth refresh route', () => {
 
     expect(response.status).toBe(200);
     expect(data.token).toBe('new-access-token');
+    expect(prisma.userSession.deleteMany).toHaveBeenCalledWith({ where: { userId: 'u4' } });
     expect(prisma.userSession.create).toHaveBeenCalled();
   });
 });

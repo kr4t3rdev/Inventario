@@ -4,9 +4,11 @@
 # Uso: .\start-unified.ps1 [opciones]
 #
 # Opciones:
-#   -jwtSecret "secret"      JWT secret (o usar JWT_SECRET env)
-#   -nextauthSecret "secret" NextAuth secret (o usar NEXTAUTH_SECRET env)
-#   -dbPassword "password"   Password de BD (default: Soyelamo32++)
+#   -jwtSecret "secret"       JWT secret
+#   -nextauthSecret "secret"  NextAuth secret
+#   -dbPassword "password"    Password de BD (default: Soyelamo32++)
+#   -adminEmail "email"      Email del admin (default: admin@tcp.com)
+#   -adminPassword "password" Password del admin (default: Admin123!)
 #   -port 80                 Puerto externo (default: 80)
 #   -dataDir .\data          Directorio de datos persistentes
 #
@@ -18,6 +20,8 @@ param(
     [string]$jwtSecret,
     [string]$nextauthSecret,
     [string]$dbPassword = "Soyelamo32++",
+    [string]$adminEmail = "admin@tcp.com",
+    [string]$adminPassword = "Admin123!",
     [int]$port = 80,
     [string]$dataDir = ".\tcp-data"
 )
@@ -63,6 +67,7 @@ Write-Host "Configuración:"
 Write-Host "  Puerto:      $port"
 Write-Host "  Datos:       $dataDir\"
 Write-Host "  JWT Secret:  $($jwtSecret.Substring(0, [Math]::Min(10, $jwtSecret.Length)))..."
+Write-Host "  Admin Email: $adminEmail"
 Write-Host ""
 
 # Detener contenedor existente
@@ -75,9 +80,19 @@ $logsDir = (Resolve-Path $logsDir).Path -replace '\\', '\\\\'
 
 Write-Host "Iniciando contenedor..."
 
+# Construir DATABASE_URL
+$databaseUrl = "postgresql://inventario:${dbPassword}@localhost:5432/inventario_db?schema=public"
+
 # Iniciar contenedor con persistencia y seguridad
 $volPostgres = "${postgresDir}:/var/lib/postgresql/data"
 $volLogs = "${logsDir}:/var/log/tcp"
+
+# Ocultar password en salida
+$env:JWT_SECRET = $jwtSecret
+$env:NEXTAUTH_SECRET = $nextauthSecret
+$env:DB_PASSWORD = $dbPassword
+$env:ADMIN_EMAIL = $adminEmail
+$env:ADMIN_PASSWORD = $adminPassword
 
 docker run -d `
     --name tcp-sistema `
@@ -85,8 +100,10 @@ docker run -d `
     -e JWT_SECRET="${jwtSecret}" `
     -e NEXTAUTH_SECRET="${nextauthSecret}" `
     -e NEXTAUTH_URL="http://localhost:${port}" `
-    -e DATABASE_URL="postgresql://inventario:${dbPassword}@localhost:5432/inventario_db?schema=public" `
+    -e DATABASE_URL="${databaseUrl}" `
     -e DB_PASSWORD="${dbPassword}" `
+    -e ADMIN_EMAIL="${adminEmail}" `
+    -e ADMIN_PASSWORD="${adminPassword}" `
     -v $volPostgres `
     -v $volLogs `
     --read-only=false `
@@ -98,12 +115,12 @@ docker run -d `
     --cap-add=SETGID `
     --cap-add=NET_BIND_SERVICE `
     --cap-add=NET_ADMIN `
-    --health-cmd="powershell -Command Invoke-WebRequest -Uri http://localhost/api/health -UseBasicParsing -ErrorAction SilentlyContinue" `
+    --health-cmd="curl -f http://localhost/api/health -UseBasicParsing -ErrorAction SilentlyContinue" `
     --health-interval=30s `
     --health-timeout=10s `
     --health-retries=3 `
     --health-start-period=60s `
-    docker-tcp:latest
+    docker-tcp:latest 2>&1 | Out-Null
 
 Write-Host ""
 Write-Host "Esperando a que el sistema inicie..."
@@ -142,7 +159,7 @@ if (-not $systemReady) {
     Write-Host "  Datos:    $dataDir\"
     Write-Host "  Logs:     docker logs tcp-sistema"
     Write-Host ""
-    Write-Host "  Para crear admin: docker exec -it tcp-sistema npx prisma db push --accept-data-loss --skip-generate"
-    Write-Host "  Para detener:     docker stop tcp-sistema"
+    Write-Host "  Admin:    $adminEmail"
+    Write-Host "  Password: [oculto]"
     Write-Host "============================================"
 }

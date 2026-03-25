@@ -1,5 +1,5 @@
 import { apiSlice } from "./apiSlice"
-import { Venta, VentaStats } from "../../../app/models/model";
+import { FormaPagoAnticipo, Venta, VentaStats } from "../../../app/models/model";
 
 // Payload para venta única con múltiples productos
 type VentaUnicaRequest = {
@@ -13,6 +13,9 @@ type VentaUnicaRequest = {
   serieId?: string
   fechaVencimiento?: string | null
   tipoVencimiento?: string
+  anticipoCobroId?: string
+  formaPagoAnticipo?: FormaPagoAnticipo
+  idempotencyKey?: string
 }
 
 export const ventasApi = apiSlice.injectEndpoints({

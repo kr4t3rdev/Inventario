@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 import { prisma } from '@/lib/prisma'
 import { withAuthGet, withAuth } from '@/lib/auth-middleware'
+import { hasUnrevertedAnticipoExecution } from '@/lib/services/anticipos-guards'
 
 const updateSchema = z.object({
   numeroFactura: z.string().optional(),
@@ -84,6 +85,14 @@ export const PUT = withAuth(async (request: NextRequest, context: { params: Prom
 
     if (!existingCompra) {
       return NextResponse.json({ error: 'Compra no encontrada' }, { status: 404 })
+    }
+
+    const requiresReversion = await hasUnrevertedAnticipoExecution(prisma, id)
+    if (requiresReversion) {
+      return NextResponse.json(
+        { error: 'Debe revertir el anticipo ejecutado antes de eliminar la compra' },
+        { status: 409 }
+      )
     }
 
     // Verificar si la compra ya tiene pagos realizados

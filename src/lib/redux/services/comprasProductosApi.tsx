@@ -5,28 +5,22 @@ import type {
 } from "@/app/models/model"
 
 type EstadoCompraProducto = 'PENDIENTE' | 'PAGADA'
-type FormaPagoCompra = 'PAGO_PARCIAL' | 'PAGO_COMPLETO'
+type FormaPagoCompra = 'PAGO_PARCIAL' | 'PAGO_COMPLETO' | 'ANTICIPO_PAGO'
 type TipoOperacionCompra = 'RESTOCK' | 'REGULAR'
 
 interface CompraProductoRequest {
-  nombre: string
-  descripcion?: string
-  categoriaId: string
-  subcategoriaId?: string
+  productoId: string
   precioCosto: number
-  precioVenta: number
-  stock: number
-  stockMinimo?: number
-  fotos?: string[]
-  unidadId: string
+  cantidad: number
   vendorId: string
-  almacenId: string
   numeroFactura?: string
   facturaUrl?: string
   formaPago: FormaPagoCompra
   estado: EstadoCompraProducto
   descripcionCompra?: string
   fechaVencimiento?: string
+  anticipoPagoId?: string
+  idempotencyKey?: string
 }
 
 interface ComprasProductosQueryParams {

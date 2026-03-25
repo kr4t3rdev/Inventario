@@ -23,9 +23,13 @@ export const RestockRequestSchema = z.object({
     .optional()
     .transform((val) => (val ? val.trim() : "")),
   formaPago: z
-    .enum(["PAGO_PARCIAL", "PAGO_COMPLETO"]),
+    .enum(["PAGO_PARCIAL", "PAGO_COMPLETO"])
+    .optional()
+    .default("PAGO_COMPLETO"),
   estado: z
-    .enum(["PENDIENTE", "PAGADA"]),
+    .enum(["PENDIENTE", "PAGADA"])
+    .optional()
+    .default("PAGADA"),
   fechaVencimiento: z
     .string()
     .optional()
@@ -167,7 +171,10 @@ export class RestockValidator {
             return RestockErrorFactory.invalidCostPrice(value)
           
           case 'precioVenta':
-            if (zodError.message.includes("less than cost price")) {
+            if (
+              zodError.message.includes("less than cost price") ||
+              zodError.message.includes("10% de margen")
+            ) {
               const costPrice = (data as Record<string, unknown>)?.precioCosto as number || 0
               return RestockErrorFactory.priceRelationshipInvalid(costPrice, value as unknown as number)
             }
@@ -281,12 +288,7 @@ export class RestockValidator {
     }
 
     // Check if user has restock permissions using the centralized permission system
-    let userRole = user.role as string
-    
-    // Normalizar rol 'user' a 'regularUser' si es necesario
-    if (userRole === 'user') {
-      userRole = 'regularUser'
-    }
+    const userRole = user.role as string
     
     const normalizedRole = userRole as UserRole
     const userId = (user.userId || user.id) as string | undefined

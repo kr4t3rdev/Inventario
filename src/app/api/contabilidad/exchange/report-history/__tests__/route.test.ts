@@ -254,7 +254,7 @@ describe("Report History API", () => {
           data: expect.objectContaining({
             tipoReporte: "DEBT_EXPOSURE",
             formato: "excel",
-            nombreArchivo: "debt-exposure.xlsx",
+            nombre: "debt-exposure.xlsx",
           }),
         })
       );

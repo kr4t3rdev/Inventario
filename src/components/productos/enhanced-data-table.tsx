@@ -41,6 +41,7 @@ const productGlobalFilter = (row: Row<Producto>, columnId: string, filterValue: 
   const producto = row.original
   const searchTerm = filterValue.toLowerCase()
   
+  if (producto.codigoInterno?.toLowerCase().includes(searchTerm)) return true
   if (producto.nombre.toLowerCase().includes(searchTerm)) return true
   if (producto.descripcion?.toLowerCase().includes(searchTerm)) return true
   if (producto.categoria?.nombre.toLowerCase().includes(searchTerm)) return true
@@ -69,7 +70,7 @@ function LoadingSpinner({ size = 24 }: { size?: number }) {
 export function EnhancedDataTable<TData, TValue>({
   columns,
   data,
-  searchPlaceholder = "Buscar productos, categorías, subcategorías...",
+  searchPlaceholder = "Buscar productos, códigos, categorías, subcategorías...",
   isLoading = false,
 }: EnhancedDataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([])

@@ -16,6 +16,7 @@ import { format, subDays, startOfDay, endOfDay } from "date-fns"
 import { exportToCsv } from "@/lib/export-utils"
 import { flattenVentas } from "@/lib/ventas-utils"
 import { cn } from "@/lib/utils"
+import { getProductDisplayIdentifier } from "@/lib/product-display-utils"
 import jsPDF from 'jspdf'
 import 'jspdf-autotable'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from "recharts"
@@ -235,7 +236,11 @@ export function ReporteVentaDiaria() {
       Fecha: format(new Date(venta.createdAt), 'yyyy-MM-dd'),
       Hora: format(new Date(venta.createdAt), 'HH:mm'),
       Tipo: 'Producto',
-      Descripcion: venta.producto?.nombre || venta.productoNombre || venta.productoId || 'Producto no encontrado',
+      Descripcion: getProductDisplayIdentifier({
+        id: venta.productoId,
+        nombre: venta.producto?.nombre || venta.productoNombre,
+        codigoInterno: venta.producto?.codigoInterno || venta.productoCodigoInterno,
+      }),
       Cantidad: venta.cantidad,
       PrecioUnitario: venta.precioUnitario || 0,
       TotalBruto: venta.totalLinea || 0,
@@ -297,7 +302,11 @@ export function ReporteVentaDiaria() {
       ...ventasDia.map(venta => ({
         tipo: 'Producto',
         hora: venta.hora,
-        descripcion: venta.producto?.nombre || venta.productoNombre || venta.productoId || 'Producto no encontrado',
+        descripcion: getProductDisplayIdentifier({
+          id: venta.productoId,
+          nombre: venta.producto?.nombre || venta.productoNombre,
+          codigoInterno: venta.producto?.codigoInterno || venta.productoCodigoInterno,
+        }),
         cantidad: venta.cantidad,
         precioUnitario: venta.precioUnitario || 0,
         descuento: venta.descuento || 0,
@@ -707,7 +716,13 @@ export function ReporteVentaDiaria() {
                           <TableCell>
                             <Badge variant="outline">Producto</Badge>
                           </TableCell>
-                          <TableCell>{venta.producto?.nombre || venta.productoNombre || venta.productoId || 'Producto no encontrado'}</TableCell>
+                          <TableCell>
+                            {getProductDisplayIdentifier({
+                              id: venta.productoId,
+                              nombre: venta.producto?.nombre || venta.productoNombre,
+                              codigoInterno: venta.producto?.codigoInterno || venta.productoCodigoInterno,
+                            })}
+                          </TableCell>
                           <TableCell className="text-right">{venta.cantidad}</TableCell>
                           <TableCell className="text-right">${(venta.precioUnitario || 0).toFixed(2)}</TableCell>
                           <TableCell className="text-right">${totalBruto.toFixed(2)}</TableCell>

@@ -6,6 +6,9 @@ export async function GET() {
     const puntoDeVenta = await prisma.puntoDeVenta.findMany({
         orderBy: {
             createdAt: 'desc'
+        },
+        include: {
+            listaPrecio: true
         }
     })
     return NextResponse.json(puntoDeVenta)
@@ -18,11 +21,12 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { nombre, ubicacion } = body
+    const { nombre, ubicacion, listaPrecioId } = body
     const puntoDeVenta = await prisma.puntoDeVenta.create({
             data: {
                 nombre,
-                ubicacion
+                ubicacion,
+                listaPrecioId
             }
     })
     return NextResponse.json(puntoDeVenta)

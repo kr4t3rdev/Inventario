@@ -23,6 +23,7 @@ import { exportToPdf, exportToCsv } from "@/lib/export-utils"
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts"
 import { StaggerContainer, StaggerItem, AnimatedCard } from "@/components/ui/animations"
 import { cn } from "@/lib/utils"
+import { getProductDisplayIdentifier } from "@/lib/product-display-utils"
 
 const surfaceCardClass = cn(
   "relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl",
@@ -55,7 +56,9 @@ export function ReportePorUbicacion() {
     ?.filter((p) => p.stockUbicacion > 0)
     .slice(0, 10)
     .map((p) => ({
-      name: p.nombre.length > 15 ? p.nombre.substring(0, 15) + "..." : p.nombre,
+      name: getProductDisplayIdentifier(p).length > 15
+        ? getProductDisplayIdentifier(p).substring(0, 15) + "..."
+        : getProductDisplayIdentifier(p),
       stock: p.stockUbicacion,
       valor: p.stockUbicacion * p.precioCosto,
     }))
@@ -79,6 +82,8 @@ export function ReportePorUbicacion() {
 
     const data = productosUbicacion.map((producto) => ({
       ID: producto.id,
+      "Código Interno": producto.codigoInterno || "",
+      Producto: getProductDisplayIdentifier(producto),
       Nombre: producto.nombre,
       Categoria: (producto as any)?.categoria?.nombre ?? "",
       Subcategoria: (producto as any)?.subcategoria?.nombre ?? "",
@@ -257,7 +262,7 @@ export function ReportePorUbicacion() {
                         ) : (
                           productosUbicacion?.map((producto) => (
                             <TableRow key={producto.id} className="hover:bg-muted/50 transition-colors">
-                              <TableCell className="font-medium">{producto.nombre}</TableCell>
+                              <TableCell className="font-medium">{getProductDisplayIdentifier(producto)}</TableCell>
                               <TableCell>{(producto as any)?.categoria?.nombre ?? '-'}</TableCell>
                               <TableCell>{(producto as any)?.subcategoria?.nombre ?? '-'}</TableCell>
                               <TableCell className="text-right">

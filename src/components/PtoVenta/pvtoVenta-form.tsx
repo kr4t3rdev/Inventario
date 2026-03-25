@@ -9,6 +9,7 @@ import { z } from "zod"
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
 import { toast } from "sonner"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -16,6 +17,7 @@ import { useAddPuntoDeVentaMutation, useGetPuntosDeVentaQuery, useUpdatePuntoDeV
 import { motion } from "framer-motion"
 import { Store, MapPin, Sparkles, ArrowLeft, Loader2 } from "lucide-react"
 import Link from "next/link"
+import { useGetListasPreciosQuery } from "@/lib/redux/services/listasPreciosApi"
 
 const ptoVentaSchema = z.object({
   nombre: z.string({
@@ -24,6 +26,7 @@ const ptoVentaSchema = z.object({
   ubicacion: z.string({
     required_error: 'Ingrese la ubicación del punto de venta',
   }),
+  listaPrecioId: z.string().optional(),
 })
 
 type PtoVentaFormValues = z.infer<typeof ptoVentaSchema>
@@ -34,6 +37,7 @@ interface PtoVentaFormProps {
     nombre: string
     ubicacion: string
     stockPuntoVenta?: number
+    listaPrecioId?: string | null
   }
 }
 
@@ -73,6 +77,7 @@ export function PtoVentaForm({ initialData }: PtoVentaFormProps) {
   const [isLoading, setIsLoading] = useState(false)
 
   const { data: ptoVenta, isLoading: isLoadingPtoVenta } = useGetPuntosDeVentaQuery()
+  const { data: listasPrecios } = useGetListasPreciosQuery()
   
   const [ addPtoVenta ] = useAddPuntoDeVentaMutation()
   const [updatePtoVenta] = useUpdatePuntoDeVentaMutation()
@@ -82,6 +87,7 @@ export function PtoVentaForm({ initialData }: PtoVentaFormProps) {
     defaultValues: {
       nombre: initialData?.nombre || "",
       ubicacion: initialData?.ubicacion || "",
+      listaPrecioId: initialData?.listaPrecioId || "default",
     },
   })
 
@@ -93,11 +99,13 @@ export function PtoVentaForm({ initialData }: PtoVentaFormProps) {
           pvId: initialData.pvId,
           ...data,
           stockPuntoVenta: initialData.stockPuntoVenta ?? 0,
+          listaPrecioId: data.listaPrecioId === "default" ? null : data.listaPrecioId,
         }).unwrap()
         toast("El punto de venta ha sido actualizado exitosamente.")
       } else {
         await addPtoVenta({
           ...data,
+          listaPrecioId: data.listaPrecioId === "default" ? null : data.listaPrecioId,
           stockPuntoVenta: 0,
         }).unwrap()
         toast("El punto de venta ha sido registrado exitosamente.")
@@ -172,6 +180,41 @@ export function PtoVentaForm({ initialData }: PtoVentaFormProps) {
                 className="absolute -top-1 -right-1"
               >
                 <Sparkles className="h-4 w-4 text-yellow-400" />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.35 }}
+              >
+                <FormField
+                  control={form.control}
+                  name="listaPrecioId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Lista de precios</FormLabel>
+                      <Select value={field.value || "default"} onValueChange={field.onChange}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Usar precio base" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="default">Usar precio base</SelectItem>
+                          {listasPrecios?.map((lista) => (
+                            <SelectItem key={lista.id} value={lista.id}>
+                              {lista.nombre}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Si no se selecciona, el punto de venta usará precio base del producto.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </motion.div>
             </motion.div>
             <div>

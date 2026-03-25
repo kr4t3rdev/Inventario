@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useDeleteGastosDEMutation, useGetGastosDEQuery } from "@/lib/redux/services/gastosDEApi"
+import { useGetVendorsQuery } from "@/lib/redux/services/vendorsApi"
 import { ColumnDef } from "@tanstack/react-table"
 import { ArrowUp, ArrowUpDown, Pencil, Plus, Trash2, Receipt, Sparkles, Loader2, AlertCircle } from "lucide-react"
 import dynamic from "next/dynamic"
@@ -16,9 +17,16 @@ import { motion } from "framer-motion"
 const GastosDE = () => {
 
     const {data:gastosDE, isLoading} = useGetGastosDEQuery()
+    const {data: vendors} = useGetVendorsQuery()
 
     const [gastosDEToDelete, setGastosDEToDelete] = useState<string | null>(null)
+    const [ filterProveedor, setFilterProveedor ] = useState<string>('')
     const [ deleteGastosDE ] = useDeleteGastosDEMutation()
+
+    const filteredGastosDE = gastosDE?.filter((gasto: any) => {
+        if (filterProveedor && gasto.proveedor !== filterProveedor) return false
+        return true
+    }) || []
 
     const handleDelete = async () => {
       if (!gastosDEToDelete) return
@@ -234,18 +242,34 @@ const GastosDE = () => {
                                 </Button>                        
                             </motion.div>
                           </motion.div>
-                          <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.5, delay: 0.3 }}
-                          >
-                            <DataTable
-                              columns={columns}
-                              data={gastosDE || []}
-                              searchColumn="tipo"
-                              searchPlaceholder="Buscar gastos de explotación..."
-                            />
-                          </motion.div>
+                           <motion.div
+                             initial={{ opacity: 0, y: 20 }}
+                             animate={{ opacity: 1, y: 0 }}
+                             transition={{ duration: 0.5, delay: 0.3 }}
+                           >
+                             <div className="flex gap-4 mb-4">
+                               <select
+                                 value={filterProveedor}
+                                 onChange={(e) => setFilterProveedor(e.target.value)}
+                                 className="h-10 rounded-md border border-slate-200 dark:border-orange-900/20 bg-slate-50 dark:bg-slate-900/10 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all"
+                               >
+                                 <option value="">Todos los proveedores</option>
+                                 {Array.from(new Set(gastosDE?.map((g: any) => g.proveedor))).map((proveedor: any) => (
+                                   proveedor && (
+                                     <option key={proveedor} value={proveedor}>
+                                       {proveedor}
+                                     </option>
+                                   )
+                                 ))}
+                               </select>
+                             </div>
+                             <DataTable
+                               columns={columns}
+                               data={filteredGastosDE}
+                               searchColumn="tipo"
+                               searchPlaceholder="Buscar gastos de explotación..."
+                             />
+                           </motion.div>
                         </div>
                       </SidebarInset>
 

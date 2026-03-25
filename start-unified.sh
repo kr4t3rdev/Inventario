@@ -8,7 +8,9 @@
 # Opciones:
 #   --jwt-secret "secret"      JWT secret (o usar JWT_SECRET env)
 #   --nextauth-secret "secret" NextAuth secret (o usar NEXTAUTH_SECRET env)
-#   --db-password "password"   Password de BD (default: inventario123)
+#   --db-password "password"   Password de BD (default: Soyelamo32++)
+#   --admin-email "email"      Email del admin (default: admin@tcp.com)
+#   --admin-password "password" Password del admin (default: Admin123!)
 #   --port 80                  Puerto externo (default: 80)
 #   --data-dir ./data          Directorio de datos persistentes
 #
@@ -21,6 +23,8 @@ set -e
 # Valores por defecto
 PORT=80
 DB_PASSWORD="Soyelamo32++"
+ADMIN_EMAIL="admin@tcp.com"
+ADMIN_PASSWORD="Admin123!"
 DATA_DIR="./tcp-data"
 
 # Parsear argumentos
@@ -36,6 +40,14 @@ while [[ $# -gt 0 ]]; do
             ;;
         --db-password)
             DB_PASSWORD="$2"
+            shift 2
+            ;;
+        --admin-email)
+            ADMIN_EMAIL="$2"
+            shift 2
+            ;;
+        --admin-password)
+            ADMIN_PASSWORD="$2"
             shift 2
             ;;
         --port)
@@ -70,6 +82,7 @@ echo "Configuración:"
 echo "  Puerto:      $PORT"
 echo "  Datos:       ${DATA_DIR}/"
 echo "  JWT Secret:  ${JWT_SECRET:0:10}..."
+echo "  Admin Email: $ADMIN_EMAIL"
 echo ""
 
 # Detener contenedor existente
@@ -84,17 +97,22 @@ LOGS_DIR="$(cd ${DATA_DIR}/logs 2>/dev/null && pwd)" || LOGS_DIR="${DATA_DIR}/lo
 mkdir -p "${POSTGRES_DIR}"
 mkdir -p "${LOGS_DIR}"
 
-# Iniciar contenedor con persistencia y seguridad
+# Construir DATABASE_URL
+DATABASE_URL="postgresql://inventario:${DB_PASSWORD}@localhost:5432/inventario_db?schema=public"
+
+# Iniciar contenedor con persistencia y seguridad (sin mostrar passwords)
 echo "Iniciando contenedor..."
 docker run -d \
     --name tcp-sistema \
     -p ${PORT}:80 \
     \
-    -e JWT_SECRET="${JWT_SECRET}" \
-    -e NEXTAUTH_SECRET="${NEXTAUTH_SECRET}" \
+    -e JWT_SECRET \
+    -e NEXTAUTH_SECRET \
     -e NEXTAUTH_URL="http://localhost:${PORT}" \
-    -e DATABASE_URL="postgresql://inventario:${DB_PASSWORD}@localhost:5432/inventario_db?schema=public" \
-    -e DB_PASSWORD="${DB_PASSWORD}" \
+    -e DATABASE_URL \
+    -e DB_PASSWORD \
+    -e ADMIN_EMAIL \
+    -e ADMIN_PASSWORD \
     \
     -v "${POSTGRES_DIR}:/var/lib/postgresql/data" \
     -v "${LOGS_DIR}:/var/log/tcp" \
@@ -115,7 +133,7 @@ docker run -d \
     --health-retries=3 \
     --health-start-period=60s \
     \
-    docker-tcp:latest
+    docker-tcp:latest 2>&1 | grep -v "${DB_PASSWORD}" || true
 
 echo ""
 echo "Esperando a que el sistema inicie..."
@@ -131,18 +149,18 @@ done
 
 if [ $retries -gt 30 ]; then
     echo ""
-    echo "⚠ El sistema puede estar iniciando."
+    echo "El sistema puede estar iniciando."
     echo "  Ver logs: docker logs tcp-sistema"
 else
     echo ""
     echo "============================================"
-    echo "  ✓ Sistema iniciado correctamente"
+    echo "  Sistema iniciado correctamente"
     echo "============================================"
     echo "  URL:      http://localhost:${PORT}"
     echo "  Datos:    ${DATA_DIR}/"
     echo "  Logs:     docker logs tcp-sistema"
     echo ""
-    echo "  Para crear admin: docker exec -it tcp-sistema npx prisma db push --accept-data-loss --skip-generate"
-    echo "  Para detener:     docker stop tcp-sistema"
+    echo "  Admin:    $ADMIN_EMAIL"
+    echo "  Password: [oculto]"
     echo "============================================"
 fi

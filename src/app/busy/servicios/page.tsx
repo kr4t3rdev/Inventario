@@ -194,7 +194,7 @@ const Servicio = () => {
           >
             <div className='flex items-center gap-3'>
               <motion.div
-                className='w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg'
+                className='w-10 h-10 bg-gradient-to-br from-orange-600 to-red-600 rounded-xl flex items-center justify-center shadow-lg'
                 whileHover={{ scale: 1.05, rotate: 5 }}
                 transition={{ duration: 0.2 }}
               >
@@ -207,6 +207,20 @@ const Servicio = () => {
             </div>
             
             <div className='flex gap-2'>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Button asChild variant='outline'>
+                  <Link href='/busy/servicios/prestados'>
+                    <CheckCircle className='mr-2 h-4 w-4' /> Prestados
+                  </Link>
+                </Button>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Button asChild variant='outline'>
+                  <Link href='/busy/servicios/recibidos'>
+                    <ShoppingCart className='mr-2 h-4 w-4' /> Recibidos
+                  </Link>
+                </Button>
+              </motion.div>
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Button 
                   asChild 

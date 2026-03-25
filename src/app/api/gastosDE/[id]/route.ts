@@ -23,13 +23,17 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const { createdAt, descripcion, gastosDEId,isPagado,monto, periodo, proveedor,tipo, updatedAt } = await request.json()
+    const { tipo, numeroFactura, proveedor, monto, descripcion } = await request.json()
     const gs = await prisma.gastosDE.update({
       where: { gastosDEId: id },
       data: {
-        createdAt, descripcion, gastosDEId,isPagado,monto, periodo, proveedor,tipo, updatedAt
+        tipo,
+        numeroFactura: numeroFactura || null,
+        proveedor,
+        monto,
+        descripcion,
+        // Removed: createdAt, gastosDEId, updatedAt - these are immutable or auto-managed
       },
-      
     })
 
     return NextResponse.json(gs)

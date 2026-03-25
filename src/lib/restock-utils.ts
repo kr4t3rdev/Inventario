@@ -167,6 +167,7 @@ export interface ProductInstanceParams {
     id: string
     nombre: string
     descripcion: string | null
+    codigoInterno: string | null
     precioCosto: number
     precioVenta: number
     stock: number
@@ -190,6 +191,7 @@ export interface ProductInstanceParams {
 export interface NewInstanceData {
   nombre: string
   descripcion: string | null
+  codigoInterno: string | null
   precioCosto: number
   precioVenta: number
   stock: number
@@ -238,6 +240,7 @@ export function determineProductInstanceNeed(params: ProductInstanceParams): Pro
     const newInstanceData = {
       nombre: currentProduct.nombre,
       descripcion: currentProduct.descripcion,
+      codigoInterno: currentProduct.codigoInterno,
       precioCosto: newCostPrice ?? currentProduct.precioCosto,
       precioVenta: newSellingPrice ?? currentProduct.precioVenta,
       stock: 0,
@@ -288,6 +291,7 @@ export function determineProductInstanceNeed(params: ProductInstanceParams): Pro
   const newInstanceData = {
     nombre: currentProduct.nombre,
     descripcion: currentProduct.descripcion,
+    codigoInterno: currentProduct.codigoInterno,
     precioCosto: newCostPrice ?? currentProduct.precioCosto,
     precioVenta: newSellingPrice ?? currentProduct.precioVenta,
     stock: 0, // New instance starts with 0 stock, will be updated during restock

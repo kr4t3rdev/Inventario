@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
@@ -32,8 +32,12 @@ import {
 } from '@/lib/redux/services/productosApi'
 import { useGetUnidadesQuery } from '@/lib/redux/services/unidadesApi'
 import { useGetAlmacenesQuery } from '@/lib/redux/services/almacenesApi'
+import { useGetListasPreciosQuery } from '@/lib/redux/services/listasPreciosApi'
+import { buildPreciosPayload } from './precios-payload'
 import { SubcategorySelector } from '@/components/categorias/subcategory-selector'
 import { ProductPhotoUpload } from './product-photo-upload'
+import { generateEan13BusinessCode } from '@/lib/ean13-utils'
+import { CompoundProductSection } from './compound-product-section'
 
 const productosSchema = z.object({
   nombre: z.string({
@@ -41,6 +45,24 @@ const productosSchema = z.object({
   }),
   descripcion: z.string({
     required_error: 'Escriba una descripción',
+  }),
+  codigoInterno: z
+    .string()
+    .optional()
+    .refine((value) => !value || /^[0-9]{11}$/.test(value), {
+      message: 'El código interno debe contener exactamente 11 números',
+    }),
+  proveedorCodigo: z.string().regex(/^\d{1,2}$/, {
+    message: 'Proveedor debe tener hasta 2 dígitos',
+  }),
+  idSeccionCodigo: z.string().regex(/^\d{1,2}$/, {
+    message: 'Id Sección debe tener hasta 2 dígitos',
+  }),
+  especificoCodigo: z.string().regex(/^\d{1,4}$/, {
+    message: 'Específico debe tener hasta 4 dígitos',
+  }),
+  surtidoCodigo: z.string().regex(/^\d{1,4}$/, {
+    message: 'Surtido debe tener hasta 4 dígitos',
   }),
   categoriaId: z.string({
     required_error: 'Seleccione una categoría',
@@ -65,15 +87,26 @@ const productosSchema = z.object({
   almacenId: z.string({
     required_error: 'Seleccione un almacén',
   }),
+  // Campos de producto compuesto
+  esCompuesto: z.boolean().optional(),
+  cantidadEnPack: z.number().optional(),
+  nombreHijo: z.string().optional(),
+  codigoNegocioHijo: z.string().optional(),
 })
 
-type ProductosFormValues = z.infer<typeof productosSchema>
+export type ProductosFormValues = z.infer<typeof productosSchema>
 
 interface ProductosFormProps {
   initialData?: {
     id: string
     nombre: string
     descripcion: string | null
+    codigoInterno?: string | null
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
     categoriaId: string
     subcategoriaId?: string
     precioCosto: number
@@ -83,6 +116,13 @@ interface ProductosFormProps {
     fotos: string[]
     unidadId: string
     almacenId: string
+    // Campos de producto compuesto
+    esCompuesto?: boolean
+    cantidadEnPack?: number | null
+    precios?: Array<{
+      listaPrecioId: string
+      precio: number
+    }>
   }
 }
 
@@ -107,6 +147,14 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
 
   const { data: unidades, isLoading: isLoadingUnidades } = useGetUnidadesQuery()
   const { data: almacenes, isLoading: isLoadingAlmacenes } = useGetAlmacenesQuery()
+  const { data: listasPrecios } = useGetListasPreciosQuery()
+  const [preciosPorLista, setPreciosPorLista] = useState<Record<string, string>>(() => {
+    const initialMap: Record<string, string> = {}
+    initialData?.precios?.forEach((precio) => {
+      initialMap[precio.listaPrecioId] = String(precio.precio)
+    })
+    return initialMap
+  })
 
   const [addProducto] = useAddProductoMutation()
   const [updateProducto] = useUpdateProductoMutation()
@@ -116,6 +164,11 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
     defaultValues: {
       nombre: initialData?.nombre || '',
       descripcion: initialData?.descripcion || '',
+      codigoInterno: initialData?.codigoInterno || '',
+      proveedorCodigo: initialData?.proveedorCodigo || '',
+      idSeccionCodigo: initialData?.idSeccionCodigo || '',
+      especificoCodigo: initialData?.especificoCodigo || '',
+      surtidoCodigo: initialData?.surtidoCodigo || '',
       categoriaId: initialData?.categoriaId || '',
       subcategoriaId: initialData?.subcategoriaId || '',
       precioCosto: initialData?.precioCosto ?? 0,
@@ -125,6 +178,11 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
       fotos: initialData?.fotos || [],
       unidadId: initialData?.unidadId || '',
       almacenId: initialData?.almacenId || '',
+      // Valores por defecto para producto compuesto
+      esCompuesto: initialData?.esCompuesto || false,
+      cantidadEnPack: initialData?.cantidadEnPack ?? undefined,
+      nombreHijo: '',
+      codigoNegocioHijo: '',
     },
   })
 
@@ -138,6 +196,20 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
       ? 'Stock bajo'
       : 'Stock normal'
 
+  const watchedSegments = {
+    proveedorCodigo: form.watch('proveedorCodigo'),
+    idSeccionCodigo: form.watch('idSeccionCodigo'),
+    especificoCodigo: form.watch('especificoCodigo'),
+    surtidoCodigo: form.watch('surtidoCodigo'),
+  }
+
+  let eanPreview = ''
+  try {
+    eanPreview = generateEan13BusinessCode(watchedSegments).codigoNegocio
+  } catch {
+    eanPreview = ''
+  }
+
   async function onSubmit(data: ProductosFormValues) {
     setIsLoading(true)
 
@@ -146,14 +218,40 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
         await updateProducto({
           id: initialData.id,
           ...data,
+          precios: buildPreciosPayload(preciosPorLista),
         }).unwrap()
         toast('El producto ha sido actualizado exitosamente.')
       } else {
-        await addProducto({
-          ...data,
+        // Construir payload para producto normal o compuesto
+        const payload: any = {
+          nombre: data.nombre,
+          descripcion: data.descripcion,
+          codigoInterno: data.codigoInterno || null,
+          proveedorCodigo: data.proveedorCodigo,
+          idSeccionCodigo: data.idSeccionCodigo,
+          especificoCodigo: data.especificoCodigo,
+          surtidoCodigo: data.surtidoCodigo,
+          precioCosto: data.precioCosto,
+          precioVenta: data.precioVenta,
+          stock: data.stock,
           stockMinimo: data.stockMinimo ?? 0,
           fotos: data.fotos ?? [],
-        }).unwrap()
+          categoriaId: data.categoriaId,
+          subcategoriaId: data.subcategoriaId || null,
+          unidadId: data.unidadId,
+          almacenId: data.almacenId,
+          precios: buildPreciosPayload(preciosPorLista),
+        }
+
+        // Agregar campos de producto compuesto si está marcado
+        if (data.esCompuesto === true && data.cantidadEnPack && data.nombreHijo && data.codigoNegocioHijo) {
+          payload.esCompuesto = true
+          payload.cantidadEnPack = data.cantidadEnPack
+          payload.nombreHijo = data.nombreHijo
+          payload.codigoNegocioHijo = data.codigoNegocioHijo
+        }
+
+        await addProducto(payload).unwrap()
         toast('El producto ha sido registrado exitosamente.')
       }
 
@@ -244,7 +342,7 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <motion.div
-                  className="grid grid-cols-1 gap-4 md:grid-cols-2"
+                  className="grid grid-cols-1 gap-4 md:grid-cols-3"
                   initial={{ opacity: 0, y: 14 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.15 }}
@@ -290,6 +388,94 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
                       </FormItem>
                     )}
                   />
+
+                  <FormField
+                    control={form.control}
+                    name="codigoInterno"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Código interno</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={11}
+                            placeholder="Ej: 12345678901"
+                            disabled={isLoading}
+                            className="transition-all duration-200 focus-visible:ring-primary/30"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Opcional. Debe contener 11 números únicos.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="proveedorCodigo"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Proveedor (2)</FormLabel>
+                          <FormControl>
+                            <Input type="text" inputMode="numeric" maxLength={2} disabled={isLoading} {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="idSeccionCodigo"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Id Sección (2)</FormLabel>
+                          <FormControl>
+                            <Input type="text" inputMode="numeric" maxLength={2} disabled={isLoading} {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="especificoCodigo"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Específico (4)</FormLabel>
+                          <FormControl>
+                            <Input type="text" inputMode="numeric" maxLength={4} disabled={isLoading} {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="surtidoCodigo"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Surtido (4)</FormLabel>
+                          <FormControl>
+                            <Input type="text" inputMode="numeric" maxLength={4} disabled={isLoading} {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormItem>
+                    <FormLabel>Código de negocio (EAN-13)</FormLabel>
+                    <FormControl>
+                      <Input type="text" value={eanPreview} readOnly placeholder="Se autogenera" />
+                    </FormControl>
+                    <FormDescription>Autogenerado: Proveedor(2)+IdSección(2)+Específico(4)+Surtido(4)+DC(1)</FormDescription>
+                  </FormItem>
                 </motion.div>
 
                 <motion.div
@@ -564,6 +750,44 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
                     </p>
                   </div>
                 </motion.div>
+
+                {listasPrecios && listasPrecios.length > 0 && (
+                  <motion.div
+                    className="space-y-3 rounded-xl border border-dashed p-4"
+                    initial={{ opacity: 0, y: 14 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.43 }}
+                  >
+                    <p className="text-sm font-semibold">Precios por lista</p>
+                    <p className="text-xs text-muted-foreground">
+                      Si dejas vacío un campo, el sistema usará el precio base de venta.
+                    </p>
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                      {listasPrecios.map((lista) => (
+                        <div key={lista.id} className="space-y-1">
+                          <label className="text-xs text-muted-foreground">{lista.nombre}</label>
+                          <Input
+                            type="number"
+                            min={0}
+                            step="0.01"
+                            placeholder={`Base: ${Number(form.watch('precioVenta') || 0).toFixed(2)}`}
+                            value={preciosPorLista[lista.id] ?? ''}
+                            onChange={(event) =>
+                              setPreciosPorLista((prev) => ({
+                                ...prev,
+                                [lista.id]: event.target.value,
+                              }))
+                            }
+                            disabled={isLoading}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Sección de producto compuesto */}
+                <CompoundProductSection disabled={isLoading || !!initialData} />
 
                 <motion.div
                   className="flex flex-col justify-end gap-3 border-t pt-4 sm:flex-row"

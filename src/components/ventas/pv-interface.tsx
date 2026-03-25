@@ -19,16 +19,19 @@ import { useGetProductosPorUbicacionQuery } from "@/lib/redux/services/productos
 import { useAddVentaMutation } from "@/lib/redux/services/ventasApi"
 import { useGetClientesQuery } from "@/lib/redux/services/ClienteApi"
 import { useGetCategoriasQuery } from "@/lib/redux/services/categoriasApi"
+import { useGetAnticiposDisponiblesQuery } from "@/lib/redux/services/contabilidadApi"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Checkbox } from "@/components/ui/checkbox"
 import { getAuthToken } from "@/lib/token"
+import { getPrecioEfectivo } from "@/lib/types/pricing"
 import { ProductoCard } from "./producto-card"
 import { CartItem } from "./cart-item"
 import { useDebounce } from "@/hooks/use-debounce"
 
 interface CartProduct {
+  cartId: string // Unique identifier for the cart item
   id: string
   nombre: string
   precioVenta: number
@@ -41,6 +44,7 @@ interface CartProduct {
 
 export function VentaInterface() {
   const router = useRouter()
+  const anticiposFeatureEnabled = process.env.NEXT_PUBLIC_ENABLE_ANTICIPOS !== "false"
   const [searchTerm, setSearchTerm] = useState("")
   const debouncedSearchTerm = useDebounce(searchTerm, 300)
   const [selectedCategoriaId, setSelectedCategoriaId] = useState<string>("all")
@@ -62,6 +66,7 @@ export function VentaInterface() {
   const [selectedSerieId, setSelectedSerieId] = useState<string>("")
   const [tipoVencimiento, setTipoVencimiento] = useState<"fecha" | "plazo" | "contra_pago">("contra_pago")
   const [fechaVencimiento, setFechaVencimiento] = useState<string>(new Date().toISOString().split('T')[0])
+  const [selectedAnticipoCobroId, setSelectedAnticipoCobroId] = useState<string>("")
 
   const { data: puntosDeVenta, isLoading: isLoadingPuntosVenta } = useGetPuntosDeVentaQuery()
   const {
@@ -75,6 +80,17 @@ export function VentaInterface() {
   const [addVenta] = useAddVentaMutation()
   const { data: clientes, isLoading: isLoadingClientes } = useGetClientesQuery()
   const { data: categorias, isLoading: isLoadingCategorias } = useGetCategoriasQuery()
+  const { data: anticiposCobroDisponibles, isFetching: isLoadingAnticiposCobro } =
+    useGetAnticiposDisponiblesQuery(
+      {
+        contexto: 'factura',
+        clienteId: selectedClienteId || undefined,
+        moneda: 'CUP'
+      },
+      {
+        skip: !anticiposFeatureEnabled || !isInvoiceDialogOpen || !selectedClienteId
+      }
+    )
 
   // Generar sugerencias de búsqueda
   const handleSearchChange = (value: string) => {
@@ -113,7 +129,7 @@ export function VentaInterface() {
         addToCart({
           id: product.id,
           nombre: product.nombre,
-          precioVenta: product.precioVenta,
+          precioVenta: getPrecioEfectivo(product, clienteListaPrecioId),
           cantidad: 1,
           stock: product.stockEnUbicacion,
           unidad: product.unidad,
@@ -130,6 +146,7 @@ export function VentaInterface() {
   // Limpiar carrito cuando cambia el punto de venta
   useEffect(() => {
     setCart([])
+    setSelectedAnticipoCobroId("")
   }, [selectedPuntoVenta])
 
   // Cargar series de facturación activas
@@ -201,44 +218,79 @@ export function VentaInterface() {
     }
   )
 
+  // Obtener listaPrecioId del cliente seleccionado
+  const clienteListaPrecioId = useMemo(() => {
+    if (!selectedClienteId || !clientes) return null;
+    const cliente = clientes.find(c => c.clienteId === selectedClienteId);
+    return (cliente as any)?.listaPrecioId || null;
+  }, [selectedClienteId, clientes]);
+
+  // Recalcular carrito cuando cambia el cliente (y su lista de precios)
+  useEffect(() => {
+    if (cart.length > 0 && productos) {
+      const updatedCart = cart.map(item => {
+        const prod = productos.find(p => p.id === item.id);
+        if (prod) {
+          const newPrice = getPrecioEfectivo(prod, clienteListaPrecioId);
+          if (newPrice !== item.precioVenta) {
+            toast(`Precio de ${item.nombre} actualizado por cambio de cliente`);
+            return { ...item, precioVenta: newPrice };
+          }
+        }
+        return item;
+      });
+      // Solo actualizamos si hubo cambios reales para evitar re-renders infinitos
+      const hasChanges = updatedCart.some((item, i) => item.precioVenta !== cart[i].precioVenta);
+      if (hasChanges) {
+        setCart(updatedCart);
+      }
+    }
+  }, [clienteListaPrecioId, productos]);
+
   // Calcular total del carrito
   const cartTotal = cart.reduce((total, item) => total + item.precioVenta * item.cantidad, 0)
   const totalConDescuento = Math.max(0, cartTotal - (Number.isFinite(descuento) ? descuento : 0))
 
   // Añadir producto al carrito
-  const addToCart = (product: CartProduct) => {
-    const existingItem = cart.find((item) => item.id === product.id)
+  const addToCart = (product: Omit<CartProduct, 'cartId'>) => {
+    const existingItem = cart.find((item) => item.id === product.id && item.precioVenta === product.precioVenta)
 
     if (existingItem) {
       setCart(
         cart.map((item) =>
-          item.id === product.id ? { ...item, cantidad: Math.min(item.cantidad + 1, item.stock) } : item,
+          item.cartId === existingItem.cartId ? { ...item, cantidad: Math.min(item.cantidad + 1, item.stock) } : item,
         ),
       )
       if (existingItem.cantidad >= product.stock) {
         toast(`No hay más unidades disponibles de ${product.nombre}`)
       }
     } else {
-      setCart([...cart, { ...product, cantidad: 1 }])
+      setCart([...cart, { ...product, cartId: crypto.randomUUID(), cantidad: 1 }])
     }
   }
 
   // Actualizar cantidad
-  const updateQuantity = (id: string, newQuantity: number) => {
-    const product = cart.find((item) => item.id === id)
+  const updateQuantity = (cartId: string, newQuantity: number) => {
+    const product = cart.find((item) => item.cartId === cartId)
 
     if (product && newQuantity > 0 && newQuantity <= product.stock) {
-      setCart(cart.map((item) => (item.id === id ? { ...item, cantidad: newQuantity } : item)))
+      setCart(cart.map((item) => (item.cartId === cartId ? { ...item, cantidad: newQuantity } : item)))
     } else if (product && newQuantity <= 0) {
-      removeFromCart(id)
+      removeFromCart(cartId)
     } else if (product && newQuantity > product.stock) {
       toast(`Solo hay ${product.stock} unidades disponibles de ${product.nombre}`)
     }
   }
 
+  // Actualizar precio
+  const updatePrice = (cartId: string, newPrice: number) => {
+    if (newPrice < 0) return
+    setCart(cart.map((item) => (item.cartId === cartId ? { ...item, precioVenta: newPrice } : item)))
+  }
+
   // Eliminar producto del carrito
-  const removeFromCart = (id: string) => {
-    setCart(cart.filter((item) => item.id !== id))
+  const removeFromCart = (cartId: string) => {
+    setCart(cart.filter((item) => item.cartId !== cartId))
   }
 
   // Procesar venta
@@ -259,6 +311,7 @@ export function VentaInterface() {
       const productos = cart.map((item) => ({
         productoId: item.id,
         cantidad: item.cantidad,
+        precioVenta: item.precioVenta,
       }))
 
       await addVenta({
@@ -312,6 +365,7 @@ export function VentaInterface() {
       const productos = cart.map((item) => ({
         productoId: item.id,
         cantidad: item.cantidad,
+        precioVenta: item.precioVenta,
       }))
 
       const ventaCreada = await addVenta({
@@ -325,12 +379,20 @@ export function VentaInterface() {
         ...(selectedSerieId && { serieId: selectedSerieId }),
         fechaVencimiento: fechaVencimientoISO,
         tipoVencimiento,
+        formaPagoAnticipo: selectedAnticipoCobroId ? 'ANTICIPO_COBRO' : undefined,
+        anticipoCobroId: anticiposFeatureEnabled ? selectedAnticipoCobroId || undefined : undefined,
+        idempotencyKey: anticiposFeatureEnabled && selectedAnticipoCobroId
+          ? (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+              ? crypto.randomUUID()
+              : `${Date.now()}-${Math.random()}`)
+          : undefined,
       } as any).unwrap()
 
       toast(`Venta registrada y factura generada por $${cartTotal}`)
       setCart([])
       setIsInvoiceDialogOpen(false)
       setSelectedClienteId("")
+      setSelectedAnticipoCobroId("")
       setCargoTransporte(0)
       const ventaId = ventaCreada?.ventaId
       if (ventaId) {
@@ -341,6 +403,23 @@ export function VentaInterface() {
       router.refresh()
     } catch (error: any) {
       console.error("Error al procesar venta con factura:", error)
+      const errorCode = error?.data?.code
+      if (errorCode === 'CONCURRENCIA') {
+        toast.error("El anticipo fue usado por otra operación. Refresque y seleccione otro anticipo.")
+        return
+      }
+      if (errorCode === 'IDEMPOTENCIA_CONFLICTO') {
+        toast.error("Conflicto de idempotencia al ejecutar el anticipo. Reintente la operación.")
+        return
+      }
+      if (errorCode === 'TASA_INVALIDA') {
+        toast.error("No existe una tasa válida para ejecutar el anticipo en la moneda de la factura.")
+        return
+      }
+      if (errorCode === 'COBERTURA_INSUFICIENTE' || errorCode === 'EJECUCION_PARCIAL_NO_PERMITIDA') {
+        toast.error("El anticipo no cubre el total de la factura.")
+        return
+      }
       if (error.data?.error === "Stock insuficiente") {
         toast(`Solo hay ${error.data.stockDisponible} unidades disponibles del producto`)
       } else {
@@ -740,13 +819,14 @@ export function VentaInterface() {
                           <ProductoCard
                             producto={{
                               ...producto,
+                              precioVenta: getPrecioEfectivo(producto, clienteListaPrecioId),
                               stock: producto.stockEnUbicacion,
                             }}
                             onAddToCart={() =>
                               addToCart({
                                 id: producto.id,
                                 nombre: producto.nombre,
-                                precioVenta: producto.precioVenta,
+                                precioVenta: getPrecioEfectivo(producto, clienteListaPrecioId),
                                 cantidad: 1,
                                 stock: producto.stockEnUbicacion,
                                 unidad: producto.unidad,
@@ -780,7 +860,7 @@ export function VentaInterface() {
                             addToCart({
                               id: producto.id,
                               nombre: producto.nombre,
-                              precioVenta: producto.precioVenta,
+                              precioVenta: getPrecioEfectivo(producto, clienteListaPrecioId),
                               cantidad: 1,
                               stock: producto.stockEnUbicacion,
                               unidad: producto.unidad,
@@ -824,11 +904,11 @@ export function VentaInterface() {
                           <div className="text-right flex-shrink-0">
                             <motion.p 
                               className="text-lg font-bold text-primary"
-                              key={producto.precioVenta}
+                              key={getPrecioEfectivo(producto, clienteListaPrecioId)}
                               initial={{ scale: 1.1 }}
                               animate={{ scale: 1 }}
                             >
-                              ${producto.precioVenta.toFixed(2)}
+                              ${getPrecioEfectivo(producto, clienteListaPrecioId).toFixed(2)}
                             </motion.p>
                             <motion.button
                               whileHover={{ scale: 1.1 }}
@@ -912,11 +992,11 @@ export function VentaInterface() {
                               <td className="p-3 text-right">
                                 <motion.span 
                                   className="font-bold text-primary"
-                                  key={producto.precioVenta}
+                                  key={getPrecioEfectivo(producto, clienteListaPrecioId)}
                                   initial={{ scale: 1.1 }}
                                   animate={{ scale: 1 }}
                                 >
-                                  ${producto.precioVenta.toFixed(2)}
+                                  ${getPrecioEfectivo(producto, clienteListaPrecioId).toFixed(2)}
                                 </motion.span>
                               </td>
                               <td className="p-3 text-center">
@@ -937,7 +1017,7 @@ export function VentaInterface() {
                                     addToCart({
                                       id: producto.id,
                                       nombre: producto.nombre,
-                                      precioVenta: producto.precioVenta,
+                                      precioVenta: getPrecioEfectivo(producto, clienteListaPrecioId),
                                       cantidad: 1,
                                       stock: producto.stockEnUbicacion,
                                       unidad: producto.unidad,
@@ -1052,7 +1132,7 @@ export function VentaInterface() {
                     <AnimatePresence mode="popLayout">
                       {cart.map((item, index) => (
                         <motion.div
-                          key={item.id}
+                          key={item.cartId}
                           layout
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
@@ -1062,6 +1142,7 @@ export function VentaInterface() {
                           <CartItem 
                             item={item} 
                             onUpdateQuantity={updateQuantity} 
+                            onUpdatePrice={updatePrice}
                             onRemove={removeFromCart} 
                           />
                         </motion.div>
@@ -1193,6 +1274,11 @@ export function VentaInterface() {
         setTipoVencimiento={setTipoVencimiento}
         fechaVencimiento={fechaVencimiento}
         setFechaVencimiento={setFechaVencimiento}
+        anticiposFeatureEnabled={anticiposFeatureEnabled}
+        anticiposCobro={anticiposCobroDisponibles?.anticipos || []}
+        selectedAnticipoCobroId={selectedAnticipoCobroId}
+        setSelectedAnticipoCobroId={setSelectedAnticipoCobroId}
+        isLoadingAnticiposCobro={isLoadingAnticiposCobro}
         onConfirm={processVentaConFactura}
         isProcessing={isProcessing}
         isLoadingClientes={isLoadingClientes}
@@ -1217,6 +1303,11 @@ export function VentaInvoiceDialog({
   setTipoVencimiento,
   fechaVencimiento,
   setFechaVencimiento,
+  anticiposFeatureEnabled,
+  anticiposCobro,
+  selectedAnticipoCobroId,
+  setSelectedAnticipoCobroId,
+  isLoadingAnticiposCobro,
   onConfirm,
   isProcessing,
   isLoadingClientes,
@@ -1235,6 +1326,11 @@ export function VentaInvoiceDialog({
   setTipoVencimiento: (v: "fecha" | "plazo" | "contra_pago") => void
   fechaVencimiento: string
   setFechaVencimiento: (v: string) => void
+  anticiposFeatureEnabled: boolean
+  anticiposCobro: any[]
+  selectedAnticipoCobroId: string
+  setSelectedAnticipoCobroId: (v: string) => void
+  isLoadingAnticiposCobro: boolean
   onConfirm: () => void
   isProcessing: boolean
   isLoadingClientes: boolean
@@ -1290,6 +1386,47 @@ export function VentaInvoiceDialog({
                 </Select>
               )}
             </motion.div>
+
+            {anticiposFeatureEnabled && (
+            <motion.div
+              className="space-y-2"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.25 }}
+            >
+              <label className="text-sm font-medium flex items-center gap-2">
+                <CreditCard className="h-4 w-4" />
+                Cobro anticipado
+              </label>
+              <Select
+                value={selectedAnticipoCobroId || "__none__"}
+                onValueChange={(value) => {
+                  const nextValue = value === "__none__" ? "" : value
+                  setSelectedAnticipoCobroId(nextValue)
+                  if (nextValue) {
+                    setTipoVencimiento("contra_pago")
+                  }
+                }}
+              >
+                <SelectTrigger className="transition-all duration-200 focus:scale-[1.01]">
+                  <SelectValue placeholder="Sin anticipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Sin anticipo</SelectItem>
+                  {anticiposCobro.map((anticipo: any) => (
+                    <SelectItem key={anticipo.anticipoId} value={anticipo.anticipoId}>
+                      {`${anticipo.anticipoId.slice(0, 8)} · Saldo ${Number(anticipo.saldoDisponible).toFixed(2)} ${anticipo.moneda}`}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {isLoadingAnticiposCobro
+                  ? "Cargando cobros anticipados disponibles..."
+                  : "Opcional: aplica y ejecuta un cobro anticipado al facturar"}
+              </p>
+            </motion.div>
+            )}
 
             <motion.div 
               className="space-y-3 border p-3 rounded-md dark:border-gray-700"

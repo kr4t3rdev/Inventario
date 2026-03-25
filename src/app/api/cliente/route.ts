@@ -5,7 +5,8 @@ export async function GET(request: NextRequest){
     try {
         const clientes = await prisma.cliente.findMany({
             include: {
-                Venta:true
+                Venta:true,
+                listaPrecio: true
             }
         })
         return NextResponse.json(clientes)
@@ -22,7 +23,7 @@ export async function GET(request: NextRequest){
 export async function POST(request: NextRequest){
     try {
         const body = await request.json()
-        const { nombre, numeroCuentaCUP, numeroCuentaUSD, numeroContrato, direccion, telefono } = body
+        const { nombre, numeroCuentaCUP, numeroCuentaUSD, numeroContrato, direccion, telefono, listaPrecioId } = body
         const clientes = await prisma.cliente.create({
             data: {
                 nombre,
@@ -31,6 +32,7 @@ export async function POST(request: NextRequest){
                 numeroCuentaCUP,
                 numeroCuentaUSD,
                 numeroContrato,
+                listaPrecioId,
             }
         })
         return NextResponse.json(clientes)

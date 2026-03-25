@@ -6,6 +6,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const { id } = await params;
     const puntoDeVenta = await prisma.puntoDeVenta.findUnique({
       where: { pvId: id },
+      include: {
+        listaPrecio: true
+      }
     })
 
     if (!puntoDeVenta) {
@@ -23,13 +26,14 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   try {
     const { id } = await params;
     const body = await request.json()
-    const { nombre, ubicacion } = body
+    const { nombre, ubicacion, listaPrecioId } = body
 
     const puntoDeVenta = await prisma.puntoDeVenta.update({
       where: { pvId: id },
       data: {
         nombre,
         ubicacion,
+        listaPrecioId: listaPrecioId ?? null,
       },
     })
 

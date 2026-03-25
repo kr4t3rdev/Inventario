@@ -227,4 +227,77 @@ describe('pago-gastos-workflow', () => {
       }
     }
   })
+
+  it('marca CxP como PAGADA y actualiza compra al cubrir el saldo total', async () => {
+    const tx = createTxMock()
+    tx.tipoPago.findFirst.mockResolvedValue({
+      tipoId: 'tp-1',
+      isActive: true,
+      cuentaDefecto: 'cb-1'
+    })
+    tx.cuentaBancaria.findUnique.mockResolvedValue({
+      cuentaId: 'cb-1',
+      isActive: true
+    })
+    tx.cuentaPorPagar.findUnique.mockResolvedValue({
+      cuentaPorPagarId: 'cxp-2',
+      estado: 'PENDIENTE',
+      montoPagado: 0,
+      saldoPendiente: 100,
+      gastoCompraId: 'gc-10',
+      proveedor: {
+        cuentaCUP: '123456',
+        cuentaUSD: null
+      }
+    })
+    tx.pagoCuentaPorPagar.findFirst.mockResolvedValue(null)
+    tx.cuentaBancaria.findMany.mockResolvedValue([
+      {
+        cuentaId: 'cb-1',
+        moneda: 'CUP',
+        saldo: 1000,
+        isActive: true
+      }
+    ])
+    tx.reconciliacionGasto.create.mockResolvedValue({
+      reconciliacionId: 'rec-3',
+      cuentaId: 'cb-1',
+      monto: 100,
+      moneda: 'CUP',
+      montoConvertido: 100,
+      descripcion: 'Pago total'
+    })
+    tx.cuentaBancaria.update.mockResolvedValue({})
+    tx.cuentaPorPagar.update.mockResolvedValue({
+      cuentaPorPagarId: 'cxp-2',
+      estado: 'PAGADA',
+      montoPagado: 100,
+      saldoPendiente: 0
+    })
+    tx.pagoCuentaPorPagar.create.mockResolvedValue({
+      pagoCuentaPorPagarId: 'pago-2',
+      numeroTransaccion: 'TRX-TOTAL',
+      monto: 100
+    })
+    tx.compraProducto.updateMany.mockResolvedValue({ count: 1 })
+
+    const result = await applyPagoGastoWorkflow(tx as any, {
+      tipoGasto: 'compra',
+      referenciaId: 'gc-10',
+      reconciliadoPor: 'user-1',
+      descripcion: 'Pago total',
+      monto: 100,
+      moneda: 'CUP',
+      cuentaPorPagarId: 'cxp-2',
+      numeroTransaccion: 'TRX-TOTAL'
+    })
+
+    expect(result.cuentaPorPagar?.estado).toBe('PAGADA')
+    expect(result.cuentaPorPagar?.saldoPendiente).toBe(0)
+    expect(tx.compraProducto.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: { estado: 'PAGADA' }
+      })
+    )
+  })
 })
