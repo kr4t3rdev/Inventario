@@ -83,6 +83,7 @@ export function GastoDEForm({ initialData }: GastosDEFormProps) {
           ...data,
         }).unwrap()
         toast.success("El gasto de explotación han sido actualizados exitosamente.")
+        
       } else {
         await addGastoGastosDE({
           gastosDEId: v4(),
@@ -252,9 +253,11 @@ export function GastoDEForm({ initialData }: GastosDEFormProps) {
                         >
                           <option value="">Seleccionar proveedor</option>
                           {vendors?.map((vendor: any) => (
-                            <option key={vendor.vendorId} value={vendor.nombre}>
-                              {vendor.nombre}
-                            </option>
+                            vendor.vendorId ? (
+                              <option key={vendor.vendorId} value={vendor.nombre}>
+                                {vendor.nombre}
+                              </option>
+                            ) : null
                           ))}
                         </select>
                       </FormControl>

@@ -2,5 +2,6 @@
     "WillLuke.nextjs.hasPrompted": true,
     "typescript.autoClosingTags": false,
     "editor.fontFamily": "'Cascadia Code'",
-    "kiroAgent.configureMCP": "Disabled"
+    "kiroAgent.configureMCP": "Disabled",
+    "chatgpt.openOnStartup": true
 }

@@ -288,9 +288,11 @@ export function ServicioForm({ initialData }: ServicioFormProps) {
                           >
                             <option value=''>Sin proveedor</option>
                             {vendors?.map((vendor: any) => (
-                              <option key={vendor.vendorId} value={vendor.vendorId}>
-                                {vendor.nombre}
-                              </option>
+                              vendor.vendorId ? (
+                                <option key={vendor.vendorId} value={vendor.vendorId}>
+                                  {vendor.nombre}
+                                </option>
+                              ) : null
                             ))}
                           </select>
                         </FormControl>

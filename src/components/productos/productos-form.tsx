@@ -33,11 +33,22 @@ import {
 import { useGetUnidadesQuery } from '@/lib/redux/services/unidadesApi'
 import { useGetAlmacenesQuery } from '@/lib/redux/services/almacenesApi'
 import { useGetListasPreciosQuery } from '@/lib/redux/services/listasPreciosApi'
+import { useGetVendorsQuery } from '@/lib/redux/services/vendorsApi'
+import {
+  useGetCategoriasQuery,
+  useGetSubcategoriasQuery,
+} from '@/lib/redux/services/categoriasApi'
+import {
+  buildProductBusinessCodePreview,
+  DEFAULT_CHILD_PREVIEW_SURTIDO,
+  DEFAULT_PARENT_PREVIEW_SURTIDO,
+  type ProductBusinessCodeResult,
+} from '@/lib/product-business-code'
 import { buildPreciosPayload } from './precios-payload'
 import { SubcategorySelector } from '@/components/categorias/subcategory-selector'
 import { ProductPhotoUpload } from './product-photo-upload'
-import { generateEan13BusinessCode } from '@/lib/ean13-utils'
 import { CompoundProductSection } from './compound-product-section'
+import type { Vendor } from '@/app/models/model'
 
 const productosSchema = z.object({
   nombre: z.string({
@@ -52,18 +63,8 @@ const productosSchema = z.object({
     .refine((value) => !value || /^[0-9]{11}$/.test(value), {
       message: 'El código interno debe contener exactamente 11 números',
     }),
-  proveedorCodigo: z.string().regex(/^\d{1,2}$/, {
-    message: 'Proveedor debe tener hasta 2 dígitos',
-  }),
-  idSeccionCodigo: z.string().regex(/^\d{1,2}$/, {
-    message: 'Id Sección debe tener hasta 2 dígitos',
-  }),
-  especificoCodigo: z.string().regex(/^\d{1,4}$/, {
-    message: 'Específico debe tener hasta 4 dígitos',
-  }),
-  surtidoCodigo: z.string().regex(/^\d{1,4}$/, {
-    message: 'Surtido debe tener hasta 4 dígitos',
-  }),
+  proveedorCodigo: z.string().optional(),
+  vendorId: z.string().optional(),
   categoriaId: z.string({
     required_error: 'Seleccione una categoría',
   }),
@@ -87,11 +88,50 @@ const productosSchema = z.object({
   almacenId: z.string({
     required_error: 'Seleccione un almacén',
   }),
-  // Campos de producto compuesto
   esCompuesto: z.boolean().optional(),
   cantidadEnPack: z.number().optional(),
   nombreHijo: z.string().optional(),
   codigoNegocioHijo: z.string().optional(),
+}).superRefine((value, ctx) => {
+  const hasVendorSelection = typeof value.vendorId === 'string' && value.vendorId.trim() !== ''
+  const hasProveedorCodigo =
+    typeof value.proveedorCodigo === 'string' && value.proveedorCodigo.trim() !== ''
+
+  if (!hasVendorSelection && !hasProveedorCodigo) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['vendorId'],
+      message: 'Seleccione un proveedor',
+    })
+  }
+
+  if (hasProveedorCodigo && !/^\d{1,2}$/.test(value.proveedorCodigo!.trim())) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['proveedorCodigo'],
+      message: 'Proveedor debe tener hasta 2 dígitos',
+    })
+  }
+
+  if (value.esCompuesto !== true) {
+    return
+  }
+
+  if (!value.cantidadEnPack || value.cantidadEnPack <= 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['cantidadEnPack'],
+      message: 'La cantidad en pack debe ser mayor a 0',
+    })
+  }
+
+  if (!value.nombreHijo || value.nombreHijo.trim() === '') {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['nombreHijo'],
+      message: 'El nombre del producto hijo es requerido',
+    })
+  }
 })
 
 export type ProductosFormValues = z.infer<typeof productosSchema>
@@ -116,6 +156,7 @@ interface ProductosFormProps {
     fotos: string[]
     unidadId: string
     almacenId: string
+    vendorId?: string | null
     // Campos de producto compuesto
     esCompuesto?: boolean
     cantidadEnPack?: number | null
@@ -124,6 +165,15 @@ interface ProductosFormProps {
       precio: number
     }>
   }
+}
+
+/**
+ * @description Devuelve un valor legible para previews read-only de segmentos.
+ * @param {string | null | undefined} value - Valor actual del segmento.
+ * @returns {string} Texto listo para UI.
+ */
+function formatPreviewValue(value: string | null | undefined): string {
+  return value && value.trim() !== '' ? value : 'Pendiente'
 }
 
 function PulseSkeleton({ className }: { className?: string }): React.JSX.Element {
@@ -144,10 +194,13 @@ function PulseSkeleton({ className }: { className?: string }): React.JSX.Element
 export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Element {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const isEditing = Boolean(initialData)
 
   const { data: unidades, isLoading: isLoadingUnidades } = useGetUnidadesQuery()
   const { data: almacenes, isLoading: isLoadingAlmacenes } = useGetAlmacenesQuery()
   const { data: listasPrecios } = useGetListasPreciosQuery()
+  const { data: categorias = [] } = useGetCategoriasQuery()
+  const { data: vendors = [], isLoading: isLoadingVendors } = useGetVendorsQuery()
   const [preciosPorLista, setPreciosPorLista] = useState<Record<string, string>>(() => {
     const initialMap: Record<string, string> = {}
     initialData?.precios?.forEach((precio) => {
@@ -166,9 +219,7 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
       descripcion: initialData?.descripcion || '',
       codigoInterno: initialData?.codigoInterno || '',
       proveedorCodigo: initialData?.proveedorCodigo || '',
-      idSeccionCodigo: initialData?.idSeccionCodigo || '',
-      especificoCodigo: initialData?.especificoCodigo || '',
-      surtidoCodigo: initialData?.surtidoCodigo || '',
+      vendorId: initialData?.vendorId || '',
       categoriaId: initialData?.categoriaId || '',
       subcategoriaId: initialData?.subcategoriaId || '',
       precioCosto: initialData?.precioCosto ?? 0,
@@ -186,6 +237,15 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
     },
   })
 
+  const watchedCategoryId = form.watch('categoriaId')
+  const watchedSubcategoryId = form.watch('subcategoriaId')
+  const watchedProveedorCodigo = form.watch('proveedorCodigo')
+  const watchedVendorId = form.watch('vendorId')
+
+  const { data: subcategorias = [] } = useGetSubcategoriasQuery(watchedCategoryId, {
+    skip: !watchedCategoryId,
+  })
+
   const stockValue = Number(form.watch('stock') || 0)
   const stockMinimoValue = Number(form.watch('stockMinimo') || 0)
   const umbral = stockMinimoValue > 0 ? stockMinimoValue : 10
@@ -196,18 +256,52 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
       ? 'Stock bajo'
       : 'Stock normal'
 
-  const watchedSegments = {
-    proveedorCodigo: form.watch('proveedorCodigo'),
-    idSeccionCodigo: form.watch('idSeccionCodigo'),
-    especificoCodigo: form.watch('especificoCodigo'),
-    surtidoCodigo: form.watch('surtidoCodigo'),
+  const vendorOptions = (vendors as Array<Vendor & { proveedorCodigo?: string | null }>) ?? []
+  const selectedVendor = vendorOptions.find((vendor) => vendor.vendorId === watchedVendorId)
+  const selectedVendorProviderCode = selectedVendor?.proveedorCodigo?.trim() || ''
+
+  const selectedCategory = categorias.find((categoria) => categoria.catId === watchedCategoryId)
+  const selectedSubcategory = subcategorias.find(
+    (subcategoria) => subcategoria.catId === watchedSubcategoryId
+  )
+
+  let parentCodePreview: ProductBusinessCodeResult | null = null
+  if (!isEditing && selectedCategory?.nombre && selectedSubcategory?.nombre) {
+    try {
+      parentCodePreview = buildProductBusinessCodePreview({
+        proveedorCodigo: selectedVendorProviderCode || watchedProveedorCodigo,
+        categoriaNombre: selectedCategory.nombre,
+        subcategoriaNombre: selectedSubcategory.nombre,
+        surtidoCodigo: DEFAULT_PARENT_PREVIEW_SURTIDO,
+      })
+    } catch {
+      parentCodePreview = null
+    }
   }
 
-  let eanPreview = ''
-  try {
-    eanPreview = generateEan13BusinessCode(watchedSegments).codigoNegocio
-  } catch {
-    eanPreview = ''
+  const watchedParentSegments = {
+    proveedorCodigo:
+      parentCodePreview?.proveedorCodigo ||
+      initialData?.proveedorCodigo ||
+      selectedVendorProviderCode ||
+      watchedProveedorCodigo ||
+      '',
+    idSeccionCodigo: parentCodePreview?.idSeccionCodigo || initialData?.idSeccionCodigo || '',
+    especificoCodigo: parentCodePreview?.especificoCodigo || initialData?.especificoCodigo || '',
+  }
+
+  let childCodePreview: ProductBusinessCodeResult | null = null
+  if (!isEditing && parentCodePreview) {
+    try {
+      childCodePreview = buildProductBusinessCodePreview({
+        proveedorCodigo: parentCodePreview.proveedorCodigo,
+        categoriaNombre: selectedCategory?.nombre || '',
+        subcategoriaNombre: selectedSubcategory?.nombre || '',
+        surtidoCodigo: DEFAULT_CHILD_PREVIEW_SURTIDO,
+      })
+    } catch {
+      childCodePreview = null
+    }
   }
 
   async function onSubmit(data: ProductosFormValues) {
@@ -222,15 +316,23 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
         }).unwrap()
         toast('El producto ha sido actualizado exitosamente.')
       } else {
-        // Construir payload para producto normal o compuesto
+        const resolvedProveedorCodigo = selectedVendorProviderCode || watchedProveedorCodigo
+
+        if (!resolvedProveedorCodigo) {
+          form.setError('vendorId', {
+            type: 'manual',
+            message: 'El proveedor seleccionado no tiene código configurado para generar el EAN-13',
+          })
+          toast('Seleccioná un proveedor con código configurado para generar el EAN-13.')
+          return
+        }
+
         const payload: any = {
           nombre: data.nombre,
           descripcion: data.descripcion,
           codigoInterno: data.codigoInterno || null,
-          proveedorCodigo: data.proveedorCodigo,
-          idSeccionCodigo: data.idSeccionCodigo,
-          especificoCodigo: data.especificoCodigo,
-          surtidoCodigo: data.surtidoCodigo,
+          proveedorCodigo: resolvedProveedorCodigo,
+          vendorId: data.vendorId || null,
           precioCosto: data.precioCosto,
           precioVenta: data.precioVenta,
           stock: data.stock,
@@ -243,12 +345,10 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
           precios: buildPreciosPayload(preciosPorLista),
         }
 
-        // Agregar campos de producto compuesto si está marcado
-        if (data.esCompuesto === true && data.cantidadEnPack && data.nombreHijo && data.codigoNegocioHijo) {
+        if (data.esCompuesto === true && data.cantidadEnPack && data.nombreHijo) {
           payload.esCompuesto = true
           payload.cantidadEnPack = data.cantidadEnPack
           payload.nombreHijo = data.nombreHijo
-          payload.codigoNegocioHijo = data.codigoNegocioHijo
         }
 
         await addProducto(payload).unwrap()
@@ -265,7 +365,7 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
     }
   }
 
-  if (isLoadingUnidades || isLoadingAlmacenes) {
+  if (isLoadingUnidades || isLoadingAlmacenes || isLoadingVendors) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -414,68 +514,165 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
                     )}
                   />
 
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <FormField
-                      control={form.control}
-                      name="proveedorCodigo"
-                      render={({ field }) => (
+                  {isEditing ? (
+                    <>
+                      <FormField
+                        control={form.control}
+                        name="proveedorCodigo"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Proveedor (2)</FormLabel>
+                            <FormControl>
+                              <Input type="text" inputMode="numeric" maxLength={2} disabled={isLoading} {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                         <FormItem>
-                          <FormLabel>Proveedor (2)</FormLabel>
+                          <FormLabel>Sección (2)</FormLabel>
                           <FormControl>
-                            <Input type="text" inputMode="numeric" maxLength={2} disabled={isLoading} {...field} />
+                            <Input
+                              type="text"
+                              value={initialData?.idSeccionCodigo || ''}
+                              readOnly
+                              placeholder="Se autogenera"
+                              className="bg-muted"
+                            />
                           </FormControl>
-                          <FormMessage />
+                          <FormDescription>No editable. Auto-generado por categoría.</FormDescription>
                         </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="idSeccionCodigo"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Id Sección (2)</FormLabel>
-                          <FormControl>
-                            <Input type="text" inputMode="numeric" maxLength={2} disabled={isLoading} {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="especificoCodigo"
-                      render={({ field }) => (
                         <FormItem>
                           <FormLabel>Específico (4)</FormLabel>
                           <FormControl>
-                            <Input type="text" inputMode="numeric" maxLength={4} disabled={isLoading} {...field} />
+                            <Input
+                              type="text"
+                              value={initialData?.especificoCodigo || ''}
+                              readOnly
+                              placeholder="Se autogenera"
+                              className="bg-muted"
+                            />
                           </FormControl>
-                          <FormMessage />
+                          <FormDescription>No editable. Auto-generado por subcategoría.</FormDescription>
                         </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="surtidoCodigo"
-                      render={({ field }) => (
                         <FormItem>
                           <FormLabel>Surtido (4)</FormLabel>
                           <FormControl>
-                            <Input type="text" inputMode="numeric" maxLength={4} disabled={isLoading} {...field} />
+                            <Input
+                              type="text"
+                              value={initialData?.surtidoCodigo || ''}
+                              readOnly
+                              placeholder="Se autogenera"
+                              className="bg-muted"
+                            />
                           </FormControl>
-                          <FormMessage />
+                          <FormDescription>No editable. Secuencial por sección.</FormDescription>
                         </FormItem>
-                      )}
-                    />
-                  </div>
+                      </div>
 
-                  <FormItem>
-                    <FormLabel>Código de negocio (EAN-13)</FormLabel>
-                    <FormControl>
-                      <Input type="text" value={eanPreview} readOnly placeholder="Se autogenera" />
-                    </FormControl>
-                    <FormDescription>Autogenerado: Proveedor(2)+IdSección(2)+Específico(4)+Surtido(4)+DC(1)</FormDescription>
-                  </FormItem>
+                      <FormItem>
+                        <FormLabel>Código de negocio (EAN-13)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="text"
+                            value={initialData?.codigoNegocio || ''}
+                            readOnly
+                            placeholder="Se autogenera"
+                            className="bg-muted font-mono"
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          El código EAN-13 se genera a partir de los segmentos. Se puede cambiar el proveedor sin recalcular automáticamente.
+                        </FormDescription>
+                      </FormItem>
+                    </>
+                  ) : (
+                    <>
+                      <FormField
+                        control={form.control}
+                        name="vendorId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Proveedor</FormLabel>
+                            <Select
+                              value={field.value || ''}
+                              onValueChange={(value) => {
+                                field.onChange(value)
+                                const nextVendor = vendorOptions.find((vendor) => vendor.vendorId === value)
+                                form.setValue('proveedorCodigo', nextVendor?.proveedorCodigo || '', {
+                                  shouldValidate: true,
+                                  shouldDirty: true,
+                                })
+                              }}
+                              disabled={isLoading}
+                            >
+                              <FormControl>
+                                <SelectTrigger className="transition-all duration-200 focus-visible:ring-primary/30">
+                                  <SelectValue placeholder="Selecciona un proveedor" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {vendorOptions.map((vendor) => (
+                                  <SelectItem key={vendor.vendorId} value={vendor.vendorId}>
+                                    {vendor.nombre}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormDescription>
+                              Seleccioná un proveedor activo. El sistema toma su código configurado y genera el EAN-13.
+                            </FormDescription>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+                        <div className="rounded-xl border border-dashed p-4">
+                          <p className="text-xs font-medium text-muted-foreground">Proveedor</p>
+                          <p className="mt-2 text-sm font-semibold">
+                            {formatPreviewValue(watchedParentSegments.proveedorCodigo)}
+                          </p>
+                        </div>
+                        <div className="rounded-xl border border-dashed p-4">
+                          <p className="text-xs font-medium text-muted-foreground">Sección</p>
+                          <p className="mt-2 text-sm font-semibold">
+                            {formatPreviewValue(parentCodePreview?.idSeccionCodigo)}
+                          </p>
+                        </div>
+                        <div className="rounded-xl border border-dashed p-4">
+                          <p className="text-xs font-medium text-muted-foreground">Específico</p>
+                          <p className="mt-2 text-sm font-semibold">
+                            {formatPreviewValue(parentCodePreview?.especificoCodigo)}
+                          </p>
+                        </div>
+                        <div className="rounded-xl border border-dashed p-4">
+                          <p className="text-xs font-medium text-muted-foreground">Surtido inicial</p>
+                          <p className="mt-2 text-sm font-semibold">
+                            {formatPreviewValue(parentCodePreview?.surtidoCodigo)}
+                          </p>
+                        </div>
+                      </div>
+
+                      <FormItem>
+                        <FormLabel htmlFor="codigoNegocioPreview">Código de negocio (preview)</FormLabel>
+                        <FormControl>
+                          <Input
+                            id="codigoNegocioPreview"
+                            type="text"
+                            value={parentCodePreview?.codigoNegocio || ''}
+                            readOnly
+                            placeholder="Se genera cuando completes proveedor, categoría y subcategoría"
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          Preview referencial. El surtido real se valida y asigna al guardar.
+                        </FormDescription>
+                      </FormItem>
+                    </>
+                  )}
                 </motion.div>
 
                 <motion.div
@@ -786,8 +983,19 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
                   </motion.div>
                 )}
 
-                {/* Sección de producto compuesto */}
-                <CompoundProductSection disabled={isLoading || !!initialData} />
+                <CompoundProductSection
+                  disabled={isLoading || isEditing}
+                  parentBusinessCode={parentCodePreview?.codigoNegocio || initialData?.codigoNegocio || ''}
+                  parentSegmentSummary={{
+                    proveedorCodigo: parentCodePreview?.proveedorCodigo || watchedParentSegments.proveedorCodigo,
+                    idSeccionCodigo:
+                      parentCodePreview?.idSeccionCodigo || watchedParentSegments.idSeccionCodigo,
+                    especificoCodigo:
+                      parentCodePreview?.especificoCodigo || watchedParentSegments.especificoCodigo,
+                  }}
+                  childBusinessCodePreview={childCodePreview?.codigoNegocio || ''}
+                  childSurtidoPreview={childCodePreview?.surtidoCodigo || DEFAULT_CHILD_PREVIEW_SURTIDO}
+                />
 
                 <motion.div
                   className="flex flex-col justify-end gap-3 border-t pt-4 sm:flex-row"

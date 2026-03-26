@@ -19,6 +19,24 @@ export interface Ean13SegmentsNormalized {
 }
 
 /**
+ * @description Contrato mínimo de Prisma requerido para consultar surtidos existentes.
+ */
+export interface SurtidoLookupClient {
+  producto: {
+    findMany: (args: {
+      where: {
+        idSeccionCodigo: string
+        especificoCodigo: string
+        deletedAt: null
+      }
+      select: {
+        surtidoCodigo: true
+      }
+    }) => Promise<Array<{ surtidoCodigo: string }>>
+  }
+}
+
+/**
  * @description Normaliza un segmento numérico usando padding a la izquierda.
  * @param {unknown} value - Valor de entrada.
  * @param {number} length - Longitud exacta esperada.
@@ -112,5 +130,147 @@ export function generateEan13BusinessCode(input: Ean13SegmentsInput): {
     dcCodigo,
     codigoNegocio: `${base12}${dcCodigo}`,
     segments,
+  }
+}
+
+/**
+ * @description Ensambla un código EAN-13 desde 4 segmentos componentes.
+ * Normaliza valores, calcula dígito de control, y devuelve el código de 13 dígitos.
+ *
+ * @param proveedorCodigo - Código proveedor (máx 2 dígitos)
+ * @param sectionCode - Código sección (máx 2 dígitos)
+ * @param specificCode - Código específico (máx 4 dígitos)
+ * @param surtidoCodigo - Código surtido (máx 4 dígitos)
+ * @returns Código EAN-13 válido (13 dígitos)
+ * @throws Error si algún segmento es inválido o excede tamaño máximo
+ *
+ * @example
+ * AssembleEan13Code('01', '14', '0285', '0001') → '0114028500012'
+ */
+export function AssembleEan13Code(
+  proveedorCodigo: string,
+  sectionCode: string,
+  specificCode: string,
+  surtidoCodigo: string
+): string {
+  // Normalizar y validar cada segmento
+  const normalized = normalizeEan13Segments({
+    proveedorCodigo,
+    idSeccionCodigo: sectionCode,
+    especificoCodigo: specificCode,
+    surtidoCodigo,
+  })
+
+  // Construir base de 12 dígitos
+  const base12 = buildEan13Base12(normalized)
+
+  // Calcular y agregar dígito de control
+  const checkDigit = calculateEan13CheckDigit(base12)
+
+  return `${base12}${checkDigit}`
+}
+
+/**
+ * @description Valida un código EAN-13 verificando formato y dígito de control.
+ * Retorna true si el código es válido, false en caso contrario.
+ *
+ * @param code - Código a validar (debe ser string de 13 dígitos)
+ * @returns true si válido, false si no
+ *
+ * @example
+ * ValidateAssembledCode('0114028500012') → true
+ * ValidateAssembledCode('0114028500011') → false (DC incorrecto)
+ */
+export function ValidateAssembledCode(code: unknown): boolean {
+  // Verificar tipo y longitud
+  if (typeof code !== 'string') return false
+  if (code.length !== 13) return false
+
+  // Verificar que contiene solo dígitos
+  if (!/^\d{13}$/.test(code)) return false
+
+  // Verificar dígito de control
+  const base12 = code.slice(0, 12)
+  const providedCheckDigit = code[12]
+
+  try {
+    const calculatedCheckDigit = calculateEan13CheckDigit(base12)
+    return providedCheckDigit === calculatedCheckDigit
+  } catch {
+    return false
+  }
+}
+
+/**
+ * @description Encuentra el siguiente número de surtido disponible para un par section/specific.
+ * Busca en la base de datos todos los productos con la misma sección y específico,
+ * encuentra el máximo surtido existente, y retorna el siguiente (incrementado en 1).
+ * Respeта soft-deletes (busca solo WHERE deletedAt IS NULL).
+ *
+ * @param prismaClient - Cliente de Prisma para consultar productos
+ * @param sectionCode - Código de sección (2 dígitos)
+ * @param specificCode - Código específico (4 dígitos)
+ * @returns Promise que resuelve al siguiente número de surtido disponible (4 dígitos con padding)
+ * @throws Error si se alcanza el máximo de surtido (9999)
+ *
+ * @example
+ * FindNextAvailableSurtido(prisma, '14', '0285') → '0001' (si no existen productos)
+ * FindNextAvailableSurtido(prisma, '14', '0285') → '0003' (si existen 0001 y 0002)
+ */
+export async function FindNextAvailableSurtido(
+  prismaClient: SurtidoLookupClient,
+  sectionCode: string,
+  specificCode: string
+): Promise<string> {
+  // Validar inputs
+  if (!/^\d{1,2}$/.test(sectionCode)) {
+    throw new Error('Código de sección inválido')
+  }
+  if (!/^\d{1,4}$/.test(specificCode)) {
+    throw new Error('Código específico inválido')
+  }
+
+  try {
+    // Buscar todos los productos con esta sección/específico (excluyendo soft-deleted)
+    const existingProducts = await prismaClient.producto.findMany({
+      where: {
+        idSeccionCodigo: sectionCode.padStart(2, '0'),
+        especificoCodigo: specificCode.padStart(4, '0'),
+        deletedAt: null, // Excluye productos eliminados (soft delete)
+      },
+      select: {
+        surtidoCodigo: true,
+      },
+    })
+
+    // Extraer números de surtido válidos
+    const surtidoNumbers = existingProducts
+      .map((product) => {
+        const num = parseInt(product.surtidoCodigo, 10)
+        return isNaN(num) ? null : num
+      })
+      .filter((n): n is number => n !== null)
+      .sort((a, b) => b - a) // Ordenar descendente para obtener máximo
+
+    // Calcular siguiente
+    const maxSurtido = surtidoNumbers.length > 0 ? surtidoNumbers[0] : 0
+    const nextSurtido = maxSurtido + 1
+
+    // Validar no desbordamiento
+    if (nextSurtido > 9999) {
+      throw new Error(
+        `Desbordamiento de surtido: no hay más variantes disponibles para sección ${sectionCode}/específico ${specificCode} (máximo: 9999)`
+      )
+    }
+
+    // Retornar con padding de 4 dígitos
+    return nextSurtido.toString().padStart(4, '0')
+  } catch (error: any) {
+    if (error.message?.includes('Desbordamiento')) {
+      throw error
+    }
+    throw new Error(
+      `Error al buscar siguiente surtido: ${error.message}`
+    )
   }
 }

@@ -1,13 +1,41 @@
+import { NextRequest, NextResponse } from 'next/server';
 
-import { prisma } from "@/lib/prisma";
-import { NextResponse, NextRequest } from "next/server";
-import { withAuthGet, withAuthPost } from "@/lib/auth-middleware";
-import { generateEan13BusinessCode } from '@/lib/ean13-utils';
+import { withAuthGet, withAuthPost } from '@/lib/auth-middleware';
+import {
+  FindNextAvailableSurtido,
+  ValidateAssembledCode,
+} from '@/lib/ean13-utils';
+import { prisma } from '@/lib/prisma';
+import {
+  assertServerOwnedCodeFields,
+  buildProductBusinessCodeFromSegments,
+  calculateCompoundUnitPrices,
+  normalizeProveedorCodigo,
+  resolveTaxonomySegments,
+  generateProductCodeWithRetry,
+} from '@/lib/product-business-code';
 
 const CODIGO_INTERNO_REGEX = /^[0-9]{11}$/;
 
+interface TaxonomyContext {
+  categoriaId: string;
+  subcategoriaId: string;
+  idSeccionCodigo: string;
+  especificoCodigo: string;
+}
+
+interface VendorProviderContext {
+  vendorId: string | null;
+  proveedorCodigo: string;
+}
+
+/**
+ * @description Normaliza el código interno opcional del producto.
+ * @param {unknown} value - Valor recibido en el payload.
+ * @returns {string | null} Código interno normalizado o null.
+ */
 function normalizeCodigoInterno(value: unknown): string | null {
-  if (typeof value !== "string") {
+  if (typeof value !== 'string') {
     return null;
   }
 
@@ -19,448 +47,532 @@ function normalizeCodigoInterno(value: unknown): string | null {
   return normalizedValue;
 }
 
-export const GET = withAuthGet(async (request: NextRequest, context: any, user: any) => {
-    try {
-        const { searchParams } = new URL(request.url)
-        const search = searchParams.get('search')
-        const categoryId = searchParams.get('categoryId')
-        const subcategoryId = searchParams.get('subcategoryId')
-        const esCompuesto = searchParams.get('esCompuesto')
+/**
+ * @description Construye una respuesta JSON de error consistente.
+ * @param {string} message - Mensaje a devolver.
+ * @param {number} status - Código HTTP.
+ * @returns {NextResponse} Respuesta JSON tipada.
+ */
+function jsonError(message: string, status: number): NextResponse {
+  return NextResponse.json({ error: message }, { status });
+}
 
-        // Build where clause - incluir todos los productos para reportes
-        const whereClause: Record<string, any> = {}
-        const andConditions: Record<string, any> = []
+/**
+ * @description Deriva el código de proveedor desde los productos ya asociados al vendor.
+ * @param {Array<{ proveedorCodigo?: string | null }>} productos - Historial de productos del proveedor.
+ * @returns {string | null} Código consistente o null si no se puede resolver.
+ */
+function deriveProveedorCodigoFromVendorProducts(
+  productos: Array<{ proveedorCodigo?: string | null }>
+): string | null {
+  const codigos = Array.from(
+    new Set(
+      productos
+        .map((producto) => producto.proveedorCodigo?.trim())
+        .filter((codigo): codigo is string => Boolean(codigo))
+    )
+  );
 
-        // Add esCompuesto filter
-        if (esCompuesto !== null) {
-            andConditions.push({ esCompuesto: esCompuesto === 'true' })
-        }
+  if (codigos.length !== 1) {
+    return null;
+  }
 
-        // Add search functionality
-        if (search) {
-            andConditions.push({
-                OR: [
-                    {
-                        nombre: {
-                            contains: search
-                        }
-                    },
-                    {
-                        descripcion: {
-                            contains: search
-                        }
-                    },
-                    {
-                        codigoInterno: {
-                            contains: search
-                        }
-                    },
-                    {
-                        codigoNegocio: {
-                            contains: search
-                        }
-                    },
-                    {
-                        categoria: {
-                            nombre: {
-                                contains: search
-                            }
-                        }
-                    },
-                    {
-                        subcategoria: {
-                            nombre: {
-                                contains: search
-                            }
-                        }
-                    },
-                    {
-                        vendor: {
-                            nombre: {
-                                contains: search
-                            }
-                        }
-                    }
-                ]
-            })
-        }
+  return codigos[0];
+}
 
-        // Add category filter
-        if (categoryId) {
-            if (subcategoryId) {
-                // Filter by specific subcategory
-                andConditions.push({ subcategoriaId: subcategoryId })
-            } else {
-                // Filter by category and its subcategories
-                andConditions.push({
-                    OR: [
-                        { categoriaId: categoryId },
-                        {
-                            subcategoria: {
-                                parentId: categoryId
-                            }
-                        }
-                    ]
-                })
-            }
-        } else if (subcategoryId) {
-            andConditions.push({ subcategoriaId: subcategoryId })
-        }
+/**
+ * @description Resuelve el código de proveedor usando vendorId como contrato primario y proveedorCodigo legado como fallback.
+ * @param {string | null | undefined} vendorId - Identificador del proveedor seleccionado.
+ * @param {unknown} proveedorCodigoInput - Código legado opcional enviado por clientes viejos.
+ * @returns {Promise<VendorProviderContext | NextResponse>} Contexto resuelto o error HTTP.
+ */
+async function resolveVendorProviderContext(
+  vendorId: string | null | undefined,
+  proveedorCodigoInput: unknown
+): Promise<VendorProviderContext | NextResponse> {
+  if (vendorId) {
+    const vendor = await prisma.vendor.findUnique({
+      where: { vendorId },
+      include: {
+        productos: {
+          select: { proveedorCodigo: true },
+          where: { proveedorCodigo: { not: null } },
+        },
+      },
+    });
 
-        if (andConditions.length > 0) {
-            whereClause.AND = andConditions
-        }
-
-        // Optimized: Use select to fetch only needed fields and add pagination with better defaults
-        // const page = parseInt(searchParams.get('page') || '1')
-        // const limit = Math.min(parseInt(searchParams.get('limit') || '50'), 100) // Cap limit at 100 for performance
-        // const offset = (page - 1) * limit
-
-        const [productosRaw, totalCount] = await Promise.all([
-            prisma.producto.findMany({
-                where: whereClause,
-                include: {
-                    categoria: {
-                        select: { catId: true, nombre: true }
-                    },
-                    subcategoria: {
-                        select: { catId: true, nombre: true, parentId: true }
-                    },
-                    unidad: {
-                        select: { simbolo: true }
-                    },
-                    vendor: {
-                        select: { nombre: true }
-                    },
-                    almacen: {
-                        select: { nombre: true}
-                    }
-                },
-                orderBy: {
-                    nombre: 'asc'
-                },
-            }),
-            prisma.producto.count({ where: whereClause })
-        ])
-
-        // Calcular el stock total para cada producto incluyendo lo que hay en puntos de venta
-        const productos = await Promise.all(productosRaw.map(async (producto: { id: string; stock: number }) => {
-            // Calcular stock en puntos de venta (Transferencias entrada - Transferencias salida - Ventas)
-            const [tEntrada, tSalida, ventasItems, ventasLegacy] = await Promise.all([
-                prisma.transferencia.aggregate({
-                    where: {
-                        productoId: producto.id,
-                        puntoDeVentaDestinoId: { not: null }
-                    },
-                    _sum: { cantidad: true }
-                }),
-                prisma.transferencia.aggregate({
-                    where: {
-                        productoId: producto.id,
-                        puntoDeVentaOrigenId: { not: null }
-                    },
-                    _sum: { cantidad: true }
-                }),
-                prisma.ventaItem.aggregate({
-                    where: {
-                        productoId: producto.id,
-                    },
-                    _sum: { cantidad: true }
-                }),
-                prisma.venta.aggregate({
-                    where: {
-                        productoId: producto.id,
-                        items: { none: {} }
-                    },
-                    _sum: { cantidad: true }
-                })
-            ])
-
-            const ventasTotal = (ventasItems._sum.cantidad || 0) + (ventasLegacy._sum.cantidad || 0)
-            const stockEnPVs = (tEntrada._sum.cantidad || 0) - (tSalida._sum.cantidad || 0) - ventasTotal
-            
-            return {
-                ...producto,
-                stock: producto.stock + Math.max(0, stockEnPVs)
-            }
-        }))
-
-        return NextResponse.json({
-            productos
-        })
-    } catch (error) {
-        console.log('Error fetch:',error)
-        return NextResponse.json({
-            error: 'Failed to fetch products'
-        },{
-            status:500
-        })
+    if (!vendor) {
+      return jsonError('El proveedor seleccionado no existe', 400);
     }
-})
 
-export const POST = withAuthPost(async (req: NextRequest, context: any, user: any) => {
-    
+    const proveedorCodigoDerivado = deriveProveedorCodigoFromVendorProducts(vendor.productos);
+
+    if (proveedorCodigoDerivado) {
+      return {
+        vendorId: vendor.vendorId,
+        proveedorCodigo: proveedorCodigoDerivado,
+      };
+    }
+
+    if (proveedorCodigoInput !== undefined && proveedorCodigoInput !== null && proveedorCodigoInput !== '') {
+      try {
+        return {
+          vendorId: vendor.vendorId,
+          proveedorCodigo: normalizeProveedorCodigo(proveedorCodigoInput),
+        };
+      } catch (error) {
+        return jsonError(error instanceof Error ? error.message : 'Proveedor inválido', 400);
+      }
+    }
+
+    return jsonError(
+      'El proveedor seleccionado no tiene un código configurado para generar el EAN-13',
+      400
+    );
+  }
+
+  try {
+    return {
+      vendorId: null,
+      proveedorCodigo: normalizeProveedorCodigo(proveedorCodigoInput),
+    };
+  } catch (error) {
+    return jsonError(error instanceof Error ? error.message : 'Proveedor inválido', 400);
+  }
+}
+
+/**
+ * @description Obtiene y valida la taxonomía usada para generar el código de negocio.
+ * @param {string | null | undefined} categoriaId - ID de la categoría.
+ * @param {string | null | undefined} subcategoriaId - ID de la subcategoría.
+ * @returns {Promise<TaxonomyContext | NextResponse>} Contexto listo para generación o un error HTTP.
+ */
+async function resolveTaxonomyContext(
+  categoriaId: string | null | undefined,
+  subcategoriaId: string | null | undefined
+): Promise<TaxonomyContext | NextResponse> {
+  if (!categoriaId) {
+    return jsonError('La categoría es requerida para generar el código de negocio', 400);
+  }
+
+  if (!subcategoriaId) {
+    return jsonError('La subcategoría es requerida para generar el código de negocio', 400);
+  }
+
+  const [categoria, subcategoria] = await Promise.all([
+    prisma.categoria.findUnique({
+      where: { catId: categoriaId },
+      select: { catId: true, nombre: true },
+    }),
+    prisma.categoria.findUnique({
+      where: { catId: subcategoriaId },
+      select: { catId: true, nombre: true, parentId: true },
+    }),
+  ]);
+
+  if (!categoria) {
+    return jsonError('La categoría seleccionada no existe', 400);
+  }
+
+  if (!subcategoria) {
+    return jsonError('La subcategoría seleccionada no existe', 400);
+  }
+
+  if (subcategoria.parentId !== categoriaId) {
+    return jsonError('La subcategoría debe pertenecer a la categoría seleccionada', 400);
+  }
+
+  try {
+    const resolvedSegments = resolveTaxonomySegments(categoria.nombre, subcategoria.nombre);
+
+    return {
+      categoriaId: categoria.catId,
+      subcategoriaId: subcategoria.catId,
+      idSeccionCodigo: resolvedSegments.idSeccionCodigo,
+      especificoCodigo: resolvedSegments.especificoCodigo,
+    };
+  } catch (error) {
+    const message = error instanceof Error
+      ? error.message
+      : 'No se pudo resolver la taxonomía del código de negocio';
+
+    return jsonError(message, 400);
+  }
+}
+
+/**
+ * @description Verifica unicidad del código de negocio antes de persistir.
+ * @param {typeof prisma} prismaClient - Cliente Prisma o transacción.
+ * @param {string} codigoNegocio - Código EAN-13 generado.
+ * @returns {Promise<void>}
+ */
+async function ensureBusinessCodeIsUnique(
+  prismaClient: {
+    producto: {
+      findFirst: typeof prisma.producto.findFirst;
+    };
+  },
+  codigoNegocio: string
+): Promise<void> {
+  const existingProducto = await prismaClient.producto.findFirst({
+    where: { codigoNegocio },
+    select: { id: true },
+  });
+
+  if (existingProducto) {
+    throw new Error('El código de negocio EAN-13 ya está asignado a otro producto');
+  }
+}
+
+export const GET = withAuthGet(async (request: NextRequest) => {
+  try {
+    const { searchParams } = new URL(request.url);
+    const search = searchParams.get('search');
+    const categoryId = searchParams.get('categoryId');
+    const subcategoryId = searchParams.get('subcategoryId');
+    const esCompuesto = searchParams.get('esCompuesto');
+
+    const whereClause: Record<string, unknown> = {};
+    const andConditions: Record<string, unknown>[] = [];
+
+    if (esCompuesto !== null) {
+      andConditions.push({ esCompuesto: esCompuesto === 'true' });
+    }
+
+    if (search) {
+      andConditions.push({
+        OR: [
+          { nombre: { contains: search } },
+          { descripcion: { contains: search } },
+          { codigoInterno: { contains: search } },
+          { codigoNegocio: { contains: search } },
+          { categoria: { nombre: { contains: search } } },
+          { subcategoria: { nombre: { contains: search } } },
+          { vendor: { nombre: { contains: search } } },
+        ],
+      });
+    }
+
+    if (categoryId) {
+      if (subcategoryId) {
+        andConditions.push({ subcategoriaId: subcategoryId });
+      } else {
+        andConditions.push({
+          OR: [
+            { categoriaId: categoryId },
+            { subcategoria: { parentId: categoryId } },
+          ],
+        });
+      }
+    } else if (subcategoryId) {
+      andConditions.push({ subcategoriaId: subcategoryId });
+    }
+
+    if (andConditions.length > 0) {
+      whereClause.AND = andConditions;
+    }
+
+    const [productosRaw, totalCount] = await Promise.all([
+      prisma.producto.findMany({
+        where: whereClause,
+        include: {
+          categoria: { select: { catId: true, nombre: true } },
+          subcategoria: { select: { catId: true, nombre: true, parentId: true } },
+          unidad: { select: { simbolo: true } },
+          vendor: { select: { nombre: true } },
+          almacen: { select: { nombre: true } },
+        },
+        orderBy: { nombre: 'asc' },
+      }),
+      prisma.producto.count({ where: whereClause }),
+    ]);
+
+    const productos = await Promise.all(
+      productosRaw.map(async (producto: { id: string; stock: number }) => {
+        const [tEntrada, tSalida, ventasItems, ventasLegacy] = await Promise.all([
+          prisma.transferencia.aggregate({
+            where: {
+              productoId: producto.id,
+              puntoDeVentaDestinoId: { not: null },
+            },
+            _sum: { cantidad: true },
+          }),
+          prisma.transferencia.aggregate({
+            where: {
+              productoId: producto.id,
+              puntoDeVentaOrigenId: { not: null },
+            },
+            _sum: { cantidad: true },
+          }),
+          prisma.ventaItem.aggregate({
+            where: { productoId: producto.id },
+            _sum: { cantidad: true },
+          }),
+          prisma.venta.aggregate({
+            where: {
+              productoId: producto.id,
+              items: { none: {} },
+            },
+            _sum: { cantidad: true },
+          }),
+        ]);
+
+        const ventasTotal = (ventasItems._sum.cantidad || 0) + (ventasLegacy._sum.cantidad || 0);
+        const stockEnPVs = (tEntrada._sum.cantidad || 0) - (tSalida._sum.cantidad || 0) - ventasTotal;
+
+        return {
+          ...producto,
+          stock: producto.stock + Math.max(0, stockEnPVs),
+        };
+      })
+    );
+
+    return NextResponse.json({ productos, totalCount });
+  } catch (error) {
+    console.error('Error al obtener productos:', error);
+    return jsonError('Failed to fetch products', 500);
+  }
+});
+
+export const POST = withAuthPost(async (req: NextRequest) => {
+  try {
+    const body = await req.json();
+    const {
+      nombre,
+      descripcion,
+      codigoInterno,
+      proveedorCodigo,
+      idSeccionCodigo,
+      especificoCodigo,
+      surtidoCodigo,
+      precioCosto,
+      precioVenta,
+      stock,
+      stockMinimo,
+      fotos,
+      categoriaId,
+      subcategoriaId,
+      unidadId,
+      vendorId,
+      almacenId,
+      precios,
+      esCompuesto,
+      cantidadEnPack,
+      nombreHijo,
+      codigoNegocioHijo,
+    } = body;
+
     try {
-        const body = await req.json()
-        const {
-            nombre,
-            descripcion,
-            codigoInterno,
-            proveedorCodigo,
-            idSeccionCodigo,
-            especificoCodigo,
-            surtidoCodigo,
-            precioCosto,
-            precioVenta,
-            stock,
-            stockMinimo,
-            fotos,
-            categoriaId,
-            subcategoriaId,
+      assertServerOwnedCodeFields({
+        idSeccionCodigo,
+        especificoCodigo,
+        surtidoCodigo,
+        codigoNegocioHijo,
+      });
+    } catch (error) {
+      return jsonError(error instanceof Error ? error.message : 'Payload inválido', 400);
+    }
+
+    const vendorProviderContext = await resolveVendorProviderContext(
+      vendorId ?? null,
+      proveedorCodigo
+    );
+    if (vendorProviderContext instanceof NextResponse) {
+      return vendorProviderContext;
+    }
+
+    const taxonomyContext = await resolveTaxonomyContext(categoriaId, subcategoriaId);
+    if (taxonomyContext instanceof NextResponse) {
+      return taxonomyContext;
+    }
+
+    if (
+      stockMinimo !== undefined &&
+      (typeof stockMinimo !== 'number' || stockMinimo < 0 || !Number.isInteger(stockMinimo))
+    ) {
+      return jsonError('El stock mínimo debe ser un número entero mayor o igual a 0', 400);
+    }
+
+    if (codigoInterno !== undefined && codigoInterno !== null && typeof codigoInterno !== 'string') {
+      return jsonError('El código interno debe enviarse como texto', 400);
+    }
+
+    const normalizedCodigoInterno = normalizeCodigoInterno(codigoInterno);
+    if (normalizedCodigoInterno && !CODIGO_INTERNO_REGEX.test(normalizedCodigoInterno)) {
+      return jsonError('El código interno debe contener exactamente 11 números', 400);
+    }
+
+    if (normalizedCodigoInterno) {
+      const existingProducto = await prisma.producto.findFirst({
+        where: { codigoInterno: normalizedCodigoInterno },
+        select: { id: true },
+      });
+
+      if (existingProducto) {
+        return jsonError('El código interno ya está asignado a otro producto', 409);
+      }
+    }
+
+    if (esCompuesto === true) {
+      if (!cantidadEnPack || typeof cantidadEnPack !== 'number' || cantidadEnPack <= 0) {
+        return jsonError('La cantidad en pack debe ser mayor a 0 para productos compuestos', 400);
+      }
+
+      if (typeof nombreHijo !== 'string' || nombreHijo.trim() === '') {
+        return jsonError('El nombre del producto hijo es requerido para productos compuestos', 400);
+      }
+    }
+
+    const resultado = await prisma.$transaction(async (tx) => {
+      const generatedParentSurtido = await FindNextAvailableSurtido(
+        tx,
+        taxonomyContext.idSeccionCodigo,
+        taxonomyContext.especificoCodigo
+      );
+
+      // Usa retry logic para generar código padre (maneja conflictos automáticamente)
+      const generatedParentCode = await generateProductCodeWithRetry(
+        tx,
+        {
+          proveedorCodigo: vendorProviderContext.proveedorCodigo,
+          idSeccionCodigo: taxonomyContext.idSeccionCodigo,
+          especificoCodigo: taxonomyContext.especificoCodigo,
+          surtidoCodigo: generatedParentSurtido,
+        },
+        3 // maxAttempts
+      );
+
+      if (!ValidateAssembledCode(generatedParentCode.codigoNegocio)) {
+        throw new Error('El código EAN-13 generado para el producto padre no pasó validación');
+      }
+
+      const producto = await tx.producto.create({
+        data: {
+          nombre,
+          descripcion,
+          codigoInterno: normalizedCodigoInterno,
+          codigoNegocio: generatedParentCode.codigoNegocio,
+          proveedorCodigo: generatedParentCode.proveedorCodigo,
+          idSeccionCodigo: generatedParentCode.idSeccionCodigo,
+          especificoCodigo: generatedParentCode.especificoCodigo,
+          surtidoCodigo: generatedParentCode.surtidoCodigo,
+          dcCodigo: generatedParentCode.dcCodigo,
+          precioCosto,
+          precioVenta,
+          stock,
+          stockMinimo: stockMinimo ?? 0,
+          fotos: fotos || [],
+          categoriaId: taxonomyContext.categoriaId,
+          subcategoriaId: taxonomyContext.subcategoriaId,
+          unidadId,
+          vendorId: vendorProviderContext.vendorId,
+          almacenId,
+          esCompuesto: esCompuesto === true,
+          cantidadEnPack: esCompuesto === true ? cantidadEnPack : null,
+          precios: Array.isArray(precios)
+            ? {
+                create: precios.map((precio: { listaPrecioId: string; precio: number }) => ({
+                  listaPrecioId: precio.listaPrecioId,
+                  precio: precio.precio,
+                })),
+              }
+            : undefined,
+        },
+      });
+
+      let productoHijo: Awaited<ReturnType<typeof tx.producto.create>> | null = null;
+
+      if (esCompuesto === true && cantidadEnPack && typeof nombreHijo === 'string') {
+        const generatedChildSurtido = await FindNextAvailableSurtido(
+          tx,
+          generatedParentCode.idSeccionCodigo,
+          generatedParentCode.especificoCodigo
+        );
+
+        // Usa retry logic para generar código hijo (maneja conflictos automáticamente)
+        const generatedChildCode = await generateProductCodeWithRetry(
+          tx,
+          {
+            proveedorCodigo: generatedParentCode.proveedorCodigo,
+            idSeccionCodigo: generatedParentCode.idSeccionCodigo,
+            especificoCodigo: generatedParentCode.especificoCodigo,
+            surtidoCodigo: generatedChildSurtido,
+          },
+          3 // maxAttempts
+        );
+
+        if (!ValidateAssembledCode(generatedChildCode.codigoNegocio)) {
+          throw new Error('El código EAN-13 generado para el producto hijo no pasó validación');
+        }
+
+        const childPrices = calculateCompoundUnitPrices(precioCosto, precioVenta, cantidadEnPack);
+
+        productoHijo = await tx.producto.create({
+          data: {
+            nombre: nombreHijo.trim(),
+            descripcion: `${nombre} (unidad)`,
+            codigoInterno: null,
+            codigoNegocio: generatedChildCode.codigoNegocio,
+            proveedorCodigo: generatedChildCode.proveedorCodigo,
+            idSeccionCodigo: generatedChildCode.idSeccionCodigo,
+            especificoCodigo: generatedChildCode.especificoCodigo,
+            surtidoCodigo: generatedChildCode.surtidoCodigo,
+            dcCodigo: generatedChildCode.dcCodigo,
+            precioCosto: childPrices.precioCostoUnitario,
+            precioVenta: childPrices.precioVentaUnitario,
+            stock: 0,
+            stockMinimo: 0,
+            fotos: fotos || [],
+            categoriaId: taxonomyContext.categoriaId,
+            subcategoriaId: taxonomyContext.subcategoriaId,
             unidadId,
-            vendorId,
+            vendorId: vendorProviderContext.vendorId,
             almacenId,
-            precios, // Array of { listaPrecioId: string, precio: number }
-            // Compound product fields
-            esCompuesto,
+            esCompuesto: false,
             cantidadEnPack,
-            nombreHijo,
-            codigoNegocioHijo
-        } = body
-        
-        // Validación de producto compuesto
-        if (esCompuesto === true) {
-            if (!cantidadEnPack || cantidadEnPack <= 0) {
-                return NextResponse.json({
-                    error: 'La cantidad en pack debe ser mayor a 0 para productos compuestos'
-                }, {
-                    status: 400
-                })
-            }
+            productoPadreId: producto.id,
+          },
+        });
+      }
 
-            if (!nombreHijo || nombreHijo.trim() === '') {
-                return NextResponse.json({
-                    error: 'El nombre del producto hijo es requerido para productos compuestos'
-                }, {
-                    status: 400
-                })
-            }
+      return { producto, productoHijo };
+    });
 
-            if (!codigoNegocioHijo || codigoNegocioHijo.trim() === '') {
-                return NextResponse.json({
-                    error: 'El código de negocio del producto hijo es requerido para productos compuestos'
-                }, {
-                    status: 400
-                })
-            }
+    if (stock > 0 && vendorProviderContext.vendorId) {
+      const now = new Date();
+      const periodo = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-            // Validar que el código de negocio del hijo sea único
-            const existingCodigoHijo = await prisma.producto.findFirst({
-                where: { codigoNegocio: codigoNegocioHijo },
-                select: { id: true }
-            })
-
-            if (existingCodigoHijo) {
-                return NextResponse.json({
-                    error: 'El código de negocio del producto hijo ya está asignado a otro producto'
-                }, {
-                    status: 409
-                })
-            }
-        }
-        
-        // vendorId es opcional para registro directo de productos (inventario inicial)
-        
-        // Validate stockMinimo
-        if (stockMinimo !== undefined && (typeof stockMinimo !== 'number' || stockMinimo < 0 || !Number.isInteger(stockMinimo))) {
-            return NextResponse.json({
-                error: 'El stock mínimo debe ser un número entero mayor o igual a 0'
-            }, {
-                status: 400
-            })
-        }
-
-        if (codigoInterno !== undefined && codigoInterno !== null && typeof codigoInterno !== 'string') {
-            return NextResponse.json({
-                error: 'El código interno debe enviarse como texto'
-            }, {
-                status: 400
-            })
-        }
-
-        const normalizedCodigoInterno = normalizeCodigoInterno(codigoInterno)
-        let generatedBusinessCode: ReturnType<typeof generateEan13BusinessCode>
-        try {
-            generatedBusinessCode = generateEan13BusinessCode({
-                proveedorCodigo,
-                idSeccionCodigo,
-                especificoCodigo,
-                surtidoCodigo,
-            })
-        } catch (error) {
-            return NextResponse.json({
-                error: error instanceof Error ? error.message : 'Error validando segmentos EAN-13'
-            }, { status: 400 })
-        }
-
-        if (normalizedCodigoInterno && !CODIGO_INTERNO_REGEX.test(normalizedCodigoInterno)) {
-            return NextResponse.json({
-                error: 'El código interno debe contener exactamente 11 números'
-            }, {
-                status: 400
-            })
-        }
-
-        if (normalizedCodigoInterno) {
-            const existingProducto = await prisma.producto.findFirst({
-                where: { codigoInterno: normalizedCodigoInterno },
-                select: { id: true }
-            })
-
-            if (existingProducto) {
-                return NextResponse.json({
-                    error: 'El código interno ya está asignado a otro producto'
-                }, {
-                    status: 409
-                })
-            }
-        }
-
-        const existingCodigoNegocio = await prisma.producto.findFirst({
-            where: { codigoNegocio: generatedBusinessCode.codigoNegocio },
-            select: { id: true }
-        })
-
-        if (existingCodigoNegocio) {
-            return NextResponse.json({
-                error: 'El código de negocio EAN-13 ya está asignado a otro producto'
-            }, {
-                status: 409
-            })
-        }
-
-        // Validate subcategory belongs to category if both are provided
-        if (subcategoriaId && categoriaId) {
-            const subcategoria = await prisma.categoria.findUnique({
-                where: { catId: subcategoriaId },
-                select: { parentId: true }
-            })
-            
-            if (!subcategoria || subcategoria.parentId !== categoriaId) {
-                return NextResponse.json({
-                    error: 'La subcategoría debe pertenecer a la categoría seleccionada'
-                }, {
-                    status: 400
-                })
-            }
-        }
-        
-        // Crear producto(s) compuesto(s) dentro de transacción
-        const resultado = await prisma.$transaction(async (tx) => {
-            // Crear producto padre (compuesto)
-            const producto = await tx.producto.create({
-                data: {
-                    nombre,
-                    descripcion,
-                    codigoInterno: normalizedCodigoInterno,
-                    codigoNegocio: generatedBusinessCode.codigoNegocio,
-                    proveedorCodigo: generatedBusinessCode.segments.proveedorCodigo,
-                    idSeccionCodigo: generatedBusinessCode.segments.idSeccionCodigo,
-                    especificoCodigo: generatedBusinessCode.segments.especificoCodigo,
-                    surtidoCodigo: generatedBusinessCode.segments.surtidoCodigo,
-                    dcCodigo: generatedBusinessCode.dcCodigo,
-                    precioCosto,
-                    precioVenta,
-                    stock,
-                    stockMinimo: stockMinimo ?? 0,
-                    fotos: fotos || [],
-                    categoriaId,
-                    subcategoriaId: subcategoriaId || null,
-                    unidadId,
-                    vendorId: vendorId || null,
-                    almacenId,
-                    // Campos de producto compuesto
-                    esCompuesto: esCompuesto === true,
-                    cantidadEnPack: cantidadEnPack || null,
-                    precios: precios && Array.isArray(precios) ? {
-                        create: precios.map((p: any) => ({
-                            listaPrecioId: p.listaPrecioId,
-                            precio: p.precio
-                        }))
-                    } : undefined
-                }
-            })
-
-            // Si es compuesto, crear el producto hijo
-            let productoHijo = null
-            if (esCompuesto === true && cantidadEnPack && nombreHijo && codigoNegocioHijo) {
-                // Calcular precio del hijo
-                const precioVentaHijo = Math.round(precioVenta / cantidadEnPack)
-                const precioCostoHijo = Math.round(precioCosto / cantidadEnPack)
-
-                productoHijo = await tx.producto.create({
-                    data: {
-                        nombre: nombreHijo,
-                        descripcion: `${nombre} (unidad)`,
-                        codigoNegocio: codigoNegocioHijo,
-                        proveedorCodigo: generatedBusinessCode.segments.proveedorCodigo,
-                        idSeccionCodigo: generatedBusinessCode.segments.idSeccionCodigo,
-                        especificoCodigo: generatedBusinessCode.segments.especificoCodigo,
-                        surtidoCodigo: generatedBusinessCode.segments.surtidoCodigo,
-                        dcCodigo: generatedBusinessCode.dcCodigo,
-                        precioCosto: precioCostoHijo,
-                        precioVenta: precioVentaHijo,
-                        stock: 0, // El stock del hijo se gestiona independientemente
-                        stockMinimo: 0,
-                        fotos: fotos || [],
-                        categoriaId,
-                        subcategoriaId: subcategoriaId || null,
-                        unidadId,
-                        vendorId: vendorId || null,
-                        almacenId,
-                        // Campos que lo identifican como hijo
-                        esCompuesto: false,
-                        cantidadEnPack: cantidadEnPack,
-                        productoPadreId: producto.id
-                    }
-                })
-            }
-
-            return { producto, productoHijo }
-        })
-        
-        const producto = resultado.producto
-        const productoHijo = resultado.productoHijo
-        
-     // Crear registro en gastos de compra cuando se añade un producto (solo si hay vendorId)
-   if (stock > 0 && vendorId) {
-   const now = new Date()
-   const periodo = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-   await prisma.gastoCompra.create({
-   data: {
-       productoId: producto.id,
-       vendorId: vendorId,
-       cantidad: stock,
-       precioUnitario: precioCosto,
-       total: stock * precioCosto,
-       fechaCompra: now,
-       descripcion: `Compra inicial - ${nombre}`,
-       periodo: periodo,
-   },
-
-   })
-   }
-
-     return NextResponse.json({
-        producto,
-        productoHijo
-    }, { status: 201 })
-    } catch (error) {
-        console.log('Error al crear producto:',error)
-        return NextResponse.json({
-            error: 'Failed to create product'
-        },{
-            status:500
-        })
+      await prisma.gastoCompra.create({
+        data: {
+          productoId: resultado.producto.id,
+          vendorId: vendorProviderContext.vendorId,
+          cantidad: stock,
+          precioUnitario: precioCosto,
+          total: stock * precioCosto,
+          fechaCompra: now,
+          descripcion: `Compra inicial - ${nombre}`,
+          periodo,
+        },
+      });
     }
-})
+
+    return NextResponse.json(resultado, { status: 201 });
+  } catch (error) {
+    console.error('Error al crear producto:', error);
+
+    if (
+      error &&
+      typeof error === 'object' &&
+      'code' in error &&
+      error.code === 'P2002'
+    ) {
+      return jsonError('El código generado ya existe. Reintentá la operación.', 409);
+    }
+
+    if (error instanceof Error && /código de negocio/i.test(error.message)) {
+      return jsonError(error.message, 409);
+    }
+
+    return jsonError('Failed to create product', 500);
+  }
+});

@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Boxes,
   Calculator,
-  Package,
   AlertCircle,
   CheckCircle2,
 } from 'lucide-react'
@@ -17,6 +16,23 @@ import type { ProductosFormValues } from './productos-form'
 
 interface CompoundProductSectionProps {
   disabled?: boolean
+  parentBusinessCode?: string
+  childBusinessCodePreview?: string
+  childSurtidoPreview?: string
+  parentSegmentSummary?: {
+    proveedorCodigo?: string
+    idSeccionCodigo?: string
+    especificoCodigo?: string
+  }
+}
+
+/**
+ * @description Normaliza valores de preview para mostrarlos como etiquetas legibles.
+ * @param {string | undefined} value - Valor actual del segmento.
+ * @returns {string} Texto preparado para UI.
+ */
+function getPreviewLabel(value?: string): string {
+  return value && value.trim() !== '' ? value : 'Pendiente'
 }
 
 /**
@@ -24,7 +40,13 @@ interface CompoundProductSectionProps {
  * @param {CompoundProductSectionProps} props - Props del componente
  * @returns {JSX.Element} Sección de producto compuesto
  */
-export function CompoundProductSection({ disabled = false }: CompoundProductSectionProps): React.JSX.Element {
+export function CompoundProductSection({
+  disabled = false,
+  parentBusinessCode = '',
+  childBusinessCodePreview = '',
+  childSurtidoPreview = '',
+  parentSegmentSummary,
+}: CompoundProductSectionProps): React.JSX.Element {
   const form = useFormContext<ProductosFormValues>()
   
   const isCompound = form.watch('esCompuesto') === true
@@ -62,7 +84,6 @@ export function CompoundProductSection({ disabled = false }: CompoundProductSect
               if (!checked) {
                 form.setValue('cantidadEnPack', undefined, { shouldValidate: true })
                 form.setValue('nombreHijo', '', { shouldValidate: true })
-                form.setValue('codigoNegocioHijo', '', { shouldValidate: true })
               }
             }}
             disabled={disabled}
@@ -140,29 +161,44 @@ export function CompoundProductSection({ disabled = false }: CompoundProductSect
                 )}
               </div>
 
-              {/* Código de negocio del hijo */}
               <div className="space-y-2 md:col-span-2">
-                <Label htmlFor="codigoNegocioHijo" className="text-xs font-medium">
-                  Código de negocio del producto individual (EAN-13) <span className="text-destructive">*</span>
+                <Label className="text-xs font-medium">
+                  Código del producto hijo (preview)
                 </Label>
+                <div className="grid grid-cols-1 gap-3 rounded-xl border border-dashed p-4 md:grid-cols-2">
+                  <div>
+                    <p className="text-xs text-muted-foreground">Código base del padre</p>
+                    <p className="mt-1 text-sm font-semibold">
+                      {getPreviewLabel(parentBusinessCode)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Surtido heredado + variante</p>
+                    <p className="mt-1 text-sm font-semibold">
+                      {getPreviewLabel(childSurtidoPreview)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Proveedor heredado</p>
+                    <p className="mt-1 text-sm font-semibold">
+                      {getPreviewLabel(parentSegmentSummary?.proveedorCodigo)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground">Sección / específico heredados</p>
+                    <p className="mt-1 text-sm font-semibold">
+                      {`${getPreviewLabel(parentSegmentSummary?.idSeccionCodigo)} / ${getPreviewLabel(parentSegmentSummary?.especificoCodigo)}`}
+                    </p>
+                  </div>
+                </div>
                 <Input
-                  id="codigoNegocioHijo"
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="Ej: 1234567890128"
-                  maxLength={13}
-                  disabled={disabled}
+                  value={childBusinessCodePreview}
+                  readOnly
+                  placeholder="Se genera automáticamente al guardar"
                   className="transition-all duration-200 focus-visible:ring-primary/30"
-                  value={form.watch('codigoNegocioHijo') || ''}
-                  onChange={(e) => form.setValue('codigoNegocioHijo', e.target.value, { shouldValidate: true })}
                 />
-                {form.formState.errors.codigoNegocioHijo && (
-                  <p className="text-xs text-destructive">
-                    {form.formState.errors.codigoNegocioHijo.message as string}
-                  </p>
-                )}
                 <p className="text-xs text-muted-foreground">
-                  Ingresa un código único diferente del código del producto padre.
+                  El hijo hereda proveedor, sección y específico del padre. Solo cambia el surtido y se recalcula el EAN-13.
                 </p>
               </div>
             </div>

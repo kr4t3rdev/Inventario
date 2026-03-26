@@ -217,9 +217,11 @@ export function ServiciosRecibidosForm(): ReactElement {
                           <SelectContent>
                             <SelectItem value='none'>Sin proveedor</SelectItem>
                             {vendors?.map((vendor: any) => (
-                              <SelectItem key={vendor.vendorId} value={vendor.vendorId}>
-                                {vendor.nombre}
-                              </SelectItem>
+                              vendor.vendorId ? (
+                                <SelectItem key={vendor.vendorId} value={vendor.vendorId}>
+                                  {vendor.nombre}
+                                </SelectItem>
+                              ) : null
                             ))}
                           </SelectContent>
                         </Select>

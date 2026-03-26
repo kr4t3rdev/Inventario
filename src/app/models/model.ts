@@ -100,6 +100,7 @@ export interface MoveCategoriaRequest {
 export interface Vendor {
   vendorId: string
   nombre: string
+  proveedorCodigo?: string | null
   direccion?: string | null
   telefono?: string | null
   contacto?: string | null
@@ -114,6 +115,7 @@ export interface Vendor {
 export interface Proveedor {
   proveedorId: string
   nombre: string
+  proveedorCodigo?: string | null
   direccion?: string | null
   telefono?: string | null
   contacto?: string | null

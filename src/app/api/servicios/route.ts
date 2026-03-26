@@ -17,28 +17,37 @@ class InvalidFkError extends Error {
   }
 }
 
+async function normalizeId(id: string | null | undefined): string | null {
+  if (!id || (typeof id === 'string' && id.trim() === '')) return null
+  return typeof id === 'string' ? id.trim() : null
+}
+
 async function validateVendor(vendorId: string | null | undefined): Promise<void> {
-  if (!vendorId) return
-  const vendor = await prisma.vendor.findUnique({ where: { vendorId } })
-  if (!vendor) throw new InvalidFkError('proveedor', vendorId)
+  const normalized = await normalizeId(vendorId)
+  if (!normalized) return
+  const vendor = await prisma.vendor.findUnique({ where: { vendorId: normalized } })
+  if (!vendor) throw new InvalidFkError('proveedor', normalized)
 }
 
 async function validateCategoria(categoriaId: string | null | undefined): Promise<void> {
-  if (!categoriaId) return
-  const categoria = await prisma.categoria.findUnique({ where: { catId: categoriaId } })
-  if (!categoria) throw new InvalidFkError('categoría', categoriaId)
+  const normalized = await normalizeId(categoriaId)
+  if (!normalized) return
+  const categoria = await prisma.categoria.findUnique({ where: { catId: normalized } })
+  if (!categoria) throw new InvalidFkError('categoría', normalized)
 }
 
 async function validateSubcategoria(subcategoriaId: string | null | undefined): Promise<void> {
-  if (!subcategoriaId) return
-  const subcategoria = await prisma.categoria.findUnique({ where: { catId: subcategoriaId } })
-  if (!subcategoria) throw new InvalidFkError('subcategoría', subcategoriaId)
+  const normalized = await normalizeId(subcategoriaId)
+  if (!normalized) return
+  const subcategoria = await prisma.categoria.findUnique({ where: { catId: normalized } })
+  if (!subcategoria) throw new InvalidFkError('subcategoría', normalized)
 }
 
 async function validateUnidad(unidadId: string | null | undefined): Promise<void> {
-  if (!unidadId) return
-  const unidad = await prisma.unidad.findUnique({ where: { unidadId } })
-  if (!unidad) throw new InvalidFkError('unidad', unidadId)
+  const normalized = await normalizeId(unidadId)
+  if (!normalized) return
+  const unidad = await prisma.unidad.findUnique({ where: { unidadId: normalized } })
+  if (!unidad) throw new InvalidFkError('unidad', normalized)
 }
 
 const servicioSchema = z.object({
@@ -89,6 +98,12 @@ export const POST = withAuthPost(async (request: NextRequest, context: any, user
     await validateSubcategoria(data.subcategoriaId)
     await validateUnidad(data.unidadId)
 
+    // Normalizar IDs: convertir strings vacíos a null
+    const normalizedCategoriaId = await normalizeId(data.categoriaId)
+    const normalizedSubcategoriaId = await normalizeId(data.subcategoriaId)
+    const normalizedUnidadId = await normalizeId(data.unidadId)
+    const normalizedVendorId = await normalizeId(data.vendorId)
+
     const gastoServicio = await prisma.servicios.create({
       data: {
         nombre: data.nombre,
@@ -98,10 +113,10 @@ export const POST = withAuthPost(async (request: NextRequest, context: any, user
         precioVenta: data.precioVenta ?? data.precio ?? null,
         codigoInterno: data.codigoInterno ?? null,
         codigoNegocio: data.codigoNegocio ?? null,
-        categoriaId: data.categoriaId ?? null,
-        subcategoriaId: data.subcategoriaId ?? null,
-        unidadId: data.unidadId ?? null,
-        vendorId: data.vendorId ?? null,
+        categoriaId: normalizedCategoriaId,
+        subcategoriaId: normalizedSubcategoriaId,
+        unidadId: normalizedUnidadId,
+        vendorId: normalizedVendorId,
         activo: data.activo ?? true,
       },
     })

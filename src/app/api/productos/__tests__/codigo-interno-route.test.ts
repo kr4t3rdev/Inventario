@@ -21,9 +21,13 @@ const prismaMock = vi.hoisted(() => ({
   categoria: {
     findUnique: vi.fn(),
   },
+  vendor: {
+    findUnique: vi.fn(),
+  },
   gastoCompra: {
     create: vi.fn(),
   },
+  $transaction: vi.fn(),
 }));
 
 vi.mock('@/lib/auth-middleware', () => ({
@@ -38,7 +42,7 @@ vi.mock('@/lib/prisma', () => ({
 }));
 
 /**
- * @description Construye payload válido mínimo para crear/actualizar productos en pruebas.
+ * @description Construye payload válido mínimo para crear productos en pruebas.
  * @param {Record<string, unknown>} overrides - Campos a sobrescribir.
  * @returns {Record<string, unknown>} Payload listo para request.
  */
@@ -51,11 +55,9 @@ function buildProductPayload(overrides: Record<string, unknown> = {}): Record<st
     stock: 0,
     stockMinimo: 5,
     fotos: [],
-    proveedorCodigo: '01',
-    idSeccionCodigo: '14',
-    especificoCodigo: '0285',
-    surtidoCodigo: '0001',
+    vendorId: 'vendor-1',
     categoriaId: 'cat-1',
+    subcategoriaId: 'sub-1',
     unidadId: 'unit-1',
     almacenId: 'alm-1',
     ...overrides,
@@ -69,6 +71,30 @@ describe('Productos API - código interno', () => {
     prismaMock.ventaItem.aggregate.mockResolvedValue({ _sum: { cantidad: 0 } });
     prismaMock.venta.aggregate.mockResolvedValue({ _sum: { cantidad: 0 } });
     prismaMock.producto.count.mockResolvedValue(0);
+    prismaMock.producto.findFirst.mockResolvedValue(null);
+    prismaMock.vendor.findUnique.mockResolvedValue({
+      vendorId: 'vendor-1',
+      productos: [{ proveedorCodigo: '01' }],
+    });
+    prismaMock.categoria.findUnique
+      .mockResolvedValueOnce({ catId: 'cat-1', nombre: 'Bebidas' })
+      .mockResolvedValueOnce({ catId: 'sub-1', nombre: 'Cerveza', parentId: 'cat-1' });
+    prismaMock.$transaction.mockImplementation(async (callback: any) => {
+      const tx = {
+        producto: {
+          findMany: vi.fn().mockResolvedValue([]),
+          findFirst: vi.fn().mockResolvedValue(null),
+          create: vi.fn().mockResolvedValue({
+            id: 'prod-1',
+            nombre: 'Producto Test',
+            codigoInterno: '12345678901',
+            codigoNegocio: '0114028100014',
+          }),
+        },
+      };
+
+      return callback(tx);
+    });
   });
 
   it('GET debe incluir codigoInterno en búsqueda por search', async () => {
@@ -106,20 +132,18 @@ describe('Productos API - código interno', () => {
     expect(data.error).toContain('11 números');
   });
 
-  it('POST debe rechazar segmentos EAN inválidos', async () => {
+  it('POST debe rechazar proveedor legado inválido cuando se usa como fallback', async () => {
     const { POST } = await import('../route');
+
+    prismaMock.vendor.findUnique.mockResolvedValue({
+      vendorId: 'vendor-1',
+      productos: [],
+    });
 
     const request = new NextRequest('http://localhost/api/productos', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(
-        buildProductPayload({
-          proveedorCodigo: 'AA',
-          idSeccionCodigo: '14',
-          especificoCodigo: '0285',
-          surtidoCodigo: '0001',
-        }),
-      ),
+      body: JSON.stringify(buildProductPayload({ proveedorCodigo: 'AA' })),
     });
 
     const response = await POST(request, {}, { userId: 'user-1' });
@@ -150,12 +174,31 @@ describe('Productos API - código interno', () => {
   it('POST debe persistir codigoInterno normalizado cuando es válido', async () => {
     const { POST } = await import('../route');
 
-    prismaMock.producto.findFirst.mockResolvedValue(null);
-    prismaMock.producto.create.mockResolvedValue({
-      id: 'prod-1',
-      nombre: 'Producto Test',
-      codigoInterno: '12345678901',
+    let createdPayload: any;
+    prismaMock.$transaction.mockImplementation(async (callback: any) => {
+      const tx = {
+        producto: {
+          findMany: vi.fn().mockResolvedValue([]),
+          findFirst: vi.fn().mockResolvedValue(null),
+          create: vi.fn().mockImplementation(({ data }: any) => {
+            createdPayload = data;
+            return Promise.resolve({
+              id: 'prod-1',
+              nombre: data.nombre,
+              codigoInterno: data.codigoInterno,
+              codigoNegocio: data.codigoNegocio,
+            });
+          }),
+        },
+      };
+
+      return callback(tx);
     });
+
+    prismaMock.categoria.findUnique.mockReset();
+    prismaMock.categoria.findUnique
+      .mockResolvedValueOnce({ catId: 'cat-1', nombre: 'Bebidas' })
+      .mockResolvedValueOnce({ catId: 'sub-1', nombre: 'Cerveza', parentId: 'cat-1' });
 
     const request = new NextRequest('http://localhost/api/productos', {
       method: 'POST',
@@ -167,14 +210,8 @@ describe('Productos API - código interno', () => {
     const data = await response.json();
 
     expect(response.status).toBe(201);
-    expect(data.codigoInterno).toBe('12345678901');
-    expect(prismaMock.producto.create).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          codigoInterno: '12345678901',
-        }),
-      }),
-    );
+    expect(data.producto.codigoInterno).toBe('12345678901');
+    expect(createdPayload.codigoInterno).toBe('12345678901');
   });
 
   it('PATCH debe devolver 409 cuando codigoInterno pertenece a otro producto', async () => {
@@ -185,7 +222,7 @@ describe('Productos API - código interno', () => {
     const request = new NextRequest('http://localhost/api/productos/prod-1', {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(buildProductPayload({ codigoInterno: '12345678901' })),
+      body: JSON.stringify(buildProductPayload({ codigoInterno: '12345678901', categoriaId: undefined, subcategoriaId: undefined })),
     });
 
     const response = await PATCH(request, { params: Promise.resolve({ id: 'prod-1' }) }, { userId: 'user-1' });
@@ -207,7 +244,7 @@ describe('Productos API - código interno', () => {
     const request = new NextRequest('http://localhost/api/productos/prod-1', {
       method: 'PATCH',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(buildProductPayload({ codigoInterno: '' })),
+      body: JSON.stringify(buildProductPayload({ codigoInterno: '', categoriaId: undefined, subcategoriaId: undefined })),
     });
 
     const response = await PATCH(request, { params: Promise.resolve({ id: 'prod-1' }) }, { userId: 'user-1' });
