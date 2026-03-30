@@ -373,6 +373,85 @@ export const POST = withAuthPost(async (req: NextRequest) => {
       return jsonError(error instanceof Error ? error.message : 'Payload inválido', 400);
     }
 
+    // Verificar si la empresa usa codificación EAN-13
+    const miEmpresa = await prisma.miEmpresa.findFirst({ select: { usaCodigoEan13: true } });
+    const usaCodigoEan13 = miEmpresa?.usaCodigoEan13 ?? false;
+
+    // ── Rama SIN EAN-13 ──────────────────────────────────────────────────────
+    if (!usaCodigoEan13) {
+      if (!categoriaId) {
+        return jsonError('La categoría es requerida', 400);
+      }
+
+      if (
+        stockMinimo !== undefined &&
+        (typeof stockMinimo !== 'number' || stockMinimo < 0 || !Number.isInteger(stockMinimo))
+      ) {
+        return jsonError('El stock mínimo debe ser un número entero mayor o igual a 0', 400);
+      }
+
+      const normalizedCodigoInterno = normalizeCodigoInterno(codigoInterno);
+      if (normalizedCodigoInterno && !CODIGO_INTERNO_REGEX.test(normalizedCodigoInterno)) {
+        return jsonError('El código interno debe contener exactamente 11 números', 400);
+      }
+
+      if (normalizedCodigoInterno) {
+        const existingProducto = await prisma.producto.findFirst({
+          where: { codigoInterno: normalizedCodigoInterno },
+          select: { id: true },
+        });
+        if (existingProducto) {
+          return jsonError('El código interno ya está asignado a otro producto', 409);
+        }
+      }
+
+      if (esCompuesto === true) {
+        if (!cantidadEnPack || typeof cantidadEnPack !== 'number' || cantidadEnPack <= 0) {
+          return jsonError('La cantidad en pack debe ser mayor a 0 para productos compuestos', 400);
+        }
+        if (typeof nombreHijo !== 'string' || nombreHijo.trim() === '') {
+          return jsonError('El nombre del producto hijo es requerido para productos compuestos', 400);
+        }
+      }
+
+      const productoSimple = await prisma.producto.create({
+        data: {
+          nombre,
+          descripcion,
+          codigoInterno: normalizedCodigoInterno,
+          codigoNegocio: null,
+          proveedorCodigo: null,
+          idSeccionCodigo: null,
+          especificoCodigo: null,
+          surtidoCodigo: null,
+          dcCodigo: null,
+          precioCosto,
+          precioVenta,
+          stock,
+          stockMinimo: stockMinimo ?? 0,
+          fotos: fotos || [],
+          categoriaId,
+          subcategoriaId: subcategoriaId || null,
+          unidadId,
+          vendorId: vendorId || null,
+          almacenId,
+          esCompuesto: esCompuesto === true,
+          cantidadEnPack: esCompuesto === true ? cantidadEnPack : null,
+          precios: Array.isArray(precios)
+            ? {
+                create: precios.map((precio: { listaPrecioId: string; precio: number }) => ({
+                  listaPrecioId: precio.listaPrecioId,
+                  precio: precio.precio,
+                })),
+              }
+            : undefined,
+        },
+      });
+
+      return NextResponse.json({ producto: productoSimple, productoHijo: null }, { status: 201 });
+    }
+
+    // ── Rama CON EAN-13 (flujo original) ─────────────────────────────────────
     const vendorProviderContext = await resolveVendorProviderContext(
       vendorId ?? null,
       proveedorCodigo
@@ -425,7 +504,7 @@ export const POST = withAuthPost(async (req: NextRequest) => {
 
     const resultado = await prisma.$transaction(async (tx) => {
       const generatedParentSurtido = await FindNextAvailableSurtido(
-        tx,
+        tx as any,
         taxonomyContext.idSeccionCodigo,
         taxonomyContext.especificoCodigo
       );
@@ -484,7 +563,7 @@ export const POST = withAuthPost(async (req: NextRequest) => {
 
       if (esCompuesto === true && cantidadEnPack && typeof nombreHijo === 'string') {
         const generatedChildSurtido = await FindNextAvailableSurtido(
-          tx,
+          tx as any,
           generatedParentCode.idSeccionCodigo,
           generatedParentCode.especificoCodigo
         );

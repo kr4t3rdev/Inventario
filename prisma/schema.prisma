@@ -33,6 +33,7 @@ model Unidad {
 
 model Vendor {
   vendorId        String           @id @default(cuid())
+  vendorCode      String?          @unique @db.VarChar(2)
   nombre          String
   contacto        String?
   createdAt       DateTime         @default(now())
@@ -51,6 +52,8 @@ model Vendor {
   comprasServicios CompraServicio[]
   productos       Producto[]
   anticipos       Anticipo[]        @relation("AnticipoVendor")
+
+  @@index([vendorCode])
 }
 
 model InyeccionCapital {
@@ -130,6 +133,7 @@ model MiEmpresa {
   nominaFactorHorasExtras   Float           @default(1.5)
   nominaPorcentajeDeduccion Float           @default(10.0)
   nominaPorcentajeAporte    Float           @default(5.0)
+  usaCodigoEan13            Boolean         @default(false)
   createdAt                 DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
   cuentaBancaria    CuentaBancaria? @relation("MiEmpresaCuenta", fields: [cuentaBancariaId], references: [cuentaId])
@@ -1795,4 +1799,10 @@ model OrdenProduccionHistorial {
 
   @@index([ordenProduccionId])
   @@index([createdAt])
+}
+
+model VendorCodeSequence {
+  id          Int      @id @default(1)
+  nextNumber  Int      @default(1)
+  updatedAt   DateTime @updatedAt
 }

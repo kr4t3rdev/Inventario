@@ -1,0 +1,84 @@
+/**
+ * Script para asignar códigos de proveedor a vendors existentes
+ * Ejecutar: npx tsx scripts/assign-vendor-codes.ts
+ */
+
+import prisma from '@/lib/prisma'
+
+function numToAlphanumeric(num: number): string {
+  const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+  
+  if (num < 10) {
+    return `0${num}`
+  }
+  
+  const first = Math.floor((num - 10) / chars.length)
+  const second = (num - 10) % chars.length
+  
+  if (first < chars.length) {
+    return `${chars[first]}${chars[second]}`
+  }
+  
+  return 'ZZ'
+}
+
+async function main() {
+  console.log('🔍 Buscando proveedores sin código...\n')
+  
+  // Obtener vendors sin código
+  const vendorsWithoutCode = await prisma.vendor.findMany({
+    orderBy: { createdAt: 'asc' },
+    select: { vendorId: true, nombre: true },
+  })
+  
+  if (vendorsWithoutCode.length === 0) {
+    console.log('✅ Todos los proveedores ya tienen código asignado')
+    return
+  }
+  
+  console.log(`📦 Encontrados ${vendorsWithoutCode.length} proveedores sin código:\n`)
+  
+  // Obtener códigos existentes
+  const existingCodes = new Set(
+    (await prisma.vendor.findMany({
+      where: { proveedorCodigo: { not: null } },
+      select: { proveedorCodigo: true },
+    }))
+      .map((v: { proveedorCodigo: string | null }) => v.proveedorCodigo!)
+  )
+  
+  // Asignar códigos
+  let counter = 0
+  for (const vendor of vendorsWithoutCode) {
+    let code: string
+    do {
+      code = numToAlphanumeric(counter)
+      counter++
+    } while (existingCodes.has(code) && counter < 1000)
+    
+    await prisma.vendor.update({
+      where: { vendorId: vendor.vendorId },
+      data: { proveedorCodigo: code },
+    })
+    
+    existingCodes.add(code)
+    console.log(`  ✅ ${vendor.nombre} → ${code}`)
+  }
+  
+  console.log('\n🎉 Proceso completado\n')
+  
+  // Mostrar resultado
+  const allVendors = await prisma.vendor.findMany({
+    select: { nombre: true, proveedorCodigo: true },
+    orderBy: { proveedorCodigo: 'asc' },
+  })
+  
+  console.log('📋 Proveedores con códigos:')
+  for (const v of allVendors) {
+    console.log(`  ${v.proveedorCodigo} - ${v.nombre}`)
+  }
+}
+
+main()
+  .catch(console.error)
+  .finally(() => prisma.$disconnect())

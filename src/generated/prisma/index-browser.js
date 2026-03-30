@@ -140,6 +140,7 @@ exports.Prisma.UnidadScalarFieldEnum = {
 
 exports.Prisma.VendorScalarFieldEnum = {
   vendorId: 'vendorId',
+  vendorCode: 'vendorCode',
   nombre: 'nombre',
   contacto: 'contacto',
   createdAt: 'createdAt',
@@ -216,6 +217,7 @@ exports.Prisma.MiEmpresaScalarFieldEnum = {
   nominaFactorHorasExtras: 'nominaFactorHorasExtras',
   nominaPorcentajeDeduccion: 'nominaPorcentajeDeduccion',
   nominaPorcentajeAporte: 'nominaPorcentajeAporte',
+  usaCodigoEan13: 'usaCodigoEan13',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -1407,6 +1409,12 @@ exports.Prisma.OrdenProduccionHistorialScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.VendorCodeSequenceScalarFieldEnum = {
+  id: 'id',
+  nextNumber: 'nextNumber',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1671,7 +1679,8 @@ exports.Prisma.ModelName = {
   LicenciaAudit: 'LicenciaAudit',
   ValeSalida: 'ValeSalida',
   ValeSalidaItem: 'ValeSalidaItem',
-  OrdenProduccionHistorial: 'OrdenProduccionHistorial'
+  OrdenProduccionHistorial: 'OrdenProduccionHistorial',
+  VendorCodeSequence: 'VendorCodeSequence'
 };
 
 /**

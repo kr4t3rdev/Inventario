@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
@@ -48,6 +48,9 @@ import { buildPreciosPayload } from './precios-payload'
 import { SubcategorySelector } from '@/components/categorias/subcategory-selector'
 import { ProductPhotoUpload } from './product-photo-upload'
 import { CompoundProductSection } from './compound-product-section'
+import { ClasificadorInfoNote } from './clasificador-info-note'
+import { getAuthToken } from '@/lib/token'
+import { mapCategoryToSection, mapSubcategoryToSpecific } from '@/lib/category-mapping'
 import type { Vendor } from '@/app/models/model'
 
 const productosSchema = z.object({
@@ -67,7 +70,7 @@ const productosSchema = z.object({
   vendorId: z.string().optional(),
   categoriaId: z.string({
     required_error: 'Seleccione una categoría',
-  }),
+  }).min(1, 'Seleccione una categoría'),
   subcategoriaId: z.string().optional(),
   precioCosto: z.coerce.number().positive({
     message: 'El precio de costo debe ser mayor a 0',
@@ -93,26 +96,6 @@ const productosSchema = z.object({
   nombreHijo: z.string().optional(),
   codigoNegocioHijo: z.string().optional(),
 }).superRefine((value, ctx) => {
-  const hasVendorSelection = typeof value.vendorId === 'string' && value.vendorId.trim() !== ''
-  const hasProveedorCodigo =
-    typeof value.proveedorCodigo === 'string' && value.proveedorCodigo.trim() !== ''
-
-  if (!hasVendorSelection && !hasProveedorCodigo) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ['vendorId'],
-      message: 'Seleccione un proveedor',
-    })
-  }
-
-  if (hasProveedorCodigo && !/^\d{1,2}$/.test(value.proveedorCodigo!.trim())) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ['proveedorCodigo'],
-      message: 'Proveedor debe tener hasta 2 dígitos',
-    })
-  }
-
   if (value.esCompuesto !== true) {
     return
   }
@@ -194,7 +177,19 @@ function PulseSkeleton({ className }: { className?: string }): React.JSX.Element
 export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Element {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const [usaEan13, setUsaEan13] = useState(false)
   const isEditing = Boolean(initialData)
+
+  useEffect(() => {
+    const token = getAuthToken()
+    fetch('/api/mi-empresa', {
+      headers: token ? { Authorization: token } : undefined,
+      cache: 'no-store',
+    })
+      .then((r) => r.json())
+      .then((data) => setUsaEan13(data?.usaCodigoEan13 ?? false))
+      .catch(() => {})
+  }, [])
 
   const { data: unidades, isLoading: isLoadingUnidades } = useGetUnidadesQuery()
   const { data: almacenes, isLoading: isLoadingAlmacenes } = useGetAlmacenesQuery()
@@ -269,7 +264,7 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
   if (!isEditing && selectedCategory?.nombre && selectedSubcategory?.nombre) {
     try {
       parentCodePreview = buildProductBusinessCodePreview({
-        proveedorCodigo: selectedVendorProviderCode || watchedProveedorCodigo,
+        proveedorCodigo: selectedVendorProviderCode || watchedProveedorCodigo || '',
         categoriaNombre: selectedCategory.nombre,
         subcategoriaNombre: selectedSubcategory.nombre,
         surtidoCodigo: DEFAULT_PARENT_PREVIEW_SURTIDO,
@@ -318,21 +313,40 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
       } else {
         const resolvedProveedorCodigo = selectedVendorProviderCode || watchedProveedorCodigo
 
-        if (!resolvedProveedorCodigo) {
-          form.setError('vendorId', {
-            type: 'manual',
-            message: 'El proveedor seleccionado no tiene código configurado para generar el EAN-13',
-          })
-          toast('Seleccioná un proveedor con código configurado para generar el EAN-13.')
-          return
+        if (usaEan13) {
+          if (!data.vendorId && !data.proveedorCodigo) {
+            form.setError('vendorId', {
+              type: 'manual',
+              message: 'Seleccione un proveedor para generar el EAN-13',
+            })
+            toast('Seleccioná un proveedor para generar el EAN-13.')
+            return
+          }
+
+          if (!resolvedProveedorCodigo) {
+            form.setError('vendorId', {
+              type: 'manual',
+              message: 'El proveedor seleccionado no tiene código configurado para generar el EAN-13',
+            })
+            toast('Seleccioná un proveedor con código configurado para generar el EAN-13.')
+            return
+          }
+
+          if (data.proveedorCodigo && !/^\d{1,2}$/.test(data.proveedorCodigo.trim())) {
+            form.setError('proveedorCodigo', {
+              type: 'manual',
+              message: 'Proveedor debe tener hasta 2 dígitos',
+            })
+            return
+          }
         }
 
         const payload: any = {
           nombre: data.nombre,
           descripcion: data.descripcion,
           codigoInterno: data.codigoInterno || null,
-          proveedorCodigo: resolvedProveedorCodigo,
-          vendorId: data.vendorId || null,
+          proveedorCodigo: usaEan13 ? (resolvedProveedorCodigo || null) : null,
+          vendorId: usaEan13 ? (data.vendorId || null) : null,
           precioCosto: data.precioCosto,
           precioVenta: data.precioVenta,
           stock: data.stock,
@@ -514,7 +528,7 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
                     )}
                   />
 
-                  {isEditing ? (
+                  {usaEan13 && (isEditing ? (
                     <>
                       <FormField
                         control={form.control}
@@ -672,7 +686,7 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
                         </FormDescription>
                       </FormItem>
                     </>
-                  )}
+                  ))}
                 </motion.div>
 
                 <motion.div
@@ -718,11 +732,46 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
                           onCategoryChange={(categoryId) => {
                             field.onChange(categoryId)
                             form.setValue('subcategoriaId', '')
+                            form.clearErrors('subcategoriaId')
+                            if (usaEan13 && categoryId) {
+                              const cat = categorias.find((c) => c.catId === categoryId)
+                              if (cat) {
+                                try {
+                                  mapCategoryToSection(cat.nombre)
+                                  form.clearErrors('categoriaId')
+                                } catch {
+                                  form.setError('categoriaId', {
+                                    type: 'manual',
+                                    message:
+                                      'Categoría no encontrada en el Clasificador oficial CLAS — revisá el documento antes de crear Secciones y Específicos',
+                                  })
+                                }
+                              }
+                            } else {
+                              form.clearErrors('categoriaId')
+                            }
                           }}
                           onSubcategoryChange={(subcategoryId) => {
                             form.setValue('subcategoriaId', subcategoryId || '')
+                            if (usaEan13 && subcategoryId) {
+                              const sub = subcategorias.find((s) => s.catId === subcategoryId)
+                              if (sub) {
+                                try {
+                                  mapSubcategoryToSpecific(sub.nombre)
+                                  form.clearErrors('subcategoriaId')
+                                } catch {
+                                  form.setError('subcategoriaId', {
+                                    type: 'manual',
+                                    message:
+                                      'Subcategoría no encontrada en el Clasificador oficial CLAS — revisá el documento antes de crear Secciones y Específicos',
+                                  })
+                                }
+                              }
+                            } else {
+                              form.clearErrors('subcategoriaId')
+                            }
                           }}
-                          required
+                          required={usaEan13}
                           showLabels
                           disabled={isLoading}
                         />
@@ -996,6 +1045,16 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
                   childBusinessCodePreview={childCodePreview?.codigoNegocio || ''}
                   childSurtidoPreview={childCodePreview?.surtidoCodigo || DEFAULT_CHILD_PREVIEW_SURTIDO}
                 />
+
+                {usaEan13 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.42 }}
+                  >
+                    <ClasificadorInfoNote />
+                  </motion.div>
+                )}
 
                 <motion.div
                   className="flex flex-col justify-end gap-3 border-t pt-4 sm:flex-row"

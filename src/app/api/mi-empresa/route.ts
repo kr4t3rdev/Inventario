@@ -16,6 +16,7 @@ const miEmpresaUpsertSchema = z.object({
   licenciaOperacion: z.string().optional().nullable(),
   logoUrl: z.string().optional().nullable(),
   cuentaBancariaId: z.string().optional().nullable(),
+  usaCodigoEan13: z.boolean().optional(),
 })
 
 export const GET = withAuth(async (request: NextRequest) => {
@@ -51,6 +52,7 @@ export const GET = withAuth(async (request: NextRequest) => {
           logoUrl: null,
           cuentaBancariaId: null,
           cuentaBancaria: null,
+          usaCodigoEan13: false,
         },
         { status: 200 },
       )
@@ -81,6 +83,7 @@ export const PUT = withAuth(async (request: NextRequest) => {
         licenciaOperacion: data.licenciaOperacion ?? undefined,
         logoUrl: data.logoUrl ?? undefined,
         cuentaBancariaId: data.cuentaBancariaId ?? undefined,
+        usaCodigoEan13: data.usaCodigoEan13 ?? false,
       },
       update: {
         ...(data.nombre !== undefined ? { nombre: data.nombre } : {}),
@@ -93,6 +96,7 @@ export const PUT = withAuth(async (request: NextRequest) => {
         ...(data.licenciaOperacion !== undefined ? { licenciaOperacion: data.licenciaOperacion } : {}),
         ...(data.logoUrl !== undefined ? { logoUrl: data.logoUrl } : {}),
         ...(data.cuentaBancariaId !== undefined ? { cuentaBancariaId: data.cuentaBancariaId } : {}),
+        ...(data.usaCodigoEan13 !== undefined ? { usaCodigoEan13: data.usaCodigoEan13 } : {}),
       },
       include: {
         cuentaBancaria: {

@@ -259,6 +259,66 @@ export const contabilidadApi = apiSlice.injectEndpoints({
       transformErrorResponse: (response) => serializeApiError(response),
     }),
 
+    // Reportes de Anticipos
+    getReporteAnticiposCliente: builder.query<
+      { clientes: Array<{ clienteId: string; nombre: string; anticipos: Anticipo[]; totalMonto: number; pendiente: number }> },
+      { clienteId?: string; fechaInicio?: string; fechaFin?: string }
+    >({
+      query: (params) => ({
+        url: "contabilidad/anticipos/reportes/cliente",
+        params
+      }),
+      providesTags: ["Anticipos", "ReportesContabilidad"],
+    }),
+
+    getReporteAnticiposProveedor: builder.query<
+      { proveedores: Array<{ vendorId: string; nombre: string; anticipos: Anticipo[]; totalMonto: number; pendiente: number }> },
+      { proveedorId?: string; fechaInicio?: string; fechaFin?: string }
+    >({
+      query: (params) => ({
+        url: "contabilidad/anticipos/reportes/proveedor",
+        params
+      }),
+      providesTags: ["Anticipos", "ReportesContabilidad"],
+    }),
+
+    getResumenAnticipos: builder.query<
+      {
+        resumen: {
+          totalAnticipos: number;
+          anticiposActivos: number;
+          anticiposEjecutados: number;
+          anticiposAnulados: number;
+          totalCobros: number;
+          totalPagos: number;
+          pendientesCobro: number;
+          pendientesPago: number;
+          porTipo?: {
+            PAGO?: number;
+            COBRO?: number;
+          };
+          porEstado?: {
+            RESERVADO?: number;
+            EJECUTADO?: number;
+            ANULADO?: number;
+          };
+          porMoneda?: Record<string, { total: number; ejecutado: number; pendiente: number }>;
+          totalesGenerales?: {
+            totalAnticipos: number;
+            totalEjecutado: number;
+            totalPendiente: number;
+          };
+        }
+      },
+      { tipo?: 'PAGO' | 'COBRO'; fechaInicio?: string; fechaFin?: string }
+    >({
+      query: (params) => ({
+        url: "contabilidad/anticipos/reportes/resumen",
+        params
+      }),
+      providesTags: ["Anticipos", "ReportesContabilidad"],
+    }),
+
     // Reconciliación Stats
     getReconciliacionStats: builder.query<{
       modules: {
@@ -997,6 +1057,9 @@ export const {
   useCreateAnticipoMutation,
   useExecuteAnticipoMutation,
   useReverseAnticipoMutation,
+  useGetReporteAnticiposClienteQuery,
+  useGetReporteAnticiposProveedorQuery,
+  useGetResumenAnticiposQuery,
   useGetInyeccionesCapitalQuery,
   useCreateInyeccionCapitalMutation,
   useRegistrarPagoDeudaMutation,

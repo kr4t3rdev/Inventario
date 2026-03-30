@@ -351,6 +351,14 @@ export function AppSidebar2({
             url: "/busy/contabilidad/cuentas-por-pagar",
             icon: Receipt,
           },
+          
+
+          {
+            title: 'Anticipos',
+            url: '/busy/contabilidad/anticipos',
+            icon: Clock,
+          },
+
           {
             title: "Transferencias Bancarias",
             url: "/busy/contabilidad/transferencias",

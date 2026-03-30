@@ -1162,6 +1162,7 @@ export interface ExecuteAnticipoRequest {
   tasaAplicada?: number
   idempotencyKey: string
   observaciones?: string
+  permitirParcial?: boolean
 }
 
 export interface ExecuteAnticipoResponse {

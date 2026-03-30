@@ -282,8 +282,8 @@ export async function validateVendor(vendorId: string | null): Promise<NextRespo
   }
 
   const vendor = await prisma.vendor.findUnique({
-    where: { id: vendorId },
-    select: { id: true },
+    where: { vendorId: vendorId },
+    select: { vendorId: true },
   });
 
   if (!vendor) {

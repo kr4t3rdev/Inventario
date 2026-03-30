@@ -1,7 +1,7 @@
 import { useAddVendorMutation, useGetVendorsQuery, useUpdateVendorMutation } from "@/lib/redux/services/vendorsApi";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
-import { Building2, Loader2, Sparkles } from "lucide-react";
+import { Building2, Loader2, Sparkles, Copy, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -12,6 +12,7 @@ import { Skeleton } from "../ui/skeleton";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
 import { VendorLogoUpload } from "./vendor-logo-upload";
 
 
@@ -33,6 +34,8 @@ interface VendorFormProps {
     initialData?: {
         vendorId: string
         nombre: string
+        vendorCode?: string | null
+        ean13Code?: string | null
         direccion?: string | null
         telefono?: string | null
         contacto?: string | null
@@ -45,11 +48,19 @@ interface VendorFormProps {
 export function VendorForm({initialData}: VendorFormProps) {
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
+    const [copiedField, setCopiedField] = useState<string | null>(null)
 
     const { data: vendor, isLoading: isLoadingVendor} = useGetVendorsQuery()
 
     const [addVendor] = useAddVendorMutation()
     const [updateVendor] = useUpdateVendorMutation()
+
+    const copyToClipboard = (text: string, field: string) => {
+        navigator.clipboard.writeText(text)
+        setCopiedField(field)
+        toast.success('Copiado al portapapeles')
+        setTimeout(() => setCopiedField(null), 2000)
+    }
 
     const form = useForm<VendorFormValues>({
         resolver: zodResolver(vendorSchema),
@@ -213,6 +224,67 @@ export function VendorForm({initialData}: VendorFormProps) {
                                     )}
                                 />
                             </motion.div>
+
+                            {initialData?.vendorCode && (
+                                <motion.div
+                                    className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                                    initial={{ opacity: 0, x: -20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    transition={{ delay: 0.25 }}
+                                >
+                                    <div className="space-y-2">
+                                        <FormLabel className="text-sm">Código de Proveedor</FormLabel>
+                                        <motion.div
+                                            className="flex items-center gap-2 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200"
+                                            whileHover={{ scale: 1.02 }}
+                                        >
+                                            <Badge variant="secondary" className="text-lg font-mono">
+                                                {initialData.vendorCode}
+                                            </Badge>
+                                            <button
+                                                type="button"
+                                                onClick={() => copyToClipboard(initialData.vendorCode!, 'vendorCode')}
+                                                className="ml-auto p-1 hover:bg-white rounded transition-colors"
+                                            >
+                                                {copiedField === 'vendorCode' ? (
+                                                    <Check className="h-4 w-4 text-green-600" />
+                                                ) : (
+                                                    <Copy className="h-4 w-4 text-gray-600" />
+                                                )}
+                                            </button>
+                                        </motion.div>
+                                        <FormDescription className="text-xs">
+                                            Código único asignado automáticamente
+                                        </FormDescription>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <FormLabel className="text-sm">Código EAN13</FormLabel>
+                                        <motion.div
+                                            className="flex items-center gap-2 p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200"
+                                            whileHover={{ scale: 1.02 }}
+                                        >
+                                            <Badge variant="secondary" className="text-sm font-mono">
+                                                {initialData.ean13Code}
+                                            </Badge>
+                                            <button
+                                                type="button"
+                                                onClick={() => copyToClipboard(initialData.ean13Code!, 'ean13Code')}
+                                                className="ml-auto p-1 hover:bg-white rounded transition-colors"
+                                            >
+                                                {copiedField === 'ean13Code' ? (
+                                                    <Check className="h-4 w-4 text-green-600" />
+                                                ) : (
+                                                    <Copy className="h-4 w-4 text-gray-600" />
+                                                )}
+                                            </button>
+                                        </motion.div>
+                                        <FormDescription className="text-xs">
+                                            Código EAN13 para etiquetado
+                                        </FormDescription>
+                                    </div>
+                                </motion.div>
+                            )}
 
                             <motion.div 
                                 className="grid grid-cols-1 md:grid-cols-2 gap-4"

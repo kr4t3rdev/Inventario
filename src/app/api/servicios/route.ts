@@ -17,7 +17,7 @@ class InvalidFkError extends Error {
   }
 }
 
-async function normalizeId(id: string | null | undefined): string | null {
+function normalizeId(id: string | null | undefined): string | null {
   if (!id || (typeof id === 'string' && id.trim() === '')) return null
   return typeof id === 'string' ? id.trim() : null
 }

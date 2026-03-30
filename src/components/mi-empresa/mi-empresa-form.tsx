@@ -14,6 +14,19 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { motion } from "framer-motion"
+import { Switch } from "@/components/ui/switch"
+import { FormDescription } from "@/components/ui/form"
+import { Barcode, TriangleAlert } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -47,6 +60,7 @@ const miEmpresaSchema = z.object({
   licenciaOperacion: z.string().optional(),
   logoUrl: z.string().optional().or(z.literal("")),
   cuentaBancariaId: z.string().optional(),
+  usaCodigoEan13: z.boolean().optional(),
 })
 
 export type MiEmpresaFormValues = z.infer<typeof miEmpresaSchema>
@@ -63,6 +77,7 @@ type MiEmpresaApiResponse = {
   licenciaOperacion: string | null
   logoUrl: string | null
   cuentaBancariaId: string | null
+  usaCodigoEan13: boolean
 }
 
 async function fetchMiEmpresa(): Promise<MiEmpresaApiResponse> {
@@ -90,6 +105,7 @@ async function saveMiEmpresa(values: MiEmpresaFormValues): Promise<MiEmpresaApiR
     licenciaOperacion: values.licenciaOperacion?.trim() ? values.licenciaOperacion.trim() : null,
     logoUrl: values.logoUrl?.trim() ? values.logoUrl.trim() : null,
     cuentaBancariaId: values.cuentaBancariaId === "none" ? null : values.cuentaBancariaId?.trim() ? values.cuentaBancariaId.trim() : null,
+    usaCodigoEan13: values.usaCodigoEan13 ?? false,
   }
 
   const res = await fetch("/api/mi-empresa", {
@@ -112,6 +128,8 @@ async function saveMiEmpresa(values: MiEmpresaFormValues): Promise<MiEmpresaApiR
 export function MiEmpresaForm() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [showEanWarning, setShowEanWarning] = useState(false)
+  const [savedUsaEan13, setSavedUsaEan13] = useState(false)
   const { data: cuentasData, isLoading: isLoadingCuentas } = useGetCuentasBancariasQuery()
 
   const cuentas = useMemo(() => {
@@ -140,6 +158,7 @@ export function MiEmpresaForm() {
     fetchMiEmpresa()
       .then((data) => {
         if (!mounted) return
+        setSavedUsaEan13(data.usaCodigoEan13 ?? false)
         form.reset({
           nombre: data.nombre ?? "Mi Empresa",
           propietario: data.propietario ?? "",
@@ -151,6 +170,7 @@ export function MiEmpresaForm() {
           licenciaOperacion: data.licenciaOperacion ?? "",
           logoUrl: data.logoUrl ?? "",
           cuentaBancariaId: data.cuentaBancariaId ?? "none",
+          usaCodigoEan13: data.usaCodigoEan13 ?? false,
         })
       })
       .catch(() => {
@@ -179,6 +199,7 @@ export function MiEmpresaForm() {
         licenciaOperacion: saved.licenciaOperacion || "",
         logoUrl: saved.logoUrl || "",
         cuentaBancariaId: saved.cuentaBancariaId || "none",
+        usaCodigoEan13: saved.usaCodigoEan13 ?? false,
       })
       toast.success("Mi Empresa actualizada")
     } catch (e) {
@@ -477,6 +498,41 @@ export function MiEmpresaForm() {
                 />
               </motion.div>
 
+              <motion.div variants={itemVariants}>
+                <FormField
+                  control={form.control}
+                  name="usaCodigoEan13"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center justify-between rounded-xl border p-4">
+                      <div className="space-y-0.5">
+                        <FormLabel className="flex items-center gap-2">
+                          <Barcode className="h-4 w-4" />
+                          Codificación EAN-13
+                        </FormLabel>
+                        <FormDescription>
+                          Activa para generar códigos de barras EAN-13. Las categorías de productos
+                          deben seguir el Clasificador oficial (CLAS).
+                        </FormDescription>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value ?? false}
+                          onCheckedChange={(newValue) => {
+                            // OFF→ON cuando la BD guardada era OFF: pedir confirmación
+                            if (newValue && !savedUsaEan13) {
+                              setShowEanWarning(true)
+                              return
+                            }
+                            field.onChange(newValue)
+                          }}
+                          disabled={loading || saving}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+              </motion.div>
+
               <motion.div 
                 variants={itemVariants}
                 className="flex justify-end gap-2"
@@ -510,6 +566,51 @@ export function MiEmpresaForm() {
           </Form>
         </CardContent>
       </Card>
+
+      <AlertDialog open={showEanWarning} onOpenChange={setShowEanWarning}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
+              <TriangleAlert className="h-5 w-5" />
+              Cambio estructural — Acción destructiva
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3 text-sm">
+                <p>
+                  Activar la codificación <strong>EAN-13</strong> cambia la estructura de los
+                  productos. Los códigos de barras se generan a partir del
+                  <strong> Clasificador oficial CLAS</strong>, lo que requiere que{" "}
+                  <strong>categorías y subcategorías estén registradas según ese estándar</strong>.
+                </p>
+                <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3">
+                  <p className="font-semibold text-destructive">Antes de activar esto, debés:</p>
+                  <ol className="mt-1 list-decimal pl-4 space-y-1 text-destructive/90">
+                    <li>Realizar una <strong>copia de seguridad</strong> de la base de datos.</li>
+                    <li>
+                      <strong>Reiniciar la base de datos</strong> — los productos existentes sin
+                      estructura EAN-13 no son compatibles.
+                    </li>
+                  </ol>
+                </div>
+                <p className="text-muted-foreground">
+                  Si la base de datos ya está vacía o es nueva, podés continuar sin problema.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                form.setValue('usaCodigoEan13', true)
+              }}
+            >
+              Entiendo, activar EAN-13
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </motion.div>
   )
 }
