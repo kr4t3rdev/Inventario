@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
-import { toast } from "sonner"
+import { sileo } from 'sileo'
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAddUnidadMutation, useGetUnidadesQuery, useUpdateUnidadMutation } from "@/lib/redux/services/unidadesApi"
 import { motion } from "framer-motion"
@@ -19,10 +19,10 @@ import Link from "next/link"
 
 const unidadSchema = z.object({
   nombre: z.string({
-    required_error: "Ingrese el nombre de la unidad",
+    required_error: 'El campo Nombre no ha sido rellenado',
   }),
   simbolo: z.string({
-    required_error: "Ingrese el símbolo de la unidad",
+    required_error: 'El campo Símbolo no ha sido rellenado',
   })
 })
 
@@ -92,16 +92,16 @@ export function UnidadForm({ initialData }: UnidadFormProps) {
           unidadId: initialData.unidadId,            
           ...data,
         }).unwrap()
-        toast("La unidad ha sido actualizada exitosamente.")
+        sileo.success({ title: 'La unidad ha sido actualizada exitosamente.' })
       } else {
         await addUnidad(data).unwrap()
-        toast("La unidad ha sido registrada exitosamente.")
+        sileo.success({ title: 'La unidad ha sido registrada exitosamente.' })
       }
       router.push("/busy/unidad")
       router.refresh()
     } catch (error) {
       console.error("Error al guardar la unidad:", error)
-      toast("Hubo un error al guardar la unidad.")
+      sileo.error({ title: 'Hubo un error al guardar la unidad.' })
     } finally {
       setIsLoading(false)
     }
@@ -183,7 +183,7 @@ export function UnidadForm({ initialData }: UnidadFormProps) {
           </motion.div>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-6">
               {/* Nombre Field */}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
@@ -260,10 +260,10 @@ export function UnidadForm({ initialData }: UnidadFormProps) {
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   <Button 
                     type="button" 
-                    variant="outline" 
+                    variant="destructive" 
                     onClick={() => router.push("/busy/unidad")}
                     disabled={isLoading}
-                    className="gap-2"
+                    className="gap-2 cursor-pointer"
                   >
                     <ArrowLeft className="h-4 w-4" />
                     Cancelar
@@ -274,7 +274,7 @@ export function UnidadForm({ initialData }: UnidadFormProps) {
                   <Button 
                     type="submit" 
                     disabled={isLoading}
-                    className="min-w-[140px] gap-2 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                    className="min-w-[140px] gap-2 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 cursor-pointer transition-colors duration-200"
                   >
                     {isLoading ? (
                       <>

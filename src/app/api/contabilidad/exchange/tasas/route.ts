@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { verify_token } from '@/lib/auth-utils'
+import { AuditLogService } from '@/lib/services/audit-log-service'
 
 // Schema para crear/actualizar tasa de cambio
 const TasaCambioSchema = z.object({
@@ -65,6 +67,11 @@ export async function GET() {
 // POST /api/contabilidad/exchange/tasas - Actualizar tasa de cambio
 export async function POST(request: NextRequest) {
   try {
+    const user = await verify_token(request)
+    if (!user) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+    }
+
     const body = await request.json()
     const validatedData = TasaCambioSchema.parse(body)
 
@@ -132,6 +139,17 @@ export async function POST(request: NextRequest) {
       },
       include: {
         monedaOrigen: true
+      }
+    })
+
+    await AuditLogService.log({
+      accion: 'CREATE',
+      entidad: 'TASA_CAMBIO',
+      entidadId: nuevaTasa.tasaId,
+      usuarioId: user.userId,
+      detalles: {
+        monedaOrigenId: validatedData.monedaOrigenId,
+        tasa: validatedData.tasa
       }
     })
 

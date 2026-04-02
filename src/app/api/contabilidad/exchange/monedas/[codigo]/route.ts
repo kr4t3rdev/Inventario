@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { verify_token } from '@/lib/auth-utils'
+import { AuditLogService } from '@/lib/services/audit-log-service'
 
 // Schema para actualizar moneda
 const UpdateMonedaSchema = z.object({
@@ -16,6 +18,11 @@ export async function PUT(
   { params }: { params: Promise<{ codigo: string }> }
 ) {
   try {
+    const user = await verify_token(request)
+    if (!user) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+    }
+
     const { codigo } = await params
     const body = await request.json()
     const validatedData = UpdateMonedaSchema.parse(body)
@@ -50,6 +57,21 @@ export async function PUT(
     const monedaActualizada = await prisma.moneda.update({
       where: { codigo },
       data: validatedData
+    })
+
+    const cambios: Record<string, { anterior: unknown; nuevo: unknown }> = {}
+    for (const key of Object.keys(validatedData) as (keyof typeof validatedData)[]) {
+      if (monedaExistente[key] !== monedaActualizada[key]) {
+        cambios[key] = { anterior: monedaExistente[key], nuevo: monedaActualizada[key] }
+      }
+    }
+
+    await AuditLogService.log({
+      accion: 'UPDATE',
+      entidad: 'MONEDA',
+      entidadId: codigo,
+      usuarioId: user.userId,
+      detalles: { cambios }
     })
 
     return NextResponse.json({

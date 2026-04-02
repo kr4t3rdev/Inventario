@@ -5,7 +5,7 @@ import { Building2, Loader2, Sparkles, Copy, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { toast } from "sonner";
+import { sileo } from 'sileo';
 import { z } from "zod";
 import { Card, CardContent } from "../ui/card";
 import { Skeleton } from "../ui/skeleton";
@@ -18,7 +18,7 @@ import { VendorLogoUpload } from "./vendor-logo-upload";
 
 const vendorSchema = z.object({
     nombre: z.string({
-        required_error: 'Ingrese el nombre del proveedor',
+        required_error: 'El campo Nombre no ha sido rellenado',
     }),
     direccion: z.string().optional(),
     telefono: z.string().optional(),
@@ -58,7 +58,7 @@ export function VendorForm({initialData}: VendorFormProps) {
     const copyToClipboard = (text: string, field: string) => {
         navigator.clipboard.writeText(text)
         setCopiedField(field)
-        toast.success('Copiado al portapapeles')
+        sileo.success({ title: 'Copiado al portapapeles' })
         setTimeout(() => setCopiedField(null), 2000)
     }
 
@@ -83,16 +83,16 @@ export function VendorForm({initialData}: VendorFormProps) {
             vendorId: initialData.vendorId,
           ...data,
         }).unwrap()
-        toast("El proveedor ha sido actualizado exitosamente.")
+        sileo.success({ title: 'El proveedor ha sido actualizado exitosamente.' })
       } else {
         await addVendor(data).unwrap()
-        toast("El proveedor ha sido registrado exitosamente.")
+        sileo.success({ title: 'El proveedor ha sido registrado exitosamente.' })
       }
       router.push("/busy/vendor")
       router.refresh()
         } catch (error) {
             console.error("Error al guardar el proveedor:", error);
-            toast('Hubo un error al guardar el proveedor.')
+            sileo.error({ title: 'Hubo un error al guardar el proveedor.' })
         }finally {
             setIsLoading(false)
         }
@@ -203,7 +203,7 @@ export function VendorForm({initialData}: VendorFormProps) {
                     </motion.div>
 
                     <Form {... form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                        <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-6">
                             <motion.div
                                 initial={{ opacity: 0, x: -20 }}
                                 animate={{ opacity: 1, x: 0 }}

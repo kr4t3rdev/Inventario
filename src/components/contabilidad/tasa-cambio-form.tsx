@@ -32,7 +32,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { useGetMonedasQuery, useUpdateTasaCambioMutation } from "@/lib/redux/services/contabilidadApi"
-import { toast } from "sonner"
+import { sileo } from 'sileo'
 
 const tasaCambioSchema = z.object({
   monedaOrigenId: z.string().min(1, "Selecciona la moneda de origen"),
@@ -98,11 +98,11 @@ export function TasaCambioForm({ onClose, onSuccess }: TasaCambioFormProps) {
         tasa: parseFloat(data.tasa),
       }).unwrap()
 
-      toast.success("Tasa de cambio actualizada correctamente")
+      sileo.success({ title: 'Tasa de cambio actualizada correctamente' })
       onSuccess()
     } catch (error: any) {
       console.error("Error al actualizar tasa:", error)
-      toast.error(error?.data?.error || "Error al actualizar la tasa de cambio")
+      sileo.error({ title: error?.data?.error || 'Error al actualizar la tasa de cambio' })
     } finally {
       setIsSubmitting(false)
     }
@@ -121,7 +121,7 @@ export function TasaCambioForm({ onClose, onSuccess }: TasaCambioFormProps) {
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-4">
             <FormField
               control={form.control}
               name="monedaOrigenId"

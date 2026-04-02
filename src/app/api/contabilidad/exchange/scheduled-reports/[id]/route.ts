@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { verify_token } from "@/lib/auth-utils";
+import { AuditLogService } from "@/lib/services/audit-log-service";
 
 /**
  * @description Endpoint para gestionar reportes programados individuales
@@ -53,6 +55,11 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await verify_token(request);
+    if (!user) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
     const { id } = await params;
     const body = await request.json();
 
@@ -105,6 +112,14 @@ export async function PATCH(
       data: updateData,
     });
 
+    await AuditLogService.log({
+      accion: "UPDATE",
+      entidad: "REPORTE_PROGRAMADO",
+      entidadId: id,
+      usuarioId: user.userId,
+      detalles: { nombre: reporte.nombre }
+    });
+
     return NextResponse.json({
       success: true,
       data: reporte,
@@ -124,10 +139,23 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await verify_token(request);
+    if (!user) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
     const { id } = await params;
 
     await prisma.scheduledReport.delete({
       where: { id },
+    });
+
+    await AuditLogService.log({
+      accion: "DELETE",
+      entidad: "REPORTE_PROGRAMADO",
+      entidadId: id,
+      usuarioId: user.userId,
+      detalles: {}
     });
 
     return NextResponse.json({

@@ -20,7 +20,7 @@ import {
 import { useErrorHandler } from '@/hooks/use-error-handler'
 import { useLoadingStates, LOADING_KEYS } from '@/hooks/use-loading-states'
 import { useRetryMechanism, RETRY_CONFIGS } from '@/hooks/use-retry-mechanism'
-import { toast } from 'sonner'
+import { sileo } from 'sileo'
 
 import { LoadingOverlay } from './loading-components'
 
@@ -142,9 +142,9 @@ export function EnhancedFormWrapper<T extends FieldValues>({
         // Success handling
         if (showSuccessMessage) {
           if (successMessage) {
-            toast.success(successMessage, { duration: 3000 })
+            sileo.success({ title: successMessage })
           } else {
-            toast.success('Datos guardados exitosamente', { duration: 3000 })
+            sileo.success({ title: 'Datos guardados exitosamente.' })
           }
         }
 

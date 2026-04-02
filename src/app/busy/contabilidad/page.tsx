@@ -10,6 +10,7 @@ import {
   Building2,
   Calculator,
   CreditCard,
+  DollarSign,
   FileText,
   Receipt,
   Settings,
@@ -169,6 +170,20 @@ export default function ContabilidadDashboard(): React.JSX.Element {
       href: '/busy/contabilidad/logs',
       icon: FileText,
       tone: 'slate',
+    },
+    {
+      title: 'Préstamos en Efectivo',
+      description: 'Préstamos cash a clientes',
+      href: '/busy/contabilidad/prestamos-cash',
+      icon: DollarSign,
+      tone: 'emerald',
+    },
+    {
+      title: 'Deudas en Efectivo',
+      description: 'Deudas cash con proveedores',
+      href: '/busy/contabilidad/deudas-cash',
+      icon: CreditCard,
+      tone: 'orange',
     },
   ] as const;
 

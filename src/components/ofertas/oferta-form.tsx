@@ -21,7 +21,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { toast } from "sonner";
+import { sileo } from 'sileo';
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetProductosQuery } from "@/lib/redux/services/productosApi";
 import { useGetClientesQuery } from "@/lib/redux/services/ClienteApi";
@@ -48,7 +48,7 @@ const itemSchema = z.object({
 })
 
 const ofertaSchema = z.object({
-  clienteId: z.string().min(1, "Seleccione un cliente"),
+  clienteId: z.string().min(1, 'El campo Cliente no ha sido seleccionado'),
   fechaVencimiento: z.string().optional(),
   observaciones: z.string().optional(),
   items: z.array(itemSchema).min(1, "Agregue al menos un item"),
@@ -209,7 +209,7 @@ export function OfertaForm() {
 
       const createdOferta = await addOferta(payload).unwrap();
       await openOfertaPdf(createdOferta.id, printWindow);
-      toast.success("Oferta creada exitosamente");
+      sileo.success({ title: 'Oferta creada exitosamente' });
       const nextUrl = selectedAnticipoCobroId
         ? `/busy/ofertas/${createdOferta.id}?anticipoCobroId=${encodeURIComponent(selectedAnticipoCobroId)}`
         : `/busy/ofertas/${createdOferta.id}`
@@ -218,7 +218,7 @@ export function OfertaForm() {
       if (printWindow) {
         printWindow.close()
       }
-      toast.error("Error al crear la oferta");
+      sileo.error({ title: 'Error al crear la oferta' });
     } finally {
       setIsSubmitting(false);
     }
@@ -299,7 +299,7 @@ export function OfertaForm() {
           </motion.div>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-6">
               {/* Cliente y Fecha */}
               <motion.div 
                 className="grid grid-cols-1 md:grid-cols-2 gap-4"

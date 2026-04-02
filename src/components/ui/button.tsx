@@ -1,6 +1,9 @@
+'use client'
+
 import * as React from 'react'
 import { Slot } from '@radix-ui/react-slot'
 import { cva, type VariantProps } from 'class-variance-authority'
+import { motion, AnimatePresence } from 'framer-motion'
 
 import { cn } from '@/lib/utils'
 
@@ -32,19 +35,91 @@ const buttonVariants = cva(
   }
 )
 
+interface RippleData {
+  id: number
+  x: number
+  y: number
+  size: number
+}
+
 function Button({
   className,
   variant,
   size,
   asChild = false,
+  onClick,
+  children,
   ...props
 }: React.ComponentProps<'button'> &
   VariantProps<typeof buttonVariants> & {
     asChild?: boolean
   }) {
-  const Comp = asChild ? Slot : 'button'
+  const [ripples, setRipples] = React.useState<RippleData[]>([])
 
-  return <Comp data-slot='button' className={cn(buttonVariants({ variant, size, className }))} {...props} />
+  const handleClick = React.useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      const rect = e.currentTarget.getBoundingClientRect()
+      const rippleSize = Math.max(rect.width, rect.height) * 2
+
+      setRipples((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          x: e.clientX - rect.left,
+          y: e.clientY - rect.top,
+          size: rippleSize,
+        },
+      ])
+      onClick?.(e)
+    },
+    [onClick]
+  )
+
+  const removeRipple = React.useCallback((id: number) => {
+    setRipples((prev) => prev.filter((r) => r.id !== id))
+  }, [])
+
+  if (asChild) {
+    return (
+      <Slot
+        data-slot='button'
+        className={cn(buttonVariants({ variant, size, className }))}
+        {...props}
+      >
+        {children}
+      </Slot>
+    )
+  }
+
+  return (
+    <button
+      data-slot='button'
+      className={cn(buttonVariants({ variant, size, className }), 'relative overflow-hidden')}
+      onClick={handleClick}
+      {...props}
+    >
+      {children}
+      <AnimatePresence>
+        {ripples.map((ripple) => (
+          <motion.span
+            key={ripple.id}
+            initial={{ scale: 0, opacity: 0.3 }}
+            animate={{ scale: 1, opacity: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.6, ease: 'easeOut' }}
+            onAnimationComplete={() => removeRipple(ripple.id)}
+            className='absolute rounded-full bg-current pointer-events-none'
+            style={{
+              width: ripple.size,
+              height: ripple.size,
+              left: ripple.x - ripple.size / 2,
+              top: ripple.y - ripple.size / 2,
+            }}
+          />
+        ))}
+      </AnimatePresence>
+    </button>
+  )
 }
 
 export { Button, buttonVariants }

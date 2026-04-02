@@ -11,26 +11,26 @@ import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { toast } from "sonner"
+import { sileo } from 'sileo'
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAddEmpleadoMutation, useGetEmpleadosQuery, useUpdateEmpleadoMutation } from "@/lib/redux/services/empleadosApi"
 import { Users, Loader2 } from "lucide-react"
 
 const empleadoSchema = z.object({
   nombre: z.string({
-    required_error: "escriba un nombre",
+    required_error: 'El campo Nombre no ha sido rellenado',
   }),
   apellido: z.string({
-    required_error: "escriba el apellido",
+    required_error: 'El campo Apellido no ha sido rellenado',
   }),
   telefono: z.string({
-    required_error: "escriba un telefono",
+    required_error: 'El campo Teléfono no ha sido rellenado',
   }),
   cargo: z.string({
-    required_error: "escriba un cargo",
+    required_error: 'El campo Cargo no ha sido rellenado',
   }),
   carnetIdentidad: z.string({
-    required_error: "El carné de identidad es obligatorio",
+    required_error: 'El campo Carné de identidad no ha sido rellenado',
   }).min(11, "El carné debe tener 11 dígitos"),
   fechaBaja: z.string().optional().refine((date) => {
     if (!date) return true;
@@ -132,20 +132,20 @@ export function EmpleadoForm({ initialData }: EmpleadoFormProps) {
           empleadoId: initialData.empleadoId,
           ...submitData,
         }).unwrap()
-        toast.success("Los empleados han sido actualizados exitosamente.")
+        sileo.success({ title: 'Los empleados han sido actualizados exitosamente.' })
         router.push("/busy/empleados")
       } else {
         await addEmpleados({
           empleadoId: v4(),
           ...submitData
         }).unwrap()
-        toast.success("El empleado ha sido registrado exitosamente.")
+        sileo.success({ title: 'El empleado ha sido registrado exitosamente.' })
       }
 
       router.back()
     } catch (error) {
       console.error("Error al guardar el empleado:", error)
-      toast.error("Hubo un error al guardar el empleado.")
+      sileo.error({ title: 'Hubo un error al guardar el empleado.' })
     } finally {
       setIsLoading(false)
     }
@@ -203,7 +203,7 @@ export function EmpleadoForm({ initialData }: EmpleadoFormProps) {
       </CardHeader>
       <CardContent className="pt-6">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-6">
             <motion.div
               custom={0}
               variants={formFieldVariants}

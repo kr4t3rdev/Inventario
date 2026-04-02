@@ -58,6 +58,24 @@ const ENTITY_BADGE_STYLES: Record<string, string> = {
     'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/25 dark:text-emerald-300 dark:border-emerald-800/70',
   TIPO_PAGO:
     'bg-pink-100 text-pink-700 border-pink-200 dark:bg-pink-900/25 dark:text-pink-300 dark:border-pink-800/70',
+  DEUDA_CASH:
+    'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/25 dark:text-rose-300 dark:border-rose-800/70',
+  PRESTAMO_CASH:
+    'bg-fuchsia-100 text-fuchsia-700 border-fuchsia-200 dark:bg-fuchsia-900/25 dark:text-fuchsia-300 dark:border-fuchsia-800/70',
+  PAGO_PRESTAMO:
+    'bg-lime-100 text-lime-700 border-lime-200 dark:bg-lime-900/25 dark:text-lime-300 dark:border-lime-800/70',
+  ANTICIPO:
+    'bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/25 dark:text-yellow-300 dark:border-yellow-800/70',
+  CUENTA_POR_PAGAR:
+    'bg-red-100 text-red-700 border-red-200 dark:bg-red-900/25 dark:text-red-300 dark:border-red-800/70',
+  CUENTA_POR_COBRAR:
+    'bg-sky-100 text-sky-700 border-sky-200 dark:bg-sky-900/25 dark:text-sky-300 dark:border-sky-800/70',
+  ESCENARIO_EXCHANGE:
+    'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/25 dark:text-purple-300 dark:border-purple-800/70',
+  REPORTE_PROGRAMADO:
+    'bg-stone-100 text-stone-700 border-stone-200 dark:bg-stone-900/25 dark:text-stone-300 dark:border-stone-800/70',
+  MONEDA:
+    'bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-900/25 dark:text-teal-300 dark:border-teal-800/70',
 };
 
 const ACTION_BADGE_STYLES: Record<string, string> = {
@@ -71,8 +89,10 @@ const ACTION_BADGE_STYLES: Record<string, string> = {
     'bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/25 dark:text-indigo-300 dark:border-indigo-800/70',
   VALIDATE:
     'bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-900/25 dark:text-teal-300 dark:border-teal-800/70',
-  registrar_pago_deuda:
-    'bg-emerald-100 text-emerald-700 border-emerald-200 dark:bg-emerald-900/25 dark:text-emerald-300 dark:border-emerald-800/70',
+  EXECUTE:
+    'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/25 dark:text-amber-300 dark:border-amber-800/70',
+  EXPORT:
+    'bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/25 dark:text-purple-300 dark:border-purple-800/70',
 };
 
 /**
@@ -304,6 +324,16 @@ export function AuditLogsTable() {
             <SelectItem value="INYECCION_CAPITAL">Inyección capital</SelectItem>
             <SelectItem value="PAGO_DEUDA">Pagos de deuda</SelectItem>
             <SelectItem value="TIPO_PAGO">Tipos de pago</SelectItem>
+            <SelectItem value="TASA_CAMBIO">Tasas de cambio</SelectItem>
+            <SelectItem value="MONEDA">Monedas</SelectItem>
+            <SelectItem value="DEUDA_CASH">Deudas cash</SelectItem>
+            <SelectItem value="PRESTAMO_CASH">Préstamos cash</SelectItem>
+            <SelectItem value="PAGO_PRESTAMO">Pagos de préstamo</SelectItem>
+            <SelectItem value="ANTICIPO">Anticipos</SelectItem>
+            <SelectItem value="CUENTA_POR_PAGAR">Cuentas por pagar</SelectItem>
+            <SelectItem value="CUENTA_POR_COBRAR">Cuentas por cobrar</SelectItem>
+            <SelectItem value="ESCENARIO_EXCHANGE">Escenarios exchange</SelectItem>
+            <SelectItem value="REPORTE_PROGRAMADO">Reportes programados</SelectItem>
           </SelectContent>
         </Select>
         <Select value={accion} onValueChange={setAccion}>
@@ -316,6 +346,9 @@ export function AuditLogsTable() {
             <SelectItem value="UPDATE">Actualización</SelectItem>
             <SelectItem value="DELETE">Eliminación</SelectItem>
             <SelectItem value="SYNC">Sincronización</SelectItem>
+            <SelectItem value="EXECUTE">Ejecución</SelectItem>
+            <SelectItem value="VALIDATE">Validación</SelectItem>
+            <SelectItem value="EXPORT">Exportación</SelectItem>
           </SelectContent>
         </Select>
       </div>

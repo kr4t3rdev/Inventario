@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { verify_token } from '@/lib/auth-utils'
+import { AuditLogService } from '@/lib/services/audit-log-service'
 
 // Schema para validar nueva moneda
 const MonedaSchema = z.object({
@@ -64,6 +66,11 @@ export async function GET() {
 // POST /api/contabilidad/exchange/monedas - Crear nueva moneda
 export async function POST(request: NextRequest) {
   try {
+    const user = await verify_token(request)
+    if (!user) {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+    }
+
     const body = await request.json()
     const validatedData = MonedaSchema.parse(body)
 
@@ -93,6 +100,18 @@ export async function POST(request: NextRequest) {
 
     const nuevaMoneda = await prisma.moneda.create({
       data: validatedData
+    })
+
+    await AuditLogService.log({
+      accion: 'CREATE',
+      entidad: 'MONEDA',
+      entidadId: nuevaMoneda.codigo,
+      usuarioId: user.userId,
+      detalles: {
+        codigo: nuevaMoneda.codigo,
+        nombre: nuevaMoneda.nombre,
+        simbolo: nuevaMoneda.simbolo
+      }
     })
 
     return NextResponse.json({

@@ -313,10 +313,10 @@ export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   <Button 
                     type="button" 
-                    variant="outline" 
+                    variant="destructive" 
                     onClick={() => router.push("/busy/categoria")}
                     disabled={isLoading}
-                    className="gap-2"
+                    className="gap-2 cursor-pointer"
                   >
                     <ArrowLeft className="h-4 w-4" />
                     Cancelar
@@ -327,7 +327,7 @@ export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
                   <Button 
                     type="submit" 
                     disabled={isLoading || !isDirty || !isValid}
-                    className="min-w-[160px] gap-2 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                    className="min-w-[160px] gap-2 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 cursor-pointer"
                   >
                     {isLoading ? (
                       <>

@@ -257,4 +257,70 @@ describe('API /compras-productos - nuevo contrato con producto existente', () =>
     expect(txMock.producto.update).toHaveBeenCalled()
     expect(txMock.compraProducto.create).not.toHaveBeenCalled()
   })
+
+  it('sincroniza stock del hijo cuando el producto padre es compuesto', async () => {
+    const { POST } = await import('../route')
+
+    txMock.producto.findUnique.mockResolvedValueOnce({
+      id: 'prod-1',
+      nombre: 'Pack x20',
+      stock: 10,
+      precioCosto: 100,
+      almacenId: 'alm-1',
+      vendor: null,
+      cantidadEnPack: 20,
+      productosHijos: [{ id: 'hijo-1' }],
+    })
+
+    const request = new NextRequest('http://localhost/api/compras-productos', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(buildPayload({ cantidad: 3 })),
+    })
+
+    const response = await POST(request, {}, { userId: 'user-1' })
+
+    expect(response.status).toBe(201)
+    // Parent stock update (normal)
+    expect(txMock.producto.update).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 'prod-1' } }),
+    )
+    // Child stock sync: 3 packs * 20 unidades = 60
+    expect(txMock.producto.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'hijo-1' },
+        data: { stock: { increment: 60 } },
+      }),
+    )
+  })
+
+  it('NO sincroniza stock del hijo cuando el producto no es compuesto', async () => {
+    const { POST } = await import('../route')
+
+    txMock.producto.findUnique.mockResolvedValueOnce({
+      id: 'prod-1',
+      nombre: 'Producto Simple',
+      stock: 10,
+      precioCosto: 100,
+      almacenId: 'alm-1',
+      vendor: null,
+      cantidadEnPack: null,
+      productosHijos: [],
+    })
+
+    const request = new NextRequest('http://localhost/api/compras-productos', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(buildPayload({ cantidad: 5 })),
+    })
+
+    const response = await POST(request, {}, { userId: 'user-1' })
+
+    expect(response.status).toBe(201)
+    // Only 1 update call (parent stock), no child sync
+    expect(txMock.producto.update).toHaveBeenCalledTimes(1)
+    expect(txMock.producto.update).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 'prod-1' } }),
+    )
+  })
 })

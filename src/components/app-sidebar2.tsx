@@ -358,6 +358,16 @@ export function AppSidebar2({
             url: '/busy/contabilidad/anticipos',
             icon: Clock,
           },
+          {
+            title: 'Préstamos en Efectivo',
+            url: '/busy/contabilidad/prestamos-cash',
+            icon: DollarSign,
+          },
+          {
+            title: 'Deudas en Efectivo',
+            url: '/busy/contabilidad/deudas-cash',
+            icon: CreditCard,
+          },
 
           {
             title: "Transferencias Bancarias",

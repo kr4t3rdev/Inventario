@@ -13,7 +13,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Loader2, AlertTriangle, CheckCircle, Save, X, CreditCard, AlignLeft, Power, Building2 } from "lucide-react"
-import { toast } from "sonner"
+import { sileo } from 'sileo'
 import { useGetCuentasBancariasQuery } from "@/lib/redux/services/contabilidadApi"
 import { CreateTipoPagoRequest, UpdateTipoPagoRequest, TipoPagoWithDetails, CuentaBancaria } from "../../app/models/model"
 import { motion, AnimatePresence } from "framer-motion"
@@ -110,11 +110,9 @@ export function TipoPagoForm({ tipoPago, onSubmit, onCancel, isLoading = false, 
     } catch (error) {
       // El toast de error se maneja aquí para mostrar el error específico
       console.error("Error en el formulario:", error)
-      toast.error(
-        mode === "create" 
-          ? "Error al crear el tipo de pago" 
-          : "Error al actualizar el tipo de pago"
-      )
+      sileo.error({ title: mode === 'create' 
+          ? 'Error al crear el tipo de pago' 
+          : 'Error al actualizar el tipo de pago' })
       // No re-lanzamos el error para evitar que se cierre el diálogo
     }
   }
@@ -134,7 +132,7 @@ export function TipoPagoForm({ tipoPago, onSubmit, onCancel, isLoading = false, 
       
       <CardContent className="px-0">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+          <form onSubmit={form.handleSubmit(handleSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-6">
             {/* Nombre */}
             <FormField
               control={form.control}

@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { toast } from 'sonner'
+import { sileo } from 'sileo'
 import {
   Dialog,
   DialogContent,
@@ -78,13 +78,13 @@ export function PagarCuentaPorPagarDialog({
   const handleSubmit = async (values: PagoFormValues) => {
     if (!cuenta) return
     if (!cuenta.cuentaPorPagarId) {
-      toast.error('La factura no tiene cuenta por pagar asociada')
+      sileo.error({ title: 'La factura no tiene cuenta por pagar asociada' })
       return
     }
 
     const saldoPendiente = Number(cuenta.saldoPendiente ?? 0)
     if (values.monto > saldoPendiente) {
-      toast.error('El monto no puede exceder el saldo pendiente')
+      sileo.error({ title: 'El monto no puede exceder el saldo pendiente' })
       return
     }
 
@@ -100,14 +100,14 @@ export function PagarCuentaPorPagarDialog({
         }
       }).unwrap()
 
-      toast.success('Pago registrado correctamente')
+      sileo.success({ title: 'Pago registrado correctamente' })
       onSuccess?.()
       onOpenChange(false)
     } catch (error) {
       console.error('Error al registrar el pago:', error)
       const apiError =
         (error as { data?: { error?: string } })?.data?.error || 'No se pudo registrar el pago'
-      toast.error(apiError)
+      sileo.error({ title: apiError })
     }
   }
 
@@ -126,7 +126,7 @@ export function PagarCuentaPorPagarDialog({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(handleSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-4">
             <FormField
               control={form.control}
               name="monto"

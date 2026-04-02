@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
-import { toast } from 'sonner'
+import { sileo } from 'sileo'
 import { motion } from 'framer-motion'
 import { ShoppingCart, Sparkles, Loader2 } from 'lucide-react'
 
@@ -156,16 +156,16 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
             : ''
 
         if (data.formaPago === 'PAGO_COMPLETO') {
-          toast.success(`Compra registrada exitosamente.${stockTrace}${costoTrace}`)
+          sileo.success({ title: `Compra registrada exitosamente.${stockTrace}${costoTrace}` })
         } else if (data.formaPago === FORMA_PAGO_ANTICIPO_PAGO) {
-          toast.success(`Compra registrada con anticipo ejecutado exitosamente.${stockTrace}${costoTrace}`)
+          sileo.success({ title: `Compra registrada con anticipo ejecutado exitosamente.${stockTrace}${costoTrace}` })
         } else {
-          toast.success(`Compra registrada exitosamente. Se generó una cuenta por pagar.${stockTrace}${costoTrace}`)
+          sileo.success({ title: `Compra registrada exitosamente. Se generó una cuenta por pagar.${stockTrace}${costoTrace}` })
         }
       }
 
       if (result.advertencia) {
-        toast.warning(result.advertencia, { duration: 8000 })
+        sileo.warning({ title: result.advertencia })
       }
 
       if (onSuccess) onSuccess()
@@ -173,7 +173,7 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
     } catch (error: any) {
       console.error('Error al registrar compra:', error)
       const errorMessage = error?.data?.error || 'Hubo un error al registrar la compra.'
-      toast.error(errorMessage)
+      sileo.error({ title: errorMessage })
     } finally {
       setIsLoading(false)
     }
@@ -225,7 +225,7 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
           </motion.div>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
+            <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className='space-y-6'>
               <FormField
                 control={form.control}
                 name='productoId'
@@ -239,7 +239,7 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {products?.map((product) => (
+                        {products?.filter((product: any) => !product.productoPadreId).map((product) => (
                           <SelectItem key={product.id} value={product.id}>
                             {product.nombre}
                           </SelectItem>

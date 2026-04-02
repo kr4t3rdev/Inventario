@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { verify_token } from '@/lib/auth-utils'
+import { AuditLogService } from '@/lib/services/audit-log-service'
 
 /**
  * @description GET endpoint para listar todos los escenarios guardados
@@ -150,6 +151,14 @@ export async function POST(request: NextRequest) {
         esFavorito: es_favorito || false,
         creadoPor: decoded.userId
       }
+    })
+
+    await AuditLogService.log({
+      accion: 'CREATE',
+      entidad: 'ESCENARIO_EXCHANGE',
+      entidadId: escenario.id,
+      usuarioId: decoded.userId,
+      detalles: { nombre }
     })
 
     // Parsear JSON fields para respuesta

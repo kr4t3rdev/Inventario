@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import { toast } from "sonner"
+import { sileo } from 'sileo'
 import { getAuthToken } from "@/lib/token"
 import { useGetCuentasBancariasQuery } from "@/lib/redux/services/contabilidadApi"
 import { Button } from "@/components/ui/button"
@@ -174,7 +174,7 @@ export function MiEmpresaForm() {
         })
       })
       .catch(() => {
-        toast.error("No se pudo cargar la configuración de Mi Empresa")
+        sileo.error({ title: 'No se pudo cargar la configuración de Mi Empresa' })
       })
       .finally(() => {
         if (mounted) setLoading(false)
@@ -201,9 +201,9 @@ export function MiEmpresaForm() {
         cuentaBancariaId: saved.cuentaBancariaId || "none",
         usaCodigoEan13: saved.usaCodigoEan13 ?? false,
       })
-      toast.success("Mi Empresa actualizada")
+      sileo.success({ title: 'Mi Empresa actualizada' })
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Error guardando Mi Empresa")
+      sileo.error({ title: e instanceof Error ? e.message : 'Error guardando Mi Empresa' })
     } finally {
       setSaving(false)
     }
@@ -223,7 +223,7 @@ export function MiEmpresaForm() {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+            <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-5">
               <motion.div 
                 variants={containerVariants}
                 initial="hidden"
@@ -397,7 +397,7 @@ export function MiEmpresaForm() {
                                 const formData = new FormData()
                                 formData.append("file", file)
 
-                                const loadingToast = toast.loading("Subiendo logo...")
+                                const loadingToastId = sileo.info({ title: 'Subiendo logo...' })
 
                                 try {
                                   const res = await fetch("/api/upload", {
@@ -412,12 +412,12 @@ export function MiEmpresaForm() {
 
                                   const data = await res.json()
                                   field.onChange(data.url)
-                                  toast.success("Logo subido correctamente")
+                                  sileo.success({ title: 'Logo subido correctamente' })
                                 } catch (error) {
                                   console.error(error)
-                                  toast.error("Error al subir el logo")
+                                  sileo.error({ title: 'Error al subir el logo' })
                                 } finally {
-                                  toast.dismiss(loadingToast)
+                                  sileo.dismiss(loadingToastId)
                                 }
                               }}
                               disabled={loading || saving}

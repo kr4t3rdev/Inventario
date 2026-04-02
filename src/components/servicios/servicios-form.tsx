@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { toast } from 'sonner'
+import { sileo } from 'sileo'
 import { Skeleton } from '@/components/ui/skeleton'
 import { v4 } from 'uuid'
 import { useAddServiciosMutation, useGetServiciosQuery, useUpdateServiciosMutation } from '@/lib/redux/services/serviciosApi'
@@ -81,18 +81,18 @@ export function ServicioForm({ initialData }: ServicioFormProps) {
           servicioId: initialData.servicioId,
           ...data,
         }).unwrap()
-        toast.success('El servicio ha sido actualizado exitosamente.')
+        sileo.success({ title: 'El servicio ha sido actualizado exitosamente.' })
       } else {
         await addServicios({
           servicioId: v4(),
           ...data
         }).unwrap()
-        toast.success('El servicio ha sido registrado exitosamente.')
+        sileo.success({ title: 'El servicio ha sido registrado exitosamente.' })
       }
       router.back()
     } catch (error) {
       console.error('Error al guardar el servicio:', error)
-      toast.error('Hubo un error al guardar el servicio.')
+      sileo.error({ title: 'Hubo un error al guardar el servicio.' })
     } finally {
       setIsLoading(false)
     }
@@ -167,7 +167,7 @@ export function ServicioForm({ initialData }: ServicioFormProps) {
           
           <CardContent className='pt-8'>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className='space-y-6'>
+              <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className='space-y-6'>
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}

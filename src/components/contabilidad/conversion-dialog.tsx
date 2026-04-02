@@ -34,7 +34,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { ArrowRightLeft, Calculator } from "lucide-react"
 import { useGetMonedasQuery, useConvertirMonedaMutation } from "@/lib/redux/services/contabilidadApi"
 import type { Moneda as MonedaModel } from "../../app/models/model"
-import { toast } from "sonner"
+import { sileo } from 'sileo'
 
 const conversionSchema = z.object({
   monedaOrigen: z.string().min(1, "Selecciona la moneda de origen"),
@@ -118,9 +118,9 @@ export function ConversionDialog({ onClose }: ConversionDialogProps) {
         monedaDestino: data.monedaDestino,
       })
 
-      toast.success("Conversión realizada correctamente")
+      sileo.success({ title: 'Conversión realizada correctamente' })
     } catch {
-      toast.error("Error al realizar la conversión")
+      sileo.error({ title: 'Error al realizar la conversión' })
     } finally {
       setIsConverting(false)
     }
@@ -158,7 +158,7 @@ export function ConversionDialog({ onClose }: ConversionDialogProps) {
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <FormField
                 control={form.control}

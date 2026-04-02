@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { motion } from "framer-motion"
 import { Package, Calculator, DollarSign, Sparkles, Loader2, ArrowLeft } from "lucide-react"
-import { toast } from "sonner"
+import { sileo } from 'sileo'
 
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -45,7 +45,7 @@ const restockSchema = z.object({
     z.literal(""),
   ]).optional(),
   moneda: z.string({
-    required_error: "Seleccione una moneda",
+    required_error: 'El campo Moneda no ha sido seleccionada',
   }),
   descripcion: z.string().max(500, "La descripción no puede exceder 500 caracteres").optional(),
   facturaUrl: z.string().optional(),
@@ -253,9 +253,7 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
 
       await restockProducto(restockRequest).unwrap()
 
-      toast.success(
-        `Restock exitoso: ${data.cantidad} ${producto.unidad?.simbolo || "unidades"} agregadas a ${producto.nombre}`
-      )
+      sileo.success({ title: `Restock exitoso: ${data.cantidad} ${producto.unidad?.simbolo || "unidades"} agregadas a ${producto.nombre}` })
 
       if (onSuccess) {
         onSuccess()
@@ -266,11 +264,11 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
       // Handle different types of errors
       const errorObj = error as { data?: { error?: { message?: string }; message?: string } }
       if (errorObj?.data?.error?.message) {
-        toast.error(`Error: ${errorObj.data.error.message}`)
+        sileo.error({ title: `Error: ${errorObj.data.error.message}` })
       } else if (errorObj?.data?.message) {
-        toast.error(`Error: ${errorObj.data.message}`)
+        sileo.error({ title: `Error: ${errorObj.data.message}` })
       } else {
-        toast.error("Hubo un error al realizar el restock del producto.")
+        sileo.error({ title: 'Hubo un error al realizar el restock del producto.' })
       }
     } finally {
       setIsLoading(false)
@@ -354,7 +352,7 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
         <CardContent className="pt-6">
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit(onSubmit)}
+            onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })}
             className="space-y-6 [&_input]:transition-all [&_input]:duration-200 [&_input]:focus-visible:ring-primary/30"
           >
             {/* Cantidad */}

@@ -6,6 +6,7 @@ import {
   applyPagoGastoWorkflow,
   isGastoWorkflowError
 } from '@/lib/services/pago-gastos-workflow'
+import { AuditLogService } from '@/lib/services/audit-log-service'
 
 const pagarSchema = z.object({
   numeroFactura: z.string().min(1),
@@ -188,6 +189,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
 
       return { cuenta: cuentaActualizada, pago: pagoRegistrado, reconciliaciones: workflowResult.reconciliaciones }
+    })
+
+    await AuditLogService.log({
+      accion: 'UPDATE',
+      entidad: 'CUENTA_POR_PAGAR',
+      entidadId: result.cuenta.cuentaPorPagarId,
+      usuarioId: user.userId,
+      detalles: {
+        monto: body.monto,
+        numeroTransaccion: body.numeroTransaccion,
+        cuentaProveedor: body.cuentaProveedor
+      }
     })
 
     return NextResponse.json(result)

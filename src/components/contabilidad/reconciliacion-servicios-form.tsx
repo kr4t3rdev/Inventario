@@ -45,7 +45,7 @@ import {
   Plus,
   Trash2,
 } from "lucide-react"
-import { toast } from "sonner"
+import { sileo } from 'sileo'
 import { 
   useReconciliarServicioMutation,
   useGetCuentasBancariasQuery,
@@ -211,14 +211,14 @@ export function ReconciliacionServiciosForm({
     const precioServicio = servicio.total || 0
 
     if (Math.abs(totalDistribuido - precioServicio) > 0.01) {
-      toast.error(`El monto total distribuido (${totalDistribuido.toFixed(2)}) debe ser igual al precio del servicio (${precioServicio.toFixed(2)})`)
+      sileo.error({ title: `El monto total distribuido (${totalDistribuido.toFixed(2)}) debe ser igual al precio del servicio (${precioServicio.toFixed(2)})` })
       return
     }
 
     // Validar que no haya montos negativos
     const montoNegativo = data.distribuciones.find(dist => (dist.monto || 0) <= 0)
     if (montoNegativo) {
-      toast.error("Todos los montos deben ser positivos")
+      sileo.error({ title: 'Todos los montos deben ser positivos' })
       return
     }
 
@@ -226,7 +226,7 @@ export function ReconciliacionServiciosForm({
      for (const dist of data.distribuciones) {
        const cuenta = cuentas.find((c: any) => c.cuentaId === dist.cuentaId)
        if (cuenta && dist.moneda !== cuenta.moneda && !dist.tasaCambio) {
-         toast.error(`La distribución en ${dist.moneda} requiere tasa de cambio para la cuenta en ${cuenta.moneda}`)
+         sileo.error({ title: `La distribución en ${dist.moneda} requiere tasa de cambio para la cuenta en ${cuenta.moneda}` })
          return
        }
      }
@@ -255,7 +255,7 @@ export function ReconciliacionServiciosForm({
         }).unwrap()
       }
 
-      toast.success("Servicio reconciliado exitosamente")
+      sileo.success({ title: 'Servicio reconciliado exitosamente' })
 
       // Force refresh of servicios pendientes data
       setTimeout(() => {
@@ -265,7 +265,7 @@ export function ReconciliacionServiciosForm({
       onClose()
     } catch (error) {
       const errorMessage = (error as { data?: { error?: string } })?.data?.error || "Error al reconciliar el servicio"
-      toast.error(errorMessage)
+      sileo.error({ title: errorMessage })
     } finally {
       setIsSubmitting(false)
     }
@@ -356,7 +356,7 @@ export function ReconciliacionServiciosForm({
               </CardHeader>
               <CardContent>
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="h-full flex flex-col gap-4">
+                  <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="h-full flex flex-col gap-4">
                     {/* Totales */}
                     <div className="grid grid-cols-2 gap-4">
                       <div className="bg-muted/50 rounded-lg p-3">

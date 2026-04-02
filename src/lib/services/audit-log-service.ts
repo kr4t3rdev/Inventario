@@ -9,7 +9,16 @@ export type AuditEntity =
   | "TASA_CAMBIO" 
   | "MONEDA"
   | "TIPO_PAGO"
-  | "INYECCION_CAPITAL";
+  | "INYECCION_CAPITAL"
+  | "DEUDA_CASH"
+  | "PAGO_DEUDA"
+  | "PRESTAMO_CASH"
+  | "PAGO_PRESTAMO"
+  | "ANTICIPO"
+  | "CUENTA_POR_PAGAR"
+  | "CUENTA_POR_COBRAR"
+  | "ESCENARIO_EXCHANGE"
+  | "REPORTE_PROGRAMADO";
 
 export type AuditAction = 
   | "CREATE" 
@@ -37,8 +46,8 @@ export class AuditLogService {
     ip = "internal",
     userAgent = "system"
   }: {
-    accion: AuditAction | string;
-    entidad: AuditEntity | string;
+    accion: AuditAction;
+    entidad: AuditEntity;
     entidadId: string;
     usuarioId: string;
     detalles?: Record<string, any>;

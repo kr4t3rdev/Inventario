@@ -42,7 +42,7 @@ import {
   Plus,
   Trash2,
 } from "lucide-react"
-import { toast } from "sonner"
+import { sileo } from 'sileo'
 import {
   useReconciliarGastoMutation,
   useGetCuentasBancariasQuery,
@@ -322,16 +322,16 @@ export function ReconciliacionGastosForm({
     // Para otros casos, el total debe ser exactamente igual al gasto
     if (isCuentaPorPagar) {
       if (totalDistribuido > precioGasto + 0.01) {
-        toast.error(`El monto total distribuido (${totalDistribuido.toFixed(2)}) no puede exceder el saldo pendiente (${precioGasto.toFixed(2)})`)
+        sileo.error({ title: `El monto total distribuido (${totalDistribuido.toFixed(2)}) no puede exceder el saldo pendiente (${precioGasto.toFixed(2)})` })
         return
       }
       if (totalDistribuido <= 0) {
-        toast.error("El monto a pagar debe ser mayor a 0")
+        sileo.error({ title: 'El monto a pagar debe ser mayor a 0' })
         return
       }
     } else {
       if (Math.abs(totalDistribuido - precioGasto) > 0.01) {
-        toast.error(`El monto total distribuido (${totalDistribuido.toFixed(2)}) debe ser igual al precio del gasto (${precioGasto.toFixed(2)})`)
+        sileo.error({ title: `El monto total distribuido (${totalDistribuido.toFixed(2)}) debe ser igual al precio del gasto (${precioGasto.toFixed(2)})` })
         return
       }
     }
@@ -339,7 +339,7 @@ export function ReconciliacionGastosForm({
     // Validar que no haya montos negativos
     const montoNegativo = data.distribuciones.find(dist => (dist.monto || 0) <= 0)
     if (montoNegativo) {
-      toast.error("Todos los montos deben ser positivos")
+      sileo.error({ title: 'Todos los montos deben ser positivos' })
       return
     }
 
@@ -347,7 +347,7 @@ export function ReconciliacionGastosForm({
      for (const dist of data.distribuciones) {
        const cuenta = cuentas.find((c: any) => c.cuentaId === dist.cuentaId)
        if (cuenta && dist.moneda !== cuenta.moneda && !dist.tasaCambio) {
-         toast.error(`La distribución en ${dist.moneda} requiere tasa de cambio para la cuenta en ${cuenta.moneda}`)
+         sileo.error({ title: `La distribución en ${dist.moneda} requiere tasa de cambio para la cuenta en ${cuenta.moneda}` })
          return
        }
      }
@@ -408,7 +408,7 @@ export function ReconciliacionGastosForm({
 
       await reconciliarGasto(reconciliacionData).unwrap()
 
-      toast.success("Gasto reconciliado exitosamente")
+      sileo.success({ title: 'Gasto reconciliado exitosamente' })
 
       // Force refresh of gastos pendientes data
       setTimeout(() => {
@@ -421,7 +421,7 @@ export function ReconciliacionGastosForm({
       const details = Array.isArray(error?.data?.details) ? error.data.details : undefined
       const detailsMsg = details ? ` | Detalles: ${details.map((d: unknown) => ((d as any)?.message || JSON.stringify(d))).join('; ')}` : ''
       const errorMessage = (error?.data?.message || error?.data?.error || error?.message || "Error al reconciliar el gasto") + detailsMsg
-      toast.error(errorMessage)
+      sileo.error({ title: errorMessage })
     }
   }
 
@@ -527,7 +527,7 @@ export function ReconciliacionGastosForm({
               </CardHeader>
               <CardContent>
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="h-full flex flex-col gap-4">
+                  <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="h-full flex flex-col gap-4">
                      {/* Totales */}
                      <div className="grid grid-cols-2 gap-4">
                        <div className="bg-muted/50 rounded-lg p-3">
@@ -672,7 +672,7 @@ export function ReconciliacionGastosForm({
                                             const newValue = value === '' ? 0 : parseFloat(value) || 0
                                             // Para cuentas por pagar, validar que no exceda el saldo pendiente
                                             if (isCuentaPorPagar && newValue > (gasto?.monto || 0)) {
-                                              toast.error(`El monto no puede exceder el saldo pendiente de ${formatCurrency(gasto?.monto || 0)}`)
+                                              sileo.error({ title: `El monto no puede exceder el saldo pendiente de ${formatCurrency(gasto?.monto || 0)}` })
                                               return
                                             }
                                             field.onChange(newValue)

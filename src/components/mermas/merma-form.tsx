@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
-import { toast } from "sonner"
+import { sileo } from 'sileo'
 import { Skeleton } from "@/components/ui/skeleton"
 
 import { useGetProductosQuery } from "@/lib/redux/services/productosApi"
@@ -24,7 +24,7 @@ import { apiSlice } from "@/lib/redux/services/apiSlice"
 
 const mermaSchema = z.object({
   productoId: z.string({
-    required_error: "Seleccione un producto",
+    required_error: 'El campo Producto no ha sido seleccionado',
   }),
   cantidad: z.coerce.number().positive({
     message: "La cantidad debe ser mayor a 0",
@@ -71,10 +71,10 @@ export function MermaForm({ initialData }: MermaFormProps) {
           mermaId: initialData.mermaId,
           ...data,
         }).unwrap()
-        toast("La merma ha sido actualizada exitosamente.")
+        sileo.success({ title: 'La merma ha sido actualizada exitosamente.' })
       } else {
         await addMerma(data).unwrap()
-        toast("La merma ha sido registrada exitosamente.")
+        sileo.success({ title: 'La merma ha sido registrada exitosamente.' })
       }
 
       dispatch(apiSlice.util.invalidateTags(['Notificaciones'])) 
@@ -83,7 +83,7 @@ export function MermaForm({ initialData }: MermaFormProps) {
       router.refresh()
     } catch (error) {
       console.error("Error al guardar la merma:", error)
-      toast("Hubo un error al guardar la merma.")
+      sileo.error({ title: 'Hubo un error al guardar la merma.' })
     } finally {
       setIsLoading(false)
     }
@@ -169,7 +169,7 @@ export function MermaForm({ initialData }: MermaFormProps) {
           </motion.div>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-6">
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}

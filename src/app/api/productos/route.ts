@@ -9,7 +9,6 @@ import { prisma } from '@/lib/prisma';
 import {
   assertServerOwnedCodeFields,
   buildProductBusinessCodeFromSegments,
-  calculateCompoundUnitPrices,
   normalizeProveedorCodigo,
   resolveTaxonomySegments,
   generateProductCodeWithRetry,
@@ -230,14 +229,9 @@ export const GET = withAuthGet(async (request: NextRequest) => {
     const search = searchParams.get('search');
     const categoryId = searchParams.get('categoryId');
     const subcategoryId = searchParams.get('subcategoryId');
-    const esCompuesto = searchParams.get('esCompuesto');
 
     const whereClause: Record<string, unknown> = {};
     const andConditions: Record<string, unknown>[] = [];
-
-    if (esCompuesto !== null) {
-      andConditions.push({ esCompuesto: esCompuesto === 'true' });
-    }
 
     if (search) {
       andConditions.push({
@@ -356,10 +350,6 @@ export const POST = withAuthPost(async (req: NextRequest) => {
       vendorId,
       almacenId,
       precios,
-      esCompuesto,
-      cantidadEnPack,
-      nombreHijo,
-      codigoNegocioHijo,
     } = body;
 
     try {
@@ -367,7 +357,6 @@ export const POST = withAuthPost(async (req: NextRequest) => {
         idSeccionCodigo,
         especificoCodigo,
         surtidoCodigo,
-        codigoNegocioHijo,
       });
     } catch (error) {
       return jsonError(error instanceof Error ? error.message : 'Payload inválido', 400);
@@ -405,15 +394,6 @@ export const POST = withAuthPost(async (req: NextRequest) => {
         }
       }
 
-      if (esCompuesto === true) {
-        if (!cantidadEnPack || typeof cantidadEnPack !== 'number' || cantidadEnPack <= 0) {
-          return jsonError('La cantidad en pack debe ser mayor a 0 para productos compuestos', 400);
-        }
-        if (typeof nombreHijo !== 'string' || nombreHijo.trim() === '') {
-          return jsonError('El nombre del producto hijo es requerido para productos compuestos', 400);
-        }
-      }
-
       const productoSimple = await prisma.producto.create({
         data: {
           nombre,
@@ -435,8 +415,6 @@ export const POST = withAuthPost(async (req: NextRequest) => {
           unidadId,
           vendorId: vendorId || null,
           almacenId,
-          esCompuesto: esCompuesto === true,
-          cantidadEnPack: esCompuesto === true ? cantidadEnPack : null,
           precios: Array.isArray(precios)
             ? {
                 create: precios.map((precio: { listaPrecioId: string; precio: number }) => ({
@@ -448,7 +426,7 @@ export const POST = withAuthPost(async (req: NextRequest) => {
         },
       });
 
-      return NextResponse.json({ producto: productoSimple, productoHijo: null }, { status: 201 });
+      return NextResponse.json({ producto: productoSimple }, { status: 201 });
     }
 
     // ── Rama CON EAN-13 (flujo original) ─────────────────────────────────────
@@ -489,16 +467,6 @@ export const POST = withAuthPost(async (req: NextRequest) => {
 
       if (existingProducto) {
         return jsonError('El código interno ya está asignado a otro producto', 409);
-      }
-    }
-
-    if (esCompuesto === true) {
-      if (!cantidadEnPack || typeof cantidadEnPack !== 'number' || cantidadEnPack <= 0) {
-        return jsonError('La cantidad en pack debe ser mayor a 0 para productos compuestos', 400);
-      }
-
-      if (typeof nombreHijo !== 'string' || nombreHijo.trim() === '') {
-        return jsonError('El nombre del producto hijo es requerido para productos compuestos', 400);
       }
     }
 
@@ -546,8 +514,6 @@ export const POST = withAuthPost(async (req: NextRequest) => {
           unidadId,
           vendorId: vendorProviderContext.vendorId,
           almacenId,
-          esCompuesto: esCompuesto === true,
-          cantidadEnPack: esCompuesto === true ? cantidadEnPack : null,
           precios: Array.isArray(precios)
             ? {
                 create: precios.map((precio: { listaPrecioId: string; precio: number }) => ({
@@ -559,62 +525,7 @@ export const POST = withAuthPost(async (req: NextRequest) => {
         },
       });
 
-      let productoHijo: Awaited<ReturnType<typeof tx.producto.create>> | null = null;
-
-      if (esCompuesto === true && cantidadEnPack && typeof nombreHijo === 'string') {
-        const generatedChildSurtido = await FindNextAvailableSurtido(
-          tx as any,
-          generatedParentCode.idSeccionCodigo,
-          generatedParentCode.especificoCodigo
-        );
-
-        // Usa retry logic para generar código hijo (maneja conflictos automáticamente)
-        const generatedChildCode = await generateProductCodeWithRetry(
-          tx,
-          {
-            proveedorCodigo: generatedParentCode.proveedorCodigo,
-            idSeccionCodigo: generatedParentCode.idSeccionCodigo,
-            especificoCodigo: generatedParentCode.especificoCodigo,
-            surtidoCodigo: generatedChildSurtido,
-          },
-          3 // maxAttempts
-        );
-
-        if (!ValidateAssembledCode(generatedChildCode.codigoNegocio)) {
-          throw new Error('El código EAN-13 generado para el producto hijo no pasó validación');
-        }
-
-        const childPrices = calculateCompoundUnitPrices(precioCosto, precioVenta, cantidadEnPack);
-
-        productoHijo = await tx.producto.create({
-          data: {
-            nombre: nombreHijo.trim(),
-            descripcion: `${nombre} (unidad)`,
-            codigoInterno: null,
-            codigoNegocio: generatedChildCode.codigoNegocio,
-            proveedorCodigo: generatedChildCode.proveedorCodigo,
-            idSeccionCodigo: generatedChildCode.idSeccionCodigo,
-            especificoCodigo: generatedChildCode.especificoCodigo,
-            surtidoCodigo: generatedChildCode.surtidoCodigo,
-            dcCodigo: generatedChildCode.dcCodigo,
-            precioCosto: childPrices.precioCostoUnitario,
-            precioVenta: childPrices.precioVentaUnitario,
-            stock: 0,
-            stockMinimo: 0,
-            fotos: fotos || [],
-            categoriaId: taxonomyContext.categoriaId,
-            subcategoriaId: taxonomyContext.subcategoriaId,
-            unidadId,
-            vendorId: vendorProviderContext.vendorId,
-            almacenId,
-            esCompuesto: false,
-            cantidadEnPack,
-            productoPadreId: producto.id,
-          },
-        });
-      }
-
-      return { producto, productoHijo };
+      return { producto };
     });
 
     if (stock > 0 && vendorProviderContext.vendorId) {

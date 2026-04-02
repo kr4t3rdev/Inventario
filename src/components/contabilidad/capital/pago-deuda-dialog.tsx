@@ -28,9 +28,9 @@ import {
     SelectValue,
   } from "@/components/ui/select"
 import { Loader2, DollarSign } from "lucide-react"
-import { toast } from "sonner"
+import { sileo } from 'sileo'
 import { showErrorToast } from "../toast-notifications"
-import { useRegistrarPagoDeudaMutation, useGetCuentasBancariasQuery } from "@/lib/redux/services/contabilidadApi"
+import { useRegistrarPagoCapitalMutation, useGetCuentasBancariasQuery } from "@/lib/redux/services/contabilidadApi"
 import { InyeccionCapital } from "@/app/models/model"
 import { useEffect } from "react"
 import { Textarea } from "@/components/ui/textarea"
@@ -52,7 +52,7 @@ interface PagoDeudaDialogProps {
 }
 
 export function PagoDeudaDialog({ inyeccion, open, onOpenChange, onSuccess }: PagoDeudaDialogProps) {
-  const [registrarPago, { isLoading }] = useRegistrarPagoDeudaMutation()
+  const [registrarPago, { isLoading }] = useRegistrarPagoCapitalMutation()
   const { data: cuentasData } = useGetCuentasBancariasQuery()
   const cuentas = cuentasData?.cuentas || []
 
@@ -89,7 +89,7 @@ export function PagoDeudaDialog({ inyeccion, open, onOpenChange, onSuccess }: Pa
         ...data
       }).unwrap()
       
-      toast.success("Pago registrado exitosamente")
+      sileo.success({ title: 'Pago registrado exitosamente' })
       onOpenChange(false)
       onSuccess?.()
     } catch (error: any) {
@@ -110,7 +110,7 @@ export function PagoDeudaDialog({ inyeccion, open, onOpenChange, onSuccess }: Pa
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-4">
             <FormField
               control={form.control}
               name="montoPagado"

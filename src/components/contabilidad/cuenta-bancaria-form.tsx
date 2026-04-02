@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Loader2, Save, X } from 'lucide-react';
-import { toast } from 'sonner';
+import { sileo } from 'sileo';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -192,20 +192,14 @@ export function CuentaBancariaForm({
         }
       }
 
-      toast.error(errorMessage, {
-        duration: 6000,
-        action: {
-          label: 'Reintentar',
-          onClick: () => form.handleSubmit(onSubmit)(),
-        },
-      });
+      sileo.error({ title: errorMessage });
     }
   };
 
   return (
     <Form {...form}>
       <motion.form
-        onSubmit={form.handleSubmit(onSubmit)}
+        onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })}
         className="space-y-6 p-1"
         variants={stagger}
         initial="hidden"

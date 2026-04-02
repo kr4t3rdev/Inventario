@@ -9,9 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import type { CuentaPorPagar } from '@/app/models/model'
+import type { CuentaPorPagar, DeudaCash } from '@/app/models/model'
 import { useGetCuentasPorPagarQuery } from '@/lib/redux/services/cuentasPorPagarApi'
 import { PagarCuentaPorPagarDialog } from '@/components/contabilidad/pagar-cuenta-por-pagar-dialog'
+import { PagoDeudaModal } from '@/components/contabilidad/deudas-cash/pago-deuda-modal'
 import { AnimatedNumber } from '@/components/ui/animated-number'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
@@ -40,6 +41,8 @@ export function CuentasPorPagarTable() {
   const [limit, setLimit] = useState(10)
   const [selectedCuenta, setSelectedCuenta] = useState<CuentaPorPagar | null>(null)
   const [openPago, setOpenPago] = useState(false)
+  const [selectedDeuda, setSelectedDeuda] = useState<DeudaCash | null>(null)
+  const [openPagoDeuda, setOpenPagoDeuda] = useState(false)
 
   const { data, isLoading, error, refetch } = useGetCuentasPorPagarQuery({
     search: search || undefined,
@@ -83,6 +86,15 @@ export function CuentasPorPagarTable() {
       toast.error(
         'Esta factura no tiene cuenta por pagar asociada. Actualice los datos antes de registrar pagos.'
       )
+      return
+    }
+    if (cuenta.tipoDeuda === 'DEUDA_CASH') {
+      if (cuenta.deudaCash) {
+        setSelectedDeuda(cuenta.deudaCash)
+        setOpenPagoDeuda(true)
+      } else {
+        toast.error('No se encontró la deuda asociada. Gestione el pago desde Deudas Cash.')
+      }
       return
     }
     if (cuenta.tipo === 'compra' && !cuenta.gastoCompraId) {
@@ -365,6 +377,16 @@ export function CuentasPorPagarTable() {
         onOpenChange={setOpenPago}
         onSuccess={() => {
           setSelectedCuenta(null)
+          refetch()
+        }}
+      />
+
+      <PagoDeudaModal
+        deuda={selectedDeuda}
+        open={openPagoDeuda}
+        onOpenChange={setOpenPagoDeuda}
+        onSuccess={() => {
+          setSelectedDeuda(null)
           refetch()
         }}
       />

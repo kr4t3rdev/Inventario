@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { verify_token } from '@/lib/auth-utils'
 import { z } from 'zod'
+import { AuditLogService } from '@/lib/services/audit-log-service'
 
 const querySchema = z.object({
   estado: z.enum(['PENDIENTE', 'PAGADA', 'PARCIAL']).optional(),
@@ -70,6 +71,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
             vendor: {
               select: { vendorId: true, nombre: true, cuentaCUP: true, cuentaUSD: true }
             }
+          }
+        },
+        deudaCash: {
+          include: {
+            cuentaPorPagar: true,
+            proveedor: true
           }
         }
       }
@@ -390,6 +397,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         moneda: body.moneda || 'CUP',
         fechaEmision,
         fechaVencimiento: body.fechaVencimiento ? new Date(body.fechaVencimiento) : null
+      }
+    })
+
+    await AuditLogService.log({
+      accion: 'CREATE',
+      entidad: 'CUENTA_POR_PAGAR',
+      entidadId: cuenta.cuentaPorPagarId,
+      usuarioId: user.userId,
+      detalles: {
+        numeroFactura: body.numeroFactura,
+        tipo: body.tipo,
+        proveedorNombre,
+        montoDeuda,
+        moneda: body.moneda || 'CUP'
       }
     })
 

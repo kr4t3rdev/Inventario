@@ -1,7 +1,7 @@
-
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { verify_token } from "@/lib/auth-utils"
+import { AuditLogService } from '@/lib/services/audit-log-service'
 
 /**
  * @description Convierte un monto de pago a CUP para cálculos de saldo en CxC.
@@ -160,6 +160,18 @@ export async function POST(request: NextRequest) {
         idTransferencia: body.idTransferencia,
         estado: body.estado || 'PENDIENTE',
         fechaVencimiento: body.fechaVencimiento ? new Date(body.fechaVencimiento) : null
+      }
+    })
+
+    await AuditLogService.log({
+      accion: 'CREATE',
+      entidad: 'CUENTA_POR_COBRAR',
+      entidadId: cuenta.id,
+      usuarioId: user.userId,
+      detalles: {
+        clienteId: body.clienteId,
+        montoDeuda: body.montoDeuda,
+        estado: body.estado || 'PENDIENTE'
       }
     })
 

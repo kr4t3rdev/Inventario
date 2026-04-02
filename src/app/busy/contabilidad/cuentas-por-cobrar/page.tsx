@@ -88,6 +88,7 @@ export default function CuentasPorCobrarPage() {
   const dataMissing = showReconciliacion && !ventaParaReconciliar && !isLoadingData
 
   const handlePagarCuenta = (cuenta: CuentaPorCobrar) => {
+    if (cuenta.tipoCuenta === 'PRESTAMO_CASH') return
     setCuentaSeleccionada(cuenta)
     setShowReconciliacion(true)
     setIsTimeOut(false)

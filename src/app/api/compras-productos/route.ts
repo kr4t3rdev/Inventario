@@ -8,88 +8,6 @@ import { applyPagoGastoWorkflow } from '@/lib/services/pago-gastos-workflow'
 import { executeAnticipo, isAnticipoWorkflowError } from '@/lib/services/anticipos-workflow'
 import { FORMA_PAGO_ANTICIPO_PAGO } from '@/lib/constants/anticipos'
 
-/**
- * @description Valida el contrato del proveedor antes de realizar una compra
- * @param {string} vendorId - ID del proveedor
- * @returns {Promise<{esValido: boolean, mensaje?: string, detalles?: any}>} Resultado de la validación
- */
-async function validarContratoProveedor(vendorId: string): Promise<{
-  esValido: boolean
-  mensaje?: string
-  detalles?: any
-  advertencia?: string
-}> {
-  // Obtener configuración de días de alerta
-  const config = await prisma.configuracionSistema.findFirst()
-  const diasAvisoVencimiento = config?.diasAvisoVencimientoContrato ?? 30
-
-  // Buscar contrato activo del proveedor
-  const contrato = await prisma.contrato.findFirst({
-    where: {
-      vendorId: vendorId,
-      estado: 'ACTIVO'
-    },
-    orderBy: {
-      fechaFin: 'desc'
-    }
-  })
-
-  if (!contrato) {
-    return {
-      esValido: false,
-      mensaje: 'El proveedor no tiene un contrato activo',
-      detalles: {
-        tieneContrato: false,
-        estado: null
-      }
-    }
-  }
-
-  // Si tiene fecha de fin, verificar si está vencido o próximo a vencer
-  if (contrato.fechaFin) {
-    const hoy = new Date()
-    const fechaFin = new Date(contrato.fechaFin)
-    const diferenciaTiempo = fechaFin.getTime() - hoy.getTime()
-    const diferenciaDias = Math.ceil(diferenciaTiempo / (1000 * 3600 * 24))
-
-    if (diferenciaDias < 0) {
-      return {
-        esValido: false,
-        mensaje: 'El contrato del proveedor está vencido',
-        detalles: {
-          tieneContrato: true,
-          estado: 'VENCIDO',
-          fechaVencimiento: contrato.fechaFin,
-          diasVencido: Math.abs(diferenciaDias)
-        }
-      }
-    }
-
-    if (diferenciaDias <= diasAvisoVencimiento) {
-      return {
-        esValido: true,
-        advertencia: `Advertencia: El contrato del proveedor vence en ${diferenciaDias} días (${contrato.fechaFin.toISOString().split('T')[0]})`,
-        detalles: {
-          tieneContrato: true,
-          estado: 'PROXIMO_VENCIMIENTO',
-          fechaVencimiento: contrato.fechaFin,
-          diasRestantes: diferenciaDias,
-          diasAlerta: diasAvisoVencimiento
-        }
-      }
-    }
-  }
-
-  return {
-    esValido: true,
-    detalles: {
-      tieneContrato: true,
-      estado: 'ACTIVO',
-      fechaVencimiento: contrato.fechaFin
-    }
-  }
-}
-
 const querySchema = z.object({
   search: z.string().optional(),
   tipoOperacion: z.enum(['RESTOCK', 'REGULAR']).optional(),
@@ -263,15 +181,6 @@ export const POST = withAuthPost(async (request: NextRequest, _context: any, use
     const body = await request.json()
     const data = createSchema.parse(body)
 
-    // Validación del contrato del proveedor
-    const contratoValidacion = await validarContratoProveedor(data.vendorId)
-    if (!contratoValidacion.esValido) {
-      return NextResponse.json({
-        error: contratoValidacion.mensaje,
-        contrato: contratoValidacion.detalles
-      }, { status: 400 })
-    }
-
     // Verificar factura duplicada (solo si se proporciona número de factura)
     if (data.numeroFactura && data.numeroFactura.trim() !== '') {
       const existingCompra = await prisma.compraProducto.findFirst({
@@ -297,7 +206,10 @@ export const POST = withAuthPost(async (request: NextRequest, _context: any, use
     const result = await prisma.$transaction(async (tx: any) => {
       const producto = await tx.producto.findUnique({
         where: { id: data.productoId },
-        include: { vendor: true }
+        include: {
+          vendor: true,
+          productosHijos: { select: { id: true } },
+        },
       })
 
       if (!producto) {
@@ -323,6 +235,15 @@ export const POST = withAuthPost(async (request: NextRequest, _context: any, use
           }
         }
       })
+
+      // Sincronizar stock del hijo si existe
+      if (producto.productosHijos && producto.productosHijos.length > 0 && producto.cantidadEnPack) {
+        const hijoId = producto.productosHijos[0].id
+        await tx.producto.update({
+          where: { id: hijoId },
+          data: { stock: { increment: data.cantidad * producto.cantidadEnPack } },
+        })
+      }
 
       await tx.stockUbicacion.upsert({
         where: {
@@ -492,12 +413,6 @@ export const POST = withAuthPost(async (request: NextRequest, _context: any, use
     const response: any = {
       ...result,
       success: true
-    }
-
-    // Incluir advertencia si existe
-    if (contratoValidacion.advertencia) {
-      response.advertencia = contratoValidacion.advertencia
-      response.contrato = contratoValidacion.detalles
     }
 
     return NextResponse.json(response, { status: 201 })

@@ -930,7 +930,7 @@ export const contabilidadApi = apiSlice.injectEndpoints({
       invalidatesTags: ["InyeccionesCapital", "CuentasBancarias", "ReportesContabilidad"],
     }),
 
-    registrarPagoDeuda: builder.mutation<PagoDeuda, { id: string } & CreatePagoDeudaRequest>({
+    registrarPagoCapital: builder.mutation<PagoDeuda, { id: string } & CreatePagoDeudaRequest>({
       query: ({ id, ...data }) => ({
         url: `contabilidad/capital/${id}/pagar`,
         method: "POST",
@@ -1062,6 +1062,6 @@ export const {
   useGetResumenAnticiposQuery,
   useGetInyeccionesCapitalQuery,
   useCreateInyeccionCapitalMutation,
-  useRegistrarPagoDeudaMutation,
+  useRegistrarPagoCapitalMutation,
   useGetAuditLogsQuery
 } = contabilidadApi

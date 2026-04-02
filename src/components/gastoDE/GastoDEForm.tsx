@@ -12,7 +12,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { toast } from "sonner"
+import { sileo } from 'sileo'
 import { Skeleton } from "@/components/ui/skeleton"
 import { v4 } from "uuid"
 import { useAddGastosDEMutation, useGetGastosDEQuery, useUpdateGastosDEMutation } from "@/lib/redux/services/gastosDEApi"
@@ -20,11 +20,11 @@ import { useGetVendorsQuery } from "@/lib/redux/services/vendorsApi"
 
 const gastosDESchema = z.object({
   tipo: z.string({
-    required_error: "escriba el tipo de gastos de explotación",
+    required_error: 'El campo Tipo de gasto no ha sido rellenado',
   }),
   numeroFactura: z.string().optional(),
   proveedor: z.string({
-    required_error: "escriba el proveedor",
+    required_error: 'El campo Proveedor no ha sido rellenado',
   }),
   monto: z.coerce.number().positive({
     message: "El monto debe ser mayor a 0",
@@ -82,19 +82,19 @@ export function GastoDEForm({ initialData }: GastosDEFormProps) {
           gastosDEId: initialData.gastosDEId,
           ...data,
         }).unwrap()
-        toast.success("El gasto de explotación han sido actualizados exitosamente.")
+        sileo.success({ title: 'El gasto de explotación han sido actualizados exitosamente.' })
         
       } else {
         await addGastoGastosDE({
           gastosDEId: v4(),
           ...data
         }).unwrap()
-        toast.success("El gasto de explotación ha sido registrado exitosamente.")
+        sileo.success({ title: 'El gasto de explotación ha sido registrado exitosamente.' })
       }
       router.back()
     } catch (error) {
       console.error("Error al guardar el gasto de explotación:", error)
-      toast.error("Hubo un error al guardar el gasto de explotación.")
+      sileo.error({ title: 'Hubo un error al guardar el gasto de explotación.' })
     } finally {
       setIsLoading(false)
     }
@@ -183,7 +183,7 @@ export function GastoDEForm({ initialData }: GastosDEFormProps) {
           </motion.div>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-6">
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}

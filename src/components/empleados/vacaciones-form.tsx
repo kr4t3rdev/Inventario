@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Plus, Palmtree, Clock, CheckCircle2, XCircle, Search, User, FileText, CalendarDays } from "lucide-react";
-import { toast } from "sonner";
+import { sileo } from 'sileo';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -151,13 +151,13 @@ export function VacacionesForm() {
     e.preventDefault();
 
     if (!selectedEmpleado || !startDate || !endDate) {
-      toast.error("Completa todos los campos requeridos");
+      sileo.error({ title: 'Completá todos los campos requeridos' });
       return;
     }
 
     const empleado = empleados.find(e => e.empleadoId === selectedEmpleado);
     if (!empleado) {
-      toast.error("Empleado no encontrado");
+      sileo.error({ title: 'Empleado no encontrado' });
       return;
     }
 
@@ -165,12 +165,12 @@ export function VacacionesForm() {
     const availableDays = getAvailableDays(empleado);
 
     if (daysRequested <= 0) {
-      toast.error("La fecha de fin debe ser posterior a la fecha de inicio");
+      sileo.error({ title: 'La fecha de fin debe ser posterior a la fecha de inicio' });
       return;
     }
 
     if (daysRequested > availableDays) {
-      toast.error(`Días insuficientes. Disponibles: ${availableDays}, Solicitados: ${daysRequested}`);
+      sileo.error({ title: `Días insuficientes. Disponibles: ${availableDays}, Solicitados: ${daysRequested}` });
       return;
     }
 
@@ -200,13 +200,13 @@ export function VacacionesForm() {
         setEndDate("");
         setReason("");
         setSelectedEmpleado("");
-        toast.success("Solicitud de vacaciones enviada correctamente");
+        sileo.success({ title: 'Solicitud de vacaciones enviada correctamente' });
       } else {
-        toast.error(data.error || "Error al enviar solicitud");
+        sileo.error({ title: data.error || 'Error al enviar solicitud' });
       }
     } catch (error) {
       console.error("Error enviando solicitud:", error);
-      toast.error("Error interno del servidor");
+      sileo.error({ title: 'Error interno del servidor' });
     } finally {
       setLoading(false);
     }

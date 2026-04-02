@@ -40,7 +40,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import type { DeudaPriorizada } from "@/types/exchange-intelligence"
-import { useRegistrarPagoDeudaMutation, useGetCuentasBancariasQuery } from "@/lib/redux/services/contabilidadApi"
+import { useRegistrarPagoCapitalMutation, useGetCuentasBancariasQuery } from "@/lib/redux/services/contabilidadApi"
 import {
   Select,
   SelectContent,
@@ -88,7 +88,7 @@ export function Debt_payment_actions({
   on_reminder_created
 }: DebtPaymentActionsProps) {
   const router = useRouter()
-  const [registrar_pago, { isLoading: is_paying }] = useRegistrarPagoDeudaMutation()
+  const [registrar_pago, { isLoading: is_paying }] = useRegistrarPagoCapitalMutation()
   const { data: cuentas_data } = useGetCuentasBancariasQuery()
   
   // Estados de diálogos

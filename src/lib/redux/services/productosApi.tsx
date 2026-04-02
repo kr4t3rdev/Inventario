@@ -25,46 +25,11 @@ interface BulkUpdateResponse {
   }[];
 }
 
-// Interface for compound product creation
-interface CompoundProductPayload {
-  nombre: string;
-  descripcion?: string;
-  codigoInterno?: string;
-  proveedorCodigo?: string;
-  idSeccionCodigo?: string;
-  especificoCodigo?: string;
-  surtidoCodigo?: string;
-  precioCosto: number;
-  precioVenta: number;
-  stock: number;
-  stockMinimo?: number;
-  fotos?: string[];
-  categoriaId: string;
-  subcategoriaId?: string;
-  unidadId: string;
-  vendorId?: string;
-  almacenId: string;
-  precios?: Array<{ listaPrecioId: string; precio: number }>;
-  // Compound product fields
-  esCompuesto: boolean;
-  cantidadEnPack: number;
-  nombreHijo: string;
-  codigoNegocioHijo: string;
-}
-
-// Response for compound product creation
-interface CompoundProductResponse {
-  producto: Producto;
-  productoHijo: Producto | null;
-}
-
-
 // Interface for search parameters
 interface ProductSearchParams {
   search?: string;
   categoryId?: string;
   subcategoryId?: string;
-  esCompuesto?: boolean;
 }
 
 export const productosApi = apiSlice.injectEndpoints({
@@ -80,7 +45,6 @@ export const productosApi = apiSlice.injectEndpoints({
           if (params.search) searchParams.append('search', params.search);
           if (params.categoryId) searchParams.append('categoryId', params.categoryId);
           if (params.subcategoryId) searchParams.append('subcategoryId', params.subcategoryId);
-          if (params.esCompuesto !== undefined) searchParams.append('esCompuesto', String(params.esCompuesto));
           
           return `/productos?${searchParams.toString()}`;
         },
@@ -265,5 +229,3 @@ export const productosApi = apiSlice.injectEndpoints({
     useBulkUpdateStockMinimoMutation,
   } = productosApi
 
-  // Export types for external use
-  export type { CompoundProductPayload, CompoundProductResponse }

@@ -7,7 +7,7 @@ import { motion } from 'framer-motion'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
-import { toast } from 'sonner'
+import { sileo } from 'sileo'
 
 import { Button } from '@/components/ui/button'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
@@ -82,11 +82,11 @@ export function ServiciosRecibidosForm(): ReactElement {
         descripcion: values.descripcion || null,
       }).unwrap()
 
-      toast.success('Servicio recibido registrado correctamente.')
+      sileo.success({ title: 'Servicio recibido registrado correctamente.' })
       form.reset()
     } catch (error) {
       console.error('Error al registrar servicio recibido:', error)
-      toast.error('No se pudo registrar el servicio recibido.')
+      sileo.error({ title: 'No se pudo registrar el servicio recibido.' })
     } finally {
       setIsLoading(false)
     }
@@ -162,7 +162,7 @@ export function ServiciosRecibidosForm(): ReactElement {
           
           <CardContent className='pt-8'>
             <Form {...form}>
-              <form className='space-y-6' onSubmit={form.handleSubmit(onSubmit)}>
+              <form className='space-y-6' onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })}>
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}

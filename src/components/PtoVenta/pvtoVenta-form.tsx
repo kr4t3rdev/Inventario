@@ -11,7 +11,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
-import { toast } from "sonner"
+import { sileo } from 'sileo'
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAddPuntoDeVentaMutation, useGetPuntosDeVentaQuery, useUpdatePuntoDeVentaMutation } from "@/lib/redux/services/puntosDeVentaApi"
 import { motion } from "framer-motion"
@@ -21,10 +21,10 @@ import { useGetListasPreciosQuery } from "@/lib/redux/services/listasPreciosApi"
 
 const ptoVentaSchema = z.object({
   nombre: z.string({
-    required_error: "Ingrese el nombre del punto de venta",
+    required_error: 'El campo Nombre no ha sido rellenado',
   }),
   ubicacion: z.string({
-    required_error: 'Ingrese la ubicación del punto de venta',
+    required_error: 'El campo Ubicación no ha sido rellenado',
   }),
   listaPrecioId: z.string().optional(),
 })
@@ -101,20 +101,20 @@ export function PtoVentaForm({ initialData }: PtoVentaFormProps) {
           stockPuntoVenta: initialData.stockPuntoVenta ?? 0,
           listaPrecioId: data.listaPrecioId === "default" ? null : data.listaPrecioId,
         }).unwrap()
-        toast("El punto de venta ha sido actualizado exitosamente.")
+        sileo.success({ title: 'El punto de venta ha sido actualizado exitosamente.' })
       } else {
         await addPtoVenta({
           ...data,
           listaPrecioId: data.listaPrecioId === "default" ? null : data.listaPrecioId,
           stockPuntoVenta: 0,
         }).unwrap()
-        toast("El punto de venta ha sido registrado exitosamente.")
+        sileo.success({ title: 'El punto de venta ha sido registrado exitosamente.' })
       }
       router.push("/busy/puntosDeVenta")
       router.refresh()
     } catch (error) {
       console.error("Error al guardar el punto de venta:", error)
-      toast("Hubo un error al guardar el punto de venta.")
+      sileo.error({ title: 'Hubo un error al guardar el punto de venta.' })
     } finally {
       setIsLoading(false)
     }
@@ -181,41 +181,6 @@ export function PtoVentaForm({ initialData }: PtoVentaFormProps) {
               >
                 <Sparkles className="h-4 w-4 text-yellow-400" />
               </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.35 }}
-              >
-                <FormField
-                  control={form.control}
-                  name="listaPrecioId"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Lista de precios</FormLabel>
-                      <Select value={field.value || "default"} onValueChange={field.onChange}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Usar precio base" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="default">Usar precio base</SelectItem>
-                          {listasPrecios?.map((lista) => (
-                            <SelectItem key={lista.id} value={lista.id}>
-                              {lista.nombre}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>
-                        Si no se selecciona, el punto de venta usará precio base del producto.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </motion.div>
             </motion.div>
             <div>
               <h2 className="text-xl font-semibold">
@@ -231,7 +196,7 @@ export function PtoVentaForm({ initialData }: PtoVentaFormProps) {
           </motion.div>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-6">
               {/* Nombre Field */}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
@@ -299,6 +264,42 @@ export function PtoVentaForm({ initialData }: PtoVentaFormProps) {
                   )}
                 />
               </motion.div>
+
+              {/* Lista de Precios Field */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.35 }}
+              >
+                <FormField
+                  control={form.control}
+                  name="listaPrecioId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Lista de precios</FormLabel>
+                      <Select value={field.value || "default"} onValueChange={field.onChange}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Usar precio base" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="default">Usar precio base</SelectItem>
+                          {listasPrecios?.map((lista) => (
+                            <SelectItem key={lista.id} value={lista.id}>
+                              {lista.nombre}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormDescription>
+                        Si no se selecciona, el punto de venta usará precio base del producto.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </motion.div>
               
               <motion.div 
                 className="flex flex-col sm:flex-row justify-end gap-4 pt-4 border-t"
@@ -309,10 +310,10 @@ export function PtoVentaForm({ initialData }: PtoVentaFormProps) {
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   <Button 
                     type="button" 
-                    variant="outline" 
+                    variant="destructive" 
                     onClick={() => router.push("/busy/puntosDeVenta")}
                     disabled={isLoading}
-                    className="gap-2"
+                    className="gap-2 cursor-pointer transition-colors duration-200"
                   >
                     <ArrowLeft className="h-4 w-4" />
                     Cancelar
@@ -323,7 +324,7 @@ export function PtoVentaForm({ initialData }: PtoVentaFormProps) {
                   <Button 
                     type="submit" 
                     disabled={isLoading}
-                    className="min-w-[180px] gap-2 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                    className="min-w-[180px] gap-2 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 cursor-pointer transition-colors duration-200"
                   >
                     {isLoading ? (
                       <>

@@ -24,7 +24,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Skeleton } from '@/components/ui/skeleton'
-import { toast } from 'sonner'
+import { sileo } from 'sileo'
 
 import {
   useAddProductoMutation,
@@ -40,26 +40,27 @@ import {
 } from '@/lib/redux/services/categoriasApi'
 import {
   buildProductBusinessCodePreview,
-  DEFAULT_CHILD_PREVIEW_SURTIDO,
   DEFAULT_PARENT_PREVIEW_SURTIDO,
   type ProductBusinessCodeResult,
 } from '@/lib/product-business-code'
 import { buildPreciosPayload } from './precios-payload'
 import { SubcategorySelector } from '@/components/categorias/subcategory-selector'
 import { ProductPhotoUpload } from './product-photo-upload'
-import { CompoundProductSection } from './compound-product-section'
 import { ClasificadorInfoNote } from './clasificador-info-note'
 import { getAuthToken } from '@/lib/token'
 import { mapCategoryToSection, mapSubcategoryToSpecific } from '@/lib/category-mapping'
 import type { Vendor } from '@/app/models/model'
 
 const productosSchema = z.object({
-  nombre: z.string({
-    required_error: 'Escriba un nombre',
-  }),
-  descripcion: z.string({
-    required_error: 'Escriba una descripción',
-  }),
+  nombre: z
+    .string({ required_error: 'El campo Nombre no ha sido rellenado' })
+    .min(1, 'El campo Nombre no ha sido rellenado')
+    .max(120, 'El nombre no puede superar los 120 caracteres'),
+  descripcion: z
+    .string()
+    .max(300, 'La descripción no puede superar los 300 caracteres')
+    .optional()
+    .or(z.literal('')),
   codigoInterno: z
     .string()
     .optional()
@@ -68,51 +69,54 @@ const productosSchema = z.object({
     }),
   proveedorCodigo: z.string().optional(),
   vendorId: z.string().optional(),
-  categoriaId: z.string({
-    required_error: 'Seleccione una categoría',
-  }).min(1, 'Seleccione una categoría'),
+  categoriaId: z
+    .string({ required_error: 'El campo Categoría no ha sido seleccionada' })
+    .min(1, 'El campo Categoría no ha sido seleccionada'),
   subcategoriaId: z.string().optional(),
-  precioCosto: z.coerce.number().positive({
-    message: 'El precio de costo debe ser mayor a 0',
-  }),
-  precioVenta: z.coerce.number().positive({
-    message: 'El precio de venta debe ser mayor a 0',
-  }),
-  stock: z.coerce.number().min(0, {
-    message: 'El stock debe ser mayor o igual a 0',
-  }),
-  stockMinimo: z.coerce.number().min(0, {
-    message: 'El stock mínimo debe ser mayor o igual a 0',
-  }),
+  precioCosto: z.preprocess(
+    (v) => (v === '' || v === null || v === undefined ? undefined : Number(v)),
+    z
+      .number({
+        required_error: 'El campo Precio de costo no ha sido rellenado',
+        invalid_type_error: 'El campo Precio de costo no ha sido rellenado',
+      })
+      .positive('El precio de costo debe ser mayor a 0')
+  ),
+  precioVenta: z.preprocess(
+    (v) => (v === '' || v === null || v === undefined ? undefined : Number(v)),
+    z
+      .number({
+        required_error: 'El campo Precio de venta no ha sido rellenado',
+        invalid_type_error: 'El campo Precio de venta no ha sido rellenado',
+      })
+      .positive('El precio de venta debe ser mayor a 0')
+  ),
+  stock: z.coerce
+    .number({ invalid_type_error: 'Ingrese un número válido' })
+    .int('El stock debe ser un número entero')
+    .min(0, 'El stock debe ser mayor o igual a 0'),
+  stockMinimo: z.coerce
+    .number({ invalid_type_error: 'Ingrese un número válido' })
+    .int('El stock mínimo debe ser un número entero')
+    .min(0, 'El stock mínimo debe ser mayor o igual a 0'),
   fotos: z.array(z.string()),
-  unidadId: z.string({
-    required_error: 'Seleccione una unidad',
-  }),
-  almacenId: z.string({
-    required_error: 'Seleccione un almacén',
-  }),
-  esCompuesto: z.boolean().optional(),
-  cantidadEnPack: z.number().optional(),
-  nombreHijo: z.string().optional(),
-  codigoNegocioHijo: z.string().optional(),
+  unidadId: z
+    .string({ required_error: 'El campo Unidad no ha sido seleccionada' })
+    .min(1, 'El campo Unidad no ha sido seleccionada'),
+  almacenId: z
+    .string({ required_error: 'El campo Almacén no ha sido seleccionado' })
+    .min(1, 'El campo Almacén no ha sido seleccionado'),
 }).superRefine((value, ctx) => {
-  if (value.esCompuesto !== true) {
-    return
-  }
-
-  if (!value.cantidadEnPack || value.cantidadEnPack <= 0) {
+  // Validación cruzada: precio de venta no debería ser menor al costo
+  if (
+    value.precioCosto > 0 &&
+    value.precioVenta > 0 &&
+    value.precioVenta < value.precioCosto
+  ) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      path: ['cantidadEnPack'],
-      message: 'La cantidad en pack debe ser mayor a 0',
-    })
-  }
-
-  if (!value.nombreHijo || value.nombreHijo.trim() === '') {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ['nombreHijo'],
-      message: 'El nombre del producto hijo es requerido',
+      path: ['precioVenta'],
+      message: 'El precio de venta es menor al precio de costo — ¿es correcto?',
     })
   }
 })
@@ -140,9 +144,6 @@ interface ProductosFormProps {
     unidadId: string
     almacenId: string
     vendorId?: string | null
-    // Campos de producto compuesto
-    esCompuesto?: boolean
-    cantidadEnPack?: number | null
     precios?: Array<{
       listaPrecioId: string
       precio: number
@@ -196,6 +197,7 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
   const { data: listasPrecios } = useGetListasPreciosQuery()
   const { data: categorias = [] } = useGetCategoriasQuery()
   const { data: vendors = [], isLoading: isLoadingVendors } = useGetVendorsQuery()
+
   const [preciosPorLista, setPreciosPorLista] = useState<Record<string, string>>(() => {
     const initialMap: Record<string, string> = {}
     initialData?.precios?.forEach((precio) => {
@@ -217,18 +219,13 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
       vendorId: initialData?.vendorId || '',
       categoriaId: initialData?.categoriaId || '',
       subcategoriaId: initialData?.subcategoriaId || '',
-      precioCosto: initialData?.precioCosto ?? 0,
-      precioVenta: initialData?.precioVenta ?? 0,
+      precioCosto: initialData?.precioCosto,
+      precioVenta: initialData?.precioVenta,
       stock: initialData?.stock ?? 0,
       stockMinimo: initialData?.stockMinimo ?? 0,
       fotos: initialData?.fotos || [],
       unidadId: initialData?.unidadId || '',
       almacenId: initialData?.almacenId || '',
-      // Valores por defecto para producto compuesto
-      esCompuesto: initialData?.esCompuesto || false,
-      cantidadEnPack: initialData?.cantidadEnPack ?? undefined,
-      nombreHijo: '',
-      codigoNegocioHijo: '',
     },
   })
 
@@ -285,20 +282,6 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
     especificoCodigo: parentCodePreview?.especificoCodigo || initialData?.especificoCodigo || '',
   }
 
-  let childCodePreview: ProductBusinessCodeResult | null = null
-  if (!isEditing && parentCodePreview) {
-    try {
-      childCodePreview = buildProductBusinessCodePreview({
-        proveedorCodigo: parentCodePreview.proveedorCodigo,
-        categoriaNombre: selectedCategory?.nombre || '',
-        subcategoriaNombre: selectedSubcategory?.nombre || '',
-        surtidoCodigo: DEFAULT_CHILD_PREVIEW_SURTIDO,
-      })
-    } catch {
-      childCodePreview = null
-    }
-  }
-
   async function onSubmit(data: ProductosFormValues) {
     setIsLoading(true)
 
@@ -309,7 +292,7 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
           ...data,
           precios: buildPreciosPayload(preciosPorLista),
         }).unwrap()
-        toast('El producto ha sido actualizado exitosamente.')
+        sileo.success({ title: 'El producto ha sido actualizado exitosamente.' })
       } else {
         const resolvedProveedorCodigo = selectedVendorProviderCode || watchedProveedorCodigo
 
@@ -319,7 +302,7 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
               type: 'manual',
               message: 'Seleccione un proveedor para generar el EAN-13',
             })
-            toast('Seleccioná un proveedor para generar el EAN-13.')
+            sileo.error({ title: 'Seleccioná un proveedor para generar el EAN-13.' })
             return
           }
 
@@ -328,7 +311,7 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
               type: 'manual',
               message: 'El proveedor seleccionado no tiene código configurado para generar el EAN-13',
             })
-            toast('Seleccioná un proveedor con código configurado para generar el EAN-13.')
+            sileo.error({ title: 'Seleccioná un proveedor con código configurado para generar el EAN-13.' })
             return
           }
 
@@ -346,7 +329,7 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
           descripcion: data.descripcion,
           codigoInterno: data.codigoInterno || null,
           proveedorCodigo: usaEan13 ? (resolvedProveedorCodigo || null) : null,
-          vendorId: usaEan13 ? (data.vendorId || null) : null,
+          vendorId: data.vendorId || null,
           precioCosto: data.precioCosto,
           precioVenta: data.precioVenta,
           stock: data.stock,
@@ -359,21 +342,15 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
           precios: buildPreciosPayload(preciosPorLista),
         }
 
-        if (data.esCompuesto === true && data.cantidadEnPack && data.nombreHijo) {
-          payload.esCompuesto = true
-          payload.cantidadEnPack = data.cantidadEnPack
-          payload.nombreHijo = data.nombreHijo
-        }
-
         await addProducto(payload).unwrap()
-        toast('El producto ha sido registrado exitosamente.')
+        sileo.success({ title: 'El producto ha sido registrado exitosamente.' })
       }
 
       router.push('/busy/products')
       router.refresh()
     } catch (error) {
       console.error('Error al guardar el producto:', error)
-      toast('Hubo un error al guardar el producto.')
+      sileo.error({ title: 'Hubo un error al guardar el producto.' })
     } finally {
       setIsLoading(false)
     }
@@ -454,7 +431,12 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
 
           <TooltipProvider>
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <form
+                onSubmit={form.handleSubmit(onSubmit, () => {
+                  sileo.error({ title: 'Completá los campos requeridos antes de continuar.' })
+                })}
+                className="space-y-6"
+              >
                 <motion.div
                   className="grid grid-cols-1 gap-4 md:grid-cols-3"
                   initial={{ opacity: 0, y: 14 }}
@@ -487,7 +469,7 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
                     name="descripcion"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Descripción</FormLabel>
+                        <FormLabel>Descripción <span className="text-muted-foreground text-xs">(opcional)</span></FormLabel>
                         <FormControl>
                           <Input
                             type="text"
@@ -495,6 +477,7 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
                             disabled={isLoading}
                             className="transition-all duration-200 focus-visible:ring-primary/30"
                             {...field}
+                            value={field.value ?? ''}
                           />
                         </FormControl>
                         <FormDescription>Información útil para identificar el producto.</FormDescription>
@@ -528,7 +511,52 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
                     )}
                   />
 
-                  {usaEan13 && (isEditing ? (
+                  {/* Selector de proveedor — siempre visible al crear */}
+                  {!isEditing && (
+                    <FormField
+                      control={form.control}
+                      name="vendorId"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Proveedor</FormLabel>
+                          <Select
+                            value={field.value || ''}
+                            onValueChange={(value) => {
+                              field.onChange(value)
+                              const nextVendor = vendorOptions.find((vendor) => vendor.vendorId === value)
+                              form.setValue('proveedorCodigo', nextVendor?.proveedorCodigo || '', {
+                                shouldValidate: true,
+                                shouldDirty: true,
+                              })
+                            }}
+                            disabled={isLoading}
+                          >
+                            <FormControl>
+                              <SelectTrigger className="transition-all duration-200 focus-visible:ring-primary/30">
+                                <SelectValue placeholder="Selecciona un proveedor" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {vendorOptions.map((vendor) => (
+                                <SelectItem key={vendor.vendorId} value={vendor.vendorId}>
+                                  {vendor.nombre}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            {usaEan13
+                              ? 'Seleccioná un proveedor activo. El sistema toma su código configurado y genera el EAN-13.'
+                              : 'Proveedor del producto (opcional).'}
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  )}
+
+                  {/* EAN-13: campos al editar */}
+                  {usaEan13 && isEditing && (
                     <>
                       <FormField
                         control={form.control}
@@ -602,47 +630,11 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
                         </FormDescription>
                       </FormItem>
                     </>
-                  ) : (
-                    <>
-                      <FormField
-                        control={form.control}
-                        name="vendorId"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Proveedor</FormLabel>
-                            <Select
-                              value={field.value || ''}
-                              onValueChange={(value) => {
-                                field.onChange(value)
-                                const nextVendor = vendorOptions.find((vendor) => vendor.vendorId === value)
-                                form.setValue('proveedorCodigo', nextVendor?.proveedorCodigo || '', {
-                                  shouldValidate: true,
-                                  shouldDirty: true,
-                                })
-                              }}
-                              disabled={isLoading}
-                            >
-                              <FormControl>
-                                <SelectTrigger className="transition-all duration-200 focus-visible:ring-primary/30">
-                                  <SelectValue placeholder="Selecciona un proveedor" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {vendorOptions.map((vendor) => (
-                                  <SelectItem key={vendor.vendorId} value={vendor.vendorId}>
-                                    {vendor.nombre}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormDescription>
-                              Seleccioná un proveedor activo. El sistema toma su código configurado y genera el EAN-13.
-                            </FormDescription>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                  )}
 
+                  {/* EAN-13: preview de segmentos al crear */}
+                  {usaEan13 && !isEditing && (
+                    <>
                       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
                         <div className="rounded-xl border border-dashed p-4">
                           <p className="text-xs font-medium text-muted-foreground">Proveedor</p>
@@ -686,7 +678,7 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
                         </FormDescription>
                       </FormItem>
                     </>
-                  ))}
+                  )}
                 </motion.div>
 
                 <motion.div
@@ -797,7 +789,7 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
                       <FormItem>
                         <FormLabel className="flex items-center gap-2">
                           <DollarSign className="h-4 w-4 text-muted-foreground" />
-                          Precio de costo
+                          Precio de costo <span className="text-destructive">*</span>
                         </FormLabel>
                         <FormControl>
                           <Input
@@ -808,6 +800,7 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
                             disabled={isLoading}
                             className="transition-all duration-200 focus-visible:ring-primary/30"
                             {...field}
+                            value={field.value ?? ''}
                           />
                         </FormControl>
                         <FormDescription>Monto de compra por unidad.</FormDescription>
@@ -823,7 +816,7 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
                       <FormItem>
                         <FormLabel className="flex items-center gap-2">
                           <DollarSign className="h-4 w-4 text-muted-foreground" />
-                          Precio de venta
+                          Precio de venta <span className="text-destructive">*</span>
                         </FormLabel>
                         <FormControl>
                           <Input
@@ -834,6 +827,7 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
                             disabled={isLoading}
                             className="transition-all duration-200 focus-visible:ring-primary/30"
                             {...field}
+                            value={field.value ?? ''}
                           />
                         </FormControl>
                         <FormDescription>Monto de venta por unidad.</FormDescription>
@@ -1032,20 +1026,6 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
                   </motion.div>
                 )}
 
-                <CompoundProductSection
-                  disabled={isLoading || isEditing}
-                  parentBusinessCode={parentCodePreview?.codigoNegocio || initialData?.codigoNegocio || ''}
-                  parentSegmentSummary={{
-                    proveedorCodigo: parentCodePreview?.proveedorCodigo || watchedParentSegments.proveedorCodigo,
-                    idSeccionCodigo:
-                      parentCodePreview?.idSeccionCodigo || watchedParentSegments.idSeccionCodigo,
-                    especificoCodigo:
-                      parentCodePreview?.especificoCodigo || watchedParentSegments.especificoCodigo,
-                  }}
-                  childBusinessCodePreview={childCodePreview?.codigoNegocio || ''}
-                  childSurtidoPreview={childCodePreview?.surtidoCodigo || DEFAULT_CHILD_PREVIEW_SURTIDO}
-                />
-
                 {usaEan13 && (
                   <motion.div
                     initial={{ opacity: 0, y: 8 }}
@@ -1065,7 +1045,7 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
                   <motion.div whileHover={{ scale: isLoading ? 1 : 1.02 }} whileTap={{ scale: isLoading ? 1 : 0.98 }}>
                     <Button
                       type="button"
-                      variant="outline"
+                      variant="destructive"
                       onClick={() => router.push('/busy/products')}
                       disabled={isLoading}
                       className="gap-2"
@@ -1079,7 +1059,7 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
                     <Button
                       type="submit"
                       disabled={isLoading}
-                      className="min-w-[170px] gap-2 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                      className="cursor-pointer min-w-[170px] gap-2 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
                     >
                       {isLoading ? (
                         <>

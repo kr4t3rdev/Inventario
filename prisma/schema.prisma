@@ -47,6 +47,7 @@ model Vendor {
   compras         CompraProducto[]
   contratos       Contrato[]       @relation("ContratoVendor")
   cuentasPorPagar CuentaPorPagar[]
+  deudasCash      DeudaCash[]
   gastoCompras    GastoCompra[]
   servicios       Servicios[]
   comprasServicios CompraServicio[]
@@ -109,6 +110,7 @@ model Cliente {
   listaPrecio       ListaPrecio?      @relation(fields: [listaPrecioId], references: [id])
   contratos         Contrato[]        @relation("ContratoCliente")
   cuentasPorCobrar  CuentaPorCobrar[]
+  prestamosCash     PrestamoCash[]
   ofertas           Oferta[]
   ordenesReparacion OrdenReparacion[]
   Venta             Venta[]
@@ -792,7 +794,7 @@ model TipoPago {
 
 model ReconciliacionVenta {
   reconciliacionId            String         @id @default(cuid())
-  ventaId                     String
+  ventaId                     String?
   cuentaId                    String
   tipoPagoId                  String
   monto                       Decimal
@@ -806,9 +808,12 @@ model ReconciliacionVenta {
   updatedAt                   DateTime       @updatedAt
   idTransferencia             String?
   verificacionTransferenciaId String?
+  prestamoCashId              String?
+  deudaCashId                 String?
+  tipoReconciliacion          TipoReconciliacion @default(VENTA)
   cuentaBancaria              CuentaBancaria @relation(fields: [cuentaId], references: [cuentaId])
   tipoPago                    TipoPago       @relation(fields: [tipoPagoId], references: [tipoId])
-  venta                       Venta          @relation(fields: [ventaId], references: [ventaId])
+  venta                       Venta?         @relation(fields: [ventaId], references: [ventaId])
 }
 
 model ReconciliacionServicio {
@@ -1241,11 +1246,15 @@ model CuentaPorCobrar {
   montoPagado      Decimal               @default(0)
   idTransferencia  String?
   estado           EstadoCuentaPorCobrar @default(PENDIENTE)
+  tipoCuenta       CuentaPorCobrarTipo   @default(VENTA)
   fechaVencimiento DateTime?
   createdAt        DateTime              @default(now())
   updatedAt        DateTime              @updatedAt
   cliente          Cliente               @relation(fields: [clienteId], references: [clienteId])
   factura          Factura?              @relation(fields: [facturaId], references: [idFactura])
+  prestamoCash     PrestamoCash?
+
+  @@index([tipoCuenta, estado])
 }
 
 model CuentaPorPagar {
@@ -1265,6 +1274,7 @@ model CuentaPorPagar {
   updatedAt        DateTime              @updatedAt
   proveedorId      String?
   tipo             TipoCuentaPorPagar
+  tipoDeuda        CuentaPorPagarTipo    @default(COMPRA)
   deletedAt        DateTime?
   compraProducto   CompraProducto?
   gastoCompra      GastoCompra?          @relation(fields: [gastoCompraId], references: [gastoCompraId])
@@ -1272,9 +1282,11 @@ model CuentaPorPagar {
   proveedor        Vendor?               @relation(fields: [proveedorId], references: [vendorId])
   pagos            PagoCuentaPorPagar[]
   reconciliaciones ReconciliacionGasto[]
+  deudaCash        DeudaCash?
 
   @@index([estado])
   @@index([tipo])
+  @@index([tipoDeuda, estado])
   @@index([numeroFactura])
   @@index([deletedAt])
 }
@@ -1805,4 +1817,76 @@ model VendorCodeSequence {
   id          Int      @id @default(1)
   nextNumber  Int      @default(1)
   updatedAt   DateTime @updatedAt
+}
+
+// ─── Cash Loans & Debts ────────────────────────────────────────────────────────
+
+model PrestamoCash {
+  id                String              @id @default(cuid())
+  idNumerico        Int                 @default(autoincrement())
+  clienteId         String
+  cuentaPorCobrarId String              @unique
+  montoCapital      Decimal
+  moneda            String              @default("CUP")
+  tasaInteres       Decimal?
+  tasaCambioAlCrear Decimal?
+  fechaOtorgamiento DateTime            @default(now())
+  fechaVencimiento  DateTime?
+  estado            EstadoPrestamoCash  @default(ACTIVO)
+  observaciones     String?
+  createdById       String
+  deletedAt         DateTime?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  cliente           Cliente             @relation(fields: [clienteId], references: [clienteId])
+  cuentaPorCobrar   CuentaPorCobrar     @relation(fields: [cuentaPorCobrarId], references: [id])
+
+  @@index([clienteId, estado])
+  @@index([estado, fechaVencimiento])
+}
+
+model DeudaCash {
+  id                String             @id @default(cuid())
+  idNumerico        Int                @default(autoincrement())
+  proveedorId       String
+  cuentaPorPagarId  String             @unique
+  montoCapital      Decimal
+  moneda            String             @default("CUP")
+  tasaInteres       Decimal?
+  fechaOtorgamiento DateTime           @default(now())
+  fechaVencimiento  DateTime?
+  estado            EstadoPrestamoCash @default(ACTIVO)
+  observaciones     String?
+  createdById       String
+  deletedAt         DateTime?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  proveedor         Vendor             @relation(fields: [proveedorId], references: [vendorId])
+  cuentaPorPagar    CuentaPorPagar     @relation(fields: [cuentaPorPagarId], references: [cuentaPorPagarId])
+
+  @@index([proveedorId, estado])
+  @@index([estado, fechaVencimiento])
+}
+
+enum CuentaPorCobrarTipo {
+  VENTA
+  PRESTAMO_CASH
+}
+
+enum CuentaPorPagarTipo {
+  COMPRA
+  DEUDA_CASH
+}
+
+enum TipoReconciliacion {
+  VENTA
+  PRESTAMO_CASH
+  DEUDA_CASH
+}
+
+enum EstadoPrestamoCash {
+  ACTIVO
+  PAGADO
+  VENCIDO
+  CANCELADO
 }

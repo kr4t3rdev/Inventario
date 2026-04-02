@@ -493,7 +493,7 @@ async function crearVentaUnica(body: any, user: any) {
   for (const item of productos) {
     const producto = await prisma.producto.findUnique({
       where: { id: item.productoId },
-      select: { id: true, precioVenta: true, nombre: true },
+      select: { id: true, precioVenta: true, nombre: true, productoPadreId: true, cantidadEnPack: true },
     })
 
     if (!producto) {
@@ -516,7 +516,9 @@ async function crearVentaUnica(body: any, user: any) {
       ...item,
       precioVenta: precioAplicado,
       nombre: producto.nombre,
-      subtotal
+      subtotal,
+      productoPadreId: producto.productoPadreId,
+      cantidadEnPack: producto.cantidadEnPack,
     })
   }
 
@@ -593,6 +595,19 @@ async function crearVentaUnica(body: any, user: any) {
         anticipoCobroId,
         idempotencyKey
       )
+    }
+
+    // Sync stock padre para items que son hijos de un producto compuesto
+    for (const item of productosConPrecio) {
+      if (item.productoPadreId && item.cantidadEnPack && item.cantidadEnPack > 0) {
+        const parentDecrement = Math.floor(item.cantidad / item.cantidadEnPack)
+        if (parentDecrement >= 1) {
+          await tx.producto.update({
+            where: { id: item.productoPadreId },
+            data: { stock: { decrement: parentDecrement } },
+          })
+        }
+      }
     }
 
     return ventaCreada
@@ -712,7 +727,7 @@ async function crearVentaIndividual(body: any, user: any) {
   // Obtener el precio de venta del producto
   const producto = await prisma.producto.findUnique({
     where: { id: productoId },
-    select: { id: true, precioVenta: true },
+    select: { id: true, precioVenta: true, productoPadreId: true, cantidadEnPack: true },
   })
 
   if (!producto) {
@@ -809,6 +824,17 @@ async function crearVentaIndividual(body: any, user: any) {
         anticipoCobroId,
         idempotencyKey
       )
+    }
+
+    // Sync stock padre si el producto vendido es un hijo
+    if (producto.productoPadreId && producto.cantidadEnPack && producto.cantidadEnPack > 0) {
+      const parentDecrement = Math.floor(cantidad / producto.cantidadEnPack)
+      if (parentDecrement >= 1) {
+        await tx.producto.update({
+          where: { id: producto.productoPadreId },
+          data: { stock: { decrement: parentDecrement } },
+        })
+      }
     }
 
     return ventaCreada

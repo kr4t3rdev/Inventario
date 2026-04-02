@@ -13,7 +13,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { toast } from 'sonner'
+import { sileo } from 'sileo'
 import { Skeleton } from "@/components/ui/skeleton"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
@@ -76,6 +76,9 @@ function ProductoSelector({
     
     // Siempre mostrar producto seleccionado
     if (p.id === value) return true
+    
+    // Excluir productos hijos (pertenecen a un producto compuesto)
+    if (p.productoPadreId) return false
     
     // Si no se muestran productos sin stock, filtrar los que tienen stock <= 0
     if (!showOutOfStock && stock <= 0) return false
@@ -451,7 +454,7 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
         : data
 
       if (initialData && (!firstProducto?.productoId || !Number.isFinite(cantidad) || cantidad <= 0)) {
-        toast.error("Debe seleccionar un producto y una cantidad válida")
+        sileo.error({ title: 'Debe seleccionar un producto y una cantidad válida.' })
         setIsLoading(false)
         return
       }
@@ -476,9 +479,7 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
       dispatch(apiSlice.util.invalidateTags(['ProductosUbicacion']))
       dispatch(apiSlice.util.invalidateTags(['Productos']))
       
-      toast.success(
-        `La transferencia de ${data.productos.length} producto(s) ha sido ${initialData ? "actualizada" : "registrada"} exitosamente.`
-      )
+      sileo.success({ title: `La transferencia de ${data.productos.length} producto(s) ha sido ${initialData ? "actualizada" : "registrada"} exitosamente.` })
 
       if (!initialData) {
         form.reset({
@@ -493,9 +494,7 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
       }
     } catch (error) {
       console.error("Error al guardar la transferencia:", error)
-      toast.error(
-        error instanceof Error ? error.message : "Hubo un error al guardar la transferencia.",
-      )
+      sileo.error({ title: error instanceof Error ? error.message : 'Hubo un error al guardar la transferencia.' })
     } finally {
       setIsLoading(false)
     }
@@ -542,7 +541,7 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
       </CardHeader>
       <CardContent className="p-6">
         <Form {...form}>
-          <form id="transferencia-form" onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+          <form id="transferencia-form" onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-8">
             {/* Sección de Origen y Destino */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start relative">
               {/* Origen */}
@@ -888,7 +887,7 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
                                                  const cantidadOk = Number.isFinite(cantidadVal) && cantidadVal > 0
                                                  const maxDisp = Number(maxDisponible ?? 0)
                                                  if (cantidadVal > maxDisp) {
-                                                   toast.warning('La cantidad supera el stock disponible')
+                                                   sileo.warning({ title: 'La cantidad supera el stock disponible.' })
                                                    return
                                                  }
                                                  if (!isEdit && origenId && tieneProducto && cantidadOk) {

@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { toast } from "sonner"
+import { sileo } from 'sileo'
 import { Skeleton } from "@/components/ui/skeleton"
 import { DollarSign, Calculator } from "lucide-react"
 
@@ -26,16 +26,16 @@ import { apiSlice } from "@/lib/redux/services/apiSlice"
 
 const ventaSchema = z.object({
   productoId: z.string({
-    required_error: "Seleccione un producto",
+    required_error: 'El campo Producto no ha sido seleccionado',
   }),
   cantidad: z.coerce.number().positive({
     message: "La cantidad debe ser mayor a 0",
   }),
   puntoDeVentaId: z.string({
-    required_error: "Seleccione un punto de venta",
+    required_error: 'El campo Punto de venta no ha sido seleccionado',
   }),
   moneda: z.string({
-    required_error: "Seleccione una moneda",
+    required_error: 'El campo Moneda no ha sido seleccionada',
   }),
   precioVentaOriginal: z.coerce.number().positive({
     message: "El precio debe ser mayor a 0",
@@ -122,16 +122,16 @@ export function EnhancedVentaForm({ initialData }: EnhancedVentaFormProps) {
           ventaId: initialData.ventaId,
           ...ventaData,
         }).unwrap()
-        toast.success('La venta ha sido actualizada exitosamente')
+        sileo.success({ title: 'La venta ha sido actualizada exitosamente' })
       } else {
         await addVenta(ventaData).unwrap()
-        toast.success('La venta ha sido registrada exitosamente')
+        sileo.success({ title: 'La venta ha sido registrada exitosamente' })
         dispatch(apiSlice.util.invalidateTags(['Productos']))
       }
       router.refresh()
     } catch (error) {
       console.error("Error al guardar la venta:", error)
-      toast.error('Hubo un error al guardar la venta')
+      sileo.error({ title: 'Hubo un error al guardar la venta' })
     } finally {
       setIsLoading(false)
       setPendingSubmission(null)
@@ -175,7 +175,7 @@ export function EnhancedVentaForm({ initialData }: EnhancedVentaFormProps) {
       <Card>
         <CardContent className="pt-6">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-6">
               <FormField
                 control={form.control}
                 name="productoId"

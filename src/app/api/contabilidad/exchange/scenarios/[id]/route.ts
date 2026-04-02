@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { verify_token } from '@/lib/auth-utils'
+import { AuditLogService } from '@/lib/services/audit-log-service'
 
 /**
  * @description GET endpoint para obtener un escenario específico
@@ -154,6 +155,14 @@ export async function PATCH(
       etiquetas: escenario_actualizado.etiquetas ? JSON.parse(escenario_actualizado.etiquetas) : []
     }
 
+    await AuditLogService.log({
+      accion: 'UPDATE',
+      entidad: 'ESCENARIO_EXCHANGE',
+      entidadId: id,
+      usuarioId: decoded.userId,
+      detalles: { nombre: escenario_actualizado.nombre }
+    })
+
     return NextResponse.json(escenario_parseado)
 
   } catch (error) {
@@ -209,6 +218,14 @@ export async function DELETE(
     // Eliminar escenario
     await prisma.scenarioSimulation.delete({
       where: { id }
+    })
+
+    await AuditLogService.log({
+      accion: 'DELETE',
+      entidad: 'ESCENARIO_EXCHANGE',
+      entidadId: id,
+      usuarioId: decoded.userId,
+      detalles: { nombre: escenario_existente.nombre }
     })
 
     return NextResponse.json({

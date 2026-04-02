@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { toast } from "sonner"
+import { sileo } from 'sileo'
 import { Skeleton } from "@/components/ui/skeleton"
 import { DollarSign, Briefcase } from "lucide-react"
 import { v4 } from "uuid"
@@ -21,7 +21,7 @@ import { TasaCambioDialog } from "@/components/contabilidad/tasa-cambio-dialog"
 
 const servicioSchema = z.object({
   nombre: z.string({
-    required_error: "escriba el tipo de servicio",
+    required_error: 'El campo Tipo de servicio no ha sido rellenado',
   }),
   precio: z.coerce.number().positive({
     message: "El monto debe ser mayor a 0",
@@ -30,7 +30,7 @@ const servicioSchema = z.object({
     message: "Escriba una descripción"
   }),
   moneda: z.string({
-    required_error: "Seleccione una moneda",
+    required_error: 'El campo Moneda no ha sido seleccionada',
   }),
 })
 
@@ -106,18 +106,18 @@ export function EnhancedServicioForm({ initialData }: EnhancedServicioFormProps)
           servicioId: initialData.servicioId,
           ...servicioData,
         }).unwrap()
-        toast.success("El servicio ha sido actualizado exitosamente.")
+        sileo.success({ title: 'El servicio ha sido actualizado exitosamente.' })
       } else {
         await addServicios({
           servicioId: v4(),
           ...servicioData
         }).unwrap()
-        toast.success("El servicio ha sido registrado exitosamente.")
+        sileo.success({ title: 'El servicio ha sido registrado exitosamente.' })
       }
       router.back()
     } catch (error) {
       console.error("Error al guardar el servicio:", error)
-      toast.error("Hubo un error al guardar el servicio.")
+      sileo.error({ title: 'Hubo un error al guardar el servicio.' })
     } finally {
       setIsLoading(false)
       setPendingSubmission(null)
@@ -161,7 +161,7 @@ export function EnhancedServicioForm({ initialData }: EnhancedServicioFormProps)
       <Card>
         <CardContent className="pt-6">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-6">
               <FormField
                 control={form.control}
                 name="nombre"

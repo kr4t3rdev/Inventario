@@ -25,7 +25,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { useCreateMonedaMutation, useUpdateMonedaMutation } from "@/lib/redux/services/contabilidadApi"
-import { toast } from "sonner"
+import { sileo } from 'sileo'
 
 const monedaSchema = z.object({
   codigo: z.string()
@@ -77,15 +77,15 @@ export function MonedaForm({ moneda, onClose, onSuccess }: MonedaFormProps) {
           codigo: moneda.codigo, // Keep original codigo, don't allow changes
           ...updateData,
         }).unwrap()
-        toast.success("Moneda actualizada correctamente")
+        sileo.success({ title: 'Moneda actualizada correctamente' })
       } else {
         await createMoneda(data).unwrap()
-        toast.success("Moneda creada correctamente")
+        sileo.success({ title: 'Moneda creada correctamente' })
       }
       onSuccess()
     } catch (error: any) {
       console.error("Error al guardar moneda:", error)
-      toast.error(error?.data?.error || "Error al guardar la moneda")
+      sileo.error({ title: error?.data?.error || 'Error al guardar la moneda' })
     } finally {
       setIsSubmitting(false)
     }
@@ -107,7 +107,7 @@ export function MonedaForm({ moneda, onClose, onSuccess }: MonedaFormProps) {
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-4">
             <FormField
               control={form.control}
               name="codigo"

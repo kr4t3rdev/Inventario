@@ -1,0 +1,135 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+
+import prisma from '@/lib/prisma'
+import { withAuthGet, withAuthPost } from '@/lib/auth-middleware'
+import { AuditLogService } from '@/lib/services/audit-log-service'
+
+const updateSchema = z.object({
+  fechaVencimiento: z.string().optional(),
+  tasaInteres: z.coerce.number().positive().optional(),
+  observaciones: z.string().optional(),
+  montoCapital: z.never().optional(),
+  moneda: z.never().optional()
+}).strict()
+
+/**
+ * @description Verifica si el módulo de préstamos cash está habilitado
+ * @returns {boolean} true si está habilitado
+ */
+function prestamosCashEnabled(): boolean {
+  return process.env.NEXT_PUBLIC_ENABLE_PRESTAMOS_CASH !== 'false'
+}
+
+/**
+ * @description Obtiene una deuda cash por ID con proveedor y cuenta por pagar
+ * @param {NextRequest} request - Request
+ * @returns {NextResponse} Deuda encontrada o 404
+ */
+export const GET = withAuthGet(async (request: NextRequest, context: unknown) => {
+  try {
+    if (!prestamosCashEnabled()) {
+      return NextResponse.json({ error: 'Módulo de deudas cash deshabilitado' }, { status: 404 })
+    }
+
+    const { params } = context as { params: Promise<{ id: string }> }
+    const { id } = await params
+
+    const deuda = await prisma.deudaCash.findFirst({
+      where: { id, deletedAt: null },
+      include: {
+        proveedor: {
+          select: {
+            vendorId: true,
+            nombre: true
+          }
+        },
+        cuentaPorPagar: true
+      }
+    })
+
+    if (!deuda) {
+      return NextResponse.json({ error: 'Deuda no encontrada' }, { status: 404 })
+    }
+
+    return NextResponse.json({ deuda })
+  } catch (error) {
+    console.error('Error obteniendo deuda cash:', error)
+    return NextResponse.json({ error: 'Error obteniendo deuda cash' }, { status: 500 })
+  }
+})
+
+/**
+ * @description Actualiza campos permitidos de una deuda cash (fechaVencimiento, tasaInteres, observaciones)
+ * @param {NextRequest} request - Request con body de campos a actualizar
+ * @returns {NextResponse} Deuda actualizada
+ */
+export const PUT = withAuthPost(async (request: NextRequest, context: unknown, user: { userId: string }) => {
+  try {
+    if (!prestamosCashEnabled()) {
+      return NextResponse.json({ error: 'Módulo de deudas cash deshabilitado' }, { status: 404 })
+    }
+
+    const { params } = context as { params: Promise<{ id: string }> }
+    const { id } = await params
+
+    const body = await request.json()
+
+    if (body.montoCapital !== undefined || body.moneda !== undefined) {
+      return NextResponse.json(
+        { error: 'No se permite modificar montoCapital ni moneda de una deuda existente' },
+        { status: 400 }
+      )
+    }
+
+    const data = updateSchema.parse(body)
+
+    const existing = await prisma.deudaCash.findFirst({
+      where: { id, deletedAt: null }
+    })
+
+    if (!existing) {
+      return NextResponse.json({ error: 'Deuda no encontrada' }, { status: 404 })
+    }
+
+    const deuda = await prisma.deudaCash.update({
+      where: { id },
+      data: {
+        ...(data.fechaVencimiento ? { fechaVencimiento: new Date(data.fechaVencimiento) } : {}),
+        ...(data.tasaInteres !== undefined ? { tasaInteres: data.tasaInteres } : {}),
+        ...(data.observaciones !== undefined ? { observaciones: data.observaciones } : {})
+      },
+      include: {
+        proveedor: {
+          select: {
+            vendorId: true,
+            nombre: true
+          }
+        },
+        cuentaPorPagar: true
+      }
+    })
+
+    await AuditLogService.log({
+      accion: 'UPDATE',
+      entidad: 'DEUDA_CASH',
+      entidadId: id,
+      usuarioId: user.userId,
+      detalles: {
+        cambios: {
+          ...(data.fechaVencimiento !== undefined ? { fechaVencimiento: { anterior: existing.fechaVencimiento, nuevo: deuda.fechaVencimiento } } : {}),
+          ...(data.tasaInteres !== undefined ? { tasaInteres: { anterior: Number(existing.tasaInteres), nuevo: Number(deuda.tasaInteres) } } : {}),
+          ...(data.observaciones !== undefined ? { observaciones: { anterior: existing.observaciones, nuevo: deuda.observaciones } } : {})
+        }
+      }
+    })
+
+    return NextResponse.json({ deuda })
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: 'Parámetros inválidos', details: error.errors }, { status: 400 })
+    }
+    console.error('Error actualizando deuda cash:', error)
+    return NextResponse.json({ error: 'Error actualizando deuda cash' }, { status: 500 })
+  }
+})

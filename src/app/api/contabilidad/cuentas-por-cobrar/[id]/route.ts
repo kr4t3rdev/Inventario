@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { verify_token } from '@/lib/auth-utils'
+import { AuditLogService } from '@/lib/services/audit-log-service'
 
 interface UpdateCuentaPorCobrarBody {
   montoPagado?: number
@@ -58,9 +59,28 @@ export async function PATCH(
       )
     }
 
+    const anterior = await prisma.cuentaPorCobrar.findUnique({ where: { id } })
+
     const cuenta = await prisma.cuentaPorCobrar.update({
       where: { id },
       data
+    })
+
+    const cambios: Record<string, { anterior: unknown; nuevo: unknown }> = {}
+    for (const key of Object.keys(data)) {
+      const prev = anterior ? (anterior as Record<string, unknown>)[key] : undefined
+      const curr = (cuenta as Record<string, unknown>)[key]
+      if (prev !== curr) {
+        cambios[key] = { anterior: prev, nuevo: curr }
+      }
+    }
+
+    await AuditLogService.log({
+      accion: 'UPDATE',
+      entidad: 'CUENTA_POR_COBRAR',
+      entidadId: id,
+      usuarioId: user.userId,
+      detalles: { cambios }
     })
 
     return NextResponse.json({ cuenta })

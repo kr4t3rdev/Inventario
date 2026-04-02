@@ -714,7 +714,10 @@ exports.Prisma.ReconciliacionVentaScalarFieldEnum = {
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   idTransferencia: 'idTransferencia',
-  verificacionTransferenciaId: 'verificacionTransferenciaId'
+  verificacionTransferenciaId: 'verificacionTransferenciaId',
+  prestamoCashId: 'prestamoCashId',
+  deudaCashId: 'deudaCashId',
+  tipoReconciliacion: 'tipoReconciliacion'
 };
 
 exports.Prisma.ReconciliacionServicioScalarFieldEnum = {
@@ -1084,6 +1087,7 @@ exports.Prisma.CuentaPorCobrarScalarFieldEnum = {
   montoPagado: 'montoPagado',
   idTransferencia: 'idTransferencia',
   estado: 'estado',
+  tipoCuenta: 'tipoCuenta',
   fechaVencimiento: 'fechaVencimiento',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -1106,6 +1110,7 @@ exports.Prisma.CuentaPorPagarScalarFieldEnum = {
   updatedAt: 'updatedAt',
   proveedorId: 'proveedorId',
   tipo: 'tipo',
+  tipoDeuda: 'tipoDeuda',
   deletedAt: 'deletedAt'
 };
 
@@ -1415,6 +1420,43 @@ exports.Prisma.VendorCodeSequenceScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.PrestamoCashScalarFieldEnum = {
+  id: 'id',
+  idNumerico: 'idNumerico',
+  clienteId: 'clienteId',
+  cuentaPorCobrarId: 'cuentaPorCobrarId',
+  montoCapital: 'montoCapital',
+  moneda: 'moneda',
+  tasaInteres: 'tasaInteres',
+  tasaCambioAlCrear: 'tasaCambioAlCrear',
+  fechaOtorgamiento: 'fechaOtorgamiento',
+  fechaVencimiento: 'fechaVencimiento',
+  estado: 'estado',
+  observaciones: 'observaciones',
+  createdById: 'createdById',
+  deletedAt: 'deletedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.DeudaCashScalarFieldEnum = {
+  id: 'id',
+  idNumerico: 'idNumerico',
+  proveedorId: 'proveedorId',
+  cuentaPorPagarId: 'cuentaPorPagarId',
+  montoCapital: 'montoCapital',
+  moneda: 'moneda',
+  tasaInteres: 'tasaInteres',
+  fechaOtorgamiento: 'fechaOtorgamiento',
+  fechaVencimiento: 'fechaVencimiento',
+  estado: 'estado',
+  observaciones: 'observaciones',
+  createdById: 'createdById',
+  deletedAt: 'deletedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1453,6 +1495,12 @@ exports.EstadoDeuda = exports.$Enums.EstadoDeuda = {
   ACTIVA: 'ACTIVA',
   PAGADA: 'PAGADA',
   EN_MORA: 'EN_MORA'
+};
+
+exports.TipoReconciliacion = exports.$Enums.TipoReconciliacion = {
+  VENTA: 'VENTA',
+  PRESTAMO_CASH: 'PRESTAMO_CASH',
+  DEUDA_CASH: 'DEUDA_CASH'
 };
 
 exports.TipoAnticipo = exports.$Enums.TipoAnticipo = {
@@ -1529,6 +1577,11 @@ exports.EstadoCuentaPorCobrar = exports.$Enums.EstadoCuentaPorCobrar = {
   PARCIAL: 'PARCIAL'
 };
 
+exports.CuentaPorCobrarTipo = exports.$Enums.CuentaPorCobrarTipo = {
+  VENTA: 'VENTA',
+  PRESTAMO_CASH: 'PRESTAMO_CASH'
+};
+
 exports.EstadoCuentaPorPagar = exports.$Enums.EstadoCuentaPorPagar = {
   PENDIENTE: 'PENDIENTE',
   PAGADA: 'PAGADA',
@@ -1538,6 +1591,11 @@ exports.EstadoCuentaPorPagar = exports.$Enums.EstadoCuentaPorPagar = {
 exports.TipoCuentaPorPagar = exports.$Enums.TipoCuentaPorPagar = {
   compra: 'compra',
   servicio: 'servicio'
+};
+
+exports.CuentaPorPagarTipo = exports.$Enums.CuentaPorPagarTipo = {
+  COMPRA: 'COMPRA',
+  DEUDA_CASH: 'DEUDA_CASH'
 };
 
 exports.EstadoOrden = exports.$Enums.EstadoOrden = {
@@ -1588,6 +1646,13 @@ exports.EstadoProduccion = exports.$Enums.EstadoProduccion = {
   EN_PROCESO: 'EN_PROCESO',
   COMPLETADA: 'COMPLETADA',
   CANCELADA: 'CANCELADA'
+};
+
+exports.EstadoPrestamoCash = exports.$Enums.EstadoPrestamoCash = {
+  ACTIVO: 'ACTIVO',
+  PAGADO: 'PAGADO',
+  VENCIDO: 'VENCIDO',
+  CANCELADO: 'CANCELADO'
 };
 
 exports.Prisma.ModelName = {
@@ -1680,7 +1745,9 @@ exports.Prisma.ModelName = {
   ValeSalida: 'ValeSalida',
   ValeSalidaItem: 'ValeSalidaItem',
   OrdenProduccionHistorial: 'OrdenProduccionHistorial',
-  VendorCodeSequence: 'VendorCodeSequence'
+  VendorCodeSequence: 'VendorCodeSequence',
+  PrestamoCash: 'PrestamoCash',
+  DeudaCash: 'DeudaCash'
 };
 
 /**

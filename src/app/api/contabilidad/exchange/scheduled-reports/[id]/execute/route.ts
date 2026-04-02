@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ejecutarReporteProgramado } from "@/lib/services/scheduled-report-scheduler";
+import { verify_token } from "@/lib/auth-utils";
+import { AuditLogService } from "@/lib/services/audit-log-service";
 
 /**
  * @description Endpoint para ejecutar un reporte programado específico manualmente
@@ -18,6 +20,11 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
+    const user = await verify_token(request);
+    if (!user) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
     const { id } = await params;
 
     if (!id) {
@@ -30,6 +37,14 @@ export async function POST(
     const resultado = await ejecutarReporteProgramado(id);
 
     if (resultado.success) {
+      await AuditLogService.log({
+        accion: "EXECUTE",
+        entidad: "REPORTE_PROGRAMADO",
+        entidadId: id,
+        usuarioId: user.userId,
+        detalles: { tipoReporte: "manual" }
+      });
+
       return NextResponse.json({
         success: true,
         message: resultado.message,

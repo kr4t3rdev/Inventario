@@ -24,7 +24,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { ArrowRightLeft, Loader2, Info } from "lucide-react"
-import { toast } from "sonner"
+import { sileo } from 'sileo'
 import { useAppDispatch } from "@/lib/redux/hooks"
 import { contabilidadApi, useGetCuentasBancariasQuery } from "@/lib/redux/services/contabilidadApi"
 import { TasaCambioDialog } from "./tasa-cambio-dialog"
@@ -152,7 +152,7 @@ export function TransferenciaBancariaForm({ onSuccess, onCancel }: Transferencia
         setShowValidacionDialog(true)
       }
     } catch (error: any) {
-      toast.error(error?.data?.error || "Error al validar la transferencia")
+      sileo.error({ title: error?.data?.error || 'Error al validar la transferencia' })
     }
   }
 
@@ -180,13 +180,13 @@ export function TransferenciaBancariaForm({ onSuccess, onCancel }: Transferencia
         contabilidadApi.endpoints.crearTransferencia.initiate(payload as any)
       ).unwrap()
 
-      toast.success("Transferencia realizada exitosamente")
+      sileo.success({ title: 'Transferencia realizada exitosamente' })
       form.reset()
       setShowValidacionDialog(false)
       setValidacionData(null)
       onSuccess?.()
     } catch (error: any) {
-      toast.error(error?.data?.error || error?.message || "Error al realizar la transferencia")
+      sileo.error({ title: error?.data?.error || error?.message || 'Error al realizar la transferencia' })
     } finally {
       setIsSubmitting(false)
     }
@@ -199,7 +199,7 @@ export function TransferenciaBancariaForm({ onSuccess, onCancel }: Transferencia
       <motion.div variants={fadeInUp} initial="hidden" animate="show">
         <Form {...form}>
           <motion.form 
-            onSubmit={form.handleSubmit(handleValidarTransferencia)} 
+            onSubmit={form.handleSubmit(handleValidarTransferencia, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} 
             className="space-y-6"
             variants={stagger}
             initial="hidden"

@@ -371,6 +371,7 @@ export interface CuentaPorPagar {
   fechaEmision: string
   fechaVencimiento: string | null
   estado: 'PENDIENTE' | 'PAGADA' | 'PARCIAL'
+  tipoDeuda?: 'COMPRA' | 'DEUDA_CASH'
   createdAt: string
   updatedAt: string
   rangoAntiguedad?: string
@@ -382,6 +383,7 @@ export interface CuentaPorPagar {
   cuentaCUP?: string | null
   cuentaUSD?: string | null
   pagos?: PagoCuentaPorPagar[]
+  deudaCash?: DeudaCash | null
 }
 
 export interface CreateCuentaPorPagarRequest {
@@ -1588,6 +1590,7 @@ export interface CuentaPorCobrar {
   montoPagado: number
   idTransferencia?: string
   estado: 'PENDIENTE' | 'PAGADA' | 'PARCIAL'
+  tipoCuenta?: 'VENTA' | 'PRESTAMO_CASH'
   fechaVencimiento?: string | null
   totalVenta?: number
   totalFactura?: number
@@ -1597,6 +1600,107 @@ export interface CuentaPorCobrar {
   factura?: Factura
   createdAt: string
   updatedAt: string
+}
+
+// === CASH LOANS & DEBTS ===
+
+export type EstadoPrestamoCash = 'ACTIVO' | 'PAGADO' | 'VENCIDO' | 'CANCELADO'
+
+export interface PrestamoCash {
+  id: string
+  idNumerico: number
+  clienteId: string
+  cuentaPorCobrarId: string
+  montoCapital: number
+  moneda: string
+  tasaInteres?: number | null
+  fechaOtorgamiento: string
+  fechaVencimiento?: string | null
+  estado: EstadoPrestamoCash
+  observaciones?: string | null
+  createdById: string
+  deletedAt?: string | null
+  createdAt: string
+  updatedAt: string
+  cliente?: Cliente
+  cuentaPorCobrar?: CuentaPorCobrar
+}
+
+export interface DeudaCash {
+  id: string
+  idNumerico: number
+  proveedorId: string
+  cuentaPorPagarId: string
+  montoCapital: number
+  moneda: string
+  tasaInteres?: number | null
+  fechaOtorgamiento: string
+  fechaVencimiento?: string | null
+  estado: EstadoPrestamoCash
+  observaciones?: string | null
+  createdById: string
+  deletedAt?: string | null
+  createdAt: string
+  updatedAt: string
+  proveedor?: Vendor
+  cuentaPorPagar?: CuentaPorPagar
+}
+
+export interface CreatePrestamoCashRequest {
+  clienteId: string
+  montoCapital: number
+  moneda?: string
+  tasaInteres?: number
+  tasaCambioAlCrear?: number
+  fechaVencimiento?: string
+  observaciones?: string
+}
+
+export interface UpdatePrestamoCashRequest {
+  fechaVencimiento?: string
+  tasaInteres?: number
+  observaciones?: string
+}
+
+export interface RegistrarPagoPrestamoRequest {
+  monto: number
+  cuentaId: string
+  tipoPagoId: string
+  moneda?: string
+  tasaCambio?: number
+  observaciones?: string
+}
+
+export interface CreateDeudaCashRequest {
+  proveedorId: string
+  montoCapital: number
+  moneda?: string
+  tasaInteres?: number
+  fechaVencimiento?: string
+  observaciones?: string
+}
+
+export interface UpdateDeudaCashRequest {
+  fechaVencimiento?: string
+  tasaInteres?: number
+  observaciones?: string
+}
+
+export interface RegistrarPagoDeudaRequest {
+  monto: number
+  cuentaId: string
+  tipoPagoId: string
+  moneda?: string
+  tasaCambio?: number
+  observaciones?: string
+}
+
+export interface PrestamosCashStats {
+  totalActivos: number
+  totalPagados: number
+  totalVencidos: number
+  montoTotalPrestado: { moneda: string; total: number }[]
+  montoPendienteCobro: { moneda: string; total: number }[]
 }
 
 export interface CreateCuentaPorCobrarRequest {

@@ -14,7 +14,7 @@ import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent } from "@/components/ui/card"
-import { toast } from "sonner"
+import { sileo } from 'sileo'
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -67,7 +67,7 @@ export default function SeriesFacturacionTable() {
       setSeries(data)
     } catch (error) {
       console.error("Error fetching series:", error)
-      toast.error("No se pudieron cargar las series de facturación")
+      sileo.error({ title: 'No se pudieron cargar las series de facturación' })
     } finally {
       setLoading(false)
     }
@@ -101,7 +101,7 @@ export default function SeriesFacturacionTable() {
         throw new Error(errorData.error || "Error al guardar serie")
       }
 
-      toast.success(editingSerie ? "Serie actualizada exitosamente" : "Serie creada exitosamente")
+      sileo.success({ title: editingSerie ? 'Serie actualizada exitosamente' : 'Serie creada exitosamente' })
       setOpenDialog(false)
       form.reset()
       setEditingSerie(null)
@@ -109,7 +109,7 @@ export default function SeriesFacturacionTable() {
       router.refresh()
     } catch (error) {
       console.error("Error saving series:", error)
-      toast.error(error instanceof Error ? error.message : "Error al guardar serie")
+      sileo.error({ title: error instanceof Error ? error.message : 'Error al guardar serie' })
     } finally {
       setIsSubmitting(false)
     }
@@ -129,13 +129,13 @@ export default function SeriesFacturacionTable() {
         throw new Error(errorData.error || "Error al eliminar serie")
       }
 
-      toast.success("Serie eliminada exitosamente")
+      sileo.success({ title: 'Serie eliminada exitosamente' })
       setDeleteConfirm(null)
       fetchSeries()
       router.refresh()
     } catch (error) {
       console.error("Error deleting series:", error)
-      toast.error(error instanceof Error ? error.message : "Error al eliminar serie")
+      sileo.error({ title: error instanceof Error ? error.message : 'Error al eliminar serie' })
     }
   }
 
@@ -397,7 +397,7 @@ export default function SeriesFacturacionTable() {
                   </DialogTitle>
                 </DialogHeader>
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
+                  <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-4 mt-4">
                     <motion.div
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}

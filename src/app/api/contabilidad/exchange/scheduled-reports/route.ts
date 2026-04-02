@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { verify_token } from "@/lib/auth-utils";
+import { AuditLogService } from "@/lib/services/audit-log-service";
 
 /**
  * @description Endpoint para gestionar reportes programados del dashboard de inteligencia cambiaria
@@ -75,6 +77,11 @@ export async function GET(request: NextRequest) {
 // POST /api/contabilidad/exchange/scheduled-reports
 export async function POST(request: NextRequest) {
   try {
+    const user = await verify_token(request);
+    if (!user) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
     const body = await request.json();
 
     const {
@@ -152,6 +159,17 @@ export async function POST(request: NextRequest) {
         proximaEjecucion,
         creadoPor,
       },
+    });
+
+    await AuditLogService.log({
+      accion: "CREATE",
+      entidad: "REPORTE_PROGRAMADO",
+      entidadId: reporte.id,
+      usuarioId: user.userId,
+      detalles: {
+        nombre,
+        tipoReporte
+      }
     });
 
     return NextResponse.json({

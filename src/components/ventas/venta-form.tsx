@@ -13,7 +13,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
-import { toast } from "sonner"
+import { sileo } from 'sileo'
 import { Skeleton } from "@/components/ui/skeleton"
 
 import { useGetProductosQuery } from "@/lib/redux/services/productosApi"
@@ -24,13 +24,13 @@ import { apiSlice } from "@/lib/redux/services/apiSlice"
 
 const ventaSchema = z.object({
   productoId: z.string({
-    required_error: "Seleccione un producto",
+    required_error: 'El campo Producto no ha sido seleccionado',
   }),
   cantidad: z.coerce.number().positive({
     message: "La cantidad debe ser mayor a 0",
   }),
   puntoDeVentaId: z.string({
-    required_error: "Seleccione un punto de venta",
+    required_error: 'El campo Punto de venta no ha sido seleccionado',
   }),  
 })
 
@@ -73,17 +73,17 @@ export function VentaForm({ initialData }: VentaFormProps) {
           ventaId: initialData.ventaId,
           ...data,
         }).unwrap()
-        toast('La venta ha sido actualizada exitosamente')
+        sileo.success({ title: 'La venta ha sido actualizada exitosamente' })
       } else {
         await addVenta({
           ...data,
         }).unwrap()
-        toast('La venta ha sido registrada exitosamente')
+        sileo.success({ title: 'La venta ha sido registrada exitosamente' })
         dispatch(apiSlice.util.invalidateTags(['Productos']))
       }
     } catch (error) {
       console.error("Error al guardar la venta:", error)
-      toast('Hubo un error al guardar la venta.y')
+      sileo.error({ title: 'Hubo un error al guardar la venta.' })
     } finally {
       setIsLoading(false)
     }
@@ -172,7 +172,7 @@ export function VentaForm({ initialData }: VentaFormProps) {
           </motion.div>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-6">
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}

@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Clock, LogIn, LogOut, Edit, Save, Calendar, User, History, CheckCircle2, AlertCircle, Timer } from "lucide-react";
-import { toast } from "sonner";
+import { sileo } from 'sileo';
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Empleado {
@@ -132,7 +132,7 @@ export function EnhancedAsistenciaForm() {
    */
   const handleAttendanceAction = async (action: 'checkin' | 'checkout') => {
     if (!selectedEmpleado) {
-      toast.error("Selecciona un empleado primero");
+      sileo.error({ title: 'Seleccioná un empleado primero' });
       return;
     }
 
@@ -155,9 +155,9 @@ export function EnhancedAsistenciaForm() {
 
       if (response.ok) {
         setAsistenciaHoy(data);
-        toast.success(action === 'checkin'
+        sileo.success({ title: action === 'checkin'
           ? "Entrada registrada correctamente"
-          : "Salida registrada correctamente");
+          : "Salida registrada correctamente" });
         
         // Refresh history
         const thirtyDaysAgo = new Date();
@@ -173,11 +173,11 @@ export function EnhancedAsistenciaForm() {
         }
 
       } else {
-        toast.error(data.error || "Error al registrar asistencia");
+        sileo.error({ title: data.error || 'Error al registrar asistencia' });
       }
     } catch (error) {
       console.error("Error registrando asistencia:", error);
-      toast.error("Error interno del servidor");
+      sileo.error({ title: 'Error interno del servidor' });
     } finally {
       setLoading(false);
     }
@@ -237,13 +237,13 @@ export function EnhancedAsistenciaForm() {
 
         setIsEditDialogOpen(false);
         setEditingRecord(null);
-        toast.success("Registro actualizado correctamente");
+        sileo.success({ title: 'Registro actualizado correctamente' });
       } else {
-        toast.error(data.error || "Error al actualizar registro");
+        sileo.error({ title: data.error || 'Error al actualizar registro' });
       }
     } catch (error) {
       console.error("Error actualizando asistencia:", error);
-      toast.error("Error interno del servidor");
+      sileo.error({ title: 'Error interno del servidor' });
     } finally {
       setLoading(false);
     }

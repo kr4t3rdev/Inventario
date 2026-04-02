@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
-import { toast } from "sonner"
+import { sileo } from 'sileo'
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAddAlmacenMutation, useGetAlmacenesQuery, useUpdateAlmacenMutation } from "@/lib/redux/services/almacenesApi"
 import { motion } from "framer-motion"
@@ -19,7 +19,7 @@ import Link from "next/link"
 
 const almacenSchema = z.object({
   nombre: z.string({
-    required_error: "Ingrese el nombre del almacén",
+    required_error: 'El campo Nombre no ha sido rellenado',
   }),
 })
 
@@ -87,19 +87,19 @@ export function AlmacenForm({ initialData }: AlmacenFormProps) {
           almacenId: initialData.almacenId,            
           ...data,
         }).unwrap()
-        toast("El almacén ha sido actualizado exitosamente.")
+        sileo.success({ title: 'El almacén ha sido actualizado exitosamente.' })
       } else {
         await addAlmacen({
           ...data,
           stockAlmacen: 0
         }).unwrap()
-        toast("El almacén ha sido registrado exitosamente.")
+        sileo.success({ title: 'El almacén ha sido registrado exitosamente.' })
       }
       router.push("/busy/almacen")
       router.refresh()
     } catch (error) {
       console.error("Error al guardar el almacén:", error)
-      toast("Hubo un error al guardar el almacén.")
+      sileo.error({ title: 'Hubo un error al guardar el almacén.' })
     } finally {
       setIsLoading(false)
     }
@@ -180,7 +180,7 @@ export function AlmacenForm({ initialData }: AlmacenFormProps) {
           </motion.div>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-6">
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -222,10 +222,10 @@ export function AlmacenForm({ initialData }: AlmacenFormProps) {
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   <Button 
                     type="button" 
-                    variant="outline" 
+                    variant="destructive" 
                     onClick={() => router.push("/busy/almacen")}
                     disabled={isLoading}
-                    className="gap-2"
+                    className="gap-2 cursor-pointer transition-colors duration-200"
                   >
                     <ArrowLeft className="h-4 w-4" />
                     Cancelar
@@ -236,7 +236,7 @@ export function AlmacenForm({ initialData }: AlmacenFormProps) {
                   <Button 
                     type="submit" 
                     disabled={isLoading}
-                    className="min-w-[140px] gap-2 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                    className="min-w-[140px] gap-2 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 cursor-pointer transition-colors duration-200"
                   >
                     {isLoading ? (
                       <>

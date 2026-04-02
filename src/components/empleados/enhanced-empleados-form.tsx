@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { toast } from "sonner"
+import { sileo } from 'sileo'
 import { Skeleton } from "@/components/ui/skeleton"
 import { DollarSign, User } from "lucide-react"
 import { useAddEmpleadoMutation, useGetEmpleadosQuery, useUpdateEmpleadoMutation } from "@/lib/redux/services/empleadosApi"
@@ -21,25 +21,25 @@ import { TasaCambioDialog } from "@/components/contabilidad/tasa-cambio-dialog"
 
 const empleadoSchema = z.object({
   nombre: z.string({
-    required_error: "escriba un nombre",
+    required_error: 'El campo Nombre no ha sido rellenado',
   }),
   apellido: z.string({
-    required_error: "escriba el apellido",
+    required_error: 'El campo Apellido no ha sido rellenado',
   }),
   salarioBases: z.coerce.number().positive({
     message: "El salarioBase debe ser mayor a 0",
   }),
   telefono: z.string({
-    required_error: "escriba un telefono",
+    required_error: 'El campo Teléfono no ha sido rellenado',
   }),
   periodo: z.string({
     message: "Escriba un periodo"
   }),
   cargo: z.string({
-    required_error: "escriba un cargo",
+    required_error: 'El campo Cargo no ha sido rellenado',
   }),
   monedaSalario: z.string({
-    required_error: "Seleccione una moneda para el salario",
+    required_error: 'El campo Moneda del salario no ha sido seleccionada',
   }),
 })
 
@@ -121,18 +121,18 @@ export function EnhancedEmpleadoForm({ initialData }: EnhancedEmpleadoFormProps)
           empleadoId: initialData.empleadoId,
           ...empleadoData,
         }).unwrap()
-        toast.success("El empleado ha sido actualizado exitosamente.")
+        sileo.success({ title: 'El empleado ha sido actualizado exitosamente.' })
       } else {
         await addEmpleados({
           empleadoId: v4(),
           ...empleadoData
         }).unwrap()
-        toast.success("El empleado ha sido registrado exitosamente.")
+        sileo.success({ title: 'El empleado ha sido registrado exitosamente.' })
       }
       router.back()
     } catch (error) {
       console.error("Error al guardar el empleado:", error)
-      toast.error("Hubo un error al guardar el empleado.")
+      sileo.error({ title: 'Hubo un error al guardar el empleado.' })
     } finally {
       setIsLoading(false)
       setPendingSubmission(null)
@@ -178,7 +178,7 @@ export function EnhancedEmpleadoForm({ initialData }: EnhancedEmpleadoFormProps)
       <Card>
         <CardContent className="pt-6">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-6">
               <FormField
                 control={form.control}
                 name="nombre"

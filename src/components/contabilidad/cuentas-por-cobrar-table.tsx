@@ -414,7 +414,8 @@ export function CuentasPorCobrarTable({ cuentas, isLoading, error, onPagar }: Cu
         const saldoPendiente = Number.isFinite(Number(cuenta.saldoFactura))
           ? Number(cuenta.saldoFactura)
           : Number(cuenta.montoDeuda) - Number(cuenta.montoPagado)
-        const puedePagar = saldoPendiente > 0.01 && cuenta.estado !== "PAGADA"
+        const esPrestamo = cuenta.tipoCuenta === 'PRESTAMO_CASH'
+        const puedePagar = !esPrestamo && saldoPendiente > 0.01 && cuenta.estado !== "PAGADA"
         
         const ventaId = cuenta.factura?.ventaId || cuenta.factura?.idFactura
         const invoiceNumber = cuenta.factura?.numeroFactura || cuenta.numeroFactura || cuenta.facturaId?.slice(-8) || "sin-factura"
@@ -465,7 +466,25 @@ export function CuentasPorCobrarTable({ cuentas, isLoading, error, onPagar }: Cu
               </Tooltip>
             </TooltipProvider>
 
-            {onPagar && (
+            {onPagar && esPrestamo && cuenta.estado !== "PAGADA" && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Badge
+                      variant="outline"
+                      className="bg-violet-100 text-violet-700 border-violet-200 dark:bg-violet-900/30 dark:text-violet-300 dark:border-violet-800 cursor-default"
+                    >
+                      Préstamo
+                    </Badge>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Gestionar pago desde Préstamos Cash</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
+
+            {onPagar && !esPrestamo && (
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>

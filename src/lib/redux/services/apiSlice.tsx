@@ -83,6 +83,9 @@ export const apiSlice = createApi({
     'OrdenesProduccion',
     'ValesSalida',
     'Conceptos',
+    // Cash Loans & Debts
+    'PrestamosCash',
+    'DeudasCash',
   ],
   endpoints: () => ({}),
 })

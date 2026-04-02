@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { activarReporteProgramado } from "@/lib/services/scheduled-report-scheduler";
+import { verify_token } from "@/lib/auth-utils";
+import { AuditLogService } from "@/lib/services/audit-log-service";
 
 /**
  * @description Endpoint para activar o desactivar un reporte programado
@@ -18,6 +20,11 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
+    const user = await verify_token(request);
+    if (!user) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
     const { id } = await params;
 
     if (!id) {
@@ -38,6 +45,14 @@ export async function PATCH(
     }
 
     const reporteActualizado = await activarReporteProgramado(id, activo);
+
+    await AuditLogService.log({
+      accion: "UPDATE",
+      entidad: "REPORTE_PROGRAMADO",
+      entidadId: id,
+      usuarioId: user.userId,
+      detalles: { activo }
+    });
 
     return NextResponse.json({
       success: true,

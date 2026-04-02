@@ -30,7 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { toast } from "sonner"
+import { sileo } from 'sileo'
 import { getAuthToken } from "@/lib/token"
 import { Plus, UserPlus, Sparkles, Loader2, PenTool } from "lucide-react"
 import { motion } from "framer-motion"
@@ -82,13 +82,13 @@ export function AddFirmaDialog({ contratoId, onSuccess, users }: AddFirmaDialogP
         throw new Error("Error al agregar firma")
       }
 
-      toast.success("Solicitud de firma agregada exitosamente")
+      sileo.success({ title: 'Solicitud de firma agregada exitosamente' })
       setOpen(false)
       form.reset()
       onSuccess()
     } catch (error) {
       console.error(error)
-      toast.error("Error al agregar la solicitud de firma")
+      sileo.error({ title: 'Error al agregar la solicitud de firma' })
     } finally {
       setIsSubmitting(false)
     }
@@ -135,7 +135,7 @@ export function AddFirmaDialog({ contratoId, onSuccess, users }: AddFirmaDialogP
             </DialogDescription>
           </DialogHeader>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 mt-4">
+            <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-4 mt-4">
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}

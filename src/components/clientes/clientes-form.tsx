@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
-import { toast } from "sonner"
+import { sileo } from 'sileo'
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAddClienteMutation, useGetClientesQuery, useUpdateClienteMutation } from "@/lib/redux/services/ClienteApi"
 import { useGetListasPreciosQuery } from "@/lib/redux/services/listasPreciosApi"
@@ -22,7 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 const clienteSchema = z
   .object({
     nombre: z.string({
-      required_error: "Ingrese el nombre del cliente",
+      required_error: 'El campo Nombre no ha sido rellenado',
     }),
     direccion: z.string().optional(),
     telefono: z.string().optional(),
@@ -99,7 +99,7 @@ export function ClienteForm({ initialData }: ClienteFormProps) {
           logoUrl: data.logoUrl,
           listaPrecioId: payloadListaPrecioId,
         } as any).unwrap()
-        toast("El cliente ha sido actualizado exitosamente.")
+        sileo.success({ title: 'El cliente ha sido actualizado exitosamente.' })
       } else {
         await addCliente({
           nombre: data.nombre,
@@ -110,13 +110,13 @@ export function ClienteForm({ initialData }: ClienteFormProps) {
           logoUrl: data.logoUrl,
           listaPrecioId: payloadListaPrecioId,
         } as any).unwrap()
-        toast("El cliente ha sido registrado exitosamente.")
+        sileo.success({ title: 'El cliente ha sido registrado exitosamente.' })
       }
       router.push("/busy/cliente")
       router.refresh()
     } catch (error) {
       console.error("Error al guardar el cliente:", error)
-      toast("Hubo un error al guardar el cliente.")
+      sileo.error({ title: 'Hubo un error al guardar el cliente.' })
     } finally {
       setIsLoading(false)
     }
@@ -202,7 +202,7 @@ export function ClienteForm({ initialData }: ClienteFormProps) {
           </motion.div>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-6">
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}

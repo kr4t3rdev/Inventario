@@ -14,7 +14,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertTriangle, DollarSign, TrendingDown, TrendingUp } from 'lucide-react'
 import { useCreateAjusteBancarioMutation, useGetCuentasBancariasQuery, useGetMonedasQuery } from '@/lib/redux/services/contabilidadApi'
 import { useAppSelector } from '@/lib/redux/hooks'
-import { toast } from 'sonner'
+import { sileo } from 'sileo'
 import { CuentaBancaria, Moneda } from '../../app/models/model'
 
 const ajusteBancarioSchema = z.object({
@@ -151,13 +151,13 @@ export function AjusteBancarioForm({ onSuccess, onCancel }: AjusteBancarioFormPr
         motivo: data.motivo
       }).unwrap()
 
-      toast.success('Ajuste bancario creado exitosamente')
+      sileo.success({ title: 'Ajuste bancario creado exitosamente.' })
       reset()
       setShowWarning(false)
       onSuccess?.()
     } catch (error: unknown) {
       const err = error as { data?: { error?: string } }
-      toast.error(err?.data?.error || 'Error al crear el ajuste bancario')
+      sileo.error({ title: err?.data?.error || 'Error al crear el ajuste bancario.' })
     }
   }
 

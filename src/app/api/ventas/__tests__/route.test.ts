@@ -277,3 +277,136 @@ describe('Ventas API - POST rollback por fallo de facturación', () => {
     fetchSpy.mockRestore();
   });
 });
+
+describe('Ventas API - sync stock padre para productos hijos compuestos', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('decrementa stock del padre cuando se vende un producto hijo (venta única)', async () => {
+    const { POST } = await import('../route');
+    const prisma = (await import('@/lib/prisma')).default as any;
+
+    prisma.puntoDeVenta.findUnique.mockResolvedValue({ pvId: 'pv-1', listaPrecioId: null });
+    prisma.precioProducto.findUnique.mockResolvedValue(null);
+    prisma.transferencia.aggregate.mockImplementation(async (args: any) => {
+      if (args?.where?.puntoDeVentaDestinoId) return { _sum: { cantidad: 100 } };
+      return { _sum: { cantidad: 0 } };
+    });
+    prisma.ventaItem.aggregate.mockResolvedValue({ _sum: { cantidad: 0 } });
+    prisma.venta.aggregate.mockResolvedValue({ _sum: { cantidad: 0 } });
+    prisma.producto.findUnique.mockResolvedValue({
+      id: 'hijo-1',
+      precioVenta: 50,
+      nombre: 'Unidad del Pack',
+      productoPadreId: 'padre-1',
+      cantidadEnPack: 24,
+    });
+
+    const txVentaCreate = vi.fn().mockResolvedValue({
+      ventaId: 'venta-1',
+      cliente: null,
+      puntoDeVenta: { nombre: 'PV Demo' },
+      items: [],
+    });
+    const txProductoUpdate = vi.fn().mockResolvedValue({});
+
+    prisma.$transaction.mockImplementation(async (callback: any) => {
+      const tx = {
+        venta: { create: txVentaCreate },
+        producto: { update: txProductoUpdate },
+      };
+      return callback(tx);
+    });
+
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(null, { status: 204 }),
+    );
+
+    const request = new NextRequest('http://localhost/api/ventas', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        productos: [{ productoId: 'hijo-1', cantidad: 24 }],
+        puntoDeVentaId: 'pv-1',
+        descuento: 0,
+        impuestos: 0,
+        cargoTransporte: 0,
+      }),
+    });
+
+    const response = await POST(request, {});
+
+    expect(response.status).toBe(200);
+    // floor(24 / 24) = 1 → decrement parent by 1
+    expect(txProductoUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'padre-1' },
+        data: { stock: { decrement: 1 } },
+      }),
+    );
+
+    fetchSpy.mockRestore();
+  });
+
+  it('NO decrementa stock del padre cuando floor es 0 (cantidad < cantidadEnPack)', async () => {
+    const { POST } = await import('../route');
+    const prisma = (await import('@/lib/prisma')).default as any;
+
+    prisma.puntoDeVenta.findUnique.mockResolvedValue({ pvId: 'pv-1', listaPrecioId: null });
+    prisma.precioProducto.findUnique.mockResolvedValue(null);
+    prisma.transferencia.aggregate.mockImplementation(async (args: any) => {
+      if (args?.where?.puntoDeVentaDestinoId) return { _sum: { cantidad: 100 } };
+      return { _sum: { cantidad: 0 } };
+    });
+    prisma.ventaItem.aggregate.mockResolvedValue({ _sum: { cantidad: 0 } });
+    prisma.venta.aggregate.mockResolvedValue({ _sum: { cantidad: 0 } });
+    prisma.producto.findUnique.mockResolvedValue({
+      id: 'hijo-1',
+      precioVenta: 50,
+      nombre: 'Unidad del Pack',
+      productoPadreId: 'padre-1',
+      cantidadEnPack: 20,
+    });
+
+    const txVentaCreate = vi.fn().mockResolvedValue({
+      ventaId: 'venta-1',
+      cliente: null,
+      puntoDeVenta: { nombre: 'PV Demo' },
+      items: [],
+    });
+    const txProductoUpdate = vi.fn();
+
+    prisma.$transaction.mockImplementation(async (callback: any) => {
+      const tx = {
+        venta: { create: txVentaCreate },
+        producto: { update: txProductoUpdate },
+      };
+      return callback(tx);
+    });
+
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(null, { status: 204 }),
+    );
+
+    const request = new NextRequest('http://localhost/api/ventas', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        productos: [{ productoId: 'hijo-1', cantidad: 15 }],
+        puntoDeVentaId: 'pv-1',
+        descuento: 0,
+        impuestos: 0,
+        cargoTransporte: 0,
+      }),
+    });
+
+    const response = await POST(request, {});
+
+    expect(response.status).toBe(200);
+    // floor(15 / 20) = 0 → no parent update
+    expect(txProductoUpdate).not.toHaveBeenCalled();
+
+    fetchSpy.mockRestore();
+  });
+});
