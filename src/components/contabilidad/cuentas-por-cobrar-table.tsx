@@ -59,7 +59,8 @@ function formatTableCurrency(amount: number): string {
 // Subcomponente para mostrar los pagos agrupados
 function PagosExpandidos({ row }: { row: Row<CuentaPorCobrar> }) {
   const cuenta = row.original;
-  const reconciliaciones = cuenta.factura?.venta?.reconciliaciones;
+  const reconciliaciones = (cuenta as any)._reconciliaciones ?? cuenta.factura?.venta?.reconciliaciones;
+  const esPrestamo = cuenta.tipoCuenta === 'PRESTAMO_CASH'
   const shouldReduceMotion = useReducedMotion()
 
   // Agrupar por idTransferencia
@@ -109,7 +110,7 @@ function PagosExpandidos({ row }: { row: Row<CuentaPorCobrar> }) {
       >
         <div className="flex items-center gap-2">
           <AlertCircle className="h-4 w-4" />
-          No hay pagos registrados para esta factura.
+          {esPrestamo ? 'No hay pagos registrados para este préstamo.' : 'No hay pagos registrados para esta factura.'}
         </div>
       </motion.div>
     )
@@ -256,8 +257,9 @@ export function CuentasPorCobrarTable({ cuentas, isLoading, error, onPagar }: Cu
       id: "expander",
       header: () => null,
       cell: ({ row }) => {
-        const tienePagos = row.original.factura?.venta?.reconciliaciones && 
-                          row.original.factura?.venta?.reconciliaciones.length > 0
+        const tienePagos = ((row.original as any)._reconciliaciones?.length > 0) ||
+                          (row.original.factura?.venta?.reconciliaciones && 
+                          row.original.factura?.venta?.reconciliaciones.length > 0)
         return (
           <TooltipProvider>
             <Tooltip>
@@ -290,6 +292,21 @@ export function CuentasPorCobrarTable({ cuentas, isLoading, error, onPagar }: Cu
       header: "ID Factura",
       cell: ({ row }) => {
         const cuenta = row.original as CuentaPorCobrar
+        const esPrestamo = cuenta.tipoCuenta === 'PRESTAMO_CASH'
+        if (esPrestamo) {
+          return (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="font-mono text-xs cursor-help">{cuenta.id.slice(-8)}</div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p className="font-mono text-xs">{cuenta.id}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )
+        }
         const idFactura = cuenta.facturaId || cuenta.factura?.idFactura
         if (!idFactura) return <div className="text-muted-foreground">-</div>
         return (
@@ -311,6 +328,18 @@ export function CuentasPorCobrarTable({ cuentas, isLoading, error, onPagar }: Cu
       header: "Factura",
       cell: ({ row }) => {
         const cuenta = row.original as CuentaPorCobrar;
+        if (cuenta.tipoCuenta === 'PRESTAMO_CASH' && cuenta.prestamoCash) {
+          return (
+            <div className="flex items-center gap-1.5">
+              <Badge
+                variant="outline"
+                className="bg-violet-100 text-violet-700 border-violet-200 dark:bg-violet-900/30 dark:text-violet-300 dark:border-violet-800 font-medium text-xs"
+              >
+                PREST-{cuenta.prestamoCash.idNumerico}
+              </Badge>
+            </div>
+          );
+        }
         if (cuenta.numeroFactura) {
           return <div className="font-medium text-foreground">{cuenta.numeroFactura}</div>;
         }
@@ -419,6 +448,8 @@ export function CuentasPorCobrarTable({ cuentas, isLoading, error, onPagar }: Cu
         
         const ventaId = cuenta.factura?.ventaId || cuenta.factura?.idFactura
         const invoiceNumber = cuenta.factura?.numeroFactura || cuenta.numeroFactura || cuenta.facturaId?.slice(-8) || "sin-factura"
+        const prestamoId = cuenta.prestamoCash?.id
+        const prestamoNumero = cuenta.prestamoCash?.idNumerico
         const downloadKey = cuenta.id || cuenta.facturaId || invoiceNumber
         const isDownloading = downloadInProgressKey === downloadKey
         
@@ -432,6 +463,26 @@ export function CuentasPorCobrarTable({ cuentas, isLoading, error, onPagar }: Cu
                     size="icon"
                     className="h-11 w-11"
                     onClick={async () => {
+                      if (esPrestamo) {
+                        if (!prestamoId) {
+                          toast.error("No se pudo obtener el préstamo asociado")
+                          return
+                        }
+                        setDownloadInProgressKey(downloadKey)
+                        const downloaded = await downloadFile(
+                          `/api/contabilidad/prestamos-cash/${prestamoId}/comprobante`,
+                          `comprobante-PREST-${prestamoNumero}.pdf`
+                        )
+                        setDownloadInProgressKey((currentKey) =>
+                          currentKey === downloadKey ? null : currentKey
+                        )
+                        if (downloaded) {
+                          toast.success("Comprobante descargado correctamente")
+                        } else {
+                          toast.error("No se pudo descargar el comprobante")
+                        }
+                        return
+                      }
                       if (!ventaId) {
                         toast.error("No hay factura disponible para descargar")
                         return
@@ -450,8 +501,8 @@ export function CuentasPorCobrarTable({ cuentas, isLoading, error, onPagar }: Cu
                         toast.error("No se pudo descargar la factura")
                       }
                     }}
-                    disabled={!ventaId || isDownloading}
-                    aria-label="Descargar PDF de la factura"
+                    disabled={(!ventaId && !esPrestamo) || isDownloading}
+                    aria-label={esPrestamo ? "Descargar comprobante del préstamo" : "Descargar PDF de la factura"}
                   >
                     {isDownloading ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
@@ -461,7 +512,7 @@ export function CuentasPorCobrarTable({ cuentas, isLoading, error, onPagar }: Cu
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>{isDownloading ? "Descargando..." : "Descargar factura PDF"}</p>
+                  <p>{isDownloading ? "Descargando..." : (esPrestamo ? "Descargar comprobante" : "Descargar factura PDF")}</p>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>

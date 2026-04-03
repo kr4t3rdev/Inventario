@@ -111,10 +111,14 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
     const body = createSchema.parse(await request.json())
 
     const prestamo = await prisma.$transaction(async (tx) => {
+      const montoDeuda = body.tasaInteres
+        ? Number((body.montoCapital * (1 + body.tasaInteres / 100)).toFixed(2))
+        : body.montoCapital
+
       const cuentaPorCobrar = await tx.cuentaPorCobrar.create({
         data: {
           clienteId: body.clienteId,
-          montoDeuda: body.montoCapital,
+          montoDeuda,
           montoPagado: 0,
           tipoCuenta: 'PRESTAMO_CASH',
           estado: 'PENDIENTE',

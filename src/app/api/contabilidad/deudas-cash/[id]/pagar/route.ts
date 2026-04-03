@@ -15,11 +15,11 @@ const pagoSchema = z.object({
 })
 
 /**
- * @description Verifica si el módulo de préstamos cash está habilitado
+ * @description Verifica si el módulo de deudas cash está habilitado
  * @returns {boolean} true si está habilitado
  */
-function prestamosCashEnabled(): boolean {
-  return process.env.NEXT_PUBLIC_ENABLE_PRESTAMOS_CASH !== 'false'
+function deudasCashEnabled(): boolean {
+  return process.env.NEXT_PUBLIC_ENABLE_DEUDAS_CASH !== 'false'
 }
 
 /**
@@ -29,7 +29,7 @@ function prestamosCashEnabled(): boolean {
  */
 export const POST = withAuthPost(async (request: NextRequest, context: unknown, user: { userId: string }) => {
   try {
-    if (!prestamosCashEnabled()) {
+    if (!deudasCashEnabled()) {
       return NextResponse.json({ error: 'Módulo de deudas cash deshabilitado' }, { status: 404 })
     }
 
@@ -66,8 +66,8 @@ export const POST = withAuthPost(async (request: NextRequest, context: unknown, 
           tipoPagoId: body.tipoPagoId,
           monto: body.monto,
           moneda: body.moneda || deuda.moneda,
-          tasaCambio: body.tasaCambio,
-          observaciones: body.observaciones,
+          ...(body.tasaCambio != null && { tasaCambio: body.tasaCambio }),
+          ...(body.observaciones != null && { observaciones: body.observaciones }),
           reconciliadoPor: user.userId,
           deudaCashId: deuda.id,
           tipoReconciliacion: 'DEUDA_CASH'

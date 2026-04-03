@@ -1,6 +1,7 @@
 import { apiSlice } from './apiSlice'
 import {
   DeudaCash,
+  DeudasCashStats,
   CreateDeudaCashRequest,
   UpdateDeudaCashRequest,
   RegistrarPagoDeudaRequest,
@@ -51,6 +52,10 @@ export const deudasCashApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ['DeudasCash', 'CuentasPorPagar', 'CuentasBancarias'],
     }),
+    getDeudasCashStats: builder.query<DeudasCashStats, void>({
+      query: () => '/contabilidad/deudas-cash/stats',
+      providesTags: ['DeudasCash'],
+    }),
   }),
 })
 
@@ -60,4 +65,5 @@ export const {
   useCreateDeudaCashMutation,
   useUpdateDeudaCashMutation,
   useRegistrarPagoDeudaMutation,
+  useGetDeudasCashStatsQuery,
 } = deudasCashApi

@@ -68,8 +68,9 @@ function PrestamosCashContent() {
             Gestione préstamos de dinero en efectivo a clientes
           </p>
         </div>
-        <Button onClick={() => setOpenForm(true)}>
-          <Plus className="mr-2 h-4 w-4" />
+        <Button onClick={() => setOpenForm(true)}
+          className="flex items-center space-x-2 mr-3">
+          <Plus className="h-4 w-4" />
           Nuevo Préstamo
         </Button>
       </div>

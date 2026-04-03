@@ -1451,6 +1451,7 @@ exports.Prisma.DeudaCashScalarFieldEnum = {
   fechaVencimiento: 'fechaVencimiento',
   estado: 'estado',
   observaciones: 'observaciones',
+  comprobanteUrl: 'comprobanteUrl',
   createdById: 'createdById',
   deletedAt: 'deletedAt',
   createdAt: 'createdAt',

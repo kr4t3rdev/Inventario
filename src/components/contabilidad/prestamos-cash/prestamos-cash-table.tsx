@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent } from "@/components/ui/card"
-import { ArrowUpDown, Search, AlertCircle, CheckCircle2, Clock, Ban, Loader2 } from "lucide-react"
+import { ArrowUpDown, Search, AlertCircle, CheckCircle2, Clock, Ban, Loader2, FileText } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -199,15 +199,52 @@ export function PrestamosCashTable({ prestamos, isLoading, error, onPagar }: Pre
       cell: ({ row }) => {
         const prestamo = row.original
         const activo = prestamo.estado === "ACTIVO" || prestamo.estado === "VENCIDO"
+        const [descargando, setDescargando] = useState(false)
+
+        const descargarComprobante = async () => {
+          setDescargando(true)
+          try {
+            const res = await fetch(`/api/contabilidad/prestamos-cash/${prestamo.id}/comprobante`)
+            if (!res.ok) throw new Error("Error al descargar")
+            const blob = await res.blob()
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement("a")
+            a.href = url
+            a.download = `comprobante-PREST-${prestamo.idNumerico}.pdf`
+            a.click()
+            URL.revokeObjectURL(url)
+          } catch {
+            console.error("Error descargando comprobante del préstamo", prestamo.idNumerico)
+          } finally {
+            setDescargando(false)
+          }
+        }
+
         return (
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!activo}
-            onClick={() => onPagar?.(prestamo)}
-          >
-            Registrar Pago
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!activo}
+              onClick={() => onPagar?.(prestamo)}
+            >
+              Registrar Pago
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              disabled={descargando}
+              onClick={descargarComprobante}
+              title="Descargar comprobante"
+            >
+              {descargando ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <FileText className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
         )
       },
     },

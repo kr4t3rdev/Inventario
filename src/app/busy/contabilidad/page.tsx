@@ -38,6 +38,7 @@ import {
   useGetVentasPendientesQuery,
 } from '@/lib/redux/contabilidad';
 import { cn } from '@/lib/utils';
+import { DeudasCashStatsWidget } from '@/components/contabilidad/deudas-cash-stats-widget';
 
 import type { Moneda } from '../../models/model';
 
@@ -282,6 +283,13 @@ export default function ContabilidadDashboard(): React.JSX.Element {
         <StaggerItem>
           <ResumenFinanciero periodo="mes" page={1} limit={10} />
         </StaggerItem>
+
+        {/* Deudas Cash Stats Widget */}
+        {process.env.NEXT_PUBLIC_ENABLE_DEUDAS_CASH !== 'false' && (
+          <StaggerItem>
+            <DeudasCashStatsWidget />
+          </StaggerItem>
+        )}
 
         <StaggerItem>
           <Separator className="bg-slate-200 dark:bg-slate-800" />

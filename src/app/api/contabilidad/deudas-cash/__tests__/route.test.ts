@@ -32,7 +32,7 @@ vi.mock('@/lib/services/audit-log-service', () => ({
 describe('API contabilidad/deudas-cash', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.stubEnv('NEXT_PUBLIC_ENABLE_PRESTAMOS_CASH', 'true')
+    vi.stubEnv('NEXT_PUBLIC_ENABLE_DEUDAS_CASH', 'true')
   })
 
   it('GET lista deudas con status 200', async () => {
@@ -70,7 +70,7 @@ describe('API contabilidad/deudas-cash', () => {
   })
 
   it('GET devuelve 404 si módulo deshabilitado', async () => {
-    vi.stubEnv('NEXT_PUBLIC_ENABLE_PRESTAMOS_CASH', 'false')
+    vi.stubEnv('NEXT_PUBLIC_ENABLE_DEUDAS_CASH', 'false')
 
     const { GET } = await import('../route')
     const request = new NextRequest('http://localhost/api/contabilidad/deudas-cash')
@@ -159,7 +159,7 @@ describe('API contabilidad/deudas-cash/[id]/pagar', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
-    vi.stubEnv('NEXT_PUBLIC_ENABLE_PRESTAMOS_CASH', 'true')
+    vi.stubEnv('NEXT_PUBLIC_ENABLE_DEUDAS_CASH', 'true')
   })
 
   it('POST registra pago parcial con status 201', async () => {

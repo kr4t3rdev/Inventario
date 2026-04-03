@@ -61,6 +61,19 @@ export async function GET(request: NextRequest) {
               }
             }
           }
+        },
+        prestamoCash: {
+          include: {
+            reconciliaciones: {
+              include: {
+                tipoPago: true,
+                cuentaBancaria: true
+              },
+              orderBy: {
+                fechaReconciliacion: 'desc'
+              }
+            }
+          }
         }
       },
       orderBy: {
@@ -123,12 +136,29 @@ export async function GET(request: NextRequest) {
         const totalPagado = totalPagadoFactura > 0.01 ? totalPagadoFactura : Number(cuenta.montoPagado ?? 0)
         const saldoFactura = Math.max(0, totalFactura - totalPagado)
 
+        const esPrestamo = cuenta.tipoCuenta === 'PRESTAMO_CASH'
+        const _reconciliaciones = esPrestamo
+          ? (cuenta.prestamoCash?.reconciliaciones ?? [])
+          : reconciliaciones
+        const prestamoCashData = esPrestamo && cuenta.prestamoCash
+          ? {
+              id: cuenta.prestamoCash.id,
+              idNumerico: cuenta.prestamoCash.idNumerico,
+              montoCapital: Number(cuenta.prestamoCash.montoCapital),
+              moneda: cuenta.prestamoCash.moneda,
+              tasaCambioAlCrear: cuenta.prestamoCash.tasaCambioAlCrear ? Number(cuenta.prestamoCash.tasaCambioAlCrear) : null,
+              observaciones: cuenta.prestamoCash.observaciones,
+            }
+          : undefined
+
         return {
           ...cuenta,
           totalFactura,
           totalVenta,
           totalPagadoFactura: totalPagado,
           saldoFactura,
+          _reconciliaciones,
+          prestamoCash: prestamoCashData,
         }
       })
       .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())

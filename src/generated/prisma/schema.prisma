@@ -814,6 +814,8 @@ model ReconciliacionVenta {
   cuentaBancaria              CuentaBancaria     @relation(fields: [cuentaId], references: [cuentaId])
   tipoPago                    TipoPago           @relation(fields: [tipoPagoId], references: [tipoId])
   venta                       Venta?             @relation(fields: [ventaId], references: [ventaId])
+  prestamoCash                PrestamoCash?      @relation(fields: [prestamoCashId], references: [id])
+  deudaCash                   DeudaCash?         @relation(fields: [deudaCashId], references: [id])
 }
 
 model ReconciliacionServicio {
@@ -1822,47 +1824,50 @@ model VendorCodeSequence {
 // ─── Cash Loans & Debts ────────────────────────────────────────────────────────
 
 model PrestamoCash {
-  id                String             @id @default(cuid())
-  idNumerico        Int                @default(autoincrement())
+  id                String                @id @default(cuid())
+  idNumerico        Int                   @default(autoincrement())
   clienteId         String
-  cuentaPorCobrarId String             @unique
+  cuentaPorCobrarId String                @unique
   montoCapital      Decimal
-  moneda            String             @default("CUP")
+  moneda            String                @default("CUP")
   tasaInteres       Decimal?
   tasaCambioAlCrear Decimal?
-  fechaOtorgamiento DateTime           @default(now())
+  fechaOtorgamiento DateTime              @default(now())
   fechaVencimiento  DateTime?
-  estado            EstadoPrestamoCash @default(ACTIVO)
+  estado            EstadoPrestamoCash    @default(ACTIVO)
   observaciones     String?
   createdById       String
   deletedAt         DateTime?
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  cliente           Cliente            @relation(fields: [clienteId], references: [clienteId])
-  cuentaPorCobrar   CuentaPorCobrar    @relation(fields: [cuentaPorCobrarId], references: [id])
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  cliente           Cliente               @relation(fields: [clienteId], references: [clienteId])
+  cuentaPorCobrar   CuentaPorCobrar       @relation(fields: [cuentaPorCobrarId], references: [id])
+  reconciliaciones  ReconciliacionVenta[]
 
   @@index([clienteId, estado])
   @@index([estado, fechaVencimiento])
 }
 
 model DeudaCash {
-  id                String             @id @default(cuid())
-  idNumerico        Int                @default(autoincrement())
+  id                String                @id @default(cuid())
+  idNumerico        Int                   @default(autoincrement())
   proveedorId       String
-  cuentaPorPagarId  String             @unique
+  cuentaPorPagarId  String                @unique
   montoCapital      Decimal
-  moneda            String             @default("CUP")
+  moneda            String                @default("CUP")
   tasaInteres       Decimal?
-  fechaOtorgamiento DateTime           @default(now())
+  fechaOtorgamiento DateTime              @default(now())
   fechaVencimiento  DateTime?
-  estado            EstadoPrestamoCash @default(ACTIVO)
+  estado            EstadoPrestamoCash    @default(ACTIVO)
   observaciones     String?
+  comprobanteUrl    String?
   createdById       String
   deletedAt         DateTime?
-  createdAt         DateTime           @default(now())
-  updatedAt         DateTime           @updatedAt
-  proveedor         Vendor             @relation(fields: [proveedorId], references: [vendorId])
-  cuentaPorPagar    CuentaPorPagar     @relation(fields: [cuentaPorPagarId], references: [cuentaPorPagarId])
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  proveedor         Vendor                @relation(fields: [proveedorId], references: [vendorId])
+  cuentaPorPagar    CuentaPorPagar        @relation(fields: [cuentaPorPagarId], references: [cuentaPorPagarId])
+  reconciliaciones  ReconciliacionVenta[]
 
   @@index([proveedorId, estado])
   @@index([estado, fechaVencimiento])

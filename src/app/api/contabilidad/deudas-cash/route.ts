@@ -19,15 +19,16 @@ const createSchema = z.object({
   moneda: z.string().optional().default('CUP'),
   tasaInteres: z.coerce.number().positive().optional(),
   fechaVencimiento: z.string().optional(),
-  observaciones: z.string().optional()
+  observaciones: z.string().optional(),
+  comprobanteUrl: z.string().url().optional()
 })
 
 /**
- * @description Verifica si el módulo de préstamos cash está habilitado
+ * @description Verifica si el módulo de deudas cash está habilitado
  * @returns {boolean} true si está habilitado
  */
-function prestamosCashEnabled(): boolean {
-  return process.env.NEXT_PUBLIC_ENABLE_PRESTAMOS_CASH !== 'false'
+function deudasCashEnabled(): boolean {
+  return process.env.NEXT_PUBLIC_ENABLE_DEUDAS_CASH !== 'false'
 }
 
 /**
@@ -37,7 +38,7 @@ function prestamosCashEnabled(): boolean {
  */
 export const GET = withAuthGet(async (request: NextRequest) => {
   try {
-    if (!prestamosCashEnabled()) {
+    if (!deudasCashEnabled()) {
       return NextResponse.json({ error: 'Módulo de deudas cash deshabilitado' }, { status: 404 })
     }
 
@@ -103,7 +104,7 @@ export const GET = withAuthGet(async (request: NextRequest) => {
  */
 export const POST = withAuthPost(async (request: NextRequest, _context: unknown, user: { userId: string }) => {
   try {
-    if (!prestamosCashEnabled()) {
+    if (!deudasCashEnabled()) {
       return NextResponse.json({ error: 'Módulo de deudas cash deshabilitado' }, { status: 404 })
     }
 
@@ -150,6 +151,7 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
           tasaInteres: body.tasaInteres,
           fechaVencimiento: body.fechaVencimiento ? new Date(body.fechaVencimiento) : undefined,
           observaciones: body.observaciones,
+          comprobanteUrl: body.comprobanteUrl,
           createdById: user.userId
         },
         include: {

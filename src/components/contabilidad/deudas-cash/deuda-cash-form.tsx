@@ -3,6 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
+import { useState, useRef, type ChangeEvent } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,8 +11,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
 import { useCreateDeudaCashMutation } from "@/lib/redux/services/deudasCashApi"
-import { Loader2 } from "lucide-react"
+import { ImageIcon, Loader2, Upload, X } from "lucide-react"
 import { sileo } from "sileo"
+import { getAuthToken } from "@/lib/token"
 
 const deudaSchema = z.object({
   proveedorId: z.string().min(1, "Seleccione un proveedor"),
@@ -38,6 +40,31 @@ interface DeudaCashFormProps {
  */
 export function DeudaCashForm({ open, onOpenChange, proveedores = [], onSuccess }: DeudaCashFormProps) {
   const [createDeuda, { isLoading }] = useCreateDeudaCashMutation()
+  const [comprobante, setComprobante] = useState<File | null>(null)
+  const [comprobantePreview, setComprobantePreview] = useState<string | null>(null)
+  const [uploadingImg, setUploadingImg] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleComprobanteChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith('image/')) {
+      sileo.error({ title: 'Solo se aceptan imágenes (JPG, PNG, WEBP)' })
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      sileo.error({ title: 'La imagen no puede superar 5 MB' })
+      return
+    }
+    setComprobante(file)
+    setComprobantePreview(URL.createObjectURL(file))
+  }
+
+  const clearComprobante = () => {
+    setComprobante(null)
+    setComprobantePreview(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
 
   const form = useForm<DeudaFormValues>({
     resolver: zodResolver(deudaSchema),
@@ -49,6 +76,26 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], onSuccess 
 
   const onSubmit = async (data: DeudaFormValues) => {
     try {
+      let comprobanteUrl: string | undefined
+
+      if (comprobante) {
+        setUploadingImg(true)
+        const fd = new FormData()
+        fd.append('file', comprobante)
+        const uploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          body: fd,
+          headers: { Authorization: getAuthToken() },
+        })
+        setUploadingImg(false)
+        if (!uploadRes.ok) {
+          sileo.error({ title: 'No se pudo subir el comprobante. Intentá de nuevo.' })
+          return
+        }
+        const uploadData = await uploadRes.json()
+        comprobanteUrl = uploadData.url
+      }
+
       await createDeuda({
         proveedorId: data.proveedorId,
         montoCapital: data.montoCapital,
@@ -56,19 +103,23 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], onSuccess 
         tasaInteres: data.tasaInteres,
         fechaVencimiento: data.fechaVencimiento || undefined,
         observaciones: data.observaciones || undefined,
+        comprobanteUrl,
       }).unwrap()
 
       sileo.success({ title: "Deuda en efectivo registrada exitosamente." })
       form.reset()
+      clearComprobante()
       onOpenChange(false)
       onSuccess?.()
     } catch (error: any) {
+      setUploadingImg(false)
       sileo.error({ title: error?.data?.error || "No se pudo registrar la deuda" })
     }
   }
 
   const handleClose = () => {
     form.reset()
+    clearComprobante()
     onOpenChange(false)
   }
 
@@ -189,12 +240,61 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], onSuccess 
               )}
             />
 
+            {/* Comprobante de deuda — opcional */}
+            <div className="space-y-2">
+              <p className="text-sm font-medium leading-none">Comprobante (Opcional)</p>
+              {comprobantePreview ? (
+                <div className="relative w-full rounded-md border overflow-hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={comprobantePreview}
+                    alt="Vista previa del comprobante"
+                    className="w-full max-h-48 object-contain bg-muted"
+                  />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="icon"
+                    className="absolute top-2 right-2 h-6 w-6"
+                    onClick={clearComprobante}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                  <p className="px-2 py-1 text-xs text-muted-foreground truncate bg-muted/50">
+                    {comprobante?.name}
+                  </p>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex w-full cursor-pointer flex-col items-center gap-2 rounded-md border-2 border-dashed border-muted-foreground/25 p-4 text-center transition-colors hover:border-primary/50 hover:bg-muted/30"
+                >
+                  <div className="rounded-full bg-muted p-2">
+                    <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                    <Upload className="h-3.5 w-3.5" />
+                    <span>Subir foto del comprobante</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">JPG, PNG, WEBP · Máx. 5 MB</p>
+                </button>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleComprobanteChange}
+              />
+            </div>
+
             <DialogFooter>
               <Button type="button" variant="outline" onClick={handleClose}>
                 Cancelar
               </Button>
-              <Button type="submit" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              <Button type="submit" disabled={isLoading || uploadingImg}>
+                {(isLoading || uploadingImg) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Registrar Deuda
               </Button>
             </DialogFooter>

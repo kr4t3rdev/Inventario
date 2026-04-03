@@ -1598,6 +1598,15 @@ export interface CuentaPorCobrar {
   saldoFactura?: number
   cliente?: Cliente
   factura?: Factura
+  _reconciliaciones?: any[]
+  prestamoCash?: {
+    id: string
+    idNumerico: number
+    montoCapital: number
+    moneda: string
+    tasaCambioAlCrear?: number | null
+    observaciones?: string | null
+  }
   createdAt: string
   updatedAt: string
 }
@@ -1678,6 +1687,7 @@ export interface CreateDeudaCashRequest {
   tasaInteres?: number
   fechaVencimiento?: string
   observaciones?: string
+  comprobanteUrl?: string
 }
 
 export interface UpdateDeudaCashRequest {
@@ -1701,6 +1711,14 @@ export interface PrestamosCashStats {
   totalVencidos: number
   montoTotalPrestado: { moneda: string; total: number }[]
   montoPendienteCobro: { moneda: string; total: number }[]
+}
+
+export interface DeudasCashStats {
+  totalActivas: number
+  totalPagadas: number
+  totalVencidas: number
+  montoTotalDeuda: Record<string, number>
+  montoPendientePago: Record<string, number>
 }
 
 export interface CreateCuentaPorCobrarRequest {

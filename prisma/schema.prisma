@@ -814,6 +814,8 @@ model ReconciliacionVenta {
   cuentaBancaria              CuentaBancaria @relation(fields: [cuentaId], references: [cuentaId])
   tipoPago                    TipoPago       @relation(fields: [tipoPagoId], references: [tipoId])
   venta                       Venta?         @relation(fields: [ventaId], references: [ventaId])
+  prestamoCash                PrestamoCash?  @relation(fields: [prestamoCashId], references: [id])
+  deudaCash                   DeudaCash?     @relation(fields: [deudaCashId], references: [id])
 }
 
 model ReconciliacionServicio {
@@ -1840,6 +1842,7 @@ model PrestamoCash {
   updatedAt         DateTime            @updatedAt
   cliente           Cliente             @relation(fields: [clienteId], references: [clienteId])
   cuentaPorCobrar   CuentaPorCobrar     @relation(fields: [cuentaPorCobrarId], references: [id])
+  reconciliaciones  ReconciliacionVenta[]
 
   @@index([clienteId, estado])
   @@index([estado, fechaVencimiento])
@@ -1857,12 +1860,14 @@ model DeudaCash {
   fechaVencimiento  DateTime?
   estado            EstadoPrestamoCash @default(ACTIVO)
   observaciones     String?
+  comprobanteUrl    String?
   createdById       String
   deletedAt         DateTime?
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
   proveedor         Vendor             @relation(fields: [proveedorId], references: [vendorId])
   cuentaPorPagar    CuentaPorPagar     @relation(fields: [cuentaPorPagarId], references: [cuentaPorPagarId])
+  reconciliaciones  ReconciliacionVenta[]
 
   @@index([proveedorId, estado])
   @@index([estado, fechaVencimiento])

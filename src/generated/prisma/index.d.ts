@@ -11460,6 +11460,68 @@ export namespace Prisma {
 
 
   /**
+   * Count Type PrestamoCashCountOutputType
+   */
+
+  export type PrestamoCashCountOutputType = {
+    reconciliaciones: number
+  }
+
+  export type PrestamoCashCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    reconciliaciones?: boolean | PrestamoCashCountOutputTypeCountReconciliacionesArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * PrestamoCashCountOutputType without action
+   */
+  export type PrestamoCashCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PrestamoCashCountOutputType
+     */
+    select?: PrestamoCashCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * PrestamoCashCountOutputType without action
+   */
+  export type PrestamoCashCountOutputTypeCountReconciliacionesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ReconciliacionVentaWhereInput
+  }
+
+
+  /**
+   * Count Type DeudaCashCountOutputType
+   */
+
+  export type DeudaCashCountOutputType = {
+    reconciliaciones: number
+  }
+
+  export type DeudaCashCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    reconciliaciones?: boolean | DeudaCashCountOutputTypeCountReconciliacionesArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * DeudaCashCountOutputType without action
+   */
+  export type DeudaCashCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DeudaCashCountOutputType
+     */
+    select?: DeudaCashCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * DeudaCashCountOutputType without action
+   */
+  export type DeudaCashCountOutputTypeCountReconciliacionesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ReconciliacionVentaWhereInput
+  }
+
+
+  /**
    * Models
    */
 
@@ -61932,6 +61994,8 @@ export namespace Prisma {
     cuentaBancaria?: boolean | CuentaBancariaDefaultArgs<ExtArgs>
     tipoPago?: boolean | TipoPagoDefaultArgs<ExtArgs>
     venta?: boolean | ReconciliacionVenta$ventaArgs<ExtArgs>
+    prestamoCash?: boolean | ReconciliacionVenta$prestamoCashArgs<ExtArgs>
+    deudaCash?: boolean | ReconciliacionVenta$deudaCashArgs<ExtArgs>
   }, ExtArgs["result"]["reconciliacionVenta"]>
 
   export type ReconciliacionVentaSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -61956,6 +62020,8 @@ export namespace Prisma {
     cuentaBancaria?: boolean | CuentaBancariaDefaultArgs<ExtArgs>
     tipoPago?: boolean | TipoPagoDefaultArgs<ExtArgs>
     venta?: boolean | ReconciliacionVenta$ventaArgs<ExtArgs>
+    prestamoCash?: boolean | ReconciliacionVenta$prestamoCashArgs<ExtArgs>
+    deudaCash?: boolean | ReconciliacionVenta$deudaCashArgs<ExtArgs>
   }, ExtArgs["result"]["reconciliacionVenta"]>
 
   export type ReconciliacionVentaSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -61980,6 +62046,8 @@ export namespace Prisma {
     cuentaBancaria?: boolean | CuentaBancariaDefaultArgs<ExtArgs>
     tipoPago?: boolean | TipoPagoDefaultArgs<ExtArgs>
     venta?: boolean | ReconciliacionVenta$ventaArgs<ExtArgs>
+    prestamoCash?: boolean | ReconciliacionVenta$prestamoCashArgs<ExtArgs>
+    deudaCash?: boolean | ReconciliacionVenta$deudaCashArgs<ExtArgs>
   }, ExtArgs["result"]["reconciliacionVenta"]>
 
   export type ReconciliacionVentaSelectScalar = {
@@ -62008,16 +62076,22 @@ export namespace Prisma {
     cuentaBancaria?: boolean | CuentaBancariaDefaultArgs<ExtArgs>
     tipoPago?: boolean | TipoPagoDefaultArgs<ExtArgs>
     venta?: boolean | ReconciliacionVenta$ventaArgs<ExtArgs>
+    prestamoCash?: boolean | ReconciliacionVenta$prestamoCashArgs<ExtArgs>
+    deudaCash?: boolean | ReconciliacionVenta$deudaCashArgs<ExtArgs>
   }
   export type ReconciliacionVentaIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     cuentaBancaria?: boolean | CuentaBancariaDefaultArgs<ExtArgs>
     tipoPago?: boolean | TipoPagoDefaultArgs<ExtArgs>
     venta?: boolean | ReconciliacionVenta$ventaArgs<ExtArgs>
+    prestamoCash?: boolean | ReconciliacionVenta$prestamoCashArgs<ExtArgs>
+    deudaCash?: boolean | ReconciliacionVenta$deudaCashArgs<ExtArgs>
   }
   export type ReconciliacionVentaIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     cuentaBancaria?: boolean | CuentaBancariaDefaultArgs<ExtArgs>
     tipoPago?: boolean | TipoPagoDefaultArgs<ExtArgs>
     venta?: boolean | ReconciliacionVenta$ventaArgs<ExtArgs>
+    prestamoCash?: boolean | ReconciliacionVenta$prestamoCashArgs<ExtArgs>
+    deudaCash?: boolean | ReconciliacionVenta$deudaCashArgs<ExtArgs>
   }
 
   export type $ReconciliacionVentaPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -62026,6 +62100,8 @@ export namespace Prisma {
       cuentaBancaria: Prisma.$CuentaBancariaPayload<ExtArgs>
       tipoPago: Prisma.$TipoPagoPayload<ExtArgs>
       venta: Prisma.$VentaPayload<ExtArgs> | null
+      prestamoCash: Prisma.$PrestamoCashPayload<ExtArgs> | null
+      deudaCash: Prisma.$DeudaCashPayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
       reconciliacionId: string
@@ -62443,6 +62519,8 @@ export namespace Prisma {
     cuentaBancaria<T extends CuentaBancariaDefaultArgs<ExtArgs> = {}>(args?: Subset<T, CuentaBancariaDefaultArgs<ExtArgs>>): Prisma__CuentaBancariaClient<$Result.GetResult<Prisma.$CuentaBancariaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     tipoPago<T extends TipoPagoDefaultArgs<ExtArgs> = {}>(args?: Subset<T, TipoPagoDefaultArgs<ExtArgs>>): Prisma__TipoPagoClient<$Result.GetResult<Prisma.$TipoPagoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     venta<T extends ReconciliacionVenta$ventaArgs<ExtArgs> = {}>(args?: Subset<T, ReconciliacionVenta$ventaArgs<ExtArgs>>): Prisma__VentaClient<$Result.GetResult<Prisma.$VentaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    prestamoCash<T extends ReconciliacionVenta$prestamoCashArgs<ExtArgs> = {}>(args?: Subset<T, ReconciliacionVenta$prestamoCashArgs<ExtArgs>>): Prisma__PrestamoCashClient<$Result.GetResult<Prisma.$PrestamoCashPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    deudaCash<T extends ReconciliacionVenta$deudaCashArgs<ExtArgs> = {}>(args?: Subset<T, ReconciliacionVenta$deudaCashArgs<ExtArgs>>): Prisma__DeudaCashClient<$Result.GetResult<Prisma.$DeudaCashPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -62902,6 +62980,44 @@ export namespace Prisma {
      */
     include?: VentaInclude<ExtArgs> | null
     where?: VentaWhereInput
+  }
+
+  /**
+   * ReconciliacionVenta.prestamoCash
+   */
+  export type ReconciliacionVenta$prestamoCashArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PrestamoCash
+     */
+    select?: PrestamoCashSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PrestamoCash
+     */
+    omit?: PrestamoCashOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PrestamoCashInclude<ExtArgs> | null
+    where?: PrestamoCashWhereInput
+  }
+
+  /**
+   * ReconciliacionVenta.deudaCash
+   */
+  export type ReconciliacionVenta$deudaCashArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DeudaCash
+     */
+    select?: DeudaCashSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the DeudaCash
+     */
+    omit?: DeudaCashOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DeudaCashInclude<ExtArgs> | null
+    where?: DeudaCashWhereInput
   }
 
   /**
@@ -121733,6 +121849,8 @@ export namespace Prisma {
     updatedAt?: boolean
     cliente?: boolean | ClienteDefaultArgs<ExtArgs>
     cuentaPorCobrar?: boolean | CuentaPorCobrarDefaultArgs<ExtArgs>
+    reconciliaciones?: boolean | PrestamoCash$reconciliacionesArgs<ExtArgs>
+    _count?: boolean | PrestamoCashCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["prestamoCash"]>
 
   export type PrestamoCashSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -121800,6 +121918,8 @@ export namespace Prisma {
   export type PrestamoCashInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     cliente?: boolean | ClienteDefaultArgs<ExtArgs>
     cuentaPorCobrar?: boolean | CuentaPorCobrarDefaultArgs<ExtArgs>
+    reconciliaciones?: boolean | PrestamoCash$reconciliacionesArgs<ExtArgs>
+    _count?: boolean | PrestamoCashCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type PrestamoCashIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     cliente?: boolean | ClienteDefaultArgs<ExtArgs>
@@ -121815,6 +121935,7 @@ export namespace Prisma {
     objects: {
       cliente: Prisma.$ClientePayload<ExtArgs>
       cuentaPorCobrar: Prisma.$CuentaPorCobrarPayload<ExtArgs>
+      reconciliaciones: Prisma.$ReconciliacionVentaPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -122229,6 +122350,7 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     cliente<T extends ClienteDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ClienteDefaultArgs<ExtArgs>>): Prisma__ClienteClient<$Result.GetResult<Prisma.$ClientePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     cuentaPorCobrar<T extends CuentaPorCobrarDefaultArgs<ExtArgs> = {}>(args?: Subset<T, CuentaPorCobrarDefaultArgs<ExtArgs>>): Prisma__CuentaPorCobrarClient<$Result.GetResult<Prisma.$CuentaPorCobrarPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    reconciliaciones<T extends PrestamoCash$reconciliacionesArgs<ExtArgs> = {}>(args?: Subset<T, PrestamoCash$reconciliacionesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReconciliacionVentaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -122670,6 +122792,30 @@ export namespace Prisma {
   }
 
   /**
+   * PrestamoCash.reconciliaciones
+   */
+  export type PrestamoCash$reconciliacionesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReconciliacionVenta
+     */
+    select?: ReconciliacionVentaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReconciliacionVenta
+     */
+    omit?: ReconciliacionVentaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReconciliacionVentaInclude<ExtArgs> | null
+    where?: ReconciliacionVentaWhereInput
+    orderBy?: ReconciliacionVentaOrderByWithRelationInput | ReconciliacionVentaOrderByWithRelationInput[]
+    cursor?: ReconciliacionVentaWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ReconciliacionVentaScalarFieldEnum | ReconciliacionVentaScalarFieldEnum[]
+  }
+
+  /**
    * PrestamoCash without action
    */
   export type PrestamoCashDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -122724,6 +122870,7 @@ export namespace Prisma {
     fechaVencimiento: Date | null
     estado: $Enums.EstadoPrestamoCash | null
     observaciones: string | null
+    comprobanteUrl: string | null
     createdById: string | null
     deletedAt: Date | null
     createdAt: Date | null
@@ -122742,6 +122889,7 @@ export namespace Prisma {
     fechaVencimiento: Date | null
     estado: $Enums.EstadoPrestamoCash | null
     observaciones: string | null
+    comprobanteUrl: string | null
     createdById: string | null
     deletedAt: Date | null
     createdAt: Date | null
@@ -122760,6 +122908,7 @@ export namespace Prisma {
     fechaVencimiento: number
     estado: number
     observaciones: number
+    comprobanteUrl: number
     createdById: number
     deletedAt: number
     createdAt: number
@@ -122792,6 +122941,7 @@ export namespace Prisma {
     fechaVencimiento?: true
     estado?: true
     observaciones?: true
+    comprobanteUrl?: true
     createdById?: true
     deletedAt?: true
     createdAt?: true
@@ -122810,6 +122960,7 @@ export namespace Prisma {
     fechaVencimiento?: true
     estado?: true
     observaciones?: true
+    comprobanteUrl?: true
     createdById?: true
     deletedAt?: true
     createdAt?: true
@@ -122828,6 +122979,7 @@ export namespace Prisma {
     fechaVencimiento?: true
     estado?: true
     observaciones?: true
+    comprobanteUrl?: true
     createdById?: true
     deletedAt?: true
     createdAt?: true
@@ -122933,6 +123085,7 @@ export namespace Prisma {
     fechaVencimiento: Date | null
     estado: $Enums.EstadoPrestamoCash
     observaciones: string | null
+    comprobanteUrl: string | null
     createdById: string
     deletedAt: Date | null
     createdAt: Date
@@ -122970,12 +123123,15 @@ export namespace Prisma {
     fechaVencimiento?: boolean
     estado?: boolean
     observaciones?: boolean
+    comprobanteUrl?: boolean
     createdById?: boolean
     deletedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     proveedor?: boolean | VendorDefaultArgs<ExtArgs>
     cuentaPorPagar?: boolean | CuentaPorPagarDefaultArgs<ExtArgs>
+    reconciliaciones?: boolean | DeudaCash$reconciliacionesArgs<ExtArgs>
+    _count?: boolean | DeudaCashCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["deudaCash"]>
 
   export type DeudaCashSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -122990,6 +123146,7 @@ export namespace Prisma {
     fechaVencimiento?: boolean
     estado?: boolean
     observaciones?: boolean
+    comprobanteUrl?: boolean
     createdById?: boolean
     deletedAt?: boolean
     createdAt?: boolean
@@ -123010,6 +123167,7 @@ export namespace Prisma {
     fechaVencimiento?: boolean
     estado?: boolean
     observaciones?: boolean
+    comprobanteUrl?: boolean
     createdById?: boolean
     deletedAt?: boolean
     createdAt?: boolean
@@ -123030,16 +123188,19 @@ export namespace Prisma {
     fechaVencimiento?: boolean
     estado?: boolean
     observaciones?: boolean
+    comprobanteUrl?: boolean
     createdById?: boolean
     deletedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type DeudaCashOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "idNumerico" | "proveedorId" | "cuentaPorPagarId" | "montoCapital" | "moneda" | "tasaInteres" | "fechaOtorgamiento" | "fechaVencimiento" | "estado" | "observaciones" | "createdById" | "deletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["deudaCash"]>
+  export type DeudaCashOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "idNumerico" | "proveedorId" | "cuentaPorPagarId" | "montoCapital" | "moneda" | "tasaInteres" | "fechaOtorgamiento" | "fechaVencimiento" | "estado" | "observaciones" | "comprobanteUrl" | "createdById" | "deletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["deudaCash"]>
   export type DeudaCashInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     proveedor?: boolean | VendorDefaultArgs<ExtArgs>
     cuentaPorPagar?: boolean | CuentaPorPagarDefaultArgs<ExtArgs>
+    reconciliaciones?: boolean | DeudaCash$reconciliacionesArgs<ExtArgs>
+    _count?: boolean | DeudaCashCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type DeudaCashIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     proveedor?: boolean | VendorDefaultArgs<ExtArgs>
@@ -123055,6 +123216,7 @@ export namespace Prisma {
     objects: {
       proveedor: Prisma.$VendorPayload<ExtArgs>
       cuentaPorPagar: Prisma.$CuentaPorPagarPayload<ExtArgs>
+      reconciliaciones: Prisma.$ReconciliacionVentaPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -123068,6 +123230,7 @@ export namespace Prisma {
       fechaVencimiento: Date | null
       estado: $Enums.EstadoPrestamoCash
       observaciones: string | null
+      comprobanteUrl: string | null
       createdById: string
       deletedAt: Date | null
       createdAt: Date
@@ -123468,6 +123631,7 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     proveedor<T extends VendorDefaultArgs<ExtArgs> = {}>(args?: Subset<T, VendorDefaultArgs<ExtArgs>>): Prisma__VendorClient<$Result.GetResult<Prisma.$VendorPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     cuentaPorPagar<T extends CuentaPorPagarDefaultArgs<ExtArgs> = {}>(args?: Subset<T, CuentaPorPagarDefaultArgs<ExtArgs>>): Prisma__CuentaPorPagarClient<$Result.GetResult<Prisma.$CuentaPorPagarPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    reconciliaciones<T extends DeudaCash$reconciliacionesArgs<ExtArgs> = {}>(args?: Subset<T, DeudaCash$reconciliacionesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReconciliacionVentaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -123508,6 +123672,7 @@ export namespace Prisma {
     readonly fechaVencimiento: FieldRef<"DeudaCash", 'DateTime'>
     readonly estado: FieldRef<"DeudaCash", 'EstadoPrestamoCash'>
     readonly observaciones: FieldRef<"DeudaCash", 'String'>
+    readonly comprobanteUrl: FieldRef<"DeudaCash", 'String'>
     readonly createdById: FieldRef<"DeudaCash", 'String'>
     readonly deletedAt: FieldRef<"DeudaCash", 'DateTime'>
     readonly createdAt: FieldRef<"DeudaCash", 'DateTime'>
@@ -123905,6 +124070,30 @@ export namespace Prisma {
      * Limit how many DeudaCashes to delete.
      */
     limit?: number
+  }
+
+  /**
+   * DeudaCash.reconciliaciones
+   */
+  export type DeudaCash$reconciliacionesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ReconciliacionVenta
+     */
+    select?: ReconciliacionVentaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ReconciliacionVenta
+     */
+    omit?: ReconciliacionVentaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ReconciliacionVentaInclude<ExtArgs> | null
+    where?: ReconciliacionVentaWhereInput
+    orderBy?: ReconciliacionVentaOrderByWithRelationInput | ReconciliacionVentaOrderByWithRelationInput[]
+    cursor?: ReconciliacionVentaWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ReconciliacionVentaScalarFieldEnum | ReconciliacionVentaScalarFieldEnum[]
   }
 
   /**
@@ -125543,6 +125732,7 @@ export namespace Prisma {
     fechaVencimiento: 'fechaVencimiento',
     estado: 'estado',
     observaciones: 'observaciones',
+    comprobanteUrl: 'comprobanteUrl',
     createdById: 'createdById',
     deletedAt: 'deletedAt',
     createdAt: 'createdAt',
@@ -129988,6 +130178,8 @@ export namespace Prisma {
     cuentaBancaria?: XOR<CuentaBancariaScalarRelationFilter, CuentaBancariaWhereInput>
     tipoPago?: XOR<TipoPagoScalarRelationFilter, TipoPagoWhereInput>
     venta?: XOR<VentaNullableScalarRelationFilter, VentaWhereInput> | null
+    prestamoCash?: XOR<PrestamoCashNullableScalarRelationFilter, PrestamoCashWhereInput> | null
+    deudaCash?: XOR<DeudaCashNullableScalarRelationFilter, DeudaCashWhereInput> | null
   }
 
   export type ReconciliacionVentaOrderByWithRelationInput = {
@@ -130012,6 +130204,8 @@ export namespace Prisma {
     cuentaBancaria?: CuentaBancariaOrderByWithRelationInput
     tipoPago?: TipoPagoOrderByWithRelationInput
     venta?: VentaOrderByWithRelationInput
+    prestamoCash?: PrestamoCashOrderByWithRelationInput
+    deudaCash?: DeudaCashOrderByWithRelationInput
   }
 
   export type ReconciliacionVentaWhereUniqueInput = Prisma.AtLeast<{
@@ -130039,6 +130233,8 @@ export namespace Prisma {
     cuentaBancaria?: XOR<CuentaBancariaScalarRelationFilter, CuentaBancariaWhereInput>
     tipoPago?: XOR<TipoPagoScalarRelationFilter, TipoPagoWhereInput>
     venta?: XOR<VentaNullableScalarRelationFilter, VentaWhereInput> | null
+    prestamoCash?: XOR<PrestamoCashNullableScalarRelationFilter, PrestamoCashWhereInput> | null
+    deudaCash?: XOR<DeudaCashNullableScalarRelationFilter, DeudaCashWhereInput> | null
   }, "reconciliacionId">
 
   export type ReconciliacionVentaOrderByWithAggregationInput = {
@@ -134610,6 +134806,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"PrestamoCash"> | Date | string
     cliente?: XOR<ClienteScalarRelationFilter, ClienteWhereInput>
     cuentaPorCobrar?: XOR<CuentaPorCobrarScalarRelationFilter, CuentaPorCobrarWhereInput>
+    reconciliaciones?: ReconciliacionVentaListRelationFilter
   }
 
   export type PrestamoCashOrderByWithRelationInput = {
@@ -134631,6 +134828,7 @@ export namespace Prisma {
     updatedAt?: SortOrder
     cliente?: ClienteOrderByWithRelationInput
     cuentaPorCobrar?: CuentaPorCobrarOrderByWithRelationInput
+    reconciliaciones?: ReconciliacionVentaOrderByRelationAggregateInput
   }
 
   export type PrestamoCashWhereUniqueInput = Prisma.AtLeast<{
@@ -134655,6 +134853,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"PrestamoCash"> | Date | string
     cliente?: XOR<ClienteScalarRelationFilter, ClienteWhereInput>
     cuentaPorCobrar?: XOR<CuentaPorCobrarScalarRelationFilter, CuentaPorCobrarWhereInput>
+    reconciliaciones?: ReconciliacionVentaListRelationFilter
   }, "id" | "cuentaPorCobrarId">
 
   export type PrestamoCashOrderByWithAggregationInput = {
@@ -134718,12 +134917,14 @@ export namespace Prisma {
     fechaVencimiento?: DateTimeNullableFilter<"DeudaCash"> | Date | string | null
     estado?: EnumEstadoPrestamoCashFilter<"DeudaCash"> | $Enums.EstadoPrestamoCash
     observaciones?: StringNullableFilter<"DeudaCash"> | string | null
+    comprobanteUrl?: StringNullableFilter<"DeudaCash"> | string | null
     createdById?: StringFilter<"DeudaCash"> | string
     deletedAt?: DateTimeNullableFilter<"DeudaCash"> | Date | string | null
     createdAt?: DateTimeFilter<"DeudaCash"> | Date | string
     updatedAt?: DateTimeFilter<"DeudaCash"> | Date | string
     proveedor?: XOR<VendorScalarRelationFilter, VendorWhereInput>
     cuentaPorPagar?: XOR<CuentaPorPagarScalarRelationFilter, CuentaPorPagarWhereInput>
+    reconciliaciones?: ReconciliacionVentaListRelationFilter
   }
 
   export type DeudaCashOrderByWithRelationInput = {
@@ -134738,12 +134939,14 @@ export namespace Prisma {
     fechaVencimiento?: SortOrderInput | SortOrder
     estado?: SortOrder
     observaciones?: SortOrderInput | SortOrder
+    comprobanteUrl?: SortOrderInput | SortOrder
     createdById?: SortOrder
     deletedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     proveedor?: VendorOrderByWithRelationInput
     cuentaPorPagar?: CuentaPorPagarOrderByWithRelationInput
+    reconciliaciones?: ReconciliacionVentaOrderByRelationAggregateInput
   }
 
   export type DeudaCashWhereUniqueInput = Prisma.AtLeast<{
@@ -134761,12 +134964,14 @@ export namespace Prisma {
     fechaVencimiento?: DateTimeNullableFilter<"DeudaCash"> | Date | string | null
     estado?: EnumEstadoPrestamoCashFilter<"DeudaCash"> | $Enums.EstadoPrestamoCash
     observaciones?: StringNullableFilter<"DeudaCash"> | string | null
+    comprobanteUrl?: StringNullableFilter<"DeudaCash"> | string | null
     createdById?: StringFilter<"DeudaCash"> | string
     deletedAt?: DateTimeNullableFilter<"DeudaCash"> | Date | string | null
     createdAt?: DateTimeFilter<"DeudaCash"> | Date | string
     updatedAt?: DateTimeFilter<"DeudaCash"> | Date | string
     proveedor?: XOR<VendorScalarRelationFilter, VendorWhereInput>
     cuentaPorPagar?: XOR<CuentaPorPagarScalarRelationFilter, CuentaPorPagarWhereInput>
+    reconciliaciones?: ReconciliacionVentaListRelationFilter
   }, "id" | "cuentaPorPagarId">
 
   export type DeudaCashOrderByWithAggregationInput = {
@@ -134781,6 +134986,7 @@ export namespace Prisma {
     fechaVencimiento?: SortOrderInput | SortOrder
     estado?: SortOrder
     observaciones?: SortOrderInput | SortOrder
+    comprobanteUrl?: SortOrderInput | SortOrder
     createdById?: SortOrder
     deletedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
@@ -134807,6 +135013,7 @@ export namespace Prisma {
     fechaVencimiento?: DateTimeNullableWithAggregatesFilter<"DeudaCash"> | Date | string | null
     estado?: EnumEstadoPrestamoCashWithAggregatesFilter<"DeudaCash"> | $Enums.EstadoPrestamoCash
     observaciones?: StringNullableWithAggregatesFilter<"DeudaCash"> | string | null
+    comprobanteUrl?: StringNullableWithAggregatesFilter<"DeudaCash"> | string | null
     createdById?: StringWithAggregatesFilter<"DeudaCash"> | string
     deletedAt?: DateTimeNullableWithAggregatesFilter<"DeudaCash"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"DeudaCash"> | Date | string
@@ -139215,12 +139422,12 @@ export namespace Prisma {
     updatedAt?: Date | string
     idTransferencia?: string | null
     verificacionTransferenciaId?: string | null
-    prestamoCashId?: string | null
-    deudaCashId?: string | null
     tipoReconciliacion?: $Enums.TipoReconciliacion
     cuentaBancaria: CuentaBancariaCreateNestedOneWithoutReconciliacionesVentaInput
     tipoPago: TipoPagoCreateNestedOneWithoutReconciliacionesVentaInput
     venta?: VentaCreateNestedOneWithoutReconciliacionesInput
+    prestamoCash?: PrestamoCashCreateNestedOneWithoutReconciliacionesInput
+    deudaCash?: DeudaCashCreateNestedOneWithoutReconciliacionesInput
   }
 
   export type ReconciliacionVentaUncheckedCreateInput = {
@@ -139257,12 +139464,12 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     idTransferencia?: NullableStringFieldUpdateOperationsInput | string | null
     verificacionTransferenciaId?: NullableStringFieldUpdateOperationsInput | string | null
-    prestamoCashId?: NullableStringFieldUpdateOperationsInput | string | null
-    deudaCashId?: NullableStringFieldUpdateOperationsInput | string | null
     tipoReconciliacion?: EnumTipoReconciliacionFieldUpdateOperationsInput | $Enums.TipoReconciliacion
     cuentaBancaria?: CuentaBancariaUpdateOneRequiredWithoutReconciliacionesVentaNestedInput
     tipoPago?: TipoPagoUpdateOneRequiredWithoutReconciliacionesVentaNestedInput
     venta?: VentaUpdateOneWithoutReconciliacionesNestedInput
+    prestamoCash?: PrestamoCashUpdateOneWithoutReconciliacionesNestedInput
+    deudaCash?: DeudaCashUpdateOneWithoutReconciliacionesNestedInput
   }
 
   export type ReconciliacionVentaUncheckedUpdateInput = {
@@ -139320,8 +139527,6 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     idTransferencia?: NullableStringFieldUpdateOperationsInput | string | null
     verificacionTransferenciaId?: NullableStringFieldUpdateOperationsInput | string | null
-    prestamoCashId?: NullableStringFieldUpdateOperationsInput | string | null
-    deudaCashId?: NullableStringFieldUpdateOperationsInput | string | null
     tipoReconciliacion?: EnumTipoReconciliacionFieldUpdateOperationsInput | $Enums.TipoReconciliacion
   }
 
@@ -144338,6 +144543,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     cliente: ClienteCreateNestedOneWithoutPrestamosCashInput
     cuentaPorCobrar: CuentaPorCobrarCreateNestedOneWithoutPrestamoCashInput
+    reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutPrestamoCashInput
   }
 
   export type PrestamoCashUncheckedCreateInput = {
@@ -144357,6 +144563,7 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutPrestamoCashInput
   }
 
   export type PrestamoCashUpdateInput = {
@@ -144376,6 +144583,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     cliente?: ClienteUpdateOneRequiredWithoutPrestamosCashNestedInput
     cuentaPorCobrar?: CuentaPorCobrarUpdateOneRequiredWithoutPrestamoCashNestedInput
+    reconciliaciones?: ReconciliacionVentaUpdateManyWithoutPrestamoCashNestedInput
   }
 
   export type PrestamoCashUncheckedUpdateInput = {
@@ -144395,6 +144603,7 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutPrestamoCashNestedInput
   }
 
   export type PrestamoCashCreateManyInput = {
@@ -144462,12 +144671,14 @@ export namespace Prisma {
     fechaVencimiento?: Date | string | null
     estado?: $Enums.EstadoPrestamoCash
     observaciones?: string | null
+    comprobanteUrl?: string | null
     createdById: string
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     proveedor: VendorCreateNestedOneWithoutDeudasCashInput
     cuentaPorPagar: CuentaPorPagarCreateNestedOneWithoutDeudaCashInput
+    reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutDeudaCashInput
   }
 
   export type DeudaCashUncheckedCreateInput = {
@@ -144482,10 +144693,12 @@ export namespace Prisma {
     fechaVencimiento?: Date | string | null
     estado?: $Enums.EstadoPrestamoCash
     observaciones?: string | null
+    comprobanteUrl?: string | null
     createdById: string
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutDeudaCashInput
   }
 
   export type DeudaCashUpdateInput = {
@@ -144498,12 +144711,14 @@ export namespace Prisma {
     fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     estado?: EnumEstadoPrestamoCashFieldUpdateOperationsInput | $Enums.EstadoPrestamoCash
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    comprobanteUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: StringFieldUpdateOperationsInput | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     proveedor?: VendorUpdateOneRequiredWithoutDeudasCashNestedInput
     cuentaPorPagar?: CuentaPorPagarUpdateOneRequiredWithoutDeudaCashNestedInput
+    reconciliaciones?: ReconciliacionVentaUpdateManyWithoutDeudaCashNestedInput
   }
 
   export type DeudaCashUncheckedUpdateInput = {
@@ -144518,10 +144733,12 @@ export namespace Prisma {
     fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     estado?: EnumEstadoPrestamoCashFieldUpdateOperationsInput | $Enums.EstadoPrestamoCash
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    comprobanteUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: StringFieldUpdateOperationsInput | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutDeudaCashNestedInput
   }
 
   export type DeudaCashCreateManyInput = {
@@ -144536,6 +144753,7 @@ export namespace Prisma {
     fechaVencimiento?: Date | string | null
     estado?: $Enums.EstadoPrestamoCash
     observaciones?: string | null
+    comprobanteUrl?: string | null
     createdById: string
     deletedAt?: Date | string | null
     createdAt?: Date | string
@@ -144552,6 +144770,7 @@ export namespace Prisma {
     fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     estado?: EnumEstadoPrestamoCashFieldUpdateOperationsInput | $Enums.EstadoPrestamoCash
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    comprobanteUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: StringFieldUpdateOperationsInput | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -144570,6 +144789,7 @@ export namespace Prisma {
     fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     estado?: EnumEstadoPrestamoCashFieldUpdateOperationsInput | $Enums.EstadoPrestamoCash
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    comprobanteUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: StringFieldUpdateOperationsInput | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -147684,6 +147904,16 @@ export namespace Prisma {
     isNot?: VentaWhereInput | null
   }
 
+  export type PrestamoCashNullableScalarRelationFilter = {
+    is?: PrestamoCashWhereInput | null
+    isNot?: PrestamoCashWhereInput | null
+  }
+
+  export type DeudaCashNullableScalarRelationFilter = {
+    is?: DeudaCashWhereInput | null
+    isNot?: DeudaCashWhereInput | null
+  }
+
   export type ReconciliacionVentaCountOrderByAggregateInput = {
     reconciliacionId?: SortOrder
     ventaId?: SortOrder
@@ -149383,11 +149613,6 @@ export namespace Prisma {
     not?: NestedEnumCuentaPorCobrarTipoFilter<$PrismaModel> | $Enums.CuentaPorCobrarTipo
   }
 
-  export type PrestamoCashNullableScalarRelationFilter = {
-    is?: PrestamoCashWhereInput | null
-    isNot?: PrestamoCashWhereInput | null
-  }
-
   export type CuentaPorCobrarCountOrderByAggregateInput = {
     id?: SortOrder
     idCC?: SortOrder
@@ -149493,11 +149718,6 @@ export namespace Prisma {
     every?: PagoCuentaPorPagarWhereInput
     some?: PagoCuentaPorPagarWhereInput
     none?: PagoCuentaPorPagarWhereInput
-  }
-
-  export type DeudaCashNullableScalarRelationFilter = {
-    is?: DeudaCashWhereInput | null
-    isNot?: DeudaCashWhereInput | null
   }
 
   export type PagoCuentaPorPagarOrderByRelationAggregateInput = {
@@ -151109,6 +151329,7 @@ export namespace Prisma {
     fechaVencimiento?: SortOrder
     estado?: SortOrder
     observaciones?: SortOrder
+    comprobanteUrl?: SortOrder
     createdById?: SortOrder
     deletedAt?: SortOrder
     createdAt?: SortOrder
@@ -151133,6 +151354,7 @@ export namespace Prisma {
     fechaVencimiento?: SortOrder
     estado?: SortOrder
     observaciones?: SortOrder
+    comprobanteUrl?: SortOrder
     createdById?: SortOrder
     deletedAt?: SortOrder
     createdAt?: SortOrder
@@ -151151,6 +151373,7 @@ export namespace Prisma {
     fechaVencimiento?: SortOrder
     estado?: SortOrder
     observaciones?: SortOrder
+    comprobanteUrl?: SortOrder
     createdById?: SortOrder
     deletedAt?: SortOrder
     createdAt?: SortOrder
@@ -156234,6 +156457,18 @@ export namespace Prisma {
     connect?: VentaWhereUniqueInput
   }
 
+  export type PrestamoCashCreateNestedOneWithoutReconciliacionesInput = {
+    create?: XOR<PrestamoCashCreateWithoutReconciliacionesInput, PrestamoCashUncheckedCreateWithoutReconciliacionesInput>
+    connectOrCreate?: PrestamoCashCreateOrConnectWithoutReconciliacionesInput
+    connect?: PrestamoCashWhereUniqueInput
+  }
+
+  export type DeudaCashCreateNestedOneWithoutReconciliacionesInput = {
+    create?: XOR<DeudaCashCreateWithoutReconciliacionesInput, DeudaCashUncheckedCreateWithoutReconciliacionesInput>
+    connectOrCreate?: DeudaCashCreateOrConnectWithoutReconciliacionesInput
+    connect?: DeudaCashWhereUniqueInput
+  }
+
   export type EnumTipoReconciliacionFieldUpdateOperationsInput = {
     set?: $Enums.TipoReconciliacion
   }
@@ -156262,6 +156497,26 @@ export namespace Prisma {
     delete?: VentaWhereInput | boolean
     connect?: VentaWhereUniqueInput
     update?: XOR<XOR<VentaUpdateToOneWithWhereWithoutReconciliacionesInput, VentaUpdateWithoutReconciliacionesInput>, VentaUncheckedUpdateWithoutReconciliacionesInput>
+  }
+
+  export type PrestamoCashUpdateOneWithoutReconciliacionesNestedInput = {
+    create?: XOR<PrestamoCashCreateWithoutReconciliacionesInput, PrestamoCashUncheckedCreateWithoutReconciliacionesInput>
+    connectOrCreate?: PrestamoCashCreateOrConnectWithoutReconciliacionesInput
+    upsert?: PrestamoCashUpsertWithoutReconciliacionesInput
+    disconnect?: PrestamoCashWhereInput | boolean
+    delete?: PrestamoCashWhereInput | boolean
+    connect?: PrestamoCashWhereUniqueInput
+    update?: XOR<XOR<PrestamoCashUpdateToOneWithWhereWithoutReconciliacionesInput, PrestamoCashUpdateWithoutReconciliacionesInput>, PrestamoCashUncheckedUpdateWithoutReconciliacionesInput>
+  }
+
+  export type DeudaCashUpdateOneWithoutReconciliacionesNestedInput = {
+    create?: XOR<DeudaCashCreateWithoutReconciliacionesInput, DeudaCashUncheckedCreateWithoutReconciliacionesInput>
+    connectOrCreate?: DeudaCashCreateOrConnectWithoutReconciliacionesInput
+    upsert?: DeudaCashUpsertWithoutReconciliacionesInput
+    disconnect?: DeudaCashWhereInput | boolean
+    delete?: DeudaCashWhereInput | boolean
+    connect?: DeudaCashWhereUniqueInput
+    update?: XOR<XOR<DeudaCashUpdateToOneWithWhereWithoutReconciliacionesInput, DeudaCashUpdateWithoutReconciliacionesInput>, DeudaCashUncheckedUpdateWithoutReconciliacionesInput>
   }
 
   export type CuentaBancariaCreateNestedOneWithoutReconciliacionesServicioInput = {
@@ -158961,6 +159216,20 @@ export namespace Prisma {
     connect?: CuentaPorCobrarWhereUniqueInput
   }
 
+  export type ReconciliacionVentaCreateNestedManyWithoutPrestamoCashInput = {
+    create?: XOR<ReconciliacionVentaCreateWithoutPrestamoCashInput, ReconciliacionVentaUncheckedCreateWithoutPrestamoCashInput> | ReconciliacionVentaCreateWithoutPrestamoCashInput[] | ReconciliacionVentaUncheckedCreateWithoutPrestamoCashInput[]
+    connectOrCreate?: ReconciliacionVentaCreateOrConnectWithoutPrestamoCashInput | ReconciliacionVentaCreateOrConnectWithoutPrestamoCashInput[]
+    createMany?: ReconciliacionVentaCreateManyPrestamoCashInputEnvelope
+    connect?: ReconciliacionVentaWhereUniqueInput | ReconciliacionVentaWhereUniqueInput[]
+  }
+
+  export type ReconciliacionVentaUncheckedCreateNestedManyWithoutPrestamoCashInput = {
+    create?: XOR<ReconciliacionVentaCreateWithoutPrestamoCashInput, ReconciliacionVentaUncheckedCreateWithoutPrestamoCashInput> | ReconciliacionVentaCreateWithoutPrestamoCashInput[] | ReconciliacionVentaUncheckedCreateWithoutPrestamoCashInput[]
+    connectOrCreate?: ReconciliacionVentaCreateOrConnectWithoutPrestamoCashInput | ReconciliacionVentaCreateOrConnectWithoutPrestamoCashInput[]
+    createMany?: ReconciliacionVentaCreateManyPrestamoCashInputEnvelope
+    connect?: ReconciliacionVentaWhereUniqueInput | ReconciliacionVentaWhereUniqueInput[]
+  }
+
   export type EnumEstadoPrestamoCashFieldUpdateOperationsInput = {
     set?: $Enums.EstadoPrestamoCash
   }
@@ -158981,6 +159250,34 @@ export namespace Prisma {
     update?: XOR<XOR<CuentaPorCobrarUpdateToOneWithWhereWithoutPrestamoCashInput, CuentaPorCobrarUpdateWithoutPrestamoCashInput>, CuentaPorCobrarUncheckedUpdateWithoutPrestamoCashInput>
   }
 
+  export type ReconciliacionVentaUpdateManyWithoutPrestamoCashNestedInput = {
+    create?: XOR<ReconciliacionVentaCreateWithoutPrestamoCashInput, ReconciliacionVentaUncheckedCreateWithoutPrestamoCashInput> | ReconciliacionVentaCreateWithoutPrestamoCashInput[] | ReconciliacionVentaUncheckedCreateWithoutPrestamoCashInput[]
+    connectOrCreate?: ReconciliacionVentaCreateOrConnectWithoutPrestamoCashInput | ReconciliacionVentaCreateOrConnectWithoutPrestamoCashInput[]
+    upsert?: ReconciliacionVentaUpsertWithWhereUniqueWithoutPrestamoCashInput | ReconciliacionVentaUpsertWithWhereUniqueWithoutPrestamoCashInput[]
+    createMany?: ReconciliacionVentaCreateManyPrestamoCashInputEnvelope
+    set?: ReconciliacionVentaWhereUniqueInput | ReconciliacionVentaWhereUniqueInput[]
+    disconnect?: ReconciliacionVentaWhereUniqueInput | ReconciliacionVentaWhereUniqueInput[]
+    delete?: ReconciliacionVentaWhereUniqueInput | ReconciliacionVentaWhereUniqueInput[]
+    connect?: ReconciliacionVentaWhereUniqueInput | ReconciliacionVentaWhereUniqueInput[]
+    update?: ReconciliacionVentaUpdateWithWhereUniqueWithoutPrestamoCashInput | ReconciliacionVentaUpdateWithWhereUniqueWithoutPrestamoCashInput[]
+    updateMany?: ReconciliacionVentaUpdateManyWithWhereWithoutPrestamoCashInput | ReconciliacionVentaUpdateManyWithWhereWithoutPrestamoCashInput[]
+    deleteMany?: ReconciliacionVentaScalarWhereInput | ReconciliacionVentaScalarWhereInput[]
+  }
+
+  export type ReconciliacionVentaUncheckedUpdateManyWithoutPrestamoCashNestedInput = {
+    create?: XOR<ReconciliacionVentaCreateWithoutPrestamoCashInput, ReconciliacionVentaUncheckedCreateWithoutPrestamoCashInput> | ReconciliacionVentaCreateWithoutPrestamoCashInput[] | ReconciliacionVentaUncheckedCreateWithoutPrestamoCashInput[]
+    connectOrCreate?: ReconciliacionVentaCreateOrConnectWithoutPrestamoCashInput | ReconciliacionVentaCreateOrConnectWithoutPrestamoCashInput[]
+    upsert?: ReconciliacionVentaUpsertWithWhereUniqueWithoutPrestamoCashInput | ReconciliacionVentaUpsertWithWhereUniqueWithoutPrestamoCashInput[]
+    createMany?: ReconciliacionVentaCreateManyPrestamoCashInputEnvelope
+    set?: ReconciliacionVentaWhereUniqueInput | ReconciliacionVentaWhereUniqueInput[]
+    disconnect?: ReconciliacionVentaWhereUniqueInput | ReconciliacionVentaWhereUniqueInput[]
+    delete?: ReconciliacionVentaWhereUniqueInput | ReconciliacionVentaWhereUniqueInput[]
+    connect?: ReconciliacionVentaWhereUniqueInput | ReconciliacionVentaWhereUniqueInput[]
+    update?: ReconciliacionVentaUpdateWithWhereUniqueWithoutPrestamoCashInput | ReconciliacionVentaUpdateWithWhereUniqueWithoutPrestamoCashInput[]
+    updateMany?: ReconciliacionVentaUpdateManyWithWhereWithoutPrestamoCashInput | ReconciliacionVentaUpdateManyWithWhereWithoutPrestamoCashInput[]
+    deleteMany?: ReconciliacionVentaScalarWhereInput | ReconciliacionVentaScalarWhereInput[]
+  }
+
   export type VendorCreateNestedOneWithoutDeudasCashInput = {
     create?: XOR<VendorCreateWithoutDeudasCashInput, VendorUncheckedCreateWithoutDeudasCashInput>
     connectOrCreate?: VendorCreateOrConnectWithoutDeudasCashInput
@@ -158991,6 +159288,20 @@ export namespace Prisma {
     create?: XOR<CuentaPorPagarCreateWithoutDeudaCashInput, CuentaPorPagarUncheckedCreateWithoutDeudaCashInput>
     connectOrCreate?: CuentaPorPagarCreateOrConnectWithoutDeudaCashInput
     connect?: CuentaPorPagarWhereUniqueInput
+  }
+
+  export type ReconciliacionVentaCreateNestedManyWithoutDeudaCashInput = {
+    create?: XOR<ReconciliacionVentaCreateWithoutDeudaCashInput, ReconciliacionVentaUncheckedCreateWithoutDeudaCashInput> | ReconciliacionVentaCreateWithoutDeudaCashInput[] | ReconciliacionVentaUncheckedCreateWithoutDeudaCashInput[]
+    connectOrCreate?: ReconciliacionVentaCreateOrConnectWithoutDeudaCashInput | ReconciliacionVentaCreateOrConnectWithoutDeudaCashInput[]
+    createMany?: ReconciliacionVentaCreateManyDeudaCashInputEnvelope
+    connect?: ReconciliacionVentaWhereUniqueInput | ReconciliacionVentaWhereUniqueInput[]
+  }
+
+  export type ReconciliacionVentaUncheckedCreateNestedManyWithoutDeudaCashInput = {
+    create?: XOR<ReconciliacionVentaCreateWithoutDeudaCashInput, ReconciliacionVentaUncheckedCreateWithoutDeudaCashInput> | ReconciliacionVentaCreateWithoutDeudaCashInput[] | ReconciliacionVentaUncheckedCreateWithoutDeudaCashInput[]
+    connectOrCreate?: ReconciliacionVentaCreateOrConnectWithoutDeudaCashInput | ReconciliacionVentaCreateOrConnectWithoutDeudaCashInput[]
+    createMany?: ReconciliacionVentaCreateManyDeudaCashInputEnvelope
+    connect?: ReconciliacionVentaWhereUniqueInput | ReconciliacionVentaWhereUniqueInput[]
   }
 
   export type VendorUpdateOneRequiredWithoutDeudasCashNestedInput = {
@@ -159007,6 +159318,34 @@ export namespace Prisma {
     upsert?: CuentaPorPagarUpsertWithoutDeudaCashInput
     connect?: CuentaPorPagarWhereUniqueInput
     update?: XOR<XOR<CuentaPorPagarUpdateToOneWithWhereWithoutDeudaCashInput, CuentaPorPagarUpdateWithoutDeudaCashInput>, CuentaPorPagarUncheckedUpdateWithoutDeudaCashInput>
+  }
+
+  export type ReconciliacionVentaUpdateManyWithoutDeudaCashNestedInput = {
+    create?: XOR<ReconciliacionVentaCreateWithoutDeudaCashInput, ReconciliacionVentaUncheckedCreateWithoutDeudaCashInput> | ReconciliacionVentaCreateWithoutDeudaCashInput[] | ReconciliacionVentaUncheckedCreateWithoutDeudaCashInput[]
+    connectOrCreate?: ReconciliacionVentaCreateOrConnectWithoutDeudaCashInput | ReconciliacionVentaCreateOrConnectWithoutDeudaCashInput[]
+    upsert?: ReconciliacionVentaUpsertWithWhereUniqueWithoutDeudaCashInput | ReconciliacionVentaUpsertWithWhereUniqueWithoutDeudaCashInput[]
+    createMany?: ReconciliacionVentaCreateManyDeudaCashInputEnvelope
+    set?: ReconciliacionVentaWhereUniqueInput | ReconciliacionVentaWhereUniqueInput[]
+    disconnect?: ReconciliacionVentaWhereUniqueInput | ReconciliacionVentaWhereUniqueInput[]
+    delete?: ReconciliacionVentaWhereUniqueInput | ReconciliacionVentaWhereUniqueInput[]
+    connect?: ReconciliacionVentaWhereUniqueInput | ReconciliacionVentaWhereUniqueInput[]
+    update?: ReconciliacionVentaUpdateWithWhereUniqueWithoutDeudaCashInput | ReconciliacionVentaUpdateWithWhereUniqueWithoutDeudaCashInput[]
+    updateMany?: ReconciliacionVentaUpdateManyWithWhereWithoutDeudaCashInput | ReconciliacionVentaUpdateManyWithWhereWithoutDeudaCashInput[]
+    deleteMany?: ReconciliacionVentaScalarWhereInput | ReconciliacionVentaScalarWhereInput[]
+  }
+
+  export type ReconciliacionVentaUncheckedUpdateManyWithoutDeudaCashNestedInput = {
+    create?: XOR<ReconciliacionVentaCreateWithoutDeudaCashInput, ReconciliacionVentaUncheckedCreateWithoutDeudaCashInput> | ReconciliacionVentaCreateWithoutDeudaCashInput[] | ReconciliacionVentaUncheckedCreateWithoutDeudaCashInput[]
+    connectOrCreate?: ReconciliacionVentaCreateOrConnectWithoutDeudaCashInput | ReconciliacionVentaCreateOrConnectWithoutDeudaCashInput[]
+    upsert?: ReconciliacionVentaUpsertWithWhereUniqueWithoutDeudaCashInput | ReconciliacionVentaUpsertWithWhereUniqueWithoutDeudaCashInput[]
+    createMany?: ReconciliacionVentaCreateManyDeudaCashInputEnvelope
+    set?: ReconciliacionVentaWhereUniqueInput | ReconciliacionVentaWhereUniqueInput[]
+    disconnect?: ReconciliacionVentaWhereUniqueInput | ReconciliacionVentaWhereUniqueInput[]
+    delete?: ReconciliacionVentaWhereUniqueInput | ReconciliacionVentaWhereUniqueInput[]
+    connect?: ReconciliacionVentaWhereUniqueInput | ReconciliacionVentaWhereUniqueInput[]
+    update?: ReconciliacionVentaUpdateWithWhereUniqueWithoutDeudaCashInput | ReconciliacionVentaUpdateWithWhereUniqueWithoutDeudaCashInput[]
+    updateMany?: ReconciliacionVentaUpdateManyWithWhereWithoutDeudaCashInput | ReconciliacionVentaUpdateManyWithWhereWithoutDeudaCashInput[]
+    deleteMany?: ReconciliacionVentaScalarWhereInput | ReconciliacionVentaScalarWhereInput[]
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -160456,11 +160795,13 @@ export namespace Prisma {
     fechaVencimiento?: Date | string | null
     estado?: $Enums.EstadoPrestamoCash
     observaciones?: string | null
+    comprobanteUrl?: string | null
     createdById: string
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     cuentaPorPagar: CuentaPorPagarCreateNestedOneWithoutDeudaCashInput
+    reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutDeudaCashInput
   }
 
   export type DeudaCashUncheckedCreateWithoutProveedorInput = {
@@ -160474,10 +160815,12 @@ export namespace Prisma {
     fechaVencimiento?: Date | string | null
     estado?: $Enums.EstadoPrestamoCash
     observaciones?: string | null
+    comprobanteUrl?: string | null
     createdById: string
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutDeudaCashInput
   }
 
   export type DeudaCashCreateOrConnectWithoutProveedorInput = {
@@ -160938,6 +161281,7 @@ export namespace Prisma {
     fechaVencimiento?: DateTimeNullableFilter<"DeudaCash"> | Date | string | null
     estado?: EnumEstadoPrestamoCashFilter<"DeudaCash"> | $Enums.EstadoPrestamoCash
     observaciones?: StringNullableFilter<"DeudaCash"> | string | null
+    comprobanteUrl?: StringNullableFilter<"DeudaCash"> | string | null
     createdById?: StringFilter<"DeudaCash"> | string
     deletedAt?: DateTimeNullableFilter<"DeudaCash"> | Date | string | null
     createdAt?: DateTimeFilter<"DeudaCash"> | Date | string
@@ -161627,6 +161971,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     cuentaPorCobrar: CuentaPorCobrarCreateNestedOneWithoutPrestamoCashInput
+    reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutPrestamoCashInput
   }
 
   export type PrestamoCashUncheckedCreateWithoutClienteInput = {
@@ -161645,6 +161990,7 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutPrestamoCashInput
   }
 
   export type PrestamoCashCreateOrConnectWithoutClienteInput = {
@@ -165233,11 +165579,11 @@ export namespace Prisma {
     updatedAt?: Date | string
     idTransferencia?: string | null
     verificacionTransferenciaId?: string | null
-    prestamoCashId?: string | null
-    deudaCashId?: string | null
     tipoReconciliacion?: $Enums.TipoReconciliacion
     cuentaBancaria: CuentaBancariaCreateNestedOneWithoutReconciliacionesVentaInput
     tipoPago: TipoPagoCreateNestedOneWithoutReconciliacionesVentaInput
+    prestamoCash?: PrestamoCashCreateNestedOneWithoutReconciliacionesInput
+    deudaCash?: DeudaCashCreateNestedOneWithoutReconciliacionesInput
   }
 
   export type ReconciliacionVentaUncheckedCreateWithoutVentaInput = {
@@ -173108,11 +173454,11 @@ export namespace Prisma {
     updatedAt?: Date | string
     idTransferencia?: string | null
     verificacionTransferenciaId?: string | null
-    prestamoCashId?: string | null
-    deudaCashId?: string | null
     tipoReconciliacion?: $Enums.TipoReconciliacion
     tipoPago: TipoPagoCreateNestedOneWithoutReconciliacionesVentaInput
     venta?: VentaCreateNestedOneWithoutReconciliacionesInput
+    prestamoCash?: PrestamoCashCreateNestedOneWithoutReconciliacionesInput
+    deudaCash?: DeudaCashCreateNestedOneWithoutReconciliacionesInput
   }
 
   export type ReconciliacionVentaUncheckedCreateWithoutCuentaBancariaInput = {
@@ -173678,11 +174024,11 @@ export namespace Prisma {
     updatedAt?: Date | string
     idTransferencia?: string | null
     verificacionTransferenciaId?: string | null
-    prestamoCashId?: string | null
-    deudaCashId?: string | null
     tipoReconciliacion?: $Enums.TipoReconciliacion
     cuentaBancaria: CuentaBancariaCreateNestedOneWithoutReconciliacionesVentaInput
     venta?: VentaCreateNestedOneWithoutReconciliacionesInput
+    prestamoCash?: PrestamoCashCreateNestedOneWithoutReconciliacionesInput
+    deudaCash?: DeudaCashCreateNestedOneWithoutReconciliacionesInput
   }
 
   export type ReconciliacionVentaUncheckedCreateWithoutTipoPagoInput = {
@@ -173888,6 +174234,92 @@ export namespace Prisma {
     create: XOR<VentaCreateWithoutReconciliacionesInput, VentaUncheckedCreateWithoutReconciliacionesInput>
   }
 
+  export type PrestamoCashCreateWithoutReconciliacionesInput = {
+    id?: string
+    idNumerico?: number
+    montoCapital: Decimal | DecimalJsLike | number | string
+    moneda?: string
+    tasaInteres?: Decimal | DecimalJsLike | number | string | null
+    tasaCambioAlCrear?: Decimal | DecimalJsLike | number | string | null
+    fechaOtorgamiento?: Date | string
+    fechaVencimiento?: Date | string | null
+    estado?: $Enums.EstadoPrestamoCash
+    observaciones?: string | null
+    createdById: string
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    cliente: ClienteCreateNestedOneWithoutPrestamosCashInput
+    cuentaPorCobrar: CuentaPorCobrarCreateNestedOneWithoutPrestamoCashInput
+  }
+
+  export type PrestamoCashUncheckedCreateWithoutReconciliacionesInput = {
+    id?: string
+    idNumerico?: number
+    clienteId: string
+    cuentaPorCobrarId: string
+    montoCapital: Decimal | DecimalJsLike | number | string
+    moneda?: string
+    tasaInteres?: Decimal | DecimalJsLike | number | string | null
+    tasaCambioAlCrear?: Decimal | DecimalJsLike | number | string | null
+    fechaOtorgamiento?: Date | string
+    fechaVencimiento?: Date | string | null
+    estado?: $Enums.EstadoPrestamoCash
+    observaciones?: string | null
+    createdById: string
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PrestamoCashCreateOrConnectWithoutReconciliacionesInput = {
+    where: PrestamoCashWhereUniqueInput
+    create: XOR<PrestamoCashCreateWithoutReconciliacionesInput, PrestamoCashUncheckedCreateWithoutReconciliacionesInput>
+  }
+
+  export type DeudaCashCreateWithoutReconciliacionesInput = {
+    id?: string
+    idNumerico?: number
+    montoCapital: Decimal | DecimalJsLike | number | string
+    moneda?: string
+    tasaInteres?: Decimal | DecimalJsLike | number | string | null
+    fechaOtorgamiento?: Date | string
+    fechaVencimiento?: Date | string | null
+    estado?: $Enums.EstadoPrestamoCash
+    observaciones?: string | null
+    comprobanteUrl?: string | null
+    createdById: string
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    proveedor: VendorCreateNestedOneWithoutDeudasCashInput
+    cuentaPorPagar: CuentaPorPagarCreateNestedOneWithoutDeudaCashInput
+  }
+
+  export type DeudaCashUncheckedCreateWithoutReconciliacionesInput = {
+    id?: string
+    idNumerico?: number
+    proveedorId: string
+    cuentaPorPagarId: string
+    montoCapital: Decimal | DecimalJsLike | number | string
+    moneda?: string
+    tasaInteres?: Decimal | DecimalJsLike | number | string | null
+    fechaOtorgamiento?: Date | string
+    fechaVencimiento?: Date | string | null
+    estado?: $Enums.EstadoPrestamoCash
+    observaciones?: string | null
+    comprobanteUrl?: string | null
+    createdById: string
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type DeudaCashCreateOrConnectWithoutReconciliacionesInput = {
+    where: DeudaCashWhereUniqueInput
+    create: XOR<DeudaCashCreateWithoutReconciliacionesInput, DeudaCashUncheckedCreateWithoutReconciliacionesInput>
+  }
+
   export type CuentaBancariaUpsertWithoutReconciliacionesVentaInput = {
     update: XOR<CuentaBancariaUpdateWithoutReconciliacionesVentaInput, CuentaBancariaUncheckedUpdateWithoutReconciliacionesVentaInput>
     create: XOR<CuentaBancariaCreateWithoutReconciliacionesVentaInput, CuentaBancariaUncheckedCreateWithoutReconciliacionesVentaInput>
@@ -174029,6 +174461,104 @@ export namespace Prisma {
     ordenReparacion?: OrdenReparacionUncheckedUpdateOneWithoutVentaNestedInput
     factura?: FacturaUncheckedUpdateOneWithoutVentaNestedInput
     items?: VentaItemUncheckedUpdateManyWithoutVentaNestedInput
+  }
+
+  export type PrestamoCashUpsertWithoutReconciliacionesInput = {
+    update: XOR<PrestamoCashUpdateWithoutReconciliacionesInput, PrestamoCashUncheckedUpdateWithoutReconciliacionesInput>
+    create: XOR<PrestamoCashCreateWithoutReconciliacionesInput, PrestamoCashUncheckedCreateWithoutReconciliacionesInput>
+    where?: PrestamoCashWhereInput
+  }
+
+  export type PrestamoCashUpdateToOneWithWhereWithoutReconciliacionesInput = {
+    where?: PrestamoCashWhereInput
+    data: XOR<PrestamoCashUpdateWithoutReconciliacionesInput, PrestamoCashUncheckedUpdateWithoutReconciliacionesInput>
+  }
+
+  export type PrestamoCashUpdateWithoutReconciliacionesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    idNumerico?: IntFieldUpdateOperationsInput | number
+    montoCapital?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    tasaInteres?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    tasaCambioAlCrear?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    fechaOtorgamiento?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    estado?: EnumEstadoPrestamoCashFieldUpdateOperationsInput | $Enums.EstadoPrestamoCash
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cliente?: ClienteUpdateOneRequiredWithoutPrestamosCashNestedInput
+    cuentaPorCobrar?: CuentaPorCobrarUpdateOneRequiredWithoutPrestamoCashNestedInput
+  }
+
+  export type PrestamoCashUncheckedUpdateWithoutReconciliacionesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    idNumerico?: IntFieldUpdateOperationsInput | number
+    clienteId?: StringFieldUpdateOperationsInput | string
+    cuentaPorCobrarId?: StringFieldUpdateOperationsInput | string
+    montoCapital?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    tasaInteres?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    tasaCambioAlCrear?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    fechaOtorgamiento?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    estado?: EnumEstadoPrestamoCashFieldUpdateOperationsInput | $Enums.EstadoPrestamoCash
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type DeudaCashUpsertWithoutReconciliacionesInput = {
+    update: XOR<DeudaCashUpdateWithoutReconciliacionesInput, DeudaCashUncheckedUpdateWithoutReconciliacionesInput>
+    create: XOR<DeudaCashCreateWithoutReconciliacionesInput, DeudaCashUncheckedCreateWithoutReconciliacionesInput>
+    where?: DeudaCashWhereInput
+  }
+
+  export type DeudaCashUpdateToOneWithWhereWithoutReconciliacionesInput = {
+    where?: DeudaCashWhereInput
+    data: XOR<DeudaCashUpdateWithoutReconciliacionesInput, DeudaCashUncheckedUpdateWithoutReconciliacionesInput>
+  }
+
+  export type DeudaCashUpdateWithoutReconciliacionesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    idNumerico?: IntFieldUpdateOperationsInput | number
+    montoCapital?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    tasaInteres?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    fechaOtorgamiento?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    estado?: EnumEstadoPrestamoCashFieldUpdateOperationsInput | $Enums.EstadoPrestamoCash
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    comprobanteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    proveedor?: VendorUpdateOneRequiredWithoutDeudasCashNestedInput
+    cuentaPorPagar?: CuentaPorPagarUpdateOneRequiredWithoutDeudaCashNestedInput
+  }
+
+  export type DeudaCashUncheckedUpdateWithoutReconciliacionesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    idNumerico?: IntFieldUpdateOperationsInput | number
+    proveedorId?: StringFieldUpdateOperationsInput | string
+    cuentaPorPagarId?: StringFieldUpdateOperationsInput | string
+    montoCapital?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    tasaInteres?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    fechaOtorgamiento?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    estado?: EnumEstadoPrestamoCashFieldUpdateOperationsInput | $Enums.EstadoPrestamoCash
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    comprobanteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type CuentaBancariaCreateWithoutReconciliacionesServicioInput = {
@@ -178986,6 +179516,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     cliente: ClienteCreateNestedOneWithoutPrestamosCashInput
+    reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutPrestamoCashInput
   }
 
   export type PrestamoCashUncheckedCreateWithoutCuentaPorCobrarInput = {
@@ -179004,6 +179535,7 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutPrestamoCashInput
   }
 
   export type PrestamoCashCreateOrConnectWithoutCuentaPorCobrarInput = {
@@ -179160,6 +179692,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     cliente?: ClienteUpdateOneRequiredWithoutPrestamosCashNestedInput
+    reconciliaciones?: ReconciliacionVentaUpdateManyWithoutPrestamoCashNestedInput
   }
 
   export type PrestamoCashUncheckedUpdateWithoutCuentaPorCobrarInput = {
@@ -179178,6 +179711,7 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutPrestamoCashNestedInput
   }
 
   export type CompraProductoCreateWithoutCuentaPorPagarInput = {
@@ -179454,11 +179988,13 @@ export namespace Prisma {
     fechaVencimiento?: Date | string | null
     estado?: $Enums.EstadoPrestamoCash
     observaciones?: string | null
+    comprobanteUrl?: string | null
     createdById: string
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     proveedor: VendorCreateNestedOneWithoutDeudasCashInput
+    reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutDeudaCashInput
   }
 
   export type DeudaCashUncheckedCreateWithoutCuentaPorPagarInput = {
@@ -179472,10 +180008,12 @@ export namespace Prisma {
     fechaVencimiento?: Date | string | null
     estado?: $Enums.EstadoPrestamoCash
     observaciones?: string | null
+    comprobanteUrl?: string | null
     createdById: string
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutDeudaCashInput
   }
 
   export type DeudaCashCreateOrConnectWithoutCuentaPorPagarInput = {
@@ -179749,11 +180287,13 @@ export namespace Prisma {
     fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     estado?: EnumEstadoPrestamoCashFieldUpdateOperationsInput | $Enums.EstadoPrestamoCash
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    comprobanteUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: StringFieldUpdateOperationsInput | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     proveedor?: VendorUpdateOneRequiredWithoutDeudasCashNestedInput
+    reconciliaciones?: ReconciliacionVentaUpdateManyWithoutDeudaCashNestedInput
   }
 
   export type DeudaCashUncheckedUpdateWithoutCuentaPorPagarInput = {
@@ -179767,10 +180307,12 @@ export namespace Prisma {
     fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     estado?: EnumEstadoPrestamoCashFieldUpdateOperationsInput | $Enums.EstadoPrestamoCash
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    comprobanteUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: StringFieldUpdateOperationsInput | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutDeudaCashNestedInput
   }
 
   export type CuentaPorPagarCreateWithoutPagosInput = {
@@ -184095,6 +184637,56 @@ export namespace Prisma {
     create: XOR<CuentaPorCobrarCreateWithoutPrestamoCashInput, CuentaPorCobrarUncheckedCreateWithoutPrestamoCashInput>
   }
 
+  export type ReconciliacionVentaCreateWithoutPrestamoCashInput = {
+    reconciliacionId?: string
+    monto: Decimal | DecimalJsLike | number | string
+    moneda?: string
+    tasaCambio?: Decimal | DecimalJsLike | number | string | null
+    montoConvertido?: Decimal | DecimalJsLike | number | string | null
+    fechaReconciliacion?: Date | string
+    observaciones?: string | null
+    reconciliadoPor: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    idTransferencia?: string | null
+    verificacionTransferenciaId?: string | null
+    tipoReconciliacion?: $Enums.TipoReconciliacion
+    cuentaBancaria: CuentaBancariaCreateNestedOneWithoutReconciliacionesVentaInput
+    tipoPago: TipoPagoCreateNestedOneWithoutReconciliacionesVentaInput
+    venta?: VentaCreateNestedOneWithoutReconciliacionesInput
+    deudaCash?: DeudaCashCreateNestedOneWithoutReconciliacionesInput
+  }
+
+  export type ReconciliacionVentaUncheckedCreateWithoutPrestamoCashInput = {
+    reconciliacionId?: string
+    ventaId?: string | null
+    cuentaId: string
+    tipoPagoId: string
+    monto: Decimal | DecimalJsLike | number | string
+    moneda?: string
+    tasaCambio?: Decimal | DecimalJsLike | number | string | null
+    montoConvertido?: Decimal | DecimalJsLike | number | string | null
+    fechaReconciliacion?: Date | string
+    observaciones?: string | null
+    reconciliadoPor: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    idTransferencia?: string | null
+    verificacionTransferenciaId?: string | null
+    deudaCashId?: string | null
+    tipoReconciliacion?: $Enums.TipoReconciliacion
+  }
+
+  export type ReconciliacionVentaCreateOrConnectWithoutPrestamoCashInput = {
+    where: ReconciliacionVentaWhereUniqueInput
+    create: XOR<ReconciliacionVentaCreateWithoutPrestamoCashInput, ReconciliacionVentaUncheckedCreateWithoutPrestamoCashInput>
+  }
+
+  export type ReconciliacionVentaCreateManyPrestamoCashInputEnvelope = {
+    data: ReconciliacionVentaCreateManyPrestamoCashInput | ReconciliacionVentaCreateManyPrestamoCashInput[]
+    skipDuplicates?: boolean
+  }
+
   export type ClienteUpsertWithoutPrestamosCashInput = {
     update: XOR<ClienteUpdateWithoutPrestamosCashInput, ClienteUncheckedUpdateWithoutPrestamosCashInput>
     create: XOR<ClienteCreateWithoutPrestamosCashInput, ClienteUncheckedCreateWithoutPrestamosCashInput>
@@ -184191,6 +184783,22 @@ export namespace Prisma {
     fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ReconciliacionVentaUpsertWithWhereUniqueWithoutPrestamoCashInput = {
+    where: ReconciliacionVentaWhereUniqueInput
+    update: XOR<ReconciliacionVentaUpdateWithoutPrestamoCashInput, ReconciliacionVentaUncheckedUpdateWithoutPrestamoCashInput>
+    create: XOR<ReconciliacionVentaCreateWithoutPrestamoCashInput, ReconciliacionVentaUncheckedCreateWithoutPrestamoCashInput>
+  }
+
+  export type ReconciliacionVentaUpdateWithWhereUniqueWithoutPrestamoCashInput = {
+    where: ReconciliacionVentaWhereUniqueInput
+    data: XOR<ReconciliacionVentaUpdateWithoutPrestamoCashInput, ReconciliacionVentaUncheckedUpdateWithoutPrestamoCashInput>
+  }
+
+  export type ReconciliacionVentaUpdateManyWithWhereWithoutPrestamoCashInput = {
+    where: ReconciliacionVentaScalarWhereInput
+    data: XOR<ReconciliacionVentaUpdateManyMutationInput, ReconciliacionVentaUncheckedUpdateManyWithoutPrestamoCashInput>
   }
 
   export type VendorCreateWithoutDeudasCashInput = {
@@ -184295,6 +184903,56 @@ export namespace Prisma {
   export type CuentaPorPagarCreateOrConnectWithoutDeudaCashInput = {
     where: CuentaPorPagarWhereUniqueInput
     create: XOR<CuentaPorPagarCreateWithoutDeudaCashInput, CuentaPorPagarUncheckedCreateWithoutDeudaCashInput>
+  }
+
+  export type ReconciliacionVentaCreateWithoutDeudaCashInput = {
+    reconciliacionId?: string
+    monto: Decimal | DecimalJsLike | number | string
+    moneda?: string
+    tasaCambio?: Decimal | DecimalJsLike | number | string | null
+    montoConvertido?: Decimal | DecimalJsLike | number | string | null
+    fechaReconciliacion?: Date | string
+    observaciones?: string | null
+    reconciliadoPor: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    idTransferencia?: string | null
+    verificacionTransferenciaId?: string | null
+    tipoReconciliacion?: $Enums.TipoReconciliacion
+    cuentaBancaria: CuentaBancariaCreateNestedOneWithoutReconciliacionesVentaInput
+    tipoPago: TipoPagoCreateNestedOneWithoutReconciliacionesVentaInput
+    venta?: VentaCreateNestedOneWithoutReconciliacionesInput
+    prestamoCash?: PrestamoCashCreateNestedOneWithoutReconciliacionesInput
+  }
+
+  export type ReconciliacionVentaUncheckedCreateWithoutDeudaCashInput = {
+    reconciliacionId?: string
+    ventaId?: string | null
+    cuentaId: string
+    tipoPagoId: string
+    monto: Decimal | DecimalJsLike | number | string
+    moneda?: string
+    tasaCambio?: Decimal | DecimalJsLike | number | string | null
+    montoConvertido?: Decimal | DecimalJsLike | number | string | null
+    fechaReconciliacion?: Date | string
+    observaciones?: string | null
+    reconciliadoPor: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    idTransferencia?: string | null
+    verificacionTransferenciaId?: string | null
+    prestamoCashId?: string | null
+    tipoReconciliacion?: $Enums.TipoReconciliacion
+  }
+
+  export type ReconciliacionVentaCreateOrConnectWithoutDeudaCashInput = {
+    where: ReconciliacionVentaWhereUniqueInput
+    create: XOR<ReconciliacionVentaCreateWithoutDeudaCashInput, ReconciliacionVentaUncheckedCreateWithoutDeudaCashInput>
+  }
+
+  export type ReconciliacionVentaCreateManyDeudaCashInputEnvelope = {
+    data: ReconciliacionVentaCreateManyDeudaCashInput | ReconciliacionVentaCreateManyDeudaCashInput[]
+    skipDuplicates?: boolean
   }
 
   export type VendorUpsertWithoutDeudasCashInput = {
@@ -184411,6 +185069,22 @@ export namespace Prisma {
     compraProducto?: CompraProductoUncheckedUpdateOneWithoutCuentaPorPagarNestedInput
     pagos?: PagoCuentaPorPagarUncheckedUpdateManyWithoutCuentaPorPagarNestedInput
     reconciliaciones?: ReconciliacionGastoUncheckedUpdateManyWithoutCuentaPorPagarNestedInput
+  }
+
+  export type ReconciliacionVentaUpsertWithWhereUniqueWithoutDeudaCashInput = {
+    where: ReconciliacionVentaWhereUniqueInput
+    update: XOR<ReconciliacionVentaUpdateWithoutDeudaCashInput, ReconciliacionVentaUncheckedUpdateWithoutDeudaCashInput>
+    create: XOR<ReconciliacionVentaCreateWithoutDeudaCashInput, ReconciliacionVentaUncheckedCreateWithoutDeudaCashInput>
+  }
+
+  export type ReconciliacionVentaUpdateWithWhereUniqueWithoutDeudaCashInput = {
+    where: ReconciliacionVentaWhereUniqueInput
+    data: XOR<ReconciliacionVentaUpdateWithoutDeudaCashInput, ReconciliacionVentaUncheckedUpdateWithoutDeudaCashInput>
+  }
+
+  export type ReconciliacionVentaUpdateManyWithWhereWithoutDeudaCashInput = {
+    where: ReconciliacionVentaScalarWhereInput
+    data: XOR<ReconciliacionVentaUpdateManyMutationInput, ReconciliacionVentaUncheckedUpdateManyWithoutDeudaCashInput>
   }
 
   export type CategoriaCreateManyParentInput = {
@@ -184957,6 +185631,7 @@ export namespace Prisma {
     fechaVencimiento?: Date | string | null
     estado?: $Enums.EstadoPrestamoCash
     observaciones?: string | null
+    comprobanteUrl?: string | null
     createdById: string
     deletedAt?: Date | string | null
     createdAt?: Date | string
@@ -185283,11 +185958,13 @@ export namespace Prisma {
     fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     estado?: EnumEstadoPrestamoCashFieldUpdateOperationsInput | $Enums.EstadoPrestamoCash
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    comprobanteUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: StringFieldUpdateOperationsInput | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     cuentaPorPagar?: CuentaPorPagarUpdateOneRequiredWithoutDeudaCashNestedInput
+    reconciliaciones?: ReconciliacionVentaUpdateManyWithoutDeudaCashNestedInput
   }
 
   export type DeudaCashUncheckedUpdateWithoutProveedorInput = {
@@ -185301,10 +185978,12 @@ export namespace Prisma {
     fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     estado?: EnumEstadoPrestamoCashFieldUpdateOperationsInput | $Enums.EstadoPrestamoCash
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    comprobanteUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: StringFieldUpdateOperationsInput | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutDeudaCashNestedInput
   }
 
   export type DeudaCashUncheckedUpdateManyWithoutProveedorInput = {
@@ -185318,6 +185997,7 @@ export namespace Prisma {
     fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     estado?: EnumEstadoPrestamoCashFieldUpdateOperationsInput | $Enums.EstadoPrestamoCash
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    comprobanteUrl?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: StringFieldUpdateOperationsInput | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -186027,6 +186707,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     cuentaPorCobrar?: CuentaPorCobrarUpdateOneRequiredWithoutPrestamoCashNestedInput
+    reconciliaciones?: ReconciliacionVentaUpdateManyWithoutPrestamoCashNestedInput
   }
 
   export type PrestamoCashUncheckedUpdateWithoutClienteInput = {
@@ -186045,6 +186726,7 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutPrestamoCashNestedInput
   }
 
   export type PrestamoCashUncheckedUpdateManyWithoutClienteInput = {
@@ -188020,11 +188702,11 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     idTransferencia?: NullableStringFieldUpdateOperationsInput | string | null
     verificacionTransferenciaId?: NullableStringFieldUpdateOperationsInput | string | null
-    prestamoCashId?: NullableStringFieldUpdateOperationsInput | string | null
-    deudaCashId?: NullableStringFieldUpdateOperationsInput | string | null
     tipoReconciliacion?: EnumTipoReconciliacionFieldUpdateOperationsInput | $Enums.TipoReconciliacion
     cuentaBancaria?: CuentaBancariaUpdateOneRequiredWithoutReconciliacionesVentaNestedInput
     tipoPago?: TipoPagoUpdateOneRequiredWithoutReconciliacionesVentaNestedInput
+    prestamoCash?: PrestamoCashUpdateOneWithoutReconciliacionesNestedInput
+    deudaCash?: DeudaCashUpdateOneWithoutReconciliacionesNestedInput
   }
 
   export type ReconciliacionVentaUncheckedUpdateWithoutVentaInput = {
@@ -190603,11 +191285,11 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     idTransferencia?: NullableStringFieldUpdateOperationsInput | string | null
     verificacionTransferenciaId?: NullableStringFieldUpdateOperationsInput | string | null
-    prestamoCashId?: NullableStringFieldUpdateOperationsInput | string | null
-    deudaCashId?: NullableStringFieldUpdateOperationsInput | string | null
     tipoReconciliacion?: EnumTipoReconciliacionFieldUpdateOperationsInput | $Enums.TipoReconciliacion
     tipoPago?: TipoPagoUpdateOneRequiredWithoutReconciliacionesVentaNestedInput
     venta?: VentaUpdateOneWithoutReconciliacionesNestedInput
+    prestamoCash?: PrestamoCashUpdateOneWithoutReconciliacionesNestedInput
+    deudaCash?: DeudaCashUpdateOneWithoutReconciliacionesNestedInput
   }
 
   export type ReconciliacionVentaUncheckedUpdateWithoutCuentaBancariaInput = {
@@ -191036,11 +191718,11 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     idTransferencia?: NullableStringFieldUpdateOperationsInput | string | null
     verificacionTransferenciaId?: NullableStringFieldUpdateOperationsInput | string | null
-    prestamoCashId?: NullableStringFieldUpdateOperationsInput | string | null
-    deudaCashId?: NullableStringFieldUpdateOperationsInput | string | null
     tipoReconciliacion?: EnumTipoReconciliacionFieldUpdateOperationsInput | $Enums.TipoReconciliacion
     cuentaBancaria?: CuentaBancariaUpdateOneRequiredWithoutReconciliacionesVentaNestedInput
     venta?: VentaUpdateOneWithoutReconciliacionesNestedInput
+    prestamoCash?: PrestamoCashUpdateOneWithoutReconciliacionesNestedInput
+    deudaCash?: DeudaCashUpdateOneWithoutReconciliacionesNestedInput
   }
 
   export type ReconciliacionVentaUncheckedUpdateWithoutTipoPagoInput = {
@@ -192719,6 +193401,166 @@ export namespace Prisma {
     cantidad?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ReconciliacionVentaCreateManyPrestamoCashInput = {
+    reconciliacionId?: string
+    ventaId?: string | null
+    cuentaId: string
+    tipoPagoId: string
+    monto: Decimal | DecimalJsLike | number | string
+    moneda?: string
+    tasaCambio?: Decimal | DecimalJsLike | number | string | null
+    montoConvertido?: Decimal | DecimalJsLike | number | string | null
+    fechaReconciliacion?: Date | string
+    observaciones?: string | null
+    reconciliadoPor: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    idTransferencia?: string | null
+    verificacionTransferenciaId?: string | null
+    deudaCashId?: string | null
+    tipoReconciliacion?: $Enums.TipoReconciliacion
+  }
+
+  export type ReconciliacionVentaUpdateWithoutPrestamoCashInput = {
+    reconciliacionId?: StringFieldUpdateOperationsInput | string
+    monto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    tasaCambio?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    montoConvertido?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    fechaReconciliacion?: DateTimeFieldUpdateOperationsInput | Date | string
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    reconciliadoPor?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    idTransferencia?: NullableStringFieldUpdateOperationsInput | string | null
+    verificacionTransferenciaId?: NullableStringFieldUpdateOperationsInput | string | null
+    tipoReconciliacion?: EnumTipoReconciliacionFieldUpdateOperationsInput | $Enums.TipoReconciliacion
+    cuentaBancaria?: CuentaBancariaUpdateOneRequiredWithoutReconciliacionesVentaNestedInput
+    tipoPago?: TipoPagoUpdateOneRequiredWithoutReconciliacionesVentaNestedInput
+    venta?: VentaUpdateOneWithoutReconciliacionesNestedInput
+    deudaCash?: DeudaCashUpdateOneWithoutReconciliacionesNestedInput
+  }
+
+  export type ReconciliacionVentaUncheckedUpdateWithoutPrestamoCashInput = {
+    reconciliacionId?: StringFieldUpdateOperationsInput | string
+    ventaId?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaId?: StringFieldUpdateOperationsInput | string
+    tipoPagoId?: StringFieldUpdateOperationsInput | string
+    monto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    tasaCambio?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    montoConvertido?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    fechaReconciliacion?: DateTimeFieldUpdateOperationsInput | Date | string
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    reconciliadoPor?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    idTransferencia?: NullableStringFieldUpdateOperationsInput | string | null
+    verificacionTransferenciaId?: NullableStringFieldUpdateOperationsInput | string | null
+    deudaCashId?: NullableStringFieldUpdateOperationsInput | string | null
+    tipoReconciliacion?: EnumTipoReconciliacionFieldUpdateOperationsInput | $Enums.TipoReconciliacion
+  }
+
+  export type ReconciliacionVentaUncheckedUpdateManyWithoutPrestamoCashInput = {
+    reconciliacionId?: StringFieldUpdateOperationsInput | string
+    ventaId?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaId?: StringFieldUpdateOperationsInput | string
+    tipoPagoId?: StringFieldUpdateOperationsInput | string
+    monto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    tasaCambio?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    montoConvertido?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    fechaReconciliacion?: DateTimeFieldUpdateOperationsInput | Date | string
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    reconciliadoPor?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    idTransferencia?: NullableStringFieldUpdateOperationsInput | string | null
+    verificacionTransferenciaId?: NullableStringFieldUpdateOperationsInput | string | null
+    deudaCashId?: NullableStringFieldUpdateOperationsInput | string | null
+    tipoReconciliacion?: EnumTipoReconciliacionFieldUpdateOperationsInput | $Enums.TipoReconciliacion
+  }
+
+  export type ReconciliacionVentaCreateManyDeudaCashInput = {
+    reconciliacionId?: string
+    ventaId?: string | null
+    cuentaId: string
+    tipoPagoId: string
+    monto: Decimal | DecimalJsLike | number | string
+    moneda?: string
+    tasaCambio?: Decimal | DecimalJsLike | number | string | null
+    montoConvertido?: Decimal | DecimalJsLike | number | string | null
+    fechaReconciliacion?: Date | string
+    observaciones?: string | null
+    reconciliadoPor: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    idTransferencia?: string | null
+    verificacionTransferenciaId?: string | null
+    prestamoCashId?: string | null
+    tipoReconciliacion?: $Enums.TipoReconciliacion
+  }
+
+  export type ReconciliacionVentaUpdateWithoutDeudaCashInput = {
+    reconciliacionId?: StringFieldUpdateOperationsInput | string
+    monto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    tasaCambio?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    montoConvertido?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    fechaReconciliacion?: DateTimeFieldUpdateOperationsInput | Date | string
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    reconciliadoPor?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    idTransferencia?: NullableStringFieldUpdateOperationsInput | string | null
+    verificacionTransferenciaId?: NullableStringFieldUpdateOperationsInput | string | null
+    tipoReconciliacion?: EnumTipoReconciliacionFieldUpdateOperationsInput | $Enums.TipoReconciliacion
+    cuentaBancaria?: CuentaBancariaUpdateOneRequiredWithoutReconciliacionesVentaNestedInput
+    tipoPago?: TipoPagoUpdateOneRequiredWithoutReconciliacionesVentaNestedInput
+    venta?: VentaUpdateOneWithoutReconciliacionesNestedInput
+    prestamoCash?: PrestamoCashUpdateOneWithoutReconciliacionesNestedInput
+  }
+
+  export type ReconciliacionVentaUncheckedUpdateWithoutDeudaCashInput = {
+    reconciliacionId?: StringFieldUpdateOperationsInput | string
+    ventaId?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaId?: StringFieldUpdateOperationsInput | string
+    tipoPagoId?: StringFieldUpdateOperationsInput | string
+    monto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    tasaCambio?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    montoConvertido?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    fechaReconciliacion?: DateTimeFieldUpdateOperationsInput | Date | string
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    reconciliadoPor?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    idTransferencia?: NullableStringFieldUpdateOperationsInput | string | null
+    verificacionTransferenciaId?: NullableStringFieldUpdateOperationsInput | string | null
+    prestamoCashId?: NullableStringFieldUpdateOperationsInput | string | null
+    tipoReconciliacion?: EnumTipoReconciliacionFieldUpdateOperationsInput | $Enums.TipoReconciliacion
+  }
+
+  export type ReconciliacionVentaUncheckedUpdateManyWithoutDeudaCashInput = {
+    reconciliacionId?: StringFieldUpdateOperationsInput | string
+    ventaId?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaId?: StringFieldUpdateOperationsInput | string
+    tipoPagoId?: StringFieldUpdateOperationsInput | string
+    monto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    tasaCambio?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    montoConvertido?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    fechaReconciliacion?: DateTimeFieldUpdateOperationsInput | Date | string
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    reconciliadoPor?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    idTransferencia?: NullableStringFieldUpdateOperationsInput | string | null
+    verificacionTransferenciaId?: NullableStringFieldUpdateOperationsInput | string | null
+    prestamoCashId?: NullableStringFieldUpdateOperationsInput | string | null
+    tipoReconciliacion?: EnumTipoReconciliacionFieldUpdateOperationsInput | $Enums.TipoReconciliacion
   }
 
 

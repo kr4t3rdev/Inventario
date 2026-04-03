@@ -67,7 +67,9 @@ function DeudasCashContent() {
             Gestione deudas de dinero en efectivo con proveedores
           </p>
         </div>
-        <Button onClick={() => setOpenForm(true)}>
+        <Button onClick={() => setOpenForm(true)}
+          className="flex items-center space-x-2 mr-3"
+          >
           <Plus className="mr-2 h-4 w-4" />
           Nueva Deuda
         </Button>

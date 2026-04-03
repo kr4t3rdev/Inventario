@@ -62,12 +62,12 @@ export const POST = withAuthPost(async (request: NextRequest, context: unknown, 
     const resultado = await prisma.$transaction(async (tx) => {
       const reconciliacion = await tx.reconciliacionVenta.create({
         data: {
-          cuentaBancaria: { connect: { cuentaId: body.cuentaId } },
-          tipoPago: { connect: { tipoId: body.tipoPagoId } },
+          cuentaId: body.cuentaId,
+          tipoPagoId: body.tipoPagoId,
           monto: body.monto,
           moneda: body.moneda || prestamo.moneda,
-          tasaCambio: body.tasaCambio,
-          observaciones: body.observaciones,
+          ...(body.tasaCambio != null && { tasaCambio: body.tasaCambio }),
+          ...(body.observaciones != null && { observaciones: body.observaciones }),
           reconciliadoPor: user.userId,
           prestamoCashId: prestamo.id,
           tipoReconciliacion: 'PRESTAMO_CASH'

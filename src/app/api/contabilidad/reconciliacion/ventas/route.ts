@@ -520,10 +520,10 @@ export async function POST(request: NextRequest) {
           tipoPagoId: validatedData.tipoPagoId,
           monto: validatedData.monto,
           moneda: validatedData.moneda,
-          tasaCambio: validatedData.tasaCambio,
+          ...(validatedData.tasaCambio != null && { tasaCambio: validatedData.tasaCambio }),
           montoConvertido: montoDestino,
           verificacionTransferenciaId: referenciaTransferencia,
-          observaciones: validatedData.observaciones,
+          ...(validatedData.observaciones != null && { observaciones: validatedData.observaciones }),
           idTransferencia: referenciaTransferencia,
           reconciliadoPor: user.userId
         },
@@ -611,10 +611,14 @@ export async function POST(request: NextRequest) {
       }
 
       // Buscar si existe CuentaPorCobrar
-      const facturaId = reconciliacion.venta.factura?.idFactura
+      const ventaRec = reconciliacion.venta
+      if (!ventaRec) {
+        throw createReconciliacionError(500, 'VENTA_NOT_FOUND', 'Venta no encontrada tras reconciliación')
+      }
+      const facturaId = ventaRec.factura?.idFactura
       
       // Solo procedemos si hay cliente (requisito de CxC)
-      if (reconciliacion.venta.clienteId) {
+      if (ventaRec.clienteId) {
         let existingCxC = null
 
         // 1) Prioridad a facturaId (clave única en CxC)
@@ -627,8 +631,8 @@ export async function POST(request: NextRequest) {
         // 2) Fallback por número de factura solo si no existe por facturaId
         if (!existingCxC) {
           const numeroFacturaCandidates = getNumeroFacturaCandidates(
-            reconciliacion.venta.ordenId,
-            reconciliacion.venta.factura?.numeroFactura
+            ventaRec.ordenId,
+            ventaRec.factura?.numeroFactura
           )
           if (numeroFacturaCandidates.length > 0) {
             existingCxC = await tx.cuentaPorCobrar.findFirst({
@@ -659,9 +663,9 @@ export async function POST(request: NextRequest) {
           // Crear nueva CxC solo si hay deuda pendiente y no existe registro
           await tx.cuentaPorCobrar.create({
             data: {
-              clienteId: reconciliacion.venta.clienteId,
+              clienteId: ventaRec.clienteId,
               facturaId: facturaId,
-              numeroFactura: reconciliacion.venta.ordenId || reconciliacion.venta.factura?.numeroFactura, // Usar ordenId o factura
+              numeroFactura: ventaRec.ordenId || ventaRec.factura?.numeroFactura, // Usar ordenId o factura
               montoDeuda: totalVenta,
               montoPagado: totalPagado,
               estado: nuevoEstado,
