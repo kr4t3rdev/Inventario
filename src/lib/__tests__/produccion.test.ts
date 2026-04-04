@@ -77,6 +77,63 @@ describe('produccion utilities', () => {
       expect(resultado.costoMateriales).toBe(0)
       expect(resultado.costoUnitario).toBe(0)
     })
+
+    it('incorpora desperdicio en la cantidad efectiva usada', () => {
+      // ingrediente: cantidad 10, desperdicio 10% → cantidad efectiva = 10 * 1.10 * cantidadProducir
+      const ingredientes = [
+        {
+          productoId: 'prod-1',
+          cantidad: 10,
+          desperdicio: 0.10,
+          producto: {
+            nombre: 'Harina',
+            precioCosto: 1,
+            stock: 200
+          }
+        }
+      ]
+
+      const resultado = calcularCostoProduccion(ingredientes, 5)
+
+      // cantidad efectiva = 10 * 1.10 * 5 = 55 (no 50)
+      expect(resultado.detalle[0].cantidad).toBe(55)
+      expect(resultado.costoMateriales).toBe(55) // 55 * 1
+      expect(resultado.costoUnitario).toBe(11)   // 55 / 5
+    })
+
+    it('desperdicio cero produce el mismo resultado que comportamiento sin desperdicio', () => {
+      const ingredientesConDesperdicioCero = [
+        {
+          productoId: 'prod-1',
+          cantidad: 2,
+          desperdicio: 0,
+          producto: {
+            nombre: 'Harina',
+            precioCosto: 10,
+            stock: 100
+          }
+        }
+      ]
+
+      const ingredientesSinCampoDesperdicio = [
+        {
+          productoId: 'prod-1',
+          cantidad: 2,
+          producto: {
+            nombre: 'Harina',
+            precioCosto: 10,
+            stock: 100
+          }
+        }
+      ]
+
+      const conCero = calcularCostoProduccion(ingredientesConDesperdicioCero, 10)
+      const sinCampo = calcularCostoProduccion(ingredientesSinCampoDesperdicio, 10)
+
+      expect(conCero.costoMateriales).toBe(sinCampo.costoMateriales)
+      expect(conCero.costoUnitario).toBe(sinCampo.costoUnitario)
+      expect(conCero.detalle[0].cantidad).toBe(sinCampo.detalle[0].cantidad)
+    })
   })
 
   describe('validarDisponibilidadMateriales', () => {

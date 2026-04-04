@@ -77,81 +77,80 @@ export const POST = withAuthPost(async (request: NextRequest) => {
     const payload = createValeSchema.parse(body);
     const userId = body.userId || 'system';
 
-    // Verificar disponibilidad de productos
-    const productosFaltantes = [];
-    for (const item of payload.items) {
-      const producto = await prisma.producto.findUnique({
-        where: { id: item.productoId },
-      });
+    // Crear el vale y validar stock + decrementar de forma atómica en una sola transacción
+    let vale;
+    try {
+      vale = await prisma.$transaction(async (tx) => {
+        // Validar disponibilidad dentro de la transacción para evitar race conditions
+        const productosFaltantes: Array<{ productoId: string; productoNombre: string; requerido: number; disponible: number }> = [];
+        for (const item of payload.items) {
+          const producto = await tx.producto.findUnique({
+            where: { id: item.productoId },
+            select: { id: true, nombre: true, stock: true },
+          });
 
-      if (!producto || producto.stock < item.cantidad) {
-        productosFaltantes.push({
-          productoId: item.productoId,
-          productoNombre: producto?.nombre || 'Desconocido',
-          requerido: item.cantidad,
-          disponible: producto?.stock || 0,
-        });
-      }
-    }
+          if (!producto || producto.stock < item.cantidad) {
+            productosFaltantes.push({
+              productoId: item.productoId,
+              productoNombre: producto?.nombre || 'Desconocido',
+              requerido: item.cantidad,
+              disponible: producto?.stock || 0,
+            });
+          }
+        }
 
-    if (productosFaltantes.length > 0) {
-      return NextResponse.json({
-        error: 'Stock insuficiente.',
-        productosFaltantes,
-      }, { status: 400 });
-    }
+        if (productosFaltantes.length > 0) {
+          throw Object.assign(new Error('Stock insuficiente.'), { productosFaltantes, statusCode: 400 });
+        }
 
-    // Crear el vale y decrementar stock en transacción
-    const vale = await prisma.$transaction(async (tx) => {
-      // Crear el vale
-      const nuevoVale = await tx.valeSalida.create({
-        data: {
-          concepto: payload.concepto,
-          observaciones: payload.observaciones,
-          estado: 'COMPLETADA',
-          usuarioId: userId,
-        },
-      });
-
-      // Crear los items y decrementar stock
-      for (const item of payload.items) {
-        await tx.valeSalidaItem.create({
+        // Crear el vale
+        const nuevoVale = await tx.valeSalida.create({
           data: {
-            valeSalidaId: nuevoVale.valeSalidaId,
-            productoId: item.productoId,
-            cantidad: item.cantidad,
+            concepto: payload.concepto,
+            observaciones: payload.observaciones,
+            estado: 'COMPLETADA',
+            usuarioId: userId,
           },
         });
 
-        await tx.producto.update({
-          where: { id: item.productoId },
-          data: {
-            stock: {
-              decrement: item.cantidad,
+        // Crear los items y decrementar stock
+        for (const item of payload.items) {
+          await tx.valeSalidaItem.create({
+            data: {
+              valeSalidaId: nuevoVale.valeSalidaId,
+              productoId: item.productoId,
+              cantidad: item.cantidad,
             },
-          },
-        });
-      }
+          });
 
-      // Retornar el vale con los items
-      return tx.valeSalida.findUnique({
-        where: { valeSalidaId: nuevoVale.valeSalidaId },
-        include: {
-          items: {
-            include: {
-              producto: {
-                select: {
-                  id: true,
-                  nombre: true,
-                  precioCosto: true,
-                  stock: true,
+          await tx.producto.update({
+            where: { id: item.productoId },
+            data: { stock: { decrement: item.cantidad } },
+          });
+        }
+
+        return tx.valeSalida.findUnique({
+          where: { valeSalidaId: nuevoVale.valeSalidaId },
+          include: {
+            items: {
+              include: {
+                producto: {
+                  select: { id: true, nombre: true, precioCosto: true, stock: true },
                 },
               },
             },
           },
-        },
+        });
       });
-    });
+    } catch (txError: any) {
+      if (txError?.statusCode === 400) {
+        return NextResponse.json(
+          { error: 'Stock insuficiente.', productosFaltantes: txError.productosFaltantes },
+          { status: 400 }
+        );
+      }
+      throw txError;
+    }
 
     return NextResponse.json(vale, { status: 201 });
   } catch (error) {

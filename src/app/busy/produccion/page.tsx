@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { OrdenProduccion, RecetaProduccion, ValeSalida, Producto } from '@/app/models/model'
@@ -53,18 +54,19 @@ export default function ProduccionPage() {
   const [searchRecetas, setSearchRecetas] = useState('')
   const [searchOrdenes, setSearchOrdenes] = useState('')
   const [searchVales, setSearchVales] = useState('')
-  const [filtroEstadoOrden, setFiltroEstadoOrden] = useState<string>('')
-  const [filtroConceptoVale, setFiltroConceptoVale] = useState<string>('')
+  const [filtroEstadoOrden, setFiltroEstadoOrden] = useState<string>('all')
+  const [filtroConceptoVale, setFiltroConceptoVale] = useState<string>('all')
   
   // Dialog states
   const [dialogRecetaOpen, setDialogRecetaOpen] = useState(false)
   const [dialogOrdenOpen, setDialogOrdenOpen] = useState(false)
   const [dialogValeOpen, setDialogValeOpen] = useState(false)
+  const [confirmacion, setConfirmacion] = useState<{ tipo: 'aprobar' | 'completar' | 'cancelar'; ordenId: string; recetaNombre: string; cantidad: number } | null>(null)
 
   // Data
   const { data: recetasTyped, isLoading: loadingRecetas } = useGetRecetasProduccionQuery(searchRecetas ? { search: searchRecetas } : undefined)
-  const { data: ordenesTyped, isLoading: loadingOrdenes } = useGetOrdenesProduccionQuery(filtroEstadoOrden ? { estado: filtroEstadoOrden } : undefined)
-  const { data: valesTyped, isLoading: loadingVales } = useGetValesSalidaQuery(filtroConceptoVale ? { concepto: filtroConceptoVale } : undefined)
+  const { data: ordenesTyped, isLoading: loadingOrdenes } = useGetOrdenesProduccionQuery(filtroEstadoOrden !== 'all' ? { estado: filtroEstadoOrden } : undefined)
+  const { data: valesTyped, isLoading: loadingVales } = useGetValesSalidaQuery(filtroConceptoVale !== 'all' ? { concepto: filtroConceptoVale } : undefined)
   const { data: conceptos } = useGetConceptosQuery()
   const { data: productosTyped } = useGetProductosQuery()
   const { data: gastosDE } = useGetGastosDEQuery()
@@ -96,14 +98,14 @@ export default function ProduccionPage() {
   }
 
   const getEstadoBadge = (estado: string) => {
-    switch (estado) {
-      case 'pendiente':
+    switch (String(estado).toUpperCase()) {
+      case 'PENDIENTE':
         return <Badge variant="secondary"><Clock className="w-3 h-3 mr-1" /> Pendiente</Badge>
-      case 'en_proceso':
+      case 'EN_PROCESO':
         return <Badge variant="default"><Clock className="w-3 h-3 mr-1" /> En Proceso</Badge>
-      case 'completada':
+      case 'COMPLETADA':
         return <Badge variant="default" className="bg-green-500"><CheckCircle className="w-3 h-3 mr-1" /> Completada</Badge>
-      case 'cancelada':
+      case 'CANCELADA':
         return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" /> Cancelada</Badge>
       default:
         return <Badge>{estado}</Badge>
@@ -424,7 +426,7 @@ export default function ProduccionPage() {
                       <SelectValue placeholder="Todos los estados" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todos</SelectItem>
+                      <SelectItem value="all">Todos</SelectItem>
                       <SelectItem value="pendiente">Pendiente</SelectItem>
                       <SelectItem value="en_proceso">En Proceso</SelectItem>
                       <SelectItem value="completada">Completada</SelectItem>
@@ -517,29 +519,29 @@ export default function ProduccionPage() {
                           <TableCell>{format(new Date(orden.fechaProduccion), 'dd/MM/yyyy')}</TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
-                              {orden.estado === 'pendiente' && (
+                              {String(orden.estado).toUpperCase() === 'PENDIENTE' && (
                                 <Button 
                                   variant="outline" 
                                   size="sm"
-                                  onClick={() => handleAprobarOrden(orden.ordenProduccionId)}
+                                  onClick={() => setConfirmacion({ tipo: 'aprobar', ordenId: orden.ordenProduccionId, recetaNombre: orden.receta?.nombre, cantidad: orden.cantidad })}
                                 >
                                   Aprobar
                                 </Button>
                               )}
-                              {orden.estado === 'en_proceso' && (
+                              {String(orden.estado).toUpperCase() === 'EN_PROCESO' && (
                                 <Button 
                                   variant="default" 
                                   size="sm"
-                                  onClick={() => handleCompletarOrden(orden.ordenProduccionId)}
+                                  onClick={() => setConfirmacion({ tipo: 'completar', ordenId: orden.ordenProduccionId, recetaNombre: orden.receta?.nombre, cantidad: orden.cantidad })}
                                 >
                                   Completar
                                 </Button>
                               )}
-                              {(orden.estado === 'pendiente' || orden.estado === 'en_proceso') && (
+                              {['PENDIENTE', 'EN_PROCESO'].includes(String(orden.estado).toUpperCase()) && (
                                 <Button 
                                   variant="destructive" 
                                   size="sm"
-                                  onClick={() => handleCancelarOrden(orden.ordenProduccionId)}
+                                  onClick={() => setConfirmacion({ tipo: 'cancelar', ordenId: orden.ordenProduccionId, recetaNombre: orden.receta?.nombre, cantidad: orden.cantidad })}
                                 >
                                   Cancelar
                                 </Button>
@@ -571,7 +573,7 @@ export default function ProduccionPage() {
                       <SelectValue placeholder="Todos los conceptos" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todos</SelectItem>
+                      <SelectItem value="all">Todos</SelectItem>
                       {conceptos?.map((concepto: any) => (
                         <SelectItem key={concepto} value={concepto}>
                           {concepto}
@@ -596,18 +598,18 @@ export default function ProduccionPage() {
                       <div className="grid gap-4 py-4">
                         <div className="grid gap-2">
                           <Label htmlFor="concepto">Concepto</Label>
-                          <Select value={selectedConcepto} onValueChange={setSelectedConcepto}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Seleccionar concepto" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {conceptos?.map((concepto: any) => (
-                                <SelectItem key={concepto} value={concepto}>
-                                  {concepto}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <Input
+                            id="concepto"
+                            list="conceptos-list"
+                            value={selectedConcepto}
+                            onChange={(e) => setSelectedConcepto(e.target.value)}
+                            placeholder="Ej: Mantenimiento, Arrendamiento..."
+                          />
+                          <datalist id="conceptos-list">
+                            {conceptos?.map((concepto: any) => (
+                              <option key={concepto} value={concepto} />
+                            ))}
+                          </datalist>
                         </div>
                         <div className="grid gap-2">
                           <Label>Productos</Label>
@@ -737,6 +739,44 @@ export default function ProduccionPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* AlertDialog de confirmación para acciones de estado */}
+      <AlertDialog open={confirmacion !== null} onOpenChange={(open) => { if (!open) setConfirmacion(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmacion?.tipo === 'aprobar' && 'Aprobar orden de producción'}
+              {confirmacion?.tipo === 'completar' && 'Completar orden de producción'}
+              {confirmacion?.tipo === 'cancelar' && 'Cancelar orden de producción'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmacion?.tipo === 'aprobar' && (
+                <>¿Confirmar aprobación de <strong>{confirmacion.recetaNombre}</strong> (cantidad: {confirmacion.cantidad})? Se reservarán los materiales del inventario.</>
+              )}
+              {confirmacion?.tipo === 'completar' && (
+                <>¿Confirmar que la producción de <strong>{confirmacion?.recetaNombre}</strong> está terminada? Se incrementará el stock del producto terminado.</>
+              )}
+              {confirmacion?.tipo === 'cancelar' && (
+                <>¿Cancelar la orden de <strong>{confirmacion?.recetaNombre}</strong>? Si estaba en proceso, los materiales reservados serán liberados al inventario.</>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setConfirmacion(null)}>Volver</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (!confirmacion) return
+                if (confirmacion.tipo === 'aprobar') handleAprobarOrden(confirmacion.ordenId)
+                if (confirmacion.tipo === 'completar') handleCompletarOrden(confirmacion.ordenId)
+                if (confirmacion.tipo === 'cancelar') handleCancelarOrden(confirmacion.ordenId)
+                setConfirmacion(null)
+              }}
+            >
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

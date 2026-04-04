@@ -9,6 +9,7 @@
 export interface IngredienteReceta {
   productoId: string
   cantidad: number
+  desperdicio?: number
   producto?: {
     nombre: string
     precioCosto: number
@@ -55,7 +56,8 @@ export function calcularCostoProduccion(
   let costoMateriales = 0
 
   for (const ingrediente of ingredientes) {
-    const cantidadUsada = ingrediente.cantidad * cantidadProducir
+    const factorDesperdicio = 1 + (ingrediente.desperdicio ?? 0)
+    const cantidadUsada = ingrediente.cantidad * factorDesperdicio * cantidadProducir
     const costoUnitario = ingrediente.producto?.precioCosto || 0
     const costoTotal = costoUnitario * cantidadUsada
 

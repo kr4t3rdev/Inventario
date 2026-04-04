@@ -39,7 +39,8 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
     // Calcular costo de materiales
     let costoMateriales = 0;
     for (const ingrediente of orden.receta.ingredientes) {
-      const cantidadUsada = ingrediente.cantidad * orden.cantidad;
+      const factorDesperdicio = 1 + (ingrediente.desperdicio ?? 0);
+      const cantidadUsada = ingrediente.cantidad * factorDesperdicio * orden.cantidad;
       const producto = await prisma.producto.findUnique({
         where: { id: ingrediente.productoId },
       });

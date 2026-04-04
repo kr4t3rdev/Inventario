@@ -37,7 +37,8 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
     // Verificar disponibilidad de materiales
     const materialesFaltantes = [];
     for (const ingrediente of orden.receta.ingredientes) {
-      const cantidadRequerida = ingrediente.cantidad * orden.cantidad;
+      const factorDesperdicio = 1 + (ingrediente.desperdicio ?? 0);
+      const cantidadRequerida = ingrediente.cantidad * factorDesperdicio * orden.cantidad;
       const producto = await prisma.producto.findUnique({
         where: { id: ingrediente.productoId },
       });
@@ -61,7 +62,8 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
 
     // Reservar materiales (decrementar stock)
     for (const ingrediente of orden.receta.ingredientes) {
-      const cantidadRequerida = ingrediente.cantidad * orden.cantidad;
+      const factorDesperdicio = 1 + (ingrediente.desperdicio ?? 0);
+      const cantidadRequerida = ingrediente.cantidad * factorDesperdicio * orden.cantidad;
       
       await prisma.producto.update({
         where: { id: ingrediente.productoId },
