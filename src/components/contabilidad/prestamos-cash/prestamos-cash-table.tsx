@@ -11,19 +11,24 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
+  getExpandedRowModel,
   useReactTable,
+  Row,
 } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Card, CardContent } from "@/components/ui/card"
-import { ArrowUpDown, Search, AlertCircle, CheckCircle2, Clock, Ban, Loader2, FileText } from "lucide-react"
+import { ArrowUpDown, ChevronDown, ChevronRight, Search, AlertCircle, CheckCircle2, Clock, Ban, Loader2, FileText, CreditCard, Printer } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
+import { getAuthToken } from "@/lib/token"
+import React from "react"
 import type { PrestamoCash } from "@/app/models/model"
 
 interface PrestamosCashTableProps {
@@ -48,6 +53,164 @@ function formatTableCurrency(amount: number): string {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`
+}
+
+/**
+ * @description Subcomponente para mostrar los pagos agrupados de un préstamo.
+ * @param {{ row: Row<PrestamoCash> }} props - Fila expandida.
+ * @returns {JSX.Element} Tabla de pagos agrupados por transferencia.
+ */
+function imprimirComprobantePago(pago: { id: string; monto: number; fecha: Date; tipo: string; cuenta: string; cantidad: number }, prestamo: PrestamoCash) {
+  const fmt = (n: number) => n.toLocaleString('es-CU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+  const win = window.open('', '_blank', 'width=420,height=560')
+  if (!win) return
+  win.document.write(`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"><title>Comprobante de Pago</title><style>
+    body{font-family:sans-serif;font-size:13px;padding:24px;color:#111;max-width:380px;margin:0 auto}
+    h2{text-align:center;font-size:16px;margin:0 0 4px}
+    .sub{text-align:center;color:#666;font-size:11px;margin-bottom:16px}
+    table{width:100%;border-collapse:collapse;margin-top:8px}
+    td{padding:5px 2px;border-bottom:1px solid #eee;vertical-align:top}
+    td:last-child{text-align:right;font-weight:600}
+    .total td{font-size:15px;border-top:2px solid #111;border-bottom:none;padding-top:10px}
+    .footer{margin-top:20px;text-align:center;font-size:10px;color:#999}
+    @media print{body{padding:8px}button{display:none}}
+  </style></head><body>
+    <h2>Comprobante de Pago</h2>
+    <p class="sub">Préstamo #${prestamo.idNumerico} &mdash; ${prestamo.cliente?.nombre ?? '—'}</p>
+    <table>
+      <tr><td>Referencia / ID</td><td>${pago.id}</td></tr>
+      <tr><td>Fecha</td><td>${pago.fecha.toLocaleDateString('es-ES')}</td></tr>
+      <tr><td>Método de Pago</td><td>${pago.tipo}</td></tr>
+      <tr><td>Cuenta Destino</td><td>${pago.cuenta}</td></tr>
+      <tr><td>N° de registros</td><td>${pago.cantidad}</td></tr>
+    </table>
+    <table style="margin-top:12px">
+      <tr class="total"><td>Total Pagado</td><td>${prestamo.moneda} ${fmt(pago.monto)}</td></tr>
+    </table>
+    <p class="footer">Generado el ${new Date().toLocaleString('es-ES')}</p>
+    <script>window.onload=function(){window.print();window.onafterprint=function(){window.close()};}<\/script>
+  </body></html>`)
+  win.document.close()
+}
+
+function PagosExpandidos({ row }: { row: Row<PrestamoCash> }) {
+  const prestamo = row.original;
+  const reconciliaciones = (prestamo as any).reconciliaciones ?? [];
+  const shouldReduceMotion = useReducedMotion()
+
+  const pagosAgrupados = React.useMemo(() => {
+    const recs: any[] = [...(reconciliaciones as any[])]
+    if (recs.length === 0) return [];
+
+    const grupos: Record<string, { id: string, monto: number, fecha: Date, tipo: string, cuenta: string, cantidad: number }> = {};
+
+    recs.forEach((rec: any) => {
+      const idTransferencia = rec.idTransferencia?.trim();
+      const reconciliacionId = rec.reconciliacionId;
+      const key = idTransferencia || reconciliacionId;
+      const label = idTransferencia || `Ref: ${reconciliacionId.slice(-8)}`;
+
+      if (!grupos[key]) {
+        grupos[key] = {
+          id: label,
+          monto: 0,
+          fecha: new Date(rec.fechaReconciliacion),
+          tipo: rec.tipoPago?.nombre || 'Desconocido',
+          cuenta: rec.cuentaBancaria?.nombreBanco || 'Desconocido',
+          cantidad: 0
+        };
+      }
+      grupos[key].monto += Number(rec.monto);
+      grupos[key].cantidad += 1;
+    });
+
+    return Object.values(grupos);
+  }, [reconciliaciones]);
+
+  if (pagosAgrupados.length === 0) {
+    return (
+      <motion.div
+        initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, height: 0 }}
+        animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, height: "auto" }}
+        exit={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, height: 0 }}
+        transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
+        className="p-6 text-sm text-muted-foreground bg-muted/30 rounded-lg border border-dashed"
+      >
+        <div className="flex items-center gap-2">
+          <AlertCircle className="h-4 w-4" />
+          No hay pagos registrados para este préstamo.
+        </div>
+      </motion.div>
+    )
+  }
+
+  return (
+    <motion.div
+      initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, height: 0 }}
+      animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, height: "auto" }}
+      exit={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, height: 0 }}
+      transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
+      className="p-4 bg-muted/30 rounded-lg border border-l-4 border-l-primary/30 ml-4 mt-2 mb-2"
+    >
+      <h4 className="font-semibold mb-3 text-sm flex items-center gap-2">
+        <CreditCard className="h-4 w-4 text-primary" />
+        <span>Detalle de Transferencias y Pagos</span>
+        <Badge variant="secondary" className="text-xs font-normal">
+          {pagosAgrupados.length} transacciones
+        </Badge>
+      </h4>
+      <div className="rounded-md border overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/50 hover:bg-muted/50">
+              <TableHead className="text-xs w-[200px] font-semibold">ID Transferencia / Referencia</TableHead>
+              <TableHead className="text-xs font-semibold">Fecha</TableHead>
+              <TableHead className="text-xs font-semibold">Método</TableHead>
+              <TableHead className="text-xs font-semibold">Cuenta Destino</TableHead>
+              <TableHead className="text-xs text-center font-semibold">Cant. Pagos</TableHead>
+              <TableHead className="text-xs text-right font-semibold">Importe Transferencia</TableHead>
+              <TableHead className="text-xs w-[40px]"></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {pagosAgrupados.map((pago, idx) => (
+              <TableRow key={idx} className="hover:bg-muted/30">
+                <TableCell className="text-xs font-mono font-medium">{pago.id}</TableCell>
+                <TableCell className="text-xs text-muted-foreground">{pago.fecha.toLocaleDateString()}</TableCell>
+                <TableCell className="text-xs">{pago.tipo}</TableCell>
+                <TableCell className="text-xs">{pago.cuenta}</TableCell>
+                <TableCell className="text-xs text-center">
+                  <Badge variant="outline" className="text-xs">
+                    {pago.cantidad}
+                  </Badge>
+                </TableCell>
+                <TableCell className="text-xs text-right font-medium text-green-600">
+                  {formatTableCurrency(pago.monto)}
+                </TableCell>
+                <TableCell className="text-xs">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => imprimirComprobantePago(pago, prestamo)}
+                        >
+                          <Printer className="h-3.5 w-3.5" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>Imprimir comprobante</TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </motion.div>
+  );
 }
 
 /**
@@ -106,10 +269,43 @@ export function PrestamosCashTable({ prestamos, isLoading, error, onPagar }: Pre
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
+  const [expanded, setExpanded] = useState({})
   const [estadoFiltro, setEstadoFiltro] = useState<string>("TODOS")
   const shouldReduceMotion = useReducedMotion()
 
   const columns: ColumnDef<PrestamoCash>[] = [
+    {
+      id: "expander",
+      header: () => null,
+      cell: ({ row }) => {
+        const tienePagos = ((row.original as any).reconciliaciones?.length ?? 0) > 0
+        return (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-11 w-11 p-0"
+                  onClick={() => row.toggleExpanded()}
+                  disabled={!tienePagos}
+                  aria-label={row.getIsExpanded() ? "Contraer detalles" : "Expandir detalles"}
+                >
+                  {row.getIsExpanded() ? (
+                    <ChevronDown className="h-4 w-4" />
+                  ) : (
+                    <ChevronRight className={`h-4 w-4 ${tienePagos ? 'text-primary' : 'text-muted-foreground'}`} />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{tienePagos ? (row.getIsExpanded() ? "Ver menos" : "Ver pagos") : "Sin pagos registrados"}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )
+      },
+    },
     {
       id: "busqueda",
       accessorFn: (row) => {
@@ -204,7 +400,10 @@ export function PrestamosCashTable({ prestamos, isLoading, error, onPagar }: Pre
         const descargarComprobante = async () => {
           setDescargando(true)
           try {
-            const res = await fetch(`/api/contabilidad/prestamos-cash/${prestamo.id}/comprobante`)
+            const token = getAuthToken()
+            const res = await fetch(`/api/contabilidad/prestamos-cash/${prestamo.id}/comprobante`, {
+              headers: token ? { Authorization: token } : undefined,
+            })
             if (!res.ok) throw new Error("Error al descargar")
             const blob = await res.blob()
             const url = URL.createObjectURL(blob)
@@ -264,11 +463,14 @@ export function PrestamosCashTable({ prestamos, isLoading, error, onPagar }: Pre
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
+    onExpandedChange: setExpanded,
     state: {
       sorting,
       columnFilters,
       columnVisibility: { busqueda: false, ...columnVisibility },
+      expanded,
     },
   })
 
@@ -340,20 +542,33 @@ export function PrestamosCashTable({ prestamos, isLoading, error, onPagar }: Pre
                   <AnimatePresence mode="popLayout">
                     {table.getRowModel().rows?.length ? (
                       table.getRowModel().rows.map((row) => (
-                        <motion.tr
-                          key={row.id}
-                          initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: -10 }}
-                          animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
-                          exit={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 10 }}
-                          transition={{ duration: shouldReduceMotion ? 0 : 0.15 }}
-                          className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
-                        >
-                          {row.getVisibleCells().map((cell) => (
-                            <TableCell key={cell.id}>
-                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                            </TableCell>
-                          ))}
-                        </motion.tr>
+                        <React.Fragment key={row.id}>
+                          <motion.tr
+                            initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: -10 }}
+                            animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
+                            exit={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 10 }}
+                            transition={{ duration: shouldReduceMotion ? 0 : 0.15 }}
+                            className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
+                          >
+                            {row.getVisibleCells().map((cell) => (
+                              <TableCell key={cell.id}>
+                                {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                              </TableCell>
+                            ))}
+                          </motion.tr>
+                          {row.getIsExpanded() && (
+                            <motion.tr
+                              initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              exit={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
+                              transition={{ duration: shouldReduceMotion ? 0 : 0.15 }}
+                            >
+                              <TableCell colSpan={columns.length} className="p-0 border-0 bg-muted/5">
+                                <PagosExpandidos row={row} />
+                              </TableCell>
+                            </motion.tr>
+                          )}
+                        </React.Fragment>
                       ))
                     ) : (
                       <TableRow>

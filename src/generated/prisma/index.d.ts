@@ -10624,6 +10624,8 @@ export namespace Prisma {
     transferenciasDestino: number
     transferenciasOrigen: number
     facturas: number
+    prestamosCash: number
+    deudasCash: number
   }
 
   export type CuentaBancariaCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -10636,6 +10638,8 @@ export namespace Prisma {
     transferenciasDestino?: boolean | CuentaBancariaCountOutputTypeCountTransferenciasDestinoArgs
     transferenciasOrigen?: boolean | CuentaBancariaCountOutputTypeCountTransferenciasOrigenArgs
     facturas?: boolean | CuentaBancariaCountOutputTypeCountFacturasArgs
+    prestamosCash?: boolean | CuentaBancariaCountOutputTypeCountPrestamosCashArgs
+    deudasCash?: boolean | CuentaBancariaCountOutputTypeCountDeudasCashArgs
   }
 
   // Custom InputTypes
@@ -10710,6 +10714,20 @@ export namespace Prisma {
    */
   export type CuentaBancariaCountOutputTypeCountFacturasArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: FacturaWhereInput
+  }
+
+  /**
+   * CuentaBancariaCountOutputType without action
+   */
+  export type CuentaBancariaCountOutputTypeCountPrestamosCashArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PrestamoCashWhereInput
+  }
+
+  /**
+   * CuentaBancariaCountOutputType without action
+   */
+  export type CuentaBancariaCountOutputTypeCountDeudasCashArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: DeudaCashWhereInput
   }
 
 
@@ -59353,6 +59371,8 @@ export namespace Prisma {
     transferenciasDestino?: boolean | CuentaBancaria$transferenciasDestinoArgs<ExtArgs>
     transferenciasOrigen?: boolean | CuentaBancaria$transferenciasOrigenArgs<ExtArgs>
     facturas?: boolean | CuentaBancaria$facturasArgs<ExtArgs>
+    prestamosCash?: boolean | CuentaBancaria$prestamosCashArgs<ExtArgs>
+    deudasCash?: boolean | CuentaBancaria$deudasCashArgs<ExtArgs>
     _count?: boolean | CuentaBancariaCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["cuentaBancaria"]>
 
@@ -59404,6 +59424,8 @@ export namespace Prisma {
     transferenciasDestino?: boolean | CuentaBancaria$transferenciasDestinoArgs<ExtArgs>
     transferenciasOrigen?: boolean | CuentaBancaria$transferenciasOrigenArgs<ExtArgs>
     facturas?: boolean | CuentaBancaria$facturasArgs<ExtArgs>
+    prestamosCash?: boolean | CuentaBancaria$prestamosCashArgs<ExtArgs>
+    deudasCash?: boolean | CuentaBancaria$deudasCashArgs<ExtArgs>
     _count?: boolean | CuentaBancariaCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type CuentaBancariaIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -59422,6 +59444,8 @@ export namespace Prisma {
       transferenciasDestino: Prisma.$TransferenciaBancariaPayload<ExtArgs>[]
       transferenciasOrigen: Prisma.$TransferenciaBancariaPayload<ExtArgs>[]
       facturas: Prisma.$FacturaPayload<ExtArgs>[]
+      prestamosCash: Prisma.$PrestamoCashPayload<ExtArgs>[]
+      deudasCash: Prisma.$DeudaCashPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       cuentaId: string
@@ -59837,6 +59861,8 @@ export namespace Prisma {
     transferenciasDestino<T extends CuentaBancaria$transferenciasDestinoArgs<ExtArgs> = {}>(args?: Subset<T, CuentaBancaria$transferenciasDestinoArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TransferenciaBancariaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     transferenciasOrigen<T extends CuentaBancaria$transferenciasOrigenArgs<ExtArgs> = {}>(args?: Subset<T, CuentaBancaria$transferenciasOrigenArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TransferenciaBancariaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     facturas<T extends CuentaBancaria$facturasArgs<ExtArgs> = {}>(args?: Subset<T, CuentaBancaria$facturasArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$FacturaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    prestamosCash<T extends CuentaBancaria$prestamosCashArgs<ExtArgs> = {}>(args?: Subset<T, CuentaBancaria$prestamosCashArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PrestamoCashPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    deudasCash<T extends CuentaBancaria$deudasCashArgs<ExtArgs> = {}>(args?: Subset<T, CuentaBancaria$deudasCashArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DeudaCashPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -60495,6 +60521,54 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: FacturaScalarFieldEnum | FacturaScalarFieldEnum[]
+  }
+
+  /**
+   * CuentaBancaria.prestamosCash
+   */
+  export type CuentaBancaria$prestamosCashArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PrestamoCash
+     */
+    select?: PrestamoCashSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PrestamoCash
+     */
+    omit?: PrestamoCashOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PrestamoCashInclude<ExtArgs> | null
+    where?: PrestamoCashWhereInput
+    orderBy?: PrestamoCashOrderByWithRelationInput | PrestamoCashOrderByWithRelationInput[]
+    cursor?: PrestamoCashWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: PrestamoCashScalarFieldEnum | PrestamoCashScalarFieldEnum[]
+  }
+
+  /**
+   * CuentaBancaria.deudasCash
+   */
+  export type CuentaBancaria$deudasCashArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the DeudaCash
+     */
+    select?: DeudaCashSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the DeudaCash
+     */
+    omit?: DeudaCashOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: DeudaCashInclude<ExtArgs> | null
+    where?: DeudaCashWhereInput
+    orderBy?: DeudaCashOrderByWithRelationInput | DeudaCashOrderByWithRelationInput[]
+    cursor?: DeudaCashWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: DeudaCashScalarFieldEnum | DeudaCashScalarFieldEnum[]
   }
 
   /**
@@ -121592,6 +121666,7 @@ export namespace Prisma {
     deletedAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
+    cuentaBancariaId: string | null
   }
 
   export type PrestamoCashMaxAggregateOutputType = {
@@ -121611,6 +121686,7 @@ export namespace Prisma {
     deletedAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
+    cuentaBancariaId: string | null
   }
 
   export type PrestamoCashCountAggregateOutputType = {
@@ -121630,6 +121706,7 @@ export namespace Prisma {
     deletedAt: number
     createdAt: number
     updatedAt: number
+    cuentaBancariaId: number
     _all: number
   }
 
@@ -121665,6 +121742,7 @@ export namespace Prisma {
     deletedAt?: true
     createdAt?: true
     updatedAt?: true
+    cuentaBancariaId?: true
   }
 
   export type PrestamoCashMaxAggregateInputType = {
@@ -121684,6 +121762,7 @@ export namespace Prisma {
     deletedAt?: true
     createdAt?: true
     updatedAt?: true
+    cuentaBancariaId?: true
   }
 
   export type PrestamoCashCountAggregateInputType = {
@@ -121703,6 +121782,7 @@ export namespace Prisma {
     deletedAt?: true
     createdAt?: true
     updatedAt?: true
+    cuentaBancariaId?: true
     _all?: true
   }
 
@@ -121809,6 +121889,7 @@ export namespace Prisma {
     deletedAt: Date | null
     createdAt: Date
     updatedAt: Date
+    cuentaBancariaId: string | null
     _count: PrestamoCashCountAggregateOutputType | null
     _avg: PrestamoCashAvgAggregateOutputType | null
     _sum: PrestamoCashSumAggregateOutputType | null
@@ -121847,8 +121928,10 @@ export namespace Prisma {
     deletedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    cuentaBancariaId?: boolean
     cliente?: boolean | ClienteDefaultArgs<ExtArgs>
     cuentaPorCobrar?: boolean | CuentaPorCobrarDefaultArgs<ExtArgs>
+    cuentaBancaria?: boolean | PrestamoCash$cuentaBancariaArgs<ExtArgs>
     reconciliaciones?: boolean | PrestamoCash$reconciliacionesArgs<ExtArgs>
     _count?: boolean | PrestamoCashCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["prestamoCash"]>
@@ -121870,8 +121953,10 @@ export namespace Prisma {
     deletedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    cuentaBancariaId?: boolean
     cliente?: boolean | ClienteDefaultArgs<ExtArgs>
     cuentaPorCobrar?: boolean | CuentaPorCobrarDefaultArgs<ExtArgs>
+    cuentaBancaria?: boolean | PrestamoCash$cuentaBancariaArgs<ExtArgs>
   }, ExtArgs["result"]["prestamoCash"]>
 
   export type PrestamoCashSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -121891,8 +121976,10 @@ export namespace Prisma {
     deletedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    cuentaBancariaId?: boolean
     cliente?: boolean | ClienteDefaultArgs<ExtArgs>
     cuentaPorCobrar?: boolean | CuentaPorCobrarDefaultArgs<ExtArgs>
+    cuentaBancaria?: boolean | PrestamoCash$cuentaBancariaArgs<ExtArgs>
   }, ExtArgs["result"]["prestamoCash"]>
 
   export type PrestamoCashSelectScalar = {
@@ -121912,22 +121999,26 @@ export namespace Prisma {
     deletedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    cuentaBancariaId?: boolean
   }
 
-  export type PrestamoCashOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "idNumerico" | "clienteId" | "cuentaPorCobrarId" | "montoCapital" | "moneda" | "tasaInteres" | "tasaCambioAlCrear" | "fechaOtorgamiento" | "fechaVencimiento" | "estado" | "observaciones" | "createdById" | "deletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["prestamoCash"]>
+  export type PrestamoCashOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "idNumerico" | "clienteId" | "cuentaPorCobrarId" | "montoCapital" | "moneda" | "tasaInteres" | "tasaCambioAlCrear" | "fechaOtorgamiento" | "fechaVencimiento" | "estado" | "observaciones" | "createdById" | "deletedAt" | "createdAt" | "updatedAt" | "cuentaBancariaId", ExtArgs["result"]["prestamoCash"]>
   export type PrestamoCashInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     cliente?: boolean | ClienteDefaultArgs<ExtArgs>
     cuentaPorCobrar?: boolean | CuentaPorCobrarDefaultArgs<ExtArgs>
+    cuentaBancaria?: boolean | PrestamoCash$cuentaBancariaArgs<ExtArgs>
     reconciliaciones?: boolean | PrestamoCash$reconciliacionesArgs<ExtArgs>
     _count?: boolean | PrestamoCashCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type PrestamoCashIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     cliente?: boolean | ClienteDefaultArgs<ExtArgs>
     cuentaPorCobrar?: boolean | CuentaPorCobrarDefaultArgs<ExtArgs>
+    cuentaBancaria?: boolean | PrestamoCash$cuentaBancariaArgs<ExtArgs>
   }
   export type PrestamoCashIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     cliente?: boolean | ClienteDefaultArgs<ExtArgs>
     cuentaPorCobrar?: boolean | CuentaPorCobrarDefaultArgs<ExtArgs>
+    cuentaBancaria?: boolean | PrestamoCash$cuentaBancariaArgs<ExtArgs>
   }
 
   export type $PrestamoCashPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -121935,6 +122026,7 @@ export namespace Prisma {
     objects: {
       cliente: Prisma.$ClientePayload<ExtArgs>
       cuentaPorCobrar: Prisma.$CuentaPorCobrarPayload<ExtArgs>
+      cuentaBancaria: Prisma.$CuentaBancariaPayload<ExtArgs> | null
       reconciliaciones: Prisma.$ReconciliacionVentaPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
@@ -121954,6 +122046,7 @@ export namespace Prisma {
       deletedAt: Date | null
       createdAt: Date
       updatedAt: Date
+      cuentaBancariaId: string | null
     }, ExtArgs["result"]["prestamoCash"]>
     composites: {}
   }
@@ -122350,6 +122443,7 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     cliente<T extends ClienteDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ClienteDefaultArgs<ExtArgs>>): Prisma__ClienteClient<$Result.GetResult<Prisma.$ClientePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     cuentaPorCobrar<T extends CuentaPorCobrarDefaultArgs<ExtArgs> = {}>(args?: Subset<T, CuentaPorCobrarDefaultArgs<ExtArgs>>): Prisma__CuentaPorCobrarClient<$Result.GetResult<Prisma.$CuentaPorCobrarPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    cuentaBancaria<T extends PrestamoCash$cuentaBancariaArgs<ExtArgs> = {}>(args?: Subset<T, PrestamoCash$cuentaBancariaArgs<ExtArgs>>): Prisma__CuentaBancariaClient<$Result.GetResult<Prisma.$CuentaBancariaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     reconciliaciones<T extends PrestamoCash$reconciliacionesArgs<ExtArgs> = {}>(args?: Subset<T, PrestamoCash$reconciliacionesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReconciliacionVentaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -122396,6 +122490,7 @@ export namespace Prisma {
     readonly deletedAt: FieldRef<"PrestamoCash", 'DateTime'>
     readonly createdAt: FieldRef<"PrestamoCash", 'DateTime'>
     readonly updatedAt: FieldRef<"PrestamoCash", 'DateTime'>
+    readonly cuentaBancariaId: FieldRef<"PrestamoCash", 'String'>
   }
     
 
@@ -122792,6 +122887,25 @@ export namespace Prisma {
   }
 
   /**
+   * PrestamoCash.cuentaBancaria
+   */
+  export type PrestamoCash$cuentaBancariaArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaBancaria
+     */
+    select?: CuentaBancariaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CuentaBancaria
+     */
+    omit?: CuentaBancariaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CuentaBancariaInclude<ExtArgs> | null
+    where?: CuentaBancariaWhereInput
+  }
+
+  /**
    * PrestamoCash.reconciliaciones
    */
   export type PrestamoCash$reconciliacionesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -122875,6 +122989,7 @@ export namespace Prisma {
     deletedAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
+    cuentaBancariaId: string | null
   }
 
   export type DeudaCashMaxAggregateOutputType = {
@@ -122894,6 +123009,7 @@ export namespace Prisma {
     deletedAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
+    cuentaBancariaId: string | null
   }
 
   export type DeudaCashCountAggregateOutputType = {
@@ -122913,6 +123029,7 @@ export namespace Prisma {
     deletedAt: number
     createdAt: number
     updatedAt: number
+    cuentaBancariaId: number
     _all: number
   }
 
@@ -122946,6 +123063,7 @@ export namespace Prisma {
     deletedAt?: true
     createdAt?: true
     updatedAt?: true
+    cuentaBancariaId?: true
   }
 
   export type DeudaCashMaxAggregateInputType = {
@@ -122965,6 +123083,7 @@ export namespace Prisma {
     deletedAt?: true
     createdAt?: true
     updatedAt?: true
+    cuentaBancariaId?: true
   }
 
   export type DeudaCashCountAggregateInputType = {
@@ -122984,6 +123103,7 @@ export namespace Prisma {
     deletedAt?: true
     createdAt?: true
     updatedAt?: true
+    cuentaBancariaId?: true
     _all?: true
   }
 
@@ -123090,6 +123210,7 @@ export namespace Prisma {
     deletedAt: Date | null
     createdAt: Date
     updatedAt: Date
+    cuentaBancariaId: string | null
     _count: DeudaCashCountAggregateOutputType | null
     _avg: DeudaCashAvgAggregateOutputType | null
     _sum: DeudaCashSumAggregateOutputType | null
@@ -123128,8 +123249,10 @@ export namespace Prisma {
     deletedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    cuentaBancariaId?: boolean
     proveedor?: boolean | VendorDefaultArgs<ExtArgs>
     cuentaPorPagar?: boolean | CuentaPorPagarDefaultArgs<ExtArgs>
+    cuentaBancaria?: boolean | DeudaCash$cuentaBancariaArgs<ExtArgs>
     reconciliaciones?: boolean | DeudaCash$reconciliacionesArgs<ExtArgs>
     _count?: boolean | DeudaCashCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["deudaCash"]>
@@ -123151,8 +123274,10 @@ export namespace Prisma {
     deletedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    cuentaBancariaId?: boolean
     proveedor?: boolean | VendorDefaultArgs<ExtArgs>
     cuentaPorPagar?: boolean | CuentaPorPagarDefaultArgs<ExtArgs>
+    cuentaBancaria?: boolean | DeudaCash$cuentaBancariaArgs<ExtArgs>
   }, ExtArgs["result"]["deudaCash"]>
 
   export type DeudaCashSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -123172,8 +123297,10 @@ export namespace Prisma {
     deletedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    cuentaBancariaId?: boolean
     proveedor?: boolean | VendorDefaultArgs<ExtArgs>
     cuentaPorPagar?: boolean | CuentaPorPagarDefaultArgs<ExtArgs>
+    cuentaBancaria?: boolean | DeudaCash$cuentaBancariaArgs<ExtArgs>
   }, ExtArgs["result"]["deudaCash"]>
 
   export type DeudaCashSelectScalar = {
@@ -123193,22 +123320,26 @@ export namespace Prisma {
     deletedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    cuentaBancariaId?: boolean
   }
 
-  export type DeudaCashOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "idNumerico" | "proveedorId" | "cuentaPorPagarId" | "montoCapital" | "moneda" | "tasaInteres" | "fechaOtorgamiento" | "fechaVencimiento" | "estado" | "observaciones" | "comprobanteUrl" | "createdById" | "deletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["deudaCash"]>
+  export type DeudaCashOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "idNumerico" | "proveedorId" | "cuentaPorPagarId" | "montoCapital" | "moneda" | "tasaInteres" | "fechaOtorgamiento" | "fechaVencimiento" | "estado" | "observaciones" | "comprobanteUrl" | "createdById" | "deletedAt" | "createdAt" | "updatedAt" | "cuentaBancariaId", ExtArgs["result"]["deudaCash"]>
   export type DeudaCashInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     proveedor?: boolean | VendorDefaultArgs<ExtArgs>
     cuentaPorPagar?: boolean | CuentaPorPagarDefaultArgs<ExtArgs>
+    cuentaBancaria?: boolean | DeudaCash$cuentaBancariaArgs<ExtArgs>
     reconciliaciones?: boolean | DeudaCash$reconciliacionesArgs<ExtArgs>
     _count?: boolean | DeudaCashCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type DeudaCashIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     proveedor?: boolean | VendorDefaultArgs<ExtArgs>
     cuentaPorPagar?: boolean | CuentaPorPagarDefaultArgs<ExtArgs>
+    cuentaBancaria?: boolean | DeudaCash$cuentaBancariaArgs<ExtArgs>
   }
   export type DeudaCashIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     proveedor?: boolean | VendorDefaultArgs<ExtArgs>
     cuentaPorPagar?: boolean | CuentaPorPagarDefaultArgs<ExtArgs>
+    cuentaBancaria?: boolean | DeudaCash$cuentaBancariaArgs<ExtArgs>
   }
 
   export type $DeudaCashPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -123216,6 +123347,7 @@ export namespace Prisma {
     objects: {
       proveedor: Prisma.$VendorPayload<ExtArgs>
       cuentaPorPagar: Prisma.$CuentaPorPagarPayload<ExtArgs>
+      cuentaBancaria: Prisma.$CuentaBancariaPayload<ExtArgs> | null
       reconciliaciones: Prisma.$ReconciliacionVentaPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
@@ -123235,6 +123367,7 @@ export namespace Prisma {
       deletedAt: Date | null
       createdAt: Date
       updatedAt: Date
+      cuentaBancariaId: string | null
     }, ExtArgs["result"]["deudaCash"]>
     composites: {}
   }
@@ -123631,6 +123764,7 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     proveedor<T extends VendorDefaultArgs<ExtArgs> = {}>(args?: Subset<T, VendorDefaultArgs<ExtArgs>>): Prisma__VendorClient<$Result.GetResult<Prisma.$VendorPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     cuentaPorPagar<T extends CuentaPorPagarDefaultArgs<ExtArgs> = {}>(args?: Subset<T, CuentaPorPagarDefaultArgs<ExtArgs>>): Prisma__CuentaPorPagarClient<$Result.GetResult<Prisma.$CuentaPorPagarPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    cuentaBancaria<T extends DeudaCash$cuentaBancariaArgs<ExtArgs> = {}>(args?: Subset<T, DeudaCash$cuentaBancariaArgs<ExtArgs>>): Prisma__CuentaBancariaClient<$Result.GetResult<Prisma.$CuentaBancariaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     reconciliaciones<T extends DeudaCash$reconciliacionesArgs<ExtArgs> = {}>(args?: Subset<T, DeudaCash$reconciliacionesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReconciliacionVentaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -123677,6 +123811,7 @@ export namespace Prisma {
     readonly deletedAt: FieldRef<"DeudaCash", 'DateTime'>
     readonly createdAt: FieldRef<"DeudaCash", 'DateTime'>
     readonly updatedAt: FieldRef<"DeudaCash", 'DateTime'>
+    readonly cuentaBancariaId: FieldRef<"DeudaCash", 'String'>
   }
     
 
@@ -124070,6 +124205,25 @@ export namespace Prisma {
      * Limit how many DeudaCashes to delete.
      */
     limit?: number
+  }
+
+  /**
+   * DeudaCash.cuentaBancaria
+   */
+  export type DeudaCash$cuentaBancariaArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaBancaria
+     */
+    select?: CuentaBancariaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CuentaBancaria
+     */
+    omit?: CuentaBancariaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CuentaBancariaInclude<ExtArgs> | null
+    where?: CuentaBancariaWhereInput
   }
 
   /**
@@ -125714,7 +125868,8 @@ export namespace Prisma {
     createdById: 'createdById',
     deletedAt: 'deletedAt',
     createdAt: 'createdAt',
-    updatedAt: 'updatedAt'
+    updatedAt: 'updatedAt',
+    cuentaBancariaId: 'cuentaBancariaId'
   };
 
   export type PrestamoCashScalarFieldEnum = (typeof PrestamoCashScalarFieldEnum)[keyof typeof PrestamoCashScalarFieldEnum]
@@ -125736,7 +125891,8 @@ export namespace Prisma {
     createdById: 'createdById',
     deletedAt: 'deletedAt',
     createdAt: 'createdAt',
-    updatedAt: 'updatedAt'
+    updatedAt: 'updatedAt',
+    cuentaBancariaId: 'cuentaBancariaId'
   };
 
   export type DeudaCashScalarFieldEnum = (typeof DeudaCashScalarFieldEnum)[keyof typeof DeudaCashScalarFieldEnum]
@@ -129996,6 +130152,8 @@ export namespace Prisma {
     transferenciasDestino?: TransferenciaBancariaListRelationFilter
     transferenciasOrigen?: TransferenciaBancariaListRelationFilter
     facturas?: FacturaListRelationFilter
+    prestamosCash?: PrestamoCashListRelationFilter
+    deudasCash?: DeudaCashListRelationFilter
   }
 
   export type CuentaBancariaOrderByWithRelationInput = {
@@ -130018,6 +130176,8 @@ export namespace Prisma {
     transferenciasDestino?: TransferenciaBancariaOrderByRelationAggregateInput
     transferenciasOrigen?: TransferenciaBancariaOrderByRelationAggregateInput
     facturas?: FacturaOrderByRelationAggregateInput
+    prestamosCash?: PrestamoCashOrderByRelationAggregateInput
+    deudasCash?: DeudaCashOrderByRelationAggregateInput
   }
 
   export type CuentaBancariaWhereUniqueInput = Prisma.AtLeast<{
@@ -130043,6 +130203,8 @@ export namespace Prisma {
     transferenciasDestino?: TransferenciaBancariaListRelationFilter
     transferenciasOrigen?: TransferenciaBancariaListRelationFilter
     facturas?: FacturaListRelationFilter
+    prestamosCash?: PrestamoCashListRelationFilter
+    deudasCash?: DeudaCashListRelationFilter
   }, "cuentaId" | "numeroCuenta">
 
   export type CuentaBancariaOrderByWithAggregationInput = {
@@ -134804,8 +134966,10 @@ export namespace Prisma {
     deletedAt?: DateTimeNullableFilter<"PrestamoCash"> | Date | string | null
     createdAt?: DateTimeFilter<"PrestamoCash"> | Date | string
     updatedAt?: DateTimeFilter<"PrestamoCash"> | Date | string
+    cuentaBancariaId?: StringNullableFilter<"PrestamoCash"> | string | null
     cliente?: XOR<ClienteScalarRelationFilter, ClienteWhereInput>
     cuentaPorCobrar?: XOR<CuentaPorCobrarScalarRelationFilter, CuentaPorCobrarWhereInput>
+    cuentaBancaria?: XOR<CuentaBancariaNullableScalarRelationFilter, CuentaBancariaWhereInput> | null
     reconciliaciones?: ReconciliacionVentaListRelationFilter
   }
 
@@ -134826,8 +134990,10 @@ export namespace Prisma {
     deletedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    cuentaBancariaId?: SortOrderInput | SortOrder
     cliente?: ClienteOrderByWithRelationInput
     cuentaPorCobrar?: CuentaPorCobrarOrderByWithRelationInput
+    cuentaBancaria?: CuentaBancariaOrderByWithRelationInput
     reconciliaciones?: ReconciliacionVentaOrderByRelationAggregateInput
   }
 
@@ -134851,8 +135017,10 @@ export namespace Prisma {
     deletedAt?: DateTimeNullableFilter<"PrestamoCash"> | Date | string | null
     createdAt?: DateTimeFilter<"PrestamoCash"> | Date | string
     updatedAt?: DateTimeFilter<"PrestamoCash"> | Date | string
+    cuentaBancariaId?: StringNullableFilter<"PrestamoCash"> | string | null
     cliente?: XOR<ClienteScalarRelationFilter, ClienteWhereInput>
     cuentaPorCobrar?: XOR<CuentaPorCobrarScalarRelationFilter, CuentaPorCobrarWhereInput>
+    cuentaBancaria?: XOR<CuentaBancariaNullableScalarRelationFilter, CuentaBancariaWhereInput> | null
     reconciliaciones?: ReconciliacionVentaListRelationFilter
   }, "id" | "cuentaPorCobrarId">
 
@@ -134873,6 +135041,7 @@ export namespace Prisma {
     deletedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    cuentaBancariaId?: SortOrderInput | SortOrder
     _count?: PrestamoCashCountOrderByAggregateInput
     _avg?: PrestamoCashAvgOrderByAggregateInput
     _max?: PrestamoCashMaxOrderByAggregateInput
@@ -134900,6 +135069,7 @@ export namespace Prisma {
     deletedAt?: DateTimeNullableWithAggregatesFilter<"PrestamoCash"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"PrestamoCash"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"PrestamoCash"> | Date | string
+    cuentaBancariaId?: StringNullableWithAggregatesFilter<"PrestamoCash"> | string | null
   }
 
   export type DeudaCashWhereInput = {
@@ -134922,8 +135092,10 @@ export namespace Prisma {
     deletedAt?: DateTimeNullableFilter<"DeudaCash"> | Date | string | null
     createdAt?: DateTimeFilter<"DeudaCash"> | Date | string
     updatedAt?: DateTimeFilter<"DeudaCash"> | Date | string
+    cuentaBancariaId?: StringNullableFilter<"DeudaCash"> | string | null
     proveedor?: XOR<VendorScalarRelationFilter, VendorWhereInput>
     cuentaPorPagar?: XOR<CuentaPorPagarScalarRelationFilter, CuentaPorPagarWhereInput>
+    cuentaBancaria?: XOR<CuentaBancariaNullableScalarRelationFilter, CuentaBancariaWhereInput> | null
     reconciliaciones?: ReconciliacionVentaListRelationFilter
   }
 
@@ -134944,8 +135116,10 @@ export namespace Prisma {
     deletedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    cuentaBancariaId?: SortOrderInput | SortOrder
     proveedor?: VendorOrderByWithRelationInput
     cuentaPorPagar?: CuentaPorPagarOrderByWithRelationInput
+    cuentaBancaria?: CuentaBancariaOrderByWithRelationInput
     reconciliaciones?: ReconciliacionVentaOrderByRelationAggregateInput
   }
 
@@ -134969,8 +135143,10 @@ export namespace Prisma {
     deletedAt?: DateTimeNullableFilter<"DeudaCash"> | Date | string | null
     createdAt?: DateTimeFilter<"DeudaCash"> | Date | string
     updatedAt?: DateTimeFilter<"DeudaCash"> | Date | string
+    cuentaBancariaId?: StringNullableFilter<"DeudaCash"> | string | null
     proveedor?: XOR<VendorScalarRelationFilter, VendorWhereInput>
     cuentaPorPagar?: XOR<CuentaPorPagarScalarRelationFilter, CuentaPorPagarWhereInput>
+    cuentaBancaria?: XOR<CuentaBancariaNullableScalarRelationFilter, CuentaBancariaWhereInput> | null
     reconciliaciones?: ReconciliacionVentaListRelationFilter
   }, "id" | "cuentaPorPagarId">
 
@@ -134991,6 +135167,7 @@ export namespace Prisma {
     deletedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    cuentaBancariaId?: SortOrderInput | SortOrder
     _count?: DeudaCashCountOrderByAggregateInput
     _avg?: DeudaCashAvgOrderByAggregateInput
     _max?: DeudaCashMaxOrderByAggregateInput
@@ -135018,6 +135195,7 @@ export namespace Prisma {
     deletedAt?: DateTimeNullableWithAggregatesFilter<"DeudaCash"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"DeudaCash"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"DeudaCash"> | Date | string
+    cuentaBancariaId?: StringNullableWithAggregatesFilter<"DeudaCash"> | string | null
   }
 
   export type CategoriaCreateInput = {
@@ -139216,6 +139394,8 @@ export namespace Prisma {
     transferenciasDestino?: TransferenciaBancariaCreateNestedManyWithoutCuentaDestinoInput
     transferenciasOrigen?: TransferenciaBancariaCreateNestedManyWithoutCuentaOrigenInput
     facturas?: FacturaCreateNestedManyWithoutCuentaBancariaInput
+    prestamosCash?: PrestamoCashCreateNestedManyWithoutCuentaBancariaInput
+    deudasCash?: DeudaCashCreateNestedManyWithoutCuentaBancariaInput
   }
 
   export type CuentaBancariaUncheckedCreateInput = {
@@ -139238,6 +139418,8 @@ export namespace Prisma {
     transferenciasDestino?: TransferenciaBancariaUncheckedCreateNestedManyWithoutCuentaDestinoInput
     transferenciasOrigen?: TransferenciaBancariaUncheckedCreateNestedManyWithoutCuentaOrigenInput
     facturas?: FacturaUncheckedCreateNestedManyWithoutCuentaBancariaInput
+    prestamosCash?: PrestamoCashUncheckedCreateNestedManyWithoutCuentaBancariaInput
+    deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutCuentaBancariaInput
   }
 
   export type CuentaBancariaUpdateInput = {
@@ -139260,6 +139442,8 @@ export namespace Prisma {
     transferenciasDestino?: TransferenciaBancariaUpdateManyWithoutCuentaDestinoNestedInput
     transferenciasOrigen?: TransferenciaBancariaUpdateManyWithoutCuentaOrigenNestedInput
     facturas?: FacturaUpdateManyWithoutCuentaBancariaNestedInput
+    prestamosCash?: PrestamoCashUpdateManyWithoutCuentaBancariaNestedInput
+    deudasCash?: DeudaCashUpdateManyWithoutCuentaBancariaNestedInput
   }
 
   export type CuentaBancariaUncheckedUpdateInput = {
@@ -139282,6 +139466,8 @@ export namespace Prisma {
     transferenciasDestino?: TransferenciaBancariaUncheckedUpdateManyWithoutCuentaDestinoNestedInput
     transferenciasOrigen?: TransferenciaBancariaUncheckedUpdateManyWithoutCuentaOrigenNestedInput
     facturas?: FacturaUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+    prestamosCash?: PrestamoCashUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+    deudasCash?: DeudaCashUncheckedUpdateManyWithoutCuentaBancariaNestedInput
   }
 
   export type CuentaBancariaCreateManyInput = {
@@ -144543,6 +144729,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     cliente: ClienteCreateNestedOneWithoutPrestamosCashInput
     cuentaPorCobrar: CuentaPorCobrarCreateNestedOneWithoutPrestamoCashInput
+    cuentaBancaria?: CuentaBancariaCreateNestedOneWithoutPrestamosCashInput
     reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutPrestamoCashInput
   }
 
@@ -144563,6 +144750,7 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    cuentaBancariaId?: string | null
     reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutPrestamoCashInput
   }
 
@@ -144583,6 +144771,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     cliente?: ClienteUpdateOneRequiredWithoutPrestamosCashNestedInput
     cuentaPorCobrar?: CuentaPorCobrarUpdateOneRequiredWithoutPrestamoCashNestedInput
+    cuentaBancaria?: CuentaBancariaUpdateOneWithoutPrestamosCashNestedInput
     reconciliaciones?: ReconciliacionVentaUpdateManyWithoutPrestamoCashNestedInput
   }
 
@@ -144603,6 +144792,7 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cuentaBancariaId?: NullableStringFieldUpdateOperationsInput | string | null
     reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutPrestamoCashNestedInput
   }
 
@@ -144623,6 +144813,7 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    cuentaBancariaId?: string | null
   }
 
   export type PrestamoCashUpdateManyMutationInput = {
@@ -144659,6 +144850,7 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cuentaBancariaId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type DeudaCashCreateInput = {
@@ -144678,6 +144870,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     proveedor: VendorCreateNestedOneWithoutDeudasCashInput
     cuentaPorPagar: CuentaPorPagarCreateNestedOneWithoutDeudaCashInput
+    cuentaBancaria?: CuentaBancariaCreateNestedOneWithoutDeudasCashInput
     reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutDeudaCashInput
   }
 
@@ -144698,6 +144891,7 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    cuentaBancariaId?: string | null
     reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutDeudaCashInput
   }
 
@@ -144718,6 +144912,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     proveedor?: VendorUpdateOneRequiredWithoutDeudasCashNestedInput
     cuentaPorPagar?: CuentaPorPagarUpdateOneRequiredWithoutDeudaCashNestedInput
+    cuentaBancaria?: CuentaBancariaUpdateOneWithoutDeudasCashNestedInput
     reconciliaciones?: ReconciliacionVentaUpdateManyWithoutDeudaCashNestedInput
   }
 
@@ -144738,6 +144933,7 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cuentaBancariaId?: NullableStringFieldUpdateOperationsInput | string | null
     reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutDeudaCashNestedInput
   }
 
@@ -144758,6 +144954,7 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    cuentaBancariaId?: string | null
   }
 
   export type DeudaCashUpdateManyMutationInput = {
@@ -144794,6 +144991,7 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cuentaBancariaId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type StringFilter<$PrismaModel = never> = {
@@ -151253,6 +151451,7 @@ export namespace Prisma {
     deletedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    cuentaBancariaId?: SortOrder
   }
 
   export type PrestamoCashAvgOrderByAggregateInput = {
@@ -151279,6 +151478,7 @@ export namespace Prisma {
     deletedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    cuentaBancariaId?: SortOrder
   }
 
   export type PrestamoCashMinOrderByAggregateInput = {
@@ -151298,6 +151498,7 @@ export namespace Prisma {
     deletedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    cuentaBancariaId?: SortOrder
   }
 
   export type PrestamoCashSumOrderByAggregateInput = {
@@ -151334,6 +151535,7 @@ export namespace Prisma {
     deletedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    cuentaBancariaId?: SortOrder
   }
 
   export type DeudaCashAvgOrderByAggregateInput = {
@@ -151359,6 +151561,7 @@ export namespace Prisma {
     deletedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    cuentaBancariaId?: SortOrder
   }
 
   export type DeudaCashMinOrderByAggregateInput = {
@@ -151378,6 +151581,7 @@ export namespace Prisma {
     deletedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    cuentaBancariaId?: SortOrder
   }
 
   export type DeudaCashSumOrderByAggregateInput = {
@@ -155972,6 +156176,20 @@ export namespace Prisma {
     connect?: FacturaWhereUniqueInput | FacturaWhereUniqueInput[]
   }
 
+  export type PrestamoCashCreateNestedManyWithoutCuentaBancariaInput = {
+    create?: XOR<PrestamoCashCreateWithoutCuentaBancariaInput, PrestamoCashUncheckedCreateWithoutCuentaBancariaInput> | PrestamoCashCreateWithoutCuentaBancariaInput[] | PrestamoCashUncheckedCreateWithoutCuentaBancariaInput[]
+    connectOrCreate?: PrestamoCashCreateOrConnectWithoutCuentaBancariaInput | PrestamoCashCreateOrConnectWithoutCuentaBancariaInput[]
+    createMany?: PrestamoCashCreateManyCuentaBancariaInputEnvelope
+    connect?: PrestamoCashWhereUniqueInput | PrestamoCashWhereUniqueInput[]
+  }
+
+  export type DeudaCashCreateNestedManyWithoutCuentaBancariaInput = {
+    create?: XOR<DeudaCashCreateWithoutCuentaBancariaInput, DeudaCashUncheckedCreateWithoutCuentaBancariaInput> | DeudaCashCreateWithoutCuentaBancariaInput[] | DeudaCashUncheckedCreateWithoutCuentaBancariaInput[]
+    connectOrCreate?: DeudaCashCreateOrConnectWithoutCuentaBancariaInput | DeudaCashCreateOrConnectWithoutCuentaBancariaInput[]
+    createMany?: DeudaCashCreateManyCuentaBancariaInputEnvelope
+    connect?: DeudaCashWhereUniqueInput | DeudaCashWhereUniqueInput[]
+  }
+
   export type AjusteBancarioUncheckedCreateNestedManyWithoutCuentaBancariaInput = {
     create?: XOR<AjusteBancarioCreateWithoutCuentaBancariaInput, AjusteBancarioUncheckedCreateWithoutCuentaBancariaInput> | AjusteBancarioCreateWithoutCuentaBancariaInput[] | AjusteBancarioUncheckedCreateWithoutCuentaBancariaInput[]
     connectOrCreate?: AjusteBancarioCreateOrConnectWithoutCuentaBancariaInput | AjusteBancarioCreateOrConnectWithoutCuentaBancariaInput[]
@@ -156039,6 +156257,20 @@ export namespace Prisma {
     connectOrCreate?: FacturaCreateOrConnectWithoutCuentaBancariaInput | FacturaCreateOrConnectWithoutCuentaBancariaInput[]
     createMany?: FacturaCreateManyCuentaBancariaInputEnvelope
     connect?: FacturaWhereUniqueInput | FacturaWhereUniqueInput[]
+  }
+
+  export type PrestamoCashUncheckedCreateNestedManyWithoutCuentaBancariaInput = {
+    create?: XOR<PrestamoCashCreateWithoutCuentaBancariaInput, PrestamoCashUncheckedCreateWithoutCuentaBancariaInput> | PrestamoCashCreateWithoutCuentaBancariaInput[] | PrestamoCashUncheckedCreateWithoutCuentaBancariaInput[]
+    connectOrCreate?: PrestamoCashCreateOrConnectWithoutCuentaBancariaInput | PrestamoCashCreateOrConnectWithoutCuentaBancariaInput[]
+    createMany?: PrestamoCashCreateManyCuentaBancariaInputEnvelope
+    connect?: PrestamoCashWhereUniqueInput | PrestamoCashWhereUniqueInput[]
+  }
+
+  export type DeudaCashUncheckedCreateNestedManyWithoutCuentaBancariaInput = {
+    create?: XOR<DeudaCashCreateWithoutCuentaBancariaInput, DeudaCashUncheckedCreateWithoutCuentaBancariaInput> | DeudaCashCreateWithoutCuentaBancariaInput[] | DeudaCashUncheckedCreateWithoutCuentaBancariaInput[]
+    connectOrCreate?: DeudaCashCreateOrConnectWithoutCuentaBancariaInput | DeudaCashCreateOrConnectWithoutCuentaBancariaInput[]
+    createMany?: DeudaCashCreateManyCuentaBancariaInputEnvelope
+    connect?: DeudaCashWhereUniqueInput | DeudaCashWhereUniqueInput[]
   }
 
   export type AjusteBancarioUpdateManyWithoutCuentaBancariaNestedInput = {
@@ -156177,6 +156409,34 @@ export namespace Prisma {
     deleteMany?: FacturaScalarWhereInput | FacturaScalarWhereInput[]
   }
 
+  export type PrestamoCashUpdateManyWithoutCuentaBancariaNestedInput = {
+    create?: XOR<PrestamoCashCreateWithoutCuentaBancariaInput, PrestamoCashUncheckedCreateWithoutCuentaBancariaInput> | PrestamoCashCreateWithoutCuentaBancariaInput[] | PrestamoCashUncheckedCreateWithoutCuentaBancariaInput[]
+    connectOrCreate?: PrestamoCashCreateOrConnectWithoutCuentaBancariaInput | PrestamoCashCreateOrConnectWithoutCuentaBancariaInput[]
+    upsert?: PrestamoCashUpsertWithWhereUniqueWithoutCuentaBancariaInput | PrestamoCashUpsertWithWhereUniqueWithoutCuentaBancariaInput[]
+    createMany?: PrestamoCashCreateManyCuentaBancariaInputEnvelope
+    set?: PrestamoCashWhereUniqueInput | PrestamoCashWhereUniqueInput[]
+    disconnect?: PrestamoCashWhereUniqueInput | PrestamoCashWhereUniqueInput[]
+    delete?: PrestamoCashWhereUniqueInput | PrestamoCashWhereUniqueInput[]
+    connect?: PrestamoCashWhereUniqueInput | PrestamoCashWhereUniqueInput[]
+    update?: PrestamoCashUpdateWithWhereUniqueWithoutCuentaBancariaInput | PrestamoCashUpdateWithWhereUniqueWithoutCuentaBancariaInput[]
+    updateMany?: PrestamoCashUpdateManyWithWhereWithoutCuentaBancariaInput | PrestamoCashUpdateManyWithWhereWithoutCuentaBancariaInput[]
+    deleteMany?: PrestamoCashScalarWhereInput | PrestamoCashScalarWhereInput[]
+  }
+
+  export type DeudaCashUpdateManyWithoutCuentaBancariaNestedInput = {
+    create?: XOR<DeudaCashCreateWithoutCuentaBancariaInput, DeudaCashUncheckedCreateWithoutCuentaBancariaInput> | DeudaCashCreateWithoutCuentaBancariaInput[] | DeudaCashUncheckedCreateWithoutCuentaBancariaInput[]
+    connectOrCreate?: DeudaCashCreateOrConnectWithoutCuentaBancariaInput | DeudaCashCreateOrConnectWithoutCuentaBancariaInput[]
+    upsert?: DeudaCashUpsertWithWhereUniqueWithoutCuentaBancariaInput | DeudaCashUpsertWithWhereUniqueWithoutCuentaBancariaInput[]
+    createMany?: DeudaCashCreateManyCuentaBancariaInputEnvelope
+    set?: DeudaCashWhereUniqueInput | DeudaCashWhereUniqueInput[]
+    disconnect?: DeudaCashWhereUniqueInput | DeudaCashWhereUniqueInput[]
+    delete?: DeudaCashWhereUniqueInput | DeudaCashWhereUniqueInput[]
+    connect?: DeudaCashWhereUniqueInput | DeudaCashWhereUniqueInput[]
+    update?: DeudaCashUpdateWithWhereUniqueWithoutCuentaBancariaInput | DeudaCashUpdateWithWhereUniqueWithoutCuentaBancariaInput[]
+    updateMany?: DeudaCashUpdateManyWithWhereWithoutCuentaBancariaInput | DeudaCashUpdateManyWithWhereWithoutCuentaBancariaInput[]
+    deleteMany?: DeudaCashScalarWhereInput | DeudaCashScalarWhereInput[]
+  }
+
   export type AjusteBancarioUncheckedUpdateManyWithoutCuentaBancariaNestedInput = {
     create?: XOR<AjusteBancarioCreateWithoutCuentaBancariaInput, AjusteBancarioUncheckedCreateWithoutCuentaBancariaInput> | AjusteBancarioCreateWithoutCuentaBancariaInput[] | AjusteBancarioUncheckedCreateWithoutCuentaBancariaInput[]
     connectOrCreate?: AjusteBancarioCreateOrConnectWithoutCuentaBancariaInput | AjusteBancarioCreateOrConnectWithoutCuentaBancariaInput[]
@@ -156311,6 +156571,34 @@ export namespace Prisma {
     update?: FacturaUpdateWithWhereUniqueWithoutCuentaBancariaInput | FacturaUpdateWithWhereUniqueWithoutCuentaBancariaInput[]
     updateMany?: FacturaUpdateManyWithWhereWithoutCuentaBancariaInput | FacturaUpdateManyWithWhereWithoutCuentaBancariaInput[]
     deleteMany?: FacturaScalarWhereInput | FacturaScalarWhereInput[]
+  }
+
+  export type PrestamoCashUncheckedUpdateManyWithoutCuentaBancariaNestedInput = {
+    create?: XOR<PrestamoCashCreateWithoutCuentaBancariaInput, PrestamoCashUncheckedCreateWithoutCuentaBancariaInput> | PrestamoCashCreateWithoutCuentaBancariaInput[] | PrestamoCashUncheckedCreateWithoutCuentaBancariaInput[]
+    connectOrCreate?: PrestamoCashCreateOrConnectWithoutCuentaBancariaInput | PrestamoCashCreateOrConnectWithoutCuentaBancariaInput[]
+    upsert?: PrestamoCashUpsertWithWhereUniqueWithoutCuentaBancariaInput | PrestamoCashUpsertWithWhereUniqueWithoutCuentaBancariaInput[]
+    createMany?: PrestamoCashCreateManyCuentaBancariaInputEnvelope
+    set?: PrestamoCashWhereUniqueInput | PrestamoCashWhereUniqueInput[]
+    disconnect?: PrestamoCashWhereUniqueInput | PrestamoCashWhereUniqueInput[]
+    delete?: PrestamoCashWhereUniqueInput | PrestamoCashWhereUniqueInput[]
+    connect?: PrestamoCashWhereUniqueInput | PrestamoCashWhereUniqueInput[]
+    update?: PrestamoCashUpdateWithWhereUniqueWithoutCuentaBancariaInput | PrestamoCashUpdateWithWhereUniqueWithoutCuentaBancariaInput[]
+    updateMany?: PrestamoCashUpdateManyWithWhereWithoutCuentaBancariaInput | PrestamoCashUpdateManyWithWhereWithoutCuentaBancariaInput[]
+    deleteMany?: PrestamoCashScalarWhereInput | PrestamoCashScalarWhereInput[]
+  }
+
+  export type DeudaCashUncheckedUpdateManyWithoutCuentaBancariaNestedInput = {
+    create?: XOR<DeudaCashCreateWithoutCuentaBancariaInput, DeudaCashUncheckedCreateWithoutCuentaBancariaInput> | DeudaCashCreateWithoutCuentaBancariaInput[] | DeudaCashUncheckedCreateWithoutCuentaBancariaInput[]
+    connectOrCreate?: DeudaCashCreateOrConnectWithoutCuentaBancariaInput | DeudaCashCreateOrConnectWithoutCuentaBancariaInput[]
+    upsert?: DeudaCashUpsertWithWhereUniqueWithoutCuentaBancariaInput | DeudaCashUpsertWithWhereUniqueWithoutCuentaBancariaInput[]
+    createMany?: DeudaCashCreateManyCuentaBancariaInputEnvelope
+    set?: DeudaCashWhereUniqueInput | DeudaCashWhereUniqueInput[]
+    disconnect?: DeudaCashWhereUniqueInput | DeudaCashWhereUniqueInput[]
+    delete?: DeudaCashWhereUniqueInput | DeudaCashWhereUniqueInput[]
+    connect?: DeudaCashWhereUniqueInput | DeudaCashWhereUniqueInput[]
+    update?: DeudaCashUpdateWithWhereUniqueWithoutCuentaBancariaInput | DeudaCashUpdateWithWhereUniqueWithoutCuentaBancariaInput[]
+    updateMany?: DeudaCashUpdateManyWithWhereWithoutCuentaBancariaInput | DeudaCashUpdateManyWithWhereWithoutCuentaBancariaInput[]
+    deleteMany?: DeudaCashScalarWhereInput | DeudaCashScalarWhereInput[]
   }
 
   export type ReconciliacionGastoCreateNestedManyWithoutTipoPagoInput = {
@@ -159216,6 +159504,12 @@ export namespace Prisma {
     connect?: CuentaPorCobrarWhereUniqueInput
   }
 
+  export type CuentaBancariaCreateNestedOneWithoutPrestamosCashInput = {
+    create?: XOR<CuentaBancariaCreateWithoutPrestamosCashInput, CuentaBancariaUncheckedCreateWithoutPrestamosCashInput>
+    connectOrCreate?: CuentaBancariaCreateOrConnectWithoutPrestamosCashInput
+    connect?: CuentaBancariaWhereUniqueInput
+  }
+
   export type ReconciliacionVentaCreateNestedManyWithoutPrestamoCashInput = {
     create?: XOR<ReconciliacionVentaCreateWithoutPrestamoCashInput, ReconciliacionVentaUncheckedCreateWithoutPrestamoCashInput> | ReconciliacionVentaCreateWithoutPrestamoCashInput[] | ReconciliacionVentaUncheckedCreateWithoutPrestamoCashInput[]
     connectOrCreate?: ReconciliacionVentaCreateOrConnectWithoutPrestamoCashInput | ReconciliacionVentaCreateOrConnectWithoutPrestamoCashInput[]
@@ -159248,6 +159542,16 @@ export namespace Prisma {
     upsert?: CuentaPorCobrarUpsertWithoutPrestamoCashInput
     connect?: CuentaPorCobrarWhereUniqueInput
     update?: XOR<XOR<CuentaPorCobrarUpdateToOneWithWhereWithoutPrestamoCashInput, CuentaPorCobrarUpdateWithoutPrestamoCashInput>, CuentaPorCobrarUncheckedUpdateWithoutPrestamoCashInput>
+  }
+
+  export type CuentaBancariaUpdateOneWithoutPrestamosCashNestedInput = {
+    create?: XOR<CuentaBancariaCreateWithoutPrestamosCashInput, CuentaBancariaUncheckedCreateWithoutPrestamosCashInput>
+    connectOrCreate?: CuentaBancariaCreateOrConnectWithoutPrestamosCashInput
+    upsert?: CuentaBancariaUpsertWithoutPrestamosCashInput
+    disconnect?: CuentaBancariaWhereInput | boolean
+    delete?: CuentaBancariaWhereInput | boolean
+    connect?: CuentaBancariaWhereUniqueInput
+    update?: XOR<XOR<CuentaBancariaUpdateToOneWithWhereWithoutPrestamosCashInput, CuentaBancariaUpdateWithoutPrestamosCashInput>, CuentaBancariaUncheckedUpdateWithoutPrestamosCashInput>
   }
 
   export type ReconciliacionVentaUpdateManyWithoutPrestamoCashNestedInput = {
@@ -159290,6 +159594,12 @@ export namespace Prisma {
     connect?: CuentaPorPagarWhereUniqueInput
   }
 
+  export type CuentaBancariaCreateNestedOneWithoutDeudasCashInput = {
+    create?: XOR<CuentaBancariaCreateWithoutDeudasCashInput, CuentaBancariaUncheckedCreateWithoutDeudasCashInput>
+    connectOrCreate?: CuentaBancariaCreateOrConnectWithoutDeudasCashInput
+    connect?: CuentaBancariaWhereUniqueInput
+  }
+
   export type ReconciliacionVentaCreateNestedManyWithoutDeudaCashInput = {
     create?: XOR<ReconciliacionVentaCreateWithoutDeudaCashInput, ReconciliacionVentaUncheckedCreateWithoutDeudaCashInput> | ReconciliacionVentaCreateWithoutDeudaCashInput[] | ReconciliacionVentaUncheckedCreateWithoutDeudaCashInput[]
     connectOrCreate?: ReconciliacionVentaCreateOrConnectWithoutDeudaCashInput | ReconciliacionVentaCreateOrConnectWithoutDeudaCashInput[]
@@ -159318,6 +159628,16 @@ export namespace Prisma {
     upsert?: CuentaPorPagarUpsertWithoutDeudaCashInput
     connect?: CuentaPorPagarWhereUniqueInput
     update?: XOR<XOR<CuentaPorPagarUpdateToOneWithWhereWithoutDeudaCashInput, CuentaPorPagarUpdateWithoutDeudaCashInput>, CuentaPorPagarUncheckedUpdateWithoutDeudaCashInput>
+  }
+
+  export type CuentaBancariaUpdateOneWithoutDeudasCashNestedInput = {
+    create?: XOR<CuentaBancariaCreateWithoutDeudasCashInput, CuentaBancariaUncheckedCreateWithoutDeudasCashInput>
+    connectOrCreate?: CuentaBancariaCreateOrConnectWithoutDeudasCashInput
+    upsert?: CuentaBancariaUpsertWithoutDeudasCashInput
+    disconnect?: CuentaBancariaWhereInput | boolean
+    delete?: CuentaBancariaWhereInput | boolean
+    connect?: CuentaBancariaWhereUniqueInput
+    update?: XOR<XOR<CuentaBancariaUpdateToOneWithWhereWithoutDeudasCashInput, CuentaBancariaUpdateWithoutDeudasCashInput>, CuentaBancariaUncheckedUpdateWithoutDeudasCashInput>
   }
 
   export type ReconciliacionVentaUpdateManyWithoutDeudaCashNestedInput = {
@@ -160801,6 +161121,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     cuentaPorPagar: CuentaPorPagarCreateNestedOneWithoutDeudaCashInput
+    cuentaBancaria?: CuentaBancariaCreateNestedOneWithoutDeudasCashInput
     reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutDeudaCashInput
   }
 
@@ -160820,6 +161141,7 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    cuentaBancariaId?: string | null
     reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutDeudaCashInput
   }
 
@@ -161286,6 +161608,7 @@ export namespace Prisma {
     deletedAt?: DateTimeNullableFilter<"DeudaCash"> | Date | string | null
     createdAt?: DateTimeFilter<"DeudaCash"> | Date | string
     updatedAt?: DateTimeFilter<"DeudaCash"> | Date | string
+    cuentaBancariaId?: StringNullableFilter<"DeudaCash"> | string | null
   }
 
   export type GastoCompraUpsertWithWhereUniqueWithoutVendorInput = {
@@ -161475,6 +161798,8 @@ export namespace Prisma {
     transferenciasDestino?: TransferenciaBancariaCreateNestedManyWithoutCuentaDestinoInput
     transferenciasOrigen?: TransferenciaBancariaCreateNestedManyWithoutCuentaOrigenInput
     facturas?: FacturaCreateNestedManyWithoutCuentaBancariaInput
+    prestamosCash?: PrestamoCashCreateNestedManyWithoutCuentaBancariaInput
+    deudasCash?: DeudaCashCreateNestedManyWithoutCuentaBancariaInput
   }
 
   export type CuentaBancariaUncheckedCreateWithoutInyeccionesCapitalInput = {
@@ -161496,6 +161821,8 @@ export namespace Prisma {
     transferenciasDestino?: TransferenciaBancariaUncheckedCreateNestedManyWithoutCuentaDestinoInput
     transferenciasOrigen?: TransferenciaBancariaUncheckedCreateNestedManyWithoutCuentaOrigenInput
     facturas?: FacturaUncheckedCreateNestedManyWithoutCuentaBancariaInput
+    prestamosCash?: PrestamoCashUncheckedCreateNestedManyWithoutCuentaBancariaInput
+    deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutCuentaBancariaInput
   }
 
   export type CuentaBancariaCreateOrConnectWithoutInyeccionesCapitalInput = {
@@ -161567,6 +161894,8 @@ export namespace Prisma {
     transferenciasDestino?: TransferenciaBancariaUpdateManyWithoutCuentaDestinoNestedInput
     transferenciasOrigen?: TransferenciaBancariaUpdateManyWithoutCuentaOrigenNestedInput
     facturas?: FacturaUpdateManyWithoutCuentaBancariaNestedInput
+    prestamosCash?: PrestamoCashUpdateManyWithoutCuentaBancariaNestedInput
+    deudasCash?: DeudaCashUpdateManyWithoutCuentaBancariaNestedInput
   }
 
   export type CuentaBancariaUncheckedUpdateWithoutInyeccionesCapitalInput = {
@@ -161588,6 +161917,8 @@ export namespace Prisma {
     transferenciasDestino?: TransferenciaBancariaUncheckedUpdateManyWithoutCuentaDestinoNestedInput
     transferenciasOrigen?: TransferenciaBancariaUncheckedUpdateManyWithoutCuentaOrigenNestedInput
     facturas?: FacturaUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+    prestamosCash?: PrestamoCashUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+    deudasCash?: DeudaCashUncheckedUpdateManyWithoutCuentaBancariaNestedInput
   }
 
   export type PagoDeudaUpsertWithWhereUniqueWithoutInyeccionInput = {
@@ -161641,6 +161972,8 @@ export namespace Prisma {
     transferenciasDestino?: TransferenciaBancariaCreateNestedManyWithoutCuentaDestinoInput
     transferenciasOrigen?: TransferenciaBancariaCreateNestedManyWithoutCuentaOrigenInput
     facturas?: FacturaCreateNestedManyWithoutCuentaBancariaInput
+    prestamosCash?: PrestamoCashCreateNestedManyWithoutCuentaBancariaInput
+    deudasCash?: DeudaCashCreateNestedManyWithoutCuentaBancariaInput
   }
 
   export type CuentaBancariaUncheckedCreateWithoutPagosDeudaInput = {
@@ -161662,6 +161995,8 @@ export namespace Prisma {
     transferenciasDestino?: TransferenciaBancariaUncheckedCreateNestedManyWithoutCuentaDestinoInput
     transferenciasOrigen?: TransferenciaBancariaUncheckedCreateNestedManyWithoutCuentaOrigenInput
     facturas?: FacturaUncheckedCreateNestedManyWithoutCuentaBancariaInput
+    prestamosCash?: PrestamoCashUncheckedCreateNestedManyWithoutCuentaBancariaInput
+    deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutCuentaBancariaInput
   }
 
   export type CuentaBancariaCreateOrConnectWithoutPagosDeudaInput = {
@@ -161746,6 +162081,8 @@ export namespace Prisma {
     transferenciasDestino?: TransferenciaBancariaUpdateManyWithoutCuentaDestinoNestedInput
     transferenciasOrigen?: TransferenciaBancariaUpdateManyWithoutCuentaOrigenNestedInput
     facturas?: FacturaUpdateManyWithoutCuentaBancariaNestedInput
+    prestamosCash?: PrestamoCashUpdateManyWithoutCuentaBancariaNestedInput
+    deudasCash?: DeudaCashUpdateManyWithoutCuentaBancariaNestedInput
   }
 
   export type CuentaBancariaUncheckedUpdateWithoutPagosDeudaInput = {
@@ -161767,6 +162104,8 @@ export namespace Prisma {
     transferenciasDestino?: TransferenciaBancariaUncheckedUpdateManyWithoutCuentaDestinoNestedInput
     transferenciasOrigen?: TransferenciaBancariaUncheckedUpdateManyWithoutCuentaOrigenNestedInput
     facturas?: FacturaUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+    prestamosCash?: PrestamoCashUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+    deudasCash?: DeudaCashUncheckedUpdateManyWithoutCuentaBancariaNestedInput
   }
 
   export type InyeccionCapitalUpsertWithoutPagosInput = {
@@ -161971,6 +162310,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     cuentaPorCobrar: CuentaPorCobrarCreateNestedOneWithoutPrestamoCashInput
+    cuentaBancaria?: CuentaBancariaCreateNestedOneWithoutPrestamosCashInput
     reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutPrestamoCashInput
   }
 
@@ -161990,6 +162330,7 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    cuentaBancariaId?: string | null
     reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutPrestamoCashInput
   }
 
@@ -162445,6 +162786,7 @@ export namespace Prisma {
     deletedAt?: DateTimeNullableFilter<"PrestamoCash"> | Date | string | null
     createdAt?: DateTimeFilter<"PrestamoCash"> | Date | string
     updatedAt?: DateTimeFilter<"PrestamoCash"> | Date | string
+    cuentaBancariaId?: StringNullableFilter<"PrestamoCash"> | string | null
   }
 
   export type OfertaUpsertWithWhereUniqueWithoutClienteInput = {
@@ -162680,6 +163022,8 @@ export namespace Prisma {
     transferenciasDestino?: TransferenciaBancariaCreateNestedManyWithoutCuentaDestinoInput
     transferenciasOrigen?: TransferenciaBancariaCreateNestedManyWithoutCuentaOrigenInput
     facturas?: FacturaCreateNestedManyWithoutCuentaBancariaInput
+    prestamosCash?: PrestamoCashCreateNestedManyWithoutCuentaBancariaInput
+    deudasCash?: DeudaCashCreateNestedManyWithoutCuentaBancariaInput
   }
 
   export type CuentaBancariaUncheckedCreateWithoutMiEmpresaInput = {
@@ -162701,6 +163045,8 @@ export namespace Prisma {
     transferenciasDestino?: TransferenciaBancariaUncheckedCreateNestedManyWithoutCuentaDestinoInput
     transferenciasOrigen?: TransferenciaBancariaUncheckedCreateNestedManyWithoutCuentaOrigenInput
     facturas?: FacturaUncheckedCreateNestedManyWithoutCuentaBancariaInput
+    prestamosCash?: PrestamoCashUncheckedCreateNestedManyWithoutCuentaBancariaInput
+    deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutCuentaBancariaInput
   }
 
   export type CuentaBancariaCreateOrConnectWithoutMiEmpresaInput = {
@@ -162738,6 +163084,8 @@ export namespace Prisma {
     transferenciasDestino?: TransferenciaBancariaUpdateManyWithoutCuentaDestinoNestedInput
     transferenciasOrigen?: TransferenciaBancariaUpdateManyWithoutCuentaOrigenNestedInput
     facturas?: FacturaUpdateManyWithoutCuentaBancariaNestedInput
+    prestamosCash?: PrestamoCashUpdateManyWithoutCuentaBancariaNestedInput
+    deudasCash?: DeudaCashUpdateManyWithoutCuentaBancariaNestedInput
   }
 
   export type CuentaBancariaUncheckedUpdateWithoutMiEmpresaInput = {
@@ -162759,6 +163107,8 @@ export namespace Prisma {
     transferenciasDestino?: TransferenciaBancariaUncheckedUpdateManyWithoutCuentaDestinoNestedInput
     transferenciasOrigen?: TransferenciaBancariaUncheckedUpdateManyWithoutCuentaOrigenNestedInput
     facturas?: FacturaUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+    prestamosCash?: PrestamoCashUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+    deudasCash?: DeudaCashUncheckedUpdateManyWithoutCuentaBancariaNestedInput
   }
 
   export type ProductoCreateWithoutAlmacenInput = {
@@ -173653,6 +174003,106 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type PrestamoCashCreateWithoutCuentaBancariaInput = {
+    id?: string
+    idNumerico?: number
+    montoCapital: Decimal | DecimalJsLike | number | string
+    moneda?: string
+    tasaInteres?: Decimal | DecimalJsLike | number | string | null
+    tasaCambioAlCrear?: Decimal | DecimalJsLike | number | string | null
+    fechaOtorgamiento?: Date | string
+    fechaVencimiento?: Date | string | null
+    estado?: $Enums.EstadoPrestamoCash
+    observaciones?: string | null
+    createdById: string
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    cliente: ClienteCreateNestedOneWithoutPrestamosCashInput
+    cuentaPorCobrar: CuentaPorCobrarCreateNestedOneWithoutPrestamoCashInput
+    reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutPrestamoCashInput
+  }
+
+  export type PrestamoCashUncheckedCreateWithoutCuentaBancariaInput = {
+    id?: string
+    idNumerico?: number
+    clienteId: string
+    cuentaPorCobrarId: string
+    montoCapital: Decimal | DecimalJsLike | number | string
+    moneda?: string
+    tasaInteres?: Decimal | DecimalJsLike | number | string | null
+    tasaCambioAlCrear?: Decimal | DecimalJsLike | number | string | null
+    fechaOtorgamiento?: Date | string
+    fechaVencimiento?: Date | string | null
+    estado?: $Enums.EstadoPrestamoCash
+    observaciones?: string | null
+    createdById: string
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutPrestamoCashInput
+  }
+
+  export type PrestamoCashCreateOrConnectWithoutCuentaBancariaInput = {
+    where: PrestamoCashWhereUniqueInput
+    create: XOR<PrestamoCashCreateWithoutCuentaBancariaInput, PrestamoCashUncheckedCreateWithoutCuentaBancariaInput>
+  }
+
+  export type PrestamoCashCreateManyCuentaBancariaInputEnvelope = {
+    data: PrestamoCashCreateManyCuentaBancariaInput | PrestamoCashCreateManyCuentaBancariaInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type DeudaCashCreateWithoutCuentaBancariaInput = {
+    id?: string
+    idNumerico?: number
+    montoCapital: Decimal | DecimalJsLike | number | string
+    moneda?: string
+    tasaInteres?: Decimal | DecimalJsLike | number | string | null
+    fechaOtorgamiento?: Date | string
+    fechaVencimiento?: Date | string | null
+    estado?: $Enums.EstadoPrestamoCash
+    observaciones?: string | null
+    comprobanteUrl?: string | null
+    createdById: string
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    proveedor: VendorCreateNestedOneWithoutDeudasCashInput
+    cuentaPorPagar: CuentaPorPagarCreateNestedOneWithoutDeudaCashInput
+    reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutDeudaCashInput
+  }
+
+  export type DeudaCashUncheckedCreateWithoutCuentaBancariaInput = {
+    id?: string
+    idNumerico?: number
+    proveedorId: string
+    cuentaPorPagarId: string
+    montoCapital: Decimal | DecimalJsLike | number | string
+    moneda?: string
+    tasaInteres?: Decimal | DecimalJsLike | number | string | null
+    fechaOtorgamiento?: Date | string
+    fechaVencimiento?: Date | string | null
+    estado?: $Enums.EstadoPrestamoCash
+    observaciones?: string | null
+    comprobanteUrl?: string | null
+    createdById: string
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutDeudaCashInput
+  }
+
+  export type DeudaCashCreateOrConnectWithoutCuentaBancariaInput = {
+    where: DeudaCashWhereUniqueInput
+    create: XOR<DeudaCashCreateWithoutCuentaBancariaInput, DeudaCashUncheckedCreateWithoutCuentaBancariaInput>
+  }
+
+  export type DeudaCashCreateManyCuentaBancariaInputEnvelope = {
+    data: DeudaCashCreateManyCuentaBancariaInput | DeudaCashCreateManyCuentaBancariaInput[]
+    skipDuplicates?: boolean
+  }
+
   export type AjusteBancarioUpsertWithWhereUniqueWithoutCuentaBancariaInput = {
     where: AjusteBancarioWhereUniqueInput
     update: XOR<AjusteBancarioUpdateWithoutCuentaBancariaInput, AjusteBancarioUncheckedUpdateWithoutCuentaBancariaInput>
@@ -173913,6 +174363,38 @@ export namespace Prisma {
     data: XOR<FacturaUpdateManyMutationInput, FacturaUncheckedUpdateManyWithoutCuentaBancariaInput>
   }
 
+  export type PrestamoCashUpsertWithWhereUniqueWithoutCuentaBancariaInput = {
+    where: PrestamoCashWhereUniqueInput
+    update: XOR<PrestamoCashUpdateWithoutCuentaBancariaInput, PrestamoCashUncheckedUpdateWithoutCuentaBancariaInput>
+    create: XOR<PrestamoCashCreateWithoutCuentaBancariaInput, PrestamoCashUncheckedCreateWithoutCuentaBancariaInput>
+  }
+
+  export type PrestamoCashUpdateWithWhereUniqueWithoutCuentaBancariaInput = {
+    where: PrestamoCashWhereUniqueInput
+    data: XOR<PrestamoCashUpdateWithoutCuentaBancariaInput, PrestamoCashUncheckedUpdateWithoutCuentaBancariaInput>
+  }
+
+  export type PrestamoCashUpdateManyWithWhereWithoutCuentaBancariaInput = {
+    where: PrestamoCashScalarWhereInput
+    data: XOR<PrestamoCashUpdateManyMutationInput, PrestamoCashUncheckedUpdateManyWithoutCuentaBancariaInput>
+  }
+
+  export type DeudaCashUpsertWithWhereUniqueWithoutCuentaBancariaInput = {
+    where: DeudaCashWhereUniqueInput
+    update: XOR<DeudaCashUpdateWithoutCuentaBancariaInput, DeudaCashUncheckedUpdateWithoutCuentaBancariaInput>
+    create: XOR<DeudaCashCreateWithoutCuentaBancariaInput, DeudaCashUncheckedCreateWithoutCuentaBancariaInput>
+  }
+
+  export type DeudaCashUpdateWithWhereUniqueWithoutCuentaBancariaInput = {
+    where: DeudaCashWhereUniqueInput
+    data: XOR<DeudaCashUpdateWithoutCuentaBancariaInput, DeudaCashUncheckedUpdateWithoutCuentaBancariaInput>
+  }
+
+  export type DeudaCashUpdateManyWithWhereWithoutCuentaBancariaInput = {
+    where: DeudaCashScalarWhereInput
+    data: XOR<DeudaCashUpdateManyMutationInput, DeudaCashUncheckedUpdateManyWithoutCuentaBancariaInput>
+  }
+
   export type ReconciliacionGastoCreateWithoutTipoPagoInput = {
     reconciliacionId?: string
     tipoGasto: string
@@ -174128,6 +174610,8 @@ export namespace Prisma {
     transferenciasDestino?: TransferenciaBancariaCreateNestedManyWithoutCuentaDestinoInput
     transferenciasOrigen?: TransferenciaBancariaCreateNestedManyWithoutCuentaOrigenInput
     facturas?: FacturaCreateNestedManyWithoutCuentaBancariaInput
+    prestamosCash?: PrestamoCashCreateNestedManyWithoutCuentaBancariaInput
+    deudasCash?: DeudaCashCreateNestedManyWithoutCuentaBancariaInput
   }
 
   export type CuentaBancariaUncheckedCreateWithoutReconciliacionesVentaInput = {
@@ -174149,6 +174633,8 @@ export namespace Prisma {
     transferenciasDestino?: TransferenciaBancariaUncheckedCreateNestedManyWithoutCuentaDestinoInput
     transferenciasOrigen?: TransferenciaBancariaUncheckedCreateNestedManyWithoutCuentaOrigenInput
     facturas?: FacturaUncheckedCreateNestedManyWithoutCuentaBancariaInput
+    prestamosCash?: PrestamoCashUncheckedCreateNestedManyWithoutCuentaBancariaInput
+    deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutCuentaBancariaInput
   }
 
   export type CuentaBancariaCreateOrConnectWithoutReconciliacionesVentaInput = {
@@ -174251,6 +174737,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     cliente: ClienteCreateNestedOneWithoutPrestamosCashInput
     cuentaPorCobrar: CuentaPorCobrarCreateNestedOneWithoutPrestamoCashInput
+    cuentaBancaria?: CuentaBancariaCreateNestedOneWithoutPrestamosCashInput
   }
 
   export type PrestamoCashUncheckedCreateWithoutReconciliacionesInput = {
@@ -174270,6 +174757,7 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    cuentaBancariaId?: string | null
   }
 
   export type PrestamoCashCreateOrConnectWithoutReconciliacionesInput = {
@@ -174294,6 +174782,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     proveedor: VendorCreateNestedOneWithoutDeudasCashInput
     cuentaPorPagar: CuentaPorPagarCreateNestedOneWithoutDeudaCashInput
+    cuentaBancaria?: CuentaBancariaCreateNestedOneWithoutDeudasCashInput
   }
 
   export type DeudaCashUncheckedCreateWithoutReconciliacionesInput = {
@@ -174313,6 +174802,7 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    cuentaBancariaId?: string | null
   }
 
   export type DeudaCashCreateOrConnectWithoutReconciliacionesInput = {
@@ -174350,6 +174840,8 @@ export namespace Prisma {
     transferenciasDestino?: TransferenciaBancariaUpdateManyWithoutCuentaDestinoNestedInput
     transferenciasOrigen?: TransferenciaBancariaUpdateManyWithoutCuentaOrigenNestedInput
     facturas?: FacturaUpdateManyWithoutCuentaBancariaNestedInput
+    prestamosCash?: PrestamoCashUpdateManyWithoutCuentaBancariaNestedInput
+    deudasCash?: DeudaCashUpdateManyWithoutCuentaBancariaNestedInput
   }
 
   export type CuentaBancariaUncheckedUpdateWithoutReconciliacionesVentaInput = {
@@ -174371,6 +174863,8 @@ export namespace Prisma {
     transferenciasDestino?: TransferenciaBancariaUncheckedUpdateManyWithoutCuentaDestinoNestedInput
     transferenciasOrigen?: TransferenciaBancariaUncheckedUpdateManyWithoutCuentaOrigenNestedInput
     facturas?: FacturaUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+    prestamosCash?: PrestamoCashUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+    deudasCash?: DeudaCashUncheckedUpdateManyWithoutCuentaBancariaNestedInput
   }
 
   export type TipoPagoUpsertWithoutReconciliacionesVentaInput = {
@@ -174491,6 +174985,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     cliente?: ClienteUpdateOneRequiredWithoutPrestamosCashNestedInput
     cuentaPorCobrar?: CuentaPorCobrarUpdateOneRequiredWithoutPrestamoCashNestedInput
+    cuentaBancaria?: CuentaBancariaUpdateOneWithoutPrestamosCashNestedInput
   }
 
   export type PrestamoCashUncheckedUpdateWithoutReconciliacionesInput = {
@@ -174510,6 +175005,7 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cuentaBancariaId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type DeudaCashUpsertWithoutReconciliacionesInput = {
@@ -174540,6 +175036,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     proveedor?: VendorUpdateOneRequiredWithoutDeudasCashNestedInput
     cuentaPorPagar?: CuentaPorPagarUpdateOneRequiredWithoutDeudaCashNestedInput
+    cuentaBancaria?: CuentaBancariaUpdateOneWithoutDeudasCashNestedInput
   }
 
   export type DeudaCashUncheckedUpdateWithoutReconciliacionesInput = {
@@ -174559,6 +175056,7 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cuentaBancariaId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type CuentaBancariaCreateWithoutReconciliacionesServicioInput = {
@@ -174580,6 +175078,8 @@ export namespace Prisma {
     transferenciasDestino?: TransferenciaBancariaCreateNestedManyWithoutCuentaDestinoInput
     transferenciasOrigen?: TransferenciaBancariaCreateNestedManyWithoutCuentaOrigenInput
     facturas?: FacturaCreateNestedManyWithoutCuentaBancariaInput
+    prestamosCash?: PrestamoCashCreateNestedManyWithoutCuentaBancariaInput
+    deudasCash?: DeudaCashCreateNestedManyWithoutCuentaBancariaInput
   }
 
   export type CuentaBancariaUncheckedCreateWithoutReconciliacionesServicioInput = {
@@ -174601,6 +175101,8 @@ export namespace Prisma {
     transferenciasDestino?: TransferenciaBancariaUncheckedCreateNestedManyWithoutCuentaDestinoInput
     transferenciasOrigen?: TransferenciaBancariaUncheckedCreateNestedManyWithoutCuentaOrigenInput
     facturas?: FacturaUncheckedCreateNestedManyWithoutCuentaBancariaInput
+    prestamosCash?: PrestamoCashUncheckedCreateNestedManyWithoutCuentaBancariaInput
+    deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutCuentaBancariaInput
   }
 
   export type CuentaBancariaCreateOrConnectWithoutReconciliacionesServicioInput = {
@@ -174698,6 +175200,8 @@ export namespace Prisma {
     transferenciasDestino?: TransferenciaBancariaUpdateManyWithoutCuentaDestinoNestedInput
     transferenciasOrigen?: TransferenciaBancariaUpdateManyWithoutCuentaOrigenNestedInput
     facturas?: FacturaUpdateManyWithoutCuentaBancariaNestedInput
+    prestamosCash?: PrestamoCashUpdateManyWithoutCuentaBancariaNestedInput
+    deudasCash?: DeudaCashUpdateManyWithoutCuentaBancariaNestedInput
   }
 
   export type CuentaBancariaUncheckedUpdateWithoutReconciliacionesServicioInput = {
@@ -174719,6 +175223,8 @@ export namespace Prisma {
     transferenciasDestino?: TransferenciaBancariaUncheckedUpdateManyWithoutCuentaDestinoNestedInput
     transferenciasOrigen?: TransferenciaBancariaUncheckedUpdateManyWithoutCuentaOrigenNestedInput
     facturas?: FacturaUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+    prestamosCash?: PrestamoCashUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+    deudasCash?: DeudaCashUncheckedUpdateManyWithoutCuentaBancariaNestedInput
   }
 
   export type TipoPagoUpsertWithoutReconciliacionesServicioInput = {
@@ -174812,6 +175318,8 @@ export namespace Prisma {
     transferenciasDestino?: TransferenciaBancariaCreateNestedManyWithoutCuentaDestinoInput
     transferenciasOrigen?: TransferenciaBancariaCreateNestedManyWithoutCuentaOrigenInput
     facturas?: FacturaCreateNestedManyWithoutCuentaBancariaInput
+    prestamosCash?: PrestamoCashCreateNestedManyWithoutCuentaBancariaInput
+    deudasCash?: DeudaCashCreateNestedManyWithoutCuentaBancariaInput
   }
 
   export type CuentaBancariaUncheckedCreateWithoutReconciliacionesGastoInput = {
@@ -174833,6 +175341,8 @@ export namespace Prisma {
     transferenciasDestino?: TransferenciaBancariaUncheckedCreateNestedManyWithoutCuentaDestinoInput
     transferenciasOrigen?: TransferenciaBancariaUncheckedCreateNestedManyWithoutCuentaOrigenInput
     facturas?: FacturaUncheckedCreateNestedManyWithoutCuentaBancariaInput
+    prestamosCash?: PrestamoCashUncheckedCreateNestedManyWithoutCuentaBancariaInput
+    deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutCuentaBancariaInput
   }
 
   export type CuentaBancariaCreateOrConnectWithoutReconciliacionesGastoInput = {
@@ -175063,6 +175573,8 @@ export namespace Prisma {
     transferenciasDestino?: TransferenciaBancariaUpdateManyWithoutCuentaDestinoNestedInput
     transferenciasOrigen?: TransferenciaBancariaUpdateManyWithoutCuentaOrigenNestedInput
     facturas?: FacturaUpdateManyWithoutCuentaBancariaNestedInput
+    prestamosCash?: PrestamoCashUpdateManyWithoutCuentaBancariaNestedInput
+    deudasCash?: DeudaCashUpdateManyWithoutCuentaBancariaNestedInput
   }
 
   export type CuentaBancariaUncheckedUpdateWithoutReconciliacionesGastoInput = {
@@ -175084,6 +175596,8 @@ export namespace Prisma {
     transferenciasDestino?: TransferenciaBancariaUncheckedUpdateManyWithoutCuentaDestinoNestedInput
     transferenciasOrigen?: TransferenciaBancariaUncheckedUpdateManyWithoutCuentaOrigenNestedInput
     facturas?: FacturaUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+    prestamosCash?: PrestamoCashUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+    deudasCash?: DeudaCashUncheckedUpdateManyWithoutCuentaBancariaNestedInput
   }
 
   export type CuentaPorPagarUpsertWithoutReconciliacionesInput = {
@@ -175851,6 +176365,8 @@ export namespace Prisma {
     transferenciasDestino?: TransferenciaBancariaCreateNestedManyWithoutCuentaDestinoInput
     transferenciasOrigen?: TransferenciaBancariaCreateNestedManyWithoutCuentaOrigenInput
     facturas?: FacturaCreateNestedManyWithoutCuentaBancariaInput
+    prestamosCash?: PrestamoCashCreateNestedManyWithoutCuentaBancariaInput
+    deudasCash?: DeudaCashCreateNestedManyWithoutCuentaBancariaInput
   }
 
   export type CuentaBancariaUncheckedCreateWithoutAjustesInput = {
@@ -175872,6 +176388,8 @@ export namespace Prisma {
     transferenciasDestino?: TransferenciaBancariaUncheckedCreateNestedManyWithoutCuentaDestinoInput
     transferenciasOrigen?: TransferenciaBancariaUncheckedCreateNestedManyWithoutCuentaOrigenInput
     facturas?: FacturaUncheckedCreateNestedManyWithoutCuentaBancariaInput
+    prestamosCash?: PrestamoCashUncheckedCreateNestedManyWithoutCuentaBancariaInput
+    deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutCuentaBancariaInput
   }
 
   export type CuentaBancariaCreateOrConnectWithoutAjustesInput = {
@@ -175909,6 +176427,8 @@ export namespace Prisma {
     transferenciasDestino?: TransferenciaBancariaUpdateManyWithoutCuentaDestinoNestedInput
     transferenciasOrigen?: TransferenciaBancariaUpdateManyWithoutCuentaOrigenNestedInput
     facturas?: FacturaUpdateManyWithoutCuentaBancariaNestedInput
+    prestamosCash?: PrestamoCashUpdateManyWithoutCuentaBancariaNestedInput
+    deudasCash?: DeudaCashUpdateManyWithoutCuentaBancariaNestedInput
   }
 
   export type CuentaBancariaUncheckedUpdateWithoutAjustesInput = {
@@ -175930,6 +176450,8 @@ export namespace Prisma {
     transferenciasDestino?: TransferenciaBancariaUncheckedUpdateManyWithoutCuentaDestinoNestedInput
     transferenciasOrigen?: TransferenciaBancariaUncheckedUpdateManyWithoutCuentaOrigenNestedInput
     facturas?: FacturaUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+    prestamosCash?: PrestamoCashUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+    deudasCash?: DeudaCashUncheckedUpdateManyWithoutCuentaBancariaNestedInput
   }
 
   export type CuentaBancariaCreateWithoutTransferenciasDestinoInput = {
@@ -175951,6 +176473,8 @@ export namespace Prisma {
     reconciliacionesVenta?: ReconciliacionVentaCreateNestedManyWithoutCuentaBancariaInput
     transferenciasOrigen?: TransferenciaBancariaCreateNestedManyWithoutCuentaOrigenInput
     facturas?: FacturaCreateNestedManyWithoutCuentaBancariaInput
+    prestamosCash?: PrestamoCashCreateNestedManyWithoutCuentaBancariaInput
+    deudasCash?: DeudaCashCreateNestedManyWithoutCuentaBancariaInput
   }
 
   export type CuentaBancariaUncheckedCreateWithoutTransferenciasDestinoInput = {
@@ -175972,6 +176496,8 @@ export namespace Prisma {
     reconciliacionesVenta?: ReconciliacionVentaUncheckedCreateNestedManyWithoutCuentaBancariaInput
     transferenciasOrigen?: TransferenciaBancariaUncheckedCreateNestedManyWithoutCuentaOrigenInput
     facturas?: FacturaUncheckedCreateNestedManyWithoutCuentaBancariaInput
+    prestamosCash?: PrestamoCashUncheckedCreateNestedManyWithoutCuentaBancariaInput
+    deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutCuentaBancariaInput
   }
 
   export type CuentaBancariaCreateOrConnectWithoutTransferenciasDestinoInput = {
@@ -175998,6 +176524,8 @@ export namespace Prisma {
     reconciliacionesVenta?: ReconciliacionVentaCreateNestedManyWithoutCuentaBancariaInput
     transferenciasDestino?: TransferenciaBancariaCreateNestedManyWithoutCuentaDestinoInput
     facturas?: FacturaCreateNestedManyWithoutCuentaBancariaInput
+    prestamosCash?: PrestamoCashCreateNestedManyWithoutCuentaBancariaInput
+    deudasCash?: DeudaCashCreateNestedManyWithoutCuentaBancariaInput
   }
 
   export type CuentaBancariaUncheckedCreateWithoutTransferenciasOrigenInput = {
@@ -176019,6 +176547,8 @@ export namespace Prisma {
     reconciliacionesVenta?: ReconciliacionVentaUncheckedCreateNestedManyWithoutCuentaBancariaInput
     transferenciasDestino?: TransferenciaBancariaUncheckedCreateNestedManyWithoutCuentaDestinoInput
     facturas?: FacturaUncheckedCreateNestedManyWithoutCuentaBancariaInput
+    prestamosCash?: PrestamoCashUncheckedCreateNestedManyWithoutCuentaBancariaInput
+    deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutCuentaBancariaInput
   }
 
   export type CuentaBancariaCreateOrConnectWithoutTransferenciasOrigenInput = {
@@ -176056,6 +176586,8 @@ export namespace Prisma {
     reconciliacionesVenta?: ReconciliacionVentaUpdateManyWithoutCuentaBancariaNestedInput
     transferenciasOrigen?: TransferenciaBancariaUpdateManyWithoutCuentaOrigenNestedInput
     facturas?: FacturaUpdateManyWithoutCuentaBancariaNestedInput
+    prestamosCash?: PrestamoCashUpdateManyWithoutCuentaBancariaNestedInput
+    deudasCash?: DeudaCashUpdateManyWithoutCuentaBancariaNestedInput
   }
 
   export type CuentaBancariaUncheckedUpdateWithoutTransferenciasDestinoInput = {
@@ -176077,6 +176609,8 @@ export namespace Prisma {
     reconciliacionesVenta?: ReconciliacionVentaUncheckedUpdateManyWithoutCuentaBancariaNestedInput
     transferenciasOrigen?: TransferenciaBancariaUncheckedUpdateManyWithoutCuentaOrigenNestedInput
     facturas?: FacturaUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+    prestamosCash?: PrestamoCashUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+    deudasCash?: DeudaCashUncheckedUpdateManyWithoutCuentaBancariaNestedInput
   }
 
   export type CuentaBancariaUpsertWithoutTransferenciasOrigenInput = {
@@ -176109,6 +176643,8 @@ export namespace Prisma {
     reconciliacionesVenta?: ReconciliacionVentaUpdateManyWithoutCuentaBancariaNestedInput
     transferenciasDestino?: TransferenciaBancariaUpdateManyWithoutCuentaDestinoNestedInput
     facturas?: FacturaUpdateManyWithoutCuentaBancariaNestedInput
+    prestamosCash?: PrestamoCashUpdateManyWithoutCuentaBancariaNestedInput
+    deudasCash?: DeudaCashUpdateManyWithoutCuentaBancariaNestedInput
   }
 
   export type CuentaBancariaUncheckedUpdateWithoutTransferenciasOrigenInput = {
@@ -176130,6 +176666,8 @@ export namespace Prisma {
     reconciliacionesVenta?: ReconciliacionVentaUncheckedUpdateManyWithoutCuentaBancariaNestedInput
     transferenciasDestino?: TransferenciaBancariaUncheckedUpdateManyWithoutCuentaDestinoNestedInput
     facturas?: FacturaUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+    prestamosCash?: PrestamoCashUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+    deudasCash?: DeudaCashUncheckedUpdateManyWithoutCuentaBancariaNestedInput
   }
 
   export type UserCreateWithoutContratosAprobadosInput = {
@@ -178353,6 +178891,8 @@ export namespace Prisma {
     reconciliacionesVenta?: ReconciliacionVentaCreateNestedManyWithoutCuentaBancariaInput
     transferenciasDestino?: TransferenciaBancariaCreateNestedManyWithoutCuentaDestinoInput
     transferenciasOrigen?: TransferenciaBancariaCreateNestedManyWithoutCuentaOrigenInput
+    prestamosCash?: PrestamoCashCreateNestedManyWithoutCuentaBancariaInput
+    deudasCash?: DeudaCashCreateNestedManyWithoutCuentaBancariaInput
   }
 
   export type CuentaBancariaUncheckedCreateWithoutFacturasInput = {
@@ -178374,6 +178914,8 @@ export namespace Prisma {
     reconciliacionesVenta?: ReconciliacionVentaUncheckedCreateNestedManyWithoutCuentaBancariaInput
     transferenciasDestino?: TransferenciaBancariaUncheckedCreateNestedManyWithoutCuentaDestinoInput
     transferenciasOrigen?: TransferenciaBancariaUncheckedCreateNestedManyWithoutCuentaOrigenInput
+    prestamosCash?: PrestamoCashUncheckedCreateNestedManyWithoutCuentaBancariaInput
+    deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutCuentaBancariaInput
   }
 
   export type CuentaBancariaCreateOrConnectWithoutFacturasInput = {
@@ -178583,6 +179125,8 @@ export namespace Prisma {
     reconciliacionesVenta?: ReconciliacionVentaUpdateManyWithoutCuentaBancariaNestedInput
     transferenciasDestino?: TransferenciaBancariaUpdateManyWithoutCuentaDestinoNestedInput
     transferenciasOrigen?: TransferenciaBancariaUpdateManyWithoutCuentaOrigenNestedInput
+    prestamosCash?: PrestamoCashUpdateManyWithoutCuentaBancariaNestedInput
+    deudasCash?: DeudaCashUpdateManyWithoutCuentaBancariaNestedInput
   }
 
   export type CuentaBancariaUncheckedUpdateWithoutFacturasInput = {
@@ -178604,6 +179148,8 @@ export namespace Prisma {
     reconciliacionesVenta?: ReconciliacionVentaUncheckedUpdateManyWithoutCuentaBancariaNestedInput
     transferenciasDestino?: TransferenciaBancariaUncheckedUpdateManyWithoutCuentaDestinoNestedInput
     transferenciasOrigen?: TransferenciaBancariaUncheckedUpdateManyWithoutCuentaOrigenNestedInput
+    prestamosCash?: PrestamoCashUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+    deudasCash?: DeudaCashUncheckedUpdateManyWithoutCuentaBancariaNestedInput
   }
 
   export type SerieFacturacionUpsertWithoutFacturasInput = {
@@ -179516,6 +180062,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     cliente: ClienteCreateNestedOneWithoutPrestamosCashInput
+    cuentaBancaria?: CuentaBancariaCreateNestedOneWithoutPrestamosCashInput
     reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutPrestamoCashInput
   }
 
@@ -179535,6 +180082,7 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    cuentaBancariaId?: string | null
     reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutPrestamoCashInput
   }
 
@@ -179692,6 +180240,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     cliente?: ClienteUpdateOneRequiredWithoutPrestamosCashNestedInput
+    cuentaBancaria?: CuentaBancariaUpdateOneWithoutPrestamosCashNestedInput
     reconciliaciones?: ReconciliacionVentaUpdateManyWithoutPrestamoCashNestedInput
   }
 
@@ -179711,6 +180260,7 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cuentaBancariaId?: NullableStringFieldUpdateOperationsInput | string | null
     reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutPrestamoCashNestedInput
   }
 
@@ -179994,6 +180544,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     proveedor: VendorCreateNestedOneWithoutDeudasCashInput
+    cuentaBancaria?: CuentaBancariaCreateNestedOneWithoutDeudasCashInput
     reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutDeudaCashInput
   }
 
@@ -180013,6 +180564,7 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    cuentaBancariaId?: string | null
     reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutDeudaCashInput
   }
 
@@ -180293,6 +180845,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     proveedor?: VendorUpdateOneRequiredWithoutDeudasCashNestedInput
+    cuentaBancaria?: CuentaBancariaUpdateOneWithoutDeudasCashNestedInput
     reconciliaciones?: ReconciliacionVentaUpdateManyWithoutDeudaCashNestedInput
   }
 
@@ -180312,6 +180865,7 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cuentaBancariaId?: NullableStringFieldUpdateOperationsInput | string | null
     reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutDeudaCashNestedInput
   }
 
@@ -184637,6 +185191,57 @@ export namespace Prisma {
     create: XOR<CuentaPorCobrarCreateWithoutPrestamoCashInput, CuentaPorCobrarUncheckedCreateWithoutPrestamoCashInput>
   }
 
+  export type CuentaBancariaCreateWithoutPrestamosCashInput = {
+    cuentaId?: string
+    nombreBanco: string
+    numeroCuenta: string
+    tipoCuenta: string
+    saldo?: number
+    moneda?: string
+    isActive: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    ajustes?: AjusteBancarioCreateNestedManyWithoutCuentaBancariaInput
+    inyeccionesCapital?: InyeccionCapitalCreateNestedManyWithoutCuentaBancariaInput
+    miEmpresa?: MiEmpresaCreateNestedOneWithoutCuentaBancariaInput
+    pagosDeuda?: PagoDeudaCreateNestedManyWithoutCuentaBancariaInput
+    reconciliacionesGasto?: ReconciliacionGastoCreateNestedManyWithoutCuentaBancariaInput
+    reconciliacionesServicio?: ReconciliacionServicioCreateNestedManyWithoutCuentaBancariaInput
+    reconciliacionesVenta?: ReconciliacionVentaCreateNestedManyWithoutCuentaBancariaInput
+    transferenciasDestino?: TransferenciaBancariaCreateNestedManyWithoutCuentaDestinoInput
+    transferenciasOrigen?: TransferenciaBancariaCreateNestedManyWithoutCuentaOrigenInput
+    facturas?: FacturaCreateNestedManyWithoutCuentaBancariaInput
+    deudasCash?: DeudaCashCreateNestedManyWithoutCuentaBancariaInput
+  }
+
+  export type CuentaBancariaUncheckedCreateWithoutPrestamosCashInput = {
+    cuentaId?: string
+    nombreBanco: string
+    numeroCuenta: string
+    tipoCuenta: string
+    saldo?: number
+    moneda?: string
+    isActive: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    ajustes?: AjusteBancarioUncheckedCreateNestedManyWithoutCuentaBancariaInput
+    inyeccionesCapital?: InyeccionCapitalUncheckedCreateNestedManyWithoutCuentaBancariaInput
+    miEmpresa?: MiEmpresaUncheckedCreateNestedOneWithoutCuentaBancariaInput
+    pagosDeuda?: PagoDeudaUncheckedCreateNestedManyWithoutCuentaBancariaInput
+    reconciliacionesGasto?: ReconciliacionGastoUncheckedCreateNestedManyWithoutCuentaBancariaInput
+    reconciliacionesServicio?: ReconciliacionServicioUncheckedCreateNestedManyWithoutCuentaBancariaInput
+    reconciliacionesVenta?: ReconciliacionVentaUncheckedCreateNestedManyWithoutCuentaBancariaInput
+    transferenciasDestino?: TransferenciaBancariaUncheckedCreateNestedManyWithoutCuentaDestinoInput
+    transferenciasOrigen?: TransferenciaBancariaUncheckedCreateNestedManyWithoutCuentaOrigenInput
+    facturas?: FacturaUncheckedCreateNestedManyWithoutCuentaBancariaInput
+    deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutCuentaBancariaInput
+  }
+
+  export type CuentaBancariaCreateOrConnectWithoutPrestamosCashInput = {
+    where: CuentaBancariaWhereUniqueInput
+    create: XOR<CuentaBancariaCreateWithoutPrestamosCashInput, CuentaBancariaUncheckedCreateWithoutPrestamosCashInput>
+  }
+
   export type ReconciliacionVentaCreateWithoutPrestamoCashInput = {
     reconciliacionId?: string
     monto: Decimal | DecimalJsLike | number | string
@@ -184785,6 +185390,63 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type CuentaBancariaUpsertWithoutPrestamosCashInput = {
+    update: XOR<CuentaBancariaUpdateWithoutPrestamosCashInput, CuentaBancariaUncheckedUpdateWithoutPrestamosCashInput>
+    create: XOR<CuentaBancariaCreateWithoutPrestamosCashInput, CuentaBancariaUncheckedCreateWithoutPrestamosCashInput>
+    where?: CuentaBancariaWhereInput
+  }
+
+  export type CuentaBancariaUpdateToOneWithWhereWithoutPrestamosCashInput = {
+    where?: CuentaBancariaWhereInput
+    data: XOR<CuentaBancariaUpdateWithoutPrestamosCashInput, CuentaBancariaUncheckedUpdateWithoutPrestamosCashInput>
+  }
+
+  export type CuentaBancariaUpdateWithoutPrestamosCashInput = {
+    cuentaId?: StringFieldUpdateOperationsInput | string
+    nombreBanco?: StringFieldUpdateOperationsInput | string
+    numeroCuenta?: StringFieldUpdateOperationsInput | string
+    tipoCuenta?: StringFieldUpdateOperationsInput | string
+    saldo?: FloatFieldUpdateOperationsInput | number
+    moneda?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ajustes?: AjusteBancarioUpdateManyWithoutCuentaBancariaNestedInput
+    inyeccionesCapital?: InyeccionCapitalUpdateManyWithoutCuentaBancariaNestedInput
+    miEmpresa?: MiEmpresaUpdateOneWithoutCuentaBancariaNestedInput
+    pagosDeuda?: PagoDeudaUpdateManyWithoutCuentaBancariaNestedInput
+    reconciliacionesGasto?: ReconciliacionGastoUpdateManyWithoutCuentaBancariaNestedInput
+    reconciliacionesServicio?: ReconciliacionServicioUpdateManyWithoutCuentaBancariaNestedInput
+    reconciliacionesVenta?: ReconciliacionVentaUpdateManyWithoutCuentaBancariaNestedInput
+    transferenciasDestino?: TransferenciaBancariaUpdateManyWithoutCuentaDestinoNestedInput
+    transferenciasOrigen?: TransferenciaBancariaUpdateManyWithoutCuentaOrigenNestedInput
+    facturas?: FacturaUpdateManyWithoutCuentaBancariaNestedInput
+    deudasCash?: DeudaCashUpdateManyWithoutCuentaBancariaNestedInput
+  }
+
+  export type CuentaBancariaUncheckedUpdateWithoutPrestamosCashInput = {
+    cuentaId?: StringFieldUpdateOperationsInput | string
+    nombreBanco?: StringFieldUpdateOperationsInput | string
+    numeroCuenta?: StringFieldUpdateOperationsInput | string
+    tipoCuenta?: StringFieldUpdateOperationsInput | string
+    saldo?: FloatFieldUpdateOperationsInput | number
+    moneda?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ajustes?: AjusteBancarioUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+    inyeccionesCapital?: InyeccionCapitalUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+    miEmpresa?: MiEmpresaUncheckedUpdateOneWithoutCuentaBancariaNestedInput
+    pagosDeuda?: PagoDeudaUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+    reconciliacionesGasto?: ReconciliacionGastoUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+    reconciliacionesServicio?: ReconciliacionServicioUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+    reconciliacionesVenta?: ReconciliacionVentaUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+    transferenciasDestino?: TransferenciaBancariaUncheckedUpdateManyWithoutCuentaDestinoNestedInput
+    transferenciasOrigen?: TransferenciaBancariaUncheckedUpdateManyWithoutCuentaOrigenNestedInput
+    facturas?: FacturaUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+    deudasCash?: DeudaCashUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+  }
+
   export type ReconciliacionVentaUpsertWithWhereUniqueWithoutPrestamoCashInput = {
     where: ReconciliacionVentaWhereUniqueInput
     update: XOR<ReconciliacionVentaUpdateWithoutPrestamoCashInput, ReconciliacionVentaUncheckedUpdateWithoutPrestamoCashInput>
@@ -184903,6 +185565,57 @@ export namespace Prisma {
   export type CuentaPorPagarCreateOrConnectWithoutDeudaCashInput = {
     where: CuentaPorPagarWhereUniqueInput
     create: XOR<CuentaPorPagarCreateWithoutDeudaCashInput, CuentaPorPagarUncheckedCreateWithoutDeudaCashInput>
+  }
+
+  export type CuentaBancariaCreateWithoutDeudasCashInput = {
+    cuentaId?: string
+    nombreBanco: string
+    numeroCuenta: string
+    tipoCuenta: string
+    saldo?: number
+    moneda?: string
+    isActive: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    ajustes?: AjusteBancarioCreateNestedManyWithoutCuentaBancariaInput
+    inyeccionesCapital?: InyeccionCapitalCreateNestedManyWithoutCuentaBancariaInput
+    miEmpresa?: MiEmpresaCreateNestedOneWithoutCuentaBancariaInput
+    pagosDeuda?: PagoDeudaCreateNestedManyWithoutCuentaBancariaInput
+    reconciliacionesGasto?: ReconciliacionGastoCreateNestedManyWithoutCuentaBancariaInput
+    reconciliacionesServicio?: ReconciliacionServicioCreateNestedManyWithoutCuentaBancariaInput
+    reconciliacionesVenta?: ReconciliacionVentaCreateNestedManyWithoutCuentaBancariaInput
+    transferenciasDestino?: TransferenciaBancariaCreateNestedManyWithoutCuentaDestinoInput
+    transferenciasOrigen?: TransferenciaBancariaCreateNestedManyWithoutCuentaOrigenInput
+    facturas?: FacturaCreateNestedManyWithoutCuentaBancariaInput
+    prestamosCash?: PrestamoCashCreateNestedManyWithoutCuentaBancariaInput
+  }
+
+  export type CuentaBancariaUncheckedCreateWithoutDeudasCashInput = {
+    cuentaId?: string
+    nombreBanco: string
+    numeroCuenta: string
+    tipoCuenta: string
+    saldo?: number
+    moneda?: string
+    isActive: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    ajustes?: AjusteBancarioUncheckedCreateNestedManyWithoutCuentaBancariaInput
+    inyeccionesCapital?: InyeccionCapitalUncheckedCreateNestedManyWithoutCuentaBancariaInput
+    miEmpresa?: MiEmpresaUncheckedCreateNestedOneWithoutCuentaBancariaInput
+    pagosDeuda?: PagoDeudaUncheckedCreateNestedManyWithoutCuentaBancariaInput
+    reconciliacionesGasto?: ReconciliacionGastoUncheckedCreateNestedManyWithoutCuentaBancariaInput
+    reconciliacionesServicio?: ReconciliacionServicioUncheckedCreateNestedManyWithoutCuentaBancariaInput
+    reconciliacionesVenta?: ReconciliacionVentaUncheckedCreateNestedManyWithoutCuentaBancariaInput
+    transferenciasDestino?: TransferenciaBancariaUncheckedCreateNestedManyWithoutCuentaDestinoInput
+    transferenciasOrigen?: TransferenciaBancariaUncheckedCreateNestedManyWithoutCuentaOrigenInput
+    facturas?: FacturaUncheckedCreateNestedManyWithoutCuentaBancariaInput
+    prestamosCash?: PrestamoCashUncheckedCreateNestedManyWithoutCuentaBancariaInput
+  }
+
+  export type CuentaBancariaCreateOrConnectWithoutDeudasCashInput = {
+    where: CuentaBancariaWhereUniqueInput
+    create: XOR<CuentaBancariaCreateWithoutDeudasCashInput, CuentaBancariaUncheckedCreateWithoutDeudasCashInput>
   }
 
   export type ReconciliacionVentaCreateWithoutDeudaCashInput = {
@@ -185069,6 +185782,63 @@ export namespace Prisma {
     compraProducto?: CompraProductoUncheckedUpdateOneWithoutCuentaPorPagarNestedInput
     pagos?: PagoCuentaPorPagarUncheckedUpdateManyWithoutCuentaPorPagarNestedInput
     reconciliaciones?: ReconciliacionGastoUncheckedUpdateManyWithoutCuentaPorPagarNestedInput
+  }
+
+  export type CuentaBancariaUpsertWithoutDeudasCashInput = {
+    update: XOR<CuentaBancariaUpdateWithoutDeudasCashInput, CuentaBancariaUncheckedUpdateWithoutDeudasCashInput>
+    create: XOR<CuentaBancariaCreateWithoutDeudasCashInput, CuentaBancariaUncheckedCreateWithoutDeudasCashInput>
+    where?: CuentaBancariaWhereInput
+  }
+
+  export type CuentaBancariaUpdateToOneWithWhereWithoutDeudasCashInput = {
+    where?: CuentaBancariaWhereInput
+    data: XOR<CuentaBancariaUpdateWithoutDeudasCashInput, CuentaBancariaUncheckedUpdateWithoutDeudasCashInput>
+  }
+
+  export type CuentaBancariaUpdateWithoutDeudasCashInput = {
+    cuentaId?: StringFieldUpdateOperationsInput | string
+    nombreBanco?: StringFieldUpdateOperationsInput | string
+    numeroCuenta?: StringFieldUpdateOperationsInput | string
+    tipoCuenta?: StringFieldUpdateOperationsInput | string
+    saldo?: FloatFieldUpdateOperationsInput | number
+    moneda?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ajustes?: AjusteBancarioUpdateManyWithoutCuentaBancariaNestedInput
+    inyeccionesCapital?: InyeccionCapitalUpdateManyWithoutCuentaBancariaNestedInput
+    miEmpresa?: MiEmpresaUpdateOneWithoutCuentaBancariaNestedInput
+    pagosDeuda?: PagoDeudaUpdateManyWithoutCuentaBancariaNestedInput
+    reconciliacionesGasto?: ReconciliacionGastoUpdateManyWithoutCuentaBancariaNestedInput
+    reconciliacionesServicio?: ReconciliacionServicioUpdateManyWithoutCuentaBancariaNestedInput
+    reconciliacionesVenta?: ReconciliacionVentaUpdateManyWithoutCuentaBancariaNestedInput
+    transferenciasDestino?: TransferenciaBancariaUpdateManyWithoutCuentaDestinoNestedInput
+    transferenciasOrigen?: TransferenciaBancariaUpdateManyWithoutCuentaOrigenNestedInput
+    facturas?: FacturaUpdateManyWithoutCuentaBancariaNestedInput
+    prestamosCash?: PrestamoCashUpdateManyWithoutCuentaBancariaNestedInput
+  }
+
+  export type CuentaBancariaUncheckedUpdateWithoutDeudasCashInput = {
+    cuentaId?: StringFieldUpdateOperationsInput | string
+    nombreBanco?: StringFieldUpdateOperationsInput | string
+    numeroCuenta?: StringFieldUpdateOperationsInput | string
+    tipoCuenta?: StringFieldUpdateOperationsInput | string
+    saldo?: FloatFieldUpdateOperationsInput | number
+    moneda?: StringFieldUpdateOperationsInput | string
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ajustes?: AjusteBancarioUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+    inyeccionesCapital?: InyeccionCapitalUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+    miEmpresa?: MiEmpresaUncheckedUpdateOneWithoutCuentaBancariaNestedInput
+    pagosDeuda?: PagoDeudaUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+    reconciliacionesGasto?: ReconciliacionGastoUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+    reconciliacionesServicio?: ReconciliacionServicioUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+    reconciliacionesVenta?: ReconciliacionVentaUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+    transferenciasDestino?: TransferenciaBancariaUncheckedUpdateManyWithoutCuentaDestinoNestedInput
+    transferenciasOrigen?: TransferenciaBancariaUncheckedUpdateManyWithoutCuentaOrigenNestedInput
+    facturas?: FacturaUncheckedUpdateManyWithoutCuentaBancariaNestedInput
+    prestamosCash?: PrestamoCashUncheckedUpdateManyWithoutCuentaBancariaNestedInput
   }
 
   export type ReconciliacionVentaUpsertWithWhereUniqueWithoutDeudaCashInput = {
@@ -185636,6 +186406,7 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    cuentaBancariaId?: string | null
   }
 
   export type GastoCompraCreateManyVendorInput = {
@@ -185964,6 +186735,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     cuentaPorPagar?: CuentaPorPagarUpdateOneRequiredWithoutDeudaCashNestedInput
+    cuentaBancaria?: CuentaBancariaUpdateOneWithoutDeudasCashNestedInput
     reconciliaciones?: ReconciliacionVentaUpdateManyWithoutDeudaCashNestedInput
   }
 
@@ -185983,6 +186755,7 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cuentaBancariaId?: NullableStringFieldUpdateOperationsInput | string | null
     reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutDeudaCashNestedInput
   }
 
@@ -186002,6 +186775,7 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cuentaBancariaId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type GastoCompraUpdateWithoutVendorInput = {
@@ -186449,6 +187223,7 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    cuentaBancariaId?: string | null
   }
 
   export type OfertaCreateManyClienteInput = {
@@ -186707,6 +187482,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     cuentaPorCobrar?: CuentaPorCobrarUpdateOneRequiredWithoutPrestamoCashNestedInput
+    cuentaBancaria?: CuentaBancariaUpdateOneWithoutPrestamosCashNestedInput
     reconciliaciones?: ReconciliacionVentaUpdateManyWithoutPrestamoCashNestedInput
   }
 
@@ -186726,6 +187502,7 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cuentaBancariaId?: NullableStringFieldUpdateOperationsInput | string | null
     reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutPrestamoCashNestedInput
   }
 
@@ -186745,6 +187522,7 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cuentaBancariaId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type OfertaUpdateWithoutClienteInput = {
@@ -191015,6 +191793,44 @@ export namespace Prisma {
     tasaCambio?: Decimal | DecimalJsLike | number | string | null
   }
 
+  export type PrestamoCashCreateManyCuentaBancariaInput = {
+    id?: string
+    idNumerico?: number
+    clienteId: string
+    cuentaPorCobrarId: string
+    montoCapital: Decimal | DecimalJsLike | number | string
+    moneda?: string
+    tasaInteres?: Decimal | DecimalJsLike | number | string | null
+    tasaCambioAlCrear?: Decimal | DecimalJsLike | number | string | null
+    fechaOtorgamiento?: Date | string
+    fechaVencimiento?: Date | string | null
+    estado?: $Enums.EstadoPrestamoCash
+    observaciones?: string | null
+    createdById: string
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type DeudaCashCreateManyCuentaBancariaInput = {
+    id?: string
+    idNumerico?: number
+    proveedorId: string
+    cuentaPorPagarId: string
+    montoCapital: Decimal | DecimalJsLike | number | string
+    moneda?: string
+    tasaInteres?: Decimal | DecimalJsLike | number | string | null
+    fechaOtorgamiento?: Date | string
+    fechaVencimiento?: Date | string | null
+    estado?: $Enums.EstadoPrestamoCash
+    observaciones?: string | null
+    comprobanteUrl?: string | null
+    createdById: string
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type AjusteBancarioUpdateWithoutCuentaBancariaInput = {
     ajusteId?: StringFieldUpdateOperationsInput | string
     tipo?: StringFieldUpdateOperationsInput | string
@@ -191527,6 +192343,124 @@ export namespace Prisma {
     tipoTarjeta?: NullableStringFieldUpdateOperationsInput | string | null
     cargoTransporte?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
     tasaCambio?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+  }
+
+  export type PrestamoCashUpdateWithoutCuentaBancariaInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    idNumerico?: IntFieldUpdateOperationsInput | number
+    montoCapital?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    tasaInteres?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    tasaCambioAlCrear?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    fechaOtorgamiento?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    estado?: EnumEstadoPrestamoCashFieldUpdateOperationsInput | $Enums.EstadoPrestamoCash
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cliente?: ClienteUpdateOneRequiredWithoutPrestamosCashNestedInput
+    cuentaPorCobrar?: CuentaPorCobrarUpdateOneRequiredWithoutPrestamoCashNestedInput
+    reconciliaciones?: ReconciliacionVentaUpdateManyWithoutPrestamoCashNestedInput
+  }
+
+  export type PrestamoCashUncheckedUpdateWithoutCuentaBancariaInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    idNumerico?: IntFieldUpdateOperationsInput | number
+    clienteId?: StringFieldUpdateOperationsInput | string
+    cuentaPorCobrarId?: StringFieldUpdateOperationsInput | string
+    montoCapital?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    tasaInteres?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    tasaCambioAlCrear?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    fechaOtorgamiento?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    estado?: EnumEstadoPrestamoCashFieldUpdateOperationsInput | $Enums.EstadoPrestamoCash
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutPrestamoCashNestedInput
+  }
+
+  export type PrestamoCashUncheckedUpdateManyWithoutCuentaBancariaInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    idNumerico?: IntFieldUpdateOperationsInput | number
+    clienteId?: StringFieldUpdateOperationsInput | string
+    cuentaPorCobrarId?: StringFieldUpdateOperationsInput | string
+    montoCapital?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    tasaInteres?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    tasaCambioAlCrear?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    fechaOtorgamiento?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    estado?: EnumEstadoPrestamoCashFieldUpdateOperationsInput | $Enums.EstadoPrestamoCash
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type DeudaCashUpdateWithoutCuentaBancariaInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    idNumerico?: IntFieldUpdateOperationsInput | number
+    montoCapital?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    tasaInteres?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    fechaOtorgamiento?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    estado?: EnumEstadoPrestamoCashFieldUpdateOperationsInput | $Enums.EstadoPrestamoCash
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    comprobanteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    proveedor?: VendorUpdateOneRequiredWithoutDeudasCashNestedInput
+    cuentaPorPagar?: CuentaPorPagarUpdateOneRequiredWithoutDeudaCashNestedInput
+    reconciliaciones?: ReconciliacionVentaUpdateManyWithoutDeudaCashNestedInput
+  }
+
+  export type DeudaCashUncheckedUpdateWithoutCuentaBancariaInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    idNumerico?: IntFieldUpdateOperationsInput | number
+    proveedorId?: StringFieldUpdateOperationsInput | string
+    cuentaPorPagarId?: StringFieldUpdateOperationsInput | string
+    montoCapital?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    tasaInteres?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    fechaOtorgamiento?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    estado?: EnumEstadoPrestamoCashFieldUpdateOperationsInput | $Enums.EstadoPrestamoCash
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    comprobanteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutDeudaCashNestedInput
+  }
+
+  export type DeudaCashUncheckedUpdateManyWithoutCuentaBancariaInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    idNumerico?: IntFieldUpdateOperationsInput | number
+    proveedorId?: StringFieldUpdateOperationsInput | string
+    cuentaPorPagarId?: StringFieldUpdateOperationsInput | string
+    montoCapital?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    tasaInteres?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    fechaOtorgamiento?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    estado?: EnumEstadoPrestamoCashFieldUpdateOperationsInput | $Enums.EstadoPrestamoCash
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    comprobanteUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ReconciliacionGastoCreateManyTipoPagoInput = {

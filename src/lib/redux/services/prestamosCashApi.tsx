@@ -37,7 +37,7 @@ export const prestamosCashApi = apiSlice.injectEndpoints({
         body: prestamo,
       }),
       transformResponse: (response: { prestamo: PrestamoCash }) => response.prestamo,
-      invalidatesTags: ['PrestamosCash', 'CuentasPorCobrar'],
+      invalidatesTags: ['PrestamosCash', 'CuentasPorCobrar', 'CuentasBancarias'],
     }),
     updatePrestamoCash: builder.mutation<PrestamoCash, { id: string } & UpdatePrestamoCashRequest>({
       query: ({ id, ...data }) => ({

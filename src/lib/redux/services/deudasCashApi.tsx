@@ -33,7 +33,7 @@ export const deudasCashApi = apiSlice.injectEndpoints({
         body: deuda,
       }),
       transformResponse: (response: { deuda: DeudaCash }) => response.deuda,
-      invalidatesTags: ['DeudasCash', 'CuentasPorPagar'],
+      invalidatesTags: ['DeudasCash', 'CuentasPorPagar', 'CuentasBancarias'],
     }),
     updateDeudaCash: builder.mutation<DeudaCash, { id: string } & UpdateDeudaCashRequest>({
       query: ({ id, ...data }) => ({

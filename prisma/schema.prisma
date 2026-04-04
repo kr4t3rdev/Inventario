@@ -776,6 +776,8 @@ model CuentaBancaria {
   transferenciasDestino    TransferenciaBancaria[]  @relation("TransferenciasDestino")
   transferenciasOrigen     TransferenciaBancaria[]  @relation("TransferenciasOrigen")
   facturas                 Factura[]                @relation("FacturaCuenta")
+  prestamosCash            PrestamoCash[]           @relation("PrestamoCashCuenta")
+  deudasCash               DeudaCash[]              @relation("DeudaCashCuenta")
 }
 
 model TipoPago {
@@ -1840,8 +1842,10 @@ model PrestamoCash {
   deletedAt         DateTime?
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
+  cuentaBancariaId  String?
   cliente           Cliente             @relation(fields: [clienteId], references: [clienteId])
   cuentaPorCobrar   CuentaPorCobrar     @relation(fields: [cuentaPorCobrarId], references: [id])
+  cuentaBancaria    CuentaBancaria?     @relation("PrestamoCashCuenta", fields: [cuentaBancariaId], references: [cuentaId])
   reconciliaciones  ReconciliacionVenta[]
 
   @@index([clienteId, estado])
@@ -1865,8 +1869,10 @@ model DeudaCash {
   deletedAt         DateTime?
   createdAt         DateTime           @default(now())
   updatedAt         DateTime           @updatedAt
+  cuentaBancariaId  String?
   proveedor         Vendor             @relation(fields: [proveedorId], references: [vendorId])
   cuentaPorPagar    CuentaPorPagar     @relation(fields: [cuentaPorPagarId], references: [cuentaPorPagarId])
+  cuentaBancaria    CuentaBancaria?    @relation("DeudaCashCuenta", fields: [cuentaBancariaId], references: [cuentaId])
   reconciliaciones  ReconciliacionVenta[]
 
   @@index([proveedorId, estado])

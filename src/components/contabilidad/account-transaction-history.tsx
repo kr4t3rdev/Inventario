@@ -59,6 +59,8 @@ const typeColors: Record<string, string> = {
   'transferencia_salida': 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 border-orange-200/80',
   'ajuste_ingreso': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 border-emerald-200/80',
   'ajuste_egreso': 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300 border-rose-200/80',
+  'prestamo_cash': 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300 border-violet-200/80',
+  'deuda_cash': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-200/80',
 }
 
 export function AccountTransactionHistory({
@@ -142,7 +144,8 @@ export function AccountTransactionHistory({
       const isIncome = t.tipoMovimiento.includes('ingreso') || 
         t.tipoMovimiento === 'venta' || 
         t.tipoMovimiento === 'servicio' || 
-        t.tipoMovimiento === 'transferencia_entrada'
+        t.tipoMovimiento === 'transferencia_entrada' ||
+        t.tipoMovimiento === 'prestamo_cash'
       const convertedAmount = getConvertedAmount(t)
       
       if (isIncome) {
@@ -223,17 +226,35 @@ export function AccountTransactionHistory({
     return typeColors[tipo] || 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300 border-gray-200/80'
   }
 
+  const getTipoMovimientoLabel = (tipo: string) => {
+    const labels: Record<string, string> = {
+      'venta': 'Venta',
+      'servicio': 'Servicio',
+      'gasto': 'Gasto',
+      'salario': 'Salario',
+      'transferencia_entrada': 'Transferencia Entrada',
+      'transferencia_salida': 'Transferencia Salida',
+      'ajuste_ingreso': 'Ajuste Ingreso',
+      'ajuste_egreso': 'Ajuste Egreso',
+      'prestamo_cash': 'Préstamo Cash',
+      'deuda_cash': 'Deuda Cash',
+    }
+    return labels[tipo] || tipo
+  }
+
   const getTipoMovimientoIcon = (tipo: string) => {
     switch (tipo) {
       case 'venta':
       case 'servicio':
       case 'ajuste_ingreso':
       case 'transferencia_entrada':
+      case 'prestamo_cash':
         return <TrendingUp className="h-3.5 w-3.5" />
       case 'gasto':
       case 'salario':
       case 'ajuste_egreso':
       case 'transferencia_salida':
+      case 'deuda_cash':
         return <TrendingDown className="h-3.5 w-3.5" />
       default:
         return <ArrowUpDown className="h-3.5 w-3.5" />
@@ -453,6 +474,8 @@ export function AccountTransactionHistory({
                     <SelectItem value="transferencia_salida">Transferencias Salida</SelectItem>
                     <SelectItem value="ajuste_ingreso">Ajustes Ingreso</SelectItem>
                     <SelectItem value="ajuste_egreso">Ajustes Egreso</SelectItem>
+                    <SelectItem value="prestamo_cash">Préstamos Cash</SelectItem>
+                    <SelectItem value="deuda_cash">Deudas Cash</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -511,7 +534,7 @@ export function AccountTransactionHistory({
                             <Badge className={cn("border", getTipoMovimientoColor(transaccion.tipoMovimiento))}>
                               <span className="flex items-center gap-1">
                                 {getTipoMovimientoIcon(transaccion.tipoMovimiento)}
-                                {transaccion.tipoMovimiento}
+                                {getTipoMovimientoLabel(transaccion.tipoMovimiento)}
                               </span>
                             </Badge>
                           </TableCell>
@@ -546,14 +569,16 @@ export function AccountTransactionHistory({
                               transaccion?.tipoMovimiento?.includes('ingreso') ||
                                 transaccion.tipoMovimiento === 'venta' ||
                                 transaccion.tipoMovimiento === 'servicio' ||
-                                transaccion.tipoMovimiento === 'transferencia_entrada'
+                                transaccion.tipoMovimiento === 'transferencia_entrada' ||
+                                transaccion.tipoMovimiento === 'prestamo_cash'
                                 ? 'text-green-600 dark:text-green-400'
                                 : 'text-red-600 dark:text-red-400'
                             )}>
                               {transaccion?.tipoMovimiento?.includes('ingreso') ||
                                 transaccion.tipoMovimiento === 'venta' ||
                                 transaccion.tipoMovimiento === 'servicio' ||
-                                transaccion.tipoMovimiento === 'transferencia_entrada' ? '+' : '-'}
+                                transaccion.tipoMovimiento === 'transferencia_entrada' ||
+                                transaccion.tipoMovimiento === 'prestamo_cash' ? '+' : '-'}
                               {formatCurrencySimple(Math.abs(getConvertedAmount(transaccion)), monedaCuenta)}
                             </span>
                           </TableCell>

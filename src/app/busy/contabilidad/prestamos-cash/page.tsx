@@ -89,6 +89,12 @@ function PrestamosCashContent() {
           clienteId: c.clienteId,
           nombre: c.nombre,
         }))}
+        cuentasBancarias={cuentasBancarias.map((c: any) => ({
+          cuentaId: c.cuentaId,
+          nombreBanco: c.nombreBanco,
+          tipoCuenta: c.tipoCuenta,
+          moneda: c.moneda,
+        }))}
         onSuccess={handleSuccess}
       />
 

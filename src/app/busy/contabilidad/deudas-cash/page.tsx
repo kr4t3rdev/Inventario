@@ -89,6 +89,12 @@ function DeudasCashContent() {
           vendorId: p.vendorId,
           nombre: p.nombre,
         }))}
+        cuentasBancarias={cuentasBancarias.map((c: any) => ({
+          cuentaId: c.cuentaId,
+          nombreBanco: c.nombreBanco,
+          tipoCuenta: c.tipoCuenta,
+          moneda: c.moneda,
+        }))}
         onSuccess={handleSuccess}
       />
 
@@ -108,6 +114,7 @@ function DeudasCashContent() {
         onSuccess={handleSuccess}
       />
     </>
+    
   )
 }
 

@@ -24,6 +24,7 @@ const prestamoSchema = z.object({
   tasaCambioAlCrear: z.coerce.number().positive().optional(),
   fechaVencimiento: z.string().optional(),
   observaciones: z.string().optional(),
+  cuentaBancariaId: z.string({ required_error: "Seleccione una cuenta bancaria" }).min(1, "Seleccione una cuenta bancaria"),
 })
 
 type PrestamoFormValues = z.infer<typeof prestamoSchema>
@@ -109,6 +110,7 @@ interface PrestamoCashFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   clientes?: Array<{ clienteId: string; nombre: string }>
+  cuentasBancarias?: Array<{ cuentaId: string; nombreBanco: string; tipoCuenta: string; moneda: string }>
   onSuccess?: () => void
 }
 
@@ -117,7 +119,7 @@ interface PrestamoCashFormProps {
  * @param {PrestamoCashFormProps} props - Props del componente.
  * @returns {JSX.Element} Formulario de préstamo cash.
  */
-export function PrestamoCashForm({ open, onOpenChange, clientes = [], onSuccess }: PrestamoCashFormProps) {
+export function PrestamoCashForm({ open, onOpenChange, clientes = [], cuentasBancarias = [], onSuccess }: PrestamoCashFormProps) {
   const [createPrestamo, { isLoading }] = useCreatePrestamoCashMutation()
   const { data: tasasData } = useGetTasasActualesQuery()
 
@@ -159,6 +161,7 @@ export function PrestamoCashForm({ open, onOpenChange, clientes = [], onSuccess 
         tasaCambioAlCrear: data.tasaCambioAlCrear,
         fechaVencimiento: data.fechaVencimiento || undefined,
         observaciones: data.observaciones || undefined,
+        cuentaBancariaId: data.cuentaBancariaId,
       }).unwrap()
 
       sileo.success({ title: "Préstamo en efectivo creado exitosamente." })
@@ -177,7 +180,7 @@ export function PrestamoCashForm({ open, onOpenChange, clientes = [], onSuccess 
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Nuevo Préstamo en Efectivo</DialogTitle>
           <DialogDescription>
@@ -186,7 +189,32 @@ export function PrestamoCashForm({ open, onOpenChange, clientes = [], onSuccess 
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-4 overflow-y-auto flex-1 pr-1">
+            <FormField
+              control={form.control}
+              name="cuentaBancariaId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Cuenta bancaria origen</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value || ""}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccione la cuenta de origen" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {cuentasBancarias.map((c) => (
+                        <SelectItem key={c.cuentaId} value={c.cuentaId}>
+                          {c.nombreBanco} · {c.tipoCuenta} ({c.moneda})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="clienteId"

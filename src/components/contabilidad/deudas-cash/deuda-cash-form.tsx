@@ -1,7 +1,7 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useForm } from "react-hook-form"
+import { useForm, useWatch } from "react-hook-form"
 import { z } from "zod"
 import { useState, useRef, type ChangeEvent } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
@@ -10,8 +10,9 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
+import { Badge } from "@/components/ui/badge"
 import { useCreateDeudaCashMutation } from "@/lib/redux/services/deudasCashApi"
-import { ImageIcon, Loader2, Upload, X } from "lucide-react"
+import { ImageIcon, Loader2, TrendingUp, Upload, X } from "lucide-react"
 import { sileo } from "sileo"
 import { getAuthToken } from "@/lib/token"
 
@@ -22,14 +23,93 @@ const deudaSchema = z.object({
   tasaInteres: z.coerce.number().min(0).optional(),
   fechaVencimiento: z.string().optional(),
   observaciones: z.string().optional(),
+  cuentaBancariaId: z.string({ required_error: "Seleccione una cuenta bancaria" }).min(1, "Seleccione una cuenta bancaria"),
 })
 
 type DeudaFormValues = z.infer<typeof deudaSchema>
+
+/**
+ * @description Panel reactivo con el resumen financiero de la deuda.
+ * Muestra capital, interés, total y cuotas estimadas diaria/semanal/mensual.
+ * @param {{ control: any }} props - Control de react-hook-form.
+ * @returns {JSX.Element | null} Panel de resumen o null si no hay monto.
+ */
+function CuotasEstimadasDeuda({ control }: { control: any }) {
+  const montoCapital = useWatch({ control, name: 'montoCapital' })
+  const tasaInteres = useWatch({ control, name: 'tasaInteres' })
+  const fechaVencimiento = useWatch({ control, name: 'fechaVencimiento' })
+  const moneda = useWatch({ control, name: 'moneda' })
+
+  const monto = Number(montoCapital) || 0
+  const tasa = Number(tasaInteres) || 0
+
+  if (monto <= 0) return null
+
+  const totalConInteres = monto * (1 + tasa / 100)
+  const interes = totalConInteres - monto
+
+  let dias = 0
+  if (fechaVencimiento) {
+    const hoy = new Date()
+    hoy.setHours(0, 0, 0, 0)
+    const vencimiento = new Date(fechaVencimiento)
+    dias = Math.max(1, Math.ceil((vencimiento.getTime() - hoy.getTime()) / (1000 * 60 * 60 * 24)))
+  }
+
+  const fmt = (n: number) =>
+    n.toLocaleString('es-CU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+  const cuotaDiaria = dias > 0 ? totalConInteres / dias : null
+
+  return (
+    <div className="rounded-lg border bg-muted/40 p-4 space-y-3 text-sm">
+      <div className="flex items-center gap-2 font-medium">
+        <TrendingUp className="h-4 w-4 text-primary" />
+        Resumen de la deuda
+      </div>
+
+      <div className="space-y-1">
+        <div className="flex justify-between">
+          <span className="text-muted-foreground">Capital</span>
+          <span className="font-medium">{fmt(monto)} {moneda}</span>
+        </div>
+        {tasa > 0 && (
+          <div className="flex justify-between">
+            <span className="text-muted-foreground">Interés ({tasa}%)</span>
+            <span className="font-medium text-amber-500">+{fmt(interes)} {moneda}</span>
+          </div>
+        )}
+        <div className="flex justify-between font-semibold border-t pt-2">
+          <span>Total a pagar</span>
+          <span className="text-primary">{fmt(totalConInteres)} {moneda}</span>
+        </div>
+      </div>
+
+      {cuotaDiaria !== null && (
+        <div className="space-y-2 border-t pt-3">
+          <p className="text-xs text-muted-foreground">Cuota fija estimada ({dias} días)</p>
+          <div className="flex gap-2 flex-wrap">
+            <Badge variant="outline" className="bg-blue-500/10 text-blue-700 border-blue-200 dark:text-blue-400 dark:border-blue-800">
+              Diaria &middot; {fmt(cuotaDiaria)} {moneda}
+            </Badge>
+            <Badge variant="outline" className="bg-emerald-500/10 text-emerald-700 border-emerald-200 dark:text-emerald-400 dark:border-emerald-800">
+              Semanal &middot; {fmt(cuotaDiaria * 7)} {moneda}
+            </Badge>
+            <Badge variant="outline" className="bg-violet-500/10 text-violet-700 border-violet-200 dark:text-violet-400 dark:border-violet-800">
+              Mensual &middot; {fmt(cuotaDiaria * 30)} {moneda}
+            </Badge>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
 
 interface DeudaCashFormProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   proveedores?: Array<{ vendorId: string; nombre: string }>
+  cuentasBancarias?: Array<{ cuentaId: string; nombreBanco: string; tipoCuenta: string; moneda: string }>
   onSuccess?: () => void
 }
 
@@ -38,7 +118,7 @@ interface DeudaCashFormProps {
  * @param {DeudaCashFormProps} props - Props del componente.
  * @returns {JSX.Element} Formulario de deuda cash.
  */
-export function DeudaCashForm({ open, onOpenChange, proveedores = [], onSuccess }: DeudaCashFormProps) {
+export function DeudaCashForm({ open, onOpenChange, proveedores = [], cuentasBancarias = [], onSuccess }: DeudaCashFormProps) {
   const [createDeuda, { isLoading }] = useCreateDeudaCashMutation()
   const [comprobante, setComprobante] = useState<File | null>(null)
   const [comprobantePreview, setComprobantePreview] = useState<string | null>(null)
@@ -100,10 +180,11 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], onSuccess 
         proveedorId: data.proveedorId,
         montoCapital: data.montoCapital,
         moneda: data.moneda,
-        tasaInteres: data.tasaInteres,
+        tasaInteres: data.tasaInteres || undefined,
         fechaVencimiento: data.fechaVencimiento || undefined,
         observaciones: data.observaciones || undefined,
         comprobanteUrl,
+        cuentaBancariaId: data.cuentaBancariaId,
       }).unwrap()
 
       sileo.success({ title: "Deuda en efectivo registrada exitosamente." })
@@ -125,7 +206,7 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], onSuccess 
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[85vh] flex flex-col">
         <DialogHeader>
           <DialogTitle>Nueva Deuda en Efectivo</DialogTitle>
           <DialogDescription>
@@ -134,7 +215,32 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], onSuccess 
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-4 overflow-y-auto flex-1 pr-1">
+            <FormField
+              control={form.control}
+              name="cuentaBancariaId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Cuenta bancaria destino</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value || ""}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Seleccione la cuenta de destino" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {cuentasBancarias.map((c) => (
+                        <SelectItem key={c.cuentaId} value={c.cuentaId}>
+                          {c.nombreBanco} · {c.tipoCuenta} ({c.moneda})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="proveedorId"
@@ -211,6 +317,8 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], onSuccess 
                 </FormItem>
               )}
             />
+
+            <CuotasEstimadasDeuda control={form.control} />
 
             <FormField
               control={form.control}

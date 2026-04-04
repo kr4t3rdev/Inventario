@@ -48,11 +48,24 @@ export async function GET(request: NextRequest) {
         fechaReconciliacion: true,
         observaciones: true,
         reconciliadoPor: true,
+        tipoReconciliacion: true,
         venta: {
           select: {
             ventaId: true,
             total: true,
             createdAt: true
+          }
+        },
+        prestamoCash: {
+          select: {
+            id: true,
+            cliente: { select: { nombre: true } }
+          }
+        },
+        deudaCash: {
+          select: {
+            id: true,
+            proveedor: { select: { nombre: true } }
           }
         },
         cuentaBancaria: {
@@ -273,21 +286,34 @@ export async function GET(request: NextRequest) {
     const movimientos = [
       ...ventasMovimientos.map((mov: any) => ({
         id: mov.reconciliacionId,
-        tipo: 'venta' as const,
+        tipo: (mov.tipoReconciliacion === 'PRESTAMO_CASH'
+          ? 'prestamo_cash'
+          : mov.tipoReconciliacion === 'DEUDA_CASH'
+          ? 'deuda_cash'
+          : 'venta'),
         fecha: mov.fechaReconciliacion,
         monto: Number(mov.monto),
         moneda: mov.moneda || 'CUP',
         montoConvertido: mov.tasaCambio ? Number(mov.monto) * Number(mov.tasaCambio) : Number(mov.monto),
         tasaCambio: mov.tasaCambio ? Number(mov.tasaCambio) : null,
-        descripcion: `Venta ${mov.venta.ventaId}`,
+        descripcion: mov.tipoReconciliacion === 'PRESTAMO_CASH'
+          ? `Préstamo Cash - ${mov.prestamoCash?.cliente?.nombre ?? mov.reconciliacionId}`
+          : mov.tipoReconciliacion === 'DEUDA_CASH'
+          ? `Deuda Cash - ${mov.deudaCash?.proveedor?.nombre ?? mov.reconciliacionId}`
+          : mov.venta ? `Venta ${mov.venta.ventaId}` : `Cobro reconciliado ${mov.reconciliacionId}`,
         cuenta: `${mov.cuentaBancaria.nombreBanco} - ${mov.cuentaBancaria.numeroCuenta}`,
         tipoPago: mov.tipoPago.nombre,
         observaciones: mov.observaciones,
         realizadoPor: mov.reconciliadoPor,
-        referencia: mov.venta.ventaId,
+        referencia: mov.tipoReconciliacion === 'PRESTAMO_CASH'
+          ? (mov.prestamoCash?.id ?? mov.reconciliacionId)
+          : mov.tipoReconciliacion === 'DEUDA_CASH'
+          ? (mov.deudaCash?.id ?? mov.reconciliacionId)
+          : (mov.venta?.ventaId ?? mov.reconciliacionId),
         detalles: {
-          totalVenta: Number(mov.venta.total),
-          fechaVenta: mov.venta.createdAt
+          tipoReconciliacion: mov.tipoReconciliacion,
+          totalVenta: mov.venta ? Number(mov.venta.total) : null,
+          fechaVenta: mov.venta?.createdAt ?? null
         }
       })),
       ...serviciosMovimientos.map((mov: any) => ({
@@ -310,7 +336,7 @@ export async function GET(request: NextRequest) {
       })),
       ...gastosMovimientos.map((mov: any) => ({
         id: mov.reconciliacionId,
-        tipo: 'gasto' as const,
+        tipo: (mov.tipoGasto === 'salario' ? 'salario' : 'gasto') as const,
         fecha: mov.fechaReconciliacion,
         monto: -Number(mov.monto),
         moneda: mov.moneda || 'CUP',

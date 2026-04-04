@@ -17,10 +17,11 @@ const createSchema = z.object({
   clienteId: z.string().min(1, 'El clienteId es requerido'),
   montoCapital: z.coerce.number().positive('El monto debe ser positivo'),
   moneda: z.string().optional().default('CUP'),
-  tasaInteres: z.coerce.number().positive().optional(),
+  tasaInteres: z.coerce.number().min(0).optional(),
   tasaCambioAlCrear: z.coerce.number().positive().optional(),
   fechaVencimiento: z.string().optional(),
-  observaciones: z.string().optional()
+  observaciones: z.string().optional(),
+  cuentaBancariaId: z.string().min(1, 'La cuenta bancaria es requerida')
 })
 
 /**
@@ -70,7 +71,16 @@ export const GET = withAuthGet(async (request: NextRequest) => {
               nombre: true
             }
           },
-          cuentaPorCobrar: true
+          cuentaPorCobrar: true,
+          reconciliaciones: {
+            include: {
+              tipoPago: true,
+              cuentaBancaria: true
+            },
+            orderBy: {
+              fechaReconciliacion: 'desc'
+            }
+          }
         },
         orderBy: { createdAt: 'desc' },
         skip,
@@ -110,7 +120,26 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
 
     const body = createSchema.parse(await request.json())
 
+    const cuentaOrigen = await prisma.cuentaBancaria.findUnique({
+      where: { cuentaId: body.cuentaBancariaId },
+      select: { cuentaId: true, saldo: true, isActive: true }
+    })
+    if (!cuentaOrigen || !cuentaOrigen.isActive) {
+      return NextResponse.json({ error: 'Cuenta bancaria no encontrada o inactiva' }, { status: 400 })
+    }
+    if (cuentaOrigen.saldo < body.montoCapital) {
+      return NextResponse.json(
+        { error: `Saldo insuficiente en la cuenta. Disponible: ${cuentaOrigen.saldo}` },
+        { status: 400 }
+      )
+    }
+
     const prestamo = await prisma.$transaction(async (tx) => {
+      await tx.cuentaBancaria.update({
+        where: { cuentaId: body.cuentaBancariaId },
+        data: { saldo: { decrement: body.montoCapital } }
+      })
+
       const montoDeuda = body.tasaInteres
         ? Number((body.montoCapital * (1 + body.tasaInteres / 100)).toFixed(2))
         : body.montoCapital
@@ -136,6 +165,7 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
           tasaCambioAlCrear: body.tasaCambioAlCrear,
           fechaVencimiento: body.fechaVencimiento ? new Date(body.fechaVencimiento) : undefined,
           observaciones: body.observaciones,
+          cuentaBancariaId: body.cuentaBancariaId,
           createdById: user.userId
         },
         include: {

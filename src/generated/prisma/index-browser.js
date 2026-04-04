@@ -1436,7 +1436,8 @@ exports.Prisma.PrestamoCashScalarFieldEnum = {
   createdById: 'createdById',
   deletedAt: 'deletedAt',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  cuentaBancariaId: 'cuentaBancariaId'
 };
 
 exports.Prisma.DeudaCashScalarFieldEnum = {
@@ -1455,7 +1456,8 @@ exports.Prisma.DeudaCashScalarFieldEnum = {
   createdById: 'createdById',
   deletedAt: 'deletedAt',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  cuentaBancariaId: 'cuentaBancariaId'
 };
 
 exports.Prisma.SortOrder = {

@@ -162,7 +162,7 @@ function generateComprobantePDF(page: any, fontRegular: any, fontBold: any, pres
     dashX = endX + gapLength
   }
   // Scissors indicator
-  const scissorsText = '✂ Cortar aquí'
+  const scissorsText = '--- Cortar aqui ---'
   const stw = fontRegular.widthOfTextAtSize(scissorsText, 8)
   page.drawText(scissorsText, {
     x: centerX - stw / 2, y: cutY + 4, size: 8, font: fontRegular, color: rgb(0.5, 0.5, 0.5)

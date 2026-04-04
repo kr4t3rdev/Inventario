@@ -74,6 +74,11 @@ export const POST = withAuthPost(async (request: NextRequest, context: unknown, 
         }
       })
 
+      await tx.cuentaBancaria.update({
+        where: { cuentaId: body.cuentaId },
+        data: { saldo: { decrement: body.monto } }
+      })
+
       const nuevoMontoPagado = Number(deuda.cuentaPorPagar.montoPagado) + body.monto
       const totalDeuda = Number(deuda.cuentaPorPagar.montoDeuda)
       const nuevoSaldoPendiente = totalDeuda - nuevoMontoPagado

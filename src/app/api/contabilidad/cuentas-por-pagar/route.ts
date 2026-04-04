@@ -47,6 +47,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     })
 
     const cuentas = await prisma.cuentaPorPagar.findMany({
+      where: {
+        tipoDeuda: { not: 'DEUDA_CASH' }
+      },
       include: {
         proveedor: {
           select: { vendorId: true, nombre: true, cuentaCUP: true, cuentaUSD: true }
@@ -71,12 +74,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
             vendor: {
               select: { vendorId: true, nombre: true, cuentaCUP: true, cuentaUSD: true }
             }
-          }
-        },
-        deudaCash: {
-          include: {
-            cuentaPorPagar: true,
-            proveedor: true
           }
         }
       }

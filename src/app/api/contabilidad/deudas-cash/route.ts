@@ -17,10 +17,11 @@ const createSchema = z.object({
   proveedorId: z.string().min(1, 'El proveedorId es requerido'),
   montoCapital: z.coerce.number().positive('El monto debe ser positivo'),
   moneda: z.string().optional().default('CUP'),
-  tasaInteres: z.coerce.number().positive().optional(),
+  tasaInteres: z.coerce.number().min(0).optional(),
   fechaVencimiento: z.string().optional(),
   observaciones: z.string().optional(),
-  comprobanteUrl: z.string().url().optional()
+  comprobanteUrl: z.string().url().optional(),
+  cuentaBancariaId: z.string().min(1, 'La cuenta bancaria es requerida')
 })
 
 /**
@@ -70,7 +71,16 @@ export const GET = withAuthGet(async (request: NextRequest) => {
               nombre: true
             }
           },
-          cuentaPorPagar: true
+          cuentaPorPagar: true,
+          reconciliaciones: {
+            include: {
+              tipoPago: true,
+              cuentaBancaria: true
+            },
+            orderBy: {
+              fechaReconciliacion: 'desc'
+            }
+          }
         },
         orderBy: { createdAt: 'desc' },
         skip,
@@ -108,7 +118,9 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
       return NextResponse.json({ error: 'Módulo de deudas cash deshabilitado' }, { status: 404 })
     }
 
-    const body = createSchema.parse(await request.json())
+    const rawBody = await request.json()
+    console.log('[DeudaCash POST] body recibido:', JSON.stringify(rawBody))
+    const body = createSchema.parse(rawBody)
 
     const proveedor = await prisma.vendor.findUnique({
       where: { vendorId: body.proveedorId },
@@ -120,6 +132,11 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
     }
 
     const deuda = await prisma.$transaction(async (tx) => {
+      await tx.cuentaBancaria.update({
+        where: { cuentaId: body.cuentaBancariaId },
+        data: { saldo: { increment: body.montoCapital } }
+      })
+
       const lastDeuda = await tx.deudaCash.findFirst({
         orderBy: { idNumerico: 'desc' },
         select: { idNumerico: true }
@@ -152,6 +169,7 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
           fechaVencimiento: body.fechaVencimiento ? new Date(body.fechaVencimiento) : undefined,
           observaciones: body.observaciones,
           comprobanteUrl: body.comprobanteUrl,
+          cuentaBancariaId: body.cuentaBancariaId,
           createdById: user.userId
         },
         include: {
@@ -181,6 +199,7 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
     return NextResponse.json({ deuda }, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
+      console.error('[DeudaCash POST] Zod errors:', JSON.stringify(error.errors))
       return NextResponse.json({ error: 'Parámetros inválidos', details: error.errors }, { status: 400 })
     }
     console.error('Error creando deuda cash:', error)

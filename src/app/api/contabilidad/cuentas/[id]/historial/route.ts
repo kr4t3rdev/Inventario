@@ -116,6 +116,12 @@ export async function GET(
         },
         include: {
           venta: true,
+          prestamoCash: {
+            include: { cliente: { select: { nombre: true } } }
+          },
+          deudaCash: {
+            include: { proveedor: { select: { nombre: true } } }
+          },
           cuentaBancaria: true,
           tipoPago: true
         },
@@ -241,16 +247,25 @@ export async function GET(
       todasTransacciones.push({
         transaccionId: rec.reconciliacionId,
         fecha: rec.fechaReconciliacion,
-        tipoMovimiento: 'venta',
-        descripcion: `Venta reconciliada - ${rec.venta?.ventaId || 'N/A'}`,
+        tipoMovimiento: rec.tipoReconciliacion === 'PRESTAMO_CASH'
+          ? 'prestamo_cash'
+          : rec.tipoReconciliacion === 'DEUDA_CASH'
+          ? 'deuda_cash'
+          : 'venta',
+        descripcion: rec.tipoReconciliacion === 'PRESTAMO_CASH'
+          ? `Préstamo Cash - ${rec.prestamoCash?.cliente?.nombre ?? rec.reconciliacionId}`
+          : rec.tipoReconciliacion === 'DEUDA_CASH'
+          ? `Deuda Cash - ${rec.deudaCash?.proveedor?.nombre ?? rec.reconciliacionId}`
+          : `Venta reconciliada - ${rec.venta?.ventaId || 'N/A'}`,
         observaciones: rec.observaciones,
         monedaOriginal: rec.moneda,
         montoOriginal: Number(rec.monto),
         tasaCambio: rec.tasaCambio ? Number(rec.tasaCambio) : null,
         montoConvertido: calcularMontoConvertido(Number(rec.monto), rec.moneda, cuenta.moneda, rec.tasaCambio ? Number(rec.tasaCambio) : null),
-        esIngreso: true,
+        esIngreso: rec.tipoReconciliacion !== 'DEUDA_CASH',
         detalles: {
           tipoPago: rec.tipoPago?.nombre,
+          tipoReconciliacion: rec.tipoReconciliacion,
           venta: rec.venta
         }
       })

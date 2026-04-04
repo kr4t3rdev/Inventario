@@ -1663,6 +1663,7 @@ export interface CreatePrestamoCashRequest {
   tasaCambioAlCrear?: number
   fechaVencimiento?: string
   observaciones?: string
+  cuentaBancariaId: string
 }
 
 export interface UpdatePrestamoCashRequest {
@@ -1688,6 +1689,7 @@ export interface CreateDeudaCashRequest {
   fechaVencimiento?: string
   observaciones?: string
   comprobanteUrl?: string
+  cuentaBancariaId: string
 }
 
 export interface UpdateDeudaCashRequest {

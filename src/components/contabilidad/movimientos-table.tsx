@@ -42,6 +42,8 @@ const typeColors: Record<string, string> = {
   'transferencia_salida': 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 border-orange-200/80',
   'ajuste_ingreso': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 border-emerald-200/80',
   'ajuste_egreso': 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300 border-rose-200/80',
+  'prestamo_cash': 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300 border-violet-200/80',
+  'deuda_cash': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-200/80',
 }
 
 export function MovimientosTable({
@@ -110,11 +112,13 @@ export function MovimientosTable({
       case 'servicio':
       case 'ajuste_ingreso':
       case 'transferencia_entrada':
+      case 'prestamo_cash':
         return <TrendingUp className="h-3.5 w-3.5" />
       case 'gasto':
       case 'salario':
       case 'ajuste_egreso':
       case 'transferencia_salida':
+      case 'deuda_cash':
         return <TrendingDown className="h-3.5 w-3.5" />
       default:
         return <ArrowUpDown className="h-3.5 w-3.5" />
@@ -130,7 +134,9 @@ export function MovimientosTable({
       'transferencia_entrada': 'Transferencia Entrada',
       'transferencia_salida': 'Transferencia Salida',
       'ajuste_ingreso': 'Ajuste Ingreso',
-      'ajuste_egreso': 'Ajuste Egreso'
+      'ajuste_egreso': 'Ajuste Egreso',
+      'prestamo_cash': 'Préstamo Cash',
+      'deuda_cash': 'Deuda Cash',
     }
     return labels[tipo] || tipo
   }
@@ -254,6 +260,8 @@ export function MovimientosTable({
                         <SelectItem value="ajuste_egreso">Ajustes de Egreso</SelectItem>
                         <SelectItem value="transferencia_entrada">Transferencias Entrada</SelectItem>
                         <SelectItem value="transferencia_salida">Transferencias Salida</SelectItem>
+                        <SelectItem value="prestamo_cash">Préstamos Cash</SelectItem>
+                        <SelectItem value="deuda_cash">Deudas Cash</SelectItem>
                       </SelectContent>
                     </Select>
 
@@ -416,7 +424,8 @@ export function MovimientosTable({
                               movimiento.tipo.includes('ingreso') ||
                                 movimiento.tipo === 'venta' ||
                                 movimiento.tipo === 'servicio' ||
-                                movimiento.tipo === 'transferencia_entrada'
+                                movimiento.tipo === 'transferencia_entrada' ||
+                                movimiento.tipo === 'prestamo_cash'
                                 ? 'text-green-600 dark:text-green-400'
                                 : 'text-red-600 dark:text-red-400'
                             )}>
