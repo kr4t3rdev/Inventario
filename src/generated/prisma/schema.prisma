@@ -46,6 +46,7 @@ model Vendor {
   compras         CompraProducto[]
   contratos       Contrato[]       @relation("ContratoVendor")
   cuentasPorPagar CuentaPorPagar[]
+  deudasCash      DeudaCash[]
   gastoCompras    GastoCompra[]
   productos       Producto[]
 }
@@ -101,6 +102,7 @@ model Cliente {
   logoUrl           String?
   contratos         Contrato[]        @relation("ContratoCliente")
   cuentasPorCobrar  CuentaPorCobrar[]
+  prestamosCash     PrestamoCash[]
   ofertas           Oferta[]
   ordenesReparacion OrdenReparacion[]
   Venta             Venta[]
@@ -275,7 +277,57 @@ model User {
   contratoVersiones    ContratoVersion[]
   notifications        Notification[]
   activityLogs         UserActivityLog[]
+  licencias            Licencia[]
+  licenciasAudit       LicenciaAudit[]      @relation("LicenciaAuditActor")
   sessions             UserSession[]
+}
+
+model Plan {
+  planId       String     @id @default(cuid())
+  nombre       String
+  descripcion  String?
+  precio       Decimal    @default(0)
+  duracionDias Int
+  maxUsuarios  Int        @default(1)
+  maxAlmacenes Int        @default(1)
+  maxProductos Int        @default(100)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  licencias    Licencia[]
+}
+
+model Licencia {
+  licenciaId String          @id @default(cuid())
+  clave      String          @unique
+  usuarioId  String
+  planId     String
+  activa     Boolean         @default(true)
+  inicio     DateTime        @default(now())
+  expiracion DateTime
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+  plan       Plan            @relation(fields: [planId], references: [planId], onDelete: Cascade)
+  usuario    User            @relation(fields: [usuarioId], references: [userId], onDelete: Cascade)
+  auditoria  LicenciaAudit[]
+
+  @@index([usuarioId])
+  @@index([planId])
+}
+
+model LicenciaAudit {
+  licenciaAuditId String   @id @default(cuid())
+  licenciaId      String
+  accion          String
+  realizadoPor    String?
+  ip              String?
+  userAgent       String?
+  detalles        String?
+  createdAt       DateTime @default(now())
+  licencia        Licencia @relation(fields: [licenciaId], references: [licenciaId], onDelete: Cascade)
+  actor           User?    @relation("LicenciaAuditActor", fields: [realizadoPor], references: [userId], onDelete: SetNull)
+
+  @@index([licenciaId])
+  @@index([realizadoPor])
 }
 
 model Notification {
@@ -624,7 +676,10 @@ model TipoPago {
 
 model ReconciliacionVenta {
   reconciliacionId            String         @id @default(cuid())
-  ventaId                     String
+  ventaId                     String?
+  deudaCashId                 String?
+  prestamoCashId              String?
+  tipoReconciliacion          String?
   cuentaId                    String
   tipoPagoId                  String
   monto                       Decimal
@@ -639,8 +694,10 @@ model ReconciliacionVenta {
   createdAt                   DateTime       @default(now())
   updatedAt                   DateTime       @updatedAt
   cuentaBancaria              CuentaBancaria @relation(fields: [cuentaId], references: [cuentaId])
+  deudaCash                   DeudaCash?     @relation(fields: [deudaCashId], references: [id], onDelete: SetNull)
+  prestamoCash                PrestamoCash?  @relation(fields: [prestamoCashId], references: [id], onDelete: SetNull)
   tipoPago                    TipoPago       @relation(fields: [tipoPagoId], references: [tipoId])
-  venta                       Venta          @relation(fields: [ventaId], references: [ventaId])
+  venta                       Venta?         @relation(fields: [ventaId], references: [ventaId])
 }
 
 model ReconciliacionServicio {
@@ -1017,6 +1074,7 @@ model CuentaPorCobrar {
   clienteId        String
   montoDeuda       Decimal
   montoPagado      Decimal               @default(0)
+  tipoCuenta       String?
   idTransferencia  String?
   estado           EstadoCuentaPorCobrar @default(PENDIENTE)
   fechaVencimiento DateTime?
@@ -1030,6 +1088,7 @@ model CuentaPorPagar {
   cuentaPorPagarId String                @id @default(cuid())
   numeroFactura    String
   tipo             TipoCuentaPorPagar
+  tipoDeuda        String?
   gastoCompraId    String?               @unique
   gastosDEId       String?               @unique
   proveedorId      String?
@@ -1053,6 +1112,55 @@ model CuentaPorPagar {
   @@index([estado])
   @@index([tipo])
   @@index([numeroFactura])
+}
+
+model DeudaCash {
+  id               String                @id @default(cuid())
+  idNumerico       Int                   @default(autoincrement())
+  proveedorId      String
+  cuentaPorPagarId String                @unique
+  montoCapital     Decimal
+  moneda           String                @default("CUP")
+  tasaInteres      Decimal?
+  fechaVencimiento DateTime?
+  observaciones    String?
+  comprobanteUrl   String?
+  cuentaBancariaId String
+  createdById      String
+  estado           String                @default("ACTIVO")
+  deletedAt        DateTime?
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  proveedor        Vendor                @relation(fields: [proveedorId], references: [vendorId])
+  reconciliaciones ReconciliacionVenta[]
+
+  @@index([proveedorId])
+  @@index([estado])
+}
+
+model PrestamoCash {
+  id                String                @id @default(cuid())
+  idNumerico        Int                   @default(autoincrement())
+  clienteId         String
+  cuentaPorCobrarId String                @unique
+  montoCapital      Decimal
+  moneda            String                @default("CUP")
+  tasaInteres       Decimal?
+  tasaCambioAlCrear Decimal?
+  fechaOtorgamiento DateTime              @default(now())
+  fechaVencimiento  DateTime?
+  observaciones     String?
+  cuentaBancariaId  String
+  createdById       String
+  estado            String                @default("ACTIVO")
+  deletedAt         DateTime?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  cliente           Cliente               @relation(fields: [clienteId], references: [clienteId])
+  reconciliaciones  ReconciliacionVenta[]
+
+  @@index([clienteId])
+  @@index([estado])
 }
 
 model PagoCuentaPorPagar {

@@ -319,6 +319,42 @@ exports.Prisma.UserScalarFieldEnum = {
   lastFailedLogin: 'lastFailedLogin'
 };
 
+exports.Prisma.PlanScalarFieldEnum = {
+  planId: 'planId',
+  nombre: 'nombre',
+  descripcion: 'descripcion',
+  precio: 'precio',
+  duracionDias: 'duracionDias',
+  maxUsuarios: 'maxUsuarios',
+  maxAlmacenes: 'maxAlmacenes',
+  maxProductos: 'maxProductos',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.LicenciaScalarFieldEnum = {
+  licenciaId: 'licenciaId',
+  clave: 'clave',
+  usuarioId: 'usuarioId',
+  planId: 'planId',
+  activa: 'activa',
+  inicio: 'inicio',
+  expiracion: 'expiracion',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.LicenciaAuditScalarFieldEnum = {
+  licenciaAuditId: 'licenciaAuditId',
+  licenciaId: 'licenciaId',
+  accion: 'accion',
+  realizadoPor: 'realizadoPor',
+  ip: 'ip',
+  userAgent: 'userAgent',
+  detalles: 'detalles',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.NotificationScalarFieldEnum = {
   id: 'id',
   title: 'title',
@@ -607,6 +643,9 @@ exports.Prisma.TipoPagoScalarFieldEnum = {
 exports.Prisma.ReconciliacionVentaScalarFieldEnum = {
   reconciliacionId: 'reconciliacionId',
   ventaId: 'ventaId',
+  deudaCashId: 'deudaCashId',
+  prestamoCashId: 'prestamoCashId',
+  tipoReconciliacion: 'tipoReconciliacion',
   cuentaId: 'cuentaId',
   tipoPagoId: 'tipoPagoId',
   monto: 'monto',
@@ -946,6 +985,7 @@ exports.Prisma.CuentaPorCobrarScalarFieldEnum = {
   clienteId: 'clienteId',
   montoDeuda: 'montoDeuda',
   montoPagado: 'montoPagado',
+  tipoCuenta: 'tipoCuenta',
   idTransferencia: 'idTransferencia',
   estado: 'estado',
   fechaVencimiento: 'fechaVencimiento',
@@ -957,6 +997,7 @@ exports.Prisma.CuentaPorPagarScalarFieldEnum = {
   cuentaPorPagarId: 'cuentaPorPagarId',
   numeroFactura: 'numeroFactura',
   tipo: 'tipo',
+  tipoDeuda: 'tipoDeuda',
   gastoCompraId: 'gastoCompraId',
   gastosDEId: 'gastosDEId',
   proveedorId: 'proveedorId',
@@ -968,6 +1009,45 @@ exports.Prisma.CuentaPorPagarScalarFieldEnum = {
   fechaEmision: 'fechaEmision',
   fechaVencimiento: 'fechaVencimiento',
   estado: 'estado',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.DeudaCashScalarFieldEnum = {
+  id: 'id',
+  idNumerico: 'idNumerico',
+  proveedorId: 'proveedorId',
+  cuentaPorPagarId: 'cuentaPorPagarId',
+  montoCapital: 'montoCapital',
+  moneda: 'moneda',
+  tasaInteres: 'tasaInteres',
+  fechaVencimiento: 'fechaVencimiento',
+  observaciones: 'observaciones',
+  comprobanteUrl: 'comprobanteUrl',
+  cuentaBancariaId: 'cuentaBancariaId',
+  createdById: 'createdById',
+  estado: 'estado',
+  deletedAt: 'deletedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.PrestamoCashScalarFieldEnum = {
+  id: 'id',
+  idNumerico: 'idNumerico',
+  clienteId: 'clienteId',
+  cuentaPorCobrarId: 'cuentaPorCobrarId',
+  montoCapital: 'montoCapital',
+  moneda: 'moneda',
+  tasaInteres: 'tasaInteres',
+  tasaCambioAlCrear: 'tasaCambioAlCrear',
+  fechaOtorgamiento: 'fechaOtorgamiento',
+  fechaVencimiento: 'fechaVencimiento',
+  observaciones: 'observaciones',
+  cuentaBancariaId: 'cuentaBancariaId',
+  createdById: 'createdById',
+  estado: 'estado',
+  deletedAt: 'deletedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -1217,6 +1297,9 @@ exports.Prisma.ModelName = {
   Merma: 'Merma',
   Transferencia: 'Transferencia',
   User: 'User',
+  Plan: 'Plan',
+  Licencia: 'Licencia',
+  LicenciaAudit: 'LicenciaAudit',
   Notification: 'Notification',
   UserActivityLog: 'UserActivityLog',
   UserSession: 'UserSession',
@@ -1260,6 +1343,8 @@ exports.Prisma.ModelName = {
   OfertaItem: 'OfertaItem',
   CuentaPorCobrar: 'CuentaPorCobrar',
   CuentaPorPagar: 'CuentaPorPagar',
+  DeudaCash: 'DeudaCash',
+  PrestamoCash: 'PrestamoCash',
   PagoCuentaPorPagar: 'PagoCuentaPorPagar',
   EquipoReparacion: 'EquipoReparacion',
   PiezaReparacion: 'PiezaReparacion',

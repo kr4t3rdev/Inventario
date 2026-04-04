@@ -1,5 +1,5 @@
 import { calculateEan13CheckDigit } from '@/lib/ean13-utils'
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '@/generated/prisma'
 
 /**
  * @description Normaliza un número (1-99) a código de vendor de 2 dígitos
