@@ -84062,7 +84062,7 @@ export namespace Prisma {
     fechaVencimiento: Date | null
     observaciones: string | null
     comprobanteUrl: string | null
-    cuentaBancariaId: string
+    cuentaBancariaId: string | null
     createdById: string
     estado: string
     deletedAt: Date | null
@@ -84200,7 +84200,7 @@ export namespace Prisma {
       fechaVencimiento: Date | null
       observaciones: string | null
       comprobanteUrl: string | null
-      cuentaBancariaId: string
+      cuentaBancariaId: string | null
       createdById: string
       estado: string
       deletedAt: Date | null
@@ -85346,7 +85346,7 @@ export namespace Prisma {
     fechaOtorgamiento: Date
     fechaVencimiento: Date | null
     observaciones: string | null
-    cuentaBancariaId: string
+    cuentaBancariaId: string | null
     createdById: string
     estado: string
     deletedAt: Date | null
@@ -85489,7 +85489,7 @@ export namespace Prisma {
       fechaOtorgamiento: Date
       fechaVencimiento: Date | null
       observaciones: string | null
-      cuentaBancariaId: string
+      cuentaBancariaId: string | null
       createdById: string
       estado: string
       deletedAt: Date | null
@@ -104454,7 +104454,7 @@ export namespace Prisma {
     fechaVencimiento?: DateTimeNullableFilter<"DeudaCash"> | Date | string | null
     observaciones?: StringNullableFilter<"DeudaCash"> | string | null
     comprobanteUrl?: StringNullableFilter<"DeudaCash"> | string | null
-    cuentaBancariaId?: StringFilter<"DeudaCash"> | string
+    cuentaBancariaId?: StringNullableFilter<"DeudaCash"> | string | null
     createdById?: StringFilter<"DeudaCash"> | string
     estado?: StringFilter<"DeudaCash"> | string
     deletedAt?: DateTimeNullableFilter<"DeudaCash"> | Date | string | null
@@ -104475,7 +104475,7 @@ export namespace Prisma {
     fechaVencimiento?: SortOrderInput | SortOrder
     observaciones?: SortOrderInput | SortOrder
     comprobanteUrl?: SortOrderInput | SortOrder
-    cuentaBancariaId?: SortOrder
+    cuentaBancariaId?: SortOrderInput | SortOrder
     createdById?: SortOrder
     estado?: SortOrder
     deletedAt?: SortOrderInput | SortOrder
@@ -104499,7 +104499,7 @@ export namespace Prisma {
     fechaVencimiento?: DateTimeNullableFilter<"DeudaCash"> | Date | string | null
     observaciones?: StringNullableFilter<"DeudaCash"> | string | null
     comprobanteUrl?: StringNullableFilter<"DeudaCash"> | string | null
-    cuentaBancariaId?: StringFilter<"DeudaCash"> | string
+    cuentaBancariaId?: StringNullableFilter<"DeudaCash"> | string | null
     createdById?: StringFilter<"DeudaCash"> | string
     estado?: StringFilter<"DeudaCash"> | string
     deletedAt?: DateTimeNullableFilter<"DeudaCash"> | Date | string | null
@@ -104520,7 +104520,7 @@ export namespace Prisma {
     fechaVencimiento?: SortOrderInput | SortOrder
     observaciones?: SortOrderInput | SortOrder
     comprobanteUrl?: SortOrderInput | SortOrder
-    cuentaBancariaId?: SortOrder
+    cuentaBancariaId?: SortOrderInput | SortOrder
     createdById?: SortOrder
     estado?: SortOrder
     deletedAt?: SortOrderInput | SortOrder
@@ -104547,7 +104547,7 @@ export namespace Prisma {
     fechaVencimiento?: DateTimeNullableWithAggregatesFilter<"DeudaCash"> | Date | string | null
     observaciones?: StringNullableWithAggregatesFilter<"DeudaCash"> | string | null
     comprobanteUrl?: StringNullableWithAggregatesFilter<"DeudaCash"> | string | null
-    cuentaBancariaId?: StringWithAggregatesFilter<"DeudaCash"> | string
+    cuentaBancariaId?: StringNullableWithAggregatesFilter<"DeudaCash"> | string | null
     createdById?: StringWithAggregatesFilter<"DeudaCash"> | string
     estado?: StringWithAggregatesFilter<"DeudaCash"> | string
     deletedAt?: DateTimeNullableWithAggregatesFilter<"DeudaCash"> | Date | string | null
@@ -104570,7 +104570,7 @@ export namespace Prisma {
     fechaOtorgamiento?: DateTimeFilter<"PrestamoCash"> | Date | string
     fechaVencimiento?: DateTimeNullableFilter<"PrestamoCash"> | Date | string | null
     observaciones?: StringNullableFilter<"PrestamoCash"> | string | null
-    cuentaBancariaId?: StringFilter<"PrestamoCash"> | string
+    cuentaBancariaId?: StringNullableFilter<"PrestamoCash"> | string | null
     createdById?: StringFilter<"PrestamoCash"> | string
     estado?: StringFilter<"PrestamoCash"> | string
     deletedAt?: DateTimeNullableFilter<"PrestamoCash"> | Date | string | null
@@ -104592,7 +104592,7 @@ export namespace Prisma {
     fechaOtorgamiento?: SortOrder
     fechaVencimiento?: SortOrderInput | SortOrder
     observaciones?: SortOrderInput | SortOrder
-    cuentaBancariaId?: SortOrder
+    cuentaBancariaId?: SortOrderInput | SortOrder
     createdById?: SortOrder
     estado?: SortOrder
     deletedAt?: SortOrderInput | SortOrder
@@ -104617,7 +104617,7 @@ export namespace Prisma {
     fechaOtorgamiento?: DateTimeFilter<"PrestamoCash"> | Date | string
     fechaVencimiento?: DateTimeNullableFilter<"PrestamoCash"> | Date | string | null
     observaciones?: StringNullableFilter<"PrestamoCash"> | string | null
-    cuentaBancariaId?: StringFilter<"PrestamoCash"> | string
+    cuentaBancariaId?: StringNullableFilter<"PrestamoCash"> | string | null
     createdById?: StringFilter<"PrestamoCash"> | string
     estado?: StringFilter<"PrestamoCash"> | string
     deletedAt?: DateTimeNullableFilter<"PrestamoCash"> | Date | string | null
@@ -104639,7 +104639,7 @@ export namespace Prisma {
     fechaOtorgamiento?: SortOrder
     fechaVencimiento?: SortOrderInput | SortOrder
     observaciones?: SortOrderInput | SortOrder
-    cuentaBancariaId?: SortOrder
+    cuentaBancariaId?: SortOrderInput | SortOrder
     createdById?: SortOrder
     estado?: SortOrder
     deletedAt?: SortOrderInput | SortOrder
@@ -104667,7 +104667,7 @@ export namespace Prisma {
     fechaOtorgamiento?: DateTimeWithAggregatesFilter<"PrestamoCash"> | Date | string
     fechaVencimiento?: DateTimeNullableWithAggregatesFilter<"PrestamoCash"> | Date | string | null
     observaciones?: StringNullableWithAggregatesFilter<"PrestamoCash"> | string | null
-    cuentaBancariaId?: StringWithAggregatesFilter<"PrestamoCash"> | string
+    cuentaBancariaId?: StringNullableWithAggregatesFilter<"PrestamoCash"> | string | null
     createdById?: StringWithAggregatesFilter<"PrestamoCash"> | string
     estado?: StringWithAggregatesFilter<"PrestamoCash"> | string
     deletedAt?: DateTimeNullableWithAggregatesFilter<"PrestamoCash"> | Date | string | null
@@ -111973,7 +111973,7 @@ export namespace Prisma {
     fechaVencimiento?: Date | string | null
     observaciones?: string | null
     comprobanteUrl?: string | null
-    cuentaBancariaId: string
+    cuentaBancariaId?: string | null
     createdById: string
     estado?: string
     deletedAt?: Date | string | null
@@ -111994,7 +111994,7 @@ export namespace Prisma {
     fechaVencimiento?: Date | string | null
     observaciones?: string | null
     comprobanteUrl?: string | null
-    cuentaBancariaId: string
+    cuentaBancariaId?: string | null
     createdById: string
     estado?: string
     deletedAt?: Date | string | null
@@ -112013,7 +112013,7 @@ export namespace Prisma {
     fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     comprobanteUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    cuentaBancariaId?: StringFieldUpdateOperationsInput | string
+    cuentaBancariaId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -112034,7 +112034,7 @@ export namespace Prisma {
     fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     comprobanteUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    cuentaBancariaId?: StringFieldUpdateOperationsInput | string
+    cuentaBancariaId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -112054,7 +112054,7 @@ export namespace Prisma {
     fechaVencimiento?: Date | string | null
     observaciones?: string | null
     comprobanteUrl?: string | null
-    cuentaBancariaId: string
+    cuentaBancariaId?: string | null
     createdById: string
     estado?: string
     deletedAt?: Date | string | null
@@ -112072,7 +112072,7 @@ export namespace Prisma {
     fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     comprobanteUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    cuentaBancariaId?: StringFieldUpdateOperationsInput | string
+    cuentaBancariaId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -112091,7 +112091,7 @@ export namespace Prisma {
     fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     comprobanteUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    cuentaBancariaId?: StringFieldUpdateOperationsInput | string
+    cuentaBancariaId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -112110,7 +112110,7 @@ export namespace Prisma {
     fechaOtorgamiento?: Date | string
     fechaVencimiento?: Date | string | null
     observaciones?: string | null
-    cuentaBancariaId: string
+    cuentaBancariaId?: string | null
     createdById: string
     estado?: string
     deletedAt?: Date | string | null
@@ -112132,7 +112132,7 @@ export namespace Prisma {
     fechaOtorgamiento?: Date | string
     fechaVencimiento?: Date | string | null
     observaciones?: string | null
-    cuentaBancariaId: string
+    cuentaBancariaId?: string | null
     createdById: string
     estado?: string
     deletedAt?: Date | string | null
@@ -112152,7 +112152,7 @@ export namespace Prisma {
     fechaOtorgamiento?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
-    cuentaBancariaId?: StringFieldUpdateOperationsInput | string
+    cuentaBancariaId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -112174,7 +112174,7 @@ export namespace Prisma {
     fechaOtorgamiento?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
-    cuentaBancariaId?: StringFieldUpdateOperationsInput | string
+    cuentaBancariaId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -112195,7 +112195,7 @@ export namespace Prisma {
     fechaOtorgamiento?: Date | string
     fechaVencimiento?: Date | string | null
     observaciones?: string | null
-    cuentaBancariaId: string
+    cuentaBancariaId?: string | null
     createdById: string
     estado?: string
     deletedAt?: Date | string | null
@@ -112214,7 +112214,7 @@ export namespace Prisma {
     fechaOtorgamiento?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
-    cuentaBancariaId?: StringFieldUpdateOperationsInput | string
+    cuentaBancariaId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -112234,7 +112234,7 @@ export namespace Prisma {
     fechaOtorgamiento?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
-    cuentaBancariaId?: StringFieldUpdateOperationsInput | string
+    cuentaBancariaId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -125328,7 +125328,7 @@ export namespace Prisma {
     fechaVencimiento?: Date | string | null
     observaciones?: string | null
     comprobanteUrl?: string | null
-    cuentaBancariaId: string
+    cuentaBancariaId?: string | null
     createdById: string
     estado?: string
     deletedAt?: Date | string | null
@@ -125347,7 +125347,7 @@ export namespace Prisma {
     fechaVencimiento?: Date | string | null
     observaciones?: string | null
     comprobanteUrl?: string | null
-    cuentaBancariaId: string
+    cuentaBancariaId?: string | null
     createdById: string
     estado?: string
     deletedAt?: Date | string | null
@@ -125621,7 +125621,7 @@ export namespace Prisma {
     fechaVencimiento?: DateTimeNullableFilter<"DeudaCash"> | Date | string | null
     observaciones?: StringNullableFilter<"DeudaCash"> | string | null
     comprobanteUrl?: StringNullableFilter<"DeudaCash"> | string | null
-    cuentaBancariaId?: StringFilter<"DeudaCash"> | string
+    cuentaBancariaId?: StringNullableFilter<"DeudaCash"> | string | null
     createdById?: StringFilter<"DeudaCash"> | string
     estado?: StringFilter<"DeudaCash"> | string
     deletedAt?: DateTimeNullableFilter<"DeudaCash"> | Date | string | null
@@ -126158,7 +126158,7 @@ export namespace Prisma {
     fechaOtorgamiento?: Date | string
     fechaVencimiento?: Date | string | null
     observaciones?: string | null
-    cuentaBancariaId: string
+    cuentaBancariaId?: string | null
     createdById: string
     estado?: string
     deletedAt?: Date | string | null
@@ -126178,7 +126178,7 @@ export namespace Prisma {
     fechaOtorgamiento?: Date | string
     fechaVencimiento?: Date | string | null
     observaciones?: string | null
-    cuentaBancariaId: string
+    cuentaBancariaId?: string | null
     createdById: string
     estado?: string
     deletedAt?: Date | string | null
@@ -126547,7 +126547,7 @@ export namespace Prisma {
     fechaOtorgamiento?: DateTimeFilter<"PrestamoCash"> | Date | string
     fechaVencimiento?: DateTimeNullableFilter<"PrestamoCash"> | Date | string | null
     observaciones?: StringNullableFilter<"PrestamoCash"> | string | null
-    cuentaBancariaId?: StringFilter<"PrestamoCash"> | string
+    cuentaBancariaId?: StringNullableFilter<"PrestamoCash"> | string | null
     createdById?: StringFilter<"PrestamoCash"> | string
     estado?: StringFilter<"PrestamoCash"> | string
     deletedAt?: DateTimeNullableFilter<"PrestamoCash"> | Date | string | null
@@ -135120,7 +135120,7 @@ export namespace Prisma {
     fechaVencimiento?: Date | string | null
     observaciones?: string | null
     comprobanteUrl?: string | null
-    cuentaBancariaId: string
+    cuentaBancariaId?: string | null
     createdById: string
     estado?: string
     deletedAt?: Date | string | null
@@ -135140,7 +135140,7 @@ export namespace Prisma {
     fechaVencimiento?: Date | string | null
     observaciones?: string | null
     comprobanteUrl?: string | null
-    cuentaBancariaId: string
+    cuentaBancariaId?: string | null
     createdById: string
     estado?: string
     deletedAt?: Date | string | null
@@ -135164,7 +135164,7 @@ export namespace Prisma {
     fechaOtorgamiento?: Date | string
     fechaVencimiento?: Date | string | null
     observaciones?: string | null
-    cuentaBancariaId: string
+    cuentaBancariaId?: string | null
     createdById: string
     estado?: string
     deletedAt?: Date | string | null
@@ -135185,7 +135185,7 @@ export namespace Prisma {
     fechaOtorgamiento?: Date | string
     fechaVencimiento?: Date | string | null
     observaciones?: string | null
-    cuentaBancariaId: string
+    cuentaBancariaId?: string | null
     createdById: string
     estado?: string
     deletedAt?: Date | string | null
@@ -135350,7 +135350,7 @@ export namespace Prisma {
     fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     comprobanteUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    cuentaBancariaId?: StringFieldUpdateOperationsInput | string
+    cuentaBancariaId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -135370,7 +135370,7 @@ export namespace Prisma {
     fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     comprobanteUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    cuentaBancariaId?: StringFieldUpdateOperationsInput | string
+    cuentaBancariaId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -135400,7 +135400,7 @@ export namespace Prisma {
     fechaOtorgamiento?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
-    cuentaBancariaId?: StringFieldUpdateOperationsInput | string
+    cuentaBancariaId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -135421,7 +135421,7 @@ export namespace Prisma {
     fechaOtorgamiento?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
-    cuentaBancariaId?: StringFieldUpdateOperationsInput | string
+    cuentaBancariaId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -142696,7 +142696,7 @@ export namespace Prisma {
     fechaVencimiento?: Date | string | null
     observaciones?: string | null
     comprobanteUrl?: string | null
-    cuentaBancariaId: string
+    cuentaBancariaId?: string | null
     createdById: string
     estado?: string
     deletedAt?: Date | string | null
@@ -142939,7 +142939,7 @@ export namespace Prisma {
     fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     comprobanteUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    cuentaBancariaId?: StringFieldUpdateOperationsInput | string
+    cuentaBancariaId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -142958,7 +142958,7 @@ export namespace Prisma {
     fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     comprobanteUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    cuentaBancariaId?: StringFieldUpdateOperationsInput | string
+    cuentaBancariaId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -142977,7 +142977,7 @@ export namespace Prisma {
     fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     comprobanteUrl?: NullableStringFieldUpdateOperationsInput | string | null
-    cuentaBancariaId?: StringFieldUpdateOperationsInput | string
+    cuentaBancariaId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -143198,7 +143198,7 @@ export namespace Prisma {
     fechaOtorgamiento?: Date | string
     fechaVencimiento?: Date | string | null
     observaciones?: string | null
-    cuentaBancariaId: string
+    cuentaBancariaId?: string | null
     createdById: string
     estado?: string
     deletedAt?: Date | string | null
@@ -143433,7 +143433,7 @@ export namespace Prisma {
     fechaOtorgamiento?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
-    cuentaBancariaId?: StringFieldUpdateOperationsInput | string
+    cuentaBancariaId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -143453,7 +143453,7 @@ export namespace Prisma {
     fechaOtorgamiento?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
-    cuentaBancariaId?: StringFieldUpdateOperationsInput | string
+    cuentaBancariaId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -143473,7 +143473,7 @@ export namespace Prisma {
     fechaOtorgamiento?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
-    cuentaBancariaId?: StringFieldUpdateOperationsInput | string
+    cuentaBancariaId?: NullableStringFieldUpdateOperationsInput | string | null
     createdById?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null

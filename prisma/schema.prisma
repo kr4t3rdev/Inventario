@@ -1125,7 +1125,7 @@ model DeudaCash {
   fechaVencimiento DateTime?
   observaciones    String?
   comprobanteUrl   String?
-  cuentaBancariaId String
+  cuentaBancariaId String?
   createdById      String
   estado           String               @default("ACTIVO")
   deletedAt        DateTime?
@@ -1150,7 +1150,7 @@ model PrestamoCash {
   fechaOtorgamiento DateTime            @default(now())
   fechaVencimiento DateTime?
   observaciones    String?
-  cuentaBancariaId String
+  cuentaBancariaId String?
   createdById      String
   estado           String               @default("ACTIVO")
   deletedAt        DateTime?
