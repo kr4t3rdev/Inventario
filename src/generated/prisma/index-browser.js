@@ -1164,6 +1164,67 @@ exports.Prisma.ConfiguracionSistemaScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.RecetaScalarFieldEnum = {
+  recetaId: 'recetaId',
+  nombre: 'nombre',
+  rendimiento: 'rendimiento',
+  productoId: 'productoId',
+  instrucciones: 'instrucciones',
+  tiempoPrep: 'tiempoPrep',
+  costoUnitario: 'costoUnitario',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.RecetaIngredienteScalarFieldEnum = {
+  id: 'id',
+  recetaId: 'recetaId',
+  productoId: 'productoId',
+  cantidad: 'cantidad',
+  desperdicio: 'desperdicio',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.OrdenProduccionScalarFieldEnum = {
+  ordenProduccionId: 'ordenProduccionId',
+  recetaId: 'recetaId',
+  cantidad: 'cantidad',
+  estado: 'estado',
+  costoMateriales: 'costoMateriales',
+  observaciones: 'observaciones',
+  fechaProduccion: 'fechaProduccion',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.OrdenProduccionHistorialScalarFieldEnum = {
+  id: 'id',
+  ordenProduccionId: 'ordenProduccionId',
+  estadoAnterior: 'estadoAnterior',
+  estadoNuevo: 'estadoNuevo',
+  observaciones: 'observaciones',
+  usuarioId: 'usuarioId',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.ValeSalidaScalarFieldEnum = {
+  valeSalidaId: 'valeSalidaId',
+  concepto: 'concepto',
+  estado: 'estado',
+  observaciones: 'observaciones',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.ValeSalidaItemScalarFieldEnum = {
+  valeSalidaItemId: 'valeSalidaItemId',
+  valeSalidaId: 'valeSalidaId',
+  productoId: 'productoId',
+  cantidad: 'cantidad',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1281,6 +1342,13 @@ exports.ComplejidadReparacion = exports.$Enums.ComplejidadReparacion = {
   GRANDE: 'GRANDE'
 };
 
+exports.EstadoProduccion = exports.$Enums.EstadoProduccion = {
+  PENDIENTE: 'PENDIENTE',
+  EN_PROCESO: 'EN_PROCESO',
+  COMPLETADA: 'COMPLETADA',
+  CANCELADA: 'CANCELADA'
+};
+
 exports.Prisma.ModelName = {
   Categoria: 'Categoria',
   Unidad: 'Unidad',
@@ -1353,7 +1421,13 @@ exports.Prisma.ModelName = {
   OrdenReparacionItem: 'OrdenReparacionItem',
   OrdenReparacionMaterial: 'OrdenReparacionMaterial',
   DefectacionCatalogo: 'DefectacionCatalogo',
-  ConfiguracionSistema: 'ConfiguracionSistema'
+  ConfiguracionSistema: 'ConfiguracionSistema',
+  Receta: 'Receta',
+  RecetaIngrediente: 'RecetaIngrediente',
+  OrdenProduccion: 'OrdenProduccion',
+  OrdenProduccionHistorial: 'OrdenProduccionHistorial',
+  ValeSalida: 'ValeSalida',
+  ValeSalidaItem: 'ValeSalidaItem'
 };
 
 /**

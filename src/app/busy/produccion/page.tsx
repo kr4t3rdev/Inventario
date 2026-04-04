@@ -41,7 +41,8 @@ import {
   useCompletarOrdenProduccionMutation,
   useCancelarOrdenProduccionMutation,
   useCreateValeSalidaMutation,
-  useDeleteRecetaProduccionMutation
+  useDeleteRecetaProduccionMutation,
+  useUpdateRecetaProduccionMutation
 } from '@/lib/redux/services/produccionApi'
 import { useGetProductosQuery } from '@/lib/redux/services/productosApi'
 import { useGetGastosDEQuery } from '@/lib/redux/services/gastosDEApi'
@@ -62,6 +63,13 @@ export default function ProduccionPage() {
   const [dialogOrdenOpen, setDialogOrdenOpen] = useState(false)
   const [dialogValeOpen, setDialogValeOpen] = useState(false)
   const [confirmacion, setConfirmacion] = useState<{ tipo: 'aprobar' | 'completar' | 'cancelar'; ordenId: string; recetaNombre: string; cantidad: number } | null>(null)
+  const [recetaVer, setRecetaVer] = useState<any | null>(null)
+  const [recetaEliminar, setRecetaEliminar] = useState<{ recetaId: string; nombre: string } | null>(null)
+  const [recetaEdit, setRecetaEdit] = useState<any | null>(null)
+  const [editNombre, setEditNombre] = useState('')
+  const [editRendimiento, setEditRendimiento] = useState(1)
+  const [editProductoId, setEditProductoId] = useState('')
+  const [editItems, setEditItems] = useState<Array<{ productoId: string; cantidad: number; desperdicio: number }>>([])
 
   // Data
   const { data: recetasTyped, isLoading: loadingRecetas } = useGetRecetasProduccionQuery(searchRecetas ? { search: searchRecetas } : undefined)
@@ -80,6 +88,7 @@ export default function ProduccionPage() {
   const [cancelarOrden] = useCancelarOrdenProduccionMutation()
   const [createVale] = useCreateValeSalidaMutation()
   const [deleteReceta] = useDeleteRecetaProduccionMutation()
+  const [updateReceta] = useUpdateRecetaProduccionMutation()
 
   // Form states
   const [nombreReceta, setNombreReceta] = useState('')
@@ -186,6 +195,27 @@ export default function ProduccionPage() {
       await cancelarOrden({ ordenProduccionId: ordenId, observaciones: 'Cancelado por usuario' }).unwrap()
     } catch (error) {
       console.error('Error al cancelar orden:', error)
+    }
+  }
+
+  const handleGuardarEdicion = async () => {
+    if (!editNombre || !recetaEdit) return
+    try {
+      await updateReceta({
+        recetaId: recetaEdit.recetaId,
+        payload: {
+          nombre: editNombre,
+          rendimiento: editRendimiento,
+          productoId: editProductoId || undefined,
+        },
+      }).unwrap()
+      await setIngredientes({
+        recetaId: recetaEdit.recetaId,
+        ingredientes: editItems,
+      }).unwrap()
+      setRecetaEdit(null)
+    } catch (error) {
+      console.error('Error al guardar receta:', error)
     }
   }
 
@@ -386,16 +416,30 @@ export default function ProduccionPage() {
                           <TableCell>{format(new Date(receta.createdAt), 'dd/MM/yyyy')}</TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
-                              <Button variant="ghost" size="icon">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setRecetaVer(receta)}
+                              >
                                 <Eye className="h-4 w-4" />
                               </Button>
-                              <Button variant="ghost" size="icon">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setRecetaEdit(receta)
+                                  setEditNombre(receta.nombre)
+                                  setEditRendimiento(receta.rendimiento)
+                                  setEditProductoId(receta.producto?.id || '')
+                                  setEditItems(receta.ingredientes?.map((i: any) => ({ productoId: i.productoId, cantidad: i.cantidad, desperdicio: i.desperdicio ?? 0 })) || [])
+                                }}
+                              >
                                 <Edit className="h-4 w-4" />
                               </Button>
                               <Button 
                                 variant="ghost" 
                                 size="icon"
-                                onClick={() => deleteReceta(receta.recetaId)}
+                                onClick={() => setRecetaEliminar({ recetaId: receta.recetaId, nombre: receta.nombre })}
                               >
                                 <Trash2 className="h-4 w-4" />
                               </Button>
@@ -739,6 +783,212 @@ export default function ProduccionPage() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Dialog: Ver Receta */}
+      <Dialog open={recetaVer !== null} onOpenChange={(open) => { if (!open) setRecetaVer(null) }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{recetaVer?.nombre}</DialogTitle>
+            <DialogDescription>Detalle completo de la receta de producción</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div><span className="font-medium">Rendimiento:</span> {recetaVer?.rendimiento} unidad(es)</div>
+              <div><span className="font-medium">Producto asociado:</span> {recetaVer?.producto?.nombre || '—'}</div>
+              <div><span className="font-medium">Instrucciones:</span> {recetaVer?.instrucciones || 'No especificado'}</div>
+              <div><span className="font-medium">Tiempo de prep.:</span> {recetaVer?.tiempoPrep ? `${recetaVer.tiempoPrep} min` : 'No especificado'}</div>
+            </div>
+            <div>
+              <p className="text-sm font-medium mb-2">Ingredientes</p>
+              {recetaVer?.ingredientes?.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Sin ingredientes definidos</p>
+              ) : (
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Producto</TableHead>
+                        <TableHead>Cantidad</TableHead>
+                        <TableHead>Desperdicio</TableHead>
+                        <TableHead className="text-right">Costo estimado</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {recetaVer?.ingredientes?.map((ing: any) => (
+                        <TableRow key={ing.productoId}>
+                          <TableCell>{ing.producto?.nombre}</TableCell>
+                          <TableCell>{ing.cantidad}</TableCell>
+                          <TableCell>{((ing.desperdicio ?? 0) * 100).toFixed(0)}%</TableCell>
+                          <TableCell className="text-right">
+                            {formatCurrency((ing.producto?.precioCosto ?? 0) * ing.cantidad * (1 + (ing.desperdicio ?? 0)))}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </div>
+            <div className="flex justify-between items-center pt-2 border-t text-sm">
+              <span className="font-medium">Costo unitario total</span>
+              <span className="font-bold">{formatCurrency(recetaVer?.costoUnitario || 0)}</span>
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <Button variant="outline" onClick={() => setRecetaVer(null)}>Cerrar</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: Editar Receta */}
+      <Dialog open={recetaEdit !== null} onOpenChange={(open) => { if (!open) setRecetaEdit(null) }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Editar Receta</DialogTitle>
+            <DialogDescription>Modificá los metadatos y los ingredientes de la receta</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="editNombre">Nombre</Label>
+              <Input
+                id="editNombre"
+                value={editNombre}
+                onChange={(e) => setEditNombre(e.target.value)}
+                className={!editNombre ? 'border-destructive' : ''}
+              />
+              {!editNombre && <p className="text-xs text-destructive">El nombre es obligatorio</p>}
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="grid gap-2">
+                <Label htmlFor="editRendimiento">Rendimiento</Label>
+                <Input
+                  id="editRendimiento"
+                  type="number"
+                  min={1}
+                  value={editRendimiento}
+                  onChange={(e) => setEditRendimiento(parseInt(e.target.value) || 1)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label>Producto asociado</Label>
+                <Select value={editProductoId} onValueChange={setEditProductoId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sin producto" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {productosTyped?.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>{p.nombre}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid gap-2">
+              <Label>Ingredientes</Label>
+              <Select
+                onValueChange={(productoId) => {
+                  if (!editItems.find((i) => i.productoId === productoId)) {
+                    setEditItems([...editItems, { productoId, cantidad: 1, desperdicio: 0 }])
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Agregar ingrediente" />
+                </SelectTrigger>
+                <SelectContent>
+                  {productosTyped?.filter((p) => !editItems.find((i) => i.productoId === p.id)).map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.nombre}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {editItems.length > 0 && (
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Producto</TableHead>
+                        <TableHead>Cantidad</TableHead>
+                        <TableHead>Desperdicio</TableHead>
+                        <TableHead className="text-right">Quitar</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {editItems.map((item) => {
+                        const prod = productosTyped?.find((p) => p.id === item.productoId)
+                        return (
+                          <TableRow key={item.productoId}>
+                            <TableCell>{prod?.nombre}</TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                min={0.01}
+                                step={0.01}
+                                value={item.cantidad}
+                                onChange={(e) => setEditItems(editItems.map((i) => i.productoId === item.productoId ? { ...i, cantidad: parseFloat(e.target.value) || 1 } : i))}
+                                className="w-20"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                min={0}
+                                max={1}
+                                step={0.01}
+                                value={item.desperdicio}
+                                onChange={(e) => setEditItems(editItems.map((i) => i.productoId === item.productoId ? { ...i, desperdicio: parseFloat(e.target.value) || 0 } : i))}
+                                className="w-20"
+                              />
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setEditItems(editItems.filter((i) => i.productoId !== item.productoId))}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        )
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setRecetaEdit(null)}>Cancelar</Button>
+            <Button onClick={handleGuardarEdicion} disabled={!editNombre}>Guardar</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* AlertDialog: Confirmar eliminación de receta */}
+      <AlertDialog open={recetaEliminar !== null} onOpenChange={(open) => { if (!open) setRecetaEliminar(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Eliminar receta</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Eliminar la receta <strong>{recetaEliminar?.nombre}</strong>? Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setRecetaEliminar(null)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (recetaEliminar) {
+                  deleteReceta(recetaEliminar.recetaId)
+                  setRecetaEliminar(null)
+                }
+              }}
+            >
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* AlertDialog de confirmación para acciones de estado */}
       <AlertDialog open={confirmacion !== null} onOpenChange={(open) => { if (!open) setConfirmacion(null) }}>

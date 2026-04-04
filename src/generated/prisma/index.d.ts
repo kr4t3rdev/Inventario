@@ -374,6 +374,36 @@ export type DefectacionCatalogo = $Result.DefaultSelection<Prisma.$DefectacionCa
  * 
  */
 export type ConfiguracionSistema = $Result.DefaultSelection<Prisma.$ConfiguracionSistemaPayload>
+/**
+ * Model Receta
+ * 
+ */
+export type Receta = $Result.DefaultSelection<Prisma.$RecetaPayload>
+/**
+ * Model RecetaIngrediente
+ * 
+ */
+export type RecetaIngrediente = $Result.DefaultSelection<Prisma.$RecetaIngredientePayload>
+/**
+ * Model OrdenProduccion
+ * 
+ */
+export type OrdenProduccion = $Result.DefaultSelection<Prisma.$OrdenProduccionPayload>
+/**
+ * Model OrdenProduccionHistorial
+ * 
+ */
+export type OrdenProduccionHistorial = $Result.DefaultSelection<Prisma.$OrdenProduccionHistorialPayload>
+/**
+ * Model ValeSalida
+ * 
+ */
+export type ValeSalida = $Result.DefaultSelection<Prisma.$ValeSalidaPayload>
+/**
+ * Model ValeSalidaItem
+ * 
+ */
+export type ValeSalidaItem = $Result.DefaultSelection<Prisma.$ValeSalidaItemPayload>
 
 /**
  * Enums
@@ -505,6 +535,16 @@ export const ComplejidadReparacion: {
 
 export type ComplejidadReparacion = (typeof ComplejidadReparacion)[keyof typeof ComplejidadReparacion]
 
+
+export const EstadoProduccion: {
+  PENDIENTE: 'PENDIENTE',
+  EN_PROCESO: 'EN_PROCESO',
+  COMPLETADA: 'COMPLETADA',
+  CANCELADA: 'CANCELADA'
+};
+
+export type EstadoProduccion = (typeof EstadoProduccion)[keyof typeof EstadoProduccion]
+
 }
 
 export type TipoInyeccion = $Enums.TipoInyeccion
@@ -558,6 +598,10 @@ export const EstadoOrden: typeof $Enums.EstadoOrden
 export type ComplejidadReparacion = $Enums.ComplejidadReparacion
 
 export const ComplejidadReparacion: typeof $Enums.ComplejidadReparacion
+
+export type EstadoProduccion = $Enums.EstadoProduccion
+
+export const EstadoProduccion: typeof $Enums.EstadoProduccion
 
 /**
  * ##  Prisma Client ʲˢ
@@ -1396,6 +1440,66 @@ export class PrismaClient<
     * ```
     */
   get configuracionSistema(): Prisma.ConfiguracionSistemaDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.receta`: Exposes CRUD operations for the **Receta** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Recetas
+    * const recetas = await prisma.receta.findMany()
+    * ```
+    */
+  get receta(): Prisma.RecetaDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.recetaIngrediente`: Exposes CRUD operations for the **RecetaIngrediente** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more RecetaIngredientes
+    * const recetaIngredientes = await prisma.recetaIngrediente.findMany()
+    * ```
+    */
+  get recetaIngrediente(): Prisma.RecetaIngredienteDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.ordenProduccion`: Exposes CRUD operations for the **OrdenProduccion** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more OrdenProduccions
+    * const ordenProduccions = await prisma.ordenProduccion.findMany()
+    * ```
+    */
+  get ordenProduccion(): Prisma.OrdenProduccionDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.ordenProduccionHistorial`: Exposes CRUD operations for the **OrdenProduccionHistorial** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more OrdenProduccionHistorials
+    * const ordenProduccionHistorials = await prisma.ordenProduccionHistorial.findMany()
+    * ```
+    */
+  get ordenProduccionHistorial(): Prisma.OrdenProduccionHistorialDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.valeSalida`: Exposes CRUD operations for the **ValeSalida** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ValeSalidas
+    * const valeSalidas = await prisma.valeSalida.findMany()
+    * ```
+    */
+  get valeSalida(): Prisma.ValeSalidaDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.valeSalidaItem`: Exposes CRUD operations for the **ValeSalidaItem** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ValeSalidaItems
+    * const valeSalidaItems = await prisma.valeSalidaItem.findMany()
+    * ```
+    */
+  get valeSalidaItem(): Prisma.ValeSalidaItemDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -1908,7 +2012,13 @@ export namespace Prisma {
     OrdenReparacionItem: 'OrdenReparacionItem',
     OrdenReparacionMaterial: 'OrdenReparacionMaterial',
     DefectacionCatalogo: 'DefectacionCatalogo',
-    ConfiguracionSistema: 'ConfiguracionSistema'
+    ConfiguracionSistema: 'ConfiguracionSistema',
+    Receta: 'Receta',
+    RecetaIngrediente: 'RecetaIngrediente',
+    OrdenProduccion: 'OrdenProduccion',
+    OrdenProduccionHistorial: 'OrdenProduccionHistorial',
+    ValeSalida: 'ValeSalida',
+    ValeSalidaItem: 'ValeSalidaItem'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -1927,7 +2037,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "categoria" | "unidad" | "vendor" | "inyeccionCapital" | "pagoDeuda" | "cliente" | "miEmpresa" | "almacen" | "puntoDeVenta" | "producto" | "venta" | "ventaItem" | "merma" | "transferencia" | "user" | "plan" | "licencia" | "licenciaAudit" | "notification" | "userActivityLog" | "userSession" | "attendance" | "employeeWorkSchedule" | "vacationRequest" | "vacationAccrual" | "empleado" | "pagosalario" | "cierreContable" | "gastoCompra" | "compraProducto" | "servicios" | "ventaServicios" | "gastosDE" | "moneda" | "catalogoReparacionConfig" | "tasaCambio" | "transaccionMoneda" | "cuentaBancaria" | "tipoPago" | "reconciliacionVenta" | "reconciliacionServicio" | "reconciliacionGasto" | "ajusteBancario" | "transferenciaBancaria" | "alertHistory" | "auditLog" | "reportHistory" | "scheduledReport" | "scenarioSimulation" | "contrato" | "contratoVersion" | "contratoFirma" | "contratoAprobacion" | "contratoArchivo" | "contratoAlerta" | "factura" | "serieFacturacion" | "oferta" | "ofertaItem" | "cuentaPorCobrar" | "cuentaPorPagar" | "deudaCash" | "prestamoCash" | "pagoCuentaPorPagar" | "equipoReparacion" | "piezaReparacion" | "ordenReparacion" | "ordenReparacionEquipo" | "ordenReparacionItem" | "ordenReparacionMaterial" | "defectacionCatalogo" | "configuracionSistema"
+      modelProps: "categoria" | "unidad" | "vendor" | "inyeccionCapital" | "pagoDeuda" | "cliente" | "miEmpresa" | "almacen" | "puntoDeVenta" | "producto" | "venta" | "ventaItem" | "merma" | "transferencia" | "user" | "plan" | "licencia" | "licenciaAudit" | "notification" | "userActivityLog" | "userSession" | "attendance" | "employeeWorkSchedule" | "vacationRequest" | "vacationAccrual" | "empleado" | "pagosalario" | "cierreContable" | "gastoCompra" | "compraProducto" | "servicios" | "ventaServicios" | "gastosDE" | "moneda" | "catalogoReparacionConfig" | "tasaCambio" | "transaccionMoneda" | "cuentaBancaria" | "tipoPago" | "reconciliacionVenta" | "reconciliacionServicio" | "reconciliacionGasto" | "ajusteBancario" | "transferenciaBancaria" | "alertHistory" | "auditLog" | "reportHistory" | "scheduledReport" | "scenarioSimulation" | "contrato" | "contratoVersion" | "contratoFirma" | "contratoAprobacion" | "contratoArchivo" | "contratoAlerta" | "factura" | "serieFacturacion" | "oferta" | "ofertaItem" | "cuentaPorCobrar" | "cuentaPorPagar" | "deudaCash" | "prestamoCash" | "pagoCuentaPorPagar" | "equipoReparacion" | "piezaReparacion" | "ordenReparacion" | "ordenReparacionEquipo" | "ordenReparacionItem" | "ordenReparacionMaterial" | "defectacionCatalogo" | "configuracionSistema" | "receta" | "recetaIngrediente" | "ordenProduccion" | "ordenProduccionHistorial" | "valeSalida" | "valeSalidaItem"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -7259,6 +7369,450 @@ export namespace Prisma {
           }
         }
       }
+      Receta: {
+        payload: Prisma.$RecetaPayload<ExtArgs>
+        fields: Prisma.RecetaFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.RecetaFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecetaPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.RecetaFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecetaPayload>
+          }
+          findFirst: {
+            args: Prisma.RecetaFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecetaPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.RecetaFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecetaPayload>
+          }
+          findMany: {
+            args: Prisma.RecetaFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecetaPayload>[]
+          }
+          create: {
+            args: Prisma.RecetaCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecetaPayload>
+          }
+          createMany: {
+            args: Prisma.RecetaCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.RecetaCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecetaPayload>[]
+          }
+          delete: {
+            args: Prisma.RecetaDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecetaPayload>
+          }
+          update: {
+            args: Prisma.RecetaUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecetaPayload>
+          }
+          deleteMany: {
+            args: Prisma.RecetaDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.RecetaUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.RecetaUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecetaPayload>[]
+          }
+          upsert: {
+            args: Prisma.RecetaUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecetaPayload>
+          }
+          aggregate: {
+            args: Prisma.RecetaAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateReceta>
+          }
+          groupBy: {
+            args: Prisma.RecetaGroupByArgs<ExtArgs>
+            result: $Utils.Optional<RecetaGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.RecetaCountArgs<ExtArgs>
+            result: $Utils.Optional<RecetaCountAggregateOutputType> | number
+          }
+        }
+      }
+      RecetaIngrediente: {
+        payload: Prisma.$RecetaIngredientePayload<ExtArgs>
+        fields: Prisma.RecetaIngredienteFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.RecetaIngredienteFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecetaIngredientePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.RecetaIngredienteFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecetaIngredientePayload>
+          }
+          findFirst: {
+            args: Prisma.RecetaIngredienteFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecetaIngredientePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.RecetaIngredienteFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecetaIngredientePayload>
+          }
+          findMany: {
+            args: Prisma.RecetaIngredienteFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecetaIngredientePayload>[]
+          }
+          create: {
+            args: Prisma.RecetaIngredienteCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecetaIngredientePayload>
+          }
+          createMany: {
+            args: Prisma.RecetaIngredienteCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.RecetaIngredienteCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecetaIngredientePayload>[]
+          }
+          delete: {
+            args: Prisma.RecetaIngredienteDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecetaIngredientePayload>
+          }
+          update: {
+            args: Prisma.RecetaIngredienteUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecetaIngredientePayload>
+          }
+          deleteMany: {
+            args: Prisma.RecetaIngredienteDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.RecetaIngredienteUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.RecetaIngredienteUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecetaIngredientePayload>[]
+          }
+          upsert: {
+            args: Prisma.RecetaIngredienteUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$RecetaIngredientePayload>
+          }
+          aggregate: {
+            args: Prisma.RecetaIngredienteAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateRecetaIngrediente>
+          }
+          groupBy: {
+            args: Prisma.RecetaIngredienteGroupByArgs<ExtArgs>
+            result: $Utils.Optional<RecetaIngredienteGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.RecetaIngredienteCountArgs<ExtArgs>
+            result: $Utils.Optional<RecetaIngredienteCountAggregateOutputType> | number
+          }
+        }
+      }
+      OrdenProduccion: {
+        payload: Prisma.$OrdenProduccionPayload<ExtArgs>
+        fields: Prisma.OrdenProduccionFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.OrdenProduccionFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrdenProduccionPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.OrdenProduccionFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrdenProduccionPayload>
+          }
+          findFirst: {
+            args: Prisma.OrdenProduccionFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrdenProduccionPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.OrdenProduccionFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrdenProduccionPayload>
+          }
+          findMany: {
+            args: Prisma.OrdenProduccionFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrdenProduccionPayload>[]
+          }
+          create: {
+            args: Prisma.OrdenProduccionCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrdenProduccionPayload>
+          }
+          createMany: {
+            args: Prisma.OrdenProduccionCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.OrdenProduccionCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrdenProduccionPayload>[]
+          }
+          delete: {
+            args: Prisma.OrdenProduccionDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrdenProduccionPayload>
+          }
+          update: {
+            args: Prisma.OrdenProduccionUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrdenProduccionPayload>
+          }
+          deleteMany: {
+            args: Prisma.OrdenProduccionDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.OrdenProduccionUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.OrdenProduccionUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrdenProduccionPayload>[]
+          }
+          upsert: {
+            args: Prisma.OrdenProduccionUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrdenProduccionPayload>
+          }
+          aggregate: {
+            args: Prisma.OrdenProduccionAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateOrdenProduccion>
+          }
+          groupBy: {
+            args: Prisma.OrdenProduccionGroupByArgs<ExtArgs>
+            result: $Utils.Optional<OrdenProduccionGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.OrdenProduccionCountArgs<ExtArgs>
+            result: $Utils.Optional<OrdenProduccionCountAggregateOutputType> | number
+          }
+        }
+      }
+      OrdenProduccionHistorial: {
+        payload: Prisma.$OrdenProduccionHistorialPayload<ExtArgs>
+        fields: Prisma.OrdenProduccionHistorialFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.OrdenProduccionHistorialFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrdenProduccionHistorialPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.OrdenProduccionHistorialFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrdenProduccionHistorialPayload>
+          }
+          findFirst: {
+            args: Prisma.OrdenProduccionHistorialFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrdenProduccionHistorialPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.OrdenProduccionHistorialFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrdenProduccionHistorialPayload>
+          }
+          findMany: {
+            args: Prisma.OrdenProduccionHistorialFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrdenProduccionHistorialPayload>[]
+          }
+          create: {
+            args: Prisma.OrdenProduccionHistorialCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrdenProduccionHistorialPayload>
+          }
+          createMany: {
+            args: Prisma.OrdenProduccionHistorialCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.OrdenProduccionHistorialCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrdenProduccionHistorialPayload>[]
+          }
+          delete: {
+            args: Prisma.OrdenProduccionHistorialDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrdenProduccionHistorialPayload>
+          }
+          update: {
+            args: Prisma.OrdenProduccionHistorialUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrdenProduccionHistorialPayload>
+          }
+          deleteMany: {
+            args: Prisma.OrdenProduccionHistorialDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.OrdenProduccionHistorialUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.OrdenProduccionHistorialUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrdenProduccionHistorialPayload>[]
+          }
+          upsert: {
+            args: Prisma.OrdenProduccionHistorialUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$OrdenProduccionHistorialPayload>
+          }
+          aggregate: {
+            args: Prisma.OrdenProduccionHistorialAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateOrdenProduccionHistorial>
+          }
+          groupBy: {
+            args: Prisma.OrdenProduccionHistorialGroupByArgs<ExtArgs>
+            result: $Utils.Optional<OrdenProduccionHistorialGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.OrdenProduccionHistorialCountArgs<ExtArgs>
+            result: $Utils.Optional<OrdenProduccionHistorialCountAggregateOutputType> | number
+          }
+        }
+      }
+      ValeSalida: {
+        payload: Prisma.$ValeSalidaPayload<ExtArgs>
+        fields: Prisma.ValeSalidaFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ValeSalidaFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ValeSalidaPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ValeSalidaFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ValeSalidaPayload>
+          }
+          findFirst: {
+            args: Prisma.ValeSalidaFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ValeSalidaPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ValeSalidaFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ValeSalidaPayload>
+          }
+          findMany: {
+            args: Prisma.ValeSalidaFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ValeSalidaPayload>[]
+          }
+          create: {
+            args: Prisma.ValeSalidaCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ValeSalidaPayload>
+          }
+          createMany: {
+            args: Prisma.ValeSalidaCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ValeSalidaCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ValeSalidaPayload>[]
+          }
+          delete: {
+            args: Prisma.ValeSalidaDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ValeSalidaPayload>
+          }
+          update: {
+            args: Prisma.ValeSalidaUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ValeSalidaPayload>
+          }
+          deleteMany: {
+            args: Prisma.ValeSalidaDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ValeSalidaUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.ValeSalidaUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ValeSalidaPayload>[]
+          }
+          upsert: {
+            args: Prisma.ValeSalidaUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ValeSalidaPayload>
+          }
+          aggregate: {
+            args: Prisma.ValeSalidaAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateValeSalida>
+          }
+          groupBy: {
+            args: Prisma.ValeSalidaGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ValeSalidaGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ValeSalidaCountArgs<ExtArgs>
+            result: $Utils.Optional<ValeSalidaCountAggregateOutputType> | number
+          }
+        }
+      }
+      ValeSalidaItem: {
+        payload: Prisma.$ValeSalidaItemPayload<ExtArgs>
+        fields: Prisma.ValeSalidaItemFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ValeSalidaItemFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ValeSalidaItemPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ValeSalidaItemFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ValeSalidaItemPayload>
+          }
+          findFirst: {
+            args: Prisma.ValeSalidaItemFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ValeSalidaItemPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ValeSalidaItemFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ValeSalidaItemPayload>
+          }
+          findMany: {
+            args: Prisma.ValeSalidaItemFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ValeSalidaItemPayload>[]
+          }
+          create: {
+            args: Prisma.ValeSalidaItemCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ValeSalidaItemPayload>
+          }
+          createMany: {
+            args: Prisma.ValeSalidaItemCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ValeSalidaItemCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ValeSalidaItemPayload>[]
+          }
+          delete: {
+            args: Prisma.ValeSalidaItemDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ValeSalidaItemPayload>
+          }
+          update: {
+            args: Prisma.ValeSalidaItemUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ValeSalidaItemPayload>
+          }
+          deleteMany: {
+            args: Prisma.ValeSalidaItemDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ValeSalidaItemUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.ValeSalidaItemUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ValeSalidaItemPayload>[]
+          }
+          upsert: {
+            args: Prisma.ValeSalidaItemUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ValeSalidaItemPayload>
+          }
+          aggregate: {
+            args: Prisma.ValeSalidaItemAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateValeSalidaItem>
+          }
+          groupBy: {
+            args: Prisma.ValeSalidaItemGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ValeSalidaItemGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ValeSalidaItemCountArgs<ExtArgs>
+            result: $Utils.Optional<ValeSalidaItemCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -7427,6 +7981,12 @@ export namespace Prisma {
     ordenReparacionMaterial?: OrdenReparacionMaterialOmit
     defectacionCatalogo?: DefectacionCatalogoOmit
     configuracionSistema?: ConfiguracionSistemaOmit
+    receta?: RecetaOmit
+    recetaIngrediente?: RecetaIngredienteOmit
+    ordenProduccion?: OrdenProduccionOmit
+    ordenProduccionHistorial?: OrdenProduccionHistorialOmit
+    valeSalida?: ValeSalidaOmit
+    valeSalidaItem?: ValeSalidaItemOmit
   }
 
   /* Types for Logging */
@@ -7903,6 +8463,9 @@ export namespace Prisma {
     transferencias: number
     ventas: number
     ventaItems: number
+    recetasProducto: number
+    ingredienteRecetas: number
+    valeSalidaItems: number
   }
 
   export type ProductoCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -7914,6 +8477,9 @@ export namespace Prisma {
     transferencias?: boolean | ProductoCountOutputTypeCountTransferenciasArgs
     ventas?: boolean | ProductoCountOutputTypeCountVentasArgs
     ventaItems?: boolean | ProductoCountOutputTypeCountVentaItemsArgs
+    recetasProducto?: boolean | ProductoCountOutputTypeCountRecetasProductoArgs
+    ingredienteRecetas?: boolean | ProductoCountOutputTypeCountIngredienteRecetasArgs
+    valeSalidaItems?: boolean | ProductoCountOutputTypeCountValeSalidaItemsArgs
   }
 
   // Custom InputTypes
@@ -7981,6 +8547,27 @@ export namespace Prisma {
    */
   export type ProductoCountOutputTypeCountVentaItemsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: VentaItemWhereInput
+  }
+
+  /**
+   * ProductoCountOutputType without action
+   */
+  export type ProductoCountOutputTypeCountRecetasProductoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RecetaWhereInput
+  }
+
+  /**
+   * ProductoCountOutputType without action
+   */
+  export type ProductoCountOutputTypeCountIngredienteRecetasArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RecetaIngredienteWhereInput
+  }
+
+  /**
+   * ProductoCountOutputType without action
+   */
+  export type ProductoCountOutputTypeCountValeSalidaItemsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ValeSalidaItemWhereInput
   }
 
 
@@ -9098,6 +9685,108 @@ export namespace Prisma {
    */
   export type DefectacionCatalogoCountOutputTypeCountItemsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: OrdenReparacionItemWhereInput
+  }
+
+
+  /**
+   * Count Type RecetaCountOutputType
+   */
+
+  export type RecetaCountOutputType = {
+    ingredientes: number
+    ordenes: number
+  }
+
+  export type RecetaCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    ingredientes?: boolean | RecetaCountOutputTypeCountIngredientesArgs
+    ordenes?: boolean | RecetaCountOutputTypeCountOrdenesArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * RecetaCountOutputType without action
+   */
+  export type RecetaCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecetaCountOutputType
+     */
+    select?: RecetaCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * RecetaCountOutputType without action
+   */
+  export type RecetaCountOutputTypeCountIngredientesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RecetaIngredienteWhereInput
+  }
+
+  /**
+   * RecetaCountOutputType without action
+   */
+  export type RecetaCountOutputTypeCountOrdenesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OrdenProduccionWhereInput
+  }
+
+
+  /**
+   * Count Type OrdenProduccionCountOutputType
+   */
+
+  export type OrdenProduccionCountOutputType = {
+    historial: number
+  }
+
+  export type OrdenProduccionCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    historial?: boolean | OrdenProduccionCountOutputTypeCountHistorialArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * OrdenProduccionCountOutputType without action
+   */
+  export type OrdenProduccionCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenProduccionCountOutputType
+     */
+    select?: OrdenProduccionCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * OrdenProduccionCountOutputType without action
+   */
+  export type OrdenProduccionCountOutputTypeCountHistorialArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OrdenProduccionHistorialWhereInput
+  }
+
+
+  /**
+   * Count Type ValeSalidaCountOutputType
+   */
+
+  export type ValeSalidaCountOutputType = {
+    items: number
+  }
+
+  export type ValeSalidaCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    items?: boolean | ValeSalidaCountOutputTypeCountItemsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * ValeSalidaCountOutputType without action
+   */
+  export type ValeSalidaCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ValeSalidaCountOutputType
+     */
+    select?: ValeSalidaCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * ValeSalidaCountOutputType without action
+   */
+  export type ValeSalidaCountOutputTypeCountItemsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ValeSalidaItemWhereInput
   }
 
 
@@ -20240,6 +20929,9 @@ export namespace Prisma {
     transferencias?: boolean | Producto$transferenciasArgs<ExtArgs>
     ventas?: boolean | Producto$ventasArgs<ExtArgs>
     ventaItems?: boolean | Producto$ventaItemsArgs<ExtArgs>
+    recetasProducto?: boolean | Producto$recetasProductoArgs<ExtArgs>
+    ingredienteRecetas?: boolean | Producto$ingredienteRecetasArgs<ExtArgs>
+    valeSalidaItems?: boolean | Producto$valeSalidaItemsArgs<ExtArgs>
     _count?: boolean | ProductoCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["producto"]>
 
@@ -20328,6 +21020,9 @@ export namespace Prisma {
     transferencias?: boolean | Producto$transferenciasArgs<ExtArgs>
     ventas?: boolean | Producto$ventasArgs<ExtArgs>
     ventaItems?: boolean | Producto$ventaItemsArgs<ExtArgs>
+    recetasProducto?: boolean | Producto$recetasProductoArgs<ExtArgs>
+    ingredienteRecetas?: boolean | Producto$ingredienteRecetasArgs<ExtArgs>
+    valeSalidaItems?: boolean | Producto$valeSalidaItemsArgs<ExtArgs>
     _count?: boolean | ProductoCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type ProductoIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -20364,6 +21059,9 @@ export namespace Prisma {
       transferencias: Prisma.$TransferenciaPayload<ExtArgs>[]
       ventas: Prisma.$VentaPayload<ExtArgs>[]
       ventaItems: Prisma.$VentaItemPayload<ExtArgs>[]
+      recetasProducto: Prisma.$RecetaPayload<ExtArgs>[]
+      ingredienteRecetas: Prisma.$RecetaIngredientePayload<ExtArgs>[]
+      valeSalidaItems: Prisma.$ValeSalidaItemPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -20790,6 +21488,9 @@ export namespace Prisma {
     transferencias<T extends Producto$transferenciasArgs<ExtArgs> = {}>(args?: Subset<T, Producto$transferenciasArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TransferenciaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     ventas<T extends Producto$ventasArgs<ExtArgs> = {}>(args?: Subset<T, Producto$ventasArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$VentaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     ventaItems<T extends Producto$ventaItemsArgs<ExtArgs> = {}>(args?: Subset<T, Producto$ventaItemsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$VentaItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    recetasProducto<T extends Producto$recetasProductoArgs<ExtArgs> = {}>(args?: Subset<T, Producto$recetasProductoArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RecetaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    ingredienteRecetas<T extends Producto$ingredienteRecetasArgs<ExtArgs> = {}>(args?: Subset<T, Producto$ingredienteRecetasArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RecetaIngredientePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    valeSalidaItems<T extends Producto$valeSalidaItemsArgs<ExtArgs> = {}>(args?: Subset<T, Producto$valeSalidaItemsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ValeSalidaItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -21496,6 +22197,78 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: VentaItemScalarFieldEnum | VentaItemScalarFieldEnum[]
+  }
+
+  /**
+   * Producto.recetasProducto
+   */
+  export type Producto$recetasProductoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Receta
+     */
+    select?: RecetaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Receta
+     */
+    omit?: RecetaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecetaInclude<ExtArgs> | null
+    where?: RecetaWhereInput
+    orderBy?: RecetaOrderByWithRelationInput | RecetaOrderByWithRelationInput[]
+    cursor?: RecetaWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: RecetaScalarFieldEnum | RecetaScalarFieldEnum[]
+  }
+
+  /**
+   * Producto.ingredienteRecetas
+   */
+  export type Producto$ingredienteRecetasArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecetaIngrediente
+     */
+    select?: RecetaIngredienteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RecetaIngrediente
+     */
+    omit?: RecetaIngredienteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecetaIngredienteInclude<ExtArgs> | null
+    where?: RecetaIngredienteWhereInput
+    orderBy?: RecetaIngredienteOrderByWithRelationInput | RecetaIngredienteOrderByWithRelationInput[]
+    cursor?: RecetaIngredienteWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: RecetaIngredienteScalarFieldEnum | RecetaIngredienteScalarFieldEnum[]
+  }
+
+  /**
+   * Producto.valeSalidaItems
+   */
+  export type Producto$valeSalidaItemsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ValeSalidaItem
+     */
+    select?: ValeSalidaItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ValeSalidaItem
+     */
+    omit?: ValeSalidaItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ValeSalidaItemInclude<ExtArgs> | null
+    where?: ValeSalidaItemWhereInput
+    orderBy?: ValeSalidaItemOrderByWithRelationInput | ValeSalidaItemOrderByWithRelationInput[]
+    cursor?: ValeSalidaItemWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ValeSalidaItemScalarFieldEnum | ValeSalidaItemScalarFieldEnum[]
   }
 
   /**
@@ -96998,6 +97771,6810 @@ export namespace Prisma {
 
 
   /**
+   * Model Receta
+   */
+
+  export type AggregateReceta = {
+    _count: RecetaCountAggregateOutputType | null
+    _avg: RecetaAvgAggregateOutputType | null
+    _sum: RecetaSumAggregateOutputType | null
+    _min: RecetaMinAggregateOutputType | null
+    _max: RecetaMaxAggregateOutputType | null
+  }
+
+  export type RecetaAvgAggregateOutputType = {
+    rendimiento: number | null
+    tiempoPrep: number | null
+    costoUnitario: number | null
+  }
+
+  export type RecetaSumAggregateOutputType = {
+    rendimiento: number | null
+    tiempoPrep: number | null
+    costoUnitario: number | null
+  }
+
+  export type RecetaMinAggregateOutputType = {
+    recetaId: string | null
+    nombre: string | null
+    rendimiento: number | null
+    productoId: string | null
+    instrucciones: string | null
+    tiempoPrep: number | null
+    costoUnitario: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type RecetaMaxAggregateOutputType = {
+    recetaId: string | null
+    nombre: string | null
+    rendimiento: number | null
+    productoId: string | null
+    instrucciones: string | null
+    tiempoPrep: number | null
+    costoUnitario: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type RecetaCountAggregateOutputType = {
+    recetaId: number
+    nombre: number
+    rendimiento: number
+    productoId: number
+    instrucciones: number
+    tiempoPrep: number
+    costoUnitario: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type RecetaAvgAggregateInputType = {
+    rendimiento?: true
+    tiempoPrep?: true
+    costoUnitario?: true
+  }
+
+  export type RecetaSumAggregateInputType = {
+    rendimiento?: true
+    tiempoPrep?: true
+    costoUnitario?: true
+  }
+
+  export type RecetaMinAggregateInputType = {
+    recetaId?: true
+    nombre?: true
+    rendimiento?: true
+    productoId?: true
+    instrucciones?: true
+    tiempoPrep?: true
+    costoUnitario?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type RecetaMaxAggregateInputType = {
+    recetaId?: true
+    nombre?: true
+    rendimiento?: true
+    productoId?: true
+    instrucciones?: true
+    tiempoPrep?: true
+    costoUnitario?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type RecetaCountAggregateInputType = {
+    recetaId?: true
+    nombre?: true
+    rendimiento?: true
+    productoId?: true
+    instrucciones?: true
+    tiempoPrep?: true
+    costoUnitario?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type RecetaAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Receta to aggregate.
+     */
+    where?: RecetaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Recetas to fetch.
+     */
+    orderBy?: RecetaOrderByWithRelationInput | RecetaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: RecetaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Recetas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Recetas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Recetas
+    **/
+    _count?: true | RecetaCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: RecetaAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: RecetaSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: RecetaMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: RecetaMaxAggregateInputType
+  }
+
+  export type GetRecetaAggregateType<T extends RecetaAggregateArgs> = {
+        [P in keyof T & keyof AggregateReceta]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateReceta[P]>
+      : GetScalarType<T[P], AggregateReceta[P]>
+  }
+
+
+
+
+  export type RecetaGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RecetaWhereInput
+    orderBy?: RecetaOrderByWithAggregationInput | RecetaOrderByWithAggregationInput[]
+    by: RecetaScalarFieldEnum[] | RecetaScalarFieldEnum
+    having?: RecetaScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: RecetaCountAggregateInputType | true
+    _avg?: RecetaAvgAggregateInputType
+    _sum?: RecetaSumAggregateInputType
+    _min?: RecetaMinAggregateInputType
+    _max?: RecetaMaxAggregateInputType
+  }
+
+  export type RecetaGroupByOutputType = {
+    recetaId: string
+    nombre: string
+    rendimiento: number
+    productoId: string | null
+    instrucciones: string | null
+    tiempoPrep: number | null
+    costoUnitario: number
+    createdAt: Date
+    updatedAt: Date
+    _count: RecetaCountAggregateOutputType | null
+    _avg: RecetaAvgAggregateOutputType | null
+    _sum: RecetaSumAggregateOutputType | null
+    _min: RecetaMinAggregateOutputType | null
+    _max: RecetaMaxAggregateOutputType | null
+  }
+
+  type GetRecetaGroupByPayload<T extends RecetaGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<RecetaGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof RecetaGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], RecetaGroupByOutputType[P]>
+            : GetScalarType<T[P], RecetaGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type RecetaSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    recetaId?: boolean
+    nombre?: boolean
+    rendimiento?: boolean
+    productoId?: boolean
+    instrucciones?: boolean
+    tiempoPrep?: boolean
+    costoUnitario?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    producto?: boolean | Receta$productoArgs<ExtArgs>
+    ingredientes?: boolean | Receta$ingredientesArgs<ExtArgs>
+    ordenes?: boolean | Receta$ordenesArgs<ExtArgs>
+    _count?: boolean | RecetaCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["receta"]>
+
+  export type RecetaSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    recetaId?: boolean
+    nombre?: boolean
+    rendimiento?: boolean
+    productoId?: boolean
+    instrucciones?: boolean
+    tiempoPrep?: boolean
+    costoUnitario?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    producto?: boolean | Receta$productoArgs<ExtArgs>
+  }, ExtArgs["result"]["receta"]>
+
+  export type RecetaSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    recetaId?: boolean
+    nombre?: boolean
+    rendimiento?: boolean
+    productoId?: boolean
+    instrucciones?: boolean
+    tiempoPrep?: boolean
+    costoUnitario?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    producto?: boolean | Receta$productoArgs<ExtArgs>
+  }, ExtArgs["result"]["receta"]>
+
+  export type RecetaSelectScalar = {
+    recetaId?: boolean
+    nombre?: boolean
+    rendimiento?: boolean
+    productoId?: boolean
+    instrucciones?: boolean
+    tiempoPrep?: boolean
+    costoUnitario?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type RecetaOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"recetaId" | "nombre" | "rendimiento" | "productoId" | "instrucciones" | "tiempoPrep" | "costoUnitario" | "createdAt" | "updatedAt", ExtArgs["result"]["receta"]>
+  export type RecetaInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    producto?: boolean | Receta$productoArgs<ExtArgs>
+    ingredientes?: boolean | Receta$ingredientesArgs<ExtArgs>
+    ordenes?: boolean | Receta$ordenesArgs<ExtArgs>
+    _count?: boolean | RecetaCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type RecetaIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    producto?: boolean | Receta$productoArgs<ExtArgs>
+  }
+  export type RecetaIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    producto?: boolean | Receta$productoArgs<ExtArgs>
+  }
+
+  export type $RecetaPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Receta"
+    objects: {
+      producto: Prisma.$ProductoPayload<ExtArgs> | null
+      ingredientes: Prisma.$RecetaIngredientePayload<ExtArgs>[]
+      ordenes: Prisma.$OrdenProduccionPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      recetaId: string
+      nombre: string
+      rendimiento: number
+      productoId: string | null
+      instrucciones: string | null
+      tiempoPrep: number | null
+      costoUnitario: number
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["receta"]>
+    composites: {}
+  }
+
+  type RecetaGetPayload<S extends boolean | null | undefined | RecetaDefaultArgs> = $Result.GetResult<Prisma.$RecetaPayload, S>
+
+  type RecetaCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<RecetaFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: RecetaCountAggregateInputType | true
+    }
+
+  export interface RecetaDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Receta'], meta: { name: 'Receta' } }
+    /**
+     * Find zero or one Receta that matches the filter.
+     * @param {RecetaFindUniqueArgs} args - Arguments to find a Receta
+     * @example
+     * // Get one Receta
+     * const receta = await prisma.receta.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends RecetaFindUniqueArgs>(args: SelectSubset<T, RecetaFindUniqueArgs<ExtArgs>>): Prisma__RecetaClient<$Result.GetResult<Prisma.$RecetaPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one Receta that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {RecetaFindUniqueOrThrowArgs} args - Arguments to find a Receta
+     * @example
+     * // Get one Receta
+     * const receta = await prisma.receta.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends RecetaFindUniqueOrThrowArgs>(args: SelectSubset<T, RecetaFindUniqueOrThrowArgs<ExtArgs>>): Prisma__RecetaClient<$Result.GetResult<Prisma.$RecetaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Receta that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecetaFindFirstArgs} args - Arguments to find a Receta
+     * @example
+     * // Get one Receta
+     * const receta = await prisma.receta.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends RecetaFindFirstArgs>(args?: SelectSubset<T, RecetaFindFirstArgs<ExtArgs>>): Prisma__RecetaClient<$Result.GetResult<Prisma.$RecetaPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first Receta that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecetaFindFirstOrThrowArgs} args - Arguments to find a Receta
+     * @example
+     * // Get one Receta
+     * const receta = await prisma.receta.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends RecetaFindFirstOrThrowArgs>(args?: SelectSubset<T, RecetaFindFirstOrThrowArgs<ExtArgs>>): Prisma__RecetaClient<$Result.GetResult<Prisma.$RecetaPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more Recetas that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecetaFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Recetas
+     * const recetas = await prisma.receta.findMany()
+     * 
+     * // Get first 10 Recetas
+     * const recetas = await prisma.receta.findMany({ take: 10 })
+     * 
+     * // Only select the `recetaId`
+     * const recetaWithRecetaIdOnly = await prisma.receta.findMany({ select: { recetaId: true } })
+     * 
+     */
+    findMany<T extends RecetaFindManyArgs>(args?: SelectSubset<T, RecetaFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RecetaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a Receta.
+     * @param {RecetaCreateArgs} args - Arguments to create a Receta.
+     * @example
+     * // Create one Receta
+     * const Receta = await prisma.receta.create({
+     *   data: {
+     *     // ... data to create a Receta
+     *   }
+     * })
+     * 
+     */
+    create<T extends RecetaCreateArgs>(args: SelectSubset<T, RecetaCreateArgs<ExtArgs>>): Prisma__RecetaClient<$Result.GetResult<Prisma.$RecetaPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many Recetas.
+     * @param {RecetaCreateManyArgs} args - Arguments to create many Recetas.
+     * @example
+     * // Create many Recetas
+     * const receta = await prisma.receta.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends RecetaCreateManyArgs>(args?: SelectSubset<T, RecetaCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Recetas and returns the data saved in the database.
+     * @param {RecetaCreateManyAndReturnArgs} args - Arguments to create many Recetas.
+     * @example
+     * // Create many Recetas
+     * const receta = await prisma.receta.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Recetas and only return the `recetaId`
+     * const recetaWithRecetaIdOnly = await prisma.receta.createManyAndReturn({
+     *   select: { recetaId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends RecetaCreateManyAndReturnArgs>(args?: SelectSubset<T, RecetaCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RecetaPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a Receta.
+     * @param {RecetaDeleteArgs} args - Arguments to delete one Receta.
+     * @example
+     * // Delete one Receta
+     * const Receta = await prisma.receta.delete({
+     *   where: {
+     *     // ... filter to delete one Receta
+     *   }
+     * })
+     * 
+     */
+    delete<T extends RecetaDeleteArgs>(args: SelectSubset<T, RecetaDeleteArgs<ExtArgs>>): Prisma__RecetaClient<$Result.GetResult<Prisma.$RecetaPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one Receta.
+     * @param {RecetaUpdateArgs} args - Arguments to update one Receta.
+     * @example
+     * // Update one Receta
+     * const receta = await prisma.receta.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends RecetaUpdateArgs>(args: SelectSubset<T, RecetaUpdateArgs<ExtArgs>>): Prisma__RecetaClient<$Result.GetResult<Prisma.$RecetaPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more Recetas.
+     * @param {RecetaDeleteManyArgs} args - Arguments to filter Recetas to delete.
+     * @example
+     * // Delete a few Recetas
+     * const { count } = await prisma.receta.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends RecetaDeleteManyArgs>(args?: SelectSubset<T, RecetaDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Recetas.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecetaUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Recetas
+     * const receta = await prisma.receta.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends RecetaUpdateManyArgs>(args: SelectSubset<T, RecetaUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Recetas and returns the data updated in the database.
+     * @param {RecetaUpdateManyAndReturnArgs} args - Arguments to update many Recetas.
+     * @example
+     * // Update many Recetas
+     * const receta = await prisma.receta.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more Recetas and only return the `recetaId`
+     * const recetaWithRecetaIdOnly = await prisma.receta.updateManyAndReturn({
+     *   select: { recetaId: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends RecetaUpdateManyAndReturnArgs>(args: SelectSubset<T, RecetaUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RecetaPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one Receta.
+     * @param {RecetaUpsertArgs} args - Arguments to update or create a Receta.
+     * @example
+     * // Update or create a Receta
+     * const receta = await prisma.receta.upsert({
+     *   create: {
+     *     // ... data to create a Receta
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Receta we want to update
+     *   }
+     * })
+     */
+    upsert<T extends RecetaUpsertArgs>(args: SelectSubset<T, RecetaUpsertArgs<ExtArgs>>): Prisma__RecetaClient<$Result.GetResult<Prisma.$RecetaPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of Recetas.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecetaCountArgs} args - Arguments to filter Recetas to count.
+     * @example
+     * // Count the number of Recetas
+     * const count = await prisma.receta.count({
+     *   where: {
+     *     // ... the filter for the Recetas we want to count
+     *   }
+     * })
+    **/
+    count<T extends RecetaCountArgs>(
+      args?: Subset<T, RecetaCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], RecetaCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Receta.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecetaAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends RecetaAggregateArgs>(args: Subset<T, RecetaAggregateArgs>): Prisma.PrismaPromise<GetRecetaAggregateType<T>>
+
+    /**
+     * Group by Receta.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecetaGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends RecetaGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: RecetaGroupByArgs['orderBy'] }
+        : { orderBy?: RecetaGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, RecetaGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetRecetaGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Receta model
+   */
+  readonly fields: RecetaFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Receta.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__RecetaClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    producto<T extends Receta$productoArgs<ExtArgs> = {}>(args?: Subset<T, Receta$productoArgs<ExtArgs>>): Prisma__ProductoClient<$Result.GetResult<Prisma.$ProductoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    ingredientes<T extends Receta$ingredientesArgs<ExtArgs> = {}>(args?: Subset<T, Receta$ingredientesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RecetaIngredientePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    ordenes<T extends Receta$ordenesArgs<ExtArgs> = {}>(args?: Subset<T, Receta$ordenesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrdenProduccionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Receta model
+   */
+  interface RecetaFieldRefs {
+    readonly recetaId: FieldRef<"Receta", 'String'>
+    readonly nombre: FieldRef<"Receta", 'String'>
+    readonly rendimiento: FieldRef<"Receta", 'Int'>
+    readonly productoId: FieldRef<"Receta", 'String'>
+    readonly instrucciones: FieldRef<"Receta", 'String'>
+    readonly tiempoPrep: FieldRef<"Receta", 'Int'>
+    readonly costoUnitario: FieldRef<"Receta", 'Float'>
+    readonly createdAt: FieldRef<"Receta", 'DateTime'>
+    readonly updatedAt: FieldRef<"Receta", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Receta findUnique
+   */
+  export type RecetaFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Receta
+     */
+    select?: RecetaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Receta
+     */
+    omit?: RecetaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecetaInclude<ExtArgs> | null
+    /**
+     * Filter, which Receta to fetch.
+     */
+    where: RecetaWhereUniqueInput
+  }
+
+  /**
+   * Receta findUniqueOrThrow
+   */
+  export type RecetaFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Receta
+     */
+    select?: RecetaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Receta
+     */
+    omit?: RecetaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecetaInclude<ExtArgs> | null
+    /**
+     * Filter, which Receta to fetch.
+     */
+    where: RecetaWhereUniqueInput
+  }
+
+  /**
+   * Receta findFirst
+   */
+  export type RecetaFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Receta
+     */
+    select?: RecetaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Receta
+     */
+    omit?: RecetaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecetaInclude<ExtArgs> | null
+    /**
+     * Filter, which Receta to fetch.
+     */
+    where?: RecetaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Recetas to fetch.
+     */
+    orderBy?: RecetaOrderByWithRelationInput | RecetaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Recetas.
+     */
+    cursor?: RecetaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Recetas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Recetas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Recetas.
+     */
+    distinct?: RecetaScalarFieldEnum | RecetaScalarFieldEnum[]
+  }
+
+  /**
+   * Receta findFirstOrThrow
+   */
+  export type RecetaFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Receta
+     */
+    select?: RecetaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Receta
+     */
+    omit?: RecetaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecetaInclude<ExtArgs> | null
+    /**
+     * Filter, which Receta to fetch.
+     */
+    where?: RecetaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Recetas to fetch.
+     */
+    orderBy?: RecetaOrderByWithRelationInput | RecetaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Recetas.
+     */
+    cursor?: RecetaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Recetas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Recetas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Recetas.
+     */
+    distinct?: RecetaScalarFieldEnum | RecetaScalarFieldEnum[]
+  }
+
+  /**
+   * Receta findMany
+   */
+  export type RecetaFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Receta
+     */
+    select?: RecetaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Receta
+     */
+    omit?: RecetaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecetaInclude<ExtArgs> | null
+    /**
+     * Filter, which Recetas to fetch.
+     */
+    where?: RecetaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Recetas to fetch.
+     */
+    orderBy?: RecetaOrderByWithRelationInput | RecetaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Recetas.
+     */
+    cursor?: RecetaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Recetas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Recetas.
+     */
+    skip?: number
+    distinct?: RecetaScalarFieldEnum | RecetaScalarFieldEnum[]
+  }
+
+  /**
+   * Receta create
+   */
+  export type RecetaCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Receta
+     */
+    select?: RecetaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Receta
+     */
+    omit?: RecetaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecetaInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Receta.
+     */
+    data: XOR<RecetaCreateInput, RecetaUncheckedCreateInput>
+  }
+
+  /**
+   * Receta createMany
+   */
+  export type RecetaCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Recetas.
+     */
+    data: RecetaCreateManyInput | RecetaCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Receta createManyAndReturn
+   */
+  export type RecetaCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Receta
+     */
+    select?: RecetaSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Receta
+     */
+    omit?: RecetaOmit<ExtArgs> | null
+    /**
+     * The data used to create many Recetas.
+     */
+    data: RecetaCreateManyInput | RecetaCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecetaIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Receta update
+   */
+  export type RecetaUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Receta
+     */
+    select?: RecetaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Receta
+     */
+    omit?: RecetaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecetaInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Receta.
+     */
+    data: XOR<RecetaUpdateInput, RecetaUncheckedUpdateInput>
+    /**
+     * Choose, which Receta to update.
+     */
+    where: RecetaWhereUniqueInput
+  }
+
+  /**
+   * Receta updateMany
+   */
+  export type RecetaUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Recetas.
+     */
+    data: XOR<RecetaUpdateManyMutationInput, RecetaUncheckedUpdateManyInput>
+    /**
+     * Filter which Recetas to update
+     */
+    where?: RecetaWhereInput
+    /**
+     * Limit how many Recetas to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * Receta updateManyAndReturn
+   */
+  export type RecetaUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Receta
+     */
+    select?: RecetaSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the Receta
+     */
+    omit?: RecetaOmit<ExtArgs> | null
+    /**
+     * The data used to update Recetas.
+     */
+    data: XOR<RecetaUpdateManyMutationInput, RecetaUncheckedUpdateManyInput>
+    /**
+     * Filter which Recetas to update
+     */
+    where?: RecetaWhereInput
+    /**
+     * Limit how many Recetas to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecetaIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Receta upsert
+   */
+  export type RecetaUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Receta
+     */
+    select?: RecetaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Receta
+     */
+    omit?: RecetaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecetaInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Receta to update in case it exists.
+     */
+    where: RecetaWhereUniqueInput
+    /**
+     * In case the Receta found by the `where` argument doesn't exist, create a new Receta with this data.
+     */
+    create: XOR<RecetaCreateInput, RecetaUncheckedCreateInput>
+    /**
+     * In case the Receta was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<RecetaUpdateInput, RecetaUncheckedUpdateInput>
+  }
+
+  /**
+   * Receta delete
+   */
+  export type RecetaDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Receta
+     */
+    select?: RecetaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Receta
+     */
+    omit?: RecetaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecetaInclude<ExtArgs> | null
+    /**
+     * Filter which Receta to delete.
+     */
+    where: RecetaWhereUniqueInput
+  }
+
+  /**
+   * Receta deleteMany
+   */
+  export type RecetaDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Recetas to delete
+     */
+    where?: RecetaWhereInput
+    /**
+     * Limit how many Recetas to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * Receta.producto
+   */
+  export type Receta$productoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Producto
+     */
+    select?: ProductoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Producto
+     */
+    omit?: ProductoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProductoInclude<ExtArgs> | null
+    where?: ProductoWhereInput
+  }
+
+  /**
+   * Receta.ingredientes
+   */
+  export type Receta$ingredientesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecetaIngrediente
+     */
+    select?: RecetaIngredienteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RecetaIngrediente
+     */
+    omit?: RecetaIngredienteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecetaIngredienteInclude<ExtArgs> | null
+    where?: RecetaIngredienteWhereInput
+    orderBy?: RecetaIngredienteOrderByWithRelationInput | RecetaIngredienteOrderByWithRelationInput[]
+    cursor?: RecetaIngredienteWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: RecetaIngredienteScalarFieldEnum | RecetaIngredienteScalarFieldEnum[]
+  }
+
+  /**
+   * Receta.ordenes
+   */
+  export type Receta$ordenesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenProduccion
+     */
+    select?: OrdenProduccionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrdenProduccion
+     */
+    omit?: OrdenProduccionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrdenProduccionInclude<ExtArgs> | null
+    where?: OrdenProduccionWhereInput
+    orderBy?: OrdenProduccionOrderByWithRelationInput | OrdenProduccionOrderByWithRelationInput[]
+    cursor?: OrdenProduccionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: OrdenProduccionScalarFieldEnum | OrdenProduccionScalarFieldEnum[]
+  }
+
+  /**
+   * Receta without action
+   */
+  export type RecetaDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Receta
+     */
+    select?: RecetaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Receta
+     */
+    omit?: RecetaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecetaInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model RecetaIngrediente
+   */
+
+  export type AggregateRecetaIngrediente = {
+    _count: RecetaIngredienteCountAggregateOutputType | null
+    _avg: RecetaIngredienteAvgAggregateOutputType | null
+    _sum: RecetaIngredienteSumAggregateOutputType | null
+    _min: RecetaIngredienteMinAggregateOutputType | null
+    _max: RecetaIngredienteMaxAggregateOutputType | null
+  }
+
+  export type RecetaIngredienteAvgAggregateOutputType = {
+    cantidad: number | null
+    desperdicio: number | null
+  }
+
+  export type RecetaIngredienteSumAggregateOutputType = {
+    cantidad: number | null
+    desperdicio: number | null
+  }
+
+  export type RecetaIngredienteMinAggregateOutputType = {
+    id: string | null
+    recetaId: string | null
+    productoId: string | null
+    cantidad: number | null
+    desperdicio: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type RecetaIngredienteMaxAggregateOutputType = {
+    id: string | null
+    recetaId: string | null
+    productoId: string | null
+    cantidad: number | null
+    desperdicio: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type RecetaIngredienteCountAggregateOutputType = {
+    id: number
+    recetaId: number
+    productoId: number
+    cantidad: number
+    desperdicio: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type RecetaIngredienteAvgAggregateInputType = {
+    cantidad?: true
+    desperdicio?: true
+  }
+
+  export type RecetaIngredienteSumAggregateInputType = {
+    cantidad?: true
+    desperdicio?: true
+  }
+
+  export type RecetaIngredienteMinAggregateInputType = {
+    id?: true
+    recetaId?: true
+    productoId?: true
+    cantidad?: true
+    desperdicio?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type RecetaIngredienteMaxAggregateInputType = {
+    id?: true
+    recetaId?: true
+    productoId?: true
+    cantidad?: true
+    desperdicio?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type RecetaIngredienteCountAggregateInputType = {
+    id?: true
+    recetaId?: true
+    productoId?: true
+    cantidad?: true
+    desperdicio?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type RecetaIngredienteAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RecetaIngrediente to aggregate.
+     */
+    where?: RecetaIngredienteWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RecetaIngredientes to fetch.
+     */
+    orderBy?: RecetaIngredienteOrderByWithRelationInput | RecetaIngredienteOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: RecetaIngredienteWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RecetaIngredientes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RecetaIngredientes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned RecetaIngredientes
+    **/
+    _count?: true | RecetaIngredienteCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: RecetaIngredienteAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: RecetaIngredienteSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: RecetaIngredienteMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: RecetaIngredienteMaxAggregateInputType
+  }
+
+  export type GetRecetaIngredienteAggregateType<T extends RecetaIngredienteAggregateArgs> = {
+        [P in keyof T & keyof AggregateRecetaIngrediente]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateRecetaIngrediente[P]>
+      : GetScalarType<T[P], AggregateRecetaIngrediente[P]>
+  }
+
+
+
+
+  export type RecetaIngredienteGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: RecetaIngredienteWhereInput
+    orderBy?: RecetaIngredienteOrderByWithAggregationInput | RecetaIngredienteOrderByWithAggregationInput[]
+    by: RecetaIngredienteScalarFieldEnum[] | RecetaIngredienteScalarFieldEnum
+    having?: RecetaIngredienteScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: RecetaIngredienteCountAggregateInputType | true
+    _avg?: RecetaIngredienteAvgAggregateInputType
+    _sum?: RecetaIngredienteSumAggregateInputType
+    _min?: RecetaIngredienteMinAggregateInputType
+    _max?: RecetaIngredienteMaxAggregateInputType
+  }
+
+  export type RecetaIngredienteGroupByOutputType = {
+    id: string
+    recetaId: string
+    productoId: string
+    cantidad: number
+    desperdicio: number
+    createdAt: Date
+    updatedAt: Date
+    _count: RecetaIngredienteCountAggregateOutputType | null
+    _avg: RecetaIngredienteAvgAggregateOutputType | null
+    _sum: RecetaIngredienteSumAggregateOutputType | null
+    _min: RecetaIngredienteMinAggregateOutputType | null
+    _max: RecetaIngredienteMaxAggregateOutputType | null
+  }
+
+  type GetRecetaIngredienteGroupByPayload<T extends RecetaIngredienteGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<RecetaIngredienteGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof RecetaIngredienteGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], RecetaIngredienteGroupByOutputType[P]>
+            : GetScalarType<T[P], RecetaIngredienteGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type RecetaIngredienteSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    recetaId?: boolean
+    productoId?: boolean
+    cantidad?: boolean
+    desperdicio?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    receta?: boolean | RecetaDefaultArgs<ExtArgs>
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["recetaIngrediente"]>
+
+  export type RecetaIngredienteSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    recetaId?: boolean
+    productoId?: boolean
+    cantidad?: boolean
+    desperdicio?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    receta?: boolean | RecetaDefaultArgs<ExtArgs>
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["recetaIngrediente"]>
+
+  export type RecetaIngredienteSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    recetaId?: boolean
+    productoId?: boolean
+    cantidad?: boolean
+    desperdicio?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    receta?: boolean | RecetaDefaultArgs<ExtArgs>
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["recetaIngrediente"]>
+
+  export type RecetaIngredienteSelectScalar = {
+    id?: boolean
+    recetaId?: boolean
+    productoId?: boolean
+    cantidad?: boolean
+    desperdicio?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type RecetaIngredienteOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "recetaId" | "productoId" | "cantidad" | "desperdicio" | "createdAt" | "updatedAt", ExtArgs["result"]["recetaIngrediente"]>
+  export type RecetaIngredienteInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    receta?: boolean | RecetaDefaultArgs<ExtArgs>
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }
+  export type RecetaIngredienteIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    receta?: boolean | RecetaDefaultArgs<ExtArgs>
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }
+  export type RecetaIngredienteIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    receta?: boolean | RecetaDefaultArgs<ExtArgs>
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }
+
+  export type $RecetaIngredientePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "RecetaIngrediente"
+    objects: {
+      receta: Prisma.$RecetaPayload<ExtArgs>
+      producto: Prisma.$ProductoPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      recetaId: string
+      productoId: string
+      cantidad: number
+      desperdicio: number
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["recetaIngrediente"]>
+    composites: {}
+  }
+
+  type RecetaIngredienteGetPayload<S extends boolean | null | undefined | RecetaIngredienteDefaultArgs> = $Result.GetResult<Prisma.$RecetaIngredientePayload, S>
+
+  type RecetaIngredienteCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<RecetaIngredienteFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: RecetaIngredienteCountAggregateInputType | true
+    }
+
+  export interface RecetaIngredienteDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['RecetaIngrediente'], meta: { name: 'RecetaIngrediente' } }
+    /**
+     * Find zero or one RecetaIngrediente that matches the filter.
+     * @param {RecetaIngredienteFindUniqueArgs} args - Arguments to find a RecetaIngrediente
+     * @example
+     * // Get one RecetaIngrediente
+     * const recetaIngrediente = await prisma.recetaIngrediente.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends RecetaIngredienteFindUniqueArgs>(args: SelectSubset<T, RecetaIngredienteFindUniqueArgs<ExtArgs>>): Prisma__RecetaIngredienteClient<$Result.GetResult<Prisma.$RecetaIngredientePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one RecetaIngrediente that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {RecetaIngredienteFindUniqueOrThrowArgs} args - Arguments to find a RecetaIngrediente
+     * @example
+     * // Get one RecetaIngrediente
+     * const recetaIngrediente = await prisma.recetaIngrediente.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends RecetaIngredienteFindUniqueOrThrowArgs>(args: SelectSubset<T, RecetaIngredienteFindUniqueOrThrowArgs<ExtArgs>>): Prisma__RecetaIngredienteClient<$Result.GetResult<Prisma.$RecetaIngredientePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first RecetaIngrediente that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecetaIngredienteFindFirstArgs} args - Arguments to find a RecetaIngrediente
+     * @example
+     * // Get one RecetaIngrediente
+     * const recetaIngrediente = await prisma.recetaIngrediente.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends RecetaIngredienteFindFirstArgs>(args?: SelectSubset<T, RecetaIngredienteFindFirstArgs<ExtArgs>>): Prisma__RecetaIngredienteClient<$Result.GetResult<Prisma.$RecetaIngredientePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first RecetaIngrediente that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecetaIngredienteFindFirstOrThrowArgs} args - Arguments to find a RecetaIngrediente
+     * @example
+     * // Get one RecetaIngrediente
+     * const recetaIngrediente = await prisma.recetaIngrediente.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends RecetaIngredienteFindFirstOrThrowArgs>(args?: SelectSubset<T, RecetaIngredienteFindFirstOrThrowArgs<ExtArgs>>): Prisma__RecetaIngredienteClient<$Result.GetResult<Prisma.$RecetaIngredientePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more RecetaIngredientes that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecetaIngredienteFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all RecetaIngredientes
+     * const recetaIngredientes = await prisma.recetaIngrediente.findMany()
+     * 
+     * // Get first 10 RecetaIngredientes
+     * const recetaIngredientes = await prisma.recetaIngrediente.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const recetaIngredienteWithIdOnly = await prisma.recetaIngrediente.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends RecetaIngredienteFindManyArgs>(args?: SelectSubset<T, RecetaIngredienteFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RecetaIngredientePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a RecetaIngrediente.
+     * @param {RecetaIngredienteCreateArgs} args - Arguments to create a RecetaIngrediente.
+     * @example
+     * // Create one RecetaIngrediente
+     * const RecetaIngrediente = await prisma.recetaIngrediente.create({
+     *   data: {
+     *     // ... data to create a RecetaIngrediente
+     *   }
+     * })
+     * 
+     */
+    create<T extends RecetaIngredienteCreateArgs>(args: SelectSubset<T, RecetaIngredienteCreateArgs<ExtArgs>>): Prisma__RecetaIngredienteClient<$Result.GetResult<Prisma.$RecetaIngredientePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many RecetaIngredientes.
+     * @param {RecetaIngredienteCreateManyArgs} args - Arguments to create many RecetaIngredientes.
+     * @example
+     * // Create many RecetaIngredientes
+     * const recetaIngrediente = await prisma.recetaIngrediente.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends RecetaIngredienteCreateManyArgs>(args?: SelectSubset<T, RecetaIngredienteCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many RecetaIngredientes and returns the data saved in the database.
+     * @param {RecetaIngredienteCreateManyAndReturnArgs} args - Arguments to create many RecetaIngredientes.
+     * @example
+     * // Create many RecetaIngredientes
+     * const recetaIngrediente = await prisma.recetaIngrediente.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many RecetaIngredientes and only return the `id`
+     * const recetaIngredienteWithIdOnly = await prisma.recetaIngrediente.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends RecetaIngredienteCreateManyAndReturnArgs>(args?: SelectSubset<T, RecetaIngredienteCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RecetaIngredientePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a RecetaIngrediente.
+     * @param {RecetaIngredienteDeleteArgs} args - Arguments to delete one RecetaIngrediente.
+     * @example
+     * // Delete one RecetaIngrediente
+     * const RecetaIngrediente = await prisma.recetaIngrediente.delete({
+     *   where: {
+     *     // ... filter to delete one RecetaIngrediente
+     *   }
+     * })
+     * 
+     */
+    delete<T extends RecetaIngredienteDeleteArgs>(args: SelectSubset<T, RecetaIngredienteDeleteArgs<ExtArgs>>): Prisma__RecetaIngredienteClient<$Result.GetResult<Prisma.$RecetaIngredientePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one RecetaIngrediente.
+     * @param {RecetaIngredienteUpdateArgs} args - Arguments to update one RecetaIngrediente.
+     * @example
+     * // Update one RecetaIngrediente
+     * const recetaIngrediente = await prisma.recetaIngrediente.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends RecetaIngredienteUpdateArgs>(args: SelectSubset<T, RecetaIngredienteUpdateArgs<ExtArgs>>): Prisma__RecetaIngredienteClient<$Result.GetResult<Prisma.$RecetaIngredientePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more RecetaIngredientes.
+     * @param {RecetaIngredienteDeleteManyArgs} args - Arguments to filter RecetaIngredientes to delete.
+     * @example
+     * // Delete a few RecetaIngredientes
+     * const { count } = await prisma.recetaIngrediente.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends RecetaIngredienteDeleteManyArgs>(args?: SelectSubset<T, RecetaIngredienteDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more RecetaIngredientes.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecetaIngredienteUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many RecetaIngredientes
+     * const recetaIngrediente = await prisma.recetaIngrediente.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends RecetaIngredienteUpdateManyArgs>(args: SelectSubset<T, RecetaIngredienteUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more RecetaIngredientes and returns the data updated in the database.
+     * @param {RecetaIngredienteUpdateManyAndReturnArgs} args - Arguments to update many RecetaIngredientes.
+     * @example
+     * // Update many RecetaIngredientes
+     * const recetaIngrediente = await prisma.recetaIngrediente.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more RecetaIngredientes and only return the `id`
+     * const recetaIngredienteWithIdOnly = await prisma.recetaIngrediente.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends RecetaIngredienteUpdateManyAndReturnArgs>(args: SelectSubset<T, RecetaIngredienteUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$RecetaIngredientePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one RecetaIngrediente.
+     * @param {RecetaIngredienteUpsertArgs} args - Arguments to update or create a RecetaIngrediente.
+     * @example
+     * // Update or create a RecetaIngrediente
+     * const recetaIngrediente = await prisma.recetaIngrediente.upsert({
+     *   create: {
+     *     // ... data to create a RecetaIngrediente
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the RecetaIngrediente we want to update
+     *   }
+     * })
+     */
+    upsert<T extends RecetaIngredienteUpsertArgs>(args: SelectSubset<T, RecetaIngredienteUpsertArgs<ExtArgs>>): Prisma__RecetaIngredienteClient<$Result.GetResult<Prisma.$RecetaIngredientePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of RecetaIngredientes.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecetaIngredienteCountArgs} args - Arguments to filter RecetaIngredientes to count.
+     * @example
+     * // Count the number of RecetaIngredientes
+     * const count = await prisma.recetaIngrediente.count({
+     *   where: {
+     *     // ... the filter for the RecetaIngredientes we want to count
+     *   }
+     * })
+    **/
+    count<T extends RecetaIngredienteCountArgs>(
+      args?: Subset<T, RecetaIngredienteCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], RecetaIngredienteCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a RecetaIngrediente.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecetaIngredienteAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends RecetaIngredienteAggregateArgs>(args: Subset<T, RecetaIngredienteAggregateArgs>): Prisma.PrismaPromise<GetRecetaIngredienteAggregateType<T>>
+
+    /**
+     * Group by RecetaIngrediente.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {RecetaIngredienteGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends RecetaIngredienteGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: RecetaIngredienteGroupByArgs['orderBy'] }
+        : { orderBy?: RecetaIngredienteGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, RecetaIngredienteGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetRecetaIngredienteGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the RecetaIngrediente model
+   */
+  readonly fields: RecetaIngredienteFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for RecetaIngrediente.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__RecetaIngredienteClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    receta<T extends RecetaDefaultArgs<ExtArgs> = {}>(args?: Subset<T, RecetaDefaultArgs<ExtArgs>>): Prisma__RecetaClient<$Result.GetResult<Prisma.$RecetaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    producto<T extends ProductoDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ProductoDefaultArgs<ExtArgs>>): Prisma__ProductoClient<$Result.GetResult<Prisma.$ProductoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the RecetaIngrediente model
+   */
+  interface RecetaIngredienteFieldRefs {
+    readonly id: FieldRef<"RecetaIngrediente", 'String'>
+    readonly recetaId: FieldRef<"RecetaIngrediente", 'String'>
+    readonly productoId: FieldRef<"RecetaIngrediente", 'String'>
+    readonly cantidad: FieldRef<"RecetaIngrediente", 'Float'>
+    readonly desperdicio: FieldRef<"RecetaIngrediente", 'Float'>
+    readonly createdAt: FieldRef<"RecetaIngrediente", 'DateTime'>
+    readonly updatedAt: FieldRef<"RecetaIngrediente", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * RecetaIngrediente findUnique
+   */
+  export type RecetaIngredienteFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecetaIngrediente
+     */
+    select?: RecetaIngredienteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RecetaIngrediente
+     */
+    omit?: RecetaIngredienteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecetaIngredienteInclude<ExtArgs> | null
+    /**
+     * Filter, which RecetaIngrediente to fetch.
+     */
+    where: RecetaIngredienteWhereUniqueInput
+  }
+
+  /**
+   * RecetaIngrediente findUniqueOrThrow
+   */
+  export type RecetaIngredienteFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecetaIngrediente
+     */
+    select?: RecetaIngredienteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RecetaIngrediente
+     */
+    omit?: RecetaIngredienteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecetaIngredienteInclude<ExtArgs> | null
+    /**
+     * Filter, which RecetaIngrediente to fetch.
+     */
+    where: RecetaIngredienteWhereUniqueInput
+  }
+
+  /**
+   * RecetaIngrediente findFirst
+   */
+  export type RecetaIngredienteFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecetaIngrediente
+     */
+    select?: RecetaIngredienteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RecetaIngrediente
+     */
+    omit?: RecetaIngredienteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecetaIngredienteInclude<ExtArgs> | null
+    /**
+     * Filter, which RecetaIngrediente to fetch.
+     */
+    where?: RecetaIngredienteWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RecetaIngredientes to fetch.
+     */
+    orderBy?: RecetaIngredienteOrderByWithRelationInput | RecetaIngredienteOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RecetaIngredientes.
+     */
+    cursor?: RecetaIngredienteWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RecetaIngredientes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RecetaIngredientes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RecetaIngredientes.
+     */
+    distinct?: RecetaIngredienteScalarFieldEnum | RecetaIngredienteScalarFieldEnum[]
+  }
+
+  /**
+   * RecetaIngrediente findFirstOrThrow
+   */
+  export type RecetaIngredienteFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecetaIngrediente
+     */
+    select?: RecetaIngredienteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RecetaIngrediente
+     */
+    omit?: RecetaIngredienteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecetaIngredienteInclude<ExtArgs> | null
+    /**
+     * Filter, which RecetaIngrediente to fetch.
+     */
+    where?: RecetaIngredienteWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RecetaIngredientes to fetch.
+     */
+    orderBy?: RecetaIngredienteOrderByWithRelationInput | RecetaIngredienteOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for RecetaIngredientes.
+     */
+    cursor?: RecetaIngredienteWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RecetaIngredientes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RecetaIngredientes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of RecetaIngredientes.
+     */
+    distinct?: RecetaIngredienteScalarFieldEnum | RecetaIngredienteScalarFieldEnum[]
+  }
+
+  /**
+   * RecetaIngrediente findMany
+   */
+  export type RecetaIngredienteFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecetaIngrediente
+     */
+    select?: RecetaIngredienteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RecetaIngrediente
+     */
+    omit?: RecetaIngredienteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecetaIngredienteInclude<ExtArgs> | null
+    /**
+     * Filter, which RecetaIngredientes to fetch.
+     */
+    where?: RecetaIngredienteWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of RecetaIngredientes to fetch.
+     */
+    orderBy?: RecetaIngredienteOrderByWithRelationInput | RecetaIngredienteOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing RecetaIngredientes.
+     */
+    cursor?: RecetaIngredienteWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` RecetaIngredientes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` RecetaIngredientes.
+     */
+    skip?: number
+    distinct?: RecetaIngredienteScalarFieldEnum | RecetaIngredienteScalarFieldEnum[]
+  }
+
+  /**
+   * RecetaIngrediente create
+   */
+  export type RecetaIngredienteCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecetaIngrediente
+     */
+    select?: RecetaIngredienteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RecetaIngrediente
+     */
+    omit?: RecetaIngredienteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecetaIngredienteInclude<ExtArgs> | null
+    /**
+     * The data needed to create a RecetaIngrediente.
+     */
+    data: XOR<RecetaIngredienteCreateInput, RecetaIngredienteUncheckedCreateInput>
+  }
+
+  /**
+   * RecetaIngrediente createMany
+   */
+  export type RecetaIngredienteCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many RecetaIngredientes.
+     */
+    data: RecetaIngredienteCreateManyInput | RecetaIngredienteCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * RecetaIngrediente createManyAndReturn
+   */
+  export type RecetaIngredienteCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecetaIngrediente
+     */
+    select?: RecetaIngredienteSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the RecetaIngrediente
+     */
+    omit?: RecetaIngredienteOmit<ExtArgs> | null
+    /**
+     * The data used to create many RecetaIngredientes.
+     */
+    data: RecetaIngredienteCreateManyInput | RecetaIngredienteCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecetaIngredienteIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * RecetaIngrediente update
+   */
+  export type RecetaIngredienteUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecetaIngrediente
+     */
+    select?: RecetaIngredienteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RecetaIngrediente
+     */
+    omit?: RecetaIngredienteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecetaIngredienteInclude<ExtArgs> | null
+    /**
+     * The data needed to update a RecetaIngrediente.
+     */
+    data: XOR<RecetaIngredienteUpdateInput, RecetaIngredienteUncheckedUpdateInput>
+    /**
+     * Choose, which RecetaIngrediente to update.
+     */
+    where: RecetaIngredienteWhereUniqueInput
+  }
+
+  /**
+   * RecetaIngrediente updateMany
+   */
+  export type RecetaIngredienteUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update RecetaIngredientes.
+     */
+    data: XOR<RecetaIngredienteUpdateManyMutationInput, RecetaIngredienteUncheckedUpdateManyInput>
+    /**
+     * Filter which RecetaIngredientes to update
+     */
+    where?: RecetaIngredienteWhereInput
+    /**
+     * Limit how many RecetaIngredientes to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * RecetaIngrediente updateManyAndReturn
+   */
+  export type RecetaIngredienteUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecetaIngrediente
+     */
+    select?: RecetaIngredienteSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the RecetaIngrediente
+     */
+    omit?: RecetaIngredienteOmit<ExtArgs> | null
+    /**
+     * The data used to update RecetaIngredientes.
+     */
+    data: XOR<RecetaIngredienteUpdateManyMutationInput, RecetaIngredienteUncheckedUpdateManyInput>
+    /**
+     * Filter which RecetaIngredientes to update
+     */
+    where?: RecetaIngredienteWhereInput
+    /**
+     * Limit how many RecetaIngredientes to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecetaIngredienteIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * RecetaIngrediente upsert
+   */
+  export type RecetaIngredienteUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecetaIngrediente
+     */
+    select?: RecetaIngredienteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RecetaIngrediente
+     */
+    omit?: RecetaIngredienteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecetaIngredienteInclude<ExtArgs> | null
+    /**
+     * The filter to search for the RecetaIngrediente to update in case it exists.
+     */
+    where: RecetaIngredienteWhereUniqueInput
+    /**
+     * In case the RecetaIngrediente found by the `where` argument doesn't exist, create a new RecetaIngrediente with this data.
+     */
+    create: XOR<RecetaIngredienteCreateInput, RecetaIngredienteUncheckedCreateInput>
+    /**
+     * In case the RecetaIngrediente was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<RecetaIngredienteUpdateInput, RecetaIngredienteUncheckedUpdateInput>
+  }
+
+  /**
+   * RecetaIngrediente delete
+   */
+  export type RecetaIngredienteDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecetaIngrediente
+     */
+    select?: RecetaIngredienteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RecetaIngrediente
+     */
+    omit?: RecetaIngredienteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecetaIngredienteInclude<ExtArgs> | null
+    /**
+     * Filter which RecetaIngrediente to delete.
+     */
+    where: RecetaIngredienteWhereUniqueInput
+  }
+
+  /**
+   * RecetaIngrediente deleteMany
+   */
+  export type RecetaIngredienteDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which RecetaIngredientes to delete
+     */
+    where?: RecetaIngredienteWhereInput
+    /**
+     * Limit how many RecetaIngredientes to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * RecetaIngrediente without action
+   */
+  export type RecetaIngredienteDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the RecetaIngrediente
+     */
+    select?: RecetaIngredienteSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the RecetaIngrediente
+     */
+    omit?: RecetaIngredienteOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: RecetaIngredienteInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model OrdenProduccion
+   */
+
+  export type AggregateOrdenProduccion = {
+    _count: OrdenProduccionCountAggregateOutputType | null
+    _avg: OrdenProduccionAvgAggregateOutputType | null
+    _sum: OrdenProduccionSumAggregateOutputType | null
+    _min: OrdenProduccionMinAggregateOutputType | null
+    _max: OrdenProduccionMaxAggregateOutputType | null
+  }
+
+  export type OrdenProduccionAvgAggregateOutputType = {
+    cantidad: number | null
+    costoMateriales: number | null
+  }
+
+  export type OrdenProduccionSumAggregateOutputType = {
+    cantidad: number | null
+    costoMateriales: number | null
+  }
+
+  export type OrdenProduccionMinAggregateOutputType = {
+    ordenProduccionId: string | null
+    recetaId: string | null
+    cantidad: number | null
+    estado: $Enums.EstadoProduccion | null
+    costoMateriales: number | null
+    observaciones: string | null
+    fechaProduccion: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type OrdenProduccionMaxAggregateOutputType = {
+    ordenProduccionId: string | null
+    recetaId: string | null
+    cantidad: number | null
+    estado: $Enums.EstadoProduccion | null
+    costoMateriales: number | null
+    observaciones: string | null
+    fechaProduccion: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type OrdenProduccionCountAggregateOutputType = {
+    ordenProduccionId: number
+    recetaId: number
+    cantidad: number
+    estado: number
+    costoMateriales: number
+    observaciones: number
+    fechaProduccion: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type OrdenProduccionAvgAggregateInputType = {
+    cantidad?: true
+    costoMateriales?: true
+  }
+
+  export type OrdenProduccionSumAggregateInputType = {
+    cantidad?: true
+    costoMateriales?: true
+  }
+
+  export type OrdenProduccionMinAggregateInputType = {
+    ordenProduccionId?: true
+    recetaId?: true
+    cantidad?: true
+    estado?: true
+    costoMateriales?: true
+    observaciones?: true
+    fechaProduccion?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type OrdenProduccionMaxAggregateInputType = {
+    ordenProduccionId?: true
+    recetaId?: true
+    cantidad?: true
+    estado?: true
+    costoMateriales?: true
+    observaciones?: true
+    fechaProduccion?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type OrdenProduccionCountAggregateInputType = {
+    ordenProduccionId?: true
+    recetaId?: true
+    cantidad?: true
+    estado?: true
+    costoMateriales?: true
+    observaciones?: true
+    fechaProduccion?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type OrdenProduccionAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which OrdenProduccion to aggregate.
+     */
+    where?: OrdenProduccionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrdenProduccions to fetch.
+     */
+    orderBy?: OrdenProduccionOrderByWithRelationInput | OrdenProduccionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: OrdenProduccionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrdenProduccions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrdenProduccions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned OrdenProduccions
+    **/
+    _count?: true | OrdenProduccionCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: OrdenProduccionAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: OrdenProduccionSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: OrdenProduccionMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: OrdenProduccionMaxAggregateInputType
+  }
+
+  export type GetOrdenProduccionAggregateType<T extends OrdenProduccionAggregateArgs> = {
+        [P in keyof T & keyof AggregateOrdenProduccion]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateOrdenProduccion[P]>
+      : GetScalarType<T[P], AggregateOrdenProduccion[P]>
+  }
+
+
+
+
+  export type OrdenProduccionGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OrdenProduccionWhereInput
+    orderBy?: OrdenProduccionOrderByWithAggregationInput | OrdenProduccionOrderByWithAggregationInput[]
+    by: OrdenProduccionScalarFieldEnum[] | OrdenProduccionScalarFieldEnum
+    having?: OrdenProduccionScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: OrdenProduccionCountAggregateInputType | true
+    _avg?: OrdenProduccionAvgAggregateInputType
+    _sum?: OrdenProduccionSumAggregateInputType
+    _min?: OrdenProduccionMinAggregateInputType
+    _max?: OrdenProduccionMaxAggregateInputType
+  }
+
+  export type OrdenProduccionGroupByOutputType = {
+    ordenProduccionId: string
+    recetaId: string
+    cantidad: number
+    estado: $Enums.EstadoProduccion
+    costoMateriales: number | null
+    observaciones: string | null
+    fechaProduccion: Date
+    createdAt: Date
+    updatedAt: Date
+    _count: OrdenProduccionCountAggregateOutputType | null
+    _avg: OrdenProduccionAvgAggregateOutputType | null
+    _sum: OrdenProduccionSumAggregateOutputType | null
+    _min: OrdenProduccionMinAggregateOutputType | null
+    _max: OrdenProduccionMaxAggregateOutputType | null
+  }
+
+  type GetOrdenProduccionGroupByPayload<T extends OrdenProduccionGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<OrdenProduccionGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof OrdenProduccionGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], OrdenProduccionGroupByOutputType[P]>
+            : GetScalarType<T[P], OrdenProduccionGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type OrdenProduccionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    ordenProduccionId?: boolean
+    recetaId?: boolean
+    cantidad?: boolean
+    estado?: boolean
+    costoMateriales?: boolean
+    observaciones?: boolean
+    fechaProduccion?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    receta?: boolean | RecetaDefaultArgs<ExtArgs>
+    historial?: boolean | OrdenProduccion$historialArgs<ExtArgs>
+    _count?: boolean | OrdenProduccionCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["ordenProduccion"]>
+
+  export type OrdenProduccionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    ordenProduccionId?: boolean
+    recetaId?: boolean
+    cantidad?: boolean
+    estado?: boolean
+    costoMateriales?: boolean
+    observaciones?: boolean
+    fechaProduccion?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    receta?: boolean | RecetaDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["ordenProduccion"]>
+
+  export type OrdenProduccionSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    ordenProduccionId?: boolean
+    recetaId?: boolean
+    cantidad?: boolean
+    estado?: boolean
+    costoMateriales?: boolean
+    observaciones?: boolean
+    fechaProduccion?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    receta?: boolean | RecetaDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["ordenProduccion"]>
+
+  export type OrdenProduccionSelectScalar = {
+    ordenProduccionId?: boolean
+    recetaId?: boolean
+    cantidad?: boolean
+    estado?: boolean
+    costoMateriales?: boolean
+    observaciones?: boolean
+    fechaProduccion?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type OrdenProduccionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"ordenProduccionId" | "recetaId" | "cantidad" | "estado" | "costoMateriales" | "observaciones" | "fechaProduccion" | "createdAt" | "updatedAt", ExtArgs["result"]["ordenProduccion"]>
+  export type OrdenProduccionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    receta?: boolean | RecetaDefaultArgs<ExtArgs>
+    historial?: boolean | OrdenProduccion$historialArgs<ExtArgs>
+    _count?: boolean | OrdenProduccionCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type OrdenProduccionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    receta?: boolean | RecetaDefaultArgs<ExtArgs>
+  }
+  export type OrdenProduccionIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    receta?: boolean | RecetaDefaultArgs<ExtArgs>
+  }
+
+  export type $OrdenProduccionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "OrdenProduccion"
+    objects: {
+      receta: Prisma.$RecetaPayload<ExtArgs>
+      historial: Prisma.$OrdenProduccionHistorialPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      ordenProduccionId: string
+      recetaId: string
+      cantidad: number
+      estado: $Enums.EstadoProduccion
+      costoMateriales: number | null
+      observaciones: string | null
+      fechaProduccion: Date
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["ordenProduccion"]>
+    composites: {}
+  }
+
+  type OrdenProduccionGetPayload<S extends boolean | null | undefined | OrdenProduccionDefaultArgs> = $Result.GetResult<Prisma.$OrdenProduccionPayload, S>
+
+  type OrdenProduccionCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<OrdenProduccionFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: OrdenProduccionCountAggregateInputType | true
+    }
+
+  export interface OrdenProduccionDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['OrdenProduccion'], meta: { name: 'OrdenProduccion' } }
+    /**
+     * Find zero or one OrdenProduccion that matches the filter.
+     * @param {OrdenProduccionFindUniqueArgs} args - Arguments to find a OrdenProduccion
+     * @example
+     * // Get one OrdenProduccion
+     * const ordenProduccion = await prisma.ordenProduccion.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends OrdenProduccionFindUniqueArgs>(args: SelectSubset<T, OrdenProduccionFindUniqueArgs<ExtArgs>>): Prisma__OrdenProduccionClient<$Result.GetResult<Prisma.$OrdenProduccionPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one OrdenProduccion that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {OrdenProduccionFindUniqueOrThrowArgs} args - Arguments to find a OrdenProduccion
+     * @example
+     * // Get one OrdenProduccion
+     * const ordenProduccion = await prisma.ordenProduccion.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends OrdenProduccionFindUniqueOrThrowArgs>(args: SelectSubset<T, OrdenProduccionFindUniqueOrThrowArgs<ExtArgs>>): Prisma__OrdenProduccionClient<$Result.GetResult<Prisma.$OrdenProduccionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first OrdenProduccion that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrdenProduccionFindFirstArgs} args - Arguments to find a OrdenProduccion
+     * @example
+     * // Get one OrdenProduccion
+     * const ordenProduccion = await prisma.ordenProduccion.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends OrdenProduccionFindFirstArgs>(args?: SelectSubset<T, OrdenProduccionFindFirstArgs<ExtArgs>>): Prisma__OrdenProduccionClient<$Result.GetResult<Prisma.$OrdenProduccionPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first OrdenProduccion that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrdenProduccionFindFirstOrThrowArgs} args - Arguments to find a OrdenProduccion
+     * @example
+     * // Get one OrdenProduccion
+     * const ordenProduccion = await prisma.ordenProduccion.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends OrdenProduccionFindFirstOrThrowArgs>(args?: SelectSubset<T, OrdenProduccionFindFirstOrThrowArgs<ExtArgs>>): Prisma__OrdenProduccionClient<$Result.GetResult<Prisma.$OrdenProduccionPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more OrdenProduccions that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrdenProduccionFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all OrdenProduccions
+     * const ordenProduccions = await prisma.ordenProduccion.findMany()
+     * 
+     * // Get first 10 OrdenProduccions
+     * const ordenProduccions = await prisma.ordenProduccion.findMany({ take: 10 })
+     * 
+     * // Only select the `ordenProduccionId`
+     * const ordenProduccionWithOrdenProduccionIdOnly = await prisma.ordenProduccion.findMany({ select: { ordenProduccionId: true } })
+     * 
+     */
+    findMany<T extends OrdenProduccionFindManyArgs>(args?: SelectSubset<T, OrdenProduccionFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrdenProduccionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a OrdenProduccion.
+     * @param {OrdenProduccionCreateArgs} args - Arguments to create a OrdenProduccion.
+     * @example
+     * // Create one OrdenProduccion
+     * const OrdenProduccion = await prisma.ordenProduccion.create({
+     *   data: {
+     *     // ... data to create a OrdenProduccion
+     *   }
+     * })
+     * 
+     */
+    create<T extends OrdenProduccionCreateArgs>(args: SelectSubset<T, OrdenProduccionCreateArgs<ExtArgs>>): Prisma__OrdenProduccionClient<$Result.GetResult<Prisma.$OrdenProduccionPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many OrdenProduccions.
+     * @param {OrdenProduccionCreateManyArgs} args - Arguments to create many OrdenProduccions.
+     * @example
+     * // Create many OrdenProduccions
+     * const ordenProduccion = await prisma.ordenProduccion.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends OrdenProduccionCreateManyArgs>(args?: SelectSubset<T, OrdenProduccionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many OrdenProduccions and returns the data saved in the database.
+     * @param {OrdenProduccionCreateManyAndReturnArgs} args - Arguments to create many OrdenProduccions.
+     * @example
+     * // Create many OrdenProduccions
+     * const ordenProduccion = await prisma.ordenProduccion.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many OrdenProduccions and only return the `ordenProduccionId`
+     * const ordenProduccionWithOrdenProduccionIdOnly = await prisma.ordenProduccion.createManyAndReturn({
+     *   select: { ordenProduccionId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends OrdenProduccionCreateManyAndReturnArgs>(args?: SelectSubset<T, OrdenProduccionCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrdenProduccionPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a OrdenProduccion.
+     * @param {OrdenProduccionDeleteArgs} args - Arguments to delete one OrdenProduccion.
+     * @example
+     * // Delete one OrdenProduccion
+     * const OrdenProduccion = await prisma.ordenProduccion.delete({
+     *   where: {
+     *     // ... filter to delete one OrdenProduccion
+     *   }
+     * })
+     * 
+     */
+    delete<T extends OrdenProduccionDeleteArgs>(args: SelectSubset<T, OrdenProduccionDeleteArgs<ExtArgs>>): Prisma__OrdenProduccionClient<$Result.GetResult<Prisma.$OrdenProduccionPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one OrdenProduccion.
+     * @param {OrdenProduccionUpdateArgs} args - Arguments to update one OrdenProduccion.
+     * @example
+     * // Update one OrdenProduccion
+     * const ordenProduccion = await prisma.ordenProduccion.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends OrdenProduccionUpdateArgs>(args: SelectSubset<T, OrdenProduccionUpdateArgs<ExtArgs>>): Prisma__OrdenProduccionClient<$Result.GetResult<Prisma.$OrdenProduccionPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more OrdenProduccions.
+     * @param {OrdenProduccionDeleteManyArgs} args - Arguments to filter OrdenProduccions to delete.
+     * @example
+     * // Delete a few OrdenProduccions
+     * const { count } = await prisma.ordenProduccion.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends OrdenProduccionDeleteManyArgs>(args?: SelectSubset<T, OrdenProduccionDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more OrdenProduccions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrdenProduccionUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many OrdenProduccions
+     * const ordenProduccion = await prisma.ordenProduccion.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends OrdenProduccionUpdateManyArgs>(args: SelectSubset<T, OrdenProduccionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more OrdenProduccions and returns the data updated in the database.
+     * @param {OrdenProduccionUpdateManyAndReturnArgs} args - Arguments to update many OrdenProduccions.
+     * @example
+     * // Update many OrdenProduccions
+     * const ordenProduccion = await prisma.ordenProduccion.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more OrdenProduccions and only return the `ordenProduccionId`
+     * const ordenProduccionWithOrdenProduccionIdOnly = await prisma.ordenProduccion.updateManyAndReturn({
+     *   select: { ordenProduccionId: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends OrdenProduccionUpdateManyAndReturnArgs>(args: SelectSubset<T, OrdenProduccionUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrdenProduccionPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one OrdenProduccion.
+     * @param {OrdenProduccionUpsertArgs} args - Arguments to update or create a OrdenProduccion.
+     * @example
+     * // Update or create a OrdenProduccion
+     * const ordenProduccion = await prisma.ordenProduccion.upsert({
+     *   create: {
+     *     // ... data to create a OrdenProduccion
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the OrdenProduccion we want to update
+     *   }
+     * })
+     */
+    upsert<T extends OrdenProduccionUpsertArgs>(args: SelectSubset<T, OrdenProduccionUpsertArgs<ExtArgs>>): Prisma__OrdenProduccionClient<$Result.GetResult<Prisma.$OrdenProduccionPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of OrdenProduccions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrdenProduccionCountArgs} args - Arguments to filter OrdenProduccions to count.
+     * @example
+     * // Count the number of OrdenProduccions
+     * const count = await prisma.ordenProduccion.count({
+     *   where: {
+     *     // ... the filter for the OrdenProduccions we want to count
+     *   }
+     * })
+    **/
+    count<T extends OrdenProduccionCountArgs>(
+      args?: Subset<T, OrdenProduccionCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], OrdenProduccionCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a OrdenProduccion.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrdenProduccionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends OrdenProduccionAggregateArgs>(args: Subset<T, OrdenProduccionAggregateArgs>): Prisma.PrismaPromise<GetOrdenProduccionAggregateType<T>>
+
+    /**
+     * Group by OrdenProduccion.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrdenProduccionGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends OrdenProduccionGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: OrdenProduccionGroupByArgs['orderBy'] }
+        : { orderBy?: OrdenProduccionGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, OrdenProduccionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetOrdenProduccionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the OrdenProduccion model
+   */
+  readonly fields: OrdenProduccionFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for OrdenProduccion.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__OrdenProduccionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    receta<T extends RecetaDefaultArgs<ExtArgs> = {}>(args?: Subset<T, RecetaDefaultArgs<ExtArgs>>): Prisma__RecetaClient<$Result.GetResult<Prisma.$RecetaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    historial<T extends OrdenProduccion$historialArgs<ExtArgs> = {}>(args?: Subset<T, OrdenProduccion$historialArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrdenProduccionHistorialPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the OrdenProduccion model
+   */
+  interface OrdenProduccionFieldRefs {
+    readonly ordenProduccionId: FieldRef<"OrdenProduccion", 'String'>
+    readonly recetaId: FieldRef<"OrdenProduccion", 'String'>
+    readonly cantidad: FieldRef<"OrdenProduccion", 'Int'>
+    readonly estado: FieldRef<"OrdenProduccion", 'EstadoProduccion'>
+    readonly costoMateriales: FieldRef<"OrdenProduccion", 'Float'>
+    readonly observaciones: FieldRef<"OrdenProduccion", 'String'>
+    readonly fechaProduccion: FieldRef<"OrdenProduccion", 'DateTime'>
+    readonly createdAt: FieldRef<"OrdenProduccion", 'DateTime'>
+    readonly updatedAt: FieldRef<"OrdenProduccion", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * OrdenProduccion findUnique
+   */
+  export type OrdenProduccionFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenProduccion
+     */
+    select?: OrdenProduccionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrdenProduccion
+     */
+    omit?: OrdenProduccionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrdenProduccionInclude<ExtArgs> | null
+    /**
+     * Filter, which OrdenProduccion to fetch.
+     */
+    where: OrdenProduccionWhereUniqueInput
+  }
+
+  /**
+   * OrdenProduccion findUniqueOrThrow
+   */
+  export type OrdenProduccionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenProduccion
+     */
+    select?: OrdenProduccionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrdenProduccion
+     */
+    omit?: OrdenProduccionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrdenProduccionInclude<ExtArgs> | null
+    /**
+     * Filter, which OrdenProduccion to fetch.
+     */
+    where: OrdenProduccionWhereUniqueInput
+  }
+
+  /**
+   * OrdenProduccion findFirst
+   */
+  export type OrdenProduccionFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenProduccion
+     */
+    select?: OrdenProduccionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrdenProduccion
+     */
+    omit?: OrdenProduccionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrdenProduccionInclude<ExtArgs> | null
+    /**
+     * Filter, which OrdenProduccion to fetch.
+     */
+    where?: OrdenProduccionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrdenProduccions to fetch.
+     */
+    orderBy?: OrdenProduccionOrderByWithRelationInput | OrdenProduccionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for OrdenProduccions.
+     */
+    cursor?: OrdenProduccionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrdenProduccions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrdenProduccions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OrdenProduccions.
+     */
+    distinct?: OrdenProduccionScalarFieldEnum | OrdenProduccionScalarFieldEnum[]
+  }
+
+  /**
+   * OrdenProduccion findFirstOrThrow
+   */
+  export type OrdenProduccionFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenProduccion
+     */
+    select?: OrdenProduccionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrdenProduccion
+     */
+    omit?: OrdenProduccionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrdenProduccionInclude<ExtArgs> | null
+    /**
+     * Filter, which OrdenProduccion to fetch.
+     */
+    where?: OrdenProduccionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrdenProduccions to fetch.
+     */
+    orderBy?: OrdenProduccionOrderByWithRelationInput | OrdenProduccionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for OrdenProduccions.
+     */
+    cursor?: OrdenProduccionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrdenProduccions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrdenProduccions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OrdenProduccions.
+     */
+    distinct?: OrdenProduccionScalarFieldEnum | OrdenProduccionScalarFieldEnum[]
+  }
+
+  /**
+   * OrdenProduccion findMany
+   */
+  export type OrdenProduccionFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenProduccion
+     */
+    select?: OrdenProduccionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrdenProduccion
+     */
+    omit?: OrdenProduccionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrdenProduccionInclude<ExtArgs> | null
+    /**
+     * Filter, which OrdenProduccions to fetch.
+     */
+    where?: OrdenProduccionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrdenProduccions to fetch.
+     */
+    orderBy?: OrdenProduccionOrderByWithRelationInput | OrdenProduccionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing OrdenProduccions.
+     */
+    cursor?: OrdenProduccionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrdenProduccions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrdenProduccions.
+     */
+    skip?: number
+    distinct?: OrdenProduccionScalarFieldEnum | OrdenProduccionScalarFieldEnum[]
+  }
+
+  /**
+   * OrdenProduccion create
+   */
+  export type OrdenProduccionCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenProduccion
+     */
+    select?: OrdenProduccionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrdenProduccion
+     */
+    omit?: OrdenProduccionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrdenProduccionInclude<ExtArgs> | null
+    /**
+     * The data needed to create a OrdenProduccion.
+     */
+    data: XOR<OrdenProduccionCreateInput, OrdenProduccionUncheckedCreateInput>
+  }
+
+  /**
+   * OrdenProduccion createMany
+   */
+  export type OrdenProduccionCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many OrdenProduccions.
+     */
+    data: OrdenProduccionCreateManyInput | OrdenProduccionCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * OrdenProduccion createManyAndReturn
+   */
+  export type OrdenProduccionCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenProduccion
+     */
+    select?: OrdenProduccionSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrdenProduccion
+     */
+    omit?: OrdenProduccionOmit<ExtArgs> | null
+    /**
+     * The data used to create many OrdenProduccions.
+     */
+    data: OrdenProduccionCreateManyInput | OrdenProduccionCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrdenProduccionIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * OrdenProduccion update
+   */
+  export type OrdenProduccionUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenProduccion
+     */
+    select?: OrdenProduccionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrdenProduccion
+     */
+    omit?: OrdenProduccionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrdenProduccionInclude<ExtArgs> | null
+    /**
+     * The data needed to update a OrdenProduccion.
+     */
+    data: XOR<OrdenProduccionUpdateInput, OrdenProduccionUncheckedUpdateInput>
+    /**
+     * Choose, which OrdenProduccion to update.
+     */
+    where: OrdenProduccionWhereUniqueInput
+  }
+
+  /**
+   * OrdenProduccion updateMany
+   */
+  export type OrdenProduccionUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update OrdenProduccions.
+     */
+    data: XOR<OrdenProduccionUpdateManyMutationInput, OrdenProduccionUncheckedUpdateManyInput>
+    /**
+     * Filter which OrdenProduccions to update
+     */
+    where?: OrdenProduccionWhereInput
+    /**
+     * Limit how many OrdenProduccions to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * OrdenProduccion updateManyAndReturn
+   */
+  export type OrdenProduccionUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenProduccion
+     */
+    select?: OrdenProduccionSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrdenProduccion
+     */
+    omit?: OrdenProduccionOmit<ExtArgs> | null
+    /**
+     * The data used to update OrdenProduccions.
+     */
+    data: XOR<OrdenProduccionUpdateManyMutationInput, OrdenProduccionUncheckedUpdateManyInput>
+    /**
+     * Filter which OrdenProduccions to update
+     */
+    where?: OrdenProduccionWhereInput
+    /**
+     * Limit how many OrdenProduccions to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrdenProduccionIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * OrdenProduccion upsert
+   */
+  export type OrdenProduccionUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenProduccion
+     */
+    select?: OrdenProduccionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrdenProduccion
+     */
+    omit?: OrdenProduccionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrdenProduccionInclude<ExtArgs> | null
+    /**
+     * The filter to search for the OrdenProduccion to update in case it exists.
+     */
+    where: OrdenProduccionWhereUniqueInput
+    /**
+     * In case the OrdenProduccion found by the `where` argument doesn't exist, create a new OrdenProduccion with this data.
+     */
+    create: XOR<OrdenProduccionCreateInput, OrdenProduccionUncheckedCreateInput>
+    /**
+     * In case the OrdenProduccion was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<OrdenProduccionUpdateInput, OrdenProduccionUncheckedUpdateInput>
+  }
+
+  /**
+   * OrdenProduccion delete
+   */
+  export type OrdenProduccionDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenProduccion
+     */
+    select?: OrdenProduccionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrdenProduccion
+     */
+    omit?: OrdenProduccionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrdenProduccionInclude<ExtArgs> | null
+    /**
+     * Filter which OrdenProduccion to delete.
+     */
+    where: OrdenProduccionWhereUniqueInput
+  }
+
+  /**
+   * OrdenProduccion deleteMany
+   */
+  export type OrdenProduccionDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which OrdenProduccions to delete
+     */
+    where?: OrdenProduccionWhereInput
+    /**
+     * Limit how many OrdenProduccions to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * OrdenProduccion.historial
+   */
+  export type OrdenProduccion$historialArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenProduccionHistorial
+     */
+    select?: OrdenProduccionHistorialSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrdenProduccionHistorial
+     */
+    omit?: OrdenProduccionHistorialOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrdenProduccionHistorialInclude<ExtArgs> | null
+    where?: OrdenProduccionHistorialWhereInput
+    orderBy?: OrdenProduccionHistorialOrderByWithRelationInput | OrdenProduccionHistorialOrderByWithRelationInput[]
+    cursor?: OrdenProduccionHistorialWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: OrdenProduccionHistorialScalarFieldEnum | OrdenProduccionHistorialScalarFieldEnum[]
+  }
+
+  /**
+   * OrdenProduccion without action
+   */
+  export type OrdenProduccionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenProduccion
+     */
+    select?: OrdenProduccionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrdenProduccion
+     */
+    omit?: OrdenProduccionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrdenProduccionInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model OrdenProduccionHistorial
+   */
+
+  export type AggregateOrdenProduccionHistorial = {
+    _count: OrdenProduccionHistorialCountAggregateOutputType | null
+    _min: OrdenProduccionHistorialMinAggregateOutputType | null
+    _max: OrdenProduccionHistorialMaxAggregateOutputType | null
+  }
+
+  export type OrdenProduccionHistorialMinAggregateOutputType = {
+    id: string | null
+    ordenProduccionId: string | null
+    estadoAnterior: string | null
+    estadoNuevo: string | null
+    observaciones: string | null
+    usuarioId: string | null
+    createdAt: Date | null
+  }
+
+  export type OrdenProduccionHistorialMaxAggregateOutputType = {
+    id: string | null
+    ordenProduccionId: string | null
+    estadoAnterior: string | null
+    estadoNuevo: string | null
+    observaciones: string | null
+    usuarioId: string | null
+    createdAt: Date | null
+  }
+
+  export type OrdenProduccionHistorialCountAggregateOutputType = {
+    id: number
+    ordenProduccionId: number
+    estadoAnterior: number
+    estadoNuevo: number
+    observaciones: number
+    usuarioId: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type OrdenProduccionHistorialMinAggregateInputType = {
+    id?: true
+    ordenProduccionId?: true
+    estadoAnterior?: true
+    estadoNuevo?: true
+    observaciones?: true
+    usuarioId?: true
+    createdAt?: true
+  }
+
+  export type OrdenProduccionHistorialMaxAggregateInputType = {
+    id?: true
+    ordenProduccionId?: true
+    estadoAnterior?: true
+    estadoNuevo?: true
+    observaciones?: true
+    usuarioId?: true
+    createdAt?: true
+  }
+
+  export type OrdenProduccionHistorialCountAggregateInputType = {
+    id?: true
+    ordenProduccionId?: true
+    estadoAnterior?: true
+    estadoNuevo?: true
+    observaciones?: true
+    usuarioId?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type OrdenProduccionHistorialAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which OrdenProduccionHistorial to aggregate.
+     */
+    where?: OrdenProduccionHistorialWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrdenProduccionHistorials to fetch.
+     */
+    orderBy?: OrdenProduccionHistorialOrderByWithRelationInput | OrdenProduccionHistorialOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: OrdenProduccionHistorialWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrdenProduccionHistorials from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrdenProduccionHistorials.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned OrdenProduccionHistorials
+    **/
+    _count?: true | OrdenProduccionHistorialCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: OrdenProduccionHistorialMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: OrdenProduccionHistorialMaxAggregateInputType
+  }
+
+  export type GetOrdenProduccionHistorialAggregateType<T extends OrdenProduccionHistorialAggregateArgs> = {
+        [P in keyof T & keyof AggregateOrdenProduccionHistorial]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateOrdenProduccionHistorial[P]>
+      : GetScalarType<T[P], AggregateOrdenProduccionHistorial[P]>
+  }
+
+
+
+
+  export type OrdenProduccionHistorialGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: OrdenProduccionHistorialWhereInput
+    orderBy?: OrdenProduccionHistorialOrderByWithAggregationInput | OrdenProduccionHistorialOrderByWithAggregationInput[]
+    by: OrdenProduccionHistorialScalarFieldEnum[] | OrdenProduccionHistorialScalarFieldEnum
+    having?: OrdenProduccionHistorialScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: OrdenProduccionHistorialCountAggregateInputType | true
+    _min?: OrdenProduccionHistorialMinAggregateInputType
+    _max?: OrdenProduccionHistorialMaxAggregateInputType
+  }
+
+  export type OrdenProduccionHistorialGroupByOutputType = {
+    id: string
+    ordenProduccionId: string
+    estadoAnterior: string
+    estadoNuevo: string
+    observaciones: string | null
+    usuarioId: string | null
+    createdAt: Date
+    _count: OrdenProduccionHistorialCountAggregateOutputType | null
+    _min: OrdenProduccionHistorialMinAggregateOutputType | null
+    _max: OrdenProduccionHistorialMaxAggregateOutputType | null
+  }
+
+  type GetOrdenProduccionHistorialGroupByPayload<T extends OrdenProduccionHistorialGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<OrdenProduccionHistorialGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof OrdenProduccionHistorialGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], OrdenProduccionHistorialGroupByOutputType[P]>
+            : GetScalarType<T[P], OrdenProduccionHistorialGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type OrdenProduccionHistorialSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    ordenProduccionId?: boolean
+    estadoAnterior?: boolean
+    estadoNuevo?: boolean
+    observaciones?: boolean
+    usuarioId?: boolean
+    createdAt?: boolean
+    orden?: boolean | OrdenProduccionDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["ordenProduccionHistorial"]>
+
+  export type OrdenProduccionHistorialSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    ordenProduccionId?: boolean
+    estadoAnterior?: boolean
+    estadoNuevo?: boolean
+    observaciones?: boolean
+    usuarioId?: boolean
+    createdAt?: boolean
+    orden?: boolean | OrdenProduccionDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["ordenProduccionHistorial"]>
+
+  export type OrdenProduccionHistorialSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    ordenProduccionId?: boolean
+    estadoAnterior?: boolean
+    estadoNuevo?: boolean
+    observaciones?: boolean
+    usuarioId?: boolean
+    createdAt?: boolean
+    orden?: boolean | OrdenProduccionDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["ordenProduccionHistorial"]>
+
+  export type OrdenProduccionHistorialSelectScalar = {
+    id?: boolean
+    ordenProduccionId?: boolean
+    estadoAnterior?: boolean
+    estadoNuevo?: boolean
+    observaciones?: boolean
+    usuarioId?: boolean
+    createdAt?: boolean
+  }
+
+  export type OrdenProduccionHistorialOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "ordenProduccionId" | "estadoAnterior" | "estadoNuevo" | "observaciones" | "usuarioId" | "createdAt", ExtArgs["result"]["ordenProduccionHistorial"]>
+  export type OrdenProduccionHistorialInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    orden?: boolean | OrdenProduccionDefaultArgs<ExtArgs>
+  }
+  export type OrdenProduccionHistorialIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    orden?: boolean | OrdenProduccionDefaultArgs<ExtArgs>
+  }
+  export type OrdenProduccionHistorialIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    orden?: boolean | OrdenProduccionDefaultArgs<ExtArgs>
+  }
+
+  export type $OrdenProduccionHistorialPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "OrdenProduccionHistorial"
+    objects: {
+      orden: Prisma.$OrdenProduccionPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      ordenProduccionId: string
+      estadoAnterior: string
+      estadoNuevo: string
+      observaciones: string | null
+      usuarioId: string | null
+      createdAt: Date
+    }, ExtArgs["result"]["ordenProduccionHistorial"]>
+    composites: {}
+  }
+
+  type OrdenProduccionHistorialGetPayload<S extends boolean | null | undefined | OrdenProduccionHistorialDefaultArgs> = $Result.GetResult<Prisma.$OrdenProduccionHistorialPayload, S>
+
+  type OrdenProduccionHistorialCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<OrdenProduccionHistorialFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: OrdenProduccionHistorialCountAggregateInputType | true
+    }
+
+  export interface OrdenProduccionHistorialDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['OrdenProduccionHistorial'], meta: { name: 'OrdenProduccionHistorial' } }
+    /**
+     * Find zero or one OrdenProduccionHistorial that matches the filter.
+     * @param {OrdenProduccionHistorialFindUniqueArgs} args - Arguments to find a OrdenProduccionHistorial
+     * @example
+     * // Get one OrdenProduccionHistorial
+     * const ordenProduccionHistorial = await prisma.ordenProduccionHistorial.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends OrdenProduccionHistorialFindUniqueArgs>(args: SelectSubset<T, OrdenProduccionHistorialFindUniqueArgs<ExtArgs>>): Prisma__OrdenProduccionHistorialClient<$Result.GetResult<Prisma.$OrdenProduccionHistorialPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one OrdenProduccionHistorial that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {OrdenProduccionHistorialFindUniqueOrThrowArgs} args - Arguments to find a OrdenProduccionHistorial
+     * @example
+     * // Get one OrdenProduccionHistorial
+     * const ordenProduccionHistorial = await prisma.ordenProduccionHistorial.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends OrdenProduccionHistorialFindUniqueOrThrowArgs>(args: SelectSubset<T, OrdenProduccionHistorialFindUniqueOrThrowArgs<ExtArgs>>): Prisma__OrdenProduccionHistorialClient<$Result.GetResult<Prisma.$OrdenProduccionHistorialPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first OrdenProduccionHistorial that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrdenProduccionHistorialFindFirstArgs} args - Arguments to find a OrdenProduccionHistorial
+     * @example
+     * // Get one OrdenProduccionHistorial
+     * const ordenProduccionHistorial = await prisma.ordenProduccionHistorial.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends OrdenProduccionHistorialFindFirstArgs>(args?: SelectSubset<T, OrdenProduccionHistorialFindFirstArgs<ExtArgs>>): Prisma__OrdenProduccionHistorialClient<$Result.GetResult<Prisma.$OrdenProduccionHistorialPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first OrdenProduccionHistorial that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrdenProduccionHistorialFindFirstOrThrowArgs} args - Arguments to find a OrdenProduccionHistorial
+     * @example
+     * // Get one OrdenProduccionHistorial
+     * const ordenProduccionHistorial = await prisma.ordenProduccionHistorial.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends OrdenProduccionHistorialFindFirstOrThrowArgs>(args?: SelectSubset<T, OrdenProduccionHistorialFindFirstOrThrowArgs<ExtArgs>>): Prisma__OrdenProduccionHistorialClient<$Result.GetResult<Prisma.$OrdenProduccionHistorialPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more OrdenProduccionHistorials that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrdenProduccionHistorialFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all OrdenProduccionHistorials
+     * const ordenProduccionHistorials = await prisma.ordenProduccionHistorial.findMany()
+     * 
+     * // Get first 10 OrdenProduccionHistorials
+     * const ordenProduccionHistorials = await prisma.ordenProduccionHistorial.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const ordenProduccionHistorialWithIdOnly = await prisma.ordenProduccionHistorial.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends OrdenProduccionHistorialFindManyArgs>(args?: SelectSubset<T, OrdenProduccionHistorialFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrdenProduccionHistorialPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a OrdenProduccionHistorial.
+     * @param {OrdenProduccionHistorialCreateArgs} args - Arguments to create a OrdenProduccionHistorial.
+     * @example
+     * // Create one OrdenProduccionHistorial
+     * const OrdenProduccionHistorial = await prisma.ordenProduccionHistorial.create({
+     *   data: {
+     *     // ... data to create a OrdenProduccionHistorial
+     *   }
+     * })
+     * 
+     */
+    create<T extends OrdenProduccionHistorialCreateArgs>(args: SelectSubset<T, OrdenProduccionHistorialCreateArgs<ExtArgs>>): Prisma__OrdenProduccionHistorialClient<$Result.GetResult<Prisma.$OrdenProduccionHistorialPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many OrdenProduccionHistorials.
+     * @param {OrdenProduccionHistorialCreateManyArgs} args - Arguments to create many OrdenProduccionHistorials.
+     * @example
+     * // Create many OrdenProduccionHistorials
+     * const ordenProduccionHistorial = await prisma.ordenProduccionHistorial.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends OrdenProduccionHistorialCreateManyArgs>(args?: SelectSubset<T, OrdenProduccionHistorialCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many OrdenProduccionHistorials and returns the data saved in the database.
+     * @param {OrdenProduccionHistorialCreateManyAndReturnArgs} args - Arguments to create many OrdenProduccionHistorials.
+     * @example
+     * // Create many OrdenProduccionHistorials
+     * const ordenProduccionHistorial = await prisma.ordenProduccionHistorial.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many OrdenProduccionHistorials and only return the `id`
+     * const ordenProduccionHistorialWithIdOnly = await prisma.ordenProduccionHistorial.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends OrdenProduccionHistorialCreateManyAndReturnArgs>(args?: SelectSubset<T, OrdenProduccionHistorialCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrdenProduccionHistorialPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a OrdenProduccionHistorial.
+     * @param {OrdenProduccionHistorialDeleteArgs} args - Arguments to delete one OrdenProduccionHistorial.
+     * @example
+     * // Delete one OrdenProduccionHistorial
+     * const OrdenProduccionHistorial = await prisma.ordenProduccionHistorial.delete({
+     *   where: {
+     *     // ... filter to delete one OrdenProduccionHistorial
+     *   }
+     * })
+     * 
+     */
+    delete<T extends OrdenProduccionHistorialDeleteArgs>(args: SelectSubset<T, OrdenProduccionHistorialDeleteArgs<ExtArgs>>): Prisma__OrdenProduccionHistorialClient<$Result.GetResult<Prisma.$OrdenProduccionHistorialPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one OrdenProduccionHistorial.
+     * @param {OrdenProduccionHistorialUpdateArgs} args - Arguments to update one OrdenProduccionHistorial.
+     * @example
+     * // Update one OrdenProduccionHistorial
+     * const ordenProduccionHistorial = await prisma.ordenProduccionHistorial.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends OrdenProduccionHistorialUpdateArgs>(args: SelectSubset<T, OrdenProduccionHistorialUpdateArgs<ExtArgs>>): Prisma__OrdenProduccionHistorialClient<$Result.GetResult<Prisma.$OrdenProduccionHistorialPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more OrdenProduccionHistorials.
+     * @param {OrdenProduccionHistorialDeleteManyArgs} args - Arguments to filter OrdenProduccionHistorials to delete.
+     * @example
+     * // Delete a few OrdenProduccionHistorials
+     * const { count } = await prisma.ordenProduccionHistorial.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends OrdenProduccionHistorialDeleteManyArgs>(args?: SelectSubset<T, OrdenProduccionHistorialDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more OrdenProduccionHistorials.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrdenProduccionHistorialUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many OrdenProduccionHistorials
+     * const ordenProduccionHistorial = await prisma.ordenProduccionHistorial.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends OrdenProduccionHistorialUpdateManyArgs>(args: SelectSubset<T, OrdenProduccionHistorialUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more OrdenProduccionHistorials and returns the data updated in the database.
+     * @param {OrdenProduccionHistorialUpdateManyAndReturnArgs} args - Arguments to update many OrdenProduccionHistorials.
+     * @example
+     * // Update many OrdenProduccionHistorials
+     * const ordenProduccionHistorial = await prisma.ordenProduccionHistorial.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more OrdenProduccionHistorials and only return the `id`
+     * const ordenProduccionHistorialWithIdOnly = await prisma.ordenProduccionHistorial.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends OrdenProduccionHistorialUpdateManyAndReturnArgs>(args: SelectSubset<T, OrdenProduccionHistorialUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrdenProduccionHistorialPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one OrdenProduccionHistorial.
+     * @param {OrdenProduccionHistorialUpsertArgs} args - Arguments to update or create a OrdenProduccionHistorial.
+     * @example
+     * // Update or create a OrdenProduccionHistorial
+     * const ordenProduccionHistorial = await prisma.ordenProduccionHistorial.upsert({
+     *   create: {
+     *     // ... data to create a OrdenProduccionHistorial
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the OrdenProduccionHistorial we want to update
+     *   }
+     * })
+     */
+    upsert<T extends OrdenProduccionHistorialUpsertArgs>(args: SelectSubset<T, OrdenProduccionHistorialUpsertArgs<ExtArgs>>): Prisma__OrdenProduccionHistorialClient<$Result.GetResult<Prisma.$OrdenProduccionHistorialPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of OrdenProduccionHistorials.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrdenProduccionHistorialCountArgs} args - Arguments to filter OrdenProduccionHistorials to count.
+     * @example
+     * // Count the number of OrdenProduccionHistorials
+     * const count = await prisma.ordenProduccionHistorial.count({
+     *   where: {
+     *     // ... the filter for the OrdenProduccionHistorials we want to count
+     *   }
+     * })
+    **/
+    count<T extends OrdenProduccionHistorialCountArgs>(
+      args?: Subset<T, OrdenProduccionHistorialCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], OrdenProduccionHistorialCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a OrdenProduccionHistorial.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrdenProduccionHistorialAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends OrdenProduccionHistorialAggregateArgs>(args: Subset<T, OrdenProduccionHistorialAggregateArgs>): Prisma.PrismaPromise<GetOrdenProduccionHistorialAggregateType<T>>
+
+    /**
+     * Group by OrdenProduccionHistorial.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {OrdenProduccionHistorialGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends OrdenProduccionHistorialGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: OrdenProduccionHistorialGroupByArgs['orderBy'] }
+        : { orderBy?: OrdenProduccionHistorialGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, OrdenProduccionHistorialGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetOrdenProduccionHistorialGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the OrdenProduccionHistorial model
+   */
+  readonly fields: OrdenProduccionHistorialFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for OrdenProduccionHistorial.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__OrdenProduccionHistorialClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    orden<T extends OrdenProduccionDefaultArgs<ExtArgs> = {}>(args?: Subset<T, OrdenProduccionDefaultArgs<ExtArgs>>): Prisma__OrdenProduccionClient<$Result.GetResult<Prisma.$OrdenProduccionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the OrdenProduccionHistorial model
+   */
+  interface OrdenProduccionHistorialFieldRefs {
+    readonly id: FieldRef<"OrdenProduccionHistorial", 'String'>
+    readonly ordenProduccionId: FieldRef<"OrdenProduccionHistorial", 'String'>
+    readonly estadoAnterior: FieldRef<"OrdenProduccionHistorial", 'String'>
+    readonly estadoNuevo: FieldRef<"OrdenProduccionHistorial", 'String'>
+    readonly observaciones: FieldRef<"OrdenProduccionHistorial", 'String'>
+    readonly usuarioId: FieldRef<"OrdenProduccionHistorial", 'String'>
+    readonly createdAt: FieldRef<"OrdenProduccionHistorial", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * OrdenProduccionHistorial findUnique
+   */
+  export type OrdenProduccionHistorialFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenProduccionHistorial
+     */
+    select?: OrdenProduccionHistorialSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrdenProduccionHistorial
+     */
+    omit?: OrdenProduccionHistorialOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrdenProduccionHistorialInclude<ExtArgs> | null
+    /**
+     * Filter, which OrdenProduccionHistorial to fetch.
+     */
+    where: OrdenProduccionHistorialWhereUniqueInput
+  }
+
+  /**
+   * OrdenProduccionHistorial findUniqueOrThrow
+   */
+  export type OrdenProduccionHistorialFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenProduccionHistorial
+     */
+    select?: OrdenProduccionHistorialSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrdenProduccionHistorial
+     */
+    omit?: OrdenProduccionHistorialOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrdenProduccionHistorialInclude<ExtArgs> | null
+    /**
+     * Filter, which OrdenProduccionHistorial to fetch.
+     */
+    where: OrdenProduccionHistorialWhereUniqueInput
+  }
+
+  /**
+   * OrdenProduccionHistorial findFirst
+   */
+  export type OrdenProduccionHistorialFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenProduccionHistorial
+     */
+    select?: OrdenProduccionHistorialSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrdenProduccionHistorial
+     */
+    omit?: OrdenProduccionHistorialOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrdenProduccionHistorialInclude<ExtArgs> | null
+    /**
+     * Filter, which OrdenProduccionHistorial to fetch.
+     */
+    where?: OrdenProduccionHistorialWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrdenProduccionHistorials to fetch.
+     */
+    orderBy?: OrdenProduccionHistorialOrderByWithRelationInput | OrdenProduccionHistorialOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for OrdenProduccionHistorials.
+     */
+    cursor?: OrdenProduccionHistorialWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrdenProduccionHistorials from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrdenProduccionHistorials.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OrdenProduccionHistorials.
+     */
+    distinct?: OrdenProduccionHistorialScalarFieldEnum | OrdenProduccionHistorialScalarFieldEnum[]
+  }
+
+  /**
+   * OrdenProduccionHistorial findFirstOrThrow
+   */
+  export type OrdenProduccionHistorialFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenProduccionHistorial
+     */
+    select?: OrdenProduccionHistorialSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrdenProduccionHistorial
+     */
+    omit?: OrdenProduccionHistorialOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrdenProduccionHistorialInclude<ExtArgs> | null
+    /**
+     * Filter, which OrdenProduccionHistorial to fetch.
+     */
+    where?: OrdenProduccionHistorialWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrdenProduccionHistorials to fetch.
+     */
+    orderBy?: OrdenProduccionHistorialOrderByWithRelationInput | OrdenProduccionHistorialOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for OrdenProduccionHistorials.
+     */
+    cursor?: OrdenProduccionHistorialWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrdenProduccionHistorials from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrdenProduccionHistorials.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of OrdenProduccionHistorials.
+     */
+    distinct?: OrdenProduccionHistorialScalarFieldEnum | OrdenProduccionHistorialScalarFieldEnum[]
+  }
+
+  /**
+   * OrdenProduccionHistorial findMany
+   */
+  export type OrdenProduccionHistorialFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenProduccionHistorial
+     */
+    select?: OrdenProduccionHistorialSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrdenProduccionHistorial
+     */
+    omit?: OrdenProduccionHistorialOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrdenProduccionHistorialInclude<ExtArgs> | null
+    /**
+     * Filter, which OrdenProduccionHistorials to fetch.
+     */
+    where?: OrdenProduccionHistorialWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of OrdenProduccionHistorials to fetch.
+     */
+    orderBy?: OrdenProduccionHistorialOrderByWithRelationInput | OrdenProduccionHistorialOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing OrdenProduccionHistorials.
+     */
+    cursor?: OrdenProduccionHistorialWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` OrdenProduccionHistorials from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` OrdenProduccionHistorials.
+     */
+    skip?: number
+    distinct?: OrdenProduccionHistorialScalarFieldEnum | OrdenProduccionHistorialScalarFieldEnum[]
+  }
+
+  /**
+   * OrdenProduccionHistorial create
+   */
+  export type OrdenProduccionHistorialCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenProduccionHistorial
+     */
+    select?: OrdenProduccionHistorialSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrdenProduccionHistorial
+     */
+    omit?: OrdenProduccionHistorialOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrdenProduccionHistorialInclude<ExtArgs> | null
+    /**
+     * The data needed to create a OrdenProduccionHistorial.
+     */
+    data: XOR<OrdenProduccionHistorialCreateInput, OrdenProduccionHistorialUncheckedCreateInput>
+  }
+
+  /**
+   * OrdenProduccionHistorial createMany
+   */
+  export type OrdenProduccionHistorialCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many OrdenProduccionHistorials.
+     */
+    data: OrdenProduccionHistorialCreateManyInput | OrdenProduccionHistorialCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * OrdenProduccionHistorial createManyAndReturn
+   */
+  export type OrdenProduccionHistorialCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenProduccionHistorial
+     */
+    select?: OrdenProduccionHistorialSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrdenProduccionHistorial
+     */
+    omit?: OrdenProduccionHistorialOmit<ExtArgs> | null
+    /**
+     * The data used to create many OrdenProduccionHistorials.
+     */
+    data: OrdenProduccionHistorialCreateManyInput | OrdenProduccionHistorialCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrdenProduccionHistorialIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * OrdenProduccionHistorial update
+   */
+  export type OrdenProduccionHistorialUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenProduccionHistorial
+     */
+    select?: OrdenProduccionHistorialSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrdenProduccionHistorial
+     */
+    omit?: OrdenProduccionHistorialOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrdenProduccionHistorialInclude<ExtArgs> | null
+    /**
+     * The data needed to update a OrdenProduccionHistorial.
+     */
+    data: XOR<OrdenProduccionHistorialUpdateInput, OrdenProduccionHistorialUncheckedUpdateInput>
+    /**
+     * Choose, which OrdenProduccionHistorial to update.
+     */
+    where: OrdenProduccionHistorialWhereUniqueInput
+  }
+
+  /**
+   * OrdenProduccionHistorial updateMany
+   */
+  export type OrdenProduccionHistorialUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update OrdenProduccionHistorials.
+     */
+    data: XOR<OrdenProduccionHistorialUpdateManyMutationInput, OrdenProduccionHistorialUncheckedUpdateManyInput>
+    /**
+     * Filter which OrdenProduccionHistorials to update
+     */
+    where?: OrdenProduccionHistorialWhereInput
+    /**
+     * Limit how many OrdenProduccionHistorials to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * OrdenProduccionHistorial updateManyAndReturn
+   */
+  export type OrdenProduccionHistorialUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenProduccionHistorial
+     */
+    select?: OrdenProduccionHistorialSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrdenProduccionHistorial
+     */
+    omit?: OrdenProduccionHistorialOmit<ExtArgs> | null
+    /**
+     * The data used to update OrdenProduccionHistorials.
+     */
+    data: XOR<OrdenProduccionHistorialUpdateManyMutationInput, OrdenProduccionHistorialUncheckedUpdateManyInput>
+    /**
+     * Filter which OrdenProduccionHistorials to update
+     */
+    where?: OrdenProduccionHistorialWhereInput
+    /**
+     * Limit how many OrdenProduccionHistorials to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrdenProduccionHistorialIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * OrdenProduccionHistorial upsert
+   */
+  export type OrdenProduccionHistorialUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenProduccionHistorial
+     */
+    select?: OrdenProduccionHistorialSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrdenProduccionHistorial
+     */
+    omit?: OrdenProduccionHistorialOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrdenProduccionHistorialInclude<ExtArgs> | null
+    /**
+     * The filter to search for the OrdenProduccionHistorial to update in case it exists.
+     */
+    where: OrdenProduccionHistorialWhereUniqueInput
+    /**
+     * In case the OrdenProduccionHistorial found by the `where` argument doesn't exist, create a new OrdenProduccionHistorial with this data.
+     */
+    create: XOR<OrdenProduccionHistorialCreateInput, OrdenProduccionHistorialUncheckedCreateInput>
+    /**
+     * In case the OrdenProduccionHistorial was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<OrdenProduccionHistorialUpdateInput, OrdenProduccionHistorialUncheckedUpdateInput>
+  }
+
+  /**
+   * OrdenProduccionHistorial delete
+   */
+  export type OrdenProduccionHistorialDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenProduccionHistorial
+     */
+    select?: OrdenProduccionHistorialSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrdenProduccionHistorial
+     */
+    omit?: OrdenProduccionHistorialOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrdenProduccionHistorialInclude<ExtArgs> | null
+    /**
+     * Filter which OrdenProduccionHistorial to delete.
+     */
+    where: OrdenProduccionHistorialWhereUniqueInput
+  }
+
+  /**
+   * OrdenProduccionHistorial deleteMany
+   */
+  export type OrdenProduccionHistorialDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which OrdenProduccionHistorials to delete
+     */
+    where?: OrdenProduccionHistorialWhereInput
+    /**
+     * Limit how many OrdenProduccionHistorials to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * OrdenProduccionHistorial without action
+   */
+  export type OrdenProduccionHistorialDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the OrdenProduccionHistorial
+     */
+    select?: OrdenProduccionHistorialSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the OrdenProduccionHistorial
+     */
+    omit?: OrdenProduccionHistorialOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: OrdenProduccionHistorialInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model ValeSalida
+   */
+
+  export type AggregateValeSalida = {
+    _count: ValeSalidaCountAggregateOutputType | null
+    _min: ValeSalidaMinAggregateOutputType | null
+    _max: ValeSalidaMaxAggregateOutputType | null
+  }
+
+  export type ValeSalidaMinAggregateOutputType = {
+    valeSalidaId: string | null
+    concepto: string | null
+    estado: string | null
+    observaciones: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ValeSalidaMaxAggregateOutputType = {
+    valeSalidaId: string | null
+    concepto: string | null
+    estado: string | null
+    observaciones: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type ValeSalidaCountAggregateOutputType = {
+    valeSalidaId: number
+    concepto: number
+    estado: number
+    observaciones: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type ValeSalidaMinAggregateInputType = {
+    valeSalidaId?: true
+    concepto?: true
+    estado?: true
+    observaciones?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ValeSalidaMaxAggregateInputType = {
+    valeSalidaId?: true
+    concepto?: true
+    estado?: true
+    observaciones?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type ValeSalidaCountAggregateInputType = {
+    valeSalidaId?: true
+    concepto?: true
+    estado?: true
+    observaciones?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type ValeSalidaAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ValeSalida to aggregate.
+     */
+    where?: ValeSalidaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ValeSalidas to fetch.
+     */
+    orderBy?: ValeSalidaOrderByWithRelationInput | ValeSalidaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ValeSalidaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ValeSalidas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ValeSalidas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ValeSalidas
+    **/
+    _count?: true | ValeSalidaCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ValeSalidaMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ValeSalidaMaxAggregateInputType
+  }
+
+  export type GetValeSalidaAggregateType<T extends ValeSalidaAggregateArgs> = {
+        [P in keyof T & keyof AggregateValeSalida]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateValeSalida[P]>
+      : GetScalarType<T[P], AggregateValeSalida[P]>
+  }
+
+
+
+
+  export type ValeSalidaGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ValeSalidaWhereInput
+    orderBy?: ValeSalidaOrderByWithAggregationInput | ValeSalidaOrderByWithAggregationInput[]
+    by: ValeSalidaScalarFieldEnum[] | ValeSalidaScalarFieldEnum
+    having?: ValeSalidaScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ValeSalidaCountAggregateInputType | true
+    _min?: ValeSalidaMinAggregateInputType
+    _max?: ValeSalidaMaxAggregateInputType
+  }
+
+  export type ValeSalidaGroupByOutputType = {
+    valeSalidaId: string
+    concepto: string
+    estado: string
+    observaciones: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: ValeSalidaCountAggregateOutputType | null
+    _min: ValeSalidaMinAggregateOutputType | null
+    _max: ValeSalidaMaxAggregateOutputType | null
+  }
+
+  type GetValeSalidaGroupByPayload<T extends ValeSalidaGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ValeSalidaGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ValeSalidaGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ValeSalidaGroupByOutputType[P]>
+            : GetScalarType<T[P], ValeSalidaGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ValeSalidaSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    valeSalidaId?: boolean
+    concepto?: boolean
+    estado?: boolean
+    observaciones?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    items?: boolean | ValeSalida$itemsArgs<ExtArgs>
+    _count?: boolean | ValeSalidaCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["valeSalida"]>
+
+  export type ValeSalidaSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    valeSalidaId?: boolean
+    concepto?: boolean
+    estado?: boolean
+    observaciones?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["valeSalida"]>
+
+  export type ValeSalidaSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    valeSalidaId?: boolean
+    concepto?: boolean
+    estado?: boolean
+    observaciones?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["valeSalida"]>
+
+  export type ValeSalidaSelectScalar = {
+    valeSalidaId?: boolean
+    concepto?: boolean
+    estado?: boolean
+    observaciones?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type ValeSalidaOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"valeSalidaId" | "concepto" | "estado" | "observaciones" | "createdAt" | "updatedAt", ExtArgs["result"]["valeSalida"]>
+  export type ValeSalidaInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    items?: boolean | ValeSalida$itemsArgs<ExtArgs>
+    _count?: boolean | ValeSalidaCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type ValeSalidaIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type ValeSalidaIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $ValeSalidaPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ValeSalida"
+    objects: {
+      items: Prisma.$ValeSalidaItemPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      valeSalidaId: string
+      concepto: string
+      estado: string
+      observaciones: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["valeSalida"]>
+    composites: {}
+  }
+
+  type ValeSalidaGetPayload<S extends boolean | null | undefined | ValeSalidaDefaultArgs> = $Result.GetResult<Prisma.$ValeSalidaPayload, S>
+
+  type ValeSalidaCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<ValeSalidaFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: ValeSalidaCountAggregateInputType | true
+    }
+
+  export interface ValeSalidaDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ValeSalida'], meta: { name: 'ValeSalida' } }
+    /**
+     * Find zero or one ValeSalida that matches the filter.
+     * @param {ValeSalidaFindUniqueArgs} args - Arguments to find a ValeSalida
+     * @example
+     * // Get one ValeSalida
+     * const valeSalida = await prisma.valeSalida.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ValeSalidaFindUniqueArgs>(args: SelectSubset<T, ValeSalidaFindUniqueArgs<ExtArgs>>): Prisma__ValeSalidaClient<$Result.GetResult<Prisma.$ValeSalidaPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one ValeSalida that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {ValeSalidaFindUniqueOrThrowArgs} args - Arguments to find a ValeSalida
+     * @example
+     * // Get one ValeSalida
+     * const valeSalida = await prisma.valeSalida.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ValeSalidaFindUniqueOrThrowArgs>(args: SelectSubset<T, ValeSalidaFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ValeSalidaClient<$Result.GetResult<Prisma.$ValeSalidaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ValeSalida that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ValeSalidaFindFirstArgs} args - Arguments to find a ValeSalida
+     * @example
+     * // Get one ValeSalida
+     * const valeSalida = await prisma.valeSalida.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ValeSalidaFindFirstArgs>(args?: SelectSubset<T, ValeSalidaFindFirstArgs<ExtArgs>>): Prisma__ValeSalidaClient<$Result.GetResult<Prisma.$ValeSalidaPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ValeSalida that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ValeSalidaFindFirstOrThrowArgs} args - Arguments to find a ValeSalida
+     * @example
+     * // Get one ValeSalida
+     * const valeSalida = await prisma.valeSalida.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ValeSalidaFindFirstOrThrowArgs>(args?: SelectSubset<T, ValeSalidaFindFirstOrThrowArgs<ExtArgs>>): Prisma__ValeSalidaClient<$Result.GetResult<Prisma.$ValeSalidaPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more ValeSalidas that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ValeSalidaFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ValeSalidas
+     * const valeSalidas = await prisma.valeSalida.findMany()
+     * 
+     * // Get first 10 ValeSalidas
+     * const valeSalidas = await prisma.valeSalida.findMany({ take: 10 })
+     * 
+     * // Only select the `valeSalidaId`
+     * const valeSalidaWithValeSalidaIdOnly = await prisma.valeSalida.findMany({ select: { valeSalidaId: true } })
+     * 
+     */
+    findMany<T extends ValeSalidaFindManyArgs>(args?: SelectSubset<T, ValeSalidaFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ValeSalidaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a ValeSalida.
+     * @param {ValeSalidaCreateArgs} args - Arguments to create a ValeSalida.
+     * @example
+     * // Create one ValeSalida
+     * const ValeSalida = await prisma.valeSalida.create({
+     *   data: {
+     *     // ... data to create a ValeSalida
+     *   }
+     * })
+     * 
+     */
+    create<T extends ValeSalidaCreateArgs>(args: SelectSubset<T, ValeSalidaCreateArgs<ExtArgs>>): Prisma__ValeSalidaClient<$Result.GetResult<Prisma.$ValeSalidaPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many ValeSalidas.
+     * @param {ValeSalidaCreateManyArgs} args - Arguments to create many ValeSalidas.
+     * @example
+     * // Create many ValeSalidas
+     * const valeSalida = await prisma.valeSalida.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ValeSalidaCreateManyArgs>(args?: SelectSubset<T, ValeSalidaCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ValeSalidas and returns the data saved in the database.
+     * @param {ValeSalidaCreateManyAndReturnArgs} args - Arguments to create many ValeSalidas.
+     * @example
+     * // Create many ValeSalidas
+     * const valeSalida = await prisma.valeSalida.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ValeSalidas and only return the `valeSalidaId`
+     * const valeSalidaWithValeSalidaIdOnly = await prisma.valeSalida.createManyAndReturn({
+     *   select: { valeSalidaId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ValeSalidaCreateManyAndReturnArgs>(args?: SelectSubset<T, ValeSalidaCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ValeSalidaPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a ValeSalida.
+     * @param {ValeSalidaDeleteArgs} args - Arguments to delete one ValeSalida.
+     * @example
+     * // Delete one ValeSalida
+     * const ValeSalida = await prisma.valeSalida.delete({
+     *   where: {
+     *     // ... filter to delete one ValeSalida
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ValeSalidaDeleteArgs>(args: SelectSubset<T, ValeSalidaDeleteArgs<ExtArgs>>): Prisma__ValeSalidaClient<$Result.GetResult<Prisma.$ValeSalidaPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one ValeSalida.
+     * @param {ValeSalidaUpdateArgs} args - Arguments to update one ValeSalida.
+     * @example
+     * // Update one ValeSalida
+     * const valeSalida = await prisma.valeSalida.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ValeSalidaUpdateArgs>(args: SelectSubset<T, ValeSalidaUpdateArgs<ExtArgs>>): Prisma__ValeSalidaClient<$Result.GetResult<Prisma.$ValeSalidaPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more ValeSalidas.
+     * @param {ValeSalidaDeleteManyArgs} args - Arguments to filter ValeSalidas to delete.
+     * @example
+     * // Delete a few ValeSalidas
+     * const { count } = await prisma.valeSalida.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ValeSalidaDeleteManyArgs>(args?: SelectSubset<T, ValeSalidaDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ValeSalidas.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ValeSalidaUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ValeSalidas
+     * const valeSalida = await prisma.valeSalida.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ValeSalidaUpdateManyArgs>(args: SelectSubset<T, ValeSalidaUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ValeSalidas and returns the data updated in the database.
+     * @param {ValeSalidaUpdateManyAndReturnArgs} args - Arguments to update many ValeSalidas.
+     * @example
+     * // Update many ValeSalidas
+     * const valeSalida = await prisma.valeSalida.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more ValeSalidas and only return the `valeSalidaId`
+     * const valeSalidaWithValeSalidaIdOnly = await prisma.valeSalida.updateManyAndReturn({
+     *   select: { valeSalidaId: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends ValeSalidaUpdateManyAndReturnArgs>(args: SelectSubset<T, ValeSalidaUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ValeSalidaPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one ValeSalida.
+     * @param {ValeSalidaUpsertArgs} args - Arguments to update or create a ValeSalida.
+     * @example
+     * // Update or create a ValeSalida
+     * const valeSalida = await prisma.valeSalida.upsert({
+     *   create: {
+     *     // ... data to create a ValeSalida
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ValeSalida we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ValeSalidaUpsertArgs>(args: SelectSubset<T, ValeSalidaUpsertArgs<ExtArgs>>): Prisma__ValeSalidaClient<$Result.GetResult<Prisma.$ValeSalidaPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of ValeSalidas.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ValeSalidaCountArgs} args - Arguments to filter ValeSalidas to count.
+     * @example
+     * // Count the number of ValeSalidas
+     * const count = await prisma.valeSalida.count({
+     *   where: {
+     *     // ... the filter for the ValeSalidas we want to count
+     *   }
+     * })
+    **/
+    count<T extends ValeSalidaCountArgs>(
+      args?: Subset<T, ValeSalidaCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ValeSalidaCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ValeSalida.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ValeSalidaAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ValeSalidaAggregateArgs>(args: Subset<T, ValeSalidaAggregateArgs>): Prisma.PrismaPromise<GetValeSalidaAggregateType<T>>
+
+    /**
+     * Group by ValeSalida.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ValeSalidaGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ValeSalidaGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ValeSalidaGroupByArgs['orderBy'] }
+        : { orderBy?: ValeSalidaGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ValeSalidaGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetValeSalidaGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ValeSalida model
+   */
+  readonly fields: ValeSalidaFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ValeSalida.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ValeSalidaClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    items<T extends ValeSalida$itemsArgs<ExtArgs> = {}>(args?: Subset<T, ValeSalida$itemsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ValeSalidaItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ValeSalida model
+   */
+  interface ValeSalidaFieldRefs {
+    readonly valeSalidaId: FieldRef<"ValeSalida", 'String'>
+    readonly concepto: FieldRef<"ValeSalida", 'String'>
+    readonly estado: FieldRef<"ValeSalida", 'String'>
+    readonly observaciones: FieldRef<"ValeSalida", 'String'>
+    readonly createdAt: FieldRef<"ValeSalida", 'DateTime'>
+    readonly updatedAt: FieldRef<"ValeSalida", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ValeSalida findUnique
+   */
+  export type ValeSalidaFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ValeSalida
+     */
+    select?: ValeSalidaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ValeSalida
+     */
+    omit?: ValeSalidaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ValeSalidaInclude<ExtArgs> | null
+    /**
+     * Filter, which ValeSalida to fetch.
+     */
+    where: ValeSalidaWhereUniqueInput
+  }
+
+  /**
+   * ValeSalida findUniqueOrThrow
+   */
+  export type ValeSalidaFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ValeSalida
+     */
+    select?: ValeSalidaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ValeSalida
+     */
+    omit?: ValeSalidaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ValeSalidaInclude<ExtArgs> | null
+    /**
+     * Filter, which ValeSalida to fetch.
+     */
+    where: ValeSalidaWhereUniqueInput
+  }
+
+  /**
+   * ValeSalida findFirst
+   */
+  export type ValeSalidaFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ValeSalida
+     */
+    select?: ValeSalidaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ValeSalida
+     */
+    omit?: ValeSalidaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ValeSalidaInclude<ExtArgs> | null
+    /**
+     * Filter, which ValeSalida to fetch.
+     */
+    where?: ValeSalidaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ValeSalidas to fetch.
+     */
+    orderBy?: ValeSalidaOrderByWithRelationInput | ValeSalidaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ValeSalidas.
+     */
+    cursor?: ValeSalidaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ValeSalidas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ValeSalidas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ValeSalidas.
+     */
+    distinct?: ValeSalidaScalarFieldEnum | ValeSalidaScalarFieldEnum[]
+  }
+
+  /**
+   * ValeSalida findFirstOrThrow
+   */
+  export type ValeSalidaFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ValeSalida
+     */
+    select?: ValeSalidaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ValeSalida
+     */
+    omit?: ValeSalidaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ValeSalidaInclude<ExtArgs> | null
+    /**
+     * Filter, which ValeSalida to fetch.
+     */
+    where?: ValeSalidaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ValeSalidas to fetch.
+     */
+    orderBy?: ValeSalidaOrderByWithRelationInput | ValeSalidaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ValeSalidas.
+     */
+    cursor?: ValeSalidaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ValeSalidas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ValeSalidas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ValeSalidas.
+     */
+    distinct?: ValeSalidaScalarFieldEnum | ValeSalidaScalarFieldEnum[]
+  }
+
+  /**
+   * ValeSalida findMany
+   */
+  export type ValeSalidaFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ValeSalida
+     */
+    select?: ValeSalidaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ValeSalida
+     */
+    omit?: ValeSalidaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ValeSalidaInclude<ExtArgs> | null
+    /**
+     * Filter, which ValeSalidas to fetch.
+     */
+    where?: ValeSalidaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ValeSalidas to fetch.
+     */
+    orderBy?: ValeSalidaOrderByWithRelationInput | ValeSalidaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ValeSalidas.
+     */
+    cursor?: ValeSalidaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ValeSalidas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ValeSalidas.
+     */
+    skip?: number
+    distinct?: ValeSalidaScalarFieldEnum | ValeSalidaScalarFieldEnum[]
+  }
+
+  /**
+   * ValeSalida create
+   */
+  export type ValeSalidaCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ValeSalida
+     */
+    select?: ValeSalidaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ValeSalida
+     */
+    omit?: ValeSalidaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ValeSalidaInclude<ExtArgs> | null
+    /**
+     * The data needed to create a ValeSalida.
+     */
+    data: XOR<ValeSalidaCreateInput, ValeSalidaUncheckedCreateInput>
+  }
+
+  /**
+   * ValeSalida createMany
+   */
+  export type ValeSalidaCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ValeSalidas.
+     */
+    data: ValeSalidaCreateManyInput | ValeSalidaCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ValeSalida createManyAndReturn
+   */
+  export type ValeSalidaCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ValeSalida
+     */
+    select?: ValeSalidaSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ValeSalida
+     */
+    omit?: ValeSalidaOmit<ExtArgs> | null
+    /**
+     * The data used to create many ValeSalidas.
+     */
+    data: ValeSalidaCreateManyInput | ValeSalidaCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ValeSalida update
+   */
+  export type ValeSalidaUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ValeSalida
+     */
+    select?: ValeSalidaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ValeSalida
+     */
+    omit?: ValeSalidaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ValeSalidaInclude<ExtArgs> | null
+    /**
+     * The data needed to update a ValeSalida.
+     */
+    data: XOR<ValeSalidaUpdateInput, ValeSalidaUncheckedUpdateInput>
+    /**
+     * Choose, which ValeSalida to update.
+     */
+    where: ValeSalidaWhereUniqueInput
+  }
+
+  /**
+   * ValeSalida updateMany
+   */
+  export type ValeSalidaUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ValeSalidas.
+     */
+    data: XOR<ValeSalidaUpdateManyMutationInput, ValeSalidaUncheckedUpdateManyInput>
+    /**
+     * Filter which ValeSalidas to update
+     */
+    where?: ValeSalidaWhereInput
+    /**
+     * Limit how many ValeSalidas to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ValeSalida updateManyAndReturn
+   */
+  export type ValeSalidaUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ValeSalida
+     */
+    select?: ValeSalidaSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ValeSalida
+     */
+    omit?: ValeSalidaOmit<ExtArgs> | null
+    /**
+     * The data used to update ValeSalidas.
+     */
+    data: XOR<ValeSalidaUpdateManyMutationInput, ValeSalidaUncheckedUpdateManyInput>
+    /**
+     * Filter which ValeSalidas to update
+     */
+    where?: ValeSalidaWhereInput
+    /**
+     * Limit how many ValeSalidas to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ValeSalida upsert
+   */
+  export type ValeSalidaUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ValeSalida
+     */
+    select?: ValeSalidaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ValeSalida
+     */
+    omit?: ValeSalidaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ValeSalidaInclude<ExtArgs> | null
+    /**
+     * The filter to search for the ValeSalida to update in case it exists.
+     */
+    where: ValeSalidaWhereUniqueInput
+    /**
+     * In case the ValeSalida found by the `where` argument doesn't exist, create a new ValeSalida with this data.
+     */
+    create: XOR<ValeSalidaCreateInput, ValeSalidaUncheckedCreateInput>
+    /**
+     * In case the ValeSalida was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ValeSalidaUpdateInput, ValeSalidaUncheckedUpdateInput>
+  }
+
+  /**
+   * ValeSalida delete
+   */
+  export type ValeSalidaDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ValeSalida
+     */
+    select?: ValeSalidaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ValeSalida
+     */
+    omit?: ValeSalidaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ValeSalidaInclude<ExtArgs> | null
+    /**
+     * Filter which ValeSalida to delete.
+     */
+    where: ValeSalidaWhereUniqueInput
+  }
+
+  /**
+   * ValeSalida deleteMany
+   */
+  export type ValeSalidaDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ValeSalidas to delete
+     */
+    where?: ValeSalidaWhereInput
+    /**
+     * Limit how many ValeSalidas to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * ValeSalida.items
+   */
+  export type ValeSalida$itemsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ValeSalidaItem
+     */
+    select?: ValeSalidaItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ValeSalidaItem
+     */
+    omit?: ValeSalidaItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ValeSalidaItemInclude<ExtArgs> | null
+    where?: ValeSalidaItemWhereInput
+    orderBy?: ValeSalidaItemOrderByWithRelationInput | ValeSalidaItemOrderByWithRelationInput[]
+    cursor?: ValeSalidaItemWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ValeSalidaItemScalarFieldEnum | ValeSalidaItemScalarFieldEnum[]
+  }
+
+  /**
+   * ValeSalida without action
+   */
+  export type ValeSalidaDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ValeSalida
+     */
+    select?: ValeSalidaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ValeSalida
+     */
+    omit?: ValeSalidaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ValeSalidaInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model ValeSalidaItem
+   */
+
+  export type AggregateValeSalidaItem = {
+    _count: ValeSalidaItemCountAggregateOutputType | null
+    _avg: ValeSalidaItemAvgAggregateOutputType | null
+    _sum: ValeSalidaItemSumAggregateOutputType | null
+    _min: ValeSalidaItemMinAggregateOutputType | null
+    _max: ValeSalidaItemMaxAggregateOutputType | null
+  }
+
+  export type ValeSalidaItemAvgAggregateOutputType = {
+    cantidad: number | null
+  }
+
+  export type ValeSalidaItemSumAggregateOutputType = {
+    cantidad: number | null
+  }
+
+  export type ValeSalidaItemMinAggregateOutputType = {
+    valeSalidaItemId: string | null
+    valeSalidaId: string | null
+    productoId: string | null
+    cantidad: number | null
+    createdAt: Date | null
+  }
+
+  export type ValeSalidaItemMaxAggregateOutputType = {
+    valeSalidaItemId: string | null
+    valeSalidaId: string | null
+    productoId: string | null
+    cantidad: number | null
+    createdAt: Date | null
+  }
+
+  export type ValeSalidaItemCountAggregateOutputType = {
+    valeSalidaItemId: number
+    valeSalidaId: number
+    productoId: number
+    cantidad: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type ValeSalidaItemAvgAggregateInputType = {
+    cantidad?: true
+  }
+
+  export type ValeSalidaItemSumAggregateInputType = {
+    cantidad?: true
+  }
+
+  export type ValeSalidaItemMinAggregateInputType = {
+    valeSalidaItemId?: true
+    valeSalidaId?: true
+    productoId?: true
+    cantidad?: true
+    createdAt?: true
+  }
+
+  export type ValeSalidaItemMaxAggregateInputType = {
+    valeSalidaItemId?: true
+    valeSalidaId?: true
+    productoId?: true
+    cantidad?: true
+    createdAt?: true
+  }
+
+  export type ValeSalidaItemCountAggregateInputType = {
+    valeSalidaItemId?: true
+    valeSalidaId?: true
+    productoId?: true
+    cantidad?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type ValeSalidaItemAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ValeSalidaItem to aggregate.
+     */
+    where?: ValeSalidaItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ValeSalidaItems to fetch.
+     */
+    orderBy?: ValeSalidaItemOrderByWithRelationInput | ValeSalidaItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ValeSalidaItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ValeSalidaItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ValeSalidaItems.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ValeSalidaItems
+    **/
+    _count?: true | ValeSalidaItemCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ValeSalidaItemAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ValeSalidaItemSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ValeSalidaItemMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ValeSalidaItemMaxAggregateInputType
+  }
+
+  export type GetValeSalidaItemAggregateType<T extends ValeSalidaItemAggregateArgs> = {
+        [P in keyof T & keyof AggregateValeSalidaItem]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateValeSalidaItem[P]>
+      : GetScalarType<T[P], AggregateValeSalidaItem[P]>
+  }
+
+
+
+
+  export type ValeSalidaItemGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ValeSalidaItemWhereInput
+    orderBy?: ValeSalidaItemOrderByWithAggregationInput | ValeSalidaItemOrderByWithAggregationInput[]
+    by: ValeSalidaItemScalarFieldEnum[] | ValeSalidaItemScalarFieldEnum
+    having?: ValeSalidaItemScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ValeSalidaItemCountAggregateInputType | true
+    _avg?: ValeSalidaItemAvgAggregateInputType
+    _sum?: ValeSalidaItemSumAggregateInputType
+    _min?: ValeSalidaItemMinAggregateInputType
+    _max?: ValeSalidaItemMaxAggregateInputType
+  }
+
+  export type ValeSalidaItemGroupByOutputType = {
+    valeSalidaItemId: string
+    valeSalidaId: string
+    productoId: string
+    cantidad: number
+    createdAt: Date
+    _count: ValeSalidaItemCountAggregateOutputType | null
+    _avg: ValeSalidaItemAvgAggregateOutputType | null
+    _sum: ValeSalidaItemSumAggregateOutputType | null
+    _min: ValeSalidaItemMinAggregateOutputType | null
+    _max: ValeSalidaItemMaxAggregateOutputType | null
+  }
+
+  type GetValeSalidaItemGroupByPayload<T extends ValeSalidaItemGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ValeSalidaItemGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ValeSalidaItemGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ValeSalidaItemGroupByOutputType[P]>
+            : GetScalarType<T[P], ValeSalidaItemGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ValeSalidaItemSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    valeSalidaItemId?: boolean
+    valeSalidaId?: boolean
+    productoId?: boolean
+    cantidad?: boolean
+    createdAt?: boolean
+    valeSalida?: boolean | ValeSalidaDefaultArgs<ExtArgs>
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["valeSalidaItem"]>
+
+  export type ValeSalidaItemSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    valeSalidaItemId?: boolean
+    valeSalidaId?: boolean
+    productoId?: boolean
+    cantidad?: boolean
+    createdAt?: boolean
+    valeSalida?: boolean | ValeSalidaDefaultArgs<ExtArgs>
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["valeSalidaItem"]>
+
+  export type ValeSalidaItemSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    valeSalidaItemId?: boolean
+    valeSalidaId?: boolean
+    productoId?: boolean
+    cantidad?: boolean
+    createdAt?: boolean
+    valeSalida?: boolean | ValeSalidaDefaultArgs<ExtArgs>
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["valeSalidaItem"]>
+
+  export type ValeSalidaItemSelectScalar = {
+    valeSalidaItemId?: boolean
+    valeSalidaId?: boolean
+    productoId?: boolean
+    cantidad?: boolean
+    createdAt?: boolean
+  }
+
+  export type ValeSalidaItemOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"valeSalidaItemId" | "valeSalidaId" | "productoId" | "cantidad" | "createdAt", ExtArgs["result"]["valeSalidaItem"]>
+  export type ValeSalidaItemInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    valeSalida?: boolean | ValeSalidaDefaultArgs<ExtArgs>
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }
+  export type ValeSalidaItemIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    valeSalida?: boolean | ValeSalidaDefaultArgs<ExtArgs>
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }
+  export type ValeSalidaItemIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    valeSalida?: boolean | ValeSalidaDefaultArgs<ExtArgs>
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }
+
+  export type $ValeSalidaItemPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ValeSalidaItem"
+    objects: {
+      valeSalida: Prisma.$ValeSalidaPayload<ExtArgs>
+      producto: Prisma.$ProductoPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      valeSalidaItemId: string
+      valeSalidaId: string
+      productoId: string
+      cantidad: number
+      createdAt: Date
+    }, ExtArgs["result"]["valeSalidaItem"]>
+    composites: {}
+  }
+
+  type ValeSalidaItemGetPayload<S extends boolean | null | undefined | ValeSalidaItemDefaultArgs> = $Result.GetResult<Prisma.$ValeSalidaItemPayload, S>
+
+  type ValeSalidaItemCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<ValeSalidaItemFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: ValeSalidaItemCountAggregateInputType | true
+    }
+
+  export interface ValeSalidaItemDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ValeSalidaItem'], meta: { name: 'ValeSalidaItem' } }
+    /**
+     * Find zero or one ValeSalidaItem that matches the filter.
+     * @param {ValeSalidaItemFindUniqueArgs} args - Arguments to find a ValeSalidaItem
+     * @example
+     * // Get one ValeSalidaItem
+     * const valeSalidaItem = await prisma.valeSalidaItem.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ValeSalidaItemFindUniqueArgs>(args: SelectSubset<T, ValeSalidaItemFindUniqueArgs<ExtArgs>>): Prisma__ValeSalidaItemClient<$Result.GetResult<Prisma.$ValeSalidaItemPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one ValeSalidaItem that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {ValeSalidaItemFindUniqueOrThrowArgs} args - Arguments to find a ValeSalidaItem
+     * @example
+     * // Get one ValeSalidaItem
+     * const valeSalidaItem = await prisma.valeSalidaItem.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ValeSalidaItemFindUniqueOrThrowArgs>(args: SelectSubset<T, ValeSalidaItemFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ValeSalidaItemClient<$Result.GetResult<Prisma.$ValeSalidaItemPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ValeSalidaItem that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ValeSalidaItemFindFirstArgs} args - Arguments to find a ValeSalidaItem
+     * @example
+     * // Get one ValeSalidaItem
+     * const valeSalidaItem = await prisma.valeSalidaItem.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ValeSalidaItemFindFirstArgs>(args?: SelectSubset<T, ValeSalidaItemFindFirstArgs<ExtArgs>>): Prisma__ValeSalidaItemClient<$Result.GetResult<Prisma.$ValeSalidaItemPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ValeSalidaItem that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ValeSalidaItemFindFirstOrThrowArgs} args - Arguments to find a ValeSalidaItem
+     * @example
+     * // Get one ValeSalidaItem
+     * const valeSalidaItem = await prisma.valeSalidaItem.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ValeSalidaItemFindFirstOrThrowArgs>(args?: SelectSubset<T, ValeSalidaItemFindFirstOrThrowArgs<ExtArgs>>): Prisma__ValeSalidaItemClient<$Result.GetResult<Prisma.$ValeSalidaItemPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more ValeSalidaItems that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ValeSalidaItemFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ValeSalidaItems
+     * const valeSalidaItems = await prisma.valeSalidaItem.findMany()
+     * 
+     * // Get first 10 ValeSalidaItems
+     * const valeSalidaItems = await prisma.valeSalidaItem.findMany({ take: 10 })
+     * 
+     * // Only select the `valeSalidaItemId`
+     * const valeSalidaItemWithValeSalidaItemIdOnly = await prisma.valeSalidaItem.findMany({ select: { valeSalidaItemId: true } })
+     * 
+     */
+    findMany<T extends ValeSalidaItemFindManyArgs>(args?: SelectSubset<T, ValeSalidaItemFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ValeSalidaItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a ValeSalidaItem.
+     * @param {ValeSalidaItemCreateArgs} args - Arguments to create a ValeSalidaItem.
+     * @example
+     * // Create one ValeSalidaItem
+     * const ValeSalidaItem = await prisma.valeSalidaItem.create({
+     *   data: {
+     *     // ... data to create a ValeSalidaItem
+     *   }
+     * })
+     * 
+     */
+    create<T extends ValeSalidaItemCreateArgs>(args: SelectSubset<T, ValeSalidaItemCreateArgs<ExtArgs>>): Prisma__ValeSalidaItemClient<$Result.GetResult<Prisma.$ValeSalidaItemPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many ValeSalidaItems.
+     * @param {ValeSalidaItemCreateManyArgs} args - Arguments to create many ValeSalidaItems.
+     * @example
+     * // Create many ValeSalidaItems
+     * const valeSalidaItem = await prisma.valeSalidaItem.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ValeSalidaItemCreateManyArgs>(args?: SelectSubset<T, ValeSalidaItemCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ValeSalidaItems and returns the data saved in the database.
+     * @param {ValeSalidaItemCreateManyAndReturnArgs} args - Arguments to create many ValeSalidaItems.
+     * @example
+     * // Create many ValeSalidaItems
+     * const valeSalidaItem = await prisma.valeSalidaItem.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ValeSalidaItems and only return the `valeSalidaItemId`
+     * const valeSalidaItemWithValeSalidaItemIdOnly = await prisma.valeSalidaItem.createManyAndReturn({
+     *   select: { valeSalidaItemId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ValeSalidaItemCreateManyAndReturnArgs>(args?: SelectSubset<T, ValeSalidaItemCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ValeSalidaItemPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a ValeSalidaItem.
+     * @param {ValeSalidaItemDeleteArgs} args - Arguments to delete one ValeSalidaItem.
+     * @example
+     * // Delete one ValeSalidaItem
+     * const ValeSalidaItem = await prisma.valeSalidaItem.delete({
+     *   where: {
+     *     // ... filter to delete one ValeSalidaItem
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ValeSalidaItemDeleteArgs>(args: SelectSubset<T, ValeSalidaItemDeleteArgs<ExtArgs>>): Prisma__ValeSalidaItemClient<$Result.GetResult<Prisma.$ValeSalidaItemPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one ValeSalidaItem.
+     * @param {ValeSalidaItemUpdateArgs} args - Arguments to update one ValeSalidaItem.
+     * @example
+     * // Update one ValeSalidaItem
+     * const valeSalidaItem = await prisma.valeSalidaItem.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ValeSalidaItemUpdateArgs>(args: SelectSubset<T, ValeSalidaItemUpdateArgs<ExtArgs>>): Prisma__ValeSalidaItemClient<$Result.GetResult<Prisma.$ValeSalidaItemPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more ValeSalidaItems.
+     * @param {ValeSalidaItemDeleteManyArgs} args - Arguments to filter ValeSalidaItems to delete.
+     * @example
+     * // Delete a few ValeSalidaItems
+     * const { count } = await prisma.valeSalidaItem.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ValeSalidaItemDeleteManyArgs>(args?: SelectSubset<T, ValeSalidaItemDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ValeSalidaItems.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ValeSalidaItemUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ValeSalidaItems
+     * const valeSalidaItem = await prisma.valeSalidaItem.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ValeSalidaItemUpdateManyArgs>(args: SelectSubset<T, ValeSalidaItemUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ValeSalidaItems and returns the data updated in the database.
+     * @param {ValeSalidaItemUpdateManyAndReturnArgs} args - Arguments to update many ValeSalidaItems.
+     * @example
+     * // Update many ValeSalidaItems
+     * const valeSalidaItem = await prisma.valeSalidaItem.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more ValeSalidaItems and only return the `valeSalidaItemId`
+     * const valeSalidaItemWithValeSalidaItemIdOnly = await prisma.valeSalidaItem.updateManyAndReturn({
+     *   select: { valeSalidaItemId: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends ValeSalidaItemUpdateManyAndReturnArgs>(args: SelectSubset<T, ValeSalidaItemUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ValeSalidaItemPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one ValeSalidaItem.
+     * @param {ValeSalidaItemUpsertArgs} args - Arguments to update or create a ValeSalidaItem.
+     * @example
+     * // Update or create a ValeSalidaItem
+     * const valeSalidaItem = await prisma.valeSalidaItem.upsert({
+     *   create: {
+     *     // ... data to create a ValeSalidaItem
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ValeSalidaItem we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ValeSalidaItemUpsertArgs>(args: SelectSubset<T, ValeSalidaItemUpsertArgs<ExtArgs>>): Prisma__ValeSalidaItemClient<$Result.GetResult<Prisma.$ValeSalidaItemPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of ValeSalidaItems.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ValeSalidaItemCountArgs} args - Arguments to filter ValeSalidaItems to count.
+     * @example
+     * // Count the number of ValeSalidaItems
+     * const count = await prisma.valeSalidaItem.count({
+     *   where: {
+     *     // ... the filter for the ValeSalidaItems we want to count
+     *   }
+     * })
+    **/
+    count<T extends ValeSalidaItemCountArgs>(
+      args?: Subset<T, ValeSalidaItemCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ValeSalidaItemCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ValeSalidaItem.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ValeSalidaItemAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ValeSalidaItemAggregateArgs>(args: Subset<T, ValeSalidaItemAggregateArgs>): Prisma.PrismaPromise<GetValeSalidaItemAggregateType<T>>
+
+    /**
+     * Group by ValeSalidaItem.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ValeSalidaItemGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ValeSalidaItemGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ValeSalidaItemGroupByArgs['orderBy'] }
+        : { orderBy?: ValeSalidaItemGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ValeSalidaItemGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetValeSalidaItemGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ValeSalidaItem model
+   */
+  readonly fields: ValeSalidaItemFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ValeSalidaItem.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ValeSalidaItemClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    valeSalida<T extends ValeSalidaDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ValeSalidaDefaultArgs<ExtArgs>>): Prisma__ValeSalidaClient<$Result.GetResult<Prisma.$ValeSalidaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    producto<T extends ProductoDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ProductoDefaultArgs<ExtArgs>>): Prisma__ProductoClient<$Result.GetResult<Prisma.$ProductoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ValeSalidaItem model
+   */
+  interface ValeSalidaItemFieldRefs {
+    readonly valeSalidaItemId: FieldRef<"ValeSalidaItem", 'String'>
+    readonly valeSalidaId: FieldRef<"ValeSalidaItem", 'String'>
+    readonly productoId: FieldRef<"ValeSalidaItem", 'String'>
+    readonly cantidad: FieldRef<"ValeSalidaItem", 'Int'>
+    readonly createdAt: FieldRef<"ValeSalidaItem", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ValeSalidaItem findUnique
+   */
+  export type ValeSalidaItemFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ValeSalidaItem
+     */
+    select?: ValeSalidaItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ValeSalidaItem
+     */
+    omit?: ValeSalidaItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ValeSalidaItemInclude<ExtArgs> | null
+    /**
+     * Filter, which ValeSalidaItem to fetch.
+     */
+    where: ValeSalidaItemWhereUniqueInput
+  }
+
+  /**
+   * ValeSalidaItem findUniqueOrThrow
+   */
+  export type ValeSalidaItemFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ValeSalidaItem
+     */
+    select?: ValeSalidaItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ValeSalidaItem
+     */
+    omit?: ValeSalidaItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ValeSalidaItemInclude<ExtArgs> | null
+    /**
+     * Filter, which ValeSalidaItem to fetch.
+     */
+    where: ValeSalidaItemWhereUniqueInput
+  }
+
+  /**
+   * ValeSalidaItem findFirst
+   */
+  export type ValeSalidaItemFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ValeSalidaItem
+     */
+    select?: ValeSalidaItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ValeSalidaItem
+     */
+    omit?: ValeSalidaItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ValeSalidaItemInclude<ExtArgs> | null
+    /**
+     * Filter, which ValeSalidaItem to fetch.
+     */
+    where?: ValeSalidaItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ValeSalidaItems to fetch.
+     */
+    orderBy?: ValeSalidaItemOrderByWithRelationInput | ValeSalidaItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ValeSalidaItems.
+     */
+    cursor?: ValeSalidaItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ValeSalidaItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ValeSalidaItems.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ValeSalidaItems.
+     */
+    distinct?: ValeSalidaItemScalarFieldEnum | ValeSalidaItemScalarFieldEnum[]
+  }
+
+  /**
+   * ValeSalidaItem findFirstOrThrow
+   */
+  export type ValeSalidaItemFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ValeSalidaItem
+     */
+    select?: ValeSalidaItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ValeSalidaItem
+     */
+    omit?: ValeSalidaItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ValeSalidaItemInclude<ExtArgs> | null
+    /**
+     * Filter, which ValeSalidaItem to fetch.
+     */
+    where?: ValeSalidaItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ValeSalidaItems to fetch.
+     */
+    orderBy?: ValeSalidaItemOrderByWithRelationInput | ValeSalidaItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ValeSalidaItems.
+     */
+    cursor?: ValeSalidaItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ValeSalidaItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ValeSalidaItems.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ValeSalidaItems.
+     */
+    distinct?: ValeSalidaItemScalarFieldEnum | ValeSalidaItemScalarFieldEnum[]
+  }
+
+  /**
+   * ValeSalidaItem findMany
+   */
+  export type ValeSalidaItemFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ValeSalidaItem
+     */
+    select?: ValeSalidaItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ValeSalidaItem
+     */
+    omit?: ValeSalidaItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ValeSalidaItemInclude<ExtArgs> | null
+    /**
+     * Filter, which ValeSalidaItems to fetch.
+     */
+    where?: ValeSalidaItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ValeSalidaItems to fetch.
+     */
+    orderBy?: ValeSalidaItemOrderByWithRelationInput | ValeSalidaItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ValeSalidaItems.
+     */
+    cursor?: ValeSalidaItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ValeSalidaItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ValeSalidaItems.
+     */
+    skip?: number
+    distinct?: ValeSalidaItemScalarFieldEnum | ValeSalidaItemScalarFieldEnum[]
+  }
+
+  /**
+   * ValeSalidaItem create
+   */
+  export type ValeSalidaItemCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ValeSalidaItem
+     */
+    select?: ValeSalidaItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ValeSalidaItem
+     */
+    omit?: ValeSalidaItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ValeSalidaItemInclude<ExtArgs> | null
+    /**
+     * The data needed to create a ValeSalidaItem.
+     */
+    data: XOR<ValeSalidaItemCreateInput, ValeSalidaItemUncheckedCreateInput>
+  }
+
+  /**
+   * ValeSalidaItem createMany
+   */
+  export type ValeSalidaItemCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ValeSalidaItems.
+     */
+    data: ValeSalidaItemCreateManyInput | ValeSalidaItemCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ValeSalidaItem createManyAndReturn
+   */
+  export type ValeSalidaItemCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ValeSalidaItem
+     */
+    select?: ValeSalidaItemSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ValeSalidaItem
+     */
+    omit?: ValeSalidaItemOmit<ExtArgs> | null
+    /**
+     * The data used to create many ValeSalidaItems.
+     */
+    data: ValeSalidaItemCreateManyInput | ValeSalidaItemCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ValeSalidaItemIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ValeSalidaItem update
+   */
+  export type ValeSalidaItemUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ValeSalidaItem
+     */
+    select?: ValeSalidaItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ValeSalidaItem
+     */
+    omit?: ValeSalidaItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ValeSalidaItemInclude<ExtArgs> | null
+    /**
+     * The data needed to update a ValeSalidaItem.
+     */
+    data: XOR<ValeSalidaItemUpdateInput, ValeSalidaItemUncheckedUpdateInput>
+    /**
+     * Choose, which ValeSalidaItem to update.
+     */
+    where: ValeSalidaItemWhereUniqueInput
+  }
+
+  /**
+   * ValeSalidaItem updateMany
+   */
+  export type ValeSalidaItemUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ValeSalidaItems.
+     */
+    data: XOR<ValeSalidaItemUpdateManyMutationInput, ValeSalidaItemUncheckedUpdateManyInput>
+    /**
+     * Filter which ValeSalidaItems to update
+     */
+    where?: ValeSalidaItemWhereInput
+    /**
+     * Limit how many ValeSalidaItems to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ValeSalidaItem updateManyAndReturn
+   */
+  export type ValeSalidaItemUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ValeSalidaItem
+     */
+    select?: ValeSalidaItemSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ValeSalidaItem
+     */
+    omit?: ValeSalidaItemOmit<ExtArgs> | null
+    /**
+     * The data used to update ValeSalidaItems.
+     */
+    data: XOR<ValeSalidaItemUpdateManyMutationInput, ValeSalidaItemUncheckedUpdateManyInput>
+    /**
+     * Filter which ValeSalidaItems to update
+     */
+    where?: ValeSalidaItemWhereInput
+    /**
+     * Limit how many ValeSalidaItems to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ValeSalidaItemIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ValeSalidaItem upsert
+   */
+  export type ValeSalidaItemUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ValeSalidaItem
+     */
+    select?: ValeSalidaItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ValeSalidaItem
+     */
+    omit?: ValeSalidaItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ValeSalidaItemInclude<ExtArgs> | null
+    /**
+     * The filter to search for the ValeSalidaItem to update in case it exists.
+     */
+    where: ValeSalidaItemWhereUniqueInput
+    /**
+     * In case the ValeSalidaItem found by the `where` argument doesn't exist, create a new ValeSalidaItem with this data.
+     */
+    create: XOR<ValeSalidaItemCreateInput, ValeSalidaItemUncheckedCreateInput>
+    /**
+     * In case the ValeSalidaItem was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ValeSalidaItemUpdateInput, ValeSalidaItemUncheckedUpdateInput>
+  }
+
+  /**
+   * ValeSalidaItem delete
+   */
+  export type ValeSalidaItemDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ValeSalidaItem
+     */
+    select?: ValeSalidaItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ValeSalidaItem
+     */
+    omit?: ValeSalidaItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ValeSalidaItemInclude<ExtArgs> | null
+    /**
+     * Filter which ValeSalidaItem to delete.
+     */
+    where: ValeSalidaItemWhereUniqueInput
+  }
+
+  /**
+   * ValeSalidaItem deleteMany
+   */
+  export type ValeSalidaItemDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ValeSalidaItems to delete
+     */
+    where?: ValeSalidaItemWhereInput
+    /**
+     * Limit how many ValeSalidaItems to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * ValeSalidaItem without action
+   */
+  export type ValeSalidaItemDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ValeSalidaItem
+     */
+    select?: ValeSalidaItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ValeSalidaItem
+     */
+    omit?: ValeSalidaItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ValeSalidaItemInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -98270,6 +105847,85 @@ export namespace Prisma {
   export type ConfiguracionSistemaScalarFieldEnum = (typeof ConfiguracionSistemaScalarFieldEnum)[keyof typeof ConfiguracionSistemaScalarFieldEnum]
 
 
+  export const RecetaScalarFieldEnum: {
+    recetaId: 'recetaId',
+    nombre: 'nombre',
+    rendimiento: 'rendimiento',
+    productoId: 'productoId',
+    instrucciones: 'instrucciones',
+    tiempoPrep: 'tiempoPrep',
+    costoUnitario: 'costoUnitario',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type RecetaScalarFieldEnum = (typeof RecetaScalarFieldEnum)[keyof typeof RecetaScalarFieldEnum]
+
+
+  export const RecetaIngredienteScalarFieldEnum: {
+    id: 'id',
+    recetaId: 'recetaId',
+    productoId: 'productoId',
+    cantidad: 'cantidad',
+    desperdicio: 'desperdicio',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type RecetaIngredienteScalarFieldEnum = (typeof RecetaIngredienteScalarFieldEnum)[keyof typeof RecetaIngredienteScalarFieldEnum]
+
+
+  export const OrdenProduccionScalarFieldEnum: {
+    ordenProduccionId: 'ordenProduccionId',
+    recetaId: 'recetaId',
+    cantidad: 'cantidad',
+    estado: 'estado',
+    costoMateriales: 'costoMateriales',
+    observaciones: 'observaciones',
+    fechaProduccion: 'fechaProduccion',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type OrdenProduccionScalarFieldEnum = (typeof OrdenProduccionScalarFieldEnum)[keyof typeof OrdenProduccionScalarFieldEnum]
+
+
+  export const OrdenProduccionHistorialScalarFieldEnum: {
+    id: 'id',
+    ordenProduccionId: 'ordenProduccionId',
+    estadoAnterior: 'estadoAnterior',
+    estadoNuevo: 'estadoNuevo',
+    observaciones: 'observaciones',
+    usuarioId: 'usuarioId',
+    createdAt: 'createdAt'
+  };
+
+  export type OrdenProduccionHistorialScalarFieldEnum = (typeof OrdenProduccionHistorialScalarFieldEnum)[keyof typeof OrdenProduccionHistorialScalarFieldEnum]
+
+
+  export const ValeSalidaScalarFieldEnum: {
+    valeSalidaId: 'valeSalidaId',
+    concepto: 'concepto',
+    estado: 'estado',
+    observaciones: 'observaciones',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type ValeSalidaScalarFieldEnum = (typeof ValeSalidaScalarFieldEnum)[keyof typeof ValeSalidaScalarFieldEnum]
+
+
+  export const ValeSalidaItemScalarFieldEnum: {
+    valeSalidaItemId: 'valeSalidaItemId',
+    valeSalidaId: 'valeSalidaId',
+    productoId: 'productoId',
+    cantidad: 'cantidad',
+    createdAt: 'createdAt'
+  };
+
+  export type ValeSalidaItemScalarFieldEnum = (typeof ValeSalidaItemScalarFieldEnum)[keyof typeof ValeSalidaItemScalarFieldEnum]
+
+
   export const SortOrder: {
     asc: 'asc',
     desc: 'desc'
@@ -98593,6 +106249,20 @@ export namespace Prisma {
    * Reference to a field of type 'ComplejidadReparacion[]'
    */
   export type ListEnumComplejidadReparacionFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ComplejidadReparacion[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'EstadoProduccion'
+   */
+  export type EnumEstadoProduccionFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EstadoProduccion'>
+    
+
+
+  /**
+   * Reference to a field of type 'EstadoProduccion[]'
+   */
+  export type ListEnumEstadoProduccionFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EstadoProduccion[]'>
     
   /**
    * Deep Input Types
@@ -99385,6 +107055,9 @@ export namespace Prisma {
     transferencias?: TransferenciaListRelationFilter
     ventas?: VentaListRelationFilter
     ventaItems?: VentaItemListRelationFilter
+    recetasProducto?: RecetaListRelationFilter
+    ingredienteRecetas?: RecetaIngredienteListRelationFilter
+    valeSalidaItems?: ValeSalidaItemListRelationFilter
   }
 
   export type ProductoOrderByWithRelationInput = {
@@ -99418,6 +107091,9 @@ export namespace Prisma {
     transferencias?: TransferenciaOrderByRelationAggregateInput
     ventas?: VentaOrderByRelationAggregateInput
     ventaItems?: VentaItemOrderByRelationAggregateInput
+    recetasProducto?: RecetaOrderByRelationAggregateInput
+    ingredienteRecetas?: RecetaIngredienteOrderByRelationAggregateInput
+    valeSalidaItems?: ValeSalidaItemOrderByRelationAggregateInput
   }
 
   export type ProductoWhereUniqueInput = Prisma.AtLeast<{
@@ -99454,6 +107130,9 @@ export namespace Prisma {
     transferencias?: TransferenciaListRelationFilter
     ventas?: VentaListRelationFilter
     ventaItems?: VentaItemListRelationFilter
+    recetasProducto?: RecetaListRelationFilter
+    ingredienteRecetas?: RecetaIngredienteListRelationFilter
+    valeSalidaItems?: ValeSalidaItemListRelationFilter
   }, "id">
 
   export type ProductoOrderByWithAggregationInput = {
@@ -105426,6 +113105,424 @@ export namespace Prisma {
     updatedAt?: DateTimeWithAggregatesFilter<"ConfiguracionSistema"> | Date | string
   }
 
+  export type RecetaWhereInput = {
+    AND?: RecetaWhereInput | RecetaWhereInput[]
+    OR?: RecetaWhereInput[]
+    NOT?: RecetaWhereInput | RecetaWhereInput[]
+    recetaId?: StringFilter<"Receta"> | string
+    nombre?: StringFilter<"Receta"> | string
+    rendimiento?: IntFilter<"Receta"> | number
+    productoId?: StringNullableFilter<"Receta"> | string | null
+    instrucciones?: StringNullableFilter<"Receta"> | string | null
+    tiempoPrep?: IntNullableFilter<"Receta"> | number | null
+    costoUnitario?: FloatFilter<"Receta"> | number
+    createdAt?: DateTimeFilter<"Receta"> | Date | string
+    updatedAt?: DateTimeFilter<"Receta"> | Date | string
+    producto?: XOR<ProductoNullableScalarRelationFilter, ProductoWhereInput> | null
+    ingredientes?: RecetaIngredienteListRelationFilter
+    ordenes?: OrdenProduccionListRelationFilter
+  }
+
+  export type RecetaOrderByWithRelationInput = {
+    recetaId?: SortOrder
+    nombre?: SortOrder
+    rendimiento?: SortOrder
+    productoId?: SortOrderInput | SortOrder
+    instrucciones?: SortOrderInput | SortOrder
+    tiempoPrep?: SortOrderInput | SortOrder
+    costoUnitario?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    producto?: ProductoOrderByWithRelationInput
+    ingredientes?: RecetaIngredienteOrderByRelationAggregateInput
+    ordenes?: OrdenProduccionOrderByRelationAggregateInput
+  }
+
+  export type RecetaWhereUniqueInput = Prisma.AtLeast<{
+    recetaId?: string
+    AND?: RecetaWhereInput | RecetaWhereInput[]
+    OR?: RecetaWhereInput[]
+    NOT?: RecetaWhereInput | RecetaWhereInput[]
+    nombre?: StringFilter<"Receta"> | string
+    rendimiento?: IntFilter<"Receta"> | number
+    productoId?: StringNullableFilter<"Receta"> | string | null
+    instrucciones?: StringNullableFilter<"Receta"> | string | null
+    tiempoPrep?: IntNullableFilter<"Receta"> | number | null
+    costoUnitario?: FloatFilter<"Receta"> | number
+    createdAt?: DateTimeFilter<"Receta"> | Date | string
+    updatedAt?: DateTimeFilter<"Receta"> | Date | string
+    producto?: XOR<ProductoNullableScalarRelationFilter, ProductoWhereInput> | null
+    ingredientes?: RecetaIngredienteListRelationFilter
+    ordenes?: OrdenProduccionListRelationFilter
+  }, "recetaId">
+
+  export type RecetaOrderByWithAggregationInput = {
+    recetaId?: SortOrder
+    nombre?: SortOrder
+    rendimiento?: SortOrder
+    productoId?: SortOrderInput | SortOrder
+    instrucciones?: SortOrderInput | SortOrder
+    tiempoPrep?: SortOrderInput | SortOrder
+    costoUnitario?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: RecetaCountOrderByAggregateInput
+    _avg?: RecetaAvgOrderByAggregateInput
+    _max?: RecetaMaxOrderByAggregateInput
+    _min?: RecetaMinOrderByAggregateInput
+    _sum?: RecetaSumOrderByAggregateInput
+  }
+
+  export type RecetaScalarWhereWithAggregatesInput = {
+    AND?: RecetaScalarWhereWithAggregatesInput | RecetaScalarWhereWithAggregatesInput[]
+    OR?: RecetaScalarWhereWithAggregatesInput[]
+    NOT?: RecetaScalarWhereWithAggregatesInput | RecetaScalarWhereWithAggregatesInput[]
+    recetaId?: StringWithAggregatesFilter<"Receta"> | string
+    nombre?: StringWithAggregatesFilter<"Receta"> | string
+    rendimiento?: IntWithAggregatesFilter<"Receta"> | number
+    productoId?: StringNullableWithAggregatesFilter<"Receta"> | string | null
+    instrucciones?: StringNullableWithAggregatesFilter<"Receta"> | string | null
+    tiempoPrep?: IntNullableWithAggregatesFilter<"Receta"> | number | null
+    costoUnitario?: FloatWithAggregatesFilter<"Receta"> | number
+    createdAt?: DateTimeWithAggregatesFilter<"Receta"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Receta"> | Date | string
+  }
+
+  export type RecetaIngredienteWhereInput = {
+    AND?: RecetaIngredienteWhereInput | RecetaIngredienteWhereInput[]
+    OR?: RecetaIngredienteWhereInput[]
+    NOT?: RecetaIngredienteWhereInput | RecetaIngredienteWhereInput[]
+    id?: StringFilter<"RecetaIngrediente"> | string
+    recetaId?: StringFilter<"RecetaIngrediente"> | string
+    productoId?: StringFilter<"RecetaIngrediente"> | string
+    cantidad?: FloatFilter<"RecetaIngrediente"> | number
+    desperdicio?: FloatFilter<"RecetaIngrediente"> | number
+    createdAt?: DateTimeFilter<"RecetaIngrediente"> | Date | string
+    updatedAt?: DateTimeFilter<"RecetaIngrediente"> | Date | string
+    receta?: XOR<RecetaScalarRelationFilter, RecetaWhereInput>
+    producto?: XOR<ProductoScalarRelationFilter, ProductoWhereInput>
+  }
+
+  export type RecetaIngredienteOrderByWithRelationInput = {
+    id?: SortOrder
+    recetaId?: SortOrder
+    productoId?: SortOrder
+    cantidad?: SortOrder
+    desperdicio?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    receta?: RecetaOrderByWithRelationInput
+    producto?: ProductoOrderByWithRelationInput
+  }
+
+  export type RecetaIngredienteWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: RecetaIngredienteWhereInput | RecetaIngredienteWhereInput[]
+    OR?: RecetaIngredienteWhereInput[]
+    NOT?: RecetaIngredienteWhereInput | RecetaIngredienteWhereInput[]
+    recetaId?: StringFilter<"RecetaIngrediente"> | string
+    productoId?: StringFilter<"RecetaIngrediente"> | string
+    cantidad?: FloatFilter<"RecetaIngrediente"> | number
+    desperdicio?: FloatFilter<"RecetaIngrediente"> | number
+    createdAt?: DateTimeFilter<"RecetaIngrediente"> | Date | string
+    updatedAt?: DateTimeFilter<"RecetaIngrediente"> | Date | string
+    receta?: XOR<RecetaScalarRelationFilter, RecetaWhereInput>
+    producto?: XOR<ProductoScalarRelationFilter, ProductoWhereInput>
+  }, "id">
+
+  export type RecetaIngredienteOrderByWithAggregationInput = {
+    id?: SortOrder
+    recetaId?: SortOrder
+    productoId?: SortOrder
+    cantidad?: SortOrder
+    desperdicio?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: RecetaIngredienteCountOrderByAggregateInput
+    _avg?: RecetaIngredienteAvgOrderByAggregateInput
+    _max?: RecetaIngredienteMaxOrderByAggregateInput
+    _min?: RecetaIngredienteMinOrderByAggregateInput
+    _sum?: RecetaIngredienteSumOrderByAggregateInput
+  }
+
+  export type RecetaIngredienteScalarWhereWithAggregatesInput = {
+    AND?: RecetaIngredienteScalarWhereWithAggregatesInput | RecetaIngredienteScalarWhereWithAggregatesInput[]
+    OR?: RecetaIngredienteScalarWhereWithAggregatesInput[]
+    NOT?: RecetaIngredienteScalarWhereWithAggregatesInput | RecetaIngredienteScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"RecetaIngrediente"> | string
+    recetaId?: StringWithAggregatesFilter<"RecetaIngrediente"> | string
+    productoId?: StringWithAggregatesFilter<"RecetaIngrediente"> | string
+    cantidad?: FloatWithAggregatesFilter<"RecetaIngrediente"> | number
+    desperdicio?: FloatWithAggregatesFilter<"RecetaIngrediente"> | number
+    createdAt?: DateTimeWithAggregatesFilter<"RecetaIngrediente"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"RecetaIngrediente"> | Date | string
+  }
+
+  export type OrdenProduccionWhereInput = {
+    AND?: OrdenProduccionWhereInput | OrdenProduccionWhereInput[]
+    OR?: OrdenProduccionWhereInput[]
+    NOT?: OrdenProduccionWhereInput | OrdenProduccionWhereInput[]
+    ordenProduccionId?: StringFilter<"OrdenProduccion"> | string
+    recetaId?: StringFilter<"OrdenProduccion"> | string
+    cantidad?: IntFilter<"OrdenProduccion"> | number
+    estado?: EnumEstadoProduccionFilter<"OrdenProduccion"> | $Enums.EstadoProduccion
+    costoMateriales?: FloatNullableFilter<"OrdenProduccion"> | number | null
+    observaciones?: StringNullableFilter<"OrdenProduccion"> | string | null
+    fechaProduccion?: DateTimeFilter<"OrdenProduccion"> | Date | string
+    createdAt?: DateTimeFilter<"OrdenProduccion"> | Date | string
+    updatedAt?: DateTimeFilter<"OrdenProduccion"> | Date | string
+    receta?: XOR<RecetaScalarRelationFilter, RecetaWhereInput>
+    historial?: OrdenProduccionHistorialListRelationFilter
+  }
+
+  export type OrdenProduccionOrderByWithRelationInput = {
+    ordenProduccionId?: SortOrder
+    recetaId?: SortOrder
+    cantidad?: SortOrder
+    estado?: SortOrder
+    costoMateriales?: SortOrderInput | SortOrder
+    observaciones?: SortOrderInput | SortOrder
+    fechaProduccion?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    receta?: RecetaOrderByWithRelationInput
+    historial?: OrdenProduccionHistorialOrderByRelationAggregateInput
+  }
+
+  export type OrdenProduccionWhereUniqueInput = Prisma.AtLeast<{
+    ordenProduccionId?: string
+    AND?: OrdenProduccionWhereInput | OrdenProduccionWhereInput[]
+    OR?: OrdenProduccionWhereInput[]
+    NOT?: OrdenProduccionWhereInput | OrdenProduccionWhereInput[]
+    recetaId?: StringFilter<"OrdenProduccion"> | string
+    cantidad?: IntFilter<"OrdenProduccion"> | number
+    estado?: EnumEstadoProduccionFilter<"OrdenProduccion"> | $Enums.EstadoProduccion
+    costoMateriales?: FloatNullableFilter<"OrdenProduccion"> | number | null
+    observaciones?: StringNullableFilter<"OrdenProduccion"> | string | null
+    fechaProduccion?: DateTimeFilter<"OrdenProduccion"> | Date | string
+    createdAt?: DateTimeFilter<"OrdenProduccion"> | Date | string
+    updatedAt?: DateTimeFilter<"OrdenProduccion"> | Date | string
+    receta?: XOR<RecetaScalarRelationFilter, RecetaWhereInput>
+    historial?: OrdenProduccionHistorialListRelationFilter
+  }, "ordenProduccionId">
+
+  export type OrdenProduccionOrderByWithAggregationInput = {
+    ordenProduccionId?: SortOrder
+    recetaId?: SortOrder
+    cantidad?: SortOrder
+    estado?: SortOrder
+    costoMateriales?: SortOrderInput | SortOrder
+    observaciones?: SortOrderInput | SortOrder
+    fechaProduccion?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: OrdenProduccionCountOrderByAggregateInput
+    _avg?: OrdenProduccionAvgOrderByAggregateInput
+    _max?: OrdenProduccionMaxOrderByAggregateInput
+    _min?: OrdenProduccionMinOrderByAggregateInput
+    _sum?: OrdenProduccionSumOrderByAggregateInput
+  }
+
+  export type OrdenProduccionScalarWhereWithAggregatesInput = {
+    AND?: OrdenProduccionScalarWhereWithAggregatesInput | OrdenProduccionScalarWhereWithAggregatesInput[]
+    OR?: OrdenProduccionScalarWhereWithAggregatesInput[]
+    NOT?: OrdenProduccionScalarWhereWithAggregatesInput | OrdenProduccionScalarWhereWithAggregatesInput[]
+    ordenProduccionId?: StringWithAggregatesFilter<"OrdenProduccion"> | string
+    recetaId?: StringWithAggregatesFilter<"OrdenProduccion"> | string
+    cantidad?: IntWithAggregatesFilter<"OrdenProduccion"> | number
+    estado?: EnumEstadoProduccionWithAggregatesFilter<"OrdenProduccion"> | $Enums.EstadoProduccion
+    costoMateriales?: FloatNullableWithAggregatesFilter<"OrdenProduccion"> | number | null
+    observaciones?: StringNullableWithAggregatesFilter<"OrdenProduccion"> | string | null
+    fechaProduccion?: DateTimeWithAggregatesFilter<"OrdenProduccion"> | Date | string
+    createdAt?: DateTimeWithAggregatesFilter<"OrdenProduccion"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"OrdenProduccion"> | Date | string
+  }
+
+  export type OrdenProduccionHistorialWhereInput = {
+    AND?: OrdenProduccionHistorialWhereInput | OrdenProduccionHistorialWhereInput[]
+    OR?: OrdenProduccionHistorialWhereInput[]
+    NOT?: OrdenProduccionHistorialWhereInput | OrdenProduccionHistorialWhereInput[]
+    id?: StringFilter<"OrdenProduccionHistorial"> | string
+    ordenProduccionId?: StringFilter<"OrdenProduccionHistorial"> | string
+    estadoAnterior?: StringFilter<"OrdenProduccionHistorial"> | string
+    estadoNuevo?: StringFilter<"OrdenProduccionHistorial"> | string
+    observaciones?: StringNullableFilter<"OrdenProduccionHistorial"> | string | null
+    usuarioId?: StringNullableFilter<"OrdenProduccionHistorial"> | string | null
+    createdAt?: DateTimeFilter<"OrdenProduccionHistorial"> | Date | string
+    orden?: XOR<OrdenProduccionScalarRelationFilter, OrdenProduccionWhereInput>
+  }
+
+  export type OrdenProduccionHistorialOrderByWithRelationInput = {
+    id?: SortOrder
+    ordenProduccionId?: SortOrder
+    estadoAnterior?: SortOrder
+    estadoNuevo?: SortOrder
+    observaciones?: SortOrderInput | SortOrder
+    usuarioId?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    orden?: OrdenProduccionOrderByWithRelationInput
+  }
+
+  export type OrdenProduccionHistorialWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: OrdenProduccionHistorialWhereInput | OrdenProduccionHistorialWhereInput[]
+    OR?: OrdenProduccionHistorialWhereInput[]
+    NOT?: OrdenProduccionHistorialWhereInput | OrdenProduccionHistorialWhereInput[]
+    ordenProduccionId?: StringFilter<"OrdenProduccionHistorial"> | string
+    estadoAnterior?: StringFilter<"OrdenProduccionHistorial"> | string
+    estadoNuevo?: StringFilter<"OrdenProduccionHistorial"> | string
+    observaciones?: StringNullableFilter<"OrdenProduccionHistorial"> | string | null
+    usuarioId?: StringNullableFilter<"OrdenProduccionHistorial"> | string | null
+    createdAt?: DateTimeFilter<"OrdenProduccionHistorial"> | Date | string
+    orden?: XOR<OrdenProduccionScalarRelationFilter, OrdenProduccionWhereInput>
+  }, "id">
+
+  export type OrdenProduccionHistorialOrderByWithAggregationInput = {
+    id?: SortOrder
+    ordenProduccionId?: SortOrder
+    estadoAnterior?: SortOrder
+    estadoNuevo?: SortOrder
+    observaciones?: SortOrderInput | SortOrder
+    usuarioId?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: OrdenProduccionHistorialCountOrderByAggregateInput
+    _max?: OrdenProduccionHistorialMaxOrderByAggregateInput
+    _min?: OrdenProduccionHistorialMinOrderByAggregateInput
+  }
+
+  export type OrdenProduccionHistorialScalarWhereWithAggregatesInput = {
+    AND?: OrdenProduccionHistorialScalarWhereWithAggregatesInput | OrdenProduccionHistorialScalarWhereWithAggregatesInput[]
+    OR?: OrdenProduccionHistorialScalarWhereWithAggregatesInput[]
+    NOT?: OrdenProduccionHistorialScalarWhereWithAggregatesInput | OrdenProduccionHistorialScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"OrdenProduccionHistorial"> | string
+    ordenProduccionId?: StringWithAggregatesFilter<"OrdenProduccionHistorial"> | string
+    estadoAnterior?: StringWithAggregatesFilter<"OrdenProduccionHistorial"> | string
+    estadoNuevo?: StringWithAggregatesFilter<"OrdenProduccionHistorial"> | string
+    observaciones?: StringNullableWithAggregatesFilter<"OrdenProduccionHistorial"> | string | null
+    usuarioId?: StringNullableWithAggregatesFilter<"OrdenProduccionHistorial"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"OrdenProduccionHistorial"> | Date | string
+  }
+
+  export type ValeSalidaWhereInput = {
+    AND?: ValeSalidaWhereInput | ValeSalidaWhereInput[]
+    OR?: ValeSalidaWhereInput[]
+    NOT?: ValeSalidaWhereInput | ValeSalidaWhereInput[]
+    valeSalidaId?: StringFilter<"ValeSalida"> | string
+    concepto?: StringFilter<"ValeSalida"> | string
+    estado?: StringFilter<"ValeSalida"> | string
+    observaciones?: StringNullableFilter<"ValeSalida"> | string | null
+    createdAt?: DateTimeFilter<"ValeSalida"> | Date | string
+    updatedAt?: DateTimeFilter<"ValeSalida"> | Date | string
+    items?: ValeSalidaItemListRelationFilter
+  }
+
+  export type ValeSalidaOrderByWithRelationInput = {
+    valeSalidaId?: SortOrder
+    concepto?: SortOrder
+    estado?: SortOrder
+    observaciones?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    items?: ValeSalidaItemOrderByRelationAggregateInput
+  }
+
+  export type ValeSalidaWhereUniqueInput = Prisma.AtLeast<{
+    valeSalidaId?: string
+    AND?: ValeSalidaWhereInput | ValeSalidaWhereInput[]
+    OR?: ValeSalidaWhereInput[]
+    NOT?: ValeSalidaWhereInput | ValeSalidaWhereInput[]
+    concepto?: StringFilter<"ValeSalida"> | string
+    estado?: StringFilter<"ValeSalida"> | string
+    observaciones?: StringNullableFilter<"ValeSalida"> | string | null
+    createdAt?: DateTimeFilter<"ValeSalida"> | Date | string
+    updatedAt?: DateTimeFilter<"ValeSalida"> | Date | string
+    items?: ValeSalidaItemListRelationFilter
+  }, "valeSalidaId">
+
+  export type ValeSalidaOrderByWithAggregationInput = {
+    valeSalidaId?: SortOrder
+    concepto?: SortOrder
+    estado?: SortOrder
+    observaciones?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: ValeSalidaCountOrderByAggregateInput
+    _max?: ValeSalidaMaxOrderByAggregateInput
+    _min?: ValeSalidaMinOrderByAggregateInput
+  }
+
+  export type ValeSalidaScalarWhereWithAggregatesInput = {
+    AND?: ValeSalidaScalarWhereWithAggregatesInput | ValeSalidaScalarWhereWithAggregatesInput[]
+    OR?: ValeSalidaScalarWhereWithAggregatesInput[]
+    NOT?: ValeSalidaScalarWhereWithAggregatesInput | ValeSalidaScalarWhereWithAggregatesInput[]
+    valeSalidaId?: StringWithAggregatesFilter<"ValeSalida"> | string
+    concepto?: StringWithAggregatesFilter<"ValeSalida"> | string
+    estado?: StringWithAggregatesFilter<"ValeSalida"> | string
+    observaciones?: StringNullableWithAggregatesFilter<"ValeSalida"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"ValeSalida"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"ValeSalida"> | Date | string
+  }
+
+  export type ValeSalidaItemWhereInput = {
+    AND?: ValeSalidaItemWhereInput | ValeSalidaItemWhereInput[]
+    OR?: ValeSalidaItemWhereInput[]
+    NOT?: ValeSalidaItemWhereInput | ValeSalidaItemWhereInput[]
+    valeSalidaItemId?: StringFilter<"ValeSalidaItem"> | string
+    valeSalidaId?: StringFilter<"ValeSalidaItem"> | string
+    productoId?: StringFilter<"ValeSalidaItem"> | string
+    cantidad?: IntFilter<"ValeSalidaItem"> | number
+    createdAt?: DateTimeFilter<"ValeSalidaItem"> | Date | string
+    valeSalida?: XOR<ValeSalidaScalarRelationFilter, ValeSalidaWhereInput>
+    producto?: XOR<ProductoScalarRelationFilter, ProductoWhereInput>
+  }
+
+  export type ValeSalidaItemOrderByWithRelationInput = {
+    valeSalidaItemId?: SortOrder
+    valeSalidaId?: SortOrder
+    productoId?: SortOrder
+    cantidad?: SortOrder
+    createdAt?: SortOrder
+    valeSalida?: ValeSalidaOrderByWithRelationInput
+    producto?: ProductoOrderByWithRelationInput
+  }
+
+  export type ValeSalidaItemWhereUniqueInput = Prisma.AtLeast<{
+    valeSalidaItemId?: string
+    AND?: ValeSalidaItemWhereInput | ValeSalidaItemWhereInput[]
+    OR?: ValeSalidaItemWhereInput[]
+    NOT?: ValeSalidaItemWhereInput | ValeSalidaItemWhereInput[]
+    valeSalidaId?: StringFilter<"ValeSalidaItem"> | string
+    productoId?: StringFilter<"ValeSalidaItem"> | string
+    cantidad?: IntFilter<"ValeSalidaItem"> | number
+    createdAt?: DateTimeFilter<"ValeSalidaItem"> | Date | string
+    valeSalida?: XOR<ValeSalidaScalarRelationFilter, ValeSalidaWhereInput>
+    producto?: XOR<ProductoScalarRelationFilter, ProductoWhereInput>
+  }, "valeSalidaItemId">
+
+  export type ValeSalidaItemOrderByWithAggregationInput = {
+    valeSalidaItemId?: SortOrder
+    valeSalidaId?: SortOrder
+    productoId?: SortOrder
+    cantidad?: SortOrder
+    createdAt?: SortOrder
+    _count?: ValeSalidaItemCountOrderByAggregateInput
+    _avg?: ValeSalidaItemAvgOrderByAggregateInput
+    _max?: ValeSalidaItemMaxOrderByAggregateInput
+    _min?: ValeSalidaItemMinOrderByAggregateInput
+    _sum?: ValeSalidaItemSumOrderByAggregateInput
+  }
+
+  export type ValeSalidaItemScalarWhereWithAggregatesInput = {
+    AND?: ValeSalidaItemScalarWhereWithAggregatesInput | ValeSalidaItemScalarWhereWithAggregatesInput[]
+    OR?: ValeSalidaItemScalarWhereWithAggregatesInput[]
+    NOT?: ValeSalidaItemScalarWhereWithAggregatesInput | ValeSalidaItemScalarWhereWithAggregatesInput[]
+    valeSalidaItemId?: StringWithAggregatesFilter<"ValeSalidaItem"> | string
+    valeSalidaId?: StringWithAggregatesFilter<"ValeSalidaItem"> | string
+    productoId?: StringWithAggregatesFilter<"ValeSalidaItem"> | string
+    cantidad?: IntWithAggregatesFilter<"ValeSalidaItem"> | number
+    createdAt?: DateTimeWithAggregatesFilter<"ValeSalidaItem"> | Date | string
+  }
+
   export type CategoriaCreateInput = {
     catId?: string
     nombre: string
@@ -106313,6 +114410,9 @@ export namespace Prisma {
     transferencias?: TransferenciaCreateNestedManyWithoutProductoInput
     ventas?: VentaCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    recetasProducto?: RecetaCreateNestedManyWithoutProductoInput
+    ingredienteRecetas?: RecetaIngredienteCreateNestedManyWithoutProductoInput
+    valeSalidaItems?: ValeSalidaItemCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateInput = {
@@ -106340,6 +114440,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    recetasProducto?: RecetaUncheckedCreateNestedManyWithoutProductoInput
+    ingredienteRecetas?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
+    valeSalidaItems?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUpdateInput = {
@@ -106367,6 +114470,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUpdateManyWithoutProductoNestedInput
     ventas?: VentaUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    recetasProducto?: RecetaUpdateManyWithoutProductoNestedInput
+    ingredienteRecetas?: RecetaIngredienteUpdateManyWithoutProductoNestedInput
+    valeSalidaItems?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateInput = {
@@ -106394,6 +114500,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    recetasProducto?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
+    ingredienteRecetas?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
+    valeSalidaItems?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoCreateManyInput = {
@@ -113048,6 +121157,442 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type RecetaCreateInput = {
+    recetaId?: string
+    nombre: string
+    rendimiento?: number
+    instrucciones?: string | null
+    tiempoPrep?: number | null
+    costoUnitario?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    producto?: ProductoCreateNestedOneWithoutRecetasProductoInput
+    ingredientes?: RecetaIngredienteCreateNestedManyWithoutRecetaInput
+    ordenes?: OrdenProduccionCreateNestedManyWithoutRecetaInput
+  }
+
+  export type RecetaUncheckedCreateInput = {
+    recetaId?: string
+    nombre: string
+    rendimiento?: number
+    productoId?: string | null
+    instrucciones?: string | null
+    tiempoPrep?: number | null
+    costoUnitario?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    ingredientes?: RecetaIngredienteUncheckedCreateNestedManyWithoutRecetaInput
+    ordenes?: OrdenProduccionUncheckedCreateNestedManyWithoutRecetaInput
+  }
+
+  export type RecetaUpdateInput = {
+    recetaId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    rendimiento?: IntFieldUpdateOperationsInput | number
+    instrucciones?: NullableStringFieldUpdateOperationsInput | string | null
+    tiempoPrep?: NullableIntFieldUpdateOperationsInput | number | null
+    costoUnitario?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    producto?: ProductoUpdateOneWithoutRecetasProductoNestedInput
+    ingredientes?: RecetaIngredienteUpdateManyWithoutRecetaNestedInput
+    ordenes?: OrdenProduccionUpdateManyWithoutRecetaNestedInput
+  }
+
+  export type RecetaUncheckedUpdateInput = {
+    recetaId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    rendimiento?: IntFieldUpdateOperationsInput | number
+    productoId?: NullableStringFieldUpdateOperationsInput | string | null
+    instrucciones?: NullableStringFieldUpdateOperationsInput | string | null
+    tiempoPrep?: NullableIntFieldUpdateOperationsInput | number | null
+    costoUnitario?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ingredientes?: RecetaIngredienteUncheckedUpdateManyWithoutRecetaNestedInput
+    ordenes?: OrdenProduccionUncheckedUpdateManyWithoutRecetaNestedInput
+  }
+
+  export type RecetaCreateManyInput = {
+    recetaId?: string
+    nombre: string
+    rendimiento?: number
+    productoId?: string | null
+    instrucciones?: string | null
+    tiempoPrep?: number | null
+    costoUnitario?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type RecetaUpdateManyMutationInput = {
+    recetaId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    rendimiento?: IntFieldUpdateOperationsInput | number
+    instrucciones?: NullableStringFieldUpdateOperationsInput | string | null
+    tiempoPrep?: NullableIntFieldUpdateOperationsInput | number | null
+    costoUnitario?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RecetaUncheckedUpdateManyInput = {
+    recetaId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    rendimiento?: IntFieldUpdateOperationsInput | number
+    productoId?: NullableStringFieldUpdateOperationsInput | string | null
+    instrucciones?: NullableStringFieldUpdateOperationsInput | string | null
+    tiempoPrep?: NullableIntFieldUpdateOperationsInput | number | null
+    costoUnitario?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RecetaIngredienteCreateInput = {
+    id?: string
+    cantidad: number
+    desperdicio?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    receta: RecetaCreateNestedOneWithoutIngredientesInput
+    producto: ProductoCreateNestedOneWithoutIngredienteRecetasInput
+  }
+
+  export type RecetaIngredienteUncheckedCreateInput = {
+    id?: string
+    recetaId: string
+    productoId: string
+    cantidad: number
+    desperdicio?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type RecetaIngredienteUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    cantidad?: FloatFieldUpdateOperationsInput | number
+    desperdicio?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    receta?: RecetaUpdateOneRequiredWithoutIngredientesNestedInput
+    producto?: ProductoUpdateOneRequiredWithoutIngredienteRecetasNestedInput
+  }
+
+  export type RecetaIngredienteUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    recetaId?: StringFieldUpdateOperationsInput | string
+    productoId?: StringFieldUpdateOperationsInput | string
+    cantidad?: FloatFieldUpdateOperationsInput | number
+    desperdicio?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RecetaIngredienteCreateManyInput = {
+    id?: string
+    recetaId: string
+    productoId: string
+    cantidad: number
+    desperdicio?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type RecetaIngredienteUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    cantidad?: FloatFieldUpdateOperationsInput | number
+    desperdicio?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RecetaIngredienteUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    recetaId?: StringFieldUpdateOperationsInput | string
+    productoId?: StringFieldUpdateOperationsInput | string
+    cantidad?: FloatFieldUpdateOperationsInput | number
+    desperdicio?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrdenProduccionCreateInput = {
+    ordenProduccionId?: string
+    cantidad: number
+    estado?: $Enums.EstadoProduccion
+    costoMateriales?: number | null
+    observaciones?: string | null
+    fechaProduccion?: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    receta: RecetaCreateNestedOneWithoutOrdenesInput
+    historial?: OrdenProduccionHistorialCreateNestedManyWithoutOrdenInput
+  }
+
+  export type OrdenProduccionUncheckedCreateInput = {
+    ordenProduccionId?: string
+    recetaId: string
+    cantidad: number
+    estado?: $Enums.EstadoProduccion
+    costoMateriales?: number | null
+    observaciones?: string | null
+    fechaProduccion?: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    historial?: OrdenProduccionHistorialUncheckedCreateNestedManyWithoutOrdenInput
+  }
+
+  export type OrdenProduccionUpdateInput = {
+    ordenProduccionId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    estado?: EnumEstadoProduccionFieldUpdateOperationsInput | $Enums.EstadoProduccion
+    costoMateriales?: NullableFloatFieldUpdateOperationsInput | number | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaProduccion?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    receta?: RecetaUpdateOneRequiredWithoutOrdenesNestedInput
+    historial?: OrdenProduccionHistorialUpdateManyWithoutOrdenNestedInput
+  }
+
+  export type OrdenProduccionUncheckedUpdateInput = {
+    ordenProduccionId?: StringFieldUpdateOperationsInput | string
+    recetaId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    estado?: EnumEstadoProduccionFieldUpdateOperationsInput | $Enums.EstadoProduccion
+    costoMateriales?: NullableFloatFieldUpdateOperationsInput | number | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaProduccion?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    historial?: OrdenProduccionHistorialUncheckedUpdateManyWithoutOrdenNestedInput
+  }
+
+  export type OrdenProduccionCreateManyInput = {
+    ordenProduccionId?: string
+    recetaId: string
+    cantidad: number
+    estado?: $Enums.EstadoProduccion
+    costoMateriales?: number | null
+    observaciones?: string | null
+    fechaProduccion?: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type OrdenProduccionUpdateManyMutationInput = {
+    ordenProduccionId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    estado?: EnumEstadoProduccionFieldUpdateOperationsInput | $Enums.EstadoProduccion
+    costoMateriales?: NullableFloatFieldUpdateOperationsInput | number | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaProduccion?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrdenProduccionUncheckedUpdateManyInput = {
+    ordenProduccionId?: StringFieldUpdateOperationsInput | string
+    recetaId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    estado?: EnumEstadoProduccionFieldUpdateOperationsInput | $Enums.EstadoProduccion
+    costoMateriales?: NullableFloatFieldUpdateOperationsInput | number | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaProduccion?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrdenProduccionHistorialCreateInput = {
+    id?: string
+    estadoAnterior: string
+    estadoNuevo: string
+    observaciones?: string | null
+    usuarioId?: string | null
+    createdAt?: Date | string
+    orden: OrdenProduccionCreateNestedOneWithoutHistorialInput
+  }
+
+  export type OrdenProduccionHistorialUncheckedCreateInput = {
+    id?: string
+    ordenProduccionId: string
+    estadoAnterior: string
+    estadoNuevo: string
+    observaciones?: string | null
+    usuarioId?: string | null
+    createdAt?: Date | string
+  }
+
+  export type OrdenProduccionHistorialUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    estadoAnterior?: StringFieldUpdateOperationsInput | string
+    estadoNuevo?: StringFieldUpdateOperationsInput | string
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    usuarioId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    orden?: OrdenProduccionUpdateOneRequiredWithoutHistorialNestedInput
+  }
+
+  export type OrdenProduccionHistorialUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    ordenProduccionId?: StringFieldUpdateOperationsInput | string
+    estadoAnterior?: StringFieldUpdateOperationsInput | string
+    estadoNuevo?: StringFieldUpdateOperationsInput | string
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    usuarioId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrdenProduccionHistorialCreateManyInput = {
+    id?: string
+    ordenProduccionId: string
+    estadoAnterior: string
+    estadoNuevo: string
+    observaciones?: string | null
+    usuarioId?: string | null
+    createdAt?: Date | string
+  }
+
+  export type OrdenProduccionHistorialUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    estadoAnterior?: StringFieldUpdateOperationsInput | string
+    estadoNuevo?: StringFieldUpdateOperationsInput | string
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    usuarioId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrdenProduccionHistorialUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    ordenProduccionId?: StringFieldUpdateOperationsInput | string
+    estadoAnterior?: StringFieldUpdateOperationsInput | string
+    estadoNuevo?: StringFieldUpdateOperationsInput | string
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    usuarioId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ValeSalidaCreateInput = {
+    valeSalidaId?: string
+    concepto: string
+    estado?: string
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    items?: ValeSalidaItemCreateNestedManyWithoutValeSalidaInput
+  }
+
+  export type ValeSalidaUncheckedCreateInput = {
+    valeSalidaId?: string
+    concepto: string
+    estado?: string
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    items?: ValeSalidaItemUncheckedCreateNestedManyWithoutValeSalidaInput
+  }
+
+  export type ValeSalidaUpdateInput = {
+    valeSalidaId?: StringFieldUpdateOperationsInput | string
+    concepto?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    items?: ValeSalidaItemUpdateManyWithoutValeSalidaNestedInput
+  }
+
+  export type ValeSalidaUncheckedUpdateInput = {
+    valeSalidaId?: StringFieldUpdateOperationsInput | string
+    concepto?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    items?: ValeSalidaItemUncheckedUpdateManyWithoutValeSalidaNestedInput
+  }
+
+  export type ValeSalidaCreateManyInput = {
+    valeSalidaId?: string
+    concepto: string
+    estado?: string
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ValeSalidaUpdateManyMutationInput = {
+    valeSalidaId?: StringFieldUpdateOperationsInput | string
+    concepto?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ValeSalidaUncheckedUpdateManyInput = {
+    valeSalidaId?: StringFieldUpdateOperationsInput | string
+    concepto?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ValeSalidaItemCreateInput = {
+    valeSalidaItemId?: string
+    cantidad: number
+    createdAt?: Date | string
+    valeSalida: ValeSalidaCreateNestedOneWithoutItemsInput
+    producto: ProductoCreateNestedOneWithoutValeSalidaItemsInput
+  }
+
+  export type ValeSalidaItemUncheckedCreateInput = {
+    valeSalidaItemId?: string
+    valeSalidaId: string
+    productoId: string
+    cantidad: number
+    createdAt?: Date | string
+  }
+
+  export type ValeSalidaItemUpdateInput = {
+    valeSalidaItemId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    valeSalida?: ValeSalidaUpdateOneRequiredWithoutItemsNestedInput
+    producto?: ProductoUpdateOneRequiredWithoutValeSalidaItemsNestedInput
+  }
+
+  export type ValeSalidaItemUncheckedUpdateInput = {
+    valeSalidaItemId?: StringFieldUpdateOperationsInput | string
+    valeSalidaId?: StringFieldUpdateOperationsInput | string
+    productoId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ValeSalidaItemCreateManyInput = {
+    valeSalidaItemId?: string
+    valeSalidaId: string
+    productoId: string
+    cantidad: number
+    createdAt?: Date | string
+  }
+
+  export type ValeSalidaItemUpdateManyMutationInput = {
+    valeSalidaItemId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ValeSalidaItemUncheckedUpdateManyInput = {
+    valeSalidaItemId?: StringFieldUpdateOperationsInput | string
+    valeSalidaId?: StringFieldUpdateOperationsInput | string
+    productoId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -113911,6 +122456,24 @@ export namespace Prisma {
     none?: VentaItemWhereInput
   }
 
+  export type RecetaListRelationFilter = {
+    every?: RecetaWhereInput
+    some?: RecetaWhereInput
+    none?: RecetaWhereInput
+  }
+
+  export type RecetaIngredienteListRelationFilter = {
+    every?: RecetaIngredienteWhereInput
+    some?: RecetaIngredienteWhereInput
+    none?: RecetaIngredienteWhereInput
+  }
+
+  export type ValeSalidaItemListRelationFilter = {
+    every?: ValeSalidaItemWhereInput
+    some?: ValeSalidaItemWhereInput
+    none?: ValeSalidaItemWhereInput
+  }
+
   export type MermaOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -113924,6 +122487,18 @@ export namespace Prisma {
   }
 
   export type VentaItemOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type RecetaOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type RecetaIngredienteOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type ValeSalidaItemOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -118108,6 +126683,308 @@ export namespace Prisma {
     diasAvisoVencimientoContrato?: SortOrder
   }
 
+  export type OrdenProduccionListRelationFilter = {
+    every?: OrdenProduccionWhereInput
+    some?: OrdenProduccionWhereInput
+    none?: OrdenProduccionWhereInput
+  }
+
+  export type OrdenProduccionOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type RecetaCountOrderByAggregateInput = {
+    recetaId?: SortOrder
+    nombre?: SortOrder
+    rendimiento?: SortOrder
+    productoId?: SortOrder
+    instrucciones?: SortOrder
+    tiempoPrep?: SortOrder
+    costoUnitario?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type RecetaAvgOrderByAggregateInput = {
+    rendimiento?: SortOrder
+    tiempoPrep?: SortOrder
+    costoUnitario?: SortOrder
+  }
+
+  export type RecetaMaxOrderByAggregateInput = {
+    recetaId?: SortOrder
+    nombre?: SortOrder
+    rendimiento?: SortOrder
+    productoId?: SortOrder
+    instrucciones?: SortOrder
+    tiempoPrep?: SortOrder
+    costoUnitario?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type RecetaMinOrderByAggregateInput = {
+    recetaId?: SortOrder
+    nombre?: SortOrder
+    rendimiento?: SortOrder
+    productoId?: SortOrder
+    instrucciones?: SortOrder
+    tiempoPrep?: SortOrder
+    costoUnitario?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type RecetaSumOrderByAggregateInput = {
+    rendimiento?: SortOrder
+    tiempoPrep?: SortOrder
+    costoUnitario?: SortOrder
+  }
+
+  export type RecetaScalarRelationFilter = {
+    is?: RecetaWhereInput
+    isNot?: RecetaWhereInput
+  }
+
+  export type RecetaIngredienteCountOrderByAggregateInput = {
+    id?: SortOrder
+    recetaId?: SortOrder
+    productoId?: SortOrder
+    cantidad?: SortOrder
+    desperdicio?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type RecetaIngredienteAvgOrderByAggregateInput = {
+    cantidad?: SortOrder
+    desperdicio?: SortOrder
+  }
+
+  export type RecetaIngredienteMaxOrderByAggregateInput = {
+    id?: SortOrder
+    recetaId?: SortOrder
+    productoId?: SortOrder
+    cantidad?: SortOrder
+    desperdicio?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type RecetaIngredienteMinOrderByAggregateInput = {
+    id?: SortOrder
+    recetaId?: SortOrder
+    productoId?: SortOrder
+    cantidad?: SortOrder
+    desperdicio?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type RecetaIngredienteSumOrderByAggregateInput = {
+    cantidad?: SortOrder
+    desperdicio?: SortOrder
+  }
+
+  export type EnumEstadoProduccionFilter<$PrismaModel = never> = {
+    equals?: $Enums.EstadoProduccion | EnumEstadoProduccionFieldRefInput<$PrismaModel>
+    in?: $Enums.EstadoProduccion[] | ListEnumEstadoProduccionFieldRefInput<$PrismaModel>
+    notIn?: $Enums.EstadoProduccion[] | ListEnumEstadoProduccionFieldRefInput<$PrismaModel>
+    not?: NestedEnumEstadoProduccionFilter<$PrismaModel> | $Enums.EstadoProduccion
+  }
+
+  export type FloatNullableFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableFilter<$PrismaModel> | number | null
+  }
+
+  export type OrdenProduccionHistorialListRelationFilter = {
+    every?: OrdenProduccionHistorialWhereInput
+    some?: OrdenProduccionHistorialWhereInput
+    none?: OrdenProduccionHistorialWhereInput
+  }
+
+  export type OrdenProduccionHistorialOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type OrdenProduccionCountOrderByAggregateInput = {
+    ordenProduccionId?: SortOrder
+    recetaId?: SortOrder
+    cantidad?: SortOrder
+    estado?: SortOrder
+    costoMateriales?: SortOrder
+    observaciones?: SortOrder
+    fechaProduccion?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type OrdenProduccionAvgOrderByAggregateInput = {
+    cantidad?: SortOrder
+    costoMateriales?: SortOrder
+  }
+
+  export type OrdenProduccionMaxOrderByAggregateInput = {
+    ordenProduccionId?: SortOrder
+    recetaId?: SortOrder
+    cantidad?: SortOrder
+    estado?: SortOrder
+    costoMateriales?: SortOrder
+    observaciones?: SortOrder
+    fechaProduccion?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type OrdenProduccionMinOrderByAggregateInput = {
+    ordenProduccionId?: SortOrder
+    recetaId?: SortOrder
+    cantidad?: SortOrder
+    estado?: SortOrder
+    costoMateriales?: SortOrder
+    observaciones?: SortOrder
+    fechaProduccion?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type OrdenProduccionSumOrderByAggregateInput = {
+    cantidad?: SortOrder
+    costoMateriales?: SortOrder
+  }
+
+  export type EnumEstadoProduccionWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.EstadoProduccion | EnumEstadoProduccionFieldRefInput<$PrismaModel>
+    in?: $Enums.EstadoProduccion[] | ListEnumEstadoProduccionFieldRefInput<$PrismaModel>
+    notIn?: $Enums.EstadoProduccion[] | ListEnumEstadoProduccionFieldRefInput<$PrismaModel>
+    not?: NestedEnumEstadoProduccionWithAggregatesFilter<$PrismaModel> | $Enums.EstadoProduccion
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumEstadoProduccionFilter<$PrismaModel>
+    _max?: NestedEnumEstadoProduccionFilter<$PrismaModel>
+  }
+
+  export type FloatNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedFloatNullableFilter<$PrismaModel>
+    _min?: NestedFloatNullableFilter<$PrismaModel>
+    _max?: NestedFloatNullableFilter<$PrismaModel>
+  }
+
+  export type OrdenProduccionScalarRelationFilter = {
+    is?: OrdenProduccionWhereInput
+    isNot?: OrdenProduccionWhereInput
+  }
+
+  export type OrdenProduccionHistorialCountOrderByAggregateInput = {
+    id?: SortOrder
+    ordenProduccionId?: SortOrder
+    estadoAnterior?: SortOrder
+    estadoNuevo?: SortOrder
+    observaciones?: SortOrder
+    usuarioId?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type OrdenProduccionHistorialMaxOrderByAggregateInput = {
+    id?: SortOrder
+    ordenProduccionId?: SortOrder
+    estadoAnterior?: SortOrder
+    estadoNuevo?: SortOrder
+    observaciones?: SortOrder
+    usuarioId?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type OrdenProduccionHistorialMinOrderByAggregateInput = {
+    id?: SortOrder
+    ordenProduccionId?: SortOrder
+    estadoAnterior?: SortOrder
+    estadoNuevo?: SortOrder
+    observaciones?: SortOrder
+    usuarioId?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type ValeSalidaCountOrderByAggregateInput = {
+    valeSalidaId?: SortOrder
+    concepto?: SortOrder
+    estado?: SortOrder
+    observaciones?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ValeSalidaMaxOrderByAggregateInput = {
+    valeSalidaId?: SortOrder
+    concepto?: SortOrder
+    estado?: SortOrder
+    observaciones?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ValeSalidaMinOrderByAggregateInput = {
+    valeSalidaId?: SortOrder
+    concepto?: SortOrder
+    estado?: SortOrder
+    observaciones?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type ValeSalidaScalarRelationFilter = {
+    is?: ValeSalidaWhereInput
+    isNot?: ValeSalidaWhereInput
+  }
+
+  export type ValeSalidaItemCountOrderByAggregateInput = {
+    valeSalidaItemId?: SortOrder
+    valeSalidaId?: SortOrder
+    productoId?: SortOrder
+    cantidad?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type ValeSalidaItemAvgOrderByAggregateInput = {
+    cantidad?: SortOrder
+  }
+
+  export type ValeSalidaItemMaxOrderByAggregateInput = {
+    valeSalidaItemId?: SortOrder
+    valeSalidaId?: SortOrder
+    productoId?: SortOrder
+    cantidad?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type ValeSalidaItemMinOrderByAggregateInput = {
+    valeSalidaItemId?: SortOrder
+    valeSalidaId?: SortOrder
+    productoId?: SortOrder
+    cantidad?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type ValeSalidaItemSumOrderByAggregateInput = {
+    cantidad?: SortOrder
+  }
+
   export type CategoriaCreateNestedOneWithoutSubcategoriasInput = {
     create?: XOR<CategoriaCreateWithoutSubcategoriasInput, CategoriaUncheckedCreateWithoutSubcategoriasInput>
     connectOrCreate?: CategoriaCreateOrConnectWithoutSubcategoriasInput
@@ -119426,6 +128303,27 @@ export namespace Prisma {
     connect?: VentaItemWhereUniqueInput | VentaItemWhereUniqueInput[]
   }
 
+  export type RecetaCreateNestedManyWithoutProductoInput = {
+    create?: XOR<RecetaCreateWithoutProductoInput, RecetaUncheckedCreateWithoutProductoInput> | RecetaCreateWithoutProductoInput[] | RecetaUncheckedCreateWithoutProductoInput[]
+    connectOrCreate?: RecetaCreateOrConnectWithoutProductoInput | RecetaCreateOrConnectWithoutProductoInput[]
+    createMany?: RecetaCreateManyProductoInputEnvelope
+    connect?: RecetaWhereUniqueInput | RecetaWhereUniqueInput[]
+  }
+
+  export type RecetaIngredienteCreateNestedManyWithoutProductoInput = {
+    create?: XOR<RecetaIngredienteCreateWithoutProductoInput, RecetaIngredienteUncheckedCreateWithoutProductoInput> | RecetaIngredienteCreateWithoutProductoInput[] | RecetaIngredienteUncheckedCreateWithoutProductoInput[]
+    connectOrCreate?: RecetaIngredienteCreateOrConnectWithoutProductoInput | RecetaIngredienteCreateOrConnectWithoutProductoInput[]
+    createMany?: RecetaIngredienteCreateManyProductoInputEnvelope
+    connect?: RecetaIngredienteWhereUniqueInput | RecetaIngredienteWhereUniqueInput[]
+  }
+
+  export type ValeSalidaItemCreateNestedManyWithoutProductoInput = {
+    create?: XOR<ValeSalidaItemCreateWithoutProductoInput, ValeSalidaItemUncheckedCreateWithoutProductoInput> | ValeSalidaItemCreateWithoutProductoInput[] | ValeSalidaItemUncheckedCreateWithoutProductoInput[]
+    connectOrCreate?: ValeSalidaItemCreateOrConnectWithoutProductoInput | ValeSalidaItemCreateOrConnectWithoutProductoInput[]
+    createMany?: ValeSalidaItemCreateManyProductoInputEnvelope
+    connect?: ValeSalidaItemWhereUniqueInput | ValeSalidaItemWhereUniqueInput[]
+  }
+
   export type CompraProductoUncheckedCreateNestedManyWithoutProductoInput = {
     create?: XOR<CompraProductoCreateWithoutProductoInput, CompraProductoUncheckedCreateWithoutProductoInput> | CompraProductoCreateWithoutProductoInput[] | CompraProductoUncheckedCreateWithoutProductoInput[]
     connectOrCreate?: CompraProductoCreateOrConnectWithoutProductoInput | CompraProductoCreateOrConnectWithoutProductoInput[]
@@ -119480,6 +128378,27 @@ export namespace Prisma {
     connectOrCreate?: VentaItemCreateOrConnectWithoutProductoInput | VentaItemCreateOrConnectWithoutProductoInput[]
     createMany?: VentaItemCreateManyProductoInputEnvelope
     connect?: VentaItemWhereUniqueInput | VentaItemWhereUniqueInput[]
+  }
+
+  export type RecetaUncheckedCreateNestedManyWithoutProductoInput = {
+    create?: XOR<RecetaCreateWithoutProductoInput, RecetaUncheckedCreateWithoutProductoInput> | RecetaCreateWithoutProductoInput[] | RecetaUncheckedCreateWithoutProductoInput[]
+    connectOrCreate?: RecetaCreateOrConnectWithoutProductoInput | RecetaCreateOrConnectWithoutProductoInput[]
+    createMany?: RecetaCreateManyProductoInputEnvelope
+    connect?: RecetaWhereUniqueInput | RecetaWhereUniqueInput[]
+  }
+
+  export type RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput = {
+    create?: XOR<RecetaIngredienteCreateWithoutProductoInput, RecetaIngredienteUncheckedCreateWithoutProductoInput> | RecetaIngredienteCreateWithoutProductoInput[] | RecetaIngredienteUncheckedCreateWithoutProductoInput[]
+    connectOrCreate?: RecetaIngredienteCreateOrConnectWithoutProductoInput | RecetaIngredienteCreateOrConnectWithoutProductoInput[]
+    createMany?: RecetaIngredienteCreateManyProductoInputEnvelope
+    connect?: RecetaIngredienteWhereUniqueInput | RecetaIngredienteWhereUniqueInput[]
+  }
+
+  export type ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput = {
+    create?: XOR<ValeSalidaItemCreateWithoutProductoInput, ValeSalidaItemUncheckedCreateWithoutProductoInput> | ValeSalidaItemCreateWithoutProductoInput[] | ValeSalidaItemUncheckedCreateWithoutProductoInput[]
+    connectOrCreate?: ValeSalidaItemCreateOrConnectWithoutProductoInput | ValeSalidaItemCreateOrConnectWithoutProductoInput[]
+    createMany?: ValeSalidaItemCreateManyProductoInputEnvelope
+    connect?: ValeSalidaItemWhereUniqueInput | ValeSalidaItemWhereUniqueInput[]
   }
 
   export type ProductoUpdatefotosInput = {
@@ -119655,6 +128574,48 @@ export namespace Prisma {
     deleteMany?: VentaItemScalarWhereInput | VentaItemScalarWhereInput[]
   }
 
+  export type RecetaUpdateManyWithoutProductoNestedInput = {
+    create?: XOR<RecetaCreateWithoutProductoInput, RecetaUncheckedCreateWithoutProductoInput> | RecetaCreateWithoutProductoInput[] | RecetaUncheckedCreateWithoutProductoInput[]
+    connectOrCreate?: RecetaCreateOrConnectWithoutProductoInput | RecetaCreateOrConnectWithoutProductoInput[]
+    upsert?: RecetaUpsertWithWhereUniqueWithoutProductoInput | RecetaUpsertWithWhereUniqueWithoutProductoInput[]
+    createMany?: RecetaCreateManyProductoInputEnvelope
+    set?: RecetaWhereUniqueInput | RecetaWhereUniqueInput[]
+    disconnect?: RecetaWhereUniqueInput | RecetaWhereUniqueInput[]
+    delete?: RecetaWhereUniqueInput | RecetaWhereUniqueInput[]
+    connect?: RecetaWhereUniqueInput | RecetaWhereUniqueInput[]
+    update?: RecetaUpdateWithWhereUniqueWithoutProductoInput | RecetaUpdateWithWhereUniqueWithoutProductoInput[]
+    updateMany?: RecetaUpdateManyWithWhereWithoutProductoInput | RecetaUpdateManyWithWhereWithoutProductoInput[]
+    deleteMany?: RecetaScalarWhereInput | RecetaScalarWhereInput[]
+  }
+
+  export type RecetaIngredienteUpdateManyWithoutProductoNestedInput = {
+    create?: XOR<RecetaIngredienteCreateWithoutProductoInput, RecetaIngredienteUncheckedCreateWithoutProductoInput> | RecetaIngredienteCreateWithoutProductoInput[] | RecetaIngredienteUncheckedCreateWithoutProductoInput[]
+    connectOrCreate?: RecetaIngredienteCreateOrConnectWithoutProductoInput | RecetaIngredienteCreateOrConnectWithoutProductoInput[]
+    upsert?: RecetaIngredienteUpsertWithWhereUniqueWithoutProductoInput | RecetaIngredienteUpsertWithWhereUniqueWithoutProductoInput[]
+    createMany?: RecetaIngredienteCreateManyProductoInputEnvelope
+    set?: RecetaIngredienteWhereUniqueInput | RecetaIngredienteWhereUniqueInput[]
+    disconnect?: RecetaIngredienteWhereUniqueInput | RecetaIngredienteWhereUniqueInput[]
+    delete?: RecetaIngredienteWhereUniqueInput | RecetaIngredienteWhereUniqueInput[]
+    connect?: RecetaIngredienteWhereUniqueInput | RecetaIngredienteWhereUniqueInput[]
+    update?: RecetaIngredienteUpdateWithWhereUniqueWithoutProductoInput | RecetaIngredienteUpdateWithWhereUniqueWithoutProductoInput[]
+    updateMany?: RecetaIngredienteUpdateManyWithWhereWithoutProductoInput | RecetaIngredienteUpdateManyWithWhereWithoutProductoInput[]
+    deleteMany?: RecetaIngredienteScalarWhereInput | RecetaIngredienteScalarWhereInput[]
+  }
+
+  export type ValeSalidaItemUpdateManyWithoutProductoNestedInput = {
+    create?: XOR<ValeSalidaItemCreateWithoutProductoInput, ValeSalidaItemUncheckedCreateWithoutProductoInput> | ValeSalidaItemCreateWithoutProductoInput[] | ValeSalidaItemUncheckedCreateWithoutProductoInput[]
+    connectOrCreate?: ValeSalidaItemCreateOrConnectWithoutProductoInput | ValeSalidaItemCreateOrConnectWithoutProductoInput[]
+    upsert?: ValeSalidaItemUpsertWithWhereUniqueWithoutProductoInput | ValeSalidaItemUpsertWithWhereUniqueWithoutProductoInput[]
+    createMany?: ValeSalidaItemCreateManyProductoInputEnvelope
+    set?: ValeSalidaItemWhereUniqueInput | ValeSalidaItemWhereUniqueInput[]
+    disconnect?: ValeSalidaItemWhereUniqueInput | ValeSalidaItemWhereUniqueInput[]
+    delete?: ValeSalidaItemWhereUniqueInput | ValeSalidaItemWhereUniqueInput[]
+    connect?: ValeSalidaItemWhereUniqueInput | ValeSalidaItemWhereUniqueInput[]
+    update?: ValeSalidaItemUpdateWithWhereUniqueWithoutProductoInput | ValeSalidaItemUpdateWithWhereUniqueWithoutProductoInput[]
+    updateMany?: ValeSalidaItemUpdateManyWithWhereWithoutProductoInput | ValeSalidaItemUpdateManyWithWhereWithoutProductoInput[]
+    deleteMany?: ValeSalidaItemScalarWhereInput | ValeSalidaItemScalarWhereInput[]
+  }
+
   export type CompraProductoUncheckedUpdateManyWithoutProductoNestedInput = {
     create?: XOR<CompraProductoCreateWithoutProductoInput, CompraProductoUncheckedCreateWithoutProductoInput> | CompraProductoCreateWithoutProductoInput[] | CompraProductoUncheckedCreateWithoutProductoInput[]
     connectOrCreate?: CompraProductoCreateOrConnectWithoutProductoInput | CompraProductoCreateOrConnectWithoutProductoInput[]
@@ -119765,6 +128726,48 @@ export namespace Prisma {
     update?: VentaItemUpdateWithWhereUniqueWithoutProductoInput | VentaItemUpdateWithWhereUniqueWithoutProductoInput[]
     updateMany?: VentaItemUpdateManyWithWhereWithoutProductoInput | VentaItemUpdateManyWithWhereWithoutProductoInput[]
     deleteMany?: VentaItemScalarWhereInput | VentaItemScalarWhereInput[]
+  }
+
+  export type RecetaUncheckedUpdateManyWithoutProductoNestedInput = {
+    create?: XOR<RecetaCreateWithoutProductoInput, RecetaUncheckedCreateWithoutProductoInput> | RecetaCreateWithoutProductoInput[] | RecetaUncheckedCreateWithoutProductoInput[]
+    connectOrCreate?: RecetaCreateOrConnectWithoutProductoInput | RecetaCreateOrConnectWithoutProductoInput[]
+    upsert?: RecetaUpsertWithWhereUniqueWithoutProductoInput | RecetaUpsertWithWhereUniqueWithoutProductoInput[]
+    createMany?: RecetaCreateManyProductoInputEnvelope
+    set?: RecetaWhereUniqueInput | RecetaWhereUniqueInput[]
+    disconnect?: RecetaWhereUniqueInput | RecetaWhereUniqueInput[]
+    delete?: RecetaWhereUniqueInput | RecetaWhereUniqueInput[]
+    connect?: RecetaWhereUniqueInput | RecetaWhereUniqueInput[]
+    update?: RecetaUpdateWithWhereUniqueWithoutProductoInput | RecetaUpdateWithWhereUniqueWithoutProductoInput[]
+    updateMany?: RecetaUpdateManyWithWhereWithoutProductoInput | RecetaUpdateManyWithWhereWithoutProductoInput[]
+    deleteMany?: RecetaScalarWhereInput | RecetaScalarWhereInput[]
+  }
+
+  export type RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput = {
+    create?: XOR<RecetaIngredienteCreateWithoutProductoInput, RecetaIngredienteUncheckedCreateWithoutProductoInput> | RecetaIngredienteCreateWithoutProductoInput[] | RecetaIngredienteUncheckedCreateWithoutProductoInput[]
+    connectOrCreate?: RecetaIngredienteCreateOrConnectWithoutProductoInput | RecetaIngredienteCreateOrConnectWithoutProductoInput[]
+    upsert?: RecetaIngredienteUpsertWithWhereUniqueWithoutProductoInput | RecetaIngredienteUpsertWithWhereUniqueWithoutProductoInput[]
+    createMany?: RecetaIngredienteCreateManyProductoInputEnvelope
+    set?: RecetaIngredienteWhereUniqueInput | RecetaIngredienteWhereUniqueInput[]
+    disconnect?: RecetaIngredienteWhereUniqueInput | RecetaIngredienteWhereUniqueInput[]
+    delete?: RecetaIngredienteWhereUniqueInput | RecetaIngredienteWhereUniqueInput[]
+    connect?: RecetaIngredienteWhereUniqueInput | RecetaIngredienteWhereUniqueInput[]
+    update?: RecetaIngredienteUpdateWithWhereUniqueWithoutProductoInput | RecetaIngredienteUpdateWithWhereUniqueWithoutProductoInput[]
+    updateMany?: RecetaIngredienteUpdateManyWithWhereWithoutProductoInput | RecetaIngredienteUpdateManyWithWhereWithoutProductoInput[]
+    deleteMany?: RecetaIngredienteScalarWhereInput | RecetaIngredienteScalarWhereInput[]
+  }
+
+  export type ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput = {
+    create?: XOR<ValeSalidaItemCreateWithoutProductoInput, ValeSalidaItemUncheckedCreateWithoutProductoInput> | ValeSalidaItemCreateWithoutProductoInput[] | ValeSalidaItemUncheckedCreateWithoutProductoInput[]
+    connectOrCreate?: ValeSalidaItemCreateOrConnectWithoutProductoInput | ValeSalidaItemCreateOrConnectWithoutProductoInput[]
+    upsert?: ValeSalidaItemUpsertWithWhereUniqueWithoutProductoInput | ValeSalidaItemUpsertWithWhereUniqueWithoutProductoInput[]
+    createMany?: ValeSalidaItemCreateManyProductoInputEnvelope
+    set?: ValeSalidaItemWhereUniqueInput | ValeSalidaItemWhereUniqueInput[]
+    disconnect?: ValeSalidaItemWhereUniqueInput | ValeSalidaItemWhereUniqueInput[]
+    delete?: ValeSalidaItemWhereUniqueInput | ValeSalidaItemWhereUniqueInput[]
+    connect?: ValeSalidaItemWhereUniqueInput | ValeSalidaItemWhereUniqueInput[]
+    update?: ValeSalidaItemUpdateWithWhereUniqueWithoutProductoInput | ValeSalidaItemUpdateWithWhereUniqueWithoutProductoInput[]
+    updateMany?: ValeSalidaItemUpdateManyWithWhereWithoutProductoInput | ValeSalidaItemUpdateManyWithWhereWithoutProductoInput[]
+    deleteMany?: ValeSalidaItemScalarWhereInput | ValeSalidaItemScalarWhereInput[]
   }
 
   export type OrdenReparacionCreateNestedOneWithoutVentaInput = {
@@ -124227,6 +133230,286 @@ export namespace Prisma {
     deleteMany?: OrdenReparacionItemScalarWhereInput | OrdenReparacionItemScalarWhereInput[]
   }
 
+  export type ProductoCreateNestedOneWithoutRecetasProductoInput = {
+    create?: XOR<ProductoCreateWithoutRecetasProductoInput, ProductoUncheckedCreateWithoutRecetasProductoInput>
+    connectOrCreate?: ProductoCreateOrConnectWithoutRecetasProductoInput
+    connect?: ProductoWhereUniqueInput
+  }
+
+  export type RecetaIngredienteCreateNestedManyWithoutRecetaInput = {
+    create?: XOR<RecetaIngredienteCreateWithoutRecetaInput, RecetaIngredienteUncheckedCreateWithoutRecetaInput> | RecetaIngredienteCreateWithoutRecetaInput[] | RecetaIngredienteUncheckedCreateWithoutRecetaInput[]
+    connectOrCreate?: RecetaIngredienteCreateOrConnectWithoutRecetaInput | RecetaIngredienteCreateOrConnectWithoutRecetaInput[]
+    createMany?: RecetaIngredienteCreateManyRecetaInputEnvelope
+    connect?: RecetaIngredienteWhereUniqueInput | RecetaIngredienteWhereUniqueInput[]
+  }
+
+  export type OrdenProduccionCreateNestedManyWithoutRecetaInput = {
+    create?: XOR<OrdenProduccionCreateWithoutRecetaInput, OrdenProduccionUncheckedCreateWithoutRecetaInput> | OrdenProduccionCreateWithoutRecetaInput[] | OrdenProduccionUncheckedCreateWithoutRecetaInput[]
+    connectOrCreate?: OrdenProduccionCreateOrConnectWithoutRecetaInput | OrdenProduccionCreateOrConnectWithoutRecetaInput[]
+    createMany?: OrdenProduccionCreateManyRecetaInputEnvelope
+    connect?: OrdenProduccionWhereUniqueInput | OrdenProduccionWhereUniqueInput[]
+  }
+
+  export type RecetaIngredienteUncheckedCreateNestedManyWithoutRecetaInput = {
+    create?: XOR<RecetaIngredienteCreateWithoutRecetaInput, RecetaIngredienteUncheckedCreateWithoutRecetaInput> | RecetaIngredienteCreateWithoutRecetaInput[] | RecetaIngredienteUncheckedCreateWithoutRecetaInput[]
+    connectOrCreate?: RecetaIngredienteCreateOrConnectWithoutRecetaInput | RecetaIngredienteCreateOrConnectWithoutRecetaInput[]
+    createMany?: RecetaIngredienteCreateManyRecetaInputEnvelope
+    connect?: RecetaIngredienteWhereUniqueInput | RecetaIngredienteWhereUniqueInput[]
+  }
+
+  export type OrdenProduccionUncheckedCreateNestedManyWithoutRecetaInput = {
+    create?: XOR<OrdenProduccionCreateWithoutRecetaInput, OrdenProduccionUncheckedCreateWithoutRecetaInput> | OrdenProduccionCreateWithoutRecetaInput[] | OrdenProduccionUncheckedCreateWithoutRecetaInput[]
+    connectOrCreate?: OrdenProduccionCreateOrConnectWithoutRecetaInput | OrdenProduccionCreateOrConnectWithoutRecetaInput[]
+    createMany?: OrdenProduccionCreateManyRecetaInputEnvelope
+    connect?: OrdenProduccionWhereUniqueInput | OrdenProduccionWhereUniqueInput[]
+  }
+
+  export type ProductoUpdateOneWithoutRecetasProductoNestedInput = {
+    create?: XOR<ProductoCreateWithoutRecetasProductoInput, ProductoUncheckedCreateWithoutRecetasProductoInput>
+    connectOrCreate?: ProductoCreateOrConnectWithoutRecetasProductoInput
+    upsert?: ProductoUpsertWithoutRecetasProductoInput
+    disconnect?: ProductoWhereInput | boolean
+    delete?: ProductoWhereInput | boolean
+    connect?: ProductoWhereUniqueInput
+    update?: XOR<XOR<ProductoUpdateToOneWithWhereWithoutRecetasProductoInput, ProductoUpdateWithoutRecetasProductoInput>, ProductoUncheckedUpdateWithoutRecetasProductoInput>
+  }
+
+  export type RecetaIngredienteUpdateManyWithoutRecetaNestedInput = {
+    create?: XOR<RecetaIngredienteCreateWithoutRecetaInput, RecetaIngredienteUncheckedCreateWithoutRecetaInput> | RecetaIngredienteCreateWithoutRecetaInput[] | RecetaIngredienteUncheckedCreateWithoutRecetaInput[]
+    connectOrCreate?: RecetaIngredienteCreateOrConnectWithoutRecetaInput | RecetaIngredienteCreateOrConnectWithoutRecetaInput[]
+    upsert?: RecetaIngredienteUpsertWithWhereUniqueWithoutRecetaInput | RecetaIngredienteUpsertWithWhereUniqueWithoutRecetaInput[]
+    createMany?: RecetaIngredienteCreateManyRecetaInputEnvelope
+    set?: RecetaIngredienteWhereUniqueInput | RecetaIngredienteWhereUniqueInput[]
+    disconnect?: RecetaIngredienteWhereUniqueInput | RecetaIngredienteWhereUniqueInput[]
+    delete?: RecetaIngredienteWhereUniqueInput | RecetaIngredienteWhereUniqueInput[]
+    connect?: RecetaIngredienteWhereUniqueInput | RecetaIngredienteWhereUniqueInput[]
+    update?: RecetaIngredienteUpdateWithWhereUniqueWithoutRecetaInput | RecetaIngredienteUpdateWithWhereUniqueWithoutRecetaInput[]
+    updateMany?: RecetaIngredienteUpdateManyWithWhereWithoutRecetaInput | RecetaIngredienteUpdateManyWithWhereWithoutRecetaInput[]
+    deleteMany?: RecetaIngredienteScalarWhereInput | RecetaIngredienteScalarWhereInput[]
+  }
+
+  export type OrdenProduccionUpdateManyWithoutRecetaNestedInput = {
+    create?: XOR<OrdenProduccionCreateWithoutRecetaInput, OrdenProduccionUncheckedCreateWithoutRecetaInput> | OrdenProduccionCreateWithoutRecetaInput[] | OrdenProduccionUncheckedCreateWithoutRecetaInput[]
+    connectOrCreate?: OrdenProduccionCreateOrConnectWithoutRecetaInput | OrdenProduccionCreateOrConnectWithoutRecetaInput[]
+    upsert?: OrdenProduccionUpsertWithWhereUniqueWithoutRecetaInput | OrdenProduccionUpsertWithWhereUniqueWithoutRecetaInput[]
+    createMany?: OrdenProduccionCreateManyRecetaInputEnvelope
+    set?: OrdenProduccionWhereUniqueInput | OrdenProduccionWhereUniqueInput[]
+    disconnect?: OrdenProduccionWhereUniqueInput | OrdenProduccionWhereUniqueInput[]
+    delete?: OrdenProduccionWhereUniqueInput | OrdenProduccionWhereUniqueInput[]
+    connect?: OrdenProduccionWhereUniqueInput | OrdenProduccionWhereUniqueInput[]
+    update?: OrdenProduccionUpdateWithWhereUniqueWithoutRecetaInput | OrdenProduccionUpdateWithWhereUniqueWithoutRecetaInput[]
+    updateMany?: OrdenProduccionUpdateManyWithWhereWithoutRecetaInput | OrdenProduccionUpdateManyWithWhereWithoutRecetaInput[]
+    deleteMany?: OrdenProduccionScalarWhereInput | OrdenProduccionScalarWhereInput[]
+  }
+
+  export type RecetaIngredienteUncheckedUpdateManyWithoutRecetaNestedInput = {
+    create?: XOR<RecetaIngredienteCreateWithoutRecetaInput, RecetaIngredienteUncheckedCreateWithoutRecetaInput> | RecetaIngredienteCreateWithoutRecetaInput[] | RecetaIngredienteUncheckedCreateWithoutRecetaInput[]
+    connectOrCreate?: RecetaIngredienteCreateOrConnectWithoutRecetaInput | RecetaIngredienteCreateOrConnectWithoutRecetaInput[]
+    upsert?: RecetaIngredienteUpsertWithWhereUniqueWithoutRecetaInput | RecetaIngredienteUpsertWithWhereUniqueWithoutRecetaInput[]
+    createMany?: RecetaIngredienteCreateManyRecetaInputEnvelope
+    set?: RecetaIngredienteWhereUniqueInput | RecetaIngredienteWhereUniqueInput[]
+    disconnect?: RecetaIngredienteWhereUniqueInput | RecetaIngredienteWhereUniqueInput[]
+    delete?: RecetaIngredienteWhereUniqueInput | RecetaIngredienteWhereUniqueInput[]
+    connect?: RecetaIngredienteWhereUniqueInput | RecetaIngredienteWhereUniqueInput[]
+    update?: RecetaIngredienteUpdateWithWhereUniqueWithoutRecetaInput | RecetaIngredienteUpdateWithWhereUniqueWithoutRecetaInput[]
+    updateMany?: RecetaIngredienteUpdateManyWithWhereWithoutRecetaInput | RecetaIngredienteUpdateManyWithWhereWithoutRecetaInput[]
+    deleteMany?: RecetaIngredienteScalarWhereInput | RecetaIngredienteScalarWhereInput[]
+  }
+
+  export type OrdenProduccionUncheckedUpdateManyWithoutRecetaNestedInput = {
+    create?: XOR<OrdenProduccionCreateWithoutRecetaInput, OrdenProduccionUncheckedCreateWithoutRecetaInput> | OrdenProduccionCreateWithoutRecetaInput[] | OrdenProduccionUncheckedCreateWithoutRecetaInput[]
+    connectOrCreate?: OrdenProduccionCreateOrConnectWithoutRecetaInput | OrdenProduccionCreateOrConnectWithoutRecetaInput[]
+    upsert?: OrdenProduccionUpsertWithWhereUniqueWithoutRecetaInput | OrdenProduccionUpsertWithWhereUniqueWithoutRecetaInput[]
+    createMany?: OrdenProduccionCreateManyRecetaInputEnvelope
+    set?: OrdenProduccionWhereUniqueInput | OrdenProduccionWhereUniqueInput[]
+    disconnect?: OrdenProduccionWhereUniqueInput | OrdenProduccionWhereUniqueInput[]
+    delete?: OrdenProduccionWhereUniqueInput | OrdenProduccionWhereUniqueInput[]
+    connect?: OrdenProduccionWhereUniqueInput | OrdenProduccionWhereUniqueInput[]
+    update?: OrdenProduccionUpdateWithWhereUniqueWithoutRecetaInput | OrdenProduccionUpdateWithWhereUniqueWithoutRecetaInput[]
+    updateMany?: OrdenProduccionUpdateManyWithWhereWithoutRecetaInput | OrdenProduccionUpdateManyWithWhereWithoutRecetaInput[]
+    deleteMany?: OrdenProduccionScalarWhereInput | OrdenProduccionScalarWhereInput[]
+  }
+
+  export type RecetaCreateNestedOneWithoutIngredientesInput = {
+    create?: XOR<RecetaCreateWithoutIngredientesInput, RecetaUncheckedCreateWithoutIngredientesInput>
+    connectOrCreate?: RecetaCreateOrConnectWithoutIngredientesInput
+    connect?: RecetaWhereUniqueInput
+  }
+
+  export type ProductoCreateNestedOneWithoutIngredienteRecetasInput = {
+    create?: XOR<ProductoCreateWithoutIngredienteRecetasInput, ProductoUncheckedCreateWithoutIngredienteRecetasInput>
+    connectOrCreate?: ProductoCreateOrConnectWithoutIngredienteRecetasInput
+    connect?: ProductoWhereUniqueInput
+  }
+
+  export type RecetaUpdateOneRequiredWithoutIngredientesNestedInput = {
+    create?: XOR<RecetaCreateWithoutIngredientesInput, RecetaUncheckedCreateWithoutIngredientesInput>
+    connectOrCreate?: RecetaCreateOrConnectWithoutIngredientesInput
+    upsert?: RecetaUpsertWithoutIngredientesInput
+    connect?: RecetaWhereUniqueInput
+    update?: XOR<XOR<RecetaUpdateToOneWithWhereWithoutIngredientesInput, RecetaUpdateWithoutIngredientesInput>, RecetaUncheckedUpdateWithoutIngredientesInput>
+  }
+
+  export type ProductoUpdateOneRequiredWithoutIngredienteRecetasNestedInput = {
+    create?: XOR<ProductoCreateWithoutIngredienteRecetasInput, ProductoUncheckedCreateWithoutIngredienteRecetasInput>
+    connectOrCreate?: ProductoCreateOrConnectWithoutIngredienteRecetasInput
+    upsert?: ProductoUpsertWithoutIngredienteRecetasInput
+    connect?: ProductoWhereUniqueInput
+    update?: XOR<XOR<ProductoUpdateToOneWithWhereWithoutIngredienteRecetasInput, ProductoUpdateWithoutIngredienteRecetasInput>, ProductoUncheckedUpdateWithoutIngredienteRecetasInput>
+  }
+
+  export type RecetaCreateNestedOneWithoutOrdenesInput = {
+    create?: XOR<RecetaCreateWithoutOrdenesInput, RecetaUncheckedCreateWithoutOrdenesInput>
+    connectOrCreate?: RecetaCreateOrConnectWithoutOrdenesInput
+    connect?: RecetaWhereUniqueInput
+  }
+
+  export type OrdenProduccionHistorialCreateNestedManyWithoutOrdenInput = {
+    create?: XOR<OrdenProduccionHistorialCreateWithoutOrdenInput, OrdenProduccionHistorialUncheckedCreateWithoutOrdenInput> | OrdenProduccionHistorialCreateWithoutOrdenInput[] | OrdenProduccionHistorialUncheckedCreateWithoutOrdenInput[]
+    connectOrCreate?: OrdenProduccionHistorialCreateOrConnectWithoutOrdenInput | OrdenProduccionHistorialCreateOrConnectWithoutOrdenInput[]
+    createMany?: OrdenProduccionHistorialCreateManyOrdenInputEnvelope
+    connect?: OrdenProduccionHistorialWhereUniqueInput | OrdenProduccionHistorialWhereUniqueInput[]
+  }
+
+  export type OrdenProduccionHistorialUncheckedCreateNestedManyWithoutOrdenInput = {
+    create?: XOR<OrdenProduccionHistorialCreateWithoutOrdenInput, OrdenProduccionHistorialUncheckedCreateWithoutOrdenInput> | OrdenProduccionHistorialCreateWithoutOrdenInput[] | OrdenProduccionHistorialUncheckedCreateWithoutOrdenInput[]
+    connectOrCreate?: OrdenProduccionHistorialCreateOrConnectWithoutOrdenInput | OrdenProduccionHistorialCreateOrConnectWithoutOrdenInput[]
+    createMany?: OrdenProduccionHistorialCreateManyOrdenInputEnvelope
+    connect?: OrdenProduccionHistorialWhereUniqueInput | OrdenProduccionHistorialWhereUniqueInput[]
+  }
+
+  export type EnumEstadoProduccionFieldUpdateOperationsInput = {
+    set?: $Enums.EstadoProduccion
+  }
+
+  export type NullableFloatFieldUpdateOperationsInput = {
+    set?: number | null
+    increment?: number
+    decrement?: number
+    multiply?: number
+    divide?: number
+  }
+
+  export type RecetaUpdateOneRequiredWithoutOrdenesNestedInput = {
+    create?: XOR<RecetaCreateWithoutOrdenesInput, RecetaUncheckedCreateWithoutOrdenesInput>
+    connectOrCreate?: RecetaCreateOrConnectWithoutOrdenesInput
+    upsert?: RecetaUpsertWithoutOrdenesInput
+    connect?: RecetaWhereUniqueInput
+    update?: XOR<XOR<RecetaUpdateToOneWithWhereWithoutOrdenesInput, RecetaUpdateWithoutOrdenesInput>, RecetaUncheckedUpdateWithoutOrdenesInput>
+  }
+
+  export type OrdenProduccionHistorialUpdateManyWithoutOrdenNestedInput = {
+    create?: XOR<OrdenProduccionHistorialCreateWithoutOrdenInput, OrdenProduccionHistorialUncheckedCreateWithoutOrdenInput> | OrdenProduccionHistorialCreateWithoutOrdenInput[] | OrdenProduccionHistorialUncheckedCreateWithoutOrdenInput[]
+    connectOrCreate?: OrdenProduccionHistorialCreateOrConnectWithoutOrdenInput | OrdenProduccionHistorialCreateOrConnectWithoutOrdenInput[]
+    upsert?: OrdenProduccionHistorialUpsertWithWhereUniqueWithoutOrdenInput | OrdenProduccionHistorialUpsertWithWhereUniqueWithoutOrdenInput[]
+    createMany?: OrdenProduccionHistorialCreateManyOrdenInputEnvelope
+    set?: OrdenProduccionHistorialWhereUniqueInput | OrdenProduccionHistorialWhereUniqueInput[]
+    disconnect?: OrdenProduccionHistorialWhereUniqueInput | OrdenProduccionHistorialWhereUniqueInput[]
+    delete?: OrdenProduccionHistorialWhereUniqueInput | OrdenProduccionHistorialWhereUniqueInput[]
+    connect?: OrdenProduccionHistorialWhereUniqueInput | OrdenProduccionHistorialWhereUniqueInput[]
+    update?: OrdenProduccionHistorialUpdateWithWhereUniqueWithoutOrdenInput | OrdenProduccionHistorialUpdateWithWhereUniqueWithoutOrdenInput[]
+    updateMany?: OrdenProduccionHistorialUpdateManyWithWhereWithoutOrdenInput | OrdenProduccionHistorialUpdateManyWithWhereWithoutOrdenInput[]
+    deleteMany?: OrdenProduccionHistorialScalarWhereInput | OrdenProduccionHistorialScalarWhereInput[]
+  }
+
+  export type OrdenProduccionHistorialUncheckedUpdateManyWithoutOrdenNestedInput = {
+    create?: XOR<OrdenProduccionHistorialCreateWithoutOrdenInput, OrdenProduccionHistorialUncheckedCreateWithoutOrdenInput> | OrdenProduccionHistorialCreateWithoutOrdenInput[] | OrdenProduccionHistorialUncheckedCreateWithoutOrdenInput[]
+    connectOrCreate?: OrdenProduccionHistorialCreateOrConnectWithoutOrdenInput | OrdenProduccionHistorialCreateOrConnectWithoutOrdenInput[]
+    upsert?: OrdenProduccionHistorialUpsertWithWhereUniqueWithoutOrdenInput | OrdenProduccionHistorialUpsertWithWhereUniqueWithoutOrdenInput[]
+    createMany?: OrdenProduccionHistorialCreateManyOrdenInputEnvelope
+    set?: OrdenProduccionHistorialWhereUniqueInput | OrdenProduccionHistorialWhereUniqueInput[]
+    disconnect?: OrdenProduccionHistorialWhereUniqueInput | OrdenProduccionHistorialWhereUniqueInput[]
+    delete?: OrdenProduccionHistorialWhereUniqueInput | OrdenProduccionHistorialWhereUniqueInput[]
+    connect?: OrdenProduccionHistorialWhereUniqueInput | OrdenProduccionHistorialWhereUniqueInput[]
+    update?: OrdenProduccionHistorialUpdateWithWhereUniqueWithoutOrdenInput | OrdenProduccionHistorialUpdateWithWhereUniqueWithoutOrdenInput[]
+    updateMany?: OrdenProduccionHistorialUpdateManyWithWhereWithoutOrdenInput | OrdenProduccionHistorialUpdateManyWithWhereWithoutOrdenInput[]
+    deleteMany?: OrdenProduccionHistorialScalarWhereInput | OrdenProduccionHistorialScalarWhereInput[]
+  }
+
+  export type OrdenProduccionCreateNestedOneWithoutHistorialInput = {
+    create?: XOR<OrdenProduccionCreateWithoutHistorialInput, OrdenProduccionUncheckedCreateWithoutHistorialInput>
+    connectOrCreate?: OrdenProduccionCreateOrConnectWithoutHistorialInput
+    connect?: OrdenProduccionWhereUniqueInput
+  }
+
+  export type OrdenProduccionUpdateOneRequiredWithoutHistorialNestedInput = {
+    create?: XOR<OrdenProduccionCreateWithoutHistorialInput, OrdenProduccionUncheckedCreateWithoutHistorialInput>
+    connectOrCreate?: OrdenProduccionCreateOrConnectWithoutHistorialInput
+    upsert?: OrdenProduccionUpsertWithoutHistorialInput
+    connect?: OrdenProduccionWhereUniqueInput
+    update?: XOR<XOR<OrdenProduccionUpdateToOneWithWhereWithoutHistorialInput, OrdenProduccionUpdateWithoutHistorialInput>, OrdenProduccionUncheckedUpdateWithoutHistorialInput>
+  }
+
+  export type ValeSalidaItemCreateNestedManyWithoutValeSalidaInput = {
+    create?: XOR<ValeSalidaItemCreateWithoutValeSalidaInput, ValeSalidaItemUncheckedCreateWithoutValeSalidaInput> | ValeSalidaItemCreateWithoutValeSalidaInput[] | ValeSalidaItemUncheckedCreateWithoutValeSalidaInput[]
+    connectOrCreate?: ValeSalidaItemCreateOrConnectWithoutValeSalidaInput | ValeSalidaItemCreateOrConnectWithoutValeSalidaInput[]
+    createMany?: ValeSalidaItemCreateManyValeSalidaInputEnvelope
+    connect?: ValeSalidaItemWhereUniqueInput | ValeSalidaItemWhereUniqueInput[]
+  }
+
+  export type ValeSalidaItemUncheckedCreateNestedManyWithoutValeSalidaInput = {
+    create?: XOR<ValeSalidaItemCreateWithoutValeSalidaInput, ValeSalidaItemUncheckedCreateWithoutValeSalidaInput> | ValeSalidaItemCreateWithoutValeSalidaInput[] | ValeSalidaItemUncheckedCreateWithoutValeSalidaInput[]
+    connectOrCreate?: ValeSalidaItemCreateOrConnectWithoutValeSalidaInput | ValeSalidaItemCreateOrConnectWithoutValeSalidaInput[]
+    createMany?: ValeSalidaItemCreateManyValeSalidaInputEnvelope
+    connect?: ValeSalidaItemWhereUniqueInput | ValeSalidaItemWhereUniqueInput[]
+  }
+
+  export type ValeSalidaItemUpdateManyWithoutValeSalidaNestedInput = {
+    create?: XOR<ValeSalidaItemCreateWithoutValeSalidaInput, ValeSalidaItemUncheckedCreateWithoutValeSalidaInput> | ValeSalidaItemCreateWithoutValeSalidaInput[] | ValeSalidaItemUncheckedCreateWithoutValeSalidaInput[]
+    connectOrCreate?: ValeSalidaItemCreateOrConnectWithoutValeSalidaInput | ValeSalidaItemCreateOrConnectWithoutValeSalidaInput[]
+    upsert?: ValeSalidaItemUpsertWithWhereUniqueWithoutValeSalidaInput | ValeSalidaItemUpsertWithWhereUniqueWithoutValeSalidaInput[]
+    createMany?: ValeSalidaItemCreateManyValeSalidaInputEnvelope
+    set?: ValeSalidaItemWhereUniqueInput | ValeSalidaItemWhereUniqueInput[]
+    disconnect?: ValeSalidaItemWhereUniqueInput | ValeSalidaItemWhereUniqueInput[]
+    delete?: ValeSalidaItemWhereUniqueInput | ValeSalidaItemWhereUniqueInput[]
+    connect?: ValeSalidaItemWhereUniqueInput | ValeSalidaItemWhereUniqueInput[]
+    update?: ValeSalidaItemUpdateWithWhereUniqueWithoutValeSalidaInput | ValeSalidaItemUpdateWithWhereUniqueWithoutValeSalidaInput[]
+    updateMany?: ValeSalidaItemUpdateManyWithWhereWithoutValeSalidaInput | ValeSalidaItemUpdateManyWithWhereWithoutValeSalidaInput[]
+    deleteMany?: ValeSalidaItemScalarWhereInput | ValeSalidaItemScalarWhereInput[]
+  }
+
+  export type ValeSalidaItemUncheckedUpdateManyWithoutValeSalidaNestedInput = {
+    create?: XOR<ValeSalidaItemCreateWithoutValeSalidaInput, ValeSalidaItemUncheckedCreateWithoutValeSalidaInput> | ValeSalidaItemCreateWithoutValeSalidaInput[] | ValeSalidaItemUncheckedCreateWithoutValeSalidaInput[]
+    connectOrCreate?: ValeSalidaItemCreateOrConnectWithoutValeSalidaInput | ValeSalidaItemCreateOrConnectWithoutValeSalidaInput[]
+    upsert?: ValeSalidaItemUpsertWithWhereUniqueWithoutValeSalidaInput | ValeSalidaItemUpsertWithWhereUniqueWithoutValeSalidaInput[]
+    createMany?: ValeSalidaItemCreateManyValeSalidaInputEnvelope
+    set?: ValeSalidaItemWhereUniqueInput | ValeSalidaItemWhereUniqueInput[]
+    disconnect?: ValeSalidaItemWhereUniqueInput | ValeSalidaItemWhereUniqueInput[]
+    delete?: ValeSalidaItemWhereUniqueInput | ValeSalidaItemWhereUniqueInput[]
+    connect?: ValeSalidaItemWhereUniqueInput | ValeSalidaItemWhereUniqueInput[]
+    update?: ValeSalidaItemUpdateWithWhereUniqueWithoutValeSalidaInput | ValeSalidaItemUpdateWithWhereUniqueWithoutValeSalidaInput[]
+    updateMany?: ValeSalidaItemUpdateManyWithWhereWithoutValeSalidaInput | ValeSalidaItemUpdateManyWithWhereWithoutValeSalidaInput[]
+    deleteMany?: ValeSalidaItemScalarWhereInput | ValeSalidaItemScalarWhereInput[]
+  }
+
+  export type ValeSalidaCreateNestedOneWithoutItemsInput = {
+    create?: XOR<ValeSalidaCreateWithoutItemsInput, ValeSalidaUncheckedCreateWithoutItemsInput>
+    connectOrCreate?: ValeSalidaCreateOrConnectWithoutItemsInput
+    connect?: ValeSalidaWhereUniqueInput
+  }
+
+  export type ProductoCreateNestedOneWithoutValeSalidaItemsInput = {
+    create?: XOR<ProductoCreateWithoutValeSalidaItemsInput, ProductoUncheckedCreateWithoutValeSalidaItemsInput>
+    connectOrCreate?: ProductoCreateOrConnectWithoutValeSalidaItemsInput
+    connect?: ProductoWhereUniqueInput
+  }
+
+  export type ValeSalidaUpdateOneRequiredWithoutItemsNestedInput = {
+    create?: XOR<ValeSalidaCreateWithoutItemsInput, ValeSalidaUncheckedCreateWithoutItemsInput>
+    connectOrCreate?: ValeSalidaCreateOrConnectWithoutItemsInput
+    upsert?: ValeSalidaUpsertWithoutItemsInput
+    connect?: ValeSalidaWhereUniqueInput
+    update?: XOR<XOR<ValeSalidaUpdateToOneWithWhereWithoutItemsInput, ValeSalidaUpdateWithoutItemsInput>, ValeSalidaUncheckedUpdateWithoutItemsInput>
+  }
+
+  export type ProductoUpdateOneRequiredWithoutValeSalidaItemsNestedInput = {
+    create?: XOR<ProductoCreateWithoutValeSalidaItemsInput, ProductoUncheckedCreateWithoutValeSalidaItemsInput>
+    connectOrCreate?: ProductoCreateOrConnectWithoutValeSalidaItemsInput
+    upsert?: ProductoUpsertWithoutValeSalidaItemsInput
+    connect?: ProductoWhereUniqueInput
+    update?: XOR<XOR<ProductoUpdateToOneWithWhereWithoutValeSalidaItemsInput, ProductoUpdateWithoutValeSalidaItemsInput>, ProductoUncheckedUpdateWithoutValeSalidaItemsInput>
+  }
+
   export type NestedStringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -124778,6 +134061,39 @@ export namespace Prisma {
     _max?: NestedEnumComplejidadReparacionNullableFilter<$PrismaModel>
   }
 
+  export type NestedEnumEstadoProduccionFilter<$PrismaModel = never> = {
+    equals?: $Enums.EstadoProduccion | EnumEstadoProduccionFieldRefInput<$PrismaModel>
+    in?: $Enums.EstadoProduccion[] | ListEnumEstadoProduccionFieldRefInput<$PrismaModel>
+    notIn?: $Enums.EstadoProduccion[] | ListEnumEstadoProduccionFieldRefInput<$PrismaModel>
+    not?: NestedEnumEstadoProduccionFilter<$PrismaModel> | $Enums.EstadoProduccion
+  }
+
+  export type NestedEnumEstadoProduccionWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.EstadoProduccion | EnumEstadoProduccionFieldRefInput<$PrismaModel>
+    in?: $Enums.EstadoProduccion[] | ListEnumEstadoProduccionFieldRefInput<$PrismaModel>
+    notIn?: $Enums.EstadoProduccion[] | ListEnumEstadoProduccionFieldRefInput<$PrismaModel>
+    not?: NestedEnumEstadoProduccionWithAggregatesFilter<$PrismaModel> | $Enums.EstadoProduccion
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumEstadoProduccionFilter<$PrismaModel>
+    _max?: NestedEnumEstadoProduccionFilter<$PrismaModel>
+  }
+
+  export type NestedFloatNullableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: number | FloatFieldRefInput<$PrismaModel> | null
+    in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    notIn?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
+    lt?: number | FloatFieldRefInput<$PrismaModel>
+    lte?: number | FloatFieldRefInput<$PrismaModel>
+    gt?: number | FloatFieldRefInput<$PrismaModel>
+    gte?: number | FloatFieldRefInput<$PrismaModel>
+    not?: NestedFloatNullableWithAggregatesFilter<$PrismaModel> | number | null
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _avg?: NestedFloatNullableFilter<$PrismaModel>
+    _sum?: NestedFloatNullableFilter<$PrismaModel>
+    _min?: NestedFloatNullableFilter<$PrismaModel>
+    _max?: NestedFloatNullableFilter<$PrismaModel>
+  }
+
   export type CategoriaCreateWithoutSubcategoriasInput = {
     catId?: string
     nombre: string
@@ -124861,6 +134177,9 @@ export namespace Prisma {
     transferencias?: TransferenciaCreateNestedManyWithoutProductoInput
     ventas?: VentaCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    recetasProducto?: RecetaCreateNestedManyWithoutProductoInput
+    ingredienteRecetas?: RecetaIngredienteCreateNestedManyWithoutProductoInput
+    valeSalidaItems?: ValeSalidaItemCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateWithoutCategoriaInput = {
@@ -124887,6 +134206,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    recetasProducto?: RecetaUncheckedCreateNestedManyWithoutProductoInput
+    ingredienteRecetas?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
+    valeSalidaItems?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoCreateOrConnectWithoutCategoriaInput = {
@@ -124923,6 +134245,9 @@ export namespace Prisma {
     transferencias?: TransferenciaCreateNestedManyWithoutProductoInput
     ventas?: VentaCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    recetasProducto?: RecetaCreateNestedManyWithoutProductoInput
+    ingredienteRecetas?: RecetaIngredienteCreateNestedManyWithoutProductoInput
+    valeSalidaItems?: ValeSalidaItemCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateWithoutSubcategoriaInput = {
@@ -124949,6 +134274,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    recetasProducto?: RecetaUncheckedCreateNestedManyWithoutProductoInput
+    ingredienteRecetas?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
+    valeSalidaItems?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoCreateOrConnectWithoutSubcategoriaInput = {
@@ -125100,6 +134428,9 @@ export namespace Prisma {
     transferencias?: TransferenciaCreateNestedManyWithoutProductoInput
     ventas?: VentaCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    recetasProducto?: RecetaCreateNestedManyWithoutProductoInput
+    ingredienteRecetas?: RecetaIngredienteCreateNestedManyWithoutProductoInput
+    valeSalidaItems?: ValeSalidaItemCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateWithoutUnidadInput = {
@@ -125126,6 +134457,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    recetasProducto?: RecetaUncheckedCreateNestedManyWithoutProductoInput
+    ingredienteRecetas?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
+    valeSalidaItems?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoCreateOrConnectWithoutUnidadInput = {
@@ -125434,6 +134768,9 @@ export namespace Prisma {
     transferencias?: TransferenciaCreateNestedManyWithoutProductoInput
     ventas?: VentaCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    recetasProducto?: RecetaCreateNestedManyWithoutProductoInput
+    ingredienteRecetas?: RecetaIngredienteCreateNestedManyWithoutProductoInput
+    valeSalidaItems?: ValeSalidaItemCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateWithoutVendorInput = {
@@ -125460,6 +134797,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    recetasProducto?: RecetaUncheckedCreateNestedManyWithoutProductoInput
+    ingredienteRecetas?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
+    valeSalidaItems?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoCreateOrConnectWithoutVendorInput = {
@@ -126877,6 +136217,9 @@ export namespace Prisma {
     transferencias?: TransferenciaCreateNestedManyWithoutProductoInput
     ventas?: VentaCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    recetasProducto?: RecetaCreateNestedManyWithoutProductoInput
+    ingredienteRecetas?: RecetaIngredienteCreateNestedManyWithoutProductoInput
+    valeSalidaItems?: ValeSalidaItemCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateWithoutAlmacenInput = {
@@ -126903,6 +136246,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    recetasProducto?: RecetaUncheckedCreateNestedManyWithoutProductoInput
+    ingredienteRecetas?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
+    valeSalidaItems?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoCreateOrConnectWithoutAlmacenInput = {
@@ -127071,6 +136417,9 @@ export namespace Prisma {
     transferencias?: TransferenciaCreateNestedManyWithoutProductoInput
     ventas?: VentaCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    recetasProducto?: RecetaCreateNestedManyWithoutProductoInput
+    ingredienteRecetas?: RecetaIngredienteCreateNestedManyWithoutProductoInput
+    valeSalidaItems?: ValeSalidaItemCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateWithoutPuntoDeVentaInput = {
@@ -127097,6 +136446,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    recetasProducto?: RecetaUncheckedCreateNestedManyWithoutProductoInput
+    ingredienteRecetas?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
+    valeSalidaItems?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoCreateOrConnectWithoutPuntoDeVentaInput = {
@@ -127751,6 +137103,94 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type RecetaCreateWithoutProductoInput = {
+    recetaId?: string
+    nombre: string
+    rendimiento?: number
+    instrucciones?: string | null
+    tiempoPrep?: number | null
+    costoUnitario?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    ingredientes?: RecetaIngredienteCreateNestedManyWithoutRecetaInput
+    ordenes?: OrdenProduccionCreateNestedManyWithoutRecetaInput
+  }
+
+  export type RecetaUncheckedCreateWithoutProductoInput = {
+    recetaId?: string
+    nombre: string
+    rendimiento?: number
+    instrucciones?: string | null
+    tiempoPrep?: number | null
+    costoUnitario?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    ingredientes?: RecetaIngredienteUncheckedCreateNestedManyWithoutRecetaInput
+    ordenes?: OrdenProduccionUncheckedCreateNestedManyWithoutRecetaInput
+  }
+
+  export type RecetaCreateOrConnectWithoutProductoInput = {
+    where: RecetaWhereUniqueInput
+    create: XOR<RecetaCreateWithoutProductoInput, RecetaUncheckedCreateWithoutProductoInput>
+  }
+
+  export type RecetaCreateManyProductoInputEnvelope = {
+    data: RecetaCreateManyProductoInput | RecetaCreateManyProductoInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type RecetaIngredienteCreateWithoutProductoInput = {
+    id?: string
+    cantidad: number
+    desperdicio?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    receta: RecetaCreateNestedOneWithoutIngredientesInput
+  }
+
+  export type RecetaIngredienteUncheckedCreateWithoutProductoInput = {
+    id?: string
+    recetaId: string
+    cantidad: number
+    desperdicio?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type RecetaIngredienteCreateOrConnectWithoutProductoInput = {
+    where: RecetaIngredienteWhereUniqueInput
+    create: XOR<RecetaIngredienteCreateWithoutProductoInput, RecetaIngredienteUncheckedCreateWithoutProductoInput>
+  }
+
+  export type RecetaIngredienteCreateManyProductoInputEnvelope = {
+    data: RecetaIngredienteCreateManyProductoInput | RecetaIngredienteCreateManyProductoInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type ValeSalidaItemCreateWithoutProductoInput = {
+    valeSalidaItemId?: string
+    cantidad: number
+    createdAt?: Date | string
+    valeSalida: ValeSalidaCreateNestedOneWithoutItemsInput
+  }
+
+  export type ValeSalidaItemUncheckedCreateWithoutProductoInput = {
+    valeSalidaItemId?: string
+    valeSalidaId: string
+    cantidad: number
+    createdAt?: Date | string
+  }
+
+  export type ValeSalidaItemCreateOrConnectWithoutProductoInput = {
+    where: ValeSalidaItemWhereUniqueInput
+    create: XOR<ValeSalidaItemCreateWithoutProductoInput, ValeSalidaItemUncheckedCreateWithoutProductoInput>
+  }
+
+  export type ValeSalidaItemCreateManyProductoInputEnvelope = {
+    data: ValeSalidaItemCreateManyProductoInput | ValeSalidaItemCreateManyProductoInput[]
+    skipDuplicates?: boolean
+  }
+
   export type CompraProductoUpsertWithWhereUniqueWithoutProductoInput = {
     where: CompraProductoWhereUniqueInput
     update: XOR<CompraProductoUpdateWithoutProductoInput, CompraProductoUncheckedUpdateWithoutProductoInput>
@@ -128135,6 +137575,93 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"VentaItem"> | Date | string
   }
 
+  export type RecetaUpsertWithWhereUniqueWithoutProductoInput = {
+    where: RecetaWhereUniqueInput
+    update: XOR<RecetaUpdateWithoutProductoInput, RecetaUncheckedUpdateWithoutProductoInput>
+    create: XOR<RecetaCreateWithoutProductoInput, RecetaUncheckedCreateWithoutProductoInput>
+  }
+
+  export type RecetaUpdateWithWhereUniqueWithoutProductoInput = {
+    where: RecetaWhereUniqueInput
+    data: XOR<RecetaUpdateWithoutProductoInput, RecetaUncheckedUpdateWithoutProductoInput>
+  }
+
+  export type RecetaUpdateManyWithWhereWithoutProductoInput = {
+    where: RecetaScalarWhereInput
+    data: XOR<RecetaUpdateManyMutationInput, RecetaUncheckedUpdateManyWithoutProductoInput>
+  }
+
+  export type RecetaScalarWhereInput = {
+    AND?: RecetaScalarWhereInput | RecetaScalarWhereInput[]
+    OR?: RecetaScalarWhereInput[]
+    NOT?: RecetaScalarWhereInput | RecetaScalarWhereInput[]
+    recetaId?: StringFilter<"Receta"> | string
+    nombre?: StringFilter<"Receta"> | string
+    rendimiento?: IntFilter<"Receta"> | number
+    productoId?: StringNullableFilter<"Receta"> | string | null
+    instrucciones?: StringNullableFilter<"Receta"> | string | null
+    tiempoPrep?: IntNullableFilter<"Receta"> | number | null
+    costoUnitario?: FloatFilter<"Receta"> | number
+    createdAt?: DateTimeFilter<"Receta"> | Date | string
+    updatedAt?: DateTimeFilter<"Receta"> | Date | string
+  }
+
+  export type RecetaIngredienteUpsertWithWhereUniqueWithoutProductoInput = {
+    where: RecetaIngredienteWhereUniqueInput
+    update: XOR<RecetaIngredienteUpdateWithoutProductoInput, RecetaIngredienteUncheckedUpdateWithoutProductoInput>
+    create: XOR<RecetaIngredienteCreateWithoutProductoInput, RecetaIngredienteUncheckedCreateWithoutProductoInput>
+  }
+
+  export type RecetaIngredienteUpdateWithWhereUniqueWithoutProductoInput = {
+    where: RecetaIngredienteWhereUniqueInput
+    data: XOR<RecetaIngredienteUpdateWithoutProductoInput, RecetaIngredienteUncheckedUpdateWithoutProductoInput>
+  }
+
+  export type RecetaIngredienteUpdateManyWithWhereWithoutProductoInput = {
+    where: RecetaIngredienteScalarWhereInput
+    data: XOR<RecetaIngredienteUpdateManyMutationInput, RecetaIngredienteUncheckedUpdateManyWithoutProductoInput>
+  }
+
+  export type RecetaIngredienteScalarWhereInput = {
+    AND?: RecetaIngredienteScalarWhereInput | RecetaIngredienteScalarWhereInput[]
+    OR?: RecetaIngredienteScalarWhereInput[]
+    NOT?: RecetaIngredienteScalarWhereInput | RecetaIngredienteScalarWhereInput[]
+    id?: StringFilter<"RecetaIngrediente"> | string
+    recetaId?: StringFilter<"RecetaIngrediente"> | string
+    productoId?: StringFilter<"RecetaIngrediente"> | string
+    cantidad?: FloatFilter<"RecetaIngrediente"> | number
+    desperdicio?: FloatFilter<"RecetaIngrediente"> | number
+    createdAt?: DateTimeFilter<"RecetaIngrediente"> | Date | string
+    updatedAt?: DateTimeFilter<"RecetaIngrediente"> | Date | string
+  }
+
+  export type ValeSalidaItemUpsertWithWhereUniqueWithoutProductoInput = {
+    where: ValeSalidaItemWhereUniqueInput
+    update: XOR<ValeSalidaItemUpdateWithoutProductoInput, ValeSalidaItemUncheckedUpdateWithoutProductoInput>
+    create: XOR<ValeSalidaItemCreateWithoutProductoInput, ValeSalidaItemUncheckedCreateWithoutProductoInput>
+  }
+
+  export type ValeSalidaItemUpdateWithWhereUniqueWithoutProductoInput = {
+    where: ValeSalidaItemWhereUniqueInput
+    data: XOR<ValeSalidaItemUpdateWithoutProductoInput, ValeSalidaItemUncheckedUpdateWithoutProductoInput>
+  }
+
+  export type ValeSalidaItemUpdateManyWithWhereWithoutProductoInput = {
+    where: ValeSalidaItemScalarWhereInput
+    data: XOR<ValeSalidaItemUpdateManyMutationInput, ValeSalidaItemUncheckedUpdateManyWithoutProductoInput>
+  }
+
+  export type ValeSalidaItemScalarWhereInput = {
+    AND?: ValeSalidaItemScalarWhereInput | ValeSalidaItemScalarWhereInput[]
+    OR?: ValeSalidaItemScalarWhereInput[]
+    NOT?: ValeSalidaItemScalarWhereInput | ValeSalidaItemScalarWhereInput[]
+    valeSalidaItemId?: StringFilter<"ValeSalidaItem"> | string
+    valeSalidaId?: StringFilter<"ValeSalidaItem"> | string
+    productoId?: StringFilter<"ValeSalidaItem"> | string
+    cantidad?: IntFilter<"ValeSalidaItem"> | number
+    createdAt?: DateTimeFilter<"ValeSalidaItem"> | Date | string
+  }
+
   export type OrdenReparacionCreateWithoutVentaInput = {
     id?: string
     numeroOrden?: number
@@ -128409,6 +137936,9 @@ export namespace Prisma {
     vendor?: VendorCreateNestedOneWithoutProductosInput
     transferencias?: TransferenciaCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    recetasProducto?: RecetaCreateNestedManyWithoutProductoInput
+    ingredienteRecetas?: RecetaIngredienteCreateNestedManyWithoutProductoInput
+    valeSalidaItems?: ValeSalidaItemCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateWithoutVentasInput = {
@@ -128435,6 +137965,9 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    recetasProducto?: RecetaUncheckedCreateNestedManyWithoutProductoInput
+    ingredienteRecetas?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
+    valeSalidaItems?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoCreateOrConnectWithoutVentasInput = {
@@ -128859,6 +138392,9 @@ export namespace Prisma {
     vendor?: VendorUpdateOneWithoutProductosNestedInput
     transferencias?: TransferenciaUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    recetasProducto?: RecetaUpdateManyWithoutProductoNestedInput
+    ingredienteRecetas?: RecetaIngredienteUpdateManyWithoutProductoNestedInput
+    valeSalidaItems?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateWithoutVentasInput = {
@@ -128885,6 +138421,9 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    recetasProducto?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
+    ingredienteRecetas?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
+    valeSalidaItems?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type PuntoDeVentaUpsertWithoutVentasInput = {
@@ -129027,6 +138566,9 @@ export namespace Prisma {
     vendor?: VendorCreateNestedOneWithoutProductosInput
     transferencias?: TransferenciaCreateNestedManyWithoutProductoInput
     ventas?: VentaCreateNestedManyWithoutProductoInput
+    recetasProducto?: RecetaCreateNestedManyWithoutProductoInput
+    ingredienteRecetas?: RecetaIngredienteCreateNestedManyWithoutProductoInput
+    valeSalidaItems?: ValeSalidaItemCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateWithoutVentaItemsInput = {
@@ -129053,6 +138595,9 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
+    recetasProducto?: RecetaUncheckedCreateNestedManyWithoutProductoInput
+    ingredienteRecetas?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
+    valeSalidaItems?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoCreateOrConnectWithoutVentaItemsInput = {
@@ -129142,6 +138687,9 @@ export namespace Prisma {
     vendor?: VendorUpdateOneWithoutProductosNestedInput
     transferencias?: TransferenciaUpdateManyWithoutProductoNestedInput
     ventas?: VentaUpdateManyWithoutProductoNestedInput
+    recetasProducto?: RecetaUpdateManyWithoutProductoNestedInput
+    ingredienteRecetas?: RecetaIngredienteUpdateManyWithoutProductoNestedInput
+    valeSalidaItems?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateWithoutVentaItemsInput = {
@@ -129168,6 +138716,9 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
+    recetasProducto?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
+    ingredienteRecetas?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
+    valeSalidaItems?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type VentaUpsertWithoutItemsInput = {
@@ -129247,6 +138798,9 @@ export namespace Prisma {
     transferencias?: TransferenciaCreateNestedManyWithoutProductoInput
     ventas?: VentaCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    recetasProducto?: RecetaCreateNestedManyWithoutProductoInput
+    ingredienteRecetas?: RecetaIngredienteCreateNestedManyWithoutProductoInput
+    valeSalidaItems?: ValeSalidaItemCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateWithoutMermasInput = {
@@ -129273,6 +138827,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    recetasProducto?: RecetaUncheckedCreateNestedManyWithoutProductoInput
+    ingredienteRecetas?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
+    valeSalidaItems?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoCreateOrConnectWithoutMermasInput = {
@@ -129315,6 +138872,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUpdateManyWithoutProductoNestedInput
     ventas?: VentaUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    recetasProducto?: RecetaUpdateManyWithoutProductoNestedInput
+    ingredienteRecetas?: RecetaIngredienteUpdateManyWithoutProductoNestedInput
+    valeSalidaItems?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateWithoutMermasInput = {
@@ -129341,6 +138901,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    recetasProducto?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
+    ingredienteRecetas?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
+    valeSalidaItems?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type AlmacenCreateWithoutTransferenciasDestinoInput = {
@@ -129413,6 +138976,9 @@ export namespace Prisma {
     vendor?: VendorCreateNestedOneWithoutProductosInput
     ventas?: VentaCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    recetasProducto?: RecetaCreateNestedManyWithoutProductoInput
+    ingredienteRecetas?: RecetaIngredienteCreateNestedManyWithoutProductoInput
+    valeSalidaItems?: ValeSalidaItemCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateWithoutTransferenciasInput = {
@@ -129439,6 +139005,9 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    recetasProducto?: RecetaUncheckedCreateNestedManyWithoutProductoInput
+    ingredienteRecetas?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
+    valeSalidaItems?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoCreateOrConnectWithoutTransferenciasInput = {
@@ -129593,6 +139162,9 @@ export namespace Prisma {
     vendor?: VendorUpdateOneWithoutProductosNestedInput
     ventas?: VentaUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    recetasProducto?: RecetaUpdateManyWithoutProductoNestedInput
+    ingredienteRecetas?: RecetaIngredienteUpdateManyWithoutProductoNestedInput
+    valeSalidaItems?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateWithoutTransferenciasInput = {
@@ -129619,6 +139191,9 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    recetasProducto?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
+    ingredienteRecetas?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
+    valeSalidaItems?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type PuntoDeVentaUpsertWithoutTransferenciasDestinoInput = {
@@ -132531,6 +142106,9 @@ export namespace Prisma {
     transferencias?: TransferenciaCreateNestedManyWithoutProductoInput
     ventas?: VentaCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    recetasProducto?: RecetaCreateNestedManyWithoutProductoInput
+    ingredienteRecetas?: RecetaIngredienteCreateNestedManyWithoutProductoInput
+    valeSalidaItems?: ValeSalidaItemCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateWithoutGastoComprasInput = {
@@ -132557,6 +142135,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    recetasProducto?: RecetaUncheckedCreateNestedManyWithoutProductoInput
+    ingredienteRecetas?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
+    valeSalidaItems?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoCreateOrConnectWithoutGastoComprasInput = {
@@ -132804,6 +142385,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUpdateManyWithoutProductoNestedInput
     ventas?: VentaUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    recetasProducto?: RecetaUpdateManyWithoutProductoNestedInput
+    ingredienteRecetas?: RecetaIngredienteUpdateManyWithoutProductoNestedInput
+    valeSalidaItems?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateWithoutGastoComprasInput = {
@@ -132830,6 +142414,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    recetasProducto?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
+    ingredienteRecetas?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
+    valeSalidaItems?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type VendorUpsertWithoutGastoComprasInput = {
@@ -133009,6 +142596,9 @@ export namespace Prisma {
     transferencias?: TransferenciaCreateNestedManyWithoutProductoInput
     ventas?: VentaCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    recetasProducto?: RecetaCreateNestedManyWithoutProductoInput
+    ingredienteRecetas?: RecetaIngredienteCreateNestedManyWithoutProductoInput
+    valeSalidaItems?: ValeSalidaItemCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateWithoutComprasInput = {
@@ -133035,6 +142625,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    recetasProducto?: RecetaUncheckedCreateNestedManyWithoutProductoInput
+    ingredienteRecetas?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
+    valeSalidaItems?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoCreateOrConnectWithoutComprasInput = {
@@ -133220,6 +142813,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUpdateManyWithoutProductoNestedInput
     ventas?: VentaUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    recetasProducto?: RecetaUpdateManyWithoutProductoNestedInput
+    ingredienteRecetas?: RecetaIngredienteUpdateManyWithoutProductoNestedInput
+    valeSalidaItems?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateWithoutComprasInput = {
@@ -133246,6 +142842,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    recetasProducto?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
+    ingredienteRecetas?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
+    valeSalidaItems?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type VendorUpsertWithoutComprasInput = {
@@ -139270,6 +148869,9 @@ export namespace Prisma {
     transferencias?: TransferenciaCreateNestedManyWithoutProductoInput
     ventas?: VentaCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    recetasProducto?: RecetaCreateNestedManyWithoutProductoInput
+    ingredienteRecetas?: RecetaIngredienteCreateNestedManyWithoutProductoInput
+    valeSalidaItems?: ValeSalidaItemCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateWithoutOfertaItemsInput = {
@@ -139296,6 +148898,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    recetasProducto?: RecetaUncheckedCreateNestedManyWithoutProductoInput
+    ingredienteRecetas?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
+    valeSalidaItems?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoCreateOrConnectWithoutOfertaItemsInput = {
@@ -139406,6 +149011,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUpdateManyWithoutProductoNestedInput
     ventas?: VentaUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    recetasProducto?: RecetaUpdateManyWithoutProductoNestedInput
+    ingredienteRecetas?: RecetaIngredienteUpdateManyWithoutProductoNestedInput
+    valeSalidaItems?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateWithoutOfertaItemsInput = {
@@ -139432,6 +149040,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    recetasProducto?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
+    ingredienteRecetas?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
+    valeSalidaItems?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type ServiciosUpsertWithoutOfertaItemsInput = {
@@ -142106,6 +151717,9 @@ export namespace Prisma {
     transferencias?: TransferenciaCreateNestedManyWithoutProductoInput
     ventas?: VentaCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    recetasProducto?: RecetaCreateNestedManyWithoutProductoInput
+    ingredienteRecetas?: RecetaIngredienteCreateNestedManyWithoutProductoInput
+    valeSalidaItems?: ValeSalidaItemCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateWithoutOrdenMaterialesInput = {
@@ -142132,6 +151746,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    recetasProducto?: RecetaUncheckedCreateNestedManyWithoutProductoInput
+    ingredienteRecetas?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
+    valeSalidaItems?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoCreateOrConnectWithoutOrdenMaterialesInput = {
@@ -142249,6 +151866,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUpdateManyWithoutProductoNestedInput
     ventas?: VentaUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    recetasProducto?: RecetaUpdateManyWithoutProductoNestedInput
+    ingredienteRecetas?: RecetaIngredienteUpdateManyWithoutProductoNestedInput
+    valeSalidaItems?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateWithoutOrdenMaterialesInput = {
@@ -142275,6 +151895,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    recetasProducto?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
+    ingredienteRecetas?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
+    valeSalidaItems?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type OrdenReparacionItemCreateWithoutDefectacionInput = {
@@ -142323,6 +151946,860 @@ export namespace Prisma {
   export type OrdenReparacionItemUpdateManyWithWhereWithoutDefectacionInput = {
     where: OrdenReparacionItemScalarWhereInput
     data: XOR<OrdenReparacionItemUpdateManyMutationInput, OrdenReparacionItemUncheckedUpdateManyWithoutDefectacionInput>
+  }
+
+  export type ProductoCreateWithoutRecetasProductoInput = {
+    id?: string
+    nombre: string
+    descripcion?: string | null
+    precioCosto: number
+    precioVenta: number
+    stock: number
+    stockMinimo?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    fotos?: ProductoCreatefotosInput | string[]
+    compras?: CompraProductoCreateNestedManyWithoutProductoInput
+    gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
+    mermas?: MermaCreateNestedManyWithoutProductoInput
+    ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
+    ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
+    almacen: AlmacenCreateNestedOneWithoutProductosInput
+    categoria: CategoriaCreateNestedOneWithoutProductosInput
+    puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
+    subcategoria?: CategoriaCreateNestedOneWithoutProductosSubcategoriaInput
+    unidad?: UnidadCreateNestedOneWithoutProductosInput
+    vendor?: VendorCreateNestedOneWithoutProductosInput
+    transferencias?: TransferenciaCreateNestedManyWithoutProductoInput
+    ventas?: VentaCreateNestedManyWithoutProductoInput
+    ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    ingredienteRecetas?: RecetaIngredienteCreateNestedManyWithoutProductoInput
+    valeSalidaItems?: ValeSalidaItemCreateNestedManyWithoutProductoInput
+  }
+
+  export type ProductoUncheckedCreateWithoutRecetasProductoInput = {
+    id?: string
+    nombre: string
+    descripcion?: string | null
+    precioCosto: number
+    precioVenta: number
+    stock: number
+    stockMinimo?: number
+    categoriaId: string
+    subcategoriaId?: string | null
+    unidadId?: string | null
+    vendorId?: string | null
+    almacenId: string
+    puntoDeVentaId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    fotos?: ProductoCreatefotosInput | string[]
+    compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
+    gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
+    mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
+    ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
+    ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
+    transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
+    ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
+    ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    ingredienteRecetas?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
+    valeSalidaItems?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
+  }
+
+  export type ProductoCreateOrConnectWithoutRecetasProductoInput = {
+    where: ProductoWhereUniqueInput
+    create: XOR<ProductoCreateWithoutRecetasProductoInput, ProductoUncheckedCreateWithoutRecetasProductoInput>
+  }
+
+  export type RecetaIngredienteCreateWithoutRecetaInput = {
+    id?: string
+    cantidad: number
+    desperdicio?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    producto: ProductoCreateNestedOneWithoutIngredienteRecetasInput
+  }
+
+  export type RecetaIngredienteUncheckedCreateWithoutRecetaInput = {
+    id?: string
+    productoId: string
+    cantidad: number
+    desperdicio?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type RecetaIngredienteCreateOrConnectWithoutRecetaInput = {
+    where: RecetaIngredienteWhereUniqueInput
+    create: XOR<RecetaIngredienteCreateWithoutRecetaInput, RecetaIngredienteUncheckedCreateWithoutRecetaInput>
+  }
+
+  export type RecetaIngredienteCreateManyRecetaInputEnvelope = {
+    data: RecetaIngredienteCreateManyRecetaInput | RecetaIngredienteCreateManyRecetaInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type OrdenProduccionCreateWithoutRecetaInput = {
+    ordenProduccionId?: string
+    cantidad: number
+    estado?: $Enums.EstadoProduccion
+    costoMateriales?: number | null
+    observaciones?: string | null
+    fechaProduccion?: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    historial?: OrdenProduccionHistorialCreateNestedManyWithoutOrdenInput
+  }
+
+  export type OrdenProduccionUncheckedCreateWithoutRecetaInput = {
+    ordenProduccionId?: string
+    cantidad: number
+    estado?: $Enums.EstadoProduccion
+    costoMateriales?: number | null
+    observaciones?: string | null
+    fechaProduccion?: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    historial?: OrdenProduccionHistorialUncheckedCreateNestedManyWithoutOrdenInput
+  }
+
+  export type OrdenProduccionCreateOrConnectWithoutRecetaInput = {
+    where: OrdenProduccionWhereUniqueInput
+    create: XOR<OrdenProduccionCreateWithoutRecetaInput, OrdenProduccionUncheckedCreateWithoutRecetaInput>
+  }
+
+  export type OrdenProduccionCreateManyRecetaInputEnvelope = {
+    data: OrdenProduccionCreateManyRecetaInput | OrdenProduccionCreateManyRecetaInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type ProductoUpsertWithoutRecetasProductoInput = {
+    update: XOR<ProductoUpdateWithoutRecetasProductoInput, ProductoUncheckedUpdateWithoutRecetasProductoInput>
+    create: XOR<ProductoCreateWithoutRecetasProductoInput, ProductoUncheckedCreateWithoutRecetasProductoInput>
+    where?: ProductoWhereInput
+  }
+
+  export type ProductoUpdateToOneWithWhereWithoutRecetasProductoInput = {
+    where?: ProductoWhereInput
+    data: XOR<ProductoUpdateWithoutRecetasProductoInput, ProductoUncheckedUpdateWithoutRecetasProductoInput>
+  }
+
+  export type ProductoUpdateWithoutRecetasProductoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    precioCosto?: IntFieldUpdateOperationsInput | number
+    precioVenta?: IntFieldUpdateOperationsInput | number
+    stock?: IntFieldUpdateOperationsInput | number
+    stockMinimo?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    fotos?: ProductoUpdatefotosInput | string[]
+    compras?: CompraProductoUpdateManyWithoutProductoNestedInput
+    gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
+    mermas?: MermaUpdateManyWithoutProductoNestedInput
+    ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
+    ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
+    almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
+    categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
+    puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
+    subcategoria?: CategoriaUpdateOneWithoutProductosSubcategoriaNestedInput
+    unidad?: UnidadUpdateOneWithoutProductosNestedInput
+    vendor?: VendorUpdateOneWithoutProductosNestedInput
+    transferencias?: TransferenciaUpdateManyWithoutProductoNestedInput
+    ventas?: VentaUpdateManyWithoutProductoNestedInput
+    ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    ingredienteRecetas?: RecetaIngredienteUpdateManyWithoutProductoNestedInput
+    valeSalidaItems?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
+  }
+
+  export type ProductoUncheckedUpdateWithoutRecetasProductoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    precioCosto?: IntFieldUpdateOperationsInput | number
+    precioVenta?: IntFieldUpdateOperationsInput | number
+    stock?: IntFieldUpdateOperationsInput | number
+    stockMinimo?: IntFieldUpdateOperationsInput | number
+    categoriaId?: StringFieldUpdateOperationsInput | string
+    subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
+    unidadId?: NullableStringFieldUpdateOperationsInput | string | null
+    vendorId?: NullableStringFieldUpdateOperationsInput | string | null
+    almacenId?: StringFieldUpdateOperationsInput | string
+    puntoDeVentaId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    fotos?: ProductoUpdatefotosInput | string[]
+    compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
+    gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
+    mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
+    ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
+    ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
+    transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
+    ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
+    ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    ingredienteRecetas?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
+    valeSalidaItems?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
+  }
+
+  export type RecetaIngredienteUpsertWithWhereUniqueWithoutRecetaInput = {
+    where: RecetaIngredienteWhereUniqueInput
+    update: XOR<RecetaIngredienteUpdateWithoutRecetaInput, RecetaIngredienteUncheckedUpdateWithoutRecetaInput>
+    create: XOR<RecetaIngredienteCreateWithoutRecetaInput, RecetaIngredienteUncheckedCreateWithoutRecetaInput>
+  }
+
+  export type RecetaIngredienteUpdateWithWhereUniqueWithoutRecetaInput = {
+    where: RecetaIngredienteWhereUniqueInput
+    data: XOR<RecetaIngredienteUpdateWithoutRecetaInput, RecetaIngredienteUncheckedUpdateWithoutRecetaInput>
+  }
+
+  export type RecetaIngredienteUpdateManyWithWhereWithoutRecetaInput = {
+    where: RecetaIngredienteScalarWhereInput
+    data: XOR<RecetaIngredienteUpdateManyMutationInput, RecetaIngredienteUncheckedUpdateManyWithoutRecetaInput>
+  }
+
+  export type OrdenProduccionUpsertWithWhereUniqueWithoutRecetaInput = {
+    where: OrdenProduccionWhereUniqueInput
+    update: XOR<OrdenProduccionUpdateWithoutRecetaInput, OrdenProduccionUncheckedUpdateWithoutRecetaInput>
+    create: XOR<OrdenProduccionCreateWithoutRecetaInput, OrdenProduccionUncheckedCreateWithoutRecetaInput>
+  }
+
+  export type OrdenProduccionUpdateWithWhereUniqueWithoutRecetaInput = {
+    where: OrdenProduccionWhereUniqueInput
+    data: XOR<OrdenProduccionUpdateWithoutRecetaInput, OrdenProduccionUncheckedUpdateWithoutRecetaInput>
+  }
+
+  export type OrdenProduccionUpdateManyWithWhereWithoutRecetaInput = {
+    where: OrdenProduccionScalarWhereInput
+    data: XOR<OrdenProduccionUpdateManyMutationInput, OrdenProduccionUncheckedUpdateManyWithoutRecetaInput>
+  }
+
+  export type OrdenProduccionScalarWhereInput = {
+    AND?: OrdenProduccionScalarWhereInput | OrdenProduccionScalarWhereInput[]
+    OR?: OrdenProduccionScalarWhereInput[]
+    NOT?: OrdenProduccionScalarWhereInput | OrdenProduccionScalarWhereInput[]
+    ordenProduccionId?: StringFilter<"OrdenProduccion"> | string
+    recetaId?: StringFilter<"OrdenProduccion"> | string
+    cantidad?: IntFilter<"OrdenProduccion"> | number
+    estado?: EnumEstadoProduccionFilter<"OrdenProduccion"> | $Enums.EstadoProduccion
+    costoMateriales?: FloatNullableFilter<"OrdenProduccion"> | number | null
+    observaciones?: StringNullableFilter<"OrdenProduccion"> | string | null
+    fechaProduccion?: DateTimeFilter<"OrdenProduccion"> | Date | string
+    createdAt?: DateTimeFilter<"OrdenProduccion"> | Date | string
+    updatedAt?: DateTimeFilter<"OrdenProduccion"> | Date | string
+  }
+
+  export type RecetaCreateWithoutIngredientesInput = {
+    recetaId?: string
+    nombre: string
+    rendimiento?: number
+    instrucciones?: string | null
+    tiempoPrep?: number | null
+    costoUnitario?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    producto?: ProductoCreateNestedOneWithoutRecetasProductoInput
+    ordenes?: OrdenProduccionCreateNestedManyWithoutRecetaInput
+  }
+
+  export type RecetaUncheckedCreateWithoutIngredientesInput = {
+    recetaId?: string
+    nombre: string
+    rendimiento?: number
+    productoId?: string | null
+    instrucciones?: string | null
+    tiempoPrep?: number | null
+    costoUnitario?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    ordenes?: OrdenProduccionUncheckedCreateNestedManyWithoutRecetaInput
+  }
+
+  export type RecetaCreateOrConnectWithoutIngredientesInput = {
+    where: RecetaWhereUniqueInput
+    create: XOR<RecetaCreateWithoutIngredientesInput, RecetaUncheckedCreateWithoutIngredientesInput>
+  }
+
+  export type ProductoCreateWithoutIngredienteRecetasInput = {
+    id?: string
+    nombre: string
+    descripcion?: string | null
+    precioCosto: number
+    precioVenta: number
+    stock: number
+    stockMinimo?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    fotos?: ProductoCreatefotosInput | string[]
+    compras?: CompraProductoCreateNestedManyWithoutProductoInput
+    gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
+    mermas?: MermaCreateNestedManyWithoutProductoInput
+    ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
+    ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
+    almacen: AlmacenCreateNestedOneWithoutProductosInput
+    categoria: CategoriaCreateNestedOneWithoutProductosInput
+    puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
+    subcategoria?: CategoriaCreateNestedOneWithoutProductosSubcategoriaInput
+    unidad?: UnidadCreateNestedOneWithoutProductosInput
+    vendor?: VendorCreateNestedOneWithoutProductosInput
+    transferencias?: TransferenciaCreateNestedManyWithoutProductoInput
+    ventas?: VentaCreateNestedManyWithoutProductoInput
+    ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    recetasProducto?: RecetaCreateNestedManyWithoutProductoInput
+    valeSalidaItems?: ValeSalidaItemCreateNestedManyWithoutProductoInput
+  }
+
+  export type ProductoUncheckedCreateWithoutIngredienteRecetasInput = {
+    id?: string
+    nombre: string
+    descripcion?: string | null
+    precioCosto: number
+    precioVenta: number
+    stock: number
+    stockMinimo?: number
+    categoriaId: string
+    subcategoriaId?: string | null
+    unidadId?: string | null
+    vendorId?: string | null
+    almacenId: string
+    puntoDeVentaId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    fotos?: ProductoCreatefotosInput | string[]
+    compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
+    gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
+    mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
+    ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
+    ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
+    transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
+    ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
+    ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    recetasProducto?: RecetaUncheckedCreateNestedManyWithoutProductoInput
+    valeSalidaItems?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
+  }
+
+  export type ProductoCreateOrConnectWithoutIngredienteRecetasInput = {
+    where: ProductoWhereUniqueInput
+    create: XOR<ProductoCreateWithoutIngredienteRecetasInput, ProductoUncheckedCreateWithoutIngredienteRecetasInput>
+  }
+
+  export type RecetaUpsertWithoutIngredientesInput = {
+    update: XOR<RecetaUpdateWithoutIngredientesInput, RecetaUncheckedUpdateWithoutIngredientesInput>
+    create: XOR<RecetaCreateWithoutIngredientesInput, RecetaUncheckedCreateWithoutIngredientesInput>
+    where?: RecetaWhereInput
+  }
+
+  export type RecetaUpdateToOneWithWhereWithoutIngredientesInput = {
+    where?: RecetaWhereInput
+    data: XOR<RecetaUpdateWithoutIngredientesInput, RecetaUncheckedUpdateWithoutIngredientesInput>
+  }
+
+  export type RecetaUpdateWithoutIngredientesInput = {
+    recetaId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    rendimiento?: IntFieldUpdateOperationsInput | number
+    instrucciones?: NullableStringFieldUpdateOperationsInput | string | null
+    tiempoPrep?: NullableIntFieldUpdateOperationsInput | number | null
+    costoUnitario?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    producto?: ProductoUpdateOneWithoutRecetasProductoNestedInput
+    ordenes?: OrdenProduccionUpdateManyWithoutRecetaNestedInput
+  }
+
+  export type RecetaUncheckedUpdateWithoutIngredientesInput = {
+    recetaId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    rendimiento?: IntFieldUpdateOperationsInput | number
+    productoId?: NullableStringFieldUpdateOperationsInput | string | null
+    instrucciones?: NullableStringFieldUpdateOperationsInput | string | null
+    tiempoPrep?: NullableIntFieldUpdateOperationsInput | number | null
+    costoUnitario?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ordenes?: OrdenProduccionUncheckedUpdateManyWithoutRecetaNestedInput
+  }
+
+  export type ProductoUpsertWithoutIngredienteRecetasInput = {
+    update: XOR<ProductoUpdateWithoutIngredienteRecetasInput, ProductoUncheckedUpdateWithoutIngredienteRecetasInput>
+    create: XOR<ProductoCreateWithoutIngredienteRecetasInput, ProductoUncheckedCreateWithoutIngredienteRecetasInput>
+    where?: ProductoWhereInput
+  }
+
+  export type ProductoUpdateToOneWithWhereWithoutIngredienteRecetasInput = {
+    where?: ProductoWhereInput
+    data: XOR<ProductoUpdateWithoutIngredienteRecetasInput, ProductoUncheckedUpdateWithoutIngredienteRecetasInput>
+  }
+
+  export type ProductoUpdateWithoutIngredienteRecetasInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    precioCosto?: IntFieldUpdateOperationsInput | number
+    precioVenta?: IntFieldUpdateOperationsInput | number
+    stock?: IntFieldUpdateOperationsInput | number
+    stockMinimo?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    fotos?: ProductoUpdatefotosInput | string[]
+    compras?: CompraProductoUpdateManyWithoutProductoNestedInput
+    gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
+    mermas?: MermaUpdateManyWithoutProductoNestedInput
+    ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
+    ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
+    almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
+    categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
+    puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
+    subcategoria?: CategoriaUpdateOneWithoutProductosSubcategoriaNestedInput
+    unidad?: UnidadUpdateOneWithoutProductosNestedInput
+    vendor?: VendorUpdateOneWithoutProductosNestedInput
+    transferencias?: TransferenciaUpdateManyWithoutProductoNestedInput
+    ventas?: VentaUpdateManyWithoutProductoNestedInput
+    ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    recetasProducto?: RecetaUpdateManyWithoutProductoNestedInput
+    valeSalidaItems?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
+  }
+
+  export type ProductoUncheckedUpdateWithoutIngredienteRecetasInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    precioCosto?: IntFieldUpdateOperationsInput | number
+    precioVenta?: IntFieldUpdateOperationsInput | number
+    stock?: IntFieldUpdateOperationsInput | number
+    stockMinimo?: IntFieldUpdateOperationsInput | number
+    categoriaId?: StringFieldUpdateOperationsInput | string
+    subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
+    unidadId?: NullableStringFieldUpdateOperationsInput | string | null
+    vendorId?: NullableStringFieldUpdateOperationsInput | string | null
+    almacenId?: StringFieldUpdateOperationsInput | string
+    puntoDeVentaId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    fotos?: ProductoUpdatefotosInput | string[]
+    compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
+    gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
+    mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
+    ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
+    ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
+    transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
+    ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
+    ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    recetasProducto?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
+    valeSalidaItems?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
+  }
+
+  export type RecetaCreateWithoutOrdenesInput = {
+    recetaId?: string
+    nombre: string
+    rendimiento?: number
+    instrucciones?: string | null
+    tiempoPrep?: number | null
+    costoUnitario?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    producto?: ProductoCreateNestedOneWithoutRecetasProductoInput
+    ingredientes?: RecetaIngredienteCreateNestedManyWithoutRecetaInput
+  }
+
+  export type RecetaUncheckedCreateWithoutOrdenesInput = {
+    recetaId?: string
+    nombre: string
+    rendimiento?: number
+    productoId?: string | null
+    instrucciones?: string | null
+    tiempoPrep?: number | null
+    costoUnitario?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    ingredientes?: RecetaIngredienteUncheckedCreateNestedManyWithoutRecetaInput
+  }
+
+  export type RecetaCreateOrConnectWithoutOrdenesInput = {
+    where: RecetaWhereUniqueInput
+    create: XOR<RecetaCreateWithoutOrdenesInput, RecetaUncheckedCreateWithoutOrdenesInput>
+  }
+
+  export type OrdenProduccionHistorialCreateWithoutOrdenInput = {
+    id?: string
+    estadoAnterior: string
+    estadoNuevo: string
+    observaciones?: string | null
+    usuarioId?: string | null
+    createdAt?: Date | string
+  }
+
+  export type OrdenProduccionHistorialUncheckedCreateWithoutOrdenInput = {
+    id?: string
+    estadoAnterior: string
+    estadoNuevo: string
+    observaciones?: string | null
+    usuarioId?: string | null
+    createdAt?: Date | string
+  }
+
+  export type OrdenProduccionHistorialCreateOrConnectWithoutOrdenInput = {
+    where: OrdenProduccionHistorialWhereUniqueInput
+    create: XOR<OrdenProduccionHistorialCreateWithoutOrdenInput, OrdenProduccionHistorialUncheckedCreateWithoutOrdenInput>
+  }
+
+  export type OrdenProduccionHistorialCreateManyOrdenInputEnvelope = {
+    data: OrdenProduccionHistorialCreateManyOrdenInput | OrdenProduccionHistorialCreateManyOrdenInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type RecetaUpsertWithoutOrdenesInput = {
+    update: XOR<RecetaUpdateWithoutOrdenesInput, RecetaUncheckedUpdateWithoutOrdenesInput>
+    create: XOR<RecetaCreateWithoutOrdenesInput, RecetaUncheckedCreateWithoutOrdenesInput>
+    where?: RecetaWhereInput
+  }
+
+  export type RecetaUpdateToOneWithWhereWithoutOrdenesInput = {
+    where?: RecetaWhereInput
+    data: XOR<RecetaUpdateWithoutOrdenesInput, RecetaUncheckedUpdateWithoutOrdenesInput>
+  }
+
+  export type RecetaUpdateWithoutOrdenesInput = {
+    recetaId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    rendimiento?: IntFieldUpdateOperationsInput | number
+    instrucciones?: NullableStringFieldUpdateOperationsInput | string | null
+    tiempoPrep?: NullableIntFieldUpdateOperationsInput | number | null
+    costoUnitario?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    producto?: ProductoUpdateOneWithoutRecetasProductoNestedInput
+    ingredientes?: RecetaIngredienteUpdateManyWithoutRecetaNestedInput
+  }
+
+  export type RecetaUncheckedUpdateWithoutOrdenesInput = {
+    recetaId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    rendimiento?: IntFieldUpdateOperationsInput | number
+    productoId?: NullableStringFieldUpdateOperationsInput | string | null
+    instrucciones?: NullableStringFieldUpdateOperationsInput | string | null
+    tiempoPrep?: NullableIntFieldUpdateOperationsInput | number | null
+    costoUnitario?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ingredientes?: RecetaIngredienteUncheckedUpdateManyWithoutRecetaNestedInput
+  }
+
+  export type OrdenProduccionHistorialUpsertWithWhereUniqueWithoutOrdenInput = {
+    where: OrdenProduccionHistorialWhereUniqueInput
+    update: XOR<OrdenProduccionHistorialUpdateWithoutOrdenInput, OrdenProduccionHistorialUncheckedUpdateWithoutOrdenInput>
+    create: XOR<OrdenProduccionHistorialCreateWithoutOrdenInput, OrdenProduccionHistorialUncheckedCreateWithoutOrdenInput>
+  }
+
+  export type OrdenProduccionHistorialUpdateWithWhereUniqueWithoutOrdenInput = {
+    where: OrdenProduccionHistorialWhereUniqueInput
+    data: XOR<OrdenProduccionHistorialUpdateWithoutOrdenInput, OrdenProduccionHistorialUncheckedUpdateWithoutOrdenInput>
+  }
+
+  export type OrdenProduccionHistorialUpdateManyWithWhereWithoutOrdenInput = {
+    where: OrdenProduccionHistorialScalarWhereInput
+    data: XOR<OrdenProduccionHistorialUpdateManyMutationInput, OrdenProduccionHistorialUncheckedUpdateManyWithoutOrdenInput>
+  }
+
+  export type OrdenProduccionHistorialScalarWhereInput = {
+    AND?: OrdenProduccionHistorialScalarWhereInput | OrdenProduccionHistorialScalarWhereInput[]
+    OR?: OrdenProduccionHistorialScalarWhereInput[]
+    NOT?: OrdenProduccionHistorialScalarWhereInput | OrdenProduccionHistorialScalarWhereInput[]
+    id?: StringFilter<"OrdenProduccionHistorial"> | string
+    ordenProduccionId?: StringFilter<"OrdenProduccionHistorial"> | string
+    estadoAnterior?: StringFilter<"OrdenProduccionHistorial"> | string
+    estadoNuevo?: StringFilter<"OrdenProduccionHistorial"> | string
+    observaciones?: StringNullableFilter<"OrdenProduccionHistorial"> | string | null
+    usuarioId?: StringNullableFilter<"OrdenProduccionHistorial"> | string | null
+    createdAt?: DateTimeFilter<"OrdenProduccionHistorial"> | Date | string
+  }
+
+  export type OrdenProduccionCreateWithoutHistorialInput = {
+    ordenProduccionId?: string
+    cantidad: number
+    estado?: $Enums.EstadoProduccion
+    costoMateriales?: number | null
+    observaciones?: string | null
+    fechaProduccion?: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    receta: RecetaCreateNestedOneWithoutOrdenesInput
+  }
+
+  export type OrdenProduccionUncheckedCreateWithoutHistorialInput = {
+    ordenProduccionId?: string
+    recetaId: string
+    cantidad: number
+    estado?: $Enums.EstadoProduccion
+    costoMateriales?: number | null
+    observaciones?: string | null
+    fechaProduccion?: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type OrdenProduccionCreateOrConnectWithoutHistorialInput = {
+    where: OrdenProduccionWhereUniqueInput
+    create: XOR<OrdenProduccionCreateWithoutHistorialInput, OrdenProduccionUncheckedCreateWithoutHistorialInput>
+  }
+
+  export type OrdenProduccionUpsertWithoutHistorialInput = {
+    update: XOR<OrdenProduccionUpdateWithoutHistorialInput, OrdenProduccionUncheckedUpdateWithoutHistorialInput>
+    create: XOR<OrdenProduccionCreateWithoutHistorialInput, OrdenProduccionUncheckedCreateWithoutHistorialInput>
+    where?: OrdenProduccionWhereInput
+  }
+
+  export type OrdenProduccionUpdateToOneWithWhereWithoutHistorialInput = {
+    where?: OrdenProduccionWhereInput
+    data: XOR<OrdenProduccionUpdateWithoutHistorialInput, OrdenProduccionUncheckedUpdateWithoutHistorialInput>
+  }
+
+  export type OrdenProduccionUpdateWithoutHistorialInput = {
+    ordenProduccionId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    estado?: EnumEstadoProduccionFieldUpdateOperationsInput | $Enums.EstadoProduccion
+    costoMateriales?: NullableFloatFieldUpdateOperationsInput | number | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaProduccion?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    receta?: RecetaUpdateOneRequiredWithoutOrdenesNestedInput
+  }
+
+  export type OrdenProduccionUncheckedUpdateWithoutHistorialInput = {
+    ordenProduccionId?: StringFieldUpdateOperationsInput | string
+    recetaId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    estado?: EnumEstadoProduccionFieldUpdateOperationsInput | $Enums.EstadoProduccion
+    costoMateriales?: NullableFloatFieldUpdateOperationsInput | number | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaProduccion?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ValeSalidaItemCreateWithoutValeSalidaInput = {
+    valeSalidaItemId?: string
+    cantidad: number
+    createdAt?: Date | string
+    producto: ProductoCreateNestedOneWithoutValeSalidaItemsInput
+  }
+
+  export type ValeSalidaItemUncheckedCreateWithoutValeSalidaInput = {
+    valeSalidaItemId?: string
+    productoId: string
+    cantidad: number
+    createdAt?: Date | string
+  }
+
+  export type ValeSalidaItemCreateOrConnectWithoutValeSalidaInput = {
+    where: ValeSalidaItemWhereUniqueInput
+    create: XOR<ValeSalidaItemCreateWithoutValeSalidaInput, ValeSalidaItemUncheckedCreateWithoutValeSalidaInput>
+  }
+
+  export type ValeSalidaItemCreateManyValeSalidaInputEnvelope = {
+    data: ValeSalidaItemCreateManyValeSalidaInput | ValeSalidaItemCreateManyValeSalidaInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type ValeSalidaItemUpsertWithWhereUniqueWithoutValeSalidaInput = {
+    where: ValeSalidaItemWhereUniqueInput
+    update: XOR<ValeSalidaItemUpdateWithoutValeSalidaInput, ValeSalidaItemUncheckedUpdateWithoutValeSalidaInput>
+    create: XOR<ValeSalidaItemCreateWithoutValeSalidaInput, ValeSalidaItemUncheckedCreateWithoutValeSalidaInput>
+  }
+
+  export type ValeSalidaItemUpdateWithWhereUniqueWithoutValeSalidaInput = {
+    where: ValeSalidaItemWhereUniqueInput
+    data: XOR<ValeSalidaItemUpdateWithoutValeSalidaInput, ValeSalidaItemUncheckedUpdateWithoutValeSalidaInput>
+  }
+
+  export type ValeSalidaItemUpdateManyWithWhereWithoutValeSalidaInput = {
+    where: ValeSalidaItemScalarWhereInput
+    data: XOR<ValeSalidaItemUpdateManyMutationInput, ValeSalidaItemUncheckedUpdateManyWithoutValeSalidaInput>
+  }
+
+  export type ValeSalidaCreateWithoutItemsInput = {
+    valeSalidaId?: string
+    concepto: string
+    estado?: string
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ValeSalidaUncheckedCreateWithoutItemsInput = {
+    valeSalidaId?: string
+    concepto: string
+    estado?: string
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ValeSalidaCreateOrConnectWithoutItemsInput = {
+    where: ValeSalidaWhereUniqueInput
+    create: XOR<ValeSalidaCreateWithoutItemsInput, ValeSalidaUncheckedCreateWithoutItemsInput>
+  }
+
+  export type ProductoCreateWithoutValeSalidaItemsInput = {
+    id?: string
+    nombre: string
+    descripcion?: string | null
+    precioCosto: number
+    precioVenta: number
+    stock: number
+    stockMinimo?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    fotos?: ProductoCreatefotosInput | string[]
+    compras?: CompraProductoCreateNestedManyWithoutProductoInput
+    gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
+    mermas?: MermaCreateNestedManyWithoutProductoInput
+    ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
+    ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
+    almacen: AlmacenCreateNestedOneWithoutProductosInput
+    categoria: CategoriaCreateNestedOneWithoutProductosInput
+    puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
+    subcategoria?: CategoriaCreateNestedOneWithoutProductosSubcategoriaInput
+    unidad?: UnidadCreateNestedOneWithoutProductosInput
+    vendor?: VendorCreateNestedOneWithoutProductosInput
+    transferencias?: TransferenciaCreateNestedManyWithoutProductoInput
+    ventas?: VentaCreateNestedManyWithoutProductoInput
+    ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    recetasProducto?: RecetaCreateNestedManyWithoutProductoInput
+    ingredienteRecetas?: RecetaIngredienteCreateNestedManyWithoutProductoInput
+  }
+
+  export type ProductoUncheckedCreateWithoutValeSalidaItemsInput = {
+    id?: string
+    nombre: string
+    descripcion?: string | null
+    precioCosto: number
+    precioVenta: number
+    stock: number
+    stockMinimo?: number
+    categoriaId: string
+    subcategoriaId?: string | null
+    unidadId?: string | null
+    vendorId?: string | null
+    almacenId: string
+    puntoDeVentaId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    fotos?: ProductoCreatefotosInput | string[]
+    compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
+    gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
+    mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
+    ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
+    ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
+    transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
+    ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
+    ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    recetasProducto?: RecetaUncheckedCreateNestedManyWithoutProductoInput
+    ingredienteRecetas?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
+  }
+
+  export type ProductoCreateOrConnectWithoutValeSalidaItemsInput = {
+    where: ProductoWhereUniqueInput
+    create: XOR<ProductoCreateWithoutValeSalidaItemsInput, ProductoUncheckedCreateWithoutValeSalidaItemsInput>
+  }
+
+  export type ValeSalidaUpsertWithoutItemsInput = {
+    update: XOR<ValeSalidaUpdateWithoutItemsInput, ValeSalidaUncheckedUpdateWithoutItemsInput>
+    create: XOR<ValeSalidaCreateWithoutItemsInput, ValeSalidaUncheckedCreateWithoutItemsInput>
+    where?: ValeSalidaWhereInput
+  }
+
+  export type ValeSalidaUpdateToOneWithWhereWithoutItemsInput = {
+    where?: ValeSalidaWhereInput
+    data: XOR<ValeSalidaUpdateWithoutItemsInput, ValeSalidaUncheckedUpdateWithoutItemsInput>
+  }
+
+  export type ValeSalidaUpdateWithoutItemsInput = {
+    valeSalidaId?: StringFieldUpdateOperationsInput | string
+    concepto?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ValeSalidaUncheckedUpdateWithoutItemsInput = {
+    valeSalidaId?: StringFieldUpdateOperationsInput | string
+    concepto?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProductoUpsertWithoutValeSalidaItemsInput = {
+    update: XOR<ProductoUpdateWithoutValeSalidaItemsInput, ProductoUncheckedUpdateWithoutValeSalidaItemsInput>
+    create: XOR<ProductoCreateWithoutValeSalidaItemsInput, ProductoUncheckedCreateWithoutValeSalidaItemsInput>
+    where?: ProductoWhereInput
+  }
+
+  export type ProductoUpdateToOneWithWhereWithoutValeSalidaItemsInput = {
+    where?: ProductoWhereInput
+    data: XOR<ProductoUpdateWithoutValeSalidaItemsInput, ProductoUncheckedUpdateWithoutValeSalidaItemsInput>
+  }
+
+  export type ProductoUpdateWithoutValeSalidaItemsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    precioCosto?: IntFieldUpdateOperationsInput | number
+    precioVenta?: IntFieldUpdateOperationsInput | number
+    stock?: IntFieldUpdateOperationsInput | number
+    stockMinimo?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    fotos?: ProductoUpdatefotosInput | string[]
+    compras?: CompraProductoUpdateManyWithoutProductoNestedInput
+    gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
+    mermas?: MermaUpdateManyWithoutProductoNestedInput
+    ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
+    ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
+    almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
+    categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
+    puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
+    subcategoria?: CategoriaUpdateOneWithoutProductosSubcategoriaNestedInput
+    unidad?: UnidadUpdateOneWithoutProductosNestedInput
+    vendor?: VendorUpdateOneWithoutProductosNestedInput
+    transferencias?: TransferenciaUpdateManyWithoutProductoNestedInput
+    ventas?: VentaUpdateManyWithoutProductoNestedInput
+    ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    recetasProducto?: RecetaUpdateManyWithoutProductoNestedInput
+    ingredienteRecetas?: RecetaIngredienteUpdateManyWithoutProductoNestedInput
+  }
+
+  export type ProductoUncheckedUpdateWithoutValeSalidaItemsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    precioCosto?: IntFieldUpdateOperationsInput | number
+    precioVenta?: IntFieldUpdateOperationsInput | number
+    stock?: IntFieldUpdateOperationsInput | number
+    stockMinimo?: IntFieldUpdateOperationsInput | number
+    categoriaId?: StringFieldUpdateOperationsInput | string
+    subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
+    unidadId?: NullableStringFieldUpdateOperationsInput | string | null
+    vendorId?: NullableStringFieldUpdateOperationsInput | string | null
+    almacenId?: StringFieldUpdateOperationsInput | string
+    puntoDeVentaId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    fotos?: ProductoUpdatefotosInput | string[]
+    compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
+    gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
+    mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
+    ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
+    ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
+    transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
+    ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
+    ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    recetasProducto?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
+    ingredienteRecetas?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type CategoriaCreateManyParentInput = {
@@ -142423,6 +152900,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUpdateManyWithoutProductoNestedInput
     ventas?: VentaUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    recetasProducto?: RecetaUpdateManyWithoutProductoNestedInput
+    ingredienteRecetas?: RecetaIngredienteUpdateManyWithoutProductoNestedInput
+    valeSalidaItems?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateWithoutCategoriaInput = {
@@ -142449,6 +152929,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    recetasProducto?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
+    ingredienteRecetas?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
+    valeSalidaItems?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateManyWithoutCategoriaInput = {
@@ -142493,6 +152976,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUpdateManyWithoutProductoNestedInput
     ventas?: VentaUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    recetasProducto?: RecetaUpdateManyWithoutProductoNestedInput
+    ingredienteRecetas?: RecetaIngredienteUpdateManyWithoutProductoNestedInput
+    valeSalidaItems?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateWithoutSubcategoriaInput = {
@@ -142519,6 +153005,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    recetasProducto?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
+    ingredienteRecetas?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
+    valeSalidaItems?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateManyWithoutSubcategoriaInput = {
@@ -142581,6 +153070,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUpdateManyWithoutProductoNestedInput
     ventas?: VentaUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    recetasProducto?: RecetaUpdateManyWithoutProductoNestedInput
+    ingredienteRecetas?: RecetaIngredienteUpdateManyWithoutProductoNestedInput
+    valeSalidaItems?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateWithoutUnidadInput = {
@@ -142607,6 +153099,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    recetasProducto?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
+    ingredienteRecetas?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
+    valeSalidaItems?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateManyWithoutUnidadInput = {
@@ -143057,6 +153552,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUpdateManyWithoutProductoNestedInput
     ventas?: VentaUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    recetasProducto?: RecetaUpdateManyWithoutProductoNestedInput
+    ingredienteRecetas?: RecetaIngredienteUpdateManyWithoutProductoNestedInput
+    valeSalidaItems?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateWithoutVendorInput = {
@@ -143083,6 +153581,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    recetasProducto?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
+    ingredienteRecetas?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
+    valeSalidaItems?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateManyWithoutVendorInput = {
@@ -143863,6 +154364,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUpdateManyWithoutProductoNestedInput
     ventas?: VentaUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    recetasProducto?: RecetaUpdateManyWithoutProductoNestedInput
+    ingredienteRecetas?: RecetaIngredienteUpdateManyWithoutProductoNestedInput
+    valeSalidaItems?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateWithoutAlmacenInput = {
@@ -143889,6 +154393,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    recetasProducto?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
+    ingredienteRecetas?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
+    valeSalidaItems?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateManyWithoutAlmacenInput = {
@@ -144064,6 +154571,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUpdateManyWithoutProductoNestedInput
     ventas?: VentaUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    recetasProducto?: RecetaUpdateManyWithoutProductoNestedInput
+    ingredienteRecetas?: RecetaIngredienteUpdateManyWithoutProductoNestedInput
+    valeSalidaItems?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateWithoutPuntoDeVentaInput = {
@@ -144090,6 +154600,9 @@ export namespace Prisma {
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    recetasProducto?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
+    ingredienteRecetas?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
+    valeSalidaItems?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateManyWithoutPuntoDeVentaInput = {
@@ -144337,6 +154850,33 @@ export namespace Prisma {
     total: number
     createdAt?: Date | string
     updatedAt?: Date | string
+  }
+
+  export type RecetaCreateManyProductoInput = {
+    recetaId?: string
+    nombre: string
+    rendimiento?: number
+    instrucciones?: string | null
+    tiempoPrep?: number | null
+    costoUnitario?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type RecetaIngredienteCreateManyProductoInput = {
+    id?: string
+    recetaId: string
+    cantidad: number
+    desperdicio?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ValeSalidaItemCreateManyProductoInput = {
+    valeSalidaItemId?: string
+    valeSalidaId: string
+    cantidad: number
+    createdAt?: Date | string
   }
 
   export type CompraProductoUpdateWithoutProductoInput = {
@@ -144645,6 +155185,91 @@ export namespace Prisma {
     total?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RecetaUpdateWithoutProductoInput = {
+    recetaId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    rendimiento?: IntFieldUpdateOperationsInput | number
+    instrucciones?: NullableStringFieldUpdateOperationsInput | string | null
+    tiempoPrep?: NullableIntFieldUpdateOperationsInput | number | null
+    costoUnitario?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ingredientes?: RecetaIngredienteUpdateManyWithoutRecetaNestedInput
+    ordenes?: OrdenProduccionUpdateManyWithoutRecetaNestedInput
+  }
+
+  export type RecetaUncheckedUpdateWithoutProductoInput = {
+    recetaId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    rendimiento?: IntFieldUpdateOperationsInput | number
+    instrucciones?: NullableStringFieldUpdateOperationsInput | string | null
+    tiempoPrep?: NullableIntFieldUpdateOperationsInput | number | null
+    costoUnitario?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ingredientes?: RecetaIngredienteUncheckedUpdateManyWithoutRecetaNestedInput
+    ordenes?: OrdenProduccionUncheckedUpdateManyWithoutRecetaNestedInput
+  }
+
+  export type RecetaUncheckedUpdateManyWithoutProductoInput = {
+    recetaId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    rendimiento?: IntFieldUpdateOperationsInput | number
+    instrucciones?: NullableStringFieldUpdateOperationsInput | string | null
+    tiempoPrep?: NullableIntFieldUpdateOperationsInput | number | null
+    costoUnitario?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RecetaIngredienteUpdateWithoutProductoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    cantidad?: FloatFieldUpdateOperationsInput | number
+    desperdicio?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    receta?: RecetaUpdateOneRequiredWithoutIngredientesNestedInput
+  }
+
+  export type RecetaIngredienteUncheckedUpdateWithoutProductoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    recetaId?: StringFieldUpdateOperationsInput | string
+    cantidad?: FloatFieldUpdateOperationsInput | number
+    desperdicio?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RecetaIngredienteUncheckedUpdateManyWithoutProductoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    recetaId?: StringFieldUpdateOperationsInput | string
+    cantidad?: FloatFieldUpdateOperationsInput | number
+    desperdicio?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ValeSalidaItemUpdateWithoutProductoInput = {
+    valeSalidaItemId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    valeSalida?: ValeSalidaUpdateOneRequiredWithoutItemsNestedInput
+  }
+
+  export type ValeSalidaItemUncheckedUpdateWithoutProductoInput = {
+    valeSalidaItemId?: StringFieldUpdateOperationsInput | string
+    valeSalidaId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ValeSalidaItemUncheckedUpdateManyWithoutProductoInput = {
+    valeSalidaItemId?: StringFieldUpdateOperationsInput | string
+    valeSalidaId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ReconciliacionVentaCreateManyVentaInput = {
@@ -148521,6 +159146,152 @@ export namespace Prisma {
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     tecnicoId?: NullableStringFieldUpdateOperationsInput | string | null
     ordenEquipoId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type RecetaIngredienteCreateManyRecetaInput = {
+    id?: string
+    productoId: string
+    cantidad: number
+    desperdicio?: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type OrdenProduccionCreateManyRecetaInput = {
+    ordenProduccionId?: string
+    cantidad: number
+    estado?: $Enums.EstadoProduccion
+    costoMateriales?: number | null
+    observaciones?: string | null
+    fechaProduccion?: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type RecetaIngredienteUpdateWithoutRecetaInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    cantidad?: FloatFieldUpdateOperationsInput | number
+    desperdicio?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    producto?: ProductoUpdateOneRequiredWithoutIngredienteRecetasNestedInput
+  }
+
+  export type RecetaIngredienteUncheckedUpdateWithoutRecetaInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    productoId?: StringFieldUpdateOperationsInput | string
+    cantidad?: FloatFieldUpdateOperationsInput | number
+    desperdicio?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type RecetaIngredienteUncheckedUpdateManyWithoutRecetaInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    productoId?: StringFieldUpdateOperationsInput | string
+    cantidad?: FloatFieldUpdateOperationsInput | number
+    desperdicio?: FloatFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrdenProduccionUpdateWithoutRecetaInput = {
+    ordenProduccionId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    estado?: EnumEstadoProduccionFieldUpdateOperationsInput | $Enums.EstadoProduccion
+    costoMateriales?: NullableFloatFieldUpdateOperationsInput | number | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaProduccion?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    historial?: OrdenProduccionHistorialUpdateManyWithoutOrdenNestedInput
+  }
+
+  export type OrdenProduccionUncheckedUpdateWithoutRecetaInput = {
+    ordenProduccionId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    estado?: EnumEstadoProduccionFieldUpdateOperationsInput | $Enums.EstadoProduccion
+    costoMateriales?: NullableFloatFieldUpdateOperationsInput | number | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaProduccion?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    historial?: OrdenProduccionHistorialUncheckedUpdateManyWithoutOrdenNestedInput
+  }
+
+  export type OrdenProduccionUncheckedUpdateManyWithoutRecetaInput = {
+    ordenProduccionId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    estado?: EnumEstadoProduccionFieldUpdateOperationsInput | $Enums.EstadoProduccion
+    costoMateriales?: NullableFloatFieldUpdateOperationsInput | number | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaProduccion?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrdenProduccionHistorialCreateManyOrdenInput = {
+    id?: string
+    estadoAnterior: string
+    estadoNuevo: string
+    observaciones?: string | null
+    usuarioId?: string | null
+    createdAt?: Date | string
+  }
+
+  export type OrdenProduccionHistorialUpdateWithoutOrdenInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    estadoAnterior?: StringFieldUpdateOperationsInput | string
+    estadoNuevo?: StringFieldUpdateOperationsInput | string
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    usuarioId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrdenProduccionHistorialUncheckedUpdateWithoutOrdenInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    estadoAnterior?: StringFieldUpdateOperationsInput | string
+    estadoNuevo?: StringFieldUpdateOperationsInput | string
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    usuarioId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type OrdenProduccionHistorialUncheckedUpdateManyWithoutOrdenInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    estadoAnterior?: StringFieldUpdateOperationsInput | string
+    estadoNuevo?: StringFieldUpdateOperationsInput | string
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    usuarioId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ValeSalidaItemCreateManyValeSalidaInput = {
+    valeSalidaItemId?: string
+    productoId: string
+    cantidad: number
+    createdAt?: Date | string
+  }
+
+  export type ValeSalidaItemUpdateWithoutValeSalidaInput = {
+    valeSalidaItemId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    producto?: ProductoUpdateOneRequiredWithoutValeSalidaItemsNestedInput
+  }
+
+  export type ValeSalidaItemUncheckedUpdateWithoutValeSalidaInput = {
+    valeSalidaItemId?: StringFieldUpdateOperationsInput | string
+    productoId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ValeSalidaItemUncheckedUpdateManyWithoutValeSalidaInput = {
+    valeSalidaItemId?: StringFieldUpdateOperationsInput | string
+    productoId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
 

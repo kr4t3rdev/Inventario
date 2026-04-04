@@ -13,16 +13,191 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { AuthLayout } from '@/components/auth/auth-layout'
 
-export default function LoginPage() {
+interface LoginFormBodyProps {
+  onSubmit: (email: string, password: string) => Promise<void>
+  loading: boolean
+  error: string
+}
+
+/**
+ * @description Formulario de login con estado local de campos para aislar re-renders
+ * por keystroke del wrapper animado externo.
+ * @param {LoginFormBodyProps} props
+ * @returns {JSX.Element}
+ */
+function LoginFormBody({ onSubmit, loading, error }: LoginFormBodyProps): JSX.Element {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    await onSubmit(email, password)
+  }
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.5, duration: 0.5 }}
+        className="px-8 pb-8 space-y-5"
+      >
+        {/* Error Alert */}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Alert variant="destructive" className="border-red-300 bg-red-50/80 dark:bg-red-900/20">
+              <AlertCircleIcon className="h-4 w-4" />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          </motion.div>
+        )}
+
+        {/* Email Field */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6, duration: 0.5, ease: 'easeOut' as const }}
+          className="space-y-2"
+        >
+          <Label htmlFor="email" className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            Correo electrónico
+          </Label>
+          <motion.div whileFocus={{ scale: 1.02 }}>
+            <Input
+              id="email"
+              type="email"
+              placeholder="tu@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              disabled={loading}
+              className="h-12 bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+            />
+          </motion.div>
+        </motion.div>
+
+        {/* Password Field */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7, duration: 0.5, ease: 'easeOut' as const }}
+          className="space-y-2"
+        >
+          <div className="flex items-center justify-between">
+            <Label htmlFor="password" className="text-sm font-medium text-slate-700 dark:text-slate-300">
+              Contraseña
+            </Label>
+          </div>
+          <motion.div whileFocus={{ scale: 1.02 }} className="relative">
+            <Input
+              id="password"
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Tu contraseña"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              disabled={loading}
+              className="h-12 bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 pr-12"
+            />
+            <motion.button
+              type="button"
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setShowPassword(!showPassword)}
+              disabled={loading}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors duration-200"
+            >
+              {showPassword ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+            </motion.button>
+          </motion.div>
+        </motion.div>
+
+        {/* Submit Button */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8, duration: 0.5, ease: 'easeOut' as const }}
+        >
+          <motion.div
+            whileHover={{ scale: loading ? 1 : 1.02 }}
+            whileTap={{ scale: loading ? 1 : 0.98 }}
+          >
+            <Button
+              type="submit"
+              disabled={loading}
+              className="w-full h-12 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white font-semibold shadow-lg shadow-primary/25 transition-all duration-300"
+            >
+              {loading ? (
+                <span className="flex items-center gap-2">
+                  <Loader2Icon className="h-5 w-5 animate-spin" />
+                  Iniciando sesión...
+                </span>
+              ) : (
+                <span className="flex items-center gap-2">
+                  <LogInIcon className="h-5 w-5" />
+                  Iniciar Sesión
+                </span>
+              )}
+            </Button>
+          </motion.div>
+        </motion.div>
+
+        {/* Divider */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.9, duration: 0.5, ease: 'easeOut' as const }}
+          className="relative py-2"
+        >
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-slate-200 dark:border-slate-700" />
+          </div>
+          <div className="relative flex justify-center text-xs">
+            <span className="px-4 bg-white/80 dark:bg-slate-900/80 text-slate-400">
+              o continúa con
+            </span>
+          </div>
+        </motion.div>
+
+        {/* Register Link */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.0, duration: 0.5, ease: 'easeOut' as const }}
+          className="text-center"
+        >
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            ¿No tienes una cuenta?{' '}
+            <Link
+              href="/register"
+              className="font-semibold text-primary hover:text-primary/80 transition-colors duration-200 relative group"
+            >
+              Regístrate aquí
+              <span className="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
+            </Link>
+          </p>
+        </motion.div>
+      </motion.div>
+    </form>
+  )
+}
+
+/**
+ * @description Página de login con animaciones de entrada y tarjeta glassmorphism
+ * @returns {JSX.Element}
+ */
+export default function LoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (email: string, password: string) => {
     setError('')
     setLoading(true)
 
@@ -107,161 +282,7 @@ export default function LoginPage() {
           </motion.div>
 
           {/* Form Section */}
-          <form onSubmit={handleSubmit}>
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5, duration: 0.5 }}
-              className="px-8 pb-8 space-y-5"
-            >
-              {/* Error Alert */}
-              {error && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: 'auto' }}
-                  exit={{ opacity: 0, height: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <Alert variant="destructive" className="border-red-300 bg-red-50/80 dark:bg-red-900/20">
-                    <AlertCircleIcon className="h-4 w-4" />
-                    <AlertDescription>{error}</AlertDescription>
-                  </Alert>
-                </motion.div>
-              )}
-
-              {/* Email Field */}
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6, duration: 0.5, ease: 'easeOut' as const }}
-                className="space-y-2"
-              >
-                <Label htmlFor="email" className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Correo electrónico
-                </Label>
-                <motion.div whileFocus={{ scale: 1.02 }}>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="tu@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    disabled={loading}
-                    className="h-12 bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
-                  />
-                </motion.div>
-              </motion.div>
-
-              {/* Password Field */}
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.7, duration: 0.5, ease: 'easeOut' as const }}
-                className="space-y-2"
-              >
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password" className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                    Contraseña
-                  </Label>
-                  {/* <Link 
-                    href="#" 
-                    className="text-xs text-primary hover:text-primary/80 transition-colors duration-200"
-                  >
-                    ¿Olvidaste tu contraseña?
-                  </Link> */}
-                </div>
-                <motion.div whileFocus={{ scale: 1.02 }} className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="Tu contraseña"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    disabled={loading}
-                    className="h-12 bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200 pr-12"
-                  />
-                  <motion.button
-                    type="button"
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setShowPassword(!showPassword)}
-                    disabled={loading}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors duration-200"
-                  >
-                    {showPassword ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
-                  </motion.button>
-                </motion.div>
-              </motion.div>
-
-              {/* Submit Button */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.8, duration: 0.5, ease: 'easeOut' as const }}
-              >
-                <motion.div
-                  whileHover={{ scale: loading ? 1 : 1.02 }}
-                  whileTap={{ scale: loading ? 1 : 0.98 }}
-                >
-                  <Button
-                    type="submit"
-                    disabled={loading}
-                    className="w-full h-12 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white font-semibold shadow-lg shadow-primary/25 transition-all duration-300"
-                  >
-                    {loading ? (
-                      <span className="flex items-center gap-2">
-                        <Loader2Icon className="h-5 w-5 animate-spin" />
-                        Iniciando sesión...
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-2">
-                        <LogInIcon className="h-5 w-5" />
-                        Iniciar Sesión
-                      </span>
-                    )}
-                  </Button>
-                </motion.div>
-              </motion.div>
-
-              {/* Divider */}
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.9, duration: 0.5, ease: 'easeOut' as const }}
-                className="relative py-2"
-              >
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-200 dark:border-slate-700" />
-                </div>
-                <div className="relative flex justify-center text-xs">
-                  <span className="px-4 bg-white/80 dark:bg-slate-900/80 text-slate-400">
-                    o continúa con
-                  </span>
-                </div>
-              </motion.div>
-
-              {/* Register Link */}
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.0, duration: 0.5, ease: 'easeOut' as const }}
-                className="text-center"
-              >
-                <p className="text-sm text-slate-500 dark:text-slate-400">
-                  ¿No tienes una cuenta?{' '}
-                  <Link 
-                    href="/register" 
-                    className="font-semibold text-primary hover:text-primary/80 transition-colors duration-200 relative group"
-                  >
-                    Regístrate aquí
-                    <span className="absolute -bottom-0.5 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
-                  </Link>
-                </p>
-              </motion.div>
-            </motion.div>
-          </form>
+          <LoginFormBody onSubmit={handleSubmit} loading={loading} error={error} />
 
           {/* Bottom decorative line */}
           <div className="h-1 bg-gradient-to-r from-primary via-purple-500 to-primary" />

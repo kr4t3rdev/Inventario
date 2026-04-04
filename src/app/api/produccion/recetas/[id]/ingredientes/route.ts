@@ -58,7 +58,7 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
         select: { precioCosto: true },
       });
       if (producto) {
-        costoUnitario += producto.precioCosto * ing.cantidad;
+        costoUnitario += producto.precioCosto * ing.cantidad * (1 + (ing.desperdicio ?? 0));
       }
     }
 

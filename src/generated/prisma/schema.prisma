@@ -1,7 +1,8 @@
 generator client {
-  provider  = "prisma-client-js"
-  output    = "../src/generated/prisma"
-  generator = "client"
+  provider      = "prisma-client-js"
+  output        = "../src/generated/prisma"
+  generator     = "client"
+  binaryTargets = ["native"]
 }
 
 datasource db {
@@ -150,36 +151,39 @@ model PuntoDeVenta {
 }
 
 model Producto {
-  id              String                    @id @default(cuid())
-  nombre          String
-  descripcion     String?
-  precioCosto     Int
-  precioVenta     Int
-  stock           Int
-  stockMinimo     Int                       @default(0)
-  categoriaId     String
-  subcategoriaId  String?
-  unidadId        String?
-  vendorId        String?
-  almacenId       String
-  puntoDeVentaId  String?
-  createdAt       DateTime                  @default(now())
-  updatedAt       DateTime                  @updatedAt
-  fotos           String[]                  @default([])
-  compras         CompraProducto[]
-  gastoCompras    GastoCompra[]
-  mermas          Merma[]
-  ofertaItems     OfertaItem[]
-  ordenMateriales OrdenReparacionMaterial[]
-  almacen         Almacen                   @relation(fields: [almacenId], references: [almacenId], onDelete: Cascade)
-  categoria       Categoria                 @relation(fields: [categoriaId], references: [catId], onDelete: Cascade)
-  puntoDeVenta    PuntoDeVenta?             @relation(fields: [puntoDeVentaId], references: [pvId], onDelete: Cascade)
-  subcategoria    Categoria?                @relation("ProductoSubcategoria", fields: [subcategoriaId], references: [catId])
-  unidad          Unidad?                   @relation(fields: [unidadId], references: [unidadId], onDelete: Cascade)
-  vendor          Vendor?                   @relation(fields: [vendorId], references: [vendorId], onDelete: Cascade)
-  transferencias  Transferencia[]
-  ventas          Venta[]
-  ventaItems      VentaItem[]
+  id                 String                    @id @default(cuid())
+  nombre             String
+  descripcion        String?
+  precioCosto        Int
+  precioVenta        Int
+  stock              Int
+  stockMinimo        Int                       @default(0)
+  categoriaId        String
+  subcategoriaId     String?
+  unidadId           String?
+  vendorId           String?
+  almacenId          String
+  puntoDeVentaId     String?
+  createdAt          DateTime                  @default(now())
+  updatedAt          DateTime                  @updatedAt
+  fotos              String[]                  @default([])
+  compras            CompraProducto[]
+  gastoCompras       GastoCompra[]
+  mermas             Merma[]
+  ofertaItems        OfertaItem[]
+  ordenMateriales    OrdenReparacionMaterial[]
+  almacen            Almacen                   @relation(fields: [almacenId], references: [almacenId], onDelete: Cascade)
+  categoria          Categoria                 @relation(fields: [categoriaId], references: [catId], onDelete: Cascade)
+  puntoDeVenta       PuntoDeVenta?             @relation(fields: [puntoDeVentaId], references: [pvId], onDelete: Cascade)
+  subcategoria       Categoria?                @relation("ProductoSubcategoria", fields: [subcategoriaId], references: [catId])
+  unidad             Unidad?                   @relation(fields: [unidadId], references: [unidadId], onDelete: Cascade)
+  vendor             Vendor?                   @relation(fields: [vendorId], references: [vendorId], onDelete: Cascade)
+  transferencias     Transferencia[]
+  ventas             Venta[]
+  ventaItems         VentaItem[]
+  recetasProducto    Receta[]                  @relation("RecetaProducto")
+  ingredienteRecetas RecetaIngrediente[]
+  valeSalidaItems    ValeSalidaItem[]
 }
 
 model Venta {
@@ -1386,4 +1390,85 @@ enum ComplejidadReparacion {
   PEQUENO
   MEDIANO
   GRANDE
+}
+
+// ===================== MÓDULO PRODUCCIÓN =====================
+
+enum EstadoProduccion {
+  PENDIENTE
+  EN_PROCESO
+  COMPLETADA
+  CANCELADA
+}
+
+model Receta {
+  recetaId      String              @id @default(cuid())
+  nombre        String              @db.VarChar(160)
+  rendimiento   Int                 @default(1)
+  productoId    String?
+  instrucciones String?             @db.VarChar(4000)
+  tiempoPrep    Int?
+  costoUnitario Float               @default(0)
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+  producto      Producto?           @relation("RecetaProducto", fields: [productoId], references: [id], onDelete: SetNull)
+  ingredientes  RecetaIngrediente[]
+  ordenes       OrdenProduccion[]
+}
+
+model RecetaIngrediente {
+  id          String   @id @default(cuid())
+  recetaId    String
+  productoId  String
+  cantidad    Float
+  desperdicio Float    @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  receta      Receta   @relation(fields: [recetaId], references: [recetaId], onDelete: Cascade)
+  producto    Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
+}
+
+model OrdenProduccion {
+  ordenProduccionId String                     @id @default(cuid())
+  recetaId          String
+  cantidad          Int
+  estado            EstadoProduccion           @default(PENDIENTE)
+  costoMateriales   Float?
+  observaciones     String?                    @db.VarChar(1000)
+  fechaProduccion   DateTime                   @default(now())
+  createdAt         DateTime                   @default(now())
+  updatedAt         DateTime                   @updatedAt
+  receta            Receta                     @relation(fields: [recetaId], references: [recetaId], onDelete: Cascade)
+  historial         OrdenProduccionHistorial[]
+}
+
+model OrdenProduccionHistorial {
+  id                String          @id @default(dbgenerated("gen_random_uuid()::text"))
+  ordenProduccionId String
+  estadoAnterior    String
+  estadoNuevo       String
+  observaciones     String?
+  usuarioId         String?
+  createdAt         DateTime        @default(now())
+  orden             OrdenProduccion @relation(fields: [ordenProduccionId], references: [ordenProduccionId], onDelete: Cascade)
+}
+
+model ValeSalida {
+  valeSalidaId  String           @id @default(cuid())
+  concepto      String           @db.VarChar(200)
+  estado        String           @default("COMPLETADO")
+  observaciones String?          @db.VarChar(1000)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  items         ValeSalidaItem[]
+}
+
+model ValeSalidaItem {
+  valeSalidaItemId String     @id @default(cuid())
+  valeSalidaId     String
+  productoId       String
+  cantidad         Int
+  createdAt        DateTime   @default(now())
+  valeSalida       ValeSalida @relation(fields: [valeSalidaId], references: [valeSalidaId], onDelete: Cascade)
+  producto         Producto   @relation(fields: [productoId], references: [id], onDelete: Cascade)
 }

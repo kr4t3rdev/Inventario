@@ -4,6 +4,7 @@
   "private": true,
   "packageManager": "pnpm@10.22.0",
   "scripts": {
+    "postinstall": "prisma generate",
     "dev": "next dev --turbopack",
     "build": "NODE_OPTIONS='--max-old-space-size=4096' NEXT_TELEMETRY_DISABLED=1 next build",
     "build:fast": "NODE_OPTIONS='--max-old-space-size=4096' NEXT_TELEMETRY_DISABLED=1 next build --no-lint",
