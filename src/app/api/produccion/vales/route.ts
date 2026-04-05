@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { v4 as uuid } from 'uuid';
 import { withAuthGet, withAuthPost } from '@/lib/auth-middleware';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
@@ -41,9 +42,9 @@ export const GET = withAuthGet(async (request: NextRequest) => {
     const vales = await prisma.valeSalida.findMany({
       where: whereClause,
       include: {
-        items: {
+        ValeSalidaItem: {
           include: {
-            producto: {
+            Producto: {
               select: {
                 id: true,
                 nombre: true,
@@ -106,10 +107,11 @@ export const POST = withAuthPost(async (request: NextRequest) => {
         // Crear el vale
         const nuevoVale = await tx.valeSalida.create({
           data: {
+            valeSalidaId: `vale_${Date.now()}`,
             concepto: payload.concepto,
             observaciones: payload.observaciones,
             estado: 'COMPLETADA',
-            usuarioId: userId,
+            updatedAt: new Date(),
           },
         });
 
@@ -117,6 +119,7 @@ export const POST = withAuthPost(async (request: NextRequest) => {
         for (const item of payload.items) {
           await tx.valeSalidaItem.create({
             data: {
+              valeSalidaItemId: uuid(),
               valeSalidaId: nuevoVale.valeSalidaId,
               productoId: item.productoId,
               cantidad: item.cantidad,
@@ -132,9 +135,9 @@ export const POST = withAuthPost(async (request: NextRequest) => {
         return tx.valeSalida.findUnique({
           where: { valeSalidaId: nuevoVale.valeSalidaId },
           include: {
-            items: {
+            ValeSalidaItem: {
               include: {
-                producto: {
+                Producto: {
                   select: { id: true, nombre: true, precioCosto: true, stock: true },
                 },
               },

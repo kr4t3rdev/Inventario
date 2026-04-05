@@ -15,9 +15,9 @@ export const GET = withAuthGet(async (request: NextRequest, { params }: { params
     const vale = await prisma.valeSalida.findUnique({
       where: { valeSalidaId: id },
       include: {
-        items: {
+        ValeSalidaItem: {
           include: {
-            producto: {
+            Producto: {
               select: {
                 id: true,
                 nombre: true,
@@ -35,8 +35,8 @@ export const GET = withAuthGet(async (request: NextRequest, { params }: { params
 
     // Calcular total
     let total = 0;
-    for (const item of vale.items) {
-      total += (item.producto?.precioCosto || 0) * item.cantidad;
+    for (const item of vale.ValeSalidaItem) {
+      total += (item.Producto?.precioCosto || 0) * item.cantidad;
     }
 
     // Generar contenido del PDF (simplificado - en producción usaríamos una librería como jsPDF o PDFKit)
@@ -46,11 +46,11 @@ export const GET = withAuthGet(async (request: NextRequest, { params }: { params
       observaciones: vale.observaciones,
       estado: vale.estado,
       fecha: vale.createdAt,
-      items: vale.items.map(item => ({
-        producto: item.producto?.nombre,
+      items: vale.ValeSalidaItem.map(item => ({
+        producto: item.Producto?.nombre,
         cantidad: item.cantidad,
-        precioUnitario: item.producto?.precioCosto,
-        total: (item.producto?.precioCosto || 0) * item.cantidad,
+        precioUnitario: item.Producto?.precioCosto,
+        total: (item.Producto?.precioCosto || 0) * item.cantidad,
       })),
       total,
     };

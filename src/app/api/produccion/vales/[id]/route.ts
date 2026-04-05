@@ -21,9 +21,9 @@ export const GET = withAuthGet(async (request: NextRequest, { params }: { params
     const vale = await prisma.valeSalida.findUnique({
       where: { valeSalidaId: id },
       include: {
-        items: {
+        ValeSalidaItem: {
           include: {
-            producto: {
+            Producto: {
               select: {
                 id: true,
                 nombre: true,
@@ -74,9 +74,9 @@ export const PATCH = withAuth(async (request: NextRequest, { params }: { params:
       where: { valeSalidaId: id },
       data: payload,
       include: {
-        items: {
+        ValeSalidaItem: {
           include: {
-            producto: {
+            Producto: {
               select: {
                 id: true,
                 nombre: true,
@@ -113,7 +113,7 @@ export const DELETE = withAuth(async (request: NextRequest, { params }: { params
     const valeExistente = await prisma.valeSalida.findUnique({
       where: { valeSalidaId: id },
       include: {
-        items: true,
+        ValeSalidaItem: true,
       },
     });
 
@@ -128,7 +128,7 @@ export const DELETE = withAuth(async (request: NextRequest, { params }: { params
     // Restaurar stock y marcar como anulado
     await prisma.$transaction(async (tx) => {
       // Restaurar stock de cada item
-      for (const item of valeExistente.items) {
+      for (const item of valeExistente.ValeSalidaItem) {
         await tx.producto.update({
           where: { id: item.productoId },
           data: {
