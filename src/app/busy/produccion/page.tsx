@@ -73,7 +73,7 @@ export default function ProduccionPage() {
   const [recetaEliminar, setRecetaEliminar] = useState<{ recetaId: string; nombre: string } | null>(null)
   const [recetaEdit, setRecetaEdit] = useState<any | null>(null)
   const [editNombre, setEditNombre] = useState('')
-  const [editRendimiento, setEditRendimiento] = useState(1)
+  const [editRendimiento, setEditRendimiento] = useState<number | string>(1)
   const [editProductoId, setEditProductoId] = useState('')
   const [editItems, setEditItems] = useState<Array<{ productoId: string; cantidad: number; unidadSimbolo: string | null; desperdicio: number }>>([])
 
@@ -98,7 +98,7 @@ export default function ProduccionPage() {
 
   // Form states
   const [nombreReceta, setNombreReceta] = useState('')
-  const [rendimiento, setRendimiento] = useState(1)
+  const [rendimiento, setRendimiento] = useState<number | string>(1)
   const [selectedProducto, setSelectedProducto] = useState('')
   const [selectedReceta, setSelectedReceta] = useState('')
   const [cantidadOrden, setCantidadOrden] = useState(1)
@@ -164,10 +164,13 @@ export default function ProduccionPage() {
   const handleCrearReceta = async () => {
     if (!nombreReceta) return
     
+    const rendimientoValue = typeof rendimiento === 'string' ? parseInt(rendimiento) : rendimiento
+    if (!rendimientoValue || rendimientoValue < 1) return
+    
     try {
       const result = await createReceta({
         nombre: nombreReceta,
-        rendimiento,
+        rendimiento: rendimientoValue,
         productoId: selectedProducto || undefined
       }).unwrap()
 
@@ -248,12 +251,16 @@ export default function ProduccionPage() {
 
   const handleGuardarEdicion = async () => {
     if (!editNombre || !recetaEdit) return
+    
+    const editRendimientoValue = typeof editRendimiento === 'string' ? parseInt(editRendimiento) : editRendimiento
+    if (!editRendimientoValue || editRendimientoValue < 1) return
+    
     try {
       await updateReceta({
         recetaId: recetaEdit.recetaId,
         payload: {
           nombre: editNombre,
-          rendimiento: editRendimiento,
+          rendimiento: editRendimientoValue,
           productoId: editProductoId || undefined,
         },
       }).unwrap()
@@ -399,16 +406,25 @@ export default function ProduccionPage() {
                           placeholder="Ej: Refresco Instantáneo 1L" 
                         />
                       </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="rendimiento">Rendimiento (unidades)</Label>
-                        <Input 
-                          id="rendimiento" 
-                          type="number"
-                          min={1}
-                          value={rendimiento}
-                          onChange={(e) => setRendimiento(parseInt(e.target.value) || 1)}
-                        />
-                      </div>
+                       <div className="grid gap-2">
+                         <Label htmlFor="rendimiento">Rendimiento (unidades)</Label>
+                         <Input 
+                           id="rendimiento" 
+                           type="number"
+                           min={1}
+                           value={rendimiento}
+                           onChange={(e) => {
+                             const val = e.target.value
+                             if (val === '') {
+                               setRendimiento('')
+                             } else {
+                               const num = parseInt(val)
+                               setRendimiento(num >= 1 ? num : 1)
+                             }
+                           }}
+                           placeholder="1"
+                         />
+                       </div>
                       <div className="grid gap-2">
                         <Label htmlFor="producto">Producto del Inventario (opcional)</Label>
                         <Select value={selectedProducto} onValueChange={setSelectedProducto}>
@@ -1023,16 +1039,25 @@ export default function ProduccionPage() {
               {!editNombre && <p className="text-xs text-destructive">El nombre es obligatorio</p>}
             </div>
             <div className="grid grid-cols-2 gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="editRendimiento">Rendimiento</Label>
-                <Input
-                  id="editRendimiento"
-                  type="number"
-                  min={1}
-                  value={editRendimiento}
-                  onChange={(e) => setEditRendimiento(parseInt(e.target.value) || 1)}
-                />
-              </div>
+               <div className="grid gap-2">
+                 <Label htmlFor="editRendimiento">Rendimiento</Label>
+                 <Input
+                   id="editRendimiento"
+                   type="number"
+                   min={1}
+                   value={editRendimiento}
+                   onChange={(e) => {
+                     const val = e.target.value
+                     if (val === '') {
+                       setEditRendimiento('')
+                     } else {
+                       const num = parseInt(val)
+                       setEditRendimiento(num >= 1 ? num : 1)
+                     }
+                   }}
+                   placeholder="1"
+                 />
+               </div>
               <div className="grid gap-2">
                 <Label>Producto asociado</Label>
                 <Select value={editProductoId} onValueChange={setEditProductoId}>
