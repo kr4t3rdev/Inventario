@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuthGet, withAuthPost } from '@/lib/auth-middleware';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import { calculateCostoUnitarioReceta } from '@/lib/utils/produccion';
 
 const createRecetaSchema = z.object({
   nombre: z.string().min(1).max(160),
@@ -83,11 +84,29 @@ export const POST = withAuthPost(async (request: NextRequest) => {
   try {
     const payload = createRecetaSchema.parse(await request.json());
 
+    // Obtener producto final para calcular costo
+    let precioCostoProductoFinal = 0;
+    if (payload.productoId) {
+      const productoFinal = await prisma.producto.findUnique({
+        where: { id: payload.productoId },
+        select: { precioCosto: true },
+      });
+      precioCostoProductoFinal = productoFinal?.precioCosto || 0;
+    }
+
+    // Calcular costo unitario inicial (sin productos agregados aún)
+    const costoUnitario = calculateCostoUnitarioReceta(
+      precioCostoProductoFinal,
+      [],
+      payload.rendimiento
+    );
+
     const receta = await prisma.receta.create({
       data: {
         recetaId: crypto.randomUUID(),
         nombre: payload.nombre,
         rendimiento: payload.rendimiento,
+        costoUnitario: costoUnitario,
         productoId: payload.productoId || null,
         instrucciones: payload.instrucciones,
         tiempoPrep: payload.tiempoPrep,
@@ -98,6 +117,7 @@ export const POST = withAuthPost(async (request: NextRequest) => {
           select: {
             id: true,
             nombre: true,
+            precioCosto: true,
           },
         },
         RecetaIngrediente: {

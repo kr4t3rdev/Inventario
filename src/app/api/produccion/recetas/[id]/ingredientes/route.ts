@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuthPost } from '@/lib/auth-middleware';
 import { prisma } from '@/lib/prisma';
 import { convertToBase } from '@/lib/utils/unit-converter';
+import { calculateCostoUnitarioReceta } from '@/lib/utils/produccion';
 import { z } from 'zod';
 
 const setIngredientesSchema = z.object({
@@ -26,9 +27,10 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
     const { id: recetaId } = await params;
     const { ingredientes } = setIngredientesSchema.parse(await request.json());
 
-    // Verificar que la receta existe
+    // Verificar que la receta existe y obtener sus datos
     const recetaExistente = await prisma.receta.findUnique({
       where: { recetaId },
+      include: { Producto: { select: { precioCosto: true } } },
     });
 
     if (!recetaExistente) {
@@ -55,21 +57,31 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
       });
     }
 
-    // Calcular costo unitario
-    let costoTotal = 0;
-    for (const ing of ingredientes) {
-      const producto = await prisma.producto.findUnique({
-        where: { id: ing.productoId },
-        select: { precioCosto: true },
-      });
-      if (producto) {
-        const cantidadBase = convertToBase(ing.cantidad, ing.unidadSimbolo);
-        costoTotal += producto.precioCosto * cantidadBase * (1 + (ing.desperdicio ?? 0));
-      }
-    }
+    // Calcular costo unitario usando la función de utilidades
+    const precioCostoProductoFinal = recetaExistente.Producto?.precioCosto || 0;
 
-    const rendimiento = recetaExistente.rendimiento || 1;
-    const costoUnitario = costoTotal / rendimiento;
+    // Construir array de productos agregados con sus costos
+    const productosAgregados = await Promise.all(
+      ingredientes.map(async (ing) => {
+        const producto = await prisma.producto.findUnique({
+          where: { id: ing.productoId },
+          select: { id: true, nombre: true, precioCosto: true },
+        });
+
+        return {
+          productoId: ing.productoId,
+          cantidad: convertToBase(ing.cantidad, ing.unidadSimbolo),
+          unidadSimbolo: ing.unidadSimbolo,
+          producto,
+        };
+      })
+    );
+
+    const costoUnitario = calculateCostoUnitarioReceta(
+      precioCostoProductoFinal,
+      productosAgregados,
+      recetaExistente.rendimiento || 1
+    );
 
     // Actualizar costo unitario de la receta
     const recetaActualizada = await prisma.receta.update({

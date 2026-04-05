@@ -127,3 +127,78 @@ export function calcularRendimientoConMerma(
   }
   return Math.round(cantidadBase * (1 - porcentajeMerma / 100))
 }
+
+/**
+ * @description Interfaz para un producto agregado a receta (renombrado de ingrediente).
+ */
+export interface ProductoAgregado {
+  productoId: string
+  cantidad: number
+  unidadSimbolo?: string | null
+  producto?: {
+    id: string
+    nombre: string
+    precioCosto: number
+  }
+}
+
+/**
+ * @description Calcula el costo unitario de una receta.
+ * Fórmula: (precioCosto_ProductoFinal + Σ(cantidadProducto × precioCosto_Producto)) / rendimiento
+ * @param {number} precioCostoProductoFinal - Precio de costo del producto final (si existe).
+ * @param {ProductoAgregado[]} productosAgregados - Productos agregados a la receta.
+ * @param {number} rendimiento - Rendimiento de la receta (cantidad producida).
+ * @returns {number} Costo unitario redondeado a 2 decimales.
+ */
+export function calculateCostoUnitarioReceta(
+  precioCostoProductoFinal: number,
+  productosAgregados: ProductoAgregado[],
+  rendimiento: number
+): number {
+  if (rendimiento <= 0) {
+    throw new Error('El rendimiento debe ser mayor a 0')
+  }
+
+  // Sumar costo del producto final
+  let costoTotal = precioCostoProductoFinal
+
+  // Sumar costos de productos agregados
+  for (const producto of productosAgregados) {
+    const costoUnitarioProducto = producto.producto?.precioCosto || 0
+    const costoProducto = producto.cantidad * costoUnitarioProducto
+    costoTotal += costoProducto
+  }
+
+  // Dividir por rendimiento y redondear a 2 decimales
+  const costoUnitario = costoTotal / rendimiento
+  return Math.round(costoUnitario * 100) / 100
+}
+
+/**
+ * @description Interfaz para un producto en inventario (para búsqueda).
+ */
+export interface ProductoInventario {
+  id: string
+  nombre: string
+  precioCosto: number
+  stock: number
+}
+
+/**
+ * @description Filtra productos por término de búsqueda.
+ * La búsqueda es case-insensitive y busca en el nombre del producto.
+ * @param {string} searchQuery - Término de búsqueda (puede estar vacío).
+ * @param {ProductoInventario[]} productos - Lista completa de productos.
+ * @returns {ProductoInventario[]} Productos filtrados.
+ */
+export function filterProductos(
+  searchQuery: string,
+  productos: ProductoInventario[]
+): ProductoInventario[] {
+  if (!searchQuery || searchQuery.trim() === '') {
+    return productos
+  }
+
+  const query = searchQuery.toLowerCase().trim()
+  return productos.filter((p) => p.nombre.toLowerCase().includes(query))
+}
