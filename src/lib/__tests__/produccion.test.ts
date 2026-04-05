@@ -5,6 +5,11 @@ import {
   validarDisponibilidadMateriales,
   calcularRendimientoConMerma
 } from '@/lib/utils/produccion'
+import {
+  convertToBase,
+  formatIngrediente,
+  formatIngredientesList,
+} from '@/lib/utils/unit-converter'
 
 describe('produccion utilities', () => {
   describe('calcularCostoProduccion', () => {
@@ -270,6 +275,79 @@ describe('produccion utilities', () => {
 
     it('lanza error con merma mayor a 100', () => {
       expect(() => calcularRendimientoConMerma(100, 110)).toThrow()
+    })
+  })
+
+  describe('unit-converter utilities', () => {
+    describe('convertToBase', () => {
+      it('convierte libras a gramos', () => {
+        expect(convertToBase(2, 'lb')).toBeCloseTo(907.184, 3)
+      })
+
+      it('convierte kilogramos a gramos', () => {
+        expect(convertToBase(1, 'kg')).toBe(1000)
+      })
+
+      it('convierte onzas a gramos', () => {
+        expect(convertToBase(1, 'oz')).toBeCloseTo(28.3495, 4)
+      })
+
+      it('convierte litros a mililitros', () => {
+        expect(convertToBase(1, 'L')).toBe(1000)
+      })
+
+      it('convierte cup a mililitros', () => {
+        expect(convertToBase(1, 'cup')).toBe(240)
+      })
+
+      it('mantiene pass-through con unidad null', () => {
+        expect(convertToBase(5, null)).toBe(5)
+      })
+
+      it('mantiene pass-through con unidad sin conversion', () => {
+        expect(convertToBase(5, 'unidad')).toBe(5)
+      })
+    })
+
+    describe('formatIngrediente', () => {
+      it('formatea con unidad', () => {
+        expect(formatIngrediente(2, 'lb', 'Arroz')).toBe('2 lb Arroz')
+      })
+
+      it('formatea sin unidad', () => {
+        expect(formatIngrediente(5, null, 'Sal')).toBe('5 Sal')
+      })
+
+      it('formatea cantidad decimal', () => {
+        expect(formatIngrediente(1.5, 'L', 'Aceite')).toBe('1.5 L Aceite')
+      })
+    })
+
+    describe('formatIngredientesList', () => {
+      it('formatea lista corta', () => {
+        const lista = [
+          { cantidad: 2, unidadSimbolo: 'lb', Producto: { nombre: 'Arroz' } },
+          { cantidad: 5, unidadSimbolo: 'g', Producto: { nombre: 'Sal' } },
+        ]
+
+        expect(formatIngredientesList(lista)).toBe('2 lb Arroz, 5 g Sal')
+      })
+
+      it('formatea lista larga con truncado', () => {
+        const lista = [
+          { cantidad: 2, unidadSimbolo: 'lb', Producto: { nombre: 'Arroz' } },
+          { cantidad: 5, unidadSimbolo: 'g', Producto: { nombre: 'Sal' } },
+          { cantidad: 1, unidadSimbolo: 'oz', Producto: { nombre: 'Aceite' } },
+          { cantidad: 3, unidadSimbolo: 'ml', Producto: { nombre: 'Vainilla' } },
+          { cantidad: 2, unidadSimbolo: 'kg', Producto: { nombre: 'Harina' } },
+        ]
+
+        expect(formatIngredientesList(lista)).toBe('2 lb Arroz, 5 g Sal, 1 oz Aceite ... +2 mas')
+      })
+
+      it('retorna etiqueta de vacio', () => {
+        expect(formatIngredientesList([])).toBe('Sin ingredientes')
+      })
     })
   })
 })

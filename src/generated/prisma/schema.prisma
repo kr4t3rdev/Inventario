@@ -1,7 +1,6 @@
 generator client {
   provider      = "prisma-client-js"
   output        = "../src/generated/prisma"
-  generator     = "client"
   binaryTargets = ["native"]
 }
 
@@ -13,10 +12,10 @@ datasource db {
 model Categoria {
   catId                 String      @id @default(cuid())
   nombre                String
-  descripcion           String?
-  parentId              String?
   createdAt             DateTime    @default(now())
   updatedAt             DateTime    @updatedAt
+  descripcion           String?
+  parentId              String?
   parent                Categoria?  @relation("CategoriaHierarchy", fields: [parentId], references: [catId], onDelete: Cascade)
   subcategorias         Categoria[] @relation("CategoriaHierarchy")
   productos             Producto[]
@@ -26,9 +25,9 @@ model Categoria {
 model Unidad {
   unidadId  String     @id @default(cuid())
   nombre    String
-  simbolo   String
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
+  simbolo   String
   productos Producto[]
 }
 
@@ -44,12 +43,15 @@ model Vendor {
   direccion       String?
   logo            String?
   telefono        String?
+  vendorCode      String?          @unique @db.VarChar(2)
   compras         CompraProducto[]
   contratos       Contrato[]       @relation("ContratoVendor")
   cuentasPorPagar CuentaPorPagar[]
   deudasCash      DeudaCash[]
   gastoCompras    GastoCompra[]
   productos       Producto[]
+
+  @@index([vendorCode])
 }
 
 model InyeccionCapital {
@@ -93,19 +95,19 @@ model PagoDeuda {
 model Cliente {
   clienteId         String            @id @default(cuid())
   nombre            String
-  direccion         String?
-  telefono          String?
-  numeroCuentaCUP   String?
-  numeroCuentaUSD   String?
-  numeroContrato    String?
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
+  direccion         String?
   logoUrl           String?
+  numeroContrato    String?
+  numeroCuentaCUP   String?
+  numeroCuentaUSD   String?
+  telefono          String?
   contratos         Contrato[]        @relation("ContratoCliente")
   cuentasPorCobrar  CuentaPorCobrar[]
-  prestamosCash     PrestamoCash[]
   ofertas           Oferta[]
   ordenesReparacion OrdenReparacion[]
+  prestamosCash     PrestamoCash[]
   Venta             Venta[]
   ventasServicios   VentaServicios[]
   facturas          Factura[]
@@ -142,8 +144,10 @@ model PuntoDeVenta {
   pvId                  String          @id @default(cuid())
   nombre                String
   ubicacion             String?
+  listaPrecioId         String?
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
+  listaPrecio           ListaPrecio?    @relation(fields: [listaPrecioId], references: [id])
   productos             Producto[]
   transferenciasDestino Transferencia[] @relation("TransferenciasDestino")
   transferenciasOrigen  Transferencia[] @relation("TransferenciasOrigen")
@@ -151,57 +155,58 @@ model PuntoDeVenta {
 }
 
 model Producto {
-  id                 String                    @id @default(cuid())
-  nombre             String
-  descripcion        String?
-  precioCosto        Int
-  precioVenta        Int
-  stock              Int
-  stockMinimo        Int                       @default(0)
-  categoriaId        String
-  subcategoriaId     String?
-  unidadId           String?
-  vendorId           String?
-  almacenId          String
-  puntoDeVentaId     String?
-  createdAt          DateTime                  @default(now())
-  updatedAt          DateTime                  @updatedAt
-  fotos              String[]                  @default([])
-  compras            CompraProducto[]
-  gastoCompras       GastoCompra[]
-  mermas             Merma[]
-  ofertaItems        OfertaItem[]
-  ordenMateriales    OrdenReparacionMaterial[]
-  almacen            Almacen                   @relation(fields: [almacenId], references: [almacenId], onDelete: Cascade)
-  categoria          Categoria                 @relation(fields: [categoriaId], references: [catId], onDelete: Cascade)
-  puntoDeVenta       PuntoDeVenta?             @relation(fields: [puntoDeVentaId], references: [pvId], onDelete: Cascade)
-  subcategoria       Categoria?                @relation("ProductoSubcategoria", fields: [subcategoriaId], references: [catId])
-  unidad             Unidad?                   @relation(fields: [unidadId], references: [unidadId], onDelete: Cascade)
-  vendor             Vendor?                   @relation(fields: [vendorId], references: [vendorId], onDelete: Cascade)
-  transferencias     Transferencia[]
-  ventas             Venta[]
-  ventaItems         VentaItem[]
-  recetasProducto    Receta[]                  @relation("RecetaProducto")
-  ingredienteRecetas RecetaIngrediente[]
-  valeSalidaItems    ValeSalidaItem[]
+  nombre            String
+  descripcion       String?
+  precioCosto       Int
+  precioVenta       Int
+  stock             Int
+  categoriaId       String
+  unidadId          String?
+  vendorId          String?
+  createdAt         DateTime                  @default(now())
+  id                String                    @id @default(cuid())
+  updatedAt         DateTime                  @updatedAt
+  almacenId         String
+  puntoDeVentaId    String?
+  stockMinimo       Int                       @default(0)
+  subcategoriaId    String?
+  fotos             String[]                  @default([])
+  compras           CompraProducto[]
+  gastoCompras      GastoCompra[]
+  mermas            Merma[]
+  ofertaItems       OfertaItem[]
+  ordenMateriales   OrdenReparacionMaterial[]
+  precios           PrecioProducto[]
+  almacen           Almacen                   @relation(fields: [almacenId], references: [almacenId], onDelete: Cascade)
+  categoria         Categoria                 @relation(fields: [categoriaId], references: [catId], onDelete: Cascade)
+  puntoDeVenta      PuntoDeVenta?             @relation(fields: [puntoDeVentaId], references: [pvId], onDelete: Cascade)
+  subcategoria      Categoria?                @relation("ProductoSubcategoria", fields: [subcategoriaId], references: [catId])
+  unidad            Unidad?                   @relation(fields: [unidadId], references: [unidadId], onDelete: Cascade)
+  vendor            Vendor?                   @relation(fields: [vendorId], references: [vendorId], onDelete: Cascade)
+  Receta            Receta[]
+  RecetaIngrediente RecetaIngrediente[]
+  transferencias    Transferencia[]
+  ValeSalidaItem    ValeSalidaItem[]
+  ventas            Venta[]
+  ventaItems        VentaItem[]
 }
 
 model Venta {
   ventaId          String                @id @default(cuid())
   productoId       String?
   cantidad         Int
-  total            Int?
-  descuento        Int?
-  observaciones    String?
   puntoDeVentaId   String
-  empleadoId       String?
-  clienteId        String?
-  ordenId          String?
-  esVentaUnica     Boolean               @default(false)
-  ventaPadreId     String?
-  ofertaId         String?               @unique
   createdAt        DateTime              @default(now())
   updatedAt        DateTime              @updatedAt
+  empleadoId       String?
+  total            Int?
+  clienteId        String?
+  ordenId          String?
+  descuento        Int?
+  observaciones    String?
+  esVentaUnica     Boolean               @default(false)
+  ofertaId         String?               @unique
+  ventaPadreId     String?
   ordenReparacion  OrdenReparacion?      @relation("OrdenVenta")
   reconciliaciones ReconciliacionVenta[]
   cliente          Cliente?              @relation(fields: [clienteId], references: [clienteId], onDelete: Cascade)
@@ -233,9 +238,9 @@ model Merma {
   productoId String
   cantidad   Int
   motivo     String?
-  costoTotal Int?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  costoTotal Int?
   producto   Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
 }
 
@@ -243,13 +248,13 @@ model Transferencia {
   transferenciaId       String        @id @default(cuid())
   productoId            String
   cantidad              Int
-  descripcion           String?
   origenId              String?
   destinoId             String?
-  puntoDeVentaOrigenId  String?
-  puntoDeVentaDestinoId String?
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt
+  descripcion           String?
+  puntoDeVentaDestinoId String?
+  puntoDeVentaOrigenId  String?
   destino               Almacen?      @relation("TransferenciasDestino", fields: [destinoId], references: [almacenId])
   origen                Almacen?      @relation("TransferenciasOrigen", fields: [origenId], references: [almacenId])
   producto              Producto      @relation(fields: [productoId], references: [id], onDelete: Cascade)
@@ -263,26 +268,26 @@ model User {
   email                String               @unique
   password             String
   role                 String               @default("regularUser")
-  isActive             Boolean              @default(true)
-  avatar               String?
-  activatedAt          DateTime?
-  expiresAt            DateTime?
   createdAt            DateTime             @default(now())
   updatedAt            DateTime             @updatedAt
-  lastModifiedBy       String?
-  loginAttempts        Int                  @default(0)
-  lockedUntil          DateTime?
+  activatedAt          DateTime?
+  avatar               String?
+  expiresAt            DateTime?
+  isActive             Boolean              @default(true)
   lastFailedLogin      DateTime?
+  lastModifiedBy       String?
+  lockedUntil          DateTime?
+  loginAttempts        Int                  @default(0)
   contratosAprobados   Contrato[]           @relation("AprobadorContrato")
   contratosCreados     Contrato[]           @relation("CreadorContrato")
   contratoAprobaciones ContratoAprobacion[]
   contratoArchivos     ContratoArchivo[]
   contratoFirmas       ContratoFirma[]
   contratoVersiones    ContratoVersion[]
-  notifications        Notification[]
-  activityLogs         UserActivityLog[]
   licencias            Licencia[]
   licenciasAudit       LicenciaAudit[]      @relation("LicenciaAuditActor")
+  notifications        Notification[]
+  activityLogs         UserActivityLog[]
   sessions             UserSession[]
 }
 
@@ -319,16 +324,16 @@ model Licencia {
 }
 
 model LicenciaAudit {
-  licenciaAuditId String   @id @default(cuid())
   licenciaId      String
   accion          String
+  detalles        String?
   realizadoPor    String?
   ip              String?
   userAgent       String?
-  detalles        String?
   createdAt       DateTime @default(now())
+  licenciaAuditId String   @id @default(cuid())
   licencia        Licencia @relation(fields: [licenciaId], references: [licenciaId], onDelete: Cascade)
-  actor           User?    @relation("LicenciaAuditActor", fields: [realizadoPor], references: [userId], onDelete: SetNull)
+  actor           User?    @relation("LicenciaAuditActor", fields: [realizadoPor], references: [userId])
 
   @@index([licenciaId])
   @@index([realizadoPor])
@@ -450,13 +455,13 @@ model Empleado {
   telefono              String?
   cargo                 String
   salarioBases          Int
-  vacationDaysAccrued   Int                    @default(0)
-  vacationDaysUsed      Int                    @default(0)
-  fechaContratacion     DateTime
-  esTiempoCompleto      Boolean                @default(true)
-  diasVacacionesAnuales Int                    @default(15)
   createdAt             DateTime               @default(now())
   updatedAt             DateTime               @updatedAt
+  diasVacacionesAnuales Int                    @default(15)
+  esTiempoCompleto      Boolean                @default(true)
+  fechaContratacion     DateTime
+  vacationDaysAccrued   Int                    @default(0)
+  vacationDaysUsed      Int                    @default(0)
   attendances           Attendance[]
   workSchedules         EmployeeWorkSchedule[]
   ordenesAsignadas      OrdenReparacion[]
@@ -517,9 +522,9 @@ model GastoCompra {
   total            Int
   fechaCompra      DateTime              @default(now())
   descripcion      String?
-  periodo          String?
   createdAt        DateTime              @default(now())
   updatedAt        DateTime              @updatedAt
+  periodo          String?
   numeroFactura    String?
   compraProducto   CompraProducto?
   cuentaPorPagar   CuentaPorPagar?
@@ -531,21 +536,21 @@ model GastoCompra {
 model CompraProducto {
   compraProductoId String          @id @default(cuid())
   productoId       String
-  proveedorId      String
   numeroFactura    String
   facturaUrl       String
   cantidad         Int
   precioUnitario   Int
   total            Int
-  formaPago        String
-  estado           String
-  tipoOperacion    String          @default("REGULAR")
   descripcion      String?
   fechaCompra      DateTime        @default(now())
   gastoCompraId    String?         @unique
   cuentaPorPagarId String?         @unique
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
+  proveedorId      String
+  formaPago        String
+  estado           String
+  tipoOperacion    String          @default("REGULAR")
   cuentaPorPagar   CuentaPorPagar? @relation(fields: [cuentaPorPagarId], references: [cuentaPorPagarId])
   gastoCompra      GastoCompra?    @relation(fields: [gastoCompraId], references: [gastoCompraId])
   producto         Producto        @relation(fields: [productoId], references: [id], onDelete: Cascade)
@@ -681,32 +686,31 @@ model TipoPago {
 model ReconciliacionVenta {
   reconciliacionId            String         @id @default(cuid())
   ventaId                     String?
-  deudaCashId                 String?
-  prestamoCashId              String?
-  tipoReconciliacion          String?
   cuentaId                    String
   tipoPagoId                  String
   monto                       Decimal
   moneda                      String         @default("CUP")
   tasaCambio                  Decimal?
   montoConvertido             Decimal?
-  verificacionTransferenciaId String?
-  idTransferencia             String?
   fechaReconciliacion         DateTime       @default(now())
   observaciones               String?
   reconciliadoPor             String
   createdAt                   DateTime       @default(now())
   updatedAt                   DateTime       @updatedAt
+  idTransferencia             String?
+  verificacionTransferenciaId String?
+  deudaCashId                 String?
+  prestamoCashId              String?
+  tipoReconciliacion          String?
   cuentaBancaria              CuentaBancaria @relation(fields: [cuentaId], references: [cuentaId])
-  deudaCash                   DeudaCash?     @relation(fields: [deudaCashId], references: [id], onDelete: SetNull)
-  prestamoCash                PrestamoCash?  @relation(fields: [prestamoCashId], references: [id], onDelete: SetNull)
+  deudaCash                   DeudaCash?     @relation(fields: [deudaCashId], references: [id])
+  prestamoCash                PrestamoCash?  @relation(fields: [prestamoCashId], references: [id])
   tipoPago                    TipoPago       @relation(fields: [tipoPagoId], references: [tipoId])
   venta                       Venta?         @relation(fields: [ventaId], references: [ventaId])
 }
 
 model ReconciliacionServicio {
   reconciliacionId    String         @id @default(cuid())
-  ventaServicioId     String
   cuentaId            String
   tipoPagoId          String
   monto               Decimal
@@ -718,6 +722,7 @@ model ReconciliacionServicio {
   reconciliadoPor     String
   createdAt           DateTime       @default(now())
   updatedAt           DateTime       @updatedAt
+  ventaServicioId     String
   cuentaBancaria      CuentaBancaria @relation(fields: [cuentaId], references: [cuentaId])
   tipoPago            TipoPago       @relation(fields: [tipoPagoId], references: [tipoId])
   ventasServicio      VentaServicios @relation(fields: [ventaServicioId], references: [ventaServicioId])
@@ -729,9 +734,6 @@ model ReconciliacionGasto {
   referenciaId        String
   cuentaId            String
   tipoPagoId          String
-  pgId                String?
-  gastosDEId          String?
-  gastoCompraId       String?
   monto               Decimal
   moneda              String          @default("CUP")
   tasaCambio          Decimal?
@@ -741,11 +743,14 @@ model ReconciliacionGasto {
   fechaReconciliacion DateTime        @default(now())
   observaciones       String?
   reconciliadoPor     String
-  isReconciliada      Boolean?        @default(false)
   createdAt           DateTime        @default(now())
   updatedAt           DateTime        @updatedAt
   cuentaPorPagarId    String?
   estado              String          @default("PENDIENTE")
+  gastoCompraId       String?
+  gastosDEId          String?
+  isReconciliada      Boolean?        @default(false)
+  pgId                String?
   cuentaBancaria      CuentaBancaria  @relation(fields: [cuentaId], references: [cuentaId])
   cuentaPorPagar      CuentaPorPagar? @relation(fields: [cuentaPorPagarId], references: [cuentaPorPagarId])
   gastoCompra         GastoCompra?    @relation(fields: [gastoCompraId], references: [gastoCompraId])
@@ -785,9 +790,9 @@ model TransferenciaBancaria {
   fechaTransferencia  DateTime       @default(now())
   comprobanteGenerado Boolean        @default(true)
   rutaComprobante     String?
-  existe              Boolean        @default(true)
   createdAt           DateTime       @default(now())
   updatedAt           DateTime       @updatedAt
+  existe              Boolean        @default(true)
   cuentaDestino       CuentaBancaria @relation("TransferenciasDestino", fields: [cuentaDestinoId], references: [cuentaId])
   cuentaOrigen        CuentaBancaria @relation("TransferenciasOrigen", fields: [cuentaOrigenId], references: [cuentaId])
 }
@@ -898,7 +903,6 @@ model Contrato {
   fechaFin             DateTime?
   monto                Decimal?
   moneda               String               @default("CUP")
-  esMultiMoneda        Boolean              @default(false)
   condiciones          Json?
   observaciones        String?
   clienteId            String?
@@ -908,6 +912,7 @@ model Contrato {
   fechaAprobacion      DateTime?
   createdAt            DateTime             @default(now())
   updatedAt            DateTime             @updatedAt
+  esMultiMoneda        Boolean              @default(false)
   diasAvisoVencimiento Int                  @default(30)
   aprobador            User?                @relation("AprobadorContrato", fields: [aprobadoPor], references: [userId])
   cliente              Cliente?             @relation("ContratoCliente", fields: [clienteId], references: [clienteId])
@@ -1001,21 +1006,21 @@ model Factura {
   subtotal          Decimal
   impuestos         Decimal          @default(0)
   descuento         Decimal          @default(0)
-  cargoTransporte   Decimal          @default(0)
   total             Decimal
-  tasaCambio        Decimal?         @default(1)
   observaciones     String?
   terminosPago      String?
   metodoPago        String?
-  tipoTarjeta       String?
   estado            EstadoFactura    @default(PENDIENTE)
   fechaEmision      DateTime         @default(now())
   fechaVencimiento  DateTime?
   creadoPor         String
   actualizadoPor    String?
-  cuentaBancariaId  String?
   createdAt         DateTime         @default(now())
   updatedAt         DateTime         @updatedAt
+  tipoTarjeta       String?
+  cargoTransporte   Decimal          @default(0)
+  cuentaBancariaId  String?
+  tasaCambio        Decimal?         @default(1)
   cuentaPorCobrar   CuentaPorCobrar?
   cliente           Cliente          @relation(fields: [clienteId], references: [clienteId])
   cuentaBancaria    CuentaBancaria?  @relation("FacturaCuenta", fields: [cuentaBancariaId], references: [cuentaId])
@@ -1078,12 +1083,12 @@ model CuentaPorCobrar {
   clienteId        String
   montoDeuda       Decimal
   montoPagado      Decimal               @default(0)
-  tipoCuenta       String?
   idTransferencia  String?
   estado           EstadoCuentaPorCobrar @default(PENDIENTE)
   fechaVencimiento DateTime?
   createdAt        DateTime              @default(now())
   updatedAt        DateTime              @updatedAt
+  tipoCuenta       String?
   cliente          Cliente               @relation(fields: [clienteId], references: [clienteId])
   factura          Factura?              @relation(fields: [facturaId], references: [idFactura])
 }
@@ -1091,11 +1096,8 @@ model CuentaPorCobrar {
 model CuentaPorPagar {
   cuentaPorPagarId String                @id @default(cuid())
   numeroFactura    String
-  tipo             TipoCuentaPorPagar
-  tipoDeuda        String?
   gastoCompraId    String?               @unique
   gastosDEId       String?               @unique
-  proveedorId      String?
   proveedorNombre  String?
   montoDeuda       Decimal
   montoPagado      Decimal               @default(0)
@@ -1106,6 +1108,9 @@ model CuentaPorPagar {
   estado           EstadoCuentaPorPagar  @default(PENDIENTE)
   createdAt        DateTime              @default(now())
   updatedAt        DateTime              @updatedAt
+  proveedorId      String?
+  tipo             TipoCuentaPorPagar
+  tipoDeuda        String?
   compraProducto   CompraProducto?
   gastoCompra      GastoCompra?          @relation(fields: [gastoCompraId], references: [gastoCompraId])
   gastosDE         GastosDE?             @relation(fields: [gastosDEId], references: [gastosDEId])
@@ -1128,13 +1133,13 @@ model DeudaCash {
   tasaInteres      Decimal?
   fechaVencimiento DateTime?
   observaciones    String?
-  comprobanteUrl   String?
-  cuentaBancariaId String?
   createdById      String
-  estado           String                @default("ACTIVO")
   deletedAt        DateTime?
   createdAt        DateTime              @default(now())
   updatedAt        DateTime              @updatedAt
+  comprobanteUrl   String?
+  cuentaBancariaId String?
+  estado           String                @default("ACTIVO")
   proveedor        Vendor                @relation(fields: [proveedorId], references: [vendorId])
   reconciliaciones ReconciliacionVenta[]
 
@@ -1150,16 +1155,16 @@ model PrestamoCash {
   montoCapital      Decimal
   moneda            String                @default("CUP")
   tasaInteres       Decimal?
-  tasaCambioAlCrear Decimal?
   fechaOtorgamiento DateTime              @default(now())
   fechaVencimiento  DateTime?
   observaciones     String?
-  cuentaBancariaId  String?
   createdById       String
-  estado            String                @default("ACTIVO")
   deletedAt         DateTime?
   createdAt         DateTime              @default(now())
   updatedAt         DateTime              @updatedAt
+  tasaCambioAlCrear Decimal?
+  cuentaBancariaId  String?
+  estado            String                @default("ACTIVO")
   cliente           Cliente               @relation(fields: [clienteId], references: [clienteId])
   reconciliaciones  ReconciliacionVenta[]
 
@@ -1216,12 +1221,10 @@ model OrdenReparacion {
   numeroSerie        String?
   contrasena         String?
   accesorios         String?
-  fotos              String[]                  @default([])
   problemaReportado  String
   diagnosticoTecnico String?
   estado             EstadoOrden               @default(RECIBIDO)
   prioridad          String                    @default("normal")
-  complejidad        ComplejidadReparacion?
   esGarantia         Boolean                   @default(false)
   fechaRecepcion     DateTime                  @default(now())
   fechaEstimada      DateTime?
@@ -1230,10 +1233,12 @@ model OrdenReparacion {
   subtotal           Decimal                   @default(0)
   descuento          Decimal                   @default(0)
   total              Decimal                   @default(0)
-  moneda             String                    @default("USD")
   ventaId            String?                   @unique
   createdAt          DateTime                  @default(now())
   updatedAt          DateTime                  @updatedAt
+  fotos              String[]                  @default([])
+  complejidad        ComplejidadReparacion?
+  moneda             String                    @default("USD")
   cliente            Cliente                   @relation(fields: [clienteId], references: [clienteId])
   equipoTipo         EquipoReparacion          @relation(fields: [equipoTipoId], references: [id])
   tecnico            Empleado?                 @relation(fields: [tecnicoId], references: [empleadoId])
@@ -1266,10 +1271,10 @@ model OrdenReparacionItem {
   ordenId       String
   piezaId       String?
   complejidad   ComplejidadReparacion?
-  defectacionId String?
   precio        Decimal
   observaciones String?
   tecnicoId     String?
+  defectacionId String?
   ordenEquipoId String?
   defectacion   DefectacionCatalogo?   @relation(fields: [defectacionId], references: [id])
   ordenEquipo   OrdenReparacionEquipo? @relation(fields: [ordenEquipoId], references: [id])
@@ -1302,6 +1307,79 @@ model ConfiguracionSistema {
   diasAvisoVencimientoContrato Int      @default(30)
   createdAt                    DateTime @default(now())
   updatedAt                    DateTime @updatedAt
+}
+
+model OrdenProduccion {
+  ordenProduccionId        String                     @id
+  recetaId                 String
+  cantidad                 Int
+  estado                   EstadoProduccion           @default(PENDIENTE)
+  observaciones            String?                    @db.VarChar(1000)
+  fechaProduccion          DateTime                   @default(now())
+  createdAt                DateTime                   @default(now())
+  updatedAt                DateTime
+  costoMateriales          Float?
+  Receta                   Receta                     @relation(fields: [recetaId], references: [recetaId], onDelete: Cascade)
+  OrdenProduccionHistorial OrdenProduccionHistorial[]
+}
+
+model OrdenProduccionHistorial {
+  ordenProduccionId String
+  estadoAnterior    String
+  estadoNuevo       String
+  observaciones     String?
+  usuarioId         String?
+  createdAt         DateTime        @default(now())
+  id                String          @id @default(dbgenerated("(gen_random_uuid())::text"))
+  OrdenProduccion   OrdenProduccion @relation(fields: [ordenProduccionId], references: [ordenProduccionId], onDelete: Cascade)
+}
+
+model Receta {
+  recetaId          String              @id
+  nombre            String              @db.VarChar(160)
+  rendimiento       Int                 @default(1)
+  costoUnitario     Float               @default(0)
+  instrucciones     String?             @db.VarChar(4000)
+  tiempoPrep        Int?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime
+  productoId        String?
+  OrdenProduccion   OrdenProduccion[]
+  Producto          Producto?           @relation(fields: [productoId], references: [id])
+  RecetaIngrediente RecetaIngrediente[]
+}
+
+model RecetaIngrediente {
+  recetaId      String
+  productoId    String
+  cantidad      Float
+  unidadSimbolo String?
+  desperdicio   Float    @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime
+  id            String   @id
+  Producto      Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
+  Receta        Receta   @relation(fields: [recetaId], references: [recetaId], onDelete: Cascade)
+}
+
+model ValeSalida {
+  valeSalidaId   String           @id
+  concepto       String           @db.VarChar(200)
+  observaciones  String?          @db.VarChar(1000)
+  estado         String           @default("COMPLETADO")
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime
+  ValeSalidaItem ValeSalidaItem[]
+}
+
+model ValeSalidaItem {
+  valeSalidaItemId String     @id
+  valeSalidaId     String
+  productoId       String
+  cantidad         Int
+  createdAt        DateTime   @default(now())
+  Producto         Producto   @relation(fields: [productoId], references: [id], onDelete: Cascade)
+  ValeSalida       ValeSalida @relation(fields: [valeSalidaId], references: [valeSalidaId], onDelete: Cascade)
 }
 
 enum TipoInyeccion {
@@ -1392,8 +1470,6 @@ enum ComplejidadReparacion {
   GRANDE
 }
 
-// ===================== MÓDULO PRODUCCIÓN =====================
-
 enum EstadoProduccion {
   PENDIENTE
   EN_PROCESO
@@ -1401,74 +1477,31 @@ enum EstadoProduccion {
   CANCELADA
 }
 
-model Receta {
-  recetaId      String              @id @default(cuid())
-  nombre        String              @db.VarChar(160)
-  rendimiento   Int                 @default(1)
-  productoId    String?
-  instrucciones String?             @db.VarChar(4000)
-  tiempoPrep    Int?
-  costoUnitario Float               @default(0)
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
-  producto      Producto?           @relation("RecetaProducto", fields: [productoId], references: [id], onDelete: SetNull)
-  ingredientes  RecetaIngrediente[]
-  ordenes       OrdenProduccion[]
-}
-
-model RecetaIngrediente {
-  id          String   @id @default(cuid())
-  recetaId    String
-  productoId  String
-  cantidad    Float
-  desperdicio Float    @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  receta      Receta   @relation(fields: [recetaId], references: [recetaId], onDelete: Cascade)
-  producto    Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
-}
-
-model OrdenProduccion {
-  ordenProduccionId String                     @id @default(cuid())
-  recetaId          String
-  cantidad          Int
-  estado            EstadoProduccion           @default(PENDIENTE)
-  costoMateriales   Float?
-  observaciones     String?                    @db.VarChar(1000)
-  fechaProduccion   DateTime                   @default(now())
-  createdAt         DateTime                   @default(now())
-  updatedAt         DateTime                   @updatedAt
-  receta            Receta                     @relation(fields: [recetaId], references: [recetaId], onDelete: Cascade)
-  historial         OrdenProduccionHistorial[]
-}
-
-model OrdenProduccionHistorial {
-  id                String          @id @default(dbgenerated("gen_random_uuid()::text"))
-  ordenProduccionId String
-  estadoAnterior    String
-  estadoNuevo       String
-  observaciones     String?
-  usuarioId         String?
-  createdAt         DateTime        @default(now())
-  orden             OrdenProduccion @relation(fields: [ordenProduccionId], references: [ordenProduccionId], onDelete: Cascade)
-}
-
-model ValeSalida {
-  valeSalidaId  String           @id @default(cuid())
-  concepto      String           @db.VarChar(200)
-  estado        String           @default("COMPLETADO")
-  observaciones String?          @db.VarChar(1000)
+model ListaPrecio {
+  id            String           @id @default(cuid())
+  nombre        String
+  descripcion   String?
+  esDefault     Boolean          @default(false)
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
-  items         ValeSalidaItem[]
+  puntosDeVenta PuntoDeVenta[]
+  precios       PrecioProducto[]
 }
 
-model ValeSalidaItem {
-  valeSalidaItemId String     @id @default(cuid())
-  valeSalidaId     String
-  productoId       String
-  cantidad         Int
-  createdAt        DateTime   @default(now())
-  valeSalida       ValeSalida @relation(fields: [valeSalidaId], references: [valeSalidaId], onDelete: Cascade)
-  producto         Producto   @relation(fields: [productoId], references: [id], onDelete: Cascade)
+model PrecioProducto {
+  id            String      @id @default(cuid())
+  listaPrecioId String
+  productoId    String
+  precio        Int
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  listaPrecio   ListaPrecio @relation(fields: [listaPrecioId], references: [id], onDelete: Cascade)
+  producto      Producto    @relation(fields: [productoId], references: [id], onDelete: Cascade)
+
+  @@unique([listaPrecioId, productoId])
+}
+
+model VendorCodeSequence {
+  id         Int @id @default(1)
+  nextNumber Int @default(1)
 }

@@ -58,18 +58,20 @@ export function ChartAreaInteractive() {
 
   return (
     <Card className="@container/card">
-      <CardHeader className="relative">
-        <CardTitle>Ingresos vs Gastos</CardTitle>
-        <CardDescription>
-          <span className="@[540px]/card:block hidden">
-            Comparativa ⬆️ ⬇️ últimos{" "}
-            {timeRange === "6m" ? `6 ${viewMode === "semana" ? "semanas" : "meses"}` : timeRange === "3m" ? `3 ${viewMode === "semana" ? "semanas" : "meses"}` : `1 ${viewMode === "semana" ? "semana" : "mes"}`}
-          </span>
-          <span className="@[540px]/card:hidden">
-            Últimos {timeRange === "6m" ? `6 ${viewMode === "semana" ? "semanas" : "meses"}` : timeRange === "3m" ? `3 ${viewMode === "semana" ? "semanas" : "meses"}` : `1 ${viewMode === "semana" ? "semana" : "mes"}`}
-          </span>
-        </CardDescription>
-        <div className="absolute right-4 top-4 flex gap-2">
+      <CardHeader className="flex flex-row items-center justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <CardTitle>Ingresos vs Gastos</CardTitle>
+          <CardDescription>
+            <span className="@[540px]/card:block hidden">
+              Comparativa ⬆️ ⬇️ últimos{" "}
+              {timeRange === "6m" ? `6 ${viewMode === "semana" ? "semanas" : "meses"}` : timeRange === "3m" ? `3 ${viewMode === "semana" ? "semanas" : "meses"}` : `1 ${viewMode === "semana" ? "semana" : "mes"}`}
+            </span>
+            <span className="@[540px]/card:hidden">
+              Últimos {timeRange === "6m" ? `6 ${viewMode === "semana" ? "semanas" : "meses"}` : timeRange === "3m" ? `3 ${viewMode === "semana" ? "semanas" : "meses"}` : `1 ${viewMode === "semana" ? "semana" : "mes"}`}
+            </span>
+          </CardDescription>
+        </div>
+        <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
           <ToggleGroup
             type="single"
             value={viewMode}

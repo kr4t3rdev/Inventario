@@ -29,6 +29,12 @@ import {
   Eye
 } from 'lucide-react'
 import { format } from 'date-fns'
+import {
+  MASS_UNITS,
+  VOLUME_UNITS,
+  formatIngrediente,
+  formatIngredientesList,
+} from '@/lib/utils/unit-converter'
 import { 
   useGetRecetasProduccionQuery, 
   useGetOrdenesProduccionQuery, 
@@ -69,7 +75,7 @@ export default function ProduccionPage() {
   const [editNombre, setEditNombre] = useState('')
   const [editRendimiento, setEditRendimiento] = useState(1)
   const [editProductoId, setEditProductoId] = useState('')
-  const [editItems, setEditItems] = useState<Array<{ productoId: string; cantidad: number; desperdicio: number }>>([])
+  const [editItems, setEditItems] = useState<Array<{ productoId: string; cantidad: number; unidadSimbolo: string | null; desperdicio: number }>>([])
 
   // Data
   const { data: recetasTyped, isLoading: loadingRecetas } = useGetRecetasProduccionQuery(searchRecetas ? { search: searchRecetas } : undefined)
@@ -98,6 +104,40 @@ export default function ProduccionPage() {
   const [cantidadOrden, setCantidadOrden] = useState(1)
   const [selectedConcepto, setSelectedConcepto] = useState('')
   const [valeItems, setValeItems] = useState<Array<{ productoId: string; cantidad: number }>>([])
+  const [nuevoItems, setNuevoItems] = useState<Array<{ productoId: string; cantidad: number; unidadSimbolo: string | null; desperdicio: number }>>([])
+
+  const UNIT_OPTION_NONE = 'none'
+  const NO_CONVERSION_UNITS = ['unidad', 'pieza']
+
+  const getRecetaIngredientes = (receta: any) => {
+    return receta?.ingredientes ?? receta?.RecetaIngrediente ?? []
+  }
+
+  const getRecetaProducto = (receta: any) => {
+    return receta?.producto ?? receta?.Producto ?? null
+  }
+
+  const getIngredienteProducto = (ingrediente: any) => {
+    return ingrediente?.producto ?? ingrediente?.Producto ?? null
+  }
+
+  const getInsumosTexto = (receta: any) => {
+    const nombres = getRecetaIngredientes(receta)
+      .map((ing: any) => getIngredienteProducto(ing)?.nombre)
+      .filter(Boolean)
+
+    if (nombres.length === 0) return '-'
+    if (nombres.length <= 2) return nombres.join(', ')
+    return `${nombres.slice(0, 2).join(', ')} +${nombres.length - 2}`
+  }
+
+  const getUnitSelectValue = (unidadSimbolo: string | null | undefined) => {
+    return unidadSimbolo ?? UNIT_OPTION_NONE
+  }
+
+  const parseUnitSelectValue = (value: string) => {
+    return value === UNIT_OPTION_NONE ? null : value
+  }
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-ES', {
@@ -130,11 +170,19 @@ export default function ProduccionPage() {
         rendimiento,
         productoId: selectedProducto || undefined
       }).unwrap()
+
+      if (nuevoItems.length > 0) {
+        await setIngredientes({
+          recetaId: result.recetaId,
+          ingredientes: nuevoItems,
+        }).unwrap()
+      }
       
       setDialogRecetaOpen(false)
       setNombreReceta('')
       setRendimiento(1)
       setSelectedProducto('')
+      setNuevoItems([])
     } catch (error) {
       console.error('Error al crear receta:', error)
     }
@@ -217,6 +265,24 @@ export default function ProduccionPage() {
     } catch (error) {
       console.error('Error al guardar receta:', error)
     }
+  }
+
+  const agregarItemNuevo = (productoId: string) => {
+    if (nuevoItems.find(i => i.productoId === productoId)) return
+    setNuevoItems([...nuevoItems, { productoId, cantidad: 1, unidadSimbolo: null, desperdicio: 0 }])
+  }
+
+  const actualizarItemNuevo = (
+    productoId: string,
+    changes: Partial<{ cantidad: number; unidadSimbolo: string | null; desperdicio: number }>
+  ) => {
+    setNuevoItems(nuevoItems.map((item) =>
+      item.productoId === productoId ? { ...item, ...changes } : item
+    ))
+  }
+
+  const eliminarItemNuevo = (productoId: string) => {
+    setNuevoItems(nuevoItems.filter((item) => item.productoId !== productoId))
   }
 
   const agregarItemVale = (productoId: string) => {
@@ -358,6 +424,96 @@ export default function ProduccionPage() {
                           </SelectContent>
                         </Select>
                       </div>
+                      <div className="grid gap-2">
+                        <Label>Ingredientes</Label>
+                        <Select onValueChange={agregarItemNuevo}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Agregar ingrediente" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {productosTyped?.filter((p) => !nuevoItems.find((i) => i.productoId === p.id)).map((p) => (
+                              <SelectItem key={p.id} value={p.id}>{p.nombre}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {nuevoItems.length > 0 && (
+                          <div className="rounded-md border">
+                            <Table>
+                              <TableHeader>
+                                <TableRow>
+                                  <TableHead>Producto</TableHead>
+                                  <TableHead>Cantidad</TableHead>
+                                  <TableHead>Unidad</TableHead>
+                                  <TableHead>Desperdicio</TableHead>
+                                  <TableHead className="text-right">Quitar</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {nuevoItems.map((item) => {
+                                  const prod = productosTyped?.find((p) => p.id === item.productoId)
+                                  return (
+                                    <TableRow key={item.productoId}>
+                                      <TableCell>{prod?.nombre}</TableCell>
+                                      <TableCell>
+                                        <Input
+                                          type="number"
+                                          min={0.01}
+                                          step={0.01}
+                                          value={item.cantidad}
+                                          onChange={(e) => actualizarItemNuevo(item.productoId, { cantidad: parseFloat(e.target.value) || 1 })}
+                                          className="w-24"
+                                        />
+                                      </TableCell>
+                                      <TableCell>
+                                        <Select
+                                          value={getUnitSelectValue(item.unidadSimbolo)}
+                                          onValueChange={(value) => actualizarItemNuevo(item.productoId, { unidadSimbolo: parseUnitSelectValue(value) })}
+                                        >
+                                          <SelectTrigger className="w-28">
+                                            <SelectValue placeholder="Sin unidad" />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value={UNIT_OPTION_NONE}>Sin unidad</SelectItem>
+                                            {MASS_UNITS.map((unit) => (
+                                              <SelectItem key={`mass-${unit}`} value={unit}>{unit}</SelectItem>
+                                            ))}
+                                            {VOLUME_UNITS.map((unit) => (
+                                              <SelectItem key={`volume-${unit}`} value={unit}>{unit}</SelectItem>
+                                            ))}
+                                            {NO_CONVERSION_UNITS.map((unit) => (
+                                              <SelectItem key={`plain-${unit}`} value={unit}>{unit}</SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                      </TableCell>
+                                      <TableCell>
+                                        <Input
+                                          type="number"
+                                          min={0}
+                                          max={1}
+                                          step={0.01}
+                                          value={item.desperdicio}
+                                          onChange={(e) => actualizarItemNuevo(item.productoId, { desperdicio: parseFloat(e.target.value) || 0 })}
+                                          className="w-24"
+                                        />
+                                      </TableCell>
+                                      <TableCell className="text-right">
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          onClick={() => eliminarItemNuevo(item.productoId)}
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      </TableCell>
+                                    </TableRow>
+                                  )
+                                })}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div className="flex justify-end gap-2">
                       <Button variant="outline" onClick={() => setDialogRecetaOpen(false)}>
@@ -410,8 +566,8 @@ export default function ProduccionPage() {
                         <TableRow key={receta.recetaId}>
                           <TableCell className="font-medium">{receta.nombre}</TableCell>
                           <TableCell>{receta.rendimiento}</TableCell>
-                          <TableCell>{receta.producto?.nombre || '-'}</TableCell>
-                          <TableCell>{receta.ingredientes?.length || 0}</TableCell>
+                          <TableCell>{getInsumosTexto(receta)}</TableCell>
+                          <TableCell>{formatIngredientesList(getRecetaIngredientes(receta))}</TableCell>
                           <TableCell>{formatCurrency(receta.costoUnitario)}</TableCell>
                           <TableCell>{format(new Date(receta.createdAt), 'dd/MM/yyyy')}</TableCell>
                           <TableCell className="text-right">
@@ -430,8 +586,13 @@ export default function ProduccionPage() {
                                   setRecetaEdit(receta)
                                   setEditNombre(receta.nombre)
                                   setEditRendimiento(receta.rendimiento)
-                                  setEditProductoId(receta.producto?.id || '')
-                                  setEditItems(receta.ingredientes?.map((i: any) => ({ productoId: i.productoId, cantidad: i.cantidad, desperdicio: i.desperdicio ?? 0 })) || [])
+                                  setEditProductoId(getRecetaProducto(receta)?.id || '')
+                                  setEditItems(getRecetaIngredientes(receta).map((i: any) => ({
+                                    productoId: i.productoId,
+                                    cantidad: i.cantidad,
+                                    unidadSimbolo: i.unidadSimbolo ?? null,
+                                    desperdicio: i.desperdicio ?? 0,
+                                  })))
                                 }}
                               >
                                 <Edit className="h-4 w-4" />
@@ -794,13 +955,13 @@ export default function ProduccionPage() {
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div><span className="font-medium">Rendimiento:</span> {recetaVer?.rendimiento} unidad(es)</div>
-              <div><span className="font-medium">Producto asociado:</span> {recetaVer?.producto?.nombre || '—'}</div>
+              <div><span className="font-medium">Producto asociado:</span> {getRecetaProducto(recetaVer)?.nombre || '—'}</div>
               <div><span className="font-medium">Instrucciones:</span> {recetaVer?.instrucciones || 'No especificado'}</div>
               <div><span className="font-medium">Tiempo de prep.:</span> {recetaVer?.tiempoPrep ? `${recetaVer.tiempoPrep} min` : 'No especificado'}</div>
             </div>
             <div>
               <p className="text-sm font-medium mb-2">Ingredientes</p>
-              {recetaVer?.ingredientes?.length === 0 ? (
+              {getRecetaIngredientes(recetaVer).length === 0 ? (
                 <p className="text-sm text-muted-foreground">Sin ingredientes definidos</p>
               ) : (
                 <div className="rounded-md border">
@@ -814,16 +975,19 @@ export default function ProduccionPage() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {recetaVer?.ingredientes?.map((ing: any) => (
+                      {getRecetaIngredientes(recetaVer).map((ing: any) => {
+                        const productoIngrediente = getIngredienteProducto(ing)
+                        return (
                         <TableRow key={ing.productoId}>
-                          <TableCell>{ing.producto?.nombre}</TableCell>
-                          <TableCell>{ing.cantidad}</TableCell>
+                          <TableCell>{productoIngrediente?.nombre}</TableCell>
+                          <TableCell>{formatIngrediente(ing.cantidad, ing.unidadSimbolo, '').trim()}</TableCell>
                           <TableCell>{((ing.desperdicio ?? 0) * 100).toFixed(0)}%</TableCell>
                           <TableCell className="text-right">
-                            {formatCurrency((ing.producto?.precioCosto ?? 0) * ing.cantidad * (1 + (ing.desperdicio ?? 0)))}
+                            {formatCurrency((productoIngrediente?.precioCosto ?? 0) * ing.cantidad * (1 + (ing.desperdicio ?? 0)))}
                           </TableCell>
                         </TableRow>
-                      ))}
+                        )
+                      })}
                     </TableBody>
                   </Table>
                 </div>
@@ -888,7 +1052,7 @@ export default function ProduccionPage() {
               <Select
                 onValueChange={(productoId) => {
                   if (!editItems.find((i) => i.productoId === productoId)) {
-                    setEditItems([...editItems, { productoId, cantidad: 1, desperdicio: 0 }])
+                    setEditItems([...editItems, { productoId, cantidad: 1, unidadSimbolo: null, desperdicio: 0 }])
                   }
                 }}
               >
@@ -908,6 +1072,7 @@ export default function ProduccionPage() {
                       <TableRow>
                         <TableHead>Producto</TableHead>
                         <TableHead>Cantidad</TableHead>
+                        <TableHead>Unidad</TableHead>
                         <TableHead>Desperdicio</TableHead>
                         <TableHead className="text-right">Quitar</TableHead>
                       </TableRow>
@@ -927,6 +1092,28 @@ export default function ProduccionPage() {
                                 onChange={(e) => setEditItems(editItems.map((i) => i.productoId === item.productoId ? { ...i, cantidad: parseFloat(e.target.value) || 1 } : i))}
                                 className="w-20"
                               />
+                            </TableCell>
+                            <TableCell>
+                              <Select
+                                value={getUnitSelectValue(item.unidadSimbolo)}
+                                onValueChange={(value) => setEditItems(editItems.map((i) => i.productoId === item.productoId ? { ...i, unidadSimbolo: parseUnitSelectValue(value) } : i))}
+                              >
+                                <SelectTrigger className="w-28">
+                                  <SelectValue placeholder="Sin unidad" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value={UNIT_OPTION_NONE}>Sin unidad</SelectItem>
+                                  {MASS_UNITS.map((unit) => (
+                                    <SelectItem key={`edit-mass-${unit}`} value={unit}>{unit}</SelectItem>
+                                  ))}
+                                  {VOLUME_UNITS.map((unit) => (
+                                    <SelectItem key={`edit-volume-${unit}`} value={unit}>{unit}</SelectItem>
+                                  ))}
+                                  {NO_CONVERSION_UNITS.map((unit) => (
+                                    <SelectItem key={`edit-plain-${unit}`} value={unit}>{unit}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
                             </TableCell>
                             <TableCell>
                               <Input

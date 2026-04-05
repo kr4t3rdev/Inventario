@@ -24,7 +24,7 @@ export const GET = withAuthGet(async (request: NextRequest, { params }: { params
     const receta = await prisma.receta.findUnique({
       where: { recetaId: id },
       include: {
-        producto: {
+        Producto: {
           select: {
             id: true,
             nombre: true,
@@ -32,9 +32,9 @@ export const GET = withAuthGet(async (request: NextRequest, { params }: { params
             stock: true,
           },
         },
-        ingredientes: {
+        RecetaIngrediente: {
           include: {
-            producto: {
+            Producto: {
               select: {
                 id: true,
                 nombre: true,
@@ -76,15 +76,15 @@ export const PATCH = withAuth(async (request: NextRequest, { params }: { params:
       where: { recetaId: id },
       data: payload,
       include: {
-        producto: {
+        Producto: {
           select: {
             id: true,
             nombre: true,
           },
         },
-        ingredientes: {
+        RecetaIngrediente: {
           include: {
-            producto: {
+            Producto: {
               select: {
                 id: true,
                 nombre: true,
@@ -104,6 +104,7 @@ export const PATCH = withAuth(async (request: NextRequest, { params }: { params:
         { error: 'Datos inválidos para actualizar receta.', issues: error.issues },
         { status: 400 }
       );
+    }
     }
 
     console.error('Error al actualizar receta de producción:', error);

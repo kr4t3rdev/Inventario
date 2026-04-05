@@ -25,13 +25,14 @@ import { useGetProductosQuery } from "@/lib/redux/services/productosApi"
 import { Venta } from "../../app/models/model"
 
 interface VentasTableProps {
-  ventas: Venta[]
+  ventas: Venta[] | undefined
   isLoading: boolean
   error: any
   onDelete: (id: string) => void
 }
 
-export function VentasTable({ ventas, isLoading, error, onDelete }: VentasTableProps) {
+export function VentasTable({ ventas: ventasProp, isLoading, error, onDelete }: VentasTableProps) {
+  const ventas = ventasProp ?? []
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
@@ -293,7 +294,7 @@ export function VentasTable({ ventas, isLoading, error, onDelete }: VentasTableP
     )
   }
 
-  if (error) {
+  if (error && ventasProp === undefined) {
     return (
       <motion.div 
         className="text-center py-8 text-destructive border border-dashed rounded-lg dark:border-gray-700"

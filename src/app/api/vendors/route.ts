@@ -11,20 +11,8 @@ import {
  * @param {Array<{ proveedorCodigo?: string | null }>} productos - Productos históricos del vendor.
  * @returns {string | null} Código consistente o null si no existe todavía.
  */
-function deriveProveedorCodigo(productos: Array<{ proveedorCodigo?: string | null }>): string | null {
-  const codigos = Array.from(
-    new Set(
-      productos
-        .map((producto) => producto.proveedorCodigo?.trim())
-        .filter((codigo): codigo is string => Boolean(codigo))
-    )
-  )
-
-  if (codigos.length !== 1) {
-    return null
-  }
-
-  return codigos[0]
+function deriveProveedorCodigo(_productos: Array<{ id: string; nombre: string }>): string | null {
+  return null
 }
 
 export async function GET() {
@@ -35,7 +23,6 @@ export async function GET() {
           select: {
             id: true,
             nombre: true,
-            proveedorCodigo: true,
           },
         },
         contratos: true,

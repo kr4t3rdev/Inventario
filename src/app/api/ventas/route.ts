@@ -203,7 +203,6 @@ export const GET = withAuthGet(async (request: NextRequest, context: any, user: 
            select: {
              id: true,
              nombre: true,
-             codigoInterno: true,
              precioVenta: true,
              precioCosto: true,
              categoria: {
@@ -248,7 +247,6 @@ export const GET = withAuthGet(async (request: NextRequest, context: any, user: 
               select: {
                 id: true,
                 nombre: true,
-                codigoInterno: true,
                 precioVenta: true,
                 precioCosto: true,
                 categoria: { select: { catId: true, nombre: true } },

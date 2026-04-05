@@ -41,6 +41,33 @@ export default function VentasPage() {
     }
   }
 
+  if (error && !ventas) {
+    return (
+      <SidebarProvider>
+        <SidebarInset>
+          <div className="container mx-auto py-4">
+            <motion.div
+              className="flex flex-col items-center justify-center py-24 gap-4 text-muted-foreground"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+            >
+              <TrendingUp className="h-12 w-12 opacity-30" />
+              <p className="text-lg font-medium">No hay ventas registradas</p>
+              <p className="text-sm">Cuando registres tu primera venta aparecerá aquí.</p>
+              <Button asChild className="mt-2 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90">
+                <Link href="/busy/sales/new">
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Nueva Venta
+                </Link>
+              </Button>
+            </motion.div>
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
+    )
+  }
+
   if (isLoading) {
     return (
       <SidebarProvider>
@@ -153,7 +180,7 @@ export default function VentasPage() {
             transition={{ duration: 0.5, delay: 0.3 }}
           >
             <VentasTable
-              ventas={ventas || []}
+              ventas={ventas}
               isLoading={isLoading}
               error={error}
               onDelete={(id) => setVentaToDelete(id)}

@@ -2014,6 +2014,7 @@ export interface RecetaProduccionIngrediente {
   recetaId: string
   productoId: string
   cantidad: number
+  unidadSimbolo?: string | null
   desperdicio: number
   createdAt: string
   updatedAt: string
@@ -2117,6 +2118,7 @@ export interface SetIngredientesPayload {
   ingredientes: Array<{
     productoId: string
     cantidad: number
+    unidadSimbolo?: string | null
     desperdicio?: number
   }>
 }

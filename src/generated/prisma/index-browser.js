@@ -124,18 +124,18 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
 exports.Prisma.CategoriaScalarFieldEnum = {
   catId: 'catId',
   nombre: 'nombre',
-  descripcion: 'descripcion',
-  parentId: 'parentId',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  descripcion: 'descripcion',
+  parentId: 'parentId'
 };
 
 exports.Prisma.UnidadScalarFieldEnum = {
   unidadId: 'unidadId',
   nombre: 'nombre',
-  simbolo: 'simbolo',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  simbolo: 'simbolo'
 };
 
 exports.Prisma.VendorScalarFieldEnum = {
@@ -149,7 +149,8 @@ exports.Prisma.VendorScalarFieldEnum = {
   cuentaUSD: 'cuentaUSD',
   direccion: 'direccion',
   logo: 'logo',
-  telefono: 'telefono'
+  telefono: 'telefono',
+  vendorCode: 'vendorCode'
 };
 
 exports.Prisma.InyeccionCapitalScalarFieldEnum = {
@@ -189,14 +190,14 @@ exports.Prisma.PagoDeudaScalarFieldEnum = {
 exports.Prisma.ClienteScalarFieldEnum = {
   clienteId: 'clienteId',
   nombre: 'nombre',
-  direccion: 'direccion',
-  telefono: 'telefono',
-  numeroCuentaCUP: 'numeroCuentaCUP',
-  numeroCuentaUSD: 'numeroCuentaUSD',
-  numeroContrato: 'numeroContrato',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  logoUrl: 'logoUrl'
+  direccion: 'direccion',
+  logoUrl: 'logoUrl',
+  numeroContrato: 'numeroContrato',
+  numeroCuentaCUP: 'numeroCuentaCUP',
+  numeroCuentaUSD: 'numeroCuentaUSD',
+  telefono: 'telefono'
 };
 
 exports.Prisma.MiEmpresaScalarFieldEnum = {
@@ -226,26 +227,27 @@ exports.Prisma.PuntoDeVentaScalarFieldEnum = {
   pvId: 'pvId',
   nombre: 'nombre',
   ubicacion: 'ubicacion',
+  listaPrecioId: 'listaPrecioId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
 
 exports.Prisma.ProductoScalarFieldEnum = {
-  id: 'id',
   nombre: 'nombre',
   descripcion: 'descripcion',
   precioCosto: 'precioCosto',
   precioVenta: 'precioVenta',
   stock: 'stock',
-  stockMinimo: 'stockMinimo',
   categoriaId: 'categoriaId',
-  subcategoriaId: 'subcategoriaId',
   unidadId: 'unidadId',
   vendorId: 'vendorId',
+  createdAt: 'createdAt',
+  id: 'id',
+  updatedAt: 'updatedAt',
   almacenId: 'almacenId',
   puntoDeVentaId: 'puntoDeVentaId',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
+  stockMinimo: 'stockMinimo',
+  subcategoriaId: 'subcategoriaId',
   fotos: 'fotos'
 };
 
@@ -253,18 +255,18 @@ exports.Prisma.VentaScalarFieldEnum = {
   ventaId: 'ventaId',
   productoId: 'productoId',
   cantidad: 'cantidad',
-  total: 'total',
-  descuento: 'descuento',
-  observaciones: 'observaciones',
   puntoDeVentaId: 'puntoDeVentaId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
   empleadoId: 'empleadoId',
+  total: 'total',
   clienteId: 'clienteId',
   ordenId: 'ordenId',
+  descuento: 'descuento',
+  observaciones: 'observaciones',
   esVentaUnica: 'esVentaUnica',
-  ventaPadreId: 'ventaPadreId',
   ofertaId: 'ofertaId',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  ventaPadreId: 'ventaPadreId'
 };
 
 exports.Prisma.VentaItemScalarFieldEnum = {
@@ -283,22 +285,22 @@ exports.Prisma.MermaScalarFieldEnum = {
   productoId: 'productoId',
   cantidad: 'cantidad',
   motivo: 'motivo',
-  costoTotal: 'costoTotal',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  costoTotal: 'costoTotal'
 };
 
 exports.Prisma.TransferenciaScalarFieldEnum = {
   transferenciaId: 'transferenciaId',
   productoId: 'productoId',
   cantidad: 'cantidad',
-  descripcion: 'descripcion',
   origenId: 'origenId',
   destinoId: 'destinoId',
-  puntoDeVentaOrigenId: 'puntoDeVentaOrigenId',
-  puntoDeVentaDestinoId: 'puntoDeVentaDestinoId',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  descripcion: 'descripcion',
+  puntoDeVentaDestinoId: 'puntoDeVentaDestinoId',
+  puntoDeVentaOrigenId: 'puntoDeVentaOrigenId'
 };
 
 exports.Prisma.UserScalarFieldEnum = {
@@ -307,16 +309,16 @@ exports.Prisma.UserScalarFieldEnum = {
   email: 'email',
   password: 'password',
   role: 'role',
-  isActive: 'isActive',
-  avatar: 'avatar',
-  activatedAt: 'activatedAt',
-  expiresAt: 'expiresAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
+  activatedAt: 'activatedAt',
+  avatar: 'avatar',
+  expiresAt: 'expiresAt',
+  isActive: 'isActive',
+  lastFailedLogin: 'lastFailedLogin',
   lastModifiedBy: 'lastModifiedBy',
-  loginAttempts: 'loginAttempts',
   lockedUntil: 'lockedUntil',
-  lastFailedLogin: 'lastFailedLogin'
+  loginAttempts: 'loginAttempts'
 };
 
 exports.Prisma.PlanScalarFieldEnum = {
@@ -345,14 +347,14 @@ exports.Prisma.LicenciaScalarFieldEnum = {
 };
 
 exports.Prisma.LicenciaAuditScalarFieldEnum = {
-  licenciaAuditId: 'licenciaAuditId',
   licenciaId: 'licenciaId',
   accion: 'accion',
+  detalles: 'detalles',
   realizadoPor: 'realizadoPor',
   ip: 'ip',
   userAgent: 'userAgent',
-  detalles: 'detalles',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  licenciaAuditId: 'licenciaAuditId'
 };
 
 exports.Prisma.NotificationScalarFieldEnum = {
@@ -460,13 +462,13 @@ exports.Prisma.EmpleadoScalarFieldEnum = {
   telefono: 'telefono',
   cargo: 'cargo',
   salarioBases: 'salarioBases',
-  vacationDaysAccrued: 'vacationDaysAccrued',
-  vacationDaysUsed: 'vacationDaysUsed',
-  fechaContratacion: 'fechaContratacion',
-  esTiempoCompleto: 'esTiempoCompleto',
-  diasVacacionesAnuales: 'diasVacacionesAnuales',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  diasVacacionesAnuales: 'diasVacacionesAnuales',
+  esTiempoCompleto: 'esTiempoCompleto',
+  fechaContratacion: 'fechaContratacion',
+  vacationDaysAccrued: 'vacationDaysAccrued',
+  vacationDaysUsed: 'vacationDaysUsed'
 };
 
 exports.Prisma.PagosalarioScalarFieldEnum = {
@@ -518,30 +520,30 @@ exports.Prisma.GastoCompraScalarFieldEnum = {
   total: 'total',
   fechaCompra: 'fechaCompra',
   descripcion: 'descripcion',
-  periodo: 'periodo',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
+  periodo: 'periodo',
   numeroFactura: 'numeroFactura'
 };
 
 exports.Prisma.CompraProductoScalarFieldEnum = {
   compraProductoId: 'compraProductoId',
   productoId: 'productoId',
-  proveedorId: 'proveedorId',
   numeroFactura: 'numeroFactura',
   facturaUrl: 'facturaUrl',
   cantidad: 'cantidad',
   precioUnitario: 'precioUnitario',
   total: 'total',
-  formaPago: 'formaPago',
-  estado: 'estado',
-  tipoOperacion: 'tipoOperacion',
   descripcion: 'descripcion',
   fechaCompra: 'fechaCompra',
   gastoCompraId: 'gastoCompraId',
   cuentaPorPagarId: 'cuentaPorPagarId',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  proveedorId: 'proveedorId',
+  formaPago: 'formaPago',
+  estado: 'estado',
+  tipoOperacion: 'tipoOperacion'
 };
 
 exports.Prisma.ServiciosScalarFieldEnum = {
@@ -643,27 +645,26 @@ exports.Prisma.TipoPagoScalarFieldEnum = {
 exports.Prisma.ReconciliacionVentaScalarFieldEnum = {
   reconciliacionId: 'reconciliacionId',
   ventaId: 'ventaId',
-  deudaCashId: 'deudaCashId',
-  prestamoCashId: 'prestamoCashId',
-  tipoReconciliacion: 'tipoReconciliacion',
   cuentaId: 'cuentaId',
   tipoPagoId: 'tipoPagoId',
   monto: 'monto',
   moneda: 'moneda',
   tasaCambio: 'tasaCambio',
   montoConvertido: 'montoConvertido',
-  verificacionTransferenciaId: 'verificacionTransferenciaId',
-  idTransferencia: 'idTransferencia',
   fechaReconciliacion: 'fechaReconciliacion',
   observaciones: 'observaciones',
   reconciliadoPor: 'reconciliadoPor',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  idTransferencia: 'idTransferencia',
+  verificacionTransferenciaId: 'verificacionTransferenciaId',
+  deudaCashId: 'deudaCashId',
+  prestamoCashId: 'prestamoCashId',
+  tipoReconciliacion: 'tipoReconciliacion'
 };
 
 exports.Prisma.ReconciliacionServicioScalarFieldEnum = {
   reconciliacionId: 'reconciliacionId',
-  ventaServicioId: 'ventaServicioId',
   cuentaId: 'cuentaId',
   tipoPagoId: 'tipoPagoId',
   monto: 'monto',
@@ -674,7 +675,8 @@ exports.Prisma.ReconciliacionServicioScalarFieldEnum = {
   observaciones: 'observaciones',
   reconciliadoPor: 'reconciliadoPor',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  ventaServicioId: 'ventaServicioId'
 };
 
 exports.Prisma.ReconciliacionGastoScalarFieldEnum = {
@@ -683,9 +685,6 @@ exports.Prisma.ReconciliacionGastoScalarFieldEnum = {
   referenciaId: 'referenciaId',
   cuentaId: 'cuentaId',
   tipoPagoId: 'tipoPagoId',
-  pgId: 'pgId',
-  gastosDEId: 'gastosDEId',
-  gastoCompraId: 'gastoCompraId',
   monto: 'monto',
   moneda: 'moneda',
   tasaCambio: 'tasaCambio',
@@ -695,11 +694,14 @@ exports.Prisma.ReconciliacionGastoScalarFieldEnum = {
   fechaReconciliacion: 'fechaReconciliacion',
   observaciones: 'observaciones',
   reconciliadoPor: 'reconciliadoPor',
-  isReconciliada: 'isReconciliada',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   cuentaPorPagarId: 'cuentaPorPagarId',
-  estado: 'estado'
+  estado: 'estado',
+  gastoCompraId: 'gastoCompraId',
+  gastosDEId: 'gastosDEId',
+  isReconciliada: 'isReconciliada',
+  pgId: 'pgId'
 };
 
 exports.Prisma.AjusteBancarioScalarFieldEnum = {
@@ -732,9 +734,9 @@ exports.Prisma.TransferenciaBancariaScalarFieldEnum = {
   fechaTransferencia: 'fechaTransferencia',
   comprobanteGenerado: 'comprobanteGenerado',
   rutaComprobante: 'rutaComprobante',
-  existe: 'existe',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  existe: 'existe'
 };
 
 exports.Prisma.AlertHistoryScalarFieldEnum = {
@@ -843,7 +845,6 @@ exports.Prisma.ContratoScalarFieldEnum = {
   fechaFin: 'fechaFin',
   monto: 'monto',
   moneda: 'moneda',
-  esMultiMoneda: 'esMultiMoneda',
   condiciones: 'condiciones',
   observaciones: 'observaciones',
   clienteId: 'clienteId',
@@ -853,6 +854,7 @@ exports.Prisma.ContratoScalarFieldEnum = {
   fechaAprobacion: 'fechaAprobacion',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
+  esMultiMoneda: 'esMultiMoneda',
   diasAvisoVencimiento: 'diasAvisoVencimiento'
 };
 
@@ -924,21 +926,21 @@ exports.Prisma.FacturaScalarFieldEnum = {
   subtotal: 'subtotal',
   impuestos: 'impuestos',
   descuento: 'descuento',
-  cargoTransporte: 'cargoTransporte',
   total: 'total',
-  tasaCambio: 'tasaCambio',
   observaciones: 'observaciones',
   terminosPago: 'terminosPago',
   metodoPago: 'metodoPago',
-  tipoTarjeta: 'tipoTarjeta',
   estado: 'estado',
   fechaEmision: 'fechaEmision',
   fechaVencimiento: 'fechaVencimiento',
   creadoPor: 'creadoPor',
   actualizadoPor: 'actualizadoPor',
-  cuentaBancariaId: 'cuentaBancariaId',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  tipoTarjeta: 'tipoTarjeta',
+  cargoTransporte: 'cargoTransporte',
+  cuentaBancariaId: 'cuentaBancariaId',
+  tasaCambio: 'tasaCambio'
 };
 
 exports.Prisma.SerieFacturacionScalarFieldEnum = {
@@ -985,22 +987,19 @@ exports.Prisma.CuentaPorCobrarScalarFieldEnum = {
   clienteId: 'clienteId',
   montoDeuda: 'montoDeuda',
   montoPagado: 'montoPagado',
-  tipoCuenta: 'tipoCuenta',
   idTransferencia: 'idTransferencia',
   estado: 'estado',
   fechaVencimiento: 'fechaVencimiento',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  tipoCuenta: 'tipoCuenta'
 };
 
 exports.Prisma.CuentaPorPagarScalarFieldEnum = {
   cuentaPorPagarId: 'cuentaPorPagarId',
   numeroFactura: 'numeroFactura',
-  tipo: 'tipo',
-  tipoDeuda: 'tipoDeuda',
   gastoCompraId: 'gastoCompraId',
   gastosDEId: 'gastosDEId',
-  proveedorId: 'proveedorId',
   proveedorNombre: 'proveedorNombre',
   montoDeuda: 'montoDeuda',
   montoPagado: 'montoPagado',
@@ -1010,7 +1009,10 @@ exports.Prisma.CuentaPorPagarScalarFieldEnum = {
   fechaVencimiento: 'fechaVencimiento',
   estado: 'estado',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  proveedorId: 'proveedorId',
+  tipo: 'tipo',
+  tipoDeuda: 'tipoDeuda'
 };
 
 exports.Prisma.DeudaCashScalarFieldEnum = {
@@ -1023,13 +1025,13 @@ exports.Prisma.DeudaCashScalarFieldEnum = {
   tasaInteres: 'tasaInteres',
   fechaVencimiento: 'fechaVencimiento',
   observaciones: 'observaciones',
-  comprobanteUrl: 'comprobanteUrl',
-  cuentaBancariaId: 'cuentaBancariaId',
   createdById: 'createdById',
-  estado: 'estado',
   deletedAt: 'deletedAt',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  comprobanteUrl: 'comprobanteUrl',
+  cuentaBancariaId: 'cuentaBancariaId',
+  estado: 'estado'
 };
 
 exports.Prisma.PrestamoCashScalarFieldEnum = {
@@ -1040,16 +1042,16 @@ exports.Prisma.PrestamoCashScalarFieldEnum = {
   montoCapital: 'montoCapital',
   moneda: 'moneda',
   tasaInteres: 'tasaInteres',
-  tasaCambioAlCrear: 'tasaCambioAlCrear',
   fechaOtorgamiento: 'fechaOtorgamiento',
   fechaVencimiento: 'fechaVencimiento',
   observaciones: 'observaciones',
-  cuentaBancariaId: 'cuentaBancariaId',
   createdById: 'createdById',
-  estado: 'estado',
   deletedAt: 'deletedAt',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  tasaCambioAlCrear: 'tasaCambioAlCrear',
+  cuentaBancariaId: 'cuentaBancariaId',
+  estado: 'estado'
 };
 
 exports.Prisma.PagoCuentaPorPagarScalarFieldEnum = {
@@ -1093,12 +1095,10 @@ exports.Prisma.OrdenReparacionScalarFieldEnum = {
   numeroSerie: 'numeroSerie',
   contrasena: 'contrasena',
   accesorios: 'accesorios',
-  fotos: 'fotos',
   problemaReportado: 'problemaReportado',
   diagnosticoTecnico: 'diagnosticoTecnico',
   estado: 'estado',
   prioridad: 'prioridad',
-  complejidad: 'complejidad',
   esGarantia: 'esGarantia',
   fechaRecepcion: 'fechaRecepcion',
   fechaEstimada: 'fechaEstimada',
@@ -1107,10 +1107,12 @@ exports.Prisma.OrdenReparacionScalarFieldEnum = {
   subtotal: 'subtotal',
   descuento: 'descuento',
   total: 'total',
-  moneda: 'moneda',
   ventaId: 'ventaId',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  fotos: 'fotos',
+  complejidad: 'complejidad',
+  moneda: 'moneda'
 };
 
 exports.Prisma.OrdenReparacionEquipoScalarFieldEnum = {
@@ -1133,10 +1135,10 @@ exports.Prisma.OrdenReparacionItemScalarFieldEnum = {
   ordenId: 'ordenId',
   piezaId: 'piezaId',
   complejidad: 'complejidad',
-  defectacionId: 'defectacionId',
   precio: 'precio',
   observaciones: 'observaciones',
   tecnicoId: 'tecnicoId',
+  defectacionId: 'defectacionId',
   ordenEquipoId: 'ordenEquipoId'
 };
 
@@ -1164,55 +1166,56 @@ exports.Prisma.ConfiguracionSistemaScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
-exports.Prisma.RecetaScalarFieldEnum = {
-  recetaId: 'recetaId',
-  nombre: 'nombre',
-  rendimiento: 'rendimiento',
-  productoId: 'productoId',
-  instrucciones: 'instrucciones',
-  tiempoPrep: 'tiempoPrep',
-  costoUnitario: 'costoUnitario',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-};
-
-exports.Prisma.RecetaIngredienteScalarFieldEnum = {
-  id: 'id',
-  recetaId: 'recetaId',
-  productoId: 'productoId',
-  cantidad: 'cantidad',
-  desperdicio: 'desperdicio',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-};
-
 exports.Prisma.OrdenProduccionScalarFieldEnum = {
   ordenProduccionId: 'ordenProduccionId',
   recetaId: 'recetaId',
   cantidad: 'cantidad',
   estado: 'estado',
-  costoMateriales: 'costoMateriales',
   observaciones: 'observaciones',
   fechaProduccion: 'fechaProduccion',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  costoMateriales: 'costoMateriales'
 };
 
 exports.Prisma.OrdenProduccionHistorialScalarFieldEnum = {
-  id: 'id',
   ordenProduccionId: 'ordenProduccionId',
   estadoAnterior: 'estadoAnterior',
   estadoNuevo: 'estadoNuevo',
   observaciones: 'observaciones',
   usuarioId: 'usuarioId',
-  createdAt: 'createdAt'
+  createdAt: 'createdAt',
+  id: 'id'
+};
+
+exports.Prisma.RecetaScalarFieldEnum = {
+  recetaId: 'recetaId',
+  nombre: 'nombre',
+  rendimiento: 'rendimiento',
+  costoUnitario: 'costoUnitario',
+  instrucciones: 'instrucciones',
+  tiempoPrep: 'tiempoPrep',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  productoId: 'productoId'
+};
+
+exports.Prisma.RecetaIngredienteScalarFieldEnum = {
+  recetaId: 'recetaId',
+  productoId: 'productoId',
+  cantidad: 'cantidad',
+  unidadSimbolo: 'unidadSimbolo',
+  desperdicio: 'desperdicio',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  id: 'id'
 };
 
 exports.Prisma.ValeSalidaScalarFieldEnum = {
   valeSalidaId: 'valeSalidaId',
   concepto: 'concepto',
-  estado: 'estado',
   observaciones: 'observaciones',
+  estado: 'estado',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -1223,6 +1226,29 @@ exports.Prisma.ValeSalidaItemScalarFieldEnum = {
   productoId: 'productoId',
   cantidad: 'cantidad',
   createdAt: 'createdAt'
+};
+
+exports.Prisma.ListaPrecioScalarFieldEnum = {
+  id: 'id',
+  nombre: 'nombre',
+  descripcion: 'descripcion',
+  esDefault: 'esDefault',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.PrecioProductoScalarFieldEnum = {
+  id: 'id',
+  listaPrecioId: 'listaPrecioId',
+  productoId: 'productoId',
+  precio: 'precio',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.VendorCodeSequenceScalarFieldEnum = {
+  id: 'id',
+  nextNumber: 'nextNumber'
 };
 
 exports.Prisma.SortOrder = {
@@ -1314,15 +1340,15 @@ exports.EstadoCuentaPorCobrar = exports.$Enums.EstadoCuentaPorCobrar = {
   PARCIAL: 'PARCIAL'
 };
 
-exports.TipoCuentaPorPagar = exports.$Enums.TipoCuentaPorPagar = {
-  compra: 'compra',
-  servicio: 'servicio'
-};
-
 exports.EstadoCuentaPorPagar = exports.$Enums.EstadoCuentaPorPagar = {
   PENDIENTE: 'PENDIENTE',
   PAGADA: 'PAGADA',
   PARCIAL: 'PARCIAL'
+};
+
+exports.TipoCuentaPorPagar = exports.$Enums.TipoCuentaPorPagar = {
+  compra: 'compra',
+  servicio: 'servicio'
 };
 
 exports.EstadoOrden = exports.$Enums.EstadoOrden = {
@@ -1422,12 +1448,15 @@ exports.Prisma.ModelName = {
   OrdenReparacionMaterial: 'OrdenReparacionMaterial',
   DefectacionCatalogo: 'DefectacionCatalogo',
   ConfiguracionSistema: 'ConfiguracionSistema',
-  Receta: 'Receta',
-  RecetaIngrediente: 'RecetaIngrediente',
   OrdenProduccion: 'OrdenProduccion',
   OrdenProduccionHistorial: 'OrdenProduccionHistorial',
+  Receta: 'Receta',
+  RecetaIngrediente: 'RecetaIngrediente',
   ValeSalida: 'ValeSalida',
-  ValeSalidaItem: 'ValeSalidaItem'
+  ValeSalidaItem: 'ValeSalidaItem',
+  ListaPrecio: 'ListaPrecio',
+  PrecioProducto: 'PrecioProducto',
+  VendorCodeSequence: 'VendorCodeSequence'
 };
 
 /**

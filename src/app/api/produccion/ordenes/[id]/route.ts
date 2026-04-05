@@ -15,9 +15,9 @@ export const GET = withAuthGet(async (request: NextRequest, { params }: { params
     const orden = await prisma.ordenProduccion.findUnique({
       where: { ordenProduccionId: id },
       include: {
-        receta: {
+        Receta: {
           include: {
-            producto: {
+            Producto: {
               select: {
                 id: true,
                 nombre: true,
@@ -25,9 +25,9 @@ export const GET = withAuthGet(async (request: NextRequest, { params }: { params
                 stock: true,
               },
             },
-            ingredientes: {
+            RecetaIngrediente: {
               include: {
-                producto: {
+                Producto: {
                   select: {
                     id: true,
                     nombre: true,
@@ -46,7 +46,21 @@ export const GET = withAuthGet(async (request: NextRequest, { params }: { params
       return NextResponse.json({ error: 'Orden de producción no encontrada.' }, { status: 404 });
     }
 
-    return NextResponse.json(orden);
+    const ordenNormalizada = {
+      ...orden,
+      receta: orden.Receta
+        ? {
+            ...orden.Receta,
+            producto: orden.Receta.Producto,
+            ingredientes: orden.Receta.RecetaIngrediente.map((ing) => ({
+              ...ing,
+              producto: ing.Producto,
+            })),
+          }
+        : null,
+    };
+
+    return NextResponse.json(ordenNormalizada);
   } catch (error) {
     console.error('Error al obtener orden de producción:', error);
     return NextResponse.json({ error: 'Error al obtener orden de producción.' }, { status: 500 });

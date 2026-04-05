@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuthPost } from '@/lib/auth-middleware';
 import { prisma } from '@/lib/prisma';
+import { convertToBase } from '@/lib/utils/unit-converter';
 
 /**
  * @description Aprueba una orden de producción, reservando los materiales del inventario.
@@ -18,9 +19,9 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
     const orden = await prisma.ordenProduccion.findUnique({
       where: { ordenProduccionId: id },
       include: {
-        receta: {
+        Receta: {
           include: {
-            ingredientes: true,
+            RecetaIngrediente: true,
           },
         },
       },
@@ -36,9 +37,10 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
 
     // Verificar disponibilidad de materiales
     const materialesFaltantes = [];
-    for (const ingrediente of orden.receta.ingredientes) {
+    for (const ingrediente of orden.Receta.RecetaIngrediente) {
       const factorDesperdicio = 1 + (ingrediente.desperdicio ?? 0);
-      const cantidadRequerida = ingrediente.cantidad * factorDesperdicio * orden.cantidad;
+      const cantidadBase = convertToBase(ingrediente.cantidad, ingrediente.unidadSimbolo);
+      const cantidadRequerida = Math.ceil((cantidadBase * factorDesperdicio * orden.cantidad) - 1e-9);
       const producto = await prisma.producto.findUnique({
         where: { id: ingrediente.productoId },
       });
@@ -61,9 +63,10 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
     }
 
     // Reservar materiales (decrementar stock)
-    for (const ingrediente of orden.receta.ingredientes) {
+    for (const ingrediente of orden.Receta.RecetaIngrediente) {
       const factorDesperdicio = 1 + (ingrediente.desperdicio ?? 0);
-      const cantidadRequerida = ingrediente.cantidad * factorDesperdicio * orden.cantidad;
+      const cantidadBase = convertToBase(ingrediente.cantidad, ingrediente.unidadSimbolo);
+      const cantidadRequerida = Math.ceil((cantidadBase * factorDesperdicio * orden.cantidad) - 1e-9);
       
       await prisma.producto.update({
         where: { id: ingrediente.productoId },
@@ -82,17 +85,17 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
         estado: 'EN_PROCESO',
       },
       include: {
-        receta: {
+        Receta: {
           include: {
-            producto: {
+            Producto: {
               select: {
                 id: true,
                 nombre: true,
               },
             },
-            ingredientes: {
+            RecetaIngrediente: {
               include: {
-                producto: {
+                Producto: {
                   select: {
                     id: true,
                     nombre: true,
@@ -118,7 +121,21 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
       },
     });
 
-    return NextResponse.json(ordenActualizada);
+    const ordenNormalizada = {
+      ...ordenActualizada,
+      receta: ordenActualizada.Receta
+        ? {
+            ...ordenActualizada.Receta,
+            producto: ordenActualizada.Receta.Producto,
+            ingredientes: ordenActualizada.Receta.RecetaIngrediente.map((ing) => ({
+              ...ing,
+              producto: ing.Producto,
+            })),
+          }
+        : null,
+    };
+
+    return NextResponse.json(ordenNormalizada);
   } catch (error) {
     console.error('Error al aprobar orden de producción:', error);
     return NextResponse.json({ error: 'Error al aprobar orden de producción.' }, { status: 500 });

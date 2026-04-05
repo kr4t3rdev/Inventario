@@ -38,7 +38,7 @@ export const GET = withAuthGet(async (request: NextRequest) => {
     const recetas = await prisma.receta.findMany({
       where: whereClause,
       include: {
-        producto: {
+        Producto: {
           select: {
             id: true,
             nombre: true,
@@ -46,9 +46,9 @@ export const GET = withAuthGet(async (request: NextRequest) => {
             stock: true,
           },
         },
-        ingredientes: {
+        RecetaIngrediente: {
           include: {
-            producto: {
+            Producto: {
               select: {
                 id: true,
                 nombre: true,
@@ -85,22 +85,24 @@ export const POST = withAuthPost(async (request: NextRequest) => {
 
     const receta = await prisma.receta.create({
       data: {
+        recetaId: crypto.randomUUID(),
         nombre: payload.nombre,
         rendimiento: payload.rendimiento,
         productoId: payload.productoId || null,
         instrucciones: payload.instrucciones,
         tiempoPrep: payload.tiempoPrep,
+        updatedAt: new Date(),
       },
       include: {
-        producto: {
+        Producto: {
           select: {
             id: true,
             nombre: true,
           },
         },
-        ingredientes: {
+        RecetaIngrediente: {
           include: {
-            producto: {
+            Producto: {
               select: {
                 id: true,
                 nombre: true,

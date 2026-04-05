@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuthPost } from '@/lib/auth-middleware';
 import { prisma } from '@/lib/prisma';
+import { convertToBase } from '@/lib/utils/unit-converter';
 import { z } from 'zod';
 
 const setIngredientesSchema = z.object({
@@ -8,6 +9,7 @@ const setIngredientesSchema = z.object({
     z.object({
       productoId: z.string(),
       cantidad: z.number().positive(),
+      unidadSimbolo: z.string().optional().nullable(),
       desperdicio: z.number().min(0).max(1).default(0),
     })
   ),
@@ -42,40 +44,55 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
     if (ingredientes.length > 0) {
       await prisma.recetaIngrediente.createMany({
         data: ingredientes.map((ing) => ({
+          id: crypto.randomUUID(),
           recetaId,
           productoId: ing.productoId,
           cantidad: ing.cantidad,
+          unidadSimbolo: ing.unidadSimbolo ?? null,
           desperdicio: ing.desperdicio,
+          updatedAt: new Date(),
         })),
       });
     }
 
     // Calcular costo unitario
-    let costoUnitario = 0;
+    let costoTotal = 0;
     for (const ing of ingredientes) {
       const producto = await prisma.producto.findUnique({
         where: { id: ing.productoId },
         select: { precioCosto: true },
       });
       if (producto) {
-        costoUnitario += producto.precioCosto * ing.cantidad * (1 + (ing.desperdicio ?? 0));
+        const cantidadBase = convertToBase(ing.cantidad, ing.unidadSimbolo);
+        costoTotal += producto.precioCosto * cantidadBase * (1 + (ing.desperdicio ?? 0));
       }
     }
+
+    const rendimiento = recetaExistente.rendimiento || 1;
+    const costoUnitario = costoTotal / rendimiento;
 
     // Actualizar costo unitario de la receta
     const recetaActualizada = await prisma.receta.update({
       where: { recetaId },
       data: { costoUnitario },
       include: {
-        producto: {
+        Producto: {
           select: {
             id: true,
             nombre: true,
           },
         },
-        ingredientes: {
-          include: {
-            producto: {
+        RecetaIngrediente: {
+          select: {
+            id: true,
+            recetaId: true,
+            productoId: true,
+            cantidad: true,
+            unidadSimbolo: true,
+            desperdicio: true,
+            createdAt: true,
+            updatedAt: true,
+            Producto: {
               select: {
                 id: true,
                 nombre: true,

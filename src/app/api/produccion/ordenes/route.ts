@@ -29,17 +29,17 @@ export const GET = withAuthGet(async (request: NextRequest) => {
     const ordenes = await prisma.ordenProduccion.findMany({
       where: whereClause,
       include: {
-        receta: {
+        Receta: {
           include: {
-            producto: {
+            Producto: {
               select: {
                 id: true,
                 nombre: true,
               },
             },
-            ingredientes: {
+            RecetaIngrediente: {
               include: {
-                producto: {
+                Producto: {
                   select: {
                     id: true,
                     nombre: true,
@@ -57,7 +57,21 @@ export const GET = withAuthGet(async (request: NextRequest) => {
       },
     });
 
-    return NextResponse.json(ordenes);
+    const ordenesNormalizadas = ordenes.map((orden) => ({
+      ...orden,
+      receta: orden.Receta
+        ? {
+            ...orden.Receta,
+            producto: orden.Receta.Producto,
+            ingredientes: orden.Receta.RecetaIngrediente.map((ing) => ({
+              ...ing,
+              producto: ing.Producto,
+            })),
+          }
+        : null,
+    }));
+
+    return NextResponse.json(ordenesNormalizadas);
   } catch (error) {
     console.error('Error al obtener órdenes de producción:', error);
     return NextResponse.json({ error: 'Error al obtener órdenes de producción.' }, { status: 500 });
@@ -77,7 +91,7 @@ export const POST = withAuthPost(async (request: NextRequest) => {
     const receta = await prisma.receta.findUnique({
       where: { recetaId: payload.recetaId },
       include: {
-        ingredientes: true,
+        RecetaIngrediente: true,
       },
     });
 
@@ -87,24 +101,26 @@ export const POST = withAuthPost(async (request: NextRequest) => {
 
     const orden = await prisma.ordenProduccion.create({
       data: {
+        ordenProduccionId: crypto.randomUUID(),
         recetaId: payload.recetaId,
         cantidad: payload.cantidad,
         observaciones: payload.observaciones,
         fechaProduccion: payload.fechaProduccion ? new Date(payload.fechaProduccion) : new Date(),
         estado: 'PENDIENTE',
+        updatedAt: new Date(),
       },
       include: {
-        receta: {
+        Receta: {
           include: {
-            producto: {
+            Producto: {
               select: {
                 id: true,
                 nombre: true,
               },
             },
-            ingredientes: {
+            RecetaIngrediente: {
               include: {
-                producto: {
+                Producto: {
                   select: {
                     id: true,
                     nombre: true,
@@ -119,7 +135,21 @@ export const POST = withAuthPost(async (request: NextRequest) => {
       },
     });
 
-    return NextResponse.json(orden, { status: 201 });
+    const ordenNormalizada = {
+      ...orden,
+      receta: orden.Receta
+        ? {
+            ...orden.Receta,
+            producto: orden.Receta.Producto,
+            ingredientes: orden.Receta.RecetaIngrediente.map((ing) => ({
+              ...ing,
+              producto: ing.Producto,
+            })),
+          }
+        : null,
+    };
+
+    return NextResponse.json(ordenNormalizada, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
