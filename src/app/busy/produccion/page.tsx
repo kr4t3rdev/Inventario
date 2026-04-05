@@ -398,190 +398,195 @@ export default function ProduccionPage() {
                       Nueva Receta
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-2xl">
-                    <DialogHeader>
+                  <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+                    <DialogHeader className="flex-shrink-0">
                       <DialogTitle>Nueva Receta de Producción</DialogTitle>
                       <DialogDescription>
                         Define una receta para producir productos del inventario
                       </DialogDescription>
                     </DialogHeader>
                     
-                    {/* SECCIÓN 1: Datos Básicos */}
-                    <div className="space-y-4 border-b pb-4">
-                      <h3 className="font-semibold text-sm">Información General</h3>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="grid gap-2">
-                          <Label htmlFor="nombre">Nombre de la Receta</Label>
-                          <Input 
-                            id="nombre" 
-                            value={nombreReceta}
-                            onChange={(e) => setNombreReceta(e.target.value)}
-                            placeholder="Ej: Refresco Instantáneo 1L" 
-                          />
-                        </div>
-                        <div className="grid gap-2">
-                          <Label htmlFor="rendimiento">Rendimiento (unidades)</Label>
-                          <Input 
-                            id="rendimiento" 
-                            type="number"
-                            min={1}
-                            value={rendimiento}
-                            onChange={(e) => {
-                              const val = e.target.value
-                              if (val === '') {
-                                setRendimiento('')
-                              } else {
-                                const num = parseInt(val)
-                                setRendimiento(num >= 1 ? num : 1)
-                              }
-                            }}
-                            placeholder="1"
-                          />
-                        </div>
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="producto">Producto del Inventario (opcional)</Label>
-                        <Select value={selectedProducto} onValueChange={setSelectedProducto}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Seleccionar producto final" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {productosTyped?.map((producto) => (
-                              <SelectItem key={producto.id} value={producto.id}>
-                                {producto.nombre}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    {/* SECCIÓN 2: Búsqueda Expandida de Productos */}
-                    <div className="space-y-4">
-                      <h3 className="font-semibold text-sm">Agregar Productos a la Receta</h3>
-                      <div className="grid gap-2">
-                        <Label htmlFor="busqueda">Buscar Productos</Label>
-                        <Input 
-                          id="busqueda"
-                          placeholder="Escribe el nombre del producto..."
-                          value={busquedaProductos}
-                          onChange={(e) => setBusquedaProductos(e.target.value)}
-                          className="h-10"
-                        />
-                      </div>
-                      
-                      {/* Grid de productos filtrados */}
-                      <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto border rounded-md p-3 bg-muted/30">
-                        {getProductosFiltrados().length === 0 ? (
-                          <div className="col-span-2 text-center text-sm text-muted-foreground py-6">
-                            {busquedaProductos ? 'No se encontraron productos' : 'Comienza a escribir para buscar...'}
+                    {/* Contenido scrollable */}
+                    <div className="flex-1 overflow-y-auto pr-4 space-y-6">
+                      {/* SECCIÓN 1: Datos Básicos */}
+                      <div className="space-y-4 border-b pb-4">
+                        <h3 className="font-semibold text-sm">Información General</h3>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="grid gap-2">
+                            <Label htmlFor="nombre">Nombre de la Receta</Label>
+                            <Input 
+                              id="nombre" 
+                              value={nombreReceta}
+                              onChange={(e) => setNombreReceta(e.target.value)}
+                              placeholder="Ej: Refresco Instantáneo 1L" 
+                            />
                           </div>
-                        ) : (
-                          getProductosFiltrados().map((p) => (
-                            <Button
-                              key={p.id}
-                              variant="outline"
-                              className="justify-start text-left h-auto py-2 px-3"
-                              onClick={() => {
-                                agregarItemNuevo(p.id)
-                                setBusquedaProductos('')
+                          <div className="grid gap-2">
+                            <Label htmlFor="rendimiento">Rendimiento (unidades)</Label>
+                            <Input 
+                              id="rendimiento" 
+                              type="number"
+                              min={1}
+                              value={rendimiento}
+                              onChange={(e) => {
+                                const val = e.target.value
+                                if (val === '') {
+                                  setRendimiento('')
+                                } else {
+                                  const num = parseInt(val)
+                                  setRendimiento(num >= 1 ? num : 1)
+                                }
                               }}
-                            >
-                              <div className="flex flex-col gap-0.5 w-full">
-                                <span className="text-sm font-medium">{p.nombre}</span>
-                                <span className="text-xs text-muted-foreground">
-                                  ${p.precioCosto} (Stock: {p.stock})
-                                </span>
-                              </div>
-                            </Button>
-                          ))
-                        )}
-                      </div>
-                    </div>
-
-                    {/* SECCIÓN 3: Tabla de Productos Agregados */}
-                    {nuevoItems.length > 0 && (
-                      <div className="space-y-4 border-t pt-4">
-                        <h3 className="font-semibold text-sm">Productos Agregados</h3>
-                        <div className="rounded-md border">
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead>Producto</TableHead>
-                                <TableHead>Cantidad</TableHead>
-                                <TableHead>Unidad</TableHead>
-                                <TableHead>Desperdicio</TableHead>
-                                <TableHead className="text-right">Quitar</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {nuevoItems.map((item) => {
-                                const prod = productosTyped?.find((p) => p.id === item.productoId)
-                                return (
-                                  <TableRow key={item.productoId}>
-                                    <TableCell>{prod?.nombre}</TableCell>
-                                    <TableCell>
-                                      <Input
-                                        type="number"
-                                        min={0.01}
-                                        step={0.01}
-                                        value={item.cantidad}
-                                        onChange={(e) => actualizarItemNuevo(item.productoId, { cantidad: parseFloat(e.target.value) || 1 })}
-                                        className="w-24"
-                                      />
-                                    </TableCell>
-                                    <TableCell>
-                                      <Select
-                                        value={getUnitSelectValue(item.unidadSimbolo)}
-                                        onValueChange={(value) => actualizarItemNuevo(item.productoId, { unidadSimbolo: parseUnitSelectValue(value) })}
-                                      >
-                                        <SelectTrigger className="w-28">
-                                          <SelectValue placeholder="Sin unidad" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          <SelectItem value={UNIT_OPTION_NONE}>Sin unidad</SelectItem>
-                                          {MASS_UNITS.map((unit) => (
-                                            <SelectItem key={`mass-${unit}`} value={unit}>{unit}</SelectItem>
-                                          ))}
-                                          {VOLUME_UNITS.map((unit) => (
-                                            <SelectItem key={`volume-${unit}`} value={unit}>{unit}</SelectItem>
-                                          ))}
-                                          {NO_CONVERSION_UNITS.map((unit) => (
-                                            <SelectItem key={`plain-${unit}`} value={unit}>{unit}</SelectItem>
-                                          ))}
-                                        </SelectContent>
-                                      </Select>
-                                    </TableCell>
-                                    <TableCell>
-                                      <Input
-                                        type="number"
-                                        min={0}
-                                        max={1}
-                                        step={0.01}
-                                        value={item.desperdicio}
-                                        onChange={(e) => actualizarItemNuevo(item.productoId, { desperdicio: parseFloat(e.target.value) || 0 })}
-                                        className="w-24"
-                                      />
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => eliminarItemNuevo(item.productoId)}
-                                      >
-                                        <Trash2 className="h-4 w-4" />
-                                      </Button>
-                                    </TableCell>
-                                  </TableRow>
-                                )
-                              })}
-                            </TableBody>
-                          </Table>
+                              placeholder="1"
+                            />
+                          </div>
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="producto">Producto del Inventario (opcional)</Label>
+                          <Select value={selectedProducto} onValueChange={setSelectedProducto}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Seleccionar producto final" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {productosTyped?.map((producto) => (
+                                <SelectItem key={producto.id} value={producto.id}>
+                                  {producto.nombre}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
-                    )}
 
-                    <div className="flex justify-end gap-2 border-t pt-4">
+                      {/* SECCIÓN 2: Búsqueda Expandida de Productos */}
+                      <div className="space-y-3">
+                        <h3 className="font-semibold text-sm">Agregar Productos a la Receta</h3>
+                        <div className="grid gap-2">
+                          <Label htmlFor="busqueda">Buscar Productos</Label>
+                          <Input 
+                            id="busqueda"
+                            placeholder="Escribe el nombre del producto..."
+                            value={busquedaProductos}
+                            onChange={(e) => setBusquedaProductos(e.target.value)}
+                            className="h-10"
+                          />
+                        </div>
+                        
+                        {/* Grid de productos filtrados */}
+                        <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto border rounded-md p-3 bg-muted/30">
+                          {getProductosFiltrados().length === 0 ? (
+                            <div className="col-span-2 text-center text-sm text-muted-foreground py-4">
+                              {busquedaProductos ? 'No se encontraron productos' : 'Comienza a escribir para buscar...'}
+                            </div>
+                          ) : (
+                            getProductosFiltrados().map((p) => (
+                              <Button
+                                key={p.id}
+                                variant="outline"
+                                className="justify-start text-left h-auto py-2 px-3 text-xs"
+                                onClick={() => {
+                                  agregarItemNuevo(p.id)
+                                  setBusquedaProductos('')
+                                }}
+                              >
+                                <div className="flex flex-col gap-0.5 w-full">
+                                  <span className="text-xs font-medium">{p.nombre}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    ${p.precioCosto} (Stock: {p.stock})
+                                  </span>
+                                </div>
+                              </Button>
+                            ))
+                          )}
+                        </div>
+                      </div>
+
+                      {/* SECCIÓN 3: Tabla de Productos Agregados */}
+                      {nuevoItems.length > 0 && (
+                        <div className="space-y-3 border-t pt-4">
+                          <h3 className="font-semibold text-sm">Productos Agregados ({nuevoItems.length})</h3>
+                          <div className="rounded-md border overflow-x-auto max-h-48 overflow-y-auto">
+                            <Table className="text-xs">
+                              <TableHeader className="sticky top-0 bg-muted">
+                                <TableRow>
+                                  <TableHead className="text-xs">Producto</TableHead>
+                                  <TableHead className="text-xs">Cantidad</TableHead>
+                                  <TableHead className="text-xs">Unidad</TableHead>
+                                  <TableHead className="text-xs">Desperdicio</TableHead>
+                                  <TableHead className="text-right text-xs">Quitar</TableHead>
+                                </TableRow>
+                              </TableHeader>
+                              <TableBody>
+                                {nuevoItems.map((item) => {
+                                  const prod = productosTyped?.find((p) => p.id === item.productoId)
+                                  return (
+                                    <TableRow key={item.productoId} className="text-xs">
+                                      <TableCell className="text-xs whitespace-nowrap">{prod?.nombre}</TableCell>
+                                      <TableCell className="text-xs">
+                                        <Input
+                                          type="number"
+                                          min={0.01}
+                                          step={0.01}
+                                          value={item.cantidad}
+                                          onChange={(e) => actualizarItemNuevo(item.productoId, { cantidad: parseFloat(e.target.value) || 1 })}
+                                          className="w-20 text-xs h-7"
+                                        />
+                                      </TableCell>
+                                      <TableCell className="text-xs">
+                                        <Select
+                                          value={getUnitSelectValue(item.unidadSimbolo)}
+                                          onValueChange={(value) => actualizarItemNuevo(item.productoId, { unidadSimbolo: parseUnitSelectValue(value) })}
+                                        >
+                                          <SelectTrigger className="w-24 text-xs h-7">
+                                            <SelectValue placeholder="Sin unidad" />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value={UNIT_OPTION_NONE}>Sin unidad</SelectItem>
+                                            {MASS_UNITS.map((unit) => (
+                                              <SelectItem key={`mass-${unit}`} value={unit}>{unit}</SelectItem>
+                                            ))}
+                                            {VOLUME_UNITS.map((unit) => (
+                                              <SelectItem key={`volume-${unit}`} value={unit}>{unit}</SelectItem>
+                                            ))}
+                                            {NO_CONVERSION_UNITS.map((unit) => (
+                                              <SelectItem key={`plain-${unit}`} value={unit}>{unit}</SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                      </TableCell>
+                                      <TableCell className="text-xs">
+                                        <Input
+                                          type="number"
+                                          min={0}
+                                          max={1}
+                                          step={0.01}
+                                          value={item.desperdicio}
+                                          onChange={(e) => actualizarItemNuevo(item.productoId, { desperdicio: parseFloat(e.target.value) || 0 })}
+                                          className="w-20 text-xs h-7"
+                                        />
+                                      </TableCell>
+                                      <TableCell className="text-right">
+                                        <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-7 w-7"
+                                          onClick={() => eliminarItemNuevo(item.productoId)}
+                                        >
+                                          <Trash2 className="h-3 w-3" />
+                                        </Button>
+                                      </TableCell>
+                                    </TableRow>
+                                  )
+                                })}
+                              </TableBody>
+                            </Table>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Footer con botones - fixed */}
+                    <div className="flex justify-end gap-2 border-t pt-4 flex-shrink-0">
                       <Button variant="outline" onClick={() => {
                         setDialogRecetaOpen(false)
                         setNombreReceta('')
