@@ -35,16 +35,16 @@ export const PATCH = withAuth(
         where: { recetaId: id },
         data: payload,
         include: {
-          plato: {
+          Producto: {
             select: {
-              platoId: true,
+              id: true,
               nombre: true,
-              precio: true,
+              precioCosto: true,
             },
           },
-          ingredientes: {
+          RecetaIngrediente: {
             include: {
-              producto: {
+              Producto: {
                 select: {
                   id: true,
                   nombre: true,
