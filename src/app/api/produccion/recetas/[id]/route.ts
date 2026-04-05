@@ -105,7 +105,6 @@ export const PATCH = withAuth(async (request: NextRequest, { params }: { params:
         { status: 400 }
       );
     }
-    }
 
     console.error('Error al actualizar receta de producción:', error);
     return NextResponse.json({ error: 'Error al actualizar receta de producción.' }, { status: 500 });
