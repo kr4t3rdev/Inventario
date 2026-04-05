@@ -1,7 +1,7 @@
 'use client';
 
 import type React from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Loader2, Save, UserPen } from 'lucide-react';
 import { toast } from 'sonner';
@@ -72,6 +72,30 @@ export function EditUserDialog({ open, onClose, user }: EditUserDialogProps): Re
     });
   }, [user]);
 
+  const handleNameChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({ ...prev, name: event.target.value }));
+  }, []);
+
+  const handleEmailChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({ ...prev, email: event.target.value }));
+  }, []);
+
+  const handlePasswordChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({ ...prev, password: event.target.value }));
+  }, []);
+
+  const handleRoleChange = useCallback((value: string) => {
+    setFormData((prev) => ({ ...prev, role: value as EditUserFormState['role'] }));
+  }, []);
+
+  const handleIsActiveChange = useCallback((checked: boolean) => {
+    setFormData((prev) => ({ ...prev, isActive: checked }));
+  }, []);
+
+  const handleDaysToExpireChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setFormData((prev) => ({ ...prev, daysToExpire: event.target.value }));
+  }, []);
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
     setLoading(true);
@@ -133,91 +157,87 @@ export function EditUserDialog({ open, onClose, user }: EditUserDialogProps): Re
           transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
         >
           <div className="grid gap-4 py-1">
-            <div className="space-y-2">
-              <Label htmlFor="edit-name">Nombre</Label>
-              <Input
-                id="edit-name"
-                value={formData.name}
-                onChange={(event) => setFormData({ ...formData, name: event.target.value })}
-                className="h-11 border-slate-200 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50"
-                required
-              />
-            </div>
+             <div className="space-y-2">
+               <Label htmlFor="edit-name">Nombre</Label>
+               <Input
+                 id="edit-name"
+                 value={formData.name}
+                 onChange={handleNameChange}
+                 className="h-11 border-slate-200 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50"
+                 required
+               />
+             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="edit-email">Email</Label>
-              <Input
-                id="edit-email"
-                type="email"
-                value={formData.email}
-                onChange={(event) => setFormData({ ...formData, email: event.target.value })}
-                className="h-11 border-slate-200 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50"
-                required
-              />
-            </div>
+             <div className="space-y-2">
+               <Label htmlFor="edit-email">Email</Label>
+               <Input
+                 id="edit-email"
+                 type="email"
+                 value={formData.email}
+                 onChange={handleEmailChange}
+                 className="h-11 border-slate-200 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50"
+                 required
+               />
+             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="edit-password">Nueva contraseña</Label>
-              <Input
-                id="edit-password"
-                type="password"
-                value={formData.password}
-                onChange={(event) => setFormData({ ...formData, password: event.target.value })}
-                placeholder="Déjalo vacío para mantener la actual"
-                minLength={6}
-                className="h-11 border-slate-200 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50"
-              />
-            </div>
+             <div className="space-y-2">
+               <Label htmlFor="edit-password">Nueva contraseña</Label>
+               <Input
+                 id="edit-password"
+                 type="password"
+                 value={formData.password}
+                 onChange={handlePasswordChange}
+                 placeholder="Déjalo vacío para mantener la actual"
+                 minLength={6}
+                 className="h-11 border-slate-200 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50"
+               />
+             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="edit-role">Rol</Label>
-                <Select
-                  value={formData.role}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, role: value as EditUserFormState['role'] })
-                  }
-                >
-                  <SelectTrigger id="edit-role" className="h-11 border-slate-200 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="regularUser">Usuario Regular</SelectItem>
-                    <SelectItem value="dependiente">Dependiente</SelectItem>
-                    <SelectItem value="admin">Administrador</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+               <div className="space-y-2">
+                 <Label htmlFor="edit-role">Rol</Label>
+                 <Select
+                   value={formData.role}
+                   onValueChange={handleRoleChange}
+                 >
+                   <SelectTrigger id="edit-role" className="h-11 border-slate-200 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50">
+                     <SelectValue />
+                   </SelectTrigger>
+                   <SelectContent>
+                     <SelectItem value="regularUser">Usuario Regular</SelectItem>
+                     <SelectItem value="dependiente">Dependiente</SelectItem>
+                     <SelectItem value="admin">Administrador</SelectItem>
+                   </SelectContent>
+                 </Select>
+               </div>
 
-              <div className="space-y-2 rounded-lg border border-slate-200/70 bg-slate-50/70 p-3 dark:border-slate-700/70 dark:bg-slate-800/40">
-                <Label htmlFor="edit-is-active">Usuario Activo</Label>
-                <div className="flex items-center justify-between">
-                  <p className="text-xs text-muted-foreground">
-                    Controla acceso al sistema en tiempo real.
-                  </p>
-                  <Switch
-                    id="edit-is-active"
-                    checked={formData.isActive}
-                    onCheckedChange={(checked) => setFormData({ ...formData, isActive: checked })}
-                  />
-                </div>
-              </div>
+               <div className="space-y-2 rounded-lg border border-slate-200/70 bg-slate-50/70 p-3 dark:border-slate-700/70 dark:bg-slate-800/40">
+                 <Label htmlFor="edit-is-active">Usuario Activo</Label>
+                 <div className="flex items-center justify-between">
+                   <p className="text-xs text-muted-foreground">
+                     Controla acceso al sistema en tiempo real.
+                   </p>
+                   <Switch
+                     id="edit-is-active"
+                     checked={formData.isActive}
+                     onCheckedChange={handleIsActiveChange}
+                   />
+                 </div>
+               </div>
             </div>
 
-            <div className="space-y-2 rounded-lg border border-slate-200/70 bg-slate-50/70 p-3 dark:border-slate-700/70 dark:bg-slate-800/40">
-              <Label htmlFor="edit-days">Extender días</Label>
-              <Input
-                id="edit-days"
-                type="number"
-                value={formData.daysToExpire}
-                onChange={(event) =>
-                  setFormData({ ...formData, daysToExpire: event.target.value })
-                }
-                min={1}
-                placeholder="Días adicionales"
-                className="h-11 border-slate-200 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50"
-              />
-            </div>
+             <div className="space-y-2 rounded-lg border border-slate-200/70 bg-slate-50/70 p-3 dark:border-slate-700/70 dark:bg-slate-800/40">
+               <Label htmlFor="edit-days">Extender días</Label>
+               <Input
+                 id="edit-days"
+                 type="number"
+                 value={formData.daysToExpire}
+                 onChange={handleDaysToExpireChange}
+                 min={1}
+                 placeholder="Días adicionales"
+                 className="h-11 border-slate-200 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50"
+               />
+             </div>
           </div>
 
           <DialogFooter>

@@ -8,7 +8,7 @@ Este módulo gestiona el proceso de producción de la empresa, incluyendo la def
 
 ### Requirement: Gestión de Recetas para Productos del Inventario
 
-El sistema DEBE permitir crear, editar, eliminar y consultar recetas para productos elaborados del inventario. Una receta define los ingredientes (otros productos del inventario) y sus cantidades necesarias para producir una cantidad específica (rendimiento) de un producto final.
+El sistema DEBE permitir crear, editar, eliminar y consultar recetas para productos elaborados del inventario. Una receta define un producto final del inventario con un rendimiento específico. El producto final actúa como tanto el destino de la producción como el componente de costo base de la receta.
 
 #### Scenario: Crear receta simple para producto
 
@@ -16,37 +16,40 @@ El sistema DEBE permitir crear, editar, eliminar y consultar recetas para produc
 - WHEN ingresa nombre "Refresco 1L", rendimiento 1, selecciona producto del inventario "Refresco Instantáneo 1L Sin Marca", y guarda
 - THEN el sistema DEBE crear la receta con estado activo
 - AND mostrar la receta en la tabla de recetas
-- AND calcular costoUnitario como 0 (cero) inicialmente
+- AND inicializar costoUnitario = precioCosto del producto final
 
-#### Scenario: Agregar ingredientes a receta
+#### Scenario: Agregar productos a receta mediante búsqueda
 
-- GIVEN que existe una receta sin ingredientes
-- WHEN el usuario accede a editar la receta, agrega ingrediente "Refresco Instantáneo 20g" con cantidad 1, desperdicio 0%, y guarda
-- THEN el sistema DEBE vincular el ingrediente a la receta
-- AND recalcular automáticamente costoUnitario = (1 × precioCosto de "Refresco Instantáneo 20g") / 1
-- AND mostrar la actualización en tiempo real
+- GIVEN que existe una receta "Refresco 1L" sin productos agregados
+- WHEN el usuario accede a editar la receta y ve un área expandida de búsqueda de productos
+- AND ingresa "Azúcar" en el input de búsqueda
+- THEN el sistema DEBE mostrar lista de productos coincidentes (ej: "Azúcar Blanca 1kg", "Azúcar Morena 1kg")
+- AND el usuario selecciona "Azúcar Blanca 1kg" con cantidad 2, unidad "kg"
+- THEN el sistema DEBE agregar el producto a la receta
+- AND recalcular costoUnitario = (precioCosto_ProductoFinal + 2 × precioCosto_Azúcar) / rendimiento
+- AND mostrar el producto agregado en una sección visual amplia
 
-#### Scenario: Rechazar ingrediente duplicado en receta
+#### Scenario: Rechazar producto duplicado en receta
 
-- GIVEN que una receta ya tiene agregado "Refresco Instantáneo 20g"
-- WHEN el usuario intenta agregar el mismo producto nuevamente
+- GIVEN que una receta ya tiene agregado producto "Azúcar Blanca 1kg"
+- WHEN el usuario intenta agregar el mismo producto nuevamente mediante búsqueda
 - THEN el sistema DEBE mostrar error "Este producto ya existe en la receta"
 - AND NOT permitir la duplicación
 
-#### Scenario: Editar cantidad de ingrediente con recalculo de costo
+#### Scenario: Editar cantidad de producto con recalculo de costo
 
-- GIVEN que una receta tiene ingrediente "Refresco Instantáneo 20g" cantidad 1
-- WHEN el usuario cambia la cantidad a 2
+- GIVEN que una receta tiene producto "Azúcar Blanca 1kg" cantidad 2
+- WHEN el usuario cambia la cantidad a 3 en el área de productos
 - THEN el sistema DEBE actualizar la cantidad en la receta
 - AND recalcular costoUnitario automáticamente
-- AND mostrar el nuevo costo en la interfaz
+- AND mostrar el nuevo costo en la interfaz y en la tabla resumen
 
-#### Scenario: Aplicar desperdicio en ingrediente
+#### Scenario: Eliminar producto de receta
 
-- GIVEN que un ingrediente tiene desperdicio 10%
-- WHEN se calcula el costo de la receta
-- THEN el sistema DEBE incluir el desperdicio en el cálculo: cantidad × (1 + 0.10)
-- AND ajustar el costoUnitario final accordingly
+- GIVEN que una receta tiene producto "Azúcar Blanca 1kg" agregado
+- WHEN el usuario hace clic en el botón eliminar para ese producto
+- THEN el sistema DEBE remover el producto de la receta
+- AND recalcular costoUnitario automáticamente
 
 #### Scenario: Eliminar receta con órdenes asociadas
 
@@ -62,23 +65,34 @@ El sistema DEBE permitir crear, editar, eliminar y consultar recetas para produc
 - THEN el sistema DEBE mostrar solo recetas cuyo nombre contenga "Refresco" (case-insensitive)
 - AND actualizar la tabla en tiempo real
 
-### Requirement: Ingredientes de Receta con Unidades y Conversiones
+#### Scenario: Mostrar costo unitario en tabla de recetas
 
-El sistema DEBE permitir definir ingredientes en diferentes unidades de medida (kg, litros, unidades, etc.) con conversión automática de costos.
+- GIVEN que existe receta con productos agregados y costo calculado
+- WHEN se visualiza la tabla de recetas
+- THEN columna "Costo Unitario" DEBE mostrar formato moneda con 2 decimales (ej: "$50.75")
+- AND actualizar en tiempo real cuando se modifican productos
+- AND mostrar desglose: "costo total / rendimiento"
 
-#### Scenario: Agregar ingrediente con unidad diferente
+### Requirement: Productos en Receta con Unidades de Medida
 
-- GIVEN que un ingrediente "Azúcar" tiene precioCosto en kg
-- WHEN el usuario agrega a la receta "Azúcar" cantidad 500, unidad "gramos"
-- THEN el sistema DEBE convertir a la unidad base (kg) internamente = 0.5 kg
-- AND calcular costo como 0.5 × precioCosto
+El sistema DEBE permitir agregar productos del inventario a una receta en diferentes unidades de medida (kg, litros, unidades, etc.). El producto se identifica únicamente y se especifica con cantidad y unidad.
 
-#### Scenario: Mostrar cantidad en unidad configurada
+#### Scenario: Agregar producto a receta con unidad específica
 
-- GIVEN que se agregó "Azúcar" 500 gramos
-- WHEN se visualiza la receta
-- THEN el sistema DEBE mostrar "500 gramos" en la interfaz (no "0.5 kg")
-- AND mantener precisión en cálculos internos
+- GIVEN que una receta existe y hay un input de búsqueda expandido
+- WHEN el usuario busca "Azúcar", selecciona "Azúcar Blanca 1kg", e ingresa cantidad 500 con unidad "gramos"
+- THEN el sistema DEBE agregar el producto a la receta
+- AND mostrar "Azúcar Blanca 1kg x 500 gramos" en la sección de productos
+- AND calcular costo usando precioCosto del producto
+
+#### Scenario: Búsqueda de producto en área expandida
+
+- GIVEN que usuario accede a editar receta
+- WHEN visualiza un área amplia dedicada a búsqueda de productos
+- THEN el sistema DEBE mostrar input con placeholder "Buscar productos..."
+- AND permitir escribir parte del nombre del producto
+- AND mostrar resultados en tiempo real debajo del input
+- AND cada resultado DEBE mostrar: nombre, categoría, precio actual, stock disponible
 
 ### Requirement: Órdenes de Producción con Estados Transicionables
 
@@ -216,34 +230,36 @@ El sistema DEBE mantener registro completo de cambios de estado en órdenes de p
 - THEN el sistema DEBE mostrar lista cronológica de cambios
 - AND mostrar para cada entrada: estado anterior, nuevo, fecha, usuario
 
-### Requirement: Cálculo Automático de Costos
+### Requirement: Cálculo Automático de Costos por Unidad
 
-El sistema DEBE calcular costos de producción basado en precios de costo de ingredientes.
+El sistema DEBE calcular automáticamente el costo unitario de cada receta basado en el producto final y los productos agregados.
 
-#### Scenario: Calcular costoUnitario de receta vacía
+#### Scenario: Calcular costoUnitario con producto final y agregados
 
-- GIVEN que se crea receta sin ingredientes
-- WHEN se guarda
-- THEN costoUnitario DEBE ser 0
+- GIVEN que receta "Refresco 1L" tiene producto final "Refresco 1L Sin Marca" ($50 costo), rendimiento 1
+- WHEN se agregan productos: "Azúcar 1kg" ($5 × 2 kg) = $10
+- THEN costoUnitario DEBE ser ($50 + $10) / 1 = $60 por unidad
+- AND mostrar en tabla: "$60.00"
 
-#### Scenario: Recalcular costo al cambiar precio de ingrediente
+#### Scenario: Recalcular costo al cambiar precio de producto
 
-- GIVEN que receta "Refresco 1L" con ingrediente "Azúcar" $1/kg, cantidad 1kg, costoUnitario = $1
-- WHEN el precio del producto "Azúcar" cambia a $1.5/kg (operación en módulo de productos)
-- THEN costoUnitario de la receta DEBE recalcularse a $1.5 en la siguiente consulta
-- AND mostrar actualización en tabla de recetas
+- GIVEN que receta tiene costoUnitario = $60
+- WHEN el precio del producto final "Refresco 1L Sin Marca" cambia de $50 a $55 (en módulo de productos)
+- THEN costoUnitario DEBE recalcularse a $65 en la siguiente consulta
+- AND mostrar actualización en tabla
 
-#### Scenario: Mostrar costo unitario en receta
+#### Scenario: Mostrar costo unitario con precisión de centavos
 
 - GIVEN que receta tiene costoUnitario calculado
-- WHEN se visualiza la tabla de recetas
-- THEN columna "Costo Unitario" DEBE mostrar formato moneda, ej: "$50.00"
+- WHEN se visualiza tabla de recetas
+- THEN columna "Costo Unitario" DEBE mostrar formato moneda con 2 decimales, ej: "$50.75"
+- AND sorted de menor a mayor para análisis de rentabilidad
 
-#### Scenario: Calcular costo total de orden
+#### Scenario: Receta sin productos agregados
 
-- GIVEN que orden produce 10 unidades con costoUnitario = $5
-- WHEN se consulta el costo de la orden
-- THEN costoMateriales DEBE ser $5 × 10 = $50
+- GIVEN que se crea receta con solo producto final
+- WHEN no hay productos adicionales agregados
+- THEN costoUnitario DEBE ser = precioCosto del producto final / rendimiento
 
 ### Requirement: Panel de Estadísticas Actualizado en Tiempo Real
 
@@ -308,6 +324,47 @@ Las recetas AHORA pueden vincularse a Productos del inventario. Una receta puede
 ## REMOVED Requirements
 
 (No hay requirements removidos en este cambio, solo adiciones y modificaciones)
+
+---
+
+## Requirement: Interfaz de Usuario para Gestión de Recetas
+
+El sistema DEBE proporcionar una interfaz clara para crear y editar recetas con búsqueda expandida de productos.
+
+#### Scenario: Pantalla de edición de receta con área de búsqueda expandida
+
+- GIVEN que usuario accede a crear/editar receta
+- WHEN visualiza el formulario
+- THEN DEBE mostrar:
+  - Campo nombre (input texto)
+  - Campo rendimiento (input número)
+  - Campo producto final (select o búsqueda)
+  - Área GRANDE y expandida para búsqueda de productos a agregar (ocupando la mayoría del espacio)
+  - Input de búsqueda en el área expandida
+  - Lista de resultados debajo del input
+  - Sección donde se muestran productos agregados
+
+#### Scenario: Agregar producto desde área expandida
+
+- GIVEN que usuario ve área expandida de búsqueda con input "Buscar productos..."
+- WHEN escribe "Azúcar" en el input
+- THEN sistema DEBE mostrar resultados con formato: "Nombre | Categoría | $Precio | Stock: N"
+- AND usuario hace clic en producto
+- THEN aparece input de cantidad y selector de unidad
+- AND luego botón "Agregar a Receta"
+- AND al hacer clic, producto se agrega a la sección inferior
+
+#### Scenario: Tabla de recetas muestra costo unitario
+
+- GIVEN que usuario visualiza tabla de recetas
+- THEN columnas DEBEN ser:
+  - Nombre (link editable)
+  - Rendimiento
+  - Producto Final (asociado)
+  - # de Productos Agregados
+  - Costo Unitario ($XX.XX) ← VISIBLE Y DESTACADO
+  - Fecha de Creación
+  - Acciones (Editar, Eliminar)
 
 ---
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useTransition } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
   AlertTriangle,
@@ -96,6 +96,7 @@ const titleVariants: Variants = {
  */
 export default function AdminUsersPage(): React.JSX.Element {
   const { user } = useAuth();
+  const [isPending, startTransition] = useTransition();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<Usuario | null>(null);
@@ -177,8 +178,10 @@ export default function AdminUsersPage(): React.JSX.Element {
   };
 
   const handleEditUser = (candidate: Usuario): void => {
-    setSelectedUser(candidate);
-    setEditDialogOpen(true);
+    startTransition(() => {
+      setSelectedUser(candidate);
+      setEditDialogOpen(true);
+    });
   };
 
   const handleDialogClose = (): void => {
