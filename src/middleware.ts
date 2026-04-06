@@ -1,22 +1,29 @@
-import { NextResponse } from "next/server"
-import type { NextRequest } from "next/server"
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+import { validateAllSecrets } from '@/lib/secrets'
 
+// Validar secretos al iniciar el middleware (falla rápido si faltan vars de entorno)
+validateAllSecrets()
+
+/**
+ * @description Middleware de Next.js que maneja la protección de rutas.
+ * La lógica pesada de autenticación (JWT + sesión + usuario) está delegada
+ * a los wrappers `withAuth*` en cada route handler.
+ * Este nivel solo hace verificación de presencia del token.
+ */
 export async function middleware(request: NextRequest) {
   const url = new URL(request.url)
   const path = url.pathname
   const method = request.method
-  
-  console.log('[Middleware] Request:', {
-    path,
-    method,
-    headers: {
-      authorization: request.headers.get('authorization')?.substring(0, 20) + '...'
-    }
-  })
 
+  if (process.env.NODE_ENV === 'development') {
+    console.log('[Middleware]', method, path)
+  }
+
+  // Rutas públicas que no requieren token
   const publicPathsExact = [
     '/api/auth/login',
-    '/api/auth/register', 
+    '/api/auth/register',
     '/api/auth/logout',
     '/api/auth/me',
     '/api/auth/refresh',
@@ -37,35 +44,27 @@ export async function middleware(request: NextRequest) {
   const isExactPublic = publicPathsExact.some(p => path === p || path.startsWith(p + '/'))
   const isPrefixPublic = publicPathsPrefix.some(p => path.startsWith(p))
   const isGetPublic = publicGetOnly.includes(path) && method === 'GET'
-  
-  const isPublicPath = isExactPublic || isPrefixPublic || isGetPublic
-  
-  console.log('[Middleware] isPublicPath:', isPublicPath, 'for path:', path)
-  
-  if (isPublicPath) {
-    console.log('[Middleware] ✅ Permitiendo acceso a ruta pública')
+
+  if (isExactPublic || isPrefixPublic || isGetPublic) {
     return NextResponse.next()
   }
-  
-  if (path.startsWith("/api")) {
-    console.log('[Middleware] 🔒 Verificando token para API')
-    const authorization = request.headers.get("authorization")
-    
-    console.log('[Middleware] Authorization header:', authorization ? 'Presente' : 'Ausente')
-    
-    if (!authorization || !authorization.startsWith("Bearer ")) {
-      console.log('[Middleware] ❌ Token no proporcionado')
-      return NextResponse.json({ 
-        error: 'Token no proporcionado',
-        message: 'Se requiere autenticación para acceder a este recurso'
-      }, { status: 401 })
+
+  // Rutas API protegidas: verificar presencia del Bearer token
+  // La validación completa (JWT + sesión + permisos) la hacen los wrappers withAuth*
+  if (path.startsWith('/api')) {
+    const authorization = request.headers.get('authorization')
+
+    if (!authorization || !authorization.startsWith('Bearer ')) {
+      return NextResponse.json(
+        {
+          error: 'Token no proporcionado',
+          message: 'Se requiere autenticación para acceder a este recurso',
+        },
+        { status: 401 }
+      )
     }
-    
-    console.log('[Middleware] ✅ Token presente, continuando')
-    return NextResponse.next()
   }
-  
-  console.log('[Middleware] ✅ Ruta de frontend, permitiendo paso')
+
   return NextResponse.next()
 }
 
@@ -74,6 +73,6 @@ export const config = {
     '/busy/:path*',
     '/login',
     '/register',
-    '/api/:path*'
-  ]
+    '/api/:path*',
+  ],
 }
