@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "../../../../../lib/prisma"
 // import { verify_token } from "../../../../../lib/auth-utils"
-import { verify_token } from "@/lib/auth-utils"
+import { authenticateUser } from "@/lib/auth-middleware"
 import { z } from "zod"
 // import { z } from "zod" // Removed for simplified query handling
 

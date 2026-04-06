@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { verify_token } from '@/lib/auth-utils'
+import { authenticateUser } from '@/lib/auth-middleware'
 
 // GET - Obtener todas las ventas de servicios
 export async function GET(request: NextRequest) {
   try {
-    const user = await verify_token(request)
-    if (!user) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-    }
+    const authResultUser = await authenticateUser(request)
+    if ('status' in authResultUser) return authResultUser as Response
+    const user = authResultUser.user
 
     const pagoSalario = await prisma.pagosalario.findMany({
       include: {
@@ -32,10 +31,9 @@ export async function GET(request: NextRequest) {
 // POST - Crear una nueva venta de servicio
 export async function POST(request: NextRequest) {
   try {
-    const user = await verify_token(request)
-    if (!user) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-    }
+    const authResultUser = await authenticateUser(request)
+    if ('status' in authResultUser) return authResultUser as Response
+    const user = authResultUser.user
 
     const data = await request.json()
 

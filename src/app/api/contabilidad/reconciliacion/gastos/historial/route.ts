@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
-import { verify_token } from '@/lib/auth-utils'
+import { authenticateUser } from '@/lib/auth-middleware'
 
 // GET - Obtener historial de reconciliaciones de gastos
 export async function GET(request: NextRequest) {
   try {
-    const user = await verify_token(request)
-    if (!user) {
-      return NextResponse.json({ error: 'No autorizado', code: 'UNAUTHORIZED' }, { status: 401 })
-    }
+    const authResultUser = await authenticateUser(request)
+    if ('status' in authResultUser) return authResultUser as Response
+    const user = authResultUser.user
 
     const { searchParams } = new URL(request.url)
     const tipoGasto = searchParams.get('tipoGasto') // 'salario', 'gastoDE', 'compra'

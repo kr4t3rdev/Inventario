@@ -1,14 +1,16 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { verify_token } from '@/lib/auth-utils';
+import { authenticateUser } from '@/lib/auth-middleware';
 import { deleteSessionQuerySchema } from '@/lib/admin/schemas';
 import { isAdminRole } from '@/lib/auth/roles';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
-    const authUser = await verify_token(request);
-    if (!authUser || !isAdminRole(authUser.role)) {
+    const authResultGet = await authenticateUser(request)
+    if ('status' in authResultGet) return authResultGet as Response
+    const authUser = authResultGet.user
+    if (!isAdminRole(authUser.role)) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
@@ -41,8 +43,10 @@ export async function GET(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const authUser = await verify_token(request);
-    if (!authUser || !isAdminRole(authUser.role)) {
+    const authResultDel = await authenticateUser(request)
+    if ('status' in authResultDel) return authResultDel as Response
+    const authUser = authResultDel.user
+    if (!isAdminRole(authUser.role)) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 

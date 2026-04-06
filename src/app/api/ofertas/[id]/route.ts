@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { z } from 'zod'
-import { verify_token } from "@/lib/auth-utils"
+import { authenticateUser } from "@/lib/auth-middleware"
 
 const updateSchema = z.object({
   estado: z.enum(['PENDIENTE', 'ACEPTADA', 'RECHAZADA', 'FACTURADA']).optional(),
@@ -44,10 +44,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
-    const user = await verify_token(request)
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const authResultUser = await authenticateUser(request)
+    if ('status' in authResultUser) return authResultUser as Response
+    const user = authResultUser.user
 
     const body = await request.json()
     const validatedData = updateSchema.parse(body)
@@ -74,10 +73,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
-    const user = await verify_token(request)
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const authResultUser = await authenticateUser(request)
+    if ('status' in authResultUser) return authResultUser as Response
+    const user = authResultUser.user
 
     // Verificar que la oferta existe
     const oferta = await prisma.oferta.findUnique({

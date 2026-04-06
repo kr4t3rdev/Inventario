@@ -1,14 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { verify_token } from "@/lib/auth-utils"
+import { authenticateUser } from "@/lib/auth-middleware"
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const user = await verify_token(request)
-    if (!user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
+    const authResultUser = await authenticateUser(request)
+    if ('status' in authResultUser) return authResultUser as Response
+    const user = authResultUser.user
 
     const body = await request.json()
 
@@ -30,10 +29,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const user = await verify_token(request)
-    if (!user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
+    const authResultUser = await authenticateUser(request)
+    if ('status' in authResultUser) return authResultUser as Response
+    const user = authResultUser.user
 
     await prisma.notification.delete({
       where: {

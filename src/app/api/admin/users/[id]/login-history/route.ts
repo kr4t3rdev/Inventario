@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { verify_token } from "@/lib/auth-utils"
+import { authenticateUser } from "@/lib/auth-middleware"
 import { isAdminRole } from '@/lib/auth/roles';
 
 /**
@@ -14,8 +14,10 @@ export async function GET(
   context: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   try {
-    const auth_user = await verify_token(request)
-    if (!auth_user || !isAdminRole(auth_user.role)) {
+    const authResultUser = await authenticateUser(request)
+    if ('status' in authResultUser) return authResultUser as NextResponse
+    const auth_user = authResultUser.user
+    if (!isAdminRole(auth_user.role)) {
       return NextResponse.json({ error: "No autorizado" }, { status: 403 })
     }
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { verify_token } from '@/lib/auth-utils';
+import { authenticateUser } from '@/lib/auth-middleware';
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
@@ -23,10 +23,9 @@ function getBufferHash(buffer: Buffer): string {
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const user = await verify_token(req);
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const authResultReq1 = await authenticateUser(req);
+    if ('status' in authResultReq1) return authResultReq1 as Response;
+    const user = authResultReq1.user;
 
     const { id } = await params;
     const formData = await req.formData();

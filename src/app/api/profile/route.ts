@@ -1,15 +1,14 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-//import { verify_token } from "@/lib/auth-utils"
+//import { authenticateUser } from "@/lib/auth-middleware"
 
-import { verify_token } from "@/lib/auth-utils"
+import { authenticateUser } from "@/lib/auth-middleware"
 
 export async function GET(request: NextRequest) {
   try {   
-    const user = await verify_token(request)
-    if (!user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
+    const authResultUser = await authenticateUser(request)
+    if ('status' in authResultUser) return authResultUser as Response
+    const user = authResultUser.user
 
     const profile = await prisma.user.findMany({
       where: { userId: user.userId },
@@ -36,10 +35,9 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    const user = await verify_token(request)
-    if (!user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
+    const authResultUser = await authenticateUser(request)
+    if ('status' in authResultUser) return authResultUser as Response
+    const user = authResultUser.user
 
     const { name, avatar } = await request.json()
 

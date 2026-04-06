@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
-import { verify_token } from '@/lib/auth-utils'
+import { authenticateUser } from '@/lib/auth-middleware'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 
 /**
@@ -14,13 +14,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const decoded = await verify_token(request)
-    if (!decoded) {
-      return NextResponse.json(
-        { error: 'No autorizado' },
-        { status: 401 }
-      )
-    }
+    const authResultDecoded = await authenticateUser(request)
+    if ('status' in authResultDecoded) return authResultDecoded as Response
+    const decoded = authResultDecoded.user
 
     const { id } = await params
 
@@ -67,13 +63,9 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const decoded = await verify_token(request)
-    if (!decoded) {
-      return NextResponse.json(
-        { error: 'No autorizado' },
-        { status: 401 }
-      )
-    }
+    const authResultDecoded = await authenticateUser(request)
+    if ('status' in authResultDecoded) return authResultDecoded as Response
+    const decoded = authResultDecoded.user
 
     const { id } = await params
     const body = await request.json()
@@ -185,13 +177,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const decoded = await verify_token(request)
-    if (!decoded) {
-      return NextResponse.json(
-        { error: 'No autorizado' },
-        { status: 401 }
-      )
-    }
+    const authResultDecoded = await authenticateUser(request)
+    if ('status' in authResultDecoded) return authResultDecoded as Response
+    const decoded = authResultDecoded.user
 
     const { id } = await params
 

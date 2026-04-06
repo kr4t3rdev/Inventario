@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
-import { verify_token } from "@/lib/auth-utils";
+import { authenticateUser } from "@/lib/auth-middleware";
 import { AuditLogService } from "@/lib/services/audit-log-service";
 
 // Schema for validating bank account updates
@@ -127,10 +127,9 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
 // PUT /api/contabilidad/cuentas/[id] - Update bank account
 export async function PUT(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const user = await verify_token(request);
-    if (!user) {
-      return NextResponse.json({ error: "No autorizado", code: "UNAUTHORIZED" }, { status: 401 });
-    }
+    const authResultUser = await authenticateUser(request)
+    if ('status' in authResultUser) return authResultUser as Response
+    const user = authResultUser.user
 
     const { id } = await context.params;
     const body = await request.json();
@@ -207,10 +206,9 @@ export async function PUT(request: NextRequest, context: { params: Promise<{ id:
 // DELETE /api/contabilidad/cuentas/[id] - Delete bank account with validation
 export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const user = await verify_token(request);
-    if (!user) {
-      return NextResponse.json({ error: "No autorizado", code: "UNAUTHORIZED" }, { status: 401 });
-    }
+    const authResultUser = await authenticateUser(request)
+    if ('status' in authResultUser) return authResultUser as Response
+    const user = authResultUser.user
 
     const { id } = await context.params;
     // Check if account exists

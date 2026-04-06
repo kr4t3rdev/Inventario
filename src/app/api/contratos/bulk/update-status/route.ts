@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { z } from 'zod';
-import { verify_token } from '@/lib/auth-utils';
+import { authenticateUser } from '@/lib/auth-middleware';
 
 const bulkStatusSchema = z.object({
   ids: z.array(z.string()),
@@ -10,10 +10,9 @@ const bulkStatusSchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const user = await verify_token(req);
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const authResultReq1 = await authenticateUser(req);
+    if ('status' in authResultReq1) return authResultReq1 as Response;
+    const user = authResultReq1.user;
 
     const body = await req.json();
     const { ids, estado } = bulkStatusSchema.parse(body);

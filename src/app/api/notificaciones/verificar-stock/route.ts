@@ -1,12 +1,14 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { verify_token } from "@/lib/auth-utils"
+import { authenticateUser } from "@/lib/auth-middleware"
 import { verificarStockBajo } from "../../../../lib/notificaciones-utils"
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await verify_token(request)
-    if (!user || user.role !== "admin") {
-      return NextResponse.json({ error: "No autorizado" }, { status: 403 })
+    const authResultUser = await authenticateUser(request)
+    if ('status' in authResultUser) return authResultUser as Response
+    const user = authResultUser.user
+    if (user.role !== 'admin') {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 })
     }
 
     const resultado = await verificarStockBajo()

@@ -1,11 +1,12 @@
 import { NextResponse, NextRequest } from 'next/server'
 import { cookies } from 'next/headers'
 import { prisma } from "@/lib/prisma"
-import { verify_token } from "@/lib/auth-utils"
+import { authenticateUser } from "@/lib/auth-middleware"
 
 export async function POST(request: NextRequest) {
   try {
-    const auth_user = await verify_token(request)
+    const authResultOpt = await authenticateUser(request)
+    const auth_user = 'status' in authResultOpt ? null : authResultOpt.user
     const ipAddress = request.headers.get("x-forwarded-for") || null
     const userAgent = request.headers.get("user-agent") || null
 

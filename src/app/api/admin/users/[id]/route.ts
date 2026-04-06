@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { verify_token } from '@/lib/auth-utils';
+import { authenticateUser } from '@/lib/auth-middleware';
 import { updateUserBodySchema, userIdParamSchema } from '@/lib/admin/schemas';
 import { isAdminRole } from '@/lib/auth/roles';
 import { prisma } from '@/lib/prisma';
@@ -27,8 +27,10 @@ export async function GET(
   context: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   try {
-    const authUser = await verify_token(request);
-    if (!authUser || !isAdminRole(authUser.role)) {
+    const authResultAuthUser1 = await authenticateUser(request);
+    if ('status' in authResultAuthUser1) return authResultAuthUser1 as NextResponse;
+    const authUser = authResultAuthUser1.user;
+    if (!isAdminRole(authUser.role)) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
@@ -76,8 +78,10 @@ export async function PUT(
   context: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   try {
-    const authUser = await verify_token(request);
-    if (!authUser || !isAdminRole(authUser.role)) {
+    const authResultAuthUser2 = await authenticateUser(request);
+    if ('status' in authResultAuthUser2) return authResultAuthUser2 as NextResponse;
+    const authUser = authResultAuthUser2.user;
+    if (!isAdminRole(authUser.role)) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
@@ -175,8 +179,10 @@ export async function DELETE(
   context: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   try {
-    const authUser = await verify_token(request);
-    if (!authUser || !isAdminRole(authUser.role)) {
+    const authResultAuthUser3 = await authenticateUser(request);
+    if ('status' in authResultAuthUser3) return authResultAuthUser3 as NextResponse;
+    const authUser = authResultAuthUser3.user;
+    if (!isAdminRole(authUser.role)) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 

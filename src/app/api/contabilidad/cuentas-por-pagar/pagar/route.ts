@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
-import { verify_token } from '@/lib/auth-utils'
+import { authenticateUser } from '@/lib/auth-middleware'
 import { z } from 'zod'
 import {
   applyPagoGastoWorkflow,
@@ -25,10 +25,9 @@ const pagarSchema = z.object({
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    const user = await verify_token(request)
-    if (!user) {
-      return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
-    }
+    const authResultUser = await authenticateUser(request)
+    if ('status' in authResultUser) return authResultUser as Response
+    const user = authResultUser.user
 
     const body = pagarSchema.parse(await request.json())
 

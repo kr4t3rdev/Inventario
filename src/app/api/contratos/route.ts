@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { z } from 'zod';
-import { verify_token } from "@/lib/auth-utils";
+import { authenticateUser } from "@/lib/auth-middleware";
 
 const contratoSchema = z.object({
   tipo: z.enum(['VENTA', 'SERVICIO', 'PROVEEDOR']),
@@ -18,10 +18,9 @@ const contratoSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await verify_token(request);
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const authResultUser = await authenticateUser(request)
+    if ('status' in authResultUser) return authResultUser as Response
+    const user = authResultUser.user
 
     const searchParams = request.nextUrl.searchParams;
     
@@ -103,10 +102,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await verify_token(request);
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const authResultUser = await authenticateUser(request)
+    if ('status' in authResultUser) return authResultUser as Response
+    const user = authResultUser.user
 
     const body = await request.json();
     const data = contratoSchema.parse(body);

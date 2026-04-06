@@ -2,7 +2,7 @@ import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
 import type { Prisma } from "@/generated/prisma";
-import { verify_token } from "@/lib/auth-utils";
+import { authenticateUser } from "@/lib/auth-middleware";
 import { AuditLogService } from "@/lib/services/audit-log-service";
 
 const pagoDeudaSchema = z.object({
@@ -17,10 +17,9 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const user = await verify_token(request);
-    if (!user) {
-      return NextResponse.json({ error: "No autorizado", code: "UNAUTHORIZED" }, { status: 401 });
-    }
+    const authResultUser = await authenticateUser(request)
+    if ('status' in authResultUser) return authResultUser as Response
+    const user = authResultUser.user
 
     const { id } = await params;
     const body = await request.json();

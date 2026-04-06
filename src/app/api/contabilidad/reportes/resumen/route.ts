@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { verify_token } from '@/lib/auth-utils'
+import { authenticateUser } from '@/lib/auth-middleware'
 
 interface CuentaBancariaResumen {
   cuentaId: string
@@ -100,10 +100,9 @@ interface EstadisticasResumen {
 
 export async function GET(request: NextRequest) {
   try {
-    const user = await verify_token(request)
-    if (!user) {
-      return NextResponse.json({ error: 'Token inválido' }, { status: 401 })
-    }
+    const authResultUser = await authenticateUser(request)
+    if ('status' in authResultUser) return authResultUser as Response
+    const user = authResultUser.user
 
     const { searchParams } = new URL(request.url)
     const fechaInicio = searchParams.get('fechaInicio')

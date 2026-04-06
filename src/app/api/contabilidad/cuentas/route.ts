@@ -1,7 +1,7 @@
 import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
 import { z } from "zod";
-import { verify_token } from "@/lib/auth-utils";
+import { authenticateUser } from "@/lib/auth-middleware";
 import { AuditLogService } from "@/lib/services/audit-log-service";
 
 // Schema for validating bank account creation/update
@@ -103,7 +103,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Create new bank account
-    const user = await verify_token(request);
+    const authResultOpt = await authenticateUser(request)
+    const user = 'status' in authResultOpt ? null : authResultOpt.user
     const nuevaCuenta = await prisma.cuentaBancaria.create({
       data: {
         nombreBanco: validatedData.nombreBanco,

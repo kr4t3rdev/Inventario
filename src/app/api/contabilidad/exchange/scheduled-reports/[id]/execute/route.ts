@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ejecutarReporteProgramado } from "@/lib/services/scheduled-report-scheduler";
-import { verify_token } from "@/lib/auth-utils";
+import { authenticateUser } from "@/lib/auth-middleware";
 import { AuditLogService } from "@/lib/services/audit-log-service";
 
 /**
@@ -20,10 +20,9 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ): Promise<NextResponse> {
   try {
-    const user = await verify_token(request);
-    if (!user) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
-    }
+    const authResultUser = await authenticateUser(request)
+    if ('status' in authResultUser) return authResultUser as Response
+    const user = authResultUser.user
 
     const { id } = await params;
 

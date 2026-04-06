@@ -1,14 +1,16 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { verify_token } from '@/lib/auth-utils';
+import { authenticateUser } from '@/lib/auth-middleware';
 import { lockUserBodySchema } from '@/lib/admin/schemas';
 import { isAdminRole } from '@/lib/auth/roles';
 import { prisma } from '@/lib/prisma';
 
 export async function POST(request: NextRequest) {
   try {
-    const authUser = await verify_token(request);
-    if (!authUser || !isAdminRole(authUser.role)) {
+    const authResultAuthUser1 = await authenticateUser(request);
+    if ('status' in authResultAuthUser1) return authResultAuthUser1 as Response;
+    const authUser = authResultAuthUser1.user;
+    if (!isAdminRole(authUser.role)) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 

@@ -1,14 +1,16 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { verify_token } from '@/lib/auth-utils';
+import { authenticateUser } from '@/lib/auth-middleware';
 import { activityLogBodySchema, activityLogQuerySchema } from '@/lib/admin/schemas';
 import { isAdminRole } from '@/lib/auth/roles';
 import { prisma } from '@/lib/prisma';
 
 export async function POST(request: NextRequest) {
   try {
-    const authUser = await verify_token(request);
-    if (!authUser || !isAdminRole(authUser.role)) {
+    const authResultAuthUser1 = await authenticateUser(request);
+    if ('status' in authResultAuthUser1) return authResultAuthUser1 as Response;
+    const authUser = authResultAuthUser1.user;
+    if (!isAdminRole(authUser.role)) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
@@ -41,8 +43,10 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const authUser = await verify_token(request);
-    if (!authUser || !isAdminRole(authUser.role)) {
+    const authResultAuthUser2 = await authenticateUser(request);
+    if ('status' in authResultAuthUser2) return authResultAuthUser2 as Response;
+    const authUser = authResultAuthUser2.user;
+    if (!isAdminRole(authUser.role)) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 

@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { verify_token } from '@/lib/auth-utils';
+import { authenticateUser } from '@/lib/auth-middleware';
 
 export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
-    const user = await verify_token(req);
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const authResultReq1 = await authenticateUser(req);
+    if ('status' in authResultReq1) return authResultReq1 as Response;
+    const user = authResultReq1.user;
 
     const { id } = await context.params;
     const aprobaciones = await prisma.contratoAprobacion.findMany({
@@ -27,10 +26,9 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const user = await verify_token(request);
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const authResultUser = await authenticateUser(request)
+    if ('status' in authResultUser) return authResultUser as Response
+    const user = authResultUser.user
 
     const { id } = await params;
     const body = await request.json();

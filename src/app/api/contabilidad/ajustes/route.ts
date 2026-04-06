@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verify_token } from '@/lib/auth-utils'
+import { authenticateUser } from '@/lib/auth-middleware'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { AuditLogService } from '@/lib/services/audit-log-service'
@@ -18,14 +18,9 @@ const createAjusteSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const user = await verify_token(request)
-
-    if (!user) {
-      return NextResponse.json(
-        { error: 'No autorizado' },
-        { status: 401 }
-      )
-    }
+    const authResultUser = await authenticateUser(request)
+    if ('status' in authResultUser) return authResultUser as Response
+    const user = authResultUser.user
 
     const body = await request.json()
     const validatedData = createAjusteSchema.parse(body)

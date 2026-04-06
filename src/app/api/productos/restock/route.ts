@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "../../../../lib/prisma"
-import { verify_token } from "../../../../lib/auth-utils"
+import { authenticateUser } from "@/lib/auth-middleware"
 
 import {
   RestockValidator,
@@ -15,11 +15,9 @@ import { executeProductInstanceCreationWorkflow } from "../../../../lib/restock-
 export async function POST(request: NextRequest) {
   try {
     // JWT Authentication middleware integration
-    const user = await verify_token(request)
-    if (!user) {
-      const authError = RestockErrorFactory.authenticationFailed()
-      return RestockApiErrorHandler.handleSingleError(authError)
-    }
+    const authResultUser = await authenticateUser(request)
+    if ('status' in authResultUser) return authResultUser as Response
+    const user = authResultUser.user
 
     // Parse request body
     const body = await request.json()

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
-import { verify_token } from '@/lib/auth-utils'
+import { authenticateUser } from '@/lib/auth-middleware'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 
 /**
@@ -9,13 +9,9 @@ import { AuditLogService } from '@/lib/services/audit-log-service'
  */
 export async function GET(request: NextRequest) {
   try {
-    const decoded = await verify_token(request)
-    if (!decoded) {
-      return NextResponse.json(
-        { error: 'No autorizado' },
-        { status: 401 }
-      )
-    }
+    const authResultDecoded = await authenticateUser(request)
+    if ('status' in authResultDecoded) return authResultDecoded as Response
+    const decoded = authResultDecoded.user
 
     // Obtener parámetros de consulta
     const searchParams = request.nextUrl.searchParams
@@ -91,13 +87,9 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
-    const decoded = await verify_token(request)
-    if (!decoded) {
-      return NextResponse.json(
-        { error: 'No autorizado' },
-        { status: 401 }
-      )
-    }
+    const authResultDecoded = await authenticateUser(request)
+    if ('status' in authResultDecoded) return authResultDecoded as Response
+    const decoded = authResultDecoded.user
 
     // Obtener datos del body
     const body = await request.json()

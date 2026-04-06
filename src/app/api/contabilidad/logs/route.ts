@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AuditLogService } from "@/lib/services/audit-log-service";
-import { verify_token } from "@/lib/auth-utils";
+import { authenticateUser } from "@/lib/auth-middleware";
 
 /**
  * @description Endpoint para obtener los logs de auditoría de contabilidad
@@ -8,10 +8,9 @@ import { verify_token } from "@/lib/auth-utils";
  */
 export async function GET(request: NextRequest) {
   try {
-    const user = await verify_token(request);
-    if (!user) {
-      return NextResponse.json({ error: "No autorizado", code: "UNAUTHORIZED" }, { status: 401 });
-    }
+    const authResultUser = await authenticateUser(request)
+    if ('status' in authResultUser) return authResultUser as Response
+    const user = authResultUser.user
 
     // Solo permitir acceso a administradores
     if (user.role !== 'admin') {
