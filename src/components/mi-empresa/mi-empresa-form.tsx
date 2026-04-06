@@ -50,7 +50,7 @@ const cardVariants = {
 }
 
 const miEmpresaSchema = z.object({
-  nombre: z.string().min(1, "Nombre requerido"),
+  nombre: z.string().optional(),
   propietario: z.string().optional(),
   direccion: z.string().optional(),
   telefono: z.string().optional(),
@@ -118,7 +118,15 @@ async function saveMiEmpresa(values: MiEmpresaFormValues): Promise<MiEmpresaApiR
   })
 
   if (!res.ok) {
-    const data = await res.json().catch(() => null)
+    const data = await res.json().catch(() => ({}))
+    
+    // Si hay errores de validación por campo, lanzar objeto con estructura especial
+    if ((data as any)?.fieldErrors) {
+      const error = new Error('Validation errors') as any
+      error.fieldErrors = (data as any).fieldErrors
+      throw error
+    }
+    
     const message = (data as any)?.error || "Error guardando Mi Empresa"
     throw new Error(message)
   }
@@ -203,7 +211,18 @@ export function MiEmpresaForm() {
       })
       sileo.success({ title: 'Mi Empresa actualizada' })
     } catch (e) {
-      sileo.error({ title: e instanceof Error ? e.message : 'Error guardando Mi Empresa' })
+      const error = e as any
+      
+      // Si hay errores de validación por campo, mostrar cada uno
+      if (error.fieldErrors && typeof error.fieldErrors === 'object') {
+        Object.entries(error.fieldErrors).forEach(([field, message]) => {
+          form.setError(field as any, { message: message as string })
+        })
+        sileo.error({ title: 'Por favor revisa los errores en los campos' })
+      } else {
+        // Error general
+        sileo.error({ title: error instanceof Error ? error.message : 'Error guardando Mi Empresa' })
+      }
     } finally {
       setSaving(false)
     }
@@ -223,7 +242,7 @@ export function MiEmpresaForm() {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-5">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
               <motion.div 
                 variants={containerVariants}
                 initial="hidden"

@@ -1,50 +1,71 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from './prisma'
 import jwt from 'jsonwebtoken'
+import { JWT_SECRET } from './secrets'
 import { checkApiPermission, type UserRole } from './permissions'
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key"
-
 /**
- * Resultado de autenticación
+ * @description Resultado de autenticación exitosa
  */
-interface AuthResult {
-  user: any
+export interface AuthenticatedUser {
+  userId: string
+  name: string
+  email: string
+  role: UserRole
+  isActive: boolean
 }
 
 /**
- * Autentica y verifica permisos para rutas API
+ * @description Autentica un usuario y verifica su sesión
+ * Esta es la ÚNICA función de autenticación en la aplicación
+ *
  * @param request - Request de Next.js
- * @param requiredPermissions - Permisos requeridos (opcional, se infiere de la URL y método)
- * @returns Response de error si no autorizado, o objeto user si autorizado
+ * @param validatePermissions - Opcional: verificar permisos específicos
+ * @returns AuthenticatedUser si es exitoso, Response con error si no
  */
-export async function authenticateAndAuthorize(
+export async function authenticateUser(
   request: NextRequest,
-  requiredPermissions?: { path: string; method: string }
-): Promise<AuthResult | Response> {
-  const authorization = request.headers.get("authorization")
+  validatePermissions?: { path: string; method: string }
+): Promise<{ user: AuthenticatedUser } | Response> {
+  const authorization = request.headers.get('authorization')
 
-  if (!authorization || !authorization.startsWith("Bearer ")) {
-    return NextResponse.json({
-      error: 'Token no proporcionado',
-      message: 'Se requiere autenticación para acceder a este recurso'
-    }, { status: 401 })
+  // 1. Verificar presencia de Authorization header
+  if (!authorization || !authorization.startsWith('Bearer ')) {
+    return NextResponse.json(
+      {
+        error: 'Token no proporcionado',
+        message:
+          'Se requiere autenticación para acceder a este recurso',
+      },
+      { status: 401 }
+    )
   }
 
-  const token = authorization.replace("Bearer ", "").trim()
+  const token = authorization.replace('Bearer ', '').trim()
 
-  // Validar formato básico del JWT
+  // 2. Validar formato básico del JWT (tres partes separadas por puntos)
   if (!token || typeof token !== 'string' || token.split('.').length !== 3) {
-    console.error('Token malformado: formato inválido', { token: token?.substring(0, 50) + '...' })
-    return NextResponse.json({
-      error: 'Token inválido',
-      message: 'El token proporcionado no tiene un formato válido'
-    }, { status: 401 })
+    console.error('[Auth] Token malformado:', {
+      tokenPreview: token?.substring(0, 20) + '...',
+    })
+    return NextResponse.json(
+      {
+        error: 'Token inválido',
+        message:
+          'El token proporcionado no tiene un formato válido',
+      },
+      { status: 401 }
+    )
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string, email: string }
+    // 3. Verificar y decodificar JWT
+    const decoded = jwt.verify(token, JWT_SECRET) as {
+      userId: string
+      email: string
+    }
 
+    // 4. Buscar sesión en base de datos
     const session = await prisma.userSession.findUnique({
       where: { token },
       select: {
@@ -55,23 +76,33 @@ export async function authenticateAndAuthorize(
     })
 
     if (!session || !session.isActive) {
-      return NextResponse.json({
-        error: 'Sesión no válida',
-        message: 'Su sesión ha sido cerrada o ha expirado. Por favor inicie sesión nuevamente.'
-      }, { status: 401 })
+      return NextResponse.json(
+        {
+          error: 'Sesión no válida',
+          message:
+            'Su sesión ha sido cerrada o ha expirado. Por favor inicie sesión nuevamente.',
+        },
+        { status: 401 }
+      )
     }
 
+    // 5. Verificar expiración de sesión
     if (session.expiresAt && new Date() > session.expiresAt) {
       await prisma.userSession.update({
         where: { token },
         data: { isActive: false },
       })
-      return NextResponse.json({
-        error: 'Sesión expirada',
-        message: 'Su sesión ha expirado. Por favor inicie sesión nuevamente.'
-      }, { status: 401 })
+      return NextResponse.json(
+        {
+          error: 'Sesión expirada',
+          message:
+            'Su sesión ha expirado. Por favor inicie sesión nuevamente.',
+        },
+        { status: 401 }
+      )
     }
 
+    // 6. Buscar usuario
     const user = await prisma.user.findUnique({
       where: { userId: decoded.userId },
       select: {
@@ -79,103 +110,141 @@ export async function authenticateAndAuthorize(
         name: true,
         email: true,
         role: true,
-        isActive: true
+        isActive: true,
       },
     })
 
     if (!user) {
-      return NextResponse.json({
-        error: 'Usuario no encontrado',
-        message: 'El usuario asociado al token no existe'
-      }, { status: 401 })
+      return NextResponse.json(
+        {
+          error: 'Usuario no encontrado',
+          message:
+            'El usuario asociado al token no existe',
+        },
+        { status: 401 }
+      )
     }
 
+    // 7. Verificar que usuario esté activo
     if (!user.isActive) {
-      return NextResponse.json({
-        error: 'Usuario inactivo',
-        message: 'Su cuenta está desactivada. Contacte al administrador.'
-      }, { status: 403 })
+      return NextResponse.json(
+        {
+          error: 'Usuario inactivo',
+          message:
+            'Su cuenta está desactivada. Contacte al administrador.',
+        },
+        { status: 403 }
+      )
     }
 
+    // 8. Actualizar timestamp de última actividad
     await prisma.userSession.update({
       where: { token },
       data: { lastActive: new Date() },
     })
 
-    // Verificar permisos si se proporcionan
-    if (requiredPermissions) {
-      const permissionCheck = checkApiPermission(
-        user.role as UserRole,
-        requiredPermissions.path,
-        requiredPermissions.method
+    // 9. Verificar permisos si se solicita
+    if (validatePermissions) {
+      const permissionError = checkApiPermission(
+        user.role,
+        validatePermissions.path,
+        validatePermissions.method
       )
-
-      if (permissionCheck) {
-        return permissionCheck
+      if (permissionError) {
+        return permissionError
       }
     }
 
-    return { user }
+    return { user: user as AuthenticatedUser }
   } catch (error) {
-    console.error('Error de autenticación:', error, { tokenPreview: token?.substring(0, 50) + '...' })
-    return NextResponse.json({
-      error: 'Token inválido',
-      message: 'El token proporcionado no es válido o ha expirado'
-    }, { status: 401 })
-  }
-}
-export function withAuthGet(
-  handler: (request: NextRequest, context: any, user: any) => Promise<NextResponse>
-) {
-  return async (request: NextRequest, context: any) => {
-    const authResult = await authenticateAndAuthorize(request)
-
-    // Verificar si es un Response (error) o AuthResult (éxito)
-    if ('status' in authResult) {
-      return authResult as Response
+    if (error instanceof jwt.JsonWebTokenError) {
+      console.error('[Auth] JWT error:', error.message)
+      return NextResponse.json(
+        {
+          error: 'Token inválido',
+          message:
+            'El token proporcionado no es válido o ha expirado',
+        },
+        { status: 401 }
+      )
     }
 
-    return handler(request, context, (authResult as AuthResult).user)
+    console.error('[Auth] Error de autenticación:', error)
+    return NextResponse.json(
+      {
+        error: 'Error interno del servidor',
+        message:
+          'Ocurrió un error al verificar tu autenticación',
+      },
+      { status: 500 }
+    )
   }
 }
 
 /**
- * Wrapper para rutas POST que requiere autenticación y autorización
+ * @description Wrapper para rutas GET protegidas
+ */
+export function withAuthGet(
+  handler: (
+    request: NextRequest,
+    context: any,
+    user: AuthenticatedUser
+  ) => Promise<NextResponse>
+) {
+  return async (request: NextRequest, context: any) => {
+    const result = await authenticateUser(request)
+
+    if ('status' in result) {
+      return result as Response
+    }
+
+    return handler(request, context, result.user)
+  }
+}
+
+/**
+ * @description Wrapper para rutas POST protegidas
  */
 export function withAuthPost(
-  handler: (request: NextRequest, context: any, user: any) => Promise<NextResponse>
+  handler: (
+    request: NextRequest,
+    context: any,
+    user: AuthenticatedUser
+  ) => Promise<NextResponse>
 ) {
   return async (request: NextRequest, context: any) => {
-    const authResult = await authenticateAndAuthorize(request)
+    const result = await authenticateUser(request)
 
-    // Verificar si es un Response (error) o AuthResult (éxito)
-    if ('status' in authResult) {
-      return authResult as Response
+    if ('status' in result) {
+      return result as Response
     }
 
-    return handler(request, context, (authResult as AuthResult).user)
+    return handler(request, context, result.user)
   }
 }
 
 /**
- * Wrapper genérico que deduce permisos de la URL y método
+ * @description Wrapper genérico que deduce permisos de URL y método
  */
 export function withAuth(
-  handler: (request: NextRequest, context: any, user: any) => Promise<NextResponse>
+  handler: (
+    request: NextRequest,
+    context: any,
+    user: AuthenticatedUser
+  ) => Promise<NextResponse>
 ) {
   return async (request: NextRequest, context: any) => {
     const url = new URL(request.url)
     const method = request.method
     const path = url.pathname
 
-    const authResult = await authenticateAndAuthorize(request, { path, method })
+    const result = await authenticateUser(request, { path, method })
 
-    // Verificar si es un Response (error) o AuthResult (éxito)
-    if ('status' in authResult) {
-      return authResult as Response
+    if ('status' in result) {
+      return result as Response
     }
 
-    return handler(request, context, (authResult as AuthResult).user)
+    return handler(request, context, result.user)
   }
 }
 

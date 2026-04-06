@@ -211,6 +211,7 @@ exports.Prisma.MiEmpresaScalarFieldEnum = {
   nit: 'nit',
   licenciaOperacion: 'licenciaOperacion',
   logoUrl: 'logoUrl',
+  usaCodigoEan13: 'usaCodigoEan13',
   cuentaBancariaId: 'cuentaBancariaId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

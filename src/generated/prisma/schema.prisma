@@ -124,6 +124,7 @@ model MiEmpresa {
   nit               String?
   licenciaOperacion String?
   logoUrl           String?
+  usaCodigoEan13    Boolean         @default(false)
   cuentaBancariaId  String?         @unique
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt

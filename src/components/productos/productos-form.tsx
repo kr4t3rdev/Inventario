@@ -286,11 +286,30 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
     setIsLoading(true)
 
     try {
-      if (initialData) {
+       if (initialData) {
+         const resolvedProveedorCodigo = selectedVendorProviderCode || data.proveedorCodigo
+
+         const payload: any = {
+           nombre: data.nombre,
+           descripcion: data.descripcion || null,
+           codigoInterno: data.codigoInterno || null,
+           proveedorCodigo: usaEan13 ? (resolvedProveedorCodigo || null) : null,
+           vendorId: data.vendorId || null,
+           precioCosto: data.precioCosto,
+           precioVenta: data.precioVenta,
+           stock: data.stock,
+           stockMinimo: data.stockMinimo ?? 0,
+           fotos: data.fotos ?? [],
+           categoriaId: data.categoriaId,
+           subcategoriaId: data.subcategoriaId || null,
+           unidadId: data.unidadId,
+           almacenId: data.almacenId,
+           precios: buildPreciosPayload(preciosPorLista),
+         }
+
         await updateProducto({
           id: initialData.id,
-          ...data,
-          precios: buildPreciosPayload(preciosPorLista),
+          ...payload,
         }).unwrap()
         sileo.success({ title: 'El producto ha sido actualizado exitosamente.' })
       } else {
@@ -350,7 +369,28 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
       router.refresh()
     } catch (error) {
       console.error('Error al guardar el producto:', error)
-      sileo.error({ title: 'Hubo un error al guardar el producto.' })
+      
+      // Extraer mensaje de error del servidor
+      let errorMessage = 'Hubo un error al guardar el producto.'
+      
+      if (error && typeof error === 'object') {
+        const err = error as any
+        
+        // Si viene del RTK Query error
+        if (err.data?.error) {
+          errorMessage = err.data.error
+        }
+        // Si es un objeto con propiedad message
+        else if (err.message) {
+          errorMessage = err.message
+        }
+        // Si es una respuesta HTTP
+        else if (err.status && err.data) {
+          errorMessage = JSON.stringify(err.data)
+        }
+      }
+      
+      sileo.error({ title: errorMessage })
     } finally {
       setIsLoading(false)
     }

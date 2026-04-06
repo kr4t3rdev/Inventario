@@ -17505,6 +17505,7 @@ export namespace Prisma {
     nit: string | null
     licenciaOperacion: string | null
     logoUrl: string | null
+    usaCodigoEan13: boolean | null
     cuentaBancariaId: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -17521,6 +17522,7 @@ export namespace Prisma {
     nit: string | null
     licenciaOperacion: string | null
     logoUrl: string | null
+    usaCodigoEan13: boolean | null
     cuentaBancariaId: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -17537,6 +17539,7 @@ export namespace Prisma {
     nit: number
     licenciaOperacion: number
     logoUrl: number
+    usaCodigoEan13: number
     cuentaBancariaId: number
     createdAt: number
     updatedAt: number
@@ -17563,6 +17566,7 @@ export namespace Prisma {
     nit?: true
     licenciaOperacion?: true
     logoUrl?: true
+    usaCodigoEan13?: true
     cuentaBancariaId?: true
     createdAt?: true
     updatedAt?: true
@@ -17579,6 +17583,7 @@ export namespace Prisma {
     nit?: true
     licenciaOperacion?: true
     logoUrl?: true
+    usaCodigoEan13?: true
     cuentaBancariaId?: true
     createdAt?: true
     updatedAt?: true
@@ -17595,6 +17600,7 @@ export namespace Prisma {
     nit?: true
     licenciaOperacion?: true
     logoUrl?: true
+    usaCodigoEan13?: true
     cuentaBancariaId?: true
     createdAt?: true
     updatedAt?: true
@@ -17698,6 +17704,7 @@ export namespace Prisma {
     nit: string | null
     licenciaOperacion: string | null
     logoUrl: string | null
+    usaCodigoEan13: boolean
     cuentaBancariaId: string | null
     createdAt: Date
     updatedAt: Date
@@ -17733,6 +17740,7 @@ export namespace Prisma {
     nit?: boolean
     licenciaOperacion?: boolean
     logoUrl?: boolean
+    usaCodigoEan13?: boolean
     cuentaBancariaId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -17750,6 +17758,7 @@ export namespace Prisma {
     nit?: boolean
     licenciaOperacion?: boolean
     logoUrl?: boolean
+    usaCodigoEan13?: boolean
     cuentaBancariaId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -17767,6 +17776,7 @@ export namespace Prisma {
     nit?: boolean
     licenciaOperacion?: boolean
     logoUrl?: boolean
+    usaCodigoEan13?: boolean
     cuentaBancariaId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -17784,12 +17794,13 @@ export namespace Prisma {
     nit?: boolean
     licenciaOperacion?: boolean
     logoUrl?: boolean
+    usaCodigoEan13?: boolean
     cuentaBancariaId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type MiEmpresaOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "nombre" | "propietario" | "direccion" | "telefono" | "email" | "carnetIdentidad" | "nit" | "licenciaOperacion" | "logoUrl" | "cuentaBancariaId" | "createdAt" | "updatedAt", ExtArgs["result"]["miEmpresa"]>
+  export type MiEmpresaOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "nombre" | "propietario" | "direccion" | "telefono" | "email" | "carnetIdentidad" | "nit" | "licenciaOperacion" | "logoUrl" | "usaCodigoEan13" | "cuentaBancariaId" | "createdAt" | "updatedAt", ExtArgs["result"]["miEmpresa"]>
   export type MiEmpresaInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     cuentaBancaria?: boolean | MiEmpresa$cuentaBancariaArgs<ExtArgs>
   }
@@ -17816,6 +17827,7 @@ export namespace Prisma {
       nit: string | null
       licenciaOperacion: string | null
       logoUrl: string | null
+      usaCodigoEan13: boolean
       cuentaBancariaId: string | null
       createdAt: Date
       updatedAt: Date
@@ -18253,6 +18265,7 @@ export namespace Prisma {
     readonly nit: FieldRef<"MiEmpresa", 'String'>
     readonly licenciaOperacion: FieldRef<"MiEmpresa", 'String'>
     readonly logoUrl: FieldRef<"MiEmpresa", 'String'>
+    readonly usaCodigoEan13: FieldRef<"MiEmpresa", 'Boolean'>
     readonly cuentaBancariaId: FieldRef<"MiEmpresa", 'String'>
     readonly createdAt: FieldRef<"MiEmpresa", 'DateTime'>
     readonly updatedAt: FieldRef<"MiEmpresa", 'DateTime'>
@@ -108340,6 +108353,7 @@ export namespace Prisma {
     nit: 'nit',
     licenciaOperacion: 'licenciaOperacion',
     logoUrl: 'logoUrl',
+    usaCodigoEan13: 'usaCodigoEan13',
     cuentaBancariaId: 'cuentaBancariaId',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -110502,6 +110516,7 @@ export namespace Prisma {
     nit?: StringNullableFilter<"MiEmpresa"> | string | null
     licenciaOperacion?: StringNullableFilter<"MiEmpresa"> | string | null
     logoUrl?: StringNullableFilter<"MiEmpresa"> | string | null
+    usaCodigoEan13?: BoolFilter<"MiEmpresa"> | boolean
     cuentaBancariaId?: StringNullableFilter<"MiEmpresa"> | string | null
     createdAt?: DateTimeFilter<"MiEmpresa"> | Date | string
     updatedAt?: DateTimeFilter<"MiEmpresa"> | Date | string
@@ -110519,6 +110534,7 @@ export namespace Prisma {
     nit?: SortOrderInput | SortOrder
     licenciaOperacion?: SortOrderInput | SortOrder
     logoUrl?: SortOrderInput | SortOrder
+    usaCodigoEan13?: SortOrder
     cuentaBancariaId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -110540,6 +110556,7 @@ export namespace Prisma {
     nit?: StringNullableFilter<"MiEmpresa"> | string | null
     licenciaOperacion?: StringNullableFilter<"MiEmpresa"> | string | null
     logoUrl?: StringNullableFilter<"MiEmpresa"> | string | null
+    usaCodigoEan13?: BoolFilter<"MiEmpresa"> | boolean
     createdAt?: DateTimeFilter<"MiEmpresa"> | Date | string
     updatedAt?: DateTimeFilter<"MiEmpresa"> | Date | string
     cuentaBancaria?: XOR<CuentaBancariaNullableScalarRelationFilter, CuentaBancariaWhereInput> | null
@@ -110556,6 +110573,7 @@ export namespace Prisma {
     nit?: SortOrderInput | SortOrder
     licenciaOperacion?: SortOrderInput | SortOrder
     logoUrl?: SortOrderInput | SortOrder
+    usaCodigoEan13?: SortOrder
     cuentaBancariaId?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -110580,6 +110598,7 @@ export namespace Prisma {
     nit?: StringNullableWithAggregatesFilter<"MiEmpresa"> | string | null
     licenciaOperacion?: StringNullableWithAggregatesFilter<"MiEmpresa"> | string | null
     logoUrl?: StringNullableWithAggregatesFilter<"MiEmpresa"> | string | null
+    usaCodigoEan13?: BoolWithAggregatesFilter<"MiEmpresa"> | boolean
     cuentaBancariaId?: StringNullableWithAggregatesFilter<"MiEmpresa"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"MiEmpresa"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"MiEmpresa"> | Date | string
@@ -118027,6 +118046,7 @@ export namespace Prisma {
     nit?: string | null
     licenciaOperacion?: string | null
     logoUrl?: string | null
+    usaCodigoEan13?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
     cuentaBancaria?: CuentaBancariaCreateNestedOneWithoutMiEmpresaInput
@@ -118043,6 +118063,7 @@ export namespace Prisma {
     nit?: string | null
     licenciaOperacion?: string | null
     logoUrl?: string | null
+    usaCodigoEan13?: boolean
     cuentaBancariaId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -118059,6 +118080,7 @@ export namespace Prisma {
     nit?: NullableStringFieldUpdateOperationsInput | string | null
     licenciaOperacion?: NullableStringFieldUpdateOperationsInput | string | null
     logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    usaCodigoEan13?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     cuentaBancaria?: CuentaBancariaUpdateOneWithoutMiEmpresaNestedInput
@@ -118075,6 +118097,7 @@ export namespace Prisma {
     nit?: NullableStringFieldUpdateOperationsInput | string | null
     licenciaOperacion?: NullableStringFieldUpdateOperationsInput | string | null
     logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    usaCodigoEan13?: BoolFieldUpdateOperationsInput | boolean
     cuentaBancariaId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -118091,6 +118114,7 @@ export namespace Prisma {
     nit?: string | null
     licenciaOperacion?: string | null
     logoUrl?: string | null
+    usaCodigoEan13?: boolean
     cuentaBancariaId?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -118107,6 +118131,7 @@ export namespace Prisma {
     nit?: NullableStringFieldUpdateOperationsInput | string | null
     licenciaOperacion?: NullableStringFieldUpdateOperationsInput | string | null
     logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    usaCodigoEan13?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -118122,6 +118147,7 @@ export namespace Prisma {
     nit?: NullableStringFieldUpdateOperationsInput | string | null
     licenciaOperacion?: NullableStringFieldUpdateOperationsInput | string | null
     logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    usaCodigoEan13?: BoolFieldUpdateOperationsInput | boolean
     cuentaBancariaId?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -126329,6 +126355,11 @@ export namespace Prisma {
     not?: NestedIntFilter<$PrismaModel> | number
   }
 
+  export type BoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
   export type CuentaBancariaNullableScalarRelationFilter = {
     is?: CuentaBancariaWhereInput | null
     isNot?: CuentaBancariaWhereInput | null
@@ -126345,6 +126376,7 @@ export namespace Prisma {
     nit?: SortOrder
     licenciaOperacion?: SortOrder
     logoUrl?: SortOrder
+    usaCodigoEan13?: SortOrder
     cuentaBancariaId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -126365,6 +126397,7 @@ export namespace Prisma {
     nit?: SortOrder
     licenciaOperacion?: SortOrder
     logoUrl?: SortOrder
+    usaCodigoEan13?: SortOrder
     cuentaBancariaId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -126381,6 +126414,7 @@ export namespace Prisma {
     nit?: SortOrder
     licenciaOperacion?: SortOrder
     logoUrl?: SortOrder
+    usaCodigoEan13?: SortOrder
     cuentaBancariaId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -126404,6 +126438,14 @@ export namespace Prisma {
     _sum?: NestedIntFilter<$PrismaModel>
     _min?: NestedIntFilter<$PrismaModel>
     _max?: NestedIntFilter<$PrismaModel>
+  }
+
+  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedBoolFilter<$PrismaModel>
+    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type TransferenciaListRelationFilter = {
@@ -126651,11 +126693,6 @@ export namespace Prisma {
     stockMinimo?: SortOrder
   }
 
-  export type BoolFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolFilter<$PrismaModel> | boolean
-  }
-
   export type OrdenReparacionNullableScalarRelationFilter = {
     is?: OrdenReparacionWhereInput | null
     isNot?: OrdenReparacionWhereInput | null
@@ -126765,14 +126802,6 @@ export namespace Prisma {
     cantidad?: SortOrder
     total?: SortOrder
     descuento?: SortOrder
-  }
-
-  export type BoolWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolWithAggregatesFilter<$PrismaModel> | boolean
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedBoolFilter<$PrismaModel>
-    _max?: NestedBoolFilter<$PrismaModel>
   }
 
   export type ProductoScalarRelationFilter = {
@@ -132093,6 +132122,10 @@ export namespace Prisma {
     divide?: number
   }
 
+  export type BoolFieldUpdateOperationsInput = {
+    set?: boolean
+  }
+
   export type CuentaBancariaUpdateOneWithoutMiEmpresaNestedInput = {
     create?: XOR<CuentaBancariaCreateWithoutMiEmpresaInput, CuentaBancariaUncheckedCreateWithoutMiEmpresaInput>
     connectOrCreate?: CuentaBancariaCreateOrConnectWithoutMiEmpresaInput
@@ -133098,10 +133131,6 @@ export namespace Prisma {
     connectOrCreate?: VentaItemCreateOrConnectWithoutVentaInput | VentaItemCreateOrConnectWithoutVentaInput[]
     createMany?: VentaItemCreateManyVentaInputEnvelope
     connect?: VentaItemWhereUniqueInput | VentaItemWhereUniqueInput[]
-  }
-
-  export type BoolFieldUpdateOperationsInput = {
-    set?: boolean
   }
 
   export type OrdenReparacionUpdateOneWithoutVentaNestedInput = {
@@ -138119,6 +138148,11 @@ export namespace Prisma {
     _max?: NestedEnumEstadoDeudaNullableFilter<$PrismaModel>
   }
 
+  export type NestedBoolFilter<$PrismaModel = never> = {
+    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
+    not?: NestedBoolFilter<$PrismaModel> | boolean
+  }
+
   export type NestedIntWithAggregatesFilter<$PrismaModel = never> = {
     equals?: number | IntFieldRefInput<$PrismaModel>
     in?: number[] | ListIntFieldRefInput<$PrismaModel>
@@ -138144,11 +138178,6 @@ export namespace Prisma {
     gt?: number | FloatFieldRefInput<$PrismaModel>
     gte?: number | FloatFieldRefInput<$PrismaModel>
     not?: NestedFloatFilter<$PrismaModel> | number
-  }
-
-  export type NestedBoolFilter<$PrismaModel = never> = {
-    equals?: boolean | BooleanFieldRefInput<$PrismaModel>
-    not?: NestedBoolFilter<$PrismaModel> | boolean
   }
 
   export type NestedBoolWithAggregatesFilter<$PrismaModel = never> = {
@@ -148385,6 +148414,7 @@ export namespace Prisma {
     nit?: string | null
     licenciaOperacion?: string | null
     logoUrl?: string | null
+    usaCodigoEan13?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -148400,6 +148430,7 @@ export namespace Prisma {
     nit?: string | null
     licenciaOperacion?: string | null
     logoUrl?: string | null
+    usaCodigoEan13?: boolean
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -148849,6 +148880,7 @@ export namespace Prisma {
     nit?: NullableStringFieldUpdateOperationsInput | string | null
     licenciaOperacion?: NullableStringFieldUpdateOperationsInput | string | null
     logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    usaCodigoEan13?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -148864,6 +148896,7 @@ export namespace Prisma {
     nit?: NullableStringFieldUpdateOperationsInput | string | null
     licenciaOperacion?: NullableStringFieldUpdateOperationsInput | string | null
     logoUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    usaCodigoEan13?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
