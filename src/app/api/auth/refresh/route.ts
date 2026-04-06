@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
 import { prisma } from '@/lib/prisma'
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
-const REFRESH_JWT_SECRET = process.env.REFRESH_JWT_SECRET || 'refresh-secret-key'
+import { JWT_SECRET, REFRESH_JWT_SECRET } from '@/lib/secrets'
 
 function parseCookies(cookieHeader: string): Record<string, string> {
   const map: Record<string, string> = {}
