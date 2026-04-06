@@ -3,10 +3,9 @@ import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
 import { sendFailedLoginAttemptsNotification } from "@/lib/email"
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key"
+import { JWT_SECRET, REFRESH_JWT_SECRET } from "@/lib/secrets"
 const MAX_LOGIN_ATTEMPTS = 5
 const LOCK_TIME_MINUTES = 15
-const REFRESH_JWT_SECRET = process.env.REFRESH_JWT_SECRET || "refresh-secret-key"
 
 export async function POST(request: NextRequest) {
   try {

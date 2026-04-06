@@ -1,8 +1,9 @@
 import type { NextRequest } from "next/server"
 import * as jwt from "jsonwebtoken"
 import { prisma } from "./prisma"
+import { JWT_SECRET } from "./secrets"
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key"
+/** @deprecated Use authenticateUser from ./auth-middleware instead */
 
 export async function verify_token(request: NextRequest) {
   try {
