@@ -1,4 +1,4 @@
-import { PrismaClient } from "@/generated/prisma";
+import { prisma } from "@/lib/prisma";
 import {
   CostImpactResponse,
   DebtExposureResponse,
@@ -12,8 +12,6 @@ import {
   ExchangeDifferential,
   DebtPriority,
 } from "@/lib/types/exchange-intelligence";
-
-const prisma = new PrismaClient();
 
 /**
  * @description Interfaz para filtros de análisis de costos
