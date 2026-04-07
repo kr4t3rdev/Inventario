@@ -1,0 +1,7 @@
+-- AlterTable
+ALTER TABLE "Producto"
+ADD COLUMN IF NOT EXISTS "proveedorCodigo" VARCHAR(2),
+ADD COLUMN IF NOT EXISTS "idSeccionCodigo" VARCHAR(2),
+ADD COLUMN IF NOT EXISTS "especificoCodigo" VARCHAR(4),
+ADD COLUMN IF NOT EXISTS "surtidoCodigo" VARCHAR(4),
+ADD COLUMN IF NOT EXISTS "dcCodigo" VARCHAR(1);
