@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { withAuth } from '@/lib/auth-middleware'
+import { clearEan13Codes, resetProductsForEan13 } from '@/lib/ean13-reset'
 import { z } from 'zod'
 
 export const dynamic = 'force-dynamic'
@@ -75,7 +76,7 @@ export const PUT = withAuth(async (request: NextRequest) => {
 
     // Validar con Zod
     const validationResult = miEmpresaUpsertSchema.safeParse(body)
-    
+
     if (!validationResult.success) {
       console.error('❌ Validation error:', validationResult.error.errors)
       const fieldErrors = validationResult.error.errors.reduce(
@@ -95,20 +96,63 @@ export const PUT = withAuth(async (request: NextRequest) => {
     const data = validationResult.data
     console.log('✅ Validación Zod exitosa')
 
+    // Get current state to detect EAN-13 transitions
+    const current = await prisma.miEmpresa.findUnique({
+      where: { id: 1 },
+    })
+
+    // Detect state transitions for EAN-13
+    const isTogglingOn =
+      !current?.usaCodigoEan13 && data.usaCodigoEan13 === true
+    const isTogglingOff = current?.usaCodigoEan13 && data.usaCodigoEan13 === false
+
+    // Handle OFF → ON transition (requires confirmation)
+    if (isTogglingOn) {
+      console.log('🔄 Transición detectada: EAN-13 OFF → ON')
+      if (!body.confirmReset) {
+        console.log(
+          '⚠️ confirmReset no proporcionado, requiriendo confirmación'
+        )
+        return NextResponse.json(
+          {
+            error: 'Reset confirmation required',
+            requiresConfirmation: true,
+            message:
+              'Activating EAN-13 will delete all existing products. Please confirm by sending confirmReset: true',
+          },
+          { status: 400 },
+        )
+      }
+      console.log('✅ Confirmación recibida, procediendo con reset')
+      await resetProductsForEan13()
+      console.log('🗑️ Productos eliminados exitosamente')
+    }
+
+    // Handle ON → OFF transition (no confirmation needed)
+    if (isTogglingOff) {
+      console.log('🔄 Transición detectada: EAN-13 ON → OFF')
+      await clearEan13Codes()
+      console.log('🔲 Códigos EAN-13 limpiados exitosamente')
+    }
+
     // Construir objeto de actualización solo con campos definidos
     const updateData: Record<string, any> = {}
-    
+
     if (data.nombre !== undefined) updateData.nombre = data.nombre
     if (data.propietario !== undefined) updateData.propietario = data.propietario
     if (data.direccion !== undefined) updateData.direccion = data.direccion
     if (data.telefono !== undefined) updateData.telefono = data.telefono
     if (data.email !== undefined) updateData.email = data.email
-    if (data.carnetIdentidad !== undefined) updateData.carnetIdentidad = data.carnetIdentidad
+    if (data.carnetIdentidad !== undefined)
+      updateData.carnetIdentidad = data.carnetIdentidad
     if (data.nit !== undefined) updateData.nit = data.nit
-    if (data.licenciaOperacion !== undefined) updateData.licenciaOperacion = data.licenciaOperacion
+    if (data.licenciaOperacion !== undefined)
+      updateData.licenciaOperacion = data.licenciaOperacion
     if (data.logoUrl !== undefined) updateData.logoUrl = data.logoUrl
-    if (data.cuentaBancariaId !== undefined) updateData.cuentaBancariaId = data.cuentaBancariaId
-    if (data.usaCodigoEan13 !== undefined) updateData.usaCodigoEan13 = data.usaCodigoEan13
+    if (data.cuentaBancariaId !== undefined)
+      updateData.cuentaBancariaId = data.cuentaBancariaId
+    if (data.usaCodigoEan13 !== undefined)
+      updateData.usaCodigoEan13 = data.usaCodigoEan13
 
     console.log('💾 Ejecutando upsert a base de datos...', { updateData })
 
@@ -144,7 +188,18 @@ export const PUT = withAuth(async (request: NextRequest) => {
     })
 
     console.log('✅ Upsert exitoso')
-    return NextResponse.json(miEmpresa, { status: 200 })
+    return NextResponse.json(
+      {
+        success: true,
+        message: isTogglingOn
+          ? 'EAN-13 activated, all products reset'
+          : isTogglingOff
+            ? 'EAN-13 deactivated, EAN-13 codes cleared'
+            : 'Mi Empresa updated',
+        data: miEmpresa,
+      },
+      { status: 200 },
+    )
   } catch (error) {
     console.error('❌ Error al guardar Mi Empresa:', error)
     if (error instanceof z.ZodError) {
