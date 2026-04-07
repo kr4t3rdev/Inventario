@@ -190,6 +190,12 @@ model Producto {
   ValeSalidaItem    ValeSalidaItem[]
   ventas            Venta[]
   ventaItems        VentaItem[]
+  codigoNegocio     String?                   @unique
+  proveedorCodigo   String?
+  idSeccionCodigo   String?
+  especificoCodigo  String?
+  surtidoCodigo     String?
+  dcCodigo          String?
 }
 
 model Venta {
@@ -1351,16 +1357,16 @@ model Receta {
 }
 
 model RecetaIngrediente {
-  recetaId    String
-  productoId  String
-  cantidad    Float
+  recetaId      String
+  productoId    String
+  cantidad      Float
   unidadSimbolo String?
-  desperdicio Float    @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime
-  id          String   @id
-  Producto    Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
-  Receta      Receta   @relation(fields: [recetaId], references: [recetaId], onDelete: Cascade)
+  desperdicio   Float    @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime
+  id            String   @id
+  Producto      Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
+  Receta        Receta   @relation(fields: [recetaId], references: [recetaId], onDelete: Cascade)
 }
 
 model ValeSalida {
