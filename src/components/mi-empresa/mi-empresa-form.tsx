@@ -136,7 +136,8 @@ async function saveMiEmpresa(values: MiEmpresaFormValues): Promise<MiEmpresaApiR
 export function MiEmpresaForm() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [showEanWarning, setShowEanWarning] = useState(false)
+  const [showEan13Confirmation, setShowEan13Confirmation] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [savedUsaEan13, setSavedUsaEan13] = useState(false)
   const { data: cuentasData, isLoading: isLoadingCuentas } = useGetCuentasBancariasQuery()
 
@@ -191,6 +192,104 @@ export function MiEmpresaForm() {
       mounted = false
     }
   }, [form])
+
+  /**
+   * @description Maneja el cambio del switch EAN-13. Si se desactiva, envía directamente. Si se activa, muestra diálogo.
+   * @param {boolean} checked - Nuevo estado del switch
+   */
+  const handleEan13Toggle = async (checked: boolean) => {
+    if (!checked) {
+      // Desactivando EAN-13 - sin confirmación necesaria
+      setIsSubmitting(true)
+      try {
+        const token = getAuthToken()
+        const res = await fetch('/api/mi-empresa', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: token } : {}),
+          },
+          body: JSON.stringify({ usaCodigoEan13: false }),
+        })
+
+        const data = await res.json()
+        if (!res.ok) {
+          throw new Error(data.error || 'Error al actualizar configuración')
+        }
+
+        sileo.success({ title: data.message || 'Configuración actualizada' })
+        form.setValue('usaCodigoEan13', false)
+        setSavedUsaEan13(false)
+      } catch (error) {
+        sileo.error({
+          title: error instanceof Error ? error.message : 'Error al actualizar',
+        })
+      } finally {
+        setIsSubmitting(false)
+      }
+    } else {
+      // Activando EAN-13 - mostrar diálogo de confirmación
+      setShowEan13Confirmation(true)
+    }
+  }
+
+  /**
+   * @description Confirma la activación de EAN-13 y ejecuta el reset de productos
+   */
+  const handleConfirmEan13Reset = async () => {
+    setIsSubmitting(true)
+    try {
+      const token = getAuthToken()
+      const res = await fetch('/api/mi-empresa', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: token } : {}),
+        },
+        body: JSON.stringify({
+          usaCodigoEan13: true,
+          confirmReset: true,
+        }),
+      })
+
+      const data = await res.json()
+      if (!res.ok) {
+        throw new Error(data.error || 'Error al activar EAN-13')
+      }
+
+      sileo.success({ title: data.message || 'EAN-13 activado correctamente' })
+      setShowEan13Confirmation(false)
+      form.setValue('usaCodigoEan13', true)
+      setSavedUsaEan13(true)
+
+      // Refetch Mi Empresa data
+      fetchMiEmpresa()
+        .then((data) => {
+          form.reset({
+            nombre: data.nombre ?? 'Mi Empresa',
+            propietario: data.propietario ?? '',
+            direccion: data.direccion ?? '',
+            telefono: data.telefono ?? '',
+            email: data.email ?? '',
+            carnetIdentidad: data.carnetIdentidad ?? '',
+            nit: data.nit ?? '',
+            licenciaOperacion: data.licenciaOperacion ?? '',
+            logoUrl: data.logoUrl ?? '',
+            cuentaBancariaId: data.cuentaBancariaId ?? 'none',
+            usaCodigoEan13: data.usaCodigoEan13 ?? false,
+          })
+        })
+        .catch(() => {
+          sileo.error({ title: 'Error al recargar configuración' })
+        })
+    } catch (error) {
+      sileo.error({
+        title: error instanceof Error ? error.message : 'Error al activar EAN-13',
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
 
   const onSubmit = async (values: MiEmpresaFormValues) => {
     setSaving(true)
@@ -533,20 +632,13 @@ export function MiEmpresaForm() {
                           deben seguir el Clasificador oficial (CLAS).
                         </FormDescription>
                       </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value ?? false}
-                          onCheckedChange={(newValue) => {
-                            // OFF→ON cuando la BD guardada era OFF: pedir confirmación
-                            if (newValue && !savedUsaEan13) {
-                              setShowEanWarning(true)
-                              return
-                            }
-                            field.onChange(newValue)
-                          }}
-                          disabled={loading || saving}
-                        />
-                      </FormControl>
+                       <FormControl>
+                         <Switch
+                           checked={field.value ?? false}
+                           onCheckedChange={handleEan13Toggle}
+                           disabled={loading || saving || isSubmitting}
+                         />
+                       </FormControl>
                     </FormItem>
                   )}
                 />
@@ -586,46 +678,26 @@ export function MiEmpresaForm() {
         </CardContent>
       </Card>
 
-      <AlertDialog open={showEanWarning} onOpenChange={setShowEanWarning}>
+      <AlertDialog open={showEan13Confirmation} onOpenChange={setShowEan13Confirmation}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
-              <TriangleAlert className="h-5 w-5" />
-              Cambio estructural — Acción destructiva
-            </AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              <div className="space-y-3 text-sm">
-                <p>
-                  Activar la codificación <strong>EAN-13</strong> cambia la estructura de los
-                  productos. Los códigos de barras se generan a partir del
-                  <strong> Clasificador oficial CLAS</strong>, lo que requiere que{" "}
-                  <strong>categorías y subcategorías estén registradas según ese estándar</strong>.
-                </p>
-                <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3">
-                  <p className="font-semibold text-destructive">Antes de activar esto, debés:</p>
-                  <ol className="mt-1 list-decimal pl-4 space-y-1 text-destructive/90">
-                    <li>Realizar una <strong>copia de seguridad</strong> de la base de datos.</li>
-                    <li>
-                      <strong>Reiniciar la base de datos</strong> — los productos existentes sin
-                      estructura EAN-13 no son compatibles.
-                    </li>
-                  </ol>
-                </div>
-                <p className="text-muted-foreground">
-                  Si la base de datos ya está vacía o es nueva, podés continuar sin problema.
-                </p>
-              </div>
+            <AlertDialogTitle>⚠️ Activar EAN-13</AlertDialogTitle>
+            <AlertDialogDescription>
+              Activar el sistema EAN-13 eliminará TODOS los productos existentes en el catálogo.
+              El histórico de ventas se conservará.
+              <br />
+              <br />
+              <strong>¿Está seguro de que desea continuar?</strong>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={isSubmitting}>Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => {
-                form.setValue('usaCodigoEan13', true)
-              }}
+              onClick={handleConfirmEan13Reset}
+              disabled={isSubmitting}
+              className="bg-red-600 hover:bg-red-700"
             >
-              Entiendo, activar EAN-13
+              {isSubmitting ? 'Procesando...' : 'Sí, activar EAN-13'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -633,3 +705,4 @@ export function MiEmpresaForm() {
     </motion.div>
   )
 }
+
