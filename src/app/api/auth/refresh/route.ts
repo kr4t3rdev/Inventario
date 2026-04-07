@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
 import { prisma } from '@/lib/prisma'
-import { JWT_SECRET, REFRESH_JWT_SECRET } from '@/lib/secrets'
+import { getJwtSecret, getRefreshJwtSecret } from '@/lib/secrets'
 
 function parseCookies(cookieHeader: string): Record<string, string> {
   const map: Record<string, string> = {}
@@ -23,7 +23,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify refresh token
-    const payload = jwt.verify(refreshToken, REFRESH_JWT_SECRET) as { userId: string; email: string; refreshId?: number }
+    const payload = jwt.verify(refreshToken, getRefreshJwtSecret()) as {
+      userId: string;
+      email: string;
+      refreshId?: number;
+    }
     const { userId, email } = payload
 
     const user = await prisma.user.findUnique({
@@ -67,8 +71,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Issue new tokens
-    const newToken = jwt.sign({ userId, email }, JWT_SECRET, { expiresIn: '15m' })
-    const newRefreshToken = jwt.sign({ userId, email, refreshId: Date.now() }, REFRESH_JWT_SECRET, { expiresIn: '30d' })
+    const newToken = jwt.sign({ userId, email }, getJwtSecret(), {
+      expiresIn: '15m',
+    })
+    const newRefreshToken = jwt.sign(
+      { userId, email, refreshId: Date.now() },
+      getRefreshJwtSecret(),
+      { expiresIn: '30d' }
+    )
 
     // Delete old sessions
     await prisma.userSession.deleteMany({

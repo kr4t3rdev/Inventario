@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
 import { sendFailedLoginAttemptsNotification } from "@/lib/email"
-import { JWT_SECRET, REFRESH_JWT_SECRET } from "@/lib/secrets"
+import { getJwtSecret, getRefreshJwtSecret } from "@/lib/secrets"
 const MAX_LOGIN_ATTEMPTS = 5
 const LOCK_TIME_MINUTES = 15
 
@@ -162,8 +162,16 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    const token = jwt.sign({ userId: user.userId, email: user.email }, JWT_SECRET, { expiresIn: "30d" })
-    const refreshToken = jwt.sign({ userId: user.userId, email: user.email }, REFRESH_JWT_SECRET, { expiresIn: "30d" })
+    const token = jwt.sign(
+      { userId: user.userId, email: user.email },
+      getJwtSecret(),
+      { expiresIn: "30d" }
+    )
+    const refreshToken = jwt.sign(
+      { userId: user.userId, email: user.email },
+      getRefreshJwtSecret(),
+      { expiresIn: "30d" }
+    )
 
     await prisma.userSession.create({
       data: {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from './prisma'
 import jwt from 'jsonwebtoken'
-import { JWT_SECRET } from './secrets'
+import { getJwtSecret } from './secrets'
 import { checkApiPermission, type UserRole } from './permissions'
 
 /**
@@ -60,7 +60,7 @@ export async function authenticateUser(
 
   try {
     // 3. Verificar y decodificar JWT
-    const decoded = jwt.verify(token, JWT_SECRET) as {
+    const decoded = jwt.verify(token, getJwtSecret()) as {
       userId: string
       email: string
     }

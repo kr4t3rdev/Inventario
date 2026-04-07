@@ -1,7 +1,7 @@
 import type { NextRequest } from "next/server"
 import * as jwt from "jsonwebtoken"
 import { prisma } from "./prisma"
-import { JWT_SECRET } from "./secrets"
+import { getJwtSecret } from "./secrets"
 
 /** @deprecated Use authenticateUser from ./auth-middleware instead */
 
@@ -18,7 +18,7 @@ export async function verify_token(request: NextRequest) {
       return null
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; email: string }
+    const decoded = jwt.verify(token, getJwtSecret()) as { userId: string; email: string }
 
     const session = await prisma.userSession.findUnique({
       where: { token },

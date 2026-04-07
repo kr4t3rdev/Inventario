@@ -18,25 +18,25 @@ const validateSecret = (name: string, value: string | undefined): string => {
  * JWT secret for signing access tokens
  * Must be at least 32 characters in production
  */
-export const JWT_SECRET = (() => {
+export function getJwtSecret(): string {
   const secret = process.env.JWT_SECRET
   if (process.env.NODE_ENV === 'production') {
     return validateSecret('JWT_SECRET', secret)
   }
   // In development, allow a default if not set (for local testing)
   return secret || 'dev-default-jwt-secret-change-in-production'
-})()
+}
 
 /**
  * JWT secret for signing refresh tokens (separate key for rotation)
  */
-export const REFRESH_JWT_SECRET = (() => {
+export function getRefreshJwtSecret(): string {
   const secret = process.env.REFRESH_JWT_SECRET
   if (process.env.NODE_ENV === 'production') {
     return validateSecret('REFRESH_JWT_SECRET', secret)
   }
   return secret || 'dev-default-refresh-secret-change-in-production'
-})()
+}
 
 /**
  * Validates all secrets at startup
@@ -45,6 +45,8 @@ export const REFRESH_JWT_SECRET = (() => {
 export function validateAllSecrets(): void {
   try {
     // Access all secrets to trigger validation
+    getJwtSecret()
+    getRefreshJwtSecret()
     console.log('[Secrets] ✅ JWT_SECRET configured')
     console.log('[Secrets] ✅ REFRESH_JWT_SECRET configured')
   } catch (error) {
