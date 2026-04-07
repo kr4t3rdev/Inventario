@@ -10,8 +10,8 @@ vi.mock('@/lib/prisma', () => ({
   },
 }))
 
-vi.mock('@/lib/auth-utils', () => ({
-  verify_token: vi.fn(),
+vi.mock('@/lib/auth-middleware', () => ({
+  authenticateUser: vi.fn(),
 }))
 
 describe('Cuentas por Cobrar API - PATCH [id]', () => {

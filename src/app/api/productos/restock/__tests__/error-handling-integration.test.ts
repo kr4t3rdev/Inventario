@@ -23,7 +23,7 @@ vi.mock('../../../../../lib/prisma', () => ({
 }))
 
 vi.mock('../../../../../lib/auth-utils', () => ({
-  verify_token: vi.fn()
+  authenticateUser: vi.fn()
 }))
 
 vi.mock('../../../../../lib/restock-utils', () => ({

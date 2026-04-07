@@ -15,7 +15,7 @@ const prismaMock = vi.hoisted(() => ({
 }))
 
 const authMock = vi.hoisted(() => ({
-  verify_token: vi.fn(),
+  authenticateUser: vi.fn(),
 }))
 
 vi.mock('../../../../../../lib/prisma', () => ({

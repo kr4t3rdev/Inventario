@@ -1,17 +1,25 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { GET } from '../route'
 
-vi.mock('@/lib/prisma', () => ({
-  default: {
-    cuentaPorCobrar: {
-      findMany: vi.fn(),
-    },
+const prismaMock = vi.hoisted(() => ({
+  cuentaPorCobrar: {
+    findMany: vi.fn(),
   },
 }))
 
-vi.mock('@/lib/auth-utils', () => ({
-  verify_token: vi.fn(),
+vi.mock('@/lib/prisma', () => ({
+  default: prismaMock,
+}))
+
+vi.mock('@/lib/auth-middleware', () => ({
+  authenticateUser: vi.fn(),
+}))
+
+vi.mock('@/lib/services/audit-log-service', () => ({
+  AuditLogService: vi.fn(() => ({
+    logAction: vi.fn(),
+  })),
 }))
 
 describe('Cuentas por Cobrar API - GET', () => {
@@ -20,8 +28,10 @@ describe('Cuentas por Cobrar API - GET', () => {
   })
 
   it('debe retornar 401 cuando no hay usuario autenticado', async () => {
-    const { verify_token } = await import('@/lib/auth-utils')
-    vi.mocked(verify_token).mockResolvedValue(null)
+    const { authenticateUser } = await import('@/lib/auth-middleware')
+    vi.mocked(authenticateUser).mockResolvedValue(
+      NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    )
 
     const request = new NextRequest('http://localhost/api/contabilidad/cuentas-por-cobrar')
     const response = await GET(request)
@@ -32,11 +42,13 @@ describe('Cuentas por Cobrar API - GET', () => {
   })
 
   it('debe calcular totalPagadoFactura y saldoFactura normalizando pagos multi-moneda', async () => {
-    const { verify_token } = await import('@/lib/auth-utils')
-    const prisma = (await import('@/lib/prisma')).default
-
-    vi.mocked(verify_token).mockResolvedValue({ userId: 'user-123' } as any)
-    vi.mocked(prisma.cuentaPorCobrar.findMany).mockResolvedValue([
+    const { authenticateUser } = await import('@/lib/auth-middleware')
+    
+    vi.mocked(authenticateUser).mockResolvedValue({
+      user: { userId: 'user-123' }
+    } as any)
+    
+    prismaMock.cuentaPorCobrar.findMany.mockResolvedValue([
       {
         id: 'cxc-1',
         facturaId: 'fac-1',
@@ -86,11 +98,13 @@ describe('Cuentas por Cobrar API - GET', () => {
   })
 
   it('debe calcular saldo usando montoDeuda cuando no existe factura relacionada', async () => {
-    const { verify_token } = await import('@/lib/auth-utils')
-    const prisma = (await import('@/lib/prisma')).default
-
-    vi.mocked(verify_token).mockResolvedValue({ userId: 'user-123' } as any)
-    vi.mocked(prisma.cuentaPorCobrar.findMany).mockResolvedValue([
+    const { authenticateUser } = await import('@/lib/auth-middleware')
+    
+    vi.mocked(authenticateUser).mockResolvedValue({
+      user: { userId: 'user-123' }
+    } as any)
+    
+    prismaMock.cuentaPorCobrar.findMany.mockResolvedValue([
       {
         id: 'cxc-2',
         facturaId: null,

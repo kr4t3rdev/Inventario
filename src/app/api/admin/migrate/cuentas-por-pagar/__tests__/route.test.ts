@@ -3,8 +3,8 @@ import { NextRequest } from 'next/server';
 
 import { GET } from '../route';
 
-vi.mock('@/lib/auth-utils', () => ({
-  verify_token: vi.fn(),
+vi.mock('@/lib/auth-middleware', () => ({
+  authenticateUser: vi.fn(),
 }));
 
 vi.mock('@/lib/prisma', () => ({
