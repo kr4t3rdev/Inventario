@@ -130,7 +130,9 @@ async function saveMiEmpresa(values: MiEmpresaFormValues): Promise<MiEmpresaApiR
     const message = (data as any)?.error || "Error guardando Mi Empresa"
     throw new Error(message)
   }
-  return (await res.json()) as MiEmpresaApiResponse
+  const json = await res.json()
+  const responseData = (json?.data ?? json) as MiEmpresaApiResponse
+  return responseData
 }
 
 export function MiEmpresaForm() {
@@ -705,4 +707,3 @@ export function MiEmpresaForm() {
     </motion.div>
   )
 }
-

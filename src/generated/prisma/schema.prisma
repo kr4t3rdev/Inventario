@@ -190,6 +190,12 @@ model Producto {
   ValeSalidaItem    ValeSalidaItem[]
   ventas            Venta[]
   ventaItems        VentaItem[]
+  codigoNegocio     String?                   @unique
+  proveedorCodigo   String?
+  idSeccionCodigo   String?
+  especificoCodigo  String?
+  surtidoCodigo     String?
+  dcCodigo          String?
 }
 
 model Venta {

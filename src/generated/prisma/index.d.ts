@@ -21061,6 +21061,12 @@ export namespace Prisma {
     puntoDeVentaId: string | null
     stockMinimo: number | null
     subcategoriaId: string | null
+    codigoNegocio: string | null
+    proveedorCodigo: string | null
+    idSeccionCodigo: string | null
+    especificoCodigo: string | null
+    surtidoCodigo: string | null
+    dcCodigo: string | null
   }
 
   export type ProductoMaxAggregateOutputType = {
@@ -21079,6 +21085,12 @@ export namespace Prisma {
     puntoDeVentaId: string | null
     stockMinimo: number | null
     subcategoriaId: string | null
+    codigoNegocio: string | null
+    proveedorCodigo: string | null
+    idSeccionCodigo: string | null
+    especificoCodigo: string | null
+    surtidoCodigo: string | null
+    dcCodigo: string | null
   }
 
   export type ProductoCountAggregateOutputType = {
@@ -21098,6 +21110,12 @@ export namespace Prisma {
     stockMinimo: number
     subcategoriaId: number
     fotos: number
+    codigoNegocio: number
+    proveedorCodigo: number
+    idSeccionCodigo: number
+    especificoCodigo: number
+    surtidoCodigo: number
+    dcCodigo: number
     _all: number
   }
 
@@ -21132,6 +21150,12 @@ export namespace Prisma {
     puntoDeVentaId?: true
     stockMinimo?: true
     subcategoriaId?: true
+    codigoNegocio?: true
+    proveedorCodigo?: true
+    idSeccionCodigo?: true
+    especificoCodigo?: true
+    surtidoCodigo?: true
+    dcCodigo?: true
   }
 
   export type ProductoMaxAggregateInputType = {
@@ -21150,6 +21174,12 @@ export namespace Prisma {
     puntoDeVentaId?: true
     stockMinimo?: true
     subcategoriaId?: true
+    codigoNegocio?: true
+    proveedorCodigo?: true
+    idSeccionCodigo?: true
+    especificoCodigo?: true
+    surtidoCodigo?: true
+    dcCodigo?: true
   }
 
   export type ProductoCountAggregateInputType = {
@@ -21169,6 +21199,12 @@ export namespace Prisma {
     stockMinimo?: true
     subcategoriaId?: true
     fotos?: true
+    codigoNegocio?: true
+    proveedorCodigo?: true
+    idSeccionCodigo?: true
+    especificoCodigo?: true
+    surtidoCodigo?: true
+    dcCodigo?: true
     _all?: true
   }
 
@@ -21275,6 +21311,12 @@ export namespace Prisma {
     stockMinimo: number
     subcategoriaId: string | null
     fotos: string[]
+    codigoNegocio: string | null
+    proveedorCodigo: string | null
+    idSeccionCodigo: string | null
+    especificoCodigo: string | null
+    surtidoCodigo: string | null
+    dcCodigo: string | null
     _count: ProductoCountAggregateOutputType | null
     _avg: ProductoAvgAggregateOutputType | null
     _sum: ProductoSumAggregateOutputType | null
@@ -21313,6 +21355,12 @@ export namespace Prisma {
     stockMinimo?: boolean
     subcategoriaId?: boolean
     fotos?: boolean
+    codigoNegocio?: boolean
+    proveedorCodigo?: boolean
+    idSeccionCodigo?: boolean
+    especificoCodigo?: boolean
+    surtidoCodigo?: boolean
+    dcCodigo?: boolean
     compras?: boolean | Producto$comprasArgs<ExtArgs>
     gastoCompras?: boolean | Producto$gastoComprasArgs<ExtArgs>
     mermas?: boolean | Producto$mermasArgs<ExtArgs>
@@ -21351,6 +21399,12 @@ export namespace Prisma {
     stockMinimo?: boolean
     subcategoriaId?: boolean
     fotos?: boolean
+    codigoNegocio?: boolean
+    proveedorCodigo?: boolean
+    idSeccionCodigo?: boolean
+    especificoCodigo?: boolean
+    surtidoCodigo?: boolean
+    dcCodigo?: boolean
     almacen?: boolean | AlmacenDefaultArgs<ExtArgs>
     categoria?: boolean | CategoriaDefaultArgs<ExtArgs>
     puntoDeVenta?: boolean | Producto$puntoDeVentaArgs<ExtArgs>
@@ -21376,6 +21430,12 @@ export namespace Prisma {
     stockMinimo?: boolean
     subcategoriaId?: boolean
     fotos?: boolean
+    codigoNegocio?: boolean
+    proveedorCodigo?: boolean
+    idSeccionCodigo?: boolean
+    especificoCodigo?: boolean
+    surtidoCodigo?: boolean
+    dcCodigo?: boolean
     almacen?: boolean | AlmacenDefaultArgs<ExtArgs>
     categoria?: boolean | CategoriaDefaultArgs<ExtArgs>
     puntoDeVenta?: boolean | Producto$puntoDeVentaArgs<ExtArgs>
@@ -21401,9 +21461,15 @@ export namespace Prisma {
     stockMinimo?: boolean
     subcategoriaId?: boolean
     fotos?: boolean
+    codigoNegocio?: boolean
+    proveedorCodigo?: boolean
+    idSeccionCodigo?: boolean
+    especificoCodigo?: boolean
+    surtidoCodigo?: boolean
+    dcCodigo?: boolean
   }
 
-  export type ProductoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"nombre" | "descripcion" | "precioCosto" | "precioVenta" | "stock" | "categoriaId" | "unidadId" | "vendorId" | "createdAt" | "id" | "updatedAt" | "almacenId" | "puntoDeVentaId" | "stockMinimo" | "subcategoriaId" | "fotos", ExtArgs["result"]["producto"]>
+  export type ProductoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"nombre" | "descripcion" | "precioCosto" | "precioVenta" | "stock" | "categoriaId" | "unidadId" | "vendorId" | "createdAt" | "id" | "updatedAt" | "almacenId" | "puntoDeVentaId" | "stockMinimo" | "subcategoriaId" | "fotos" | "codigoNegocio" | "proveedorCodigo" | "idSeccionCodigo" | "especificoCodigo" | "surtidoCodigo" | "dcCodigo", ExtArgs["result"]["producto"]>
   export type ProductoInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     compras?: boolean | Producto$comprasArgs<ExtArgs>
     gastoCompras?: boolean | Producto$gastoComprasArgs<ExtArgs>
@@ -21481,6 +21547,12 @@ export namespace Prisma {
       stockMinimo: number
       subcategoriaId: string | null
       fotos: string[]
+      codigoNegocio: string | null
+      proveedorCodigo: string | null
+      idSeccionCodigo: string | null
+      especificoCodigo: string | null
+      surtidoCodigo: string | null
+      dcCodigo: string | null
     }, ExtArgs["result"]["producto"]>
     composites: {}
   }
@@ -21938,6 +22010,12 @@ export namespace Prisma {
     readonly stockMinimo: FieldRef<"Producto", 'Int'>
     readonly subcategoriaId: FieldRef<"Producto", 'String'>
     readonly fotos: FieldRef<"Producto", 'String[]'>
+    readonly codigoNegocio: FieldRef<"Producto", 'String'>
+    readonly proveedorCodigo: FieldRef<"Producto", 'String'>
+    readonly idSeccionCodigo: FieldRef<"Producto", 'String'>
+    readonly especificoCodigo: FieldRef<"Producto", 'String'>
+    readonly surtidoCodigo: FieldRef<"Producto", 'String'>
+    readonly dcCodigo: FieldRef<"Producto", 'String'>
   }
     
 
@@ -108400,7 +108478,13 @@ export namespace Prisma {
     puntoDeVentaId: 'puntoDeVentaId',
     stockMinimo: 'stockMinimo',
     subcategoriaId: 'subcategoriaId',
-    fotos: 'fotos'
+    fotos: 'fotos',
+    codigoNegocio: 'codigoNegocio',
+    proveedorCodigo: 'proveedorCodigo',
+    idSeccionCodigo: 'idSeccionCodigo',
+    especificoCodigo: 'especificoCodigo',
+    surtidoCodigo: 'surtidoCodigo',
+    dcCodigo: 'dcCodigo'
   };
 
   export type ProductoScalarFieldEnum = (typeof ProductoScalarFieldEnum)[keyof typeof ProductoScalarFieldEnum]
@@ -110752,6 +110836,12 @@ export namespace Prisma {
     stockMinimo?: IntFilter<"Producto"> | number
     subcategoriaId?: StringNullableFilter<"Producto"> | string | null
     fotos?: StringNullableListFilter<"Producto">
+    codigoNegocio?: StringNullableFilter<"Producto"> | string | null
+    proveedorCodigo?: StringNullableFilter<"Producto"> | string | null
+    idSeccionCodigo?: StringNullableFilter<"Producto"> | string | null
+    especificoCodigo?: StringNullableFilter<"Producto"> | string | null
+    surtidoCodigo?: StringNullableFilter<"Producto"> | string | null
+    dcCodigo?: StringNullableFilter<"Producto"> | string | null
     compras?: CompraProductoListRelationFilter
     gastoCompras?: GastoCompraListRelationFilter
     mermas?: MermaListRelationFilter
@@ -110789,6 +110879,12 @@ export namespace Prisma {
     stockMinimo?: SortOrder
     subcategoriaId?: SortOrderInput | SortOrder
     fotos?: SortOrder
+    codigoNegocio?: SortOrderInput | SortOrder
+    proveedorCodigo?: SortOrderInput | SortOrder
+    idSeccionCodigo?: SortOrderInput | SortOrder
+    especificoCodigo?: SortOrderInput | SortOrder
+    surtidoCodigo?: SortOrderInput | SortOrder
+    dcCodigo?: SortOrderInput | SortOrder
     compras?: CompraProductoOrderByRelationAggregateInput
     gastoCompras?: GastoCompraOrderByRelationAggregateInput
     mermas?: MermaOrderByRelationAggregateInput
@@ -110811,6 +110907,7 @@ export namespace Prisma {
 
   export type ProductoWhereUniqueInput = Prisma.AtLeast<{
     id?: string
+    codigoNegocio?: string
     AND?: ProductoWhereInput | ProductoWhereInput[]
     OR?: ProductoWhereInput[]
     NOT?: ProductoWhereInput | ProductoWhereInput[]
@@ -110829,6 +110926,11 @@ export namespace Prisma {
     stockMinimo?: IntFilter<"Producto"> | number
     subcategoriaId?: StringNullableFilter<"Producto"> | string | null
     fotos?: StringNullableListFilter<"Producto">
+    proveedorCodigo?: StringNullableFilter<"Producto"> | string | null
+    idSeccionCodigo?: StringNullableFilter<"Producto"> | string | null
+    especificoCodigo?: StringNullableFilter<"Producto"> | string | null
+    surtidoCodigo?: StringNullableFilter<"Producto"> | string | null
+    dcCodigo?: StringNullableFilter<"Producto"> | string | null
     compras?: CompraProductoListRelationFilter
     gastoCompras?: GastoCompraListRelationFilter
     mermas?: MermaListRelationFilter
@@ -110847,7 +110949,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemListRelationFilter
     ventas?: VentaListRelationFilter
     ventaItems?: VentaItemListRelationFilter
-  }, "id">
+  }, "id" | "codigoNegocio">
 
   export type ProductoOrderByWithAggregationInput = {
     nombre?: SortOrder
@@ -110866,6 +110968,12 @@ export namespace Prisma {
     stockMinimo?: SortOrder
     subcategoriaId?: SortOrderInput | SortOrder
     fotos?: SortOrder
+    codigoNegocio?: SortOrderInput | SortOrder
+    proveedorCodigo?: SortOrderInput | SortOrder
+    idSeccionCodigo?: SortOrderInput | SortOrder
+    especificoCodigo?: SortOrderInput | SortOrder
+    surtidoCodigo?: SortOrderInput | SortOrder
+    dcCodigo?: SortOrderInput | SortOrder
     _count?: ProductoCountOrderByAggregateInput
     _avg?: ProductoAvgOrderByAggregateInput
     _max?: ProductoMaxOrderByAggregateInput
@@ -110893,6 +111001,12 @@ export namespace Prisma {
     stockMinimo?: IntWithAggregatesFilter<"Producto"> | number
     subcategoriaId?: StringNullableWithAggregatesFilter<"Producto"> | string | null
     fotos?: StringNullableListFilter<"Producto">
+    codigoNegocio?: StringNullableWithAggregatesFilter<"Producto"> | string | null
+    proveedorCodigo?: StringNullableWithAggregatesFilter<"Producto"> | string | null
+    idSeccionCodigo?: StringNullableWithAggregatesFilter<"Producto"> | string | null
+    especificoCodigo?: StringNullableWithAggregatesFilter<"Producto"> | string | null
+    surtidoCodigo?: StringNullableWithAggregatesFilter<"Producto"> | string | null
+    dcCodigo?: StringNullableWithAggregatesFilter<"Producto"> | string | null
   }
 
   export type VentaWhereInput = {
@@ -118303,6 +118417,12 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
@@ -118340,6 +118460,12 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
@@ -118365,6 +118491,12 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
@@ -118402,6 +118534,12 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
@@ -118433,6 +118571,12 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
   }
 
   export type ProductoUpdateManyMutationInput = {
@@ -118446,6 +118590,12 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ProductoUncheckedUpdateManyInput = {
@@ -118465,6 +118615,12 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type VentaCreateInput = {
@@ -126641,6 +126797,12 @@ export namespace Prisma {
     stockMinimo?: SortOrder
     subcategoriaId?: SortOrder
     fotos?: SortOrder
+    codigoNegocio?: SortOrder
+    proveedorCodigo?: SortOrder
+    idSeccionCodigo?: SortOrder
+    especificoCodigo?: SortOrder
+    surtidoCodigo?: SortOrder
+    dcCodigo?: SortOrder
   }
 
   export type ProductoAvgOrderByAggregateInput = {
@@ -126666,6 +126828,12 @@ export namespace Prisma {
     puntoDeVentaId?: SortOrder
     stockMinimo?: SortOrder
     subcategoriaId?: SortOrder
+    codigoNegocio?: SortOrder
+    proveedorCodigo?: SortOrder
+    idSeccionCodigo?: SortOrder
+    especificoCodigo?: SortOrder
+    surtidoCodigo?: SortOrder
+    dcCodigo?: SortOrder
   }
 
   export type ProductoMinOrderByAggregateInput = {
@@ -126684,6 +126852,12 @@ export namespace Prisma {
     puntoDeVentaId?: SortOrder
     stockMinimo?: SortOrder
     subcategoriaId?: SortOrder
+    codigoNegocio?: SortOrder
+    proveedorCodigo?: SortOrder
+    idSeccionCodigo?: SortOrder
+    especificoCodigo?: SortOrder
+    surtidoCodigo?: SortOrder
+    dcCodigo?: SortOrder
   }
 
   export type ProductoSumOrderByAggregateInput = {
@@ -138553,6 +138727,12 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
@@ -138588,6 +138768,12 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
@@ -138623,6 +138809,12 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
@@ -138658,6 +138850,12 @@ export namespace Prisma {
     puntoDeVentaId?: string | null
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
@@ -138779,6 +138977,12 @@ export namespace Prisma {
     stockMinimo?: IntFilter<"Producto"> | number
     subcategoriaId?: StringNullableFilter<"Producto"> | string | null
     fotos?: StringNullableListFilter<"Producto">
+    codigoNegocio?: StringNullableFilter<"Producto"> | string | null
+    proveedorCodigo?: StringNullableFilter<"Producto"> | string | null
+    idSeccionCodigo?: StringNullableFilter<"Producto"> | string | null
+    especificoCodigo?: StringNullableFilter<"Producto"> | string | null
+    surtidoCodigo?: StringNullableFilter<"Producto"> | string | null
+    dcCodigo?: StringNullableFilter<"Producto"> | string | null
   }
 
   export type ProductoUpsertWithWhereUniqueWithoutSubcategoriaInput = {
@@ -138808,6 +139012,12 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
@@ -138843,6 +139053,12 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
@@ -139150,6 +139366,12 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
@@ -139185,6 +139407,12 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
@@ -140601,6 +140829,12 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
@@ -140636,6 +140870,12 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
@@ -140828,6 +141068,12 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
@@ -140863,6 +141109,12 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
@@ -142445,6 +142697,12 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
@@ -142481,6 +142739,12 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
@@ -142905,6 +143169,12 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
@@ -142941,6 +143211,12 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
@@ -143083,6 +143359,12 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
@@ -143119,6 +143401,12 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
@@ -143206,6 +143494,12 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
@@ -143242,6 +143536,12 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
@@ -143319,6 +143619,12 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
@@ -143355,6 +143661,12 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
@@ -143395,6 +143707,12 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
@@ -143431,6 +143749,12 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
@@ -143501,6 +143825,12 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
@@ -143537,6 +143867,12 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
@@ -143693,6 +144029,12 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
@@ -143729,6 +144071,12 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
@@ -146643,6 +146991,12 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
@@ -146679,6 +147033,12 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
@@ -146926,6 +147286,12 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
@@ -146962,6 +147328,12 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
@@ -147141,6 +147513,12 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
@@ -147177,6 +147555,12 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
@@ -147362,6 +147746,12 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
@@ -147398,6 +147788,12 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
@@ -153430,6 +153826,12 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
@@ -153466,6 +153868,12 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
@@ -153574,6 +153982,12 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
@@ -153610,6 +154024,12 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
@@ -156290,6 +156710,12 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
@@ -156326,6 +156752,12 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
@@ -156441,6 +156873,12 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
@@ -156477,6 +156915,12 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
@@ -156772,6 +157216,12 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
@@ -156808,6 +157258,12 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
@@ -156909,6 +157365,12 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
@@ -156945,6 +157407,12 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
@@ -156985,6 +157453,12 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
@@ -157021,6 +157495,12 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
@@ -157092,6 +157572,12 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
@@ -157128,6 +157614,12 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
@@ -157229,6 +157721,12 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
@@ -157265,6 +157763,12 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
@@ -157328,6 +157832,12 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
@@ -157364,6 +157874,12 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
@@ -157546,6 +158062,12 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
@@ -157582,6 +158104,12 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
@@ -157653,6 +158181,12 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
@@ -157689,6 +158223,12 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
@@ -157726,6 +158266,12 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
   }
 
   export type ProductoCreateManySubcategoriaInput = {
@@ -157744,6 +158290,12 @@ export namespace Prisma {
     puntoDeVentaId?: string | null
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
   }
 
   export type CategoriaUpdateWithoutParentInput = {
@@ -157787,6 +158339,12 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
@@ -157822,6 +158380,12 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
@@ -157852,6 +158416,12 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ProductoUpdateWithoutSubcategoriaInput = {
@@ -157865,6 +158435,12 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
@@ -157900,6 +158476,12 @@ export namespace Prisma {
     puntoDeVentaId?: NullableStringFieldUpdateOperationsInput | string | null
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
@@ -157930,6 +158512,12 @@ export namespace Prisma {
     puntoDeVentaId?: NullableStringFieldUpdateOperationsInput | string | null
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ProductoCreateManyUnidadInput = {
@@ -157948,6 +158536,12 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
   }
 
   export type ProductoUpdateWithoutUnidadInput = {
@@ -157961,6 +158555,12 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
@@ -157996,6 +158596,12 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
@@ -158026,6 +158632,12 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type CompraProductoCreateManyProveedorInput = {
@@ -158135,6 +158747,12 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
   }
 
   export type CompraProductoUpdateWithoutProveedorInput = {
@@ -158445,6 +159063,12 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
@@ -158480,6 +159104,12 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
@@ -158510,6 +159140,12 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type PagoDeudaCreateManyInyeccionInput = {
@@ -159222,6 +159858,12 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
   }
 
   export type TransferenciaCreateManyDestinoInput = {
@@ -159259,6 +159901,12 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
@@ -159294,6 +159942,12 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
@@ -159324,6 +159978,12 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type TransferenciaUpdateWithoutDestinoInput = {
@@ -159414,6 +160074,12 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
   }
 
   export type TransferenciaCreateManyPuntoDeVentaDestinoInput = {
@@ -159468,6 +160134,12 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
@@ -159503,6 +160175,12 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
@@ -159533,6 +160211,12 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type TransferenciaUpdateWithoutPuntoDeVentaDestinoInput = {

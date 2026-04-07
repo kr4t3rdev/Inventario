@@ -249,7 +249,13 @@ exports.Prisma.ProductoScalarFieldEnum = {
   puntoDeVentaId: 'puntoDeVentaId',
   stockMinimo: 'stockMinimo',
   subcategoriaId: 'subcategoriaId',
-  fotos: 'fotos'
+  fotos: 'fotos',
+  codigoNegocio: 'codigoNegocio',
+  proveedorCodigo: 'proveedorCodigo',
+  idSeccionCodigo: 'idSeccionCodigo',
+  especificoCodigo: 'especificoCodigo',
+  surtidoCodigo: 'surtidoCodigo',
+  dcCodigo: 'dcCodigo'
 };
 
 exports.Prisma.VentaScalarFieldEnum = {
