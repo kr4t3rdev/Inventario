@@ -363,6 +363,28 @@ export const POST = withAuthPost(async (request: NextRequest, _context: any, use
         }
       })
 
+      // Record cost change due to restock (RESTOCK reason)
+      if (precioCostoAntes !== precioCostoNuevo) {
+        try {
+          await tx.productoCostHistory.create({
+            data: {
+              productoId: producto.id,
+              oldPrecioCosto: precioCostoAntes,
+              newPrecioCosto: precioCostoNuevo,
+              oldPrecioVenta: producto.precioVenta,
+              newPrecioVenta: producto.precioVenta, // No cambia en restock
+              reason: 'RESTOCK',
+              changedBy: user?.id || user?.userId || 'system',
+              changedAt: now,
+              notes: `Restock: ${data.cantidad} unidades a ${data.precioCosto} c/u. Método: ${metodoCosto}`,
+            },
+          })
+        } catch (historyError) {
+          console.error('Error recording cost history for restock:', historyError)
+          // Don't fail the transaction if history recording fails, but log it
+        }
+      }
+
       let ejecucionAnticipo: any = null
       if (data.formaPago === FORMA_PAGO_ANTICIPO_PAGO && data.anticipoPagoId && data.idempotencyKey) {
         ejecucionAnticipo = await executeAnticipo(

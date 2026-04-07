@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { withAuth } from "@/lib/auth-middleware"
 import { generateEan13BusinessCode } from '@/lib/ean13-utils'
+import { recordCostChange } from '@/lib/cost-history-utils'
 
 type ProductoRouteContext = { params: Promise<{ id: string }> }
 const CODIGO_INTERNO_REGEX = /^[0-9]{11}$/
@@ -176,6 +177,19 @@ export const PATCH = withAuth(async (request: NextRequest, context: ProductoRout
       }
     }
 
+    // Fetch current product to detect price changes (for cost history tracking)
+    const currentProducto = await prisma.producto.findUnique({
+      where: { id },
+      select: {
+        precioCosto: true,
+        precioVenta: true,
+      },
+    })
+
+    if (!currentProducto) {
+      return NextResponse.json({ error: 'Producto no encontrado' }, { status: 404 })
+    }
+
     if (precios && Array.isArray(precios)) {
       await Promise.all(precios.map((p: any) => 
         prisma.precioProducto.upsert({
@@ -195,36 +209,67 @@ export const PATCH = withAuth(async (request: NextRequest, context: ProductoRout
       ))
     }
 
-    const producto = await prisma.producto.update({
-      where: { id: id },
-      data: {
-        nombre,
-        descripcion,
-        precioCosto,
-        precioVenta,
-        stock,
-        ...(stockMinimo !== undefined && { stockMinimo }),
-        ...(fotos !== undefined && { fotos }),
-        ...(normalizedCodigoInterno !== undefined && { codigoInterno: normalizedCodigoInterno }),
-        ...(generatedBusinessCode && { codigoNegocio: generatedBusinessCode.codigoNegocio }),
-        ...(generatedBusinessCode && { proveedorCodigo: generatedBusinessCode.segments.proveedorCodigo }),
-        ...(generatedBusinessCode && { idSeccionCodigo: generatedBusinessCode.segments.idSeccionCodigo }),
-        ...(generatedBusinessCode && { especificoCodigo: generatedBusinessCode.segments.especificoCodigo }),
-        ...(generatedBusinessCode && { surtidoCodigo: generatedBusinessCode.segments.surtidoCodigo }),
-        ...(generatedBusinessCode && { dcCodigo: generatedBusinessCode.dcCodigo }),
-        categoriaId,
-        subcategoriaId: subcategoriaId || null,
-        unidadId,
-        vendorId,
-        almacenId,
-      },
-      include: {
-        categoria: true,
-        subcategoria: true,
-        unidad: true,
-        vendor: true,
-        almacen: true,
-      },
+    // Use transaction to ensure atomicity: update product + log cost change together
+    const producto = await prisma.$transaction(async (tx) => {
+      // Update the product
+      const updated = await tx.producto.update({
+        where: { id: id },
+        data: {
+          nombre,
+          descripcion,
+          precioCosto,
+          precioVenta,
+          stock,
+          ...(stockMinimo !== undefined && { stockMinimo }),
+          ...(fotos !== undefined && { fotos }),
+          ...(normalizedCodigoInterno !== undefined && { codigoInterno: normalizedCodigoInterno }),
+          ...(generatedBusinessCode && { codigoNegocio: generatedBusinessCode.codigoNegocio }),
+          ...(generatedBusinessCode && { proveedorCodigo: generatedBusinessCode.segments.proveedorCodigo }),
+          ...(generatedBusinessCode && { idSeccionCodigo: generatedBusinessCode.segments.idSeccionCodigo }),
+          ...(generatedBusinessCode && { especificoCodigo: generatedBusinessCode.segments.especificoCodigo }),
+          ...(generatedBusinessCode && { surtidoCodigo: generatedBusinessCode.segments.surtidoCodigo }),
+          ...(generatedBusinessCode && { dcCodigo: generatedBusinessCode.dcCodigo }),
+          categoriaId,
+          subcategoriaId: subcategoriaId || null,
+          unidadId,
+          vendorId,
+          almacenId,
+        },
+        include: {
+          categoria: true,
+          subcategoria: true,
+          unidad: true,
+          vendor: true,
+          almacen: true,
+        },
+      })
+
+      // Record cost change if prices changed
+      if (
+        (precioCosto !== undefined && precioCosto !== currentProducto.precioCosto) ||
+        (precioVenta !== undefined && precioVenta !== currentProducto.precioVenta)
+      ) {
+        try {
+          await tx.productoCostHistory.create({
+            data: {
+              productoId: id,
+              oldPrecioCosto: currentProducto.precioCosto,
+              newPrecioCosto: precioCosto !== undefined ? precioCosto : currentProducto.precioCosto,
+              oldPrecioVenta: currentProducto.precioVenta,
+              newPrecioVenta: precioVenta !== undefined ? precioVenta : currentProducto.precioVenta,
+              reason: 'MANUAL_EDIT',
+              changedBy: _user?.id || 'system',
+              changedAt: new Date(),
+              notes: null,
+            },
+          })
+        } catch (historyError) {
+          console.error('Error recording cost history:', historyError)
+          // Don't fail the update if history recording fails, but log it
+        }
+      }
+
+      return updated
     })
 
     return NextResponse.json(producto)
