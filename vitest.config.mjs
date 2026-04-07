@@ -5,7 +5,10 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     globals: true,
-    setupFiles: ['./src/test/setup.ts'],
+    setupFiles: [
+      './src/test/setup.ts',
+      './src/test/jest-dom-setup.ts',
+    ],
   },
   resolve: {
     alias: {

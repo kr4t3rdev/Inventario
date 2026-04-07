@@ -1,32 +1,35 @@
 import { NextRequest } from 'next/server'
 import { GET } from '../route'
-import { prisma } from '../../../../../../lib/prisma'
-import { verify_token } from '../../../../../../lib/auth-utils'
+import { vi } from 'vitest'
 
-// Mock dependencies
-jest.mock('../../../../../../lib/prisma', () => ({
-  prisma: {
-    producto: {
-      findUnique: jest.fn(),
-      findMany: jest.fn(),
-    },
-    gastoCompra: {
-      findMany: jest.fn(),
-      count: jest.fn(),
-    },
+// Mock dependencies with vi.hoisted to avoid hoisting issues
+const prismaMock = vi.hoisted(() => ({
+  producto: {
+    findUnique: vi.fn(),
+    findMany: vi.fn(),
+  },
+  gastoCompra: {
+    findMany: vi.fn(),
+    count: vi.fn(),
   },
 }))
 
-jest.mock('../../../../../../lib/auth-utils', () => ({
-  verify_token: jest.fn(),
+const authMock = vi.hoisted(() => ({
+  verify_token: vi.fn(),
 }))
 
-const mockPrisma = prisma as jest.Mocked<typeof prisma>
-const mockVerifyToken = verify_token as jest.MockedFunction<typeof verify_token>
+vi.mock('../../../../../../lib/prisma', () => ({
+  prisma: prismaMock,
+  default: prismaMock,
+}))
+
+vi.mock('../../../../../../lib/auth-utils', () => ({
+  verify_token: authMock.verify_token,
+}))
 
 describe('/api/productos/[id]/restock-history', () => {
   beforeEach(() => {
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
 
   const mockUser = { userId: 'user1', role: 'admin' }
@@ -95,11 +98,11 @@ describe('/api/productos/[id]/restock-history', () => {
   ]
 
   it('should return restock history successfully', async () => {
-    mockVerifyToken.mockResolvedValue(mockUser)
-    mockPrisma.producto.findUnique.mockResolvedValue(mockProduct)
-    mockPrisma.producto.findMany.mockResolvedValue(mockRelatedProducts)
-    mockPrisma.gastoCompra.findMany.mockResolvedValue(mockRestockEntries)
-    mockPrisma.gastoCompra.count.mockResolvedValue(2)
+    authMock.verify_token.mockResolvedValue(mockUser)
+    prismaMock.producto.findUnique.mockResolvedValue(mockProduct)
+    prismaMock.producto.findMany.mockResolvedValue(mockRelatedProducts)
+    prismaMock.gastoCompra.findMany.mockResolvedValue(mockRestockEntries)
+    prismaMock.gastoCompra.count.mockResolvedValue(2)
 
     const request = new NextRequest('http://localhost/api/productos/prod1/restock-history')
     const response = await GET(request, { params: { id: 'prod1' } })
@@ -114,11 +117,11 @@ describe('/api/productos/[id]/restock-history', () => {
   })
 
   it('should handle pagination correctly', async () => {
-    mockVerifyToken.mockResolvedValue(mockUser)
-    mockPrisma.producto.findUnique.mockResolvedValue(mockProduct)
-    mockPrisma.producto.findMany.mockResolvedValue(mockRelatedProducts)
-    mockPrisma.gastoCompra.findMany.mockResolvedValue([mockRestockEntries[0]])
-    mockPrisma.gastoCompra.count.mockResolvedValue(2)
+    authMock.verify_token.mockResolvedValue(mockUser)
+    prismaMock.producto.findUnique.mockResolvedValue(mockProduct)
+    prismaMock.producto.findMany.mockResolvedValue(mockRelatedProducts)
+    prismaMock.gastoCompra.findMany.mockResolvedValue([mockRestockEntries[0]])
+    prismaMock.gastoCompra.count.mockResolvedValue(2)
 
     const request = new NextRequest('http://localhost/api/productos/prod1/restock-history?page=1&limit=1')
     const response = await GET(request, { params: { id: 'prod1' } })
@@ -133,7 +136,7 @@ describe('/api/productos/[id]/restock-history', () => {
   })
 
   it('should return 401 for unauthorized requests', async () => {
-    mockVerifyToken.mockResolvedValue(null)
+    authMock.verify_token.mockResolvedValue(null)
 
     const request = new NextRequest('http://localhost/api/productos/prod1/restock-history')
     const response = await GET(request, { params: { id: 'prod1' } })
@@ -145,8 +148,8 @@ describe('/api/productos/[id]/restock-history', () => {
   })
 
   it('should return 404 for non-existent product', async () => {
-    mockVerifyToken.mockResolvedValue(mockUser)
-    mockPrisma.producto.findUnique.mockResolvedValue(null)
+    authMock.verify_token.mockResolvedValue(mockUser)
+    prismaMock.producto.findUnique.mockResolvedValue(null)
 
     const request = new NextRequest('http://localhost/api/productos/nonexistent/restock-history')
     const response = await GET(request, { params: { id: 'nonexistent' } })
@@ -158,7 +161,7 @@ describe('/api/productos/[id]/restock-history', () => {
   })
 
   it('should validate query parameters', async () => {
-    mockVerifyToken.mockResolvedValue(mockUser)
+    authMock.verify_token.mockResolvedValue(mockUser)
 
     const request = new NextRequest('http://localhost/api/productos/prod1/restock-history?page=0&limit=200')
     const response = await GET(request, { params: { id: 'prod1' } })
@@ -169,17 +172,17 @@ describe('/api/productos/[id]/restock-history', () => {
   })
 
   it('should handle sorting parameters', async () => {
-    mockVerifyToken.mockResolvedValue(mockUser)
-    mockPrisma.producto.findUnique.mockResolvedValue(mockProduct)
-    mockPrisma.producto.findMany.mockResolvedValue(mockRelatedProducts)
-    mockPrisma.gastoCompra.findMany.mockResolvedValue(mockRestockEntries)
-    mockPrisma.gastoCompra.count.mockResolvedValue(2)
+    authMock.verify_token.mockResolvedValue(mockUser)
+    prismaMock.producto.findUnique.mockResolvedValue(mockProduct)
+    prismaMock.producto.findMany.mockResolvedValue(mockRelatedProducts)
+    prismaMock.gastoCompra.findMany.mockResolvedValue(mockRestockEntries)
+    prismaMock.gastoCompra.count.mockResolvedValue(2)
 
     const request = new NextRequest('http://localhost/api/productos/prod1/restock-history?sortBy=cantidad&sortOrder=asc')
     const response = await GET(request, { params: { id: 'prod1' } })
 
     expect(response.status).toBe(200)
-    expect(mockPrisma.gastoCompra.findMany).toHaveBeenCalledWith(
+    expect(prismaMock.gastoCompra.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         orderBy: { cantidad: 'asc' }
       })
@@ -187,11 +190,11 @@ describe('/api/productos/[id]/restock-history', () => {
   })
 
   it('should identify different restock operation types', async () => {
-    mockVerifyToken.mockResolvedValue(mockUser)
-    mockPrisma.producto.findUnique.mockResolvedValue(mockProduct)
-    mockPrisma.producto.findMany.mockResolvedValue(mockRelatedProducts)
-    mockPrisma.gastoCompra.findMany.mockResolvedValue(mockRestockEntries)
-    mockPrisma.gastoCompra.count.mockResolvedValue(2)
+    authMock.verify_token.mockResolvedValue(mockUser)
+    prismaMock.producto.findUnique.mockResolvedValue(mockProduct)
+    prismaMock.producto.findMany.mockResolvedValue(mockRelatedProducts)
+    prismaMock.gastoCompra.findMany.mockResolvedValue(mockRestockEntries)
+    prismaMock.gastoCompra.count.mockResolvedValue(2)
 
     const request = new NextRequest('http://localhost/api/productos/prod1/restock-history')
     const response = await GET(request, { params: { id: 'prod1' } })
@@ -205,8 +208,8 @@ describe('/api/productos/[id]/restock-history', () => {
   })
 
   it('should handle database errors gracefully', async () => {
-    mockVerifyToken.mockResolvedValue(mockUser)
-    mockPrisma.producto.findUnique.mockRejectedValue(new Error('Database connection error'))
+    authMock.verify_token.mockResolvedValue(mockUser)
+    prismaMock.producto.findUnique.mockRejectedValue(new Error('Database connection error'))
 
     const request = new NextRequest('http://localhost/api/productos/prod1/restock-history')
     const response = await GET(request, { params: { id: 'prod1' } })
@@ -217,11 +220,11 @@ describe('/api/productos/[id]/restock-history', () => {
   })
 
   it('should return empty history for product with no restocks', async () => {
-    mockVerifyToken.mockResolvedValue(mockUser)
-    mockPrisma.producto.findUnique.mockResolvedValue(mockProduct)
-    mockPrisma.producto.findMany.mockResolvedValue([mockProduct])
-    mockPrisma.gastoCompra.findMany.mockResolvedValue([])
-    mockPrisma.gastoCompra.count.mockResolvedValue(0)
+    authMock.verify_token.mockResolvedValue(mockUser)
+    prismaMock.producto.findUnique.mockResolvedValue(mockProduct)
+    prismaMock.producto.findMany.mockResolvedValue([mockProduct])
+    prismaMock.gastoCompra.findMany.mockResolvedValue([])
+    prismaMock.gastoCompra.count.mockResolvedValue(0)
 
     const request = new NextRequest('http://localhost/api/productos/prod1/restock-history')
     const response = await GET(request, { params: { id: 'prod1' } })
