@@ -23,30 +23,30 @@ import {
 // ============================================================================
 
 const product_data_arbitrary = fc.record({
-  precio_venta: fc.float({ min: 1, max: 10000 }),
-  gastos_fijos: fc.float({ min: 0, max: 5000 }),
-  costo_divisa: fc.float({ min: 0.01, max: 5000 }),
+  precio_venta: fc.float({ min: Math.fround(1), max: Math.fround(10000) }),
+  gastos_fijos: fc.float({ min: Math.fround(0), max: Math.fround(5000) }),
+  costo_divisa: fc.float({ min: Math.fround(0.01), max: Math.fround(5000) }),
 })
 
 const margin_data_arbitrary = fc.record({
-  precio_venta: fc.float({ min: 1, max: 10000 }),
-  costo_original: fc.float({ min: 0.01, max: 5000 }),
-  tasa_actual: fc.float({ min: 0.01, max: 1000 }),
-  tasa_original: fc.float({ min: 0.01, max: 1000 }),
+  precio_venta: fc.float({ min: Math.fround(1), max: Math.fround(10000) }),
+  costo_original: fc.float({ min: Math.fround(0.01), max: Math.fround(5000) }),
+  tasa_actual: fc.float({ min: Math.fround(0.01), max: Math.fround(1000) }),
+  tasa_original: fc.float({ min: Math.fround(0.01), max: Math.fround(1000) }),
 })
 
 const debt_data_arbitrary = fc.record({
   id: fc.string({ minLength: 1, maxLength: 10 }),
-  monto: fc.float({ min: 0.01, max: 1000000 }),
+  monto: fc.float({ min: Math.fround(0.01), max: Math.fround(1000000) }),
   moneda: fc.constantFrom('USD', 'EUR', 'GBP', 'CAD', 'MXN'),
   fecha_registro: fc.date({ min: new Date('2020-01-01'), max: new Date() }),
 })
 
 const transaction_data_arbitrary = fc.record({
   fecha: fc.date({ min: new Date('2024-01-01'), max: new Date() }),
-  tasa: fc.float({ min: 0.01, max: 1000 }),
-  tasa_original: fc.float({ min: 0.01, max: 1000 }),
-  monto: fc.float({ min: 0.01, max: 100000 }),
+  tasa: fc.float({ min: Math.fround(0.01), max: Math.fround(1000) }),
+  tasa_original: fc.float({ min: Math.fround(0.01), max: Math.fround(1000) }),
+  monto: fc.float({ min: Math.fround(0.01), max: Math.fround(100000) }),
   moneda: fc.constantFrom('USD', 'EUR', 'GBP'),
 })
 
@@ -117,7 +117,7 @@ describe('Property 13: Real-Time KPI Update Consistency', () => {
       await fc.assert(
         fc.asyncProperty(
           fc.array(product_data_arbitrary, { minLength: 1, maxLength: 5 }),
-          fc.float({ min: 1.1, max: 2.0 }),
+          fc.float({ min: Math.fround(1.1), max: Math.fround(2.0) }),
           async (productos, factor_cambio) => {
             // Calcular KPIs iniciales
             const kpis_iniciales = productos.map(p => ({
@@ -169,7 +169,7 @@ describe('Property 13: Real-Time KPI Update Consistency', () => {
       await fc.assert(
         fc.asyncProperty(
           fc.array(margin_data_arbitrary, { minLength: 1, maxLength: 5 }),
-          fc.float({ min: 0.5, max: 2.0 }),
+          fc.float({ min: Math.fround(0.5), max: Math.fround(2.0) }),
           async (margenes, factor_tasa) => {
             // Calcular márgenes iniciales
             const margenes_iniciales = margenes.map(m =>
@@ -355,7 +355,7 @@ describe('Property 13: Real-Time KPI Update Consistency', () => {
       await fc.assert(
         fc.asyncProperty(
           fc.array(margin_data_arbitrary, { minLength: 1, maxLength: 5 }),
-          fc.float({ min: 0.5, max: 2.0 }),
+          fc.float({ min: Math.fround(0.5), max: Math.fround(2.0) }),
           async (margenes, factor_tasa) => {
             // Calcular márgenes iniciales
             const margenes_iniciales = margenes.map(m =>
@@ -448,7 +448,7 @@ describe('Property 13: Real-Time KPI Update Consistency', () => {
       await fc.assert(
         fc.asyncProperty(
           fc.array(product_data_arbitrary, { minLength: 1, maxLength: 5 }),
-          fc.array(fc.float({ min: 1.01, max: 1.5 }), { minLength: 3, maxLength: 5 }),
+          fc.array(fc.float({ min: Math.fround(1.01), max: Math.fround(1.5) }), { minLength: 3, maxLength: 5 }),
           async (productos, factores_cambio) => {
             let estado_actual = productos
 
@@ -495,8 +495,8 @@ describe('Property 13: Real-Time KPI Update Consistency', () => {
       await fc.assert(
         fc.asyncProperty(
           fc.array(margin_data_arbitrary, { minLength: 1, maxLength: 5 }),
-          fc.float({ min: 0.5, max: 2.0 }),
-          fc.float({ min: 0.5, max: 2.0 }),
+          fc.float({ min: Math.fround(0.5), max: Math.fround(2.0) }),
+          fc.float({ min: Math.fround(0.5), max: Math.fround(2.0) }),
           async (margenes, factor1, factor2) => {
             // Primera actualización
             const margenes_v1 = margenes.map(m => ({
