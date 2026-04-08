@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import {
   Table,
   TableBody,
@@ -104,7 +104,7 @@ export function CostHistoryTable({
   /**
    * @description Carga el historial de costos
    */
-  const loadHistory = async () => {
+  const loadHistory = useCallback(async () => {
     setIsLoading(true)
     setError(null)
 
@@ -140,14 +140,14 @@ export function CostHistoryTable({
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [productoId, page, limit, startDate, endDate, selectedReason])
 
   /**
    * @description Recarga cuando cambian los filtros o paginación
    */
   useEffect(() => {
     loadHistory()
-  }, [productoId, page, limit, selectedReason, startDate, endDate])
+  }, [loadHistory])
 
   /**
    * @description Calcula porcentaje de cambio
