@@ -2,7 +2,7 @@
 
 import { useParams } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { AlertCircle, Boxes, History, Package, Sparkles } from 'lucide-react'
+import { AlertCircle, Boxes, History, Package, Sparkles, TrendingUp } from 'lucide-react'
 
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -10,6 +10,7 @@ import { useGetProductoQuery } from '@/lib/redux/services/productosApi'
 import { ProductoForm } from '@/components/productos/productos-form'
 import { RestockDialog } from '@/components/productos/restock-dialog'
 import { RestockHistoryDialog } from '@/components/productos/restock-history-dialog'
+import { CostHistoryDialog } from '@/components/productos/cost-history-dialog'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
