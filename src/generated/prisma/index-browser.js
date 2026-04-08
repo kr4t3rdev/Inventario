@@ -1253,6 +1253,20 @@ exports.Prisma.PrecioProductoScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.ProductoCostHistoryScalarFieldEnum = {
+  id: 'id',
+  productoId: 'productoId',
+  oldPrecioCosto: 'oldPrecioCosto',
+  newPrecioCosto: 'newPrecioCosto',
+  oldPrecioVenta: 'oldPrecioVenta',
+  newPrecioVenta: 'newPrecioVenta',
+  reason: 'reason',
+  changedBy: 'changedBy',
+  changedAt: 'changedAt',
+  notes: 'notes',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.VendorCodeSequenceScalarFieldEnum = {
   id: 'id',
   nextNumber: 'nextNumber'
@@ -1382,6 +1396,16 @@ exports.EstadoProduccion = exports.$Enums.EstadoProduccion = {
   CANCELADA: 'CANCELADA'
 };
 
+exports.CostChangeReason = exports.$Enums.CostChangeReason = {
+  MANUAL_EDIT: 'MANUAL_EDIT',
+  RESTOCK: 'RESTOCK',
+  ADJUSTMENT: 'ADJUSTMENT',
+  INITIAL: 'INITIAL',
+  SYSTEM_SYNC: 'SYSTEM_SYNC',
+  CORRECTION: 'CORRECTION',
+  IMPORT: 'IMPORT'
+};
+
 exports.Prisma.ModelName = {
   Categoria: 'Categoria',
   Unidad: 'Unidad',
@@ -1463,6 +1487,7 @@ exports.Prisma.ModelName = {
   ValeSalidaItem: 'ValeSalidaItem',
   ListaPrecio: 'ListaPrecio',
   PrecioProducto: 'PrecioProducto',
+  ProductoCostHistory: 'ProductoCostHistory',
   VendorCodeSequence: 'VendorCodeSequence'
 };
 

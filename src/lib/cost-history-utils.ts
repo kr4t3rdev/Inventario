@@ -1,5 +1,4 @@
-import { Prisma, PrismaClient } from '@/generated/prisma'
-import { CostChangeReason } from '@/generated/prisma'
+import { PrismaClient, CostChangeReason } from '@/generated/prisma'
 
 /**
  * @description Enum para razones de cambio de costo — debe coincidir con Prisma schema
@@ -17,7 +16,7 @@ export interface RecordCostChangeParams {
   newPrecioVenta: number
   reason: CostChangeReason
   changedBy: string // userId
-  notes?: string
+  notes?: string | null
 }
 
 /**

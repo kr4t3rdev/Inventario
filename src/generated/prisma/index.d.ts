@@ -415,6 +415,11 @@ export type ListaPrecio = $Result.DefaultSelection<Prisma.$ListaPrecioPayload>
  */
 export type PrecioProducto = $Result.DefaultSelection<Prisma.$PrecioProductoPayload>
 /**
+ * Model ProductoCostHistory
+ * 
+ */
+export type ProductoCostHistory = $Result.DefaultSelection<Prisma.$ProductoCostHistoryPayload>
+/**
  * Model VendorCodeSequence
  * 
  */
@@ -560,6 +565,19 @@ export const EstadoProduccion: {
 
 export type EstadoProduccion = (typeof EstadoProduccion)[keyof typeof EstadoProduccion]
 
+
+export const CostChangeReason: {
+  MANUAL_EDIT: 'MANUAL_EDIT',
+  RESTOCK: 'RESTOCK',
+  ADJUSTMENT: 'ADJUSTMENT',
+  INITIAL: 'INITIAL',
+  SYSTEM_SYNC: 'SYSTEM_SYNC',
+  CORRECTION: 'CORRECTION',
+  IMPORT: 'IMPORT'
+};
+
+export type CostChangeReason = (typeof CostChangeReason)[keyof typeof CostChangeReason]
+
 }
 
 export type TipoInyeccion = $Enums.TipoInyeccion
@@ -617,6 +635,10 @@ export const ComplejidadReparacion: typeof $Enums.ComplejidadReparacion
 export type EstadoProduccion = $Enums.EstadoProduccion
 
 export const EstadoProduccion: typeof $Enums.EstadoProduccion
+
+export type CostChangeReason = $Enums.CostChangeReason
+
+export const CostChangeReason: typeof $Enums.CostChangeReason
 
 /**
  * ##  Prisma Client ʲˢ
@@ -1537,6 +1559,16 @@ export class PrismaClient<
   get precioProducto(): Prisma.PrecioProductoDelegate<ExtArgs, ClientOptions>;
 
   /**
+   * `prisma.productoCostHistory`: Exposes CRUD operations for the **ProductoCostHistory** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more ProductoCostHistories
+    * const productoCostHistories = await prisma.productoCostHistory.findMany()
+    * ```
+    */
+  get productoCostHistory(): Prisma.ProductoCostHistoryDelegate<ExtArgs, ClientOptions>;
+
+  /**
    * `prisma.vendorCodeSequence`: Exposes CRUD operations for the **VendorCodeSequence** model.
     * Example usage:
     * ```ts
@@ -2066,6 +2098,7 @@ export namespace Prisma {
     ValeSalidaItem: 'ValeSalidaItem',
     ListaPrecio: 'ListaPrecio',
     PrecioProducto: 'PrecioProducto',
+    ProductoCostHistory: 'ProductoCostHistory',
     VendorCodeSequence: 'VendorCodeSequence'
   };
 
@@ -2085,7 +2118,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "categoria" | "unidad" | "vendor" | "inyeccionCapital" | "pagoDeuda" | "cliente" | "miEmpresa" | "almacen" | "puntoDeVenta" | "producto" | "venta" | "ventaItem" | "merma" | "transferencia" | "user" | "plan" | "licencia" | "licenciaAudit" | "notification" | "userActivityLog" | "userSession" | "attendance" | "employeeWorkSchedule" | "vacationRequest" | "vacationAccrual" | "empleado" | "pagosalario" | "cierreContable" | "gastoCompra" | "compraProducto" | "servicios" | "ventaServicios" | "gastosDE" | "moneda" | "catalogoReparacionConfig" | "tasaCambio" | "transaccionMoneda" | "cuentaBancaria" | "tipoPago" | "reconciliacionVenta" | "reconciliacionServicio" | "reconciliacionGasto" | "ajusteBancario" | "transferenciaBancaria" | "alertHistory" | "auditLog" | "reportHistory" | "scheduledReport" | "scenarioSimulation" | "contrato" | "contratoVersion" | "contratoFirma" | "contratoAprobacion" | "contratoArchivo" | "contratoAlerta" | "factura" | "serieFacturacion" | "oferta" | "ofertaItem" | "cuentaPorCobrar" | "cuentaPorPagar" | "deudaCash" | "prestamoCash" | "pagoCuentaPorPagar" | "equipoReparacion" | "piezaReparacion" | "ordenReparacion" | "ordenReparacionEquipo" | "ordenReparacionItem" | "ordenReparacionMaterial" | "defectacionCatalogo" | "configuracionSistema" | "ordenProduccion" | "ordenProduccionHistorial" | "receta" | "recetaIngrediente" | "valeSalida" | "valeSalidaItem" | "listaPrecio" | "precioProducto" | "vendorCodeSequence"
+      modelProps: "categoria" | "unidad" | "vendor" | "inyeccionCapital" | "pagoDeuda" | "cliente" | "miEmpresa" | "almacen" | "puntoDeVenta" | "producto" | "venta" | "ventaItem" | "merma" | "transferencia" | "user" | "plan" | "licencia" | "licenciaAudit" | "notification" | "userActivityLog" | "userSession" | "attendance" | "employeeWorkSchedule" | "vacationRequest" | "vacationAccrual" | "empleado" | "pagosalario" | "cierreContable" | "gastoCompra" | "compraProducto" | "servicios" | "ventaServicios" | "gastosDE" | "moneda" | "catalogoReparacionConfig" | "tasaCambio" | "transaccionMoneda" | "cuentaBancaria" | "tipoPago" | "reconciliacionVenta" | "reconciliacionServicio" | "reconciliacionGasto" | "ajusteBancario" | "transferenciaBancaria" | "alertHistory" | "auditLog" | "reportHistory" | "scheduledReport" | "scenarioSimulation" | "contrato" | "contratoVersion" | "contratoFirma" | "contratoAprobacion" | "contratoArchivo" | "contratoAlerta" | "factura" | "serieFacturacion" | "oferta" | "ofertaItem" | "cuentaPorCobrar" | "cuentaPorPagar" | "deudaCash" | "prestamoCash" | "pagoCuentaPorPagar" | "equipoReparacion" | "piezaReparacion" | "ordenReparacion" | "ordenReparacionEquipo" | "ordenReparacionItem" | "ordenReparacionMaterial" | "defectacionCatalogo" | "configuracionSistema" | "ordenProduccion" | "ordenProduccionHistorial" | "receta" | "recetaIngrediente" | "valeSalida" | "valeSalidaItem" | "listaPrecio" | "precioProducto" | "productoCostHistory" | "vendorCodeSequence"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -8009,6 +8042,80 @@ export namespace Prisma {
           }
         }
       }
+      ProductoCostHistory: {
+        payload: Prisma.$ProductoCostHistoryPayload<ExtArgs>
+        fields: Prisma.ProductoCostHistoryFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.ProductoCostHistoryFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProductoCostHistoryPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.ProductoCostHistoryFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProductoCostHistoryPayload>
+          }
+          findFirst: {
+            args: Prisma.ProductoCostHistoryFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProductoCostHistoryPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.ProductoCostHistoryFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProductoCostHistoryPayload>
+          }
+          findMany: {
+            args: Prisma.ProductoCostHistoryFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProductoCostHistoryPayload>[]
+          }
+          create: {
+            args: Prisma.ProductoCostHistoryCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProductoCostHistoryPayload>
+          }
+          createMany: {
+            args: Prisma.ProductoCostHistoryCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.ProductoCostHistoryCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProductoCostHistoryPayload>[]
+          }
+          delete: {
+            args: Prisma.ProductoCostHistoryDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProductoCostHistoryPayload>
+          }
+          update: {
+            args: Prisma.ProductoCostHistoryUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProductoCostHistoryPayload>
+          }
+          deleteMany: {
+            args: Prisma.ProductoCostHistoryDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.ProductoCostHistoryUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.ProductoCostHistoryUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProductoCostHistoryPayload>[]
+          }
+          upsert: {
+            args: Prisma.ProductoCostHistoryUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$ProductoCostHistoryPayload>
+          }
+          aggregate: {
+            args: Prisma.ProductoCostHistoryAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateProductoCostHistory>
+          }
+          groupBy: {
+            args: Prisma.ProductoCostHistoryGroupByArgs<ExtArgs>
+            result: $Utils.Optional<ProductoCostHistoryGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.ProductoCostHistoryCountArgs<ExtArgs>
+            result: $Utils.Optional<ProductoCostHistoryCountAggregateOutputType> | number
+          }
+        }
+      }
       VendorCodeSequence: {
         payload: Prisma.$VendorCodeSequencePayload<ExtArgs>
         fields: Prisma.VendorCodeSequenceFieldRefs
@@ -8259,6 +8366,7 @@ export namespace Prisma {
     valeSalidaItem?: ValeSalidaItemOmit
     listaPrecio?: ListaPrecioOmit
     precioProducto?: PrecioProductoOmit
+    productoCostHistory?: ProductoCostHistoryOmit
     vendorCodeSequence?: VendorCodeSequenceOmit
   }
 
@@ -8734,6 +8842,7 @@ export namespace Prisma {
     ofertaItems: number
     ordenMateriales: number
     precios: number
+    costHistory: number
     Receta: number
     RecetaIngrediente: number
     transferencias: number
@@ -8749,6 +8858,7 @@ export namespace Prisma {
     ofertaItems?: boolean | ProductoCountOutputTypeCountOfertaItemsArgs
     ordenMateriales?: boolean | ProductoCountOutputTypeCountOrdenMaterialesArgs
     precios?: boolean | ProductoCountOutputTypeCountPreciosArgs
+    costHistory?: boolean | ProductoCountOutputTypeCountCostHistoryArgs
     Receta?: boolean | ProductoCountOutputTypeCountRecetaArgs
     RecetaIngrediente?: boolean | ProductoCountOutputTypeCountRecetaIngredienteArgs
     transferencias?: boolean | ProductoCountOutputTypeCountTransferenciasArgs
@@ -8808,6 +8918,13 @@ export namespace Prisma {
    */
   export type ProductoCountOutputTypeCountPreciosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: PrecioProductoWhereInput
+  }
+
+  /**
+   * ProductoCountOutputType without action
+   */
+  export type ProductoCountOutputTypeCountCostHistoryArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ProductoCostHistoryWhereInput
   }
 
   /**
@@ -21367,6 +21484,7 @@ export namespace Prisma {
     ofertaItems?: boolean | Producto$ofertaItemsArgs<ExtArgs>
     ordenMateriales?: boolean | Producto$ordenMaterialesArgs<ExtArgs>
     precios?: boolean | Producto$preciosArgs<ExtArgs>
+    costHistory?: boolean | Producto$costHistoryArgs<ExtArgs>
     almacen?: boolean | AlmacenDefaultArgs<ExtArgs>
     categoria?: boolean | CategoriaDefaultArgs<ExtArgs>
     puntoDeVenta?: boolean | Producto$puntoDeVentaArgs<ExtArgs>
@@ -21477,6 +21595,7 @@ export namespace Prisma {
     ofertaItems?: boolean | Producto$ofertaItemsArgs<ExtArgs>
     ordenMateriales?: boolean | Producto$ordenMaterialesArgs<ExtArgs>
     precios?: boolean | Producto$preciosArgs<ExtArgs>
+    costHistory?: boolean | Producto$costHistoryArgs<ExtArgs>
     almacen?: boolean | AlmacenDefaultArgs<ExtArgs>
     categoria?: boolean | CategoriaDefaultArgs<ExtArgs>
     puntoDeVenta?: boolean | Producto$puntoDeVentaArgs<ExtArgs>
@@ -21517,6 +21636,7 @@ export namespace Prisma {
       ofertaItems: Prisma.$OfertaItemPayload<ExtArgs>[]
       ordenMateriales: Prisma.$OrdenReparacionMaterialPayload<ExtArgs>[]
       precios: Prisma.$PrecioProductoPayload<ExtArgs>[]
+      costHistory: Prisma.$ProductoCostHistoryPayload<ExtArgs>[]
       almacen: Prisma.$AlmacenPayload<ExtArgs>
       categoria: Prisma.$CategoriaPayload<ExtArgs>
       puntoDeVenta: Prisma.$PuntoDeVentaPayload<ExtArgs> | null
@@ -21953,6 +22073,7 @@ export namespace Prisma {
     ofertaItems<T extends Producto$ofertaItemsArgs<ExtArgs> = {}>(args?: Subset<T, Producto$ofertaItemsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OfertaItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     ordenMateriales<T extends Producto$ordenMaterialesArgs<ExtArgs> = {}>(args?: Subset<T, Producto$ordenMaterialesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrdenReparacionMaterialPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     precios<T extends Producto$preciosArgs<ExtArgs> = {}>(args?: Subset<T, Producto$preciosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PrecioProductoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    costHistory<T extends Producto$costHistoryArgs<ExtArgs> = {}>(args?: Subset<T, Producto$costHistoryArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProductoCostHistoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     almacen<T extends AlmacenDefaultArgs<ExtArgs> = {}>(args?: Subset<T, AlmacenDefaultArgs<ExtArgs>>): Prisma__AlmacenClient<$Result.GetResult<Prisma.$AlmacenPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     categoria<T extends CategoriaDefaultArgs<ExtArgs> = {}>(args?: Subset<T, CategoriaDefaultArgs<ExtArgs>>): Prisma__CategoriaClient<$Result.GetResult<Prisma.$CategoriaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     puntoDeVenta<T extends Producto$puntoDeVentaArgs<ExtArgs> = {}>(args?: Subset<T, Producto$puntoDeVentaArgs<ExtArgs>>): Prisma__PuntoDeVentaClient<$Result.GetResult<Prisma.$PuntoDeVentaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
@@ -22553,6 +22674,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: PrecioProductoScalarFieldEnum | PrecioProductoScalarFieldEnum[]
+  }
+
+  /**
+   * Producto.costHistory
+   */
+  export type Producto$costHistoryArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProductoCostHistory
+     */
+    select?: ProductoCostHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProductoCostHistory
+     */
+    omit?: ProductoCostHistoryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProductoCostHistoryInclude<ExtArgs> | null
+    where?: ProductoCostHistoryWhereInput
+    orderBy?: ProductoCostHistoryOrderByWithRelationInput | ProductoCostHistoryOrderByWithRelationInput[]
+    cursor?: ProductoCostHistoryWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ProductoCostHistoryScalarFieldEnum | ProductoCostHistoryScalarFieldEnum[]
   }
 
   /**
@@ -107316,6 +107461,1188 @@ export namespace Prisma {
 
 
   /**
+   * Model ProductoCostHistory
+   */
+
+  export type AggregateProductoCostHistory = {
+    _count: ProductoCostHistoryCountAggregateOutputType | null
+    _avg: ProductoCostHistoryAvgAggregateOutputType | null
+    _sum: ProductoCostHistorySumAggregateOutputType | null
+    _min: ProductoCostHistoryMinAggregateOutputType | null
+    _max: ProductoCostHistoryMaxAggregateOutputType | null
+  }
+
+  export type ProductoCostHistoryAvgAggregateOutputType = {
+    oldPrecioCosto: number | null
+    newPrecioCosto: number | null
+    oldPrecioVenta: number | null
+    newPrecioVenta: number | null
+  }
+
+  export type ProductoCostHistorySumAggregateOutputType = {
+    oldPrecioCosto: number | null
+    newPrecioCosto: number | null
+    oldPrecioVenta: number | null
+    newPrecioVenta: number | null
+  }
+
+  export type ProductoCostHistoryMinAggregateOutputType = {
+    id: string | null
+    productoId: string | null
+    oldPrecioCosto: number | null
+    newPrecioCosto: number | null
+    oldPrecioVenta: number | null
+    newPrecioVenta: number | null
+    reason: $Enums.CostChangeReason | null
+    changedBy: string | null
+    changedAt: Date | null
+    notes: string | null
+    createdAt: Date | null
+  }
+
+  export type ProductoCostHistoryMaxAggregateOutputType = {
+    id: string | null
+    productoId: string | null
+    oldPrecioCosto: number | null
+    newPrecioCosto: number | null
+    oldPrecioVenta: number | null
+    newPrecioVenta: number | null
+    reason: $Enums.CostChangeReason | null
+    changedBy: string | null
+    changedAt: Date | null
+    notes: string | null
+    createdAt: Date | null
+  }
+
+  export type ProductoCostHistoryCountAggregateOutputType = {
+    id: number
+    productoId: number
+    oldPrecioCosto: number
+    newPrecioCosto: number
+    oldPrecioVenta: number
+    newPrecioVenta: number
+    reason: number
+    changedBy: number
+    changedAt: number
+    notes: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type ProductoCostHistoryAvgAggregateInputType = {
+    oldPrecioCosto?: true
+    newPrecioCosto?: true
+    oldPrecioVenta?: true
+    newPrecioVenta?: true
+  }
+
+  export type ProductoCostHistorySumAggregateInputType = {
+    oldPrecioCosto?: true
+    newPrecioCosto?: true
+    oldPrecioVenta?: true
+    newPrecioVenta?: true
+  }
+
+  export type ProductoCostHistoryMinAggregateInputType = {
+    id?: true
+    productoId?: true
+    oldPrecioCosto?: true
+    newPrecioCosto?: true
+    oldPrecioVenta?: true
+    newPrecioVenta?: true
+    reason?: true
+    changedBy?: true
+    changedAt?: true
+    notes?: true
+    createdAt?: true
+  }
+
+  export type ProductoCostHistoryMaxAggregateInputType = {
+    id?: true
+    productoId?: true
+    oldPrecioCosto?: true
+    newPrecioCosto?: true
+    oldPrecioVenta?: true
+    newPrecioVenta?: true
+    reason?: true
+    changedBy?: true
+    changedAt?: true
+    notes?: true
+    createdAt?: true
+  }
+
+  export type ProductoCostHistoryCountAggregateInputType = {
+    id?: true
+    productoId?: true
+    oldPrecioCosto?: true
+    newPrecioCosto?: true
+    oldPrecioVenta?: true
+    newPrecioVenta?: true
+    reason?: true
+    changedBy?: true
+    changedAt?: true
+    notes?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type ProductoCostHistoryAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ProductoCostHistory to aggregate.
+     */
+    where?: ProductoCostHistoryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ProductoCostHistories to fetch.
+     */
+    orderBy?: ProductoCostHistoryOrderByWithRelationInput | ProductoCostHistoryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: ProductoCostHistoryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ProductoCostHistories from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ProductoCostHistories.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned ProductoCostHistories
+    **/
+    _count?: true | ProductoCostHistoryCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: ProductoCostHistoryAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: ProductoCostHistorySumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: ProductoCostHistoryMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: ProductoCostHistoryMaxAggregateInputType
+  }
+
+  export type GetProductoCostHistoryAggregateType<T extends ProductoCostHistoryAggregateArgs> = {
+        [P in keyof T & keyof AggregateProductoCostHistory]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateProductoCostHistory[P]>
+      : GetScalarType<T[P], AggregateProductoCostHistory[P]>
+  }
+
+
+
+
+  export type ProductoCostHistoryGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ProductoCostHistoryWhereInput
+    orderBy?: ProductoCostHistoryOrderByWithAggregationInput | ProductoCostHistoryOrderByWithAggregationInput[]
+    by: ProductoCostHistoryScalarFieldEnum[] | ProductoCostHistoryScalarFieldEnum
+    having?: ProductoCostHistoryScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: ProductoCostHistoryCountAggregateInputType | true
+    _avg?: ProductoCostHistoryAvgAggregateInputType
+    _sum?: ProductoCostHistorySumAggregateInputType
+    _min?: ProductoCostHistoryMinAggregateInputType
+    _max?: ProductoCostHistoryMaxAggregateInputType
+  }
+
+  export type ProductoCostHistoryGroupByOutputType = {
+    id: string
+    productoId: string
+    oldPrecioCosto: number
+    newPrecioCosto: number
+    oldPrecioVenta: number
+    newPrecioVenta: number
+    reason: $Enums.CostChangeReason
+    changedBy: string
+    changedAt: Date
+    notes: string | null
+    createdAt: Date
+    _count: ProductoCostHistoryCountAggregateOutputType | null
+    _avg: ProductoCostHistoryAvgAggregateOutputType | null
+    _sum: ProductoCostHistorySumAggregateOutputType | null
+    _min: ProductoCostHistoryMinAggregateOutputType | null
+    _max: ProductoCostHistoryMaxAggregateOutputType | null
+  }
+
+  type GetProductoCostHistoryGroupByPayload<T extends ProductoCostHistoryGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<ProductoCostHistoryGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof ProductoCostHistoryGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], ProductoCostHistoryGroupByOutputType[P]>
+            : GetScalarType<T[P], ProductoCostHistoryGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type ProductoCostHistorySelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    productoId?: boolean
+    oldPrecioCosto?: boolean
+    newPrecioCosto?: boolean
+    oldPrecioVenta?: boolean
+    newPrecioVenta?: boolean
+    reason?: boolean
+    changedBy?: boolean
+    changedAt?: boolean
+    notes?: boolean
+    createdAt?: boolean
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["productoCostHistory"]>
+
+  export type ProductoCostHistorySelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    productoId?: boolean
+    oldPrecioCosto?: boolean
+    newPrecioCosto?: boolean
+    oldPrecioVenta?: boolean
+    newPrecioVenta?: boolean
+    reason?: boolean
+    changedBy?: boolean
+    changedAt?: boolean
+    notes?: boolean
+    createdAt?: boolean
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["productoCostHistory"]>
+
+  export type ProductoCostHistorySelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    productoId?: boolean
+    oldPrecioCosto?: boolean
+    newPrecioCosto?: boolean
+    oldPrecioVenta?: boolean
+    newPrecioVenta?: boolean
+    reason?: boolean
+    changedBy?: boolean
+    changedAt?: boolean
+    notes?: boolean
+    createdAt?: boolean
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["productoCostHistory"]>
+
+  export type ProductoCostHistorySelectScalar = {
+    id?: boolean
+    productoId?: boolean
+    oldPrecioCosto?: boolean
+    newPrecioCosto?: boolean
+    oldPrecioVenta?: boolean
+    newPrecioVenta?: boolean
+    reason?: boolean
+    changedBy?: boolean
+    changedAt?: boolean
+    notes?: boolean
+    createdAt?: boolean
+  }
+
+  export type ProductoCostHistoryOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "productoId" | "oldPrecioCosto" | "newPrecioCosto" | "oldPrecioVenta" | "newPrecioVenta" | "reason" | "changedBy" | "changedAt" | "notes" | "createdAt", ExtArgs["result"]["productoCostHistory"]>
+  export type ProductoCostHistoryInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }
+  export type ProductoCostHistoryIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }
+  export type ProductoCostHistoryIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }
+
+  export type $ProductoCostHistoryPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "ProductoCostHistory"
+    objects: {
+      producto: Prisma.$ProductoPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      productoId: string
+      oldPrecioCosto: number
+      newPrecioCosto: number
+      oldPrecioVenta: number
+      newPrecioVenta: number
+      reason: $Enums.CostChangeReason
+      changedBy: string
+      changedAt: Date
+      notes: string | null
+      createdAt: Date
+    }, ExtArgs["result"]["productoCostHistory"]>
+    composites: {}
+  }
+
+  type ProductoCostHistoryGetPayload<S extends boolean | null | undefined | ProductoCostHistoryDefaultArgs> = $Result.GetResult<Prisma.$ProductoCostHistoryPayload, S>
+
+  type ProductoCostHistoryCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<ProductoCostHistoryFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: ProductoCostHistoryCountAggregateInputType | true
+    }
+
+  export interface ProductoCostHistoryDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['ProductoCostHistory'], meta: { name: 'ProductoCostHistory' } }
+    /**
+     * Find zero or one ProductoCostHistory that matches the filter.
+     * @param {ProductoCostHistoryFindUniqueArgs} args - Arguments to find a ProductoCostHistory
+     * @example
+     * // Get one ProductoCostHistory
+     * const productoCostHistory = await prisma.productoCostHistory.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends ProductoCostHistoryFindUniqueArgs>(args: SelectSubset<T, ProductoCostHistoryFindUniqueArgs<ExtArgs>>): Prisma__ProductoCostHistoryClient<$Result.GetResult<Prisma.$ProductoCostHistoryPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one ProductoCostHistory that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {ProductoCostHistoryFindUniqueOrThrowArgs} args - Arguments to find a ProductoCostHistory
+     * @example
+     * // Get one ProductoCostHistory
+     * const productoCostHistory = await prisma.productoCostHistory.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends ProductoCostHistoryFindUniqueOrThrowArgs>(args: SelectSubset<T, ProductoCostHistoryFindUniqueOrThrowArgs<ExtArgs>>): Prisma__ProductoCostHistoryClient<$Result.GetResult<Prisma.$ProductoCostHistoryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ProductoCostHistory that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProductoCostHistoryFindFirstArgs} args - Arguments to find a ProductoCostHistory
+     * @example
+     * // Get one ProductoCostHistory
+     * const productoCostHistory = await prisma.productoCostHistory.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends ProductoCostHistoryFindFirstArgs>(args?: SelectSubset<T, ProductoCostHistoryFindFirstArgs<ExtArgs>>): Prisma__ProductoCostHistoryClient<$Result.GetResult<Prisma.$ProductoCostHistoryPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first ProductoCostHistory that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProductoCostHistoryFindFirstOrThrowArgs} args - Arguments to find a ProductoCostHistory
+     * @example
+     * // Get one ProductoCostHistory
+     * const productoCostHistory = await prisma.productoCostHistory.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends ProductoCostHistoryFindFirstOrThrowArgs>(args?: SelectSubset<T, ProductoCostHistoryFindFirstOrThrowArgs<ExtArgs>>): Prisma__ProductoCostHistoryClient<$Result.GetResult<Prisma.$ProductoCostHistoryPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more ProductoCostHistories that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProductoCostHistoryFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all ProductoCostHistories
+     * const productoCostHistories = await prisma.productoCostHistory.findMany()
+     * 
+     * // Get first 10 ProductoCostHistories
+     * const productoCostHistories = await prisma.productoCostHistory.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const productoCostHistoryWithIdOnly = await prisma.productoCostHistory.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends ProductoCostHistoryFindManyArgs>(args?: SelectSubset<T, ProductoCostHistoryFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProductoCostHistoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a ProductoCostHistory.
+     * @param {ProductoCostHistoryCreateArgs} args - Arguments to create a ProductoCostHistory.
+     * @example
+     * // Create one ProductoCostHistory
+     * const ProductoCostHistory = await prisma.productoCostHistory.create({
+     *   data: {
+     *     // ... data to create a ProductoCostHistory
+     *   }
+     * })
+     * 
+     */
+    create<T extends ProductoCostHistoryCreateArgs>(args: SelectSubset<T, ProductoCostHistoryCreateArgs<ExtArgs>>): Prisma__ProductoCostHistoryClient<$Result.GetResult<Prisma.$ProductoCostHistoryPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many ProductoCostHistories.
+     * @param {ProductoCostHistoryCreateManyArgs} args - Arguments to create many ProductoCostHistories.
+     * @example
+     * // Create many ProductoCostHistories
+     * const productoCostHistory = await prisma.productoCostHistory.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends ProductoCostHistoryCreateManyArgs>(args?: SelectSubset<T, ProductoCostHistoryCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many ProductoCostHistories and returns the data saved in the database.
+     * @param {ProductoCostHistoryCreateManyAndReturnArgs} args - Arguments to create many ProductoCostHistories.
+     * @example
+     * // Create many ProductoCostHistories
+     * const productoCostHistory = await prisma.productoCostHistory.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many ProductoCostHistories and only return the `id`
+     * const productoCostHistoryWithIdOnly = await prisma.productoCostHistory.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends ProductoCostHistoryCreateManyAndReturnArgs>(args?: SelectSubset<T, ProductoCostHistoryCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProductoCostHistoryPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a ProductoCostHistory.
+     * @param {ProductoCostHistoryDeleteArgs} args - Arguments to delete one ProductoCostHistory.
+     * @example
+     * // Delete one ProductoCostHistory
+     * const ProductoCostHistory = await prisma.productoCostHistory.delete({
+     *   where: {
+     *     // ... filter to delete one ProductoCostHistory
+     *   }
+     * })
+     * 
+     */
+    delete<T extends ProductoCostHistoryDeleteArgs>(args: SelectSubset<T, ProductoCostHistoryDeleteArgs<ExtArgs>>): Prisma__ProductoCostHistoryClient<$Result.GetResult<Prisma.$ProductoCostHistoryPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one ProductoCostHistory.
+     * @param {ProductoCostHistoryUpdateArgs} args - Arguments to update one ProductoCostHistory.
+     * @example
+     * // Update one ProductoCostHistory
+     * const productoCostHistory = await prisma.productoCostHistory.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends ProductoCostHistoryUpdateArgs>(args: SelectSubset<T, ProductoCostHistoryUpdateArgs<ExtArgs>>): Prisma__ProductoCostHistoryClient<$Result.GetResult<Prisma.$ProductoCostHistoryPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more ProductoCostHistories.
+     * @param {ProductoCostHistoryDeleteManyArgs} args - Arguments to filter ProductoCostHistories to delete.
+     * @example
+     * // Delete a few ProductoCostHistories
+     * const { count } = await prisma.productoCostHistory.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends ProductoCostHistoryDeleteManyArgs>(args?: SelectSubset<T, ProductoCostHistoryDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ProductoCostHistories.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProductoCostHistoryUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many ProductoCostHistories
+     * const productoCostHistory = await prisma.productoCostHistory.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends ProductoCostHistoryUpdateManyArgs>(args: SelectSubset<T, ProductoCostHistoryUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more ProductoCostHistories and returns the data updated in the database.
+     * @param {ProductoCostHistoryUpdateManyAndReturnArgs} args - Arguments to update many ProductoCostHistories.
+     * @example
+     * // Update many ProductoCostHistories
+     * const productoCostHistory = await prisma.productoCostHistory.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more ProductoCostHistories and only return the `id`
+     * const productoCostHistoryWithIdOnly = await prisma.productoCostHistory.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends ProductoCostHistoryUpdateManyAndReturnArgs>(args: SelectSubset<T, ProductoCostHistoryUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProductoCostHistoryPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one ProductoCostHistory.
+     * @param {ProductoCostHistoryUpsertArgs} args - Arguments to update or create a ProductoCostHistory.
+     * @example
+     * // Update or create a ProductoCostHistory
+     * const productoCostHistory = await prisma.productoCostHistory.upsert({
+     *   create: {
+     *     // ... data to create a ProductoCostHistory
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the ProductoCostHistory we want to update
+     *   }
+     * })
+     */
+    upsert<T extends ProductoCostHistoryUpsertArgs>(args: SelectSubset<T, ProductoCostHistoryUpsertArgs<ExtArgs>>): Prisma__ProductoCostHistoryClient<$Result.GetResult<Prisma.$ProductoCostHistoryPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of ProductoCostHistories.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProductoCostHistoryCountArgs} args - Arguments to filter ProductoCostHistories to count.
+     * @example
+     * // Count the number of ProductoCostHistories
+     * const count = await prisma.productoCostHistory.count({
+     *   where: {
+     *     // ... the filter for the ProductoCostHistories we want to count
+     *   }
+     * })
+    **/
+    count<T extends ProductoCostHistoryCountArgs>(
+      args?: Subset<T, ProductoCostHistoryCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], ProductoCostHistoryCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a ProductoCostHistory.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProductoCostHistoryAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends ProductoCostHistoryAggregateArgs>(args: Subset<T, ProductoCostHistoryAggregateArgs>): Prisma.PrismaPromise<GetProductoCostHistoryAggregateType<T>>
+
+    /**
+     * Group by ProductoCostHistory.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {ProductoCostHistoryGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends ProductoCostHistoryGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: ProductoCostHistoryGroupByArgs['orderBy'] }
+        : { orderBy?: ProductoCostHistoryGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, ProductoCostHistoryGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetProductoCostHistoryGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the ProductoCostHistory model
+   */
+  readonly fields: ProductoCostHistoryFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for ProductoCostHistory.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__ProductoCostHistoryClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    producto<T extends ProductoDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ProductoDefaultArgs<ExtArgs>>): Prisma__ProductoClient<$Result.GetResult<Prisma.$ProductoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the ProductoCostHistory model
+   */
+  interface ProductoCostHistoryFieldRefs {
+    readonly id: FieldRef<"ProductoCostHistory", 'String'>
+    readonly productoId: FieldRef<"ProductoCostHistory", 'String'>
+    readonly oldPrecioCosto: FieldRef<"ProductoCostHistory", 'Int'>
+    readonly newPrecioCosto: FieldRef<"ProductoCostHistory", 'Int'>
+    readonly oldPrecioVenta: FieldRef<"ProductoCostHistory", 'Int'>
+    readonly newPrecioVenta: FieldRef<"ProductoCostHistory", 'Int'>
+    readonly reason: FieldRef<"ProductoCostHistory", 'CostChangeReason'>
+    readonly changedBy: FieldRef<"ProductoCostHistory", 'String'>
+    readonly changedAt: FieldRef<"ProductoCostHistory", 'DateTime'>
+    readonly notes: FieldRef<"ProductoCostHistory", 'String'>
+    readonly createdAt: FieldRef<"ProductoCostHistory", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * ProductoCostHistory findUnique
+   */
+  export type ProductoCostHistoryFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProductoCostHistory
+     */
+    select?: ProductoCostHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProductoCostHistory
+     */
+    omit?: ProductoCostHistoryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProductoCostHistoryInclude<ExtArgs> | null
+    /**
+     * Filter, which ProductoCostHistory to fetch.
+     */
+    where: ProductoCostHistoryWhereUniqueInput
+  }
+
+  /**
+   * ProductoCostHistory findUniqueOrThrow
+   */
+  export type ProductoCostHistoryFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProductoCostHistory
+     */
+    select?: ProductoCostHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProductoCostHistory
+     */
+    omit?: ProductoCostHistoryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProductoCostHistoryInclude<ExtArgs> | null
+    /**
+     * Filter, which ProductoCostHistory to fetch.
+     */
+    where: ProductoCostHistoryWhereUniqueInput
+  }
+
+  /**
+   * ProductoCostHistory findFirst
+   */
+  export type ProductoCostHistoryFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProductoCostHistory
+     */
+    select?: ProductoCostHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProductoCostHistory
+     */
+    omit?: ProductoCostHistoryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProductoCostHistoryInclude<ExtArgs> | null
+    /**
+     * Filter, which ProductoCostHistory to fetch.
+     */
+    where?: ProductoCostHistoryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ProductoCostHistories to fetch.
+     */
+    orderBy?: ProductoCostHistoryOrderByWithRelationInput | ProductoCostHistoryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ProductoCostHistories.
+     */
+    cursor?: ProductoCostHistoryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ProductoCostHistories from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ProductoCostHistories.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ProductoCostHistories.
+     */
+    distinct?: ProductoCostHistoryScalarFieldEnum | ProductoCostHistoryScalarFieldEnum[]
+  }
+
+  /**
+   * ProductoCostHistory findFirstOrThrow
+   */
+  export type ProductoCostHistoryFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProductoCostHistory
+     */
+    select?: ProductoCostHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProductoCostHistory
+     */
+    omit?: ProductoCostHistoryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProductoCostHistoryInclude<ExtArgs> | null
+    /**
+     * Filter, which ProductoCostHistory to fetch.
+     */
+    where?: ProductoCostHistoryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ProductoCostHistories to fetch.
+     */
+    orderBy?: ProductoCostHistoryOrderByWithRelationInput | ProductoCostHistoryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for ProductoCostHistories.
+     */
+    cursor?: ProductoCostHistoryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ProductoCostHistories from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ProductoCostHistories.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of ProductoCostHistories.
+     */
+    distinct?: ProductoCostHistoryScalarFieldEnum | ProductoCostHistoryScalarFieldEnum[]
+  }
+
+  /**
+   * ProductoCostHistory findMany
+   */
+  export type ProductoCostHistoryFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProductoCostHistory
+     */
+    select?: ProductoCostHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProductoCostHistory
+     */
+    omit?: ProductoCostHistoryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProductoCostHistoryInclude<ExtArgs> | null
+    /**
+     * Filter, which ProductoCostHistories to fetch.
+     */
+    where?: ProductoCostHistoryWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of ProductoCostHistories to fetch.
+     */
+    orderBy?: ProductoCostHistoryOrderByWithRelationInput | ProductoCostHistoryOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing ProductoCostHistories.
+     */
+    cursor?: ProductoCostHistoryWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` ProductoCostHistories from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` ProductoCostHistories.
+     */
+    skip?: number
+    distinct?: ProductoCostHistoryScalarFieldEnum | ProductoCostHistoryScalarFieldEnum[]
+  }
+
+  /**
+   * ProductoCostHistory create
+   */
+  export type ProductoCostHistoryCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProductoCostHistory
+     */
+    select?: ProductoCostHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProductoCostHistory
+     */
+    omit?: ProductoCostHistoryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProductoCostHistoryInclude<ExtArgs> | null
+    /**
+     * The data needed to create a ProductoCostHistory.
+     */
+    data: XOR<ProductoCostHistoryCreateInput, ProductoCostHistoryUncheckedCreateInput>
+  }
+
+  /**
+   * ProductoCostHistory createMany
+   */
+  export type ProductoCostHistoryCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many ProductoCostHistories.
+     */
+    data: ProductoCostHistoryCreateManyInput | ProductoCostHistoryCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * ProductoCostHistory createManyAndReturn
+   */
+  export type ProductoCostHistoryCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProductoCostHistory
+     */
+    select?: ProductoCostHistorySelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProductoCostHistory
+     */
+    omit?: ProductoCostHistoryOmit<ExtArgs> | null
+    /**
+     * The data used to create many ProductoCostHistories.
+     */
+    data: ProductoCostHistoryCreateManyInput | ProductoCostHistoryCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProductoCostHistoryIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ProductoCostHistory update
+   */
+  export type ProductoCostHistoryUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProductoCostHistory
+     */
+    select?: ProductoCostHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProductoCostHistory
+     */
+    omit?: ProductoCostHistoryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProductoCostHistoryInclude<ExtArgs> | null
+    /**
+     * The data needed to update a ProductoCostHistory.
+     */
+    data: XOR<ProductoCostHistoryUpdateInput, ProductoCostHistoryUncheckedUpdateInput>
+    /**
+     * Choose, which ProductoCostHistory to update.
+     */
+    where: ProductoCostHistoryWhereUniqueInput
+  }
+
+  /**
+   * ProductoCostHistory updateMany
+   */
+  export type ProductoCostHistoryUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update ProductoCostHistories.
+     */
+    data: XOR<ProductoCostHistoryUpdateManyMutationInput, ProductoCostHistoryUncheckedUpdateManyInput>
+    /**
+     * Filter which ProductoCostHistories to update
+     */
+    where?: ProductoCostHistoryWhereInput
+    /**
+     * Limit how many ProductoCostHistories to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * ProductoCostHistory updateManyAndReturn
+   */
+  export type ProductoCostHistoryUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProductoCostHistory
+     */
+    select?: ProductoCostHistorySelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProductoCostHistory
+     */
+    omit?: ProductoCostHistoryOmit<ExtArgs> | null
+    /**
+     * The data used to update ProductoCostHistories.
+     */
+    data: XOR<ProductoCostHistoryUpdateManyMutationInput, ProductoCostHistoryUncheckedUpdateManyInput>
+    /**
+     * Filter which ProductoCostHistories to update
+     */
+    where?: ProductoCostHistoryWhereInput
+    /**
+     * Limit how many ProductoCostHistories to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProductoCostHistoryIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * ProductoCostHistory upsert
+   */
+  export type ProductoCostHistoryUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProductoCostHistory
+     */
+    select?: ProductoCostHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProductoCostHistory
+     */
+    omit?: ProductoCostHistoryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProductoCostHistoryInclude<ExtArgs> | null
+    /**
+     * The filter to search for the ProductoCostHistory to update in case it exists.
+     */
+    where: ProductoCostHistoryWhereUniqueInput
+    /**
+     * In case the ProductoCostHistory found by the `where` argument doesn't exist, create a new ProductoCostHistory with this data.
+     */
+    create: XOR<ProductoCostHistoryCreateInput, ProductoCostHistoryUncheckedCreateInput>
+    /**
+     * In case the ProductoCostHistory was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<ProductoCostHistoryUpdateInput, ProductoCostHistoryUncheckedUpdateInput>
+  }
+
+  /**
+   * ProductoCostHistory delete
+   */
+  export type ProductoCostHistoryDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProductoCostHistory
+     */
+    select?: ProductoCostHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProductoCostHistory
+     */
+    omit?: ProductoCostHistoryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProductoCostHistoryInclude<ExtArgs> | null
+    /**
+     * Filter which ProductoCostHistory to delete.
+     */
+    where: ProductoCostHistoryWhereUniqueInput
+  }
+
+  /**
+   * ProductoCostHistory deleteMany
+   */
+  export type ProductoCostHistoryDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which ProductoCostHistories to delete
+     */
+    where?: ProductoCostHistoryWhereInput
+    /**
+     * Limit how many ProductoCostHistories to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * ProductoCostHistory without action
+   */
+  export type ProductoCostHistoryDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the ProductoCostHistory
+     */
+    select?: ProductoCostHistorySelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the ProductoCostHistory
+     */
+    omit?: ProductoCostHistoryOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ProductoCostHistoryInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Model VendorCodeSequence
    */
 
@@ -109695,6 +111022,23 @@ export namespace Prisma {
   export type PrecioProductoScalarFieldEnum = (typeof PrecioProductoScalarFieldEnum)[keyof typeof PrecioProductoScalarFieldEnum]
 
 
+  export const ProductoCostHistoryScalarFieldEnum: {
+    id: 'id',
+    productoId: 'productoId',
+    oldPrecioCosto: 'oldPrecioCosto',
+    newPrecioCosto: 'newPrecioCosto',
+    oldPrecioVenta: 'oldPrecioVenta',
+    newPrecioVenta: 'newPrecioVenta',
+    reason: 'reason',
+    changedBy: 'changedBy',
+    changedAt: 'changedAt',
+    notes: 'notes',
+    createdAt: 'createdAt'
+  };
+
+  export type ProductoCostHistoryScalarFieldEnum = (typeof ProductoCostHistoryScalarFieldEnum)[keyof typeof ProductoCostHistoryScalarFieldEnum]
+
+
   export const VendorCodeSequenceScalarFieldEnum: {
     id: 'id',
     nextNumber: 'nextNumber'
@@ -110040,6 +111384,20 @@ export namespace Prisma {
    * Reference to a field of type 'EstadoProduccion[]'
    */
   export type ListEnumEstadoProduccionFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EstadoProduccion[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'CostChangeReason'
+   */
+  export type EnumCostChangeReasonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CostChangeReason'>
+    
+
+
+  /**
+   * Reference to a field of type 'CostChangeReason[]'
+   */
+  export type ListEnumCostChangeReasonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CostChangeReason[]'>
     
   /**
    * Deep Input Types
@@ -110848,6 +112206,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemListRelationFilter
     ordenMateriales?: OrdenReparacionMaterialListRelationFilter
     precios?: PrecioProductoListRelationFilter
+    costHistory?: ProductoCostHistoryListRelationFilter
     almacen?: XOR<AlmacenScalarRelationFilter, AlmacenWhereInput>
     categoria?: XOR<CategoriaScalarRelationFilter, CategoriaWhereInput>
     puntoDeVenta?: XOR<PuntoDeVentaNullableScalarRelationFilter, PuntoDeVentaWhereInput> | null
@@ -110891,6 +112250,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemOrderByRelationAggregateInput
     ordenMateriales?: OrdenReparacionMaterialOrderByRelationAggregateInput
     precios?: PrecioProductoOrderByRelationAggregateInput
+    costHistory?: ProductoCostHistoryOrderByRelationAggregateInput
     almacen?: AlmacenOrderByWithRelationInput
     categoria?: CategoriaOrderByWithRelationInput
     puntoDeVenta?: PuntoDeVentaOrderByWithRelationInput
@@ -110937,6 +112297,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemListRelationFilter
     ordenMateriales?: OrdenReparacionMaterialListRelationFilter
     precios?: PrecioProductoListRelationFilter
+    costHistory?: ProductoCostHistoryListRelationFilter
     almacen?: XOR<AlmacenScalarRelationFilter, AlmacenWhereInput>
     categoria?: XOR<CategoriaScalarRelationFilter, CategoriaWhereInput>
     puntoDeVenta?: XOR<PuntoDeVentaNullableScalarRelationFilter, PuntoDeVentaWhereInput> | null
@@ -117485,6 +118846,93 @@ export namespace Prisma {
     updatedAt?: DateTimeWithAggregatesFilter<"PrecioProducto"> | Date | string
   }
 
+  export type ProductoCostHistoryWhereInput = {
+    AND?: ProductoCostHistoryWhereInput | ProductoCostHistoryWhereInput[]
+    OR?: ProductoCostHistoryWhereInput[]
+    NOT?: ProductoCostHistoryWhereInput | ProductoCostHistoryWhereInput[]
+    id?: StringFilter<"ProductoCostHistory"> | string
+    productoId?: StringFilter<"ProductoCostHistory"> | string
+    oldPrecioCosto?: IntFilter<"ProductoCostHistory"> | number
+    newPrecioCosto?: IntFilter<"ProductoCostHistory"> | number
+    oldPrecioVenta?: IntFilter<"ProductoCostHistory"> | number
+    newPrecioVenta?: IntFilter<"ProductoCostHistory"> | number
+    reason?: EnumCostChangeReasonFilter<"ProductoCostHistory"> | $Enums.CostChangeReason
+    changedBy?: StringFilter<"ProductoCostHistory"> | string
+    changedAt?: DateTimeFilter<"ProductoCostHistory"> | Date | string
+    notes?: StringNullableFilter<"ProductoCostHistory"> | string | null
+    createdAt?: DateTimeFilter<"ProductoCostHistory"> | Date | string
+    producto?: XOR<ProductoScalarRelationFilter, ProductoWhereInput>
+  }
+
+  export type ProductoCostHistoryOrderByWithRelationInput = {
+    id?: SortOrder
+    productoId?: SortOrder
+    oldPrecioCosto?: SortOrder
+    newPrecioCosto?: SortOrder
+    oldPrecioVenta?: SortOrder
+    newPrecioVenta?: SortOrder
+    reason?: SortOrder
+    changedBy?: SortOrder
+    changedAt?: SortOrder
+    notes?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    producto?: ProductoOrderByWithRelationInput
+  }
+
+  export type ProductoCostHistoryWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: ProductoCostHistoryWhereInput | ProductoCostHistoryWhereInput[]
+    OR?: ProductoCostHistoryWhereInput[]
+    NOT?: ProductoCostHistoryWhereInput | ProductoCostHistoryWhereInput[]
+    productoId?: StringFilter<"ProductoCostHistory"> | string
+    oldPrecioCosto?: IntFilter<"ProductoCostHistory"> | number
+    newPrecioCosto?: IntFilter<"ProductoCostHistory"> | number
+    oldPrecioVenta?: IntFilter<"ProductoCostHistory"> | number
+    newPrecioVenta?: IntFilter<"ProductoCostHistory"> | number
+    reason?: EnumCostChangeReasonFilter<"ProductoCostHistory"> | $Enums.CostChangeReason
+    changedBy?: StringFilter<"ProductoCostHistory"> | string
+    changedAt?: DateTimeFilter<"ProductoCostHistory"> | Date | string
+    notes?: StringNullableFilter<"ProductoCostHistory"> | string | null
+    createdAt?: DateTimeFilter<"ProductoCostHistory"> | Date | string
+    producto?: XOR<ProductoScalarRelationFilter, ProductoWhereInput>
+  }, "id">
+
+  export type ProductoCostHistoryOrderByWithAggregationInput = {
+    id?: SortOrder
+    productoId?: SortOrder
+    oldPrecioCosto?: SortOrder
+    newPrecioCosto?: SortOrder
+    oldPrecioVenta?: SortOrder
+    newPrecioVenta?: SortOrder
+    reason?: SortOrder
+    changedBy?: SortOrder
+    changedAt?: SortOrder
+    notes?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: ProductoCostHistoryCountOrderByAggregateInput
+    _avg?: ProductoCostHistoryAvgOrderByAggregateInput
+    _max?: ProductoCostHistoryMaxOrderByAggregateInput
+    _min?: ProductoCostHistoryMinOrderByAggregateInput
+    _sum?: ProductoCostHistorySumOrderByAggregateInput
+  }
+
+  export type ProductoCostHistoryScalarWhereWithAggregatesInput = {
+    AND?: ProductoCostHistoryScalarWhereWithAggregatesInput | ProductoCostHistoryScalarWhereWithAggregatesInput[]
+    OR?: ProductoCostHistoryScalarWhereWithAggregatesInput[]
+    NOT?: ProductoCostHistoryScalarWhereWithAggregatesInput | ProductoCostHistoryScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"ProductoCostHistory"> | string
+    productoId?: StringWithAggregatesFilter<"ProductoCostHistory"> | string
+    oldPrecioCosto?: IntWithAggregatesFilter<"ProductoCostHistory"> | number
+    newPrecioCosto?: IntWithAggregatesFilter<"ProductoCostHistory"> | number
+    oldPrecioVenta?: IntWithAggregatesFilter<"ProductoCostHistory"> | number
+    newPrecioVenta?: IntWithAggregatesFilter<"ProductoCostHistory"> | number
+    reason?: EnumCostChangeReasonWithAggregatesFilter<"ProductoCostHistory"> | $Enums.CostChangeReason
+    changedBy?: StringWithAggregatesFilter<"ProductoCostHistory"> | string
+    changedAt?: DateTimeWithAggregatesFilter<"ProductoCostHistory"> | Date | string
+    notes?: StringNullableWithAggregatesFilter<"ProductoCostHistory"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"ProductoCostHistory"> | Date | string
+  }
+
   export type VendorCodeSequenceWhereInput = {
     AND?: VendorCodeSequenceWhereInput | VendorCodeSequenceWhereInput[]
     OR?: VendorCodeSequenceWhereInput[]
@@ -118429,6 +119877,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
@@ -118472,6 +119921,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
@@ -118503,6 +119953,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
@@ -118546,6 +119997,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
@@ -125799,6 +127251,103 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type ProductoCostHistoryCreateInput = {
+    id?: string
+    oldPrecioCosto: number
+    newPrecioCosto: number
+    oldPrecioVenta: number
+    newPrecioVenta: number
+    reason: $Enums.CostChangeReason
+    changedBy: string
+    changedAt: Date | string
+    notes?: string | null
+    createdAt?: Date | string
+    producto: ProductoCreateNestedOneWithoutCostHistoryInput
+  }
+
+  export type ProductoCostHistoryUncheckedCreateInput = {
+    id?: string
+    productoId: string
+    oldPrecioCosto: number
+    newPrecioCosto: number
+    oldPrecioVenta: number
+    newPrecioVenta: number
+    reason: $Enums.CostChangeReason
+    changedBy: string
+    changedAt: Date | string
+    notes?: string | null
+    createdAt?: Date | string
+  }
+
+  export type ProductoCostHistoryUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    oldPrecioCosto?: IntFieldUpdateOperationsInput | number
+    newPrecioCosto?: IntFieldUpdateOperationsInput | number
+    oldPrecioVenta?: IntFieldUpdateOperationsInput | number
+    newPrecioVenta?: IntFieldUpdateOperationsInput | number
+    reason?: EnumCostChangeReasonFieldUpdateOperationsInput | $Enums.CostChangeReason
+    changedBy?: StringFieldUpdateOperationsInput | string
+    changedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    producto?: ProductoUpdateOneRequiredWithoutCostHistoryNestedInput
+  }
+
+  export type ProductoCostHistoryUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    productoId?: StringFieldUpdateOperationsInput | string
+    oldPrecioCosto?: IntFieldUpdateOperationsInput | number
+    newPrecioCosto?: IntFieldUpdateOperationsInput | number
+    oldPrecioVenta?: IntFieldUpdateOperationsInput | number
+    newPrecioVenta?: IntFieldUpdateOperationsInput | number
+    reason?: EnumCostChangeReasonFieldUpdateOperationsInput | $Enums.CostChangeReason
+    changedBy?: StringFieldUpdateOperationsInput | string
+    changedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProductoCostHistoryCreateManyInput = {
+    id?: string
+    productoId: string
+    oldPrecioCosto: number
+    newPrecioCosto: number
+    oldPrecioVenta: number
+    newPrecioVenta: number
+    reason: $Enums.CostChangeReason
+    changedBy: string
+    changedAt: Date | string
+    notes?: string | null
+    createdAt?: Date | string
+  }
+
+  export type ProductoCostHistoryUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    oldPrecioCosto?: IntFieldUpdateOperationsInput | number
+    newPrecioCosto?: IntFieldUpdateOperationsInput | number
+    oldPrecioVenta?: IntFieldUpdateOperationsInput | number
+    newPrecioVenta?: IntFieldUpdateOperationsInput | number
+    reason?: EnumCostChangeReasonFieldUpdateOperationsInput | $Enums.CostChangeReason
+    changedBy?: StringFieldUpdateOperationsInput | string
+    changedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProductoCostHistoryUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    productoId?: StringFieldUpdateOperationsInput | string
+    oldPrecioCosto?: IntFieldUpdateOperationsInput | number
+    newPrecioCosto?: IntFieldUpdateOperationsInput | number
+    oldPrecioVenta?: IntFieldUpdateOperationsInput | number
+    newPrecioVenta?: IntFieldUpdateOperationsInput | number
+    reason?: EnumCostChangeReasonFieldUpdateOperationsInput | $Enums.CostChangeReason
+    changedBy?: StringFieldUpdateOperationsInput | string
+    changedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type VendorCodeSequenceCreateInput = {
     id?: number
     nextNumber?: number
@@ -126699,6 +128248,12 @@ export namespace Prisma {
     none?: PrecioProductoWhereInput
   }
 
+  export type ProductoCostHistoryListRelationFilter = {
+    every?: ProductoCostHistoryWhereInput
+    some?: ProductoCostHistoryWhereInput
+    none?: ProductoCostHistoryWhereInput
+  }
+
   export type AlmacenScalarRelationFilter = {
     is?: AlmacenWhereInput
     isNot?: AlmacenWhereInput
@@ -126761,6 +128316,10 @@ export namespace Prisma {
   }
 
   export type PrecioProductoOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type ProductoCostHistoryOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -131353,6 +132912,79 @@ export namespace Prisma {
     precio?: SortOrder
   }
 
+  export type EnumCostChangeReasonFilter<$PrismaModel = never> = {
+    equals?: $Enums.CostChangeReason | EnumCostChangeReasonFieldRefInput<$PrismaModel>
+    in?: $Enums.CostChangeReason[] | ListEnumCostChangeReasonFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CostChangeReason[] | ListEnumCostChangeReasonFieldRefInput<$PrismaModel>
+    not?: NestedEnumCostChangeReasonFilter<$PrismaModel> | $Enums.CostChangeReason
+  }
+
+  export type ProductoCostHistoryCountOrderByAggregateInput = {
+    id?: SortOrder
+    productoId?: SortOrder
+    oldPrecioCosto?: SortOrder
+    newPrecioCosto?: SortOrder
+    oldPrecioVenta?: SortOrder
+    newPrecioVenta?: SortOrder
+    reason?: SortOrder
+    changedBy?: SortOrder
+    changedAt?: SortOrder
+    notes?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type ProductoCostHistoryAvgOrderByAggregateInput = {
+    oldPrecioCosto?: SortOrder
+    newPrecioCosto?: SortOrder
+    oldPrecioVenta?: SortOrder
+    newPrecioVenta?: SortOrder
+  }
+
+  export type ProductoCostHistoryMaxOrderByAggregateInput = {
+    id?: SortOrder
+    productoId?: SortOrder
+    oldPrecioCosto?: SortOrder
+    newPrecioCosto?: SortOrder
+    oldPrecioVenta?: SortOrder
+    newPrecioVenta?: SortOrder
+    reason?: SortOrder
+    changedBy?: SortOrder
+    changedAt?: SortOrder
+    notes?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type ProductoCostHistoryMinOrderByAggregateInput = {
+    id?: SortOrder
+    productoId?: SortOrder
+    oldPrecioCosto?: SortOrder
+    newPrecioCosto?: SortOrder
+    oldPrecioVenta?: SortOrder
+    newPrecioVenta?: SortOrder
+    reason?: SortOrder
+    changedBy?: SortOrder
+    changedAt?: SortOrder
+    notes?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type ProductoCostHistorySumOrderByAggregateInput = {
+    oldPrecioCosto?: SortOrder
+    newPrecioCosto?: SortOrder
+    oldPrecioVenta?: SortOrder
+    newPrecioVenta?: SortOrder
+  }
+
+  export type EnumCostChangeReasonWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.CostChangeReason | EnumCostChangeReasonFieldRefInput<$PrismaModel>
+    in?: $Enums.CostChangeReason[] | ListEnumCostChangeReasonFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CostChangeReason[] | ListEnumCostChangeReasonFieldRefInput<$PrismaModel>
+    not?: NestedEnumCostChangeReasonWithAggregatesFilter<$PrismaModel> | $Enums.CostChangeReason
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumCostChangeReasonFilter<$PrismaModel>
+    _max?: NestedEnumCostChangeReasonFilter<$PrismaModel>
+  }
+
   export type VendorCodeSequenceCountOrderByAggregateInput = {
     id?: SortOrder
     nextNumber?: SortOrder
@@ -132666,6 +134298,13 @@ export namespace Prisma {
     connect?: PrecioProductoWhereUniqueInput | PrecioProductoWhereUniqueInput[]
   }
 
+  export type ProductoCostHistoryCreateNestedManyWithoutProductoInput = {
+    create?: XOR<ProductoCostHistoryCreateWithoutProductoInput, ProductoCostHistoryUncheckedCreateWithoutProductoInput> | ProductoCostHistoryCreateWithoutProductoInput[] | ProductoCostHistoryUncheckedCreateWithoutProductoInput[]
+    connectOrCreate?: ProductoCostHistoryCreateOrConnectWithoutProductoInput | ProductoCostHistoryCreateOrConnectWithoutProductoInput[]
+    createMany?: ProductoCostHistoryCreateManyProductoInputEnvelope
+    connect?: ProductoCostHistoryWhereUniqueInput | ProductoCostHistoryWhereUniqueInput[]
+  }
+
   export type AlmacenCreateNestedOneWithoutProductosInput = {
     create?: XOR<AlmacenCreateWithoutProductosInput, AlmacenUncheckedCreateWithoutProductosInput>
     connectOrCreate?: AlmacenCreateOrConnectWithoutProductosInput
@@ -132784,6 +134423,13 @@ export namespace Prisma {
     connectOrCreate?: PrecioProductoCreateOrConnectWithoutProductoInput | PrecioProductoCreateOrConnectWithoutProductoInput[]
     createMany?: PrecioProductoCreateManyProductoInputEnvelope
     connect?: PrecioProductoWhereUniqueInput | PrecioProductoWhereUniqueInput[]
+  }
+
+  export type ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput = {
+    create?: XOR<ProductoCostHistoryCreateWithoutProductoInput, ProductoCostHistoryUncheckedCreateWithoutProductoInput> | ProductoCostHistoryCreateWithoutProductoInput[] | ProductoCostHistoryUncheckedCreateWithoutProductoInput[]
+    connectOrCreate?: ProductoCostHistoryCreateOrConnectWithoutProductoInput | ProductoCostHistoryCreateOrConnectWithoutProductoInput[]
+    createMany?: ProductoCostHistoryCreateManyProductoInputEnvelope
+    connect?: ProductoCostHistoryWhereUniqueInput | ProductoCostHistoryWhereUniqueInput[]
   }
 
   export type RecetaUncheckedCreateNestedManyWithoutProductoInput = {
@@ -132915,6 +134561,20 @@ export namespace Prisma {
     update?: PrecioProductoUpdateWithWhereUniqueWithoutProductoInput | PrecioProductoUpdateWithWhereUniqueWithoutProductoInput[]
     updateMany?: PrecioProductoUpdateManyWithWhereWithoutProductoInput | PrecioProductoUpdateManyWithWhereWithoutProductoInput[]
     deleteMany?: PrecioProductoScalarWhereInput | PrecioProductoScalarWhereInput[]
+  }
+
+  export type ProductoCostHistoryUpdateManyWithoutProductoNestedInput = {
+    create?: XOR<ProductoCostHistoryCreateWithoutProductoInput, ProductoCostHistoryUncheckedCreateWithoutProductoInput> | ProductoCostHistoryCreateWithoutProductoInput[] | ProductoCostHistoryUncheckedCreateWithoutProductoInput[]
+    connectOrCreate?: ProductoCostHistoryCreateOrConnectWithoutProductoInput | ProductoCostHistoryCreateOrConnectWithoutProductoInput[]
+    upsert?: ProductoCostHistoryUpsertWithWhereUniqueWithoutProductoInput | ProductoCostHistoryUpsertWithWhereUniqueWithoutProductoInput[]
+    createMany?: ProductoCostHistoryCreateManyProductoInputEnvelope
+    set?: ProductoCostHistoryWhereUniqueInput | ProductoCostHistoryWhereUniqueInput[]
+    disconnect?: ProductoCostHistoryWhereUniqueInput | ProductoCostHistoryWhereUniqueInput[]
+    delete?: ProductoCostHistoryWhereUniqueInput | ProductoCostHistoryWhereUniqueInput[]
+    connect?: ProductoCostHistoryWhereUniqueInput | ProductoCostHistoryWhereUniqueInput[]
+    update?: ProductoCostHistoryUpdateWithWhereUniqueWithoutProductoInput | ProductoCostHistoryUpdateWithWhereUniqueWithoutProductoInput[]
+    updateMany?: ProductoCostHistoryUpdateManyWithWhereWithoutProductoInput | ProductoCostHistoryUpdateManyWithWhereWithoutProductoInput[]
+    deleteMany?: ProductoCostHistoryScalarWhereInput | ProductoCostHistoryScalarWhereInput[]
   }
 
   export type AlmacenUpdateOneRequiredWithoutProductosNestedInput = {
@@ -133139,6 +134799,20 @@ export namespace Prisma {
     update?: PrecioProductoUpdateWithWhereUniqueWithoutProductoInput | PrecioProductoUpdateWithWhereUniqueWithoutProductoInput[]
     updateMany?: PrecioProductoUpdateManyWithWhereWithoutProductoInput | PrecioProductoUpdateManyWithWhereWithoutProductoInput[]
     deleteMany?: PrecioProductoScalarWhereInput | PrecioProductoScalarWhereInput[]
+  }
+
+  export type ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput = {
+    create?: XOR<ProductoCostHistoryCreateWithoutProductoInput, ProductoCostHistoryUncheckedCreateWithoutProductoInput> | ProductoCostHistoryCreateWithoutProductoInput[] | ProductoCostHistoryUncheckedCreateWithoutProductoInput[]
+    connectOrCreate?: ProductoCostHistoryCreateOrConnectWithoutProductoInput | ProductoCostHistoryCreateOrConnectWithoutProductoInput[]
+    upsert?: ProductoCostHistoryUpsertWithWhereUniqueWithoutProductoInput | ProductoCostHistoryUpsertWithWhereUniqueWithoutProductoInput[]
+    createMany?: ProductoCostHistoryCreateManyProductoInputEnvelope
+    set?: ProductoCostHistoryWhereUniqueInput | ProductoCostHistoryWhereUniqueInput[]
+    disconnect?: ProductoCostHistoryWhereUniqueInput | ProductoCostHistoryWhereUniqueInput[]
+    delete?: ProductoCostHistoryWhereUniqueInput | ProductoCostHistoryWhereUniqueInput[]
+    connect?: ProductoCostHistoryWhereUniqueInput | ProductoCostHistoryWhereUniqueInput[]
+    update?: ProductoCostHistoryUpdateWithWhereUniqueWithoutProductoInput | ProductoCostHistoryUpdateWithWhereUniqueWithoutProductoInput[]
+    updateMany?: ProductoCostHistoryUpdateManyWithWhereWithoutProductoInput | ProductoCostHistoryUpdateManyWithWhereWithoutProductoInput[]
+    deleteMany?: ProductoCostHistoryScalarWhereInput | ProductoCostHistoryScalarWhereInput[]
   }
 
   export type RecetaUncheckedUpdateManyWithoutProductoNestedInput = {
@@ -138073,6 +139747,24 @@ export namespace Prisma {
     update?: XOR<XOR<ProductoUpdateToOneWithWhereWithoutPreciosInput, ProductoUpdateWithoutPreciosInput>, ProductoUncheckedUpdateWithoutPreciosInput>
   }
 
+  export type ProductoCreateNestedOneWithoutCostHistoryInput = {
+    create?: XOR<ProductoCreateWithoutCostHistoryInput, ProductoUncheckedCreateWithoutCostHistoryInput>
+    connectOrCreate?: ProductoCreateOrConnectWithoutCostHistoryInput
+    connect?: ProductoWhereUniqueInput
+  }
+
+  export type EnumCostChangeReasonFieldUpdateOperationsInput = {
+    set?: $Enums.CostChangeReason
+  }
+
+  export type ProductoUpdateOneRequiredWithoutCostHistoryNestedInput = {
+    create?: XOR<ProductoCreateWithoutCostHistoryInput, ProductoUncheckedCreateWithoutCostHistoryInput>
+    connectOrCreate?: ProductoCreateOrConnectWithoutCostHistoryInput
+    upsert?: ProductoUpsertWithoutCostHistoryInput
+    connect?: ProductoWhereUniqueInput
+    update?: XOR<XOR<ProductoUpdateToOneWithWhereWithoutCostHistoryInput, ProductoUpdateWithoutCostHistoryInput>, ProductoUncheckedUpdateWithoutCostHistoryInput>
+  }
+
   export type NestedStringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -138657,6 +140349,23 @@ export namespace Prisma {
     _max?: NestedFloatNullableFilter<$PrismaModel>
   }
 
+  export type NestedEnumCostChangeReasonFilter<$PrismaModel = never> = {
+    equals?: $Enums.CostChangeReason | EnumCostChangeReasonFieldRefInput<$PrismaModel>
+    in?: $Enums.CostChangeReason[] | ListEnumCostChangeReasonFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CostChangeReason[] | ListEnumCostChangeReasonFieldRefInput<$PrismaModel>
+    not?: NestedEnumCostChangeReasonFilter<$PrismaModel> | $Enums.CostChangeReason
+  }
+
+  export type NestedEnumCostChangeReasonWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.CostChangeReason | EnumCostChangeReasonFieldRefInput<$PrismaModel>
+    in?: $Enums.CostChangeReason[] | ListEnumCostChangeReasonFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CostChangeReason[] | ListEnumCostChangeReasonFieldRefInput<$PrismaModel>
+    not?: NestedEnumCostChangeReasonWithAggregatesFilter<$PrismaModel> | $Enums.CostChangeReason
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumCostChangeReasonFilter<$PrismaModel>
+    _max?: NestedEnumCostChangeReasonFilter<$PrismaModel>
+  }
+
   export type CategoriaCreateWithoutSubcategoriasInput = {
     catId?: string
     nombre: string
@@ -138739,6 +140448,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
     subcategoria?: CategoriaCreateNestedOneWithoutProductosSubcategoriaInput
@@ -138780,6 +140490,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
@@ -138821,6 +140532,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
@@ -138862,6 +140574,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
@@ -139024,6 +140737,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
@@ -139065,6 +140779,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
@@ -139378,6 +141093,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
@@ -139419,6 +141135,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
@@ -140841,6 +142558,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
     subcategoria?: CategoriaCreateNestedOneWithoutProductosSubcategoriaInput
@@ -140882,6 +142600,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
@@ -141080,6 +142799,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     subcategoria?: CategoriaCreateNestedOneWithoutProductosSubcategoriaInput
@@ -141121,6 +142841,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
@@ -141551,6 +143272,42 @@ export namespace Prisma {
 
   export type PrecioProductoCreateManyProductoInputEnvelope = {
     data: PrecioProductoCreateManyProductoInput | PrecioProductoCreateManyProductoInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type ProductoCostHistoryCreateWithoutProductoInput = {
+    id?: string
+    oldPrecioCosto: number
+    newPrecioCosto: number
+    oldPrecioVenta: number
+    newPrecioVenta: number
+    reason: $Enums.CostChangeReason
+    changedBy: string
+    changedAt: Date | string
+    notes?: string | null
+    createdAt?: Date | string
+  }
+
+  export type ProductoCostHistoryUncheckedCreateWithoutProductoInput = {
+    id?: string
+    oldPrecioCosto: number
+    newPrecioCosto: number
+    oldPrecioVenta: number
+    newPrecioVenta: number
+    reason: $Enums.CostChangeReason
+    changedBy: string
+    changedAt: Date | string
+    notes?: string | null
+    createdAt?: Date | string
+  }
+
+  export type ProductoCostHistoryCreateOrConnectWithoutProductoInput = {
+    where: ProductoCostHistoryWhereUniqueInput
+    create: XOR<ProductoCostHistoryCreateWithoutProductoInput, ProductoCostHistoryUncheckedCreateWithoutProductoInput>
+  }
+
+  export type ProductoCostHistoryCreateManyProductoInputEnvelope = {
+    data: ProductoCostHistoryCreateManyProductoInput | ProductoCostHistoryCreateManyProductoInput[]
     skipDuplicates?: boolean
   }
 
@@ -142076,6 +143833,39 @@ export namespace Prisma {
     precio?: IntFilter<"PrecioProducto"> | number
     createdAt?: DateTimeFilter<"PrecioProducto"> | Date | string
     updatedAt?: DateTimeFilter<"PrecioProducto"> | Date | string
+  }
+
+  export type ProductoCostHistoryUpsertWithWhereUniqueWithoutProductoInput = {
+    where: ProductoCostHistoryWhereUniqueInput
+    update: XOR<ProductoCostHistoryUpdateWithoutProductoInput, ProductoCostHistoryUncheckedUpdateWithoutProductoInput>
+    create: XOR<ProductoCostHistoryCreateWithoutProductoInput, ProductoCostHistoryUncheckedCreateWithoutProductoInput>
+  }
+
+  export type ProductoCostHistoryUpdateWithWhereUniqueWithoutProductoInput = {
+    where: ProductoCostHistoryWhereUniqueInput
+    data: XOR<ProductoCostHistoryUpdateWithoutProductoInput, ProductoCostHistoryUncheckedUpdateWithoutProductoInput>
+  }
+
+  export type ProductoCostHistoryUpdateManyWithWhereWithoutProductoInput = {
+    where: ProductoCostHistoryScalarWhereInput
+    data: XOR<ProductoCostHistoryUpdateManyMutationInput, ProductoCostHistoryUncheckedUpdateManyWithoutProductoInput>
+  }
+
+  export type ProductoCostHistoryScalarWhereInput = {
+    AND?: ProductoCostHistoryScalarWhereInput | ProductoCostHistoryScalarWhereInput[]
+    OR?: ProductoCostHistoryScalarWhereInput[]
+    NOT?: ProductoCostHistoryScalarWhereInput | ProductoCostHistoryScalarWhereInput[]
+    id?: StringFilter<"ProductoCostHistory"> | string
+    productoId?: StringFilter<"ProductoCostHistory"> | string
+    oldPrecioCosto?: IntFilter<"ProductoCostHistory"> | number
+    newPrecioCosto?: IntFilter<"ProductoCostHistory"> | number
+    oldPrecioVenta?: IntFilter<"ProductoCostHistory"> | number
+    newPrecioVenta?: IntFilter<"ProductoCostHistory"> | number
+    reason?: EnumCostChangeReasonFilter<"ProductoCostHistory"> | $Enums.CostChangeReason
+    changedBy?: StringFilter<"ProductoCostHistory"> | string
+    changedAt?: DateTimeFilter<"ProductoCostHistory"> | Date | string
+    notes?: StringNullableFilter<"ProductoCostHistory"> | string | null
+    createdAt?: DateTimeFilter<"ProductoCostHistory"> | Date | string
   }
 
   export type AlmacenUpsertWithoutProductosInput = {
@@ -142709,6 +144499,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
@@ -142751,6 +144542,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
@@ -143181,6 +144973,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
@@ -143223,6 +145016,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
@@ -143371,6 +145165,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
@@ -143413,6 +145208,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
@@ -143506,6 +145302,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
@@ -143548,6 +145345,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
@@ -143630,6 +145428,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
@@ -143672,6 +145471,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
@@ -143718,6 +145518,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
@@ -143760,6 +145561,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
@@ -143837,6 +145639,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
@@ -143879,6 +145682,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     ValeSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
@@ -144041,6 +145845,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
@@ -144083,6 +145888,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     ValeSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
@@ -147002,6 +148808,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
@@ -147044,6 +148851,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
@@ -147297,6 +149105,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
@@ -147339,6 +149148,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
@@ -147524,6 +149334,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
@@ -147566,6 +149377,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
@@ -147757,6 +149569,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
@@ -147799,6 +149612,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
@@ -153837,6 +155651,7 @@ export namespace Prisma {
     mermas?: MermaCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
@@ -153879,6 +155694,7 @@ export namespace Prisma {
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
@@ -153993,6 +155809,7 @@ export namespace Prisma {
     mermas?: MermaUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
@@ -154035,6 +155852,7 @@ export namespace Prisma {
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
@@ -156721,6 +158539,7 @@ export namespace Prisma {
     mermas?: MermaCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
@@ -156763,6 +158582,7 @@ export namespace Prisma {
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
@@ -156884,6 +158704,7 @@ export namespace Prisma {
     mermas?: MermaUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
@@ -156926,6 +158747,7 @@ export namespace Prisma {
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
@@ -157228,6 +159050,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
@@ -157270,6 +159093,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
     ValeSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
@@ -157377,6 +159201,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
@@ -157419,6 +159244,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
     ValeSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
@@ -157465,6 +159291,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
@@ -157507,6 +159334,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
     ValeSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
@@ -157584,6 +159412,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
@@ -157626,6 +159455,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
     ValeSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
@@ -157733,6 +159563,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
@@ -157775,6 +159606,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
@@ -157844,6 +159676,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
@@ -157886,6 +159719,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
@@ -158073,6 +159907,7 @@ export namespace Prisma {
     mermas?: MermaCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
@@ -158115,6 +159950,7 @@ export namespace Prisma {
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
@@ -158192,6 +160028,7 @@ export namespace Prisma {
     mermas?: MermaUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
@@ -158234,6 +160071,171 @@ export namespace Prisma {
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
+    Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
+    RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
+    transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
+    ValeSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
+    ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
+    ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+  }
+
+  export type ProductoCreateWithoutCostHistoryInput = {
+    nombre: string
+    descripcion?: string | null
+    precioCosto: number
+    precioVenta: number
+    stock: number
+    createdAt?: Date | string
+    id?: string
+    updatedAt?: Date | string
+    stockMinimo?: number
+    fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
+    compras?: CompraProductoCreateNestedManyWithoutProductoInput
+    gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
+    mermas?: MermaCreateNestedManyWithoutProductoInput
+    ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
+    ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
+    precios?: PrecioProductoCreateNestedManyWithoutProductoInput
+    almacen: AlmacenCreateNestedOneWithoutProductosInput
+    categoria: CategoriaCreateNestedOneWithoutProductosInput
+    puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
+    subcategoria?: CategoriaCreateNestedOneWithoutProductosSubcategoriaInput
+    unidad?: UnidadCreateNestedOneWithoutProductosInput
+    vendor?: VendorCreateNestedOneWithoutProductosInput
+    Receta?: RecetaCreateNestedManyWithoutProductoInput
+    RecetaIngrediente?: RecetaIngredienteCreateNestedManyWithoutProductoInput
+    transferencias?: TransferenciaCreateNestedManyWithoutProductoInput
+    ValeSalidaItem?: ValeSalidaItemCreateNestedManyWithoutProductoInput
+    ventas?: VentaCreateNestedManyWithoutProductoInput
+    ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+  }
+
+  export type ProductoUncheckedCreateWithoutCostHistoryInput = {
+    nombre: string
+    descripcion?: string | null
+    precioCosto: number
+    precioVenta: number
+    stock: number
+    categoriaId: string
+    unidadId?: string | null
+    vendorId?: string | null
+    createdAt?: Date | string
+    id?: string
+    updatedAt?: Date | string
+    almacenId: string
+    puntoDeVentaId?: string | null
+    stockMinimo?: number
+    subcategoriaId?: string | null
+    fotos?: ProductoCreatefotosInput | string[]
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
+    compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
+    gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
+    mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
+    ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
+    ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
+    precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
+    Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
+    RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
+    transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
+    ValeSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
+    ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
+    ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+  }
+
+  export type ProductoCreateOrConnectWithoutCostHistoryInput = {
+    where: ProductoWhereUniqueInput
+    create: XOR<ProductoCreateWithoutCostHistoryInput, ProductoUncheckedCreateWithoutCostHistoryInput>
+  }
+
+  export type ProductoUpsertWithoutCostHistoryInput = {
+    update: XOR<ProductoUpdateWithoutCostHistoryInput, ProductoUncheckedUpdateWithoutCostHistoryInput>
+    create: XOR<ProductoCreateWithoutCostHistoryInput, ProductoUncheckedCreateWithoutCostHistoryInput>
+    where?: ProductoWhereInput
+  }
+
+  export type ProductoUpdateToOneWithWhereWithoutCostHistoryInput = {
+    where?: ProductoWhereInput
+    data: XOR<ProductoUpdateWithoutCostHistoryInput, ProductoUncheckedUpdateWithoutCostHistoryInput>
+  }
+
+  export type ProductoUpdateWithoutCostHistoryInput = {
+    nombre?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    precioCosto?: IntFieldUpdateOperationsInput | number
+    precioVenta?: IntFieldUpdateOperationsInput | number
+    stock?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    id?: StringFieldUpdateOperationsInput | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    stockMinimo?: IntFieldUpdateOperationsInput | number
+    fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    compras?: CompraProductoUpdateManyWithoutProductoNestedInput
+    gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
+    mermas?: MermaUpdateManyWithoutProductoNestedInput
+    ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
+    ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
+    precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
+    almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
+    categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
+    puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
+    subcategoria?: CategoriaUpdateOneWithoutProductosSubcategoriaNestedInput
+    unidad?: UnidadUpdateOneWithoutProductosNestedInput
+    vendor?: VendorUpdateOneWithoutProductosNestedInput
+    Receta?: RecetaUpdateManyWithoutProductoNestedInput
+    RecetaIngrediente?: RecetaIngredienteUpdateManyWithoutProductoNestedInput
+    transferencias?: TransferenciaUpdateManyWithoutProductoNestedInput
+    ValeSalidaItem?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
+    ventas?: VentaUpdateManyWithoutProductoNestedInput
+    ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+  }
+
+  export type ProductoUncheckedUpdateWithoutCostHistoryInput = {
+    nombre?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    precioCosto?: IntFieldUpdateOperationsInput | number
+    precioVenta?: IntFieldUpdateOperationsInput | number
+    stock?: IntFieldUpdateOperationsInput | number
+    categoriaId?: StringFieldUpdateOperationsInput | string
+    unidadId?: NullableStringFieldUpdateOperationsInput | string | null
+    vendorId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    id?: StringFieldUpdateOperationsInput | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    almacenId?: StringFieldUpdateOperationsInput | string
+    puntoDeVentaId?: NullableStringFieldUpdateOperationsInput | string | null
+    stockMinimo?: IntFieldUpdateOperationsInput | number
+    subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
+    fotos?: ProductoUpdatefotosInput | string[]
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
+    gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
+    mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
+    ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
+    ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
+    precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
@@ -158351,6 +160353,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
     subcategoria?: CategoriaUpdateOneWithoutProductosSubcategoriaNestedInput
@@ -158392,6 +160395,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
@@ -158447,6 +160451,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
@@ -158488,6 +160493,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
@@ -158567,6 +160573,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
@@ -158608,6 +160615,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
@@ -159075,6 +161083,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
@@ -159116,6 +161125,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
@@ -159913,6 +161923,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
     subcategoria?: CategoriaUpdateOneWithoutProductosSubcategoriaNestedInput
@@ -159954,6 +161965,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
@@ -160146,6 +162158,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     subcategoria?: CategoriaUpdateOneWithoutProductosSubcategoriaNestedInput
@@ -160187,6 +162200,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
@@ -160415,6 +162429,19 @@ export namespace Prisma {
     precio: number
     createdAt?: Date | string
     updatedAt?: Date | string
+  }
+
+  export type ProductoCostHistoryCreateManyProductoInput = {
+    id?: string
+    oldPrecioCosto: number
+    newPrecioCosto: number
+    oldPrecioVenta: number
+    newPrecioVenta: number
+    reason: $Enums.CostChangeReason
+    changedBy: string
+    changedAt: Date | string
+    notes?: string | null
+    createdAt?: Date | string
   }
 
   export type RecetaCreateManyProductoInput = {
@@ -160689,6 +162716,45 @@ export namespace Prisma {
     precio?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProductoCostHistoryUpdateWithoutProductoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    oldPrecioCosto?: IntFieldUpdateOperationsInput | number
+    newPrecioCosto?: IntFieldUpdateOperationsInput | number
+    oldPrecioVenta?: IntFieldUpdateOperationsInput | number
+    newPrecioVenta?: IntFieldUpdateOperationsInput | number
+    reason?: EnumCostChangeReasonFieldUpdateOperationsInput | $Enums.CostChangeReason
+    changedBy?: StringFieldUpdateOperationsInput | string
+    changedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProductoCostHistoryUncheckedUpdateWithoutProductoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    oldPrecioCosto?: IntFieldUpdateOperationsInput | number
+    newPrecioCosto?: IntFieldUpdateOperationsInput | number
+    oldPrecioVenta?: IntFieldUpdateOperationsInput | number
+    newPrecioVenta?: IntFieldUpdateOperationsInput | number
+    reason?: EnumCostChangeReasonFieldUpdateOperationsInput | $Enums.CostChangeReason
+    changedBy?: StringFieldUpdateOperationsInput | string
+    changedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProductoCostHistoryUncheckedUpdateManyWithoutProductoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    oldPrecioCosto?: IntFieldUpdateOperationsInput | number
+    newPrecioCosto?: IntFieldUpdateOperationsInput | number
+    oldPrecioVenta?: IntFieldUpdateOperationsInput | number
+    newPrecioVenta?: IntFieldUpdateOperationsInput | number
+    reason?: EnumCostChangeReasonFieldUpdateOperationsInput | $Enums.CostChangeReason
+    changedBy?: StringFieldUpdateOperationsInput | string
+    changedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    notes?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type RecetaUpdateWithoutProductoInput = {

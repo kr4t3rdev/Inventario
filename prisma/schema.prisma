@@ -178,6 +178,7 @@ model Producto {
   ofertaItems       OfertaItem[]
   ordenMateriales   OrdenReparacionMaterial[]
   precios           PrecioProducto[]
+  costHistory       ProductoCostHistory[]
   almacen           Almacen                   @relation(fields: [almacenId], references: [almacenId], onDelete: Cascade)
   categoria         Categoria                 @relation(fields: [categoriaId], references: [catId], onDelete: Cascade)
   puntoDeVenta      PuntoDeVenta?             @relation(fields: [puntoDeVentaId], references: [pvId], onDelete: Cascade)
@@ -1484,6 +1485,16 @@ enum EstadoProduccion {
   CANCELADA
 }
 
+enum CostChangeReason {
+  MANUAL_EDIT
+  RESTOCK
+  ADJUSTMENT
+  INITIAL
+  SYSTEM_SYNC
+  CORRECTION
+  IMPORT
+}
+
 model ListaPrecio {
   id            String           @id @default(cuid())
   nombre        String
@@ -1506,6 +1517,25 @@ model PrecioProducto {
   producto      Producto    @relation(fields: [productoId], references: [id], onDelete: Cascade)
 
   @@unique([listaPrecioId, productoId])
+}
+
+model ProductoCostHistory {
+  id              String         @id @default(cuid())
+  productoId      String
+  oldPrecioCosto  Int
+  newPrecioCosto  Int
+  oldPrecioVenta  Int
+  newPrecioVenta  Int
+  reason          CostChangeReason
+  changedBy       String         // userId
+  changedAt       DateTime
+  notes           String?
+  createdAt       DateTime       @default(now())
+  producto        Producto       @relation(fields: [productoId], references: [id], onDelete: Cascade)
+
+  @@index([productoId])
+  @@index([changedAt])
+  @@index([reason])
 }
 
 model VendorCodeSequence {
