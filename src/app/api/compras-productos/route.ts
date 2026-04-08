@@ -208,7 +208,6 @@ export const POST = withAuthPost(async (request: NextRequest, _context: any, use
         where: { id: data.productoId },
         include: {
           vendor: true,
-          productosHijos: { select: { id: true } },
         },
       })
 
@@ -235,15 +234,6 @@ export const POST = withAuthPost(async (request: NextRequest, _context: any, use
           }
         }
       })
-
-      // Sincronizar stock del hijo si existe
-      if (producto.productosHijos && producto.productosHijos.length > 0 && producto.cantidadEnPack) {
-        const hijoId = producto.productosHijos[0].id
-        await tx.producto.update({
-          where: { id: hijoId },
-          data: { stock: { increment: data.cantidad * producto.cantidadEnPack } },
-        })
-      }
 
       await tx.stockUbicacion.upsert({
         where: {
