@@ -10,92 +10,110 @@ const listaPrecioUpdateSchema = z.object({
   esDefault: z.boolean().optional(),
 })
 
-export const PUT = withAuth(async (req: Request, { params }: { params: { id: string } }) => {
-  try {
-    const body = await req.json()
-    const validatedData = listaPrecioUpdateSchema.parse(body)
-    const { id } = params
+export const PUT = withAuth(
+  async (req: Request, { params }: { params: Promise<{ id: string }> }) => {
+    try {
+      const body = await req.json()
+      const validatedData = listaPrecioUpdateSchema.parse(body)
+      const { id } = await params
 
-    // Si se marca como default, desmarcar las otras
-    if (validatedData.esDefault) {
-      await prisma.listaPrecio.updateMany({
-        where: { esDefault: true, id: { not: id } },
-        data: { esDefault: false },
+      // Si se marca como default, desmarcar las otras
+      if (validatedData.esDefault) {
+        await prisma.listaPrecio.updateMany({
+          where: { esDefault: true, id: { not: id } },
+          data: { esDefault: false },
+        })
+      }
+
+      const listaActualizada = await prisma.listaPrecio.update({
+        where: { id },
+        data: validatedData,
       })
-    }
 
-    const listaActualizada = await prisma.listaPrecio.update({
-      where: { id },
-      data: validatedData,
-    })
-
-    return NextResponse.json(listaActualizada)
-  } catch (error) {
-    if (error instanceof z.ZodError) {
+      return NextResponse.json(listaActualizada)
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return NextResponse.json(
+          { error: 'Datos inválidos', details: error.errors },
+          { status: 400 }
+        )
+      }
+      console.error('Error updating price list:', error)
       return NextResponse.json(
-        { error: 'Datos inválidos', details: error.errors },
-        { status: 400 }
+        { error: 'Error al actualizar la lista de precios' },
+        { status: 500 }
       )
     }
-    console.error('Error updating price list:', error)
-    return NextResponse.json(
-      { error: 'Error al actualizar la lista de precios' },
-      { status: 500 }
-    )
   }
-})
+)
 
-export const DELETE = withAuth(async (req: Request, { params }: { params: { id: string } }) => {
-  try {
-    const { id } = params
+export const DELETE = withAuth(
+  async (req: Request, { params }: { params: Promise<{ id: string }> }) => {
+    try {
+      const { id } = await params
 
-    // Verificar si está en uso por puntos de venta
-    const usoPuntoVenta = await prisma.puntoDeVenta.count({
-      where: { listaPrecioId: id },
-    })
+      // Verificar si está en uso por puntos de venta
+      const usoPuntoVenta = await prisma.puntoDeVenta.count({
+        where: { listaPrecioId: id },
+      })
 
-    if (usoPuntoVenta > 0) {
+      if (usoPuntoVenta > 0) {
+        const puntoDeVentaAsociado = await prisma.puntoDeVenta.findFirst({
+          where: { listaPrecioId: id },
+          select: {
+            pvId: true,
+            nombre: true,
+          },
+        })
+
+        return NextResponse.json(
+          {
+            error: 'No se puede eliminar una lista de precios asociada a un punto de venta',
+            code: 'LISTA_PRECIO_IN_USE',
+            puntoDeVenta: puntoDeVentaAsociado,
+          },
+          { status: 400 }
+        )
+      }
+
+      await prisma.listaPrecio.delete({
+        where: { id },
+      })
+
+      return NextResponse.json({ message: 'Lista de precios eliminada correctamente' })
+    } catch (error) {
+      console.error('Error deleting price list:', error)
       return NextResponse.json(
-        { error: 'No se puede eliminar una lista de precios asignada a un punto de venta' },
-        { status: 400 }
+        { error: 'Error al eliminar la lista de precios' },
+        { status: 500 }
       )
     }
-
-    await prisma.listaPrecio.delete({
-      where: { id },
-    })
-
-    return NextResponse.json({ message: 'Lista de precios eliminada correctamente' })
-  } catch (error) {
-    console.error('Error deleting price list:', error)
-    return NextResponse.json(
-      { error: 'Error al eliminar la lista de precios' },
-      { status: 500 }
-    )
   }
-})
+)
 
 // GET individual si es necesario
-export const GET = withAuth(async (req: Request, { params }: { params: { id: string } }) => {
-  try {
-    const { id } = params
-    const lista = await prisma.listaPrecio.findUnique({
-      where: { id },
-      include: {
-        puntosDeVenta: true,
+export const GET = withAuth(
+  async (req: Request, { params }: { params: Promise<{ id: string }> }) => {
+    try {
+      const { id } = await params
+      const lista = await prisma.listaPrecio.findUnique({
+        where: { id },
+        include: {
+          puntosDeVenta: true,
+        }
+      })
+
+      if (!lista) {
+        return NextResponse.json({ error: 'Lista no encontrada' }, { status: 404 })
       }
-    })
 
-    if (!lista) {
-      return NextResponse.json({ error: 'Lista no encontrada' }, { status: 404 })
+      return NextResponse.json(lista)
+    } catch (error) {
+      console.error('Error getting price list:', error)
+      return NextResponse.json(
+        { error: 'Error al obtener la lista de precios' },
+        { status: 500 }
+      )
     }
-
-    return NextResponse.json(lista)
-  } catch (error) {
-     console.error('Error getting price list:', error)
-    return NextResponse.json(
-      { error: 'Error al obtener la lista de precios' },
-      { status: 500 }
-    )
   }
-})
+)

@@ -289,6 +289,26 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
        if (initialData) {
          const resolvedProveedorCodigo = selectedVendorProviderCode || data.proveedorCodigo
 
+         if (usaEan13) {
+           if (!data.vendorId && !data.proveedorCodigo) {
+             form.setError('vendorId', {
+               type: 'manual',
+               message: 'Seleccione un proveedor para generar el EAN-13',
+             })
+             sileo.error({ title: 'Seleccioná un proveedor para generar el EAN-13.' })
+             return
+           }
+
+           if (!resolvedProveedorCodigo) {
+             form.setError('vendorId', {
+               type: 'manual',
+               message: 'El proveedor seleccionado no tiene código configurado para generar el EAN-13',
+             })
+             sileo.error({ title: 'Seleccioná un proveedor con código configurado para generar el EAN-13.' })
+             return
+           }
+         }
+
          const payload: any = {
            nombre: data.nombre,
            descripcion: data.descripcion || null,
@@ -551,49 +571,47 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
                     )}
                   />
 
-                  {/* Selector de proveedor — siempre visible al crear */}
-                  {!isEditing && (
-                    <FormField
-                      control={form.control}
-                      name="vendorId"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Proveedor</FormLabel>
-                          <Select
-                            value={field.value || ''}
-                            onValueChange={(value) => {
-                              field.onChange(value)
-                              const nextVendor = vendorOptions.find((vendor) => vendor.vendorId === value)
-                              form.setValue('proveedorCodigo', nextVendor?.proveedorCodigo || '', {
-                                shouldValidate: true,
-                                shouldDirty: true,
-                              })
-                            }}
-                            disabled={isLoading}
-                          >
-                            <FormControl>
-                              <SelectTrigger className="transition-all duration-200 focus-visible:ring-primary/30">
-                                <SelectValue placeholder="Selecciona un proveedor" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {vendorOptions.map((vendor) => (
-                                <SelectItem key={vendor.vendorId} value={vendor.vendorId}>
-                                  {vendor.nombre}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <FormDescription>
-                            {usaEan13
-                              ? 'Seleccioná un proveedor activo. El sistema toma su código configurado y genera el EAN-13.'
-                              : 'Proveedor del producto (opcional).'}
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  )}
+                  {/* Selector de proveedor — siempre visible */}
+                  <FormField
+                    control={form.control}
+                    name="vendorId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Proveedor</FormLabel>
+                        <Select
+                          value={field.value || ''}
+                          onValueChange={(value) => {
+                            field.onChange(value)
+                            const nextVendor = vendorOptions.find((vendor) => vendor.vendorId === value)
+                            form.setValue('proveedorCodigo', nextVendor?.proveedorCodigo || '', {
+                              shouldValidate: true,
+                              shouldDirty: true,
+                            })
+                          }}
+                          disabled={isLoading}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="transition-all duration-200 focus-visible:ring-primary/30">
+                              <SelectValue placeholder="Selecciona un proveedor" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {vendorOptions.map((vendor) => (
+                              <SelectItem key={vendor.vendorId} value={vendor.vendorId}>
+                                {vendor.nombre}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormDescription>
+                          {usaEan13
+                            ? 'Seleccioná un proveedor activo. El sistema toma su código configurado y genera el EAN-13.'
+                            : 'Proveedor del producto (opcional).'}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
 
                   {/* EAN-13: campos al editar */}
                   {usaEan13 && isEditing && (

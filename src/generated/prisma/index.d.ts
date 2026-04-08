@@ -64,6 +64,11 @@ export type PuntoDeVenta = $Result.DefaultSelection<Prisma.$PuntoDeVentaPayload>
  */
 export type Producto = $Result.DefaultSelection<Prisma.$ProductoPayload>
 /**
+ * Model StockUbicacion
+ * 
+ */
+export type StockUbicacion = $Result.DefaultSelection<Prisma.$StockUbicacionPayload>
+/**
  * Model Venta
  * 
  */
@@ -857,6 +862,16 @@ export class PrismaClient<
     * ```
     */
   get producto(): Prisma.ProductoDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.stockUbicacion`: Exposes CRUD operations for the **StockUbicacion** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more StockUbicacions
+    * const stockUbicacions = await prisma.stockUbicacion.findMany()
+    * ```
+    */
+  get stockUbicacion(): Prisma.StockUbicacionDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.venta`: Exposes CRUD operations for the **Venta** model.
@@ -2028,6 +2043,7 @@ export namespace Prisma {
     Almacen: 'Almacen',
     PuntoDeVenta: 'PuntoDeVenta',
     Producto: 'Producto',
+    StockUbicacion: 'StockUbicacion',
     Venta: 'Venta',
     VentaItem: 'VentaItem',
     Merma: 'Merma',
@@ -2118,7 +2134,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "categoria" | "unidad" | "vendor" | "inyeccionCapital" | "pagoDeuda" | "cliente" | "miEmpresa" | "almacen" | "puntoDeVenta" | "producto" | "venta" | "ventaItem" | "merma" | "transferencia" | "user" | "plan" | "licencia" | "licenciaAudit" | "notification" | "userActivityLog" | "userSession" | "attendance" | "employeeWorkSchedule" | "vacationRequest" | "vacationAccrual" | "empleado" | "pagosalario" | "cierreContable" | "gastoCompra" | "compraProducto" | "servicios" | "ventaServicios" | "gastosDE" | "moneda" | "catalogoReparacionConfig" | "tasaCambio" | "transaccionMoneda" | "cuentaBancaria" | "tipoPago" | "reconciliacionVenta" | "reconciliacionServicio" | "reconciliacionGasto" | "ajusteBancario" | "transferenciaBancaria" | "alertHistory" | "auditLog" | "reportHistory" | "scheduledReport" | "scenarioSimulation" | "contrato" | "contratoVersion" | "contratoFirma" | "contratoAprobacion" | "contratoArchivo" | "contratoAlerta" | "factura" | "serieFacturacion" | "oferta" | "ofertaItem" | "cuentaPorCobrar" | "cuentaPorPagar" | "deudaCash" | "prestamoCash" | "pagoCuentaPorPagar" | "equipoReparacion" | "piezaReparacion" | "ordenReparacion" | "ordenReparacionEquipo" | "ordenReparacionItem" | "ordenReparacionMaterial" | "defectacionCatalogo" | "configuracionSistema" | "ordenProduccion" | "ordenProduccionHistorial" | "receta" | "recetaIngrediente" | "valeSalida" | "valeSalidaItem" | "listaPrecio" | "precioProducto" | "productoCostHistory" | "vendorCodeSequence"
+      modelProps: "categoria" | "unidad" | "vendor" | "inyeccionCapital" | "pagoDeuda" | "cliente" | "miEmpresa" | "almacen" | "puntoDeVenta" | "producto" | "stockUbicacion" | "venta" | "ventaItem" | "merma" | "transferencia" | "user" | "plan" | "licencia" | "licenciaAudit" | "notification" | "userActivityLog" | "userSession" | "attendance" | "employeeWorkSchedule" | "vacationRequest" | "vacationAccrual" | "empleado" | "pagosalario" | "cierreContable" | "gastoCompra" | "compraProducto" | "servicios" | "ventaServicios" | "gastosDE" | "moneda" | "catalogoReparacionConfig" | "tasaCambio" | "transaccionMoneda" | "cuentaBancaria" | "tipoPago" | "reconciliacionVenta" | "reconciliacionServicio" | "reconciliacionGasto" | "ajusteBancario" | "transferenciaBancaria" | "alertHistory" | "auditLog" | "reportHistory" | "scheduledReport" | "scenarioSimulation" | "contrato" | "contratoVersion" | "contratoFirma" | "contratoAprobacion" | "contratoArchivo" | "contratoAlerta" | "factura" | "serieFacturacion" | "oferta" | "ofertaItem" | "cuentaPorCobrar" | "cuentaPorPagar" | "deudaCash" | "prestamoCash" | "pagoCuentaPorPagar" | "equipoReparacion" | "piezaReparacion" | "ordenReparacion" | "ordenReparacionEquipo" | "ordenReparacionItem" | "ordenReparacionMaterial" | "defectacionCatalogo" | "configuracionSistema" | "ordenProduccion" | "ordenProduccionHistorial" | "receta" | "recetaIngrediente" | "valeSalida" | "valeSalidaItem" | "listaPrecio" | "precioProducto" | "productoCostHistory" | "vendorCodeSequence"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -2859,6 +2875,80 @@ export namespace Prisma {
           count: {
             args: Prisma.ProductoCountArgs<ExtArgs>
             result: $Utils.Optional<ProductoCountAggregateOutputType> | number
+          }
+        }
+      }
+      StockUbicacion: {
+        payload: Prisma.$StockUbicacionPayload<ExtArgs>
+        fields: Prisma.StockUbicacionFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.StockUbicacionFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StockUbicacionPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.StockUbicacionFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StockUbicacionPayload>
+          }
+          findFirst: {
+            args: Prisma.StockUbicacionFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StockUbicacionPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.StockUbicacionFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StockUbicacionPayload>
+          }
+          findMany: {
+            args: Prisma.StockUbicacionFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StockUbicacionPayload>[]
+          }
+          create: {
+            args: Prisma.StockUbicacionCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StockUbicacionPayload>
+          }
+          createMany: {
+            args: Prisma.StockUbicacionCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.StockUbicacionCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StockUbicacionPayload>[]
+          }
+          delete: {
+            args: Prisma.StockUbicacionDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StockUbicacionPayload>
+          }
+          update: {
+            args: Prisma.StockUbicacionUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StockUbicacionPayload>
+          }
+          deleteMany: {
+            args: Prisma.StockUbicacionDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.StockUbicacionUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.StockUbicacionUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StockUbicacionPayload>[]
+          }
+          upsert: {
+            args: Prisma.StockUbicacionUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StockUbicacionPayload>
+          }
+          aggregate: {
+            args: Prisma.StockUbicacionAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateStockUbicacion>
+          }
+          groupBy: {
+            args: Prisma.StockUbicacionGroupByArgs<ExtArgs>
+            result: $Utils.Optional<StockUbicacionGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.StockUbicacionCountArgs<ExtArgs>
+            result: $Utils.Optional<StockUbicacionCountAggregateOutputType> | number
           }
         }
       }
@@ -8296,6 +8386,7 @@ export namespace Prisma {
     almacen?: AlmacenOmit
     puntoDeVenta?: PuntoDeVentaOmit
     producto?: ProductoOmit
+    stockUbicacion?: StockUbicacionOmit
     venta?: VentaOmit
     ventaItem?: VentaItemOmit
     merma?: MermaOmit
@@ -8843,6 +8934,7 @@ export namespace Prisma {
     ordenMateriales: number
     precios: number
     costHistory: number
+    stockUbicaciones: number
     Receta: number
     RecetaIngrediente: number
     transferencias: number
@@ -8859,6 +8951,7 @@ export namespace Prisma {
     ordenMateriales?: boolean | ProductoCountOutputTypeCountOrdenMaterialesArgs
     precios?: boolean | ProductoCountOutputTypeCountPreciosArgs
     costHistory?: boolean | ProductoCountOutputTypeCountCostHistoryArgs
+    stockUbicaciones?: boolean | ProductoCountOutputTypeCountStockUbicacionesArgs
     Receta?: boolean | ProductoCountOutputTypeCountRecetaArgs
     RecetaIngrediente?: boolean | ProductoCountOutputTypeCountRecetaIngredienteArgs
     transferencias?: boolean | ProductoCountOutputTypeCountTransferenciasArgs
@@ -8925,6 +9018,13 @@ export namespace Prisma {
    */
   export type ProductoCountOutputTypeCountCostHistoryArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ProductoCostHistoryWhereInput
+  }
+
+  /**
+   * ProductoCountOutputType without action
+   */
+  export type ProductoCountOutputTypeCountStockUbicacionesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: StockUbicacionWhereInput
   }
 
   /**
@@ -9026,6 +9126,7 @@ export namespace Prisma {
     notifications: number
     activityLogs: number
     sessions: number
+    comprasProductoCreadas: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -9040,6 +9141,7 @@ export namespace Prisma {
     notifications?: boolean | UserCountOutputTypeCountNotificationsArgs
     activityLogs?: boolean | UserCountOutputTypeCountActivityLogsArgs
     sessions?: boolean | UserCountOutputTypeCountSessionsArgs
+    comprasProductoCreadas?: boolean | UserCountOutputTypeCountComprasProductoCreadasArgs
   }
 
   // Custom InputTypes
@@ -9128,6 +9230,13 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountSessionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: UserSessionWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountComprasProductoCreadasArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CompraProductoWhereInput
   }
 
 
@@ -21178,6 +21287,7 @@ export namespace Prisma {
     puntoDeVentaId: string | null
     stockMinimo: number | null
     subcategoriaId: string | null
+    codigoInterno: string | null
     codigoNegocio: string | null
     proveedorCodigo: string | null
     idSeccionCodigo: string | null
@@ -21202,6 +21312,7 @@ export namespace Prisma {
     puntoDeVentaId: string | null
     stockMinimo: number | null
     subcategoriaId: string | null
+    codigoInterno: string | null
     codigoNegocio: string | null
     proveedorCodigo: string | null
     idSeccionCodigo: string | null
@@ -21227,6 +21338,7 @@ export namespace Prisma {
     stockMinimo: number
     subcategoriaId: number
     fotos: number
+    codigoInterno: number
     codigoNegocio: number
     proveedorCodigo: number
     idSeccionCodigo: number
@@ -21267,6 +21379,7 @@ export namespace Prisma {
     puntoDeVentaId?: true
     stockMinimo?: true
     subcategoriaId?: true
+    codigoInterno?: true
     codigoNegocio?: true
     proveedorCodigo?: true
     idSeccionCodigo?: true
@@ -21291,6 +21404,7 @@ export namespace Prisma {
     puntoDeVentaId?: true
     stockMinimo?: true
     subcategoriaId?: true
+    codigoInterno?: true
     codigoNegocio?: true
     proveedorCodigo?: true
     idSeccionCodigo?: true
@@ -21316,6 +21430,7 @@ export namespace Prisma {
     stockMinimo?: true
     subcategoriaId?: true
     fotos?: true
+    codigoInterno?: true
     codigoNegocio?: true
     proveedorCodigo?: true
     idSeccionCodigo?: true
@@ -21428,6 +21543,7 @@ export namespace Prisma {
     stockMinimo: number
     subcategoriaId: string | null
     fotos: string[]
+    codigoInterno: string | null
     codigoNegocio: string | null
     proveedorCodigo: string | null
     idSeccionCodigo: string | null
@@ -21472,6 +21588,7 @@ export namespace Prisma {
     stockMinimo?: boolean
     subcategoriaId?: boolean
     fotos?: boolean
+    codigoInterno?: boolean
     codigoNegocio?: boolean
     proveedorCodigo?: boolean
     idSeccionCodigo?: boolean
@@ -21485,6 +21602,7 @@ export namespace Prisma {
     ordenMateriales?: boolean | Producto$ordenMaterialesArgs<ExtArgs>
     precios?: boolean | Producto$preciosArgs<ExtArgs>
     costHistory?: boolean | Producto$costHistoryArgs<ExtArgs>
+    stockUbicaciones?: boolean | Producto$stockUbicacionesArgs<ExtArgs>
     almacen?: boolean | AlmacenDefaultArgs<ExtArgs>
     categoria?: boolean | CategoriaDefaultArgs<ExtArgs>
     puntoDeVenta?: boolean | Producto$puntoDeVentaArgs<ExtArgs>
@@ -21517,6 +21635,7 @@ export namespace Prisma {
     stockMinimo?: boolean
     subcategoriaId?: boolean
     fotos?: boolean
+    codigoInterno?: boolean
     codigoNegocio?: boolean
     proveedorCodigo?: boolean
     idSeccionCodigo?: boolean
@@ -21548,6 +21667,7 @@ export namespace Prisma {
     stockMinimo?: boolean
     subcategoriaId?: boolean
     fotos?: boolean
+    codigoInterno?: boolean
     codigoNegocio?: boolean
     proveedorCodigo?: boolean
     idSeccionCodigo?: boolean
@@ -21579,6 +21699,7 @@ export namespace Prisma {
     stockMinimo?: boolean
     subcategoriaId?: boolean
     fotos?: boolean
+    codigoInterno?: boolean
     codigoNegocio?: boolean
     proveedorCodigo?: boolean
     idSeccionCodigo?: boolean
@@ -21587,7 +21708,7 @@ export namespace Prisma {
     dcCodigo?: boolean
   }
 
-  export type ProductoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"nombre" | "descripcion" | "precioCosto" | "precioVenta" | "stock" | "categoriaId" | "unidadId" | "vendorId" | "createdAt" | "id" | "updatedAt" | "almacenId" | "puntoDeVentaId" | "stockMinimo" | "subcategoriaId" | "fotos" | "codigoNegocio" | "proveedorCodigo" | "idSeccionCodigo" | "especificoCodigo" | "surtidoCodigo" | "dcCodigo", ExtArgs["result"]["producto"]>
+  export type ProductoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"nombre" | "descripcion" | "precioCosto" | "precioVenta" | "stock" | "categoriaId" | "unidadId" | "vendorId" | "createdAt" | "id" | "updatedAt" | "almacenId" | "puntoDeVentaId" | "stockMinimo" | "subcategoriaId" | "fotos" | "codigoInterno" | "codigoNegocio" | "proveedorCodigo" | "idSeccionCodigo" | "especificoCodigo" | "surtidoCodigo" | "dcCodigo", ExtArgs["result"]["producto"]>
   export type ProductoInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     compras?: boolean | Producto$comprasArgs<ExtArgs>
     gastoCompras?: boolean | Producto$gastoComprasArgs<ExtArgs>
@@ -21596,6 +21717,7 @@ export namespace Prisma {
     ordenMateriales?: boolean | Producto$ordenMaterialesArgs<ExtArgs>
     precios?: boolean | Producto$preciosArgs<ExtArgs>
     costHistory?: boolean | Producto$costHistoryArgs<ExtArgs>
+    stockUbicaciones?: boolean | Producto$stockUbicacionesArgs<ExtArgs>
     almacen?: boolean | AlmacenDefaultArgs<ExtArgs>
     categoria?: boolean | CategoriaDefaultArgs<ExtArgs>
     puntoDeVenta?: boolean | Producto$puntoDeVentaArgs<ExtArgs>
@@ -21637,6 +21759,7 @@ export namespace Prisma {
       ordenMateriales: Prisma.$OrdenReparacionMaterialPayload<ExtArgs>[]
       precios: Prisma.$PrecioProductoPayload<ExtArgs>[]
       costHistory: Prisma.$ProductoCostHistoryPayload<ExtArgs>[]
+      stockUbicaciones: Prisma.$StockUbicacionPayload<ExtArgs>[]
       almacen: Prisma.$AlmacenPayload<ExtArgs>
       categoria: Prisma.$CategoriaPayload<ExtArgs>
       puntoDeVenta: Prisma.$PuntoDeVentaPayload<ExtArgs> | null
@@ -21667,6 +21790,7 @@ export namespace Prisma {
       stockMinimo: number
       subcategoriaId: string | null
       fotos: string[]
+      codigoInterno: string | null
       codigoNegocio: string | null
       proveedorCodigo: string | null
       idSeccionCodigo: string | null
@@ -22074,6 +22198,7 @@ export namespace Prisma {
     ordenMateriales<T extends Producto$ordenMaterialesArgs<ExtArgs> = {}>(args?: Subset<T, Producto$ordenMaterialesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OrdenReparacionMaterialPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     precios<T extends Producto$preciosArgs<ExtArgs> = {}>(args?: Subset<T, Producto$preciosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PrecioProductoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     costHistory<T extends Producto$costHistoryArgs<ExtArgs> = {}>(args?: Subset<T, Producto$costHistoryArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProductoCostHistoryPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    stockUbicaciones<T extends Producto$stockUbicacionesArgs<ExtArgs> = {}>(args?: Subset<T, Producto$stockUbicacionesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StockUbicacionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     almacen<T extends AlmacenDefaultArgs<ExtArgs> = {}>(args?: Subset<T, AlmacenDefaultArgs<ExtArgs>>): Prisma__AlmacenClient<$Result.GetResult<Prisma.$AlmacenPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     categoria<T extends CategoriaDefaultArgs<ExtArgs> = {}>(args?: Subset<T, CategoriaDefaultArgs<ExtArgs>>): Prisma__CategoriaClient<$Result.GetResult<Prisma.$CategoriaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     puntoDeVenta<T extends Producto$puntoDeVentaArgs<ExtArgs> = {}>(args?: Subset<T, Producto$puntoDeVentaArgs<ExtArgs>>): Prisma__PuntoDeVentaClient<$Result.GetResult<Prisma.$PuntoDeVentaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
@@ -22131,6 +22256,7 @@ export namespace Prisma {
     readonly stockMinimo: FieldRef<"Producto", 'Int'>
     readonly subcategoriaId: FieldRef<"Producto", 'String'>
     readonly fotos: FieldRef<"Producto", 'String[]'>
+    readonly codigoInterno: FieldRef<"Producto", 'String'>
     readonly codigoNegocio: FieldRef<"Producto", 'String'>
     readonly proveedorCodigo: FieldRef<"Producto", 'String'>
     readonly idSeccionCodigo: FieldRef<"Producto", 'String'>
@@ -22701,6 +22827,30 @@ export namespace Prisma {
   }
 
   /**
+   * Producto.stockUbicaciones
+   */
+  export type Producto$stockUbicacionesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StockUbicacion
+     */
+    select?: StockUbicacionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StockUbicacion
+     */
+    omit?: StockUbicacionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StockUbicacionInclude<ExtArgs> | null
+    where?: StockUbicacionWhereInput
+    orderBy?: StockUbicacionOrderByWithRelationInput | StockUbicacionOrderByWithRelationInput[]
+    cursor?: StockUbicacionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: StockUbicacionScalarFieldEnum | StockUbicacionScalarFieldEnum[]
+  }
+
+  /**
    * Producto.puntoDeVenta
    */
   export type Producto$puntoDeVentaArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -22936,6 +23086,1171 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: ProductoInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model StockUbicacion
+   */
+
+  export type AggregateStockUbicacion = {
+    _count: StockUbicacionCountAggregateOutputType | null
+    _avg: StockUbicacionAvgAggregateOutputType | null
+    _sum: StockUbicacionSumAggregateOutputType | null
+    _min: StockUbicacionMinAggregateOutputType | null
+    _max: StockUbicacionMaxAggregateOutputType | null
+  }
+
+  export type StockUbicacionAvgAggregateOutputType = {
+    cantidad: number | null
+    cantidadReservada: number | null
+    cantidadDisponible: number | null
+  }
+
+  export type StockUbicacionSumAggregateOutputType = {
+    cantidad: number | null
+    cantidadReservada: number | null
+    cantidadDisponible: number | null
+  }
+
+  export type StockUbicacionMinAggregateOutputType = {
+    stockUbicacionId: string | null
+    productoId: string | null
+    tipoUbicacion: string | null
+    ubicacionId: string | null
+    cantidad: number | null
+    cantidadReservada: number | null
+    cantidadDisponible: number | null
+    ultimaActualizacion: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type StockUbicacionMaxAggregateOutputType = {
+    stockUbicacionId: string | null
+    productoId: string | null
+    tipoUbicacion: string | null
+    ubicacionId: string | null
+    cantidad: number | null
+    cantidadReservada: number | null
+    cantidadDisponible: number | null
+    ultimaActualizacion: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type StockUbicacionCountAggregateOutputType = {
+    stockUbicacionId: number
+    productoId: number
+    tipoUbicacion: number
+    ubicacionId: number
+    cantidad: number
+    cantidadReservada: number
+    cantidadDisponible: number
+    ultimaActualizacion: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type StockUbicacionAvgAggregateInputType = {
+    cantidad?: true
+    cantidadReservada?: true
+    cantidadDisponible?: true
+  }
+
+  export type StockUbicacionSumAggregateInputType = {
+    cantidad?: true
+    cantidadReservada?: true
+    cantidadDisponible?: true
+  }
+
+  export type StockUbicacionMinAggregateInputType = {
+    stockUbicacionId?: true
+    productoId?: true
+    tipoUbicacion?: true
+    ubicacionId?: true
+    cantidad?: true
+    cantidadReservada?: true
+    cantidadDisponible?: true
+    ultimaActualizacion?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type StockUbicacionMaxAggregateInputType = {
+    stockUbicacionId?: true
+    productoId?: true
+    tipoUbicacion?: true
+    ubicacionId?: true
+    cantidad?: true
+    cantidadReservada?: true
+    cantidadDisponible?: true
+    ultimaActualizacion?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type StockUbicacionCountAggregateInputType = {
+    stockUbicacionId?: true
+    productoId?: true
+    tipoUbicacion?: true
+    ubicacionId?: true
+    cantidad?: true
+    cantidadReservada?: true
+    cantidadDisponible?: true
+    ultimaActualizacion?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type StockUbicacionAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which StockUbicacion to aggregate.
+     */
+    where?: StockUbicacionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of StockUbicacions to fetch.
+     */
+    orderBy?: StockUbicacionOrderByWithRelationInput | StockUbicacionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: StockUbicacionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` StockUbicacions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` StockUbicacions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned StockUbicacions
+    **/
+    _count?: true | StockUbicacionCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: StockUbicacionAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: StockUbicacionSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: StockUbicacionMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: StockUbicacionMaxAggregateInputType
+  }
+
+  export type GetStockUbicacionAggregateType<T extends StockUbicacionAggregateArgs> = {
+        [P in keyof T & keyof AggregateStockUbicacion]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateStockUbicacion[P]>
+      : GetScalarType<T[P], AggregateStockUbicacion[P]>
+  }
+
+
+
+
+  export type StockUbicacionGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: StockUbicacionWhereInput
+    orderBy?: StockUbicacionOrderByWithAggregationInput | StockUbicacionOrderByWithAggregationInput[]
+    by: StockUbicacionScalarFieldEnum[] | StockUbicacionScalarFieldEnum
+    having?: StockUbicacionScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: StockUbicacionCountAggregateInputType | true
+    _avg?: StockUbicacionAvgAggregateInputType
+    _sum?: StockUbicacionSumAggregateInputType
+    _min?: StockUbicacionMinAggregateInputType
+    _max?: StockUbicacionMaxAggregateInputType
+  }
+
+  export type StockUbicacionGroupByOutputType = {
+    stockUbicacionId: string
+    productoId: string
+    tipoUbicacion: string
+    ubicacionId: string
+    cantidad: number
+    cantidadReservada: number
+    cantidadDisponible: number
+    ultimaActualizacion: Date
+    createdAt: Date
+    updatedAt: Date
+    _count: StockUbicacionCountAggregateOutputType | null
+    _avg: StockUbicacionAvgAggregateOutputType | null
+    _sum: StockUbicacionSumAggregateOutputType | null
+    _min: StockUbicacionMinAggregateOutputType | null
+    _max: StockUbicacionMaxAggregateOutputType | null
+  }
+
+  type GetStockUbicacionGroupByPayload<T extends StockUbicacionGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<StockUbicacionGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof StockUbicacionGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], StockUbicacionGroupByOutputType[P]>
+            : GetScalarType<T[P], StockUbicacionGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type StockUbicacionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    stockUbicacionId?: boolean
+    productoId?: boolean
+    tipoUbicacion?: boolean
+    ubicacionId?: boolean
+    cantidad?: boolean
+    cantidadReservada?: boolean
+    cantidadDisponible?: boolean
+    ultimaActualizacion?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["stockUbicacion"]>
+
+  export type StockUbicacionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    stockUbicacionId?: boolean
+    productoId?: boolean
+    tipoUbicacion?: boolean
+    ubicacionId?: boolean
+    cantidad?: boolean
+    cantidadReservada?: boolean
+    cantidadDisponible?: boolean
+    ultimaActualizacion?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["stockUbicacion"]>
+
+  export type StockUbicacionSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    stockUbicacionId?: boolean
+    productoId?: boolean
+    tipoUbicacion?: boolean
+    ubicacionId?: boolean
+    cantidad?: boolean
+    cantidadReservada?: boolean
+    cantidadDisponible?: boolean
+    ultimaActualizacion?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["stockUbicacion"]>
+
+  export type StockUbicacionSelectScalar = {
+    stockUbicacionId?: boolean
+    productoId?: boolean
+    tipoUbicacion?: boolean
+    ubicacionId?: boolean
+    cantidad?: boolean
+    cantidadReservada?: boolean
+    cantidadDisponible?: boolean
+    ultimaActualizacion?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type StockUbicacionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"stockUbicacionId" | "productoId" | "tipoUbicacion" | "ubicacionId" | "cantidad" | "cantidadReservada" | "cantidadDisponible" | "ultimaActualizacion" | "createdAt" | "updatedAt", ExtArgs["result"]["stockUbicacion"]>
+  export type StockUbicacionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }
+  export type StockUbicacionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }
+  export type StockUbicacionIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }
+
+  export type $StockUbicacionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "StockUbicacion"
+    objects: {
+      producto: Prisma.$ProductoPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      stockUbicacionId: string
+      productoId: string
+      tipoUbicacion: string
+      ubicacionId: string
+      cantidad: number
+      cantidadReservada: number
+      cantidadDisponible: number
+      ultimaActualizacion: Date
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["stockUbicacion"]>
+    composites: {}
+  }
+
+  type StockUbicacionGetPayload<S extends boolean | null | undefined | StockUbicacionDefaultArgs> = $Result.GetResult<Prisma.$StockUbicacionPayload, S>
+
+  type StockUbicacionCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<StockUbicacionFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: StockUbicacionCountAggregateInputType | true
+    }
+
+  export interface StockUbicacionDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['StockUbicacion'], meta: { name: 'StockUbicacion' } }
+    /**
+     * Find zero or one StockUbicacion that matches the filter.
+     * @param {StockUbicacionFindUniqueArgs} args - Arguments to find a StockUbicacion
+     * @example
+     * // Get one StockUbicacion
+     * const stockUbicacion = await prisma.stockUbicacion.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends StockUbicacionFindUniqueArgs>(args: SelectSubset<T, StockUbicacionFindUniqueArgs<ExtArgs>>): Prisma__StockUbicacionClient<$Result.GetResult<Prisma.$StockUbicacionPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one StockUbicacion that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {StockUbicacionFindUniqueOrThrowArgs} args - Arguments to find a StockUbicacion
+     * @example
+     * // Get one StockUbicacion
+     * const stockUbicacion = await prisma.stockUbicacion.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends StockUbicacionFindUniqueOrThrowArgs>(args: SelectSubset<T, StockUbicacionFindUniqueOrThrowArgs<ExtArgs>>): Prisma__StockUbicacionClient<$Result.GetResult<Prisma.$StockUbicacionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first StockUbicacion that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StockUbicacionFindFirstArgs} args - Arguments to find a StockUbicacion
+     * @example
+     * // Get one StockUbicacion
+     * const stockUbicacion = await prisma.stockUbicacion.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends StockUbicacionFindFirstArgs>(args?: SelectSubset<T, StockUbicacionFindFirstArgs<ExtArgs>>): Prisma__StockUbicacionClient<$Result.GetResult<Prisma.$StockUbicacionPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first StockUbicacion that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StockUbicacionFindFirstOrThrowArgs} args - Arguments to find a StockUbicacion
+     * @example
+     * // Get one StockUbicacion
+     * const stockUbicacion = await prisma.stockUbicacion.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends StockUbicacionFindFirstOrThrowArgs>(args?: SelectSubset<T, StockUbicacionFindFirstOrThrowArgs<ExtArgs>>): Prisma__StockUbicacionClient<$Result.GetResult<Prisma.$StockUbicacionPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more StockUbicacions that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StockUbicacionFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all StockUbicacions
+     * const stockUbicacions = await prisma.stockUbicacion.findMany()
+     * 
+     * // Get first 10 StockUbicacions
+     * const stockUbicacions = await prisma.stockUbicacion.findMany({ take: 10 })
+     * 
+     * // Only select the `stockUbicacionId`
+     * const stockUbicacionWithStockUbicacionIdOnly = await prisma.stockUbicacion.findMany({ select: { stockUbicacionId: true } })
+     * 
+     */
+    findMany<T extends StockUbicacionFindManyArgs>(args?: SelectSubset<T, StockUbicacionFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StockUbicacionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a StockUbicacion.
+     * @param {StockUbicacionCreateArgs} args - Arguments to create a StockUbicacion.
+     * @example
+     * // Create one StockUbicacion
+     * const StockUbicacion = await prisma.stockUbicacion.create({
+     *   data: {
+     *     // ... data to create a StockUbicacion
+     *   }
+     * })
+     * 
+     */
+    create<T extends StockUbicacionCreateArgs>(args: SelectSubset<T, StockUbicacionCreateArgs<ExtArgs>>): Prisma__StockUbicacionClient<$Result.GetResult<Prisma.$StockUbicacionPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many StockUbicacions.
+     * @param {StockUbicacionCreateManyArgs} args - Arguments to create many StockUbicacions.
+     * @example
+     * // Create many StockUbicacions
+     * const stockUbicacion = await prisma.stockUbicacion.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends StockUbicacionCreateManyArgs>(args?: SelectSubset<T, StockUbicacionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many StockUbicacions and returns the data saved in the database.
+     * @param {StockUbicacionCreateManyAndReturnArgs} args - Arguments to create many StockUbicacions.
+     * @example
+     * // Create many StockUbicacions
+     * const stockUbicacion = await prisma.stockUbicacion.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many StockUbicacions and only return the `stockUbicacionId`
+     * const stockUbicacionWithStockUbicacionIdOnly = await prisma.stockUbicacion.createManyAndReturn({
+     *   select: { stockUbicacionId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends StockUbicacionCreateManyAndReturnArgs>(args?: SelectSubset<T, StockUbicacionCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StockUbicacionPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a StockUbicacion.
+     * @param {StockUbicacionDeleteArgs} args - Arguments to delete one StockUbicacion.
+     * @example
+     * // Delete one StockUbicacion
+     * const StockUbicacion = await prisma.stockUbicacion.delete({
+     *   where: {
+     *     // ... filter to delete one StockUbicacion
+     *   }
+     * })
+     * 
+     */
+    delete<T extends StockUbicacionDeleteArgs>(args: SelectSubset<T, StockUbicacionDeleteArgs<ExtArgs>>): Prisma__StockUbicacionClient<$Result.GetResult<Prisma.$StockUbicacionPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one StockUbicacion.
+     * @param {StockUbicacionUpdateArgs} args - Arguments to update one StockUbicacion.
+     * @example
+     * // Update one StockUbicacion
+     * const stockUbicacion = await prisma.stockUbicacion.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends StockUbicacionUpdateArgs>(args: SelectSubset<T, StockUbicacionUpdateArgs<ExtArgs>>): Prisma__StockUbicacionClient<$Result.GetResult<Prisma.$StockUbicacionPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more StockUbicacions.
+     * @param {StockUbicacionDeleteManyArgs} args - Arguments to filter StockUbicacions to delete.
+     * @example
+     * // Delete a few StockUbicacions
+     * const { count } = await prisma.stockUbicacion.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends StockUbicacionDeleteManyArgs>(args?: SelectSubset<T, StockUbicacionDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more StockUbicacions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StockUbicacionUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many StockUbicacions
+     * const stockUbicacion = await prisma.stockUbicacion.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends StockUbicacionUpdateManyArgs>(args: SelectSubset<T, StockUbicacionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more StockUbicacions and returns the data updated in the database.
+     * @param {StockUbicacionUpdateManyAndReturnArgs} args - Arguments to update many StockUbicacions.
+     * @example
+     * // Update many StockUbicacions
+     * const stockUbicacion = await prisma.stockUbicacion.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more StockUbicacions and only return the `stockUbicacionId`
+     * const stockUbicacionWithStockUbicacionIdOnly = await prisma.stockUbicacion.updateManyAndReturn({
+     *   select: { stockUbicacionId: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends StockUbicacionUpdateManyAndReturnArgs>(args: SelectSubset<T, StockUbicacionUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StockUbicacionPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one StockUbicacion.
+     * @param {StockUbicacionUpsertArgs} args - Arguments to update or create a StockUbicacion.
+     * @example
+     * // Update or create a StockUbicacion
+     * const stockUbicacion = await prisma.stockUbicacion.upsert({
+     *   create: {
+     *     // ... data to create a StockUbicacion
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the StockUbicacion we want to update
+     *   }
+     * })
+     */
+    upsert<T extends StockUbicacionUpsertArgs>(args: SelectSubset<T, StockUbicacionUpsertArgs<ExtArgs>>): Prisma__StockUbicacionClient<$Result.GetResult<Prisma.$StockUbicacionPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of StockUbicacions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StockUbicacionCountArgs} args - Arguments to filter StockUbicacions to count.
+     * @example
+     * // Count the number of StockUbicacions
+     * const count = await prisma.stockUbicacion.count({
+     *   where: {
+     *     // ... the filter for the StockUbicacions we want to count
+     *   }
+     * })
+    **/
+    count<T extends StockUbicacionCountArgs>(
+      args?: Subset<T, StockUbicacionCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], StockUbicacionCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a StockUbicacion.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StockUbicacionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends StockUbicacionAggregateArgs>(args: Subset<T, StockUbicacionAggregateArgs>): Prisma.PrismaPromise<GetStockUbicacionAggregateType<T>>
+
+    /**
+     * Group by StockUbicacion.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StockUbicacionGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends StockUbicacionGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: StockUbicacionGroupByArgs['orderBy'] }
+        : { orderBy?: StockUbicacionGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, StockUbicacionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetStockUbicacionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the StockUbicacion model
+   */
+  readonly fields: StockUbicacionFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for StockUbicacion.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__StockUbicacionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    producto<T extends ProductoDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ProductoDefaultArgs<ExtArgs>>): Prisma__ProductoClient<$Result.GetResult<Prisma.$ProductoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the StockUbicacion model
+   */
+  interface StockUbicacionFieldRefs {
+    readonly stockUbicacionId: FieldRef<"StockUbicacion", 'String'>
+    readonly productoId: FieldRef<"StockUbicacion", 'String'>
+    readonly tipoUbicacion: FieldRef<"StockUbicacion", 'String'>
+    readonly ubicacionId: FieldRef<"StockUbicacion", 'String'>
+    readonly cantidad: FieldRef<"StockUbicacion", 'Int'>
+    readonly cantidadReservada: FieldRef<"StockUbicacion", 'Int'>
+    readonly cantidadDisponible: FieldRef<"StockUbicacion", 'Int'>
+    readonly ultimaActualizacion: FieldRef<"StockUbicacion", 'DateTime'>
+    readonly createdAt: FieldRef<"StockUbicacion", 'DateTime'>
+    readonly updatedAt: FieldRef<"StockUbicacion", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * StockUbicacion findUnique
+   */
+  export type StockUbicacionFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StockUbicacion
+     */
+    select?: StockUbicacionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StockUbicacion
+     */
+    omit?: StockUbicacionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StockUbicacionInclude<ExtArgs> | null
+    /**
+     * Filter, which StockUbicacion to fetch.
+     */
+    where: StockUbicacionWhereUniqueInput
+  }
+
+  /**
+   * StockUbicacion findUniqueOrThrow
+   */
+  export type StockUbicacionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StockUbicacion
+     */
+    select?: StockUbicacionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StockUbicacion
+     */
+    omit?: StockUbicacionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StockUbicacionInclude<ExtArgs> | null
+    /**
+     * Filter, which StockUbicacion to fetch.
+     */
+    where: StockUbicacionWhereUniqueInput
+  }
+
+  /**
+   * StockUbicacion findFirst
+   */
+  export type StockUbicacionFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StockUbicacion
+     */
+    select?: StockUbicacionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StockUbicacion
+     */
+    omit?: StockUbicacionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StockUbicacionInclude<ExtArgs> | null
+    /**
+     * Filter, which StockUbicacion to fetch.
+     */
+    where?: StockUbicacionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of StockUbicacions to fetch.
+     */
+    orderBy?: StockUbicacionOrderByWithRelationInput | StockUbicacionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for StockUbicacions.
+     */
+    cursor?: StockUbicacionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` StockUbicacions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` StockUbicacions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of StockUbicacions.
+     */
+    distinct?: StockUbicacionScalarFieldEnum | StockUbicacionScalarFieldEnum[]
+  }
+
+  /**
+   * StockUbicacion findFirstOrThrow
+   */
+  export type StockUbicacionFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StockUbicacion
+     */
+    select?: StockUbicacionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StockUbicacion
+     */
+    omit?: StockUbicacionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StockUbicacionInclude<ExtArgs> | null
+    /**
+     * Filter, which StockUbicacion to fetch.
+     */
+    where?: StockUbicacionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of StockUbicacions to fetch.
+     */
+    orderBy?: StockUbicacionOrderByWithRelationInput | StockUbicacionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for StockUbicacions.
+     */
+    cursor?: StockUbicacionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` StockUbicacions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` StockUbicacions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of StockUbicacions.
+     */
+    distinct?: StockUbicacionScalarFieldEnum | StockUbicacionScalarFieldEnum[]
+  }
+
+  /**
+   * StockUbicacion findMany
+   */
+  export type StockUbicacionFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StockUbicacion
+     */
+    select?: StockUbicacionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StockUbicacion
+     */
+    omit?: StockUbicacionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StockUbicacionInclude<ExtArgs> | null
+    /**
+     * Filter, which StockUbicacions to fetch.
+     */
+    where?: StockUbicacionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of StockUbicacions to fetch.
+     */
+    orderBy?: StockUbicacionOrderByWithRelationInput | StockUbicacionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing StockUbicacions.
+     */
+    cursor?: StockUbicacionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` StockUbicacions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` StockUbicacions.
+     */
+    skip?: number
+    distinct?: StockUbicacionScalarFieldEnum | StockUbicacionScalarFieldEnum[]
+  }
+
+  /**
+   * StockUbicacion create
+   */
+  export type StockUbicacionCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StockUbicacion
+     */
+    select?: StockUbicacionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StockUbicacion
+     */
+    omit?: StockUbicacionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StockUbicacionInclude<ExtArgs> | null
+    /**
+     * The data needed to create a StockUbicacion.
+     */
+    data: XOR<StockUbicacionCreateInput, StockUbicacionUncheckedCreateInput>
+  }
+
+  /**
+   * StockUbicacion createMany
+   */
+  export type StockUbicacionCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many StockUbicacions.
+     */
+    data: StockUbicacionCreateManyInput | StockUbicacionCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * StockUbicacion createManyAndReturn
+   */
+  export type StockUbicacionCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StockUbicacion
+     */
+    select?: StockUbicacionSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the StockUbicacion
+     */
+    omit?: StockUbicacionOmit<ExtArgs> | null
+    /**
+     * The data used to create many StockUbicacions.
+     */
+    data: StockUbicacionCreateManyInput | StockUbicacionCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StockUbicacionIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * StockUbicacion update
+   */
+  export type StockUbicacionUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StockUbicacion
+     */
+    select?: StockUbicacionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StockUbicacion
+     */
+    omit?: StockUbicacionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StockUbicacionInclude<ExtArgs> | null
+    /**
+     * The data needed to update a StockUbicacion.
+     */
+    data: XOR<StockUbicacionUpdateInput, StockUbicacionUncheckedUpdateInput>
+    /**
+     * Choose, which StockUbicacion to update.
+     */
+    where: StockUbicacionWhereUniqueInput
+  }
+
+  /**
+   * StockUbicacion updateMany
+   */
+  export type StockUbicacionUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update StockUbicacions.
+     */
+    data: XOR<StockUbicacionUpdateManyMutationInput, StockUbicacionUncheckedUpdateManyInput>
+    /**
+     * Filter which StockUbicacions to update
+     */
+    where?: StockUbicacionWhereInput
+    /**
+     * Limit how many StockUbicacions to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * StockUbicacion updateManyAndReturn
+   */
+  export type StockUbicacionUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StockUbicacion
+     */
+    select?: StockUbicacionSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the StockUbicacion
+     */
+    omit?: StockUbicacionOmit<ExtArgs> | null
+    /**
+     * The data used to update StockUbicacions.
+     */
+    data: XOR<StockUbicacionUpdateManyMutationInput, StockUbicacionUncheckedUpdateManyInput>
+    /**
+     * Filter which StockUbicacions to update
+     */
+    where?: StockUbicacionWhereInput
+    /**
+     * Limit how many StockUbicacions to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StockUbicacionIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * StockUbicacion upsert
+   */
+  export type StockUbicacionUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StockUbicacion
+     */
+    select?: StockUbicacionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StockUbicacion
+     */
+    omit?: StockUbicacionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StockUbicacionInclude<ExtArgs> | null
+    /**
+     * The filter to search for the StockUbicacion to update in case it exists.
+     */
+    where: StockUbicacionWhereUniqueInput
+    /**
+     * In case the StockUbicacion found by the `where` argument doesn't exist, create a new StockUbicacion with this data.
+     */
+    create: XOR<StockUbicacionCreateInput, StockUbicacionUncheckedCreateInput>
+    /**
+     * In case the StockUbicacion was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<StockUbicacionUpdateInput, StockUbicacionUncheckedUpdateInput>
+  }
+
+  /**
+   * StockUbicacion delete
+   */
+  export type StockUbicacionDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StockUbicacion
+     */
+    select?: StockUbicacionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StockUbicacion
+     */
+    omit?: StockUbicacionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StockUbicacionInclude<ExtArgs> | null
+    /**
+     * Filter which StockUbicacion to delete.
+     */
+    where: StockUbicacionWhereUniqueInput
+  }
+
+  /**
+   * StockUbicacion deleteMany
+   */
+  export type StockUbicacionDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which StockUbicacions to delete
+     */
+    where?: StockUbicacionWhereInput
+    /**
+     * Limit how many StockUbicacions to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * StockUbicacion without action
+   */
+  export type StockUbicacionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StockUbicacion
+     */
+    select?: StockUbicacionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StockUbicacion
+     */
+    omit?: StockUbicacionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StockUbicacionInclude<ExtArgs> | null
   }
 
 
@@ -28204,6 +29519,7 @@ export namespace Prisma {
     notifications?: boolean | User$notificationsArgs<ExtArgs>
     activityLogs?: boolean | User$activityLogsArgs<ExtArgs>
     sessions?: boolean | User$sessionsArgs<ExtArgs>
+    comprasProductoCreadas?: boolean | User$comprasProductoCreadasArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
@@ -28274,6 +29590,7 @@ export namespace Prisma {
     notifications?: boolean | User$notificationsArgs<ExtArgs>
     activityLogs?: boolean | User$activityLogsArgs<ExtArgs>
     sessions?: boolean | User$sessionsArgs<ExtArgs>
+    comprasProductoCreadas?: boolean | User$comprasProductoCreadasArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -28293,6 +29610,7 @@ export namespace Prisma {
       notifications: Prisma.$NotificationPayload<ExtArgs>[]
       activityLogs: Prisma.$UserActivityLogPayload<ExtArgs>[]
       sessions: Prisma.$UserSessionPayload<ExtArgs>[]
+      comprasProductoCreadas: Prisma.$CompraProductoPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       userId: string
@@ -28715,6 +30033,7 @@ export namespace Prisma {
     notifications<T extends User$notificationsArgs<ExtArgs> = {}>(args?: Subset<T, User$notificationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     activityLogs<T extends User$activityLogsArgs<ExtArgs> = {}>(args?: Subset<T, User$activityLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserActivityLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     sessions<T extends User$sessionsArgs<ExtArgs> = {}>(args?: Subset<T, User$sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    comprasProductoCreadas<T extends User$comprasProductoCreadasArgs<ExtArgs> = {}>(args?: Subset<T, User$comprasProductoCreadasArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CompraProductoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -29408,6 +30727,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: UserSessionScalarFieldEnum | UserSessionScalarFieldEnum[]
+  }
+
+  /**
+   * User.comprasProductoCreadas
+   */
+  export type User$comprasProductoCreadasArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraProducto
+     */
+    select?: CompraProductoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraProducto
+     */
+    omit?: CompraProductoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraProductoInclude<ExtArgs> | null
+    where?: CompraProductoWhereInput
+    orderBy?: CompraProductoOrderByWithRelationInput | CompraProductoOrderByWithRelationInput[]
+    cursor?: CompraProductoWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: CompraProductoScalarFieldEnum | CompraProductoScalarFieldEnum[]
   }
 
   /**
@@ -46220,6 +47563,7 @@ export namespace Prisma {
     fechaCompra: Date | null
     gastoCompraId: string | null
     cuentaPorPagarId: string | null
+    createdById: string | null
     createdAt: Date | null
     updatedAt: Date | null
     proveedorId: string | null
@@ -46240,6 +47584,7 @@ export namespace Prisma {
     fechaCompra: Date | null
     gastoCompraId: string | null
     cuentaPorPagarId: string | null
+    createdById: string | null
     createdAt: Date | null
     updatedAt: Date | null
     proveedorId: string | null
@@ -46260,6 +47605,7 @@ export namespace Prisma {
     fechaCompra: number
     gastoCompraId: number
     cuentaPorPagarId: number
+    createdById: number
     createdAt: number
     updatedAt: number
     proveedorId: number
@@ -46294,6 +47640,7 @@ export namespace Prisma {
     fechaCompra?: true
     gastoCompraId?: true
     cuentaPorPagarId?: true
+    createdById?: true
     createdAt?: true
     updatedAt?: true
     proveedorId?: true
@@ -46314,6 +47661,7 @@ export namespace Prisma {
     fechaCompra?: true
     gastoCompraId?: true
     cuentaPorPagarId?: true
+    createdById?: true
     createdAt?: true
     updatedAt?: true
     proveedorId?: true
@@ -46334,6 +47682,7 @@ export namespace Prisma {
     fechaCompra?: true
     gastoCompraId?: true
     cuentaPorPagarId?: true
+    createdById?: true
     createdAt?: true
     updatedAt?: true
     proveedorId?: true
@@ -46441,6 +47790,7 @@ export namespace Prisma {
     fechaCompra: Date
     gastoCompraId: string | null
     cuentaPorPagarId: string | null
+    createdById: string | null
     createdAt: Date
     updatedAt: Date
     proveedorId: string
@@ -46480,6 +47830,7 @@ export namespace Prisma {
     fechaCompra?: boolean
     gastoCompraId?: boolean
     cuentaPorPagarId?: boolean
+    createdById?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     proveedorId?: boolean
@@ -46490,6 +47841,7 @@ export namespace Prisma {
     gastoCompra?: boolean | CompraProducto$gastoCompraArgs<ExtArgs>
     producto?: boolean | ProductoDefaultArgs<ExtArgs>
     proveedor?: boolean | VendorDefaultArgs<ExtArgs>
+    createdBy?: boolean | CompraProducto$createdByArgs<ExtArgs>
   }, ExtArgs["result"]["compraProducto"]>
 
   export type CompraProductoSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -46504,6 +47856,7 @@ export namespace Prisma {
     fechaCompra?: boolean
     gastoCompraId?: boolean
     cuentaPorPagarId?: boolean
+    createdById?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     proveedorId?: boolean
@@ -46514,6 +47867,7 @@ export namespace Prisma {
     gastoCompra?: boolean | CompraProducto$gastoCompraArgs<ExtArgs>
     producto?: boolean | ProductoDefaultArgs<ExtArgs>
     proveedor?: boolean | VendorDefaultArgs<ExtArgs>
+    createdBy?: boolean | CompraProducto$createdByArgs<ExtArgs>
   }, ExtArgs["result"]["compraProducto"]>
 
   export type CompraProductoSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -46528,6 +47882,7 @@ export namespace Prisma {
     fechaCompra?: boolean
     gastoCompraId?: boolean
     cuentaPorPagarId?: boolean
+    createdById?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     proveedorId?: boolean
@@ -46538,6 +47893,7 @@ export namespace Prisma {
     gastoCompra?: boolean | CompraProducto$gastoCompraArgs<ExtArgs>
     producto?: boolean | ProductoDefaultArgs<ExtArgs>
     proveedor?: boolean | VendorDefaultArgs<ExtArgs>
+    createdBy?: boolean | CompraProducto$createdByArgs<ExtArgs>
   }, ExtArgs["result"]["compraProducto"]>
 
   export type CompraProductoSelectScalar = {
@@ -46552,6 +47908,7 @@ export namespace Prisma {
     fechaCompra?: boolean
     gastoCompraId?: boolean
     cuentaPorPagarId?: boolean
+    createdById?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     proveedorId?: boolean
@@ -46560,24 +47917,27 @@ export namespace Prisma {
     tipoOperacion?: boolean
   }
 
-  export type CompraProductoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"compraProductoId" | "productoId" | "numeroFactura" | "facturaUrl" | "cantidad" | "precioUnitario" | "total" | "descripcion" | "fechaCompra" | "gastoCompraId" | "cuentaPorPagarId" | "createdAt" | "updatedAt" | "proveedorId" | "formaPago" | "estado" | "tipoOperacion", ExtArgs["result"]["compraProducto"]>
+  export type CompraProductoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"compraProductoId" | "productoId" | "numeroFactura" | "facturaUrl" | "cantidad" | "precioUnitario" | "total" | "descripcion" | "fechaCompra" | "gastoCompraId" | "cuentaPorPagarId" | "createdById" | "createdAt" | "updatedAt" | "proveedorId" | "formaPago" | "estado" | "tipoOperacion", ExtArgs["result"]["compraProducto"]>
   export type CompraProductoInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     cuentaPorPagar?: boolean | CompraProducto$cuentaPorPagarArgs<ExtArgs>
     gastoCompra?: boolean | CompraProducto$gastoCompraArgs<ExtArgs>
     producto?: boolean | ProductoDefaultArgs<ExtArgs>
     proveedor?: boolean | VendorDefaultArgs<ExtArgs>
+    createdBy?: boolean | CompraProducto$createdByArgs<ExtArgs>
   }
   export type CompraProductoIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     cuentaPorPagar?: boolean | CompraProducto$cuentaPorPagarArgs<ExtArgs>
     gastoCompra?: boolean | CompraProducto$gastoCompraArgs<ExtArgs>
     producto?: boolean | ProductoDefaultArgs<ExtArgs>
     proveedor?: boolean | VendorDefaultArgs<ExtArgs>
+    createdBy?: boolean | CompraProducto$createdByArgs<ExtArgs>
   }
   export type CompraProductoIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     cuentaPorPagar?: boolean | CompraProducto$cuentaPorPagarArgs<ExtArgs>
     gastoCompra?: boolean | CompraProducto$gastoCompraArgs<ExtArgs>
     producto?: boolean | ProductoDefaultArgs<ExtArgs>
     proveedor?: boolean | VendorDefaultArgs<ExtArgs>
+    createdBy?: boolean | CompraProducto$createdByArgs<ExtArgs>
   }
 
   export type $CompraProductoPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -46587,6 +47947,7 @@ export namespace Prisma {
       gastoCompra: Prisma.$GastoCompraPayload<ExtArgs> | null
       producto: Prisma.$ProductoPayload<ExtArgs>
       proveedor: Prisma.$VendorPayload<ExtArgs>
+      createdBy: Prisma.$UserPayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
       compraProductoId: string
@@ -46600,6 +47961,7 @@ export namespace Prisma {
       fechaCompra: Date
       gastoCompraId: string | null
       cuentaPorPagarId: string | null
+      createdById: string | null
       createdAt: Date
       updatedAt: Date
       proveedorId: string
@@ -47004,6 +48366,7 @@ export namespace Prisma {
     gastoCompra<T extends CompraProducto$gastoCompraArgs<ExtArgs> = {}>(args?: Subset<T, CompraProducto$gastoCompraArgs<ExtArgs>>): Prisma__GastoCompraClient<$Result.GetResult<Prisma.$GastoCompraPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     producto<T extends ProductoDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ProductoDefaultArgs<ExtArgs>>): Prisma__ProductoClient<$Result.GetResult<Prisma.$ProductoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     proveedor<T extends VendorDefaultArgs<ExtArgs> = {}>(args?: Subset<T, VendorDefaultArgs<ExtArgs>>): Prisma__VendorClient<$Result.GetResult<Prisma.$VendorPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    createdBy<T extends CompraProducto$createdByArgs<ExtArgs> = {}>(args?: Subset<T, CompraProducto$createdByArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -47044,6 +48407,7 @@ export namespace Prisma {
     readonly fechaCompra: FieldRef<"CompraProducto", 'DateTime'>
     readonly gastoCompraId: FieldRef<"CompraProducto", 'String'>
     readonly cuentaPorPagarId: FieldRef<"CompraProducto", 'String'>
+    readonly createdById: FieldRef<"CompraProducto", 'String'>
     readonly createdAt: FieldRef<"CompraProducto", 'DateTime'>
     readonly updatedAt: FieldRef<"CompraProducto", 'DateTime'>
     readonly proveedorId: FieldRef<"CompraProducto", 'String'>
@@ -47481,6 +48845,25 @@ export namespace Prisma {
      */
     include?: GastoCompraInclude<ExtArgs> | null
     where?: GastoCompraWhereInput
+  }
+
+  /**
+   * CompraProducto.createdBy
+   */
+  export type CompraProducto$createdByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
   }
 
   /**
@@ -109806,6 +111189,7 @@ export namespace Prisma {
     stockMinimo: 'stockMinimo',
     subcategoriaId: 'subcategoriaId',
     fotos: 'fotos',
+    codigoInterno: 'codigoInterno',
     codigoNegocio: 'codigoNegocio',
     proveedorCodigo: 'proveedorCodigo',
     idSeccionCodigo: 'idSeccionCodigo',
@@ -109815,6 +111199,22 @@ export namespace Prisma {
   };
 
   export type ProductoScalarFieldEnum = (typeof ProductoScalarFieldEnum)[keyof typeof ProductoScalarFieldEnum]
+
+
+  export const StockUbicacionScalarFieldEnum: {
+    stockUbicacionId: 'stockUbicacionId',
+    productoId: 'productoId',
+    tipoUbicacion: 'tipoUbicacion',
+    ubicacionId: 'ubicacionId',
+    cantidad: 'cantidad',
+    cantidadReservada: 'cantidadReservada',
+    cantidadDisponible: 'cantidadDisponible',
+    ultimaActualizacion: 'ultimaActualizacion',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type StockUbicacionScalarFieldEnum = (typeof StockUbicacionScalarFieldEnum)[keyof typeof StockUbicacionScalarFieldEnum]
 
 
   export const VentaScalarFieldEnum: {
@@ -110161,6 +111561,7 @@ export namespace Prisma {
     fechaCompra: 'fechaCompra',
     gastoCompraId: 'gastoCompraId',
     cuentaPorPagarId: 'cuentaPorPagarId',
+    createdById: 'createdById',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
     proveedorId: 'proveedorId',
@@ -112194,6 +113595,7 @@ export namespace Prisma {
     stockMinimo?: IntFilter<"Producto"> | number
     subcategoriaId?: StringNullableFilter<"Producto"> | string | null
     fotos?: StringNullableListFilter<"Producto">
+    codigoInterno?: StringNullableFilter<"Producto"> | string | null
     codigoNegocio?: StringNullableFilter<"Producto"> | string | null
     proveedorCodigo?: StringNullableFilter<"Producto"> | string | null
     idSeccionCodigo?: StringNullableFilter<"Producto"> | string | null
@@ -112207,6 +113609,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialListRelationFilter
     precios?: PrecioProductoListRelationFilter
     costHistory?: ProductoCostHistoryListRelationFilter
+    stockUbicaciones?: StockUbicacionListRelationFilter
     almacen?: XOR<AlmacenScalarRelationFilter, AlmacenWhereInput>
     categoria?: XOR<CategoriaScalarRelationFilter, CategoriaWhereInput>
     puntoDeVenta?: XOR<PuntoDeVentaNullableScalarRelationFilter, PuntoDeVentaWhereInput> | null
@@ -112238,6 +113641,7 @@ export namespace Prisma {
     stockMinimo?: SortOrder
     subcategoriaId?: SortOrderInput | SortOrder
     fotos?: SortOrder
+    codigoInterno?: SortOrderInput | SortOrder
     codigoNegocio?: SortOrderInput | SortOrder
     proveedorCodigo?: SortOrderInput | SortOrder
     idSeccionCodigo?: SortOrderInput | SortOrder
@@ -112251,6 +113655,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialOrderByRelationAggregateInput
     precios?: PrecioProductoOrderByRelationAggregateInput
     costHistory?: ProductoCostHistoryOrderByRelationAggregateInput
+    stockUbicaciones?: StockUbicacionOrderByRelationAggregateInput
     almacen?: AlmacenOrderByWithRelationInput
     categoria?: CategoriaOrderByWithRelationInput
     puntoDeVenta?: PuntoDeVentaOrderByWithRelationInput
@@ -112267,6 +113672,7 @@ export namespace Prisma {
 
   export type ProductoWhereUniqueInput = Prisma.AtLeast<{
     id?: string
+    codigoInterno?: string
     codigoNegocio?: string
     AND?: ProductoWhereInput | ProductoWhereInput[]
     OR?: ProductoWhereInput[]
@@ -112298,6 +113704,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialListRelationFilter
     precios?: PrecioProductoListRelationFilter
     costHistory?: ProductoCostHistoryListRelationFilter
+    stockUbicaciones?: StockUbicacionListRelationFilter
     almacen?: XOR<AlmacenScalarRelationFilter, AlmacenWhereInput>
     categoria?: XOR<CategoriaScalarRelationFilter, CategoriaWhereInput>
     puntoDeVenta?: XOR<PuntoDeVentaNullableScalarRelationFilter, PuntoDeVentaWhereInput> | null
@@ -112310,7 +113717,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemListRelationFilter
     ventas?: VentaListRelationFilter
     ventaItems?: VentaItemListRelationFilter
-  }, "id" | "codigoNegocio">
+  }, "id" | "codigoInterno" | "codigoNegocio">
 
   export type ProductoOrderByWithAggregationInput = {
     nombre?: SortOrder
@@ -112329,6 +113736,7 @@ export namespace Prisma {
     stockMinimo?: SortOrder
     subcategoriaId?: SortOrderInput | SortOrder
     fotos?: SortOrder
+    codigoInterno?: SortOrderInput | SortOrder
     codigoNegocio?: SortOrderInput | SortOrder
     proveedorCodigo?: SortOrderInput | SortOrder
     idSeccionCodigo?: SortOrderInput | SortOrder
@@ -112362,12 +113770,96 @@ export namespace Prisma {
     stockMinimo?: IntWithAggregatesFilter<"Producto"> | number
     subcategoriaId?: StringNullableWithAggregatesFilter<"Producto"> | string | null
     fotos?: StringNullableListFilter<"Producto">
+    codigoInterno?: StringNullableWithAggregatesFilter<"Producto"> | string | null
     codigoNegocio?: StringNullableWithAggregatesFilter<"Producto"> | string | null
     proveedorCodigo?: StringNullableWithAggregatesFilter<"Producto"> | string | null
     idSeccionCodigo?: StringNullableWithAggregatesFilter<"Producto"> | string | null
     especificoCodigo?: StringNullableWithAggregatesFilter<"Producto"> | string | null
     surtidoCodigo?: StringNullableWithAggregatesFilter<"Producto"> | string | null
     dcCodigo?: StringNullableWithAggregatesFilter<"Producto"> | string | null
+  }
+
+  export type StockUbicacionWhereInput = {
+    AND?: StockUbicacionWhereInput | StockUbicacionWhereInput[]
+    OR?: StockUbicacionWhereInput[]
+    NOT?: StockUbicacionWhereInput | StockUbicacionWhereInput[]
+    stockUbicacionId?: StringFilter<"StockUbicacion"> | string
+    productoId?: StringFilter<"StockUbicacion"> | string
+    tipoUbicacion?: StringFilter<"StockUbicacion"> | string
+    ubicacionId?: StringFilter<"StockUbicacion"> | string
+    cantidad?: IntFilter<"StockUbicacion"> | number
+    cantidadReservada?: IntFilter<"StockUbicacion"> | number
+    cantidadDisponible?: IntFilter<"StockUbicacion"> | number
+    ultimaActualizacion?: DateTimeFilter<"StockUbicacion"> | Date | string
+    createdAt?: DateTimeFilter<"StockUbicacion"> | Date | string
+    updatedAt?: DateTimeFilter<"StockUbicacion"> | Date | string
+    producto?: XOR<ProductoScalarRelationFilter, ProductoWhereInput>
+  }
+
+  export type StockUbicacionOrderByWithRelationInput = {
+    stockUbicacionId?: SortOrder
+    productoId?: SortOrder
+    tipoUbicacion?: SortOrder
+    ubicacionId?: SortOrder
+    cantidad?: SortOrder
+    cantidadReservada?: SortOrder
+    cantidadDisponible?: SortOrder
+    ultimaActualizacion?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    producto?: ProductoOrderByWithRelationInput
+  }
+
+  export type StockUbicacionWhereUniqueInput = Prisma.AtLeast<{
+    stockUbicacionId?: string
+    productoId_tipoUbicacion_ubicacionId?: StockUbicacionProductoIdTipoUbicacionUbicacionIdCompoundUniqueInput
+    AND?: StockUbicacionWhereInput | StockUbicacionWhereInput[]
+    OR?: StockUbicacionWhereInput[]
+    NOT?: StockUbicacionWhereInput | StockUbicacionWhereInput[]
+    productoId?: StringFilter<"StockUbicacion"> | string
+    tipoUbicacion?: StringFilter<"StockUbicacion"> | string
+    ubicacionId?: StringFilter<"StockUbicacion"> | string
+    cantidad?: IntFilter<"StockUbicacion"> | number
+    cantidadReservada?: IntFilter<"StockUbicacion"> | number
+    cantidadDisponible?: IntFilter<"StockUbicacion"> | number
+    ultimaActualizacion?: DateTimeFilter<"StockUbicacion"> | Date | string
+    createdAt?: DateTimeFilter<"StockUbicacion"> | Date | string
+    updatedAt?: DateTimeFilter<"StockUbicacion"> | Date | string
+    producto?: XOR<ProductoScalarRelationFilter, ProductoWhereInput>
+  }, "stockUbicacionId" | "productoId_tipoUbicacion_ubicacionId">
+
+  export type StockUbicacionOrderByWithAggregationInput = {
+    stockUbicacionId?: SortOrder
+    productoId?: SortOrder
+    tipoUbicacion?: SortOrder
+    ubicacionId?: SortOrder
+    cantidad?: SortOrder
+    cantidadReservada?: SortOrder
+    cantidadDisponible?: SortOrder
+    ultimaActualizacion?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: StockUbicacionCountOrderByAggregateInput
+    _avg?: StockUbicacionAvgOrderByAggregateInput
+    _max?: StockUbicacionMaxOrderByAggregateInput
+    _min?: StockUbicacionMinOrderByAggregateInput
+    _sum?: StockUbicacionSumOrderByAggregateInput
+  }
+
+  export type StockUbicacionScalarWhereWithAggregatesInput = {
+    AND?: StockUbicacionScalarWhereWithAggregatesInput | StockUbicacionScalarWhereWithAggregatesInput[]
+    OR?: StockUbicacionScalarWhereWithAggregatesInput[]
+    NOT?: StockUbicacionScalarWhereWithAggregatesInput | StockUbicacionScalarWhereWithAggregatesInput[]
+    stockUbicacionId?: StringWithAggregatesFilter<"StockUbicacion"> | string
+    productoId?: StringWithAggregatesFilter<"StockUbicacion"> | string
+    tipoUbicacion?: StringWithAggregatesFilter<"StockUbicacion"> | string
+    ubicacionId?: StringWithAggregatesFilter<"StockUbicacion"> | string
+    cantidad?: IntWithAggregatesFilter<"StockUbicacion"> | number
+    cantidadReservada?: IntWithAggregatesFilter<"StockUbicacion"> | number
+    cantidadDisponible?: IntWithAggregatesFilter<"StockUbicacion"> | number
+    ultimaActualizacion?: DateTimeWithAggregatesFilter<"StockUbicacion"> | Date | string
+    createdAt?: DateTimeWithAggregatesFilter<"StockUbicacion"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"StockUbicacion"> | Date | string
   }
 
   export type VentaWhereInput = {
@@ -112767,6 +114259,7 @@ export namespace Prisma {
     notifications?: NotificationListRelationFilter
     activityLogs?: UserActivityLogListRelationFilter
     sessions?: UserSessionListRelationFilter
+    comprasProductoCreadas?: CompraProductoListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
@@ -112796,6 +114289,7 @@ export namespace Prisma {
     notifications?: NotificationOrderByRelationAggregateInput
     activityLogs?: UserActivityLogOrderByRelationAggregateInput
     sessions?: UserSessionOrderByRelationAggregateInput
+    comprasProductoCreadas?: CompraProductoOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -112828,6 +114322,7 @@ export namespace Prisma {
     notifications?: NotificationListRelationFilter
     activityLogs?: UserActivityLogListRelationFilter
     sessions?: UserSessionListRelationFilter
+    comprasProductoCreadas?: CompraProductoListRelationFilter
   }, "userId" | "email">
 
   export type UserOrderByWithAggregationInput = {
@@ -114182,6 +115677,7 @@ export namespace Prisma {
     fechaCompra?: DateTimeFilter<"CompraProducto"> | Date | string
     gastoCompraId?: StringNullableFilter<"CompraProducto"> | string | null
     cuentaPorPagarId?: StringNullableFilter<"CompraProducto"> | string | null
+    createdById?: StringNullableFilter<"CompraProducto"> | string | null
     createdAt?: DateTimeFilter<"CompraProducto"> | Date | string
     updatedAt?: DateTimeFilter<"CompraProducto"> | Date | string
     proveedorId?: StringFilter<"CompraProducto"> | string
@@ -114192,6 +115688,7 @@ export namespace Prisma {
     gastoCompra?: XOR<GastoCompraNullableScalarRelationFilter, GastoCompraWhereInput> | null
     producto?: XOR<ProductoScalarRelationFilter, ProductoWhereInput>
     proveedor?: XOR<VendorScalarRelationFilter, VendorWhereInput>
+    createdBy?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
   }
 
   export type CompraProductoOrderByWithRelationInput = {
@@ -114206,6 +115703,7 @@ export namespace Prisma {
     fechaCompra?: SortOrder
     gastoCompraId?: SortOrderInput | SortOrder
     cuentaPorPagarId?: SortOrderInput | SortOrder
+    createdById?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     proveedorId?: SortOrder
@@ -114216,6 +115714,7 @@ export namespace Prisma {
     gastoCompra?: GastoCompraOrderByWithRelationInput
     producto?: ProductoOrderByWithRelationInput
     proveedor?: VendorOrderByWithRelationInput
+    createdBy?: UserOrderByWithRelationInput
   }
 
   export type CompraProductoWhereUniqueInput = Prisma.AtLeast<{
@@ -114233,6 +115732,7 @@ export namespace Prisma {
     total?: IntFilter<"CompraProducto"> | number
     descripcion?: StringNullableFilter<"CompraProducto"> | string | null
     fechaCompra?: DateTimeFilter<"CompraProducto"> | Date | string
+    createdById?: StringNullableFilter<"CompraProducto"> | string | null
     createdAt?: DateTimeFilter<"CompraProducto"> | Date | string
     updatedAt?: DateTimeFilter<"CompraProducto"> | Date | string
     proveedorId?: StringFilter<"CompraProducto"> | string
@@ -114243,6 +115743,7 @@ export namespace Prisma {
     gastoCompra?: XOR<GastoCompraNullableScalarRelationFilter, GastoCompraWhereInput> | null
     producto?: XOR<ProductoScalarRelationFilter, ProductoWhereInput>
     proveedor?: XOR<VendorScalarRelationFilter, VendorWhereInput>
+    createdBy?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
   }, "compraProductoId" | "gastoCompraId" | "cuentaPorPagarId">
 
   export type CompraProductoOrderByWithAggregationInput = {
@@ -114257,6 +115758,7 @@ export namespace Prisma {
     fechaCompra?: SortOrder
     gastoCompraId?: SortOrderInput | SortOrder
     cuentaPorPagarId?: SortOrderInput | SortOrder
+    createdById?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     proveedorId?: SortOrder
@@ -114285,6 +115787,7 @@ export namespace Prisma {
     fechaCompra?: DateTimeWithAggregatesFilter<"CompraProducto"> | Date | string
     gastoCompraId?: StringNullableWithAggregatesFilter<"CompraProducto"> | string | null
     cuentaPorPagarId?: StringNullableWithAggregatesFilter<"CompraProducto"> | string | null
+    createdById?: StringNullableWithAggregatesFilter<"CompraProducto"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"CompraProducto"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"CompraProducto"> | Date | string
     proveedorId?: StringWithAggregatesFilter<"CompraProducto"> | string
@@ -119865,6 +121368,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -119878,6 +121382,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
@@ -119909,6 +121414,7 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -119922,6 +121428,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
@@ -119941,6 +121448,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -119954,6 +121462,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
@@ -119985,6 +121494,7 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -119998,6 +121508,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
@@ -120023,6 +121534,7 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -120042,6 +121554,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -120067,12 +121580,103 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type StockUbicacionCreateInput = {
+    stockUbicacionId?: string
+    tipoUbicacion: string
+    ubicacionId: string
+    cantidad: number
+    cantidadReservada?: number
+    cantidadDisponible: number
+    ultimaActualizacion?: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    producto: ProductoCreateNestedOneWithoutStockUbicacionesInput
+  }
+
+  export type StockUbicacionUncheckedCreateInput = {
+    stockUbicacionId?: string
+    productoId: string
+    tipoUbicacion: string
+    ubicacionId: string
+    cantidad: number
+    cantidadReservada?: number
+    cantidadDisponible: number
+    ultimaActualizacion?: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type StockUbicacionUpdateInput = {
+    stockUbicacionId?: StringFieldUpdateOperationsInput | string
+    tipoUbicacion?: StringFieldUpdateOperationsInput | string
+    ubicacionId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    cantidadReservada?: IntFieldUpdateOperationsInput | number
+    cantidadDisponible?: IntFieldUpdateOperationsInput | number
+    ultimaActualizacion?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    producto?: ProductoUpdateOneRequiredWithoutStockUbicacionesNestedInput
+  }
+
+  export type StockUbicacionUncheckedUpdateInput = {
+    stockUbicacionId?: StringFieldUpdateOperationsInput | string
+    productoId?: StringFieldUpdateOperationsInput | string
+    tipoUbicacion?: StringFieldUpdateOperationsInput | string
+    ubicacionId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    cantidadReservada?: IntFieldUpdateOperationsInput | number
+    cantidadDisponible?: IntFieldUpdateOperationsInput | number
+    ultimaActualizacion?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type StockUbicacionCreateManyInput = {
+    stockUbicacionId?: string
+    productoId: string
+    tipoUbicacion: string
+    ubicacionId: string
+    cantidad: number
+    cantidadReservada?: number
+    cantidadDisponible: number
+    ultimaActualizacion?: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type StockUbicacionUpdateManyMutationInput = {
+    stockUbicacionId?: StringFieldUpdateOperationsInput | string
+    tipoUbicacion?: StringFieldUpdateOperationsInput | string
+    ubicacionId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    cantidadReservada?: IntFieldUpdateOperationsInput | number
+    cantidadDisponible?: IntFieldUpdateOperationsInput | number
+    ultimaActualizacion?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type StockUbicacionUncheckedUpdateManyInput = {
+    stockUbicacionId?: StringFieldUpdateOperationsInput | string
+    productoId?: StringFieldUpdateOperationsInput | string
+    tipoUbicacion?: StringFieldUpdateOperationsInput | string
+    ubicacionId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    cantidadReservada?: IntFieldUpdateOperationsInput | number
+    cantidadDisponible?: IntFieldUpdateOperationsInput | number
+    ultimaActualizacion?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type VentaCreateInput = {
@@ -120469,6 +122073,7 @@ export namespace Prisma {
     notifications?: NotificationCreateNestedManyWithoutUserInput
     activityLogs?: UserActivityLogCreateNestedManyWithoutUserInput
     sessions?: UserSessionCreateNestedManyWithoutUserInput
+    comprasProductoCreadas?: CompraProductoCreateNestedManyWithoutCreatedByInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -120498,6 +122103,7 @@ export namespace Prisma {
     notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
     activityLogs?: UserActivityLogUncheckedCreateNestedManyWithoutUserInput
     sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
+    comprasProductoCreadas?: CompraProductoUncheckedCreateNestedManyWithoutCreatedByInput
   }
 
   export type UserUpdateInput = {
@@ -120527,6 +122133,7 @@ export namespace Prisma {
     notifications?: NotificationUpdateManyWithoutUserNestedInput
     activityLogs?: UserActivityLogUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUpdateManyWithoutUserNestedInput
+    comprasProductoCreadas?: CompraProductoUpdateManyWithoutCreatedByNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -120556,6 +122163,7 @@ export namespace Prisma {
     notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
     activityLogs?: UserActivityLogUncheckedUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
+    comprasProductoCreadas?: CompraProductoUncheckedUpdateManyWithoutCreatedByNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -122103,6 +123711,7 @@ export namespace Prisma {
     gastoCompra?: GastoCompraCreateNestedOneWithoutCompraProductoInput
     producto: ProductoCreateNestedOneWithoutComprasInput
     proveedor: VendorCreateNestedOneWithoutComprasInput
+    createdBy?: UserCreateNestedOneWithoutComprasProductoCreadasInput
   }
 
   export type CompraProductoUncheckedCreateInput = {
@@ -122117,6 +123726,7 @@ export namespace Prisma {
     fechaCompra?: Date | string
     gastoCompraId?: string | null
     cuentaPorPagarId?: string | null
+    createdById?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     proveedorId: string
@@ -122143,6 +123753,7 @@ export namespace Prisma {
     gastoCompra?: GastoCompraUpdateOneWithoutCompraProductoNestedInput
     producto?: ProductoUpdateOneRequiredWithoutComprasNestedInput
     proveedor?: VendorUpdateOneRequiredWithoutComprasNestedInput
+    createdBy?: UserUpdateOneWithoutComprasProductoCreadasNestedInput
   }
 
   export type CompraProductoUncheckedUpdateInput = {
@@ -122157,6 +123768,7 @@ export namespace Prisma {
     fechaCompra?: DateTimeFieldUpdateOperationsInput | Date | string
     gastoCompraId?: NullableStringFieldUpdateOperationsInput | string | null
     cuentaPorPagarId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     proveedorId?: StringFieldUpdateOperationsInput | string
@@ -122177,6 +123789,7 @@ export namespace Prisma {
     fechaCompra?: Date | string
     gastoCompraId?: string | null
     cuentaPorPagarId?: string | null
+    createdById?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     proveedorId: string
@@ -122213,6 +123826,7 @@ export namespace Prisma {
     fechaCompra?: DateTimeFieldUpdateOperationsInput | Date | string
     gastoCompraId?: NullableStringFieldUpdateOperationsInput | string | null
     cuentaPorPagarId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     proveedorId?: StringFieldUpdateOperationsInput | string
@@ -128254,6 +129868,12 @@ export namespace Prisma {
     none?: ProductoCostHistoryWhereInput
   }
 
+  export type StockUbicacionListRelationFilter = {
+    every?: StockUbicacionWhereInput
+    some?: StockUbicacionWhereInput
+    none?: StockUbicacionWhereInput
+  }
+
   export type AlmacenScalarRelationFilter = {
     is?: AlmacenWhereInput
     isNot?: AlmacenWhereInput
@@ -128323,6 +129943,10 @@ export namespace Prisma {
     _count?: SortOrder
   }
 
+  export type StockUbicacionOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
   export type RecetaOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -128356,6 +129980,7 @@ export namespace Prisma {
     stockMinimo?: SortOrder
     subcategoriaId?: SortOrder
     fotos?: SortOrder
+    codigoInterno?: SortOrder
     codigoNegocio?: SortOrder
     proveedorCodigo?: SortOrder
     idSeccionCodigo?: SortOrder
@@ -128387,6 +130012,7 @@ export namespace Prisma {
     puntoDeVentaId?: SortOrder
     stockMinimo?: SortOrder
     subcategoriaId?: SortOrder
+    codigoInterno?: SortOrder
     codigoNegocio?: SortOrder
     proveedorCodigo?: SortOrder
     idSeccionCodigo?: SortOrder
@@ -128411,6 +130037,7 @@ export namespace Prisma {
     puntoDeVentaId?: SortOrder
     stockMinimo?: SortOrder
     subcategoriaId?: SortOrder
+    codigoInterno?: SortOrder
     codigoNegocio?: SortOrder
     proveedorCodigo?: SortOrder
     idSeccionCodigo?: SortOrder
@@ -128424,6 +130051,68 @@ export namespace Prisma {
     precioVenta?: SortOrder
     stock?: SortOrder
     stockMinimo?: SortOrder
+  }
+
+  export type ProductoScalarRelationFilter = {
+    is?: ProductoWhereInput
+    isNot?: ProductoWhereInput
+  }
+
+  export type StockUbicacionProductoIdTipoUbicacionUbicacionIdCompoundUniqueInput = {
+    productoId: string
+    tipoUbicacion: string
+    ubicacionId: string
+  }
+
+  export type StockUbicacionCountOrderByAggregateInput = {
+    stockUbicacionId?: SortOrder
+    productoId?: SortOrder
+    tipoUbicacion?: SortOrder
+    ubicacionId?: SortOrder
+    cantidad?: SortOrder
+    cantidadReservada?: SortOrder
+    cantidadDisponible?: SortOrder
+    ultimaActualizacion?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type StockUbicacionAvgOrderByAggregateInput = {
+    cantidad?: SortOrder
+    cantidadReservada?: SortOrder
+    cantidadDisponible?: SortOrder
+  }
+
+  export type StockUbicacionMaxOrderByAggregateInput = {
+    stockUbicacionId?: SortOrder
+    productoId?: SortOrder
+    tipoUbicacion?: SortOrder
+    ubicacionId?: SortOrder
+    cantidad?: SortOrder
+    cantidadReservada?: SortOrder
+    cantidadDisponible?: SortOrder
+    ultimaActualizacion?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type StockUbicacionMinOrderByAggregateInput = {
+    stockUbicacionId?: SortOrder
+    productoId?: SortOrder
+    tipoUbicacion?: SortOrder
+    ubicacionId?: SortOrder
+    cantidad?: SortOrder
+    cantidadReservada?: SortOrder
+    cantidadDisponible?: SortOrder
+    ultimaActualizacion?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type StockUbicacionSumOrderByAggregateInput = {
+    cantidad?: SortOrder
+    cantidadReservada?: SortOrder
+    cantidadDisponible?: SortOrder
   }
 
   export type OrdenReparacionNullableScalarRelationFilter = {
@@ -128535,11 +130224,6 @@ export namespace Prisma {
     cantidad?: SortOrder
     total?: SortOrder
     descuento?: SortOrder
-  }
-
-  export type ProductoScalarRelationFilter = {
-    is?: ProductoWhereInput
-    isNot?: ProductoWhereInput
   }
 
   export type VentaScalarRelationFilter = {
@@ -129705,6 +131389,7 @@ export namespace Prisma {
     fechaCompra?: SortOrder
     gastoCompraId?: SortOrder
     cuentaPorPagarId?: SortOrder
+    createdById?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     proveedorId?: SortOrder
@@ -129731,6 +131416,7 @@ export namespace Prisma {
     fechaCompra?: SortOrder
     gastoCompraId?: SortOrder
     cuentaPorPagarId?: SortOrder
+    createdById?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     proveedorId?: SortOrder
@@ -129751,6 +131437,7 @@ export namespace Prisma {
     fechaCompra?: SortOrder
     gastoCompraId?: SortOrder
     cuentaPorPagarId?: SortOrder
+    createdById?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     proveedorId?: SortOrder
@@ -134305,6 +135992,13 @@ export namespace Prisma {
     connect?: ProductoCostHistoryWhereUniqueInput | ProductoCostHistoryWhereUniqueInput[]
   }
 
+  export type StockUbicacionCreateNestedManyWithoutProductoInput = {
+    create?: XOR<StockUbicacionCreateWithoutProductoInput, StockUbicacionUncheckedCreateWithoutProductoInput> | StockUbicacionCreateWithoutProductoInput[] | StockUbicacionUncheckedCreateWithoutProductoInput[]
+    connectOrCreate?: StockUbicacionCreateOrConnectWithoutProductoInput | StockUbicacionCreateOrConnectWithoutProductoInput[]
+    createMany?: StockUbicacionCreateManyProductoInputEnvelope
+    connect?: StockUbicacionWhereUniqueInput | StockUbicacionWhereUniqueInput[]
+  }
+
   export type AlmacenCreateNestedOneWithoutProductosInput = {
     create?: XOR<AlmacenCreateWithoutProductosInput, AlmacenUncheckedCreateWithoutProductosInput>
     connectOrCreate?: AlmacenCreateOrConnectWithoutProductosInput
@@ -134430,6 +136124,13 @@ export namespace Prisma {
     connectOrCreate?: ProductoCostHistoryCreateOrConnectWithoutProductoInput | ProductoCostHistoryCreateOrConnectWithoutProductoInput[]
     createMany?: ProductoCostHistoryCreateManyProductoInputEnvelope
     connect?: ProductoCostHistoryWhereUniqueInput | ProductoCostHistoryWhereUniqueInput[]
+  }
+
+  export type StockUbicacionUncheckedCreateNestedManyWithoutProductoInput = {
+    create?: XOR<StockUbicacionCreateWithoutProductoInput, StockUbicacionUncheckedCreateWithoutProductoInput> | StockUbicacionCreateWithoutProductoInput[] | StockUbicacionUncheckedCreateWithoutProductoInput[]
+    connectOrCreate?: StockUbicacionCreateOrConnectWithoutProductoInput | StockUbicacionCreateOrConnectWithoutProductoInput[]
+    createMany?: StockUbicacionCreateManyProductoInputEnvelope
+    connect?: StockUbicacionWhereUniqueInput | StockUbicacionWhereUniqueInput[]
   }
 
   export type RecetaUncheckedCreateNestedManyWithoutProductoInput = {
@@ -134575,6 +136276,20 @@ export namespace Prisma {
     update?: ProductoCostHistoryUpdateWithWhereUniqueWithoutProductoInput | ProductoCostHistoryUpdateWithWhereUniqueWithoutProductoInput[]
     updateMany?: ProductoCostHistoryUpdateManyWithWhereWithoutProductoInput | ProductoCostHistoryUpdateManyWithWhereWithoutProductoInput[]
     deleteMany?: ProductoCostHistoryScalarWhereInput | ProductoCostHistoryScalarWhereInput[]
+  }
+
+  export type StockUbicacionUpdateManyWithoutProductoNestedInput = {
+    create?: XOR<StockUbicacionCreateWithoutProductoInput, StockUbicacionUncheckedCreateWithoutProductoInput> | StockUbicacionCreateWithoutProductoInput[] | StockUbicacionUncheckedCreateWithoutProductoInput[]
+    connectOrCreate?: StockUbicacionCreateOrConnectWithoutProductoInput | StockUbicacionCreateOrConnectWithoutProductoInput[]
+    upsert?: StockUbicacionUpsertWithWhereUniqueWithoutProductoInput | StockUbicacionUpsertWithWhereUniqueWithoutProductoInput[]
+    createMany?: StockUbicacionCreateManyProductoInputEnvelope
+    set?: StockUbicacionWhereUniqueInput | StockUbicacionWhereUniqueInput[]
+    disconnect?: StockUbicacionWhereUniqueInput | StockUbicacionWhereUniqueInput[]
+    delete?: StockUbicacionWhereUniqueInput | StockUbicacionWhereUniqueInput[]
+    connect?: StockUbicacionWhereUniqueInput | StockUbicacionWhereUniqueInput[]
+    update?: StockUbicacionUpdateWithWhereUniqueWithoutProductoInput | StockUbicacionUpdateWithWhereUniqueWithoutProductoInput[]
+    updateMany?: StockUbicacionUpdateManyWithWhereWithoutProductoInput | StockUbicacionUpdateManyWithWhereWithoutProductoInput[]
+    deleteMany?: StockUbicacionScalarWhereInput | StockUbicacionScalarWhereInput[]
   }
 
   export type AlmacenUpdateOneRequiredWithoutProductosNestedInput = {
@@ -134815,6 +136530,20 @@ export namespace Prisma {
     deleteMany?: ProductoCostHistoryScalarWhereInput | ProductoCostHistoryScalarWhereInput[]
   }
 
+  export type StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput = {
+    create?: XOR<StockUbicacionCreateWithoutProductoInput, StockUbicacionUncheckedCreateWithoutProductoInput> | StockUbicacionCreateWithoutProductoInput[] | StockUbicacionUncheckedCreateWithoutProductoInput[]
+    connectOrCreate?: StockUbicacionCreateOrConnectWithoutProductoInput | StockUbicacionCreateOrConnectWithoutProductoInput[]
+    upsert?: StockUbicacionUpsertWithWhereUniqueWithoutProductoInput | StockUbicacionUpsertWithWhereUniqueWithoutProductoInput[]
+    createMany?: StockUbicacionCreateManyProductoInputEnvelope
+    set?: StockUbicacionWhereUniqueInput | StockUbicacionWhereUniqueInput[]
+    disconnect?: StockUbicacionWhereUniqueInput | StockUbicacionWhereUniqueInput[]
+    delete?: StockUbicacionWhereUniqueInput | StockUbicacionWhereUniqueInput[]
+    connect?: StockUbicacionWhereUniqueInput | StockUbicacionWhereUniqueInput[]
+    update?: StockUbicacionUpdateWithWhereUniqueWithoutProductoInput | StockUbicacionUpdateWithWhereUniqueWithoutProductoInput[]
+    updateMany?: StockUbicacionUpdateManyWithWhereWithoutProductoInput | StockUbicacionUpdateManyWithWhereWithoutProductoInput[]
+    deleteMany?: StockUbicacionScalarWhereInput | StockUbicacionScalarWhereInput[]
+  }
+
   export type RecetaUncheckedUpdateManyWithoutProductoNestedInput = {
     create?: XOR<RecetaCreateWithoutProductoInput, RecetaUncheckedCreateWithoutProductoInput> | RecetaCreateWithoutProductoInput[] | RecetaUncheckedCreateWithoutProductoInput[]
     connectOrCreate?: RecetaCreateOrConnectWithoutProductoInput | RecetaCreateOrConnectWithoutProductoInput[]
@@ -134897,6 +136626,20 @@ export namespace Prisma {
     update?: VentaItemUpdateWithWhereUniqueWithoutProductoInput | VentaItemUpdateWithWhereUniqueWithoutProductoInput[]
     updateMany?: VentaItemUpdateManyWithWhereWithoutProductoInput | VentaItemUpdateManyWithWhereWithoutProductoInput[]
     deleteMany?: VentaItemScalarWhereInput | VentaItemScalarWhereInput[]
+  }
+
+  export type ProductoCreateNestedOneWithoutStockUbicacionesInput = {
+    create?: XOR<ProductoCreateWithoutStockUbicacionesInput, ProductoUncheckedCreateWithoutStockUbicacionesInput>
+    connectOrCreate?: ProductoCreateOrConnectWithoutStockUbicacionesInput
+    connect?: ProductoWhereUniqueInput
+  }
+
+  export type ProductoUpdateOneRequiredWithoutStockUbicacionesNestedInput = {
+    create?: XOR<ProductoCreateWithoutStockUbicacionesInput, ProductoUncheckedCreateWithoutStockUbicacionesInput>
+    connectOrCreate?: ProductoCreateOrConnectWithoutStockUbicacionesInput
+    upsert?: ProductoUpsertWithoutStockUbicacionesInput
+    connect?: ProductoWhereUniqueInput
+    update?: XOR<XOR<ProductoUpdateToOneWithWhereWithoutStockUbicacionesInput, ProductoUpdateWithoutStockUbicacionesInput>, ProductoUncheckedUpdateWithoutStockUbicacionesInput>
   }
 
   export type OrdenReparacionCreateNestedOneWithoutVentaInput = {
@@ -135322,6 +137065,13 @@ export namespace Prisma {
     connect?: UserSessionWhereUniqueInput | UserSessionWhereUniqueInput[]
   }
 
+  export type CompraProductoCreateNestedManyWithoutCreatedByInput = {
+    create?: XOR<CompraProductoCreateWithoutCreatedByInput, CompraProductoUncheckedCreateWithoutCreatedByInput> | CompraProductoCreateWithoutCreatedByInput[] | CompraProductoUncheckedCreateWithoutCreatedByInput[]
+    connectOrCreate?: CompraProductoCreateOrConnectWithoutCreatedByInput | CompraProductoCreateOrConnectWithoutCreatedByInput[]
+    createMany?: CompraProductoCreateManyCreatedByInputEnvelope
+    connect?: CompraProductoWhereUniqueInput | CompraProductoWhereUniqueInput[]
+  }
+
   export type ContratoUncheckedCreateNestedManyWithoutAprobadorInput = {
     create?: XOR<ContratoCreateWithoutAprobadorInput, ContratoUncheckedCreateWithoutAprobadorInput> | ContratoCreateWithoutAprobadorInput[] | ContratoUncheckedCreateWithoutAprobadorInput[]
     connectOrCreate?: ContratoCreateOrConnectWithoutAprobadorInput | ContratoCreateOrConnectWithoutAprobadorInput[]
@@ -135397,6 +137147,13 @@ export namespace Prisma {
     connectOrCreate?: UserSessionCreateOrConnectWithoutUserInput | UserSessionCreateOrConnectWithoutUserInput[]
     createMany?: UserSessionCreateManyUserInputEnvelope
     connect?: UserSessionWhereUniqueInput | UserSessionWhereUniqueInput[]
+  }
+
+  export type CompraProductoUncheckedCreateNestedManyWithoutCreatedByInput = {
+    create?: XOR<CompraProductoCreateWithoutCreatedByInput, CompraProductoUncheckedCreateWithoutCreatedByInput> | CompraProductoCreateWithoutCreatedByInput[] | CompraProductoUncheckedCreateWithoutCreatedByInput[]
+    connectOrCreate?: CompraProductoCreateOrConnectWithoutCreatedByInput | CompraProductoCreateOrConnectWithoutCreatedByInput[]
+    createMany?: CompraProductoCreateManyCreatedByInputEnvelope
+    connect?: CompraProductoWhereUniqueInput | CompraProductoWhereUniqueInput[]
   }
 
   export type ContratoUpdateManyWithoutAprobadorNestedInput = {
@@ -135553,6 +137310,20 @@ export namespace Prisma {
     deleteMany?: UserSessionScalarWhereInput | UserSessionScalarWhereInput[]
   }
 
+  export type CompraProductoUpdateManyWithoutCreatedByNestedInput = {
+    create?: XOR<CompraProductoCreateWithoutCreatedByInput, CompraProductoUncheckedCreateWithoutCreatedByInput> | CompraProductoCreateWithoutCreatedByInput[] | CompraProductoUncheckedCreateWithoutCreatedByInput[]
+    connectOrCreate?: CompraProductoCreateOrConnectWithoutCreatedByInput | CompraProductoCreateOrConnectWithoutCreatedByInput[]
+    upsert?: CompraProductoUpsertWithWhereUniqueWithoutCreatedByInput | CompraProductoUpsertWithWhereUniqueWithoutCreatedByInput[]
+    createMany?: CompraProductoCreateManyCreatedByInputEnvelope
+    set?: CompraProductoWhereUniqueInput | CompraProductoWhereUniqueInput[]
+    disconnect?: CompraProductoWhereUniqueInput | CompraProductoWhereUniqueInput[]
+    delete?: CompraProductoWhereUniqueInput | CompraProductoWhereUniqueInput[]
+    connect?: CompraProductoWhereUniqueInput | CompraProductoWhereUniqueInput[]
+    update?: CompraProductoUpdateWithWhereUniqueWithoutCreatedByInput | CompraProductoUpdateWithWhereUniqueWithoutCreatedByInput[]
+    updateMany?: CompraProductoUpdateManyWithWhereWithoutCreatedByInput | CompraProductoUpdateManyWithWhereWithoutCreatedByInput[]
+    deleteMany?: CompraProductoScalarWhereInput | CompraProductoScalarWhereInput[]
+  }
+
   export type ContratoUncheckedUpdateManyWithoutAprobadorNestedInput = {
     create?: XOR<ContratoCreateWithoutAprobadorInput, ContratoUncheckedCreateWithoutAprobadorInput> | ContratoCreateWithoutAprobadorInput[] | ContratoUncheckedCreateWithoutAprobadorInput[]
     connectOrCreate?: ContratoCreateOrConnectWithoutAprobadorInput | ContratoCreateOrConnectWithoutAprobadorInput[]
@@ -135705,6 +137476,20 @@ export namespace Prisma {
     update?: UserSessionUpdateWithWhereUniqueWithoutUserInput | UserSessionUpdateWithWhereUniqueWithoutUserInput[]
     updateMany?: UserSessionUpdateManyWithWhereWithoutUserInput | UserSessionUpdateManyWithWhereWithoutUserInput[]
     deleteMany?: UserSessionScalarWhereInput | UserSessionScalarWhereInput[]
+  }
+
+  export type CompraProductoUncheckedUpdateManyWithoutCreatedByNestedInput = {
+    create?: XOR<CompraProductoCreateWithoutCreatedByInput, CompraProductoUncheckedCreateWithoutCreatedByInput> | CompraProductoCreateWithoutCreatedByInput[] | CompraProductoUncheckedCreateWithoutCreatedByInput[]
+    connectOrCreate?: CompraProductoCreateOrConnectWithoutCreatedByInput | CompraProductoCreateOrConnectWithoutCreatedByInput[]
+    upsert?: CompraProductoUpsertWithWhereUniqueWithoutCreatedByInput | CompraProductoUpsertWithWhereUniqueWithoutCreatedByInput[]
+    createMany?: CompraProductoCreateManyCreatedByInputEnvelope
+    set?: CompraProductoWhereUniqueInput | CompraProductoWhereUniqueInput[]
+    disconnect?: CompraProductoWhereUniqueInput | CompraProductoWhereUniqueInput[]
+    delete?: CompraProductoWhereUniqueInput | CompraProductoWhereUniqueInput[]
+    connect?: CompraProductoWhereUniqueInput | CompraProductoWhereUniqueInput[]
+    update?: CompraProductoUpdateWithWhereUniqueWithoutCreatedByInput | CompraProductoUpdateWithWhereUniqueWithoutCreatedByInput[]
+    updateMany?: CompraProductoUpdateManyWithWhereWithoutCreatedByInput | CompraProductoUpdateManyWithWhereWithoutCreatedByInput[]
+    deleteMany?: CompraProductoScalarWhereInput | CompraProductoScalarWhereInput[]
   }
 
   export type LicenciaCreateNestedManyWithoutPlanInput = {
@@ -136455,6 +138240,12 @@ export namespace Prisma {
     connect?: VendorWhereUniqueInput
   }
 
+  export type UserCreateNestedOneWithoutComprasProductoCreadasInput = {
+    create?: XOR<UserCreateWithoutComprasProductoCreadasInput, UserUncheckedCreateWithoutComprasProductoCreadasInput>
+    connectOrCreate?: UserCreateOrConnectWithoutComprasProductoCreadasInput
+    connect?: UserWhereUniqueInput
+  }
+
   export type CuentaPorPagarUpdateOneWithoutCompraProductoNestedInput = {
     create?: XOR<CuentaPorPagarCreateWithoutCompraProductoInput, CuentaPorPagarUncheckedCreateWithoutCompraProductoInput>
     connectOrCreate?: CuentaPorPagarCreateOrConnectWithoutCompraProductoInput
@@ -136489,6 +138280,16 @@ export namespace Prisma {
     upsert?: VendorUpsertWithoutComprasInput
     connect?: VendorWhereUniqueInput
     update?: XOR<XOR<VendorUpdateToOneWithWhereWithoutComprasInput, VendorUpdateWithoutComprasInput>, VendorUncheckedUpdateWithoutComprasInput>
+  }
+
+  export type UserUpdateOneWithoutComprasProductoCreadasNestedInput = {
+    create?: XOR<UserCreateWithoutComprasProductoCreadasInput, UserUncheckedCreateWithoutComprasProductoCreadasInput>
+    connectOrCreate?: UserCreateOrConnectWithoutComprasProductoCreadasInput
+    upsert?: UserUpsertWithoutComprasProductoCreadasInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutComprasProductoCreadasInput, UserUpdateWithoutComprasProductoCreadasInput>, UserUncheckedUpdateWithoutComprasProductoCreadasInput>
   }
 
   export type OfertaItemCreateNestedManyWithoutServicioInput = {
@@ -140436,6 +142237,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -140449,6 +142251,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
     subcategoria?: CategoriaCreateNestedOneWithoutProductosSubcategoriaInput
@@ -140478,6 +142281,7 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -140491,6 +142295,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
@@ -140520,6 +142325,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -140533,6 +142339,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
@@ -140562,6 +142369,7 @@ export namespace Prisma {
     puntoDeVentaId?: string | null
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -140575,6 +142383,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
@@ -140690,6 +142499,7 @@ export namespace Prisma {
     stockMinimo?: IntFilter<"Producto"> | number
     subcategoriaId?: StringNullableFilter<"Producto"> | string | null
     fotos?: StringNullableListFilter<"Producto">
+    codigoInterno?: StringNullableFilter<"Producto"> | string | null
     codigoNegocio?: StringNullableFilter<"Producto"> | string | null
     proveedorCodigo?: StringNullableFilter<"Producto"> | string | null
     idSeccionCodigo?: StringNullableFilter<"Producto"> | string | null
@@ -140725,6 +142535,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -140738,6 +142549,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
@@ -140767,6 +142579,7 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -140780,6 +142593,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
@@ -140831,6 +142645,7 @@ export namespace Prisma {
     cuentaPorPagar?: CuentaPorPagarCreateNestedOneWithoutCompraProductoInput
     gastoCompra?: GastoCompraCreateNestedOneWithoutCompraProductoInput
     producto: ProductoCreateNestedOneWithoutComprasInput
+    createdBy?: UserCreateNestedOneWithoutComprasProductoCreadasInput
   }
 
   export type CompraProductoUncheckedCreateWithoutProveedorInput = {
@@ -140845,6 +142660,7 @@ export namespace Prisma {
     fechaCompra?: Date | string
     gastoCompraId?: string | null
     cuentaPorPagarId?: string | null
+    createdById?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     formaPago: string
@@ -141081,6 +142897,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -141094,6 +142911,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
@@ -141123,6 +142941,7 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -141136,6 +142955,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
@@ -141185,6 +143005,7 @@ export namespace Prisma {
     fechaCompra?: DateTimeFilter<"CompraProducto"> | Date | string
     gastoCompraId?: StringNullableFilter<"CompraProducto"> | string | null
     cuentaPorPagarId?: StringNullableFilter<"CompraProducto"> | string | null
+    createdById?: StringNullableFilter<"CompraProducto"> | string | null
     createdAt?: DateTimeFilter<"CompraProducto"> | Date | string
     updatedAt?: DateTimeFilter<"CompraProducto"> | Date | string
     proveedorId?: StringFilter<"CompraProducto"> | string
@@ -142546,6 +144367,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -142559,6 +144381,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
     subcategoria?: CategoriaCreateNestedOneWithoutProductosSubcategoriaInput
@@ -142588,6 +144411,7 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -142601,6 +144425,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
@@ -142787,6 +144612,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -142800,6 +144626,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     subcategoria?: CategoriaCreateNestedOneWithoutProductosSubcategoriaInput
@@ -142829,6 +144656,7 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -142842,6 +144670,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
@@ -143092,6 +144921,7 @@ export namespace Prisma {
     cuentaPorPagar?: CuentaPorPagarCreateNestedOneWithoutCompraProductoInput
     gastoCompra?: GastoCompraCreateNestedOneWithoutCompraProductoInput
     proveedor: VendorCreateNestedOneWithoutComprasInput
+    createdBy?: UserCreateNestedOneWithoutComprasProductoCreadasInput
   }
 
   export type CompraProductoUncheckedCreateWithoutProductoInput = {
@@ -143105,6 +144935,7 @@ export namespace Prisma {
     fechaCompra?: Date | string
     gastoCompraId?: string | null
     cuentaPorPagarId?: string | null
+    createdById?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     proveedorId: string
@@ -143308,6 +145139,40 @@ export namespace Prisma {
 
   export type ProductoCostHistoryCreateManyProductoInputEnvelope = {
     data: ProductoCostHistoryCreateManyProductoInput | ProductoCostHistoryCreateManyProductoInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type StockUbicacionCreateWithoutProductoInput = {
+    stockUbicacionId?: string
+    tipoUbicacion: string
+    ubicacionId: string
+    cantidad: number
+    cantidadReservada?: number
+    cantidadDisponible: number
+    ultimaActualizacion?: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type StockUbicacionUncheckedCreateWithoutProductoInput = {
+    stockUbicacionId?: string
+    tipoUbicacion: string
+    ubicacionId: string
+    cantidad: number
+    cantidadReservada?: number
+    cantidadDisponible: number
+    ultimaActualizacion?: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type StockUbicacionCreateOrConnectWithoutProductoInput = {
+    where: StockUbicacionWhereUniqueInput
+    create: XOR<StockUbicacionCreateWithoutProductoInput, StockUbicacionUncheckedCreateWithoutProductoInput>
+  }
+
+  export type StockUbicacionCreateManyProductoInputEnvelope = {
+    data: StockUbicacionCreateManyProductoInput | StockUbicacionCreateManyProductoInput[]
     skipDuplicates?: boolean
   }
 
@@ -143868,6 +145733,38 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"ProductoCostHistory"> | Date | string
   }
 
+  export type StockUbicacionUpsertWithWhereUniqueWithoutProductoInput = {
+    where: StockUbicacionWhereUniqueInput
+    update: XOR<StockUbicacionUpdateWithoutProductoInput, StockUbicacionUncheckedUpdateWithoutProductoInput>
+    create: XOR<StockUbicacionCreateWithoutProductoInput, StockUbicacionUncheckedCreateWithoutProductoInput>
+  }
+
+  export type StockUbicacionUpdateWithWhereUniqueWithoutProductoInput = {
+    where: StockUbicacionWhereUniqueInput
+    data: XOR<StockUbicacionUpdateWithoutProductoInput, StockUbicacionUncheckedUpdateWithoutProductoInput>
+  }
+
+  export type StockUbicacionUpdateManyWithWhereWithoutProductoInput = {
+    where: StockUbicacionScalarWhereInput
+    data: XOR<StockUbicacionUpdateManyMutationInput, StockUbicacionUncheckedUpdateManyWithoutProductoInput>
+  }
+
+  export type StockUbicacionScalarWhereInput = {
+    AND?: StockUbicacionScalarWhereInput | StockUbicacionScalarWhereInput[]
+    OR?: StockUbicacionScalarWhereInput[]
+    NOT?: StockUbicacionScalarWhereInput | StockUbicacionScalarWhereInput[]
+    stockUbicacionId?: StringFilter<"StockUbicacion"> | string
+    productoId?: StringFilter<"StockUbicacion"> | string
+    tipoUbicacion?: StringFilter<"StockUbicacion"> | string
+    ubicacionId?: StringFilter<"StockUbicacion"> | string
+    cantidad?: IntFilter<"StockUbicacion"> | number
+    cantidadReservada?: IntFilter<"StockUbicacion"> | number
+    cantidadDisponible?: IntFilter<"StockUbicacion"> | number
+    ultimaActualizacion?: DateTimeFilter<"StockUbicacion"> | Date | string
+    createdAt?: DateTimeFilter<"StockUbicacion"> | Date | string
+    updatedAt?: DateTimeFilter<"StockUbicacion"> | Date | string
+  }
+
   export type AlmacenUpsertWithoutProductosInput = {
     update: XOR<AlmacenUpdateWithoutProductosInput, AlmacenUncheckedUpdateWithoutProductosInput>
     create: XOR<AlmacenCreateWithoutProductosInput, AlmacenUncheckedCreateWithoutProductosInput>
@@ -144226,6 +146123,178 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"VentaItem"> | Date | string
   }
 
+  export type ProductoCreateWithoutStockUbicacionesInput = {
+    nombre: string
+    descripcion?: string | null
+    precioCosto: number
+    precioVenta: number
+    stock: number
+    createdAt?: Date | string
+    id?: string
+    updatedAt?: Date | string
+    stockMinimo?: number
+    fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
+    compras?: CompraProductoCreateNestedManyWithoutProductoInput
+    gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
+    mermas?: MermaCreateNestedManyWithoutProductoInput
+    ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
+    ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
+    precios?: PrecioProductoCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
+    almacen: AlmacenCreateNestedOneWithoutProductosInput
+    categoria: CategoriaCreateNestedOneWithoutProductosInput
+    puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
+    subcategoria?: CategoriaCreateNestedOneWithoutProductosSubcategoriaInput
+    unidad?: UnidadCreateNestedOneWithoutProductosInput
+    vendor?: VendorCreateNestedOneWithoutProductosInput
+    Receta?: RecetaCreateNestedManyWithoutProductoInput
+    RecetaIngrediente?: RecetaIngredienteCreateNestedManyWithoutProductoInput
+    transferencias?: TransferenciaCreateNestedManyWithoutProductoInput
+    ValeSalidaItem?: ValeSalidaItemCreateNestedManyWithoutProductoInput
+    ventas?: VentaCreateNestedManyWithoutProductoInput
+    ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+  }
+
+  export type ProductoUncheckedCreateWithoutStockUbicacionesInput = {
+    nombre: string
+    descripcion?: string | null
+    precioCosto: number
+    precioVenta: number
+    stock: number
+    categoriaId: string
+    unidadId?: string | null
+    vendorId?: string | null
+    createdAt?: Date | string
+    id?: string
+    updatedAt?: Date | string
+    almacenId: string
+    puntoDeVentaId?: string | null
+    stockMinimo?: number
+    subcategoriaId?: string | null
+    fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
+    compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
+    gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
+    mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
+    ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
+    ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
+    precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
+    costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
+    Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
+    RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
+    transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
+    ValeSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
+    ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
+    ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+  }
+
+  export type ProductoCreateOrConnectWithoutStockUbicacionesInput = {
+    where: ProductoWhereUniqueInput
+    create: XOR<ProductoCreateWithoutStockUbicacionesInput, ProductoUncheckedCreateWithoutStockUbicacionesInput>
+  }
+
+  export type ProductoUpsertWithoutStockUbicacionesInput = {
+    update: XOR<ProductoUpdateWithoutStockUbicacionesInput, ProductoUncheckedUpdateWithoutStockUbicacionesInput>
+    create: XOR<ProductoCreateWithoutStockUbicacionesInput, ProductoUncheckedCreateWithoutStockUbicacionesInput>
+    where?: ProductoWhereInput
+  }
+
+  export type ProductoUpdateToOneWithWhereWithoutStockUbicacionesInput = {
+    where?: ProductoWhereInput
+    data: XOR<ProductoUpdateWithoutStockUbicacionesInput, ProductoUncheckedUpdateWithoutStockUbicacionesInput>
+  }
+
+  export type ProductoUpdateWithoutStockUbicacionesInput = {
+    nombre?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    precioCosto?: IntFieldUpdateOperationsInput | number
+    precioVenta?: IntFieldUpdateOperationsInput | number
+    stock?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    id?: StringFieldUpdateOperationsInput | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    stockMinimo?: IntFieldUpdateOperationsInput | number
+    fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    compras?: CompraProductoUpdateManyWithoutProductoNestedInput
+    gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
+    mermas?: MermaUpdateManyWithoutProductoNestedInput
+    ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
+    ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
+    precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
+    almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
+    categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
+    puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
+    subcategoria?: CategoriaUpdateOneWithoutProductosSubcategoriaNestedInput
+    unidad?: UnidadUpdateOneWithoutProductosNestedInput
+    vendor?: VendorUpdateOneWithoutProductosNestedInput
+    Receta?: RecetaUpdateManyWithoutProductoNestedInput
+    RecetaIngrediente?: RecetaIngredienteUpdateManyWithoutProductoNestedInput
+    transferencias?: TransferenciaUpdateManyWithoutProductoNestedInput
+    ValeSalidaItem?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
+    ventas?: VentaUpdateManyWithoutProductoNestedInput
+    ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+  }
+
+  export type ProductoUncheckedUpdateWithoutStockUbicacionesInput = {
+    nombre?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    precioCosto?: IntFieldUpdateOperationsInput | number
+    precioVenta?: IntFieldUpdateOperationsInput | number
+    stock?: IntFieldUpdateOperationsInput | number
+    categoriaId?: StringFieldUpdateOperationsInput | string
+    unidadId?: NullableStringFieldUpdateOperationsInput | string | null
+    vendorId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    id?: StringFieldUpdateOperationsInput | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    almacenId?: StringFieldUpdateOperationsInput | string
+    puntoDeVentaId?: NullableStringFieldUpdateOperationsInput | string | null
+    stockMinimo?: IntFieldUpdateOperationsInput | number
+    subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
+    fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
+    gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
+    mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
+    ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
+    ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
+    precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
+    costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
+    Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
+    RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
+    transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
+    ValeSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
+    ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
+    ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+  }
+
   export type OrdenReparacionCreateWithoutVentaInput = {
     id?: string
     numeroOrden?: number
@@ -144487,6 +146556,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -144500,6 +146570,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
@@ -144530,6 +146601,7 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -144543,6 +146615,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
@@ -144961,6 +147034,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -144974,6 +147048,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
@@ -145004,6 +147079,7 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -145017,6 +147093,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
@@ -145153,6 +147230,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -145166,6 +147244,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
@@ -145196,6 +147275,7 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -145209,6 +147289,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
@@ -145290,6 +147371,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -145303,6 +147385,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
@@ -145333,6 +147416,7 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -145346,6 +147430,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
@@ -145417,6 +147502,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -145429,6 +147515,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
@@ -145460,6 +147547,7 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -145472,6 +147560,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
@@ -145507,6 +147596,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -145519,6 +147609,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
@@ -145550,6 +147641,7 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -145562,6 +147654,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
@@ -145627,6 +147720,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -145640,6 +147734,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
@@ -145670,6 +147765,7 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -145683,6 +147779,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     ValeSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
@@ -145833,6 +147930,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -145846,6 +147944,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
@@ -145876,6 +147975,7 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -145889,6 +147989,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     ValeSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
@@ -146374,6 +148475,56 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type CompraProductoCreateWithoutCreatedByInput = {
+    compraProductoId?: string
+    numeroFactura: string
+    facturaUrl: string
+    cantidad: number
+    precioUnitario: number
+    total: number
+    descripcion?: string | null
+    fechaCompra?: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    formaPago: string
+    estado: string
+    tipoOperacion?: string
+    cuentaPorPagar?: CuentaPorPagarCreateNestedOneWithoutCompraProductoInput
+    gastoCompra?: GastoCompraCreateNestedOneWithoutCompraProductoInput
+    producto: ProductoCreateNestedOneWithoutComprasInput
+    proveedor: VendorCreateNestedOneWithoutComprasInput
+  }
+
+  export type CompraProductoUncheckedCreateWithoutCreatedByInput = {
+    compraProductoId?: string
+    productoId: string
+    numeroFactura: string
+    facturaUrl: string
+    cantidad: number
+    precioUnitario: number
+    total: number
+    descripcion?: string | null
+    fechaCompra?: Date | string
+    gastoCompraId?: string | null
+    cuentaPorPagarId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    proveedorId: string
+    formaPago: string
+    estado: string
+    tipoOperacion?: string
+  }
+
+  export type CompraProductoCreateOrConnectWithoutCreatedByInput = {
+    where: CompraProductoWhereUniqueInput
+    create: XOR<CompraProductoCreateWithoutCreatedByInput, CompraProductoUncheckedCreateWithoutCreatedByInput>
+  }
+
+  export type CompraProductoCreateManyCreatedByInputEnvelope = {
+    data: CompraProductoCreateManyCreatedByInput | CompraProductoCreateManyCreatedByInput[]
+    skipDuplicates?: boolean
+  }
+
   export type ContratoUpsertWithWhereUniqueWithoutAprobadorInput = {
     where: ContratoWhereUniqueInput
     update: XOR<ContratoUpdateWithoutAprobadorInput, ContratoUncheckedUpdateWithoutAprobadorInput>
@@ -146681,6 +148832,22 @@ export namespace Prisma {
     lastActive?: DateTimeFilter<"UserSession"> | Date | string
   }
 
+  export type CompraProductoUpsertWithWhereUniqueWithoutCreatedByInput = {
+    where: CompraProductoWhereUniqueInput
+    update: XOR<CompraProductoUpdateWithoutCreatedByInput, CompraProductoUncheckedUpdateWithoutCreatedByInput>
+    create: XOR<CompraProductoCreateWithoutCreatedByInput, CompraProductoUncheckedCreateWithoutCreatedByInput>
+  }
+
+  export type CompraProductoUpdateWithWhereUniqueWithoutCreatedByInput = {
+    where: CompraProductoWhereUniqueInput
+    data: XOR<CompraProductoUpdateWithoutCreatedByInput, CompraProductoUncheckedUpdateWithoutCreatedByInput>
+  }
+
+  export type CompraProductoUpdateManyWithWhereWithoutCreatedByInput = {
+    where: CompraProductoScalarWhereInput
+    data: XOR<CompraProductoUpdateManyMutationInput, CompraProductoUncheckedUpdateManyWithoutCreatedByInput>
+  }
+
   export type LicenciaCreateWithoutPlanInput = {
     licenciaId?: string
     clave: string
@@ -146788,6 +148955,7 @@ export namespace Prisma {
     notifications?: NotificationCreateNestedManyWithoutUserInput
     activityLogs?: UserActivityLogCreateNestedManyWithoutUserInput
     sessions?: UserSessionCreateNestedManyWithoutUserInput
+    comprasProductoCreadas?: CompraProductoCreateNestedManyWithoutCreatedByInput
   }
 
   export type UserUncheckedCreateWithoutLicenciasInput = {
@@ -146816,6 +148984,7 @@ export namespace Prisma {
     notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
     activityLogs?: UserActivityLogUncheckedCreateNestedManyWithoutUserInput
     sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
+    comprasProductoCreadas?: CompraProductoUncheckedCreateNestedManyWithoutCreatedByInput
   }
 
   export type UserCreateOrConnectWithoutLicenciasInput = {
@@ -146927,6 +149096,7 @@ export namespace Prisma {
     notifications?: NotificationUpdateManyWithoutUserNestedInput
     activityLogs?: UserActivityLogUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUpdateManyWithoutUserNestedInput
+    comprasProductoCreadas?: CompraProductoUpdateManyWithoutCreatedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutLicenciasInput = {
@@ -146955,6 +149125,7 @@ export namespace Prisma {
     notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
     activityLogs?: UserActivityLogUncheckedUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
+    comprasProductoCreadas?: CompraProductoUncheckedUpdateManyWithoutCreatedByNestedInput
   }
 
   export type LicenciaAuditUpsertWithWhereUniqueWithoutLicenciaInput = {
@@ -147028,6 +149199,7 @@ export namespace Prisma {
     notifications?: NotificationCreateNestedManyWithoutUserInput
     activityLogs?: UserActivityLogCreateNestedManyWithoutUserInput
     sessions?: UserSessionCreateNestedManyWithoutUserInput
+    comprasProductoCreadas?: CompraProductoCreateNestedManyWithoutCreatedByInput
   }
 
   export type UserUncheckedCreateWithoutLicenciasAuditInput = {
@@ -147056,6 +149228,7 @@ export namespace Prisma {
     notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
     activityLogs?: UserActivityLogUncheckedCreateNestedManyWithoutUserInput
     sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
+    comprasProductoCreadas?: CompraProductoUncheckedCreateNestedManyWithoutCreatedByInput
   }
 
   export type UserCreateOrConnectWithoutLicenciasAuditInput = {
@@ -147135,6 +149308,7 @@ export namespace Prisma {
     notifications?: NotificationUpdateManyWithoutUserNestedInput
     activityLogs?: UserActivityLogUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUpdateManyWithoutUserNestedInput
+    comprasProductoCreadas?: CompraProductoUpdateManyWithoutCreatedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutLicenciasAuditInput = {
@@ -147163,6 +149337,7 @@ export namespace Prisma {
     notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
     activityLogs?: UserActivityLogUncheckedUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
+    comprasProductoCreadas?: CompraProductoUncheckedUpdateManyWithoutCreatedByNestedInput
   }
 
   export type UserCreateWithoutNotificationsInput = {
@@ -147191,6 +149366,7 @@ export namespace Prisma {
     licenciasAudit?: LicenciaAuditCreateNestedManyWithoutActorInput
     activityLogs?: UserActivityLogCreateNestedManyWithoutUserInput
     sessions?: UserSessionCreateNestedManyWithoutUserInput
+    comprasProductoCreadas?: CompraProductoCreateNestedManyWithoutCreatedByInput
   }
 
   export type UserUncheckedCreateWithoutNotificationsInput = {
@@ -147219,6 +149395,7 @@ export namespace Prisma {
     licenciasAudit?: LicenciaAuditUncheckedCreateNestedManyWithoutActorInput
     activityLogs?: UserActivityLogUncheckedCreateNestedManyWithoutUserInput
     sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
+    comprasProductoCreadas?: CompraProductoUncheckedCreateNestedManyWithoutCreatedByInput
   }
 
   export type UserCreateOrConnectWithoutNotificationsInput = {
@@ -147263,6 +149440,7 @@ export namespace Prisma {
     licenciasAudit?: LicenciaAuditUpdateManyWithoutActorNestedInput
     activityLogs?: UserActivityLogUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUpdateManyWithoutUserNestedInput
+    comprasProductoCreadas?: CompraProductoUpdateManyWithoutCreatedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutNotificationsInput = {
@@ -147291,6 +149469,7 @@ export namespace Prisma {
     licenciasAudit?: LicenciaAuditUncheckedUpdateManyWithoutActorNestedInput
     activityLogs?: UserActivityLogUncheckedUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
+    comprasProductoCreadas?: CompraProductoUncheckedUpdateManyWithoutCreatedByNestedInput
   }
 
   export type UserCreateWithoutActivityLogsInput = {
@@ -147319,6 +149498,7 @@ export namespace Prisma {
     licenciasAudit?: LicenciaAuditCreateNestedManyWithoutActorInput
     notifications?: NotificationCreateNestedManyWithoutUserInput
     sessions?: UserSessionCreateNestedManyWithoutUserInput
+    comprasProductoCreadas?: CompraProductoCreateNestedManyWithoutCreatedByInput
   }
 
   export type UserUncheckedCreateWithoutActivityLogsInput = {
@@ -147347,6 +149527,7 @@ export namespace Prisma {
     licenciasAudit?: LicenciaAuditUncheckedCreateNestedManyWithoutActorInput
     notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
     sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
+    comprasProductoCreadas?: CompraProductoUncheckedCreateNestedManyWithoutCreatedByInput
   }
 
   export type UserCreateOrConnectWithoutActivityLogsInput = {
@@ -147391,6 +149572,7 @@ export namespace Prisma {
     licenciasAudit?: LicenciaAuditUpdateManyWithoutActorNestedInput
     notifications?: NotificationUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUpdateManyWithoutUserNestedInput
+    comprasProductoCreadas?: CompraProductoUpdateManyWithoutCreatedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutActivityLogsInput = {
@@ -147419,6 +149601,7 @@ export namespace Prisma {
     licenciasAudit?: LicenciaAuditUncheckedUpdateManyWithoutActorNestedInput
     notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
+    comprasProductoCreadas?: CompraProductoUncheckedUpdateManyWithoutCreatedByNestedInput
   }
 
   export type UserCreateWithoutSessionsInput = {
@@ -147447,6 +149630,7 @@ export namespace Prisma {
     licenciasAudit?: LicenciaAuditCreateNestedManyWithoutActorInput
     notifications?: NotificationCreateNestedManyWithoutUserInput
     activityLogs?: UserActivityLogCreateNestedManyWithoutUserInput
+    comprasProductoCreadas?: CompraProductoCreateNestedManyWithoutCreatedByInput
   }
 
   export type UserUncheckedCreateWithoutSessionsInput = {
@@ -147475,6 +149659,7 @@ export namespace Prisma {
     licenciasAudit?: LicenciaAuditUncheckedCreateNestedManyWithoutActorInput
     notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
     activityLogs?: UserActivityLogUncheckedCreateNestedManyWithoutUserInput
+    comprasProductoCreadas?: CompraProductoUncheckedCreateNestedManyWithoutCreatedByInput
   }
 
   export type UserCreateOrConnectWithoutSessionsInput = {
@@ -147519,6 +149704,7 @@ export namespace Prisma {
     licenciasAudit?: LicenciaAuditUpdateManyWithoutActorNestedInput
     notifications?: NotificationUpdateManyWithoutUserNestedInput
     activityLogs?: UserActivityLogUpdateManyWithoutUserNestedInput
+    comprasProductoCreadas?: CompraProductoUpdateManyWithoutCreatedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutSessionsInput = {
@@ -147547,6 +149733,7 @@ export namespace Prisma {
     licenciasAudit?: LicenciaAuditUncheckedUpdateManyWithoutActorNestedInput
     notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
     activityLogs?: UserActivityLogUncheckedUpdateManyWithoutUserNestedInput
+    comprasProductoCreadas?: CompraProductoUncheckedUpdateManyWithoutCreatedByNestedInput
   }
 
   export type EmpleadoCreateWithoutAttendancesInput = {
@@ -148711,6 +150898,7 @@ export namespace Prisma {
     cuentaPorPagar?: CuentaPorPagarCreateNestedOneWithoutCompraProductoInput
     producto: ProductoCreateNestedOneWithoutComprasInput
     proveedor: VendorCreateNestedOneWithoutComprasInput
+    createdBy?: UserCreateNestedOneWithoutComprasProductoCreadasInput
   }
 
   export type CompraProductoUncheckedCreateWithoutGastoCompraInput = {
@@ -148724,6 +150912,7 @@ export namespace Prisma {
     descripcion?: string | null
     fechaCompra?: Date | string
     cuentaPorPagarId?: string | null
+    createdById?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     proveedorId: string
@@ -148797,6 +150986,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -148809,6 +150999,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
@@ -148840,6 +151031,7 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -148852,6 +151044,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
@@ -148996,6 +151189,7 @@ export namespace Prisma {
     cuentaPorPagar?: CuentaPorPagarUpdateOneWithoutCompraProductoNestedInput
     producto?: ProductoUpdateOneRequiredWithoutComprasNestedInput
     proveedor?: VendorUpdateOneRequiredWithoutComprasNestedInput
+    createdBy?: UserUpdateOneWithoutComprasProductoCreadasNestedInput
   }
 
   export type CompraProductoUncheckedUpdateWithoutGastoCompraInput = {
@@ -149009,6 +151203,7 @@ export namespace Prisma {
     descripcion?: NullableStringFieldUpdateOperationsInput | string | null
     fechaCompra?: DateTimeFieldUpdateOperationsInput | Date | string
     cuentaPorPagarId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     proveedorId?: StringFieldUpdateOperationsInput | string
@@ -149094,6 +151289,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -149106,6 +151302,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
@@ -149137,6 +151334,7 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -149149,6 +151347,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
@@ -149323,6 +151522,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -149335,6 +151535,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
@@ -149366,6 +151567,7 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -149378,6 +151580,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
@@ -149434,6 +151637,69 @@ export namespace Prisma {
   export type VendorCreateOrConnectWithoutComprasInput = {
     where: VendorWhereUniqueInput
     create: XOR<VendorCreateWithoutComprasInput, VendorUncheckedCreateWithoutComprasInput>
+  }
+
+  export type UserCreateWithoutComprasProductoCreadasInput = {
+    userId?: string
+    name: string
+    email: string
+    password: string
+    role?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    activatedAt?: Date | string | null
+    avatar?: string | null
+    expiresAt?: Date | string | null
+    isActive?: boolean
+    lastFailedLogin?: Date | string | null
+    lastModifiedBy?: string | null
+    lockedUntil?: Date | string | null
+    loginAttempts?: number
+    contratosAprobados?: ContratoCreateNestedManyWithoutAprobadorInput
+    contratosCreados?: ContratoCreateNestedManyWithoutCreadorInput
+    contratoAprobaciones?: ContratoAprobacionCreateNestedManyWithoutAprobadorInput
+    contratoArchivos?: ContratoArchivoCreateNestedManyWithoutGeneradorInput
+    contratoFirmas?: ContratoFirmaCreateNestedManyWithoutFirmanteInput
+    contratoVersiones?: ContratoVersionCreateNestedManyWithoutCreadorInput
+    licencias?: LicenciaCreateNestedManyWithoutUsuarioInput
+    licenciasAudit?: LicenciaAuditCreateNestedManyWithoutActorInput
+    notifications?: NotificationCreateNestedManyWithoutUserInput
+    activityLogs?: UserActivityLogCreateNestedManyWithoutUserInput
+    sessions?: UserSessionCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutComprasProductoCreadasInput = {
+    userId?: string
+    name: string
+    email: string
+    password: string
+    role?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    activatedAt?: Date | string | null
+    avatar?: string | null
+    expiresAt?: Date | string | null
+    isActive?: boolean
+    lastFailedLogin?: Date | string | null
+    lastModifiedBy?: string | null
+    lockedUntil?: Date | string | null
+    loginAttempts?: number
+    contratosAprobados?: ContratoUncheckedCreateNestedManyWithoutAprobadorInput
+    contratosCreados?: ContratoUncheckedCreateNestedManyWithoutCreadorInput
+    contratoAprobaciones?: ContratoAprobacionUncheckedCreateNestedManyWithoutAprobadorInput
+    contratoArchivos?: ContratoArchivoUncheckedCreateNestedManyWithoutGeneradorInput
+    contratoFirmas?: ContratoFirmaUncheckedCreateNestedManyWithoutFirmanteInput
+    contratoVersiones?: ContratoVersionUncheckedCreateNestedManyWithoutCreadorInput
+    licencias?: LicenciaUncheckedCreateNestedManyWithoutUsuarioInput
+    licenciasAudit?: LicenciaAuditUncheckedCreateNestedManyWithoutActorInput
+    notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
+    activityLogs?: UserActivityLogUncheckedCreateNestedManyWithoutUserInput
+    sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutComprasProductoCreadasInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutComprasProductoCreadasInput, UserUncheckedCreateWithoutComprasProductoCreadasInput>
   }
 
   export type CuentaPorPagarUpsertWithoutCompraProductoInput = {
@@ -149558,6 +151824,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -149570,6 +151837,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
@@ -149601,6 +151869,7 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -149613,6 +151882,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
@@ -149670,6 +151940,75 @@ export namespace Prisma {
     deudasCash?: DeudaCashUncheckedUpdateManyWithoutProveedorNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutVendorNestedInput
     productos?: ProductoUncheckedUpdateManyWithoutVendorNestedInput
+  }
+
+  export type UserUpsertWithoutComprasProductoCreadasInput = {
+    update: XOR<UserUpdateWithoutComprasProductoCreadasInput, UserUncheckedUpdateWithoutComprasProductoCreadasInput>
+    create: XOR<UserCreateWithoutComprasProductoCreadasInput, UserUncheckedCreateWithoutComprasProductoCreadasInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutComprasProductoCreadasInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutComprasProductoCreadasInput, UserUncheckedUpdateWithoutComprasProductoCreadasInput>
+  }
+
+  export type UserUpdateWithoutComprasProductoCreadasInput = {
+    userId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    avatar?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    lastFailedLogin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastModifiedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    lockedUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    loginAttempts?: IntFieldUpdateOperationsInput | number
+    contratosAprobados?: ContratoUpdateManyWithoutAprobadorNestedInput
+    contratosCreados?: ContratoUpdateManyWithoutCreadorNestedInput
+    contratoAprobaciones?: ContratoAprobacionUpdateManyWithoutAprobadorNestedInput
+    contratoArchivos?: ContratoArchivoUpdateManyWithoutGeneradorNestedInput
+    contratoFirmas?: ContratoFirmaUpdateManyWithoutFirmanteNestedInput
+    contratoVersiones?: ContratoVersionUpdateManyWithoutCreadorNestedInput
+    licencias?: LicenciaUpdateManyWithoutUsuarioNestedInput
+    licenciasAudit?: LicenciaAuditUpdateManyWithoutActorNestedInput
+    notifications?: NotificationUpdateManyWithoutUserNestedInput
+    activityLogs?: UserActivityLogUpdateManyWithoutUserNestedInput
+    sessions?: UserSessionUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutComprasProductoCreadasInput = {
+    userId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    avatar?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    lastFailedLogin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastModifiedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    lockedUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    loginAttempts?: IntFieldUpdateOperationsInput | number
+    contratosAprobados?: ContratoUncheckedUpdateManyWithoutAprobadorNestedInput
+    contratosCreados?: ContratoUncheckedUpdateManyWithoutCreadorNestedInput
+    contratoAprobaciones?: ContratoAprobacionUncheckedUpdateManyWithoutAprobadorNestedInput
+    contratoArchivos?: ContratoArchivoUncheckedUpdateManyWithoutGeneradorNestedInput
+    contratoFirmas?: ContratoFirmaUncheckedUpdateManyWithoutFirmanteNestedInput
+    contratoVersiones?: ContratoVersionUncheckedUpdateManyWithoutCreadorNestedInput
+    licencias?: LicenciaUncheckedUpdateManyWithoutUsuarioNestedInput
+    licenciasAudit?: LicenciaAuditUncheckedUpdateManyWithoutActorNestedInput
+    notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
+    activityLogs?: UserActivityLogUncheckedUpdateManyWithoutUserNestedInput
+    sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type OfertaItemCreateWithoutServicioInput = {
@@ -152952,6 +155291,7 @@ export namespace Prisma {
     notifications?: NotificationCreateNestedManyWithoutUserInput
     activityLogs?: UserActivityLogCreateNestedManyWithoutUserInput
     sessions?: UserSessionCreateNestedManyWithoutUserInput
+    comprasProductoCreadas?: CompraProductoCreateNestedManyWithoutCreatedByInput
   }
 
   export type UserUncheckedCreateWithoutContratosAprobadosInput = {
@@ -152980,6 +155320,7 @@ export namespace Prisma {
     notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
     activityLogs?: UserActivityLogUncheckedCreateNestedManyWithoutUserInput
     sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
+    comprasProductoCreadas?: CompraProductoUncheckedCreateNestedManyWithoutCreatedByInput
   }
 
   export type UserCreateOrConnectWithoutContratosAprobadosInput = {
@@ -153058,6 +155399,7 @@ export namespace Prisma {
     notifications?: NotificationCreateNestedManyWithoutUserInput
     activityLogs?: UserActivityLogCreateNestedManyWithoutUserInput
     sessions?: UserSessionCreateNestedManyWithoutUserInput
+    comprasProductoCreadas?: CompraProductoCreateNestedManyWithoutCreatedByInput
   }
 
   export type UserUncheckedCreateWithoutContratosCreadosInput = {
@@ -153086,6 +155428,7 @@ export namespace Prisma {
     notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
     activityLogs?: UserActivityLogUncheckedCreateNestedManyWithoutUserInput
     sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
+    comprasProductoCreadas?: CompraProductoUncheckedCreateNestedManyWithoutCreatedByInput
   }
 
   export type UserCreateOrConnectWithoutContratosCreadosInput = {
@@ -153331,6 +155674,7 @@ export namespace Prisma {
     notifications?: NotificationUpdateManyWithoutUserNestedInput
     activityLogs?: UserActivityLogUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUpdateManyWithoutUserNestedInput
+    comprasProductoCreadas?: CompraProductoUpdateManyWithoutCreatedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutContratosAprobadosInput = {
@@ -153359,6 +155703,7 @@ export namespace Prisma {
     notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
     activityLogs?: UserActivityLogUncheckedUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
+    comprasProductoCreadas?: CompraProductoUncheckedUpdateManyWithoutCreatedByNestedInput
   }
 
   export type ClienteUpsertWithoutContratosInput = {
@@ -153449,6 +155794,7 @@ export namespace Prisma {
     notifications?: NotificationUpdateManyWithoutUserNestedInput
     activityLogs?: UserActivityLogUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUpdateManyWithoutUserNestedInput
+    comprasProductoCreadas?: CompraProductoUpdateManyWithoutCreatedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutContratosCreadosInput = {
@@ -153477,6 +155823,7 @@ export namespace Prisma {
     notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
     activityLogs?: UserActivityLogUncheckedUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
+    comprasProductoCreadas?: CompraProductoUncheckedUpdateManyWithoutCreatedByNestedInput
   }
 
   export type VendorUpsertWithoutContratosInput = {
@@ -153737,6 +156084,7 @@ export namespace Prisma {
     notifications?: NotificationCreateNestedManyWithoutUserInput
     activityLogs?: UserActivityLogCreateNestedManyWithoutUserInput
     sessions?: UserSessionCreateNestedManyWithoutUserInput
+    comprasProductoCreadas?: CompraProductoCreateNestedManyWithoutCreatedByInput
   }
 
   export type UserUncheckedCreateWithoutContratoVersionesInput = {
@@ -153765,6 +156113,7 @@ export namespace Prisma {
     notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
     activityLogs?: UserActivityLogUncheckedCreateNestedManyWithoutUserInput
     sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
+    comprasProductoCreadas?: CompraProductoUncheckedCreateNestedManyWithoutCreatedByInput
   }
 
   export type UserCreateOrConnectWithoutContratoVersionesInput = {
@@ -153888,6 +156237,7 @@ export namespace Prisma {
     notifications?: NotificationUpdateManyWithoutUserNestedInput
     activityLogs?: UserActivityLogUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUpdateManyWithoutUserNestedInput
+    comprasProductoCreadas?: CompraProductoUpdateManyWithoutCreatedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutContratoVersionesInput = {
@@ -153916,6 +156266,7 @@ export namespace Prisma {
     notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
     activityLogs?: UserActivityLogUncheckedUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
+    comprasProductoCreadas?: CompraProductoUncheckedUpdateManyWithoutCreatedByNestedInput
   }
 
   export type ContratoCreateWithoutFirmasInput = {
@@ -154001,6 +156352,7 @@ export namespace Prisma {
     notifications?: NotificationCreateNestedManyWithoutUserInput
     activityLogs?: UserActivityLogCreateNestedManyWithoutUserInput
     sessions?: UserSessionCreateNestedManyWithoutUserInput
+    comprasProductoCreadas?: CompraProductoCreateNestedManyWithoutCreatedByInput
   }
 
   export type UserUncheckedCreateWithoutContratoFirmasInput = {
@@ -154029,6 +156381,7 @@ export namespace Prisma {
     notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
     activityLogs?: UserActivityLogUncheckedCreateNestedManyWithoutUserInput
     sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
+    comprasProductoCreadas?: CompraProductoUncheckedCreateNestedManyWithoutCreatedByInput
   }
 
   export type UserCreateOrConnectWithoutContratoFirmasInput = {
@@ -154136,6 +156489,7 @@ export namespace Prisma {
     notifications?: NotificationUpdateManyWithoutUserNestedInput
     activityLogs?: UserActivityLogUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUpdateManyWithoutUserNestedInput
+    comprasProductoCreadas?: CompraProductoUpdateManyWithoutCreatedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutContratoFirmasInput = {
@@ -154164,6 +156518,7 @@ export namespace Prisma {
     notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
     activityLogs?: UserActivityLogUncheckedUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
+    comprasProductoCreadas?: CompraProductoUncheckedUpdateManyWithoutCreatedByNestedInput
   }
 
   export type UserCreateWithoutContratoAprobacionesInput = {
@@ -154192,6 +156547,7 @@ export namespace Prisma {
     notifications?: NotificationCreateNestedManyWithoutUserInput
     activityLogs?: UserActivityLogCreateNestedManyWithoutUserInput
     sessions?: UserSessionCreateNestedManyWithoutUserInput
+    comprasProductoCreadas?: CompraProductoCreateNestedManyWithoutCreatedByInput
   }
 
   export type UserUncheckedCreateWithoutContratoAprobacionesInput = {
@@ -154220,6 +156576,7 @@ export namespace Prisma {
     notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
     activityLogs?: UserActivityLogUncheckedCreateNestedManyWithoutUserInput
     sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
+    comprasProductoCreadas?: CompraProductoUncheckedCreateNestedManyWithoutCreatedByInput
   }
 
   export type UserCreateOrConnectWithoutContratoAprobacionesInput = {
@@ -154321,6 +156678,7 @@ export namespace Prisma {
     notifications?: NotificationUpdateManyWithoutUserNestedInput
     activityLogs?: UserActivityLogUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUpdateManyWithoutUserNestedInput
+    comprasProductoCreadas?: CompraProductoUpdateManyWithoutCreatedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutContratoAprobacionesInput = {
@@ -154349,6 +156707,7 @@ export namespace Prisma {
     notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
     activityLogs?: UserActivityLogUncheckedUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
+    comprasProductoCreadas?: CompraProductoUncheckedUpdateManyWithoutCreatedByNestedInput
   }
 
   export type ContratoUpsertWithoutAprobacionesInput = {
@@ -154497,6 +156856,7 @@ export namespace Prisma {
     notifications?: NotificationCreateNestedManyWithoutUserInput
     activityLogs?: UserActivityLogCreateNestedManyWithoutUserInput
     sessions?: UserSessionCreateNestedManyWithoutUserInput
+    comprasProductoCreadas?: CompraProductoCreateNestedManyWithoutCreatedByInput
   }
 
   export type UserUncheckedCreateWithoutContratoArchivosInput = {
@@ -154525,6 +156885,7 @@ export namespace Prisma {
     notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
     activityLogs?: UserActivityLogUncheckedCreateNestedManyWithoutUserInput
     sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
+    comprasProductoCreadas?: CompraProductoUncheckedCreateNestedManyWithoutCreatedByInput
   }
 
   export type UserCreateOrConnectWithoutContratoArchivosInput = {
@@ -154657,6 +157018,7 @@ export namespace Prisma {
     notifications?: NotificationUpdateManyWithoutUserNestedInput
     activityLogs?: UserActivityLogUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUpdateManyWithoutUserNestedInput
+    comprasProductoCreadas?: CompraProductoUpdateManyWithoutCreatedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutContratoArchivosInput = {
@@ -154685,6 +157047,7 @@ export namespace Prisma {
     notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
     activityLogs?: UserActivityLogUncheckedUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
+    comprasProductoCreadas?: CompraProductoUncheckedUpdateManyWithoutCreatedByNestedInput
   }
 
   export type ContratoVersionUpsertWithoutArchivosInput = {
@@ -155640,6 +158003,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -155652,6 +158016,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
@@ -155683,6 +158048,7 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -155695,6 +158061,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
@@ -155798,6 +158165,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -155810,6 +158178,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
@@ -155841,6 +158210,7 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -155853,6 +158223,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
@@ -156133,6 +158504,7 @@ export namespace Prisma {
     gastoCompra?: GastoCompraCreateNestedOneWithoutCompraProductoInput
     producto: ProductoCreateNestedOneWithoutComprasInput
     proveedor: VendorCreateNestedOneWithoutComprasInput
+    createdBy?: UserCreateNestedOneWithoutComprasProductoCreadasInput
   }
 
   export type CompraProductoUncheckedCreateWithoutCuentaPorPagarInput = {
@@ -156146,6 +158518,7 @@ export namespace Prisma {
     descripcion?: string | null
     fechaCompra?: Date | string
     gastoCompraId?: string | null
+    createdById?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     proveedorId: string
@@ -156394,6 +158767,7 @@ export namespace Prisma {
     gastoCompra?: GastoCompraUpdateOneWithoutCompraProductoNestedInput
     producto?: ProductoUpdateOneRequiredWithoutComprasNestedInput
     proveedor?: VendorUpdateOneRequiredWithoutComprasNestedInput
+    createdBy?: UserUpdateOneWithoutComprasProductoCreadasNestedInput
   }
 
   export type CompraProductoUncheckedUpdateWithoutCuentaPorPagarInput = {
@@ -156407,6 +158781,7 @@ export namespace Prisma {
     descripcion?: NullableStringFieldUpdateOperationsInput | string | null
     fechaCompra?: DateTimeFieldUpdateOperationsInput | Date | string
     gastoCompraId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     proveedorId?: StringFieldUpdateOperationsInput | string
@@ -158528,6 +160903,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -158540,6 +160916,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
@@ -158571,6 +160948,7 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -158583,6 +160961,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
@@ -158693,6 +161072,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -158705,6 +161085,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
@@ -158736,6 +161117,7 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -158748,6 +161130,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
@@ -159038,6 +161421,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -159051,6 +161435,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
@@ -159081,6 +161466,7 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -159094,6 +161480,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
     ValeSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
@@ -159189,6 +161576,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -159202,6 +161590,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
@@ -159232,6 +161621,7 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -159245,6 +161635,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
     ValeSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
@@ -159279,6 +161670,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -159292,6 +161684,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
@@ -159322,6 +161715,7 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -159335,6 +161729,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
     ValeSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
@@ -159400,6 +161795,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -159413,6 +161809,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
@@ -159443,6 +161840,7 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -159456,6 +161854,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
     ValeSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
@@ -159551,6 +161950,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -159564,6 +161964,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
@@ -159594,6 +161995,7 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -159607,6 +162009,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
@@ -159664,6 +162067,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -159677,6 +162081,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
@@ -159707,6 +162112,7 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -159720,6 +162126,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
@@ -159896,6 +162303,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -159908,6 +162316,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
@@ -159939,6 +162348,7 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -159951,6 +162361,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
@@ -160017,6 +162428,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -160029,6 +162441,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
@@ -160060,6 +162473,7 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -160072,6 +162486,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
@@ -160091,6 +162506,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -160103,6 +162519,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
     almacen: AlmacenCreateNestedOneWithoutProductosInput
     categoria: CategoriaCreateNestedOneWithoutProductosInput
     puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
@@ -160134,6 +162551,7 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -160146,6 +162564,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
     precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
     Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
     RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
@@ -160181,6 +162600,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -160193,6 +162613,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
@@ -160224,6 +162645,7 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -160236,6 +162658,7 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
@@ -160268,6 +162691,7 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -160292,6 +162716,7 @@ export namespace Prisma {
     puntoDeVentaId?: string | null
     stockMinimo?: number
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -160341,6 +162766,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -160354,6 +162780,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
     subcategoria?: CategoriaUpdateOneWithoutProductosSubcategoriaNestedInput
@@ -160383,6 +162810,7 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -160396,6 +162824,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
@@ -160420,6 +162849,7 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -160439,6 +162869,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -160452,6 +162883,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
@@ -160481,6 +162913,7 @@ export namespace Prisma {
     puntoDeVentaId?: NullableStringFieldUpdateOperationsInput | string | null
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -160494,6 +162927,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
@@ -160518,6 +162952,7 @@ export namespace Prisma {
     puntoDeVentaId?: NullableStringFieldUpdateOperationsInput | string | null
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -160542,6 +162977,7 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -160561,6 +162997,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -160574,6 +163011,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
@@ -160603,6 +163041,7 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -160616,6 +163055,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
@@ -160640,6 +163080,7 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -160660,6 +163101,7 @@ export namespace Prisma {
     fechaCompra?: Date | string
     gastoCompraId?: string | null
     cuentaPorPagarId?: string | null
+    createdById?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     formaPago: string
@@ -160755,6 +163197,7 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -160780,6 +163223,7 @@ export namespace Prisma {
     cuentaPorPagar?: CuentaPorPagarUpdateOneWithoutCompraProductoNestedInput
     gastoCompra?: GastoCompraUpdateOneWithoutCompraProductoNestedInput
     producto?: ProductoUpdateOneRequiredWithoutComprasNestedInput
+    createdBy?: UserUpdateOneWithoutComprasProductoCreadasNestedInput
   }
 
   export type CompraProductoUncheckedUpdateWithoutProveedorInput = {
@@ -160794,6 +163238,7 @@ export namespace Prisma {
     fechaCompra?: DateTimeFieldUpdateOperationsInput | Date | string
     gastoCompraId?: NullableStringFieldUpdateOperationsInput | string | null
     cuentaPorPagarId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     formaPago?: StringFieldUpdateOperationsInput | string
@@ -160813,6 +163258,7 @@ export namespace Prisma {
     fechaCompra?: DateTimeFieldUpdateOperationsInput | Date | string
     gastoCompraId?: NullableStringFieldUpdateOperationsInput | string | null
     cuentaPorPagarId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     formaPago?: StringFieldUpdateOperationsInput | string
@@ -161071,6 +163517,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -161084,6 +163531,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
@@ -161113,6 +163561,7 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -161126,6 +163575,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
@@ -161150,6 +163600,7 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -161868,6 +164319,7 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -161911,6 +164363,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -161924,6 +164377,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
     subcategoria?: CategoriaUpdateOneWithoutProductosSubcategoriaNestedInput
@@ -161953,6 +164407,7 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -161966,6 +164421,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
@@ -161990,6 +164446,7 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -162086,6 +164543,7 @@ export namespace Prisma {
     stockMinimo?: number
     subcategoriaId?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    codigoInterno?: string | null
     codigoNegocio?: string | null
     proveedorCodigo?: string | null
     idSeccionCodigo?: string | null
@@ -162146,6 +164604,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     stockMinimo?: IntFieldUpdateOperationsInput | number
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -162159,6 +164618,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
     almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
     categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
     subcategoria?: CategoriaUpdateOneWithoutProductosSubcategoriaNestedInput
@@ -162188,6 +164648,7 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -162201,6 +164662,7 @@ export namespace Prisma {
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
     precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
     costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
     Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
     RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
@@ -162225,6 +164687,7 @@ export namespace Prisma {
     stockMinimo?: IntFieldUpdateOperationsInput | number
     subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
     codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
     proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
@@ -162375,6 +164838,7 @@ export namespace Prisma {
     fechaCompra?: Date | string
     gastoCompraId?: string | null
     cuentaPorPagarId?: string | null
+    createdById?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     proveedorId: string
@@ -162442,6 +164906,18 @@ export namespace Prisma {
     changedAt: Date | string
     notes?: string | null
     createdAt?: Date | string
+  }
+
+  export type StockUbicacionCreateManyProductoInput = {
+    stockUbicacionId?: string
+    tipoUbicacion: string
+    ubicacionId: string
+    cantidad: number
+    cantidadReservada?: number
+    cantidadDisponible: number
+    ultimaActualizacion?: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type RecetaCreateManyProductoInput = {
@@ -162528,6 +165004,7 @@ export namespace Prisma {
     cuentaPorPagar?: CuentaPorPagarUpdateOneWithoutCompraProductoNestedInput
     gastoCompra?: GastoCompraUpdateOneWithoutCompraProductoNestedInput
     proveedor?: VendorUpdateOneRequiredWithoutComprasNestedInput
+    createdBy?: UserUpdateOneWithoutComprasProductoCreadasNestedInput
   }
 
   export type CompraProductoUncheckedUpdateWithoutProductoInput = {
@@ -162541,6 +165018,7 @@ export namespace Prisma {
     fechaCompra?: DateTimeFieldUpdateOperationsInput | Date | string
     gastoCompraId?: NullableStringFieldUpdateOperationsInput | string | null
     cuentaPorPagarId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     proveedorId?: StringFieldUpdateOperationsInput | string
@@ -162560,6 +165038,7 @@ export namespace Prisma {
     fechaCompra?: DateTimeFieldUpdateOperationsInput | Date | string
     gastoCompraId?: NullableStringFieldUpdateOperationsInput | string | null
     cuentaPorPagarId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdById?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     proveedorId?: StringFieldUpdateOperationsInput | string
@@ -162755,6 +165234,42 @@ export namespace Prisma {
     changedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     notes?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type StockUbicacionUpdateWithoutProductoInput = {
+    stockUbicacionId?: StringFieldUpdateOperationsInput | string
+    tipoUbicacion?: StringFieldUpdateOperationsInput | string
+    ubicacionId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    cantidadReservada?: IntFieldUpdateOperationsInput | number
+    cantidadDisponible?: IntFieldUpdateOperationsInput | number
+    ultimaActualizacion?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type StockUbicacionUncheckedUpdateWithoutProductoInput = {
+    stockUbicacionId?: StringFieldUpdateOperationsInput | string
+    tipoUbicacion?: StringFieldUpdateOperationsInput | string
+    ubicacionId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    cantidadReservada?: IntFieldUpdateOperationsInput | number
+    cantidadDisponible?: IntFieldUpdateOperationsInput | number
+    ultimaActualizacion?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type StockUbicacionUncheckedUpdateManyWithoutProductoInput = {
+    stockUbicacionId?: StringFieldUpdateOperationsInput | string
+    tipoUbicacion?: StringFieldUpdateOperationsInput | string
+    ubicacionId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    cantidadReservada?: IntFieldUpdateOperationsInput | number
+    cantidadDisponible?: IntFieldUpdateOperationsInput | number
+    ultimaActualizacion?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type RecetaUpdateWithoutProductoInput = {
@@ -163227,6 +165742,26 @@ export namespace Prisma {
     lastActive?: Date | string
   }
 
+  export type CompraProductoCreateManyCreatedByInput = {
+    compraProductoId?: string
+    productoId: string
+    numeroFactura: string
+    facturaUrl: string
+    cantidad: number
+    precioUnitario: number
+    total: number
+    descripcion?: string | null
+    fechaCompra?: Date | string
+    gastoCompraId?: string | null
+    cuentaPorPagarId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    proveedorId: string
+    formaPago: string
+    estado: string
+    tipoOperacion?: string
+  }
+
   export type ContratoUpdateWithoutAprobadorInput = {
     contratoId?: StringFieldUpdateOperationsInput | string
     numeroContrato?: StringFieldUpdateOperationsInput | string
@@ -163660,6 +166195,66 @@ export namespace Prisma {
     expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     lastActive?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CompraProductoUpdateWithoutCreatedByInput = {
+    compraProductoId?: StringFieldUpdateOperationsInput | string
+    numeroFactura?: StringFieldUpdateOperationsInput | string
+    facturaUrl?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    precioUnitario?: IntFieldUpdateOperationsInput | number
+    total?: IntFieldUpdateOperationsInput | number
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaCompra?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    formaPago?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    tipoOperacion?: StringFieldUpdateOperationsInput | string
+    cuentaPorPagar?: CuentaPorPagarUpdateOneWithoutCompraProductoNestedInput
+    gastoCompra?: GastoCompraUpdateOneWithoutCompraProductoNestedInput
+    producto?: ProductoUpdateOneRequiredWithoutComprasNestedInput
+    proveedor?: VendorUpdateOneRequiredWithoutComprasNestedInput
+  }
+
+  export type CompraProductoUncheckedUpdateWithoutCreatedByInput = {
+    compraProductoId?: StringFieldUpdateOperationsInput | string
+    productoId?: StringFieldUpdateOperationsInput | string
+    numeroFactura?: StringFieldUpdateOperationsInput | string
+    facturaUrl?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    precioUnitario?: IntFieldUpdateOperationsInput | number
+    total?: IntFieldUpdateOperationsInput | number
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaCompra?: DateTimeFieldUpdateOperationsInput | Date | string
+    gastoCompraId?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaPorPagarId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    proveedorId?: StringFieldUpdateOperationsInput | string
+    formaPago?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    tipoOperacion?: StringFieldUpdateOperationsInput | string
+  }
+
+  export type CompraProductoUncheckedUpdateManyWithoutCreatedByInput = {
+    compraProductoId?: StringFieldUpdateOperationsInput | string
+    productoId?: StringFieldUpdateOperationsInput | string
+    numeroFactura?: StringFieldUpdateOperationsInput | string
+    facturaUrl?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    precioUnitario?: IntFieldUpdateOperationsInput | number
+    total?: IntFieldUpdateOperationsInput | number
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaCompra?: DateTimeFieldUpdateOperationsInput | Date | string
+    gastoCompraId?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaPorPagarId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    proveedorId?: StringFieldUpdateOperationsInput | string
+    formaPago?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    tipoOperacion?: StringFieldUpdateOperationsInput | string
   }
 
   export type LicenciaCreateManyPlanInput = {

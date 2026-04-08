@@ -179,6 +179,7 @@ model Producto {
   ordenMateriales   OrdenReparacionMaterial[]
   precios           PrecioProducto[]
   costHistory       ProductoCostHistory[]
+  stockUbicaciones  StockUbicacion[]
   almacen           Almacen                   @relation(fields: [almacenId], references: [almacenId], onDelete: Cascade)
   categoria         Categoria                 @relation(fields: [categoriaId], references: [catId], onDelete: Cascade)
   puntoDeVenta      PuntoDeVenta?             @relation(fields: [puntoDeVentaId], references: [pvId], onDelete: Cascade)
@@ -191,12 +192,33 @@ model Producto {
   ValeSalidaItem    ValeSalidaItem[]
   ventas            Venta[]
   ventaItems        VentaItem[]
+  codigoInterno     String?                   @unique
   codigoNegocio     String?                   @unique
   proveedorCodigo   String?
   idSeccionCodigo   String?
   especificoCodigo  String?
   surtidoCodigo     String?
   dcCodigo          String?
+}
+
+model StockUbicacion {
+  stockUbicacionId    String   @id @default(cuid())
+  productoId          String
+  tipoUbicacion       String // 'almacen' or 'puntoDeVenta'
+  ubicacionId         String // almacenId or puntoDeVentaId
+  cantidad            Int // Total stock at this location
+  cantidadReservada   Int      @default(0) // Reserved for pending sales
+  cantidadDisponible  Int // cantidad - cantidadReservada
+  ultimaActualizacion DateTime @default(now()) @updatedAt
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  producto            Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
+
+  // Composite unique constraint: each product can have one entry per location type
+  @@unique([productoId, tipoUbicacion, ubicacionId])
+  @@index([productoId])
+  @@index([tipoUbicacion])
+  @@index([ubicacionId])
 }
 
 model Venta {
@@ -271,32 +293,33 @@ model Transferencia {
 }
 
 model User {
-  userId               String               @id @default(cuid())
-  name                 String
-  email                String               @unique
-  password             String
-  role                 String               @default("regularUser")
-  createdAt            DateTime             @default(now())
-  updatedAt            DateTime             @updatedAt
-  activatedAt          DateTime?
-  avatar               String?
-  expiresAt            DateTime?
-  isActive             Boolean              @default(true)
-  lastFailedLogin      DateTime?
-  lastModifiedBy       String?
-  lockedUntil          DateTime?
-  loginAttempts        Int                  @default(0)
-  contratosAprobados   Contrato[]           @relation("AprobadorContrato")
-  contratosCreados     Contrato[]           @relation("CreadorContrato")
-  contratoAprobaciones ContratoAprobacion[]
-  contratoArchivos     ContratoArchivo[]
-  contratoFirmas       ContratoFirma[]
-  contratoVersiones    ContratoVersion[]
-  licencias            Licencia[]
-  licenciasAudit       LicenciaAudit[]      @relation("LicenciaAuditActor")
-  notifications        Notification[]
-  activityLogs         UserActivityLog[]
-  sessions             UserSession[]
+  userId                 String               @id @default(cuid())
+  name                   String
+  email                  String               @unique
+  password               String
+  role                   String               @default("regularUser")
+  createdAt              DateTime             @default(now())
+  updatedAt              DateTime             @updatedAt
+  activatedAt            DateTime?
+  avatar                 String?
+  expiresAt              DateTime?
+  isActive               Boolean              @default(true)
+  lastFailedLogin        DateTime?
+  lastModifiedBy         String?
+  lockedUntil            DateTime?
+  loginAttempts          Int                  @default(0)
+  contratosAprobados     Contrato[]           @relation("AprobadorContrato")
+  contratosCreados       Contrato[]           @relation("CreadorContrato")
+  contratoAprobaciones   ContratoAprobacion[]
+  contratoArchivos       ContratoArchivo[]
+  contratoFirmas         ContratoFirma[]
+  contratoVersiones      ContratoVersion[]
+  licencias              Licencia[]
+  licenciasAudit         LicenciaAudit[]      @relation("LicenciaAuditActor")
+  notifications          Notification[]
+  activityLogs           UserActivityLog[]
+  sessions               UserSession[]
+  comprasProductoCreadas CompraProducto[]     @relation("CompraProductoCreador")
 }
 
 model Plan {
@@ -553,6 +576,7 @@ model CompraProducto {
   fechaCompra      DateTime        @default(now())
   gastoCompraId    String?         @unique
   cuentaPorPagarId String?         @unique
+  createdById      String?
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
   proveedorId      String
@@ -563,10 +587,12 @@ model CompraProducto {
   gastoCompra      GastoCompra?    @relation(fields: [gastoCompraId], references: [gastoCompraId])
   producto         Producto        @relation(fields: [productoId], references: [id], onDelete: Cascade)
   proveedor        Vendor          @relation(fields: [proveedorId], references: [vendorId], onDelete: Cascade)
+  createdBy        User?           @relation("CompraProductoCreador", fields: [createdById], references: [userId], onDelete: SetNull)
 
   @@index([estado])
   @@index([proveedorId])
   @@index([productoId])
+  @@index([createdById])
 }
 
 model Servicios {

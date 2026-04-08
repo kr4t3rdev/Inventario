@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Plus, Trash2, Tag, Tags, Sparkles, AlertCircle, ListChecks } from 'lucide-react';
-import { toast } from 'sonner';
+import { sileo } from 'sileo';
 import { motion, AnimatePresence } from 'framer-motion';
+import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -48,6 +50,7 @@ function LoadingSpinner({ size = 32 }: { size?: number }) {
  * @returns {JSX.Element} Vista para crear y eliminar listas.
  */
 export default function ListasPreciosPage(): React.JSX.Element {
+  const router = useRouter();
   const { data: listas, isLoading } = useGetListasPreciosQuery();
   const [addListaPrecio, { isLoading: isCreating }] = useAddListaPrecioMutation();
   const [deleteListaPrecio] = useDeleteListaPrecioMutation();
@@ -57,7 +60,7 @@ export default function ListasPreciosPage(): React.JSX.Element {
 
   const onCreate = async () => {
     if (!nombre.trim()) {
-      toast.error('El nombre es obligatorio');
+      sileo.error({ title: 'El nombre es obligatorio' });
       return;
     }
 
@@ -68,10 +71,10 @@ export default function ListasPreciosPage(): React.JSX.Element {
       }).unwrap();
       setNombre('');
       setDescripcion('');
-      toast.success('Lista de precios creada');
+      sileo.success({ title: 'Lista de precios creada' });
     } catch (error) {
       console.error('Error creando lista de precios', error);
-      toast.error('No se pudo crear la lista');
+      sileo.error({ title: 'No se pudo crear la lista' });
     }
   };
 
@@ -79,10 +82,36 @@ export default function ListasPreciosPage(): React.JSX.Element {
     if (!listaToDelete) return;
     try {
       await deleteListaPrecio(listaToDelete).unwrap();
-      toast.success('Lista eliminada');
+      sileo.success({ title: 'Lista eliminada' });
     } catch (error) {
       console.error('Error eliminando lista de precios', error);
-      toast.error('No se pudo eliminar la lista');
+      const rtkError = error as FetchBaseQueryError & {
+        data?: {
+          error?: string;
+          code?: string;
+          puntoDeVenta?: {
+            pvId: string;
+            nombre: string;
+          } | null;
+        };
+      };
+
+      const apiMessage = rtkError.data?.error || 'No se pudo eliminar la lista';
+      const puntoDeVenta = rtkError.data?.puntoDeVenta;
+
+      if (rtkError.data?.code === 'LISTA_PRECIO_IN_USE' && puntoDeVenta?.pvId) {
+        sileo.error({
+          title: 'No se puede eliminar una lista de precios asociada a un punto de venta',
+          description: `Está asociada a: ${puntoDeVenta.nombre}`,
+          button: {
+            title: 'Ir al punto de venta',
+            onClick: () => router.push(`/busy/puntosDeVenta/update/${puntoDeVenta.pvId}`),
+          },
+          duration: 8000,
+        });
+      } else {
+        sileo.error({ title: apiMessage });
+      }
     } finally {
       setListaToDelete(null);
     }

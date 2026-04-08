@@ -98,14 +98,16 @@ export const PATCH = withAuth(async (request: NextRequest, context: ProductoRout
     }
 
     const normalizedCodigoInterno = normalizeCodigoInterno(codigoInterno)
+    const miEmpresa = await prisma.miEmpresa.findFirst({ select: { usaCodigoEan13: true } })
+    const usaEan13 = miEmpresa?.usaCodigoEan13 ?? false
     const hasAnyEanSegment =
-      proveedorCodigo !== undefined ||
-      idSeccionCodigo !== undefined ||
-      especificoCodigo !== undefined ||
-      surtidoCodigo !== undefined
+      [proveedorCodigo, idSeccionCodigo, especificoCodigo, surtidoCodigo].some((value) => {
+        if (value === undefined || value === null) return false
+        return String(value).trim() !== ''
+      })
 
     let generatedBusinessCode: ReturnType<typeof generateEan13BusinessCode> | null = null
-    if (hasAnyEanSegment) {
+    if (usaEan13 && hasAnyEanSegment) {
       try {
         generatedBusinessCode = generateEan13BusinessCode({
           proveedorCodigo,

@@ -258,7 +258,7 @@ describe('API /compras-productos - nuevo contrato con producto existente', () =>
     expect(txMock.compraProducto.create).not.toHaveBeenCalled()
   })
 
-  it('sincroniza stock del hijo cuando el producto padre es compuesto', async () => {
+  it('no sincroniza stock derivado de hijo aunque el payload legacy incluya campos compuestos', async () => {
     const { POST } = await import('../route')
 
     txMock.producto.findUnique.mockResolvedValueOnce({
@@ -281,20 +281,14 @@ describe('API /compras-productos - nuevo contrato con producto existente', () =>
     const response = await POST(request, {}, { userId: 'user-1' })
 
     expect(response.status).toBe(201)
-    // Parent stock update (normal)
+    // Solo update de stock del producto comprado
     expect(txMock.producto.update).toHaveBeenCalledWith(
       expect.objectContaining({ where: { id: 'prod-1' } }),
     )
-    // Child stock sync: 3 packs * 20 unidades = 60
-    expect(txMock.producto.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { id: 'hijo-1' },
-        data: { stock: { increment: 60 } },
-      }),
-    )
+    expect(txMock.producto.update).toHaveBeenCalledTimes(1)
   })
 
-  it('NO sincroniza stock del hijo cuando el producto no es compuesto', async () => {
+  it('mantiene una sola actualización de producto cuando no hay metadatos compuestos', async () => {
     const { POST } = await import('../route')
 
     txMock.producto.findUnique.mockResolvedValueOnce({

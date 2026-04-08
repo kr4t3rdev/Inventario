@@ -250,12 +250,26 @@ exports.Prisma.ProductoScalarFieldEnum = {
   stockMinimo: 'stockMinimo',
   subcategoriaId: 'subcategoriaId',
   fotos: 'fotos',
+  codigoInterno: 'codigoInterno',
   codigoNegocio: 'codigoNegocio',
   proveedorCodigo: 'proveedorCodigo',
   idSeccionCodigo: 'idSeccionCodigo',
   especificoCodigo: 'especificoCodigo',
   surtidoCodigo: 'surtidoCodigo',
   dcCodigo: 'dcCodigo'
+};
+
+exports.Prisma.StockUbicacionScalarFieldEnum = {
+  stockUbicacionId: 'stockUbicacionId',
+  productoId: 'productoId',
+  tipoUbicacion: 'tipoUbicacion',
+  ubicacionId: 'ubicacionId',
+  cantidad: 'cantidad',
+  cantidadReservada: 'cantidadReservada',
+  cantidadDisponible: 'cantidadDisponible',
+  ultimaActualizacion: 'ultimaActualizacion',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.VentaScalarFieldEnum = {
@@ -545,6 +559,7 @@ exports.Prisma.CompraProductoScalarFieldEnum = {
   fechaCompra: 'fechaCompra',
   gastoCompraId: 'gastoCompraId',
   cuentaPorPagarId: 'cuentaPorPagarId',
+  createdById: 'createdById',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   proveedorId: 'proveedorId',
@@ -1417,6 +1432,7 @@ exports.Prisma.ModelName = {
   Almacen: 'Almacen',
   PuntoDeVenta: 'PuntoDeVenta',
   Producto: 'Producto',
+  StockUbicacion: 'StockUbicacion',
   Venta: 'Venta',
   VentaItem: 'VentaItem',
   Merma: 'Merma',
