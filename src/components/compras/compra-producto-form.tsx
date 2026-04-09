@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
@@ -18,6 +18,7 @@ import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 
 import { ProductPhotoUpload } from '@/components/productos/product-photo-upload'
+import type { Producto, Vendor } from '@/app/models/model'
 import { useGetVendorsQuery } from '@/lib/redux/services/vendorsApi'
 import { useGetProductosQuery } from '@/lib/redux/services/productosApi'
 import { useCreateCompraProductoMutation } from '@/lib/redux/services/comprasProductosApi'
@@ -98,10 +99,34 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
   })
 
   const formaPagoSeleccionada = form.watch('formaPago')
+  const productoSeleccionado = form.watch('productoId')
   const proveedorSeleccionado = form.watch('vendorId')
   const precioCostoSeleccionado = form.watch('precioCosto')
   const cantidadSeleccionada = form.watch('cantidad')
   const montoEstimadoCompra = Number(precioCostoSeleccionado || 0) * Number(cantidadSeleccionada || 0)
+  const previousProductoIdRef = useRef<string | null>(null)
+  const lastAutofilledVendorRef = useRef<string | null>(null)
+  const lastAutofilledCostoRef = useRef<number | null>(null)
+  const productosCatalogo = useMemo<Producto[]>(
+    () => (Array.isArray(products) ? products : []),
+    [products]
+  )
+  const proveedoresCatalogo = useMemo<Vendor[]>(
+    () => (Array.isArray(vendors) ? vendors : []),
+    [vendors]
+  )
+  const productosComprables = useMemo<Producto[]>(
+    () => productosCatalogo.filter((product) => !product.productoPadreId),
+    [productosCatalogo]
+  )
+
+  const productoLookup = useMemo(() => {
+    const map = new Map<string, Producto>()
+    for (const product of productosCatalogo) {
+      map.set(product.id, product)
+    }
+    return map
+  }, [productosCatalogo])
 
   const { data: anticiposDisponibles, isFetching: isLoadingAnticipos } = useGetAnticiposDisponiblesQuery(
     {
@@ -125,6 +150,50 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
       form.setValue('anticipoPagoId', '')
     }
   }, [formaPagoSeleccionada, form])
+
+  useEffect(() => {
+    if (!productoSeleccionado) {
+      previousProductoIdRef.current = null
+      return
+    }
+
+    const producto = productoLookup.get(productoSeleccionado)
+    if (!producto) return
+
+    const selectedVendorId = typeof producto.vendorId === 'string' ? producto.vendorId : ''
+    const selectedPrecioCosto = Number(producto.precioCosto ?? 0)
+    const previousProductoId = previousProductoIdRef.current
+
+    const vendorActual = form.getValues('vendorId')
+    const costoActual = Number(form.getValues('precioCosto') || 0)
+    const vendorDirty = !!form.formState.dirtyFields.vendorId
+    const costoDirty = !!form.formState.dirtyFields.precioCosto
+
+    const canAutofillVendor =
+      !vendorDirty ||
+      !vendorActual ||
+      (lastAutofilledVendorRef.current !== null && vendorActual === lastAutofilledVendorRef.current) ||
+      previousProductoId !== productoSeleccionado
+
+    if (selectedVendorId && canAutofillVendor) {
+      form.setValue('vendorId', selectedVendorId, { shouldValidate: true })
+      lastAutofilledVendorRef.current = selectedVendorId
+    }
+
+    const canAutofillCosto =
+      !costoDirty ||
+      !Number.isFinite(costoActual) ||
+      costoActual <= 0 ||
+      (lastAutofilledCostoRef.current !== null && costoActual === lastAutofilledCostoRef.current) ||
+      previousProductoId !== productoSeleccionado
+
+    if (selectedPrecioCosto > 0 && canAutofillCosto) {
+      form.setValue('precioCosto', selectedPrecioCosto, { shouldValidate: true })
+      lastAutofilledCostoRef.current = selectedPrecioCosto
+    }
+
+    previousProductoIdRef.current = productoSeleccionado
+  }, [productoSeleccionado, productoLookup, form])
 
   async function onSubmit(data: CompraProductoFormValues) {
     setIsLoading(true)
@@ -239,7 +308,7 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {products?.filter((product: any) => !product.productoPadreId).map((product) => (
+                        {productosComprables.map((product) => (
                           <SelectItem key={product.id} value={product.id}>
                             {product.nombre}
                           </SelectItem>
@@ -266,7 +335,7 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {vendors?.map((vendor: any) => (
+                          {proveedoresCatalogo.map((vendor) => (
                             <SelectItem key={vendor.vendorId} value={vendor.vendorId}>
                               {vendor.nombre}
                             </SelectItem>
@@ -436,10 +505,10 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
               />
 
               <div className='flex justify-end space-x-4 pt-4'>
-                <Button type='button' variant='outline' onClick={() => router.push('/busy/compras-productos')}>
+                <Button type='button' variant='destructive' className='cursor-pointer' onClick={() => router.push('/busy/compras-productos')}>
                   Cancelar
                 </Button>
-                <Button type='submit' disabled={isLoading} className='bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90'>
+                <Button type='submit' disabled={isLoading} className='cursor-pointer bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90'>
                   {isLoading ? (
                     <>
                       <Loader2 className='mr-2 h-4 w-4 animate-spin' />

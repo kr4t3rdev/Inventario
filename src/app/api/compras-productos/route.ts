@@ -88,9 +88,7 @@ export const GET = withAuthGet(async (request: NextRequest, _context: any, _user
       limit: searchParams.get('limit') || undefined,
     })
 
-    const whereClause: Record<string, any> = {
-      deletedAt: null, // Exclude soft-deleted records by default
-    }
+    const whereClause: Record<string, any> = {}
 
     if (params.tipoOperacion) {
       whereClause.tipoOperacion = params.tipoOperacion
@@ -213,6 +211,10 @@ export const POST = withAuthPost(async (request: NextRequest, _context: any, use
 
       if (!producto) {
         throw new Error('PRODUCTO_NOT_FOUND')
+      }
+
+      if (producto.vendorId && producto.vendorId !== data.vendorId) {
+        throw new Error('PRODUCT_VENDOR_MISMATCH')
       }
 
       const stockAntes = producto.stock
@@ -430,12 +432,39 @@ export const POST = withAuthPost(async (request: NextRequest, _context: any, use
     return NextResponse.json(response, { status: 201 })
   } catch (error) {
     console.error('Error al crear compra de producto:', error)
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({
+        code: 'VALIDATION_ERROR',
+        message: 'Error de validación en la compra de producto',
+        error: 'Error de validación en la compra de producto',
+        details: error.flatten()
+      }, { status: 400 })
+    }
     if (isAnticipoWorkflowError(error)) {
-      return NextResponse.json({ error: error.message, code: error.code }, { status: error.status })
+      return NextResponse.json({
+        code: error.code,
+        message: error.message,
+        error: error.message
+      }, { status: error.status })
     }
     if (error instanceof Error && error.message === 'PRODUCTO_NOT_FOUND') {
-      return NextResponse.json({ error: 'El producto seleccionado no existe' }, { status: 404 })
+      return NextResponse.json({
+        code: 'PRODUCT_NOT_FOUND',
+        message: 'El producto seleccionado no existe',
+        error: 'El producto seleccionado no existe'
+      }, { status: 404 })
     }
-    return NextResponse.json({ error: 'Error al crear compra de producto' }, { status: 500 })
+    if (error instanceof Error && error.message === 'PRODUCT_VENDOR_MISMATCH') {
+      return NextResponse.json({
+        code: 'PRODUCT_VENDOR_MISMATCH',
+        message: 'El proveedor seleccionado no coincide con el proveedor del producto',
+        error: 'El proveedor seleccionado no coincide con el proveedor del producto'
+      }, { status: 422 })
+    }
+    return NextResponse.json({
+      code: 'UNEXPECTED_ERROR',
+      message: 'Error al crear compra de producto',
+      error: 'Error al crear compra de producto'
+    }, { status: 500 })
   }
 })

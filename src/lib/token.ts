@@ -79,7 +79,7 @@ export const clearAuthToken = () => {
       }
 
       if (response.status === 403) {
-        const errorData = await response.json().catch(() => ({}))
+        const errorData = await response.clone().json().catch(() => ({}))
         if (errorData?.error === 'Usuario inactivo' || errorData?.error === 'Usuario no encontrado') {
           sessionStorage.removeItem('token')
           const { toast } = await import('sonner')

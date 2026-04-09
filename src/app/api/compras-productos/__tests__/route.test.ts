@@ -89,6 +89,7 @@ describe('API /compras-productos - nuevo contrato con producto existente', () =>
       nombre: 'Producto Existente',
       stock: 10,
       precioCosto: 100,
+      vendorId: 'vendor-1',
       almacenId: 'alm-1',
       vendor: null,
     })
@@ -197,6 +198,50 @@ describe('API /compras-productos - nuevo contrato con producto existente', () =>
 
     expect(response.status).toBe(409)
     expect(data.error).toContain('Ya existe una compra con este número de factura')
+    expect(prismaMock.$transaction).not.toHaveBeenCalled()
+  })
+
+  it('retorna 422 si vendorId no coincide con el proveedor del producto', async () => {
+    const { POST } = await import('../route')
+    txMock.producto.findUnique.mockResolvedValueOnce({
+      id: 'prod-1',
+      nombre: 'Producto Existente',
+      stock: 10,
+      precioCosto: 100,
+      vendorId: 'vendor-catalogo',
+      almacenId: 'alm-1',
+      vendor: null,
+    })
+
+    const request = new NextRequest('http://localhost/api/compras-productos', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(buildPayload({ vendorId: 'vendor-distinto' })),
+    })
+
+    const response = await POST(request, {}, { userId: 'user-1' })
+    const data = await response.json()
+
+    expect(response.status).toBe(422)
+    expect(data.code).toBe('PRODUCT_VENDOR_MISMATCH')
+    expect(data.error).toContain('no coincide')
+  })
+
+  it('retorna 400 con details cuando el payload es inválido', async () => {
+    const { POST } = await import('../route')
+
+    const request = new NextRequest('http://localhost/api/compras-productos', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(buildPayload({ cantidad: 0, precioCosto: 0 })),
+    })
+
+    const response = await POST(request, {}, { userId: 'user-1' })
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(data.code).toBe('VALIDATION_ERROR')
+    expect(data.details).toBeDefined()
     expect(prismaMock.$transaction).not.toHaveBeenCalled()
   })
 
