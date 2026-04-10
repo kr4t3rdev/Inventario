@@ -7,9 +7,9 @@
 
 ## Overview
 
-Phase B implemented comprehensive unit validation across the production module to prevent silent stock calculation errors. The solution spans backend validation, API integration, and frontend user warnings.
+Phase B implemented comprehensive unit validation across the production module to prevent silent stock calculation errors. The solution now spans backend validation, API integration, frontend blocking feedback, and deterministic Playwright verification.
 
-**Total Changes**: 7 files modified, 3 new files created, ~350 lines added
+This archive also includes the post-implementation hardening discovered during manual E2E testing.
 
 ---
 
@@ -42,6 +42,7 @@ Phase B implemented comprehensive unit validation across the production module t
   2. Call `validateIngredientsUnits()` to validate compatibility
   3. Filter warnings (non-blocking)
   4. Return response with optional `unitWarnings` field
+  5. Fixed Prisma lookup to read product unit from `unidad.simbolo` and map it to `unidadSimbolo` before validation
 - **API Contract**: 
   ```typescript
   // Response now includes:
@@ -51,6 +52,7 @@ Phase B implemented comprehensive unit validation across the production module t
   }
   ```
 - **Behavior**: Warnings don't prevent recipe creation (power-user override)
+ - **Behavior**: The API returns warnings without failing the request, while the UI prevents creating recipes until incompatible units are corrected.
 
 ### 4. **src/app/busy/produccion/page.tsx** (MODIFIED)
 - **Lines changed**: Multiple sections
@@ -64,14 +66,38 @@ Phase B implemented comprehensive unit validation across the production module t
   - Clear warnings on dialog close
 - **D) Helper function**:
   - New: `getUnitWarning()` - Detects unit incompatibilities per ingredient
+  - Fixed product-unit lookup to use `prod.unidad?.simbolo` instead of a non-existent `prod.unidadSimbolo`
 - **E) UI Updates**:
   1. Warning banner (yellow, border-left) after DialogHeader
      - Shows icon (⚠️) + title + bulleted list
      - Includes help text explaining issue
    2. Table icons - shows ⚠️ next to product name when incompatible
      - Tooltip shows specific warning message
-   3. State cleanup on dialog state changes
-- **Impact**: Visual feedback for users without blocking workflows
+   3. Create action is replaced by a disabled `Arreglar Unidades` button while unresolved warnings exist
+   4. State cleanup on dialog state changes
+- **Impact**: Visual feedback with an explicit UI guard that blocks invalid recipe creation until units are fixed
+
+### 5. **scripts/seed-e2e-user.ts** (MODIFIED)
+- **What**: Extended the E2E seed to create deterministic catalog fixtures
+- **Fixtures created**:
+  - User: `e2e@test.local`
+  - Products: `E2E Aceite Volumen 1L`, `E2E Arroz Masa 1kg`
+  - Supporting catalog: dedicated category, warehouse, and `L` / `kg` units
+- **Impact**: Playwright no longer depends on whatever products happen to exist in the local database
+
+### 6. **e2e/global-setup.ts** (NEW)
+- **What**: Runs the E2E seed automatically before Playwright starts
+- **Impact**: Every execution begins from a known-good catalog and test user state
+
+### 7. **e2e/production-recipe-validation.spec.ts** (NEW)
+- **What**: Real browser coverage for the production recipe flow using Playwright
+- **Scenarios covered**:
+  1. Warning icon appears when units are incompatible
+  2. Create action is blocked while warnings exist
+  3. Create action recovers after unit correction
+  4. Recipe creation succeeds when units are compatible
+  5. Warning UI lists multiple incompatible ingredients
+- **Impact**: Validates the full browser flow, auth bootstrap, modal behavior, and end-to-end API integration
 
 ---
 
@@ -97,6 +123,16 @@ Phase B implemented comprehensive unit validation across the production module t
    - API contract: 3 tests
 ```
 
+### Playwright Browser Tests (e2e/production-recipe-validation.spec.ts)
+```
+✅ 5/5 passing in two consecutive runs
+  - Incompatible units show warning icon and banner
+  - Create action is blocked until units are corrected
+  - Compatible units remove the warning state
+  - Compatible recipe creation closes the dialog and persists the recipe
+  - Multiple incompatible ingredients keep the warning state visible
+```
+
 ---
 
 ## Technical Implementation Details
@@ -117,11 +153,11 @@ Phase B implemented comprehensive unit validation across the production module t
 | unknown | kg | ⚠️ Warn | Unknown unit → WARNING |
 | null | kg | ❌ Incompatible | null maps to 'unit' vs 'mass' → WARNING |
 
-### Non-Blocking Warnings
-- Warnings do not prevent recipe creation
-- Experienced users can override if they have valid reasons
-- Warnings appear in UI as advisory, not errors
-- System logs warnings to console for debugging
+### Warning Strategy
+- The backend returns warnings in `unitWarnings` without rejecting the request
+- The frontend computes the same incompatibilities locally and blocks creation until they are fixed
+- Users get both row-level indicators and a summary banner before attempting submission
+- The API response still preserves warnings for edit flows and future clients
 
 ---
 
@@ -130,15 +166,15 @@ Phase B implemented comprehensive unit validation across the production module t
 ### Before (No Validation)
 1. User creates recipe with "500 mL" but product stored as "kg"
 2. Stock calculation silently uses wrong conversion factor
-3. System deceits products as out-of-stock
+3. System marks products as out-of-stock with no visible explanation
 4. User has no way to know why
 
 ### After (With Validation)
 1. User creates recipe with "500 mL" but product stored as "kg"
-2. API validates and returns warning: "Unidades incompatibles: volumen vs masa"
-3. UI shows ⚠️ icon next to product name in table
-4. Warning banner displays at top with explanation
-5. User can investigate and fix unit definitions before proceeding
+2. UI detects incompatibility immediately and disables recipe creation
+3. API also validates and returns warning metadata: "Unidades incompatibles: volumen vs masa"
+4. UI shows ⚠️ icon next to product name in table plus a warning banner at the top
+5. User fixes the unit mismatch and only then can proceed with creation
 
 ---
 
@@ -148,7 +184,8 @@ Phase B implemented comprehensive unit validation across the production module t
 - ✅ Single batch query for all productos (efficient)
 - ✅ O(n) validation (linear, not exponential)
 - ✅ No database writes, only validation
-- ✅ Response includes warnings but doesn't block on errors
+- ✅ Response includes warnings for clients and edits
+- ✅ Browser flow is now deterministic thanks to seeded E2E fixtures
 - ⚠️ Frontend re-renders category suggestions if needed (lazy-load only on demand)
 
 ---
@@ -157,7 +194,7 @@ Phase B implemented comprehensive unit validation across the production module t
 
 ❌ **None**. All changes are:
 - Additive (new fields in API response are optional)
-- Non-blocking (warnings don't prevent operations)
+- Protective in the UI (recipe creation is blocked until units are fixed)
 - Graceful degradation (code handles missing `unitWarnings` field)
 
 ---
@@ -175,8 +212,8 @@ Phase B implemented comprehensive unit validation across the production module t
 **Rollback plan**:
 1. Revert 4 files to previous commit
 2. Remove validator imports from page.tsx
-3. Remove E2E test file
-4. No database changes, so no risk
+3. Remove Playwright seed/setup/spec files
+4. No schema changes, so there is no migration risk
 
 ---
 
@@ -186,12 +223,13 @@ Phase B implemented comprehensive unit validation across the production module t
 - Validator JSDoc with `@example` in each function
 - Error handling patterns documented
 - Unit categories clearly defined
-- Test cases demonstrate expected behavior
+- Test cases demonstrate expected behavior in both Vitest and Playwright
 
 ### For Users  
 - Help text in warning banner explains issue
 - Icon tooltips show specific incompatibility
-- Recommendations via `suggestUnitsByCategory()` available for implementation
+- Disabled create state makes the correction path explicit
+- Recommendations via `suggestUnitsByCategory()` available for future implementation
 
 ---
 
@@ -207,22 +245,24 @@ Phase B implemented comprehensive unit validation across the production module t
 
 ## Code Quality Metrics
 
-- **Test Coverage**: 41 tests (28 unit + 13 E2E), 100% passing
+- **Focused Validation**: 46 Vitest tests + 5 Playwright tests, all passing
 - **Type Safety**: Full TypeScript, no `any` types (except @ts-nocheck on page.tsx existing)
 - **Documentation**: JSDoc on every function
 - **Error Handling**: Graceful degradation, no silent failures
 - **Performance**: O(n) validation, single batch query
+- **E2E Stability**: Browser tests no longer depend on ambient database catalog data
 
 ---
 
 ## Sign-off Checklist
 
-- [x] All tests passing (41/41)
+- [x] Focused Vitest coverage passing (46/46)
+- [x] Playwright browser coverage passing twice consecutively (5/5)
 - [x] No breaking changes
 - [x] JSDoc documented
 - [x] Type-safe
 - [x] Backwards compatible
-- [x] Non-blocking validation
+- [x] UI prevents invalid recipe creation
 - [x] User-friendly warnings
 - [x] Ready for code review
 - [x] Ready for merge

@@ -2103,6 +2103,11 @@ export interface CreateOrdenProduccionPayload {
   fechaProduccion?: string
 }
 
+// Respuesta de setIngredientes — extiende RecetaProduccion con warnings opcionales
+export interface SetIngredientesResponse extends RecetaProduccion {
+  unitWarnings?: string[]
+}
+
 // Payload para crear receta de producción
 export interface CreateRecetaProduccionPayload {
   nombre: string

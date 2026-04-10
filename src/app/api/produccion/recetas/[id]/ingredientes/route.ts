@@ -39,7 +39,7 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
     }
 
     // CRITICAL FIX #1: Fetch ALL product data in ONE query (no N+1 + race condition)
-    const productosInventario = await prisma.producto.findMany({
+    const productosInventarioRaw = await prisma.producto.findMany({
       where: {
         id: {
           in: ingredientes.map((ing) => ing.productoId),
@@ -48,10 +48,15 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
       select: {
         id: true,
         nombre: true,
-        unidadSimbolo: true,
         precioCosto: true, // Include cost data to avoid re-fetching
+        unidad: { select: { simbolo: true } },
       },
     });
+
+    const productosInventario = productosInventarioRaw.map((p) => ({
+      ...p,
+      unidadSimbolo: p.unidad?.simbolo ?? null,
+    }));
 
     // CRITICAL FIX #2: Validate that ALL products exist before proceeding
     const ingredientesIds = ingredientes.map((ing) => ing.productoId);

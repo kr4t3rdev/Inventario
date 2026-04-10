@@ -157,7 +157,7 @@ export default function ProduccionPage() {
     const prod = productosTyped?.find((p) => p.id === item.productoId)
     if (!prod) return null
     
-    const { isCompatible, warning } = validateUnitCompatibility(item.unidadSimbolo, prod.unidadSimbolo)
+    const { isCompatible, warning } = validateUnitCompatibility(item.unidadSimbolo, prod.unidad?.simbolo)
     return isCompatible ? null : warning
   }
 
@@ -471,7 +471,7 @@ export default function ProduccionPage() {
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
-                    <DialogHeader className="flex-shrink-0">
+                    <DialogHeader className="shrink-0">
                       <DialogTitle>Nueva Receta de Producción</DialogTitle>
                       <DialogDescription>
                         Define una receta para producir productos del inventario
@@ -480,9 +480,9 @@ export default function ProduccionPage() {
 
                     {/* Banner de warnings de unidades */}
                     {unitWarnings.length > 0 && (
-                      <div className="flex-shrink-0 border-l-4 border-yellow-500 bg-yellow-50 p-4 rounded-r-md">
+                      <div className="shrink-0 border-l-4 border-yellow-500 bg-yellow-50 p-4 rounded-r-md">
                         <div className="flex">
-                          <div className="flex-shrink-0">
+                          <div className="shrink-0">
                             <span className="text-2xl text-yellow-500">⚠️</span>
                           </div>
                           <div className="ml-3">
@@ -691,7 +691,7 @@ export default function ProduccionPage() {
                     </div>
 
                     {/* Footer con botones - fixed */}
-                    <div className="flex justify-end gap-2 border-t pt-4 flex-shrink-0">
+                    <div className="flex justify-end gap-2 border-t pt-4 shrink-0">
                       <Button variant="outline" onClick={() => {
                         setDialogRecetaOpen(false)
                         setNombreReceta('')

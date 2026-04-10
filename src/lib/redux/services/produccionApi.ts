@@ -1,5 +1,6 @@
 import {
   RecetaProduccion,
+  SetIngredientesResponse,
   CreateRecetaProduccionPayload,
   SetIngredientesPayload,
   OrdenProduccion,
@@ -80,7 +81,7 @@ export const produccionApi = apiSlice.injectEndpoints({
     /**
      * @description Gestiona ingredientes de una receta.
      */
-    setIngredientesRecetaProduccion: builder.mutation<RecetaProduccion, SetIngredientesPayload>({
+    setIngredientesRecetaProduccion: builder.mutation<SetIngredientesResponse, SetIngredientesPayload>({
       query: ({ recetaId, ingredientes }) => ({
         url: `/produccion/recetas/${recetaId}/ingredientes`,
         method: 'POST',

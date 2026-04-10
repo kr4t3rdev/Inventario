@@ -110,6 +110,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@fast-check/vitest": "^0.2.4",
+    "@playwright/test": "^1.59.1",
     "@prisma/client": "^6.19.0",
     "@remotion/cli": "^4.0.417",
     "@supabase/supabase-js": "^2.86.2",

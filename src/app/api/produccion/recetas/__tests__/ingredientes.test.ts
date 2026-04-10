@@ -7,6 +7,7 @@ import { calculateCostoUnitarioReceta } from '@/lib/utils/produccion'
 // Mock prisma
 vi.mock('@/lib/prisma', () => ({
   prisma: {
+    $transaction: vi.fn(),
     receta: {
       findUnique: vi.fn(),
       update: vi.fn(),
@@ -16,6 +17,7 @@ vi.mock('@/lib/prisma', () => ({
       createMany: vi.fn(),
     },
     producto: {
+      findMany: vi.fn(),
       findUnique: vi.fn(),
     },
   },
@@ -34,12 +36,17 @@ vi.mock('@/lib/utils/produccion', () => ({
 
 // Mock unit converter
 vi.mock('@/lib/utils/unit-converter', () => ({
+  MASS_UNITS: ['g', 'kg', 'lb', 'oz'],
+  VOLUME_UNITS: ['ml', 'L', 'fl oz', 'tsp', 'tbsp', 'cup'],
   convertToBase: (cantidad: number) => cantidad,
 }))
 
 describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    vi.resetAllMocks()
+
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma as never))
+    vi.mocked(prisma.producto.findMany).mockResolvedValue([])
   })
 
   it('debe agregar ingredientes y recalcular costoUnitario', async () => {
@@ -71,11 +78,14 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
       count: 1,
     })
 
-    vi.mocked(prisma.producto.findUnique).mockResolvedValueOnce({
+    vi.mocked(prisma.producto.findMany).mockResolvedValueOnce([
+      {
       id: productoId,
       nombre: 'Harina',
       precioCosto: 50,
-    })
+      unidad: null,
+      },
+    ])
 
     // Mock calculateCostoUnitarioReceta to return 75 ((100 + 50) / 2)
     vi.mocked(calculateCostoUnitarioReceta).mockReturnValueOnce(75)
@@ -225,17 +235,20 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
     })
 
     // Mock multiple producto lookups
-    vi.mocked(prisma.producto.findUnique)
-      .mockResolvedValueOnce({
+    vi.mocked(prisma.producto.findMany).mockResolvedValueOnce([
+      {
         id: 'prod-1',
         nombre: 'Harina',
         precioCosto: 100,
-      })
-      .mockResolvedValueOnce({
+        unidad: { simbolo: 'kg' },
+      },
+      {
         id: 'prod-2',
         nombre: 'Azúcar',
         precioCosto: 150,
-      })
+        unidad: { simbolo: 'kg' },
+      },
+    ])
 
     // Mock calculateCostoUnitarioReceta to return 112.5 ((200 + 100 + 150) / 4)
     vi.mocked(calculateCostoUnitarioReceta).mockReturnValueOnce(112.5)
