@@ -1,7 +1,6 @@
 import '@/app/globals.css';
 import type { Metadata } from 'next';
 import { ThemeProvider } from 'next-themes';
-import { sileo,Toaster } from 'sileo';
 
 import ReduxProvider from '@/lib/redux/provider';
 import { AuthProvider } from '@/contexts/auth-context';
@@ -24,7 +23,7 @@ export default function RootLayout({
       <body
         className="antialiased"
       >
-          <Toaster position='top-center'/>
+          
         <ReduxProvider>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
             <AuthProvider>

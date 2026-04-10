@@ -14,6 +14,10 @@ vi.mock('@/lib/prisma', () => ({
       count: vi.fn(),
       create: vi.fn()
     },
+    cuentaBancaria: {
+      findUnique: vi.fn(),
+      update: vi.fn()
+    },
     cuentaPorCobrar: {
       create: vi.fn()
     },
@@ -65,6 +69,27 @@ describe('API contabilidad/prestamos-cash', () => {
     )
   })
 
+  it('GET no intenta incluir cuentaPorCobrar en el listado y soporta vacío', async () => {
+    const prisma = (await import('@/lib/prisma')).default as any
+    prisma.prestamoCash.findMany.mockResolvedValue([])
+    prisma.prestamoCash.count.mockResolvedValue(0)
+
+    const { GET } = await import('../route')
+    const request = new NextRequest('http://localhost/api/contabilidad/prestamos-cash')
+    const response = await GET(request)
+    const body = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(body.prestamos).toEqual([])
+    expect(prisma.prestamoCash.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        include: expect.not.objectContaining({
+          cuentaPorCobrar: expect.anything()
+        })
+      })
+    )
+  })
+
   it('GET devuelve 404 si módulo deshabilitado', async () => {
     vi.stubEnv('NEXT_PUBLIC_ENABLE_PRESTAMOS_CASH', 'false')
 
@@ -88,8 +113,15 @@ describe('API contabilidad/prestamos-cash', () => {
       cuentaPorCobrar: mockCuenta
     }
 
+    prisma.cuentaBancaria.findUnique.mockResolvedValue({
+      cuentaId: 'cb-1',
+      saldo: 1000,
+      isActive: true
+    })
+
     prisma.$transaction.mockImplementation(async (callback: any) => {
       const tx = {
+        cuentaBancaria: { update: vi.fn().mockResolvedValue({}) },
         cuentaPorCobrar: { create: vi.fn().mockResolvedValue(mockCuenta) },
         prestamoCash: { create: vi.fn().mockResolvedValue(mockPrestamo) }
       }
@@ -102,7 +134,8 @@ describe('API contabilidad/prestamos-cash', () => {
       body: JSON.stringify({
         clienteId: 'c-1',
         montoCapital: 500,
-        moneda: 'CUP'
+        moneda: 'CUP',
+        cuentaBancariaId: 'cb-1'
       })
     })
 

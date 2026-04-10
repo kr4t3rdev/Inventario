@@ -25,7 +25,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
 import { useCreateMonedaMutation, useUpdateMonedaMutation } from "@/lib/redux/services/contabilidadApi"
-import { sileo } from 'sileo'
+import { sileo } from '@/lib/sileo-shim'
 
 const monedaSchema = z.object({
   codigo: z.string()

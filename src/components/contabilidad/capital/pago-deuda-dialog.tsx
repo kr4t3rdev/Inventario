@@ -28,7 +28,7 @@ import {
     SelectValue,
   } from "@/components/ui/select"
 import { Loader2, DollarSign } from "lucide-react"
-import { sileo } from 'sileo'
+import { sileo } from '@/lib/sileo-shim'
 import { showErrorToast } from "../toast-notifications"
 import { useRegistrarPagoCapitalMutation, useGetCuentasBancariasQuery } from "@/lib/redux/services/contabilidadApi"
 import { InyeccionCapital } from "@/app/models/model"

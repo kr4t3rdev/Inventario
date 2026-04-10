@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Plus, Palmtree, Clock, CheckCircle2, XCircle, Search, User, FileText, CalendarDays } from "lucide-react";
-import { sileo } from 'sileo';
+import { sileo } from '@/lib/sileo-shim';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
 

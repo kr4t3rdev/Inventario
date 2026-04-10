@@ -20,7 +20,7 @@ import {
 import { useErrorHandler } from '@/hooks/use-error-handler'
 import { useLoadingStates, LOADING_KEYS } from '@/hooks/use-loading-states'
 import { useRetryMechanism, RETRY_CONFIGS } from '@/hooks/use-retry-mechanism'
-import { sileo } from 'sileo'
+import { sileo } from '@/lib/sileo-shim'
 
 import { LoadingOverlay } from './loading-components'
 

@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/form"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Loader2, Save, X, Building2, User } from "lucide-react"
-import { sileo } from 'sileo'
+import { sileo } from '@/lib/sileo-shim'
 import { showErrorToast } from "../toast-notifications"
 import { useCreateInyeccionCapitalMutation, useGetCuentasBancariasQuery, useGetMonedasQuery } from "@/lib/redux/services/contabilidadApi"
 import { Textarea } from "@/components/ui/textarea"

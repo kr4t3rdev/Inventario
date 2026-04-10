@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
-import { sileo } from 'sileo'
+import { sileo } from '@/lib/sileo-shim'
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAddUnidadMutation, useGetUnidadesQuery, useUpdateUnidadMutation } from "@/lib/redux/services/unidadesApi"
 import { motion } from "framer-motion"

@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useCreateAnticipoMutation } from "@/lib/redux/services/contabilidadApi"
 import { Loader2 } from "lucide-react"
-import { sileo } from "sileo"
+import { sileo } from "@/lib/sileo-shim"
 
 const anticipoSchema = z.object({
   tipo: z.enum(["PAGO", "COBRO"], { required_error: "Seleccione el tipo de anticipo" }),

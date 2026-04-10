@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge"
 import { useCreatePrestamoCashMutation } from "@/lib/redux/services/prestamosCashApi"
 import { useGetTasasActualesQuery } from "@/lib/redux/services/contabilidadApi"
 import { Loader2, TrendingUp, ArrowRightLeft } from "lucide-react"
-import { sileo } from "sileo"
+import { sileo } from "@/lib/sileo-shim"
 
 const prestamoSchema = z.object({
   clienteId: z.string().min(1, "Seleccione un cliente"),

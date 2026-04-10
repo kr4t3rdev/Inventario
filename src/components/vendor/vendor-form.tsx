@@ -5,7 +5,7 @@ import { Building2, Loader2, Sparkles, Copy, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { sileo } from 'sileo';
+import { sileo } from '@/lib/sileo-shim';
 import { z } from "zod";
 import { Card, CardContent } from "../ui/card";
 import { Skeleton } from "../ui/skeleton";

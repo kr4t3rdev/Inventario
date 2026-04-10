@@ -4,6 +4,7 @@ import {
   validateUnitCompatibility,
   validateIngredientsUnits,
   suggestUnitsByCategory,
+  validateAndNormalizeIngredientUnit,
 } from './production-units';
 
 describe('Production Units Validator', () => {
@@ -50,13 +51,13 @@ describe('Production Units Validator', () => {
   });
 
   describe('validateUnitCompatibility', () => {
-    it('should be compatible when both are null/undefined', () => {
+    it('should be compatible when both are discrete/null units', () => {
       const result = validateUnitCompatibility(null, undefined);
       expect(result.isCompatible).toBe(true);
       expect(result.warning).toBeNull();
     });
 
-    it('should warn when units are unknown', () => {
+    it('should reject when units are unknown', () => {
       const result1 = validateUnitCompatibility('bls', 'kg');
       expect(result1.isCompatible).toBe(false);
       expect(result1.warning).toContain('Unidad desconocida');
@@ -221,14 +222,14 @@ describe('Production Units Validator', () => {
       expect(result[3].warning).toContain('incompatibles');
     });
 
-    it('should handle null/undefined units as compatible with any unit', () => {
+    it('should reject null/undefined when product uses measurable units', () => {
       const ingredientes = [
-        { productoId: 'prod1', unidadSimbolo: null }, // null should be compatible with any
+        { productoId: 'prod1', unidadSimbolo: null },
       ];
 
       const result = validateIngredientsUnits(ingredientes, mockProductos);
       expect(result).toHaveLength(1);
-      expect(result[0].isValid).toBe(false); // null ('unit') is incompatible with 'kg' ('mass')
+      expect(result[0].isValid).toBe(false);
       expect(result[0].warning).toContain('Inconsistencia');
     });
 
@@ -321,6 +322,78 @@ describe('Production Units Validator', () => {
       // Warning should include product name for easy identification
       expect(warning).toContain('Pan integral');
       expect(warning).not.toBeNull();
+    });
+  });
+
+  describe('validateAndNormalizeIngredientUnit', () => {
+    it('should normalize compatible mass units to canonical symbol', () => {
+      const result = validateAndNormalizeIngredientUnit(
+        { productoId: 'prod1', cantidad: 500, unidadSimbolo: 'g' },
+        { id: 'prod1', nombre: 'Harina', unidadSimbolo: 'kg' }
+      );
+
+      expect(result.isValid).toBe(true);
+      expect(result.normalizedUnidadSimbolo).toBe('kg');
+      expect(result.normalizedCantidad).toBe(0.5);
+      expect(result.normalization).toEqual({
+        productoId: 'prod1',
+        productoNombre: 'Harina',
+        providedUnit: 'g',
+        canonicalUnit: 'kg',
+        originalCantidad: 500,
+        normalizedCantidad: 0.5,
+      });
+    });
+
+    it('should allow null unit for discrete canonical products', () => {
+      const result = validateAndNormalizeIngredientUnit(
+        { productoId: 'prod2', cantidad: 3, unidadSimbolo: null },
+        { id: 'prod2', nombre: 'Botella', unidadSimbolo: 'unidad' }
+      );
+
+      expect(result.isValid).toBe(true);
+      expect(result.normalizedUnidadSimbolo).toBe('unidad');
+      expect(result.normalizedCantidad).toBe(3);
+      expect(result.normalization).toEqual({
+        productoId: 'prod2',
+        productoNombre: 'Botella',
+        providedUnit: null,
+        canonicalUnit: 'unidad',
+        originalCantidad: 3,
+        normalizedCantidad: 3,
+      });
+    });
+
+    it('should reject missing unit for measurable products', () => {
+      const result = validateAndNormalizeIngredientUnit(
+        { productoId: 'prod3', cantidad: 2, unidadSimbolo: null },
+        { id: 'prod3', nombre: 'Agua', unidadSimbolo: 'ml' }
+      );
+
+      expect(result.isValid).toBe(false);
+      expect(result.error).toEqual({
+        productoId: 'prod3',
+        productoNombre: 'Agua',
+        providedUnit: null,
+        canonicalUnit: 'ml',
+        reason: 'missing_unit',
+      });
+    });
+
+    it('should reject incompatible categories', () => {
+      const result = validateAndNormalizeIngredientUnit(
+        { productoId: 'prod4', cantidad: 1, unidadSimbolo: 'L' },
+        { id: 'prod4', nombre: 'Harina', unidadSimbolo: 'kg' }
+      );
+
+      expect(result.isValid).toBe(false);
+      expect(result.error).toEqual({
+        productoId: 'prod4',
+        productoNombre: 'Harina',
+        providedUnit: 'L',
+        canonicalUnit: 'kg',
+        reason: 'incompatible_category',
+      });
     });
   });
 });

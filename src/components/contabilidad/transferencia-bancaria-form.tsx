@@ -24,7 +24,7 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { ArrowRightLeft, Loader2, Info } from "lucide-react"
-import { sileo } from 'sileo'
+import { sileo } from '@/lib/sileo-shim'
 import { useAppDispatch } from "@/lib/redux/hooks"
 import { contabilidadApi, useGetCuentasBancariasQuery } from "@/lib/redux/services/contabilidadApi"
 import { TasaCambioDialog } from "./tasa-cambio-dialog"

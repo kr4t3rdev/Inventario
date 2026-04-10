@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { sileo } from 'sileo'
+import { toast } from 'sonner'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
@@ -35,7 +35,11 @@ import {
   formatIngrediente,
   formatIngredientesList,
 } from '@/lib/utils/unit-converter'
-import { validateUnitCompatibility } from '@/lib/validators/production-units'
+import {
+  validateAndNormalizeIngredientUnit,
+  type UnitError,
+  type UnitNormalization,
+} from '@/lib/validators/production-units'
 import { filterProductos } from '@/lib/utils/produccion'
 import { 
   useGetRecetasProduccionQuery, 
@@ -54,6 +58,107 @@ import {
 } from '@/lib/redux/services/produccionApi'
 import { useGetProductosQuery } from '@/lib/redux/services/productosApi'
 import { useGetGastosDEQuery } from '@/lib/redux/services/gastosDEApi'
+
+type RecipeEditorItem = {
+  productoId: string
+  cantidad: number
+  unidadSimbolo: string | null
+  desperdicio: number
+}
+
+type PreviewProduct = {
+  id: string
+  nombre: string
+  unidad?: {
+    simbolo?: string | null
+  } | null
+}
+
+type RecipeUnitPreviewRow = {
+  productoId: string
+  blockingMessage: string | null
+  normalizationMessage: string | null
+}
+
+type RecipeUnitPreview = {
+  hasBlockingIssues: boolean
+  blockingMessages: string[]
+  normalizationMessages: string[]
+  rows: RecipeUnitPreviewRow[]
+}
+
+function formatPreviewQuantity(value: number): string {
+  if (Number.isInteger(value)) return String(value)
+  return parseFloat(value.toFixed(3)).toString()
+}
+
+function formatUnitLabel(unit: string | null | undefined): string {
+  return unit?.trim() || 'sin unidad'
+}
+
+function formatUnitErrorMessage(error: UnitError): string {
+  switch (error.reason) {
+    case 'missing_unit':
+      return `${error.productoNombre ?? 'Producto'}: Debés especificar una unidad para este producto.`
+    case 'unknown_unit':
+      return `${error.productoNombre ?? 'Producto'}: La unidad ingresada no es reconocida.`
+    case 'missing_product':
+      return `Producto no encontrado en catálogo: ${error.productoId}.`
+    case 'incompatible_category':
+    default:
+      return `${error.productoNombre ?? 'Producto'}: La unidad ${formatUnitLabel(error.providedUnit)} no es compatible con ${formatUnitLabel(error.canonicalUnit)}.`
+  }
+}
+
+export function formatUnitNormalizationMessage(normalization: UnitNormalization): string {
+  return `${normalization.productoNombre}: ${formatPreviewQuantity(normalization.originalCantidad)} ${formatUnitLabel(normalization.providedUnit)} se guardará como ${formatPreviewQuantity(normalization.normalizedCantidad)} ${formatUnitLabel(normalization.canonicalUnit)}.`
+}
+
+export function buildRecipeUnitPreview(
+  items: RecipeEditorItem[],
+  productos: PreviewProduct[]
+): RecipeUnitPreview {
+  const rows = items.map((item) => {
+    const producto = productos.find((prod) => prod.id === item.productoId)
+
+    if (!producto) {
+      return {
+        productoId: item.productoId,
+        blockingMessage: `Producto no encontrado en catálogo: ${item.productoId}.`,
+        normalizationMessage: null,
+      }
+    }
+
+    const result = validateAndNormalizeIngredientUnit(item, {
+      id: producto.id,
+      nombre: producto.nombre,
+      unidadSimbolo: producto.unidad?.simbolo ?? null,
+    })
+
+    return {
+      productoId: item.productoId,
+      blockingMessage: result.error ? formatUnitErrorMessage(result.error) : null,
+      normalizationMessage: result.normalization
+        ? formatUnitNormalizationMessage(result.normalization)
+        : null,
+    }
+  })
+
+  const blockingMessages = rows
+    .map((row) => row.blockingMessage)
+    .filter((message): message is string => Boolean(message))
+
+  const normalizationMessages = rows
+    .map((row) => row.normalizationMessage)
+    .filter((message): message is string => Boolean(message))
+
+  return {
+    hasBlockingIssues: blockingMessages.length > 0,
+    blockingMessages,
+    normalizationMessages,
+    rows,
+  }
+}
 
 /**
  * @description Página principal del módulo de Producción.
@@ -106,9 +211,8 @@ export default function ProduccionPage() {
   const [cantidadOrden, setCantidadOrden] = useState(1)
   const [selectedConcepto, setSelectedConcepto] = useState('')
   const [valeItems, setValeItems] = useState<Array<{ productoId: string; cantidad: number }>>([])
-  const [nuevoItems, setNuevoItems] = useState<Array<{ productoId: string; cantidad: number; unidadSimbolo: string | null; desperdicio: number }>>([])
+  const [nuevoItems, setNuevoItems] = useState<RecipeEditorItem[]>([])
   const [busquedaProductos, setBusquedaProductos] = useState('')
-  const [unitWarnings, setUnitWarnings] = useState<string[]>([])
 
   const UNIT_OPTION_NONE = 'none'
   const NO_CONVERSION_UNITS = ['unidad', 'pieza']
@@ -150,23 +254,22 @@ export default function ProduccionPage() {
     }).format(amount)
   }
 
-  /**
-   * @description Detecta si hay incompatibilidad de unidades entre ingrediente y producto
-   */
-  const getUnitWarning = (item: any) => {
-    const prod = productosTyped?.find((p) => p.id === item.productoId)
-    if (!prod) return null
-    
-    const { isCompatible, warning } = validateUnitCompatibility(item.unidadSimbolo, prod.unidad?.simbolo)
-    return isCompatible ? null : warning
-  }
-
   const getProductosFiltrados = () => {
     return filterProductos(
       busquedaProductos,
       productosTyped?.filter((p) => !nuevoItems.find((i) => i.productoId === p.id)) || []
     )
   }
+
+  const newRecipePreview = buildRecipeUnitPreview(nuevoItems, productosTyped || [])
+  const editRecipePreview = buildRecipeUnitPreview(editItems, productosTyped || [])
+
+  const getPreviewRowState = (preview: RecipeUnitPreview, productoId: string) =>
+    preview.rows.find((row) => row.productoId === productoId) ?? {
+      productoId,
+      blockingMessage: null,
+      normalizationMessage: null,
+    }
 
   const getEstadoBadge = (estado: string) => {
     switch (String(estado).toUpperCase()) {
@@ -201,11 +304,18 @@ export default function ProduccionPage() {
           recetaId: result.recetaId,
           ingredientes: nuevoItems,
         }).unwrap()
-        
-        // Capturar warnings si existen
-        if (ingredientesResult?.unitWarnings && ingredientesResult.unitWarnings.length > 0) {
-          setUnitWarnings(ingredientesResult.unitWarnings)
+
+        if (ingredientesResult?.unitNormalizations?.length) {
+          toast.success('Receta creada', {
+            description: ingredientesResult.unitNormalizations
+              .map(formatUnitNormalizationMessage)
+              .join(' '),
+          })
+        } else {
+          toast.success('Receta creada')
         }
+      } else {
+        toast.success('Receta creada')
       }
       
       setDialogRecetaOpen(false)
@@ -213,8 +323,13 @@ export default function ProduccionPage() {
       setRendimiento(1)
       setSelectedProducto('')
       setNuevoItems([])
-      setUnitWarnings([])
     } catch (error) {
+      const unitErrors = (error as any)?.data?.unitErrors
+      if (Array.isArray(unitErrors) && unitErrors.length > 0) {
+        toast.error('No se pudo guardar la receta', {
+          description: unitErrors.map(formatUnitErrorMessage).join(' '),
+        })
+      }
       console.error('Error al crear receta:', error)
     }
   }
@@ -256,8 +371,7 @@ export default function ProduccionPage() {
   const handleAprobarOrden = async (ordenId: string) => {
     try {
       const result = await aprobarOrden({ ordenProduccionId: ordenId }).unwrap()
-      sileo.success({
-        title: 'Orden aprobada',
+      toast.success('Orden aprobada', {
         description: 'Materiales reservados exitosamente'
       })
     } catch (error: any) {
@@ -265,18 +379,15 @@ export default function ProduccionPage() {
         const faltantes = error.data.materialesFaltantes
           .map((m: any) => `${m.productoNombre}: necesita ${m.requerido}, disponible ${m.disponible}`)
           .join('\n')
-        sileo.error({
-          title: 'Materiales insuficientes',
+        toast.error('Materiales insuficientes', {
           description: faltantes
         })
       } else if (error?.data?.error) {
-        sileo.error({
-          title: 'Error',
+        toast.error('Error', {
           description: error.data.error
         })
       } else {
-        sileo.error({
-          title: 'Error al aprobar orden',
+        toast.error('Error al aprobar orden', {
           description: 'Intenta de nuevo'
         })
       }
@@ -287,19 +398,16 @@ export default function ProduccionPage() {
   const handleCompletarOrden = async (ordenId: string) => {
     try {
       const result = await completarOrden({ ordenProduccionId: ordenId }).unwrap()
-      sileo.success({
-        title: 'Orden completada',
+      toast.success('Orden completada', {
         description: 'Stock del producto final incrementado'
       })
     } catch (error: any) {
       if (error?.data?.error) {
-        sileo.error({
-          title: 'Error al completar orden',
+        toast.error('Error al completar orden', {
           description: error.data.error
         })
       } else {
-        sileo.error({
-          title: 'Error',
+        toast.error('Error', {
           description: 'Intenta de nuevo'
         })
       }
@@ -310,19 +418,16 @@ export default function ProduccionPage() {
   const handleCancelarOrden = async (ordenId: string) => {
     try {
       const result = await cancelarOrden({ ordenProduccionId: ordenId, observaciones: 'Cancelado por usuario' }).unwrap()
-      sileo.success({
-        title: 'Orden cancelada',
+      toast.success('Orden cancelada', {
         description: 'Los materiales reservados han sido liberados al inventario'
       })
     } catch (error: any) {
       if (error?.data?.error) {
-        sileo.error({
-          title: 'Error al cancelar orden',
+        toast.error('Error al cancelar orden', {
           description: error.data.error
         })
       } else {
-        sileo.error({
-          title: 'Error',
+        toast.error('Error', {
           description: 'Intenta de nuevo'
         })
       }
@@ -349,8 +454,15 @@ export default function ProduccionPage() {
         recetaId: recetaEdit.recetaId,
         ingredientes: editItems,
       }).unwrap()
+      toast.success('Receta actualizada')
       setRecetaEdit(null)
     } catch (error) {
+      const unitErrors = (error as any)?.data?.unitErrors
+      if (Array.isArray(unitErrors) && unitErrors.length > 0) {
+        toast.error('No se pudo actualizar la receta', {
+          description: unitErrors.map(formatUnitErrorMessage).join(' '),
+        })
+      }
       console.error('Error al guardar receta:', error)
     }
   }
@@ -478,26 +590,32 @@ export default function ProduccionPage() {
                       </DialogDescription>
                     </DialogHeader>
 
-                    {/* Banner de warnings de unidades */}
-                    {unitWarnings.length > 0 && (
-                      <div className="shrink-0 border-l-4 border-yellow-500 bg-yellow-50 p-4 rounded-r-md">
+                    {(newRecipePreview.blockingMessages.length > 0 || newRecipePreview.normalizationMessages.length > 0) && (
+                      <div className={`shrink-0 p-4 rounded-r-md ${newRecipePreview.hasBlockingIssues ? 'border-l-4 border-yellow-500 bg-yellow-50' : 'border-l-4 border-blue-500 bg-blue-50'}`}>
                         <div className="flex">
                           <div className="shrink-0">
-                            <span className="text-2xl text-yellow-500">⚠️</span>
+                            <span className={`text-2xl ${newRecipePreview.hasBlockingIssues ? 'text-yellow-500' : 'text-blue-500'}`}>
+                              {newRecipePreview.hasBlockingIssues ? '⚠️' : 'ℹ️'}
+                            </span>
                           </div>
                           <div className="ml-3">
-                            <p className="text-sm font-medium text-yellow-800">
-                              Advertencias de Unidad de Medida
+                            <p className={`text-sm font-medium ${newRecipePreview.hasBlockingIssues ? 'text-yellow-800' : 'text-blue-800'}`}>
+                              {newRecipePreview.hasBlockingIssues ? 'Problemas de Unidad de Medida' : 'Normalización de Unidad de Medida'}
                             </p>
-                            <ul className="mt-2 list-disc list-inside text-sm text-yellow-700 space-y-1">
-                              {unitWarnings.map((warning, idx) => (
-                                <li key={idx}>{warning}</li>
-                              ))}
-                            </ul>
-                            <p className="mt-3 text-xs text-yellow-600">
-                              💡 Estos productos tienen unidades incompatibles con las especificadas en la receta. 
-                              Las conversiones pueden no ser precisas. Recomendamos verificar la configuración.
-                            </p>
+                            {newRecipePreview.blockingMessages.length > 0 && (
+                              <ul className="mt-2 list-disc list-inside text-sm text-yellow-700 space-y-1">
+                                {newRecipePreview.blockingMessages.map((warning, idx) => (
+                                  <li key={`block-${idx}`}>{warning}</li>
+                                ))}
+                              </ul>
+                            )}
+                            {newRecipePreview.normalizationMessages.length > 0 && (
+                              <ul className={`mt-2 list-disc list-inside text-sm space-y-1 ${newRecipePreview.hasBlockingIssues ? 'text-blue-700' : 'text-blue-700'}`}>
+                                {newRecipePreview.normalizationMessages.map((message, idx) => (
+                                  <li key={`norm-${idx}`}>{message}</li>
+                                ))}
+                              </ul>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -616,14 +734,17 @@ export default function ProduccionPage() {
                               <TableBody>
                                 {nuevoItems.map((item) => {
                                   const prod = productosTyped?.find((p) => p.id === item.productoId)
-                                  const unitWarn = getUnitWarning(item)
+                                  const previewRow = getPreviewRowState(newRecipePreview, item.productoId)
                                   return (
                                     <TableRow key={item.productoId} className="text-xs">
                                       <TableCell className="text-xs whitespace-nowrap">
                                         <div className="flex items-center gap-2">
                                           <span>{prod?.nombre}</span>
-                                          {unitWarn && (
-                                            <span className="text-yellow-600 text-lg" title={unitWarn}>⚠️</span>
+                                          {previewRow.blockingMessage && (
+                                            <span className="text-yellow-600 text-lg" title={previewRow.blockingMessage}>⚠️</span>
+                                          )}
+                                          {!previewRow.blockingMessage && previewRow.normalizationMessage && (
+                                            <span className="text-blue-600 text-lg" title={previewRow.normalizationMessage}>ℹ️</span>
                                           )}
                                         </div>
                                       </TableCell>
@@ -703,10 +824,7 @@ export default function ProduccionPage() {
                         Cancelar
                       </Button>
                       {(() => {
-                        // Calculate real-time warnings based on nuevoItems (not post-API state)
-                        const hasAnyWarnings = nuevoItems.some((item) => getUnitWarning(item) !== null);
-                        
-                        return hasAnyWarnings ? (
+                        return newRecipePreview.hasBlockingIssues ? (
                           <Button 
                             disabled 
                             className="bg-destructive/50 cursor-not-allowed" 
@@ -1205,12 +1323,33 @@ export default function ProduccionPage() {
 
       {/* Dialog: Editar Receta */}
       <Dialog open={recetaEdit !== null} onOpenChange={(open) => { if (!open) setRecetaEdit(null) }}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Editar Receta</DialogTitle>
             <DialogDescription>Modificá los metadatos y los ingredientes de la receta</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          {(editRecipePreview.blockingMessages.length > 0 || editRecipePreview.normalizationMessages.length > 0) && (
+            <div className={`shrink-0 p-4 rounded-r-md ${editRecipePreview.hasBlockingIssues ? 'border-l-4 border-yellow-500 bg-yellow-50' : 'border-l-4 border-blue-500 bg-blue-50'}`}>
+              <p className={`text-sm font-medium ${editRecipePreview.hasBlockingIssues ? 'text-yellow-800' : 'text-blue-800'}`}>
+                {editRecipePreview.hasBlockingIssues ? 'Problemas de Unidad de Medida' : 'Normalización de Unidad de Medida'}
+              </p>
+              {editRecipePreview.blockingMessages.length > 0 && (
+                <ul className="mt-2 list-disc list-inside text-sm text-yellow-700 space-y-1">
+                  {editRecipePreview.blockingMessages.map((message, idx) => (
+                    <li key={`edit-block-${idx}`}>{message}</li>
+                  ))}
+                </ul>
+              )}
+              {editRecipePreview.normalizationMessages.length > 0 && (
+                <ul className="mt-2 list-disc list-inside text-sm text-blue-700 space-y-1">
+                  {editRecipePreview.normalizationMessages.map((message, idx) => (
+                    <li key={`edit-norm-${idx}`}>{message}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+          <div className="grid gap-4 py-4 w-full">
             <div className="grid gap-2">
               <Label htmlFor="editNombre">Nombre</Label>
               <Input
@@ -1244,10 +1383,10 @@ export default function ProduccionPage() {
               <div className="grid gap-2">
                 <Label>Producto asociado</Label>
                 <Select value={editProductoId} onValueChange={setEditProductoId}>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Sin producto" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-w-sm">
                     {productosTyped?.map((p) => (
                       <SelectItem key={p.id} value={p.id}>{p.nombre}</SelectItem>
                     ))}
@@ -1264,10 +1403,10 @@ export default function ProduccionPage() {
                   }
                 }}
               >
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder="Agregar ingrediente" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="max-w-sm">
                   {productosTyped?.filter((p) => !editItems.find((i) => i.productoId === p.id)).map((p) => (
                     <SelectItem key={p.id} value={p.id}>{p.nombre}</SelectItem>
                   ))}
@@ -1288,9 +1427,20 @@ export default function ProduccionPage() {
                     <TableBody>
                       {editItems.map((item) => {
                         const prod = productosTyped?.find((p) => p.id === item.productoId)
+                        const previewRow = getPreviewRowState(editRecipePreview, item.productoId)
                         return (
                           <TableRow key={item.productoId}>
-                            <TableCell>{prod?.nombre}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <span>{prod?.nombre}</span>
+                                {previewRow.blockingMessage && (
+                                  <span className="text-yellow-600 text-lg" title={previewRow.blockingMessage}>⚠️</span>
+                                )}
+                                {!previewRow.blockingMessage && previewRow.normalizationMessage && (
+                                  <span className="text-blue-600 text-lg" title={previewRow.normalizationMessage}>ℹ️</span>
+                                )}
+                              </div>
+                            </TableCell>
                             <TableCell>
                               <Input
                                 type="number"
@@ -1309,7 +1459,7 @@ export default function ProduccionPage() {
                                 <SelectTrigger className="w-28">
                                   <SelectValue placeholder="Sin unidad" />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="max-w-xs">
                                   <SelectItem value={UNIT_OPTION_NONE}>Sin unidad</SelectItem>
                                   {MASS_UNITS.map((unit) => (
                                     <SelectItem key={`edit-mass-${unit}`} value={unit}>{unit}</SelectItem>
@@ -1354,7 +1504,13 @@ export default function ProduccionPage() {
           </div>
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setRecetaEdit(null)}>Cancelar</Button>
-            <Button onClick={handleGuardarEdicion} disabled={!editNombre}>Guardar</Button>
+            <Button
+              onClick={handleGuardarEdicion}
+              disabled={!editNombre || editRecipePreview.hasBlockingIssues}
+              title={editRecipePreview.hasBlockingIssues ? 'Corregí las unidades incompatibles antes de guardar' : undefined}
+            >
+              Guardar
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

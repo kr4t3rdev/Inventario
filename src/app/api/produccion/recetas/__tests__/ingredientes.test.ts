@@ -39,6 +39,10 @@ vi.mock('@/lib/utils/unit-converter', () => ({
   MASS_UNITS: ['g', 'kg', 'lb', 'oz'],
   VOLUME_UNITS: ['ml', 'L', 'fl oz', 'tsp', 'tbsp', 'cup'],
   convertToBase: (cantidad: number) => cantidad,
+  convertBetweenUnits: (cantidad: number, from: string | null, to: string | null) => {
+    if (from === 'g' && to === 'kg') return cantidad / 1000
+    return cantidad
+  },
 }))
 
 describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes', () => {
@@ -402,5 +406,178 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
     expect(response.status).toBe(200)
     expect(data.costoUnitario).toBe(100)
     expect(data.RecetaIngrediente).toHaveLength(0)
+  })
+
+  it('debe persistir en unidad canónica y retornar unitNormalizations', async () => {
+    const recetaId = 'receta-123'
+
+    vi.mocked(prisma.receta.findUnique).mockResolvedValueOnce({
+      recetaId,
+      nombre: 'Receta Normalizada',
+      rendimiento: 1,
+      costoUnitario: 0,
+      productoId: 'prod-final',
+      instrucciones: null,
+      tiempoPrep: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      Producto: {
+        id: 'prod-final',
+        nombre: 'Producto Final',
+        precioCosto: 10,
+      },
+    })
+
+    vi.mocked(prisma.recetaIngrediente.deleteMany).mockResolvedValueOnce({ count: 0 })
+    vi.mocked(prisma.recetaIngrediente.createMany).mockResolvedValueOnce({ count: 1 })
+    vi.mocked(prisma.producto.findMany).mockResolvedValueOnce([
+      {
+        id: 'prod-1',
+        nombre: 'Harina',
+        precioCosto: 20,
+        unidad: { simbolo: 'kg' },
+      },
+    ])
+    vi.mocked(calculateCostoUnitarioReceta).mockReturnValueOnce(20)
+    vi.mocked(prisma.receta.update).mockResolvedValueOnce({
+      recetaId,
+      nombre: 'Receta Normalizada',
+      rendimiento: 1,
+      costoUnitario: 20,
+      productoId: 'prod-final',
+      instrucciones: null,
+      tiempoPrep: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      Producto: {
+        id: 'prod-final',
+        nombre: 'Producto Final',
+      },
+      RecetaIngrediente: [
+        {
+          id: 'ing-1',
+          recetaId,
+          productoId: 'prod-1',
+          cantidad: 0.5,
+          unidadSimbolo: 'kg',
+          desperdicio: 0,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          Producto: {
+            id: 'prod-1',
+            nombre: 'Harina',
+            precioCosto: 20,
+            stock: 30,
+          },
+        },
+      ],
+    })
+
+    const request = new NextRequest(
+      `http://localhost/api/produccion/recetas/${recetaId}/ingredientes`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          ingredientes: [
+            {
+              productoId: 'prod-1',
+              cantidad: 500,
+              unidadSimbolo: 'g',
+              desperdicio: 0,
+            },
+          ],
+        }),
+      }
+    )
+
+    const response = await setIngredientesHandler(request, { params: Promise.resolve({ id: recetaId }) })
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.unitNormalizations).toEqual([
+      {
+        productoId: 'prod-1',
+        productoNombre: 'Harina',
+        providedUnit: 'g',
+        canonicalUnit: 'kg',
+        originalCantidad: 500,
+        normalizedCantidad: 0.5,
+      },
+    ])
+    expect(vi.mocked(calculateCostoUnitarioReceta)).toHaveBeenCalledWith(
+      10,
+      [
+        expect.objectContaining({
+          productoId: 'prod-1',
+          cantidad: 0.5,
+          unidadSimbolo: 'kg',
+        }),
+      ],
+      1
+    )
+  })
+
+  it('debe rechazar ingredientes incompatibles con unitErrors y sin persistir cambios', async () => {
+    const recetaId = 'receta-123'
+
+    vi.mocked(prisma.receta.findUnique).mockResolvedValueOnce({
+      recetaId,
+      nombre: 'Receta Inválida',
+      rendimiento: 1,
+      costoUnitario: 0,
+      productoId: 'prod-final',
+      instrucciones: null,
+      tiempoPrep: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      Producto: {
+        id: 'prod-final',
+        nombre: 'Producto Final',
+        precioCosto: 10,
+      },
+    })
+
+    vi.mocked(prisma.producto.findMany).mockResolvedValueOnce([
+      {
+        id: 'prod-1',
+        nombre: 'Harina',
+        precioCosto: 20,
+        unidad: { simbolo: 'kg' },
+      },
+    ])
+
+    const request = new NextRequest(
+      `http://localhost/api/produccion/recetas/${recetaId}/ingredientes`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          ingredientes: [
+            {
+              productoId: 'prod-1',
+              cantidad: 1,
+              unidadSimbolo: 'L',
+              desperdicio: 0,
+            },
+          ],
+        }),
+      }
+    )
+
+    const response = await setIngredientesHandler(request, { params: Promise.resolve({ id: recetaId }) })
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(data.error).toContain('unidades')
+    expect(data.unitErrors).toEqual([
+      {
+        productoId: 'prod-1',
+        productoNombre: 'Harina',
+        providedUnit: 'L',
+        canonicalUnit: 'kg',
+        reason: 'incompatible_category',
+      },
+    ])
+    expect(vi.mocked(prisma.$transaction)).not.toHaveBeenCalled()
+    expect(vi.mocked(prisma.recetaIngrediente.deleteMany)).not.toHaveBeenCalled()
   })
 })

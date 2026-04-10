@@ -16,40 +16,8 @@ const nextConfig: NextConfig = {
     unoptimized: true,
   },
   
-  // Configuración de webpack optimizada
-  webpack: (config, { isServer, dev }) => {
-    if (!dev) {
-      // Desactivar completamente los mapas fuente
-      config.devtool = false;
-
-      // Caché de webpack persistida con ruta absoluta
-      config.cache = {
-        type: 'filesystem',
-        buildDependencies: {
-          config: [path.resolve(process.cwd(), 'next.config.ts')],
-        },
-        cacheDirectory: path.resolve(__dirname, '.next/cache/webpack'),
-      };
-
-      // Limitar workers para evitar sobrecarga
-      config.parallelism = 2;
-
-      // Optimizaciones de performance
-      config.performance = {
-        hints: false,
-      };
-    }
-
-    // Excluir directorio e2e del build
-    config.module = config.module || {};
-    config.module.rules = config.module.rules || [];
-    config.module.rules.push({
-      test: /\.ts$/,
-      exclude: [/node_modules/, /e2e/],
-    });
-
-    return config;
-  },
+  // Nota: Webpack no se usa con Turbopack en Next.js 15
+  // Solo usamos configuración de turbopack a través de experimental.turbopack
   
   // Optimizaciones experimentales
   experimental: {

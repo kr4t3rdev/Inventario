@@ -3,7 +3,7 @@ import { withAuthPost } from '@/lib/auth-middleware';
 import { prisma } from '@/lib/prisma';
 import { convertToBase } from '@/lib/utils/unit-converter';
 import { calculateCostoUnitarioReceta } from '@/lib/utils/produccion';
-import { validateIngredientsUnits } from '@/lib/validators/production-units';
+import { validateAndNormalizeIngredientUnit } from '@/lib/validators/production-units';
 import { z } from 'zod';
 
 const setIngredientesSchema = z.object({
@@ -73,9 +73,44 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
       );
     }
 
-    // Validar compatibilidad de unidades
-    const validaciones = validateIngredientsUnits(ingredientes, productosInventario);
-    const warnings = validaciones.filter((v) => !v.isValid && v.warning);
+    const normalizedIngredientes = ingredientes.map((ing) => {
+      const producto = productosInventario.find((p) => p.id === ing.productoId);
+
+      if (!producto) {
+        return {
+          isValid: false as const,
+          error: {
+            productoId: ing.productoId,
+            productoNombre: null,
+            providedUnit: ing.unidadSimbolo ?? null,
+            canonicalUnit: null,
+            reason: 'missing_product' as const,
+          },
+        };
+      }
+
+      return validateAndNormalizeIngredientUnit(ing, producto);
+    });
+
+    const unitErrors = normalizedIngredientes
+      .filter((result) => !result.isValid)
+      .map((result) => result.error)
+      .filter(Boolean);
+
+    if (unitErrors.length > 0) {
+      return NextResponse.json(
+        {
+          error: 'Hay ingredientes con unidades incompatibles o no normalizables.',
+          unitErrors,
+        },
+        { status: 400 }
+      );
+    }
+
+    const unitNormalizations = normalizedIngredientes
+      .filter((result) => result.isValid && result.normalization)
+      .map((result) => result.normalization)
+      .filter(Boolean);
 
     // CRITICAL FIX #3: Wrap entire operation in transaction for atomicity
     const recetaActualizada = await prisma.$transaction(async (tx) => {
@@ -87,12 +122,12 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
       // Step 2: Create new ingredients
       if (ingredientes.length > 0) {
         await tx.recetaIngrediente.createMany({
-          data: ingredientes.map((ing) => ({
+          data: ingredientes.map((ing, index) => ({
             id: crypto.randomUUID(),
             recetaId,
             productoId: ing.productoId,
-            cantidad: ing.cantidad,
-            unidadSimbolo: ing.unidadSimbolo ?? null,
+            cantidad: normalizedIngredientes[index].normalizedCantidad ?? ing.cantidad,
+            unidadSimbolo: normalizedIngredientes[index].normalizedUnidadSimbolo ?? ing.unidadSimbolo ?? null,
             desperdicio: ing.desperdicio,
             updatedAt: new Date(),
           })),
@@ -102,17 +137,21 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
       // Step 3: Calculate and update cost (reuse already-fetched productos)
       const precioCostoProductoFinal = recetaExistente.Producto?.precioCosto || 0;
 
-      const productosAgregados = ingredientes.map((ing) => {
+      const productosAgregados = ingredientes.map((ing, index) => {
         const producto = productosInventario.find((p) => p.id === ing.productoId);
         // CRITICAL FIX #4: Null check (guaranteed to exist after validation above, but defensive)
         if (!producto) {
           throw new Error(`Producto ${ing.productoId} no encontrado (inconsistencia de datos)`);
         }
 
+        const normalizedCantidad = normalizedIngredientes[index].normalizedCantidad ?? ing.cantidad;
+        const normalizedUnidadSimbolo =
+          normalizedIngredientes[index].normalizedUnidadSimbolo ?? ing.unidadSimbolo ?? null;
+
         return {
           productoId: ing.productoId,
-          cantidad: convertToBase(ing.cantidad, ing.unidadSimbolo),
-          unidadSimbolo: ing.unidadSimbolo,
+          cantidad: convertToBase(normalizedCantidad, normalizedUnidadSimbolo),
+          unidadSimbolo: normalizedUnidadSimbolo,
           producto,
         };
       });
@@ -158,10 +197,10 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
       });
     });
 
-    // Return recipe + warnings if any exist
+    // Return recipe + normalization info if any exist
     const response: any = recetaActualizada;
-    if (warnings.length > 0) {
-      response.unitWarnings = warnings.map((w) => w.warning);
+    if (unitNormalizations.length > 0) {
+      response.unitNormalizations = unitNormalizations;
     }
 
     return NextResponse.json(response);

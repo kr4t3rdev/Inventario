@@ -13,7 +13,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Loader2, AlertTriangle, CheckCircle, Save, X, CreditCard, AlignLeft, Power, Building2 } from "lucide-react"
-import { sileo } from 'sileo'
+import { sileo } from '@/lib/sileo-shim'
 import { useGetCuentasBancariasQuery } from "@/lib/redux/services/contabilidadApi"
 import { CreateTipoPagoRequest, UpdateTipoPagoRequest, TipoPagoWithDetails, CuentaBancaria } from "../../app/models/model"
 import { motion, AnimatePresence } from "framer-motion"

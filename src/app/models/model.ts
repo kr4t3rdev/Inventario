@@ -2036,6 +2036,23 @@ export interface RecetaProduccion {
   ingredientes: RecetaProduccionIngrediente[]
 }
 
+export interface UnitNormalization {
+  productoId: string
+  productoNombre: string
+  providedUnit: string | null
+  canonicalUnit: string | null
+  originalCantidad: number
+  normalizedCantidad: number
+}
+
+export interface UnitError {
+  productoId: string
+  productoNombre: string | null
+  providedUnit: string | null
+  canonicalUnit: string | null
+  reason: 'incompatible_category' | 'missing_unit' | 'unknown_unit' | 'missing_product'
+}
+
 // Orden de producción
 export interface OrdenProduccion {
   ordenProduccionId: string
@@ -2103,9 +2120,10 @@ export interface CreateOrdenProduccionPayload {
   fechaProduccion?: string
 }
 
-// Respuesta de setIngredientes — extiende RecetaProduccion con warnings opcionales
+// Respuesta de setIngredientes — extiende RecetaProduccion con contratos explícitos de unidades
 export interface SetIngredientesResponse extends RecetaProduccion {
-  unitWarnings?: string[]
+  unitNormalizations?: UnitNormalization[]
+  unitErrors?: UnitError[]
 }
 
 // Payload para crear receta de producción

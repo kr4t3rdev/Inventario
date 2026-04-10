@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
-import { sileo } from 'sileo'
+import { sileo } from '@/lib/sileo-shim'
 import { motion } from 'framer-motion'
 import { ShoppingCart, Sparkles, Loader2 } from 'lucide-react'
 

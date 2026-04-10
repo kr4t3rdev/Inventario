@@ -30,7 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { sileo } from 'sileo'
+import { sileo } from '@/lib/sileo-shim'
 import { getAuthToken } from "@/lib/token"
 import { Plus, UserPlus, Sparkles, Loader2, PenTool } from "lucide-react"
 import { motion } from "framer-motion"

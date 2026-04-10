@@ -39,7 +39,7 @@ import {
   Trash2,
   AlertCircle,
 } from "lucide-react"
-import { sileo } from 'sileo'
+import { sileo } from '@/lib/sileo-shim'
 import {
   useReconciliarVentaMutation,
   useGetCuentasBancariasQuery,

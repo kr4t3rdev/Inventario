@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Loader2, Save, X } from 'lucide-react';
-import { sileo } from 'sileo';
+import { sileo } from '@/lib/sileo-shim';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

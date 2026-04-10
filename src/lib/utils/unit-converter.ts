@@ -23,6 +23,8 @@ export type VolumeUnit = typeof VOLUME_UNITS[number]
  */
 export type KnownUnit = MassUnit | VolumeUnit
 
+const DISCRETE_UNITS = ['unidad', 'pieza'] as const
+
 const MASS_TO_GRAMS: Record<string, number> = {
   g: 1,
   kg: 1000,
@@ -50,6 +52,16 @@ function normalizeSymbol(simbolo: string | null | undefined): string {
   }
 
   return simbolo.trim().toLowerCase().replace(/\s+/g, ' ')
+}
+
+/**
+ * @description Indica si una unidad representa conteo discreto.
+ * @param {string | null | undefined} simbolo - Símbolo a evaluar.
+ * @returns {boolean} True si la unidad es discreta.
+ */
+function isDiscreteUnit(simbolo: string | null | undefined): boolean {
+  const normalized = normalizeSymbol(simbolo)
+  return DISCRETE_UNITS.includes(normalized as (typeof DISCRETE_UNITS)[number])
 }
 
 /**
@@ -115,6 +127,45 @@ export function convertFromBase(cantidad: number, simbolo: string | null | undef
   }
 
   return cantidad
+}
+
+/**
+ * @description Convierte una cantidad entre dos unidades compatibles usando unidad base intermedia.
+ * @param {number} cantidad - Cantidad original.
+ * @param {string | null | undefined} fromSymbol - Unidad origen.
+ * @param {string | null | undefined} toSymbol - Unidad destino.
+ * @returns {number} Cantidad convertida a la unidad destino.
+ */
+export function convertBetweenUnits(
+  cantidad: number,
+  fromSymbol: string | null | undefined,
+  toSymbol: string | null | undefined
+): number {
+  const normalizedFrom = normalizeSymbol(fromSymbol)
+  const normalizedTo = normalizeSymbol(toSymbol)
+
+  if (normalizedFrom === normalizedTo) {
+    return cantidad
+  }
+
+  if ((!normalizedFrom && !normalizedTo) || (!normalizedFrom && isDiscreteUnit(toSymbol))) {
+    return cantidad
+  }
+
+  if ((!normalizedTo && isDiscreteUnit(fromSymbol)) || (isDiscreteUnit(fromSymbol) && isDiscreteUnit(toSymbol))) {
+    return cantidad
+  }
+
+  const fromIsMass = normalizedFrom in MASS_TO_GRAMS
+  const toIsMass = normalizedTo in MASS_TO_GRAMS
+  const fromIsVolume = normalizedFrom in VOLUME_TO_ML
+  const toIsVolume = normalizedTo in VOLUME_TO_ML
+
+  if ((fromIsMass && toIsMass) || (fromIsVolume && toIsVolume)) {
+    return convertFromBase(convertToBase(cantidad, fromSymbol), toSymbol)
+  }
+
+  throw new Error(`Las unidades "${fromSymbol}" y "${toSymbol}" no son compatibles`)
 }
 
 /**

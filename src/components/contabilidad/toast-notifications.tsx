@@ -1,6 +1,6 @@
 'use client'
 
-import { sileo } from 'sileo'
+import { sileo } from '@/lib/sileo-shim'
 import { CheckCircle, XCircle, AlertCircle, Info, DollarSign, ArrowRightLeft } from 'lucide-react'
 
 export interface ToastOptions {

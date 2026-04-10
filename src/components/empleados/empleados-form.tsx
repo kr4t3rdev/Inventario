@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { sileo } from 'sileo'
+import { sileo } from '@/lib/sileo-shim'
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAddEmpleadoMutation, useGetEmpleadosQuery, useUpdateEmpleadoMutation } from "@/lib/redux/services/empleadosApi"
 import { Users, Loader2 } from "lucide-react"

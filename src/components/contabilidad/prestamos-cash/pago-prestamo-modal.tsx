@@ -4,7 +4,7 @@ import { useEffect, useMemo } from "react"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { sileo } from "sileo"
+import { sileo } from "@/lib/sileo-shim"
 import {
   Dialog,
   DialogContent,

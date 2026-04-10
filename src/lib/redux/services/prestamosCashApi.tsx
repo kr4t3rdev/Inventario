@@ -18,7 +18,8 @@ export const prestamosCashApi = apiSlice.injectEndpoints({
         const qs = searchParams.toString()
         return `/contabilidad/prestamos-cash${qs ? `?${qs}` : ''}`
       },
-      transformResponse: (response: { prestamos: PrestamoCash[] }) => response.prestamos,
+      transformResponse: (response: { prestamos?: PrestamoCash[] } | PrestamoCash[]) =>
+        Array.isArray(response) ? response : response.prestamos ?? [],
       providesTags: ['PrestamosCash'],
     }),
     getPrestamosCashStats: builder.query<PrestamosCashStats, void>({

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Trash2, Tag, Tags, Sparkles, AlertCircle, ListChecks } from 'lucide-react';
-import { sileo } from 'sileo';
+import { sileo } from '@/lib/sileo-shim';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';

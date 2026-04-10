@@ -3,9 +3,31 @@
  * Garantiza consistencia entre unidades en recetas e inventario.
  */
 
-import { MASS_UNITS, VOLUME_UNITS } from '@/lib/utils/unit-converter';
+import { convertBetweenUnits, MASS_UNITS, VOLUME_UNITS } from '@/lib/utils/unit-converter';
 
 export type UnitCategory = 'mass' | 'volume' | 'unit' | 'unknown';
+export type UnitErrorReason =
+  | 'incompatible_category'
+  | 'missing_unit'
+  | 'unknown_unit'
+  | 'missing_product';
+
+export interface UnitNormalization {
+  productoId: string;
+  productoNombre: string;
+  providedUnit: string | null;
+  canonicalUnit: string | null;
+  originalCantidad: number;
+  normalizedCantidad: number;
+}
+
+export interface UnitError {
+  productoId: string;
+  productoNombre: string | null;
+  providedUnit: string | null;
+  canonicalUnit: string | null;
+  reason: UnitErrorReason;
+}
 
 /**
  * @description Categoriza una unidad en mass, volume, unit o unknown
@@ -142,6 +164,97 @@ export function validateIngredientsUnits(
       productoNombre: producto.nombre,
     };
   });
+}
+
+/**
+ * @description Valida y normaliza un ingrediente hacia la unidad canónica del producto.
+ * @param {{ productoId: string; cantidad: number; unidadSimbolo?: string | null }} ingrediente - Ingrediente a validar.
+ * @param {{ id: string; nombre: string; unidadSimbolo?: string | null }} producto - Producto del catálogo.
+ * @returns {{
+ *   isValid: boolean;
+ *   normalizedCantidad?: number;
+ *   normalizedUnidadSimbolo?: string | null;
+ *   normalization: UnitNormalization | null;
+ *   error?: UnitError;
+ * }} Resultado de validación y normalización.
+ */
+export function validateAndNormalizeIngredientUnit(
+  ingrediente: { productoId: string; cantidad: number; unidadSimbolo?: string | null },
+  producto: { id: string; nombre: string; unidadSimbolo?: string | null }
+): {
+  isValid: boolean;
+  normalizedCantidad?: number;
+  normalizedUnidadSimbolo?: string | null;
+  normalization: UnitNormalization | null;
+  error?: UnitError;
+} {
+  const providedUnit = ingrediente.unidadSimbolo ?? null;
+  const canonicalUnit = producto.unidadSimbolo ?? null;
+  const providedCategory = categorizeUnit(providedUnit);
+  const canonicalCategory = categorizeUnit(canonicalUnit);
+
+  if (canonicalCategory === 'unknown' || providedCategory === 'unknown') {
+    return {
+      isValid: false,
+      normalization: null,
+      error: {
+        productoId: ingrediente.productoId,
+        productoNombre: producto.nombre,
+        providedUnit,
+        canonicalUnit,
+        reason: 'unknown_unit',
+      },
+    };
+  }
+
+  if ((providedUnit === null || providedUnit === '') && (canonicalCategory === 'mass' || canonicalCategory === 'volume')) {
+    return {
+      isValid: false,
+      normalization: null,
+      error: {
+        productoId: ingrediente.productoId,
+        productoNombre: producto.nombre,
+        providedUnit: null,
+        canonicalUnit,
+        reason: 'missing_unit',
+      },
+    };
+  }
+
+  if (canonicalCategory !== providedCategory) {
+    return {
+      isValid: false,
+      normalization: null,
+      error: {
+        productoId: ingrediente.productoId,
+        productoNombre: producto.nombre,
+        providedUnit,
+        canonicalUnit,
+        reason: 'incompatible_category',
+      },
+    };
+  }
+
+  const normalizedCantidad = convertBetweenUnits(ingrediente.cantidad, providedUnit, canonicalUnit);
+  const normalizedUnidadSimbolo = canonicalUnit;
+  const normalization =
+    providedUnit !== normalizedUnidadSimbolo || normalizedCantidad !== ingrediente.cantidad
+      ? {
+          productoId: ingrediente.productoId,
+          productoNombre: producto.nombre,
+          providedUnit,
+          canonicalUnit,
+          originalCantidad: ingrediente.cantidad,
+          normalizedCantidad,
+        }
+      : null;
+
+  return {
+    isValid: true,
+    normalizedCantidad,
+    normalizedUnidadSimbolo,
+    normalization,
+  };
 }
 
 /**

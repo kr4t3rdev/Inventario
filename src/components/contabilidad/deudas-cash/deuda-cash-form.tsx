@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { useCreateDeudaCashMutation } from "@/lib/redux/services/deudasCashApi"
 import { ImageIcon, Loader2, TrendingUp, Upload, X } from "lucide-react"
-import { sileo } from "sileo"
+import { sileo } from "@/lib/sileo-shim"
 import { getAuthToken } from "@/lib/token"
 
 const deudaSchema = z.object({

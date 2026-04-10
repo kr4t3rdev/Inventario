@@ -71,7 +71,6 @@ export const GET = withAuthGet(async (request: NextRequest) => {
               nombre: true
             }
           },
-          cuentaPorCobrar: true,
           reconciliaciones: {
             include: {
               tipoPago: true,

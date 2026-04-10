@@ -34,7 +34,6 @@ import { Textarea } from "@/components/ui/textarea"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { sileo } from 'sileo'
 import { Card } from "@/components/ui/card"
 
 import { Producto, Oferta } from "@/app/models/model"

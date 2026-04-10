@@ -11,7 +11,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
-import { sileo } from 'sileo'
+import { sileo } from '@/lib/sileo-shim'
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAddPuntoDeVentaMutation, useGetPuntosDeVentaQuery, useUpdatePuntoDeVentaMutation } from "@/lib/redux/services/puntosDeVentaApi"
 import { motion } from "framer-motion"

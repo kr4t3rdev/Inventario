@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Clock, LogIn, LogOut, Edit, Save, Calendar, User, History, CheckCircle2, AlertCircle, Timer } from "lucide-react";
-import { sileo } from 'sileo';
+import { sileo } from '@/lib/sileo-shim';
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Empleado {

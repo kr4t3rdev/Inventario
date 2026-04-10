@@ -14,7 +14,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertTriangle, DollarSign, TrendingDown, TrendingUp } from 'lucide-react'
 import { useCreateAjusteBancarioMutation, useGetCuentasBancariasQuery, useGetMonedasQuery } from '@/lib/redux/services/contabilidadApi'
 import { useAppSelector } from '@/lib/redux/hooks'
-import { sileo } from 'sileo'
+import { sileo } from '@/lib/sileo-shim'
 import { CuentaBancaria, Moneda } from '../../app/models/model'
 
 const ajusteBancarioSchema = z.object({

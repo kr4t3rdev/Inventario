@@ -21,7 +21,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { sileo } from 'sileo';
+import { sileo } from '@/lib/sileo-shim';
 import { Skeleton } from "@/components/ui/skeleton";
 import { useGetProductosQuery } from "@/lib/redux/services/productosApi";
 import { useGetClientesQuery } from "@/lib/redux/services/ClienteApi";

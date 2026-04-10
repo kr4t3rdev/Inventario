@@ -24,7 +24,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Skeleton } from '@/components/ui/skeleton'
-import { sileo } from 'sileo'
+import { sileo } from '@/lib/sileo-shim'
 
 import {
   useAddProductoMutation,

@@ -34,7 +34,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { ArrowRightLeft, Calculator } from "lucide-react"
 import { useGetMonedasQuery, useConvertirMonedaMutation } from "@/lib/redux/services/contabilidadApi"
 import type { Moneda as MonedaModel } from "../../app/models/model"
-import { sileo } from 'sileo'
+import { sileo } from '@/lib/sileo-shim'
 
 const conversionSchema = z.object({
   monedaOrigen: z.string().min(1, "Selecciona la moneda de origen"),

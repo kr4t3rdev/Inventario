@@ -7,6 +7,7 @@ import {
 } from '@/lib/utils/produccion'
 import {
   convertToBase,
+  convertBetweenUnits,
   formatIngrediente,
   formatIngredientesList,
 } from '@/lib/utils/unit-converter'
@@ -306,6 +307,24 @@ describe('produccion utilities', () => {
 
       it('mantiene pass-through con unidad sin conversion', () => {
         expect(convertToBase(5, 'unidad')).toBe(5)
+      })
+    })
+
+    describe('convertBetweenUnits', () => {
+      it('convierte gramos a kilogramos usando unidad base', () => {
+        expect(convertBetweenUnits(500, 'g', 'kg')).toBe(0.5)
+      })
+
+      it('convierte litros a mililitros usando unidad base', () => {
+        expect(convertBetweenUnits(1.25, 'L', 'ml')).toBe(1250)
+      })
+
+      it('mantiene la cantidad cuando origen y destino coinciden', () => {
+        expect(convertBetweenUnits(3, 'unidad', 'unidad')).toBe(3)
+      })
+
+      it('lanza error cuando origen y destino son incompatibles', () => {
+        expect(() => convertBetweenUnits(1, 'kg', 'L')).toThrow('no son compatibles')
       })
     })
 

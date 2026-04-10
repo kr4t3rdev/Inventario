@@ -32,7 +32,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { useGetMonedasQuery, useUpdateTasaCambioMutation } from "@/lib/redux/services/contabilidadApi"
-import { sileo } from 'sileo'
+import { sileo } from '@/lib/sileo-shim'
 
 const tasaCambioSchema = z.object({
   monedaOrigenId: z.string().min(1, "Selecciona la moneda de origen"),

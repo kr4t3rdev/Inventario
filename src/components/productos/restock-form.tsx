@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { motion } from "framer-motion"
 import { Package, Calculator, DollarSign, Sparkles, Loader2, ArrowLeft } from "lucide-react"
-import { sileo } from 'sileo'
+import { sileo } from '@/lib/sileo-shim'
 
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"

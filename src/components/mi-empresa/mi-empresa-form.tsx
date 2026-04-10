@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import { sileo } from 'sileo'
+import { sileo } from '@/lib/sileo-shim'
 import { getAuthToken } from "@/lib/token"
 import { useGetCuentasBancariasQuery } from "@/lib/redux/services/contabilidadApi"
 import { Button } from "@/components/ui/button"

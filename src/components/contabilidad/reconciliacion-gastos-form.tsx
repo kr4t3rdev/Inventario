@@ -42,7 +42,7 @@ import {
   Plus,
   Trash2,
 } from "lucide-react"
-import { sileo } from 'sileo'
+import { sileo } from '@/lib/sileo-shim'
 import {
   useReconciliarGastoMutation,
   useGetCuentasBancariasQuery,
