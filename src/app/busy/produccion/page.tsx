@@ -702,15 +702,24 @@ export default function ProduccionPage() {
                       }}>
                         Cancelar
                       </Button>
-                      {unitWarnings.length > 0 ? (
-                        <Button disabled className="bg-destructive/50 cursor-not-allowed" title="Arregla los problemas de unidades antes de continuar">
-                          ⚠️ Arreglar Unidades
-                        </Button>
-                      ) : (
-                        <Button onClick={handleCrearReceta}>
-                          Crear Receta
-                        </Button>
-                      )}
+                      {(() => {
+                        // Calculate real-time warnings based on nuevoItems (not post-API state)
+                        const hasAnyWarnings = nuevoItems.some((item) => getUnitWarning(item) !== null);
+                        
+                        return hasAnyWarnings ? (
+                          <Button 
+                            disabled 
+                            className="bg-destructive/50 cursor-not-allowed" 
+                            title="Arregla los problemas de unidades antes de continuar"
+                          >
+                            ⚠️ Arreglar Unidades
+                          </Button>
+                        ) : (
+                          <Button onClick={handleCrearReceta}>
+                            Crear Receta
+                          </Button>
+                        );
+                      })()}
                     </div>
                   </DialogContent>
 
