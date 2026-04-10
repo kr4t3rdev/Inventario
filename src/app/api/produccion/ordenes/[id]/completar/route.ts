@@ -19,10 +19,10 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
     const orden = await prisma.ordenProduccion.findUnique({
       where: { ordenProduccionId: id },
       include: {
-        receta: {
+        Receta: {
           include: {
-            producto: true,
-            ingredientes: true,
+            Producto: true,
+            RecetaIngrediente: true,
           },
         },
       },
@@ -36,9 +36,27 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
       return NextResponse.json({ error: 'La orden no está en proceso.' }, { status: 400 });
     }
 
+    // Validar que el producto final existe en el catálogo
+    if (!orden.Receta.Producto) {
+      return NextResponse.json({
+        error: 'Producto final no configurado para esta receta.'
+      }, { status: 404 });
+    }
+
+    // Validar que el stock no excederá límites
+    const productoFinal = await prisma.producto.findUnique({
+      where: { id: orden.Receta.productoId },
+    });
+
+    if (!productoFinal) {
+      return NextResponse.json({
+        error: 'Producto final no encontrado en catálogo.'
+      }, { status: 404 });
+    }
+
     // Calcular costo de materiales
     let costoMateriales = 0;
-    for (const ingrediente of orden.receta.ingredientes) {
+    for (const ingrediente of orden.Receta.RecetaIngrediente) {
       const factorDesperdicio = 1 + (ingrediente.desperdicio ?? 0);
       const cantidadUsada = ingrediente.cantidad * factorDesperdicio * orden.cantidad;
       const producto = await prisma.producto.findUnique({
@@ -51,83 +69,86 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
 
     const costoUnitario = orden.cantidad > 0 ? Math.round(costoMateriales / orden.cantidad) : 0;
 
-    // Si hay un producto asociado, incrementar su stock
-    if (orden.receta.productoId) {
-      await prisma.producto.update({
-        where: { id: orden.receta.productoId },
+    // Usar transacción para garantizar atomicity
+    const ordenActualizada = await prisma.$transaction(async (tx) => {
+      // 1. Incrementar stock del producto final
+      const productoActualizado = await tx.producto.update({
+        where: { id: orden.Receta.productoId },
         data: {
           stock: {
-            increment: orden.cantidad * orden.receta.rendimiento,
+            increment: orden.cantidad * orden.Receta.rendimiento,
           },
         },
       });
-    }
 
-    // Actualizar estado de la orden con los costos
-    const ordenActualizada = await prisma.ordenProduccion.update({
-      where: { ordenProduccionId: id },
-      data: {
-        estado: 'COMPLETADA',
-        costoMateriales,
-        costoUnitario,
-      },
-      include: {
-        receta: {
-          include: {
-            producto: {
-              select: {
-                id: true,
-                nombre: true,
+      // 2. Actualizar estado de la orden con los costos
+      const orden_updated = await tx.ordenProduccion.update({
+        where: { ordenProduccionId: id },
+        data: {
+          estado: 'COMPLETADA',
+          costoMateriales,
+          costoUnitario: costoUnitario || 0,
+          updatedAt: new Date(),
+        },
+        include: {
+          Receta: {
+            include: {
+              Producto: {
+                select: {
+                  id: true,
+                  nombre: true,
+                },
               },
-            },
-            ingredientes: {
-              include: {
-                producto: {
-                  select: {
-                    id: true,
-                    nombre: true,
-                    precioCosto: true,
-                    stock: true,
+              RecetaIngrediente: {
+                include: {
+                  Producto: {
+                    select: {
+                      id: true,
+                      nombre: true,
+                      precioCosto: true,
+                      stock: true,
+                    },
                   },
                 },
               },
             },
           },
         },
-      },
-    });
+      });
 
-    // Crear historial de estado
-    await prisma.ordenProduccionHistorial.create({
-      data: {
-        ordenProduccionId: id,
-        estadoAnterior: 'EN_PROCESO',
-        estadoNuevo: 'COMPLETADA',
-        observaciones: `Producción completada. Costo de materiales: ${costoMateriales}`,
-        usuarioId: userId,
-      },
-    });
-
-    // Registrar en contabilidad (ReconciliacionGasto)
-    if (costoMateriales > 0) {
-      // Obtener el período actual
-      const periodo = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
-      
-      await prisma.reconciliacionGasto.create({
+      // 3. Crear historial de estado
+      await tx.ordenProduccionHistorial.create({
         data: {
-          tipoGasto: 'produccion',
-          referenciaId: id,
-          cuentaId: body.cuentaId || 'default',
-          tipoPagoId: body.tipoPagoId || 'efectivo',
-          monto: costoMateriales,
-          moneda: 'CUP',
-          descripcion: `Costo de producción - Orden: ${orden.receta.nombre} (Cantidad: ${orden.cantidad})`,
-          periodo,
-          reconciliadoPor: userId,
-          estado: 'PENDIENTE',
+          ordenProduccionId: id,
+          estadoAnterior: 'EN_PROCESO',
+          estadoNuevo: 'COMPLETADA',
+          observaciones: `Producción completada. Costo de materiales: ${costoMateriales}. Stock incrementado: ${orden.cantidad * orden.Receta.rendimiento}`,
+          usuarioId: userId,
         },
       });
-    }
+
+      // 4. Registrar en contabilidad (ReconciliacionGasto) si hay costo
+      if (costoMateriales > 0 && body.cuentaId) {
+        const periodo = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+        
+        await tx.reconciliacionGasto.create({
+          data: {
+            tipoGasto: 'produccion',
+            referenciaId: id,
+            cuentaId: body.cuentaId,
+            tipoPagoId: body.tipoPagoId || 'efectivo',
+            monto: costoMateriales,
+            moneda: 'CUP',
+            descripcion: `Costo de producción - Orden: ${orden.Receta.nombre} (Cantidad: ${orden.cantidad})`,
+            periodo,
+            reconciliadoPor: userId,
+            estado: 'PENDIENTE',
+          },
+        });
+      }
+
+      return orden_updated;
+    });
 
     return NextResponse.json(ordenActualizada);
   } catch (error) {

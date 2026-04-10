@@ -2,6 +2,7 @@
 // @ts-nocheck - Deshabilitar verificación de tipos para este archivo debido a problemas con RTK Query
 
 import { useState } from 'react'
+import { sileo } from 'sileo'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
@@ -35,6 +36,7 @@ import {
   formatIngrediente,
   formatIngredientesList,
 } from '@/lib/utils/unit-converter'
+import { validateUnitCompatibility } from '@/lib/validators/production-units'
 import { filterProductos } from '@/lib/utils/produccion'
 import { 
   useGetRecetasProduccionQuery, 
@@ -107,6 +109,7 @@ export default function ProduccionPage() {
   const [valeItems, setValeItems] = useState<Array<{ productoId: string; cantidad: number }>>([])
   const [nuevoItems, setNuevoItems] = useState<Array<{ productoId: string; cantidad: number; unidadSimbolo: string | null; desperdicio: number }>>([])
   const [busquedaProductos, setBusquedaProductos] = useState('')
+  const [unitWarnings, setUnitWarnings] = useState<string[]>([])
 
   const UNIT_OPTION_NONE = 'none'
   const NO_CONVERSION_UNITS = ['unidad', 'pieza']
@@ -148,6 +151,17 @@ export default function ProduccionPage() {
     }).format(amount)
   }
 
+  /**
+   * @description Detecta si hay incompatibilidad de unidades entre ingrediente y producto
+   */
+  const getUnitWarning = (item: any) => {
+    const prod = productosTyped?.find((p) => p.id === item.productoId)
+    if (!prod) return null
+    
+    const { isCompatible, warning } = validateUnitCompatibility(item.unidadSimbolo, prod.unidadSimbolo)
+    return isCompatible ? null : warning
+  }
+
   const getProductosFiltrados = () => {
     return filterProductos(
       busquedaProductos,
@@ -184,10 +198,15 @@ export default function ProduccionPage() {
       }).unwrap()
 
       if (nuevoItems.length > 0) {
-        await setIngredientes({
+        const ingredientesResult = await setIngredientes({
           recetaId: result.recetaId,
           ingredientes: nuevoItems,
         }).unwrap()
+        
+        // Capturar warnings si existen
+        if (ingredientesResult?.unitWarnings && ingredientesResult.unitWarnings.length > 0) {
+          setUnitWarnings(ingredientesResult.unitWarnings)
+        }
       }
       
       setDialogRecetaOpen(false)
@@ -195,6 +214,7 @@ export default function ProduccionPage() {
       setRendimiento(1)
       setSelectedProducto('')
       setNuevoItems([])
+      setUnitWarnings([])
     } catch (error) {
       console.error('Error al crear receta:', error)
     }
@@ -236,24 +256,77 @@ export default function ProduccionPage() {
 
   const handleAprobarOrden = async (ordenId: string) => {
     try {
-      await aprobarOrden({ ordenProduccionId: ordenId }).unwrap()
-    } catch (error) {
+      const result = await aprobarOrden({ ordenProduccionId: ordenId }).unwrap()
+      sileo.success({
+        title: 'Orden aprobada',
+        description: 'Materiales reservados exitosamente'
+      })
+    } catch (error: any) {
+      if (error?.data?.materialesFaltantes?.length > 0) {
+        const faltantes = error.data.materialesFaltantes
+          .map((m: any) => `${m.productoNombre}: necesita ${m.requerido}, disponible ${m.disponible}`)
+          .join('\n')
+        sileo.error({
+          title: 'Materiales insuficientes',
+          description: faltantes
+        })
+      } else if (error?.data?.error) {
+        sileo.error({
+          title: 'Error',
+          description: error.data.error
+        })
+      } else {
+        sileo.error({
+          title: 'Error al aprobar orden',
+          description: 'Intenta de nuevo'
+        })
+      }
       console.error('Error al aprobar orden:', error)
     }
   }
 
   const handleCompletarOrden = async (ordenId: string) => {
     try {
-      await completarOrden({ ordenProduccionId: ordenId }).unwrap()
-    } catch (error) {
+      const result = await completarOrden({ ordenProduccionId: ordenId }).unwrap()
+      sileo.success({
+        title: 'Orden completada',
+        description: 'Stock del producto final incrementado'
+      })
+    } catch (error: any) {
+      if (error?.data?.error) {
+        sileo.error({
+          title: 'Error al completar orden',
+          description: error.data.error
+        })
+      } else {
+        sileo.error({
+          title: 'Error',
+          description: 'Intenta de nuevo'
+        })
+      }
       console.error('Error al completar orden:', error)
     }
   }
 
   const handleCancelarOrden = async (ordenId: string) => {
     try {
-      await cancelarOrden({ ordenProduccionId: ordenId, observaciones: 'Cancelado por usuario' }).unwrap()
-    } catch (error) {
+      const result = await cancelarOrden({ ordenProduccionId: ordenId, observaciones: 'Cancelado por usuario' }).unwrap()
+      sileo.success({
+        title: 'Orden cancelada',
+        description: 'Los materiales reservados han sido liberados al inventario'
+      })
+    } catch (error: any) {
+      if (error?.data?.error) {
+        sileo.error({
+          title: 'Error al cancelar orden',
+          description: error.data.error
+        })
+      } else {
+        sileo.error({
+          title: 'Error',
+          description: 'Intenta de nuevo'
+        })
+      }
       console.error('Error al cancelar orden:', error)
     }
   }
@@ -405,6 +478,31 @@ export default function ProduccionPage() {
                         Define una receta para producir productos del inventario
                       </DialogDescription>
                     </DialogHeader>
+
+                    {/* Banner de warnings de unidades */}
+                    {unitWarnings.length > 0 && (
+                      <div className="flex-shrink-0 border-l-4 border-yellow-500 bg-yellow-50 p-4 rounded-r-md">
+                        <div className="flex">
+                          <div className="flex-shrink-0">
+                            <span className="text-2xl text-yellow-500">⚠️</span>
+                          </div>
+                          <div className="ml-3">
+                            <p className="text-sm font-medium text-yellow-800">
+                              Advertencias de Unidad de Medida
+                            </p>
+                            <ul className="mt-2 list-disc list-inside text-sm text-yellow-700 space-y-1">
+                              {unitWarnings.map((warning, idx) => (
+                                <li key={idx}>{warning}</li>
+                              ))}
+                            </ul>
+                            <p className="mt-3 text-xs text-yellow-600">
+                              💡 Estos productos tienen unidades incompatibles con las especificadas en la receta. 
+                              Las conversiones pueden no ser precisas. Recomendamos verificar la configuración.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     
                     {/* Contenido scrollable */}
                     <div className="flex-1 overflow-y-auto pr-4 space-y-6">
@@ -519,9 +617,17 @@ export default function ProduccionPage() {
                               <TableBody>
                                 {nuevoItems.map((item) => {
                                   const prod = productosTyped?.find((p) => p.id === item.productoId)
+                                  const unitWarn = getUnitWarning(item)
                                   return (
                                     <TableRow key={item.productoId} className="text-xs">
-                                      <TableCell className="text-xs whitespace-nowrap">{prod?.nombre}</TableCell>
+                                      <TableCell className="text-xs whitespace-nowrap">
+                                        <div className="flex items-center gap-2">
+                                          <span>{prod?.nombre}</span>
+                                          {unitWarn && (
+                                            <span className="text-yellow-600 text-lg" title={unitWarn}>⚠️</span>
+                                          )}
+                                        </div>
+                                      </TableCell>
                                       <TableCell className="text-xs">
                                         <Input
                                           type="number"
@@ -711,10 +817,10 @@ export default function ProduccionPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todos</SelectItem>
-                      <SelectItem value="pendiente">Pendiente</SelectItem>
-                      <SelectItem value="en_proceso">En Proceso</SelectItem>
-                      <SelectItem value="completada">Completada</SelectItem>
-                      <SelectItem value="cancelada">Cancelada</SelectItem>
+                      <SelectItem value="PENDIENTE">Pendiente</SelectItem>
+                      <SelectItem value="EN_PROCESO">En Proceso</SelectItem>
+                      <SelectItem value="COMPLETADA">Completada</SelectItem>
+                      <SelectItem value="CANCELADA">Cancelada</SelectItem>
                     </SelectContent>
                   </Select>
                   <Dialog open={dialogOrdenOpen} onOpenChange={setDialogOrdenOpen}>

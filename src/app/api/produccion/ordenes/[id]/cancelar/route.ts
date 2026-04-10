@@ -18,9 +18,9 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
     const orden = await prisma.ordenProduccion.findUnique({
       where: { ordenProduccionId: id },
       include: {
-        receta: {
+        Receta: {
           include: {
-            ingredientes: true,
+            RecetaIngrediente: true,
           },
         },
       },
@@ -37,7 +37,7 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
 
     // Si estaba en proceso, liberar los materiales reservados
     if (estadoOrden === 'EN_PROCESO') {
-      for (const ingrediente of orden.receta.ingredientes) {
+      for (const ingrediente of orden.Receta.RecetaIngrediente) {
         const cantidadReservada = ingrediente.cantidad * orden.cantidad;
         
         await prisma.producto.update({
@@ -58,17 +58,17 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
         estado: 'CANCELADA',
       },
       include: {
-        receta: {
+        Receta: {
           include: {
-            producto: {
+            Producto: {
               select: {
                 id: true,
                 nombre: true,
               },
             },
-            ingredientes: {
+            RecetaIngrediente: {
               include: {
-                producto: {
+                Producto: {
                   select: {
                     id: true,
                     nombre: true,

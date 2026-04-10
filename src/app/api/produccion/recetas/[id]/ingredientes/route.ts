@@ -3,6 +3,7 @@ import { withAuthPost } from '@/lib/auth-middleware';
 import { prisma } from '@/lib/prisma';
 import { convertToBase } from '@/lib/utils/unit-converter';
 import { calculateCostoUnitarioReceta } from '@/lib/utils/produccion';
+import { validateIngredientsUnits } from '@/lib/validators/production-units';
 import { z } from 'zod';
 
 const setIngredientesSchema = z.object({
@@ -36,6 +37,24 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
     if (!recetaExistente) {
       return NextResponse.json({ error: 'Receta no encontrada.' }, { status: 404 });
     }
+
+    // Obtener todos los productos para validar unidades
+    const productosInventario = await prisma.producto.findMany({
+      where: {
+        id: {
+          in: ingredientes.map((ing) => ing.productoId),
+        },
+      },
+      select: {
+        id: true,
+        nombre: true,
+        unidadSimbolo: true,
+      },
+    });
+
+    // Validar compatibilidad de unidades
+    const validaciones = validateIngredientsUnits(ingredientes, productosInventario);
+    const warnings = validaciones.filter((v) => !v.isValid && v.warning);
 
     // Eliminar ingredientes existentes
     await prisma.recetaIngrediente.deleteMany({
@@ -117,7 +136,13 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
       },
     });
 
-    return NextResponse.json(recetaActualizada);
+    // Retornar receta + warnings si existen
+    const response: any = recetaActualizada;
+    if (warnings.length > 0) {
+      response.unitWarnings = warnings.map((w) => w.warning);
+    }
+
+    return NextResponse.json(response);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
