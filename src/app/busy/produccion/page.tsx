@@ -1,5 +1,4 @@
 'use client'
-// @ts-nocheck - Deshabilitar verificación de tipos para este archivo debido a problemas con RTK Query
 
 import { useState } from 'react'
 import { sileo } from 'sileo'
@@ -703,9 +702,15 @@ export default function ProduccionPage() {
                       }}>
                         Cancelar
                       </Button>
-                      <Button onClick={handleCrearReceta}>
-                        Crear Receta
-                      </Button>
+                      {unitWarnings.length > 0 ? (
+                        <Button disabled className="bg-destructive/50 cursor-not-allowed" title="Arregla los problemas de unidades antes de continuar">
+                          ⚠️ Arreglar Unidades
+                        </Button>
+                      ) : (
+                        <Button onClick={handleCrearReceta}>
+                          Crear Receta
+                        </Button>
+                      )}
                     </div>
                   </DialogContent>
 
