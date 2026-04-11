@@ -124,10 +124,10 @@ model MiEmpresa {
   nit               String?
   licenciaOperacion String?
   logoUrl           String?
-  usaCodigoEan13    Boolean         @default(false)
   cuentaBancariaId  String?         @unique
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
+  usaCodigoEan13    Boolean         @default(false)
   cuentaBancaria    CuentaBancaria? @relation("MiEmpresaCuenta", fields: [cuentaBancariaId], references: [cuentaId])
 }
 
@@ -145,11 +145,11 @@ model PuntoDeVenta {
   pvId                  String          @id @default(cuid())
   nombre                String
   ubicacion             String?
-  listaPrecioId         String?
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
-  listaPrecio           ListaPrecio?    @relation(fields: [listaPrecioId], references: [id])
+  listaPrecioId         String?
   productos             Producto[]
+  listaPrecio           ListaPrecio?    @relation(fields: [listaPrecioId], references: [id])
   transferenciasDestino Transferencia[] @relation("TransferenciasDestino")
   transferenciasOrigen  Transferencia[] @relation("TransferenciasOrigen")
   ventas                Venta[]
@@ -171,27 +171,6 @@ model Producto {
   puntoDeVentaId    String?
   stockMinimo       Int                       @default(0)
   subcategoriaId    String?
-  fotos             String[]                  @default([])
-  compras           CompraProducto[]
-  gastoCompras      GastoCompra[]
-  mermas            Merma[]
-  ofertaItems       OfertaItem[]
-  ordenMateriales   OrdenReparacionMaterial[]
-  precios           PrecioProducto[]
-  costHistory       ProductoCostHistory[]
-  stockUbicaciones  StockUbicacion[]
-  almacen           Almacen                   @relation(fields: [almacenId], references: [almacenId], onDelete: Cascade)
-  categoria         Categoria                 @relation(fields: [categoriaId], references: [catId], onDelete: Cascade)
-  puntoDeVenta      PuntoDeVenta?             @relation(fields: [puntoDeVentaId], references: [pvId], onDelete: Cascade)
-  subcategoria      Categoria?                @relation("ProductoSubcategoria", fields: [subcategoriaId], references: [catId])
-  unidad            Unidad?                   @relation(fields: [unidadId], references: [unidadId], onDelete: Cascade)
-  vendor            Vendor?                   @relation(fields: [vendorId], references: [vendorId], onDelete: Cascade)
-  Receta            Receta[]
-  RecetaIngrediente RecetaIngrediente[]
-  transferencias    Transferencia[]
-  ValeSalidaItem    ValeSalidaItem[]
-  ventas            Venta[]
-  ventaItems        VentaItem[]
   codigoInterno     String?                   @unique
   codigoNegocio     String?                   @unique
   proveedorCodigo   String?
@@ -199,22 +178,42 @@ model Producto {
   especificoCodigo  String?
   surtidoCodigo     String?
   dcCodigo          String?
+  fotos             String[]                  @default([])
+  compras           CompraProducto[]
+  gastoCompras      GastoCompra[]
+  mermas            Merma[]
+  ofertaItems       OfertaItem[]
+  ordenMateriales   OrdenReparacionMaterial[]
+  precios           PrecioProducto[]
+  almacen           Almacen                   @relation(fields: [almacenId], references: [almacenId], onDelete: Cascade)
+  categoria         Categoria                 @relation(fields: [categoriaId], references: [catId], onDelete: Cascade)
+  puntoDeVenta      PuntoDeVenta?             @relation(fields: [puntoDeVentaId], references: [pvId], onDelete: Cascade)
+  subcategoria      Categoria?                @relation("ProductoSubcategoria", fields: [subcategoriaId], references: [catId])
+  unidad            Unidad?                   @relation(fields: [unidadId], references: [unidadId], onDelete: Cascade)
+  vendor            Vendor?                   @relation(fields: [vendorId], references: [vendorId], onDelete: Cascade)
+  costHistory       ProductoCostHistory[]
+  Receta            Receta[]
+  RecetaIngrediente RecetaIngrediente[]
+  stockUbicaciones  StockUbicacion[]
+  transferencias    Transferencia[]
+  ValeSalidaItem    ValeSalidaItem[]
+  ventas            Venta[]
+  ventaItems        VentaItem[]
 }
 
 model StockUbicacion {
-  stockUbicacionId    String   @id @default(cuid())
   productoId          String
-  tipoUbicacion       String // 'almacen' or 'puntoDeVenta'
-  ubicacionId         String // almacenId or puntoDeVentaId
-  cantidad            Int // Total stock at this location
-  cantidadReservada   Int      @default(0) // Reserved for pending sales
-  cantidadDisponible  Int // cantidad - cantidadReservada
+  tipoUbicacion       String
+  ubicacionId         String
+  cantidad            Int
+  cantidadReservada   Int      @default(0)
+  cantidadDisponible  Int
   ultimaActualizacion DateTime @default(now()) @updatedAt
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+  stockUbicacionId    String   @id @default(cuid())
   producto            Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
 
-  // Composite unique constraint: each product can have one entry per location type
   @@unique([productoId, tipoUbicacion, ubicacionId])
   @@index([productoId])
   @@index([tipoUbicacion])
@@ -308,6 +307,7 @@ model User {
   lastModifiedBy         String?
   lockedUntil            DateTime?
   loginAttempts          Int                  @default(0)
+  comprasProductoCreadas CompraProducto[]     @relation("CompraProductoCreador")
   contratosAprobados     Contrato[]           @relation("AprobadorContrato")
   contratosCreados       Contrato[]           @relation("CreadorContrato")
   contratoAprobaciones   ContratoAprobacion[]
@@ -319,7 +319,6 @@ model User {
   notifications          Notification[]
   activityLogs           UserActivityLog[]
   sessions               UserSession[]
-  comprasProductoCreadas CompraProducto[]     @relation("CompraProductoCreador")
 }
 
 model Plan {
@@ -576,18 +575,18 @@ model CompraProducto {
   fechaCompra      DateTime        @default(now())
   gastoCompraId    String?         @unique
   cuentaPorPagarId String?         @unique
-  createdById      String?
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
+  createdById      String?
   proveedorId      String
   formaPago        String
   estado           String
   tipoOperacion    String          @default("REGULAR")
+  createdBy        User?           @relation("CompraProductoCreador", fields: [createdById], references: [userId])
   cuentaPorPagar   CuentaPorPagar? @relation(fields: [cuentaPorPagarId], references: [cuentaPorPagarId])
   gastoCompra      GastoCompra?    @relation(fields: [gastoCompraId], references: [gastoCompraId])
   producto         Producto        @relation(fields: [productoId], references: [id], onDelete: Cascade)
   proveedor        Vendor          @relation(fields: [proveedorId], references: [vendorId], onDelete: Cascade)
-  createdBy        User?           @relation("CompraProductoCreador", fields: [createdById], references: [userId], onDelete: SetNull)
 
   @@index([estado])
   @@index([proveedorId])
@@ -1387,11 +1386,11 @@ model RecetaIngrediente {
   recetaId      String
   productoId    String
   cantidad      Float
-  unidadSimbolo String?
   desperdicio   Float    @default(0)
   createdAt     DateTime @default(now())
   updatedAt     DateTime
   id            String   @id
+  unidadSimbolo String?
   Producto      Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
   Receta        Receta   @relation(fields: [recetaId], references: [recetaId], onDelete: Cascade)
 }
@@ -1414,6 +1413,54 @@ model ValeSalidaItem {
   createdAt        DateTime   @default(now())
   Producto         Producto   @relation(fields: [productoId], references: [id], onDelete: Cascade)
   ValeSalida       ValeSalida @relation(fields: [valeSalidaId], references: [valeSalidaId], onDelete: Cascade)
+}
+
+model ListaPrecio {
+  id            String           @id @default(cuid())
+  nombre        String
+  descripcion   String?
+  esDefault     Boolean          @default(false)
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  precios       PrecioProducto[]
+  puntosDeVenta PuntoDeVenta[]
+}
+
+model PrecioProducto {
+  id            String      @id @default(cuid())
+  listaPrecioId String
+  productoId    String
+  precio        Int
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  listaPrecio   ListaPrecio @relation(fields: [listaPrecioId], references: [id], onDelete: Cascade)
+  producto      Producto    @relation(fields: [productoId], references: [id], onDelete: Cascade)
+
+  @@unique([listaPrecioId, productoId])
+}
+
+model ProductoCostHistory {
+  id             String           @id @default(cuid())
+  productoId     String
+  oldPrecioCosto Int
+  newPrecioCosto Int
+  oldPrecioVenta Int
+  newPrecioVenta Int
+  reason         CostChangeReason
+  changedBy      String
+  changedAt      DateTime
+  notes          String?
+  createdAt      DateTime         @default(now())
+  producto       Producto         @relation(fields: [productoId], references: [id], onDelete: Cascade)
+
+  @@index([productoId])
+  @@index([changedAt])
+  @@index([reason])
+}
+
+model VendorCodeSequence {
+  id         Int @id @default(1)
+  nextNumber Int @default(1)
 }
 
 enum TipoInyeccion {
@@ -1519,52 +1566,4 @@ enum CostChangeReason {
   SYSTEM_SYNC
   CORRECTION
   IMPORT
-}
-
-model ListaPrecio {
-  id            String           @id @default(cuid())
-  nombre        String
-  descripcion   String?
-  esDefault     Boolean          @default(false)
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
-  puntosDeVenta PuntoDeVenta[]
-  precios       PrecioProducto[]
-}
-
-model PrecioProducto {
-  id            String      @id @default(cuid())
-  listaPrecioId String
-  productoId    String
-  precio        Int
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  listaPrecio   ListaPrecio @relation(fields: [listaPrecioId], references: [id], onDelete: Cascade)
-  producto      Producto    @relation(fields: [productoId], references: [id], onDelete: Cascade)
-
-  @@unique([listaPrecioId, productoId])
-}
-
-model ProductoCostHistory {
-  id             String           @id @default(cuid())
-  productoId     String
-  oldPrecioCosto Int
-  newPrecioCosto Int
-  oldPrecioVenta Int
-  newPrecioVenta Int
-  reason         CostChangeReason
-  changedBy      String // userId
-  changedAt      DateTime
-  notes          String?
-  createdAt      DateTime         @default(now())
-  producto       Producto         @relation(fields: [productoId], references: [id], onDelete: Cascade)
-
-  @@index([productoId])
-  @@index([changedAt])
-  @@index([reason])
-}
-
-model VendorCodeSequence {
-  id         Int @id @default(1)
-  nextNumber Int @default(1)
 }

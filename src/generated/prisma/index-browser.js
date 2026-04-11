@@ -211,10 +211,10 @@ exports.Prisma.MiEmpresaScalarFieldEnum = {
   nit: 'nit',
   licenciaOperacion: 'licenciaOperacion',
   logoUrl: 'logoUrl',
-  usaCodigoEan13: 'usaCodigoEan13',
   cuentaBancariaId: 'cuentaBancariaId',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  usaCodigoEan13: 'usaCodigoEan13'
 };
 
 exports.Prisma.AlmacenScalarFieldEnum = {
@@ -228,9 +228,9 @@ exports.Prisma.PuntoDeVentaScalarFieldEnum = {
   pvId: 'pvId',
   nombre: 'nombre',
   ubicacion: 'ubicacion',
-  listaPrecioId: 'listaPrecioId',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  listaPrecioId: 'listaPrecioId'
 };
 
 exports.Prisma.ProductoScalarFieldEnum = {
@@ -249,18 +249,17 @@ exports.Prisma.ProductoScalarFieldEnum = {
   puntoDeVentaId: 'puntoDeVentaId',
   stockMinimo: 'stockMinimo',
   subcategoriaId: 'subcategoriaId',
-  fotos: 'fotos',
   codigoInterno: 'codigoInterno',
   codigoNegocio: 'codigoNegocio',
   proveedorCodigo: 'proveedorCodigo',
   idSeccionCodigo: 'idSeccionCodigo',
   especificoCodigo: 'especificoCodigo',
   surtidoCodigo: 'surtidoCodigo',
-  dcCodigo: 'dcCodigo'
+  dcCodigo: 'dcCodigo',
+  fotos: 'fotos'
 };
 
 exports.Prisma.StockUbicacionScalarFieldEnum = {
-  stockUbicacionId: 'stockUbicacionId',
   productoId: 'productoId',
   tipoUbicacion: 'tipoUbicacion',
   ubicacionId: 'ubicacionId',
@@ -269,7 +268,8 @@ exports.Prisma.StockUbicacionScalarFieldEnum = {
   cantidadDisponible: 'cantidadDisponible',
   ultimaActualizacion: 'ultimaActualizacion',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  stockUbicacionId: 'stockUbicacionId'
 };
 
 exports.Prisma.VentaScalarFieldEnum = {
@@ -559,9 +559,9 @@ exports.Prisma.CompraProductoScalarFieldEnum = {
   fechaCompra: 'fechaCompra',
   gastoCompraId: 'gastoCompraId',
   cuentaPorPagarId: 'cuentaPorPagarId',
-  createdById: 'createdById',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
+  createdById: 'createdById',
   proveedorId: 'proveedorId',
   formaPago: 'formaPago',
   estado: 'estado',
@@ -1226,11 +1226,11 @@ exports.Prisma.RecetaIngredienteScalarFieldEnum = {
   recetaId: 'recetaId',
   productoId: 'productoId',
   cantidad: 'cantidad',
-  unidadSimbolo: 'unidadSimbolo',
   desperdicio: 'desperdicio',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  id: 'id'
+  id: 'id',
+  unidadSimbolo: 'unidadSimbolo'
 };
 
 exports.Prisma.ValeSalidaScalarFieldEnum = {

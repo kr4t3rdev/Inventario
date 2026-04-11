@@ -4,8 +4,11 @@ import prisma from "@/lib/prisma";
 export async function GET(request: NextRequest){
     try {
         const almacenes = await prisma.almacen.findMany({
-            include: {
-                productos:true
+            select: {
+                almacenId: true,
+                nombre: true,
+                createdAt: true,
+                updatedAt: true,
             }
         })
         return NextResponse.json(almacenes)
