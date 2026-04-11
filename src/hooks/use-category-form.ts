@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Categoria } from '../app/models/model';
 import { useDispatch } from 'react-redux';
 import { categoriasApi } from '@/lib/redux/services/categoriasApi';
+import { mapCategoryToSection, mapSubcategoryToSpecific } from '@/lib/category-mapping';
 
 // Define the form schema using Zod
 const categoryFormSchema = z.object({
@@ -29,9 +30,10 @@ interface UseCategoryFormProps {
     parentId?: string | null;
   };
   onSuccess?: () => void;
+  usaEan13?: boolean;
 }
 
-export function useCategoryForm({ initialData, onSuccess }: UseCategoryFormProps) {
+export function useCategoryForm({ initialData, onSuccess, usaEan13 = false }: UseCategoryFormProps) {
   const router = useRouter();
   const dispatch = useDispatch();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -95,10 +97,41 @@ export function useCategoryForm({ initialData, onSuccess }: UseCategoryFormProps
     }
   };
 
+  // Validate category against CLAS mapping in EAN-13 mode
+  const validateCLASMapping = (nombre: string, parentId: string | null): boolean => {
+    try {
+      if (!parentId || parentId === 'none') {
+        // Root category: validate against sections
+        mapCategoryToSection(nombre);
+      } else {
+        // Subcategory: validate against specifics
+        mapSubcategoryToSpecific(nombre);
+      }
+      return true;
+    } catch (error) {
+      return false;
+    }
+  };
+
   // Handle form submission
   const onSubmit = async (data: CategoryFormValues) => {
     // Clear previous errors
     setServerErrors({});
+    
+    // Validate CLAS mapping if EAN-13 is enabled
+    if (usaEan13) {
+      const parentId = data.parentId === 'none' ? null : data.parentId;
+      const isCLASValid = validateCLASMapping(data.nombre, parentId);
+      
+      if (!isCLASValid) {
+        const isRootCategory = !parentId;
+        const errorMessage = isRootCategory
+          ? 'Estas en modo generacion ean-13 por lo q categoria debe coincidir con las secciones declaradas en el clasificador'
+          : 'Estas en modo generacion ean-13 por lo q la subcategoria ingresada debe coincidir con el especifico declarado en el clasificador';
+        toast.error(errorMessage);
+        return;
+      }
+    }
     
     // Validate on the server
     const isValid = await validateCategory(data);

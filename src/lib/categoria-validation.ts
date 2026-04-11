@@ -58,7 +58,8 @@ export enum CategoriaErrorCode {
   CATEGORY_HAS_PRODUCTS = 'CATEGORY_HAS_PRODUCTS',
   CATEGORY_HAS_SUBCATEGORIES = 'CATEGORY_HAS_SUBCATEGORIES',
   SUBCATEGORY_MISMATCH = 'SUBCATEGORY_MISMATCH',
-  CATEGORY_NOT_FOUND = 'CATEGORY_NOT_FOUND'
+  CATEGORY_NOT_FOUND = 'CATEGORY_NOT_FOUND',
+  INVALID_CLAS_MAPPING = 'INVALID_CLAS_MAPPING'
 }
 
 /**
@@ -73,13 +74,73 @@ export const CATEGORIA_ERROR_MESSAGES = {
   [CategoriaErrorCode.CATEGORY_HAS_PRODUCTS]: "No se puede eliminar una categoría que tiene productos asignados",
   [CategoriaErrorCode.CATEGORY_HAS_SUBCATEGORIES]: "No se puede eliminar una categoría que tiene subcategorías",
   [CategoriaErrorCode.SUBCATEGORY_MISMATCH]: "La subcategoría debe pertenecer a la misma categoría padre",
-  [CategoriaErrorCode.CATEGORY_NOT_FOUND]: "Categoría no encontrada"
+  [CategoriaErrorCode.CATEGORY_NOT_FOUND]: "Categoría no encontrada",
+  [CategoriaErrorCode.INVALID_CLAS_MAPPING]: "Categoria invalida en modo EAN-13"
 }
 
 /**
  * Maximum hierarchy depth allowed (3 levels: Category > Subcategory > Sub-subcategory)
  */
 export const MAX_HIERARCHY_DEPTH = 3
+
+/**
+ * Validate category against CLAS mapping when EAN-13 mode is enabled
+ */
+export async function validateCategoryAgainstCLAS(
+  nombre: string,
+  parentId: string | null
+): Promise<CategoriaValidationResult> {
+  try {
+    // Check if EAN-13 mode is enabled
+    const miEmpresa = await prisma.miEmpresa.findUnique({
+      where: { id: 1 },
+      select: { usaCodigoEan13: true }
+    })
+
+    // If EAN-13 is disabled, skip validation
+    if (!miEmpresa?.usaCodigoEan13) {
+      return { success: true }
+    }
+
+    // Import mapping functions
+    const { mapCategoryToSection, mapSubcategoryToSpecific } = await import('@/lib/category-mapping')
+
+    try {
+      if (!parentId) {
+        // Root category: validate against sections
+        mapCategoryToSection(nombre)
+      } else {
+        // Subcategory: validate against specifics
+        mapSubcategoryToSpecific(nombre)
+      }
+      return { success: true }
+    } catch (mapError) {
+      const isRootCategory = !parentId
+      const message = isRootCategory
+        ? 'Estas en modo generacion ean-13 por lo q categoria debe coincidir con las secciones declaradas en el clasificador'
+        : 'Estas en modo generacion ean-13 por lo q la subcategoria ingresada debe coincidir con el especifico declarado en el clasificador'
+      
+      return {
+        success: false,
+        errors: [{
+          code: CategoriaErrorCode.INVALID_CLAS_MAPPING,
+          message,
+          field: 'nombre',
+          details: { nombre, parentId, originalError: (mapError as Error).message }
+        }]
+      }
+    }
+  } catch (error) {
+    return {
+      success: false,
+      errors: [{
+        code: CategoriaErrorCode.INVALID_INPUT,
+        message: 'Error al validar contra clasificador CLAS',
+        details: { error }
+      }]
+    }
+  }
+}
 
 /**
  * Category validation class with comprehensive business rule validation
@@ -398,19 +459,28 @@ export class CategoriaValidator {
 
     const validatedData = inputValidation.data!
 
-    // Step 2: Validate parent exists
+    // Step 2: Validate against CLAS mapping in EAN-13 mode
+    const clasValidation = await validateCategoryAgainstCLAS(
+      validatedData.nombre,
+      validatedData.parentId ?? null
+    )
+    if (!clasValidation.success) {
+      allErrors.push(...(clasValidation.errors || []))
+    }
+
+    // Step 3: Validate parent exists
     const parentValidation = await this.validateParentExists(validatedData.parentId ?? null)
     if (!parentValidation.success) {
       allErrors.push(...(parentValidation.errors || []))
     }
 
-    // Step 3: Validate hierarchy depth
+    // Step 4: Validate hierarchy depth
     const depthValidation = await this.validateHierarchyDepth(validatedData.parentId ?? null)
     if (!depthValidation.success) {
       allErrors.push(...(depthValidation.errors || []))
     }
 
-    // Step 4: Validate unique name
+    // Step 5: Validate unique name
     const nameValidation = await this.validateUniqueName(
       validatedData.nombre,
       validatedData.parentId ?? null
@@ -443,25 +513,34 @@ export class CategoriaValidator {
 
     const validatedData = inputValidation.data!
 
-    // Step 2: Validate parent exists
+    // Step 2: Validate against CLAS mapping in EAN-13 mode
+    const clasValidation = await validateCategoryAgainstCLAS(
+      validatedData.nombre,
+      validatedData.parentId ?? null
+    )
+    if (!clasValidation.success) {
+      allErrors.push(...(clasValidation.errors || []))
+    }
+
+    // Step 3: Validate parent exists
     const parentValidation = await this.validateParentExists(validatedData.parentId ?? null)
     if (!parentValidation.success) {
       allErrors.push(...(parentValidation.errors || []))
     }
 
-    // Step 3: Validate circular reference
+    // Step 4: Validate circular reference
     const circularValidation = await this.validateCircularReference(categoryId, validatedData.parentId ?? null)
     if (!circularValidation.success) {
       allErrors.push(...(circularValidation.errors || []))
     }
 
-    // Step 4: Validate hierarchy depth
+    // Step 5: Validate hierarchy depth
     const depthValidation = await this.validateHierarchyDepth(validatedData.parentId ?? null)
     if (!depthValidation.success) {
       allErrors.push(...(depthValidation.errors || []))
     }
 
-    // Step 5: Validate unique name (excluding current category)
+    // Step 6: Validate unique name (excluding current category)
     const nameValidation = await this.validateUniqueName(
       validatedData.nombre,
       validatedData.parentId ?? null,

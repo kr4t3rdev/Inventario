@@ -87,6 +87,7 @@ export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
     isValid,
   } = useCategoryForm({
     initialData,
+    usaEan13,
     onSuccess: onSuccess || (() => {
       router.push("/busy/categoria");
       router.refresh();

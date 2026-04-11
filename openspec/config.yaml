@@ -1,0 +1,61 @@
+schema: spec-driven
+
+context: |
+  Tech stack: Next.js 15, React 19, TypeScript, Prisma, PostgreSQL, Redux Toolkit, Zod.
+  Architecture: App Router con API routes, formularios con React Hook Form, validación cliente/servidor y UI con shadcn/radix.
+  Testing: Vitest para unit/integration, Testing Library para componentes, Playwright para E2E.
+  Style: ESLint (next lint), TypeScript strict, pnpm como package manager.
+
+strict_tdd: true
+
+testing:
+  detected: 2026-04-11
+  test_runner:
+    available: true
+    framework: vitest
+    command: pnpm run test:run
+  layers:
+    unit:
+      available: true
+      tool: vitest
+    integration:
+      available: true
+      tool: testing-library
+    e2e:
+      available: true
+      tool: playwright
+  coverage:
+    available: false
+    command: "-"
+  quality_tools:
+    linter:
+      available: true
+      command: pnpm exec eslint <file>
+    type_checker:
+      available: true
+      command: pnpm run typecheck
+    formatter:
+      available: false
+      command: "-"
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+    - Identify affected modules and validation boundaries
+  specs:
+    - Use Given/When/Then format for scenarios
+    - Use RFC 2119 keywords (MUST, SHOULD, MAY)
+  design:
+    - Document client/server validation split and toast behavior
+  tasks:
+    - Group tasks by dependency order
+    - Reference concrete files in every task
+    - Keep tasks small enough for one apply batch
+  apply:
+    - Prefer root-cause fixes with client feedback plus server enforcement
+    - Reuse existing category mapping utilities as source of truth
+  verify:
+    - Run focused tests or lint/typecheck for touched slices
+    - Confirm exact toast copy when UX text is specified
+  archive:
+    - Preserve exact user-facing message strings in final specs
