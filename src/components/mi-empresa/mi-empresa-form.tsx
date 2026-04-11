@@ -89,7 +89,9 @@ async function fetchMiEmpresa(): Promise<MiEmpresaApiResponse> {
   if (!res.ok) {
     throw new Error("Error cargando Mi Empresa")
   }
-  return (await res.json()) as MiEmpresaApiResponse
+  const body = await res.json().catch(() => null)
+  if (!body) throw new Error('Respuesta inválida de Mi Empresa')
+  return body as MiEmpresaApiResponse
 }
 
 async function saveMiEmpresa(values: MiEmpresaFormValues): Promise<MiEmpresaApiResponse> {
@@ -130,7 +132,8 @@ async function saveMiEmpresa(values: MiEmpresaFormValues): Promise<MiEmpresaApiR
     const message = (data as any)?.error || "Error guardando Mi Empresa"
     throw new Error(message)
   }
-  const json = await res.json()
+  const json = await res.json().catch(() => null)
+  if (!json) throw new Error('Respuesta inválida al guardar Mi Empresa')
   const responseData = (json?.data ?? json) as MiEmpresaApiResponse
   return responseData
 }
