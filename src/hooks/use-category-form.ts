@@ -5,6 +5,8 @@ import { z } from 'zod';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 import { Categoria } from '../app/models/model';
+import { useDispatch } from 'react-redux';
+import { categoriasApi } from '@/lib/redux/services/categoriasApi';
 
 // Define the form schema using Zod
 const categoryFormSchema = z.object({
@@ -31,6 +33,7 @@ interface UseCategoryFormProps {
 
 export function useCategoryForm({ initialData, onSuccess }: UseCategoryFormProps) {
   const router = useRouter();
+  const dispatch = useDispatch();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const [serverErrors, setServerErrors] = useState<Record<string, string[]>>({});
@@ -142,6 +145,21 @@ export function useCategoryForm({ initialData, onSuccess }: UseCategoryFormProps
           ? 'Categoría actualizada correctamente'
           : 'Categoría creada correctamente'
       );
+
+      await Promise.allSettled([
+        dispatch(
+          categoriasApi.endpoints.getCategorias.initiate(undefined, {
+            forceRefetch: true,
+            subscribe: false,
+          })
+        ),
+        dispatch(
+          categoriasApi.endpoints.getCategoriaHierarchy.initiate(undefined, {
+            forceRefetch: true,
+            subscribe: false,
+          })
+        ),
+      ]);
 
       // Call the success callback if provided
       if (onSuccess) {
