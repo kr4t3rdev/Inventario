@@ -23,6 +23,11 @@ describe('E2E lógico: Production Unit Validation Integration', () => {
         nombre: 'Botella',
         unidad: { simbolo: 'unidad' },
       },
+      {
+        id: 'prod-full-item',
+        nombre: 'Sirope',
+        unidad: { simbolo: 'paquete' },
+      },
     ];
 
     it('should return normalization info for compatible non-canonical units', () => {
@@ -63,6 +68,31 @@ describe('E2E lógico: Production Unit Validation Integration', () => {
       expect(preview.blockingMessages).toEqual([]);
       expect(preview.normalizationMessages).toEqual([
         'Botella: 3 sin unidad se guardará como 3 unidad.',
+      ]);
+    });
+
+    it('should allow null unit for catalog products consumed as full items', () => {
+      const preview = buildRecipeUnitPreview(
+        [{ productoId: 'prod-full-item', cantidad: 2, unidadSimbolo: null, desperdicio: 0 }],
+        productos
+      );
+
+      expect(preview.hasBlockingIssues).toBe(false);
+      expect(preview.blockingMessages).toEqual([]);
+      expect(preview.normalizationMessages).toEqual([
+        'Sirope: 2 sin unidad se guardará como 2 paquete.',
+      ]);
+    });
+
+    it('should still block unknown user-entered units for full-item products', () => {
+      const preview = buildRecipeUnitPreview(
+        [{ productoId: 'prod-full-item', cantidad: 2, unidadSimbolo: 'docena', desperdicio: 0 }],
+        productos
+      );
+
+      expect(preview.hasBlockingIssues).toBe(true);
+      expect(preview.blockingMessages).toEqual([
+        'Sirope: La unidad ingresada no es reconocida.',
       ]);
     });
 

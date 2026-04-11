@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   categorizeUnit,
+  categorizeCatalogUnit,
   validateUnitCompatibility,
   validateIngredientsUnits,
   suggestUnitsByCategory,
@@ -50,6 +51,19 @@ describe('Production Units Validator', () => {
     });
   });
 
+  describe('categorizeCatalogUnit', () => {
+    it('should preserve convertible mass and volume units', () => {
+      expect(categorizeCatalogUnit('kg')).toBe('mass');
+      expect(categorizeCatalogUnit('ml')).toBe('volume');
+    });
+
+    it('should treat custom catalog units as unit', () => {
+      expect(categorizeCatalogUnit('paquete')).toBe('unit');
+      expect(categorizeCatalogUnit('caja')).toBe('unit');
+      expect(categorizeCatalogUnit('frasco')).toBe('unit');
+    });
+  });
+
   describe('validateUnitCompatibility', () => {
     it('should be compatible when both are discrete/null units', () => {
       const result = validateUnitCompatibility(null, undefined);
@@ -65,8 +79,13 @@ describe('Production Units Validator', () => {
 
       const result2 = validateUnitCompatibility('kg', 'xyz');
       expect(result2.isCompatible).toBe(false);
-      expect(result2.warning).toContain('Unidad desconocida');
-      expect(result2.warning).toContain('xyz');
+      expect(result2.warning).toContain('Inconsistencia');
+    });
+
+    it('should allow null recipe unit when catalog unit represents a full item', () => {
+      const result = validateUnitCompatibility(null, 'paquete');
+      expect(result.isCompatible).toBe(true);
+      expect(result.warning).toBeNull();
     });
 
     it('should be compatible when both are unit types', () => {
@@ -132,6 +151,7 @@ describe('Production Units Validator', () => {
       { id: 'prod2', nombre: 'Agua', unidadSimbolo: 'L' },
       { id: 'prod3', nombre: 'Sal', unidadSimbolo: 'g' },
       { id: 'prod4', nombre: 'Leche', unidadSimbolo: 'ml' },
+      { id: 'prod5', nombre: 'Sirope', unidadSimbolo: 'paquete' },
     ];
 
     it('should validate compatible mass units', () => {
@@ -180,6 +200,18 @@ describe('Production Units Validator', () => {
       expect(result[0].isValid).toBe(false);
       expect(result[0].warning).toContain('Unidad desconocida');
       expect(result[0].warning).toContain('bls');
+    });
+
+    it('should allow full-item catalog products without a recipe unit', () => {
+      const ingredientes = [
+        { productoId: 'prod5', unidadSimbolo: null },
+      ];
+
+      const result = validateIngredientsUnits(ingredientes, mockProductos);
+      expect(result).toHaveLength(1);
+      expect(result[0].isValid).toBe(true);
+      expect(result[0].warning).toBeNull();
+      expect(result[0].productoNombre).toBe('Sirope');
     });
 
     it('should handle missing product', () => {
@@ -361,6 +393,41 @@ describe('Production Units Validator', () => {
         canonicalUnit: 'unidad',
         originalCantidad: 3,
         normalizedCantidad: 3,
+      });
+    });
+
+    it('should allow null unit when catalog unit means full inventory item', () => {
+      const result = validateAndNormalizeIngredientUnit(
+        { productoId: 'prod5', cantidad: 2, unidadSimbolo: null },
+        { id: 'prod5', nombre: 'Sirope', unidadSimbolo: 'paquete' }
+      );
+
+      expect(result.isValid).toBe(true);
+      expect(result.normalizedUnidadSimbolo).toBe('paquete');
+      expect(result.normalizedCantidad).toBe(2);
+      expect(result.normalization).toEqual({
+        productoId: 'prod5',
+        productoNombre: 'Sirope',
+        providedUnit: null,
+        canonicalUnit: 'paquete',
+        originalCantidad: 2,
+        normalizedCantidad: 2,
+      });
+    });
+
+    it('should still reject unknown recipe units even for full-item catalog products', () => {
+      const result = validateAndNormalizeIngredientUnit(
+        { productoId: 'prod5', cantidad: 2, unidadSimbolo: 'docena' },
+        { id: 'prod5', nombre: 'Sirope', unidadSimbolo: 'paquete' }
+      );
+
+      expect(result.isValid).toBe(false);
+      expect(result.error).toEqual({
+        productoId: 'prod5',
+        productoNombre: 'Sirope',
+        providedUnit: 'docena',
+        canonicalUnit: 'paquete',
+        reason: 'unknown_unit',
       });
     });
 

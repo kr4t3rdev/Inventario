@@ -58,6 +58,7 @@ import {
 } from '@/lib/redux/services/produccionApi'
 import { useGetProductosQuery } from '@/lib/redux/services/productosApi'
 import { useGetGastosDEQuery } from '@/lib/redux/services/gastosDEApi'
+import { RecipeOutputSelector, type RecipeOutputMode } from '@/components/produccion/recipe-output-selector'
 
 type RecipeEditorItem = {
   productoId: string
@@ -182,6 +183,10 @@ export default function ProduccionPage() {
   const [editNombre, setEditNombre] = useState('')
   const [editRendimiento, setEditRendimiento] = useState<number | string>(1)
   const [editProductoId, setEditProductoId] = useState('')
+  const [outputMode, setOutputMode] = useState<RecipeOutputMode>('existing')
+  const [editOutputMode, setEditOutputMode] = useState<RecipeOutputMode>('existing')
+  const [createdOutputProductName, setCreatedOutputProductName] = useState<string | null>(null)
+  const [editCreatedOutputProductName, setEditCreatedOutputProductName] = useState<string | null>(null)
   const [editItems, setEditItems] = useState<Array<{ productoId: string; cantidad: number; unidadSimbolo: string | null; desperdicio: number }>>([])
 
   // Data
@@ -261,6 +266,8 @@ export default function ProduccionPage() {
     )
   }
 
+  const recetasOperativas = recetasTyped?.filter((receta: any) => Boolean(getRecetaProducto(receta)?.id)) || []
+
   const newRecipePreview = buildRecipeUnitPreview(nuevoItems, productosTyped || [])
   const editRecipePreview = buildRecipeUnitPreview(editItems, productosTyped || [])
 
@@ -288,6 +295,10 @@ export default function ProduccionPage() {
 
   const handleCrearReceta = async () => {
     if (!nombreReceta) return
+    if (!selectedProducto) {
+      toast.error('Debés seleccionar o crear el producto final de salida.')
+      return
+    }
     
     const rendimientoValue = typeof rendimiento === 'string' ? parseInt(rendimiento) : rendimiento
     if (!rendimientoValue || rendimientoValue < 1) return
@@ -322,6 +333,8 @@ export default function ProduccionPage() {
       setNombreReceta('')
       setRendimiento(1)
       setSelectedProducto('')
+      setOutputMode('existing')
+      setCreatedOutputProductName(null)
       setNuevoItems([])
     } catch (error) {
       const unitErrors = (error as any)?.data?.unitErrors
@@ -437,6 +450,10 @@ export default function ProduccionPage() {
 
   const handleGuardarEdicion = async () => {
     if (!editNombre || !recetaEdit) return
+    if (!editProductoId) {
+      toast.error('Debés seleccionar o crear el producto final de salida.')
+      return
+    }
     
     const editRendimientoValue = typeof editRendimiento === 'string' ? parseInt(editRendimiento) : editRendimiento
     if (!editRendimientoValue || editRendimientoValue < 1) return
@@ -456,6 +473,8 @@ export default function ProduccionPage() {
       }).unwrap()
       toast.success('Receta actualizada')
       setRecetaEdit(null)
+      setEditOutputMode('existing')
+      setEditCreatedOutputProductName(null)
     } catch (error) {
       const unitErrors = (error as any)?.data?.unitErrors
       if (Array.isArray(unitErrors) && unitErrors.length > 0) {
@@ -656,21 +675,21 @@ export default function ProduccionPage() {
                             />
                           </div>
                         </div>
-                        <div className="grid gap-2">
-                          <Label htmlFor="producto">Producto del Inventario (opcional)</Label>
-                          <Select value={selectedProducto} onValueChange={setSelectedProducto}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Seleccionar producto final" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {productosTyped?.map((producto) => (
-                                <SelectItem key={producto.id} value={producto.id}>
-                                  {producto.nombre}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
+                        <RecipeOutputSelector
+                          createdProductName={createdOutputProductName}
+                          onCreatedProduct={(product) => {
+                            setSelectedProducto(product.id)
+                            setCreatedOutputProductName(product.nombre)
+                          }}
+                          onModeChange={setOutputMode}
+                          onProductChange={setSelectedProducto}
+                          products={productosTyped?.map((product) => ({
+                            id: product.id,
+                            nombre: product.nombre,
+                          })) || []}
+                          selectedMode={outputMode}
+                          selectedProductId={selectedProducto}
+                        />
                       </div>
 
                       {/* SECCIÓN 2: Búsqueda Expandida de Productos */}
@@ -818,6 +837,8 @@ export default function ProduccionPage() {
                         setNombreReceta('')
                         setRendimiento(1)
                         setSelectedProducto('')
+                        setOutputMode('existing')
+                        setCreatedOutputProductName(null)
                         setNuevoItems([])
                         setBusquedaProductos('')
                       }}>
@@ -883,7 +904,13 @@ export default function ProduccionPage() {
                         <TableRow key={receta.recetaId}>
                           <TableCell className="font-medium">{receta.nombre}</TableCell>
                           <TableCell>{receta.rendimiento}</TableCell>
-                          <TableCell>{getInsumosTexto(receta)}</TableCell>
+                          <TableCell>
+                            {getRecetaProducto(receta)?.nombre ? (
+                              getRecetaProducto(receta)?.nombre
+                            ) : (
+                              <Badge variant='destructive'>Sin producto final</Badge>
+                            )}
+                          </TableCell>
                           <TableCell>{formatIngredientesList(getRecetaIngredientes(receta))}</TableCell>
                           <TableCell>{formatCurrency(receta.costoUnitario)}</TableCell>
                           <TableCell>{format(new Date(receta.createdAt), 'dd/MM/yyyy')}</TableCell>
@@ -904,6 +931,8 @@ export default function ProduccionPage() {
                                   setEditNombre(receta.nombre)
                                   setEditRendimiento(receta.rendimiento)
                                   setEditProductoId(getRecetaProducto(receta)?.id || '')
+                                  setEditOutputMode(getRecetaProducto(receta)?.id ? 'existing' : 'create')
+                                  setEditCreatedOutputProductName(null)
                                   setEditItems(getRecetaIngredientes(receta).map((i: any) => ({
                                     productoId: i.productoId,
                                     cantidad: i.cantidad,
@@ -977,13 +1006,18 @@ export default function ProduccionPage() {
                               <SelectValue placeholder="Seleccionar receta" />
                             </SelectTrigger>
                             <SelectContent>
-                              {recetasTyped?.map((receta: any) => (
+                              {recetasOperativas.map((receta: any) => (
                                 <SelectItem key={receta.recetaId} value={receta.recetaId}>
                                   {receta.nombre}
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
+                          {recetasTyped && recetasOperativas.length !== recetasTyped.length ? (
+                            <p className='text-xs text-muted-foreground'>
+                              Las recetas sin producto final configurado no se pueden usar para crear órdenes.
+                            </p>
+                          ) : null}
                         </div>
                         <div className="grid gap-2">
                           <Label htmlFor="cantidad">Cantidad a Producir</Label>
@@ -1360,39 +1394,41 @@ export default function ProduccionPage() {
               />
               {!editNombre && <p className="text-xs text-destructive">El nombre es obligatorio</p>}
             </div>
-            <div className="grid grid-cols-2 gap-4">
-               <div className="grid gap-2">
-                 <Label htmlFor="editRendimiento">Rendimiento</Label>
-                 <Input
-                   id="editRendimiento"
-                   type="number"
-                   min={1}
-                   value={editRendimiento}
-                   onChange={(e) => {
-                     const val = e.target.value
-                     if (val === '') {
-                       setEditRendimiento('')
-                     } else {
-                       const num = parseInt(val)
-                       setEditRendimiento(num >= 1 ? num : 1)
-                     }
-                   }}
-                   placeholder="1"
-                 />
-               </div>
+            <div className="grid gap-4">
               <div className="grid gap-2">
-                <Label>Producto asociado</Label>
-                <Select value={editProductoId} onValueChange={setEditProductoId}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Sin producto" />
-                  </SelectTrigger>
-                  <SelectContent className="max-w-sm">
-                    {productosTyped?.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>{p.nombre}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="editRendimiento">Rendimiento</Label>
+                <Input
+                  id="editRendimiento"
+                  type="number"
+                  min={1}
+                  value={editRendimiento}
+                  onChange={(e) => {
+                    const val = e.target.value
+                    if (val === '') {
+                      setEditRendimiento('')
+                    } else {
+                      const num = parseInt(val)
+                      setEditRendimiento(num >= 1 ? num : 1)
+                    }
+                  }}
+                  placeholder="1"
+                />
               </div>
+              <RecipeOutputSelector
+                createdProductName={editCreatedOutputProductName}
+                onCreatedProduct={(product) => {
+                  setEditProductoId(product.id)
+                  setEditCreatedOutputProductName(product.nombre)
+                }}
+                onModeChange={setEditOutputMode}
+                onProductChange={setEditProductoId}
+                products={productosTyped?.map((product) => ({
+                  id: product.id,
+                  nombre: product.nombre,
+                })) || []}
+                selectedMode={editOutputMode}
+                selectedProductId={editProductoId}
+              />
             </div>
             <div className="grid gap-2">
               <Label>Ingredientes</Label>

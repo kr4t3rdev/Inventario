@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import React, { useEffect, useMemo, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -206,7 +206,7 @@ export function MiEmpresaForm() {
       try {
         const token = getAuthToken()
         const res = await fetch('/api/mi-empresa', {
-          method: 'POST',
+          method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
             ...(token ? { Authorization: token } : {}),
@@ -214,12 +214,12 @@ export function MiEmpresaForm() {
           body: JSON.stringify({ usaCodigoEan13: false }),
         })
 
-        const data = await res.json()
+        const data = await res.json().catch(() => ({}))
         if (!res.ok) {
-          throw new Error(data.error || 'Error al actualizar configuración')
+          throw new Error((data as { error?: string }).error || 'Error al actualizar configuración')
         }
 
-        sileo.success({ title: data.message || 'Configuración actualizada' })
+        sileo.success({ title: (data as { message?: string }).message || 'Configuración actualizada' })
         form.setValue('usaCodigoEan13', false)
         setSavedUsaEan13(false)
       } catch (error) {
@@ -243,7 +243,7 @@ export function MiEmpresaForm() {
     try {
       const token = getAuthToken()
       const res = await fetch('/api/mi-empresa', {
-        method: 'POST',
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: token } : {}),
@@ -254,12 +254,12 @@ export function MiEmpresaForm() {
         }),
       })
 
-      const data = await res.json()
+      const data = await res.json().catch(() => ({}))
       if (!res.ok) {
-        throw new Error(data.error || 'Error al activar EAN-13')
+        throw new Error((data as { error?: string }).error || 'Error al activar EAN-13')
       }
 
-      sileo.success({ title: data.message || 'EAN-13 activado correctamente' })
+      sileo.success({ title: (data as { message?: string }).message || 'EAN-13 activado correctamente' })
       setShowEan13Confirmation(false)
       form.setValue('usaCodigoEan13', true)
       setSavedUsaEan13(true)

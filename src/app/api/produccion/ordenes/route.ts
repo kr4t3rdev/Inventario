@@ -99,6 +99,13 @@ export const POST = withAuthPost(async (request: NextRequest) => {
       return NextResponse.json({ error: 'Receta no encontrada.' }, { status: 404 });
     }
 
+    if (!receta.productoId) {
+      return NextResponse.json(
+        { error: 'La receta no tiene producto final configurado. Seleccioná o creá uno antes de generar la orden.' },
+        { status: 400 }
+      );
+    }
+
     const orden = await prisma.ordenProduccion.create({
       data: {
         ordenProduccionId: crypto.randomUUID(),

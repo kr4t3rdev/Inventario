@@ -60,6 +60,13 @@ export const productosApi = apiSlice.injectEndpoints({
           method: "POST",
           body: producto,
         }),
+        transformResponse: (response: { producto?: Producto } | Producto) => {
+          if (response && typeof response === 'object' && 'producto' in response && response.producto) {
+            return response.producto;
+          }
+
+          return response as Producto;
+        },
         invalidatesTags: ["Productos", "Dashboard", "StockUbicacion"],
       }),
       updateProducto: builder.mutation<Producto, Partial<Producto> & { id: string }>({

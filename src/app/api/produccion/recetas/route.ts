@@ -7,7 +7,7 @@ import { calculateCostoUnitarioReceta } from '@/lib/utils/produccion';
 const createRecetaSchema = z.object({
   nombre: z.string().min(1).max(160),
   rendimiento: z.number().int().min(1).default(1),
-  productoId: z.string().optional(),
+  productoId: z.string().min(1, 'Producto final requerido'),
   instrucciones: z.string().max(4000).optional(),
   tiempoPrep: z.number().int().min(1).max(1440).optional(),
 });
@@ -84,15 +84,19 @@ export const POST = withAuthPost(async (request: NextRequest) => {
   try {
     const payload = createRecetaSchema.parse(await request.json());
 
-    // Obtener producto final para calcular costo
-    let precioCostoProductoFinal = 0;
-    if (payload.productoId) {
-      const productoFinal = await prisma.producto.findUnique({
-        where: { id: payload.productoId },
-        select: { precioCosto: true },
-      });
-      precioCostoProductoFinal = productoFinal?.precioCosto || 0;
+    if (!payload.productoId) {
+      return NextResponse.json(
+        { error: 'Debés configurar el producto final de salida para la receta.' },
+        { status: 400 }
+      );
     }
+
+    // Obtener producto final para calcular costo
+    const productoFinal = await prisma.producto.findUnique({
+      where: { id: payload.productoId },
+      select: { precioCosto: true },
+    });
+    const precioCostoProductoFinal = productoFinal?.precioCosto || 0;
 
     // Calcular costo unitario inicial (sin productos agregados aún)
     const costoUnitario = calculateCostoUnitarioReceta(
@@ -107,7 +111,7 @@ export const POST = withAuthPost(async (request: NextRequest) => {
         nombre: payload.nombre,
         rendimiento: payload.rendimiento,
         costoUnitario: costoUnitario,
-        productoId: payload.productoId || null,
+        productoId: payload.productoId,
         instrucciones: payload.instrucciones,
         tiempoPrep: payload.tiempoPrep,
         updatedAt: new Date(),
@@ -138,6 +142,15 @@ export const POST = withAuthPost(async (request: NextRequest) => {
     return NextResponse.json(receta, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) {
+      const productoIssue = error.issues.find((issue) => issue.path.includes('productoId'));
+
+      if (productoIssue) {
+        return NextResponse.json(
+          { error: 'Debés configurar el producto final de salida para la receta.' },
+          { status: 400 }
+        );
+      }
+
       return NextResponse.json(
         { error: 'Datos inválidos para crear receta.', issues: error.issues },
         { status: 400 }

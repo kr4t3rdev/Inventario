@@ -60,6 +60,17 @@ export function categorizeUnit(simbolo: string | null | undefined): UnitCategory
 }
 
 /**
+ * @description Categoriza la unidad canónica del producto en catálogo.
+ * Las unidades no convertibles del catálogo se interpretan como consumo de unidad completa.
+ * @param {string | null | undefined} simbolo - Símbolo de unidad del producto en inventario.
+ * @returns {UnitCategory} Categoría funcional de la unidad de catálogo.
+ */
+export function categorizeCatalogUnit(simbolo: string | null | undefined): UnitCategory {
+  const category = categorizeUnit(simbolo);
+  return category === 'unknown' ? 'unit' : category;
+}
+
+/**
  * @description Validación de compatibilidad entre unidades
  * @param {string | null | undefined} recetaUnit - Unidad definida en la receta
  * @param {string | null | undefined} productoUnit - Unidad del producto en el catálogo
@@ -78,14 +89,13 @@ export function validateUnitCompatibility(
   productoUnit: string | null | undefined
 ): { isCompatible: boolean; warning: string | null } {
   const recetaCategory = categorizeUnit(recetaUnit);
-  const productoCategory = categorizeUnit(productoUnit);
+  const productoCategory = categorizeCatalogUnit(productoUnit);
 
-  // Si alguno es 'unknown', avisar pero permitir (usuario puede saber lo que hace)
-  if (recetaCategory === 'unknown' || productoCategory === 'unknown') {
-    const unknownUnit = recetaCategory === 'unknown' ? recetaUnit : productoUnit;
+  // La unidad ingresada por el usuario sigue siendo estricta.
+  if (recetaCategory === 'unknown') {
     return {
       isCompatible: false,
-      warning: `Unidad desconocida: "${unknownUnit}". Asegúrate de que sea válida.`,
+      warning: `Unidad desconocida: "${recetaUnit}". Asegúrate de que sea válida.`,
     };
   }
 
@@ -191,9 +201,9 @@ export function validateAndNormalizeIngredientUnit(
   const providedUnit = ingrediente.unidadSimbolo ?? null;
   const canonicalUnit = producto.unidadSimbolo ?? null;
   const providedCategory = categorizeUnit(providedUnit);
-  const canonicalCategory = categorizeUnit(canonicalUnit);
+  const canonicalCategory = categorizeCatalogUnit(canonicalUnit);
 
-  if (canonicalCategory === 'unknown' || providedCategory === 'unknown') {
+  if (providedCategory === 'unknown') {
     return {
       isValid: false,
       normalization: null,
@@ -218,6 +228,29 @@ export function validateAndNormalizeIngredientUnit(
         canonicalUnit,
         reason: 'missing_unit',
       },
+    };
+  }
+
+  if (canonicalCategory === 'unit' && providedCategory === 'unit') {
+    const normalizedCantidad = ingrediente.cantidad;
+    const normalizedUnidadSimbolo = canonicalUnit ?? providedUnit;
+    const normalization =
+      providedUnit !== normalizedUnidadSimbolo || normalizedCantidad !== ingrediente.cantidad
+        ? {
+            productoId: ingrediente.productoId,
+            productoNombre: producto.nombre,
+            providedUnit,
+            canonicalUnit,
+            originalCantidad: ingrediente.cantidad,
+            normalizedCantidad,
+          }
+        : null;
+
+    return {
+      isValid: true,
+      normalizedCantidad,
+      normalizedUnidadSimbolo,
+      normalization,
     };
   }
 

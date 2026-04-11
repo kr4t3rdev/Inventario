@@ -33,6 +33,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
+import { toast } from "sonner"
 import { z } from "zod"
 import { Card } from "@/components/ui/card"
 
@@ -156,7 +157,7 @@ export function QuickOfferDialog({ producto, trigger }: QuickOfferDialogProps) {
       } as Partial<Oferta>
 
       const createdOferta = await addOferta(payload).unwrap()
-      sileo.success({ title: 'Oferta creada exitosamente' })
+      toast.success('Oferta creada exitosamente')
       setOpen(false)
       form.reset()
       
@@ -165,11 +166,11 @@ export function QuickOfferDialog({ producto, trigger }: QuickOfferDialogProps) {
         await openOfertaPdf(createdOferta.id)
       } catch (pdfError) {
         console.error("Error generating PDF:", pdfError)
-        sileo.error({ title: 'Oferta creada pero hubo un error al generar el PDF' })
+        toast.error('Oferta creada pero hubo un error al generar el PDF')
       }
     } catch (error) {
       console.error("Error creating offer:", error)
-      sileo.error({ title: 'Error al crear la oferta' })
+      toast.error('Error al crear la oferta')
     }
   }
 
@@ -219,7 +220,7 @@ export function QuickOfferDialog({ producto, trigger }: QuickOfferDialogProps) {
           </DialogHeader>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-4 mt-4">
+            <form onSubmit={form.handleSubmit(onSubmit, () => { toast.error('Completá los campos requeridos antes de continuar.') })} className="space-y-4 mt-4">
               <motion.div
                 variants={staggerContainer}
                 initial="hidden"
