@@ -1,15 +1,22 @@
 import prisma from '@/lib/prisma'
 
 /**
- * @description Reset all products and inventory when EAN-13 is activated
- * Deletes all products (cascade handles related data) but preserves sales history
- * @returns Promise<{deletedProducts: number}>
+ * @description Reset all products and categories when EAN-13 is activated.
+ * Deletes all products first (cascade handles related data), then clears the
+ * category tree. Sales history is preserved.
+ * @returns Promise<{deletedProducts: number, deletedCategorias: number}>
  */
 export async function resetProductsForEan13(): Promise<{
   deletedProducts: number
+  deletedCategorias: number
 }> {
-  const result = await prisma.producto.deleteMany({})
-  return { deletedProducts: result.count }
+  const productos = await prisma.producto.deleteMany({})
+
+  // Break self-referential FK before bulk-deleting categories
+  await prisma.categoria.updateMany({ data: { parentId: null } })
+  const categorias = await prisma.categoria.deleteMany({})
+
+  return { deletedProducts: productos.count, deletedCategorias: categorias.count }
 }
 
 /**

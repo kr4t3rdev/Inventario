@@ -124,8 +124,8 @@ export const PUT = withAuth(async (request: NextRequest) => {
         )
       }
       console.log('✅ Confirmación recibida, procediendo con reset')
-      await resetProductsForEan13()
-      console.log('🗑️ Productos eliminados exitosamente')
+      const resetResult = await resetProductsForEan13()
+      console.log(`🗑️ Reset completado: ${resetResult.deletedProducts} productos y ${resetResult.deletedCategorias} categorías eliminadas`)
     }
 
     // Handle ON → OFF transition (no confirmation needed)
@@ -192,7 +192,7 @@ export const PUT = withAuth(async (request: NextRequest) => {
       {
         success: true,
         message: isTogglingOn
-          ? 'EAN-13 activated, all products reset'
+          ? 'EAN-13 activated, all products and categories reset'
           : isTogglingOff
             ? 'EAN-13 deactivated, EAN-13 codes cleared'
             : 'Mi Empresa updated',

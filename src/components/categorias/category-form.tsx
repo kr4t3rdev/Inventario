@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,6 +16,8 @@ import { Loader2, Folder, ArrowLeft, Sparkles, Layers } from "lucide-react";
 import { useDispatch } from "react-redux";
 import { apiSlice } from "@/lib/redux/services/apiSlice";
 import { motion, AnimatePresence } from "framer-motion";
+import { ClasificadorInfoNote } from "@/components/productos/clasificador-info-note";
+import { getAuthToken } from "@/lib/token";
 
 interface CategoryFormProps {
   initialData?: {
@@ -61,6 +64,18 @@ export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
   const router = useRouter();
   const dispatch = useDispatch()
   const { data: categorias, isLoading: isLoadingCategorias } = useGetCategoriasQuery();
+  const [usaEan13, setUsaEan13] = useState(false)
+
+  useEffect(() => {
+    const token = getAuthToken()
+    fetch('/api/mi-empresa', {
+      headers: token ? { Authorization: token } : undefined,
+      cache: 'no-store',
+    })
+      .then((r) => r.json())
+      .then((data) => setUsaEan13(data?.usaCodigoEan13 ?? false))
+      .catch(() => {})
+  }, [])
   
   const {
     form,
@@ -304,6 +319,16 @@ export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
                 />
               </motion.div>
               
+              {usaEan13 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.45 }}
+                >
+                  <ClasificadorInfoNote />
+                </motion.div>
+              )}
+
               <motion.div 
                 className="flex flex-col sm:flex-row justify-end gap-4 pt-4 border-t"
                 initial={{ opacity: 0, y: 10 }}

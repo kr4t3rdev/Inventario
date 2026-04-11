@@ -81,9 +81,13 @@ describe('EAN-13 Reset Logic', () => {
     const result = await resetProductsForEan13()
 
     expect(result.deletedProducts).toBe(2)
+    expect(result.deletedCategorias).toBeGreaterThanOrEqual(1)
 
     const after = await prisma.producto.count()
     expect(after).toBe(0)
+
+    const afterCat = await prisma.categoria.count()
+    expect(afterCat).toBe(0)
   })
 
   it('should clear all EAN-13 codes without deleting products', async () => {
@@ -126,6 +130,8 @@ describe('EAN-13 Reset Logic', () => {
     const result = await resetProductsForEan13()
     expect(result.deletedProducts).toBe(2)
     expect(typeof result.deletedProducts).toBe('number')
+    expect(result.deletedCategorias).toBeGreaterThanOrEqual(1)
+    expect(typeof result.deletedCategorias).toBe('number')
   })
 
   it('should return correct cleared count', async () => {
@@ -142,8 +148,26 @@ describe('EAN-13 Reset Logic', () => {
 
     const resultDelete = await resetProductsForEan13()
     expect(resultDelete.deletedProducts).toBe(0)
+    expect(resultDelete.deletedCategorias).toBe(0)
 
     const resultClear = await clearEan13Codes()
     expect(resultClear.clearedProducts).toBe(0)
+  })
+
+  it('should delete hierarchical categories (parent and children) on reset', async () => {
+    await cleanup()
+
+    const parent = await prisma.categoria.create({ data: { nombre: 'Parent Cat' } })
+    await prisma.categoria.create({ data: { nombre: 'Child Cat 1', parentId: parent.catId } })
+    await prisma.categoria.create({ data: { nombre: 'Child Cat 2', parentId: parent.catId } })
+
+    const beforeCount = await prisma.categoria.count()
+    expect(beforeCount).toBe(3)
+
+    const result = await resetProductsForEan13()
+
+    expect(result.deletedCategorias).toBe(3)
+    const afterCount = await prisma.categoria.count()
+    expect(afterCount).toBe(0)
   })
 })
