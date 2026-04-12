@@ -502,25 +502,31 @@ export const GET = withAuthGet(async (request: NextRequest, context: any, user: 
       .sort((a, b) => b[1] - a[1])
       .slice(0, 5)
 
-    const productosMasVendidos = await Promise.all(
-      productosVentas.map(async ([productoId, cantidad]) => {
-        const producto = await prisma.producto.findUnique({
-          where: { id: productoId },
-          include: { categoria: true },
-        })
+    // Una sola query batch en lugar de N+1 findUnique separados
+    const topProductoIds = productosVentas.map(([productoId]) => productoId)
+    const topProductosData = await prisma.producto.findMany({
+      where: { id: { in: topProductoIds } },
+      select: {
+        id: true,
+        nombre: true,
+        stock: true,
+        categoria: { select: { nombre: true } },
+      },
+    })
+    const topProductosMap = new Map(topProductosData.map((p) => [p.id, p]))
 
-        const ingresos = (ingresosItemsPorProducto[productoId] || 0) + (ingresosLegacyPorProducto[productoId] || 0)
-
-        return {
-          id: producto?.id || productoId,
-          nombre: producto?.nombre || "",
-          categoria: producto?.categoria.nombre || "",
-          ventas: cantidad,
-          ingresos,
-          stock: producto?.stock || 0,
-        }
-      }),
-    )
+    const productosMasVendidos = productosVentas.map(([productoId, cantidad]) => {
+      const producto = topProductosMap.get(productoId)
+      const ingresos = (ingresosItemsPorProducto[productoId] || 0) + (ingresosLegacyPorProducto[productoId] || 0)
+      return {
+        id: producto?.id || productoId,
+        nombre: producto?.nombre || "",
+        categoria: producto?.categoria?.nombre || "",
+        ventas: cantidad,
+        ingresos,
+        stock: producto?.stock || 0,
+      }
+    })
 
     const productosMasVendidosFiltrados = productosMasVendidos.filter(Boolean)
 
@@ -533,9 +539,17 @@ export const GET = withAuthGet(async (request: NextRequest, context: any, user: 
       : {};
 
     // Obtener todos los productos (con filtro de ubicación si aplica)
+    // select limitado: sólo los campos necesarios para calcular stock bajo
     const todosLosProductos = await prisma.producto.findMany({
       where: baseWhereCondition,
-      include: { categoria: true, unidad: true },
+      select: {
+        id: true,
+        nombre: true,
+        stock: true,
+        stockMinimo: true,
+        categoria: { select: { nombre: true } },
+        unidad: { select: { simbolo: true } },
+      },
     });
 
     // Definir tipos para el agrupamiento

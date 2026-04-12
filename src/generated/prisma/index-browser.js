@@ -249,7 +249,6 @@ exports.Prisma.ProductoScalarFieldEnum = {
   puntoDeVentaId: 'puntoDeVentaId',
   stockMinimo: 'stockMinimo',
   subcategoriaId: 'subcategoriaId',
-  codigoInterno: 'codigoInterno',
   codigoNegocio: 'codigoNegocio',
   proveedorCodigo: 'proveedorCodigo',
   idSeccionCodigo: 'idSeccionCodigo',
@@ -257,19 +256,6 @@ exports.Prisma.ProductoScalarFieldEnum = {
   surtidoCodigo: 'surtidoCodigo',
   dcCodigo: 'dcCodigo',
   fotos: 'fotos'
-};
-
-exports.Prisma.StockUbicacionScalarFieldEnum = {
-  productoId: 'productoId',
-  tipoUbicacion: 'tipoUbicacion',
-  ubicacionId: 'ubicacionId',
-  cantidad: 'cantidad',
-  cantidadReservada: 'cantidadReservada',
-  cantidadDisponible: 'cantidadDisponible',
-  ultimaActualizacion: 'ultimaActualizacion',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt',
-  stockUbicacionId: 'stockUbicacionId'
 };
 
 exports.Prisma.VentaScalarFieldEnum = {
@@ -561,7 +547,6 @@ exports.Prisma.CompraProductoScalarFieldEnum = {
   cuentaPorPagarId: 'cuentaPorPagarId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
-  createdById: 'createdById',
   proveedorId: 'proveedorId',
   formaPago: 'formaPago',
   estado: 'estado',
@@ -1412,13 +1397,13 @@ exports.EstadoProduccion = exports.$Enums.EstadoProduccion = {
 };
 
 exports.CostChangeReason = exports.$Enums.CostChangeReason = {
-  MANUAL_EDIT: 'MANUAL_EDIT',
+  INITIAL: 'INITIAL',
   RESTOCK: 'RESTOCK',
   ADJUSTMENT: 'ADJUSTMENT',
-  INITIAL: 'INITIAL',
-  SYSTEM_SYNC: 'SYSTEM_SYNC',
   CORRECTION: 'CORRECTION',
-  IMPORT: 'IMPORT'
+  IMPORT: 'IMPORT',
+  MANUAL_EDIT: 'MANUAL_EDIT',
+  SYSTEM_SYNC: 'SYSTEM_SYNC'
 };
 
 exports.Prisma.ModelName = {
@@ -1432,7 +1417,6 @@ exports.Prisma.ModelName = {
   Almacen: 'Almacen',
   PuntoDeVenta: 'PuntoDeVenta',
   Producto: 'Producto',
-  StockUbicacion: 'StockUbicacion',
   Venta: 'Venta',
   VentaItem: 'VentaItem',
   Merma: 'Merma',

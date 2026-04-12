@@ -171,7 +171,6 @@ model Producto {
   puntoDeVentaId    String?
   stockMinimo       Int                       @default(0)
   subcategoriaId    String?
-  codigoInterno     String?                   @unique
   codigoNegocio     String?                   @unique
   proveedorCodigo   String?
   idSeccionCodigo   String?
@@ -194,30 +193,10 @@ model Producto {
   costHistory       ProductoCostHistory[]
   Receta            Receta[]
   RecetaIngrediente RecetaIngrediente[]
-  stockUbicaciones  StockUbicacion[]
   transferencias    Transferencia[]
   ValeSalidaItem    ValeSalidaItem[]
   ventas            Venta[]
   ventaItems        VentaItem[]
-}
-
-model StockUbicacion {
-  productoId          String
-  tipoUbicacion       String
-  ubicacionId         String
-  cantidad            Int
-  cantidadReservada   Int      @default(0)
-  cantidadDisponible  Int
-  ultimaActualizacion DateTime @default(now()) @updatedAt
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
-  stockUbicacionId    String   @id @default(cuid())
-  producto            Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
-
-  @@unique([productoId, tipoUbicacion, ubicacionId])
-  @@index([productoId])
-  @@index([tipoUbicacion])
-  @@index([ubicacionId])
 }
 
 model Venta {
@@ -292,33 +271,32 @@ model Transferencia {
 }
 
 model User {
-  userId                 String               @id @default(cuid())
-  name                   String
-  email                  String               @unique
-  password               String
-  role                   String               @default("regularUser")
-  createdAt              DateTime             @default(now())
-  updatedAt              DateTime             @updatedAt
-  activatedAt            DateTime?
-  avatar                 String?
-  expiresAt              DateTime?
-  isActive               Boolean              @default(true)
-  lastFailedLogin        DateTime?
-  lastModifiedBy         String?
-  lockedUntil            DateTime?
-  loginAttempts          Int                  @default(0)
-  comprasProductoCreadas CompraProducto[]     @relation("CompraProductoCreador")
-  contratosAprobados     Contrato[]           @relation("AprobadorContrato")
-  contratosCreados       Contrato[]           @relation("CreadorContrato")
-  contratoAprobaciones   ContratoAprobacion[]
-  contratoArchivos       ContratoArchivo[]
-  contratoFirmas         ContratoFirma[]
-  contratoVersiones      ContratoVersion[]
-  licencias              Licencia[]
-  licenciasAudit         LicenciaAudit[]      @relation("LicenciaAuditActor")
-  notifications          Notification[]
-  activityLogs           UserActivityLog[]
-  sessions               UserSession[]
+  userId               String               @id @default(cuid())
+  name                 String
+  email                String               @unique
+  password             String
+  role                 String               @default("regularUser")
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+  activatedAt          DateTime?
+  avatar               String?
+  expiresAt            DateTime?
+  isActive             Boolean              @default(true)
+  lastFailedLogin      DateTime?
+  lastModifiedBy       String?
+  lockedUntil          DateTime?
+  loginAttempts        Int                  @default(0)
+  contratosAprobados   Contrato[]           @relation("AprobadorContrato")
+  contratosCreados     Contrato[]           @relation("CreadorContrato")
+  contratoAprobaciones ContratoAprobacion[]
+  contratoArchivos     ContratoArchivo[]
+  contratoFirmas       ContratoFirma[]
+  contratoVersiones    ContratoVersion[]
+  licencias            Licencia[]
+  licenciasAudit       LicenciaAudit[]      @relation("LicenciaAuditActor")
+  notifications        Notification[]
+  activityLogs         UserActivityLog[]
+  sessions             UserSession[]
 }
 
 model Plan {
@@ -577,12 +555,10 @@ model CompraProducto {
   cuentaPorPagarId String?         @unique
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
-  createdById      String?
   proveedorId      String
   formaPago        String
   estado           String
   tipoOperacion    String          @default("REGULAR")
-  createdBy        User?           @relation("CompraProductoCreador", fields: [createdById], references: [userId])
   cuentaPorPagar   CuentaPorPagar? @relation(fields: [cuentaPorPagarId], references: [cuentaPorPagarId])
   gastoCompra      GastoCompra?    @relation(fields: [gastoCompraId], references: [gastoCompraId])
   producto         Producto        @relation(fields: [productoId], references: [id], onDelete: Cascade)
@@ -591,7 +567,6 @@ model CompraProducto {
   @@index([estado])
   @@index([proveedorId])
   @@index([productoId])
-  @@index([createdById])
 }
 
 model Servicios {
@@ -1559,11 +1534,11 @@ enum EstadoProduccion {
 }
 
 enum CostChangeReason {
-  MANUAL_EDIT
+  INITIAL
   RESTOCK
   ADJUSTMENT
-  INITIAL
-  SYSTEM_SYNC
   CORRECTION
   IMPORT
+  MANUAL_EDIT
+  SYSTEM_SYNC
 }

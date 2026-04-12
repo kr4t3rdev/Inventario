@@ -29,13 +29,21 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "ubicacionId y tipoUbicacion son requeridos" }, { status: 400 })
     }
 
-    // 1. Obtener todos los productos con su información básica en UNA sola query
+    // 1. Obtener todos los productos con select limitado a campos necesarios
     const productos = await prisma.producto.findMany({
-      include: {
-        categoria: true,
-        unidad: true,
-        vendor: true,
-        almacen: true,
+      select: {
+        id: true,
+        nombre: true,
+        codigoInterno: true,
+        precioCosto: true,
+        precioVenta: true,
+        stock: true,
+        stockMinimo: true,
+        categoriaId: true,
+        subcategoriaId: true,
+        almacenId: true,
+        categoria: { select: { catId: true, nombre: true } },
+        subcategoria: { select: { catId: true, nombre: true } },
       },
     })
 
