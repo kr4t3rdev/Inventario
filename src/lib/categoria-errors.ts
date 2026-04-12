@@ -171,10 +171,12 @@ export class CategoriaDeletionValidator {
     try {
       const categoria = await prisma.categoria.findUnique({
         where: { catId: categoryId },
-        include: {
-          productos: true,
-          subcategorias: true,
-          productosSubcategoria: true
+        select: {
+          catId: true,
+          parentId: true,
+          productos: { select: { id: true } },
+          subcategorias: { select: { catId: true } },
+          productosSubcategoria: { select: { id: true } }
         }
       })
 

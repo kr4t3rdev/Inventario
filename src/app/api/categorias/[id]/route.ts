@@ -119,8 +119,10 @@ export async function DELETE(
         // Get the category data for reassignment logic
         const categoria = await prisma.categoria.findUnique({
             where: { catId: id },
-            include: {
-                productosSubcategoria: true
+            select: {
+                catId: true,
+                parentId: true,
+                productosSubcategoria: { select: { id: true } }
             }
         });
 
