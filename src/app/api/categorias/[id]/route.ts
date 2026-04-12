@@ -91,7 +91,15 @@ export async function PATCH(
                         descripcion: true
                     }
                 }
+            }
+        })
 
+        return CategoriaApiErrorHandler.createSuccessResponse(categoria, 'Categoría actualizada exitosamente')
+    } catch (error) {
+        console.error('Error updating category:', error)
+        return CategoriaApiErrorHandler.handleUnknownError(error, { operation: 'update', categoryId: id })
+    }
+}
 
 export async function DELETE(
     request: NextRequest,
