@@ -233,12 +233,14 @@ export class CategoriaDeletionValidator {
       }
 
     } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      console.error('[CategoriaDeletionValidator.validateDeletion]', message, error)
       return {
         canDelete: false,
         errors: [{
           code: CategoriaErrorCode.INVALID_INPUT,
           message: 'Error al validar la eliminación de la categoría',
-          details: { error }
+          details: { error: message }
         }]
       }
     }
