@@ -3,6 +3,8 @@ import prisma from "@/lib/prisma";
 import { CategoriaValidator } from "@/lib/categoria-validation";
 import { CategoriaApiErrorHandler, CategoriaDeletionValidator } from "@/lib/categoria-errors";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ id: string }> }

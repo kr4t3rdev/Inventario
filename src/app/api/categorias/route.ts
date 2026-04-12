@@ -3,6 +3,8 @@ import prisma from "@/lib/prisma";
 import { CategoriaValidator } from "@/lib/categoria-validation";
 import { CategoriaApiErrorHandler } from "@/lib/categoria-errors";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
     try {
         const categorias = await prisma.categoria.findMany({
