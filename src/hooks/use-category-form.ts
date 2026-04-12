@@ -48,7 +48,8 @@ export function useCategoryForm({ initialData, onSuccess, usaEan13 = false }: Us
       descripcion: initialData?.descripcion || '',
       parentId: initialData?.parentId || 'none',
     },
-    mode: 'onChange',
+    mode: 'onBlur',
+    reValidateMode: 'onChange',
   });
 
   // Reset form when initialData changes
@@ -85,6 +86,15 @@ export function useCategoryForm({ initialData, onSuccess, usaEan13 = false }: Us
 
       if (!response.ok) {
         throw new Error(result.error || 'Error de validación');
+      }
+
+      if (!result.isValid) {
+        const message = result.error || 'Error de validación';
+        if (result.field === 'name') {
+          form.setError('nombre', { type: 'server', message });
+        }
+        toast.error(message);
+        return false;
       }
 
       return result.isValid;

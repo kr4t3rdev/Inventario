@@ -41,6 +41,7 @@ import { useState } from "react"
 import { toast } from "sonner"
 import type { Categoria, CategoriaHierarchy } from "../../models/model"
 import { motion, AnimatePresence } from "framer-motion"
+import { useAuth } from "@/contexts/auth-context"
 
 // Loading spinner component
 function LoadingSpinner({ size = 32 }: { size?: number }) {
@@ -76,9 +77,11 @@ const DataTable = dynamic(() => import("@/components/data-table").then(mod => ({
 })
 
 const Categoria = () => {
+  const { user, loading: authLoading } = useAuth()
+  const skipQuery = authLoading || !user
 
-  const { data: categorias, isLoading } = useGetCategoriasQuery()
-  const { data: categoriaHierarchy, isLoading: isLoadingHierarchy } = useGetCategoriaHierarchyQuery()
+  const { data: categorias, isLoading } = useGetCategoriasQuery(undefined, { skip: skipQuery })
+  const { data: categoriaHierarchy, isLoading: isLoadingHierarchy } = useGetCategoriaHierarchyQuery(undefined, { skip: skipQuery })
 
   const [categoriaToDelete, setCategoriaToDelete] = useState<string | null>(null)
   const [showTreeView, setShowTreeView] = useState(false)

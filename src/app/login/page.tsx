@@ -68,18 +68,16 @@ function LoginFormBody({ onSubmit, loading, error }: LoginFormBodyProps): JSX.El
           <Label htmlFor="email" className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Correo electrónico
           </Label>
-          <motion.div whileFocus={{ scale: 1.02 }}>
-            <Input
-              id="email"
-              type="email"
-              placeholder="tu@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              disabled={loading}
-              className="h-12 bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
-            />
-          </motion.div>
+          <Input
+            id="email"
+            type="email"
+            placeholder="tu@email.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            disabled={loading}
+            className="h-12 bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+          />
         </motion.div>
 
         {/* Password Field */}
@@ -94,7 +92,7 @@ function LoginFormBody({ onSubmit, loading, error }: LoginFormBodyProps): JSX.El
               Contraseña
             </Label>
           </div>
-          <motion.div whileFocus={{ scale: 1.02 }} className="relative">
+          <div className="relative">
             <Input
               id="password"
               type={showPassword ? 'text' : 'password'}
@@ -115,7 +113,7 @@ function LoginFormBody({ onSubmit, loading, error }: LoginFormBodyProps): JSX.El
             >
               {showPassword ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
             </motion.button>
-          </motion.div>
+          </div>
         </motion.div>
 
         {/* Submit Button */}

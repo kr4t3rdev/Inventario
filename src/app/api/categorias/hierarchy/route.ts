@@ -57,11 +57,12 @@ export async function GET() {
 
     return NextResponse.json(hierarchy);
   } catch (error) {
-    console.error("Error al obtener jerarquía de categorías:", error);
+    const message = error instanceof Error ? error.message : String(error)
+    console.error("[GET /api/categorias/hierarchy]", message)
     return NextResponse.json(
-      { error: "Error al obtener jerarquía de categorías" }, 
+      { error: "Error al obtener jerarquía de categorías", detail: process.env.NODE_ENV !== 'production' ? message : undefined },
       { status: 500 }
-    );
+    )
   }
 }
 

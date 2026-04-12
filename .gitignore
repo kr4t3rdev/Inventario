@@ -78,9 +78,11 @@ test y cambios/*
 # public uploads
 public/uploads
 
-# query engine binaries
+# query engine binaries - only exclude platform-specific that are auto-generated
 libquery_engine-darwin-arm64.dylib.node
+libquery_engine-darwin-x64.dylib.node
 libquery_engine-linux-arm64-openssl-3.0.x.so.node
+libquery_engine-linux-arm64-openssl-1.1.x.so.node
 query_engine-windows.dll.node
 query_engine-windows.dll.node.tmp4604
 query_engine-windows.dll.node.tmp14584

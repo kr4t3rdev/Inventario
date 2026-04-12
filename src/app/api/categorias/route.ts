@@ -32,8 +32,12 @@ export async function GET() {
         })
         return NextResponse.json(categorias)
     } catch (error) {
-        console.log(error)
-        return NextResponse.json({error: 'Error al obtener categorias'}, {status:500})        
+        const message = error instanceof Error ? error.message : String(error)
+        console.error('[GET /api/categorias]', message)
+        return NextResponse.json(
+          { error: 'Error al obtener categorias', detail: process.env.NODE_ENV !== 'production' ? message : undefined },
+          { status: 500 }
+        )
     }
 }
 export async function POST(req: NextRequest) {
