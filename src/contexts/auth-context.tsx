@@ -40,18 +40,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (response.ok) {
           const userData = await response.json()
           setUser(userData)
-        } else {
-          if (response.status === 401) {
-            toast.error('Su sesión ha expirado. Por favor inicie sesión nuevamente.')
-          }
+        } else if (response.status === 401 || response.status === 403) {
+          // Solo invalidar sesión ante respuesta explícita de no-autorizado
+          toast.error('Su sesión ha expirado. Por favor inicie sesión nuevamente.')
           sessionStorage.removeItem("token")
           setUser(null)
         }
+        // En 500 u otros errores de servidor: mantener la sesión actual
       }
     } catch (error) {
+      // Error de red o del servidor: no cerrar sesión, puede ser transitorio
       console.error("Error checking auth:", error)
-      sessionStorage.removeItem("token")
-      setUser(null)
     } finally {
       setLoading(false)
     }

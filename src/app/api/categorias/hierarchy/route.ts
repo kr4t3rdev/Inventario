@@ -58,9 +58,9 @@ export async function GET() {
     return NextResponse.json(hierarchy);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error)
-    console.error("[GET /api/categorias/hierarchy]", message)
+    console.error("[GET /api/categorias/hierarchy]", message, error)
     return NextResponse.json(
-      { error: "Error al obtener jerarquía de categorías", detail: process.env.NODE_ENV !== 'production' ? message : undefined },
+      { error: "Error al obtener jerarquía de categorías", detail: message },
       { status: 500 }
     )
   }
