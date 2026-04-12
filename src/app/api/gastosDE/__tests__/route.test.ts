@@ -1,13 +1,20 @@
 import { describe, it, expect, vi, beforeEach, Mock } from 'vitest'
 import { NextRequest } from 'next/server'
 
+// Mock authenticateUser
+vi.mock('@/lib/auth-middleware', () => ({
+  authenticateUser: vi.fn().mockResolvedValue({ success: true, user: { id: 'test-user' } }),
+}))
+
 // Mock prisma module
 vi.mock('@/lib/prisma', () => ({
   default: {
     gastosDE: {
       findMany: vi.fn(),
+      findUnique: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      delete: vi.fn(),
     },
   },
 }))
@@ -15,7 +22,7 @@ vi.mock('@/lib/prisma', () => ({
 // Import after mocking
 import prisma from '@/lib/prisma'
 import { GET, POST } from '../route'
-import { PATCH } from '../[id]/route'
+import { GET as GET_BY_ID, PATCH, DELETE } from '../[id]/route'
 
 describe('GastosDE API Routes', () => {
   beforeEach(() => {
@@ -25,8 +32,8 @@ describe('GastosDE API Routes', () => {
   describe('GET /api/gastosDE', () => {
     it('should return list of gastosDE', async () => {
       const mockGastosDE = [
-        { gastosDEId: '1', tipo: 'Arrendamiento', proveedor: 'Proveedor A', monto: 1000, descripcion: 'Oficina', periodo: '2026-03', numeroFactura: 'INV-001' },
-        { gastosDEId: '2', tipo: 'Mantenimiento', proveedor: 'Proveedor B', monto: 500, descripcion: 'Reparación', periodo: '2026-03', numeroFactura: null },
+        { gastosDEId: '1', tipo: 'Arrendamiento', conceptoId: null, elementoId: null, proveedor: 'Proveedor A', monto: 1000, descripcion: 'Oficina', periodo: '2026-03', numeroFactura: 'INV-001', isPagado: 'pendiente' },
+        { gastosDEId: '2', tipo: 'Mantenimiento', conceptoId: null, elementoId: null, proveedor: 'Proveedor B', monto: 500, descripcion: 'Reparación', periodo: '2026-03', numeroFactura: null, isPagado: 'pendiente' },
       ]
       ;(prisma.gastosDE.findMany as Mock).mockResolvedValue(mockGastosDE)
 
@@ -38,13 +45,17 @@ describe('GastosDE API Routes', () => {
       expect(data).toEqual(mockGastosDE)
       expect(prisma.gastosDE.findMany).toHaveBeenCalledWith({
         where: {},
+        include: {
+          concepto: true,
+          elemento: true,
+        },
         orderBy: { monto: 'desc' },
       })
     })
 
     it('should filter by periodo', async () => {
       const mockGastosDE = [
-        { gastosDEId: '1', tipo: 'Arrendamiento', proveedor: 'Proveedor A', monto: 1000, descripcion: 'Oficina', periodo: '2026-03', numeroFactura: 'INV-001' },
+        { gastosDEId: '1', tipo: 'Arrendamiento', conceptoId: null, elementoId: null, proveedor: 'Proveedor A', monto: 1000, descripcion: 'Oficina', periodo: '2026-03', numeroFactura: 'INV-001', isPagado: 'pendiente' },
       ]
       ;(prisma.gastosDE.findMany as Mock).mockResolvedValue(mockGastosDE)
 
@@ -55,8 +66,24 @@ describe('GastosDE API Routes', () => {
       expect(response.status).toBe(200)
       expect(prisma.gastosDE.findMany).toHaveBeenCalledWith({
         where: { periodo: '2026-03' },
+        include: {
+          concepto: true,
+          elemento: true,
+        },
         orderBy: { monto: 'desc' },
       })
+    })
+
+    it('should return 401 when not authenticated', async () => {
+      const { authenticateUser } = await import('@/lib/auth-middleware')
+      ;(authenticateUser as Mock).mockResolvedValueOnce({ success: false })
+
+      const request = new NextRequest('http://localhost:3000/api/gastosDE')
+      const response = await GET(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(401)
+      expect(data.error).toBe('No autorizado')
     })
 
     it('should return 500 on error', async () => {
@@ -67,7 +94,7 @@ describe('GastosDE API Routes', () => {
       const data = await response.json()
 
       expect(response.status).toBe(500)
-      expect(data.error).toBe('Error al obtener Gasto Derivados Empresa')
+      expect(data.error).toBe('Error al obtener Gastos de Explotación')
     })
   })
 
@@ -92,6 +119,7 @@ describe('GastosDE API Routes', () => {
         periodo: '2026-03',
         createdAt: new Date(),
         updatedAt: new Date(),
+        isPagado: 'pendiente',
       }
       ;(prisma.gastosDE.create as Mock).mockResolvedValue(mockCreated)
 
@@ -102,7 +130,7 @@ describe('GastosDE API Routes', () => {
       const response = await POST(request)
       const data = await response.json()
 
-      expect(response.status).toBe(200)
+      expect(response.status).toBe(201)
       expect(data.gastosDEId).toBe(mockCreated.gastosDEId)
       expect(data.tipo).toBe(mockCreated.tipo)
       expect(data.proveedor).toBe(mockCreated.proveedor)
@@ -114,12 +142,18 @@ describe('GastosDE API Routes', () => {
         data: expect.objectContaining({
           gastosDEId: 'test-uuid-123',
           tipo: 'Arrendamiento',
+          conceptoId: null,
+          elementoId: null,
           proveedor: 'Proveedor A',
           monto: 1000,
           descripcion: 'Oficina',
           numeroFactura: 'INV-001',
           periodo: expect.stringMatching(/^\d{4}-\d{2}$/),
         }),
+        include: {
+          concepto: true,
+          elemento: true,
+        },
       })
     })
 
@@ -142,6 +176,7 @@ describe('GastosDE API Routes', () => {
         periodo: '2026-03',
         createdAt: new Date(),
         updatedAt: new Date(),
+        isPagado: 'pendiente',
       }
       ;(prisma.gastosDE.create as Mock).mockResolvedValue(mockCreated)
 
@@ -152,20 +187,67 @@ describe('GastosDE API Routes', () => {
       const response = await POST(request)
       const data = await response.json()
 
-      expect(response.status).toBe(200)
+      expect(response.status).toBe(201)
       expect(data.numeroFactura).toBeNull()
       expect(data.gastosDEId).toBe(mockCreated.gastosDEId)
       expect(prisma.gastosDE.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           gastosDEId: 'test-uuid-456',
           tipo: 'Mantenimiento',
+          conceptoId: null,
+          elementoId: null,
           proveedor: 'Proveedor B',
           monto: 500,
           descripcion: 'Reparación',
           numeroFactura: null,
           periodo: expect.stringMatching(/^\d{4}-\d{2}$/),
         }),
+        include: {
+          concepto: true,
+          elemento: true,
+        },
       })
+    })
+
+    it('should return 400 when monto is negative', async () => {
+      const mockRequest = {
+        gastosDEId: 'test-uuid-789',
+        tipo: 'Arrendamiento',
+        proveedor: 'Proveedor A',
+        monto: -100,
+        descripcion: 'Oficina',
+      }
+
+      const request = new NextRequest('http://localhost:3000/api/gastosDE', {
+        method: 'POST',
+        body: JSON.stringify(mockRequest),
+      })
+      const response = await POST(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(400)
+      expect(data.error).toBe('El monto debe ser mayor a 0')
+    })
+
+    it('should return 400 when proveedor is missing', async () => {
+      const mockRequest = {
+        gastosDEId: 'test-uuid-789',
+        tipo: 'Arrendamiento',
+        conceptoId: null,
+        elementoId: null,
+        monto: 100,
+        descripcion: 'Oficina',
+      }
+
+      const request = new NextRequest('http://localhost:3000/api/gastosDE', {
+        method: 'POST',
+        body: JSON.stringify(mockRequest),
+      })
+      const response = await POST(request)
+      const data = await response.json()
+
+      expect(response.status).toBe(400)
+      expect(data.error).toBeDefined()
     })
 
     it('should return 500 on creation error', async () => {
@@ -174,6 +256,8 @@ describe('GastosDE API Routes', () => {
       const mockRequest = {
         gastosDEId: 'test-uuid-789',
         tipo: 'Arrendamiento',
+        conceptoId: null,
+        elementoId: null,
         proveedor: 'Proveedor A',
         monto: 1000,
         descripcion: 'Oficina',
@@ -187,7 +271,43 @@ describe('GastosDE API Routes', () => {
       const data = await response.json()
 
       expect(response.status).toBe(500)
-      expect(data.error).toBe('Error al crear el Gasto Derivados Empresa')
+      expect(data.error).toBe('Error al crear el Gasto de Explotación')
+    })
+  })
+
+  describe('GET /api/gastosDE/[id]', () => {
+    it('should return single gastoDE by id', async () => {
+      const mockGasto = {
+        gastosDEId: '1',
+        tipo: 'Arrendamiento',
+        conceptoId: null,
+        elementoId: null,
+        proveedor: 'Proveedor A',
+        monto: 1000,
+        descripcion: 'Oficina',
+        periodo: '2026-03',
+        numeroFactura: 'INV-001',
+        isPagado: 'pendiente',
+      }
+      ;(prisma.gastosDE.findUnique as Mock).mockResolvedValue(mockGasto)
+
+      const request = new NextRequest('http://localhost:3000/api/gastosDE/1')
+      const response = await GET_BY_ID(request, { params: Promise.resolve({ id: '1' }) })
+      const data = await response.json()
+
+      expect(response.status).toBe(200)
+      expect(data.gastosDEId).toBe('1')
+    })
+
+    it('should return 404 when not found', async () => {
+      ;(prisma.gastosDE.findUnique as Mock).mockResolvedValue(null)
+
+      const request = new NextRequest('http://localhost:3000/api/gastosDE/nonexistent')
+      const response = await GET_BY_ID(request, { params: Promise.resolve({ id: 'nonexistent' }) })
+      const data = await response.json()
+
+      expect(response.status).toBe(404)
+      expect(data.error).toBe('Gasto de Explotación no encontrado')
     })
   })
 
@@ -212,6 +332,7 @@ describe('GastosDE API Routes', () => {
         periodo: '2026-03',
         createdAt: new Date(),
         updatedAt: new Date(),
+        isPagado: 'pendiente',
       }
       ;(prisma.gastosDE.update as Mock).mockResolvedValue(mockUpdated)
 
@@ -236,7 +357,25 @@ describe('GastosDE API Routes', () => {
           monto: 1500,
           descripcion: 'Oficina Grande',
         }),
+        include: {
+          concepto: true,
+          elemento: true,
+        },
       })
+    })
+
+    it('should return 400 when monto is negative', async () => {
+      const mockId = 'test-uuid-456'
+      const request = new NextRequest(`http://localhost:3000/api/gastosDE/${mockId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ monto: -50 }),
+      })
+
+      const response = await PATCH(request, { params: Promise.resolve({ id: mockId }) })
+      const data = await response.json()
+
+      expect(response.status).toBe(400)
+      expect(data.error).toBe('El monto debe ser mayor a 0')
     })
 
     it('should return 500 on update error', async () => {
@@ -252,7 +391,60 @@ describe('GastosDE API Routes', () => {
       const data = await response.json()
 
       expect(response.status).toBe(500)
-      expect(data.error).toBe('Error al actualizar el Gasto Derivados Empresa')
+      expect(data.error).toBe('Error al actualizar el Gasto de Explotación')
+    })
+  })
+
+  describe('DELETE /api/gastosDE/[id]', () => {
+    it('should delete gastoDE without reconciliaciones', async () => {
+      const mockId = 'test-uuid-123'
+      ;(prisma.gastosDE.findUnique as Mock).mockResolvedValue({
+        gastosDEId: mockId,
+        reconciliaciones: [],
+      })
+      ;(prisma.gastosDE.delete as Mock).mockResolvedValue({})
+
+      const request = new NextRequest(`http://localhost:3000/api/gastosDE/${mockId}`, {
+        method: 'DELETE',
+      })
+
+      const response = await DELETE(request, { params: Promise.resolve({ id: mockId }) })
+      const data = await response.json()
+
+      expect(response.status).toBe(200)
+      expect(data.success).toBe(true)
+    })
+
+    it('should return 400 when gasto has reconciliaciones', async () => {
+      const mockId = 'test-uuid-456'
+      ;(prisma.gastosDE.findUnique as Mock).mockResolvedValue({
+        gastosDEId: mockId,
+        reconciliaciones: [{ reconciliacionId: 'rec-1' }],
+      })
+
+      const request = new NextRequest(`http://localhost:3000/api/gastosDE/${mockId}`, {
+        method: 'DELETE',
+      })
+
+      const response = await DELETE(request, { params: Promise.resolve({ id: mockId }) })
+      const data = await response.json()
+
+      expect(response.status).toBe(400)
+      expect(data.error).toBe('No se puede eliminar un gasto que tiene reconciliaciones asociadas')
+    })
+
+    it('should return 404 when gasto not found', async () => {
+      ;(prisma.gastosDE.findUnique as Mock).mockResolvedValue(null)
+
+      const request = new NextRequest('http://localhost:3000/api/gastosDE/nonexistent', {
+        method: 'DELETE',
+      })
+
+      const response = await DELETE(request, { params: Promise.resolve({ id: 'nonexistent' }) })
+      const data = await response.json()
+
+      expect(response.status).toBe(404)
+      expect(data.error).toBe('Gasto de Explotación no encontrado')
     })
   })
 })

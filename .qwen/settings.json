@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx *)"
+      "Bash(npx *)",
+      "Bash(mkdir *)"
     ]
-  }
+  },
+  "$version": 3
 }

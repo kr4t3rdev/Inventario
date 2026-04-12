@@ -68,6 +68,8 @@ export const apiSlice = createApi({
     'PagoSalarios',
     'GastosCompra',
     'GastosDE',
+    'GastosConceptos',
+    'GastosElementos',
     'ReportesFinancieros',
     'Clientes',
     'Servicios',

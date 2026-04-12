@@ -577,6 +577,8 @@ exports.Prisma.VentaServiciosScalarFieldEnum = {
 exports.Prisma.GastosDEScalarFieldEnum = {
   gastosDEId: 'gastosDEId',
   tipo: 'tipo',
+  conceptoId: 'conceptoId',
+  elementoId: 'elementoId',
   proveedor: 'proveedor',
   monto: 'monto',
   periodo: 'periodo',
@@ -585,6 +587,25 @@ exports.Prisma.GastosDEScalarFieldEnum = {
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   numeroFactura: 'numeroFactura'
+};
+
+exports.Prisma.GastoConceptoScalarFieldEnum = {
+  conceptoId: 'conceptoId',
+  nombre: 'nombre',
+  descripcion: 'descripcion',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.GastoElementoScalarFieldEnum = {
+  elementoId: 'elementoId',
+  conceptoId: 'conceptoId',
+  nombre: 'nombre',
+  descripcion: 'descripcion',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.MonedaScalarFieldEnum = {
@@ -1440,6 +1461,8 @@ exports.Prisma.ModelName = {
   Servicios: 'Servicios',
   VentaServicios: 'VentaServicios',
   GastosDE: 'GastosDE',
+  GastoConcepto: 'GastoConcepto',
+  GastoElemento: 'GastoElemento',
   Moneda: 'Moneda',
   CatalogoReparacionConfig: 'CatalogoReparacionConfig',
   TasaCambio: 'TasaCambio',

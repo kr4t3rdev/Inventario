@@ -750,15 +750,40 @@ export interface GastosCompra {
 }
 export interface GastosDE {
   gastosDEId: string
-  tipo: string
+  tipo: string | null
+  conceptoId: string | null
+  elementoId: string | null
   numeroFactura?: string | null
   proveedor: string
   monto: number
-  descripcion: string
+  descripcion: string | null
   periodo: string
-  isPagado?: string | null
+  isPagado: string
   createdAt:   Date
   updatedAt:   Date
+  concepto?: GastoConcepto | null
+  elemento?: GastoElemento | null
+}
+
+export interface GastoConcepto {
+  conceptoId: string
+  nombre: string
+  descripcion: string | null
+  isActive: boolean
+  createdAt: Date
+  updatedAt: Date
+  elementos?: GastoElemento[]
+}
+
+export interface GastoElemento {
+  elementoId: string
+  conceptoId: string
+  nombre: string
+  descripcion: string | null
+  isActive: boolean
+  createdAt: Date
+  updatedAt: Date
+  concepto?: GastoConcepto
 }
 
 export interface Servicios {

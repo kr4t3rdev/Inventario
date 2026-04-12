@@ -11,7 +11,7 @@ export const gastosDEApi = apiSlice.injectEndpoints({
             query: (id) => `/gastosDE/${id}`,
             providesTags: (result, error, id) => [{ type: "GastosDE", id }],
         }),
-        addGastosDE: builder.mutation<GastosDE, Omit<GastosDE, "createdAt" | "updatedAt" | "periodo">>({
+        addGastosDE: builder.mutation<GastosDE, Omit<GastosDE, "createdAt" | "updatedAt">>({
             query: (GastosDE) => ({
                 url: '/gastosDE',
                 method: 'POST',

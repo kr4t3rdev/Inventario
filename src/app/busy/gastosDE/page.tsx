@@ -6,8 +6,9 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useDeleteGastosDEMutation, useGetGastosDEQuery } from "@/lib/redux/services/gastosDEApi"
 import { useGetVendorsQuery } from "@/lib/redux/services/vendorsApi"
-import { ColumnDef } from "@tanstack/react-table"
-import { ArrowUp, ArrowUpDown, Pencil, Plus, Trash2, Receipt, Sparkles, Loader2, AlertCircle } from "lucide-react"
+import { ColumnDef, RowSelectionState } from "@tanstack/react-table"
+import { ArrowUp, ArrowUpDown, Pencil, Plus, Trash2, Receipt, Sparkles, Loader2, AlertCircle, Download, CheckSquare } from "lucide-react"
+import { Checkbox } from "@/components/ui/checkbox"
 import dynamic from "next/dynamic"
 import Link from "next/link"
 import { useState } from "react"
@@ -20,28 +21,104 @@ const GastosDE = () => {
     const {data: vendors} = useGetVendorsQuery()
 
     const [gastosDEToDelete, setGastosDEToDelete] = useState<string | null>(null)
-    const [ filterProveedor, setFilterProveedor ] = useState<string>('')
-    const [ deleteGastosDE ] = useDeleteGastosDEMutation()
+    const [gastosDEToBulkDelete, setGastosDEToBulkDelete] = useState<string[] | null>(null)
+    const [filterProveedor, setFilterProveedor] = useState<string>('')
+    const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
+    const [deleteGastosDE] = useDeleteGastosDEMutation()
 
     const filteredGastosDE = gastosDE?.filter((gasto: any) => {
         if (filterProveedor && gasto.proveedor !== filterProveedor) return false
         return true
     }) || []
 
+    const selectedIds = Object.keys(rowSelection)
+    const selectedGastos = selectedIds.map((idx) => filteredGastosDE[parseInt(idx)] as any).filter(Boolean)
+
     const handleDelete = async () => {
       if (!gastosDEToDelete) return
       try {
         await deleteGastosDE(gastosDEToDelete).unwrap()
-        toast("El gasto de explotación ha sido eliminado exitosamente.")
-      } catch (error) {
+        toast.success("El gasto de explotación ha sido eliminado exitosamente.")
+      } catch (error: any) {
         console.error("Error al eliminar el gasto de explotación:", error)
-        toast("Hubo un error al eliminar el gasto de explotación.")
+        const errorMsg = error?.data?.error || "Hubo un error al eliminar el gasto de explotación."
+        toast.error(errorMsg)
       } finally {
         setGastosDEToDelete(null)
       }
     }
 
+    const handleBulkDelete = async () => {
+      if (!gastosDEToBulkDelete || gastosDEToBulkDelete.length === 0) return
+      let successCount = 0
+      let errorCount = 0
+      for (const id of gastosDEToBulkDelete) {
+        try {
+          await deleteGastosDE(id).unwrap()
+          successCount++
+        } catch (error: any) {
+          console.error("Error al eliminar gasto:", error)
+          errorCount++
+        }
+      }
+      if (successCount > 0) {
+        toast.success(`${successCount} gasto(s) eliminado(s) exitosamente.`)
+      }
+      if (errorCount > 0) {
+        toast.error(`${errorCount} gasto(s) no pudieron ser eliminados (pueden tener reconciliaciones).`)
+      }
+      setGastosDEToBulkDelete(null)
+      setRowSelection({})
+    }
+
+    const handleExportCSV = () => {
+      const dataToExport = filteredGastosDE.length === 0 ? [] : filteredGastosDE
+      if (dataToExport.length === 0) {
+        toast.error("No hay datos para exportar.")
+        return
+      }
+      const headers = ["Tipo", "Proveedor", "Descripción", "Nº Factura", "Monto", "Período", "Estado Pago", "Fecha Creación"]
+      const rows = dataToExport.map((g: any) => [
+        g.tipo || "",
+        g.proveedor || "",
+        g.descripcion || "",
+        g.numeroFactura || "Sin factura",
+        g.monto?.toFixed(2) || "0.00",
+        g.periodo || "",
+        g.isPagado || "pendiente",
+        new Date(g.createdAt).toLocaleDateString(),
+      ])
+      const csvContent = [headers.join(","), ...rows.map((r: string[]) => r.map((c) => `"${c}"`).join(","))].join("\n")
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement("a")
+      a.href = url
+      a.download = `gastos_explotacion_${new Date().toISOString().slice(0, 10)}.csv`
+      a.click()
+      URL.revokeObjectURL(url)
+      toast.success("Archivo CSV exportado exitosamente.")
+    }
+
     const columns: ColumnDef<unknown>[] = [
+        {
+            id: 'select',
+            header: ({ table }) => (
+                <Checkbox
+                    checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && 'indeterminate')}
+                    onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+                    aria-label="Seleccionar todos"
+                />
+            ),
+            cell: ({ row }) => (
+                <Checkbox
+                    checked={row.getIsSelected()}
+                    onCheckedChange={(value) => row.toggleSelected(!!value)}
+                    aria-label="Seleccionar fila"
+                />
+            ),
+            enableSorting: false,
+            enableHiding: false,
+        },
         {
             accessorKey: 'tipo',
             header: ({ column }) => (
@@ -68,6 +145,19 @@ const GastosDE = () => {
                     <ArrowUp className='ml-2 h-4 w-4'/>
                 </Button>
             ),
+        },
+        {
+            accessorKey: 'numeroFactura',
+            header: ({ column }) => (
+                <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+                    Nº Factura
+                    <ArrowUp className='ml-2 h-4 w-4'/>
+                </Button>
+            ),
+            cell: ({ row }) => {
+                const factura = (row.original as any).numeroFactura
+                return <div className="max-w-[150px] truncate">{factura || "Sin factura"}</div>
+            },
         },
         {
             accessorKey: 'monto',
@@ -100,7 +190,7 @@ const GastosDE = () => {
                     <ArrowUp className='ml-2 h-4 w-4'/>
                 </Button>
             ),
-        },   
+        },
         {
                     accessorKey:'createdAt',
                     header: ({column}) => (
@@ -142,12 +232,13 @@ const GastosDE = () => {
                     }
                 }
             ]
+
             if (isLoading) {
                     return (
-                      <SidebarProvider>           
-                        <SidebarInset>              
+                      <SidebarProvider>
+                        <SidebarInset>
                           <div className="container mx-auto py-4">
-                            <motion.div 
+                            <motion.div
                               className="flex justify-between items-center mb-6"
                               initial={{ opacity: 0, y: -20 }}
                               animate={{ opacity: 1, y: 0 }}
@@ -188,24 +279,24 @@ const GastosDE = () => {
                         </SidebarInset>
                       </SidebarProvider>
                     )
-                  }  
+                  }
                   return (
-                    <SidebarProvider>          
-                      <SidebarInset>            
+                    <SidebarProvider>
+                      <SidebarInset>
                         <div className="container mx-auto py-4">
-                          <motion.div 
+                          <motion.div
                             className="flex justify-between items-center mb-6"
                             initial={{ opacity: 0, y: -20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.5 }}
                           >
-                            <motion.div 
+                            <motion.div
                               className="flex items-center gap-3"
                               initial={{ opacity: 0, x: -20 }}
                               animate={{ opacity: 1, x: 0 }}
                               transition={{ delay: 0.1 }}
                             >
-                              <motion.div 
+                              <motion.div
                                 className="w-10 h-10 bg-gradient-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
                                 whileHover={{ scale: 1.05, rotate: 5 }}
                                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
@@ -219,7 +310,7 @@ const GastosDE = () => {
                                 <motion.div
                                   className="absolute -right-4 -top-1"
                                   animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-                                  transition={{ 
+                                  transition={{
                                     rotate: { duration: 20, repeat: Infinity, ease: "linear" },
                                     scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
                                   }}
@@ -228,19 +319,47 @@ const GastosDE = () => {
                                 </motion.div>
                               </div>
                             </motion.div>
-                            <motion.div
-                              whileHover={{ scale: 1.02 }}
-                              whileTap={{ scale: 0.98 }}
-                              initial={{ opacity: 0, x: 20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: 0.2 }}
-                            >
-                              <Button asChild className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90">
-                                  <Link href="/busy/gastosDE/new">
-                                    <Plus className="mr-2 h-4 w-4" /> Nuevo Gasto de Explotación
-                                  </Link>
-                                </Button>                        
-                            </motion.div>
+                            <div className="flex items-center gap-2">
+                              <motion.div
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: 0.2 }}
+                              >
+                                <Button asChild className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90">
+                                    <Link href="/busy/gastosDE/new">
+                                      <Plus className="mr-2 h-4 w-4" /> Nuevo Gasto
+                                    </Link>
+                                  </Button>
+                              </motion.div>
+                              {selectedIds.length > 0 && (
+                                <motion.div
+                                  initial={{ opacity: 0, scale: 0.8 }}
+                                  animate={{ opacity: 1, scale: 1 }}
+                                  whileHover={{ scale: 1.02 }}
+                                  whileTap={{ scale: 0.98 }}
+                                >
+                                  <Button
+                                    variant="destructive"
+                                    onClick={() => setGastosDEToBulkDelete(selectedIds.map((idx) => filteredGastosDE[parseInt(idx)]?.gastosDEId).filter(Boolean))}
+                                  >
+                                    <Trash2 className="mr-2 h-4 w-4" /> Eliminar ({selectedIds.length})
+                                  </Button>
+                                </motion.div>
+                              )}
+                              <motion.div
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ delay: 0.25 }}
+                              >
+                                <Button variant="outline" onClick={handleExportCSV}>
+                                  <Download className="mr-2 h-4 w-4" /> Exportar CSV
+                                </Button>
+                              </motion.div>
+                            </div>
                           </motion.div>
                            <motion.div
                              initial={{ opacity: 0, y: 20 }}
@@ -268,12 +387,14 @@ const GastosDE = () => {
                                data={filteredGastosDE}
                                searchColumn="tipo"
                                searchPlaceholder="Buscar gastos de explotación..."
+                               rowSelection={rowSelection}
+                               onRowSelectionChange={setRowSelection}
                              />
                            </motion.div>
                         </div>
                       </SidebarInset>
 
-                      {/* Diálogo de confirmación para eliminar */}
+                      {/* Diálogo de confirmación para eliminar individual */}
                       <AlertDialog open={!!gastosDEToDelete} onOpenChange={(open) => !open && setGastosDEToDelete(null)}>
                         <AlertDialogContent className="border-dashed">
                           <AlertDialogHeader>
@@ -299,8 +420,35 @@ const GastosDE = () => {
                           </AlertDialogFooter>
                         </AlertDialogContent>
                       </AlertDialog>
+
+                      {/* Diálogo de confirmación para eliminación masiva */}
+                      <AlertDialog open={!!gastosDEToBulkDelete} onOpenChange={(open) => !open && setGastosDEToBulkDelete(null)}>
+                        <AlertDialogContent className="border-dashed">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle className="flex items-center gap-2">
+                              <motion.div
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ type: "spring", stiffness: 500, damping: 15 }}
+                              >
+                                <AlertCircle className="h-5 w-5 text-destructive" />
+                              </motion.div>
+                              ¿Eliminar {gastosDEToBulkDelete?.length || 0} gastos?
+                            </AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Esta acción no se puede deshacer. Se eliminarán {gastosDEToBulkDelete?.length || 0} gastos de explotación permanentemente. Los gastos con reconciliaciones no podrán ser eliminados.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction onClick={handleBulkDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                              <Trash2 className="mr-2 h-4 w-4" /> Eliminar todos
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </SidebarProvider>
-                  )  
+                  )
               }
 
 

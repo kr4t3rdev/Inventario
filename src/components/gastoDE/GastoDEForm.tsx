@@ -17,11 +17,13 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { v4 } from "uuid"
 import { useAddGastosDEMutation, useGetGastosDEQuery, useUpdateGastosDEMutation } from "@/lib/redux/services/gastosDEApi"
 import { useGetVendorsQuery } from "@/lib/redux/services/vendorsApi"
+import { useGetGastoConceptosQuery, useGetGastoElementosQuery } from "@/lib/redux/services/gastosConceptosApi"
+import { VendorCombobox } from "./VendorCombobox"
 
 const gastosDESchema = z.object({
-  tipo: z.string({
-    required_error: 'El campo Tipo de gasto no ha sido rellenado',
-  }),
+  tipo: z.string().optional(),
+  conceptoId: z.string().optional(),
+  elementoId: z.string().optional(),
   numeroFactura: z.string().optional(),
   proveedor: z.string({
     required_error: 'El campo Proveedor no ha sido rellenado',
@@ -32,6 +34,7 @@ const gastosDESchema = z.object({
   descripcion: z.string({
     message: "Escriba una descripción"
   }),
+  periodo: z.string().regex(/^\d{4}-\d{2}$/, "El período debe tener formato YYYY-MM"),
 })
 
 type GastosDEFormValues = z.infer<typeof gastosDESchema>
@@ -39,20 +42,26 @@ type GastosDEFormValues = z.infer<typeof gastosDESchema>
 interface GastosDEFormProps {
   initialData?: {
     gastosDEId: string
-    tipo: string
+    tipo: string | null
+    conceptoId: string | null
+    elementoId: string | null
     numeroFactura?: string | null
     proveedor: string | null
     monto: number
-    descripcion: string
+    descripcion: string | null
+    periodo?: string
   }
 }
 
 export function GastoDEForm({ initialData }: GastosDEFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const [selectedConceptoId, setSelectedConceptoId] = useState<string>(initialData?.conceptoId || '')
 
   const { data: gastosDE, isLoading: isLoadingGastosDE } = useGetGastosDEQuery()
   const { data: vendors, isLoading: isLoadingVendors } = useGetVendorsQuery()
+  const { data: conceptos } = useGetGastoConceptosQuery({ onlyActive: true })
+  const { data: elementos } = useGetGastoElementosQuery(selectedConceptoId, { skip: !selectedConceptoId })
 
   const [addGastoGastosDE] = useAddGastosDEMutation()
   const [updateGastosDE] = useUpdateGastosDEMutation()
@@ -61,10 +70,13 @@ export function GastoDEForm({ initialData }: GastosDEFormProps) {
     resolver: zodResolver(gastosDESchema),
     defaultValues: {
       tipo: initialData?.tipo || '',
+      conceptoId: initialData?.conceptoId || '',
+      elementoId: initialData?.elementoId || '',
       numeroFactura: initialData?.numeroFactura || '',
       proveedor: initialData?.proveedor || '',
       descripcion: initialData?.descripcion || '',
       monto: initialData?.monto ?? undefined,
+      periodo: initialData?.periodo || `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`,
     },
   })
 
@@ -82,8 +94,8 @@ export function GastoDEForm({ initialData }: GastosDEFormProps) {
           gastosDEId: initialData.gastosDEId,
           ...data,
         }).unwrap()
-        sileo.success({ title: 'El gasto de explotación han sido actualizados exitosamente.' })
-        
+        sileo.success({ title: 'El gasto de explotación ha sido actualizado exitosamente.' })
+
       } else {
         await addGastoGastosDE({
           gastosDEId: v4(),
@@ -191,18 +203,114 @@ export function GastoDEForm({ initialData }: GastosDEFormProps) {
               >
                 <FormField
                   control={form.control}
+                  name="conceptoId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Concepto de Gasto</FormLabel>
+                      <FormControl>
+                        <select
+                          value={field.value}
+                          onChange={(e) => {
+                            field.onChange(e.target.value)
+                            setSelectedConceptoId(e.target.value)
+                            form.setValue('elementoId', '') // Reset elemento
+                          }}
+                          className="h-12 w-full rounded-md border border-slate-200 dark:border-orange-900/20 bg-slate-50 dark:bg-slate-900/10 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
+                        >
+                          <option value="">Seleccionar concepto</option>
+                          {conceptos?.map((c: any) => (
+                            <option key={c.conceptoId} value={c.conceptoId}>
+                              {c.nombre}
+                            </option>
+                          ))}
+                        </select>
+                      </FormControl>
+                      <FormDescription>Categoría principal del gasto.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.22 }}
+              >
+                <FormField
+                  control={form.control}
+                  name="elementoId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Elemento</FormLabel>
+                      <FormControl>
+                        <select
+                          value={field.value}
+                          onChange={field.onChange}
+                          disabled={!selectedConceptoId}
+                          className="h-12 w-full rounded-md border border-slate-200 dark:border-orange-900/20 bg-slate-50 dark:bg-slate-900/10 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <option value="">Seleccionar elemento</option>
+                          {elementos?.map((e: any) => (
+                            <option key={e.elementoId} value={e.elementoId}>
+                              {e.nombre}
+                            </option>
+                          ))}
+                        </select>
+                      </FormControl>
+                      <FormDescription>Subcategoría del gasto seleccionado.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.24 }}
+              >
+                <FormField
+                  control={form.control}
                   name="tipo"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Tipo</FormLabel>
+                      <FormLabel>Tipo (texto libre, opcional)</FormLabel>
                       <FormControl>
-                        <Input 
-                          type="text" 
-                          {...field} 
+                        <Input
+                          type="text"
+                          {...field}
+                          placeholder="Solo si no usa concepto/elemento"
                           className="transition-all duration-200 focus:scale-[1.01]"
                         />
                       </FormControl>
-                      <FormDescription>Ingrese el tipo de gasto.</FormDescription>
+                      <FormDescription>Texto libre alternativo al concepto/elemento.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.22 }}
+              >
+                <FormField
+                  control={form.control}
+                  name="periodo"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Período</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="text"
+                          placeholder="YYYY-MM"
+                          {...field}
+                          className="transition-all duration-200 focus:scale-[1.01]"
+                        />
+                      </FormControl>
+                      <FormDescription>Período del gasto (formato YYYY-MM).</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -247,19 +355,13 @@ export function GastoDEForm({ initialData }: GastosDEFormProps) {
                     <FormItem>
                       <FormLabel>Proveedor</FormLabel>
                       <FormControl>
-                        <select
-                          {...field}
-                          className="h-12 w-full rounded-md border border-slate-200 dark:border-orange-900/20 bg-slate-50 dark:bg-slate-900/10 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200"
-                        >
-                          <option value="">Seleccionar proveedor</option>
-                          {vendors?.map((vendor: any) => (
-                            vendor.vendorId ? (
-                              <option key={vendor.vendorId} value={vendor.nombre}>
-                                {vendor.nombre}
-                              </option>
-                            ) : null
-                          ))}
-                        </select>
+                        <VendorCombobox
+                          value={field.value}
+                          onChange={field.onChange}
+                          vendors={vendors?.filter((v: any) => v.vendorId) || []}
+                          placeholder="Seleccionar proveedor"
+                          error={!!form.formState.errors.proveedor}
+                        />
                       </FormControl>
                       <FormDescription>Seleccione el proveedor del gasto.</FormDescription>
                       <FormMessage />
@@ -340,8 +442,8 @@ export function GastoDEForm({ initialData }: GastosDEFormProps) {
                       </div>
                       <div className="grid grid-cols-2 gap-4 text-sm">
                         <div>
-                          <p className="text-muted-foreground">Tipo de gasto:</p>
-                          <p className="font-medium">{watchedValues.tipo}</p>
+                          <p className="text-muted-foreground">Tipo:</p>
+                          <p className="font-medium">{watchedValues.tipo || "(texto libre)"}</p>
                         </div>
                         <div>
                           <p className="text-muted-foreground">Proveedor:</p>
