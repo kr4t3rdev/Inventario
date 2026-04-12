@@ -13,9 +13,16 @@ export async function PATCH(
         // Validate that the category to move exists
         const categoryToMove = await prisma.categoria.findUnique({
             where: { catId: id },
-            include: {
-                productos: true,
-                subcategorias: true
+            select: {
+                catId: true,
+                nombre: true,
+                parentId: true,
+                subcategorias: {
+                    select: {
+                        catId: true,
+                        nombre: true
+                    }
+                }
             }
         });
 
@@ -72,14 +79,26 @@ export async function PATCH(
         const updatedCategory = await prisma.categoria.update({
             where: { catId: id },
             data: { parentId },
-            include: {
-                parent: true,
-                subcategorias: {
-                    include: {
-                        productos: true
+            select: {
+                catId: true,
+                nombre: true,
+                descripcion: true,
+                parentId: true,
+                createdAt: true,
+                updatedAt: true,
+                parent: {
+                    select: {
+                        catId: true,
+                        nombre: true
                     }
                 },
-                productos: true
+                subcategorias: {
+                    select: {
+                        catId: true,
+                        nombre: true,
+                        descripcion: true
+                    }
+                }
             }
         });
 

@@ -633,8 +633,14 @@ export const GET = withAuthGet(async (request: NextRequest, context: any, user: 
 
     // Distribución de stock por categoría
     const stockPorCategoria = await prisma.categoria.findMany({
-      include: {
-        productos: true,
+      select: {
+        nombre: true,
+        productos: {
+          select: {
+            stock: true,
+            precioCosto: true,
+          },
+        },
       },
     })
 

@@ -6,12 +6,24 @@ import { CategoriaApiErrorHandler } from "@/lib/categoria-errors";
 export async function GET() {
     try {
         const categorias = await prisma.categoria.findMany({
-            include: {
-                productos: true,
-                parent: true,
+            select: {
+                catId: true,
+                nombre: true,
+                descripcion: true,
+                parentId: true,
+                createdAt: true,
+                updatedAt: true,
+                parent: {
+                    select: {
+                        catId: true,
+                        nombre: true
+                    }
+                },
                 subcategorias: {
-                    include: {
-                        productos: true
+                    select: {
+                        catId: true,
+                        nombre: true,
+                        descripcion: true
                     }
                 }
             }
@@ -41,9 +53,25 @@ export async function POST(req: NextRequest) {
                 descripcion: validatedData.descripcion,
                 parentId: validatedData.parentId
             },
-            include: {
-                parent: true,
-                subcategorias: true
+            select: {
+                catId: true,
+                nombre: true,
+                descripcion: true,
+                parentId: true,
+                createdAt: true,
+                updatedAt: true,
+                parent: {
+                    select: {
+                        catId: true,
+                        nombre: true
+                    }
+                },
+                subcategorias: {
+                    select: {
+                        catId: true,
+                        nombre: true
+                    }
+                }
             }
         })
         

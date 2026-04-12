@@ -11,12 +11,24 @@ export async function GET(
         const {id} = await params
         const categoria = await prisma.categoria.findUnique({
             where: { catId: id},
-            include: {
-                productos: true,
-                parent: true,
+            select: {
+                catId: true,
+                nombre: true,
+                descripcion: true,
+                parentId: true,
+                createdAt: true,
+                updatedAt: true,
+                parent: {
+                    select: {
+                        catId: true,
+                        nombre: true
+                    }
+                },
                 subcategorias: {
-                    include: {
-                        productos: true
+                    select: {
+                        catId: true,
+                        nombre: true,
+                        descripcion: true
                     }
                 }
             },
@@ -59,23 +71,26 @@ export async function PATCH(
                 descripcion: validatedData.descripcion,
                 parentId: validatedData.parentId
             },
-            include: {
-                parent: true,
-                subcategorias: {
-                    include: {
-                        productos: true
+            select: {
+                catId: true,
+                nombre: true,
+                descripcion: true,
+                parentId: true,
+                createdAt: true,
+                updatedAt: true,
+                parent: {
+                    select: {
+                        catId: true,
+                        nombre: true
                     }
                 },
-                productos: true
-            }
-        })
-        
-        return CategoriaApiErrorHandler.createSuccessResponse(categoria, 'Categoría actualizada exitosamente')
-    } catch (error) {
-        console.error('Error updating category:', error)
-        return CategoriaApiErrorHandler.handleUnknownError(error, { operation: 'update', categoryId: id })
-    }
-}
+                subcategorias: {
+                    select: {
+                        catId: true,
+                        nombre: true,
+                        descripcion: true
+                    }
+                }
 
 
 export async function DELETE(

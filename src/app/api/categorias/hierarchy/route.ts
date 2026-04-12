@@ -15,19 +15,33 @@ export async function GET() {
   try {
     // Get all categories with their relationships
     const categorias = await prisma.categoria.findMany({
-      include: {
+      select: {
+        catId: true,
+        nombre: true,
+        descripcion: true,
+        parentId: true,
         subcategorias: {
-          include: {
+          select: {
+            catId: true,
+            nombre: true,
+            descripcion: true,
+            parentId: true,
             subcategorias: {
-              include: {
-                productos: true
+              select: {
+                catId: true,
+                nombre: true,
+                descripcion: true,
+                parentId: true
               }
-            },
-            productos: true
+            }
           }
         },
-        productos: true,
-        parent: true
+        parent: {
+          select: {
+            catId: true,
+            nombre: true
+          }
+        }
       }
     });
 

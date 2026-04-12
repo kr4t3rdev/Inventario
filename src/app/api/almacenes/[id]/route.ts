@@ -6,7 +6,12 @@ export async function GET(req: NextRequest, context: { params: Promise<{ id: str
     const { id } = await context.params
     const almacen = await prisma.almacen.findUnique({
       where: { almacenId: id },
-      include: { productos: true },
+      select: {
+        almacenId: true,
+        nombre: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     })
 
     if (!almacen) {

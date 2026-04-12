@@ -6,7 +6,13 @@ export async function GET(request: Request,{ params }: { params: Promise<{ id: s
     const { id } = await params;
     const unidad = await prisma.unidad.findUnique({
       where: { unidadId: id },
-      include: { productos: true },
+      select: {
+        unidadId: true,
+        nombre: true,
+        simbolo: true,
+        createdAt: true,
+        updatedAt: true,
+      },
     })     
 
     if (!unidad) {

@@ -25,11 +25,18 @@ export async function GET(
             where: {
                 parentId: id
             },
-            include: {
-                productos: true,
+            select: {
+                catId: true,
+                nombre: true,
+                descripcion: true,
+                parentId: true,
+                createdAt: true,
+                updatedAt: true,
                 subcategorias: {
-                    include: {
-                        productos: true
+                    select: {
+                        catId: true,
+                        nombre: true,
+                        descripcion: true
                     }
                 }
             },
