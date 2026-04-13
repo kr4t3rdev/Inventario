@@ -100,7 +100,7 @@ export function GastoDEForm({ initialData }: GastosDEFormProps) {
         await addGastoGastosDE({
           gastosDEId: v4(),
           ...data
-        }).unwrap()
+        } as any).unwrap()
         sileo.success({ title: 'El gasto de explotación ha sido registrado exitosamente.' })
       }
       router.back()

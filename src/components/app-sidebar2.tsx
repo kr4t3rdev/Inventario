@@ -43,6 +43,7 @@ import {
   Settings,
   UtensilsCrossed,
   Monitor,
+  FolderOpen,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -201,6 +202,18 @@ export function AppSidebar2({
             title: "Gastos DE",
             url: "/busy/gastosDE",
             icon: Receipt,
+            subItems: [
+              {
+                title: "Lista de Gastos",
+                url: "/busy/gastosDE",
+                icon: Receipt,
+              },
+              {
+                title: "Conceptos de Gastos",
+                url: "/busy/gastosDE/conceptos",
+                icon: FolderOpen,
+              },
+            ],
           },
           {
             title: "Producción",

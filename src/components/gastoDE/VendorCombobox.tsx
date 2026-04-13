@@ -18,9 +18,9 @@ interface VendorComboboxProps {
 /**
  * @description Combobox searchable para selección de proveedores con filtro en tiempo real
  * @param {VendorComboboxProps} props - Props del componente
- * @returns {JSX.Element} Combobox con búsqueda
+ * @returns Combobox con búsqueda
  */
-export function VendorCombobox({ value, onChange, vendors, placeholder = "Seleccionar proveedor", error }: VendorComboboxProps): JSX.Element {
+export function VendorCombobox({ value, onChange, vendors, placeholder = "Seleccionar proveedor", error }: VendorComboboxProps) {
   const [open, setOpen] = React.useState(false)
   const [search, setSearch] = React.useState("")
 
