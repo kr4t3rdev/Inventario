@@ -77,9 +77,10 @@ const GastosDE = () => {
         toast.error("No hay datos para exportar.")
         return
       }
-      const headers = ["Tipo", "Proveedor", "Descripción", "Nº Factura", "Monto", "Período", "Estado Pago", "Fecha Creación"]
+      const headers = ["Concepto de Gasto", "Elemento de Gasto", "Proveedor", "Descripción", "Nº Factura", "Monto", "Período", "Estado Pago", "Fecha Creación"]
       const rows = dataToExport.map((g: any) => [
-        g.tipo || "",
+        g.concepto?.nombre || g.tipo || "Sin concepto",
+        g.elemento?.nombre || "—",
         g.proveedor || "",
         g.descripcion || "",
         g.numeroFactura || "Sin factura",
@@ -120,13 +121,32 @@ const GastosDE = () => {
             enableHiding: false,
         },
         {
-            accessorKey: 'tipo',
+            accessorKey: 'concepto.nombre',
             header: ({ column }) => (
                 <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
-                    Tipo
+                    Concepto de Gasto
                     <ArrowUp className='ml-2 h-4 w-4'/>
                 </Button>
             ),
+            cell: ({ row }) => {
+                const gasto = row.original as any
+                const conceptoNombre = gasto.concepto?.nombre || gasto.tipo || "Sin concepto"
+                return <div className="max-w-[180px] truncate">{conceptoNombre}</div>
+            },
+        },
+        {
+            accessorKey: 'elemento.nombre',
+            header: ({ column }) => (
+                <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
+                    Elemento de Gasto
+                    <ArrowUp className='ml-2 h-4 w-4'/>
+                </Button>
+            ),
+            cell: ({ row }) => {
+                const gasto = row.original as any
+                const elementoNombre = gasto.elemento?.nombre || "—"
+                return <div className="max-w-[180px] truncate text-muted-foreground">{elementoNombre}</div>
+            },
         },
         {
             accessorKey: 'proveedor',
@@ -385,8 +405,8 @@ const GastosDE = () => {
                              <DataTable
                                columns={columns}
                                data={filteredGastosDE}
-                               searchColumn="tipo"
-                               searchPlaceholder="Buscar gastos de explotación..."
+                               searchColumn="concepto.nombre"
+                               searchPlaceholder="Buscar por concepto de gasto..."
                                rowSelection={rowSelection}
                                onRowSelectionChange={setRowSelection}
                              />

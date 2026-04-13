@@ -13,9 +13,7 @@ const elementoSchema = z.object({
 export async function GET(request: NextRequest, { params }: { params: Promise<{ conceptoId: string }> }) {
   try {
     const authResult = await authenticateUser(request)
-    if (!authResult.success) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
+    if ('status' in authResult) return authResult as Response
 
     const { conceptoId } = await params
 
@@ -47,9 +45,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ conceptoId: string }> }) {
   try {
     const authResult = await authenticateUser(request)
-    if (!authResult.success) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
+    if ('status' in authResult) return authResult as Response
 
     const { conceptoId } = await params
     const data = await request.json()

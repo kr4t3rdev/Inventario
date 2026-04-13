@@ -17,9 +17,7 @@ const gastosDESchema = z.object({
 export async function GET(request: NextRequest) {
   try {
     const authResult = await authenticateUser(request)
-    if (!authResult.success) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
+    if ('status' in authResult) return authResult as Response
 
     const { searchParams } = new URL(request.url)
     const periodo = searchParams.get("periodo")
@@ -50,9 +48,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const authResult = await authenticateUser(request)
-    if (!authResult.success) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
+    if ('status' in authResult) return authResult as Response
 
     const data = await request.json()
     const validation = gastosDESchema.safeParse(data)

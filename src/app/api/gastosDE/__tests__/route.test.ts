@@ -3,7 +3,7 @@ import { NextRequest } from 'next/server'
 
 // Mock authenticateUser
 vi.mock('@/lib/auth-middleware', () => ({
-  authenticateUser: vi.fn().mockResolvedValue({ success: true, user: { id: 'test-user' } }),
+  authenticateUser: vi.fn().mockResolvedValue({ user: { userId: 'test-user', name: 'Test', email: 'test@test.com', role: 'ADMIN', isActive: true } }),
 }))
 
 // Mock prisma module
@@ -76,14 +76,16 @@ describe('GastosDE API Routes', () => {
 
     it('should return 401 when not authenticated', async () => {
       const { authenticateUser } = await import('@/lib/auth-middleware')
-      ;(authenticateUser as Mock).mockResolvedValueOnce({ success: false })
+      ;(authenticateUser as Mock).mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: 'Token no proporcionado' }), { status: 401 })
+      )
 
       const request = new NextRequest('http://localhost:3000/api/gastosDE')
       const response = await GET(request)
       const data = await response.json()
 
       expect(response.status).toBe(401)
-      expect(data.error).toBe('No autorizado')
+      expect(data.error).toBe('Token no proporcionado')
     })
 
     it('should return 500 on error', async () => {

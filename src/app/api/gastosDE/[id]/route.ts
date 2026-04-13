@@ -17,9 +17,7 @@ const gastosDEPatchSchema = z.object({
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const authResult = await authenticateUser(request)
-    if (!authResult.success) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
+    if ('status' in authResult) return authResult as Response
 
     const { id } = await params;
     const gs = await prisma.gastosDE.findUnique({
@@ -40,9 +38,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const authResult = await authenticateUser(request)
-    if (!authResult.success) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
+    if ('status' in authResult) return authResult as Response
 
     const { id } = await params;
     const body = await request.json()
@@ -104,9 +100,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
     const authResult = await authenticateUser(request)
-    if (!authResult.success) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
+    if ('status' in authResult) return authResult as Response
 
     const { id } = await context.params
 
