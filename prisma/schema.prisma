@@ -597,46 +597,17 @@ model VentaServicios {
 
 model GastosDE {
   gastosDEId       String                @id @default(cuid())
-  tipo             String?
-  conceptoId       String?
-  elementoId       String?
+  tipo             String
   proveedor        String
-  monto            Decimal               @default(0)
+  monto            Int
   periodo          String
   descripcion      String?
-  isPagado         String                @default("pendiente")
+  isPagado         String?
   createdAt        DateTime              @default(now())
   updatedAt        DateTime              @updatedAt
   numeroFactura    String?
-  concepto         GastoConcepto?        @relation(fields: [conceptoId], references: [conceptoId])
-  elemento         GastoElemento?        @relation(fields: [elementoId], references: [elementoId])
   cuentaPorPagar   CuentaPorPagar?
   reconciliaciones ReconciliacionGasto[]
-}
-
-model GastoConcepto {
-  conceptoId        String          @id @default(cuid())
-  nombre            String          @unique
-  descripcion       String?
-  isActive          Boolean         @default(true)
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-  elementos         GastoElemento[]
-  gastosDE          GastosDE[]
-}
-
-model GastoElemento {
-  elementoId        String          @id @default(cuid())
-  conceptoId        String
-  nombre            String
-  descripcion       String?
-  isActive          Boolean         @default(true)
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-  concepto          GastoConcepto   @relation(fields: [conceptoId], references: [conceptoId], onDelete: Cascade)
-  gastosDE          GastosDE[]
-
-  @@index([conceptoId])
 }
 
 model Moneda {

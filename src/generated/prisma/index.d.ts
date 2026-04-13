@@ -180,16 +180,6 @@ export type VentaServicios = $Result.DefaultSelection<Prisma.$VentaServiciosPayl
  */
 export type GastosDE = $Result.DefaultSelection<Prisma.$GastosDEPayload>
 /**
- * Model GastoConcepto
- * 
- */
-export type GastoConcepto = $Result.DefaultSelection<Prisma.$GastoConceptoPayload>
-/**
- * Model GastoElemento
- * 
- */
-export type GastoElemento = $Result.DefaultSelection<Prisma.$GastoElementoPayload>
-/**
  * Model Moneda
  * 
  */
@@ -1097,26 +1087,6 @@ export class PrismaClient<
     * ```
     */
   get gastosDE(): Prisma.GastosDEDelegate<ExtArgs, ClientOptions>;
-
-  /**
-   * `prisma.gastoConcepto`: Exposes CRUD operations for the **GastoConcepto** model.
-    * Example usage:
-    * ```ts
-    * // Fetch zero or more GastoConceptos
-    * const gastoConceptos = await prisma.gastoConcepto.findMany()
-    * ```
-    */
-  get gastoConcepto(): Prisma.GastoConceptoDelegate<ExtArgs, ClientOptions>;
-
-  /**
-   * `prisma.gastoElemento`: Exposes CRUD operations for the **GastoElemento** model.
-    * Example usage:
-    * ```ts
-    * // Fetch zero or more GastoElementos
-    * const gastoElementos = await prisma.gastoElemento.findMany()
-    * ```
-    */
-  get gastoElemento(): Prisma.GastoElementoDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.moneda`: Exposes CRUD operations for the **Moneda** model.
@@ -2081,8 +2051,6 @@ export namespace Prisma {
     Servicios: 'Servicios',
     VentaServicios: 'VentaServicios',
     GastosDE: 'GastosDE',
-    GastoConcepto: 'GastoConcepto',
-    GastoElemento: 'GastoElemento',
     Moneda: 'Moneda',
     CatalogoReparacionConfig: 'CatalogoReparacionConfig',
     TasaCambio: 'TasaCambio',
@@ -2150,7 +2118,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "categoria" | "unidad" | "vendor" | "inyeccionCapital" | "pagoDeuda" | "cliente" | "miEmpresa" | "almacen" | "puntoDeVenta" | "producto" | "venta" | "ventaItem" | "merma" | "transferencia" | "user" | "plan" | "licencia" | "licenciaAudit" | "notification" | "userActivityLog" | "userSession" | "attendance" | "employeeWorkSchedule" | "vacationRequest" | "vacationAccrual" | "empleado" | "pagosalario" | "cierreContable" | "gastoCompra" | "compraProducto" | "servicios" | "ventaServicios" | "gastosDE" | "gastoConcepto" | "gastoElemento" | "moneda" | "catalogoReparacionConfig" | "tasaCambio" | "transaccionMoneda" | "cuentaBancaria" | "tipoPago" | "reconciliacionVenta" | "reconciliacionServicio" | "reconciliacionGasto" | "ajusteBancario" | "transferenciaBancaria" | "alertHistory" | "auditLog" | "reportHistory" | "scheduledReport" | "scenarioSimulation" | "contrato" | "contratoVersion" | "contratoFirma" | "contratoAprobacion" | "contratoArchivo" | "contratoAlerta" | "factura" | "serieFacturacion" | "oferta" | "ofertaItem" | "cuentaPorCobrar" | "cuentaPorPagar" | "deudaCash" | "prestamoCash" | "pagoCuentaPorPagar" | "equipoReparacion" | "piezaReparacion" | "ordenReparacion" | "ordenReparacionEquipo" | "ordenReparacionItem" | "ordenReparacionMaterial" | "defectacionCatalogo" | "configuracionSistema" | "ordenProduccion" | "ordenProduccionHistorial" | "receta" | "recetaIngrediente" | "valeSalida" | "valeSalidaItem" | "listaPrecio" | "precioProducto" | "productoCostHistory" | "vendorCodeSequence"
+      modelProps: "categoria" | "unidad" | "vendor" | "inyeccionCapital" | "pagoDeuda" | "cliente" | "miEmpresa" | "almacen" | "puntoDeVenta" | "producto" | "venta" | "ventaItem" | "merma" | "transferencia" | "user" | "plan" | "licencia" | "licenciaAudit" | "notification" | "userActivityLog" | "userSession" | "attendance" | "employeeWorkSchedule" | "vacationRequest" | "vacationAccrual" | "empleado" | "pagosalario" | "cierreContable" | "gastoCompra" | "compraProducto" | "servicios" | "ventaServicios" | "gastosDE" | "moneda" | "catalogoReparacionConfig" | "tasaCambio" | "transaccionMoneda" | "cuentaBancaria" | "tipoPago" | "reconciliacionVenta" | "reconciliacionServicio" | "reconciliacionGasto" | "ajusteBancario" | "transferenciaBancaria" | "alertHistory" | "auditLog" | "reportHistory" | "scheduledReport" | "scenarioSimulation" | "contrato" | "contratoVersion" | "contratoFirma" | "contratoAprobacion" | "contratoArchivo" | "contratoAlerta" | "factura" | "serieFacturacion" | "oferta" | "ofertaItem" | "cuentaPorCobrar" | "cuentaPorPagar" | "deudaCash" | "prestamoCash" | "pagoCuentaPorPagar" | "equipoReparacion" | "piezaReparacion" | "ordenReparacion" | "ordenReparacionEquipo" | "ordenReparacionItem" | "ordenReparacionMaterial" | "defectacionCatalogo" | "configuracionSistema" | "ordenProduccion" | "ordenProduccionHistorial" | "receta" | "recetaIngrediente" | "valeSalida" | "valeSalidaItem" | "listaPrecio" | "precioProducto" | "productoCostHistory" | "vendorCodeSequence"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -4593,154 +4561,6 @@ export namespace Prisma {
           count: {
             args: Prisma.GastosDECountArgs<ExtArgs>
             result: $Utils.Optional<GastosDECountAggregateOutputType> | number
-          }
-        }
-      }
-      GastoConcepto: {
-        payload: Prisma.$GastoConceptoPayload<ExtArgs>
-        fields: Prisma.GastoConceptoFieldRefs
-        operations: {
-          findUnique: {
-            args: Prisma.GastoConceptoFindUniqueArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$GastoConceptoPayload> | null
-          }
-          findUniqueOrThrow: {
-            args: Prisma.GastoConceptoFindUniqueOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$GastoConceptoPayload>
-          }
-          findFirst: {
-            args: Prisma.GastoConceptoFindFirstArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$GastoConceptoPayload> | null
-          }
-          findFirstOrThrow: {
-            args: Prisma.GastoConceptoFindFirstOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$GastoConceptoPayload>
-          }
-          findMany: {
-            args: Prisma.GastoConceptoFindManyArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$GastoConceptoPayload>[]
-          }
-          create: {
-            args: Prisma.GastoConceptoCreateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$GastoConceptoPayload>
-          }
-          createMany: {
-            args: Prisma.GastoConceptoCreateManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          createManyAndReturn: {
-            args: Prisma.GastoConceptoCreateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$GastoConceptoPayload>[]
-          }
-          delete: {
-            args: Prisma.GastoConceptoDeleteArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$GastoConceptoPayload>
-          }
-          update: {
-            args: Prisma.GastoConceptoUpdateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$GastoConceptoPayload>
-          }
-          deleteMany: {
-            args: Prisma.GastoConceptoDeleteManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          updateMany: {
-            args: Prisma.GastoConceptoUpdateManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          updateManyAndReturn: {
-            args: Prisma.GastoConceptoUpdateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$GastoConceptoPayload>[]
-          }
-          upsert: {
-            args: Prisma.GastoConceptoUpsertArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$GastoConceptoPayload>
-          }
-          aggregate: {
-            args: Prisma.GastoConceptoAggregateArgs<ExtArgs>
-            result: $Utils.Optional<AggregateGastoConcepto>
-          }
-          groupBy: {
-            args: Prisma.GastoConceptoGroupByArgs<ExtArgs>
-            result: $Utils.Optional<GastoConceptoGroupByOutputType>[]
-          }
-          count: {
-            args: Prisma.GastoConceptoCountArgs<ExtArgs>
-            result: $Utils.Optional<GastoConceptoCountAggregateOutputType> | number
-          }
-        }
-      }
-      GastoElemento: {
-        payload: Prisma.$GastoElementoPayload<ExtArgs>
-        fields: Prisma.GastoElementoFieldRefs
-        operations: {
-          findUnique: {
-            args: Prisma.GastoElementoFindUniqueArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$GastoElementoPayload> | null
-          }
-          findUniqueOrThrow: {
-            args: Prisma.GastoElementoFindUniqueOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$GastoElementoPayload>
-          }
-          findFirst: {
-            args: Prisma.GastoElementoFindFirstArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$GastoElementoPayload> | null
-          }
-          findFirstOrThrow: {
-            args: Prisma.GastoElementoFindFirstOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$GastoElementoPayload>
-          }
-          findMany: {
-            args: Prisma.GastoElementoFindManyArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$GastoElementoPayload>[]
-          }
-          create: {
-            args: Prisma.GastoElementoCreateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$GastoElementoPayload>
-          }
-          createMany: {
-            args: Prisma.GastoElementoCreateManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          createManyAndReturn: {
-            args: Prisma.GastoElementoCreateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$GastoElementoPayload>[]
-          }
-          delete: {
-            args: Prisma.GastoElementoDeleteArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$GastoElementoPayload>
-          }
-          update: {
-            args: Prisma.GastoElementoUpdateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$GastoElementoPayload>
-          }
-          deleteMany: {
-            args: Prisma.GastoElementoDeleteManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          updateMany: {
-            args: Prisma.GastoElementoUpdateManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          updateManyAndReturn: {
-            args: Prisma.GastoElementoUpdateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$GastoElementoPayload>[]
-          }
-          upsert: {
-            args: Prisma.GastoElementoUpsertArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$GastoElementoPayload>
-          }
-          aggregate: {
-            args: Prisma.GastoElementoAggregateArgs<ExtArgs>
-            result: $Utils.Optional<AggregateGastoElemento>
-          }
-          groupBy: {
-            args: Prisma.GastoElementoGroupByArgs<ExtArgs>
-            result: $Utils.Optional<GastoElementoGroupByOutputType>[]
-          }
-          count: {
-            args: Prisma.GastoElementoCountArgs<ExtArgs>
-            result: $Utils.Optional<GastoElementoCountAggregateOutputType> | number
           }
         }
       }
@@ -8499,8 +8319,6 @@ export namespace Prisma {
     servicios?: ServiciosOmit
     ventaServicios?: VentaServiciosOmit
     gastosDE?: GastosDEOmit
-    gastoConcepto?: GastoConceptoOmit
-    gastoElemento?: GastoElementoOmit
     moneda?: MonedaOmit
     catalogoReparacionConfig?: CatalogoReparacionConfigOmit
     tasaCambio?: TasaCambioOmit
@@ -9621,77 +9439,6 @@ export namespace Prisma {
    */
   export type GastosDECountOutputTypeCountReconciliacionesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ReconciliacionGastoWhereInput
-  }
-
-
-  /**
-   * Count Type GastoConceptoCountOutputType
-   */
-
-  export type GastoConceptoCountOutputType = {
-    elementos: number
-    gastosDE: number
-  }
-
-  export type GastoConceptoCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    elementos?: boolean | GastoConceptoCountOutputTypeCountElementosArgs
-    gastosDE?: boolean | GastoConceptoCountOutputTypeCountGastosDEArgs
-  }
-
-  // Custom InputTypes
-  /**
-   * GastoConceptoCountOutputType without action
-   */
-  export type GastoConceptoCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the GastoConceptoCountOutputType
-     */
-    select?: GastoConceptoCountOutputTypeSelect<ExtArgs> | null
-  }
-
-  /**
-   * GastoConceptoCountOutputType without action
-   */
-  export type GastoConceptoCountOutputTypeCountElementosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: GastoElementoWhereInput
-  }
-
-  /**
-   * GastoConceptoCountOutputType without action
-   */
-  export type GastoConceptoCountOutputTypeCountGastosDEArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: GastosDEWhereInput
-  }
-
-
-  /**
-   * Count Type GastoElementoCountOutputType
-   */
-
-  export type GastoElementoCountOutputType = {
-    gastosDE: number
-  }
-
-  export type GastoElementoCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    gastosDE?: boolean | GastoElementoCountOutputTypeCountGastosDEArgs
-  }
-
-  // Custom InputTypes
-  /**
-   * GastoElementoCountOutputType without action
-   */
-  export type GastoElementoCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the GastoElementoCountOutputType
-     */
-    select?: GastoElementoCountOutputTypeSelect<ExtArgs> | null
-  }
-
-  /**
-   * GastoElementoCountOutputType without action
-   */
-  export type GastoElementoCountOutputTypeCountGastosDEArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: GastosDEWhereInput
   }
 
 
@@ -50118,20 +49865,18 @@ export namespace Prisma {
   }
 
   export type GastosDEAvgAggregateOutputType = {
-    monto: Decimal | null
+    monto: number | null
   }
 
   export type GastosDESumAggregateOutputType = {
-    monto: Decimal | null
+    monto: number | null
   }
 
   export type GastosDEMinAggregateOutputType = {
     gastosDEId: string | null
     tipo: string | null
-    conceptoId: string | null
-    elementoId: string | null
     proveedor: string | null
-    monto: Decimal | null
+    monto: number | null
     periodo: string | null
     descripcion: string | null
     isPagado: string | null
@@ -50143,10 +49888,8 @@ export namespace Prisma {
   export type GastosDEMaxAggregateOutputType = {
     gastosDEId: string | null
     tipo: string | null
-    conceptoId: string | null
-    elementoId: string | null
     proveedor: string | null
-    monto: Decimal | null
+    monto: number | null
     periodo: string | null
     descripcion: string | null
     isPagado: string | null
@@ -50158,8 +49901,6 @@ export namespace Prisma {
   export type GastosDECountAggregateOutputType = {
     gastosDEId: number
     tipo: number
-    conceptoId: number
-    elementoId: number
     proveedor: number
     monto: number
     periodo: number
@@ -50183,8 +49924,6 @@ export namespace Prisma {
   export type GastosDEMinAggregateInputType = {
     gastosDEId?: true
     tipo?: true
-    conceptoId?: true
-    elementoId?: true
     proveedor?: true
     monto?: true
     periodo?: true
@@ -50198,8 +49937,6 @@ export namespace Prisma {
   export type GastosDEMaxAggregateInputType = {
     gastosDEId?: true
     tipo?: true
-    conceptoId?: true
-    elementoId?: true
     proveedor?: true
     monto?: true
     periodo?: true
@@ -50213,8 +49950,6 @@ export namespace Prisma {
   export type GastosDECountAggregateInputType = {
     gastosDEId?: true
     tipo?: true
-    conceptoId?: true
-    elementoId?: true
     proveedor?: true
     monto?: true
     periodo?: true
@@ -50314,14 +50049,12 @@ export namespace Prisma {
 
   export type GastosDEGroupByOutputType = {
     gastosDEId: string
-    tipo: string | null
-    conceptoId: string | null
-    elementoId: string | null
+    tipo: string
     proveedor: string
-    monto: Decimal
+    monto: number
     periodo: string
     descripcion: string | null
-    isPagado: string
+    isPagado: string | null
     createdAt: Date
     updatedAt: Date
     numeroFactura: string | null
@@ -50349,8 +50082,6 @@ export namespace Prisma {
   export type GastosDESelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     gastosDEId?: boolean
     tipo?: boolean
-    conceptoId?: boolean
-    elementoId?: boolean
     proveedor?: boolean
     monto?: boolean
     periodo?: boolean
@@ -50359,8 +50090,6 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     numeroFactura?: boolean
-    concepto?: boolean | GastosDE$conceptoArgs<ExtArgs>
-    elemento?: boolean | GastosDE$elementoArgs<ExtArgs>
     cuentaPorPagar?: boolean | GastosDE$cuentaPorPagarArgs<ExtArgs>
     reconciliaciones?: boolean | GastosDE$reconciliacionesArgs<ExtArgs>
     _count?: boolean | GastosDECountOutputTypeDefaultArgs<ExtArgs>
@@ -50369,8 +50098,6 @@ export namespace Prisma {
   export type GastosDESelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     gastosDEId?: boolean
     tipo?: boolean
-    conceptoId?: boolean
-    elementoId?: boolean
     proveedor?: boolean
     monto?: boolean
     periodo?: boolean
@@ -50379,15 +50106,11 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     numeroFactura?: boolean
-    concepto?: boolean | GastosDE$conceptoArgs<ExtArgs>
-    elemento?: boolean | GastosDE$elementoArgs<ExtArgs>
   }, ExtArgs["result"]["gastosDE"]>
 
   export type GastosDESelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     gastosDEId?: boolean
     tipo?: boolean
-    conceptoId?: boolean
-    elementoId?: boolean
     proveedor?: boolean
     monto?: boolean
     periodo?: boolean
@@ -50396,15 +50119,11 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     numeroFactura?: boolean
-    concepto?: boolean | GastosDE$conceptoArgs<ExtArgs>
-    elemento?: boolean | GastosDE$elementoArgs<ExtArgs>
   }, ExtArgs["result"]["gastosDE"]>
 
   export type GastosDESelectScalar = {
     gastosDEId?: boolean
     tipo?: boolean
-    conceptoId?: boolean
-    elementoId?: boolean
     proveedor?: boolean
     monto?: boolean
     periodo?: boolean
@@ -50415,41 +50134,29 @@ export namespace Prisma {
     numeroFactura?: boolean
   }
 
-  export type GastosDEOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"gastosDEId" | "tipo" | "conceptoId" | "elementoId" | "proveedor" | "monto" | "periodo" | "descripcion" | "isPagado" | "createdAt" | "updatedAt" | "numeroFactura", ExtArgs["result"]["gastosDE"]>
+  export type GastosDEOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"gastosDEId" | "tipo" | "proveedor" | "monto" | "periodo" | "descripcion" | "isPagado" | "createdAt" | "updatedAt" | "numeroFactura", ExtArgs["result"]["gastosDE"]>
   export type GastosDEInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    concepto?: boolean | GastosDE$conceptoArgs<ExtArgs>
-    elemento?: boolean | GastosDE$elementoArgs<ExtArgs>
     cuentaPorPagar?: boolean | GastosDE$cuentaPorPagarArgs<ExtArgs>
     reconciliaciones?: boolean | GastosDE$reconciliacionesArgs<ExtArgs>
     _count?: boolean | GastosDECountOutputTypeDefaultArgs<ExtArgs>
   }
-  export type GastosDEIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    concepto?: boolean | GastosDE$conceptoArgs<ExtArgs>
-    elemento?: boolean | GastosDE$elementoArgs<ExtArgs>
-  }
-  export type GastosDEIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    concepto?: boolean | GastosDE$conceptoArgs<ExtArgs>
-    elemento?: boolean | GastosDE$elementoArgs<ExtArgs>
-  }
+  export type GastosDEIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type GastosDEIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
 
   export type $GastosDEPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "GastosDE"
     objects: {
-      concepto: Prisma.$GastoConceptoPayload<ExtArgs> | null
-      elemento: Prisma.$GastoElementoPayload<ExtArgs> | null
       cuentaPorPagar: Prisma.$CuentaPorPagarPayload<ExtArgs> | null
       reconciliaciones: Prisma.$ReconciliacionGastoPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       gastosDEId: string
-      tipo: string | null
-      conceptoId: string | null
-      elementoId: string | null
+      tipo: string
       proveedor: string
-      monto: Prisma.Decimal
+      monto: number
       periodo: string
       descripcion: string | null
-      isPagado: string
+      isPagado: string | null
       createdAt: Date
       updatedAt: Date
       numeroFactura: string | null
@@ -50847,8 +50554,6 @@ export namespace Prisma {
    */
   export interface Prisma__GastosDEClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
-    concepto<T extends GastosDE$conceptoArgs<ExtArgs> = {}>(args?: Subset<T, GastosDE$conceptoArgs<ExtArgs>>): Prisma__GastoConceptoClient<$Result.GetResult<Prisma.$GastoConceptoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-    elemento<T extends GastosDE$elementoArgs<ExtArgs> = {}>(args?: Subset<T, GastosDE$elementoArgs<ExtArgs>>): Prisma__GastoElementoClient<$Result.GetResult<Prisma.$GastoElementoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     cuentaPorPagar<T extends GastosDE$cuentaPorPagarArgs<ExtArgs> = {}>(args?: Subset<T, GastosDE$cuentaPorPagarArgs<ExtArgs>>): Prisma__CuentaPorPagarClient<$Result.GetResult<Prisma.$CuentaPorPagarPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     reconciliaciones<T extends GastosDE$reconciliacionesArgs<ExtArgs> = {}>(args?: Subset<T, GastosDE$reconciliacionesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ReconciliacionGastoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
@@ -50882,10 +50587,8 @@ export namespace Prisma {
   interface GastosDEFieldRefs {
     readonly gastosDEId: FieldRef<"GastosDE", 'String'>
     readonly tipo: FieldRef<"GastosDE", 'String'>
-    readonly conceptoId: FieldRef<"GastosDE", 'String'>
-    readonly elementoId: FieldRef<"GastosDE", 'String'>
     readonly proveedor: FieldRef<"GastosDE", 'String'>
-    readonly monto: FieldRef<"GastosDE", 'Decimal'>
+    readonly monto: FieldRef<"GastosDE", 'Int'>
     readonly periodo: FieldRef<"GastosDE", 'String'>
     readonly descripcion: FieldRef<"GastosDE", 'String'>
     readonly isPagado: FieldRef<"GastosDE", 'String'>
@@ -51141,10 +50844,6 @@ export namespace Prisma {
      */
     data: GastosDECreateManyInput | GastosDECreateManyInput[]
     skipDuplicates?: boolean
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: GastosDEIncludeCreateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -51215,10 +50914,6 @@ export namespace Prisma {
      * Limit how many GastosDES to update.
      */
     limit?: number
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: GastosDEIncludeUpdateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -51288,44 +50983,6 @@ export namespace Prisma {
   }
 
   /**
-   * GastosDE.concepto
-   */
-  export type GastosDE$conceptoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the GastoConcepto
-     */
-    select?: GastoConceptoSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the GastoConcepto
-     */
-    omit?: GastoConceptoOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: GastoConceptoInclude<ExtArgs> | null
-    where?: GastoConceptoWhereInput
-  }
-
-  /**
-   * GastosDE.elemento
-   */
-  export type GastosDE$elementoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the GastoElemento
-     */
-    select?: GastoElementoSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the GastoElemento
-     */
-    omit?: GastoElementoOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: GastoElementoInclude<ExtArgs> | null
-    where?: GastoElementoWhereInput
-  }
-
-  /**
    * GastosDE.cuentaPorPagar
    */
   export type GastosDE$cuentaPorPagarArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -51384,2231 +51041,6 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: GastosDEInclude<ExtArgs> | null
-  }
-
-
-  /**
-   * Model GastoConcepto
-   */
-
-  export type AggregateGastoConcepto = {
-    _count: GastoConceptoCountAggregateOutputType | null
-    _min: GastoConceptoMinAggregateOutputType | null
-    _max: GastoConceptoMaxAggregateOutputType | null
-  }
-
-  export type GastoConceptoMinAggregateOutputType = {
-    conceptoId: string | null
-    nombre: string | null
-    descripcion: string | null
-    isActive: boolean | null
-    createdAt: Date | null
-    updatedAt: Date | null
-  }
-
-  export type GastoConceptoMaxAggregateOutputType = {
-    conceptoId: string | null
-    nombre: string | null
-    descripcion: string | null
-    isActive: boolean | null
-    createdAt: Date | null
-    updatedAt: Date | null
-  }
-
-  export type GastoConceptoCountAggregateOutputType = {
-    conceptoId: number
-    nombre: number
-    descripcion: number
-    isActive: number
-    createdAt: number
-    updatedAt: number
-    _all: number
-  }
-
-
-  export type GastoConceptoMinAggregateInputType = {
-    conceptoId?: true
-    nombre?: true
-    descripcion?: true
-    isActive?: true
-    createdAt?: true
-    updatedAt?: true
-  }
-
-  export type GastoConceptoMaxAggregateInputType = {
-    conceptoId?: true
-    nombre?: true
-    descripcion?: true
-    isActive?: true
-    createdAt?: true
-    updatedAt?: true
-  }
-
-  export type GastoConceptoCountAggregateInputType = {
-    conceptoId?: true
-    nombre?: true
-    descripcion?: true
-    isActive?: true
-    createdAt?: true
-    updatedAt?: true
-    _all?: true
-  }
-
-  export type GastoConceptoAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Filter which GastoConcepto to aggregate.
-     */
-    where?: GastoConceptoWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of GastoConceptos to fetch.
-     */
-    orderBy?: GastoConceptoOrderByWithRelationInput | GastoConceptoOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the start position
-     */
-    cursor?: GastoConceptoWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` GastoConceptos from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` GastoConceptos.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Count returned GastoConceptos
-    **/
-    _count?: true | GastoConceptoCountAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to find the minimum value
-    **/
-    _min?: GastoConceptoMinAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to find the maximum value
-    **/
-    _max?: GastoConceptoMaxAggregateInputType
-  }
-
-  export type GetGastoConceptoAggregateType<T extends GastoConceptoAggregateArgs> = {
-        [P in keyof T & keyof AggregateGastoConcepto]: P extends '_count' | 'count'
-      ? T[P] extends true
-        ? number
-        : GetScalarType<T[P], AggregateGastoConcepto[P]>
-      : GetScalarType<T[P], AggregateGastoConcepto[P]>
-  }
-
-
-
-
-  export type GastoConceptoGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: GastoConceptoWhereInput
-    orderBy?: GastoConceptoOrderByWithAggregationInput | GastoConceptoOrderByWithAggregationInput[]
-    by: GastoConceptoScalarFieldEnum[] | GastoConceptoScalarFieldEnum
-    having?: GastoConceptoScalarWhereWithAggregatesInput
-    take?: number
-    skip?: number
-    _count?: GastoConceptoCountAggregateInputType | true
-    _min?: GastoConceptoMinAggregateInputType
-    _max?: GastoConceptoMaxAggregateInputType
-  }
-
-  export type GastoConceptoGroupByOutputType = {
-    conceptoId: string
-    nombre: string
-    descripcion: string | null
-    isActive: boolean
-    createdAt: Date
-    updatedAt: Date
-    _count: GastoConceptoCountAggregateOutputType | null
-    _min: GastoConceptoMinAggregateOutputType | null
-    _max: GastoConceptoMaxAggregateOutputType | null
-  }
-
-  type GetGastoConceptoGroupByPayload<T extends GastoConceptoGroupByArgs> = Prisma.PrismaPromise<
-    Array<
-      PickEnumerable<GastoConceptoGroupByOutputType, T['by']> &
-        {
-          [P in ((keyof T) & (keyof GastoConceptoGroupByOutputType))]: P extends '_count'
-            ? T[P] extends boolean
-              ? number
-              : GetScalarType<T[P], GastoConceptoGroupByOutputType[P]>
-            : GetScalarType<T[P], GastoConceptoGroupByOutputType[P]>
-        }
-      >
-    >
-
-
-  export type GastoConceptoSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    conceptoId?: boolean
-    nombre?: boolean
-    descripcion?: boolean
-    isActive?: boolean
-    createdAt?: boolean
-    updatedAt?: boolean
-    elementos?: boolean | GastoConcepto$elementosArgs<ExtArgs>
-    gastosDE?: boolean | GastoConcepto$gastosDEArgs<ExtArgs>
-    _count?: boolean | GastoConceptoCountOutputTypeDefaultArgs<ExtArgs>
-  }, ExtArgs["result"]["gastoConcepto"]>
-
-  export type GastoConceptoSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    conceptoId?: boolean
-    nombre?: boolean
-    descripcion?: boolean
-    isActive?: boolean
-    createdAt?: boolean
-    updatedAt?: boolean
-  }, ExtArgs["result"]["gastoConcepto"]>
-
-  export type GastoConceptoSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    conceptoId?: boolean
-    nombre?: boolean
-    descripcion?: boolean
-    isActive?: boolean
-    createdAt?: boolean
-    updatedAt?: boolean
-  }, ExtArgs["result"]["gastoConcepto"]>
-
-  export type GastoConceptoSelectScalar = {
-    conceptoId?: boolean
-    nombre?: boolean
-    descripcion?: boolean
-    isActive?: boolean
-    createdAt?: boolean
-    updatedAt?: boolean
-  }
-
-  export type GastoConceptoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"conceptoId" | "nombre" | "descripcion" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["gastoConcepto"]>
-  export type GastoConceptoInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    elementos?: boolean | GastoConcepto$elementosArgs<ExtArgs>
-    gastosDE?: boolean | GastoConcepto$gastosDEArgs<ExtArgs>
-    _count?: boolean | GastoConceptoCountOutputTypeDefaultArgs<ExtArgs>
-  }
-  export type GastoConceptoIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
-  export type GastoConceptoIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
-
-  export type $GastoConceptoPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    name: "GastoConcepto"
-    objects: {
-      elementos: Prisma.$GastoElementoPayload<ExtArgs>[]
-      gastosDE: Prisma.$GastosDEPayload<ExtArgs>[]
-    }
-    scalars: $Extensions.GetPayloadResult<{
-      conceptoId: string
-      nombre: string
-      descripcion: string | null
-      isActive: boolean
-      createdAt: Date
-      updatedAt: Date
-    }, ExtArgs["result"]["gastoConcepto"]>
-    composites: {}
-  }
-
-  type GastoConceptoGetPayload<S extends boolean | null | undefined | GastoConceptoDefaultArgs> = $Result.GetResult<Prisma.$GastoConceptoPayload, S>
-
-  type GastoConceptoCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
-    Omit<GastoConceptoFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
-      select?: GastoConceptoCountAggregateInputType | true
-    }
-
-  export interface GastoConceptoDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
-    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['GastoConcepto'], meta: { name: 'GastoConcepto' } }
-    /**
-     * Find zero or one GastoConcepto that matches the filter.
-     * @param {GastoConceptoFindUniqueArgs} args - Arguments to find a GastoConcepto
-     * @example
-     * // Get one GastoConcepto
-     * const gastoConcepto = await prisma.gastoConcepto.findUnique({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findUnique<T extends GastoConceptoFindUniqueArgs>(args: SelectSubset<T, GastoConceptoFindUniqueArgs<ExtArgs>>): Prisma__GastoConceptoClient<$Result.GetResult<Prisma.$GastoConceptoPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find one GastoConcepto that matches the filter or throw an error with `error.code='P2025'`
-     * if no matches were found.
-     * @param {GastoConceptoFindUniqueOrThrowArgs} args - Arguments to find a GastoConcepto
-     * @example
-     * // Get one GastoConcepto
-     * const gastoConcepto = await prisma.gastoConcepto.findUniqueOrThrow({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findUniqueOrThrow<T extends GastoConceptoFindUniqueOrThrowArgs>(args: SelectSubset<T, GastoConceptoFindUniqueOrThrowArgs<ExtArgs>>): Prisma__GastoConceptoClient<$Result.GetResult<Prisma.$GastoConceptoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find the first GastoConcepto that matches the filter.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {GastoConceptoFindFirstArgs} args - Arguments to find a GastoConcepto
-     * @example
-     * // Get one GastoConcepto
-     * const gastoConcepto = await prisma.gastoConcepto.findFirst({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findFirst<T extends GastoConceptoFindFirstArgs>(args?: SelectSubset<T, GastoConceptoFindFirstArgs<ExtArgs>>): Prisma__GastoConceptoClient<$Result.GetResult<Prisma.$GastoConceptoPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find the first GastoConcepto that matches the filter or
-     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {GastoConceptoFindFirstOrThrowArgs} args - Arguments to find a GastoConcepto
-     * @example
-     * // Get one GastoConcepto
-     * const gastoConcepto = await prisma.gastoConcepto.findFirstOrThrow({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findFirstOrThrow<T extends GastoConceptoFindFirstOrThrowArgs>(args?: SelectSubset<T, GastoConceptoFindFirstOrThrowArgs<ExtArgs>>): Prisma__GastoConceptoClient<$Result.GetResult<Prisma.$GastoConceptoPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find zero or more GastoConceptos that matches the filter.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {GastoConceptoFindManyArgs} args - Arguments to filter and select certain fields only.
-     * @example
-     * // Get all GastoConceptos
-     * const gastoConceptos = await prisma.gastoConcepto.findMany()
-     * 
-     * // Get first 10 GastoConceptos
-     * const gastoConceptos = await prisma.gastoConcepto.findMany({ take: 10 })
-     * 
-     * // Only select the `conceptoId`
-     * const gastoConceptoWithConceptoIdOnly = await prisma.gastoConcepto.findMany({ select: { conceptoId: true } })
-     * 
-     */
-    findMany<T extends GastoConceptoFindManyArgs>(args?: SelectSubset<T, GastoConceptoFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$GastoConceptoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
-
-    /**
-     * Create a GastoConcepto.
-     * @param {GastoConceptoCreateArgs} args - Arguments to create a GastoConcepto.
-     * @example
-     * // Create one GastoConcepto
-     * const GastoConcepto = await prisma.gastoConcepto.create({
-     *   data: {
-     *     // ... data to create a GastoConcepto
-     *   }
-     * })
-     * 
-     */
-    create<T extends GastoConceptoCreateArgs>(args: SelectSubset<T, GastoConceptoCreateArgs<ExtArgs>>): Prisma__GastoConceptoClient<$Result.GetResult<Prisma.$GastoConceptoPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Create many GastoConceptos.
-     * @param {GastoConceptoCreateManyArgs} args - Arguments to create many GastoConceptos.
-     * @example
-     * // Create many GastoConceptos
-     * const gastoConcepto = await prisma.gastoConcepto.createMany({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     *     
-     */
-    createMany<T extends GastoConceptoCreateManyArgs>(args?: SelectSubset<T, GastoConceptoCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Create many GastoConceptos and returns the data saved in the database.
-     * @param {GastoConceptoCreateManyAndReturnArgs} args - Arguments to create many GastoConceptos.
-     * @example
-     * // Create many GastoConceptos
-     * const gastoConcepto = await prisma.gastoConcepto.createManyAndReturn({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Create many GastoConceptos and only return the `conceptoId`
-     * const gastoConceptoWithConceptoIdOnly = await prisma.gastoConcepto.createManyAndReturn({
-     *   select: { conceptoId: true },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    createManyAndReturn<T extends GastoConceptoCreateManyAndReturnArgs>(args?: SelectSubset<T, GastoConceptoCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$GastoConceptoPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
-
-    /**
-     * Delete a GastoConcepto.
-     * @param {GastoConceptoDeleteArgs} args - Arguments to delete one GastoConcepto.
-     * @example
-     * // Delete one GastoConcepto
-     * const GastoConcepto = await prisma.gastoConcepto.delete({
-     *   where: {
-     *     // ... filter to delete one GastoConcepto
-     *   }
-     * })
-     * 
-     */
-    delete<T extends GastoConceptoDeleteArgs>(args: SelectSubset<T, GastoConceptoDeleteArgs<ExtArgs>>): Prisma__GastoConceptoClient<$Result.GetResult<Prisma.$GastoConceptoPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Update one GastoConcepto.
-     * @param {GastoConceptoUpdateArgs} args - Arguments to update one GastoConcepto.
-     * @example
-     * // Update one GastoConcepto
-     * const gastoConcepto = await prisma.gastoConcepto.update({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: {
-     *     // ... provide data here
-     *   }
-     * })
-     * 
-     */
-    update<T extends GastoConceptoUpdateArgs>(args: SelectSubset<T, GastoConceptoUpdateArgs<ExtArgs>>): Prisma__GastoConceptoClient<$Result.GetResult<Prisma.$GastoConceptoPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Delete zero or more GastoConceptos.
-     * @param {GastoConceptoDeleteManyArgs} args - Arguments to filter GastoConceptos to delete.
-     * @example
-     * // Delete a few GastoConceptos
-     * const { count } = await prisma.gastoConcepto.deleteMany({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     * 
-     */
-    deleteMany<T extends GastoConceptoDeleteManyArgs>(args?: SelectSubset<T, GastoConceptoDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Update zero or more GastoConceptos.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {GastoConceptoUpdateManyArgs} args - Arguments to update one or more rows.
-     * @example
-     * // Update many GastoConceptos
-     * const gastoConcepto = await prisma.gastoConcepto.updateMany({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: {
-     *     // ... provide data here
-     *   }
-     * })
-     * 
-     */
-    updateMany<T extends GastoConceptoUpdateManyArgs>(args: SelectSubset<T, GastoConceptoUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Update zero or more GastoConceptos and returns the data updated in the database.
-     * @param {GastoConceptoUpdateManyAndReturnArgs} args - Arguments to update many GastoConceptos.
-     * @example
-     * // Update many GastoConceptos
-     * const gastoConcepto = await prisma.gastoConcepto.updateManyAndReturn({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Update zero or more GastoConceptos and only return the `conceptoId`
-     * const gastoConceptoWithConceptoIdOnly = await prisma.gastoConcepto.updateManyAndReturn({
-     *   select: { conceptoId: true },
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    updateManyAndReturn<T extends GastoConceptoUpdateManyAndReturnArgs>(args: SelectSubset<T, GastoConceptoUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$GastoConceptoPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
-
-    /**
-     * Create or update one GastoConcepto.
-     * @param {GastoConceptoUpsertArgs} args - Arguments to update or create a GastoConcepto.
-     * @example
-     * // Update or create a GastoConcepto
-     * const gastoConcepto = await prisma.gastoConcepto.upsert({
-     *   create: {
-     *     // ... data to create a GastoConcepto
-     *   },
-     *   update: {
-     *     // ... in case it already exists, update
-     *   },
-     *   where: {
-     *     // ... the filter for the GastoConcepto we want to update
-     *   }
-     * })
-     */
-    upsert<T extends GastoConceptoUpsertArgs>(args: SelectSubset<T, GastoConceptoUpsertArgs<ExtArgs>>): Prisma__GastoConceptoClient<$Result.GetResult<Prisma.$GastoConceptoPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-
-    /**
-     * Count the number of GastoConceptos.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {GastoConceptoCountArgs} args - Arguments to filter GastoConceptos to count.
-     * @example
-     * // Count the number of GastoConceptos
-     * const count = await prisma.gastoConcepto.count({
-     *   where: {
-     *     // ... the filter for the GastoConceptos we want to count
-     *   }
-     * })
-    **/
-    count<T extends GastoConceptoCountArgs>(
-      args?: Subset<T, GastoConceptoCountArgs>,
-    ): Prisma.PrismaPromise<
-      T extends $Utils.Record<'select', any>
-        ? T['select'] extends true
-          ? number
-          : GetScalarType<T['select'], GastoConceptoCountAggregateOutputType>
-        : number
-    >
-
-    /**
-     * Allows you to perform aggregations operations on a GastoConcepto.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {GastoConceptoAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
-     * @example
-     * // Ordered by age ascending
-     * // Where email contains prisma.io
-     * // Limited to the 10 users
-     * const aggregations = await prisma.user.aggregate({
-     *   _avg: {
-     *     age: true,
-     *   },
-     *   where: {
-     *     email: {
-     *       contains: "prisma.io",
-     *     },
-     *   },
-     *   orderBy: {
-     *     age: "asc",
-     *   },
-     *   take: 10,
-     * })
-    **/
-    aggregate<T extends GastoConceptoAggregateArgs>(args: Subset<T, GastoConceptoAggregateArgs>): Prisma.PrismaPromise<GetGastoConceptoAggregateType<T>>
-
-    /**
-     * Group by GastoConcepto.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {GastoConceptoGroupByArgs} args - Group by arguments.
-     * @example
-     * // Group by city, order by createdAt, get count
-     * const result = await prisma.user.groupBy({
-     *   by: ['city', 'createdAt'],
-     *   orderBy: {
-     *     createdAt: true
-     *   },
-     *   _count: {
-     *     _all: true
-     *   },
-     * })
-     * 
-    **/
-    groupBy<
-      T extends GastoConceptoGroupByArgs,
-      HasSelectOrTake extends Or<
-        Extends<'skip', Keys<T>>,
-        Extends<'take', Keys<T>>
-      >,
-      OrderByArg extends True extends HasSelectOrTake
-        ? { orderBy: GastoConceptoGroupByArgs['orderBy'] }
-        : { orderBy?: GastoConceptoGroupByArgs['orderBy'] },
-      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
-      ByFields extends MaybeTupleToUnion<T['by']>,
-      ByValid extends Has<ByFields, OrderFields>,
-      HavingFields extends GetHavingFields<T['having']>,
-      HavingValid extends Has<ByFields, HavingFields>,
-      ByEmpty extends T['by'] extends never[] ? True : False,
-      InputErrors extends ByEmpty extends True
-      ? `Error: "by" must not be empty.`
-      : HavingValid extends False
-      ? {
-          [P in HavingFields]: P extends ByFields
-            ? never
-            : P extends string
-            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
-            : [
-                Error,
-                'Field ',
-                P,
-                ` in "having" needs to be provided in "by"`,
-              ]
-        }[HavingFields]
-      : 'take' extends Keys<T>
-      ? 'orderBy' extends Keys<T>
-        ? ByValid extends True
-          ? {}
-          : {
-              [P in OrderFields]: P extends ByFields
-                ? never
-                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-            }[OrderFields]
-        : 'Error: If you provide "take", you also need to provide "orderBy"'
-      : 'skip' extends Keys<T>
-      ? 'orderBy' extends Keys<T>
-        ? ByValid extends True
-          ? {}
-          : {
-              [P in OrderFields]: P extends ByFields
-                ? never
-                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-            }[OrderFields]
-        : 'Error: If you provide "skip", you also need to provide "orderBy"'
-      : ByValid extends True
-      ? {}
-      : {
-          [P in OrderFields]: P extends ByFields
-            ? never
-            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-        }[OrderFields]
-    >(args: SubsetIntersection<T, GastoConceptoGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetGastoConceptoGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
-  /**
-   * Fields of the GastoConcepto model
-   */
-  readonly fields: GastoConceptoFieldRefs;
-  }
-
-  /**
-   * The delegate class that acts as a "Promise-like" for GastoConcepto.
-   * Why is this prefixed with `Prisma__`?
-   * Because we want to prevent naming conflicts as mentioned in
-   * https://github.com/prisma/prisma-client-js/issues/707
-   */
-  export interface Prisma__GastoConceptoClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
-    readonly [Symbol.toStringTag]: "PrismaPromise"
-    elementos<T extends GastoConcepto$elementosArgs<ExtArgs> = {}>(args?: Subset<T, GastoConcepto$elementosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$GastoElementoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-    gastosDE<T extends GastoConcepto$gastosDEArgs<ExtArgs> = {}>(args?: Subset<T, GastoConcepto$gastosDEArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$GastosDEPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-    /**
-     * Attaches callbacks for the resolution and/or rejection of the Promise.
-     * @param onfulfilled The callback to execute when the Promise is resolved.
-     * @param onrejected The callback to execute when the Promise is rejected.
-     * @returns A Promise for the completion of which ever callback is executed.
-     */
-    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
-    /**
-     * Attaches a callback for only the rejection of the Promise.
-     * @param onrejected The callback to execute when the Promise is rejected.
-     * @returns A Promise for the completion of the callback.
-     */
-    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
-    /**
-     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
-     * resolved value cannot be modified from the callback.
-     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
-     * @returns A Promise for the completion of the callback.
-     */
-    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
-  }
-
-
-
-
-  /**
-   * Fields of the GastoConcepto model
-   */
-  interface GastoConceptoFieldRefs {
-    readonly conceptoId: FieldRef<"GastoConcepto", 'String'>
-    readonly nombre: FieldRef<"GastoConcepto", 'String'>
-    readonly descripcion: FieldRef<"GastoConcepto", 'String'>
-    readonly isActive: FieldRef<"GastoConcepto", 'Boolean'>
-    readonly createdAt: FieldRef<"GastoConcepto", 'DateTime'>
-    readonly updatedAt: FieldRef<"GastoConcepto", 'DateTime'>
-  }
-    
-
-  // Custom InputTypes
-  /**
-   * GastoConcepto findUnique
-   */
-  export type GastoConceptoFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the GastoConcepto
-     */
-    select?: GastoConceptoSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the GastoConcepto
-     */
-    omit?: GastoConceptoOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: GastoConceptoInclude<ExtArgs> | null
-    /**
-     * Filter, which GastoConcepto to fetch.
-     */
-    where: GastoConceptoWhereUniqueInput
-  }
-
-  /**
-   * GastoConcepto findUniqueOrThrow
-   */
-  export type GastoConceptoFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the GastoConcepto
-     */
-    select?: GastoConceptoSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the GastoConcepto
-     */
-    omit?: GastoConceptoOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: GastoConceptoInclude<ExtArgs> | null
-    /**
-     * Filter, which GastoConcepto to fetch.
-     */
-    where: GastoConceptoWhereUniqueInput
-  }
-
-  /**
-   * GastoConcepto findFirst
-   */
-  export type GastoConceptoFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the GastoConcepto
-     */
-    select?: GastoConceptoSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the GastoConcepto
-     */
-    omit?: GastoConceptoOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: GastoConceptoInclude<ExtArgs> | null
-    /**
-     * Filter, which GastoConcepto to fetch.
-     */
-    where?: GastoConceptoWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of GastoConceptos to fetch.
-     */
-    orderBy?: GastoConceptoOrderByWithRelationInput | GastoConceptoOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for searching for GastoConceptos.
-     */
-    cursor?: GastoConceptoWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` GastoConceptos from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` GastoConceptos.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of GastoConceptos.
-     */
-    distinct?: GastoConceptoScalarFieldEnum | GastoConceptoScalarFieldEnum[]
-  }
-
-  /**
-   * GastoConcepto findFirstOrThrow
-   */
-  export type GastoConceptoFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the GastoConcepto
-     */
-    select?: GastoConceptoSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the GastoConcepto
-     */
-    omit?: GastoConceptoOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: GastoConceptoInclude<ExtArgs> | null
-    /**
-     * Filter, which GastoConcepto to fetch.
-     */
-    where?: GastoConceptoWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of GastoConceptos to fetch.
-     */
-    orderBy?: GastoConceptoOrderByWithRelationInput | GastoConceptoOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for searching for GastoConceptos.
-     */
-    cursor?: GastoConceptoWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` GastoConceptos from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` GastoConceptos.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of GastoConceptos.
-     */
-    distinct?: GastoConceptoScalarFieldEnum | GastoConceptoScalarFieldEnum[]
-  }
-
-  /**
-   * GastoConcepto findMany
-   */
-  export type GastoConceptoFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the GastoConcepto
-     */
-    select?: GastoConceptoSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the GastoConcepto
-     */
-    omit?: GastoConceptoOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: GastoConceptoInclude<ExtArgs> | null
-    /**
-     * Filter, which GastoConceptos to fetch.
-     */
-    where?: GastoConceptoWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of GastoConceptos to fetch.
-     */
-    orderBy?: GastoConceptoOrderByWithRelationInput | GastoConceptoOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for listing GastoConceptos.
-     */
-    cursor?: GastoConceptoWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` GastoConceptos from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` GastoConceptos.
-     */
-    skip?: number
-    distinct?: GastoConceptoScalarFieldEnum | GastoConceptoScalarFieldEnum[]
-  }
-
-  /**
-   * GastoConcepto create
-   */
-  export type GastoConceptoCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the GastoConcepto
-     */
-    select?: GastoConceptoSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the GastoConcepto
-     */
-    omit?: GastoConceptoOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: GastoConceptoInclude<ExtArgs> | null
-    /**
-     * The data needed to create a GastoConcepto.
-     */
-    data: XOR<GastoConceptoCreateInput, GastoConceptoUncheckedCreateInput>
-  }
-
-  /**
-   * GastoConcepto createMany
-   */
-  export type GastoConceptoCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to create many GastoConceptos.
-     */
-    data: GastoConceptoCreateManyInput | GastoConceptoCreateManyInput[]
-    skipDuplicates?: boolean
-  }
-
-  /**
-   * GastoConcepto createManyAndReturn
-   */
-  export type GastoConceptoCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the GastoConcepto
-     */
-    select?: GastoConceptoSelectCreateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the GastoConcepto
-     */
-    omit?: GastoConceptoOmit<ExtArgs> | null
-    /**
-     * The data used to create many GastoConceptos.
-     */
-    data: GastoConceptoCreateManyInput | GastoConceptoCreateManyInput[]
-    skipDuplicates?: boolean
-  }
-
-  /**
-   * GastoConcepto update
-   */
-  export type GastoConceptoUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the GastoConcepto
-     */
-    select?: GastoConceptoSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the GastoConcepto
-     */
-    omit?: GastoConceptoOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: GastoConceptoInclude<ExtArgs> | null
-    /**
-     * The data needed to update a GastoConcepto.
-     */
-    data: XOR<GastoConceptoUpdateInput, GastoConceptoUncheckedUpdateInput>
-    /**
-     * Choose, which GastoConcepto to update.
-     */
-    where: GastoConceptoWhereUniqueInput
-  }
-
-  /**
-   * GastoConcepto updateMany
-   */
-  export type GastoConceptoUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to update GastoConceptos.
-     */
-    data: XOR<GastoConceptoUpdateManyMutationInput, GastoConceptoUncheckedUpdateManyInput>
-    /**
-     * Filter which GastoConceptos to update
-     */
-    where?: GastoConceptoWhereInput
-    /**
-     * Limit how many GastoConceptos to update.
-     */
-    limit?: number
-  }
-
-  /**
-   * GastoConcepto updateManyAndReturn
-   */
-  export type GastoConceptoUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the GastoConcepto
-     */
-    select?: GastoConceptoSelectUpdateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the GastoConcepto
-     */
-    omit?: GastoConceptoOmit<ExtArgs> | null
-    /**
-     * The data used to update GastoConceptos.
-     */
-    data: XOR<GastoConceptoUpdateManyMutationInput, GastoConceptoUncheckedUpdateManyInput>
-    /**
-     * Filter which GastoConceptos to update
-     */
-    where?: GastoConceptoWhereInput
-    /**
-     * Limit how many GastoConceptos to update.
-     */
-    limit?: number
-  }
-
-  /**
-   * GastoConcepto upsert
-   */
-  export type GastoConceptoUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the GastoConcepto
-     */
-    select?: GastoConceptoSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the GastoConcepto
-     */
-    omit?: GastoConceptoOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: GastoConceptoInclude<ExtArgs> | null
-    /**
-     * The filter to search for the GastoConcepto to update in case it exists.
-     */
-    where: GastoConceptoWhereUniqueInput
-    /**
-     * In case the GastoConcepto found by the `where` argument doesn't exist, create a new GastoConcepto with this data.
-     */
-    create: XOR<GastoConceptoCreateInput, GastoConceptoUncheckedCreateInput>
-    /**
-     * In case the GastoConcepto was found with the provided `where` argument, update it with this data.
-     */
-    update: XOR<GastoConceptoUpdateInput, GastoConceptoUncheckedUpdateInput>
-  }
-
-  /**
-   * GastoConcepto delete
-   */
-  export type GastoConceptoDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the GastoConcepto
-     */
-    select?: GastoConceptoSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the GastoConcepto
-     */
-    omit?: GastoConceptoOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: GastoConceptoInclude<ExtArgs> | null
-    /**
-     * Filter which GastoConcepto to delete.
-     */
-    where: GastoConceptoWhereUniqueInput
-  }
-
-  /**
-   * GastoConcepto deleteMany
-   */
-  export type GastoConceptoDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Filter which GastoConceptos to delete
-     */
-    where?: GastoConceptoWhereInput
-    /**
-     * Limit how many GastoConceptos to delete.
-     */
-    limit?: number
-  }
-
-  /**
-   * GastoConcepto.elementos
-   */
-  export type GastoConcepto$elementosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the GastoElemento
-     */
-    select?: GastoElementoSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the GastoElemento
-     */
-    omit?: GastoElementoOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: GastoElementoInclude<ExtArgs> | null
-    where?: GastoElementoWhereInput
-    orderBy?: GastoElementoOrderByWithRelationInput | GastoElementoOrderByWithRelationInput[]
-    cursor?: GastoElementoWhereUniqueInput
-    take?: number
-    skip?: number
-    distinct?: GastoElementoScalarFieldEnum | GastoElementoScalarFieldEnum[]
-  }
-
-  /**
-   * GastoConcepto.gastosDE
-   */
-  export type GastoConcepto$gastosDEArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the GastosDE
-     */
-    select?: GastosDESelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the GastosDE
-     */
-    omit?: GastosDEOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: GastosDEInclude<ExtArgs> | null
-    where?: GastosDEWhereInput
-    orderBy?: GastosDEOrderByWithRelationInput | GastosDEOrderByWithRelationInput[]
-    cursor?: GastosDEWhereUniqueInput
-    take?: number
-    skip?: number
-    distinct?: GastosDEScalarFieldEnum | GastosDEScalarFieldEnum[]
-  }
-
-  /**
-   * GastoConcepto without action
-   */
-  export type GastoConceptoDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the GastoConcepto
-     */
-    select?: GastoConceptoSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the GastoConcepto
-     */
-    omit?: GastoConceptoOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: GastoConceptoInclude<ExtArgs> | null
-  }
-
-
-  /**
-   * Model GastoElemento
-   */
-
-  export type AggregateGastoElemento = {
-    _count: GastoElementoCountAggregateOutputType | null
-    _min: GastoElementoMinAggregateOutputType | null
-    _max: GastoElementoMaxAggregateOutputType | null
-  }
-
-  export type GastoElementoMinAggregateOutputType = {
-    elementoId: string | null
-    conceptoId: string | null
-    nombre: string | null
-    descripcion: string | null
-    isActive: boolean | null
-    createdAt: Date | null
-    updatedAt: Date | null
-  }
-
-  export type GastoElementoMaxAggregateOutputType = {
-    elementoId: string | null
-    conceptoId: string | null
-    nombre: string | null
-    descripcion: string | null
-    isActive: boolean | null
-    createdAt: Date | null
-    updatedAt: Date | null
-  }
-
-  export type GastoElementoCountAggregateOutputType = {
-    elementoId: number
-    conceptoId: number
-    nombre: number
-    descripcion: number
-    isActive: number
-    createdAt: number
-    updatedAt: number
-    _all: number
-  }
-
-
-  export type GastoElementoMinAggregateInputType = {
-    elementoId?: true
-    conceptoId?: true
-    nombre?: true
-    descripcion?: true
-    isActive?: true
-    createdAt?: true
-    updatedAt?: true
-  }
-
-  export type GastoElementoMaxAggregateInputType = {
-    elementoId?: true
-    conceptoId?: true
-    nombre?: true
-    descripcion?: true
-    isActive?: true
-    createdAt?: true
-    updatedAt?: true
-  }
-
-  export type GastoElementoCountAggregateInputType = {
-    elementoId?: true
-    conceptoId?: true
-    nombre?: true
-    descripcion?: true
-    isActive?: true
-    createdAt?: true
-    updatedAt?: true
-    _all?: true
-  }
-
-  export type GastoElementoAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Filter which GastoElemento to aggregate.
-     */
-    where?: GastoElementoWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of GastoElementos to fetch.
-     */
-    orderBy?: GastoElementoOrderByWithRelationInput | GastoElementoOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the start position
-     */
-    cursor?: GastoElementoWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` GastoElementos from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` GastoElementos.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Count returned GastoElementos
-    **/
-    _count?: true | GastoElementoCountAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to find the minimum value
-    **/
-    _min?: GastoElementoMinAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to find the maximum value
-    **/
-    _max?: GastoElementoMaxAggregateInputType
-  }
-
-  export type GetGastoElementoAggregateType<T extends GastoElementoAggregateArgs> = {
-        [P in keyof T & keyof AggregateGastoElemento]: P extends '_count' | 'count'
-      ? T[P] extends true
-        ? number
-        : GetScalarType<T[P], AggregateGastoElemento[P]>
-      : GetScalarType<T[P], AggregateGastoElemento[P]>
-  }
-
-
-
-
-  export type GastoElementoGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: GastoElementoWhereInput
-    orderBy?: GastoElementoOrderByWithAggregationInput | GastoElementoOrderByWithAggregationInput[]
-    by: GastoElementoScalarFieldEnum[] | GastoElementoScalarFieldEnum
-    having?: GastoElementoScalarWhereWithAggregatesInput
-    take?: number
-    skip?: number
-    _count?: GastoElementoCountAggregateInputType | true
-    _min?: GastoElementoMinAggregateInputType
-    _max?: GastoElementoMaxAggregateInputType
-  }
-
-  export type GastoElementoGroupByOutputType = {
-    elementoId: string
-    conceptoId: string
-    nombre: string
-    descripcion: string | null
-    isActive: boolean
-    createdAt: Date
-    updatedAt: Date
-    _count: GastoElementoCountAggregateOutputType | null
-    _min: GastoElementoMinAggregateOutputType | null
-    _max: GastoElementoMaxAggregateOutputType | null
-  }
-
-  type GetGastoElementoGroupByPayload<T extends GastoElementoGroupByArgs> = Prisma.PrismaPromise<
-    Array<
-      PickEnumerable<GastoElementoGroupByOutputType, T['by']> &
-        {
-          [P in ((keyof T) & (keyof GastoElementoGroupByOutputType))]: P extends '_count'
-            ? T[P] extends boolean
-              ? number
-              : GetScalarType<T[P], GastoElementoGroupByOutputType[P]>
-            : GetScalarType<T[P], GastoElementoGroupByOutputType[P]>
-        }
-      >
-    >
-
-
-  export type GastoElementoSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    elementoId?: boolean
-    conceptoId?: boolean
-    nombre?: boolean
-    descripcion?: boolean
-    isActive?: boolean
-    createdAt?: boolean
-    updatedAt?: boolean
-    concepto?: boolean | GastoConceptoDefaultArgs<ExtArgs>
-    gastosDE?: boolean | GastoElemento$gastosDEArgs<ExtArgs>
-    _count?: boolean | GastoElementoCountOutputTypeDefaultArgs<ExtArgs>
-  }, ExtArgs["result"]["gastoElemento"]>
-
-  export type GastoElementoSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    elementoId?: boolean
-    conceptoId?: boolean
-    nombre?: boolean
-    descripcion?: boolean
-    isActive?: boolean
-    createdAt?: boolean
-    updatedAt?: boolean
-    concepto?: boolean | GastoConceptoDefaultArgs<ExtArgs>
-  }, ExtArgs["result"]["gastoElemento"]>
-
-  export type GastoElementoSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    elementoId?: boolean
-    conceptoId?: boolean
-    nombre?: boolean
-    descripcion?: boolean
-    isActive?: boolean
-    createdAt?: boolean
-    updatedAt?: boolean
-    concepto?: boolean | GastoConceptoDefaultArgs<ExtArgs>
-  }, ExtArgs["result"]["gastoElemento"]>
-
-  export type GastoElementoSelectScalar = {
-    elementoId?: boolean
-    conceptoId?: boolean
-    nombre?: boolean
-    descripcion?: boolean
-    isActive?: boolean
-    createdAt?: boolean
-    updatedAt?: boolean
-  }
-
-  export type GastoElementoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"elementoId" | "conceptoId" | "nombre" | "descripcion" | "isActive" | "createdAt" | "updatedAt", ExtArgs["result"]["gastoElemento"]>
-  export type GastoElementoInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    concepto?: boolean | GastoConceptoDefaultArgs<ExtArgs>
-    gastosDE?: boolean | GastoElemento$gastosDEArgs<ExtArgs>
-    _count?: boolean | GastoElementoCountOutputTypeDefaultArgs<ExtArgs>
-  }
-  export type GastoElementoIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    concepto?: boolean | GastoConceptoDefaultArgs<ExtArgs>
-  }
-  export type GastoElementoIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    concepto?: boolean | GastoConceptoDefaultArgs<ExtArgs>
-  }
-
-  export type $GastoElementoPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    name: "GastoElemento"
-    objects: {
-      concepto: Prisma.$GastoConceptoPayload<ExtArgs>
-      gastosDE: Prisma.$GastosDEPayload<ExtArgs>[]
-    }
-    scalars: $Extensions.GetPayloadResult<{
-      elementoId: string
-      conceptoId: string
-      nombre: string
-      descripcion: string | null
-      isActive: boolean
-      createdAt: Date
-      updatedAt: Date
-    }, ExtArgs["result"]["gastoElemento"]>
-    composites: {}
-  }
-
-  type GastoElementoGetPayload<S extends boolean | null | undefined | GastoElementoDefaultArgs> = $Result.GetResult<Prisma.$GastoElementoPayload, S>
-
-  type GastoElementoCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
-    Omit<GastoElementoFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
-      select?: GastoElementoCountAggregateInputType | true
-    }
-
-  export interface GastoElementoDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
-    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['GastoElemento'], meta: { name: 'GastoElemento' } }
-    /**
-     * Find zero or one GastoElemento that matches the filter.
-     * @param {GastoElementoFindUniqueArgs} args - Arguments to find a GastoElemento
-     * @example
-     * // Get one GastoElemento
-     * const gastoElemento = await prisma.gastoElemento.findUnique({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findUnique<T extends GastoElementoFindUniqueArgs>(args: SelectSubset<T, GastoElementoFindUniqueArgs<ExtArgs>>): Prisma__GastoElementoClient<$Result.GetResult<Prisma.$GastoElementoPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find one GastoElemento that matches the filter or throw an error with `error.code='P2025'`
-     * if no matches were found.
-     * @param {GastoElementoFindUniqueOrThrowArgs} args - Arguments to find a GastoElemento
-     * @example
-     * // Get one GastoElemento
-     * const gastoElemento = await prisma.gastoElemento.findUniqueOrThrow({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findUniqueOrThrow<T extends GastoElementoFindUniqueOrThrowArgs>(args: SelectSubset<T, GastoElementoFindUniqueOrThrowArgs<ExtArgs>>): Prisma__GastoElementoClient<$Result.GetResult<Prisma.$GastoElementoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find the first GastoElemento that matches the filter.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {GastoElementoFindFirstArgs} args - Arguments to find a GastoElemento
-     * @example
-     * // Get one GastoElemento
-     * const gastoElemento = await prisma.gastoElemento.findFirst({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findFirst<T extends GastoElementoFindFirstArgs>(args?: SelectSubset<T, GastoElementoFindFirstArgs<ExtArgs>>): Prisma__GastoElementoClient<$Result.GetResult<Prisma.$GastoElementoPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find the first GastoElemento that matches the filter or
-     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {GastoElementoFindFirstOrThrowArgs} args - Arguments to find a GastoElemento
-     * @example
-     * // Get one GastoElemento
-     * const gastoElemento = await prisma.gastoElemento.findFirstOrThrow({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findFirstOrThrow<T extends GastoElementoFindFirstOrThrowArgs>(args?: SelectSubset<T, GastoElementoFindFirstOrThrowArgs<ExtArgs>>): Prisma__GastoElementoClient<$Result.GetResult<Prisma.$GastoElementoPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find zero or more GastoElementos that matches the filter.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {GastoElementoFindManyArgs} args - Arguments to filter and select certain fields only.
-     * @example
-     * // Get all GastoElementos
-     * const gastoElementos = await prisma.gastoElemento.findMany()
-     * 
-     * // Get first 10 GastoElementos
-     * const gastoElementos = await prisma.gastoElemento.findMany({ take: 10 })
-     * 
-     * // Only select the `elementoId`
-     * const gastoElementoWithElementoIdOnly = await prisma.gastoElemento.findMany({ select: { elementoId: true } })
-     * 
-     */
-    findMany<T extends GastoElementoFindManyArgs>(args?: SelectSubset<T, GastoElementoFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$GastoElementoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
-
-    /**
-     * Create a GastoElemento.
-     * @param {GastoElementoCreateArgs} args - Arguments to create a GastoElemento.
-     * @example
-     * // Create one GastoElemento
-     * const GastoElemento = await prisma.gastoElemento.create({
-     *   data: {
-     *     // ... data to create a GastoElemento
-     *   }
-     * })
-     * 
-     */
-    create<T extends GastoElementoCreateArgs>(args: SelectSubset<T, GastoElementoCreateArgs<ExtArgs>>): Prisma__GastoElementoClient<$Result.GetResult<Prisma.$GastoElementoPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Create many GastoElementos.
-     * @param {GastoElementoCreateManyArgs} args - Arguments to create many GastoElementos.
-     * @example
-     * // Create many GastoElementos
-     * const gastoElemento = await prisma.gastoElemento.createMany({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     *     
-     */
-    createMany<T extends GastoElementoCreateManyArgs>(args?: SelectSubset<T, GastoElementoCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Create many GastoElementos and returns the data saved in the database.
-     * @param {GastoElementoCreateManyAndReturnArgs} args - Arguments to create many GastoElementos.
-     * @example
-     * // Create many GastoElementos
-     * const gastoElemento = await prisma.gastoElemento.createManyAndReturn({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Create many GastoElementos and only return the `elementoId`
-     * const gastoElementoWithElementoIdOnly = await prisma.gastoElemento.createManyAndReturn({
-     *   select: { elementoId: true },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    createManyAndReturn<T extends GastoElementoCreateManyAndReturnArgs>(args?: SelectSubset<T, GastoElementoCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$GastoElementoPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
-
-    /**
-     * Delete a GastoElemento.
-     * @param {GastoElementoDeleteArgs} args - Arguments to delete one GastoElemento.
-     * @example
-     * // Delete one GastoElemento
-     * const GastoElemento = await prisma.gastoElemento.delete({
-     *   where: {
-     *     // ... filter to delete one GastoElemento
-     *   }
-     * })
-     * 
-     */
-    delete<T extends GastoElementoDeleteArgs>(args: SelectSubset<T, GastoElementoDeleteArgs<ExtArgs>>): Prisma__GastoElementoClient<$Result.GetResult<Prisma.$GastoElementoPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Update one GastoElemento.
-     * @param {GastoElementoUpdateArgs} args - Arguments to update one GastoElemento.
-     * @example
-     * // Update one GastoElemento
-     * const gastoElemento = await prisma.gastoElemento.update({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: {
-     *     // ... provide data here
-     *   }
-     * })
-     * 
-     */
-    update<T extends GastoElementoUpdateArgs>(args: SelectSubset<T, GastoElementoUpdateArgs<ExtArgs>>): Prisma__GastoElementoClient<$Result.GetResult<Prisma.$GastoElementoPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Delete zero or more GastoElementos.
-     * @param {GastoElementoDeleteManyArgs} args - Arguments to filter GastoElementos to delete.
-     * @example
-     * // Delete a few GastoElementos
-     * const { count } = await prisma.gastoElemento.deleteMany({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     * 
-     */
-    deleteMany<T extends GastoElementoDeleteManyArgs>(args?: SelectSubset<T, GastoElementoDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Update zero or more GastoElementos.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {GastoElementoUpdateManyArgs} args - Arguments to update one or more rows.
-     * @example
-     * // Update many GastoElementos
-     * const gastoElemento = await prisma.gastoElemento.updateMany({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: {
-     *     // ... provide data here
-     *   }
-     * })
-     * 
-     */
-    updateMany<T extends GastoElementoUpdateManyArgs>(args: SelectSubset<T, GastoElementoUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Update zero or more GastoElementos and returns the data updated in the database.
-     * @param {GastoElementoUpdateManyAndReturnArgs} args - Arguments to update many GastoElementos.
-     * @example
-     * // Update many GastoElementos
-     * const gastoElemento = await prisma.gastoElemento.updateManyAndReturn({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Update zero or more GastoElementos and only return the `elementoId`
-     * const gastoElementoWithElementoIdOnly = await prisma.gastoElemento.updateManyAndReturn({
-     *   select: { elementoId: true },
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    updateManyAndReturn<T extends GastoElementoUpdateManyAndReturnArgs>(args: SelectSubset<T, GastoElementoUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$GastoElementoPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
-
-    /**
-     * Create or update one GastoElemento.
-     * @param {GastoElementoUpsertArgs} args - Arguments to update or create a GastoElemento.
-     * @example
-     * // Update or create a GastoElemento
-     * const gastoElemento = await prisma.gastoElemento.upsert({
-     *   create: {
-     *     // ... data to create a GastoElemento
-     *   },
-     *   update: {
-     *     // ... in case it already exists, update
-     *   },
-     *   where: {
-     *     // ... the filter for the GastoElemento we want to update
-     *   }
-     * })
-     */
-    upsert<T extends GastoElementoUpsertArgs>(args: SelectSubset<T, GastoElementoUpsertArgs<ExtArgs>>): Prisma__GastoElementoClient<$Result.GetResult<Prisma.$GastoElementoPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-
-    /**
-     * Count the number of GastoElementos.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {GastoElementoCountArgs} args - Arguments to filter GastoElementos to count.
-     * @example
-     * // Count the number of GastoElementos
-     * const count = await prisma.gastoElemento.count({
-     *   where: {
-     *     // ... the filter for the GastoElementos we want to count
-     *   }
-     * })
-    **/
-    count<T extends GastoElementoCountArgs>(
-      args?: Subset<T, GastoElementoCountArgs>,
-    ): Prisma.PrismaPromise<
-      T extends $Utils.Record<'select', any>
-        ? T['select'] extends true
-          ? number
-          : GetScalarType<T['select'], GastoElementoCountAggregateOutputType>
-        : number
-    >
-
-    /**
-     * Allows you to perform aggregations operations on a GastoElemento.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {GastoElementoAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
-     * @example
-     * // Ordered by age ascending
-     * // Where email contains prisma.io
-     * // Limited to the 10 users
-     * const aggregations = await prisma.user.aggregate({
-     *   _avg: {
-     *     age: true,
-     *   },
-     *   where: {
-     *     email: {
-     *       contains: "prisma.io",
-     *     },
-     *   },
-     *   orderBy: {
-     *     age: "asc",
-     *   },
-     *   take: 10,
-     * })
-    **/
-    aggregate<T extends GastoElementoAggregateArgs>(args: Subset<T, GastoElementoAggregateArgs>): Prisma.PrismaPromise<GetGastoElementoAggregateType<T>>
-
-    /**
-     * Group by GastoElemento.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {GastoElementoGroupByArgs} args - Group by arguments.
-     * @example
-     * // Group by city, order by createdAt, get count
-     * const result = await prisma.user.groupBy({
-     *   by: ['city', 'createdAt'],
-     *   orderBy: {
-     *     createdAt: true
-     *   },
-     *   _count: {
-     *     _all: true
-     *   },
-     * })
-     * 
-    **/
-    groupBy<
-      T extends GastoElementoGroupByArgs,
-      HasSelectOrTake extends Or<
-        Extends<'skip', Keys<T>>,
-        Extends<'take', Keys<T>>
-      >,
-      OrderByArg extends True extends HasSelectOrTake
-        ? { orderBy: GastoElementoGroupByArgs['orderBy'] }
-        : { orderBy?: GastoElementoGroupByArgs['orderBy'] },
-      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
-      ByFields extends MaybeTupleToUnion<T['by']>,
-      ByValid extends Has<ByFields, OrderFields>,
-      HavingFields extends GetHavingFields<T['having']>,
-      HavingValid extends Has<ByFields, HavingFields>,
-      ByEmpty extends T['by'] extends never[] ? True : False,
-      InputErrors extends ByEmpty extends True
-      ? `Error: "by" must not be empty.`
-      : HavingValid extends False
-      ? {
-          [P in HavingFields]: P extends ByFields
-            ? never
-            : P extends string
-            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
-            : [
-                Error,
-                'Field ',
-                P,
-                ` in "having" needs to be provided in "by"`,
-              ]
-        }[HavingFields]
-      : 'take' extends Keys<T>
-      ? 'orderBy' extends Keys<T>
-        ? ByValid extends True
-          ? {}
-          : {
-              [P in OrderFields]: P extends ByFields
-                ? never
-                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-            }[OrderFields]
-        : 'Error: If you provide "take", you also need to provide "orderBy"'
-      : 'skip' extends Keys<T>
-      ? 'orderBy' extends Keys<T>
-        ? ByValid extends True
-          ? {}
-          : {
-              [P in OrderFields]: P extends ByFields
-                ? never
-                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-            }[OrderFields]
-        : 'Error: If you provide "skip", you also need to provide "orderBy"'
-      : ByValid extends True
-      ? {}
-      : {
-          [P in OrderFields]: P extends ByFields
-            ? never
-            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-        }[OrderFields]
-    >(args: SubsetIntersection<T, GastoElementoGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetGastoElementoGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
-  /**
-   * Fields of the GastoElemento model
-   */
-  readonly fields: GastoElementoFieldRefs;
-  }
-
-  /**
-   * The delegate class that acts as a "Promise-like" for GastoElemento.
-   * Why is this prefixed with `Prisma__`?
-   * Because we want to prevent naming conflicts as mentioned in
-   * https://github.com/prisma/prisma-client-js/issues/707
-   */
-  export interface Prisma__GastoElementoClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
-    readonly [Symbol.toStringTag]: "PrismaPromise"
-    concepto<T extends GastoConceptoDefaultArgs<ExtArgs> = {}>(args?: Subset<T, GastoConceptoDefaultArgs<ExtArgs>>): Prisma__GastoConceptoClient<$Result.GetResult<Prisma.$GastoConceptoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-    gastosDE<T extends GastoElemento$gastosDEArgs<ExtArgs> = {}>(args?: Subset<T, GastoElemento$gastosDEArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$GastosDEPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-    /**
-     * Attaches callbacks for the resolution and/or rejection of the Promise.
-     * @param onfulfilled The callback to execute when the Promise is resolved.
-     * @param onrejected The callback to execute when the Promise is rejected.
-     * @returns A Promise for the completion of which ever callback is executed.
-     */
-    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
-    /**
-     * Attaches a callback for only the rejection of the Promise.
-     * @param onrejected The callback to execute when the Promise is rejected.
-     * @returns A Promise for the completion of the callback.
-     */
-    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
-    /**
-     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
-     * resolved value cannot be modified from the callback.
-     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
-     * @returns A Promise for the completion of the callback.
-     */
-    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
-  }
-
-
-
-
-  /**
-   * Fields of the GastoElemento model
-   */
-  interface GastoElementoFieldRefs {
-    readonly elementoId: FieldRef<"GastoElemento", 'String'>
-    readonly conceptoId: FieldRef<"GastoElemento", 'String'>
-    readonly nombre: FieldRef<"GastoElemento", 'String'>
-    readonly descripcion: FieldRef<"GastoElemento", 'String'>
-    readonly isActive: FieldRef<"GastoElemento", 'Boolean'>
-    readonly createdAt: FieldRef<"GastoElemento", 'DateTime'>
-    readonly updatedAt: FieldRef<"GastoElemento", 'DateTime'>
-  }
-    
-
-  // Custom InputTypes
-  /**
-   * GastoElemento findUnique
-   */
-  export type GastoElementoFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the GastoElemento
-     */
-    select?: GastoElementoSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the GastoElemento
-     */
-    omit?: GastoElementoOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: GastoElementoInclude<ExtArgs> | null
-    /**
-     * Filter, which GastoElemento to fetch.
-     */
-    where: GastoElementoWhereUniqueInput
-  }
-
-  /**
-   * GastoElemento findUniqueOrThrow
-   */
-  export type GastoElementoFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the GastoElemento
-     */
-    select?: GastoElementoSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the GastoElemento
-     */
-    omit?: GastoElementoOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: GastoElementoInclude<ExtArgs> | null
-    /**
-     * Filter, which GastoElemento to fetch.
-     */
-    where: GastoElementoWhereUniqueInput
-  }
-
-  /**
-   * GastoElemento findFirst
-   */
-  export type GastoElementoFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the GastoElemento
-     */
-    select?: GastoElementoSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the GastoElemento
-     */
-    omit?: GastoElementoOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: GastoElementoInclude<ExtArgs> | null
-    /**
-     * Filter, which GastoElemento to fetch.
-     */
-    where?: GastoElementoWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of GastoElementos to fetch.
-     */
-    orderBy?: GastoElementoOrderByWithRelationInput | GastoElementoOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for searching for GastoElementos.
-     */
-    cursor?: GastoElementoWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` GastoElementos from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` GastoElementos.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of GastoElementos.
-     */
-    distinct?: GastoElementoScalarFieldEnum | GastoElementoScalarFieldEnum[]
-  }
-
-  /**
-   * GastoElemento findFirstOrThrow
-   */
-  export type GastoElementoFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the GastoElemento
-     */
-    select?: GastoElementoSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the GastoElemento
-     */
-    omit?: GastoElementoOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: GastoElementoInclude<ExtArgs> | null
-    /**
-     * Filter, which GastoElemento to fetch.
-     */
-    where?: GastoElementoWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of GastoElementos to fetch.
-     */
-    orderBy?: GastoElementoOrderByWithRelationInput | GastoElementoOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for searching for GastoElementos.
-     */
-    cursor?: GastoElementoWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` GastoElementos from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` GastoElementos.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of GastoElementos.
-     */
-    distinct?: GastoElementoScalarFieldEnum | GastoElementoScalarFieldEnum[]
-  }
-
-  /**
-   * GastoElemento findMany
-   */
-  export type GastoElementoFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the GastoElemento
-     */
-    select?: GastoElementoSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the GastoElemento
-     */
-    omit?: GastoElementoOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: GastoElementoInclude<ExtArgs> | null
-    /**
-     * Filter, which GastoElementos to fetch.
-     */
-    where?: GastoElementoWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of GastoElementos to fetch.
-     */
-    orderBy?: GastoElementoOrderByWithRelationInput | GastoElementoOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for listing GastoElementos.
-     */
-    cursor?: GastoElementoWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` GastoElementos from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` GastoElementos.
-     */
-    skip?: number
-    distinct?: GastoElementoScalarFieldEnum | GastoElementoScalarFieldEnum[]
-  }
-
-  /**
-   * GastoElemento create
-   */
-  export type GastoElementoCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the GastoElemento
-     */
-    select?: GastoElementoSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the GastoElemento
-     */
-    omit?: GastoElementoOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: GastoElementoInclude<ExtArgs> | null
-    /**
-     * The data needed to create a GastoElemento.
-     */
-    data: XOR<GastoElementoCreateInput, GastoElementoUncheckedCreateInput>
-  }
-
-  /**
-   * GastoElemento createMany
-   */
-  export type GastoElementoCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to create many GastoElementos.
-     */
-    data: GastoElementoCreateManyInput | GastoElementoCreateManyInput[]
-    skipDuplicates?: boolean
-  }
-
-  /**
-   * GastoElemento createManyAndReturn
-   */
-  export type GastoElementoCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the GastoElemento
-     */
-    select?: GastoElementoSelectCreateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the GastoElemento
-     */
-    omit?: GastoElementoOmit<ExtArgs> | null
-    /**
-     * The data used to create many GastoElementos.
-     */
-    data: GastoElementoCreateManyInput | GastoElementoCreateManyInput[]
-    skipDuplicates?: boolean
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: GastoElementoIncludeCreateManyAndReturn<ExtArgs> | null
-  }
-
-  /**
-   * GastoElemento update
-   */
-  export type GastoElementoUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the GastoElemento
-     */
-    select?: GastoElementoSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the GastoElemento
-     */
-    omit?: GastoElementoOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: GastoElementoInclude<ExtArgs> | null
-    /**
-     * The data needed to update a GastoElemento.
-     */
-    data: XOR<GastoElementoUpdateInput, GastoElementoUncheckedUpdateInput>
-    /**
-     * Choose, which GastoElemento to update.
-     */
-    where: GastoElementoWhereUniqueInput
-  }
-
-  /**
-   * GastoElemento updateMany
-   */
-  export type GastoElementoUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to update GastoElementos.
-     */
-    data: XOR<GastoElementoUpdateManyMutationInput, GastoElementoUncheckedUpdateManyInput>
-    /**
-     * Filter which GastoElementos to update
-     */
-    where?: GastoElementoWhereInput
-    /**
-     * Limit how many GastoElementos to update.
-     */
-    limit?: number
-  }
-
-  /**
-   * GastoElemento updateManyAndReturn
-   */
-  export type GastoElementoUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the GastoElemento
-     */
-    select?: GastoElementoSelectUpdateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the GastoElemento
-     */
-    omit?: GastoElementoOmit<ExtArgs> | null
-    /**
-     * The data used to update GastoElementos.
-     */
-    data: XOR<GastoElementoUpdateManyMutationInput, GastoElementoUncheckedUpdateManyInput>
-    /**
-     * Filter which GastoElementos to update
-     */
-    where?: GastoElementoWhereInput
-    /**
-     * Limit how many GastoElementos to update.
-     */
-    limit?: number
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: GastoElementoIncludeUpdateManyAndReturn<ExtArgs> | null
-  }
-
-  /**
-   * GastoElemento upsert
-   */
-  export type GastoElementoUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the GastoElemento
-     */
-    select?: GastoElementoSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the GastoElemento
-     */
-    omit?: GastoElementoOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: GastoElementoInclude<ExtArgs> | null
-    /**
-     * The filter to search for the GastoElemento to update in case it exists.
-     */
-    where: GastoElementoWhereUniqueInput
-    /**
-     * In case the GastoElemento found by the `where` argument doesn't exist, create a new GastoElemento with this data.
-     */
-    create: XOR<GastoElementoCreateInput, GastoElementoUncheckedCreateInput>
-    /**
-     * In case the GastoElemento was found with the provided `where` argument, update it with this data.
-     */
-    update: XOR<GastoElementoUpdateInput, GastoElementoUncheckedUpdateInput>
-  }
-
-  /**
-   * GastoElemento delete
-   */
-  export type GastoElementoDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the GastoElemento
-     */
-    select?: GastoElementoSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the GastoElemento
-     */
-    omit?: GastoElementoOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: GastoElementoInclude<ExtArgs> | null
-    /**
-     * Filter which GastoElemento to delete.
-     */
-    where: GastoElementoWhereUniqueInput
-  }
-
-  /**
-   * GastoElemento deleteMany
-   */
-  export type GastoElementoDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Filter which GastoElementos to delete
-     */
-    where?: GastoElementoWhereInput
-    /**
-     * Limit how many GastoElementos to delete.
-     */
-    limit?: number
-  }
-
-  /**
-   * GastoElemento.gastosDE
-   */
-  export type GastoElemento$gastosDEArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the GastosDE
-     */
-    select?: GastosDESelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the GastosDE
-     */
-    omit?: GastosDEOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: GastosDEInclude<ExtArgs> | null
-    where?: GastosDEWhereInput
-    orderBy?: GastosDEOrderByWithRelationInput | GastosDEOrderByWithRelationInput[]
-    cursor?: GastosDEWhereUniqueInput
-    take?: number
-    skip?: number
-    distinct?: GastosDEScalarFieldEnum | GastosDEScalarFieldEnum[]
-  }
-
-  /**
-   * GastoElemento without action
-   */
-  export type GastoElementoDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the GastoElemento
-     */
-    select?: GastoElementoSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the GastoElemento
-     */
-    omit?: GastoElementoOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: GastoElementoInclude<ExtArgs> | null
   }
 
 
@@ -112770,8 +110202,6 @@ export namespace Prisma {
   export const GastosDEScalarFieldEnum: {
     gastosDEId: 'gastosDEId',
     tipo: 'tipo',
-    conceptoId: 'conceptoId',
-    elementoId: 'elementoId',
     proveedor: 'proveedor',
     monto: 'monto',
     periodo: 'periodo',
@@ -112783,31 +110213,6 @@ export namespace Prisma {
   };
 
   export type GastosDEScalarFieldEnum = (typeof GastosDEScalarFieldEnum)[keyof typeof GastosDEScalarFieldEnum]
-
-
-  export const GastoConceptoScalarFieldEnum: {
-    conceptoId: 'conceptoId',
-    nombre: 'nombre',
-    descripcion: 'descripcion',
-    isActive: 'isActive',
-    createdAt: 'createdAt',
-    updatedAt: 'updatedAt'
-  };
-
-  export type GastoConceptoScalarFieldEnum = (typeof GastoConceptoScalarFieldEnum)[keyof typeof GastoConceptoScalarFieldEnum]
-
-
-  export const GastoElementoScalarFieldEnum: {
-    elementoId: 'elementoId',
-    conceptoId: 'conceptoId',
-    nombre: 'nombre',
-    descripcion: 'descripcion',
-    isActive: 'isActive',
-    createdAt: 'createdAt',
-    updatedAt: 'updatedAt'
-  };
-
-  export type GastoElementoScalarFieldEnum = (typeof GastoElementoScalarFieldEnum)[keyof typeof GastoElementoScalarFieldEnum]
 
 
   export const MonedaScalarFieldEnum: {
@@ -117041,38 +114446,30 @@ export namespace Prisma {
     OR?: GastosDEWhereInput[]
     NOT?: GastosDEWhereInput | GastosDEWhereInput[]
     gastosDEId?: StringFilter<"GastosDE"> | string
-    tipo?: StringNullableFilter<"GastosDE"> | string | null
-    conceptoId?: StringNullableFilter<"GastosDE"> | string | null
-    elementoId?: StringNullableFilter<"GastosDE"> | string | null
+    tipo?: StringFilter<"GastosDE"> | string
     proveedor?: StringFilter<"GastosDE"> | string
-    monto?: DecimalFilter<"GastosDE"> | Decimal | DecimalJsLike | number | string
+    monto?: IntFilter<"GastosDE"> | number
     periodo?: StringFilter<"GastosDE"> | string
     descripcion?: StringNullableFilter<"GastosDE"> | string | null
-    isPagado?: StringFilter<"GastosDE"> | string
+    isPagado?: StringNullableFilter<"GastosDE"> | string | null
     createdAt?: DateTimeFilter<"GastosDE"> | Date | string
     updatedAt?: DateTimeFilter<"GastosDE"> | Date | string
     numeroFactura?: StringNullableFilter<"GastosDE"> | string | null
-    concepto?: XOR<GastoConceptoNullableScalarRelationFilter, GastoConceptoWhereInput> | null
-    elemento?: XOR<GastoElementoNullableScalarRelationFilter, GastoElementoWhereInput> | null
     cuentaPorPagar?: XOR<CuentaPorPagarNullableScalarRelationFilter, CuentaPorPagarWhereInput> | null
     reconciliaciones?: ReconciliacionGastoListRelationFilter
   }
 
   export type GastosDEOrderByWithRelationInput = {
     gastosDEId?: SortOrder
-    tipo?: SortOrderInput | SortOrder
-    conceptoId?: SortOrderInput | SortOrder
-    elementoId?: SortOrderInput | SortOrder
+    tipo?: SortOrder
     proveedor?: SortOrder
     monto?: SortOrder
     periodo?: SortOrder
     descripcion?: SortOrderInput | SortOrder
-    isPagado?: SortOrder
+    isPagado?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     numeroFactura?: SortOrderInput | SortOrder
-    concepto?: GastoConceptoOrderByWithRelationInput
-    elemento?: GastoElementoOrderByWithRelationInput
     cuentaPorPagar?: CuentaPorPagarOrderByWithRelationInput
     reconciliaciones?: ReconciliacionGastoOrderByRelationAggregateInput
   }
@@ -117082,33 +114479,27 @@ export namespace Prisma {
     AND?: GastosDEWhereInput | GastosDEWhereInput[]
     OR?: GastosDEWhereInput[]
     NOT?: GastosDEWhereInput | GastosDEWhereInput[]
-    tipo?: StringNullableFilter<"GastosDE"> | string | null
-    conceptoId?: StringNullableFilter<"GastosDE"> | string | null
-    elementoId?: StringNullableFilter<"GastosDE"> | string | null
+    tipo?: StringFilter<"GastosDE"> | string
     proveedor?: StringFilter<"GastosDE"> | string
-    monto?: DecimalFilter<"GastosDE"> | Decimal | DecimalJsLike | number | string
+    monto?: IntFilter<"GastosDE"> | number
     periodo?: StringFilter<"GastosDE"> | string
     descripcion?: StringNullableFilter<"GastosDE"> | string | null
-    isPagado?: StringFilter<"GastosDE"> | string
+    isPagado?: StringNullableFilter<"GastosDE"> | string | null
     createdAt?: DateTimeFilter<"GastosDE"> | Date | string
     updatedAt?: DateTimeFilter<"GastosDE"> | Date | string
     numeroFactura?: StringNullableFilter<"GastosDE"> | string | null
-    concepto?: XOR<GastoConceptoNullableScalarRelationFilter, GastoConceptoWhereInput> | null
-    elemento?: XOR<GastoElementoNullableScalarRelationFilter, GastoElementoWhereInput> | null
     cuentaPorPagar?: XOR<CuentaPorPagarNullableScalarRelationFilter, CuentaPorPagarWhereInput> | null
     reconciliaciones?: ReconciliacionGastoListRelationFilter
   }, "gastosDEId">
 
   export type GastosDEOrderByWithAggregationInput = {
     gastosDEId?: SortOrder
-    tipo?: SortOrderInput | SortOrder
-    conceptoId?: SortOrderInput | SortOrder
-    elementoId?: SortOrderInput | SortOrder
+    tipo?: SortOrder
     proveedor?: SortOrder
     monto?: SortOrder
     periodo?: SortOrder
     descripcion?: SortOrderInput | SortOrder
-    isPagado?: SortOrder
+    isPagado?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     numeroFactura?: SortOrderInput | SortOrder
@@ -117124,148 +114515,15 @@ export namespace Prisma {
     OR?: GastosDEScalarWhereWithAggregatesInput[]
     NOT?: GastosDEScalarWhereWithAggregatesInput | GastosDEScalarWhereWithAggregatesInput[]
     gastosDEId?: StringWithAggregatesFilter<"GastosDE"> | string
-    tipo?: StringNullableWithAggregatesFilter<"GastosDE"> | string | null
-    conceptoId?: StringNullableWithAggregatesFilter<"GastosDE"> | string | null
-    elementoId?: StringNullableWithAggregatesFilter<"GastosDE"> | string | null
+    tipo?: StringWithAggregatesFilter<"GastosDE"> | string
     proveedor?: StringWithAggregatesFilter<"GastosDE"> | string
-    monto?: DecimalWithAggregatesFilter<"GastosDE"> | Decimal | DecimalJsLike | number | string
+    monto?: IntWithAggregatesFilter<"GastosDE"> | number
     periodo?: StringWithAggregatesFilter<"GastosDE"> | string
     descripcion?: StringNullableWithAggregatesFilter<"GastosDE"> | string | null
-    isPagado?: StringWithAggregatesFilter<"GastosDE"> | string
+    isPagado?: StringNullableWithAggregatesFilter<"GastosDE"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"GastosDE"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"GastosDE"> | Date | string
     numeroFactura?: StringNullableWithAggregatesFilter<"GastosDE"> | string | null
-  }
-
-  export type GastoConceptoWhereInput = {
-    AND?: GastoConceptoWhereInput | GastoConceptoWhereInput[]
-    OR?: GastoConceptoWhereInput[]
-    NOT?: GastoConceptoWhereInput | GastoConceptoWhereInput[]
-    conceptoId?: StringFilter<"GastoConcepto"> | string
-    nombre?: StringFilter<"GastoConcepto"> | string
-    descripcion?: StringNullableFilter<"GastoConcepto"> | string | null
-    isActive?: BoolFilter<"GastoConcepto"> | boolean
-    createdAt?: DateTimeFilter<"GastoConcepto"> | Date | string
-    updatedAt?: DateTimeFilter<"GastoConcepto"> | Date | string
-    elementos?: GastoElementoListRelationFilter
-    gastosDE?: GastosDEListRelationFilter
-  }
-
-  export type GastoConceptoOrderByWithRelationInput = {
-    conceptoId?: SortOrder
-    nombre?: SortOrder
-    descripcion?: SortOrderInput | SortOrder
-    isActive?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-    elementos?: GastoElementoOrderByRelationAggregateInput
-    gastosDE?: GastosDEOrderByRelationAggregateInput
-  }
-
-  export type GastoConceptoWhereUniqueInput = Prisma.AtLeast<{
-    conceptoId?: string
-    nombre?: string
-    AND?: GastoConceptoWhereInput | GastoConceptoWhereInput[]
-    OR?: GastoConceptoWhereInput[]
-    NOT?: GastoConceptoWhereInput | GastoConceptoWhereInput[]
-    descripcion?: StringNullableFilter<"GastoConcepto"> | string | null
-    isActive?: BoolFilter<"GastoConcepto"> | boolean
-    createdAt?: DateTimeFilter<"GastoConcepto"> | Date | string
-    updatedAt?: DateTimeFilter<"GastoConcepto"> | Date | string
-    elementos?: GastoElementoListRelationFilter
-    gastosDE?: GastosDEListRelationFilter
-  }, "conceptoId" | "nombre">
-
-  export type GastoConceptoOrderByWithAggregationInput = {
-    conceptoId?: SortOrder
-    nombre?: SortOrder
-    descripcion?: SortOrderInput | SortOrder
-    isActive?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-    _count?: GastoConceptoCountOrderByAggregateInput
-    _max?: GastoConceptoMaxOrderByAggregateInput
-    _min?: GastoConceptoMinOrderByAggregateInput
-  }
-
-  export type GastoConceptoScalarWhereWithAggregatesInput = {
-    AND?: GastoConceptoScalarWhereWithAggregatesInput | GastoConceptoScalarWhereWithAggregatesInput[]
-    OR?: GastoConceptoScalarWhereWithAggregatesInput[]
-    NOT?: GastoConceptoScalarWhereWithAggregatesInput | GastoConceptoScalarWhereWithAggregatesInput[]
-    conceptoId?: StringWithAggregatesFilter<"GastoConcepto"> | string
-    nombre?: StringWithAggregatesFilter<"GastoConcepto"> | string
-    descripcion?: StringNullableWithAggregatesFilter<"GastoConcepto"> | string | null
-    isActive?: BoolWithAggregatesFilter<"GastoConcepto"> | boolean
-    createdAt?: DateTimeWithAggregatesFilter<"GastoConcepto"> | Date | string
-    updatedAt?: DateTimeWithAggregatesFilter<"GastoConcepto"> | Date | string
-  }
-
-  export type GastoElementoWhereInput = {
-    AND?: GastoElementoWhereInput | GastoElementoWhereInput[]
-    OR?: GastoElementoWhereInput[]
-    NOT?: GastoElementoWhereInput | GastoElementoWhereInput[]
-    elementoId?: StringFilter<"GastoElemento"> | string
-    conceptoId?: StringFilter<"GastoElemento"> | string
-    nombre?: StringFilter<"GastoElemento"> | string
-    descripcion?: StringNullableFilter<"GastoElemento"> | string | null
-    isActive?: BoolFilter<"GastoElemento"> | boolean
-    createdAt?: DateTimeFilter<"GastoElemento"> | Date | string
-    updatedAt?: DateTimeFilter<"GastoElemento"> | Date | string
-    concepto?: XOR<GastoConceptoScalarRelationFilter, GastoConceptoWhereInput>
-    gastosDE?: GastosDEListRelationFilter
-  }
-
-  export type GastoElementoOrderByWithRelationInput = {
-    elementoId?: SortOrder
-    conceptoId?: SortOrder
-    nombre?: SortOrder
-    descripcion?: SortOrderInput | SortOrder
-    isActive?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-    concepto?: GastoConceptoOrderByWithRelationInput
-    gastosDE?: GastosDEOrderByRelationAggregateInput
-  }
-
-  export type GastoElementoWhereUniqueInput = Prisma.AtLeast<{
-    elementoId?: string
-    AND?: GastoElementoWhereInput | GastoElementoWhereInput[]
-    OR?: GastoElementoWhereInput[]
-    NOT?: GastoElementoWhereInput | GastoElementoWhereInput[]
-    conceptoId?: StringFilter<"GastoElemento"> | string
-    nombre?: StringFilter<"GastoElemento"> | string
-    descripcion?: StringNullableFilter<"GastoElemento"> | string | null
-    isActive?: BoolFilter<"GastoElemento"> | boolean
-    createdAt?: DateTimeFilter<"GastoElemento"> | Date | string
-    updatedAt?: DateTimeFilter<"GastoElemento"> | Date | string
-    concepto?: XOR<GastoConceptoScalarRelationFilter, GastoConceptoWhereInput>
-    gastosDE?: GastosDEListRelationFilter
-  }, "elementoId">
-
-  export type GastoElementoOrderByWithAggregationInput = {
-    elementoId?: SortOrder
-    conceptoId?: SortOrder
-    nombre?: SortOrder
-    descripcion?: SortOrderInput | SortOrder
-    isActive?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-    _count?: GastoElementoCountOrderByAggregateInput
-    _max?: GastoElementoMaxOrderByAggregateInput
-    _min?: GastoElementoMinOrderByAggregateInput
-  }
-
-  export type GastoElementoScalarWhereWithAggregatesInput = {
-    AND?: GastoElementoScalarWhereWithAggregatesInput | GastoElementoScalarWhereWithAggregatesInput[]
-    OR?: GastoElementoScalarWhereWithAggregatesInput[]
-    NOT?: GastoElementoScalarWhereWithAggregatesInput | GastoElementoScalarWhereWithAggregatesInput[]
-    elementoId?: StringWithAggregatesFilter<"GastoElemento"> | string
-    conceptoId?: StringWithAggregatesFilter<"GastoElemento"> | string
-    nombre?: StringWithAggregatesFilter<"GastoElemento"> | string
-    descripcion?: StringNullableWithAggregatesFilter<"GastoElemento"> | string | null
-    isActive?: BoolWithAggregatesFilter<"GastoElemento"> | boolean
-    createdAt?: DateTimeWithAggregatesFilter<"GastoElemento"> | Date | string
-    updatedAt?: DateTimeWithAggregatesFilter<"GastoElemento"> | Date | string
   }
 
   export type MonedaWhereInput = {
@@ -125122,31 +122380,27 @@ export namespace Prisma {
 
   export type GastosDECreateInput = {
     gastosDEId?: string
-    tipo?: string | null
+    tipo: string
     proveedor: string
-    monto?: Decimal | DecimalJsLike | number | string
+    monto: number
     periodo: string
     descripcion?: string | null
-    isPagado?: string
+    isPagado?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     numeroFactura?: string | null
-    concepto?: GastoConceptoCreateNestedOneWithoutGastosDEInput
-    elemento?: GastoElementoCreateNestedOneWithoutGastosDEInput
     cuentaPorPagar?: CuentaPorPagarCreateNestedOneWithoutGastosDEInput
     reconciliaciones?: ReconciliacionGastoCreateNestedManyWithoutGastoDEInput
   }
 
   export type GastosDEUncheckedCreateInput = {
     gastosDEId?: string
-    tipo?: string | null
-    conceptoId?: string | null
-    elementoId?: string | null
+    tipo: string
     proveedor: string
-    monto?: Decimal | DecimalJsLike | number | string
+    monto: number
     periodo: string
     descripcion?: string | null
-    isPagado?: string
+    isPagado?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     numeroFactura?: string | null
@@ -125156,31 +122410,27 @@ export namespace Prisma {
 
   export type GastosDEUpdateInput = {
     gastosDEId?: StringFieldUpdateOperationsInput | string
-    tipo?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo?: StringFieldUpdateOperationsInput | string
     proveedor?: StringFieldUpdateOperationsInput | string
-    monto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto?: IntFieldUpdateOperationsInput | number
     periodo?: StringFieldUpdateOperationsInput | string
     descripcion?: NullableStringFieldUpdateOperationsInput | string | null
-    isPagado?: StringFieldUpdateOperationsInput | string
+    isPagado?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
-    concepto?: GastoConceptoUpdateOneWithoutGastosDENestedInput
-    elemento?: GastoElementoUpdateOneWithoutGastosDENestedInput
     cuentaPorPagar?: CuentaPorPagarUpdateOneWithoutGastosDENestedInput
     reconciliaciones?: ReconciliacionGastoUpdateManyWithoutGastoDENestedInput
   }
 
   export type GastosDEUncheckedUpdateInput = {
     gastosDEId?: StringFieldUpdateOperationsInput | string
-    tipo?: NullableStringFieldUpdateOperationsInput | string | null
-    conceptoId?: NullableStringFieldUpdateOperationsInput | string | null
-    elementoId?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo?: StringFieldUpdateOperationsInput | string
     proveedor?: StringFieldUpdateOperationsInput | string
-    monto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto?: IntFieldUpdateOperationsInput | number
     periodo?: StringFieldUpdateOperationsInput | string
     descripcion?: NullableStringFieldUpdateOperationsInput | string | null
-    isPagado?: StringFieldUpdateOperationsInput | string
+    isPagado?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
@@ -125190,14 +122440,12 @@ export namespace Prisma {
 
   export type GastosDECreateManyInput = {
     gastosDEId?: string
-    tipo?: string | null
-    conceptoId?: string | null
-    elementoId?: string | null
+    tipo: string
     proveedor: string
-    monto?: Decimal | DecimalJsLike | number | string
+    monto: number
     periodo: string
     descripcion?: string | null
-    isPagado?: string
+    isPagado?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     numeroFactura?: string | null
@@ -125205,12 +122453,12 @@ export namespace Prisma {
 
   export type GastosDEUpdateManyMutationInput = {
     gastosDEId?: StringFieldUpdateOperationsInput | string
-    tipo?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo?: StringFieldUpdateOperationsInput | string
     proveedor?: StringFieldUpdateOperationsInput | string
-    monto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto?: IntFieldUpdateOperationsInput | number
     periodo?: StringFieldUpdateOperationsInput | string
     descripcion?: NullableStringFieldUpdateOperationsInput | string | null
-    isPagado?: StringFieldUpdateOperationsInput | string
+    isPagado?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
@@ -125218,161 +122466,15 @@ export namespace Prisma {
 
   export type GastosDEUncheckedUpdateManyInput = {
     gastosDEId?: StringFieldUpdateOperationsInput | string
-    tipo?: NullableStringFieldUpdateOperationsInput | string | null
-    conceptoId?: NullableStringFieldUpdateOperationsInput | string | null
-    elementoId?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo?: StringFieldUpdateOperationsInput | string
     proveedor?: StringFieldUpdateOperationsInput | string
-    monto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto?: IntFieldUpdateOperationsInput | number
     periodo?: StringFieldUpdateOperationsInput | string
     descripcion?: NullableStringFieldUpdateOperationsInput | string | null
-    isPagado?: StringFieldUpdateOperationsInput | string
+    isPagado?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
-  }
-
-  export type GastoConceptoCreateInput = {
-    conceptoId?: string
-    nombre: string
-    descripcion?: string | null
-    isActive?: boolean
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    elementos?: GastoElementoCreateNestedManyWithoutConceptoInput
-    gastosDE?: GastosDECreateNestedManyWithoutConceptoInput
-  }
-
-  export type GastoConceptoUncheckedCreateInput = {
-    conceptoId?: string
-    nombre: string
-    descripcion?: string | null
-    isActive?: boolean
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    elementos?: GastoElementoUncheckedCreateNestedManyWithoutConceptoInput
-    gastosDE?: GastosDEUncheckedCreateNestedManyWithoutConceptoInput
-  }
-
-  export type GastoConceptoUpdateInput = {
-    conceptoId?: StringFieldUpdateOperationsInput | string
-    nombre?: StringFieldUpdateOperationsInput | string
-    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
-    isActive?: BoolFieldUpdateOperationsInput | boolean
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    elementos?: GastoElementoUpdateManyWithoutConceptoNestedInput
-    gastosDE?: GastosDEUpdateManyWithoutConceptoNestedInput
-  }
-
-  export type GastoConceptoUncheckedUpdateInput = {
-    conceptoId?: StringFieldUpdateOperationsInput | string
-    nombre?: StringFieldUpdateOperationsInput | string
-    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
-    isActive?: BoolFieldUpdateOperationsInput | boolean
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    elementos?: GastoElementoUncheckedUpdateManyWithoutConceptoNestedInput
-    gastosDE?: GastosDEUncheckedUpdateManyWithoutConceptoNestedInput
-  }
-
-  export type GastoConceptoCreateManyInput = {
-    conceptoId?: string
-    nombre: string
-    descripcion?: string | null
-    isActive?: boolean
-    createdAt?: Date | string
-    updatedAt?: Date | string
-  }
-
-  export type GastoConceptoUpdateManyMutationInput = {
-    conceptoId?: StringFieldUpdateOperationsInput | string
-    nombre?: StringFieldUpdateOperationsInput | string
-    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
-    isActive?: BoolFieldUpdateOperationsInput | boolean
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type GastoConceptoUncheckedUpdateManyInput = {
-    conceptoId?: StringFieldUpdateOperationsInput | string
-    nombre?: StringFieldUpdateOperationsInput | string
-    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
-    isActive?: BoolFieldUpdateOperationsInput | boolean
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type GastoElementoCreateInput = {
-    elementoId?: string
-    nombre: string
-    descripcion?: string | null
-    isActive?: boolean
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    concepto: GastoConceptoCreateNestedOneWithoutElementosInput
-    gastosDE?: GastosDECreateNestedManyWithoutElementoInput
-  }
-
-  export type GastoElementoUncheckedCreateInput = {
-    elementoId?: string
-    conceptoId: string
-    nombre: string
-    descripcion?: string | null
-    isActive?: boolean
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    gastosDE?: GastosDEUncheckedCreateNestedManyWithoutElementoInput
-  }
-
-  export type GastoElementoUpdateInput = {
-    elementoId?: StringFieldUpdateOperationsInput | string
-    nombre?: StringFieldUpdateOperationsInput | string
-    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
-    isActive?: BoolFieldUpdateOperationsInput | boolean
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    concepto?: GastoConceptoUpdateOneRequiredWithoutElementosNestedInput
-    gastosDE?: GastosDEUpdateManyWithoutElementoNestedInput
-  }
-
-  export type GastoElementoUncheckedUpdateInput = {
-    elementoId?: StringFieldUpdateOperationsInput | string
-    conceptoId?: StringFieldUpdateOperationsInput | string
-    nombre?: StringFieldUpdateOperationsInput | string
-    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
-    isActive?: BoolFieldUpdateOperationsInput | boolean
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    gastosDE?: GastosDEUncheckedUpdateManyWithoutElementoNestedInput
-  }
-
-  export type GastoElementoCreateManyInput = {
-    elementoId?: string
-    conceptoId: string
-    nombre: string
-    descripcion?: string | null
-    isActive?: boolean
-    createdAt?: Date | string
-    updatedAt?: Date | string
-  }
-
-  export type GastoElementoUpdateManyMutationInput = {
-    elementoId?: StringFieldUpdateOperationsInput | string
-    nombre?: StringFieldUpdateOperationsInput | string
-    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
-    isActive?: BoolFieldUpdateOperationsInput | boolean
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type GastoElementoUncheckedUpdateManyInput = {
-    elementoId?: StringFieldUpdateOperationsInput | string
-    conceptoId?: StringFieldUpdateOperationsInput | string
-    nombre?: StringFieldUpdateOperationsInput | string
-    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
-    isActive?: BoolFieldUpdateOperationsInput | boolean
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type MonedaCreateInput = {
@@ -132772,21 +129874,9 @@ export namespace Prisma {
     _max?: NestedBoolNullableFilter<$PrismaModel>
   }
 
-  export type GastoConceptoNullableScalarRelationFilter = {
-    is?: GastoConceptoWhereInput | null
-    isNot?: GastoConceptoWhereInput | null
-  }
-
-  export type GastoElementoNullableScalarRelationFilter = {
-    is?: GastoElementoWhereInput | null
-    isNot?: GastoElementoWhereInput | null
-  }
-
   export type GastosDECountOrderByAggregateInput = {
     gastosDEId?: SortOrder
     tipo?: SortOrder
-    conceptoId?: SortOrder
-    elementoId?: SortOrder
     proveedor?: SortOrder
     monto?: SortOrder
     periodo?: SortOrder
@@ -132804,8 +129894,6 @@ export namespace Prisma {
   export type GastosDEMaxOrderByAggregateInput = {
     gastosDEId?: SortOrder
     tipo?: SortOrder
-    conceptoId?: SortOrder
-    elementoId?: SortOrder
     proveedor?: SortOrder
     monto?: SortOrder
     periodo?: SortOrder
@@ -132819,8 +129907,6 @@ export namespace Prisma {
   export type GastosDEMinOrderByAggregateInput = {
     gastosDEId?: SortOrder
     tipo?: SortOrder
-    conceptoId?: SortOrder
-    elementoId?: SortOrder
     proveedor?: SortOrder
     monto?: SortOrder
     periodo?: SortOrder
@@ -132833,88 +129919,6 @@ export namespace Prisma {
 
   export type GastosDESumOrderByAggregateInput = {
     monto?: SortOrder
-  }
-
-  export type GastoElementoListRelationFilter = {
-    every?: GastoElementoWhereInput
-    some?: GastoElementoWhereInput
-    none?: GastoElementoWhereInput
-  }
-
-  export type GastosDEListRelationFilter = {
-    every?: GastosDEWhereInput
-    some?: GastosDEWhereInput
-    none?: GastosDEWhereInput
-  }
-
-  export type GastoElementoOrderByRelationAggregateInput = {
-    _count?: SortOrder
-  }
-
-  export type GastosDEOrderByRelationAggregateInput = {
-    _count?: SortOrder
-  }
-
-  export type GastoConceptoCountOrderByAggregateInput = {
-    conceptoId?: SortOrder
-    nombre?: SortOrder
-    descripcion?: SortOrder
-    isActive?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-  }
-
-  export type GastoConceptoMaxOrderByAggregateInput = {
-    conceptoId?: SortOrder
-    nombre?: SortOrder
-    descripcion?: SortOrder
-    isActive?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-  }
-
-  export type GastoConceptoMinOrderByAggregateInput = {
-    conceptoId?: SortOrder
-    nombre?: SortOrder
-    descripcion?: SortOrder
-    isActive?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-  }
-
-  export type GastoConceptoScalarRelationFilter = {
-    is?: GastoConceptoWhereInput
-    isNot?: GastoConceptoWhereInput
-  }
-
-  export type GastoElementoCountOrderByAggregateInput = {
-    elementoId?: SortOrder
-    conceptoId?: SortOrder
-    nombre?: SortOrder
-    descripcion?: SortOrder
-    isActive?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-  }
-
-  export type GastoElementoMaxOrderByAggregateInput = {
-    elementoId?: SortOrder
-    conceptoId?: SortOrder
-    nombre?: SortOrder
-    descripcion?: SortOrder
-    isActive?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
-  }
-
-  export type GastoElementoMinOrderByAggregateInput = {
-    elementoId?: SortOrder
-    conceptoId?: SortOrder
-    nombre?: SortOrder
-    descripcion?: SortOrder
-    isActive?: SortOrder
-    createdAt?: SortOrder
-    updatedAt?: SortOrder
   }
 
   export type CatalogoReparacionConfigNullableScalarRelationFilter = {
@@ -139647,18 +136651,6 @@ export namespace Prisma {
     deleteMany?: ReconciliacionServicioScalarWhereInput | ReconciliacionServicioScalarWhereInput[]
   }
 
-  export type GastoConceptoCreateNestedOneWithoutGastosDEInput = {
-    create?: XOR<GastoConceptoCreateWithoutGastosDEInput, GastoConceptoUncheckedCreateWithoutGastosDEInput>
-    connectOrCreate?: GastoConceptoCreateOrConnectWithoutGastosDEInput
-    connect?: GastoConceptoWhereUniqueInput
-  }
-
-  export type GastoElementoCreateNestedOneWithoutGastosDEInput = {
-    create?: XOR<GastoElementoCreateWithoutGastosDEInput, GastoElementoUncheckedCreateWithoutGastosDEInput>
-    connectOrCreate?: GastoElementoCreateOrConnectWithoutGastosDEInput
-    connect?: GastoElementoWhereUniqueInput
-  }
-
   export type CuentaPorPagarCreateNestedOneWithoutGastosDEInput = {
     create?: XOR<CuentaPorPagarCreateWithoutGastosDEInput, CuentaPorPagarUncheckedCreateWithoutGastosDEInput>
     connectOrCreate?: CuentaPorPagarCreateOrConnectWithoutGastosDEInput
@@ -139683,26 +136675,6 @@ export namespace Prisma {
     connectOrCreate?: ReconciliacionGastoCreateOrConnectWithoutGastoDEInput | ReconciliacionGastoCreateOrConnectWithoutGastoDEInput[]
     createMany?: ReconciliacionGastoCreateManyGastoDEInputEnvelope
     connect?: ReconciliacionGastoWhereUniqueInput | ReconciliacionGastoWhereUniqueInput[]
-  }
-
-  export type GastoConceptoUpdateOneWithoutGastosDENestedInput = {
-    create?: XOR<GastoConceptoCreateWithoutGastosDEInput, GastoConceptoUncheckedCreateWithoutGastosDEInput>
-    connectOrCreate?: GastoConceptoCreateOrConnectWithoutGastosDEInput
-    upsert?: GastoConceptoUpsertWithoutGastosDEInput
-    disconnect?: GastoConceptoWhereInput | boolean
-    delete?: GastoConceptoWhereInput | boolean
-    connect?: GastoConceptoWhereUniqueInput
-    update?: XOR<XOR<GastoConceptoUpdateToOneWithWhereWithoutGastosDEInput, GastoConceptoUpdateWithoutGastosDEInput>, GastoConceptoUncheckedUpdateWithoutGastosDEInput>
-  }
-
-  export type GastoElementoUpdateOneWithoutGastosDENestedInput = {
-    create?: XOR<GastoElementoCreateWithoutGastosDEInput, GastoElementoUncheckedCreateWithoutGastosDEInput>
-    connectOrCreate?: GastoElementoCreateOrConnectWithoutGastosDEInput
-    upsert?: GastoElementoUpsertWithoutGastosDEInput
-    disconnect?: GastoElementoWhereInput | boolean
-    delete?: GastoElementoWhereInput | boolean
-    connect?: GastoElementoWhereUniqueInput
-    update?: XOR<XOR<GastoElementoUpdateToOneWithWhereWithoutGastosDEInput, GastoElementoUpdateWithoutGastosDEInput>, GastoElementoUncheckedUpdateWithoutGastosDEInput>
   }
 
   export type CuentaPorPagarUpdateOneWithoutGastosDENestedInput = {
@@ -139751,146 +136723,6 @@ export namespace Prisma {
     update?: ReconciliacionGastoUpdateWithWhereUniqueWithoutGastoDEInput | ReconciliacionGastoUpdateWithWhereUniqueWithoutGastoDEInput[]
     updateMany?: ReconciliacionGastoUpdateManyWithWhereWithoutGastoDEInput | ReconciliacionGastoUpdateManyWithWhereWithoutGastoDEInput[]
     deleteMany?: ReconciliacionGastoScalarWhereInput | ReconciliacionGastoScalarWhereInput[]
-  }
-
-  export type GastoElementoCreateNestedManyWithoutConceptoInput = {
-    create?: XOR<GastoElementoCreateWithoutConceptoInput, GastoElementoUncheckedCreateWithoutConceptoInput> | GastoElementoCreateWithoutConceptoInput[] | GastoElementoUncheckedCreateWithoutConceptoInput[]
-    connectOrCreate?: GastoElementoCreateOrConnectWithoutConceptoInput | GastoElementoCreateOrConnectWithoutConceptoInput[]
-    createMany?: GastoElementoCreateManyConceptoInputEnvelope
-    connect?: GastoElementoWhereUniqueInput | GastoElementoWhereUniqueInput[]
-  }
-
-  export type GastosDECreateNestedManyWithoutConceptoInput = {
-    create?: XOR<GastosDECreateWithoutConceptoInput, GastosDEUncheckedCreateWithoutConceptoInput> | GastosDECreateWithoutConceptoInput[] | GastosDEUncheckedCreateWithoutConceptoInput[]
-    connectOrCreate?: GastosDECreateOrConnectWithoutConceptoInput | GastosDECreateOrConnectWithoutConceptoInput[]
-    createMany?: GastosDECreateManyConceptoInputEnvelope
-    connect?: GastosDEWhereUniqueInput | GastosDEWhereUniqueInput[]
-  }
-
-  export type GastoElementoUncheckedCreateNestedManyWithoutConceptoInput = {
-    create?: XOR<GastoElementoCreateWithoutConceptoInput, GastoElementoUncheckedCreateWithoutConceptoInput> | GastoElementoCreateWithoutConceptoInput[] | GastoElementoUncheckedCreateWithoutConceptoInput[]
-    connectOrCreate?: GastoElementoCreateOrConnectWithoutConceptoInput | GastoElementoCreateOrConnectWithoutConceptoInput[]
-    createMany?: GastoElementoCreateManyConceptoInputEnvelope
-    connect?: GastoElementoWhereUniqueInput | GastoElementoWhereUniqueInput[]
-  }
-
-  export type GastosDEUncheckedCreateNestedManyWithoutConceptoInput = {
-    create?: XOR<GastosDECreateWithoutConceptoInput, GastosDEUncheckedCreateWithoutConceptoInput> | GastosDECreateWithoutConceptoInput[] | GastosDEUncheckedCreateWithoutConceptoInput[]
-    connectOrCreate?: GastosDECreateOrConnectWithoutConceptoInput | GastosDECreateOrConnectWithoutConceptoInput[]
-    createMany?: GastosDECreateManyConceptoInputEnvelope
-    connect?: GastosDEWhereUniqueInput | GastosDEWhereUniqueInput[]
-  }
-
-  export type GastoElementoUpdateManyWithoutConceptoNestedInput = {
-    create?: XOR<GastoElementoCreateWithoutConceptoInput, GastoElementoUncheckedCreateWithoutConceptoInput> | GastoElementoCreateWithoutConceptoInput[] | GastoElementoUncheckedCreateWithoutConceptoInput[]
-    connectOrCreate?: GastoElementoCreateOrConnectWithoutConceptoInput | GastoElementoCreateOrConnectWithoutConceptoInput[]
-    upsert?: GastoElementoUpsertWithWhereUniqueWithoutConceptoInput | GastoElementoUpsertWithWhereUniqueWithoutConceptoInput[]
-    createMany?: GastoElementoCreateManyConceptoInputEnvelope
-    set?: GastoElementoWhereUniqueInput | GastoElementoWhereUniqueInput[]
-    disconnect?: GastoElementoWhereUniqueInput | GastoElementoWhereUniqueInput[]
-    delete?: GastoElementoWhereUniqueInput | GastoElementoWhereUniqueInput[]
-    connect?: GastoElementoWhereUniqueInput | GastoElementoWhereUniqueInput[]
-    update?: GastoElementoUpdateWithWhereUniqueWithoutConceptoInput | GastoElementoUpdateWithWhereUniqueWithoutConceptoInput[]
-    updateMany?: GastoElementoUpdateManyWithWhereWithoutConceptoInput | GastoElementoUpdateManyWithWhereWithoutConceptoInput[]
-    deleteMany?: GastoElementoScalarWhereInput | GastoElementoScalarWhereInput[]
-  }
-
-  export type GastosDEUpdateManyWithoutConceptoNestedInput = {
-    create?: XOR<GastosDECreateWithoutConceptoInput, GastosDEUncheckedCreateWithoutConceptoInput> | GastosDECreateWithoutConceptoInput[] | GastosDEUncheckedCreateWithoutConceptoInput[]
-    connectOrCreate?: GastosDECreateOrConnectWithoutConceptoInput | GastosDECreateOrConnectWithoutConceptoInput[]
-    upsert?: GastosDEUpsertWithWhereUniqueWithoutConceptoInput | GastosDEUpsertWithWhereUniqueWithoutConceptoInput[]
-    createMany?: GastosDECreateManyConceptoInputEnvelope
-    set?: GastosDEWhereUniqueInput | GastosDEWhereUniqueInput[]
-    disconnect?: GastosDEWhereUniqueInput | GastosDEWhereUniqueInput[]
-    delete?: GastosDEWhereUniqueInput | GastosDEWhereUniqueInput[]
-    connect?: GastosDEWhereUniqueInput | GastosDEWhereUniqueInput[]
-    update?: GastosDEUpdateWithWhereUniqueWithoutConceptoInput | GastosDEUpdateWithWhereUniqueWithoutConceptoInput[]
-    updateMany?: GastosDEUpdateManyWithWhereWithoutConceptoInput | GastosDEUpdateManyWithWhereWithoutConceptoInput[]
-    deleteMany?: GastosDEScalarWhereInput | GastosDEScalarWhereInput[]
-  }
-
-  export type GastoElementoUncheckedUpdateManyWithoutConceptoNestedInput = {
-    create?: XOR<GastoElementoCreateWithoutConceptoInput, GastoElementoUncheckedCreateWithoutConceptoInput> | GastoElementoCreateWithoutConceptoInput[] | GastoElementoUncheckedCreateWithoutConceptoInput[]
-    connectOrCreate?: GastoElementoCreateOrConnectWithoutConceptoInput | GastoElementoCreateOrConnectWithoutConceptoInput[]
-    upsert?: GastoElementoUpsertWithWhereUniqueWithoutConceptoInput | GastoElementoUpsertWithWhereUniqueWithoutConceptoInput[]
-    createMany?: GastoElementoCreateManyConceptoInputEnvelope
-    set?: GastoElementoWhereUniqueInput | GastoElementoWhereUniqueInput[]
-    disconnect?: GastoElementoWhereUniqueInput | GastoElementoWhereUniqueInput[]
-    delete?: GastoElementoWhereUniqueInput | GastoElementoWhereUniqueInput[]
-    connect?: GastoElementoWhereUniqueInput | GastoElementoWhereUniqueInput[]
-    update?: GastoElementoUpdateWithWhereUniqueWithoutConceptoInput | GastoElementoUpdateWithWhereUniqueWithoutConceptoInput[]
-    updateMany?: GastoElementoUpdateManyWithWhereWithoutConceptoInput | GastoElementoUpdateManyWithWhereWithoutConceptoInput[]
-    deleteMany?: GastoElementoScalarWhereInput | GastoElementoScalarWhereInput[]
-  }
-
-  export type GastosDEUncheckedUpdateManyWithoutConceptoNestedInput = {
-    create?: XOR<GastosDECreateWithoutConceptoInput, GastosDEUncheckedCreateWithoutConceptoInput> | GastosDECreateWithoutConceptoInput[] | GastosDEUncheckedCreateWithoutConceptoInput[]
-    connectOrCreate?: GastosDECreateOrConnectWithoutConceptoInput | GastosDECreateOrConnectWithoutConceptoInput[]
-    upsert?: GastosDEUpsertWithWhereUniqueWithoutConceptoInput | GastosDEUpsertWithWhereUniqueWithoutConceptoInput[]
-    createMany?: GastosDECreateManyConceptoInputEnvelope
-    set?: GastosDEWhereUniqueInput | GastosDEWhereUniqueInput[]
-    disconnect?: GastosDEWhereUniqueInput | GastosDEWhereUniqueInput[]
-    delete?: GastosDEWhereUniqueInput | GastosDEWhereUniqueInput[]
-    connect?: GastosDEWhereUniqueInput | GastosDEWhereUniqueInput[]
-    update?: GastosDEUpdateWithWhereUniqueWithoutConceptoInput | GastosDEUpdateWithWhereUniqueWithoutConceptoInput[]
-    updateMany?: GastosDEUpdateManyWithWhereWithoutConceptoInput | GastosDEUpdateManyWithWhereWithoutConceptoInput[]
-    deleteMany?: GastosDEScalarWhereInput | GastosDEScalarWhereInput[]
-  }
-
-  export type GastoConceptoCreateNestedOneWithoutElementosInput = {
-    create?: XOR<GastoConceptoCreateWithoutElementosInput, GastoConceptoUncheckedCreateWithoutElementosInput>
-    connectOrCreate?: GastoConceptoCreateOrConnectWithoutElementosInput
-    connect?: GastoConceptoWhereUniqueInput
-  }
-
-  export type GastosDECreateNestedManyWithoutElementoInput = {
-    create?: XOR<GastosDECreateWithoutElementoInput, GastosDEUncheckedCreateWithoutElementoInput> | GastosDECreateWithoutElementoInput[] | GastosDEUncheckedCreateWithoutElementoInput[]
-    connectOrCreate?: GastosDECreateOrConnectWithoutElementoInput | GastosDECreateOrConnectWithoutElementoInput[]
-    createMany?: GastosDECreateManyElementoInputEnvelope
-    connect?: GastosDEWhereUniqueInput | GastosDEWhereUniqueInput[]
-  }
-
-  export type GastosDEUncheckedCreateNestedManyWithoutElementoInput = {
-    create?: XOR<GastosDECreateWithoutElementoInput, GastosDEUncheckedCreateWithoutElementoInput> | GastosDECreateWithoutElementoInput[] | GastosDEUncheckedCreateWithoutElementoInput[]
-    connectOrCreate?: GastosDECreateOrConnectWithoutElementoInput | GastosDECreateOrConnectWithoutElementoInput[]
-    createMany?: GastosDECreateManyElementoInputEnvelope
-    connect?: GastosDEWhereUniqueInput | GastosDEWhereUniqueInput[]
-  }
-
-  export type GastoConceptoUpdateOneRequiredWithoutElementosNestedInput = {
-    create?: XOR<GastoConceptoCreateWithoutElementosInput, GastoConceptoUncheckedCreateWithoutElementosInput>
-    connectOrCreate?: GastoConceptoCreateOrConnectWithoutElementosInput
-    upsert?: GastoConceptoUpsertWithoutElementosInput
-    connect?: GastoConceptoWhereUniqueInput
-    update?: XOR<XOR<GastoConceptoUpdateToOneWithWhereWithoutElementosInput, GastoConceptoUpdateWithoutElementosInput>, GastoConceptoUncheckedUpdateWithoutElementosInput>
-  }
-
-  export type GastosDEUpdateManyWithoutElementoNestedInput = {
-    create?: XOR<GastosDECreateWithoutElementoInput, GastosDEUncheckedCreateWithoutElementoInput> | GastosDECreateWithoutElementoInput[] | GastosDEUncheckedCreateWithoutElementoInput[]
-    connectOrCreate?: GastosDECreateOrConnectWithoutElementoInput | GastosDECreateOrConnectWithoutElementoInput[]
-    upsert?: GastosDEUpsertWithWhereUniqueWithoutElementoInput | GastosDEUpsertWithWhereUniqueWithoutElementoInput[]
-    createMany?: GastosDECreateManyElementoInputEnvelope
-    set?: GastosDEWhereUniqueInput | GastosDEWhereUniqueInput[]
-    disconnect?: GastosDEWhereUniqueInput | GastosDEWhereUniqueInput[]
-    delete?: GastosDEWhereUniqueInput | GastosDEWhereUniqueInput[]
-    connect?: GastosDEWhereUniqueInput | GastosDEWhereUniqueInput[]
-    update?: GastosDEUpdateWithWhereUniqueWithoutElementoInput | GastosDEUpdateWithWhereUniqueWithoutElementoInput[]
-    updateMany?: GastosDEUpdateManyWithWhereWithoutElementoInput | GastosDEUpdateManyWithWhereWithoutElementoInput[]
-    deleteMany?: GastosDEScalarWhereInput | GastosDEScalarWhereInput[]
-  }
-
-  export type GastosDEUncheckedUpdateManyWithoutElementoNestedInput = {
-    create?: XOR<GastosDECreateWithoutElementoInput, GastosDEUncheckedCreateWithoutElementoInput> | GastosDECreateWithoutElementoInput[] | GastosDEUncheckedCreateWithoutElementoInput[]
-    connectOrCreate?: GastosDECreateOrConnectWithoutElementoInput | GastosDECreateOrConnectWithoutElementoInput[]
-    upsert?: GastosDEUpsertWithWhereUniqueWithoutElementoInput | GastosDEUpsertWithWhereUniqueWithoutElementoInput[]
-    createMany?: GastosDECreateManyElementoInputEnvelope
-    set?: GastosDEWhereUniqueInput | GastosDEWhereUniqueInput[]
-    disconnect?: GastosDEWhereUniqueInput | GastosDEWhereUniqueInput[]
-    delete?: GastosDEWhereUniqueInput | GastosDEWhereUniqueInput[]
-    connect?: GastosDEWhereUniqueInput | GastosDEWhereUniqueInput[]
-    update?: GastosDEUpdateWithWhereUniqueWithoutElementoInput | GastosDEUpdateWithWhereUniqueWithoutElementoInput[]
-    updateMany?: GastosDEUpdateManyWithWhereWithoutElementoInput | GastosDEUpdateManyWithWhereWithoutElementoInput[]
-    deleteMany?: GastosDEScalarWhereInput | GastosDEScalarWhereInput[]
   }
 
   export type CatalogoReparacionConfigCreateNestedOneWithoutMonedaInput = {
@@ -153161,56 +149993,6 @@ export namespace Prisma {
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutServicioNestedInput
   }
 
-  export type GastoConceptoCreateWithoutGastosDEInput = {
-    conceptoId?: string
-    nombre: string
-    descripcion?: string | null
-    isActive?: boolean
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    elementos?: GastoElementoCreateNestedManyWithoutConceptoInput
-  }
-
-  export type GastoConceptoUncheckedCreateWithoutGastosDEInput = {
-    conceptoId?: string
-    nombre: string
-    descripcion?: string | null
-    isActive?: boolean
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    elementos?: GastoElementoUncheckedCreateNestedManyWithoutConceptoInput
-  }
-
-  export type GastoConceptoCreateOrConnectWithoutGastosDEInput = {
-    where: GastoConceptoWhereUniqueInput
-    create: XOR<GastoConceptoCreateWithoutGastosDEInput, GastoConceptoUncheckedCreateWithoutGastosDEInput>
-  }
-
-  export type GastoElementoCreateWithoutGastosDEInput = {
-    elementoId?: string
-    nombre: string
-    descripcion?: string | null
-    isActive?: boolean
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    concepto: GastoConceptoCreateNestedOneWithoutElementosInput
-  }
-
-  export type GastoElementoUncheckedCreateWithoutGastosDEInput = {
-    elementoId?: string
-    conceptoId: string
-    nombre: string
-    descripcion?: string | null
-    isActive?: boolean
-    createdAt?: Date | string
-    updatedAt?: Date | string
-  }
-
-  export type GastoElementoCreateOrConnectWithoutGastosDEInput = {
-    where: GastoElementoWhereUniqueInput
-    create: XOR<GastoElementoCreateWithoutGastosDEInput, GastoElementoUncheckedCreateWithoutGastosDEInput>
-  }
-
   export type CuentaPorPagarCreateWithoutGastosDEInput = {
     cuentaPorPagarId?: string
     numeroFactura: string
@@ -153318,68 +150100,6 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
-  export type GastoConceptoUpsertWithoutGastosDEInput = {
-    update: XOR<GastoConceptoUpdateWithoutGastosDEInput, GastoConceptoUncheckedUpdateWithoutGastosDEInput>
-    create: XOR<GastoConceptoCreateWithoutGastosDEInput, GastoConceptoUncheckedCreateWithoutGastosDEInput>
-    where?: GastoConceptoWhereInput
-  }
-
-  export type GastoConceptoUpdateToOneWithWhereWithoutGastosDEInput = {
-    where?: GastoConceptoWhereInput
-    data: XOR<GastoConceptoUpdateWithoutGastosDEInput, GastoConceptoUncheckedUpdateWithoutGastosDEInput>
-  }
-
-  export type GastoConceptoUpdateWithoutGastosDEInput = {
-    conceptoId?: StringFieldUpdateOperationsInput | string
-    nombre?: StringFieldUpdateOperationsInput | string
-    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
-    isActive?: BoolFieldUpdateOperationsInput | boolean
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    elementos?: GastoElementoUpdateManyWithoutConceptoNestedInput
-  }
-
-  export type GastoConceptoUncheckedUpdateWithoutGastosDEInput = {
-    conceptoId?: StringFieldUpdateOperationsInput | string
-    nombre?: StringFieldUpdateOperationsInput | string
-    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
-    isActive?: BoolFieldUpdateOperationsInput | boolean
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    elementos?: GastoElementoUncheckedUpdateManyWithoutConceptoNestedInput
-  }
-
-  export type GastoElementoUpsertWithoutGastosDEInput = {
-    update: XOR<GastoElementoUpdateWithoutGastosDEInput, GastoElementoUncheckedUpdateWithoutGastosDEInput>
-    create: XOR<GastoElementoCreateWithoutGastosDEInput, GastoElementoUncheckedCreateWithoutGastosDEInput>
-    where?: GastoElementoWhereInput
-  }
-
-  export type GastoElementoUpdateToOneWithWhereWithoutGastosDEInput = {
-    where?: GastoElementoWhereInput
-    data: XOR<GastoElementoUpdateWithoutGastosDEInput, GastoElementoUncheckedUpdateWithoutGastosDEInput>
-  }
-
-  export type GastoElementoUpdateWithoutGastosDEInput = {
-    elementoId?: StringFieldUpdateOperationsInput | string
-    nombre?: StringFieldUpdateOperationsInput | string
-    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
-    isActive?: BoolFieldUpdateOperationsInput | boolean
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    concepto?: GastoConceptoUpdateOneRequiredWithoutElementosNestedInput
-  }
-
-  export type GastoElementoUncheckedUpdateWithoutGastosDEInput = {
-    elementoId?: StringFieldUpdateOperationsInput | string
-    conceptoId?: StringFieldUpdateOperationsInput | string
-    nombre?: StringFieldUpdateOperationsInput | string
-    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
-    isActive?: BoolFieldUpdateOperationsInput | boolean
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
   export type CuentaPorPagarUpsertWithoutGastosDEInput = {
     update: XOR<CuentaPorPagarUpdateWithoutGastosDEInput, CuentaPorPagarUncheckedUpdateWithoutGastosDEInput>
     create: XOR<CuentaPorPagarCreateWithoutGastosDEInput, CuentaPorPagarUncheckedCreateWithoutGastosDEInput>
@@ -153449,255 +150169,6 @@ export namespace Prisma {
   export type ReconciliacionGastoUpdateManyWithWhereWithoutGastoDEInput = {
     where: ReconciliacionGastoScalarWhereInput
     data: XOR<ReconciliacionGastoUpdateManyMutationInput, ReconciliacionGastoUncheckedUpdateManyWithoutGastoDEInput>
-  }
-
-  export type GastoElementoCreateWithoutConceptoInput = {
-    elementoId?: string
-    nombre: string
-    descripcion?: string | null
-    isActive?: boolean
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    gastosDE?: GastosDECreateNestedManyWithoutElementoInput
-  }
-
-  export type GastoElementoUncheckedCreateWithoutConceptoInput = {
-    elementoId?: string
-    nombre: string
-    descripcion?: string | null
-    isActive?: boolean
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    gastosDE?: GastosDEUncheckedCreateNestedManyWithoutElementoInput
-  }
-
-  export type GastoElementoCreateOrConnectWithoutConceptoInput = {
-    where: GastoElementoWhereUniqueInput
-    create: XOR<GastoElementoCreateWithoutConceptoInput, GastoElementoUncheckedCreateWithoutConceptoInput>
-  }
-
-  export type GastoElementoCreateManyConceptoInputEnvelope = {
-    data: GastoElementoCreateManyConceptoInput | GastoElementoCreateManyConceptoInput[]
-    skipDuplicates?: boolean
-  }
-
-  export type GastosDECreateWithoutConceptoInput = {
-    gastosDEId?: string
-    tipo?: string | null
-    proveedor: string
-    monto?: Decimal | DecimalJsLike | number | string
-    periodo: string
-    descripcion?: string | null
-    isPagado?: string
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    numeroFactura?: string | null
-    elemento?: GastoElementoCreateNestedOneWithoutGastosDEInput
-    cuentaPorPagar?: CuentaPorPagarCreateNestedOneWithoutGastosDEInput
-    reconciliaciones?: ReconciliacionGastoCreateNestedManyWithoutGastoDEInput
-  }
-
-  export type GastosDEUncheckedCreateWithoutConceptoInput = {
-    gastosDEId?: string
-    tipo?: string | null
-    elementoId?: string | null
-    proveedor: string
-    monto?: Decimal | DecimalJsLike | number | string
-    periodo: string
-    descripcion?: string | null
-    isPagado?: string
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    numeroFactura?: string | null
-    cuentaPorPagar?: CuentaPorPagarUncheckedCreateNestedOneWithoutGastosDEInput
-    reconciliaciones?: ReconciliacionGastoUncheckedCreateNestedManyWithoutGastoDEInput
-  }
-
-  export type GastosDECreateOrConnectWithoutConceptoInput = {
-    where: GastosDEWhereUniqueInput
-    create: XOR<GastosDECreateWithoutConceptoInput, GastosDEUncheckedCreateWithoutConceptoInput>
-  }
-
-  export type GastosDECreateManyConceptoInputEnvelope = {
-    data: GastosDECreateManyConceptoInput | GastosDECreateManyConceptoInput[]
-    skipDuplicates?: boolean
-  }
-
-  export type GastoElementoUpsertWithWhereUniqueWithoutConceptoInput = {
-    where: GastoElementoWhereUniqueInput
-    update: XOR<GastoElementoUpdateWithoutConceptoInput, GastoElementoUncheckedUpdateWithoutConceptoInput>
-    create: XOR<GastoElementoCreateWithoutConceptoInput, GastoElementoUncheckedCreateWithoutConceptoInput>
-  }
-
-  export type GastoElementoUpdateWithWhereUniqueWithoutConceptoInput = {
-    where: GastoElementoWhereUniqueInput
-    data: XOR<GastoElementoUpdateWithoutConceptoInput, GastoElementoUncheckedUpdateWithoutConceptoInput>
-  }
-
-  export type GastoElementoUpdateManyWithWhereWithoutConceptoInput = {
-    where: GastoElementoScalarWhereInput
-    data: XOR<GastoElementoUpdateManyMutationInput, GastoElementoUncheckedUpdateManyWithoutConceptoInput>
-  }
-
-  export type GastoElementoScalarWhereInput = {
-    AND?: GastoElementoScalarWhereInput | GastoElementoScalarWhereInput[]
-    OR?: GastoElementoScalarWhereInput[]
-    NOT?: GastoElementoScalarWhereInput | GastoElementoScalarWhereInput[]
-    elementoId?: StringFilter<"GastoElemento"> | string
-    conceptoId?: StringFilter<"GastoElemento"> | string
-    nombre?: StringFilter<"GastoElemento"> | string
-    descripcion?: StringNullableFilter<"GastoElemento"> | string | null
-    isActive?: BoolFilter<"GastoElemento"> | boolean
-    createdAt?: DateTimeFilter<"GastoElemento"> | Date | string
-    updatedAt?: DateTimeFilter<"GastoElemento"> | Date | string
-  }
-
-  export type GastosDEUpsertWithWhereUniqueWithoutConceptoInput = {
-    where: GastosDEWhereUniqueInput
-    update: XOR<GastosDEUpdateWithoutConceptoInput, GastosDEUncheckedUpdateWithoutConceptoInput>
-    create: XOR<GastosDECreateWithoutConceptoInput, GastosDEUncheckedCreateWithoutConceptoInput>
-  }
-
-  export type GastosDEUpdateWithWhereUniqueWithoutConceptoInput = {
-    where: GastosDEWhereUniqueInput
-    data: XOR<GastosDEUpdateWithoutConceptoInput, GastosDEUncheckedUpdateWithoutConceptoInput>
-  }
-
-  export type GastosDEUpdateManyWithWhereWithoutConceptoInput = {
-    where: GastosDEScalarWhereInput
-    data: XOR<GastosDEUpdateManyMutationInput, GastosDEUncheckedUpdateManyWithoutConceptoInput>
-  }
-
-  export type GastosDEScalarWhereInput = {
-    AND?: GastosDEScalarWhereInput | GastosDEScalarWhereInput[]
-    OR?: GastosDEScalarWhereInput[]
-    NOT?: GastosDEScalarWhereInput | GastosDEScalarWhereInput[]
-    gastosDEId?: StringFilter<"GastosDE"> | string
-    tipo?: StringNullableFilter<"GastosDE"> | string | null
-    conceptoId?: StringNullableFilter<"GastosDE"> | string | null
-    elementoId?: StringNullableFilter<"GastosDE"> | string | null
-    proveedor?: StringFilter<"GastosDE"> | string
-    monto?: DecimalFilter<"GastosDE"> | Decimal | DecimalJsLike | number | string
-    periodo?: StringFilter<"GastosDE"> | string
-    descripcion?: StringNullableFilter<"GastosDE"> | string | null
-    isPagado?: StringFilter<"GastosDE"> | string
-    createdAt?: DateTimeFilter<"GastosDE"> | Date | string
-    updatedAt?: DateTimeFilter<"GastosDE"> | Date | string
-    numeroFactura?: StringNullableFilter<"GastosDE"> | string | null
-  }
-
-  export type GastoConceptoCreateWithoutElementosInput = {
-    conceptoId?: string
-    nombre: string
-    descripcion?: string | null
-    isActive?: boolean
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    gastosDE?: GastosDECreateNestedManyWithoutConceptoInput
-  }
-
-  export type GastoConceptoUncheckedCreateWithoutElementosInput = {
-    conceptoId?: string
-    nombre: string
-    descripcion?: string | null
-    isActive?: boolean
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    gastosDE?: GastosDEUncheckedCreateNestedManyWithoutConceptoInput
-  }
-
-  export type GastoConceptoCreateOrConnectWithoutElementosInput = {
-    where: GastoConceptoWhereUniqueInput
-    create: XOR<GastoConceptoCreateWithoutElementosInput, GastoConceptoUncheckedCreateWithoutElementosInput>
-  }
-
-  export type GastosDECreateWithoutElementoInput = {
-    gastosDEId?: string
-    tipo?: string | null
-    proveedor: string
-    monto?: Decimal | DecimalJsLike | number | string
-    periodo: string
-    descripcion?: string | null
-    isPagado?: string
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    numeroFactura?: string | null
-    concepto?: GastoConceptoCreateNestedOneWithoutGastosDEInput
-    cuentaPorPagar?: CuentaPorPagarCreateNestedOneWithoutGastosDEInput
-    reconciliaciones?: ReconciliacionGastoCreateNestedManyWithoutGastoDEInput
-  }
-
-  export type GastosDEUncheckedCreateWithoutElementoInput = {
-    gastosDEId?: string
-    tipo?: string | null
-    conceptoId?: string | null
-    proveedor: string
-    monto?: Decimal | DecimalJsLike | number | string
-    periodo: string
-    descripcion?: string | null
-    isPagado?: string
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    numeroFactura?: string | null
-    cuentaPorPagar?: CuentaPorPagarUncheckedCreateNestedOneWithoutGastosDEInput
-    reconciliaciones?: ReconciliacionGastoUncheckedCreateNestedManyWithoutGastoDEInput
-  }
-
-  export type GastosDECreateOrConnectWithoutElementoInput = {
-    where: GastosDEWhereUniqueInput
-    create: XOR<GastosDECreateWithoutElementoInput, GastosDEUncheckedCreateWithoutElementoInput>
-  }
-
-  export type GastosDECreateManyElementoInputEnvelope = {
-    data: GastosDECreateManyElementoInput | GastosDECreateManyElementoInput[]
-    skipDuplicates?: boolean
-  }
-
-  export type GastoConceptoUpsertWithoutElementosInput = {
-    update: XOR<GastoConceptoUpdateWithoutElementosInput, GastoConceptoUncheckedUpdateWithoutElementosInput>
-    create: XOR<GastoConceptoCreateWithoutElementosInput, GastoConceptoUncheckedCreateWithoutElementosInput>
-    where?: GastoConceptoWhereInput
-  }
-
-  export type GastoConceptoUpdateToOneWithWhereWithoutElementosInput = {
-    where?: GastoConceptoWhereInput
-    data: XOR<GastoConceptoUpdateWithoutElementosInput, GastoConceptoUncheckedUpdateWithoutElementosInput>
-  }
-
-  export type GastoConceptoUpdateWithoutElementosInput = {
-    conceptoId?: StringFieldUpdateOperationsInput | string
-    nombre?: StringFieldUpdateOperationsInput | string
-    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
-    isActive?: BoolFieldUpdateOperationsInput | boolean
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    gastosDE?: GastosDEUpdateManyWithoutConceptoNestedInput
-  }
-
-  export type GastoConceptoUncheckedUpdateWithoutElementosInput = {
-    conceptoId?: StringFieldUpdateOperationsInput | string
-    nombre?: StringFieldUpdateOperationsInput | string
-    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
-    isActive?: BoolFieldUpdateOperationsInput | boolean
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    gastosDE?: GastosDEUncheckedUpdateManyWithoutConceptoNestedInput
-  }
-
-  export type GastosDEUpsertWithWhereUniqueWithoutElementoInput = {
-    where: GastosDEWhereUniqueInput
-    update: XOR<GastosDEUpdateWithoutElementoInput, GastosDEUncheckedUpdateWithoutElementoInput>
-    create: XOR<GastosDECreateWithoutElementoInput, GastosDEUncheckedCreateWithoutElementoInput>
-  }
-
-  export type GastosDEUpdateWithWhereUniqueWithoutElementoInput = {
-    where: GastosDEWhereUniqueInput
-    data: XOR<GastosDEUpdateWithoutElementoInput, GastosDEUncheckedUpdateWithoutElementoInput>
-  }
-
-  export type GastosDEUpdateManyWithWhereWithoutElementoInput = {
-    where: GastosDEScalarWhereInput
-    data: XOR<GastosDEUpdateManyMutationInput, GastosDEUncheckedUpdateManyWithoutElementoInput>
   }
 
   export type CatalogoReparacionConfigCreateWithoutMonedaInput = {
@@ -155796,30 +152267,26 @@ export namespace Prisma {
 
   export type GastosDECreateWithoutReconciliacionesInput = {
     gastosDEId?: string
-    tipo?: string | null
+    tipo: string
     proveedor: string
-    monto?: Decimal | DecimalJsLike | number | string
+    monto: number
     periodo: string
     descripcion?: string | null
-    isPagado?: string
+    isPagado?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     numeroFactura?: string | null
-    concepto?: GastoConceptoCreateNestedOneWithoutGastosDEInput
-    elemento?: GastoElementoCreateNestedOneWithoutGastosDEInput
     cuentaPorPagar?: CuentaPorPagarCreateNestedOneWithoutGastosDEInput
   }
 
   export type GastosDEUncheckedCreateWithoutReconciliacionesInput = {
     gastosDEId?: string
-    tipo?: string | null
-    conceptoId?: string | null
-    elementoId?: string | null
+    tipo: string
     proveedor: string
-    monto?: Decimal | DecimalJsLike | number | string
+    monto: number
     periodo: string
     descripcion?: string | null
-    isPagado?: string
+    isPagado?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     numeroFactura?: string | null
@@ -156059,30 +152526,26 @@ export namespace Prisma {
 
   export type GastosDEUpdateWithoutReconciliacionesInput = {
     gastosDEId?: StringFieldUpdateOperationsInput | string
-    tipo?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo?: StringFieldUpdateOperationsInput | string
     proveedor?: StringFieldUpdateOperationsInput | string
-    monto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto?: IntFieldUpdateOperationsInput | number
     periodo?: StringFieldUpdateOperationsInput | string
     descripcion?: NullableStringFieldUpdateOperationsInput | string | null
-    isPagado?: StringFieldUpdateOperationsInput | string
+    isPagado?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
-    concepto?: GastoConceptoUpdateOneWithoutGastosDENestedInput
-    elemento?: GastoElementoUpdateOneWithoutGastosDENestedInput
     cuentaPorPagar?: CuentaPorPagarUpdateOneWithoutGastosDENestedInput
   }
 
   export type GastosDEUncheckedUpdateWithoutReconciliacionesInput = {
     gastosDEId?: StringFieldUpdateOperationsInput | string
-    tipo?: NullableStringFieldUpdateOperationsInput | string | null
-    conceptoId?: NullableStringFieldUpdateOperationsInput | string | null
-    elementoId?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo?: StringFieldUpdateOperationsInput | string
     proveedor?: StringFieldUpdateOperationsInput | string
-    monto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto?: IntFieldUpdateOperationsInput | number
     periodo?: StringFieldUpdateOperationsInput | string
     descripcion?: NullableStringFieldUpdateOperationsInput | string | null
-    isPagado?: StringFieldUpdateOperationsInput | string
+    isPagado?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
@@ -159737,30 +156200,26 @@ export namespace Prisma {
 
   export type GastosDECreateWithoutCuentaPorPagarInput = {
     gastosDEId?: string
-    tipo?: string | null
+    tipo: string
     proveedor: string
-    monto?: Decimal | DecimalJsLike | number | string
+    monto: number
     periodo: string
     descripcion?: string | null
-    isPagado?: string
+    isPagado?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     numeroFactura?: string | null
-    concepto?: GastoConceptoCreateNestedOneWithoutGastosDEInput
-    elemento?: GastoElementoCreateNestedOneWithoutGastosDEInput
     reconciliaciones?: ReconciliacionGastoCreateNestedManyWithoutGastoDEInput
   }
 
   export type GastosDEUncheckedCreateWithoutCuentaPorPagarInput = {
     gastosDEId?: string
-    tipo?: string | null
-    conceptoId?: string | null
-    elementoId?: string | null
+    tipo: string
     proveedor: string
-    monto?: Decimal | DecimalJsLike | number | string
+    monto: number
     periodo: string
     descripcion?: string | null
-    isPagado?: string
+    isPagado?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     numeroFactura?: string | null
@@ -160014,30 +156473,26 @@ export namespace Prisma {
 
   export type GastosDEUpdateWithoutCuentaPorPagarInput = {
     gastosDEId?: StringFieldUpdateOperationsInput | string
-    tipo?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo?: StringFieldUpdateOperationsInput | string
     proveedor?: StringFieldUpdateOperationsInput | string
-    monto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto?: IntFieldUpdateOperationsInput | number
     periodo?: StringFieldUpdateOperationsInput | string
     descripcion?: NullableStringFieldUpdateOperationsInput | string | null
-    isPagado?: StringFieldUpdateOperationsInput | string
+    isPagado?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
-    concepto?: GastoConceptoUpdateOneWithoutGastosDENestedInput
-    elemento?: GastoElementoUpdateOneWithoutGastosDENestedInput
     reconciliaciones?: ReconciliacionGastoUpdateManyWithoutGastoDENestedInput
   }
 
   export type GastosDEUncheckedUpdateWithoutCuentaPorPagarInput = {
     gastosDEId?: StringFieldUpdateOperationsInput | string
-    tipo?: NullableStringFieldUpdateOperationsInput | string | null
-    conceptoId?: NullableStringFieldUpdateOperationsInput | string | null
-    elementoId?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo?: StringFieldUpdateOperationsInput | string
     proveedor?: StringFieldUpdateOperationsInput | string
-    monto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    monto?: IntFieldUpdateOperationsInput | number
     periodo?: StringFieldUpdateOperationsInput | string
     descripcion?: NullableStringFieldUpdateOperationsInput | string | null
-    isPagado?: StringFieldUpdateOperationsInput | string
+    isPagado?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
@@ -168205,164 +164660,6 @@ export namespace Prisma {
     gastoCompraId?: NullableStringFieldUpdateOperationsInput | string | null
     isReconciliada?: NullableBoolFieldUpdateOperationsInput | boolean | null
     pgId?: NullableStringFieldUpdateOperationsInput | string | null
-  }
-
-  export type GastoElementoCreateManyConceptoInput = {
-    elementoId?: string
-    nombre: string
-    descripcion?: string | null
-    isActive?: boolean
-    createdAt?: Date | string
-    updatedAt?: Date | string
-  }
-
-  export type GastosDECreateManyConceptoInput = {
-    gastosDEId?: string
-    tipo?: string | null
-    elementoId?: string | null
-    proveedor: string
-    monto?: Decimal | DecimalJsLike | number | string
-    periodo: string
-    descripcion?: string | null
-    isPagado?: string
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    numeroFactura?: string | null
-  }
-
-  export type GastoElementoUpdateWithoutConceptoInput = {
-    elementoId?: StringFieldUpdateOperationsInput | string
-    nombre?: StringFieldUpdateOperationsInput | string
-    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
-    isActive?: BoolFieldUpdateOperationsInput | boolean
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    gastosDE?: GastosDEUpdateManyWithoutElementoNestedInput
-  }
-
-  export type GastoElementoUncheckedUpdateWithoutConceptoInput = {
-    elementoId?: StringFieldUpdateOperationsInput | string
-    nombre?: StringFieldUpdateOperationsInput | string
-    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
-    isActive?: BoolFieldUpdateOperationsInput | boolean
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    gastosDE?: GastosDEUncheckedUpdateManyWithoutElementoNestedInput
-  }
-
-  export type GastoElementoUncheckedUpdateManyWithoutConceptoInput = {
-    elementoId?: StringFieldUpdateOperationsInput | string
-    nombre?: StringFieldUpdateOperationsInput | string
-    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
-    isActive?: BoolFieldUpdateOperationsInput | boolean
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type GastosDEUpdateWithoutConceptoInput = {
-    gastosDEId?: StringFieldUpdateOperationsInput | string
-    tipo?: NullableStringFieldUpdateOperationsInput | string | null
-    proveedor?: StringFieldUpdateOperationsInput | string
-    monto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    periodo?: StringFieldUpdateOperationsInput | string
-    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
-    isPagado?: StringFieldUpdateOperationsInput | string
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
-    elemento?: GastoElementoUpdateOneWithoutGastosDENestedInput
-    cuentaPorPagar?: CuentaPorPagarUpdateOneWithoutGastosDENestedInput
-    reconciliaciones?: ReconciliacionGastoUpdateManyWithoutGastoDENestedInput
-  }
-
-  export type GastosDEUncheckedUpdateWithoutConceptoInput = {
-    gastosDEId?: StringFieldUpdateOperationsInput | string
-    tipo?: NullableStringFieldUpdateOperationsInput | string | null
-    elementoId?: NullableStringFieldUpdateOperationsInput | string | null
-    proveedor?: StringFieldUpdateOperationsInput | string
-    monto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    periodo?: StringFieldUpdateOperationsInput | string
-    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
-    isPagado?: StringFieldUpdateOperationsInput | string
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
-    cuentaPorPagar?: CuentaPorPagarUncheckedUpdateOneWithoutGastosDENestedInput
-    reconciliaciones?: ReconciliacionGastoUncheckedUpdateManyWithoutGastoDENestedInput
-  }
-
-  export type GastosDEUncheckedUpdateManyWithoutConceptoInput = {
-    gastosDEId?: StringFieldUpdateOperationsInput | string
-    tipo?: NullableStringFieldUpdateOperationsInput | string | null
-    elementoId?: NullableStringFieldUpdateOperationsInput | string | null
-    proveedor?: StringFieldUpdateOperationsInput | string
-    monto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    periodo?: StringFieldUpdateOperationsInput | string
-    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
-    isPagado?: StringFieldUpdateOperationsInput | string
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
-  }
-
-  export type GastosDECreateManyElementoInput = {
-    gastosDEId?: string
-    tipo?: string | null
-    conceptoId?: string | null
-    proveedor: string
-    monto?: Decimal | DecimalJsLike | number | string
-    periodo: string
-    descripcion?: string | null
-    isPagado?: string
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    numeroFactura?: string | null
-  }
-
-  export type GastosDEUpdateWithoutElementoInput = {
-    gastosDEId?: StringFieldUpdateOperationsInput | string
-    tipo?: NullableStringFieldUpdateOperationsInput | string | null
-    proveedor?: StringFieldUpdateOperationsInput | string
-    monto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    periodo?: StringFieldUpdateOperationsInput | string
-    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
-    isPagado?: StringFieldUpdateOperationsInput | string
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
-    concepto?: GastoConceptoUpdateOneWithoutGastosDENestedInput
-    cuentaPorPagar?: CuentaPorPagarUpdateOneWithoutGastosDENestedInput
-    reconciliaciones?: ReconciliacionGastoUpdateManyWithoutGastoDENestedInput
-  }
-
-  export type GastosDEUncheckedUpdateWithoutElementoInput = {
-    gastosDEId?: StringFieldUpdateOperationsInput | string
-    tipo?: NullableStringFieldUpdateOperationsInput | string | null
-    conceptoId?: NullableStringFieldUpdateOperationsInput | string | null
-    proveedor?: StringFieldUpdateOperationsInput | string
-    monto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    periodo?: StringFieldUpdateOperationsInput | string
-    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
-    isPagado?: StringFieldUpdateOperationsInput | string
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
-    cuentaPorPagar?: CuentaPorPagarUncheckedUpdateOneWithoutGastosDENestedInput
-    reconciliaciones?: ReconciliacionGastoUncheckedUpdateManyWithoutGastoDENestedInput
-  }
-
-  export type GastosDEUncheckedUpdateManyWithoutElementoInput = {
-    gastosDEId?: StringFieldUpdateOperationsInput | string
-    tipo?: NullableStringFieldUpdateOperationsInput | string | null
-    conceptoId?: NullableStringFieldUpdateOperationsInput | string | null
-    proveedor?: StringFieldUpdateOperationsInput | string
-    monto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
-    periodo?: StringFieldUpdateOperationsInput | string
-    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
-    isPagado?: StringFieldUpdateOperationsInput | string
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type TasaCambioCreateManyMonedaOrigenInput = {

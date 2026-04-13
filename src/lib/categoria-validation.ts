@@ -308,7 +308,7 @@ export class CategoriaValidator {
   }
 
   /**
-   * Validate unique name within parent scope
+   * Validate unique name within parent scope (case-insensitive)
    */
   static async validateUniqueName(
     nombre: string,
@@ -318,7 +318,10 @@ export class CategoriaValidator {
     try {
       const existingCategory = await prisma.categoria.findFirst({
         where: {
-          nombre: nombre.trim(),
+          nombre: {
+            equals: nombre.trim(),
+            mode: 'insensitive'
+          },
           parentId: parentId,
           ...(excludeCategoryId && { catId: { not: excludeCategoryId } })
         }
@@ -331,10 +334,10 @@ export class CategoriaValidator {
             code: CategoriaErrorCode.DUPLICATE_NAME,
             message: CATEGORIA_ERROR_MESSAGES[CategoriaErrorCode.DUPLICATE_NAME],
             field: 'nombre',
-            details: { 
-              nombre, 
-              parentId, 
-              existingCategoryId: existingCategory.catId 
+            details: {
+              nombre,
+              parentId,
+              existingCategoryId: existingCategory.catId
             }
           }]
         }
