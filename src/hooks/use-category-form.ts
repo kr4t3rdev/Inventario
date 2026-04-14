@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
-import { useForm, UseFormReturn } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { Categoria } from '../app/models/model';
-import { useDispatch } from 'react-redux';
 import { categoriasApi } from '@/lib/redux/services/categoriasApi';
-import { mapCategoryToSection, mapSubcategoryToSpecific } from '@/lib/category-mapping';
+import { useAppDispatch } from '@/lib/redux/hooks';
+import { validateCLASSection, validateCLASSpecific, CLASClassifierData } from '@/lib/clas-classifier';
 
 // Define the form schema using Zod
 const categoryFormSchema = z.object({
@@ -18,6 +17,8 @@ const categoryFormSchema = z.object({
     .trim(),
   descripcion: z.string().max(500).optional().or(z.literal('')),
   parentId: z.string().optional().nullable(),
+  clasSectionId: z.string().optional().nullable(),
+  clasSpecificId: z.string().optional().nullable(),
 });
 
 type CategoryFormValues = z.infer<typeof categoryFormSchema>;
@@ -31,11 +32,43 @@ interface UseCategoryFormProps {
   };
   onSuccess?: () => void;
   usaEan13?: boolean;
+  clasClassifierData?: CLASClassifierData | null;
+  requireSpecificSelection?: boolean;
 }
 
-export function useCategoryForm({ initialData, onSuccess, usaEan13 = false }: UseCategoryFormProps) {
+const normalizeParentId = (parentId: string | null | undefined) => {
+  if (!parentId || parentId === 'none') {
+    return null;
+  }
+
+  return parentId;
+};
+
+const normalizeSectionId = (sectionId: string | null | undefined) => {
+  if (!sectionId) {
+    return null;
+  }
+
+  return sectionId.trim();
+};
+
+const normalizeSpecificId = (specificId: string | null | undefined) => {
+  if (!specificId) {
+    return null;
+  }
+
+  return specificId.trim();
+};
+
+export function useCategoryForm({
+  initialData,
+  onSuccess,
+  usaEan13 = false,
+  clasClassifierData,
+  requireSpecificSelection = false,
+}: UseCategoryFormProps) {
   const router = useRouter();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const [serverErrors, setServerErrors] = useState<Record<string, string[]>>({});
@@ -47,6 +80,8 @@ export function useCategoryForm({ initialData, onSuccess, usaEan13 = false }: Us
       nombre: initialData?.nombre || '',
       descripcion: initialData?.descripcion || '',
       parentId: initialData?.parentId || 'none',
+      clasSectionId: undefined,
+      clasSpecificId: undefined,
     },
     mode: 'onBlur',
     reValidateMode: 'onChange',
@@ -59,7 +94,9 @@ export function useCategoryForm({ initialData, onSuccess, usaEan13 = false }: Us
         nombre: initialData.nombre,
         descripcion: initialData.descripcion || '',
         parentId: initialData.parentId || 'none',
-      });
+        clasSectionId: undefined,
+        clasSpecificId: undefined,
+      })
     }
   }, [initialData, form]);
 
@@ -77,7 +114,9 @@ export function useCategoryForm({ initialData, onSuccess, usaEan13 = false }: Us
         body: JSON.stringify({
           categoryId: initialData?.catId,
           name: data.nombre,
-          parentId: data.parentId === 'none' ? null : data.parentId,
+          parentId: normalizeParentId(data.parentId),
+          clasSectionId: normalizeSectionId(data.clasSectionId),
+          clasSpecificId: normalizeSpecificId(data.clasSpecificId),
           descripcion: data.descripcion,
         }),
       });
@@ -108,38 +147,67 @@ export function useCategoryForm({ initialData, onSuccess, usaEan13 = false }: Us
   };
 
   // Validate category against CLAS mapping in EAN-13 mode
-  const validateCLASMapping = (nombre: string, parentId: string | null): boolean => {
+  const validateCLASMapping = (data: CategoryFormValues): { valid: boolean; error?: string } => {
     try {
-      if (!parentId || parentId === 'none') {
-        // Root category: validate against sections
-        mapCategoryToSection(nombre);
+      const sectionId = normalizeSectionId(data.clasSectionId)
+      const specificId = normalizeSpecificId(data.clasSpecificId)
+      const needsSpecificSelection = requireSpecificSelection || !!specificId
+
+      if (!needsSpecificSelection) {
+        // Root category: must match a CLAS section
+        if (!sectionId) {
+          return { valid: false, error: 'Estas en modo generacion ean-13 por lo q categoria debe coincidir con las secciones declaradas en el clasificador' }
+        }
+        // Verify the nombre matches the selected section
+        const matchedSectionId = validateCLASSection(data.nombre)
+        if (matchedSectionId !== sectionId) {
+          return { valid: false, error: 'Estas en modo generacion ean-13 por lo q categoria debe coincidir con las secciones declaradas en el clasificador' }
+        }
       } else {
-        // Subcategory: validate against specifics
-        mapSubcategoryToSpecific(nombre);
+        // Subcategory: must match a CLAS specific
+        if (!sectionId || !specificId) {
+          return { valid: false, error: 'Estas en modo generacion ean-13 por lo q la subcategoria ingresada debe coincidir con el especifico declarado en el clasificador' }
+        }
+
+        const matchedSpecificId = validateCLASSpecific(data.nombre)
+        if (matchedSpecificId !== specificId) {
+          return { valid: false, error: 'Estas en modo generacion ean-13 por lo q la subcategoria ingresada debe coincidir con el especifico declarado en el clasificador' }
+        }
+
+        if (!clasClassifierData) {
+          return { valid: false, error: 'Estas en modo generacion ean-13 por lo q la subcategoria ingresada debe coincidir con el especifico declarado en el clasificador' }
+        }
+
+        const specificSection = clasClassifierData.specificSectionById[specificId]
+        if (specificSection !== sectionId) {
+          return { valid: false, error: 'Estas en modo generacion ean-13 por lo q la subcategoria ingresada debe coincidir con el especifico declarado en el clasificador' }
+        }
       }
-      return true;
-    } catch (error) {
-      return false;
+      return { valid: true }
+    } catch {
+      const isRootCategory = !requireSpecificSelection && !normalizeSpecificId(data.clasSpecificId)
+      return {
+        valid: false,
+        error: isRootCategory
+          ? 'Estas en modo generacion ean-13 por lo q categoria debe coincidir con las secciones declaradas en el clasificador'
+          : 'Estas en modo generacion ean-13 por lo q la subcategoria ingresada debe coincidir con el especifico declarado en el clasificador',
+      }
     }
-  };
+  }
 
   // Handle form submission
   const onSubmit = async (data: CategoryFormValues) => {
     // Clear previous errors
-    setServerErrors({});
-    
+    setServerErrors({})
+    const parentId = normalizeParentId(data.parentId)
+
     // Validate CLAS mapping if EAN-13 is enabled
     if (usaEan13) {
-      const parentId = data.parentId === 'none' ? null : data.parentId;
-      const isCLASValid = validateCLASMapping(data.nombre, parentId);
-      
-      if (!isCLASValid) {
-        const isRootCategory = !parentId;
-        const errorMessage = isRootCategory
-          ? 'Estas en modo generacion ean-13 por lo q categoria debe coincidir con las secciones declaradas en el clasificador'
-          : 'Estas en modo generacion ean-13 por lo q la subcategoria ingresada debe coincidir con el especifico declarado en el clasificador';
-        toast.error(errorMessage);
-        return;
+      const clasValidation = validateCLASMapping(data)
+
+      if (!clasValidation.valid) {
+        toast.error(clasValidation.error!)
+        return
       }
     }
     
@@ -167,7 +235,9 @@ export function useCategoryForm({ initialData, onSuccess, usaEan13 = false }: Us
         body: JSON.stringify({
           nombre: data.nombre.trim(),
           descripcion: data.descripcion?.trim() || null,
-          parentId: data.parentId === 'none' ? null : data.parentId,
+          parentId,
+          clasSectionId: normalizeSectionId(data.clasSectionId),
+          clasSpecificId: normalizeSpecificId(data.clasSpecificId),
         }),
       });
 

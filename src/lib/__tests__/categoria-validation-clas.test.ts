@@ -78,7 +78,12 @@ describe('validateCategoryAgainstCLAS', () => {
       usaCodigoEan13: true
     } as any)
 
-    const result = await validateCategoryAgainstCLAS('InvalidSubcategoryName', 'parent-id-123')
+    const result = await validateCategoryAgainstCLAS(
+      'InvalidSubcategoryName',
+      null,
+      '05',
+      '0000'
+    )
 
     expect(result.success).toBe(false)
     expect(result.errors).toHaveLength(1)
@@ -94,10 +99,35 @@ describe('validateCategoryAgainstCLAS', () => {
       usaCodigoEan13: true
     } as any)
 
-    const result = await validateCategoryAgainstCLAS('PANTALONES DE VESTIR (HOMBRE)', 'parent-id-123')
+    const result = await validateCategoryAgainstCLAS(
+      'BLOOMERS P/BEBE',
+      null,
+      '05',
+      '0000'
+    )
 
     expect(result.success).toBe(true)
     expect(result.errors).toBeUndefined()
+  })
+
+  it('should reject a valid specific when it is paired with the wrong section', async () => {
+    vi.mocked(prisma.miEmpresa.findUnique).mockResolvedValueOnce({
+      id: 1,
+      usaCodigoEan13: true
+    } as any)
+
+    const result = await validateCategoryAgainstCLAS(
+      'BLOOMERS P/BEBE',
+      null,
+      '06',
+      '0000'
+    )
+
+    expect(result.success).toBe(false)
+    expect(result.errors).toHaveLength(1)
+    expect(result.errors![0].message).toBe(
+      'Estas en modo generacion ean-13 por lo q la subcategoria ingresada debe coincidir con el especifico declarado en el clasificador'
+    )
   })
 
   it('should include correct error message for root category', async () => {
@@ -120,7 +150,12 @@ describe('validateCategoryAgainstCLAS', () => {
       usaCodigoEan13: true
     } as any)
 
-    const result = await validateCategoryAgainstCLAS('NotAValidSubcategory', 'parent-123')
+    const result = await validateCategoryAgainstCLAS(
+      'NotAValidSubcategory',
+      null,
+      '05',
+      '0000'
+    )
 
     expect(result.success).toBe(false)
     expect(result.errors![0].message).toBe(

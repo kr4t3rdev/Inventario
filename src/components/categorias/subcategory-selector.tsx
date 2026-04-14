@@ -129,41 +129,49 @@ export function SubcategorySelector({
         </Select>
       </div>
 
-      {/* Subcategory Selector */}
-      {internalCategoryId && (
-        <div className="space-y-2">
-          {showLabels && (
-            <Label htmlFor="subcategory-select">
-              Subcategoría (Opcional)
-            </Label>
-          )}
-          {isLoadingSubcategories ? (
-            <Skeleton className="h-9 w-full" data-testid="skeleton" />
-          ) : subcategoriesError ? (
-            <div className="text-sm text-destructive">
-              Error al cargar las subcategorías
-            </div>
-          ) : (
-            <Select
-              value={internalSubcategoryId}
-              onValueChange={handleSubcategoryChange}
-              disabled={disabled}
-            >
-              <SelectTrigger id="subcategory-select">
-                <SelectValue placeholder="Seleccionar subcategoría (opcional)" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">Sin subcategoría</SelectItem>
-                {subcategories.map((subcategory: Categoria) => (
-                  <SelectItem key={subcategory.catId} value={subcategory.catId}>
-                    {subcategory.nombre}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </div>
-      )}
+      {/* Subcategory Selector - always visible */}
+      <div className="space-y-2">
+        {showLabels && (
+          <Label htmlFor="subcategory-select">
+            Subcategoría (Opcional)
+          </Label>
+        )}
+        {internalCategoryId && isLoadingSubcategories ? (
+          <Skeleton className="h-9 w-full" data-testid="skeleton" />
+        ) : internalCategoryId && subcategoriesError ? (
+          <div className="text-sm text-destructive">
+            Error al cargar las subcategorías
+          </div>
+        ) : (
+          <Select
+            value={internalSubcategoryId}
+            onValueChange={handleSubcategoryChange}
+            disabled={disabled || !internalCategoryId}
+          >
+            <SelectTrigger id="subcategory-select">
+              <SelectValue
+                placeholder={
+                  !internalCategoryId
+                    ? "Primero seleccioná una categoría"
+                    : "Seleccionar subcategoría (opcional)"
+                }
+              />
+            </SelectTrigger>
+            <SelectContent>
+              {internalCategoryId && (
+                <>
+                  <SelectItem value="none">Sin subcategoría</SelectItem>
+                  {subcategories.map((subcategory: Categoria) => (
+                    <SelectItem key={subcategory.catId} value={subcategory.catId}>
+                      {subcategory.nombre}
+                    </SelectItem>
+                  ))}
+                </>
+              )}
+            </SelectContent>
+          </Select>
+        )}
+      </div>
     </div>
   )
 }

@@ -80,9 +80,9 @@ const GastoConceptos = () => {
             cell: ({ row }) => {
                 const isActive = (row.original as any).isActive
                 return isActive ? (
-                    <Badge variant="default" className="bg-green-600">Activo</Badge>
+                    <Badge className="bg-green-600 text-white">Activo</Badge>
                 ) : (
-                    <Badge variant="secondary">Inactivo</Badge>
+                    <Badge className="bg-gray-600 text-white">Inactivo</Badge>
                 )
             },
         },

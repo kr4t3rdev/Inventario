@@ -5,6 +5,8 @@
 
 import { z } from "zod"
 import prisma from "@/lib/prisma"
+import { getClasClassifierData } from '@/lib/clas-classifier.server'
+import { isSpecificInSection, validateCLASSection, validateCLASSpecific } from '@/lib/clas-classifier'
 
 // Zod schema for category creation/update
 export const CategoriaSchema = z.object({
@@ -20,6 +22,16 @@ export const CategoriaSchema = z.object({
     .optional(),
   
   parentId: z
+    .string()
+    .optional()
+    .nullable(),
+
+  clasSectionId: z
+    .string()
+    .optional()
+    .nullable(),
+
+  clasSpecificId: z
     .string()
     .optional()
     .nullable()
@@ -88,7 +100,9 @@ export const MAX_HIERARCHY_DEPTH = 3
  */
 export async function validateCategoryAgainstCLAS(
   nombre: string,
-  parentId: string | null
+  parentId: string | null,
+  clasSectionId?: string | null,
+  clasSpecificId?: string | null
 ): Promise<CategoriaValidationResult> {
   try {
     // Check if EAN-13 mode is enabled
@@ -102,20 +116,90 @@ export async function validateCategoryAgainstCLAS(
       return { success: true }
     }
 
-    // Import mapping functions
-    const { mapCategoryToSection, mapSubcategoryToSpecific } = await import('@/lib/category-mapping')
+    const classifier = getClasClassifierData()
+    const normalizedSectionId = clasSectionId?.trim() || null
+    const normalizedSpecificId = clasSpecificId?.trim() || null
 
     try {
-      if (!parentId) {
-        // Root category: validate against sections
-        mapCategoryToSection(nombre)
+      if (normalizedSpecificId) {
+        if (!normalizedSectionId) {
+          return {
+            success: false,
+            errors: [{
+              code: CategoriaErrorCode.INVALID_CLAS_MAPPING,
+              message: 'Estas en modo generacion ean-13 por lo q la subcategoria ingresada debe coincidir con el especifico declarado en el clasificador',
+              field: 'clasSpecificId',
+              details: { nombre, parentId, clasSectionId, clasSpecificId }
+            }]
+          }
+        }
+
+        const matchedSpecificId = validateCLASSpecific(nombre)
+        if (matchedSpecificId !== normalizedSpecificId) {
+          return {
+            success: false,
+            errors: [{
+              code: CategoriaErrorCode.INVALID_CLAS_MAPPING,
+              message: 'Estas en modo generacion ean-13 por lo q la subcategoria ingresada debe coincidir con el especifico declarado en el clasificador',
+              field: 'clasSpecificId',
+              details: { nombre, parentId, clasSectionId, clasSpecificId }
+            }]
+          }
+        }
+
+        if (!classifier.specificSectionById[normalizedSpecificId]) {
+          return {
+            success: false,
+            errors: [{
+              code: CategoriaErrorCode.INVALID_CLAS_MAPPING,
+              message: 'Estas en modo generacion ean-13 por lo q la subcategoria ingresada debe coincidir con el especifico declarado en el clasificador',
+              field: 'clasSpecificId',
+              details: { nombre, parentId, clasSectionId, clasSpecificId }
+            }]
+          }
+        }
+
+        if (normalizedSectionId && !isSpecificInSection(classifier, normalizedSectionId, normalizedSpecificId)) {
+          return {
+            success: false,
+            errors: [{
+              code: CategoriaErrorCode.INVALID_CLAS_MAPPING,
+              message: 'Estas en modo generacion ean-13 por lo q la subcategoria ingresada debe coincidir con el especifico declarado en el clasificador',
+              field: 'clasSpecificId',
+              details: { nombre, parentId, clasSectionId, clasSpecificId }
+            }]
+          }
+        }
       } else {
-        // Subcategory: validate against specifics
-        mapSubcategoryToSpecific(nombre)
+        const matchedSectionId = validateCLASSection(nombre)
+
+        if (normalizedSectionId && matchedSectionId !== normalizedSectionId) {
+          return {
+            success: false,
+            errors: [{
+              code: CategoriaErrorCode.INVALID_CLAS_MAPPING,
+              message: 'Estas en modo generacion ean-13 por lo q categoria debe coincidir con las secciones declaradas en el clasificador',
+              field: 'clasSectionId',
+              details: { nombre, parentId, clasSectionId, clasSpecificId }
+            }]
+          }
+        }
+
+        if (!matchedSectionId) {
+          return {
+            success: false,
+            errors: [{
+              code: CategoriaErrorCode.INVALID_CLAS_MAPPING,
+              message: 'Estas en modo generacion ean-13 por lo q categoria debe coincidir con las secciones declaradas en el clasificador',
+              field: 'clasSectionId',
+              details: { nombre, parentId, clasSectionId, clasSpecificId }
+            }]
+          }
+        }
       }
       return { success: true }
     } catch (mapError) {
-      const isRootCategory = !parentId
+      const isRootCategory = !normalizedSpecificId && !parentId
       const message = isRootCategory
         ? 'Estas en modo generacion ean-13 por lo q categoria debe coincidir con las secciones declaradas en el clasificador'
         : 'Estas en modo generacion ean-13 por lo q la subcategoria ingresada debe coincidir con el especifico declarado en el clasificador'
@@ -465,7 +549,9 @@ export class CategoriaValidator {
     // Step 2: Validate against CLAS mapping in EAN-13 mode
     const clasValidation = await validateCategoryAgainstCLAS(
       validatedData.nombre,
-      validatedData.parentId ?? null
+      validatedData.parentId ?? null,
+      validatedData.clasSectionId ?? null,
+      validatedData.clasSpecificId ?? null
     )
     if (!clasValidation.success) {
       allErrors.push(...(clasValidation.errors || []))
@@ -519,7 +605,9 @@ export class CategoriaValidator {
     // Step 2: Validate against CLAS mapping in EAN-13 mode
     const clasValidation = await validateCategoryAgainstCLAS(
       validatedData.nombre,
-      validatedData.parentId ?? null
+      validatedData.parentId ?? null,
+      validatedData.clasSectionId ?? null,
+      validatedData.clasSpecificId ?? null
     )
     if (!clasValidation.success) {
       allErrors.push(...(clasValidation.errors || []))

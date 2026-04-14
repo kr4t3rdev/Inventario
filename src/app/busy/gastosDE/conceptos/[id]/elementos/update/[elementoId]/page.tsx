@@ -12,7 +12,7 @@ import Link from "next/link"
 export default function UpdateGastoElementoPage() {
     const params = useParams()
     const router = useRouter()
-    const conceptoId = params.conceptoId as string
+    const conceptoId = params.id as string
     const elementoId = params.elementoId as string
     const { data: concepto, isLoading: isLoadingConcepto } = useGetGastoConceptoQuery(conceptoId, { skip: !conceptoId })
 

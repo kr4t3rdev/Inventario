@@ -121,7 +121,8 @@ const GastosDE = () => {
             enableHiding: false,
         },
         {
-            accessorKey: 'concepto.nombre',
+            id: 'conceptoNombre',
+            accessorFn: (row: any) => row.concepto?.nombre || row.tipo || "Sin concepto",
             header: ({ column }) => (
                 <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
                     Concepto de Gasto
@@ -135,7 +136,8 @@ const GastosDE = () => {
             },
         },
         {
-            accessorKey: 'elemento.nombre',
+            id: 'elementoNombre',
+            accessorFn: (row: any) => row.elemento?.nombre || "—",
             header: ({ column }) => (
                 <Button variant='ghost' onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}>
                     Elemento de Gasto
@@ -405,7 +407,7 @@ const GastosDE = () => {
                              <DataTable
                                columns={columns}
                                data={filteredGastosDE}
-                               searchColumn="concepto.nombre"
+                               searchColumn="conceptoNombre"
                                searchPlaceholder="Buscar por concepto de gasto..."
                                rowSelection={rowSelection}
                                onRowSelectionChange={setRowSelection}

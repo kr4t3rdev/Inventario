@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 export default function NewGastoElementoPage() {
     const params = useParams()
-    const conceptoId = params.conceptoId as string
+    const conceptoId = params.id as string
     const { data: concepto, isLoading } = useGetGastoConceptoQuery(conceptoId, { skip: !conceptoId })
 
     if (isLoading) {

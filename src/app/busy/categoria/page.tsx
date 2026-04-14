@@ -63,7 +63,7 @@ function LoadingSpinner({ size = 32 }: { size?: number }) {
 const DataTable = dynamic(() => import("@/components/data-table").then(mod => ({ default: mod.DataTable })), {
   loading: () => (
     <motion.div 
-      className="h-[500px] w-full flex items-center justify-center bg-muted/30 rounded-lg border-2 border-dashed"
+      className="h-125 w-full flex items-center justify-center bg-muted/30 rounded-lg border-2 border-dashed"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
@@ -158,7 +158,7 @@ const Categoria = () => {
       ),
       cell: ({ row }) => {
         const date = new Date(row.getValue('createdAt'))
-        return <div className="max-w-[150px] truncate text-center">{date.toLocaleDateString()}</div>
+        return <div className="max-w-37.5 truncate text-center">{date.toLocaleDateString()}</div>
       },
     },
     {
@@ -312,7 +312,7 @@ const Categoria = () => {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
             >
-              <Skeleton className="h-[500px] w-full rounded-lg" />
+              <Skeleton className="h-125 w-full rounded-lg" />
             </motion.div>
           </div>
         </SidebarInset>
@@ -345,7 +345,7 @@ const Categoria = () => {
             >
               <div className="flex items-center gap-3">
                 <motion.div 
-                  className="w-10 h-10 bg-gradient-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg relative"
+                  className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg relative"
                   whileHover={{ scale: 1.05, rotate: 5 }}
                   transition={{ duration: 0.2 }}
                 >
@@ -365,7 +365,7 @@ const Categoria = () => {
                   </motion.div>
                 </motion.div>
                 <div>
-                  <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
+                  <h1 className="text-3xl font-bold bg-linear-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
                     Categorías
                   </h1>
                   <p className="text-muted-foreground text-sm">
@@ -406,24 +406,44 @@ const Categoria = () => {
                   </motion.button>
                 </motion.div>
 
-                {/* New Category Button */}
-                <motion.div 
-                  whileHover={{ scale: 1.02 }} 
-                  whileTap={{ scale: 0.98 }}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <Button 
-                    asChild 
-                    className="gap-2 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  <motion.div 
+                    whileHover={{ scale: 1.02 }} 
+                    whileTap={{ scale: 0.98 }}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.3 }}
                   >
-                    <Link href="/busy/categoria/new">
-                      <Plus className="h-4 w-4" /> 
-                      Nueva Categoría
-                    </Link>
-                  </Button>
-                </motion.div>
+                    <Button 
+                      asChild 
+                      className="gap-2 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                    >
+                      <Link href="/busy/categoria/new">
+                        <Plus className="h-4 w-4" /> 
+                        Nueva Categoría
+                      </Link>
+                    </Button>
+                  </motion.div>
+
+                  <motion.div 
+                    whileHover={{ scale: 1.02 }} 
+                    whileTap={{ scale: 0.98 }}
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.35 }}
+                  >
+                    <Button 
+                      asChild 
+                      variant="outline"
+                      className="gap-2 border-primary/30 text-primary hover:bg-primary/5"
+                    >
+                      <Link href="/busy/categoria/subcategoria/new">
+                        <Layers className="h-4 w-4" /> 
+                        Nueva Subcategoría
+                      </Link>
+                    </Button>
+                  </motion.div>
+                </div>
               </div>
             </motion.div>
 

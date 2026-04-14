@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
 
         // Comprehensive validation using the new validation system
         const validation = await CategoriaValidator.validateCategoryCreation(body)
-        
+
         if (!validation.success) {
             return CategoriaApiErrorHandler.handleValidationErrors(validation.errors!)
         }
