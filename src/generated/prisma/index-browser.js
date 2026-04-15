@@ -558,16 +558,6 @@ exports.Prisma.ServiciosScalarFieldEnum = {
   nombre: 'nombre',
   precio: 'precio',
   descripcion: 'descripcion',
-  precioCosto: 'precioCosto',
-  precioVenta: 'precioVenta',
-  codigoInterno: 'codigoInterno',
-  codigoNegocio: 'codigoNegocio',
-  categoriaId: 'categoriaId',
-  subcategoriaId: 'subcategoriaId',
-  unidadId: 'unidadId',
-  vendorId: 'vendorId',
-  activo: 'activo',
-  deletedAt: 'deletedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -580,6 +570,25 @@ exports.Prisma.VentaServiciosScalarFieldEnum = {
   observaciones: 'observaciones',
   reconciliado: 'reconciliado',
   clienteId: 'clienteId',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.GastoConceptoScalarFieldEnum = {
+  conceptoId: 'conceptoId',
+  nombre: 'nombre',
+  descripcion: 'descripcion',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.GastoElementoScalarFieldEnum = {
+  elementoId: 'elementoId',
+  nombre: 'nombre',
+  descripcion: 'descripcion',
+  isActive: 'isActive',
+  conceptoId: 'conceptoId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -597,25 +606,6 @@ exports.Prisma.GastosDEScalarFieldEnum = {
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   numeroFactura: 'numeroFactura'
-};
-
-exports.Prisma.GastoConceptoScalarFieldEnum = {
-  conceptoId: 'conceptoId',
-  nombre: 'nombre',
-  descripcion: 'descripcion',
-  isActive: 'isActive',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
-};
-
-exports.Prisma.GastoElementoScalarFieldEnum = {
-  elementoId: 'elementoId',
-  conceptoId: 'conceptoId',
-  nombre: 'nombre',
-  descripcion: 'descripcion',
-  isActive: 'isActive',
-  createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.MonedaScalarFieldEnum = {
@@ -1470,9 +1460,9 @@ exports.Prisma.ModelName = {
   CompraProducto: 'CompraProducto',
   Servicios: 'Servicios',
   VentaServicios: 'VentaServicios',
-  GastosDE: 'GastosDE',
   GastoConcepto: 'GastoConcepto',
   GastoElemento: 'GastoElemento',
+  GastosDE: 'GastosDE',
   Moneda: 'Moneda',
   CatalogoReparacionConfig: 'CatalogoReparacionConfig',
   TasaCambio: 'TasaCambio',

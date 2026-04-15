@@ -6,8 +6,8 @@ import { mapCategoryToSection, mapSubcategoryToSpecific } from '@/lib/category-m
 import { prisma } from '@/lib/prisma';
 import { NextResponse } from 'next/server';
 
-export const DEFAULT_PARENT_PREVIEW_SURTIDO = '0001';
-export const DEFAULT_CHILD_PREVIEW_SURTIDO = '0002';
+export const DEFAULT_PARENT_PREVIEW_SURTIDO = '0000'
+export const DEFAULT_CHILD_PREVIEW_SURTIDO = '0001'
 
 /**
  * @description Payload para generar un código de negocio desde segmentos ya resueltos.

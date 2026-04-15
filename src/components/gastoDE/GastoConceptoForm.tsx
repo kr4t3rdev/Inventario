@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -35,6 +35,7 @@ interface GastoConceptoFormProps {
 export function GastoConceptoForm({ initialData }: GastoConceptoFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const [isPending, startTransition] = useTransition()
 
   const [addConcepto] = useAddGastoConceptoMutation()
   const [updateConcepto] = useUpdateGastoConceptoMutation()
@@ -168,14 +169,18 @@ export function GastoConceptoForm({ initialData }: GastoConceptoFormProps) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.4 }}
               >
-                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Button type="button" variant="destructive" onClick={() => router.push("/busy/gastosDE/conceptos")} disabled={isLoading} className="gap-2">
-                    <ArrowLeft className="h-4 w-4" /> Cancelar
-                  </Button>
-                </motion.div>
-                <motion.div whileHover={{ scale: isLoading ? 1 : 1.02 }} whileTap={{ scale: isLoading ? 1 : 0.98 }}>
-                  <Button type="submit" disabled={isLoading} className="min-w-[140px] gap-2 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90">
-                    {isLoading ? (
+                <Button 
+                  type="button" 
+                  variant="destructive" 
+                  onClick={() => startTransition(() => router.push("/busy/gastosDE/conceptos"))}
+                  disabled={isLoading || isPending} 
+                  className="gap-2"
+                >
+                  <ArrowLeft className="h-4 w-4" /> Cancelar
+                </Button>
+                <motion.div whileHover={{ scale: isLoading || isPending ? 1 : 1.02 }}>
+                  <Button type="submit" disabled={isLoading || isPending} className="min-w-[140px] gap-2 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90">
+                    {isLoading || isPending ? (
                       <>
                         <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}>
                           <Loader2 className="h-4 w-4" />

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
@@ -177,6 +177,7 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [usaEan13, setUsaEan13] = useState(false)
+  const [isPending, startTransition] = useTransition()
   const isEditing = Boolean(initialData)
 
   useEffect(() => {
@@ -1112,26 +1113,24 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.45 }}
                 >
-                  <motion.div whileHover={{ scale: isLoading ? 1 : 1.02 }} whileTap={{ scale: isLoading ? 1 : 0.98 }}>
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      onClick={() => router.push('/busy/products')}
-                      disabled={isLoading}
-                      className="gap-2"
-                    >
-                      <ArrowLeft className="h-4 w-4" />
-                      Cancelar
-                    </Button>
-                  </motion.div>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    onClick={() => startTransition(() => router.push('/busy/products'))}
+                    disabled={isLoading || isPending}
+                    className="gap-2"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Cancelar
+                  </Button>
 
-                  <motion.div whileHover={{ scale: isLoading ? 1 : 1.02 }} whileTap={{ scale: isLoading ? 1 : 0.98 }}>
+                  <motion.div whileHover={{ scale: (isLoading || isPending) ? 1 : 1.02 }}>
                     <Button
                       type="submit"
-                      disabled={isLoading}
+                      disabled={isLoading || isPending}
                       className="cursor-pointer min-w-[170px] gap-2 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
                     >
-                      {isLoading ? (
+                      {isLoading || isPending ? (
                         <>
                           <Loader2 className="h-4 w-4 animate-spin" />
                           {initialData ? 'Actualizando...' : 'Creando...'}

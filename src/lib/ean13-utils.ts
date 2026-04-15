@@ -252,7 +252,7 @@ export async function FindNextAvailableSurtido(
       .sort((a, b) => b - a) // Ordenar descendente para obtener máximo
 
     // Calcular siguiente
-    const maxSurtido = surtidoNumbers.length > 0 ? surtidoNumbers[0] : 0
+    const maxSurtido = surtidoNumbers.length > 0 ? surtidoNumbers[0] : -1
     const nextSurtido = maxSurtido + 1
 
     // Validar no desbordamiento
