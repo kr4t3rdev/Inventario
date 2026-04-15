@@ -558,6 +558,16 @@ exports.Prisma.ServiciosScalarFieldEnum = {
   nombre: 'nombre',
   precio: 'precio',
   descripcion: 'descripcion',
+  precioCosto: 'precioCosto',
+  precioVenta: 'precioVenta',
+  codigoInterno: 'codigoInterno',
+  codigoNegocio: 'codigoNegocio',
+  categoriaId: 'categoriaId',
+  subcategoriaId: 'subcategoriaId',
+  unidadId: 'unidadId',
+  vendorId: 'vendorId',
+  activo: 'activo',
+  deletedAt: 'deletedAt',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };

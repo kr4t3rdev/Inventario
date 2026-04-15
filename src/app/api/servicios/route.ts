@@ -52,8 +52,8 @@ async function validateUnidad(unidadId: string | null | undefined): Promise<void
 
 const servicioSchema = z.object({
   nombre: z.string().min(1, 'El nombre es requerido'),
-  descripcion: z.string().max(500).optional().nullable(),
-  precio: z.coerce.number().int().nonnegative().optional(),
+  descripcion: z.string().min(1, 'La descripción es requerida'),
+  precio: z.coerce.number().int().positive('El precio debe ser mayor a 0'),
   precioCosto: z.coerce.number().int().nonnegative().optional().nullable(),
   precioVenta: z.coerce.number().int().nonnegative().optional().nullable(),
   codigoInterno: z.string().max(11).optional().nullable(),
@@ -104,13 +104,13 @@ export const POST = withAuthPost(async (request: NextRequest, context: any, user
     const normalizedUnidadId = await normalizeId(data.unidadId)
     const normalizedVendorId = await normalizeId(data.vendorId)
 
-    const gastoServicio = await prisma.servicios.create({
+    const servicio = await prisma.servicios.create({
       data: {
         nombre: data.nombre,
         descripcion: data.descripcion,
-        precio: data.precio ?? data.precioVenta ?? 0,
+        precio: data.precio,
         precioCosto: data.precioCosto ?? null,
-        precioVenta: data.precioVenta ?? data.precio ?? null,
+        precioVenta: data.precioVenta ?? null,
         codigoInterno: data.codigoInterno ?? null,
         codigoNegocio: data.codigoNegocio ?? null,
         categoriaId: normalizedCategoriaId,
@@ -121,7 +121,7 @@ export const POST = withAuthPost(async (request: NextRequest, context: any, user
       },
     })
 
-    return NextResponse.json(gastoServicio)
+    return NextResponse.json(servicio)
   } catch (error) {
     if (error instanceof InvalidFkError) {
       return NextResponse.json({

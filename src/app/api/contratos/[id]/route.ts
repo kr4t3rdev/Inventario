@@ -1,6 +1,52 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { authenticateUser } from '@/lib/auth-middleware';
+import { z } from 'zod';
+
+// Schema para validar actualización de contratos
+const contratoUpdateSchema = z
+  .object({
+    tipo: z.enum(['VENTA', 'SERVICIO', 'PROVEEDOR']).optional(),
+    fechaInicio: z.string().datetime().optional(),
+    fechaFin: z.string().datetime().nullable().optional(),
+    monto: z.string().nullable().optional(),
+    moneda: z.string().optional(),
+    esMultiMoneda: z.boolean().optional(),
+    condiciones: z.any().nullable().optional(),
+    observaciones: z.string().nullable().optional(),
+    clienteId: z.string().nullable().optional(),
+    vendorId: z.string().nullable().optional(),
+    estado: z.enum(['BORRADOR', 'PENDIENTE_APROBACION', 'APROBADO', 'RECHAZADO', 'ACTIVO', 'FINALIZADO', 'ANULADO']).optional(),
+    numeroContrato: z.string().optional(),
+    fechaAprobacion: z.string().datetime().nullable().optional(),
+    aprobadoPor: z.string().nullable().optional(),
+  })
+  .refine(
+    (data) => {
+      // Si se está actualizando el tipo, validar la lógica de cliente/vendor
+      if (data.tipo) {
+        if ((data.tipo === 'VENTA' || data.tipo === 'SERVICIO') && data.clienteId === null && data.clienteId !== undefined) {
+          return false;
+        }
+        if (data.tipo === 'PROVEEDOR' && data.vendorId === null && data.vendorId !== undefined) {
+          return false;
+        }
+      }
+      return true;
+    },
+    (data) => {
+      if (data.tipo === 'PROVEEDOR') {
+        return {
+          message: 'El campo Proveedor es requerido para contratos de tipo PROVEEDOR',
+          path: ['vendorId'],
+        };
+      }
+      return {
+        message: 'El campo Cliente es requerido para contratos de tipo VENTA o SERVICIO',
+        path: ['clienteId'],
+      };
+    }
+  );
 
 export async function GET(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   try {
@@ -43,34 +89,67 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const { id } = await params;
     const body = await request.json();
+    
+    // Validar con el schema
+    const validatedBody = contratoUpdateSchema.parse(body);
+
+    // Si estamos cambiando el tipo, verificar que tenga el cliente o vendor correspondiente
+    const existingContrato = await prisma.contrato.findUnique({
+      where: { contratoId: id },
+    });
+
+    if (!existingContrato) {
+      return NextResponse.json({ error: 'Contrato no encontrado' }, { status: 404 });
+    }
+
+    const tipoActual = validatedBody.tipo || existingContrato.tipo;
+    
+    // Validar lógica de negocio: si es VENTA/SERVICIO debe tener cliente
+    if ((tipoActual === 'VENTA' || tipoActual === 'SERVICIO')) {
+      const clienteId = validatedBody.clienteId !== undefined ? validatedBody.clienteId : existingContrato.clienteId;
+      if (!clienteId) {
+        return NextResponse.json(
+          { error: 'El campo Cliente es requerido para contratos de tipo VENTA o SERVICIO' },
+          { status: 400 }
+        );
+      }
+    }
+    
+    // Validar lógica de negocio: si es PROVEEDOR debe tener vendor
+    if (tipoActual === 'PROVEEDOR') {
+      const vendorId = validatedBody.vendorId !== undefined ? validatedBody.vendorId : existingContrato.vendorId;
+      if (!vendorId) {
+        return NextResponse.json(
+          { error: 'El campo Proveedor es requerido para contratos de tipo PROVEEDOR' },
+          { status: 400 }
+        );
+      }
+    }
 
     // Construir objeto data explícitamente para evitar campos inválidos
-    const data: any = {
-      numeroContrato: body.numeroContrato,
-      tipo: body.tipo,
-      estado: body.estado,
-      monto: body.monto,
-      moneda: body.moneda,
-      esMultiMoneda: body.esMultiMoneda,
-      condiciones: body.condiciones,
-      observaciones: body.observaciones,
-      fechaInicio: body.fechaInicio ? new Date(body.fechaInicio) : undefined,
-      fechaFin: body.fechaFin ? new Date(body.fechaFin) : undefined,
-      fechaAprobacion: body.fechaAprobacion ? new Date(body.fechaAprobacion) : undefined,
-    };
-
-    // Eliminar claves undefined
-    Object.keys(data).forEach(key => data[key] === undefined && delete data[key]);
+    const data: any = {};
+    
+    if (validatedBody.numeroContrato !== undefined) data.numeroContrato = validatedBody.numeroContrato;
+    if (validatedBody.tipo !== undefined) data.tipo = validatedBody.tipo;
+    if (validatedBody.estado !== undefined) data.estado = validatedBody.estado;
+    if (validatedBody.monto !== undefined) data.monto = validatedBody.monto;
+    if (validatedBody.moneda !== undefined) data.moneda = validatedBody.moneda;
+    if (validatedBody.esMultiMoneda !== undefined) data.esMultiMoneda = validatedBody.esMultiMoneda;
+    if (validatedBody.condiciones !== undefined) data.condiciones = validatedBody.condiciones;
+    if (validatedBody.observaciones !== undefined) data.observaciones = validatedBody.observaciones;
+    if (validatedBody.fechaInicio !== undefined) data.fechaInicio = new Date(validatedBody.fechaInicio);
+    if (validatedBody.fechaFin !== undefined) data.fechaFin = validatedBody.fechaFin ? new Date(validatedBody.fechaFin) : null;
+    if (validatedBody.fechaAprobacion !== undefined) data.fechaAprobacion = validatedBody.fechaAprobacion ? new Date(validatedBody.fechaAprobacion) : null;
 
     // Manejo de relaciones (usando connect/disconnect para asegurar compatibilidad)
-    if (body.clienteId !== undefined) {
-      data.cliente = body.clienteId ? { connect: { clienteId: body.clienteId } } : { disconnect: true };
+    if (validatedBody.clienteId !== undefined) {
+      data.cliente = validatedBody.clienteId ? { connect: { clienteId: validatedBody.clienteId } } : { disconnect: true };
     }
-    if (body.vendorId !== undefined) {
-      data.vendor = body.vendorId ? { connect: { vendorId: body.vendorId } } : { disconnect: true };
+    if (validatedBody.vendorId !== undefined) {
+      data.vendor = validatedBody.vendorId ? { connect: { vendorId: validatedBody.vendorId } } : { disconnect: true };
     }
-    if (body.aprobadoPor !== undefined) {
-      data.aprobador = body.aprobadoPor ? { connect: { userId: body.aprobadoPor } } : { disconnect: true };
+    if (validatedBody.aprobadoPor !== undefined) {
+      data.aprobador = validatedBody.aprobadoPor ? { connect: { userId: validatedBody.aprobadoPor } } : { disconnect: true };
     }
 
     const contrato = await prisma.contrato.update({
@@ -84,9 +163,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       },
     });
 
-    if (body.clienteId && contrato.numeroContrato) {
+    if (validatedBody.clienteId && contrato.numeroContrato) {
       await prisma.cliente.update({
-        where: { clienteId: body.clienteId },
+        where: { clienteId: validatedBody.clienteId },
         data: { numeroContrato: contrato.numeroContrato },
       });
     }
@@ -94,6 +173,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     return NextResponse.json(contrato);
   } catch (error) {
     console.error('Error al actualizar contrato:', error);
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ error: 'Validation error', details: error.errors }, { status: 400 });
+    }
     return NextResponse.json({ error: 'Error al actualizar contrato' }, { status: 500 });
   }
 }

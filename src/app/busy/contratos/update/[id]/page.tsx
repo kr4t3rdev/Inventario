@@ -85,6 +85,25 @@ export default function UpdateContratoPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // Validación client-side
+    if (!formData.fechaInicio) {
+      toast('La fecha de inicio es requerida')
+      return
+    }
+
+    if (formData.tipo === 'VENTA' || formData.tipo === 'SERVICIO') {
+      if (!formData.clienteId) {
+        toast('El cliente es requerido para contratos de tipo ' + formData.tipo)
+        return
+      }
+    } else if (formData.tipo === 'PROVEEDOR') {
+      if (!formData.vendorId) {
+        toast('El proveedor es requerido para contratos de tipo PROVEEDOR')
+        return
+      }
+    }
+
     setIsLoading(true)
 
     try {

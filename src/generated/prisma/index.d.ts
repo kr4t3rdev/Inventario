@@ -8633,12 +8633,16 @@ export namespace Prisma {
     subcategorias: number
     productos: number
     productosSubcategoria: number
+    servicios: number
+    serviciosSubcategoria: number
   }
 
   export type CategoriaCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     subcategorias?: boolean | CategoriaCountOutputTypeCountSubcategoriasArgs
     productos?: boolean | CategoriaCountOutputTypeCountProductosArgs
     productosSubcategoria?: boolean | CategoriaCountOutputTypeCountProductosSubcategoriaArgs
+    servicios?: boolean | CategoriaCountOutputTypeCountServiciosArgs
+    serviciosSubcategoria?: boolean | CategoriaCountOutputTypeCountServiciosSubcategoriaArgs
   }
 
   // Custom InputTypes
@@ -8673,6 +8677,20 @@ export namespace Prisma {
     where?: ProductoWhereInput
   }
 
+  /**
+   * CategoriaCountOutputType without action
+   */
+  export type CategoriaCountOutputTypeCountServiciosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ServiciosWhereInput
+  }
+
+  /**
+   * CategoriaCountOutputType without action
+   */
+  export type CategoriaCountOutputTypeCountServiciosSubcategoriaArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ServiciosWhereInput
+  }
+
 
   /**
    * Count Type UnidadCountOutputType
@@ -8680,10 +8698,12 @@ export namespace Prisma {
 
   export type UnidadCountOutputType = {
     productos: number
+    servicios: number
   }
 
   export type UnidadCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     productos?: boolean | UnidadCountOutputTypeCountProductosArgs
+    servicios?: boolean | UnidadCountOutputTypeCountServiciosArgs
   }
 
   // Custom InputTypes
@@ -8704,6 +8724,13 @@ export namespace Prisma {
     where?: ProductoWhereInput
   }
 
+  /**
+   * UnidadCountOutputType without action
+   */
+  export type UnidadCountOutputTypeCountServiciosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ServiciosWhereInput
+  }
+
 
   /**
    * Count Type VendorCountOutputType
@@ -8716,6 +8743,7 @@ export namespace Prisma {
     deudasCash: number
     gastoCompras: number
     productos: number
+    servicios: number
   }
 
   export type VendorCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -8725,6 +8753,7 @@ export namespace Prisma {
     deudasCash?: boolean | VendorCountOutputTypeCountDeudasCashArgs
     gastoCompras?: boolean | VendorCountOutputTypeCountGastoComprasArgs
     productos?: boolean | VendorCountOutputTypeCountProductosArgs
+    servicios?: boolean | VendorCountOutputTypeCountServiciosArgs
   }
 
   // Custom InputTypes
@@ -8778,6 +8807,13 @@ export namespace Prisma {
    */
   export type VendorCountOutputTypeCountProductosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ProductoWhereInput
+  }
+
+  /**
+   * VendorCountOutputType without action
+   */
+  export type VendorCountOutputTypeCountServiciosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: ServiciosWhereInput
   }
 
 
@@ -10662,6 +10698,8 @@ export namespace Prisma {
     subcategorias?: boolean | Categoria$subcategoriasArgs<ExtArgs>
     productos?: boolean | Categoria$productosArgs<ExtArgs>
     productosSubcategoria?: boolean | Categoria$productosSubcategoriaArgs<ExtArgs>
+    servicios?: boolean | Categoria$serviciosArgs<ExtArgs>
+    serviciosSubcategoria?: boolean | Categoria$serviciosSubcategoriaArgs<ExtArgs>
     _count?: boolean | CategoriaCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["categoria"]>
 
@@ -10700,6 +10738,8 @@ export namespace Prisma {
     subcategorias?: boolean | Categoria$subcategoriasArgs<ExtArgs>
     productos?: boolean | Categoria$productosArgs<ExtArgs>
     productosSubcategoria?: boolean | Categoria$productosSubcategoriaArgs<ExtArgs>
+    servicios?: boolean | Categoria$serviciosArgs<ExtArgs>
+    serviciosSubcategoria?: boolean | Categoria$serviciosSubcategoriaArgs<ExtArgs>
     _count?: boolean | CategoriaCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type CategoriaIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -10716,6 +10756,8 @@ export namespace Prisma {
       subcategorias: Prisma.$CategoriaPayload<ExtArgs>[]
       productos: Prisma.$ProductoPayload<ExtArgs>[]
       productosSubcategoria: Prisma.$ProductoPayload<ExtArgs>[]
+      servicios: Prisma.$ServiciosPayload<ExtArgs>[]
+      serviciosSubcategoria: Prisma.$ServiciosPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       catId: string
@@ -11122,6 +11164,8 @@ export namespace Prisma {
     subcategorias<T extends Categoria$subcategoriasArgs<ExtArgs> = {}>(args?: Subset<T, Categoria$subcategoriasArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CategoriaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     productos<T extends Categoria$productosArgs<ExtArgs> = {}>(args?: Subset<T, Categoria$productosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProductoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     productosSubcategoria<T extends Categoria$productosSubcategoriaArgs<ExtArgs> = {}>(args?: Subset<T, Categoria$productosSubcategoriaArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProductoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    servicios<T extends Categoria$serviciosArgs<ExtArgs> = {}>(args?: Subset<T, Categoria$serviciosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ServiciosPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    serviciosSubcategoria<T extends Categoria$serviciosSubcategoriaArgs<ExtArgs> = {}>(args?: Subset<T, Categoria$serviciosSubcategoriaArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ServiciosPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -11644,6 +11688,54 @@ export namespace Prisma {
   }
 
   /**
+   * Categoria.servicios
+   */
+  export type Categoria$serviciosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Servicios
+     */
+    select?: ServiciosSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Servicios
+     */
+    omit?: ServiciosOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ServiciosInclude<ExtArgs> | null
+    where?: ServiciosWhereInput
+    orderBy?: ServiciosOrderByWithRelationInput | ServiciosOrderByWithRelationInput[]
+    cursor?: ServiciosWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ServiciosScalarFieldEnum | ServiciosScalarFieldEnum[]
+  }
+
+  /**
+   * Categoria.serviciosSubcategoria
+   */
+  export type Categoria$serviciosSubcategoriaArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Servicios
+     */
+    select?: ServiciosSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Servicios
+     */
+    omit?: ServiciosOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ServiciosInclude<ExtArgs> | null
+    where?: ServiciosWhereInput
+    orderBy?: ServiciosOrderByWithRelationInput | ServiciosOrderByWithRelationInput[]
+    cursor?: ServiciosWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ServiciosScalarFieldEnum | ServiciosScalarFieldEnum[]
+  }
+
+  /**
    * Categoria without action
    */
   export type CategoriaDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -11827,6 +11919,7 @@ export namespace Prisma {
     updatedAt?: boolean
     simbolo?: boolean
     productos?: boolean | Unidad$productosArgs<ExtArgs>
+    servicios?: boolean | Unidad$serviciosArgs<ExtArgs>
     _count?: boolean | UnidadCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["unidad"]>
 
@@ -11857,6 +11950,7 @@ export namespace Prisma {
   export type UnidadOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"unidadId" | "nombre" | "createdAt" | "updatedAt" | "simbolo", ExtArgs["result"]["unidad"]>
   export type UnidadInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     productos?: boolean | Unidad$productosArgs<ExtArgs>
+    servicios?: boolean | Unidad$serviciosArgs<ExtArgs>
     _count?: boolean | UnidadCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type UnidadIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -11866,6 +11960,7 @@ export namespace Prisma {
     name: "Unidad"
     objects: {
       productos: Prisma.$ProductoPayload<ExtArgs>[]
+      servicios: Prisma.$ServiciosPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       unidadId: string
@@ -12268,6 +12363,7 @@ export namespace Prisma {
   export interface Prisma__UnidadClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     productos<T extends Unidad$productosArgs<ExtArgs> = {}>(args?: Subset<T, Unidad$productosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProductoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    servicios<T extends Unidad$serviciosArgs<ExtArgs> = {}>(args?: Subset<T, Unidad$serviciosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ServiciosPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -12714,6 +12810,30 @@ export namespace Prisma {
   }
 
   /**
+   * Unidad.servicios
+   */
+  export type Unidad$serviciosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Servicios
+     */
+    select?: ServiciosSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Servicios
+     */
+    omit?: ServiciosOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ServiciosInclude<ExtArgs> | null
+    where?: ServiciosWhereInput
+    orderBy?: ServiciosOrderByWithRelationInput | ServiciosOrderByWithRelationInput[]
+    cursor?: ServiciosWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ServiciosScalarFieldEnum | ServiciosScalarFieldEnum[]
+  }
+
+  /**
    * Unidad without action
    */
   export type UnidadDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -12958,6 +13078,7 @@ export namespace Prisma {
     deudasCash?: boolean | Vendor$deudasCashArgs<ExtArgs>
     gastoCompras?: boolean | Vendor$gastoComprasArgs<ExtArgs>
     productos?: boolean | Vendor$productosArgs<ExtArgs>
+    servicios?: boolean | Vendor$serviciosArgs<ExtArgs>
     _count?: boolean | VendorCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["vendor"]>
 
@@ -13014,6 +13135,7 @@ export namespace Prisma {
     deudasCash?: boolean | Vendor$deudasCashArgs<ExtArgs>
     gastoCompras?: boolean | Vendor$gastoComprasArgs<ExtArgs>
     productos?: boolean | Vendor$productosArgs<ExtArgs>
+    servicios?: boolean | Vendor$serviciosArgs<ExtArgs>
     _count?: boolean | VendorCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type VendorIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -13028,6 +13150,7 @@ export namespace Prisma {
       deudasCash: Prisma.$DeudaCashPayload<ExtArgs>[]
       gastoCompras: Prisma.$GastoCompraPayload<ExtArgs>[]
       productos: Prisma.$ProductoPayload<ExtArgs>[]
+      servicios: Prisma.$ServiciosPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       vendorId: string
@@ -13442,6 +13565,7 @@ export namespace Prisma {
     deudasCash<T extends Vendor$deudasCashArgs<ExtArgs> = {}>(args?: Subset<T, Vendor$deudasCashArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DeudaCashPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     gastoCompras<T extends Vendor$gastoComprasArgs<ExtArgs> = {}>(args?: Subset<T, Vendor$gastoComprasArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$GastoCompraPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     productos<T extends Vendor$productosArgs<ExtArgs> = {}>(args?: Subset<T, Vendor$productosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProductoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    servicios<T extends Vendor$serviciosArgs<ExtArgs> = {}>(args?: Subset<T, Vendor$serviciosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ServiciosPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -14012,6 +14136,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: ProductoScalarFieldEnum | ProductoScalarFieldEnum[]
+  }
+
+  /**
+   * Vendor.servicios
+   */
+  export type Vendor$serviciosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Servicios
+     */
+    select?: ServiciosSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Servicios
+     */
+    omit?: ServiciosOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ServiciosInclude<ExtArgs> | null
+    where?: ServiciosWhereInput
+    orderBy?: ServiciosOrderByWithRelationInput | ServiciosOrderByWithRelationInput[]
+    cursor?: ServiciosWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: ServiciosScalarFieldEnum | ServiciosScalarFieldEnum[]
   }
 
   /**
@@ -47769,10 +47917,14 @@ export namespace Prisma {
 
   export type ServiciosAvgAggregateOutputType = {
     precio: number | null
+    precioCosto: number | null
+    precioVenta: number | null
   }
 
   export type ServiciosSumAggregateOutputType = {
     precio: number | null
+    precioCosto: number | null
+    precioVenta: number | null
   }
 
   export type ServiciosMinAggregateOutputType = {
@@ -47780,6 +47932,16 @@ export namespace Prisma {
     nombre: string | null
     precio: number | null
     descripcion: string | null
+    precioCosto: number | null
+    precioVenta: number | null
+    codigoInterno: string | null
+    codigoNegocio: string | null
+    categoriaId: string | null
+    subcategoriaId: string | null
+    unidadId: string | null
+    vendorId: string | null
+    activo: boolean | null
+    deletedAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -47789,6 +47951,16 @@ export namespace Prisma {
     nombre: string | null
     precio: number | null
     descripcion: string | null
+    precioCosto: number | null
+    precioVenta: number | null
+    codigoInterno: string | null
+    codigoNegocio: string | null
+    categoriaId: string | null
+    subcategoriaId: string | null
+    unidadId: string | null
+    vendorId: string | null
+    activo: boolean | null
+    deletedAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -47798,6 +47970,16 @@ export namespace Prisma {
     nombre: number
     precio: number
     descripcion: number
+    precioCosto: number
+    precioVenta: number
+    codigoInterno: number
+    codigoNegocio: number
+    categoriaId: number
+    subcategoriaId: number
+    unidadId: number
+    vendorId: number
+    activo: number
+    deletedAt: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -47806,10 +47988,14 @@ export namespace Prisma {
 
   export type ServiciosAvgAggregateInputType = {
     precio?: true
+    precioCosto?: true
+    precioVenta?: true
   }
 
   export type ServiciosSumAggregateInputType = {
     precio?: true
+    precioCosto?: true
+    precioVenta?: true
   }
 
   export type ServiciosMinAggregateInputType = {
@@ -47817,6 +48003,16 @@ export namespace Prisma {
     nombre?: true
     precio?: true
     descripcion?: true
+    precioCosto?: true
+    precioVenta?: true
+    codigoInterno?: true
+    codigoNegocio?: true
+    categoriaId?: true
+    subcategoriaId?: true
+    unidadId?: true
+    vendorId?: true
+    activo?: true
+    deletedAt?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -47826,6 +48022,16 @@ export namespace Prisma {
     nombre?: true
     precio?: true
     descripcion?: true
+    precioCosto?: true
+    precioVenta?: true
+    codigoInterno?: true
+    codigoNegocio?: true
+    categoriaId?: true
+    subcategoriaId?: true
+    unidadId?: true
+    vendorId?: true
+    activo?: true
+    deletedAt?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -47835,6 +48041,16 @@ export namespace Prisma {
     nombre?: true
     precio?: true
     descripcion?: true
+    precioCosto?: true
+    precioVenta?: true
+    codigoInterno?: true
+    codigoNegocio?: true
+    categoriaId?: true
+    subcategoriaId?: true
+    unidadId?: true
+    vendorId?: true
+    activo?: true
+    deletedAt?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -47931,6 +48147,16 @@ export namespace Prisma {
     nombre: string
     precio: number
     descripcion: string
+    precioCosto: number | null
+    precioVenta: number | null
+    codigoInterno: string | null
+    codigoNegocio: string | null
+    categoriaId: string | null
+    subcategoriaId: string | null
+    unidadId: string | null
+    vendorId: string | null
+    activo: boolean
+    deletedAt: Date | null
     createdAt: Date
     updatedAt: Date
     _count: ServiciosCountAggregateOutputType | null
@@ -47959,8 +48185,22 @@ export namespace Prisma {
     nombre?: boolean
     precio?: boolean
     descripcion?: boolean
+    precioCosto?: boolean
+    precioVenta?: boolean
+    codigoInterno?: boolean
+    codigoNegocio?: boolean
+    categoriaId?: boolean
+    subcategoriaId?: boolean
+    unidadId?: boolean
+    vendorId?: boolean
+    activo?: boolean
+    deletedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    categoria?: boolean | Servicios$categoriaArgs<ExtArgs>
+    subcategoria?: boolean | Servicios$subcategoriaArgs<ExtArgs>
+    unidad?: boolean | Servicios$unidadArgs<ExtArgs>
+    vendor?: boolean | Servicios$vendorArgs<ExtArgs>
     ofertaItems?: boolean | Servicios$ofertaItemsArgs<ExtArgs>
     ventasServicios?: boolean | Servicios$ventasServiciosArgs<ExtArgs>
     _count?: boolean | ServiciosCountOutputTypeDefaultArgs<ExtArgs>
@@ -47971,8 +48211,22 @@ export namespace Prisma {
     nombre?: boolean
     precio?: boolean
     descripcion?: boolean
+    precioCosto?: boolean
+    precioVenta?: boolean
+    codigoInterno?: boolean
+    codigoNegocio?: boolean
+    categoriaId?: boolean
+    subcategoriaId?: boolean
+    unidadId?: boolean
+    vendorId?: boolean
+    activo?: boolean
+    deletedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    categoria?: boolean | Servicios$categoriaArgs<ExtArgs>
+    subcategoria?: boolean | Servicios$subcategoriaArgs<ExtArgs>
+    unidad?: boolean | Servicios$unidadArgs<ExtArgs>
+    vendor?: boolean | Servicios$vendorArgs<ExtArgs>
   }, ExtArgs["result"]["servicios"]>
 
   export type ServiciosSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -47980,8 +48234,22 @@ export namespace Prisma {
     nombre?: boolean
     precio?: boolean
     descripcion?: boolean
+    precioCosto?: boolean
+    precioVenta?: boolean
+    codigoInterno?: boolean
+    codigoNegocio?: boolean
+    categoriaId?: boolean
+    subcategoriaId?: boolean
+    unidadId?: boolean
+    vendorId?: boolean
+    activo?: boolean
+    deletedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
+    categoria?: boolean | Servicios$categoriaArgs<ExtArgs>
+    subcategoria?: boolean | Servicios$subcategoriaArgs<ExtArgs>
+    unidad?: boolean | Servicios$unidadArgs<ExtArgs>
+    vendor?: boolean | Servicios$vendorArgs<ExtArgs>
   }, ExtArgs["result"]["servicios"]>
 
   export type ServiciosSelectScalar = {
@@ -47989,22 +48257,50 @@ export namespace Prisma {
     nombre?: boolean
     precio?: boolean
     descripcion?: boolean
+    precioCosto?: boolean
+    precioVenta?: boolean
+    codigoInterno?: boolean
+    codigoNegocio?: boolean
+    categoriaId?: boolean
+    subcategoriaId?: boolean
+    unidadId?: boolean
+    vendorId?: boolean
+    activo?: boolean
+    deletedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type ServiciosOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"servicioId" | "nombre" | "precio" | "descripcion" | "createdAt" | "updatedAt", ExtArgs["result"]["servicios"]>
+  export type ServiciosOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"servicioId" | "nombre" | "precio" | "descripcion" | "precioCosto" | "precioVenta" | "codigoInterno" | "codigoNegocio" | "categoriaId" | "subcategoriaId" | "unidadId" | "vendorId" | "activo" | "deletedAt" | "createdAt" | "updatedAt", ExtArgs["result"]["servicios"]>
   export type ServiciosInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    categoria?: boolean | Servicios$categoriaArgs<ExtArgs>
+    subcategoria?: boolean | Servicios$subcategoriaArgs<ExtArgs>
+    unidad?: boolean | Servicios$unidadArgs<ExtArgs>
+    vendor?: boolean | Servicios$vendorArgs<ExtArgs>
     ofertaItems?: boolean | Servicios$ofertaItemsArgs<ExtArgs>
     ventasServicios?: boolean | Servicios$ventasServiciosArgs<ExtArgs>
     _count?: boolean | ServiciosCountOutputTypeDefaultArgs<ExtArgs>
   }
-  export type ServiciosIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
-  export type ServiciosIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type ServiciosIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    categoria?: boolean | Servicios$categoriaArgs<ExtArgs>
+    subcategoria?: boolean | Servicios$subcategoriaArgs<ExtArgs>
+    unidad?: boolean | Servicios$unidadArgs<ExtArgs>
+    vendor?: boolean | Servicios$vendorArgs<ExtArgs>
+  }
+  export type ServiciosIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    categoria?: boolean | Servicios$categoriaArgs<ExtArgs>
+    subcategoria?: boolean | Servicios$subcategoriaArgs<ExtArgs>
+    unidad?: boolean | Servicios$unidadArgs<ExtArgs>
+    vendor?: boolean | Servicios$vendorArgs<ExtArgs>
+  }
 
   export type $ServiciosPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Servicios"
     objects: {
+      categoria: Prisma.$CategoriaPayload<ExtArgs> | null
+      subcategoria: Prisma.$CategoriaPayload<ExtArgs> | null
+      unidad: Prisma.$UnidadPayload<ExtArgs> | null
+      vendor: Prisma.$VendorPayload<ExtArgs> | null
       ofertaItems: Prisma.$OfertaItemPayload<ExtArgs>[]
       ventasServicios: Prisma.$VentaServiciosPayload<ExtArgs>[]
     }
@@ -48013,6 +48309,16 @@ export namespace Prisma {
       nombre: string
       precio: number
       descripcion: string
+      precioCosto: number | null
+      precioVenta: number | null
+      codigoInterno: string | null
+      codigoNegocio: string | null
+      categoriaId: string | null
+      subcategoriaId: string | null
+      unidadId: string | null
+      vendorId: string | null
+      activo: boolean
+      deletedAt: Date | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["servicios"]>
@@ -48409,6 +48715,10 @@ export namespace Prisma {
    */
   export interface Prisma__ServiciosClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
+    categoria<T extends Servicios$categoriaArgs<ExtArgs> = {}>(args?: Subset<T, Servicios$categoriaArgs<ExtArgs>>): Prisma__CategoriaClient<$Result.GetResult<Prisma.$CategoriaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    subcategoria<T extends Servicios$subcategoriaArgs<ExtArgs> = {}>(args?: Subset<T, Servicios$subcategoriaArgs<ExtArgs>>): Prisma__CategoriaClient<$Result.GetResult<Prisma.$CategoriaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    unidad<T extends Servicios$unidadArgs<ExtArgs> = {}>(args?: Subset<T, Servicios$unidadArgs<ExtArgs>>): Prisma__UnidadClient<$Result.GetResult<Prisma.$UnidadPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    vendor<T extends Servicios$vendorArgs<ExtArgs> = {}>(args?: Subset<T, Servicios$vendorArgs<ExtArgs>>): Prisma__VendorClient<$Result.GetResult<Prisma.$VendorPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     ofertaItems<T extends Servicios$ofertaItemsArgs<ExtArgs> = {}>(args?: Subset<T, Servicios$ofertaItemsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OfertaItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     ventasServicios<T extends Servicios$ventasServiciosArgs<ExtArgs> = {}>(args?: Subset<T, Servicios$ventasServiciosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$VentaServiciosPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
@@ -48444,6 +48754,16 @@ export namespace Prisma {
     readonly nombre: FieldRef<"Servicios", 'String'>
     readonly precio: FieldRef<"Servicios", 'Int'>
     readonly descripcion: FieldRef<"Servicios", 'String'>
+    readonly precioCosto: FieldRef<"Servicios", 'Int'>
+    readonly precioVenta: FieldRef<"Servicios", 'Int'>
+    readonly codigoInterno: FieldRef<"Servicios", 'String'>
+    readonly codigoNegocio: FieldRef<"Servicios", 'String'>
+    readonly categoriaId: FieldRef<"Servicios", 'String'>
+    readonly subcategoriaId: FieldRef<"Servicios", 'String'>
+    readonly unidadId: FieldRef<"Servicios", 'String'>
+    readonly vendorId: FieldRef<"Servicios", 'String'>
+    readonly activo: FieldRef<"Servicios", 'Boolean'>
+    readonly deletedAt: FieldRef<"Servicios", 'DateTime'>
     readonly createdAt: FieldRef<"Servicios", 'DateTime'>
     readonly updatedAt: FieldRef<"Servicios", 'DateTime'>
   }
@@ -48695,6 +49015,10 @@ export namespace Prisma {
      */
     data: ServiciosCreateManyInput | ServiciosCreateManyInput[]
     skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ServiciosIncludeCreateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -48765,6 +49089,10 @@ export namespace Prisma {
      * Limit how many Servicios to update.
      */
     limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: ServiciosIncludeUpdateManyAndReturn<ExtArgs> | null
   }
 
   /**
@@ -48831,6 +49159,82 @@ export namespace Prisma {
      * Limit how many Servicios to delete.
      */
     limit?: number
+  }
+
+  /**
+   * Servicios.categoria
+   */
+  export type Servicios$categoriaArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Categoria
+     */
+    select?: CategoriaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Categoria
+     */
+    omit?: CategoriaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CategoriaInclude<ExtArgs> | null
+    where?: CategoriaWhereInput
+  }
+
+  /**
+   * Servicios.subcategoria
+   */
+  export type Servicios$subcategoriaArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Categoria
+     */
+    select?: CategoriaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Categoria
+     */
+    omit?: CategoriaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CategoriaInclude<ExtArgs> | null
+    where?: CategoriaWhereInput
+  }
+
+  /**
+   * Servicios.unidad
+   */
+  export type Servicios$unidadArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Unidad
+     */
+    select?: UnidadSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Unidad
+     */
+    omit?: UnidadOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UnidadInclude<ExtArgs> | null
+    where?: UnidadWhereInput
+  }
+
+  /**
+   * Servicios.vendor
+   */
+  export type Servicios$vendorArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Vendor
+     */
+    select?: VendorSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Vendor
+     */
+    omit?: VendorOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: VendorInclude<ExtArgs> | null
+    where?: VendorWhereInput
   }
 
   /**
@@ -112745,6 +113149,16 @@ export namespace Prisma {
     nombre: 'nombre',
     precio: 'precio',
     descripcion: 'descripcion',
+    precioCosto: 'precioCosto',
+    precioVenta: 'precioVenta',
+    codigoInterno: 'codigoInterno',
+    codigoNegocio: 'codigoNegocio',
+    categoriaId: 'categoriaId',
+    subcategoriaId: 'subcategoriaId',
+    unidadId: 'unidadId',
+    vendorId: 'vendorId',
+    activo: 'activo',
+    deletedAt: 'deletedAt',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -114013,6 +114427,8 @@ export namespace Prisma {
     subcategorias?: CategoriaListRelationFilter
     productos?: ProductoListRelationFilter
     productosSubcategoria?: ProductoListRelationFilter
+    servicios?: ServiciosListRelationFilter
+    serviciosSubcategoria?: ServiciosListRelationFilter
   }
 
   export type CategoriaOrderByWithRelationInput = {
@@ -114026,6 +114442,8 @@ export namespace Prisma {
     subcategorias?: CategoriaOrderByRelationAggregateInput
     productos?: ProductoOrderByRelationAggregateInput
     productosSubcategoria?: ProductoOrderByRelationAggregateInput
+    servicios?: ServiciosOrderByRelationAggregateInput
+    serviciosSubcategoria?: ServiciosOrderByRelationAggregateInput
   }
 
   export type CategoriaWhereUniqueInput = Prisma.AtLeast<{
@@ -114042,6 +114460,8 @@ export namespace Prisma {
     subcategorias?: CategoriaListRelationFilter
     productos?: ProductoListRelationFilter
     productosSubcategoria?: ProductoListRelationFilter
+    servicios?: ServiciosListRelationFilter
+    serviciosSubcategoria?: ServiciosListRelationFilter
   }, "catId">
 
   export type CategoriaOrderByWithAggregationInput = {
@@ -114078,6 +114498,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Unidad"> | Date | string
     simbolo?: StringFilter<"Unidad"> | string
     productos?: ProductoListRelationFilter
+    servicios?: ServiciosListRelationFilter
   }
 
   export type UnidadOrderByWithRelationInput = {
@@ -114087,6 +114508,7 @@ export namespace Prisma {
     updatedAt?: SortOrder
     simbolo?: SortOrder
     productos?: ProductoOrderByRelationAggregateInput
+    servicios?: ServiciosOrderByRelationAggregateInput
   }
 
   export type UnidadWhereUniqueInput = Prisma.AtLeast<{
@@ -114099,6 +114521,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Unidad"> | Date | string
     simbolo?: StringFilter<"Unidad"> | string
     productos?: ProductoListRelationFilter
+    servicios?: ServiciosListRelationFilter
   }, "unidadId">
 
   export type UnidadOrderByWithAggregationInput = {
@@ -114145,6 +114568,7 @@ export namespace Prisma {
     deudasCash?: DeudaCashListRelationFilter
     gastoCompras?: GastoCompraListRelationFilter
     productos?: ProductoListRelationFilter
+    servicios?: ServiciosListRelationFilter
   }
 
   export type VendorOrderByWithRelationInput = {
@@ -114166,6 +114590,7 @@ export namespace Prisma {
     deudasCash?: DeudaCashOrderByRelationAggregateInput
     gastoCompras?: GastoCompraOrderByRelationAggregateInput
     productos?: ProductoOrderByRelationAggregateInput
+    servicios?: ServiciosOrderByRelationAggregateInput
   }
 
   export type VendorWhereUniqueInput = Prisma.AtLeast<{
@@ -114190,6 +114615,7 @@ export namespace Prisma {
     deudasCash?: DeudaCashListRelationFilter
     gastoCompras?: GastoCompraListRelationFilter
     productos?: ProductoListRelationFilter
+    servicios?: ServiciosListRelationFilter
   }, "vendorId" | "vendorCode">
 
   export type VendorOrderByWithAggregationInput = {
@@ -116896,8 +117322,22 @@ export namespace Prisma {
     nombre?: StringFilter<"Servicios"> | string
     precio?: IntFilter<"Servicios"> | number
     descripcion?: StringFilter<"Servicios"> | string
+    precioCosto?: IntNullableFilter<"Servicios"> | number | null
+    precioVenta?: IntNullableFilter<"Servicios"> | number | null
+    codigoInterno?: StringNullableFilter<"Servicios"> | string | null
+    codigoNegocio?: StringNullableFilter<"Servicios"> | string | null
+    categoriaId?: StringNullableFilter<"Servicios"> | string | null
+    subcategoriaId?: StringNullableFilter<"Servicios"> | string | null
+    unidadId?: StringNullableFilter<"Servicios"> | string | null
+    vendorId?: StringNullableFilter<"Servicios"> | string | null
+    activo?: BoolFilter<"Servicios"> | boolean
+    deletedAt?: DateTimeNullableFilter<"Servicios"> | Date | string | null
     createdAt?: DateTimeFilter<"Servicios"> | Date | string
     updatedAt?: DateTimeFilter<"Servicios"> | Date | string
+    categoria?: XOR<CategoriaNullableScalarRelationFilter, CategoriaWhereInput> | null
+    subcategoria?: XOR<CategoriaNullableScalarRelationFilter, CategoriaWhereInput> | null
+    unidad?: XOR<UnidadNullableScalarRelationFilter, UnidadWhereInput> | null
+    vendor?: XOR<VendorNullableScalarRelationFilter, VendorWhereInput> | null
     ofertaItems?: OfertaItemListRelationFilter
     ventasServicios?: VentaServiciosListRelationFilter
   }
@@ -116907,8 +117347,22 @@ export namespace Prisma {
     nombre?: SortOrder
     precio?: SortOrder
     descripcion?: SortOrder
+    precioCosto?: SortOrderInput | SortOrder
+    precioVenta?: SortOrderInput | SortOrder
+    codigoInterno?: SortOrderInput | SortOrder
+    codigoNegocio?: SortOrderInput | SortOrder
+    categoriaId?: SortOrderInput | SortOrder
+    subcategoriaId?: SortOrderInput | SortOrder
+    unidadId?: SortOrderInput | SortOrder
+    vendorId?: SortOrderInput | SortOrder
+    activo?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+    categoria?: CategoriaOrderByWithRelationInput
+    subcategoria?: CategoriaOrderByWithRelationInput
+    unidad?: UnidadOrderByWithRelationInput
+    vendor?: VendorOrderByWithRelationInput
     ofertaItems?: OfertaItemOrderByRelationAggregateInput
     ventasServicios?: VentaServiciosOrderByRelationAggregateInput
   }
@@ -116921,8 +117375,22 @@ export namespace Prisma {
     nombre?: StringFilter<"Servicios"> | string
     precio?: IntFilter<"Servicios"> | number
     descripcion?: StringFilter<"Servicios"> | string
+    precioCosto?: IntNullableFilter<"Servicios"> | number | null
+    precioVenta?: IntNullableFilter<"Servicios"> | number | null
+    codigoInterno?: StringNullableFilter<"Servicios"> | string | null
+    codigoNegocio?: StringNullableFilter<"Servicios"> | string | null
+    categoriaId?: StringNullableFilter<"Servicios"> | string | null
+    subcategoriaId?: StringNullableFilter<"Servicios"> | string | null
+    unidadId?: StringNullableFilter<"Servicios"> | string | null
+    vendorId?: StringNullableFilter<"Servicios"> | string | null
+    activo?: BoolFilter<"Servicios"> | boolean
+    deletedAt?: DateTimeNullableFilter<"Servicios"> | Date | string | null
     createdAt?: DateTimeFilter<"Servicios"> | Date | string
     updatedAt?: DateTimeFilter<"Servicios"> | Date | string
+    categoria?: XOR<CategoriaNullableScalarRelationFilter, CategoriaWhereInput> | null
+    subcategoria?: XOR<CategoriaNullableScalarRelationFilter, CategoriaWhereInput> | null
+    unidad?: XOR<UnidadNullableScalarRelationFilter, UnidadWhereInput> | null
+    vendor?: XOR<VendorNullableScalarRelationFilter, VendorWhereInput> | null
     ofertaItems?: OfertaItemListRelationFilter
     ventasServicios?: VentaServiciosListRelationFilter
   }, "servicioId">
@@ -116932,6 +117400,16 @@ export namespace Prisma {
     nombre?: SortOrder
     precio?: SortOrder
     descripcion?: SortOrder
+    precioCosto?: SortOrderInput | SortOrder
+    precioVenta?: SortOrderInput | SortOrder
+    codigoInterno?: SortOrderInput | SortOrder
+    codigoNegocio?: SortOrderInput | SortOrder
+    categoriaId?: SortOrderInput | SortOrder
+    subcategoriaId?: SortOrderInput | SortOrder
+    unidadId?: SortOrderInput | SortOrder
+    vendorId?: SortOrderInput | SortOrder
+    activo?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: ServiciosCountOrderByAggregateInput
@@ -116949,6 +117427,16 @@ export namespace Prisma {
     nombre?: StringWithAggregatesFilter<"Servicios"> | string
     precio?: IntWithAggregatesFilter<"Servicios"> | number
     descripcion?: StringWithAggregatesFilter<"Servicios"> | string
+    precioCosto?: IntNullableWithAggregatesFilter<"Servicios"> | number | null
+    precioVenta?: IntNullableWithAggregatesFilter<"Servicios"> | number | null
+    codigoInterno?: StringNullableWithAggregatesFilter<"Servicios"> | string | null
+    codigoNegocio?: StringNullableWithAggregatesFilter<"Servicios"> | string | null
+    categoriaId?: StringNullableWithAggregatesFilter<"Servicios"> | string | null
+    subcategoriaId?: StringNullableWithAggregatesFilter<"Servicios"> | string | null
+    unidadId?: StringNullableWithAggregatesFilter<"Servicios"> | string | null
+    vendorId?: StringNullableWithAggregatesFilter<"Servicios"> | string | null
+    activo?: BoolWithAggregatesFilter<"Servicios"> | boolean
+    deletedAt?: DateTimeNullableWithAggregatesFilter<"Servicios"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"Servicios"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Servicios"> | Date | string
   }
@@ -121724,6 +122212,8 @@ export namespace Prisma {
     subcategorias?: CategoriaCreateNestedManyWithoutParentInput
     productos?: ProductoCreateNestedManyWithoutCategoriaInput
     productosSubcategoria?: ProductoCreateNestedManyWithoutSubcategoriaInput
+    servicios?: ServiciosCreateNestedManyWithoutCategoriaInput
+    serviciosSubcategoria?: ServiciosCreateNestedManyWithoutSubcategoriaInput
   }
 
   export type CategoriaUncheckedCreateInput = {
@@ -121736,6 +122226,8 @@ export namespace Prisma {
     subcategorias?: CategoriaUncheckedCreateNestedManyWithoutParentInput
     productos?: ProductoUncheckedCreateNestedManyWithoutCategoriaInput
     productosSubcategoria?: ProductoUncheckedCreateNestedManyWithoutSubcategoriaInput
+    servicios?: ServiciosUncheckedCreateNestedManyWithoutCategoriaInput
+    serviciosSubcategoria?: ServiciosUncheckedCreateNestedManyWithoutSubcategoriaInput
   }
 
   export type CategoriaUpdateInput = {
@@ -121748,6 +122240,8 @@ export namespace Prisma {
     subcategorias?: CategoriaUpdateManyWithoutParentNestedInput
     productos?: ProductoUpdateManyWithoutCategoriaNestedInput
     productosSubcategoria?: ProductoUpdateManyWithoutSubcategoriaNestedInput
+    servicios?: ServiciosUpdateManyWithoutCategoriaNestedInput
+    serviciosSubcategoria?: ServiciosUpdateManyWithoutSubcategoriaNestedInput
   }
 
   export type CategoriaUncheckedUpdateInput = {
@@ -121760,6 +122254,8 @@ export namespace Prisma {
     subcategorias?: CategoriaUncheckedUpdateManyWithoutParentNestedInput
     productos?: ProductoUncheckedUpdateManyWithoutCategoriaNestedInput
     productosSubcategoria?: ProductoUncheckedUpdateManyWithoutSubcategoriaNestedInput
+    servicios?: ServiciosUncheckedUpdateManyWithoutCategoriaNestedInput
+    serviciosSubcategoria?: ServiciosUncheckedUpdateManyWithoutSubcategoriaNestedInput
   }
 
   export type CategoriaCreateManyInput = {
@@ -121795,6 +122291,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     simbolo: string
     productos?: ProductoCreateNestedManyWithoutUnidadInput
+    servicios?: ServiciosCreateNestedManyWithoutUnidadInput
   }
 
   export type UnidadUncheckedCreateInput = {
@@ -121804,6 +122301,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     simbolo: string
     productos?: ProductoUncheckedCreateNestedManyWithoutUnidadInput
+    servicios?: ServiciosUncheckedCreateNestedManyWithoutUnidadInput
   }
 
   export type UnidadUpdateInput = {
@@ -121813,6 +122311,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     simbolo?: StringFieldUpdateOperationsInput | string
     productos?: ProductoUpdateManyWithoutUnidadNestedInput
+    servicios?: ServiciosUpdateManyWithoutUnidadNestedInput
   }
 
   export type UnidadUncheckedUpdateInput = {
@@ -121822,6 +122321,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     simbolo?: StringFieldUpdateOperationsInput | string
     productos?: ProductoUncheckedUpdateManyWithoutUnidadNestedInput
+    servicios?: ServiciosUncheckedUpdateManyWithoutUnidadNestedInput
   }
 
   export type UnidadCreateManyInput = {
@@ -121867,6 +122367,7 @@ export namespace Prisma {
     deudasCash?: DeudaCashCreateNestedManyWithoutProveedorInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutVendorInput
     productos?: ProductoCreateNestedManyWithoutVendorInput
+    servicios?: ServiciosCreateNestedManyWithoutVendorInput
   }
 
   export type VendorUncheckedCreateInput = {
@@ -121888,6 +122389,7 @@ export namespace Prisma {
     deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutProveedorInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutVendorInput
     productos?: ProductoUncheckedCreateNestedManyWithoutVendorInput
+    servicios?: ServiciosUncheckedCreateNestedManyWithoutVendorInput
   }
 
   export type VendorUpdateInput = {
@@ -121909,6 +122411,7 @@ export namespace Prisma {
     deudasCash?: DeudaCashUpdateManyWithoutProveedorNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutVendorNestedInput
     productos?: ProductoUpdateManyWithoutVendorNestedInput
+    servicios?: ServiciosUpdateManyWithoutVendorNestedInput
   }
 
   export type VendorUncheckedUpdateInput = {
@@ -121930,6 +122433,7 @@ export namespace Prisma {
     deudasCash?: DeudaCashUncheckedUpdateManyWithoutProveedorNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutVendorNestedInput
     productos?: ProductoUncheckedUpdateManyWithoutVendorNestedInput
+    servicios?: ServiciosUncheckedUpdateManyWithoutVendorNestedInput
   }
 
   export type VendorCreateManyInput = {
@@ -124968,8 +125472,18 @@ export namespace Prisma {
     nombre: string
     precio: number
     descripcion: string
+    precioCosto?: number | null
+    precioVenta?: number | null
+    codigoInterno?: string | null
+    codigoNegocio?: string | null
+    activo?: boolean
+    deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    categoria?: CategoriaCreateNestedOneWithoutServiciosInput
+    subcategoria?: CategoriaCreateNestedOneWithoutServiciosSubcategoriaInput
+    unidad?: UnidadCreateNestedOneWithoutServiciosInput
+    vendor?: VendorCreateNestedOneWithoutServiciosInput
     ofertaItems?: OfertaItemCreateNestedManyWithoutServicioInput
     ventasServicios?: VentaServiciosCreateNestedManyWithoutServicioInput
   }
@@ -124979,6 +125493,16 @@ export namespace Prisma {
     nombre: string
     precio: number
     descripcion: string
+    precioCosto?: number | null
+    precioVenta?: number | null
+    codigoInterno?: string | null
+    codigoNegocio?: string | null
+    categoriaId?: string | null
+    subcategoriaId?: string | null
+    unidadId?: string | null
+    vendorId?: string | null
+    activo?: boolean
+    deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutServicioInput
@@ -124990,8 +125514,18 @@ export namespace Prisma {
     nombre?: StringFieldUpdateOperationsInput | string
     precio?: IntFieldUpdateOperationsInput | number
     descripcion?: StringFieldUpdateOperationsInput | string
+    precioCosto?: NullableIntFieldUpdateOperationsInput | number | null
+    precioVenta?: NullableIntFieldUpdateOperationsInput | number | null
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    categoria?: CategoriaUpdateOneWithoutServiciosNestedInput
+    subcategoria?: CategoriaUpdateOneWithoutServiciosSubcategoriaNestedInput
+    unidad?: UnidadUpdateOneWithoutServiciosNestedInput
+    vendor?: VendorUpdateOneWithoutServiciosNestedInput
     ofertaItems?: OfertaItemUpdateManyWithoutServicioNestedInput
     ventasServicios?: VentaServiciosUpdateManyWithoutServicioNestedInput
   }
@@ -125001,6 +125535,16 @@ export namespace Prisma {
     nombre?: StringFieldUpdateOperationsInput | string
     precio?: IntFieldUpdateOperationsInput | number
     descripcion?: StringFieldUpdateOperationsInput | string
+    precioCosto?: NullableIntFieldUpdateOperationsInput | number | null
+    precioVenta?: NullableIntFieldUpdateOperationsInput | number | null
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    categoriaId?: NullableStringFieldUpdateOperationsInput | string | null
+    subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
+    unidadId?: NullableStringFieldUpdateOperationsInput | string | null
+    vendorId?: NullableStringFieldUpdateOperationsInput | string | null
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutServicioNestedInput
@@ -125012,6 +125556,16 @@ export namespace Prisma {
     nombre: string
     precio: number
     descripcion: string
+    precioCosto?: number | null
+    precioVenta?: number | null
+    codigoInterno?: string | null
+    codigoNegocio?: string | null
+    categoriaId?: string | null
+    subcategoriaId?: string | null
+    unidadId?: string | null
+    vendorId?: string | null
+    activo?: boolean
+    deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -125021,6 +125575,12 @@ export namespace Prisma {
     nombre?: StringFieldUpdateOperationsInput | string
     precio?: IntFieldUpdateOperationsInput | number
     descripcion?: StringFieldUpdateOperationsInput | string
+    precioCosto?: NullableIntFieldUpdateOperationsInput | number | null
+    precioVenta?: NullableIntFieldUpdateOperationsInput | number | null
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -125030,6 +125590,16 @@ export namespace Prisma {
     nombre?: StringFieldUpdateOperationsInput | string
     precio?: IntFieldUpdateOperationsInput | number
     descripcion?: StringFieldUpdateOperationsInput | string
+    precioCosto?: NullableIntFieldUpdateOperationsInput | number | null
+    precioVenta?: NullableIntFieldUpdateOperationsInput | number | null
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    categoriaId?: NullableStringFieldUpdateOperationsInput | string | null
+    subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
+    unidadId?: NullableStringFieldUpdateOperationsInput | string | null
+    vendorId?: NullableStringFieldUpdateOperationsInput | string | null
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -130339,6 +130909,12 @@ export namespace Prisma {
     none?: ProductoWhereInput
   }
 
+  export type ServiciosListRelationFilter = {
+    every?: ServiciosWhereInput
+    some?: ServiciosWhereInput
+    none?: ServiciosWhereInput
+  }
+
   export type SortOrderInput = {
     sort: SortOrder
     nulls?: NullsOrder
@@ -130349,6 +130925,10 @@ export namespace Prisma {
   }
 
   export type ProductoOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type ServiciosOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -132668,12 +133248,24 @@ export namespace Prisma {
     nombre?: SortOrder
     precio?: SortOrder
     descripcion?: SortOrder
+    precioCosto?: SortOrder
+    precioVenta?: SortOrder
+    codigoInterno?: SortOrder
+    codigoNegocio?: SortOrder
+    categoriaId?: SortOrder
+    subcategoriaId?: SortOrder
+    unidadId?: SortOrder
+    vendorId?: SortOrder
+    activo?: SortOrder
+    deletedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
 
   export type ServiciosAvgOrderByAggregateInput = {
     precio?: SortOrder
+    precioCosto?: SortOrder
+    precioVenta?: SortOrder
   }
 
   export type ServiciosMaxOrderByAggregateInput = {
@@ -132681,6 +133273,16 @@ export namespace Prisma {
     nombre?: SortOrder
     precio?: SortOrder
     descripcion?: SortOrder
+    precioCosto?: SortOrder
+    precioVenta?: SortOrder
+    codigoInterno?: SortOrder
+    codigoNegocio?: SortOrder
+    categoriaId?: SortOrder
+    subcategoriaId?: SortOrder
+    unidadId?: SortOrder
+    vendorId?: SortOrder
+    activo?: SortOrder
+    deletedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -132690,12 +133292,24 @@ export namespace Prisma {
     nombre?: SortOrder
     precio?: SortOrder
     descripcion?: SortOrder
+    precioCosto?: SortOrder
+    precioVenta?: SortOrder
+    codigoInterno?: SortOrder
+    codigoNegocio?: SortOrder
+    categoriaId?: SortOrder
+    subcategoriaId?: SortOrder
+    unidadId?: SortOrder
+    vendorId?: SortOrder
+    activo?: SortOrder
+    deletedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
 
   export type ServiciosSumOrderByAggregateInput = {
     precio?: SortOrder
+    precioCosto?: SortOrder
+    precioVenta?: SortOrder
   }
 
   export type BoolNullableFilter<$PrismaModel = never> = {
@@ -136033,6 +136647,20 @@ export namespace Prisma {
     connect?: ProductoWhereUniqueInput | ProductoWhereUniqueInput[]
   }
 
+  export type ServiciosCreateNestedManyWithoutCategoriaInput = {
+    create?: XOR<ServiciosCreateWithoutCategoriaInput, ServiciosUncheckedCreateWithoutCategoriaInput> | ServiciosCreateWithoutCategoriaInput[] | ServiciosUncheckedCreateWithoutCategoriaInput[]
+    connectOrCreate?: ServiciosCreateOrConnectWithoutCategoriaInput | ServiciosCreateOrConnectWithoutCategoriaInput[]
+    createMany?: ServiciosCreateManyCategoriaInputEnvelope
+    connect?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+  }
+
+  export type ServiciosCreateNestedManyWithoutSubcategoriaInput = {
+    create?: XOR<ServiciosCreateWithoutSubcategoriaInput, ServiciosUncheckedCreateWithoutSubcategoriaInput> | ServiciosCreateWithoutSubcategoriaInput[] | ServiciosUncheckedCreateWithoutSubcategoriaInput[]
+    connectOrCreate?: ServiciosCreateOrConnectWithoutSubcategoriaInput | ServiciosCreateOrConnectWithoutSubcategoriaInput[]
+    createMany?: ServiciosCreateManySubcategoriaInputEnvelope
+    connect?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+  }
+
   export type CategoriaUncheckedCreateNestedManyWithoutParentInput = {
     create?: XOR<CategoriaCreateWithoutParentInput, CategoriaUncheckedCreateWithoutParentInput> | CategoriaCreateWithoutParentInput[] | CategoriaUncheckedCreateWithoutParentInput[]
     connectOrCreate?: CategoriaCreateOrConnectWithoutParentInput | CategoriaCreateOrConnectWithoutParentInput[]
@@ -136052,6 +136680,20 @@ export namespace Prisma {
     connectOrCreate?: ProductoCreateOrConnectWithoutSubcategoriaInput | ProductoCreateOrConnectWithoutSubcategoriaInput[]
     createMany?: ProductoCreateManySubcategoriaInputEnvelope
     connect?: ProductoWhereUniqueInput | ProductoWhereUniqueInput[]
+  }
+
+  export type ServiciosUncheckedCreateNestedManyWithoutCategoriaInput = {
+    create?: XOR<ServiciosCreateWithoutCategoriaInput, ServiciosUncheckedCreateWithoutCategoriaInput> | ServiciosCreateWithoutCategoriaInput[] | ServiciosUncheckedCreateWithoutCategoriaInput[]
+    connectOrCreate?: ServiciosCreateOrConnectWithoutCategoriaInput | ServiciosCreateOrConnectWithoutCategoriaInput[]
+    createMany?: ServiciosCreateManyCategoriaInputEnvelope
+    connect?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+  }
+
+  export type ServiciosUncheckedCreateNestedManyWithoutSubcategoriaInput = {
+    create?: XOR<ServiciosCreateWithoutSubcategoriaInput, ServiciosUncheckedCreateWithoutSubcategoriaInput> | ServiciosCreateWithoutSubcategoriaInput[] | ServiciosUncheckedCreateWithoutSubcategoriaInput[]
+    connectOrCreate?: ServiciosCreateOrConnectWithoutSubcategoriaInput | ServiciosCreateOrConnectWithoutSubcategoriaInput[]
+    createMany?: ServiciosCreateManySubcategoriaInputEnvelope
+    connect?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
   }
 
   export type StringFieldUpdateOperationsInput = {
@@ -136118,6 +136760,34 @@ export namespace Prisma {
     deleteMany?: ProductoScalarWhereInput | ProductoScalarWhereInput[]
   }
 
+  export type ServiciosUpdateManyWithoutCategoriaNestedInput = {
+    create?: XOR<ServiciosCreateWithoutCategoriaInput, ServiciosUncheckedCreateWithoutCategoriaInput> | ServiciosCreateWithoutCategoriaInput[] | ServiciosUncheckedCreateWithoutCategoriaInput[]
+    connectOrCreate?: ServiciosCreateOrConnectWithoutCategoriaInput | ServiciosCreateOrConnectWithoutCategoriaInput[]
+    upsert?: ServiciosUpsertWithWhereUniqueWithoutCategoriaInput | ServiciosUpsertWithWhereUniqueWithoutCategoriaInput[]
+    createMany?: ServiciosCreateManyCategoriaInputEnvelope
+    set?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+    disconnect?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+    delete?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+    connect?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+    update?: ServiciosUpdateWithWhereUniqueWithoutCategoriaInput | ServiciosUpdateWithWhereUniqueWithoutCategoriaInput[]
+    updateMany?: ServiciosUpdateManyWithWhereWithoutCategoriaInput | ServiciosUpdateManyWithWhereWithoutCategoriaInput[]
+    deleteMany?: ServiciosScalarWhereInput | ServiciosScalarWhereInput[]
+  }
+
+  export type ServiciosUpdateManyWithoutSubcategoriaNestedInput = {
+    create?: XOR<ServiciosCreateWithoutSubcategoriaInput, ServiciosUncheckedCreateWithoutSubcategoriaInput> | ServiciosCreateWithoutSubcategoriaInput[] | ServiciosUncheckedCreateWithoutSubcategoriaInput[]
+    connectOrCreate?: ServiciosCreateOrConnectWithoutSubcategoriaInput | ServiciosCreateOrConnectWithoutSubcategoriaInput[]
+    upsert?: ServiciosUpsertWithWhereUniqueWithoutSubcategoriaInput | ServiciosUpsertWithWhereUniqueWithoutSubcategoriaInput[]
+    createMany?: ServiciosCreateManySubcategoriaInputEnvelope
+    set?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+    disconnect?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+    delete?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+    connect?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+    update?: ServiciosUpdateWithWhereUniqueWithoutSubcategoriaInput | ServiciosUpdateWithWhereUniqueWithoutSubcategoriaInput[]
+    updateMany?: ServiciosUpdateManyWithWhereWithoutSubcategoriaInput | ServiciosUpdateManyWithWhereWithoutSubcategoriaInput[]
+    deleteMany?: ServiciosScalarWhereInput | ServiciosScalarWhereInput[]
+  }
+
   export type CategoriaUncheckedUpdateManyWithoutParentNestedInput = {
     create?: XOR<CategoriaCreateWithoutParentInput, CategoriaUncheckedCreateWithoutParentInput> | CategoriaCreateWithoutParentInput[] | CategoriaUncheckedCreateWithoutParentInput[]
     connectOrCreate?: CategoriaCreateOrConnectWithoutParentInput | CategoriaCreateOrConnectWithoutParentInput[]
@@ -136160,6 +136830,34 @@ export namespace Prisma {
     deleteMany?: ProductoScalarWhereInput | ProductoScalarWhereInput[]
   }
 
+  export type ServiciosUncheckedUpdateManyWithoutCategoriaNestedInput = {
+    create?: XOR<ServiciosCreateWithoutCategoriaInput, ServiciosUncheckedCreateWithoutCategoriaInput> | ServiciosCreateWithoutCategoriaInput[] | ServiciosUncheckedCreateWithoutCategoriaInput[]
+    connectOrCreate?: ServiciosCreateOrConnectWithoutCategoriaInput | ServiciosCreateOrConnectWithoutCategoriaInput[]
+    upsert?: ServiciosUpsertWithWhereUniqueWithoutCategoriaInput | ServiciosUpsertWithWhereUniqueWithoutCategoriaInput[]
+    createMany?: ServiciosCreateManyCategoriaInputEnvelope
+    set?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+    disconnect?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+    delete?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+    connect?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+    update?: ServiciosUpdateWithWhereUniqueWithoutCategoriaInput | ServiciosUpdateWithWhereUniqueWithoutCategoriaInput[]
+    updateMany?: ServiciosUpdateManyWithWhereWithoutCategoriaInput | ServiciosUpdateManyWithWhereWithoutCategoriaInput[]
+    deleteMany?: ServiciosScalarWhereInput | ServiciosScalarWhereInput[]
+  }
+
+  export type ServiciosUncheckedUpdateManyWithoutSubcategoriaNestedInput = {
+    create?: XOR<ServiciosCreateWithoutSubcategoriaInput, ServiciosUncheckedCreateWithoutSubcategoriaInput> | ServiciosCreateWithoutSubcategoriaInput[] | ServiciosUncheckedCreateWithoutSubcategoriaInput[]
+    connectOrCreate?: ServiciosCreateOrConnectWithoutSubcategoriaInput | ServiciosCreateOrConnectWithoutSubcategoriaInput[]
+    upsert?: ServiciosUpsertWithWhereUniqueWithoutSubcategoriaInput | ServiciosUpsertWithWhereUniqueWithoutSubcategoriaInput[]
+    createMany?: ServiciosCreateManySubcategoriaInputEnvelope
+    set?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+    disconnect?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+    delete?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+    connect?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+    update?: ServiciosUpdateWithWhereUniqueWithoutSubcategoriaInput | ServiciosUpdateWithWhereUniqueWithoutSubcategoriaInput[]
+    updateMany?: ServiciosUpdateManyWithWhereWithoutSubcategoriaInput | ServiciosUpdateManyWithWhereWithoutSubcategoriaInput[]
+    deleteMany?: ServiciosScalarWhereInput | ServiciosScalarWhereInput[]
+  }
+
   export type ProductoCreateNestedManyWithoutUnidadInput = {
     create?: XOR<ProductoCreateWithoutUnidadInput, ProductoUncheckedCreateWithoutUnidadInput> | ProductoCreateWithoutUnidadInput[] | ProductoUncheckedCreateWithoutUnidadInput[]
     connectOrCreate?: ProductoCreateOrConnectWithoutUnidadInput | ProductoCreateOrConnectWithoutUnidadInput[]
@@ -136167,11 +136865,25 @@ export namespace Prisma {
     connect?: ProductoWhereUniqueInput | ProductoWhereUniqueInput[]
   }
 
+  export type ServiciosCreateNestedManyWithoutUnidadInput = {
+    create?: XOR<ServiciosCreateWithoutUnidadInput, ServiciosUncheckedCreateWithoutUnidadInput> | ServiciosCreateWithoutUnidadInput[] | ServiciosUncheckedCreateWithoutUnidadInput[]
+    connectOrCreate?: ServiciosCreateOrConnectWithoutUnidadInput | ServiciosCreateOrConnectWithoutUnidadInput[]
+    createMany?: ServiciosCreateManyUnidadInputEnvelope
+    connect?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+  }
+
   export type ProductoUncheckedCreateNestedManyWithoutUnidadInput = {
     create?: XOR<ProductoCreateWithoutUnidadInput, ProductoUncheckedCreateWithoutUnidadInput> | ProductoCreateWithoutUnidadInput[] | ProductoUncheckedCreateWithoutUnidadInput[]
     connectOrCreate?: ProductoCreateOrConnectWithoutUnidadInput | ProductoCreateOrConnectWithoutUnidadInput[]
     createMany?: ProductoCreateManyUnidadInputEnvelope
     connect?: ProductoWhereUniqueInput | ProductoWhereUniqueInput[]
+  }
+
+  export type ServiciosUncheckedCreateNestedManyWithoutUnidadInput = {
+    create?: XOR<ServiciosCreateWithoutUnidadInput, ServiciosUncheckedCreateWithoutUnidadInput> | ServiciosCreateWithoutUnidadInput[] | ServiciosUncheckedCreateWithoutUnidadInput[]
+    connectOrCreate?: ServiciosCreateOrConnectWithoutUnidadInput | ServiciosCreateOrConnectWithoutUnidadInput[]
+    createMany?: ServiciosCreateManyUnidadInputEnvelope
+    connect?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
   }
 
   export type ProductoUpdateManyWithoutUnidadNestedInput = {
@@ -136188,6 +136900,20 @@ export namespace Prisma {
     deleteMany?: ProductoScalarWhereInput | ProductoScalarWhereInput[]
   }
 
+  export type ServiciosUpdateManyWithoutUnidadNestedInput = {
+    create?: XOR<ServiciosCreateWithoutUnidadInput, ServiciosUncheckedCreateWithoutUnidadInput> | ServiciosCreateWithoutUnidadInput[] | ServiciosUncheckedCreateWithoutUnidadInput[]
+    connectOrCreate?: ServiciosCreateOrConnectWithoutUnidadInput | ServiciosCreateOrConnectWithoutUnidadInput[]
+    upsert?: ServiciosUpsertWithWhereUniqueWithoutUnidadInput | ServiciosUpsertWithWhereUniqueWithoutUnidadInput[]
+    createMany?: ServiciosCreateManyUnidadInputEnvelope
+    set?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+    disconnect?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+    delete?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+    connect?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+    update?: ServiciosUpdateWithWhereUniqueWithoutUnidadInput | ServiciosUpdateWithWhereUniqueWithoutUnidadInput[]
+    updateMany?: ServiciosUpdateManyWithWhereWithoutUnidadInput | ServiciosUpdateManyWithWhereWithoutUnidadInput[]
+    deleteMany?: ServiciosScalarWhereInput | ServiciosScalarWhereInput[]
+  }
+
   export type ProductoUncheckedUpdateManyWithoutUnidadNestedInput = {
     create?: XOR<ProductoCreateWithoutUnidadInput, ProductoUncheckedCreateWithoutUnidadInput> | ProductoCreateWithoutUnidadInput[] | ProductoUncheckedCreateWithoutUnidadInput[]
     connectOrCreate?: ProductoCreateOrConnectWithoutUnidadInput | ProductoCreateOrConnectWithoutUnidadInput[]
@@ -136200,6 +136926,20 @@ export namespace Prisma {
     update?: ProductoUpdateWithWhereUniqueWithoutUnidadInput | ProductoUpdateWithWhereUniqueWithoutUnidadInput[]
     updateMany?: ProductoUpdateManyWithWhereWithoutUnidadInput | ProductoUpdateManyWithWhereWithoutUnidadInput[]
     deleteMany?: ProductoScalarWhereInput | ProductoScalarWhereInput[]
+  }
+
+  export type ServiciosUncheckedUpdateManyWithoutUnidadNestedInput = {
+    create?: XOR<ServiciosCreateWithoutUnidadInput, ServiciosUncheckedCreateWithoutUnidadInput> | ServiciosCreateWithoutUnidadInput[] | ServiciosUncheckedCreateWithoutUnidadInput[]
+    connectOrCreate?: ServiciosCreateOrConnectWithoutUnidadInput | ServiciosCreateOrConnectWithoutUnidadInput[]
+    upsert?: ServiciosUpsertWithWhereUniqueWithoutUnidadInput | ServiciosUpsertWithWhereUniqueWithoutUnidadInput[]
+    createMany?: ServiciosCreateManyUnidadInputEnvelope
+    set?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+    disconnect?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+    delete?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+    connect?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+    update?: ServiciosUpdateWithWhereUniqueWithoutUnidadInput | ServiciosUpdateWithWhereUniqueWithoutUnidadInput[]
+    updateMany?: ServiciosUpdateManyWithWhereWithoutUnidadInput | ServiciosUpdateManyWithWhereWithoutUnidadInput[]
+    deleteMany?: ServiciosScalarWhereInput | ServiciosScalarWhereInput[]
   }
 
   export type CompraProductoCreateNestedManyWithoutProveedorInput = {
@@ -136244,6 +136984,13 @@ export namespace Prisma {
     connect?: ProductoWhereUniqueInput | ProductoWhereUniqueInput[]
   }
 
+  export type ServiciosCreateNestedManyWithoutVendorInput = {
+    create?: XOR<ServiciosCreateWithoutVendorInput, ServiciosUncheckedCreateWithoutVendorInput> | ServiciosCreateWithoutVendorInput[] | ServiciosUncheckedCreateWithoutVendorInput[]
+    connectOrCreate?: ServiciosCreateOrConnectWithoutVendorInput | ServiciosCreateOrConnectWithoutVendorInput[]
+    createMany?: ServiciosCreateManyVendorInputEnvelope
+    connect?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+  }
+
   export type CompraProductoUncheckedCreateNestedManyWithoutProveedorInput = {
     create?: XOR<CompraProductoCreateWithoutProveedorInput, CompraProductoUncheckedCreateWithoutProveedorInput> | CompraProductoCreateWithoutProveedorInput[] | CompraProductoUncheckedCreateWithoutProveedorInput[]
     connectOrCreate?: CompraProductoCreateOrConnectWithoutProveedorInput | CompraProductoCreateOrConnectWithoutProveedorInput[]
@@ -136284,6 +137031,13 @@ export namespace Prisma {
     connectOrCreate?: ProductoCreateOrConnectWithoutVendorInput | ProductoCreateOrConnectWithoutVendorInput[]
     createMany?: ProductoCreateManyVendorInputEnvelope
     connect?: ProductoWhereUniqueInput | ProductoWhereUniqueInput[]
+  }
+
+  export type ServiciosUncheckedCreateNestedManyWithoutVendorInput = {
+    create?: XOR<ServiciosCreateWithoutVendorInput, ServiciosUncheckedCreateWithoutVendorInput> | ServiciosCreateWithoutVendorInput[] | ServiciosUncheckedCreateWithoutVendorInput[]
+    connectOrCreate?: ServiciosCreateOrConnectWithoutVendorInput | ServiciosCreateOrConnectWithoutVendorInput[]
+    createMany?: ServiciosCreateManyVendorInputEnvelope
+    connect?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
   }
 
   export type CompraProductoUpdateManyWithoutProveedorNestedInput = {
@@ -136370,6 +137124,20 @@ export namespace Prisma {
     deleteMany?: ProductoScalarWhereInput | ProductoScalarWhereInput[]
   }
 
+  export type ServiciosUpdateManyWithoutVendorNestedInput = {
+    create?: XOR<ServiciosCreateWithoutVendorInput, ServiciosUncheckedCreateWithoutVendorInput> | ServiciosCreateWithoutVendorInput[] | ServiciosUncheckedCreateWithoutVendorInput[]
+    connectOrCreate?: ServiciosCreateOrConnectWithoutVendorInput | ServiciosCreateOrConnectWithoutVendorInput[]
+    upsert?: ServiciosUpsertWithWhereUniqueWithoutVendorInput | ServiciosUpsertWithWhereUniqueWithoutVendorInput[]
+    createMany?: ServiciosCreateManyVendorInputEnvelope
+    set?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+    disconnect?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+    delete?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+    connect?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+    update?: ServiciosUpdateWithWhereUniqueWithoutVendorInput | ServiciosUpdateWithWhereUniqueWithoutVendorInput[]
+    updateMany?: ServiciosUpdateManyWithWhereWithoutVendorInput | ServiciosUpdateManyWithWhereWithoutVendorInput[]
+    deleteMany?: ServiciosScalarWhereInput | ServiciosScalarWhereInput[]
+  }
+
   export type CompraProductoUncheckedUpdateManyWithoutProveedorNestedInput = {
     create?: XOR<CompraProductoCreateWithoutProveedorInput, CompraProductoUncheckedCreateWithoutProveedorInput> | CompraProductoCreateWithoutProveedorInput[] | CompraProductoUncheckedCreateWithoutProveedorInput[]
     connectOrCreate?: CompraProductoCreateOrConnectWithoutProveedorInput | CompraProductoCreateOrConnectWithoutProveedorInput[]
@@ -136452,6 +137220,20 @@ export namespace Prisma {
     update?: ProductoUpdateWithWhereUniqueWithoutVendorInput | ProductoUpdateWithWhereUniqueWithoutVendorInput[]
     updateMany?: ProductoUpdateManyWithWhereWithoutVendorInput | ProductoUpdateManyWithWhereWithoutVendorInput[]
     deleteMany?: ProductoScalarWhereInput | ProductoScalarWhereInput[]
+  }
+
+  export type ServiciosUncheckedUpdateManyWithoutVendorNestedInput = {
+    create?: XOR<ServiciosCreateWithoutVendorInput, ServiciosUncheckedCreateWithoutVendorInput> | ServiciosCreateWithoutVendorInput[] | ServiciosUncheckedCreateWithoutVendorInput[]
+    connectOrCreate?: ServiciosCreateOrConnectWithoutVendorInput | ServiciosCreateOrConnectWithoutVendorInput[]
+    upsert?: ServiciosUpsertWithWhereUniqueWithoutVendorInput | ServiciosUpsertWithWhereUniqueWithoutVendorInput[]
+    createMany?: ServiciosCreateManyVendorInputEnvelope
+    set?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+    disconnect?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+    delete?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+    connect?: ServiciosWhereUniqueInput | ServiciosWhereUniqueInput[]
+    update?: ServiciosUpdateWithWhereUniqueWithoutVendorInput | ServiciosUpdateWithWhereUniqueWithoutVendorInput[]
+    updateMany?: ServiciosUpdateManyWithWhereWithoutVendorInput | ServiciosUpdateManyWithWhereWithoutVendorInput[]
+    deleteMany?: ServiciosScalarWhereInput | ServiciosScalarWhereInput[]
   }
 
   export type CuentaBancariaCreateNestedOneWithoutInyeccionesCapitalInput = {
@@ -139487,6 +140269,30 @@ export namespace Prisma {
     update?: XOR<XOR<VendorUpdateToOneWithWhereWithoutComprasInput, VendorUpdateWithoutComprasInput>, VendorUncheckedUpdateWithoutComprasInput>
   }
 
+  export type CategoriaCreateNestedOneWithoutServiciosInput = {
+    create?: XOR<CategoriaCreateWithoutServiciosInput, CategoriaUncheckedCreateWithoutServiciosInput>
+    connectOrCreate?: CategoriaCreateOrConnectWithoutServiciosInput
+    connect?: CategoriaWhereUniqueInput
+  }
+
+  export type CategoriaCreateNestedOneWithoutServiciosSubcategoriaInput = {
+    create?: XOR<CategoriaCreateWithoutServiciosSubcategoriaInput, CategoriaUncheckedCreateWithoutServiciosSubcategoriaInput>
+    connectOrCreate?: CategoriaCreateOrConnectWithoutServiciosSubcategoriaInput
+    connect?: CategoriaWhereUniqueInput
+  }
+
+  export type UnidadCreateNestedOneWithoutServiciosInput = {
+    create?: XOR<UnidadCreateWithoutServiciosInput, UnidadUncheckedCreateWithoutServiciosInput>
+    connectOrCreate?: UnidadCreateOrConnectWithoutServiciosInput
+    connect?: UnidadWhereUniqueInput
+  }
+
+  export type VendorCreateNestedOneWithoutServiciosInput = {
+    create?: XOR<VendorCreateWithoutServiciosInput, VendorUncheckedCreateWithoutServiciosInput>
+    connectOrCreate?: VendorCreateOrConnectWithoutServiciosInput
+    connect?: VendorWhereUniqueInput
+  }
+
   export type OfertaItemCreateNestedManyWithoutServicioInput = {
     create?: XOR<OfertaItemCreateWithoutServicioInput, OfertaItemUncheckedCreateWithoutServicioInput> | OfertaItemCreateWithoutServicioInput[] | OfertaItemUncheckedCreateWithoutServicioInput[]
     connectOrCreate?: OfertaItemCreateOrConnectWithoutServicioInput | OfertaItemCreateOrConnectWithoutServicioInput[]
@@ -139513,6 +140319,46 @@ export namespace Prisma {
     connectOrCreate?: VentaServiciosCreateOrConnectWithoutServicioInput | VentaServiciosCreateOrConnectWithoutServicioInput[]
     createMany?: VentaServiciosCreateManyServicioInputEnvelope
     connect?: VentaServiciosWhereUniqueInput | VentaServiciosWhereUniqueInput[]
+  }
+
+  export type CategoriaUpdateOneWithoutServiciosNestedInput = {
+    create?: XOR<CategoriaCreateWithoutServiciosInput, CategoriaUncheckedCreateWithoutServiciosInput>
+    connectOrCreate?: CategoriaCreateOrConnectWithoutServiciosInput
+    upsert?: CategoriaUpsertWithoutServiciosInput
+    disconnect?: CategoriaWhereInput | boolean
+    delete?: CategoriaWhereInput | boolean
+    connect?: CategoriaWhereUniqueInput
+    update?: XOR<XOR<CategoriaUpdateToOneWithWhereWithoutServiciosInput, CategoriaUpdateWithoutServiciosInput>, CategoriaUncheckedUpdateWithoutServiciosInput>
+  }
+
+  export type CategoriaUpdateOneWithoutServiciosSubcategoriaNestedInput = {
+    create?: XOR<CategoriaCreateWithoutServiciosSubcategoriaInput, CategoriaUncheckedCreateWithoutServiciosSubcategoriaInput>
+    connectOrCreate?: CategoriaCreateOrConnectWithoutServiciosSubcategoriaInput
+    upsert?: CategoriaUpsertWithoutServiciosSubcategoriaInput
+    disconnect?: CategoriaWhereInput | boolean
+    delete?: CategoriaWhereInput | boolean
+    connect?: CategoriaWhereUniqueInput
+    update?: XOR<XOR<CategoriaUpdateToOneWithWhereWithoutServiciosSubcategoriaInput, CategoriaUpdateWithoutServiciosSubcategoriaInput>, CategoriaUncheckedUpdateWithoutServiciosSubcategoriaInput>
+  }
+
+  export type UnidadUpdateOneWithoutServiciosNestedInput = {
+    create?: XOR<UnidadCreateWithoutServiciosInput, UnidadUncheckedCreateWithoutServiciosInput>
+    connectOrCreate?: UnidadCreateOrConnectWithoutServiciosInput
+    upsert?: UnidadUpsertWithoutServiciosInput
+    disconnect?: UnidadWhereInput | boolean
+    delete?: UnidadWhereInput | boolean
+    connect?: UnidadWhereUniqueInput
+    update?: XOR<XOR<UnidadUpdateToOneWithWhereWithoutServiciosInput, UnidadUpdateWithoutServiciosInput>, UnidadUncheckedUpdateWithoutServiciosInput>
+  }
+
+  export type VendorUpdateOneWithoutServiciosNestedInput = {
+    create?: XOR<VendorCreateWithoutServiciosInput, VendorUncheckedCreateWithoutServiciosInput>
+    connectOrCreate?: VendorCreateOrConnectWithoutServiciosInput
+    upsert?: VendorUpsertWithoutServiciosInput
+    disconnect?: VendorWhereInput | boolean
+    delete?: VendorWhereInput | boolean
+    connect?: VendorWhereUniqueInput
+    update?: XOR<XOR<VendorUpdateToOneWithWhereWithoutServiciosInput, VendorUpdateWithoutServiciosInput>, VendorUncheckedUpdateWithoutServiciosInput>
   }
 
   export type OfertaItemUpdateManyWithoutServicioNestedInput = {
@@ -143543,6 +144389,8 @@ export namespace Prisma {
     parent?: CategoriaCreateNestedOneWithoutSubcategoriasInput
     productos?: ProductoCreateNestedManyWithoutCategoriaInput
     productosSubcategoria?: ProductoCreateNestedManyWithoutSubcategoriaInput
+    servicios?: ServiciosCreateNestedManyWithoutCategoriaInput
+    serviciosSubcategoria?: ServiciosCreateNestedManyWithoutSubcategoriaInput
   }
 
   export type CategoriaUncheckedCreateWithoutSubcategoriasInput = {
@@ -143554,6 +144402,8 @@ export namespace Prisma {
     parentId?: string | null
     productos?: ProductoUncheckedCreateNestedManyWithoutCategoriaInput
     productosSubcategoria?: ProductoUncheckedCreateNestedManyWithoutSubcategoriaInput
+    servicios?: ServiciosUncheckedCreateNestedManyWithoutCategoriaInput
+    serviciosSubcategoria?: ServiciosUncheckedCreateNestedManyWithoutSubcategoriaInput
   }
 
   export type CategoriaCreateOrConnectWithoutSubcategoriasInput = {
@@ -143570,6 +144420,8 @@ export namespace Prisma {
     subcategorias?: CategoriaCreateNestedManyWithoutParentInput
     productos?: ProductoCreateNestedManyWithoutCategoriaInput
     productosSubcategoria?: ProductoCreateNestedManyWithoutSubcategoriaInput
+    servicios?: ServiciosCreateNestedManyWithoutCategoriaInput
+    serviciosSubcategoria?: ServiciosCreateNestedManyWithoutSubcategoriaInput
   }
 
   export type CategoriaUncheckedCreateWithoutParentInput = {
@@ -143581,6 +144433,8 @@ export namespace Prisma {
     subcategorias?: CategoriaUncheckedCreateNestedManyWithoutParentInput
     productos?: ProductoUncheckedCreateNestedManyWithoutCategoriaInput
     productosSubcategoria?: ProductoUncheckedCreateNestedManyWithoutSubcategoriaInput
+    servicios?: ServiciosUncheckedCreateNestedManyWithoutCategoriaInput
+    serviciosSubcategoria?: ServiciosUncheckedCreateNestedManyWithoutSubcategoriaInput
   }
 
   export type CategoriaCreateOrConnectWithoutParentInput = {
@@ -143761,6 +144615,106 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type ServiciosCreateWithoutCategoriaInput = {
+    servicioId?: string
+    nombre: string
+    precio: number
+    descripcion: string
+    precioCosto?: number | null
+    precioVenta?: number | null
+    codigoInterno?: string | null
+    codigoNegocio?: string | null
+    activo?: boolean
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    subcategoria?: CategoriaCreateNestedOneWithoutServiciosSubcategoriaInput
+    unidad?: UnidadCreateNestedOneWithoutServiciosInput
+    vendor?: VendorCreateNestedOneWithoutServiciosInput
+    ofertaItems?: OfertaItemCreateNestedManyWithoutServicioInput
+    ventasServicios?: VentaServiciosCreateNestedManyWithoutServicioInput
+  }
+
+  export type ServiciosUncheckedCreateWithoutCategoriaInput = {
+    servicioId?: string
+    nombre: string
+    precio: number
+    descripcion: string
+    precioCosto?: number | null
+    precioVenta?: number | null
+    codigoInterno?: string | null
+    codigoNegocio?: string | null
+    subcategoriaId?: string | null
+    unidadId?: string | null
+    vendorId?: string | null
+    activo?: boolean
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutServicioInput
+    ventasServicios?: VentaServiciosUncheckedCreateNestedManyWithoutServicioInput
+  }
+
+  export type ServiciosCreateOrConnectWithoutCategoriaInput = {
+    where: ServiciosWhereUniqueInput
+    create: XOR<ServiciosCreateWithoutCategoriaInput, ServiciosUncheckedCreateWithoutCategoriaInput>
+  }
+
+  export type ServiciosCreateManyCategoriaInputEnvelope = {
+    data: ServiciosCreateManyCategoriaInput | ServiciosCreateManyCategoriaInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type ServiciosCreateWithoutSubcategoriaInput = {
+    servicioId?: string
+    nombre: string
+    precio: number
+    descripcion: string
+    precioCosto?: number | null
+    precioVenta?: number | null
+    codigoInterno?: string | null
+    codigoNegocio?: string | null
+    activo?: boolean
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    categoria?: CategoriaCreateNestedOneWithoutServiciosInput
+    unidad?: UnidadCreateNestedOneWithoutServiciosInput
+    vendor?: VendorCreateNestedOneWithoutServiciosInput
+    ofertaItems?: OfertaItemCreateNestedManyWithoutServicioInput
+    ventasServicios?: VentaServiciosCreateNestedManyWithoutServicioInput
+  }
+
+  export type ServiciosUncheckedCreateWithoutSubcategoriaInput = {
+    servicioId?: string
+    nombre: string
+    precio: number
+    descripcion: string
+    precioCosto?: number | null
+    precioVenta?: number | null
+    codigoInterno?: string | null
+    codigoNegocio?: string | null
+    categoriaId?: string | null
+    unidadId?: string | null
+    vendorId?: string | null
+    activo?: boolean
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutServicioInput
+    ventasServicios?: VentaServiciosUncheckedCreateNestedManyWithoutServicioInput
+  }
+
+  export type ServiciosCreateOrConnectWithoutSubcategoriaInput = {
+    where: ServiciosWhereUniqueInput
+    create: XOR<ServiciosCreateWithoutSubcategoriaInput, ServiciosUncheckedCreateWithoutSubcategoriaInput>
+  }
+
+  export type ServiciosCreateManySubcategoriaInputEnvelope = {
+    data: ServiciosCreateManySubcategoriaInput | ServiciosCreateManySubcategoriaInput[]
+    skipDuplicates?: boolean
+  }
+
   export type CategoriaUpsertWithoutSubcategoriasInput = {
     update: XOR<CategoriaUpdateWithoutSubcategoriasInput, CategoriaUncheckedUpdateWithoutSubcategoriasInput>
     create: XOR<CategoriaCreateWithoutSubcategoriasInput, CategoriaUncheckedCreateWithoutSubcategoriasInput>
@@ -143781,6 +144735,8 @@ export namespace Prisma {
     parent?: CategoriaUpdateOneWithoutSubcategoriasNestedInput
     productos?: ProductoUpdateManyWithoutCategoriaNestedInput
     productosSubcategoria?: ProductoUpdateManyWithoutSubcategoriaNestedInput
+    servicios?: ServiciosUpdateManyWithoutCategoriaNestedInput
+    serviciosSubcategoria?: ServiciosUpdateManyWithoutSubcategoriaNestedInput
   }
 
   export type CategoriaUncheckedUpdateWithoutSubcategoriasInput = {
@@ -143792,6 +144748,8 @@ export namespace Prisma {
     parentId?: NullableStringFieldUpdateOperationsInput | string | null
     productos?: ProductoUncheckedUpdateManyWithoutCategoriaNestedInput
     productosSubcategoria?: ProductoUncheckedUpdateManyWithoutSubcategoriaNestedInput
+    servicios?: ServiciosUncheckedUpdateManyWithoutCategoriaNestedInput
+    serviciosSubcategoria?: ServiciosUncheckedUpdateManyWithoutSubcategoriaNestedInput
   }
 
   export type CategoriaUpsertWithWhereUniqueWithoutParentInput = {
@@ -143882,6 +144840,60 @@ export namespace Prisma {
     data: XOR<ProductoUpdateManyMutationInput, ProductoUncheckedUpdateManyWithoutSubcategoriaInput>
   }
 
+  export type ServiciosUpsertWithWhereUniqueWithoutCategoriaInput = {
+    where: ServiciosWhereUniqueInput
+    update: XOR<ServiciosUpdateWithoutCategoriaInput, ServiciosUncheckedUpdateWithoutCategoriaInput>
+    create: XOR<ServiciosCreateWithoutCategoriaInput, ServiciosUncheckedCreateWithoutCategoriaInput>
+  }
+
+  export type ServiciosUpdateWithWhereUniqueWithoutCategoriaInput = {
+    where: ServiciosWhereUniqueInput
+    data: XOR<ServiciosUpdateWithoutCategoriaInput, ServiciosUncheckedUpdateWithoutCategoriaInput>
+  }
+
+  export type ServiciosUpdateManyWithWhereWithoutCategoriaInput = {
+    where: ServiciosScalarWhereInput
+    data: XOR<ServiciosUpdateManyMutationInput, ServiciosUncheckedUpdateManyWithoutCategoriaInput>
+  }
+
+  export type ServiciosScalarWhereInput = {
+    AND?: ServiciosScalarWhereInput | ServiciosScalarWhereInput[]
+    OR?: ServiciosScalarWhereInput[]
+    NOT?: ServiciosScalarWhereInput | ServiciosScalarWhereInput[]
+    servicioId?: StringFilter<"Servicios"> | string
+    nombre?: StringFilter<"Servicios"> | string
+    precio?: IntFilter<"Servicios"> | number
+    descripcion?: StringFilter<"Servicios"> | string
+    precioCosto?: IntNullableFilter<"Servicios"> | number | null
+    precioVenta?: IntNullableFilter<"Servicios"> | number | null
+    codigoInterno?: StringNullableFilter<"Servicios"> | string | null
+    codigoNegocio?: StringNullableFilter<"Servicios"> | string | null
+    categoriaId?: StringNullableFilter<"Servicios"> | string | null
+    subcategoriaId?: StringNullableFilter<"Servicios"> | string | null
+    unidadId?: StringNullableFilter<"Servicios"> | string | null
+    vendorId?: StringNullableFilter<"Servicios"> | string | null
+    activo?: BoolFilter<"Servicios"> | boolean
+    deletedAt?: DateTimeNullableFilter<"Servicios"> | Date | string | null
+    createdAt?: DateTimeFilter<"Servicios"> | Date | string
+    updatedAt?: DateTimeFilter<"Servicios"> | Date | string
+  }
+
+  export type ServiciosUpsertWithWhereUniqueWithoutSubcategoriaInput = {
+    where: ServiciosWhereUniqueInput
+    update: XOR<ServiciosUpdateWithoutSubcategoriaInput, ServiciosUncheckedUpdateWithoutSubcategoriaInput>
+    create: XOR<ServiciosCreateWithoutSubcategoriaInput, ServiciosUncheckedCreateWithoutSubcategoriaInput>
+  }
+
+  export type ServiciosUpdateWithWhereUniqueWithoutSubcategoriaInput = {
+    where: ServiciosWhereUniqueInput
+    data: XOR<ServiciosUpdateWithoutSubcategoriaInput, ServiciosUncheckedUpdateWithoutSubcategoriaInput>
+  }
+
+  export type ServiciosUpdateManyWithWhereWithoutSubcategoriaInput = {
+    where: ServiciosScalarWhereInput
+    data: XOR<ServiciosUpdateManyMutationInput, ServiciosUncheckedUpdateManyWithoutSubcategoriaInput>
+  }
+
   export type ProductoCreateWithoutUnidadInput = {
     nombre: string
     descripcion?: string | null
@@ -143966,6 +144978,56 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type ServiciosCreateWithoutUnidadInput = {
+    servicioId?: string
+    nombre: string
+    precio: number
+    descripcion: string
+    precioCosto?: number | null
+    precioVenta?: number | null
+    codigoInterno?: string | null
+    codigoNegocio?: string | null
+    activo?: boolean
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    categoria?: CategoriaCreateNestedOneWithoutServiciosInput
+    subcategoria?: CategoriaCreateNestedOneWithoutServiciosSubcategoriaInput
+    vendor?: VendorCreateNestedOneWithoutServiciosInput
+    ofertaItems?: OfertaItemCreateNestedManyWithoutServicioInput
+    ventasServicios?: VentaServiciosCreateNestedManyWithoutServicioInput
+  }
+
+  export type ServiciosUncheckedCreateWithoutUnidadInput = {
+    servicioId?: string
+    nombre: string
+    precio: number
+    descripcion: string
+    precioCosto?: number | null
+    precioVenta?: number | null
+    codigoInterno?: string | null
+    codigoNegocio?: string | null
+    categoriaId?: string | null
+    subcategoriaId?: string | null
+    vendorId?: string | null
+    activo?: boolean
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutServicioInput
+    ventasServicios?: VentaServiciosUncheckedCreateNestedManyWithoutServicioInput
+  }
+
+  export type ServiciosCreateOrConnectWithoutUnidadInput = {
+    where: ServiciosWhereUniqueInput
+    create: XOR<ServiciosCreateWithoutUnidadInput, ServiciosUncheckedCreateWithoutUnidadInput>
+  }
+
+  export type ServiciosCreateManyUnidadInputEnvelope = {
+    data: ServiciosCreateManyUnidadInput | ServiciosCreateManyUnidadInput[]
+    skipDuplicates?: boolean
+  }
+
   export type ProductoUpsertWithWhereUniqueWithoutUnidadInput = {
     where: ProductoWhereUniqueInput
     update: XOR<ProductoUpdateWithoutUnidadInput, ProductoUncheckedUpdateWithoutUnidadInput>
@@ -143980,6 +145042,22 @@ export namespace Prisma {
   export type ProductoUpdateManyWithWhereWithoutUnidadInput = {
     where: ProductoScalarWhereInput
     data: XOR<ProductoUpdateManyMutationInput, ProductoUncheckedUpdateManyWithoutUnidadInput>
+  }
+
+  export type ServiciosUpsertWithWhereUniqueWithoutUnidadInput = {
+    where: ServiciosWhereUniqueInput
+    update: XOR<ServiciosUpdateWithoutUnidadInput, ServiciosUncheckedUpdateWithoutUnidadInput>
+    create: XOR<ServiciosCreateWithoutUnidadInput, ServiciosUncheckedCreateWithoutUnidadInput>
+  }
+
+  export type ServiciosUpdateWithWhereUniqueWithoutUnidadInput = {
+    where: ServiciosWhereUniqueInput
+    data: XOR<ServiciosUpdateWithoutUnidadInput, ServiciosUncheckedUpdateWithoutUnidadInput>
+  }
+
+  export type ServiciosUpdateManyWithWhereWithoutUnidadInput = {
+    where: ServiciosScalarWhereInput
+    data: XOR<ServiciosUpdateManyMutationInput, ServiciosUncheckedUpdateManyWithoutUnidadInput>
   }
 
   export type CompraProductoCreateWithoutProveedorInput = {
@@ -144322,6 +145400,56 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type ServiciosCreateWithoutVendorInput = {
+    servicioId?: string
+    nombre: string
+    precio: number
+    descripcion: string
+    precioCosto?: number | null
+    precioVenta?: number | null
+    codigoInterno?: string | null
+    codigoNegocio?: string | null
+    activo?: boolean
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    categoria?: CategoriaCreateNestedOneWithoutServiciosInput
+    subcategoria?: CategoriaCreateNestedOneWithoutServiciosSubcategoriaInput
+    unidad?: UnidadCreateNestedOneWithoutServiciosInput
+    ofertaItems?: OfertaItemCreateNestedManyWithoutServicioInput
+    ventasServicios?: VentaServiciosCreateNestedManyWithoutServicioInput
+  }
+
+  export type ServiciosUncheckedCreateWithoutVendorInput = {
+    servicioId?: string
+    nombre: string
+    precio: number
+    descripcion: string
+    precioCosto?: number | null
+    precioVenta?: number | null
+    codigoInterno?: string | null
+    codigoNegocio?: string | null
+    categoriaId?: string | null
+    subcategoriaId?: string | null
+    unidadId?: string | null
+    activo?: boolean
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutServicioInput
+    ventasServicios?: VentaServiciosUncheckedCreateNestedManyWithoutServicioInput
+  }
+
+  export type ServiciosCreateOrConnectWithoutVendorInput = {
+    where: ServiciosWhereUniqueInput
+    create: XOR<ServiciosCreateWithoutVendorInput, ServiciosUncheckedCreateWithoutVendorInput>
+  }
+
+  export type ServiciosCreateManyVendorInputEnvelope = {
+    data: ServiciosCreateManyVendorInput | ServiciosCreateManyVendorInput[]
+    skipDuplicates?: boolean
+  }
+
   export type CompraProductoUpsertWithWhereUniqueWithoutProveedorInput = {
     where: CompraProductoWhereUniqueInput
     update: XOR<CompraProductoUpdateWithoutProveedorInput, CompraProductoUncheckedUpdateWithoutProveedorInput>
@@ -144527,6 +145655,22 @@ export namespace Prisma {
   export type ProductoUpdateManyWithWhereWithoutVendorInput = {
     where: ProductoScalarWhereInput
     data: XOR<ProductoUpdateManyMutationInput, ProductoUncheckedUpdateManyWithoutVendorInput>
+  }
+
+  export type ServiciosUpsertWithWhereUniqueWithoutVendorInput = {
+    where: ServiciosWhereUniqueInput
+    update: XOR<ServiciosUpdateWithoutVendorInput, ServiciosUncheckedUpdateWithoutVendorInput>
+    create: XOR<ServiciosCreateWithoutVendorInput, ServiciosUncheckedCreateWithoutVendorInput>
+  }
+
+  export type ServiciosUpdateWithWhereUniqueWithoutVendorInput = {
+    where: ServiciosWhereUniqueInput
+    data: XOR<ServiciosUpdateWithoutVendorInput, ServiciosUncheckedUpdateWithoutVendorInput>
+  }
+
+  export type ServiciosUpdateManyWithWhereWithoutVendorInput = {
+    where: ServiciosScalarWhereInput
+    data: XOR<ServiciosUpdateManyMutationInput, ServiciosUncheckedUpdateManyWithoutVendorInput>
   }
 
   export type CuentaBancariaCreateWithoutInyeccionesCapitalInput = {
@@ -146475,6 +147619,8 @@ export namespace Prisma {
     parent?: CategoriaCreateNestedOneWithoutSubcategoriasInput
     subcategorias?: CategoriaCreateNestedManyWithoutParentInput
     productosSubcategoria?: ProductoCreateNestedManyWithoutSubcategoriaInput
+    servicios?: ServiciosCreateNestedManyWithoutCategoriaInput
+    serviciosSubcategoria?: ServiciosCreateNestedManyWithoutSubcategoriaInput
   }
 
   export type CategoriaUncheckedCreateWithoutProductosInput = {
@@ -146486,6 +147632,8 @@ export namespace Prisma {
     parentId?: string | null
     subcategorias?: CategoriaUncheckedCreateNestedManyWithoutParentInput
     productosSubcategoria?: ProductoUncheckedCreateNestedManyWithoutSubcategoriaInput
+    servicios?: ServiciosUncheckedCreateNestedManyWithoutCategoriaInput
+    serviciosSubcategoria?: ServiciosUncheckedCreateNestedManyWithoutSubcategoriaInput
   }
 
   export type CategoriaCreateOrConnectWithoutProductosInput = {
@@ -146531,6 +147679,8 @@ export namespace Prisma {
     parent?: CategoriaCreateNestedOneWithoutSubcategoriasInput
     subcategorias?: CategoriaCreateNestedManyWithoutParentInput
     productos?: ProductoCreateNestedManyWithoutCategoriaInput
+    servicios?: ServiciosCreateNestedManyWithoutCategoriaInput
+    serviciosSubcategoria?: ServiciosCreateNestedManyWithoutSubcategoriaInput
   }
 
   export type CategoriaUncheckedCreateWithoutProductosSubcategoriaInput = {
@@ -146542,6 +147692,8 @@ export namespace Prisma {
     parentId?: string | null
     subcategorias?: CategoriaUncheckedCreateNestedManyWithoutParentInput
     productos?: ProductoUncheckedCreateNestedManyWithoutCategoriaInput
+    servicios?: ServiciosUncheckedCreateNestedManyWithoutCategoriaInput
+    serviciosSubcategoria?: ServiciosUncheckedCreateNestedManyWithoutSubcategoriaInput
   }
 
   export type CategoriaCreateOrConnectWithoutProductosSubcategoriaInput = {
@@ -146555,6 +147707,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     simbolo: string
+    servicios?: ServiciosCreateNestedManyWithoutUnidadInput
   }
 
   export type UnidadUncheckedCreateWithoutProductosInput = {
@@ -146563,6 +147716,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     simbolo: string
+    servicios?: ServiciosUncheckedCreateNestedManyWithoutUnidadInput
   }
 
   export type UnidadCreateOrConnectWithoutProductosInput = {
@@ -146588,6 +147742,7 @@ export namespace Prisma {
     cuentasPorPagar?: CuentaPorPagarCreateNestedManyWithoutProveedorInput
     deudasCash?: DeudaCashCreateNestedManyWithoutProveedorInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutVendorInput
+    servicios?: ServiciosCreateNestedManyWithoutVendorInput
   }
 
   export type VendorUncheckedCreateWithoutProductosInput = {
@@ -146608,6 +147763,7 @@ export namespace Prisma {
     cuentasPorPagar?: CuentaPorPagarUncheckedCreateNestedManyWithoutProveedorInput
     deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutProveedorInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutVendorInput
+    servicios?: ServiciosUncheckedCreateNestedManyWithoutVendorInput
   }
 
   export type VendorCreateOrConnectWithoutProductosInput = {
@@ -147052,6 +148208,8 @@ export namespace Prisma {
     parent?: CategoriaUpdateOneWithoutSubcategoriasNestedInput
     subcategorias?: CategoriaUpdateManyWithoutParentNestedInput
     productosSubcategoria?: ProductoUpdateManyWithoutSubcategoriaNestedInput
+    servicios?: ServiciosUpdateManyWithoutCategoriaNestedInput
+    serviciosSubcategoria?: ServiciosUpdateManyWithoutSubcategoriaNestedInput
   }
 
   export type CategoriaUncheckedUpdateWithoutProductosInput = {
@@ -147063,6 +148221,8 @@ export namespace Prisma {
     parentId?: NullableStringFieldUpdateOperationsInput | string | null
     subcategorias?: CategoriaUncheckedUpdateManyWithoutParentNestedInput
     productosSubcategoria?: ProductoUncheckedUpdateManyWithoutSubcategoriaNestedInput
+    servicios?: ServiciosUncheckedUpdateManyWithoutCategoriaNestedInput
+    serviciosSubcategoria?: ServiciosUncheckedUpdateManyWithoutSubcategoriaNestedInput
   }
 
   export type PuntoDeVentaUpsertWithoutProductosInput = {
@@ -147120,6 +148280,8 @@ export namespace Prisma {
     parent?: CategoriaUpdateOneWithoutSubcategoriasNestedInput
     subcategorias?: CategoriaUpdateManyWithoutParentNestedInput
     productos?: ProductoUpdateManyWithoutCategoriaNestedInput
+    servicios?: ServiciosUpdateManyWithoutCategoriaNestedInput
+    serviciosSubcategoria?: ServiciosUpdateManyWithoutSubcategoriaNestedInput
   }
 
   export type CategoriaUncheckedUpdateWithoutProductosSubcategoriaInput = {
@@ -147131,6 +148293,8 @@ export namespace Prisma {
     parentId?: NullableStringFieldUpdateOperationsInput | string | null
     subcategorias?: CategoriaUncheckedUpdateManyWithoutParentNestedInput
     productos?: ProductoUncheckedUpdateManyWithoutCategoriaNestedInput
+    servicios?: ServiciosUncheckedUpdateManyWithoutCategoriaNestedInput
+    serviciosSubcategoria?: ServiciosUncheckedUpdateManyWithoutSubcategoriaNestedInput
   }
 
   export type UnidadUpsertWithoutProductosInput = {
@@ -147150,6 +148314,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     simbolo?: StringFieldUpdateOperationsInput | string
+    servicios?: ServiciosUpdateManyWithoutUnidadNestedInput
   }
 
   export type UnidadUncheckedUpdateWithoutProductosInput = {
@@ -147158,6 +148323,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     simbolo?: StringFieldUpdateOperationsInput | string
+    servicios?: ServiciosUncheckedUpdateManyWithoutUnidadNestedInput
   }
 
   export type VendorUpsertWithoutProductosInput = {
@@ -147189,6 +148355,7 @@ export namespace Prisma {
     cuentasPorPagar?: CuentaPorPagarUpdateManyWithoutProveedorNestedInput
     deudasCash?: DeudaCashUpdateManyWithoutProveedorNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutVendorNestedInput
+    servicios?: ServiciosUpdateManyWithoutVendorNestedInput
   }
 
   export type VendorUncheckedUpdateWithoutProductosInput = {
@@ -147209,6 +148376,7 @@ export namespace Prisma {
     cuentasPorPagar?: CuentaPorPagarUncheckedUpdateManyWithoutProveedorNestedInput
     deudasCash?: DeudaCashUncheckedUpdateManyWithoutProveedorNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutVendorNestedInput
+    servicios?: ServiciosUncheckedUpdateManyWithoutVendorNestedInput
   }
 
   export type ProductoCostHistoryUpsertWithWhereUniqueWithoutProductoInput = {
@@ -152051,6 +153219,7 @@ export namespace Prisma {
     cuentasPorPagar?: CuentaPorPagarCreateNestedManyWithoutProveedorInput
     deudasCash?: DeudaCashCreateNestedManyWithoutProveedorInput
     productos?: ProductoCreateNestedManyWithoutVendorInput
+    servicios?: ServiciosCreateNestedManyWithoutVendorInput
   }
 
   export type VendorUncheckedCreateWithoutGastoComprasInput = {
@@ -152071,6 +153240,7 @@ export namespace Prisma {
     cuentasPorPagar?: CuentaPorPagarUncheckedCreateNestedManyWithoutProveedorInput
     deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutProveedorInput
     productos?: ProductoUncheckedCreateNestedManyWithoutVendorInput
+    servicios?: ServiciosUncheckedCreateNestedManyWithoutVendorInput
   }
 
   export type VendorCreateOrConnectWithoutGastoComprasInput = {
@@ -152354,6 +153524,7 @@ export namespace Prisma {
     cuentasPorPagar?: CuentaPorPagarUpdateManyWithoutProveedorNestedInput
     deudasCash?: DeudaCashUpdateManyWithoutProveedorNestedInput
     productos?: ProductoUpdateManyWithoutVendorNestedInput
+    servicios?: ServiciosUpdateManyWithoutVendorNestedInput
   }
 
   export type VendorUncheckedUpdateWithoutGastoComprasInput = {
@@ -152374,6 +153545,7 @@ export namespace Prisma {
     cuentasPorPagar?: CuentaPorPagarUncheckedUpdateManyWithoutProveedorNestedInput
     deudasCash?: DeudaCashUncheckedUpdateManyWithoutProveedorNestedInput
     productos?: ProductoUncheckedUpdateManyWithoutVendorNestedInput
+    servicios?: ServiciosUncheckedUpdateManyWithoutVendorNestedInput
   }
 
   export type ReconciliacionGastoUpsertWithWhereUniqueWithoutGastoCompraInput = {
@@ -152577,6 +153749,7 @@ export namespace Prisma {
     deudasCash?: DeudaCashCreateNestedManyWithoutProveedorInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutVendorInput
     productos?: ProductoCreateNestedManyWithoutVendorInput
+    servicios?: ServiciosCreateNestedManyWithoutVendorInput
   }
 
   export type VendorUncheckedCreateWithoutComprasInput = {
@@ -152597,6 +153770,7 @@ export namespace Prisma {
     deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutProveedorInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutVendorInput
     productos?: ProductoUncheckedCreateNestedManyWithoutVendorInput
+    servicios?: ServiciosUncheckedCreateNestedManyWithoutVendorInput
   }
 
   export type VendorCreateOrConnectWithoutComprasInput = {
@@ -152818,6 +153992,7 @@ export namespace Prisma {
     deudasCash?: DeudaCashUpdateManyWithoutProveedorNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutVendorNestedInput
     productos?: ProductoUpdateManyWithoutVendorNestedInput
+    servicios?: ServiciosUpdateManyWithoutVendorNestedInput
   }
 
   export type VendorUncheckedUpdateWithoutComprasInput = {
@@ -152838,6 +154013,139 @@ export namespace Prisma {
     deudasCash?: DeudaCashUncheckedUpdateManyWithoutProveedorNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutVendorNestedInput
     productos?: ProductoUncheckedUpdateManyWithoutVendorNestedInput
+    servicios?: ServiciosUncheckedUpdateManyWithoutVendorNestedInput
+  }
+
+  export type CategoriaCreateWithoutServiciosInput = {
+    catId?: string
+    nombre: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    descripcion?: string | null
+    parent?: CategoriaCreateNestedOneWithoutSubcategoriasInput
+    subcategorias?: CategoriaCreateNestedManyWithoutParentInput
+    productos?: ProductoCreateNestedManyWithoutCategoriaInput
+    productosSubcategoria?: ProductoCreateNestedManyWithoutSubcategoriaInput
+    serviciosSubcategoria?: ServiciosCreateNestedManyWithoutSubcategoriaInput
+  }
+
+  export type CategoriaUncheckedCreateWithoutServiciosInput = {
+    catId?: string
+    nombre: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    descripcion?: string | null
+    parentId?: string | null
+    subcategorias?: CategoriaUncheckedCreateNestedManyWithoutParentInput
+    productos?: ProductoUncheckedCreateNestedManyWithoutCategoriaInput
+    productosSubcategoria?: ProductoUncheckedCreateNestedManyWithoutSubcategoriaInput
+    serviciosSubcategoria?: ServiciosUncheckedCreateNestedManyWithoutSubcategoriaInput
+  }
+
+  export type CategoriaCreateOrConnectWithoutServiciosInput = {
+    where: CategoriaWhereUniqueInput
+    create: XOR<CategoriaCreateWithoutServiciosInput, CategoriaUncheckedCreateWithoutServiciosInput>
+  }
+
+  export type CategoriaCreateWithoutServiciosSubcategoriaInput = {
+    catId?: string
+    nombre: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    descripcion?: string | null
+    parent?: CategoriaCreateNestedOneWithoutSubcategoriasInput
+    subcategorias?: CategoriaCreateNestedManyWithoutParentInput
+    productos?: ProductoCreateNestedManyWithoutCategoriaInput
+    productosSubcategoria?: ProductoCreateNestedManyWithoutSubcategoriaInput
+    servicios?: ServiciosCreateNestedManyWithoutCategoriaInput
+  }
+
+  export type CategoriaUncheckedCreateWithoutServiciosSubcategoriaInput = {
+    catId?: string
+    nombre: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    descripcion?: string | null
+    parentId?: string | null
+    subcategorias?: CategoriaUncheckedCreateNestedManyWithoutParentInput
+    productos?: ProductoUncheckedCreateNestedManyWithoutCategoriaInput
+    productosSubcategoria?: ProductoUncheckedCreateNestedManyWithoutSubcategoriaInput
+    servicios?: ServiciosUncheckedCreateNestedManyWithoutCategoriaInput
+  }
+
+  export type CategoriaCreateOrConnectWithoutServiciosSubcategoriaInput = {
+    where: CategoriaWhereUniqueInput
+    create: XOR<CategoriaCreateWithoutServiciosSubcategoriaInput, CategoriaUncheckedCreateWithoutServiciosSubcategoriaInput>
+  }
+
+  export type UnidadCreateWithoutServiciosInput = {
+    unidadId?: string
+    nombre: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    simbolo: string
+    productos?: ProductoCreateNestedManyWithoutUnidadInput
+  }
+
+  export type UnidadUncheckedCreateWithoutServiciosInput = {
+    unidadId?: string
+    nombre: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    simbolo: string
+    productos?: ProductoUncheckedCreateNestedManyWithoutUnidadInput
+  }
+
+  export type UnidadCreateOrConnectWithoutServiciosInput = {
+    where: UnidadWhereUniqueInput
+    create: XOR<UnidadCreateWithoutServiciosInput, UnidadUncheckedCreateWithoutServiciosInput>
+  }
+
+  export type VendorCreateWithoutServiciosInput = {
+    vendorId?: string
+    nombre: string
+    contacto?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    contrato?: string | null
+    cuentaCUP?: string | null
+    cuentaUSD?: string | null
+    direccion?: string | null
+    logo?: string | null
+    telefono?: string | null
+    vendorCode?: string | null
+    compras?: CompraProductoCreateNestedManyWithoutProveedorInput
+    contratos?: ContratoCreateNestedManyWithoutVendorInput
+    cuentasPorPagar?: CuentaPorPagarCreateNestedManyWithoutProveedorInput
+    deudasCash?: DeudaCashCreateNestedManyWithoutProveedorInput
+    gastoCompras?: GastoCompraCreateNestedManyWithoutVendorInput
+    productos?: ProductoCreateNestedManyWithoutVendorInput
+  }
+
+  export type VendorUncheckedCreateWithoutServiciosInput = {
+    vendorId?: string
+    nombre: string
+    contacto?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    contrato?: string | null
+    cuentaCUP?: string | null
+    cuentaUSD?: string | null
+    direccion?: string | null
+    logo?: string | null
+    telefono?: string | null
+    vendorCode?: string | null
+    compras?: CompraProductoUncheckedCreateNestedManyWithoutProveedorInput
+    contratos?: ContratoUncheckedCreateNestedManyWithoutVendorInput
+    cuentasPorPagar?: CuentaPorPagarUncheckedCreateNestedManyWithoutProveedorInput
+    deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutProveedorInput
+    gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutVendorInput
+    productos?: ProductoUncheckedCreateNestedManyWithoutVendorInput
+  }
+
+  export type VendorCreateOrConnectWithoutServiciosInput = {
+    where: VendorWhereUniqueInput
+    create: XOR<VendorCreateWithoutServiciosInput, VendorUncheckedCreateWithoutServiciosInput>
   }
 
   export type OfertaItemCreateWithoutServicioInput = {
@@ -152900,6 +154208,162 @@ export namespace Prisma {
   export type VentaServiciosCreateManyServicioInputEnvelope = {
     data: VentaServiciosCreateManyServicioInput | VentaServiciosCreateManyServicioInput[]
     skipDuplicates?: boolean
+  }
+
+  export type CategoriaUpsertWithoutServiciosInput = {
+    update: XOR<CategoriaUpdateWithoutServiciosInput, CategoriaUncheckedUpdateWithoutServiciosInput>
+    create: XOR<CategoriaCreateWithoutServiciosInput, CategoriaUncheckedCreateWithoutServiciosInput>
+    where?: CategoriaWhereInput
+  }
+
+  export type CategoriaUpdateToOneWithWhereWithoutServiciosInput = {
+    where?: CategoriaWhereInput
+    data: XOR<CategoriaUpdateWithoutServiciosInput, CategoriaUncheckedUpdateWithoutServiciosInput>
+  }
+
+  export type CategoriaUpdateWithoutServiciosInput = {
+    catId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    parent?: CategoriaUpdateOneWithoutSubcategoriasNestedInput
+    subcategorias?: CategoriaUpdateManyWithoutParentNestedInput
+    productos?: ProductoUpdateManyWithoutCategoriaNestedInput
+    productosSubcategoria?: ProductoUpdateManyWithoutSubcategoriaNestedInput
+    serviciosSubcategoria?: ServiciosUpdateManyWithoutSubcategoriaNestedInput
+  }
+
+  export type CategoriaUncheckedUpdateWithoutServiciosInput = {
+    catId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    parentId?: NullableStringFieldUpdateOperationsInput | string | null
+    subcategorias?: CategoriaUncheckedUpdateManyWithoutParentNestedInput
+    productos?: ProductoUncheckedUpdateManyWithoutCategoriaNestedInput
+    productosSubcategoria?: ProductoUncheckedUpdateManyWithoutSubcategoriaNestedInput
+    serviciosSubcategoria?: ServiciosUncheckedUpdateManyWithoutSubcategoriaNestedInput
+  }
+
+  export type CategoriaUpsertWithoutServiciosSubcategoriaInput = {
+    update: XOR<CategoriaUpdateWithoutServiciosSubcategoriaInput, CategoriaUncheckedUpdateWithoutServiciosSubcategoriaInput>
+    create: XOR<CategoriaCreateWithoutServiciosSubcategoriaInput, CategoriaUncheckedCreateWithoutServiciosSubcategoriaInput>
+    where?: CategoriaWhereInput
+  }
+
+  export type CategoriaUpdateToOneWithWhereWithoutServiciosSubcategoriaInput = {
+    where?: CategoriaWhereInput
+    data: XOR<CategoriaUpdateWithoutServiciosSubcategoriaInput, CategoriaUncheckedUpdateWithoutServiciosSubcategoriaInput>
+  }
+
+  export type CategoriaUpdateWithoutServiciosSubcategoriaInput = {
+    catId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    parent?: CategoriaUpdateOneWithoutSubcategoriasNestedInput
+    subcategorias?: CategoriaUpdateManyWithoutParentNestedInput
+    productos?: ProductoUpdateManyWithoutCategoriaNestedInput
+    productosSubcategoria?: ProductoUpdateManyWithoutSubcategoriaNestedInput
+    servicios?: ServiciosUpdateManyWithoutCategoriaNestedInput
+  }
+
+  export type CategoriaUncheckedUpdateWithoutServiciosSubcategoriaInput = {
+    catId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    parentId?: NullableStringFieldUpdateOperationsInput | string | null
+    subcategorias?: CategoriaUncheckedUpdateManyWithoutParentNestedInput
+    productos?: ProductoUncheckedUpdateManyWithoutCategoriaNestedInput
+    productosSubcategoria?: ProductoUncheckedUpdateManyWithoutSubcategoriaNestedInput
+    servicios?: ServiciosUncheckedUpdateManyWithoutCategoriaNestedInput
+  }
+
+  export type UnidadUpsertWithoutServiciosInput = {
+    update: XOR<UnidadUpdateWithoutServiciosInput, UnidadUncheckedUpdateWithoutServiciosInput>
+    create: XOR<UnidadCreateWithoutServiciosInput, UnidadUncheckedCreateWithoutServiciosInput>
+    where?: UnidadWhereInput
+  }
+
+  export type UnidadUpdateToOneWithWhereWithoutServiciosInput = {
+    where?: UnidadWhereInput
+    data: XOR<UnidadUpdateWithoutServiciosInput, UnidadUncheckedUpdateWithoutServiciosInput>
+  }
+
+  export type UnidadUpdateWithoutServiciosInput = {
+    unidadId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    simbolo?: StringFieldUpdateOperationsInput | string
+    productos?: ProductoUpdateManyWithoutUnidadNestedInput
+  }
+
+  export type UnidadUncheckedUpdateWithoutServiciosInput = {
+    unidadId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    simbolo?: StringFieldUpdateOperationsInput | string
+    productos?: ProductoUncheckedUpdateManyWithoutUnidadNestedInput
+  }
+
+  export type VendorUpsertWithoutServiciosInput = {
+    update: XOR<VendorUpdateWithoutServiciosInput, VendorUncheckedUpdateWithoutServiciosInput>
+    create: XOR<VendorCreateWithoutServiciosInput, VendorUncheckedCreateWithoutServiciosInput>
+    where?: VendorWhereInput
+  }
+
+  export type VendorUpdateToOneWithWhereWithoutServiciosInput = {
+    where?: VendorWhereInput
+    data: XOR<VendorUpdateWithoutServiciosInput, VendorUncheckedUpdateWithoutServiciosInput>
+  }
+
+  export type VendorUpdateWithoutServiciosInput = {
+    vendorId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    contacto?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    contrato?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaCUP?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaUSD?: NullableStringFieldUpdateOperationsInput | string | null
+    direccion?: NullableStringFieldUpdateOperationsInput | string | null
+    logo?: NullableStringFieldUpdateOperationsInput | string | null
+    telefono?: NullableStringFieldUpdateOperationsInput | string | null
+    vendorCode?: NullableStringFieldUpdateOperationsInput | string | null
+    compras?: CompraProductoUpdateManyWithoutProveedorNestedInput
+    contratos?: ContratoUpdateManyWithoutVendorNestedInput
+    cuentasPorPagar?: CuentaPorPagarUpdateManyWithoutProveedorNestedInput
+    deudasCash?: DeudaCashUpdateManyWithoutProveedorNestedInput
+    gastoCompras?: GastoCompraUpdateManyWithoutVendorNestedInput
+    productos?: ProductoUpdateManyWithoutVendorNestedInput
+  }
+
+  export type VendorUncheckedUpdateWithoutServiciosInput = {
+    vendorId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    contacto?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    contrato?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaCUP?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaUSD?: NullableStringFieldUpdateOperationsInput | string | null
+    direccion?: NullableStringFieldUpdateOperationsInput | string | null
+    logo?: NullableStringFieldUpdateOperationsInput | string | null
+    telefono?: NullableStringFieldUpdateOperationsInput | string | null
+    vendorCode?: NullableStringFieldUpdateOperationsInput | string | null
+    compras?: CompraProductoUncheckedUpdateManyWithoutProveedorNestedInput
+    contratos?: ContratoUncheckedUpdateManyWithoutVendorNestedInput
+    cuentasPorPagar?: CuentaPorPagarUncheckedUpdateManyWithoutProveedorNestedInput
+    deudasCash?: DeudaCashUncheckedUpdateManyWithoutProveedorNestedInput
+    gastoCompras?: GastoCompraUncheckedUpdateManyWithoutVendorNestedInput
+    productos?: ProductoUncheckedUpdateManyWithoutVendorNestedInput
   }
 
   export type OfertaItemUpsertWithWhereUniqueWithoutServicioInput = {
@@ -153024,8 +154488,18 @@ export namespace Prisma {
     nombre: string
     precio: number
     descripcion: string
+    precioCosto?: number | null
+    precioVenta?: number | null
+    codigoInterno?: string | null
+    codigoNegocio?: string | null
+    activo?: boolean
+    deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    categoria?: CategoriaCreateNestedOneWithoutServiciosInput
+    subcategoria?: CategoriaCreateNestedOneWithoutServiciosSubcategoriaInput
+    unidad?: UnidadCreateNestedOneWithoutServiciosInput
+    vendor?: VendorCreateNestedOneWithoutServiciosInput
     ofertaItems?: OfertaItemCreateNestedManyWithoutServicioInput
   }
 
@@ -153034,6 +154508,16 @@ export namespace Prisma {
     nombre: string
     precio: number
     descripcion: string
+    precioCosto?: number | null
+    precioVenta?: number | null
+    codigoInterno?: string | null
+    codigoNegocio?: string | null
+    categoriaId?: string | null
+    subcategoriaId?: string | null
+    unidadId?: string | null
+    vendorId?: string | null
+    activo?: boolean
+    deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutServicioInput
@@ -153146,8 +154630,18 @@ export namespace Prisma {
     nombre?: StringFieldUpdateOperationsInput | string
     precio?: IntFieldUpdateOperationsInput | number
     descripcion?: StringFieldUpdateOperationsInput | string
+    precioCosto?: NullableIntFieldUpdateOperationsInput | number | null
+    precioVenta?: NullableIntFieldUpdateOperationsInput | number | null
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    categoria?: CategoriaUpdateOneWithoutServiciosNestedInput
+    subcategoria?: CategoriaUpdateOneWithoutServiciosSubcategoriaNestedInput
+    unidad?: UnidadUpdateOneWithoutServiciosNestedInput
+    vendor?: VendorUpdateOneWithoutServiciosNestedInput
     ofertaItems?: OfertaItemUpdateManyWithoutServicioNestedInput
   }
 
@@ -153156,6 +154650,16 @@ export namespace Prisma {
     nombre?: StringFieldUpdateOperationsInput | string
     precio?: IntFieldUpdateOperationsInput | number
     descripcion?: StringFieldUpdateOperationsInput | string
+    precioCosto?: NullableIntFieldUpdateOperationsInput | number | null
+    precioVenta?: NullableIntFieldUpdateOperationsInput | number | null
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    categoriaId?: NullableStringFieldUpdateOperationsInput | string | null
+    subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
+    unidadId?: NullableStringFieldUpdateOperationsInput | string | null
+    vendorId?: NullableStringFieldUpdateOperationsInput | string | null
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutServicioNestedInput
@@ -156648,6 +158152,7 @@ export namespace Prisma {
     deudasCash?: DeudaCashCreateNestedManyWithoutProveedorInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutVendorInput
     productos?: ProductoCreateNestedManyWithoutVendorInput
+    servicios?: ServiciosCreateNestedManyWithoutVendorInput
   }
 
   export type VendorUncheckedCreateWithoutContratosInput = {
@@ -156668,6 +158173,7 @@ export namespace Prisma {
     deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutProveedorInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutVendorInput
     productos?: ProductoUncheckedCreateNestedManyWithoutVendorInput
+    servicios?: ServiciosUncheckedCreateNestedManyWithoutVendorInput
   }
 
   export type VendorCreateOrConnectWithoutContratosInput = {
@@ -157045,6 +158551,7 @@ export namespace Prisma {
     deudasCash?: DeudaCashUpdateManyWithoutProveedorNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutVendorNestedInput
     productos?: ProductoUpdateManyWithoutVendorNestedInput
+    servicios?: ServiciosUpdateManyWithoutVendorNestedInput
   }
 
   export type VendorUncheckedUpdateWithoutContratosInput = {
@@ -157065,6 +158572,7 @@ export namespace Prisma {
     deudasCash?: DeudaCashUncheckedUpdateManyWithoutProveedorNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutVendorNestedInput
     productos?: ProductoUncheckedUpdateManyWithoutVendorNestedInput
+    servicios?: ServiciosUncheckedUpdateManyWithoutVendorNestedInput
   }
 
   export type ContratoAlertaUpsertWithWhereUniqueWithoutContratoInput = {
@@ -159250,8 +160758,18 @@ export namespace Prisma {
     nombre: string
     precio: number
     descripcion: string
+    precioCosto?: number | null
+    precioVenta?: number | null
+    codigoInterno?: string | null
+    codigoNegocio?: string | null
+    activo?: boolean
+    deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    categoria?: CategoriaCreateNestedOneWithoutServiciosInput
+    subcategoria?: CategoriaCreateNestedOneWithoutServiciosSubcategoriaInput
+    unidad?: UnidadCreateNestedOneWithoutServiciosInput
+    vendor?: VendorCreateNestedOneWithoutServiciosInput
     ventasServicios?: VentaServiciosCreateNestedManyWithoutServicioInput
   }
 
@@ -159260,6 +160778,16 @@ export namespace Prisma {
     nombre: string
     precio: number
     descripcion: string
+    precioCosto?: number | null
+    precioVenta?: number | null
+    codigoInterno?: string | null
+    codigoNegocio?: string | null
+    categoriaId?: string | null
+    subcategoriaId?: string | null
+    unidadId?: string | null
+    vendorId?: string | null
+    activo?: boolean
+    deletedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     ventasServicios?: VentaServiciosUncheckedCreateNestedManyWithoutServicioInput
@@ -159414,8 +160942,18 @@ export namespace Prisma {
     nombre?: StringFieldUpdateOperationsInput | string
     precio?: IntFieldUpdateOperationsInput | number
     descripcion?: StringFieldUpdateOperationsInput | string
+    precioCosto?: NullableIntFieldUpdateOperationsInput | number | null
+    precioVenta?: NullableIntFieldUpdateOperationsInput | number | null
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    categoria?: CategoriaUpdateOneWithoutServiciosNestedInput
+    subcategoria?: CategoriaUpdateOneWithoutServiciosSubcategoriaNestedInput
+    unidad?: UnidadUpdateOneWithoutServiciosNestedInput
+    vendor?: VendorUpdateOneWithoutServiciosNestedInput
     ventasServicios?: VentaServiciosUpdateManyWithoutServicioNestedInput
   }
 
@@ -159424,6 +160962,16 @@ export namespace Prisma {
     nombre?: StringFieldUpdateOperationsInput | string
     precio?: IntFieldUpdateOperationsInput | number
     descripcion?: StringFieldUpdateOperationsInput | string
+    precioCosto?: NullableIntFieldUpdateOperationsInput | number | null
+    precioVenta?: NullableIntFieldUpdateOperationsInput | number | null
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    categoriaId?: NullableStringFieldUpdateOperationsInput | string | null
+    subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
+    unidadId?: NullableStringFieldUpdateOperationsInput | string | null
+    vendorId?: NullableStringFieldUpdateOperationsInput | string | null
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ventasServicios?: VentaServiciosUncheckedUpdateManyWithoutServicioNestedInput
@@ -159790,6 +161338,7 @@ export namespace Prisma {
     deudasCash?: DeudaCashCreateNestedManyWithoutProveedorInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutVendorInput
     productos?: ProductoCreateNestedManyWithoutVendorInput
+    servicios?: ServiciosCreateNestedManyWithoutVendorInput
   }
 
   export type VendorUncheckedCreateWithoutCuentasPorPagarInput = {
@@ -159810,6 +161359,7 @@ export namespace Prisma {
     deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutProveedorInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutVendorInput
     productos?: ProductoUncheckedCreateNestedManyWithoutVendorInput
+    servicios?: ServiciosUncheckedCreateNestedManyWithoutVendorInput
   }
 
   export type VendorCreateOrConnectWithoutCuentasPorPagarInput = {
@@ -160073,6 +161623,7 @@ export namespace Prisma {
     deudasCash?: DeudaCashUpdateManyWithoutProveedorNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutVendorNestedInput
     productos?: ProductoUpdateManyWithoutVendorNestedInput
+    servicios?: ServiciosUpdateManyWithoutVendorNestedInput
   }
 
   export type VendorUncheckedUpdateWithoutCuentasPorPagarInput = {
@@ -160093,6 +161644,7 @@ export namespace Prisma {
     deudasCash?: DeudaCashUncheckedUpdateManyWithoutProveedorNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutVendorNestedInput
     productos?: ProductoUncheckedUpdateManyWithoutVendorNestedInput
+    servicios?: ServiciosUncheckedUpdateManyWithoutVendorNestedInput
   }
 
   export type PagoCuentaPorPagarUpsertWithWhereUniqueWithoutCuentaPorPagarInput = {
@@ -160160,6 +161712,7 @@ export namespace Prisma {
     cuentasPorPagar?: CuentaPorPagarCreateNestedManyWithoutProveedorInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutVendorInput
     productos?: ProductoCreateNestedManyWithoutVendorInput
+    servicios?: ServiciosCreateNestedManyWithoutVendorInput
   }
 
   export type VendorUncheckedCreateWithoutDeudasCashInput = {
@@ -160180,6 +161733,7 @@ export namespace Prisma {
     cuentasPorPagar?: CuentaPorPagarUncheckedCreateNestedManyWithoutProveedorInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutVendorInput
     productos?: ProductoUncheckedCreateNestedManyWithoutVendorInput
+    servicios?: ServiciosUncheckedCreateNestedManyWithoutVendorInput
   }
 
   export type VendorCreateOrConnectWithoutDeudasCashInput = {
@@ -160266,6 +161820,7 @@ export namespace Prisma {
     cuentasPorPagar?: CuentaPorPagarUpdateManyWithoutProveedorNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutVendorNestedInput
     productos?: ProductoUpdateManyWithoutVendorNestedInput
+    servicios?: ServiciosUpdateManyWithoutVendorNestedInput
   }
 
   export type VendorUncheckedUpdateWithoutDeudasCashInput = {
@@ -160286,6 +161841,7 @@ export namespace Prisma {
     cuentasPorPagar?: CuentaPorPagarUncheckedUpdateManyWithoutProveedorNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutVendorNestedInput
     productos?: ProductoUncheckedUpdateManyWithoutVendorNestedInput
+    servicios?: ServiciosUncheckedUpdateManyWithoutVendorNestedInput
   }
 
   export type ReconciliacionVentaUpsertWithWhereUniqueWithoutDeudaCashInput = {
@@ -163845,6 +165401,42 @@ export namespace Prisma {
     fotos?: ProductoCreatefotosInput | string[]
   }
 
+  export type ServiciosCreateManyCategoriaInput = {
+    servicioId?: string
+    nombre: string
+    precio: number
+    descripcion: string
+    precioCosto?: number | null
+    precioVenta?: number | null
+    codigoInterno?: string | null
+    codigoNegocio?: string | null
+    subcategoriaId?: string | null
+    unidadId?: string | null
+    vendorId?: string | null
+    activo?: boolean
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type ServiciosCreateManySubcategoriaInput = {
+    servicioId?: string
+    nombre: string
+    precio: number
+    descripcion: string
+    precioCosto?: number | null
+    precioVenta?: number | null
+    codigoInterno?: string | null
+    codigoNegocio?: string | null
+    categoriaId?: string | null
+    unidadId?: string | null
+    vendorId?: string | null
+    activo?: boolean
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type CategoriaUpdateWithoutParentInput = {
     catId?: StringFieldUpdateOperationsInput | string
     nombre?: StringFieldUpdateOperationsInput | string
@@ -163854,6 +165446,8 @@ export namespace Prisma {
     subcategorias?: CategoriaUpdateManyWithoutParentNestedInput
     productos?: ProductoUpdateManyWithoutCategoriaNestedInput
     productosSubcategoria?: ProductoUpdateManyWithoutSubcategoriaNestedInput
+    servicios?: ServiciosUpdateManyWithoutCategoriaNestedInput
+    serviciosSubcategoria?: ServiciosUpdateManyWithoutSubcategoriaNestedInput
   }
 
   export type CategoriaUncheckedUpdateWithoutParentInput = {
@@ -163865,6 +165459,8 @@ export namespace Prisma {
     subcategorias?: CategoriaUncheckedUpdateManyWithoutParentNestedInput
     productos?: ProductoUncheckedUpdateManyWithoutCategoriaNestedInput
     productosSubcategoria?: ProductoUncheckedUpdateManyWithoutSubcategoriaNestedInput
+    servicios?: ServiciosUncheckedUpdateManyWithoutCategoriaNestedInput
+    serviciosSubcategoria?: ServiciosUncheckedUpdateManyWithoutSubcategoriaNestedInput
   }
 
   export type CategoriaUncheckedUpdateManyWithoutParentInput = {
@@ -164071,6 +165667,122 @@ export namespace Prisma {
     fotos?: ProductoUpdatefotosInput | string[]
   }
 
+  export type ServiciosUpdateWithoutCategoriaInput = {
+    servicioId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    precio?: IntFieldUpdateOperationsInput | number
+    descripcion?: StringFieldUpdateOperationsInput | string
+    precioCosto?: NullableIntFieldUpdateOperationsInput | number | null
+    precioVenta?: NullableIntFieldUpdateOperationsInput | number | null
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    subcategoria?: CategoriaUpdateOneWithoutServiciosSubcategoriaNestedInput
+    unidad?: UnidadUpdateOneWithoutServiciosNestedInput
+    vendor?: VendorUpdateOneWithoutServiciosNestedInput
+    ofertaItems?: OfertaItemUpdateManyWithoutServicioNestedInput
+    ventasServicios?: VentaServiciosUpdateManyWithoutServicioNestedInput
+  }
+
+  export type ServiciosUncheckedUpdateWithoutCategoriaInput = {
+    servicioId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    precio?: IntFieldUpdateOperationsInput | number
+    descripcion?: StringFieldUpdateOperationsInput | string
+    precioCosto?: NullableIntFieldUpdateOperationsInput | number | null
+    precioVenta?: NullableIntFieldUpdateOperationsInput | number | null
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
+    unidadId?: NullableStringFieldUpdateOperationsInput | string | null
+    vendorId?: NullableStringFieldUpdateOperationsInput | string | null
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ofertaItems?: OfertaItemUncheckedUpdateManyWithoutServicioNestedInput
+    ventasServicios?: VentaServiciosUncheckedUpdateManyWithoutServicioNestedInput
+  }
+
+  export type ServiciosUncheckedUpdateManyWithoutCategoriaInput = {
+    servicioId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    precio?: IntFieldUpdateOperationsInput | number
+    descripcion?: StringFieldUpdateOperationsInput | string
+    precioCosto?: NullableIntFieldUpdateOperationsInput | number | null
+    precioVenta?: NullableIntFieldUpdateOperationsInput | number | null
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
+    unidadId?: NullableStringFieldUpdateOperationsInput | string | null
+    vendorId?: NullableStringFieldUpdateOperationsInput | string | null
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ServiciosUpdateWithoutSubcategoriaInput = {
+    servicioId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    precio?: IntFieldUpdateOperationsInput | number
+    descripcion?: StringFieldUpdateOperationsInput | string
+    precioCosto?: NullableIntFieldUpdateOperationsInput | number | null
+    precioVenta?: NullableIntFieldUpdateOperationsInput | number | null
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    categoria?: CategoriaUpdateOneWithoutServiciosNestedInput
+    unidad?: UnidadUpdateOneWithoutServiciosNestedInput
+    vendor?: VendorUpdateOneWithoutServiciosNestedInput
+    ofertaItems?: OfertaItemUpdateManyWithoutServicioNestedInput
+    ventasServicios?: VentaServiciosUpdateManyWithoutServicioNestedInput
+  }
+
+  export type ServiciosUncheckedUpdateWithoutSubcategoriaInput = {
+    servicioId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    precio?: IntFieldUpdateOperationsInput | number
+    descripcion?: StringFieldUpdateOperationsInput | string
+    precioCosto?: NullableIntFieldUpdateOperationsInput | number | null
+    precioVenta?: NullableIntFieldUpdateOperationsInput | number | null
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    categoriaId?: NullableStringFieldUpdateOperationsInput | string | null
+    unidadId?: NullableStringFieldUpdateOperationsInput | string | null
+    vendorId?: NullableStringFieldUpdateOperationsInput | string | null
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ofertaItems?: OfertaItemUncheckedUpdateManyWithoutServicioNestedInput
+    ventasServicios?: VentaServiciosUncheckedUpdateManyWithoutServicioNestedInput
+  }
+
+  export type ServiciosUncheckedUpdateManyWithoutSubcategoriaInput = {
+    servicioId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    precio?: IntFieldUpdateOperationsInput | number
+    descripcion?: StringFieldUpdateOperationsInput | string
+    precioCosto?: NullableIntFieldUpdateOperationsInput | number | null
+    precioVenta?: NullableIntFieldUpdateOperationsInput | number | null
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    categoriaId?: NullableStringFieldUpdateOperationsInput | string | null
+    unidadId?: NullableStringFieldUpdateOperationsInput | string | null
+    vendorId?: NullableStringFieldUpdateOperationsInput | string | null
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type ProductoCreateManyUnidadInput = {
     nombre: string
     descripcion?: string | null
@@ -164093,6 +165805,24 @@ export namespace Prisma {
     surtidoCodigo?: string | null
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+  }
+
+  export type ServiciosCreateManyUnidadInput = {
+    servicioId?: string
+    nombre: string
+    precio: number
+    descripcion: string
+    precioCosto?: number | null
+    precioVenta?: number | null
+    codigoInterno?: string | null
+    codigoNegocio?: string | null
+    categoriaId?: string | null
+    subcategoriaId?: string | null
+    vendorId?: string | null
+    activo?: boolean
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type ProductoUpdateWithoutUnidadInput = {
@@ -164191,6 +165921,64 @@ export namespace Prisma {
     surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+  }
+
+  export type ServiciosUpdateWithoutUnidadInput = {
+    servicioId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    precio?: IntFieldUpdateOperationsInput | number
+    descripcion?: StringFieldUpdateOperationsInput | string
+    precioCosto?: NullableIntFieldUpdateOperationsInput | number | null
+    precioVenta?: NullableIntFieldUpdateOperationsInput | number | null
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    categoria?: CategoriaUpdateOneWithoutServiciosNestedInput
+    subcategoria?: CategoriaUpdateOneWithoutServiciosSubcategoriaNestedInput
+    vendor?: VendorUpdateOneWithoutServiciosNestedInput
+    ofertaItems?: OfertaItemUpdateManyWithoutServicioNestedInput
+    ventasServicios?: VentaServiciosUpdateManyWithoutServicioNestedInput
+  }
+
+  export type ServiciosUncheckedUpdateWithoutUnidadInput = {
+    servicioId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    precio?: IntFieldUpdateOperationsInput | number
+    descripcion?: StringFieldUpdateOperationsInput | string
+    precioCosto?: NullableIntFieldUpdateOperationsInput | number | null
+    precioVenta?: NullableIntFieldUpdateOperationsInput | number | null
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    categoriaId?: NullableStringFieldUpdateOperationsInput | string | null
+    subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
+    vendorId?: NullableStringFieldUpdateOperationsInput | string | null
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ofertaItems?: OfertaItemUncheckedUpdateManyWithoutServicioNestedInput
+    ventasServicios?: VentaServiciosUncheckedUpdateManyWithoutServicioNestedInput
+  }
+
+  export type ServiciosUncheckedUpdateManyWithoutUnidadInput = {
+    servicioId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    precio?: IntFieldUpdateOperationsInput | number
+    descripcion?: StringFieldUpdateOperationsInput | string
+    precioCosto?: NullableIntFieldUpdateOperationsInput | number | null
+    precioVenta?: NullableIntFieldUpdateOperationsInput | number | null
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    categoriaId?: NullableStringFieldUpdateOperationsInput | string | null
+    subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
+    vendorId?: NullableStringFieldUpdateOperationsInput | string | null
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type CompraProductoCreateManyProveedorInput = {
@@ -164306,6 +166094,24 @@ export namespace Prisma {
     surtidoCodigo?: string | null
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+  }
+
+  export type ServiciosCreateManyVendorInput = {
+    servicioId?: string
+    nombre: string
+    precio: number
+    descripcion: string
+    precioCosto?: number | null
+    precioVenta?: number | null
+    codigoInterno?: string | null
+    codigoNegocio?: string | null
+    categoriaId?: string | null
+    subcategoriaId?: string | null
+    unidadId?: string | null
+    activo?: boolean
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type CompraProductoUpdateWithoutProveedorInput = {
@@ -164701,6 +166507,64 @@ export namespace Prisma {
     surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+  }
+
+  export type ServiciosUpdateWithoutVendorInput = {
+    servicioId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    precio?: IntFieldUpdateOperationsInput | number
+    descripcion?: StringFieldUpdateOperationsInput | string
+    precioCosto?: NullableIntFieldUpdateOperationsInput | number | null
+    precioVenta?: NullableIntFieldUpdateOperationsInput | number | null
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    categoria?: CategoriaUpdateOneWithoutServiciosNestedInput
+    subcategoria?: CategoriaUpdateOneWithoutServiciosSubcategoriaNestedInput
+    unidad?: UnidadUpdateOneWithoutServiciosNestedInput
+    ofertaItems?: OfertaItemUpdateManyWithoutServicioNestedInput
+    ventasServicios?: VentaServiciosUpdateManyWithoutServicioNestedInput
+  }
+
+  export type ServiciosUncheckedUpdateWithoutVendorInput = {
+    servicioId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    precio?: IntFieldUpdateOperationsInput | number
+    descripcion?: StringFieldUpdateOperationsInput | string
+    precioCosto?: NullableIntFieldUpdateOperationsInput | number | null
+    precioVenta?: NullableIntFieldUpdateOperationsInput | number | null
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    categoriaId?: NullableStringFieldUpdateOperationsInput | string | null
+    subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
+    unidadId?: NullableStringFieldUpdateOperationsInput | string | null
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ofertaItems?: OfertaItemUncheckedUpdateManyWithoutServicioNestedInput
+    ventasServicios?: VentaServiciosUncheckedUpdateManyWithoutServicioNestedInput
+  }
+
+  export type ServiciosUncheckedUpdateManyWithoutVendorInput = {
+    servicioId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    precio?: IntFieldUpdateOperationsInput | number
+    descripcion?: StringFieldUpdateOperationsInput | string
+    precioCosto?: NullableIntFieldUpdateOperationsInput | number | null
+    precioVenta?: NullableIntFieldUpdateOperationsInput | number | null
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    categoriaId?: NullableStringFieldUpdateOperationsInput | string | null
+    subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
+    unidadId?: NullableStringFieldUpdateOperationsInput | string | null
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type PagoDeudaCreateManyInyeccionInput = {

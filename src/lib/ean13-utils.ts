@@ -231,12 +231,11 @@ export async function FindNextAvailableSurtido(
   }
 
   try {
-    // Buscar todos los productos con esta sección/específico (excluyendo soft-deleted)
+    // Buscar todos los productos con esta sección/específico
     const existingProducts = await prismaClient.producto.findMany({
       where: {
         idSeccionCodigo: sectionCode.padStart(2, '0'),
         especificoCodigo: specificCode.padStart(4, '0'),
-        deletedAt: null, // Excluye productos eliminados (soft delete)
       },
       select: {
         surtidoCodigo: true,

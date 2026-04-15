@@ -238,7 +238,6 @@ export const GET = withAuthGet(async (request: NextRequest) => {
         OR: [
           { nombre: { contains: search } },
           { descripcion: { contains: search } },
-          { codigoInterno: { contains: search } },
           { codigoNegocio: { contains: search } },
           { categoria: { nombre: { contains: search } } },
           { subcategoria: { nombre: { contains: search } } },
@@ -334,7 +333,6 @@ export const POST = withAuthPost(async (req: NextRequest) => {
     const {
       nombre,
       descripcion,
-      codigoInterno,
       proveedorCodigo,
       idSeccionCodigo,
       especificoCodigo,
@@ -379,26 +377,12 @@ export const POST = withAuthPost(async (req: NextRequest) => {
         return jsonError('El stock mínimo debe ser un número entero mayor o igual a 0', 400);
       }
 
-      const normalizedCodigoInterno = normalizeCodigoInterno(codigoInterno);
-      if (normalizedCodigoInterno && !CODIGO_INTERNO_REGEX.test(normalizedCodigoInterno)) {
-        return jsonError('El código interno debe contener exactamente 11 números', 400);
-      }
-
-      if (normalizedCodigoInterno) {
-        const existingProducto = await prisma.producto.findFirst({
-          where: { codigoInterno: normalizedCodigoInterno },
-          select: { id: true },
-        });
-        if (existingProducto) {
-          return jsonError('El código interno ya está asignado a otro producto', 409);
-        }
-      }
+      // codigoInterno no es soportado actualmente
 
       const productoSimple = await prisma.producto.create({
         data: {
           nombre,
           descripcion,
-          codigoInterno: normalizedCodigoInterno,
           codigoNegocio: null,
           proveedorCodigo: null,
           idSeccionCodigo: null,
@@ -450,26 +434,6 @@ export const POST = withAuthPost(async (req: NextRequest) => {
       return jsonError('El stock mínimo debe ser un número entero mayor o igual a 0', 400);
     }
 
-    if (codigoInterno !== undefined && codigoInterno !== null && typeof codigoInterno !== 'string') {
-      return jsonError('El código interno debe enviarse como texto', 400);
-    }
-
-    const normalizedCodigoInterno = normalizeCodigoInterno(codigoInterno);
-    if (normalizedCodigoInterno && !CODIGO_INTERNO_REGEX.test(normalizedCodigoInterno)) {
-      return jsonError('El código interno debe contener exactamente 11 números', 400);
-    }
-
-    if (normalizedCodigoInterno) {
-      const existingProducto = await prisma.producto.findFirst({
-        where: { codigoInterno: normalizedCodigoInterno },
-        select: { id: true },
-      });
-
-      if (existingProducto) {
-        return jsonError('El código interno ya está asignado a otro producto', 409);
-      }
-    }
-
     const resultado = await prisma.$transaction(async (tx) => {
       const generatedParentSurtido = await FindNextAvailableSurtido(
         tx as any,
@@ -497,7 +461,6 @@ export const POST = withAuthPost(async (req: NextRequest) => {
         data: {
           nombre,
           descripcion,
-          codigoInterno: normalizedCodigoInterno,
           codigoNegocio: generatedParentCode.codigoNegocio,
           proveedorCodigo: generatedParentCode.proveedorCodigo,
           idSeccionCodigo: generatedParentCode.idSeccionCodigo,

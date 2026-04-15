@@ -3,18 +3,44 @@ import prisma from '@/lib/prisma';
 import { z } from 'zod';
 import { authenticateUser } from "@/lib/auth-middleware";
 
-const contratoSchema = z.object({
-  tipo: z.enum(['VENTA', 'SERVICIO', 'PROVEEDOR']),
-  fechaInicio: z.string().datetime(),
-  fechaFin: z.string().datetime().nullable().optional(),
-  monto: z.string().nullable().optional(),
-  moneda: z.string().default('CUP'),
-  esMultiMoneda: z.boolean().default(false).optional(),
-  condiciones: z.any().nullable().optional(),
-  observaciones: z.string().nullable().optional(),
-  clienteId: z.string().nullable().optional(),
-  vendorId: z.string().nullable().optional(),
-});
+const contratoSchema = z
+  .object({
+    tipo: z.enum(['VENTA', 'SERVICIO', 'PROVEEDOR']),
+    fechaInicio: z.string().datetime(),
+    fechaFin: z.string().datetime().nullable().optional(),
+    monto: z.string().nullable().optional(),
+    moneda: z.string().default('CUP'),
+    esMultiMoneda: z.boolean().default(false).optional(),
+    condiciones: z.any().nullable().optional(),
+    observaciones: z.string().nullable().optional(),
+    clienteId: z.string().nullable().optional(),
+    vendorId: z.string().nullable().optional(),
+  })
+  .refine(
+    (data) => {
+      // Si es VENTA o SERVICIO, clienteId es REQUERIDO
+      if ((data.tipo === 'VENTA' || data.tipo === 'SERVICIO') && !data.clienteId) {
+        return false;
+      }
+      // Si es PROVEEDOR, vendorId es REQUERIDO
+      if (data.tipo === 'PROVEEDOR' && !data.vendorId) {
+        return false;
+      }
+      return true;
+    },
+    (data) => {
+      if (data.tipo === 'PROVEEDOR') {
+        return {
+          message: 'El campo Proveedor es requerido para contratos de tipo PROVEEDOR',
+          path: ['vendorId'],
+        };
+      }
+      return {
+        message: 'El campo Cliente es requerido para contratos de tipo VENTA o SERVICIO',
+        path: ['clienteId'],
+      };
+    }
+  );
 
 export async function GET(request: NextRequest) {
   try {

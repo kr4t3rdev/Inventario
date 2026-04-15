@@ -20,15 +20,18 @@ model Categoria {
   subcategorias         Categoria[] @relation("CategoriaHierarchy")
   productos             Producto[]
   productosSubcategoria Producto[]  @relation("ProductoSubcategoria")
+  servicios             Servicios[] @relation("ServiciosCategoria")
+  serviciosSubcategoria Servicios[] @relation("ServiciosSubcategoria")
 }
 
 model Unidad {
-  unidadId  String     @id @default(cuid())
+  unidadId  String      @id @default(cuid())
   nombre    String
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
   simbolo   String
   productos Producto[]
+  servicios Servicios[]
 }
 
 model Vendor {
@@ -50,6 +53,7 @@ model Vendor {
   deudasCash      DeudaCash[]
   gastoCompras    GastoCompra[]
   productos       Producto[]
+  servicios       Servicios[]
 
   @@index([vendorCode])
 }
@@ -570,14 +574,36 @@ model CompraProducto {
 }
 
 model Servicios {
-  servicioId      String           @id @default(cuid())
-  nombre          String
-  precio          Int
-  descripcion     String
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  servicioId     String    @id @default(cuid())
+  nombre         String
+  precio         Int
+  descripcion    String
+  precioCosto    Int?
+  precioVenta    Int?
+  codigoInterno  String?   @db.VarChar(11)
+  codigoNegocio  String?   @db.VarChar(40)
+  categoriaId    String?
+  subcategoriaId String?
+  unidadId       String?
+  vendorId       String?
+  activo         Boolean   @default(true)
+  deletedAt      DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Relaciones
+  categoria    Categoria? @relation("ServiciosCategoria", fields: [categoriaId], references: [catId], onDelete: SetNull)
+  subcategoria Categoria? @relation("ServiciosSubcategoria", fields: [subcategoriaId], references: [catId], onDelete: SetNull)
+  unidad       Unidad?    @relation(fields: [unidadId], references: [unidadId], onDelete: SetNull)
+  vendor       Vendor?    @relation(fields: [vendorId], references: [vendorId], onDelete: SetNull)
+
   ofertaItems     OfertaItem[]
   ventasServicios VentaServicios[]
+
+  @@index([categoriaId])
+  @@index([subcategoriaId])
+  @@index([unidadId])
+  @@index([vendorId])
 }
 
 model VentaServicios {

@@ -62,11 +62,9 @@ const productosSchema = z.object({
     .optional()
     .or(z.literal('')),
   codigoInterno: z
-    .string()
-    .optional()
-    .refine((value) => !value || /^[0-9]{11}$/.test(value), {
-      message: 'El código interno debe contener exactamente 11 números',
-    }),
+    .string({ required_error: 'El código interno es requerido' })
+    .min(1, 'El código interno es requerido')
+    .regex(/^[0-9]{11}$/, 'El código interno debe contener exactamente 11 números'),
   proveedorCodigo: z.string().optional(),
   vendorId: z.string().optional(),
   categoriaId: z
@@ -286,6 +284,20 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
     setIsLoading(true)
 
     try {
+      // Validar código interno
+      if (!data.codigoInterno || !/^[0-9]{11}$/.test(data.codigoInterno.trim())) {
+        form.setError('codigoInterno', {
+          type: 'manual',
+          message: 'El código interno debe contener exactamente 11 números',
+        })
+        sileo.error({
+          title: 'Código interno inválido',
+          description: 'El código interno es requerido y debe contener exactamente 11 números.',
+        })
+        setIsLoading(false)
+        return
+      }
+
        if (initialData) {
          const resolvedProveedorCodigo = selectedVendorProviderCode || data.proveedorCodigo
 
@@ -564,7 +576,7 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
                           />
                         </FormControl>
                         <FormDescription>
-                          Opcional. Debe contener 11 números únicos.
+                          Requerido. Debe contener exactamente 11 números.
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
