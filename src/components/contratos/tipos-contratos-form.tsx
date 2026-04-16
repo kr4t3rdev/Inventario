@@ -167,11 +167,11 @@ export function TiposContratosForm({
         </motion.div>
       </DialogTrigger>
 
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-125">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <motion.div
-              className="w-6 h-6 bg-gradient-to-br from-primary to-purple-600 rounded-lg flex items-center justify-center"
+              className="w-6 h-6 bg-linear-to-br from-primary to-purple-600 rounded-lg flex items-center justify-center"
               whileHover={{ scale: 1.1 }}
               transition={{ type: 'spring', stiffness: 400, damping: 10 }}
             >
@@ -235,7 +235,7 @@ export function TiposContratosForm({
                           <Textarea
                             placeholder="Describe brevemente el tipo de contrato..."
                             disabled={isLoading}
-                            className="min-h-[100px] resize-none focus:ring-2 focus:ring-primary/20"
+                            className="min-h-25 resize-none focus:ring-2 focus:ring-primary/20"
                             {...field}
                             value={field.value || ''}
                           />
@@ -275,7 +275,7 @@ export function TiposContratosForm({
                       <Button
                         type="submit"
                         disabled={isLoading}
-                        className="gap-2 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                        className="gap-2 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
                       >
                         {isLoading ? (
                           <>
@@ -306,7 +306,7 @@ export function TiposContratosForm({
               <motion.div
                 animate={{ scale: [1, 1.1, 1] }}
                 transition={{ duration: 0.5, repeat: 1 }}
-                className="w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-600 rounded-full flex items-center justify-center"
+                className="w-16 h-16 bg-linear-to-br from-green-400 to-emerald-600 rounded-full flex items-center justify-center"
               >
                 <CheckCircle2 className="h-8 w-8 text-white" />
               </motion.div>
