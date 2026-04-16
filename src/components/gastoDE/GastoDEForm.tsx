@@ -21,19 +21,17 @@ import { useGetGastoConceptosQuery, useGetGastoElementosQuery } from "@/lib/redu
 import { VendorCombobox } from "./VendorCombobox"
 
 const gastosDESchema = z.object({
-  tipo: z.string().optional(),
+  tipo: z.string().max(100, 'Máximo 100 caracteres').optional(),
   conceptoId: z.string().optional(),
   elementoId: z.string().optional(),
-  numeroFactura: z.string().optional(),
-  proveedor: z.string({
-    required_error: 'El campo Proveedor no ha sido rellenado',
-  }),
-  monto: z.coerce.number().positive({
+  numeroFactura: z.string().max(50, 'Máximo 50 caracteres').optional(),
+  proveedor: z.string().max(200, 'Máximo 200 caracteres').optional(),
+  monto: z.coerce.number({ invalid_type_error: 'Ingrese un monto válido' }).positive({
     message: "El monto debe ser mayor a 0",
   }),
-  descripcion: z.string({
-    message: "Escriba una descripción"
-  }),
+  descripcion: z.string()
+    .min(1, 'La descripción es obligatoria')
+    .max(500, 'Máximo 500 caracteres'),
   periodo: z.string().regex(/^\d{4}-\d{2}$/, "El período debe tener formato YYYY-MM"),
 })
 
@@ -413,7 +411,7 @@ export function GastoDEForm({ initialData }: GastosDEFormProps) {
                         <Input 
                           type="number" 
                           step="0.01" 
-                          min="0" 
+                          min="0.01" 
                           {...field} 
                           className="transition-all duration-200 focus:scale-[1.01]"
                         />

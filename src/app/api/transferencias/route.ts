@@ -76,17 +76,46 @@ export const GET = withAuthGet(async (request: NextRequest) => {
       where: {
         deletedAt: null, // Excluir transferencias eliminadas (soft delete)
       },
-      include: {
+      select: {
+        transferenciaId: true,
+        numeroTransferencia: true,
+        productoId: true,
+        cantidad: true,
+        costoUnitario: true,
+        costoTotal: true,
+        estado: true,
+        createdAt: true,
+        updatedAt: true,
         producto: {
-          include: {
-            categoria: true,
-            unidad: true,
+          select: {
+            nombre: true,
+            codigoInterno: true,
           }
         },
-        origen: true,
-        destino: true,
-        puntoDeVentaOrigen: true,
-        puntoDeVentaDestino: true,
+        origen: {
+          select: {
+            almacenId: true,
+            nombre: true,
+          }
+        },
+        destino: {
+          select: {
+            almacenId: true,
+            nombre: true,
+          }
+        },
+        puntoDeVentaOrigen: {
+          select: {
+            puntoDeVentaId: true,
+            nombre: true,
+          }
+        },
+        puntoDeVentaDestino: {
+          select: {
+            puntoDeVentaId: true,
+            nombre: true,
+          }
+        },
         creadoPor: {
           select: {
             userId: true,

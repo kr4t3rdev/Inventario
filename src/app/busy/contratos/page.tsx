@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { motion, AnimatePresence } from "framer-motion"
 import { Card, CardContent } from "@/components/ui/card"
+import { TiposContratosForm } from "@/components/contratos/tipos-contratos-form"
 
 interface Contrato {
   contratoId: string
@@ -531,6 +532,7 @@ export default function ContratosPage() {
                     </motion.div>
                   )}
                 </AnimatePresence>
+                <TiposContratosForm />
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   <Button asChild className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90">
                     <Link href="/busy/contratos/new">

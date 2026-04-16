@@ -6,7 +6,7 @@ import { z } from 'zod';
 // Schema para validar actualización de contratos
 const contratoUpdateSchema = z
   .object({
-    tipo: z.enum(['VENTA', 'SERVICIO', 'PROVEEDOR']).optional(),
+    tipo: z.enum(['COMPRA_VENTA', 'SERVICIO', 'SUMINISTROS']).optional(),
     fechaInicio: z.string().datetime().optional(),
     fechaFin: z.string().datetime().nullable().optional(),
     monto: z.string().nullable().optional(),
@@ -25,24 +25,24 @@ const contratoUpdateSchema = z
     (data) => {
       // Si se está actualizando el tipo, validar la lógica de cliente/vendor
       if (data.tipo) {
-        if ((data.tipo === 'VENTA' || data.tipo === 'SERVICIO') && data.clienteId === null && data.clienteId !== undefined) {
+        if ((data.tipo === 'COMPRA_VENTA' || data.tipo === 'SERVICIO') && data.clienteId === null && data.clienteId !== undefined) {
           return false;
         }
-        if (data.tipo === 'PROVEEDOR' && data.vendorId === null && data.vendorId !== undefined) {
+        if (data.tipo === 'SUMINISTROS' && data.vendorId === null && data.vendorId !== undefined) {
           return false;
         }
       }
       return true;
     },
     (data) => {
-      if (data.tipo === 'PROVEEDOR') {
+      if (data.tipo === 'SUMINISTROS') {
         return {
-          message: 'El campo Proveedor es requerido para contratos de tipo PROVEEDOR',
+          message: 'El campo Proveedor es requerido para contratos de tipo SUMINISTROS',
           path: ['vendorId'],
         };
       }
       return {
-        message: 'El campo Cliente es requerido para contratos de tipo VENTA o SERVICIO',
+        message: 'El campo Cliente es requerido para contratos de tipo COMPRA_VENTA o SERVICIO',
         path: ['clienteId'],
       };
     }
@@ -104,23 +104,23 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const tipoActual = validatedBody.tipo || existingContrato.tipo;
     
-    // Validar lógica de negocio: si es VENTA/SERVICIO debe tener cliente
-    if ((tipoActual === 'VENTA' || tipoActual === 'SERVICIO')) {
+    // Validar lógica de negocio: si es COMPRA_VENTA/SERVICIO debe tener cliente
+    if ((tipoActual === 'COMPRA_VENTA' || tipoActual === 'SERVICIO')) {
       const clienteId = validatedBody.clienteId !== undefined ? validatedBody.clienteId : existingContrato.clienteId;
       if (!clienteId) {
         return NextResponse.json(
-          { error: 'El campo Cliente es requerido para contratos de tipo VENTA o SERVICIO' },
+          { error: 'El campo Cliente es requerido para contratos de tipo COMPRA_VENTA o SERVICIO' },
           { status: 400 }
         );
       }
     }
     
-    // Validar lógica de negocio: si es PROVEEDOR debe tener vendor
-    if (tipoActual === 'PROVEEDOR') {
+    // Validar lógica de negocio: si es SUMINISTROS debe tener vendor
+    if (tipoActual === 'SUMINISTROS') {
       const vendorId = validatedBody.vendorId !== undefined ? validatedBody.vendorId : existingContrato.vendorId;
       if (!vendorId) {
         return NextResponse.json(
-          { error: 'El campo Proveedor es requerido para contratos de tipo PROVEEDOR' },
+          { error: 'El campo Proveedor es requerido para contratos de tipo SUMINISTROS' },
           { status: 400 }
         );
       }
