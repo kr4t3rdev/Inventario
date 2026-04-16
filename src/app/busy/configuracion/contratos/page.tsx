@@ -1,6 +1,7 @@
 'use client'
 
 import { ConfiguracionContratos } from "@/components/configuracion/configuracion-contratos"
+import { TiposContratosList } from "@/components/contratos/tipos-contratos-list"
 
 export default function ConfiguracionContratosPage() {
   return (
@@ -10,6 +11,7 @@ export default function ConfiguracionContratosPage() {
         <p className="text-muted-foreground">Configure los parámetros generales para la gestión de contratos</p>
       </div>
       <ConfiguracionContratos />
+      <TiposContratosList />
     </div>
   )
 }

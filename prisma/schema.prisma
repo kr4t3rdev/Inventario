@@ -292,6 +292,7 @@ model User {
   contratoArchivos     ContratoArchivo[]
   contratoFirmas       ContratoFirma[]
   contratoVersiones    ContratoVersion[]
+  tiposContratosCustom TipoContratoCustom[]
   licencias            Licencia[]
   licenciasAudit       LicenciaAudit[]      @relation("LicenciaAuditActor")
   notifications        Notification[]
@@ -932,6 +933,8 @@ model ScenarioSimulation {
 model Contrato {
   contratoId           String               @id @default(cuid())
   numeroContrato       String               @unique
+  numeroConsecutivo    Int
+  numeroContratoClienteProveedor String?
   tipo                 TipoContrato
   estado               EstadoContrato       @default(BORRADOR)
   fechaInicio          DateTime
@@ -958,6 +961,8 @@ model Contrato {
   archivos             ContratoArchivo[]
   firmas               ContratoFirma[]
   versiones            ContratoVersion[]
+
+  @@unique([tipo, numeroConsecutivo])
 }
 
 model ContratoVersion {
@@ -1028,6 +1033,20 @@ model ContratoAlerta {
   accionRequerida Boolean  @default(false)
   createdAt       DateTime @default(now())
   contrato        Contrato @relation(fields: [contratoId], references: [contratoId], onDelete: Cascade)
+}
+
+model TipoContratoCustom {
+  tipoCustomId  String   @id @default(cuid())
+  nombre        String   @unique
+  descripcion   String?
+  activo        Boolean  @default(true)
+  creadoPor     String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  creador       User     @relation(fields: [creadoPor], references: [userId])
+
+  @@index([nombre])
+  @@index([activo])
 }
 
 model Factura {
@@ -1477,9 +1496,9 @@ enum EstadoDeuda {
 }
 
 enum TipoContrato {
-  VENTA
+  COMPRA_VENTA
   SERVICIO
-  PROVEEDOR
+  SUMINISTROS
 }
 
 enum EstadoContrato {

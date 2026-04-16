@@ -26,7 +26,7 @@ export default function NewContratoPage() {
   const { data: vendors, isLoading: isLoadingVendors } = useGetVendorsQuery()
 
   const [formData, setFormData] = useState({
-    tipo: 'VENTA' as 'VENTA' | 'SERVICIO' | 'PROVEEDOR',
+    tipo: 'COMPRA_VENTA' as 'COMPRA_VENTA' | 'SERVICIO' | 'SUMINISTROS',
     fechaInicio: '',
     fechaFin: '',
     monto: '',
@@ -34,6 +34,7 @@ export default function NewContratoPage() {
     esMultiMoneda: false,
     clienteId: '',
     vendorId: '',
+    numeroContratoClienteProveedor: '',
     observaciones: '',
   })
 
@@ -46,14 +47,14 @@ export default function NewContratoPage() {
       return
     }
 
-    if (formData.tipo === 'VENTA' || formData.tipo === 'SERVICIO') {
+    if (formData.tipo === 'COMPRA_VENTA' || formData.tipo === 'SERVICIO') {
       if (!formData.clienteId) {
         toast('El cliente es requerido para contratos de tipo ' + formData.tipo)
         return
       }
-    } else if (formData.tipo === 'PROVEEDOR') {
+    } else if (formData.tipo === 'SUMINISTROS') {
       if (!formData.vendorId) {
-        toast('El proveedor es requerido para contratos de tipo PROVEEDOR')
+        toast('El proveedor es requerido para contratos de tipo SUMINISTROS')
         return
       }
     }
@@ -97,9 +98,9 @@ export default function NewContratoPage() {
   const handleTipoChange = (value: string) => {
     setFormData(prev => ({
       ...prev,
-      tipo: value as 'VENTA' | 'SERVICIO' | 'PROVEEDOR',
-      clienteId: value === 'PROVEEDOR' ? '' : prev.clienteId,
-      vendorId: value !== 'PROVEEDOR' ? '' : prev.vendorId,
+      tipo: value as 'COMPRA_VENTA' | 'SERVICIO' | 'SUMINISTROS',
+      clienteId: value === 'SUMINISTROS' ? '' : prev.clienteId,
+      vendorId: value !== 'SUMINISTROS' ? '' : prev.vendorId,
     }))
   }
 
@@ -212,16 +213,16 @@ export default function NewContratoPage() {
                       <SelectValue placeholder="Seleccione el tipo" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="VENTA">Venta</SelectItem>
+                      <SelectItem value="COMPRA_VENTA">Compra - Venta</SelectItem>
                       <SelectItem value="SERVICIO">Servicio</SelectItem>
-                      <SelectItem value="PROVEEDOR">Proveedor</SelectItem>
+                      <SelectItem value="SUMINISTROS">Suministros</SelectItem>
                     </SelectContent>
                   </Select>
                 </motion.div>
 
                 {/* Cliente o Proveedor */}
                 <AnimatePresence mode="wait">
-                  {(formData.tipo === 'VENTA' || formData.tipo === 'SERVICIO') && (
+                  {(formData.tipo === 'COMPRA_VENTA' || formData.tipo === 'SERVICIO') && (
                     <motion.div
                       key="cliente"
                       initial={{ opacity: 0, height: 0 }}
@@ -262,7 +263,7 @@ export default function NewContratoPage() {
                     </motion.div>
                   )}
 
-                  {formData.tipo === 'PROVEEDOR' && (
+                  {formData.tipo === 'SUMINISTROS' && (
                     <motion.div
                       key="proveedor"
                       initial={{ opacity: 0, height: 0 }}
@@ -304,7 +305,25 @@ export default function NewContratoPage() {
                   )}
                 </AnimatePresence>
 
-                {/* Fechas */}
+                {/* Número de Contrato del Cliente/Proveedor */}
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.35 }}
+                >
+                  <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-muted-foreground" />
+                    Número de Contrato (Cliente/Proveedor)
+                  </label>
+                  <Input
+                    type="text"
+                    value={formData.numeroContratoClienteProveedor}
+                    onChange={(e) => setFormData(prev => ({ ...prev, numeroContratoClienteProveedor: e.target.value }))}
+                    placeholder="Ej: PR-2026-04-001"
+                    className="transition-all duration-200 focus:scale-[1.01]"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Referencia con la cual el cliente/proveedor identifica este contrato (opcional)</p>
+                </motion.div>
                 <motion.div 
                   className="grid grid-cols-2 gap-4"
                   initial={{ opacity: 0, x: -20 }}

@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { z } from 'zod';
 import { authenticateUser } from "@/lib/auth-middleware";
+import { generarProximoConsecutivo, formatearNumeroContrato } from './lib/numeroContratoGenerator';
 
 const contratoSchema = z
   .object({
-    tipo: z.enum(['VENTA', 'SERVICIO', 'PROVEEDOR']),
+    tipo: z.enum(['COMPRA_VENTA', 'SERVICIO', 'SUMINISTROS']),
     fechaInicio: z.string().datetime(),
     fechaFin: z.string().datetime().nullable().optional(),
     monto: z.string().nullable().optional(),
@@ -13,30 +14,31 @@ const contratoSchema = z
     esMultiMoneda: z.boolean().default(false).optional(),
     condiciones: z.any().nullable().optional(),
     observaciones: z.string().nullable().optional(),
+    numeroContratoClienteProveedor: z.string().nullable().optional(),
     clienteId: z.string().nullable().optional(),
     vendorId: z.string().nullable().optional(),
   })
   .refine(
     (data) => {
-      // Si es VENTA o SERVICIO, clienteId es REQUERIDO
-      if ((data.tipo === 'VENTA' || data.tipo === 'SERVICIO') && !data.clienteId) {
+      // Si es COMPRA_VENTA o SERVICIO, clienteId es REQUERIDO
+      if ((data.tipo === 'COMPRA_VENTA' || data.tipo === 'SERVICIO') && !data.clienteId) {
         return false;
       }
-      // Si es PROVEEDOR, vendorId es REQUERIDO
-      if (data.tipo === 'PROVEEDOR' && !data.vendorId) {
+      // Si es SUMINISTROS, vendorId es REQUERIDO
+      if (data.tipo === 'SUMINISTROS' && !data.vendorId) {
         return false;
       }
       return true;
     },
     (data) => {
-      if (data.tipo === 'PROVEEDOR') {
+      if (data.tipo === 'SUMINISTROS') {
         return {
-          message: 'El campo Proveedor es requerido para contratos de tipo PROVEEDOR',
+          message: 'El campo Proveedor es requerido para contratos de tipo SUMINISTROS',
           path: ['vendorId'],
         };
       }
       return {
-        message: 'El campo Cliente es requerido para contratos de tipo VENTA o SERVICIO',
+        message: 'El campo Cliente es requerido para contratos de tipo COMPRA_VENTA o SERVICIO',
         path: ['clienteId'],
       };
     }
@@ -135,26 +137,17 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const data = contratoSchema.parse(body);
 
-    const year = new Date().getFullYear();
-    const tipoAbreviado = data.tipo === 'VENTA' ? 'VEN' : data.tipo === 'SERVICIO' ? 'SER' : 'PRO';
-
-    const countContratos = await prisma.contrato.count({
-      where: {
-        tipo: data.tipo,
-        createdAt: {
-          gte: new Date(`${year}-01-01`),
-          lt: new Date(`${year + 1}-01-01`),
-        },
-      },
-    });
-
-    const numeroContrato = `C-${year}-${tipoAbreviado}-${String(countContratos + 1).padStart(5, '0')}`;
+    // Generar próximo consecutivo para el tipo de contrato
+    const numeroConsecutivo = await generarProximoConsecutivo(data.tipo);
+    const numeroContrato = formatearNumeroContrato(data.tipo, numeroConsecutivo);
 
     const contrato = await prisma.contrato.create({
       data: {
         ...data,
         creadoPor: user.userId,
         numeroContrato,
+        numeroConsecutivo,
+        numeroContratoClienteProveedor: data.numeroContratoClienteProveedor || null,
         fechaInicio: new Date(data.fechaInicio),
         fechaFin: data.fechaFin ? new Date(data.fechaFin) : null,
       },

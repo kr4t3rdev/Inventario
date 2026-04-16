@@ -300,6 +300,11 @@ export type ContratoArchivo = $Result.DefaultSelection<Prisma.$ContratoArchivoPa
  */
 export type ContratoAlerta = $Result.DefaultSelection<Prisma.$ContratoAlertaPayload>
 /**
+ * Model TipoContratoCustom
+ * 
+ */
+export type TipoContratoCustom = $Result.DefaultSelection<Prisma.$TipoContratoCustomPayload>
+/**
  * Model Factura
  * 
  */
@@ -457,9 +462,9 @@ export type EstadoDeuda = (typeof EstadoDeuda)[keyof typeof EstadoDeuda]
 
 
 export const TipoContrato: {
-  VENTA: 'VENTA',
+  COMPRA_VENTA: 'COMPRA_VENTA',
   SERVICIO: 'SERVICIO',
-  PROVEEDOR: 'PROVEEDOR'
+  SUMINISTROS: 'SUMINISTROS'
 };
 
 export type TipoContrato = (typeof TipoContrato)[keyof typeof TipoContrato]
@@ -1339,6 +1344,16 @@ export class PrismaClient<
   get contratoAlerta(): Prisma.ContratoAlertaDelegate<ExtArgs, ClientOptions>;
 
   /**
+   * `prisma.tipoContratoCustom`: Exposes CRUD operations for the **TipoContratoCustom** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more TipoContratoCustoms
+    * const tipoContratoCustoms = await prisma.tipoContratoCustom.findMany()
+    * ```
+    */
+  get tipoContratoCustom(): Prisma.TipoContratoCustomDelegate<ExtArgs, ClientOptions>;
+
+  /**
    * `prisma.factura`: Exposes CRUD operations for the **Factura** model.
     * Example usage:
     * ```ts
@@ -2105,6 +2120,7 @@ export namespace Prisma {
     ContratoAprobacion: 'ContratoAprobacion',
     ContratoArchivo: 'ContratoArchivo',
     ContratoAlerta: 'ContratoAlerta',
+    TipoContratoCustom: 'TipoContratoCustom',
     Factura: 'Factura',
     SerieFacturacion: 'SerieFacturacion',
     Oferta: 'Oferta',
@@ -2150,7 +2166,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "categoria" | "unidad" | "vendor" | "inyeccionCapital" | "pagoDeuda" | "cliente" | "miEmpresa" | "almacen" | "puntoDeVenta" | "producto" | "venta" | "ventaItem" | "merma" | "transferencia" | "user" | "plan" | "licencia" | "licenciaAudit" | "notification" | "userActivityLog" | "userSession" | "attendance" | "employeeWorkSchedule" | "vacationRequest" | "vacationAccrual" | "empleado" | "pagosalario" | "cierreContable" | "gastoCompra" | "compraProducto" | "servicios" | "ventaServicios" | "gastoConcepto" | "gastoElemento" | "gastosDE" | "moneda" | "catalogoReparacionConfig" | "tasaCambio" | "transaccionMoneda" | "cuentaBancaria" | "tipoPago" | "reconciliacionVenta" | "reconciliacionServicio" | "reconciliacionGasto" | "ajusteBancario" | "transferenciaBancaria" | "alertHistory" | "auditLog" | "reportHistory" | "scheduledReport" | "scenarioSimulation" | "contrato" | "contratoVersion" | "contratoFirma" | "contratoAprobacion" | "contratoArchivo" | "contratoAlerta" | "factura" | "serieFacturacion" | "oferta" | "ofertaItem" | "cuentaPorCobrar" | "cuentaPorPagar" | "deudaCash" | "prestamoCash" | "pagoCuentaPorPagar" | "equipoReparacion" | "piezaReparacion" | "ordenReparacion" | "ordenReparacionEquipo" | "ordenReparacionItem" | "ordenReparacionMaterial" | "defectacionCatalogo" | "configuracionSistema" | "ordenProduccion" | "ordenProduccionHistorial" | "receta" | "recetaIngrediente" | "valeSalida" | "valeSalidaItem" | "listaPrecio" | "precioProducto" | "productoCostHistory" | "vendorCodeSequence"
+      modelProps: "categoria" | "unidad" | "vendor" | "inyeccionCapital" | "pagoDeuda" | "cliente" | "miEmpresa" | "almacen" | "puntoDeVenta" | "producto" | "venta" | "ventaItem" | "merma" | "transferencia" | "user" | "plan" | "licencia" | "licenciaAudit" | "notification" | "userActivityLog" | "userSession" | "attendance" | "employeeWorkSchedule" | "vacationRequest" | "vacationAccrual" | "empleado" | "pagosalario" | "cierreContable" | "gastoCompra" | "compraProducto" | "servicios" | "ventaServicios" | "gastoConcepto" | "gastoElemento" | "gastosDE" | "moneda" | "catalogoReparacionConfig" | "tasaCambio" | "transaccionMoneda" | "cuentaBancaria" | "tipoPago" | "reconciliacionVenta" | "reconciliacionServicio" | "reconciliacionGasto" | "ajusteBancario" | "transferenciaBancaria" | "alertHistory" | "auditLog" | "reportHistory" | "scheduledReport" | "scenarioSimulation" | "contrato" | "contratoVersion" | "contratoFirma" | "contratoAprobacion" | "contratoArchivo" | "contratoAlerta" | "tipoContratoCustom" | "factura" | "serieFacturacion" | "oferta" | "ofertaItem" | "cuentaPorCobrar" | "cuentaPorPagar" | "deudaCash" | "prestamoCash" | "pagoCuentaPorPagar" | "equipoReparacion" | "piezaReparacion" | "ordenReparacion" | "ordenReparacionEquipo" | "ordenReparacionItem" | "ordenReparacionMaterial" | "defectacionCatalogo" | "configuracionSistema" | "ordenProduccion" | "ordenProduccionHistorial" | "receta" | "recetaIngrediente" | "valeSalida" | "valeSalidaItem" | "listaPrecio" | "precioProducto" | "productoCostHistory" | "vendorCodeSequence"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -6372,6 +6388,80 @@ export namespace Prisma {
           }
         }
       }
+      TipoContratoCustom: {
+        payload: Prisma.$TipoContratoCustomPayload<ExtArgs>
+        fields: Prisma.TipoContratoCustomFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.TipoContratoCustomFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TipoContratoCustomPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.TipoContratoCustomFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TipoContratoCustomPayload>
+          }
+          findFirst: {
+            args: Prisma.TipoContratoCustomFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TipoContratoCustomPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.TipoContratoCustomFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TipoContratoCustomPayload>
+          }
+          findMany: {
+            args: Prisma.TipoContratoCustomFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TipoContratoCustomPayload>[]
+          }
+          create: {
+            args: Prisma.TipoContratoCustomCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TipoContratoCustomPayload>
+          }
+          createMany: {
+            args: Prisma.TipoContratoCustomCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.TipoContratoCustomCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TipoContratoCustomPayload>[]
+          }
+          delete: {
+            args: Prisma.TipoContratoCustomDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TipoContratoCustomPayload>
+          }
+          update: {
+            args: Prisma.TipoContratoCustomUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TipoContratoCustomPayload>
+          }
+          deleteMany: {
+            args: Prisma.TipoContratoCustomDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.TipoContratoCustomUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.TipoContratoCustomUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TipoContratoCustomPayload>[]
+          }
+          upsert: {
+            args: Prisma.TipoContratoCustomUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$TipoContratoCustomPayload>
+          }
+          aggregate: {
+            args: Prisma.TipoContratoCustomAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateTipoContratoCustom>
+          }
+          groupBy: {
+            args: Prisma.TipoContratoCustomGroupByArgs<ExtArgs>
+            result: $Utils.Optional<TipoContratoCustomGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.TipoContratoCustomCountArgs<ExtArgs>
+            result: $Utils.Optional<TipoContratoCustomCountAggregateOutputType> | number
+          }
+        }
+      }
       Factura: {
         payload: Prisma.$FacturaPayload<ExtArgs>
         fields: Prisma.FacturaFieldRefs
@@ -8523,6 +8613,7 @@ export namespace Prisma {
     contratoAprobacion?: ContratoAprobacionOmit
     contratoArchivo?: ContratoArchivoOmit
     contratoAlerta?: ContratoAlertaOmit
+    tipoContratoCustom?: TipoContratoCustomOmit
     factura?: FacturaOmit
     serieFacturacion?: SerieFacturacionOmit
     oferta?: OfertaOmit
@@ -9203,6 +9294,7 @@ export namespace Prisma {
     contratoArchivos: number
     contratoFirmas: number
     contratoVersiones: number
+    tiposContratosCustom: number
     licencias: number
     licenciasAudit: number
     notifications: number
@@ -9217,6 +9309,7 @@ export namespace Prisma {
     contratoArchivos?: boolean | UserCountOutputTypeCountContratoArchivosArgs
     contratoFirmas?: boolean | UserCountOutputTypeCountContratoFirmasArgs
     contratoVersiones?: boolean | UserCountOutputTypeCountContratoVersionesArgs
+    tiposContratosCustom?: boolean | UserCountOutputTypeCountTiposContratosCustomArgs
     licencias?: boolean | UserCountOutputTypeCountLicenciasArgs
     licenciasAudit?: boolean | UserCountOutputTypeCountLicenciasAuditArgs
     notifications?: boolean | UserCountOutputTypeCountNotificationsArgs
@@ -9275,6 +9368,13 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountContratoVersionesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ContratoVersionWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountTiposContratosCustomArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TipoContratoCustomWhereInput
   }
 
   /**
@@ -28452,6 +28552,7 @@ export namespace Prisma {
     contratoArchivos?: boolean | User$contratoArchivosArgs<ExtArgs>
     contratoFirmas?: boolean | User$contratoFirmasArgs<ExtArgs>
     contratoVersiones?: boolean | User$contratoVersionesArgs<ExtArgs>
+    tiposContratosCustom?: boolean | User$tiposContratosCustomArgs<ExtArgs>
     licencias?: boolean | User$licenciasArgs<ExtArgs>
     licenciasAudit?: boolean | User$licenciasAuditArgs<ExtArgs>
     notifications?: boolean | User$notificationsArgs<ExtArgs>
@@ -28522,6 +28623,7 @@ export namespace Prisma {
     contratoArchivos?: boolean | User$contratoArchivosArgs<ExtArgs>
     contratoFirmas?: boolean | User$contratoFirmasArgs<ExtArgs>
     contratoVersiones?: boolean | User$contratoVersionesArgs<ExtArgs>
+    tiposContratosCustom?: boolean | User$tiposContratosCustomArgs<ExtArgs>
     licencias?: boolean | User$licenciasArgs<ExtArgs>
     licenciasAudit?: boolean | User$licenciasAuditArgs<ExtArgs>
     notifications?: boolean | User$notificationsArgs<ExtArgs>
@@ -28541,6 +28643,7 @@ export namespace Prisma {
       contratoArchivos: Prisma.$ContratoArchivoPayload<ExtArgs>[]
       contratoFirmas: Prisma.$ContratoFirmaPayload<ExtArgs>[]
       contratoVersiones: Prisma.$ContratoVersionPayload<ExtArgs>[]
+      tiposContratosCustom: Prisma.$TipoContratoCustomPayload<ExtArgs>[]
       licencias: Prisma.$LicenciaPayload<ExtArgs>[]
       licenciasAudit: Prisma.$LicenciaAuditPayload<ExtArgs>[]
       notifications: Prisma.$NotificationPayload<ExtArgs>[]
@@ -28963,6 +29066,7 @@ export namespace Prisma {
     contratoArchivos<T extends User$contratoArchivosArgs<ExtArgs> = {}>(args?: Subset<T, User$contratoArchivosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ContratoArchivoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     contratoFirmas<T extends User$contratoFirmasArgs<ExtArgs> = {}>(args?: Subset<T, User$contratoFirmasArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ContratoFirmaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     contratoVersiones<T extends User$contratoVersionesArgs<ExtArgs> = {}>(args?: Subset<T, User$contratoVersionesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ContratoVersionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    tiposContratosCustom<T extends User$tiposContratosCustomArgs<ExtArgs> = {}>(args?: Subset<T, User$tiposContratosCustomArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TipoContratoCustomPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     licencias<T extends User$licenciasArgs<ExtArgs> = {}>(args?: Subset<T, User$licenciasArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LicenciaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     licenciasAudit<T extends User$licenciasAuditArgs<ExtArgs> = {}>(args?: Subset<T, User$licenciasAuditArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$LicenciaAuditPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     notifications<T extends User$notificationsArgs<ExtArgs> = {}>(args?: Subset<T, User$notificationsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NotificationPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -29541,6 +29645,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: ContratoVersionScalarFieldEnum | ContratoVersionScalarFieldEnum[]
+  }
+
+  /**
+   * User.tiposContratosCustom
+   */
+  export type User$tiposContratosCustomArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TipoContratoCustom
+     */
+    select?: TipoContratoCustomSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TipoContratoCustom
+     */
+    omit?: TipoContratoCustomOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TipoContratoCustomInclude<ExtArgs> | null
+    where?: TipoContratoCustomWhereInput
+    orderBy?: TipoContratoCustomOrderByWithRelationInput | TipoContratoCustomOrderByWithRelationInput[]
+    cursor?: TipoContratoCustomWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: TipoContratoCustomScalarFieldEnum | TipoContratoCustomScalarFieldEnum[]
   }
 
   /**
@@ -72985,11 +73113,13 @@ export namespace Prisma {
   }
 
   export type ContratoAvgAggregateOutputType = {
+    numeroConsecutivo: number | null
     monto: Decimal | null
     diasAvisoVencimiento: number | null
   }
 
   export type ContratoSumAggregateOutputType = {
+    numeroConsecutivo: number | null
     monto: Decimal | null
     diasAvisoVencimiento: number | null
   }
@@ -72997,6 +73127,8 @@ export namespace Prisma {
   export type ContratoMinAggregateOutputType = {
     contratoId: string | null
     numeroContrato: string | null
+    numeroConsecutivo: number | null
+    numeroContratoClienteProveedor: string | null
     tipo: $Enums.TipoContrato | null
     estado: $Enums.EstadoContrato | null
     fechaInicio: Date | null
@@ -73018,6 +73150,8 @@ export namespace Prisma {
   export type ContratoMaxAggregateOutputType = {
     contratoId: string | null
     numeroContrato: string | null
+    numeroConsecutivo: number | null
+    numeroContratoClienteProveedor: string | null
     tipo: $Enums.TipoContrato | null
     estado: $Enums.EstadoContrato | null
     fechaInicio: Date | null
@@ -73039,6 +73173,8 @@ export namespace Prisma {
   export type ContratoCountAggregateOutputType = {
     contratoId: number
     numeroContrato: number
+    numeroConsecutivo: number
+    numeroContratoClienteProveedor: number
     tipo: number
     estado: number
     fechaInicio: number
@@ -73061,11 +73197,13 @@ export namespace Prisma {
 
 
   export type ContratoAvgAggregateInputType = {
+    numeroConsecutivo?: true
     monto?: true
     diasAvisoVencimiento?: true
   }
 
   export type ContratoSumAggregateInputType = {
+    numeroConsecutivo?: true
     monto?: true
     diasAvisoVencimiento?: true
   }
@@ -73073,6 +73211,8 @@ export namespace Prisma {
   export type ContratoMinAggregateInputType = {
     contratoId?: true
     numeroContrato?: true
+    numeroConsecutivo?: true
+    numeroContratoClienteProveedor?: true
     tipo?: true
     estado?: true
     fechaInicio?: true
@@ -73094,6 +73234,8 @@ export namespace Prisma {
   export type ContratoMaxAggregateInputType = {
     contratoId?: true
     numeroContrato?: true
+    numeroConsecutivo?: true
+    numeroContratoClienteProveedor?: true
     tipo?: true
     estado?: true
     fechaInicio?: true
@@ -73115,6 +73257,8 @@ export namespace Prisma {
   export type ContratoCountAggregateInputType = {
     contratoId?: true
     numeroContrato?: true
+    numeroConsecutivo?: true
+    numeroContratoClienteProveedor?: true
     tipo?: true
     estado?: true
     fechaInicio?: true
@@ -73224,6 +73368,8 @@ export namespace Prisma {
   export type ContratoGroupByOutputType = {
     contratoId: string
     numeroContrato: string
+    numeroConsecutivo: number
+    numeroContratoClienteProveedor: string | null
     tipo: $Enums.TipoContrato
     estado: $Enums.EstadoContrato
     fechaInicio: Date
@@ -73265,6 +73411,8 @@ export namespace Prisma {
   export type ContratoSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     contratoId?: boolean
     numeroContrato?: boolean
+    numeroConsecutivo?: boolean
+    numeroContratoClienteProveedor?: boolean
     tipo?: boolean
     estado?: boolean
     fechaInicio?: boolean
@@ -73297,6 +73445,8 @@ export namespace Prisma {
   export type ContratoSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     contratoId?: boolean
     numeroContrato?: boolean
+    numeroConsecutivo?: boolean
+    numeroContratoClienteProveedor?: boolean
     tipo?: boolean
     estado?: boolean
     fechaInicio?: boolean
@@ -73323,6 +73473,8 @@ export namespace Prisma {
   export type ContratoSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     contratoId?: boolean
     numeroContrato?: boolean
+    numeroConsecutivo?: boolean
+    numeroContratoClienteProveedor?: boolean
     tipo?: boolean
     estado?: boolean
     fechaInicio?: boolean
@@ -73349,6 +73501,8 @@ export namespace Prisma {
   export type ContratoSelectScalar = {
     contratoId?: boolean
     numeroContrato?: boolean
+    numeroConsecutivo?: boolean
+    numeroContratoClienteProveedor?: boolean
     tipo?: boolean
     estado?: boolean
     fechaInicio?: boolean
@@ -73368,7 +73522,7 @@ export namespace Prisma {
     diasAvisoVencimiento?: boolean
   }
 
-  export type ContratoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"contratoId" | "numeroContrato" | "tipo" | "estado" | "fechaInicio" | "fechaFin" | "monto" | "moneda" | "condiciones" | "observaciones" | "clienteId" | "vendorId" | "creadoPor" | "aprobadoPor" | "fechaAprobacion" | "createdAt" | "updatedAt" | "esMultiMoneda" | "diasAvisoVencimiento", ExtArgs["result"]["contrato"]>
+  export type ContratoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"contratoId" | "numeroContrato" | "numeroConsecutivo" | "numeroContratoClienteProveedor" | "tipo" | "estado" | "fechaInicio" | "fechaFin" | "monto" | "moneda" | "condiciones" | "observaciones" | "clienteId" | "vendorId" | "creadoPor" | "aprobadoPor" | "fechaAprobacion" | "createdAt" | "updatedAt" | "esMultiMoneda" | "diasAvisoVencimiento", ExtArgs["result"]["contrato"]>
   export type ContratoInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     aprobador?: boolean | Contrato$aprobadorArgs<ExtArgs>
     cliente?: boolean | Contrato$clienteArgs<ExtArgs>
@@ -73410,6 +73564,8 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       contratoId: string
       numeroContrato: string
+      numeroConsecutivo: number
+      numeroContratoClienteProveedor: string | null
       tipo: $Enums.TipoContrato
       estado: $Enums.EstadoContrato
       fechaInicio: Date
@@ -73861,6 +74017,8 @@ export namespace Prisma {
   interface ContratoFieldRefs {
     readonly contratoId: FieldRef<"Contrato", 'String'>
     readonly numeroContrato: FieldRef<"Contrato", 'String'>
+    readonly numeroConsecutivo: FieldRef<"Contrato", 'Int'>
+    readonly numeroContratoClienteProveedor: FieldRef<"Contrato", 'String'>
     readonly tipo: FieldRef<"Contrato", 'TipoContrato'>
     readonly estado: FieldRef<"Contrato", 'EstadoContrato'>
     readonly fechaInicio: FieldRef<"Contrato", 'DateTime'>
@@ -80130,6 +80288,1090 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: ContratoAlertaInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model TipoContratoCustom
+   */
+
+  export type AggregateTipoContratoCustom = {
+    _count: TipoContratoCustomCountAggregateOutputType | null
+    _min: TipoContratoCustomMinAggregateOutputType | null
+    _max: TipoContratoCustomMaxAggregateOutputType | null
+  }
+
+  export type TipoContratoCustomMinAggregateOutputType = {
+    tipoCustomId: string | null
+    nombre: string | null
+    descripcion: string | null
+    activo: boolean | null
+    creadoPor: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type TipoContratoCustomMaxAggregateOutputType = {
+    tipoCustomId: string | null
+    nombre: string | null
+    descripcion: string | null
+    activo: boolean | null
+    creadoPor: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type TipoContratoCustomCountAggregateOutputType = {
+    tipoCustomId: number
+    nombre: number
+    descripcion: number
+    activo: number
+    creadoPor: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type TipoContratoCustomMinAggregateInputType = {
+    tipoCustomId?: true
+    nombre?: true
+    descripcion?: true
+    activo?: true
+    creadoPor?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type TipoContratoCustomMaxAggregateInputType = {
+    tipoCustomId?: true
+    nombre?: true
+    descripcion?: true
+    activo?: true
+    creadoPor?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type TipoContratoCustomCountAggregateInputType = {
+    tipoCustomId?: true
+    nombre?: true
+    descripcion?: true
+    activo?: true
+    creadoPor?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type TipoContratoCustomAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TipoContratoCustom to aggregate.
+     */
+    where?: TipoContratoCustomWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TipoContratoCustoms to fetch.
+     */
+    orderBy?: TipoContratoCustomOrderByWithRelationInput | TipoContratoCustomOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: TipoContratoCustomWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TipoContratoCustoms from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TipoContratoCustoms.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned TipoContratoCustoms
+    **/
+    _count?: true | TipoContratoCustomCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: TipoContratoCustomMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: TipoContratoCustomMaxAggregateInputType
+  }
+
+  export type GetTipoContratoCustomAggregateType<T extends TipoContratoCustomAggregateArgs> = {
+        [P in keyof T & keyof AggregateTipoContratoCustom]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateTipoContratoCustom[P]>
+      : GetScalarType<T[P], AggregateTipoContratoCustom[P]>
+  }
+
+
+
+
+  export type TipoContratoCustomGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TipoContratoCustomWhereInput
+    orderBy?: TipoContratoCustomOrderByWithAggregationInput | TipoContratoCustomOrderByWithAggregationInput[]
+    by: TipoContratoCustomScalarFieldEnum[] | TipoContratoCustomScalarFieldEnum
+    having?: TipoContratoCustomScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: TipoContratoCustomCountAggregateInputType | true
+    _min?: TipoContratoCustomMinAggregateInputType
+    _max?: TipoContratoCustomMaxAggregateInputType
+  }
+
+  export type TipoContratoCustomGroupByOutputType = {
+    tipoCustomId: string
+    nombre: string
+    descripcion: string | null
+    activo: boolean
+    creadoPor: string
+    createdAt: Date
+    updatedAt: Date
+    _count: TipoContratoCustomCountAggregateOutputType | null
+    _min: TipoContratoCustomMinAggregateOutputType | null
+    _max: TipoContratoCustomMaxAggregateOutputType | null
+  }
+
+  type GetTipoContratoCustomGroupByPayload<T extends TipoContratoCustomGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<TipoContratoCustomGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof TipoContratoCustomGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], TipoContratoCustomGroupByOutputType[P]>
+            : GetScalarType<T[P], TipoContratoCustomGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type TipoContratoCustomSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    tipoCustomId?: boolean
+    nombre?: boolean
+    descripcion?: boolean
+    activo?: boolean
+    creadoPor?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    creador?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["tipoContratoCustom"]>
+
+  export type TipoContratoCustomSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    tipoCustomId?: boolean
+    nombre?: boolean
+    descripcion?: boolean
+    activo?: boolean
+    creadoPor?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    creador?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["tipoContratoCustom"]>
+
+  export type TipoContratoCustomSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    tipoCustomId?: boolean
+    nombre?: boolean
+    descripcion?: boolean
+    activo?: boolean
+    creadoPor?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    creador?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["tipoContratoCustom"]>
+
+  export type TipoContratoCustomSelectScalar = {
+    tipoCustomId?: boolean
+    nombre?: boolean
+    descripcion?: boolean
+    activo?: boolean
+    creadoPor?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type TipoContratoCustomOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"tipoCustomId" | "nombre" | "descripcion" | "activo" | "creadoPor" | "createdAt" | "updatedAt", ExtArgs["result"]["tipoContratoCustom"]>
+  export type TipoContratoCustomInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    creador?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type TipoContratoCustomIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    creador?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type TipoContratoCustomIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    creador?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $TipoContratoCustomPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "TipoContratoCustom"
+    objects: {
+      creador: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      tipoCustomId: string
+      nombre: string
+      descripcion: string | null
+      activo: boolean
+      creadoPor: string
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["tipoContratoCustom"]>
+    composites: {}
+  }
+
+  type TipoContratoCustomGetPayload<S extends boolean | null | undefined | TipoContratoCustomDefaultArgs> = $Result.GetResult<Prisma.$TipoContratoCustomPayload, S>
+
+  type TipoContratoCustomCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<TipoContratoCustomFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: TipoContratoCustomCountAggregateInputType | true
+    }
+
+  export interface TipoContratoCustomDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['TipoContratoCustom'], meta: { name: 'TipoContratoCustom' } }
+    /**
+     * Find zero or one TipoContratoCustom that matches the filter.
+     * @param {TipoContratoCustomFindUniqueArgs} args - Arguments to find a TipoContratoCustom
+     * @example
+     * // Get one TipoContratoCustom
+     * const tipoContratoCustom = await prisma.tipoContratoCustom.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends TipoContratoCustomFindUniqueArgs>(args: SelectSubset<T, TipoContratoCustomFindUniqueArgs<ExtArgs>>): Prisma__TipoContratoCustomClient<$Result.GetResult<Prisma.$TipoContratoCustomPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one TipoContratoCustom that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {TipoContratoCustomFindUniqueOrThrowArgs} args - Arguments to find a TipoContratoCustom
+     * @example
+     * // Get one TipoContratoCustom
+     * const tipoContratoCustom = await prisma.tipoContratoCustom.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends TipoContratoCustomFindUniqueOrThrowArgs>(args: SelectSubset<T, TipoContratoCustomFindUniqueOrThrowArgs<ExtArgs>>): Prisma__TipoContratoCustomClient<$Result.GetResult<Prisma.$TipoContratoCustomPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first TipoContratoCustom that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TipoContratoCustomFindFirstArgs} args - Arguments to find a TipoContratoCustom
+     * @example
+     * // Get one TipoContratoCustom
+     * const tipoContratoCustom = await prisma.tipoContratoCustom.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends TipoContratoCustomFindFirstArgs>(args?: SelectSubset<T, TipoContratoCustomFindFirstArgs<ExtArgs>>): Prisma__TipoContratoCustomClient<$Result.GetResult<Prisma.$TipoContratoCustomPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first TipoContratoCustom that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TipoContratoCustomFindFirstOrThrowArgs} args - Arguments to find a TipoContratoCustom
+     * @example
+     * // Get one TipoContratoCustom
+     * const tipoContratoCustom = await prisma.tipoContratoCustom.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends TipoContratoCustomFindFirstOrThrowArgs>(args?: SelectSubset<T, TipoContratoCustomFindFirstOrThrowArgs<ExtArgs>>): Prisma__TipoContratoCustomClient<$Result.GetResult<Prisma.$TipoContratoCustomPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more TipoContratoCustoms that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TipoContratoCustomFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all TipoContratoCustoms
+     * const tipoContratoCustoms = await prisma.tipoContratoCustom.findMany()
+     * 
+     * // Get first 10 TipoContratoCustoms
+     * const tipoContratoCustoms = await prisma.tipoContratoCustom.findMany({ take: 10 })
+     * 
+     * // Only select the `tipoCustomId`
+     * const tipoContratoCustomWithTipoCustomIdOnly = await prisma.tipoContratoCustom.findMany({ select: { tipoCustomId: true } })
+     * 
+     */
+    findMany<T extends TipoContratoCustomFindManyArgs>(args?: SelectSubset<T, TipoContratoCustomFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TipoContratoCustomPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a TipoContratoCustom.
+     * @param {TipoContratoCustomCreateArgs} args - Arguments to create a TipoContratoCustom.
+     * @example
+     * // Create one TipoContratoCustom
+     * const TipoContratoCustom = await prisma.tipoContratoCustom.create({
+     *   data: {
+     *     // ... data to create a TipoContratoCustom
+     *   }
+     * })
+     * 
+     */
+    create<T extends TipoContratoCustomCreateArgs>(args: SelectSubset<T, TipoContratoCustomCreateArgs<ExtArgs>>): Prisma__TipoContratoCustomClient<$Result.GetResult<Prisma.$TipoContratoCustomPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many TipoContratoCustoms.
+     * @param {TipoContratoCustomCreateManyArgs} args - Arguments to create many TipoContratoCustoms.
+     * @example
+     * // Create many TipoContratoCustoms
+     * const tipoContratoCustom = await prisma.tipoContratoCustom.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends TipoContratoCustomCreateManyArgs>(args?: SelectSubset<T, TipoContratoCustomCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many TipoContratoCustoms and returns the data saved in the database.
+     * @param {TipoContratoCustomCreateManyAndReturnArgs} args - Arguments to create many TipoContratoCustoms.
+     * @example
+     * // Create many TipoContratoCustoms
+     * const tipoContratoCustom = await prisma.tipoContratoCustom.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many TipoContratoCustoms and only return the `tipoCustomId`
+     * const tipoContratoCustomWithTipoCustomIdOnly = await prisma.tipoContratoCustom.createManyAndReturn({
+     *   select: { tipoCustomId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends TipoContratoCustomCreateManyAndReturnArgs>(args?: SelectSubset<T, TipoContratoCustomCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TipoContratoCustomPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a TipoContratoCustom.
+     * @param {TipoContratoCustomDeleteArgs} args - Arguments to delete one TipoContratoCustom.
+     * @example
+     * // Delete one TipoContratoCustom
+     * const TipoContratoCustom = await prisma.tipoContratoCustom.delete({
+     *   where: {
+     *     // ... filter to delete one TipoContratoCustom
+     *   }
+     * })
+     * 
+     */
+    delete<T extends TipoContratoCustomDeleteArgs>(args: SelectSubset<T, TipoContratoCustomDeleteArgs<ExtArgs>>): Prisma__TipoContratoCustomClient<$Result.GetResult<Prisma.$TipoContratoCustomPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one TipoContratoCustom.
+     * @param {TipoContratoCustomUpdateArgs} args - Arguments to update one TipoContratoCustom.
+     * @example
+     * // Update one TipoContratoCustom
+     * const tipoContratoCustom = await prisma.tipoContratoCustom.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends TipoContratoCustomUpdateArgs>(args: SelectSubset<T, TipoContratoCustomUpdateArgs<ExtArgs>>): Prisma__TipoContratoCustomClient<$Result.GetResult<Prisma.$TipoContratoCustomPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more TipoContratoCustoms.
+     * @param {TipoContratoCustomDeleteManyArgs} args - Arguments to filter TipoContratoCustoms to delete.
+     * @example
+     * // Delete a few TipoContratoCustoms
+     * const { count } = await prisma.tipoContratoCustom.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends TipoContratoCustomDeleteManyArgs>(args?: SelectSubset<T, TipoContratoCustomDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TipoContratoCustoms.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TipoContratoCustomUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many TipoContratoCustoms
+     * const tipoContratoCustom = await prisma.tipoContratoCustom.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends TipoContratoCustomUpdateManyArgs>(args: SelectSubset<T, TipoContratoCustomUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more TipoContratoCustoms and returns the data updated in the database.
+     * @param {TipoContratoCustomUpdateManyAndReturnArgs} args - Arguments to update many TipoContratoCustoms.
+     * @example
+     * // Update many TipoContratoCustoms
+     * const tipoContratoCustom = await prisma.tipoContratoCustom.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more TipoContratoCustoms and only return the `tipoCustomId`
+     * const tipoContratoCustomWithTipoCustomIdOnly = await prisma.tipoContratoCustom.updateManyAndReturn({
+     *   select: { tipoCustomId: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends TipoContratoCustomUpdateManyAndReturnArgs>(args: SelectSubset<T, TipoContratoCustomUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TipoContratoCustomPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one TipoContratoCustom.
+     * @param {TipoContratoCustomUpsertArgs} args - Arguments to update or create a TipoContratoCustom.
+     * @example
+     * // Update or create a TipoContratoCustom
+     * const tipoContratoCustom = await prisma.tipoContratoCustom.upsert({
+     *   create: {
+     *     // ... data to create a TipoContratoCustom
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the TipoContratoCustom we want to update
+     *   }
+     * })
+     */
+    upsert<T extends TipoContratoCustomUpsertArgs>(args: SelectSubset<T, TipoContratoCustomUpsertArgs<ExtArgs>>): Prisma__TipoContratoCustomClient<$Result.GetResult<Prisma.$TipoContratoCustomPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of TipoContratoCustoms.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TipoContratoCustomCountArgs} args - Arguments to filter TipoContratoCustoms to count.
+     * @example
+     * // Count the number of TipoContratoCustoms
+     * const count = await prisma.tipoContratoCustom.count({
+     *   where: {
+     *     // ... the filter for the TipoContratoCustoms we want to count
+     *   }
+     * })
+    **/
+    count<T extends TipoContratoCustomCountArgs>(
+      args?: Subset<T, TipoContratoCustomCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], TipoContratoCustomCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a TipoContratoCustom.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TipoContratoCustomAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends TipoContratoCustomAggregateArgs>(args: Subset<T, TipoContratoCustomAggregateArgs>): Prisma.PrismaPromise<GetTipoContratoCustomAggregateType<T>>
+
+    /**
+     * Group by TipoContratoCustom.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {TipoContratoCustomGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends TipoContratoCustomGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: TipoContratoCustomGroupByArgs['orderBy'] }
+        : { orderBy?: TipoContratoCustomGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, TipoContratoCustomGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetTipoContratoCustomGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the TipoContratoCustom model
+   */
+  readonly fields: TipoContratoCustomFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for TipoContratoCustom.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__TipoContratoCustomClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    creador<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the TipoContratoCustom model
+   */
+  interface TipoContratoCustomFieldRefs {
+    readonly tipoCustomId: FieldRef<"TipoContratoCustom", 'String'>
+    readonly nombre: FieldRef<"TipoContratoCustom", 'String'>
+    readonly descripcion: FieldRef<"TipoContratoCustom", 'String'>
+    readonly activo: FieldRef<"TipoContratoCustom", 'Boolean'>
+    readonly creadoPor: FieldRef<"TipoContratoCustom", 'String'>
+    readonly createdAt: FieldRef<"TipoContratoCustom", 'DateTime'>
+    readonly updatedAt: FieldRef<"TipoContratoCustom", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * TipoContratoCustom findUnique
+   */
+  export type TipoContratoCustomFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TipoContratoCustom
+     */
+    select?: TipoContratoCustomSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TipoContratoCustom
+     */
+    omit?: TipoContratoCustomOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TipoContratoCustomInclude<ExtArgs> | null
+    /**
+     * Filter, which TipoContratoCustom to fetch.
+     */
+    where: TipoContratoCustomWhereUniqueInput
+  }
+
+  /**
+   * TipoContratoCustom findUniqueOrThrow
+   */
+  export type TipoContratoCustomFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TipoContratoCustom
+     */
+    select?: TipoContratoCustomSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TipoContratoCustom
+     */
+    omit?: TipoContratoCustomOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TipoContratoCustomInclude<ExtArgs> | null
+    /**
+     * Filter, which TipoContratoCustom to fetch.
+     */
+    where: TipoContratoCustomWhereUniqueInput
+  }
+
+  /**
+   * TipoContratoCustom findFirst
+   */
+  export type TipoContratoCustomFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TipoContratoCustom
+     */
+    select?: TipoContratoCustomSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TipoContratoCustom
+     */
+    omit?: TipoContratoCustomOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TipoContratoCustomInclude<ExtArgs> | null
+    /**
+     * Filter, which TipoContratoCustom to fetch.
+     */
+    where?: TipoContratoCustomWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TipoContratoCustoms to fetch.
+     */
+    orderBy?: TipoContratoCustomOrderByWithRelationInput | TipoContratoCustomOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TipoContratoCustoms.
+     */
+    cursor?: TipoContratoCustomWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TipoContratoCustoms from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TipoContratoCustoms.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TipoContratoCustoms.
+     */
+    distinct?: TipoContratoCustomScalarFieldEnum | TipoContratoCustomScalarFieldEnum[]
+  }
+
+  /**
+   * TipoContratoCustom findFirstOrThrow
+   */
+  export type TipoContratoCustomFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TipoContratoCustom
+     */
+    select?: TipoContratoCustomSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TipoContratoCustom
+     */
+    omit?: TipoContratoCustomOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TipoContratoCustomInclude<ExtArgs> | null
+    /**
+     * Filter, which TipoContratoCustom to fetch.
+     */
+    where?: TipoContratoCustomWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TipoContratoCustoms to fetch.
+     */
+    orderBy?: TipoContratoCustomOrderByWithRelationInput | TipoContratoCustomOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for TipoContratoCustoms.
+     */
+    cursor?: TipoContratoCustomWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TipoContratoCustoms from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TipoContratoCustoms.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of TipoContratoCustoms.
+     */
+    distinct?: TipoContratoCustomScalarFieldEnum | TipoContratoCustomScalarFieldEnum[]
+  }
+
+  /**
+   * TipoContratoCustom findMany
+   */
+  export type TipoContratoCustomFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TipoContratoCustom
+     */
+    select?: TipoContratoCustomSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TipoContratoCustom
+     */
+    omit?: TipoContratoCustomOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TipoContratoCustomInclude<ExtArgs> | null
+    /**
+     * Filter, which TipoContratoCustoms to fetch.
+     */
+    where?: TipoContratoCustomWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of TipoContratoCustoms to fetch.
+     */
+    orderBy?: TipoContratoCustomOrderByWithRelationInput | TipoContratoCustomOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing TipoContratoCustoms.
+     */
+    cursor?: TipoContratoCustomWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` TipoContratoCustoms from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` TipoContratoCustoms.
+     */
+    skip?: number
+    distinct?: TipoContratoCustomScalarFieldEnum | TipoContratoCustomScalarFieldEnum[]
+  }
+
+  /**
+   * TipoContratoCustom create
+   */
+  export type TipoContratoCustomCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TipoContratoCustom
+     */
+    select?: TipoContratoCustomSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TipoContratoCustom
+     */
+    omit?: TipoContratoCustomOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TipoContratoCustomInclude<ExtArgs> | null
+    /**
+     * The data needed to create a TipoContratoCustom.
+     */
+    data: XOR<TipoContratoCustomCreateInput, TipoContratoCustomUncheckedCreateInput>
+  }
+
+  /**
+   * TipoContratoCustom createMany
+   */
+  export type TipoContratoCustomCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many TipoContratoCustoms.
+     */
+    data: TipoContratoCustomCreateManyInput | TipoContratoCustomCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * TipoContratoCustom createManyAndReturn
+   */
+  export type TipoContratoCustomCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TipoContratoCustom
+     */
+    select?: TipoContratoCustomSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the TipoContratoCustom
+     */
+    omit?: TipoContratoCustomOmit<ExtArgs> | null
+    /**
+     * The data used to create many TipoContratoCustoms.
+     */
+    data: TipoContratoCustomCreateManyInput | TipoContratoCustomCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TipoContratoCustomIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * TipoContratoCustom update
+   */
+  export type TipoContratoCustomUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TipoContratoCustom
+     */
+    select?: TipoContratoCustomSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TipoContratoCustom
+     */
+    omit?: TipoContratoCustomOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TipoContratoCustomInclude<ExtArgs> | null
+    /**
+     * The data needed to update a TipoContratoCustom.
+     */
+    data: XOR<TipoContratoCustomUpdateInput, TipoContratoCustomUncheckedUpdateInput>
+    /**
+     * Choose, which TipoContratoCustom to update.
+     */
+    where: TipoContratoCustomWhereUniqueInput
+  }
+
+  /**
+   * TipoContratoCustom updateMany
+   */
+  export type TipoContratoCustomUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update TipoContratoCustoms.
+     */
+    data: XOR<TipoContratoCustomUpdateManyMutationInput, TipoContratoCustomUncheckedUpdateManyInput>
+    /**
+     * Filter which TipoContratoCustoms to update
+     */
+    where?: TipoContratoCustomWhereInput
+    /**
+     * Limit how many TipoContratoCustoms to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * TipoContratoCustom updateManyAndReturn
+   */
+  export type TipoContratoCustomUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TipoContratoCustom
+     */
+    select?: TipoContratoCustomSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the TipoContratoCustom
+     */
+    omit?: TipoContratoCustomOmit<ExtArgs> | null
+    /**
+     * The data used to update TipoContratoCustoms.
+     */
+    data: XOR<TipoContratoCustomUpdateManyMutationInput, TipoContratoCustomUncheckedUpdateManyInput>
+    /**
+     * Filter which TipoContratoCustoms to update
+     */
+    where?: TipoContratoCustomWhereInput
+    /**
+     * Limit how many TipoContratoCustoms to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TipoContratoCustomIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * TipoContratoCustom upsert
+   */
+  export type TipoContratoCustomUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TipoContratoCustom
+     */
+    select?: TipoContratoCustomSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TipoContratoCustom
+     */
+    omit?: TipoContratoCustomOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TipoContratoCustomInclude<ExtArgs> | null
+    /**
+     * The filter to search for the TipoContratoCustom to update in case it exists.
+     */
+    where: TipoContratoCustomWhereUniqueInput
+    /**
+     * In case the TipoContratoCustom found by the `where` argument doesn't exist, create a new TipoContratoCustom with this data.
+     */
+    create: XOR<TipoContratoCustomCreateInput, TipoContratoCustomUncheckedCreateInput>
+    /**
+     * In case the TipoContratoCustom was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<TipoContratoCustomUpdateInput, TipoContratoCustomUncheckedUpdateInput>
+  }
+
+  /**
+   * TipoContratoCustom delete
+   */
+  export type TipoContratoCustomDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TipoContratoCustom
+     */
+    select?: TipoContratoCustomSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TipoContratoCustom
+     */
+    omit?: TipoContratoCustomOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TipoContratoCustomInclude<ExtArgs> | null
+    /**
+     * Filter which TipoContratoCustom to delete.
+     */
+    where: TipoContratoCustomWhereUniqueInput
+  }
+
+  /**
+   * TipoContratoCustom deleteMany
+   */
+  export type TipoContratoCustomDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which TipoContratoCustoms to delete
+     */
+    where?: TipoContratoCustomWhereInput
+    /**
+     * Limit how many TipoContratoCustoms to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * TipoContratoCustom without action
+   */
+  export type TipoContratoCustomDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the TipoContratoCustom
+     */
+    select?: TipoContratoCustomSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the TipoContratoCustom
+     */
+    omit?: TipoContratoCustomOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TipoContratoCustomInclude<ExtArgs> | null
   }
 
 
@@ -113117,6 +114359,8 @@ export namespace Prisma {
   export const ContratoScalarFieldEnum: {
     contratoId: 'contratoId',
     numeroContrato: 'numeroContrato',
+    numeroConsecutivo: 'numeroConsecutivo',
+    numeroContratoClienteProveedor: 'numeroContratoClienteProveedor',
     tipo: 'tipo',
     estado: 'estado',
     fechaInicio: 'fechaInicio',
@@ -113209,6 +114453,19 @@ export namespace Prisma {
   };
 
   export type ContratoAlertaScalarFieldEnum = (typeof ContratoAlertaScalarFieldEnum)[keyof typeof ContratoAlertaScalarFieldEnum]
+
+
+  export const TipoContratoCustomScalarFieldEnum: {
+    tipoCustomId: 'tipoCustomId',
+    nombre: 'nombre',
+    descripcion: 'descripcion',
+    activo: 'activo',
+    creadoPor: 'creadoPor',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type TipoContratoCustomScalarFieldEnum = (typeof TipoContratoCustomScalarFieldEnum)[keyof typeof TipoContratoCustomScalarFieldEnum]
 
 
   export const FacturaScalarFieldEnum: {
@@ -115357,6 +116614,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoListRelationFilter
     contratoFirmas?: ContratoFirmaListRelationFilter
     contratoVersiones?: ContratoVersionListRelationFilter
+    tiposContratosCustom?: TipoContratoCustomListRelationFilter
     licencias?: LicenciaListRelationFilter
     licenciasAudit?: LicenciaAuditListRelationFilter
     notifications?: NotificationListRelationFilter
@@ -115386,6 +116644,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoOrderByRelationAggregateInput
     contratoFirmas?: ContratoFirmaOrderByRelationAggregateInput
     contratoVersiones?: ContratoVersionOrderByRelationAggregateInput
+    tiposContratosCustom?: TipoContratoCustomOrderByRelationAggregateInput
     licencias?: LicenciaOrderByRelationAggregateInput
     licenciasAudit?: LicenciaAuditOrderByRelationAggregateInput
     notifications?: NotificationOrderByRelationAggregateInput
@@ -115418,6 +116677,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoListRelationFilter
     contratoFirmas?: ContratoFirmaListRelationFilter
     contratoVersiones?: ContratoVersionListRelationFilter
+    tiposContratosCustom?: TipoContratoCustomListRelationFilter
     licencias?: LicenciaListRelationFilter
     licenciasAudit?: LicenciaAuditListRelationFilter
     notifications?: NotificationListRelationFilter
@@ -118878,6 +120138,8 @@ export namespace Prisma {
     NOT?: ContratoWhereInput | ContratoWhereInput[]
     contratoId?: StringFilter<"Contrato"> | string
     numeroContrato?: StringFilter<"Contrato"> | string
+    numeroConsecutivo?: IntFilter<"Contrato"> | number
+    numeroContratoClienteProveedor?: StringNullableFilter<"Contrato"> | string | null
     tipo?: EnumTipoContratoFilter<"Contrato"> | $Enums.TipoContrato
     estado?: EnumEstadoContratoFilter<"Contrato"> | $Enums.EstadoContrato
     fechaInicio?: DateTimeFilter<"Contrato"> | Date | string
@@ -118909,6 +120171,8 @@ export namespace Prisma {
   export type ContratoOrderByWithRelationInput = {
     contratoId?: SortOrder
     numeroContrato?: SortOrder
+    numeroConsecutivo?: SortOrder
+    numeroContratoClienteProveedor?: SortOrderInput | SortOrder
     tipo?: SortOrder
     estado?: SortOrder
     fechaInicio?: SortOrder
@@ -118940,9 +120204,12 @@ export namespace Prisma {
   export type ContratoWhereUniqueInput = Prisma.AtLeast<{
     contratoId?: string
     numeroContrato?: string
+    tipo_numeroConsecutivo?: ContratoTipoNumeroConsecutivoCompoundUniqueInput
     AND?: ContratoWhereInput | ContratoWhereInput[]
     OR?: ContratoWhereInput[]
     NOT?: ContratoWhereInput | ContratoWhereInput[]
+    numeroConsecutivo?: IntFilter<"Contrato"> | number
+    numeroContratoClienteProveedor?: StringNullableFilter<"Contrato"> | string | null
     tipo?: EnumTipoContratoFilter<"Contrato"> | $Enums.TipoContrato
     estado?: EnumEstadoContratoFilter<"Contrato"> | $Enums.EstadoContrato
     fechaInicio?: DateTimeFilter<"Contrato"> | Date | string
@@ -118969,11 +120236,13 @@ export namespace Prisma {
     archivos?: ContratoArchivoListRelationFilter
     firmas?: ContratoFirmaListRelationFilter
     versiones?: ContratoVersionListRelationFilter
-  }, "contratoId" | "numeroContrato">
+  }, "contratoId" | "numeroContrato" | "tipo_numeroConsecutivo">
 
   export type ContratoOrderByWithAggregationInput = {
     contratoId?: SortOrder
     numeroContrato?: SortOrder
+    numeroConsecutivo?: SortOrder
+    numeroContratoClienteProveedor?: SortOrderInput | SortOrder
     tipo?: SortOrder
     estado?: SortOrder
     fechaInicio?: SortOrder
@@ -119004,6 +120273,8 @@ export namespace Prisma {
     NOT?: ContratoScalarWhereWithAggregatesInput | ContratoScalarWhereWithAggregatesInput[]
     contratoId?: StringWithAggregatesFilter<"Contrato"> | string
     numeroContrato?: StringWithAggregatesFilter<"Contrato"> | string
+    numeroConsecutivo?: IntWithAggregatesFilter<"Contrato"> | number
+    numeroContratoClienteProveedor?: StringNullableWithAggregatesFilter<"Contrato"> | string | null
     tipo?: EnumTipoContratoWithAggregatesFilter<"Contrato"> | $Enums.TipoContrato
     estado?: EnumEstadoContratoWithAggregatesFilter<"Contrato"> | $Enums.EstadoContrato
     fechaInicio?: DateTimeWithAggregatesFilter<"Contrato"> | Date | string
@@ -119404,6 +120675,71 @@ export namespace Prisma {
     mensaje?: StringWithAggregatesFilter<"ContratoAlerta"> | string
     accionRequerida?: BoolWithAggregatesFilter<"ContratoAlerta"> | boolean
     createdAt?: DateTimeWithAggregatesFilter<"ContratoAlerta"> | Date | string
+  }
+
+  export type TipoContratoCustomWhereInput = {
+    AND?: TipoContratoCustomWhereInput | TipoContratoCustomWhereInput[]
+    OR?: TipoContratoCustomWhereInput[]
+    NOT?: TipoContratoCustomWhereInput | TipoContratoCustomWhereInput[]
+    tipoCustomId?: StringFilter<"TipoContratoCustom"> | string
+    nombre?: StringFilter<"TipoContratoCustom"> | string
+    descripcion?: StringNullableFilter<"TipoContratoCustom"> | string | null
+    activo?: BoolFilter<"TipoContratoCustom"> | boolean
+    creadoPor?: StringFilter<"TipoContratoCustom"> | string
+    createdAt?: DateTimeFilter<"TipoContratoCustom"> | Date | string
+    updatedAt?: DateTimeFilter<"TipoContratoCustom"> | Date | string
+    creador?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }
+
+  export type TipoContratoCustomOrderByWithRelationInput = {
+    tipoCustomId?: SortOrder
+    nombre?: SortOrder
+    descripcion?: SortOrderInput | SortOrder
+    activo?: SortOrder
+    creadoPor?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    creador?: UserOrderByWithRelationInput
+  }
+
+  export type TipoContratoCustomWhereUniqueInput = Prisma.AtLeast<{
+    tipoCustomId?: string
+    nombre?: string
+    AND?: TipoContratoCustomWhereInput | TipoContratoCustomWhereInput[]
+    OR?: TipoContratoCustomWhereInput[]
+    NOT?: TipoContratoCustomWhereInput | TipoContratoCustomWhereInput[]
+    descripcion?: StringNullableFilter<"TipoContratoCustom"> | string | null
+    activo?: BoolFilter<"TipoContratoCustom"> | boolean
+    creadoPor?: StringFilter<"TipoContratoCustom"> | string
+    createdAt?: DateTimeFilter<"TipoContratoCustom"> | Date | string
+    updatedAt?: DateTimeFilter<"TipoContratoCustom"> | Date | string
+    creador?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }, "tipoCustomId" | "nombre">
+
+  export type TipoContratoCustomOrderByWithAggregationInput = {
+    tipoCustomId?: SortOrder
+    nombre?: SortOrder
+    descripcion?: SortOrderInput | SortOrder
+    activo?: SortOrder
+    creadoPor?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: TipoContratoCustomCountOrderByAggregateInput
+    _max?: TipoContratoCustomMaxOrderByAggregateInput
+    _min?: TipoContratoCustomMinOrderByAggregateInput
+  }
+
+  export type TipoContratoCustomScalarWhereWithAggregatesInput = {
+    AND?: TipoContratoCustomScalarWhereWithAggregatesInput | TipoContratoCustomScalarWhereWithAggregatesInput[]
+    OR?: TipoContratoCustomScalarWhereWithAggregatesInput[]
+    NOT?: TipoContratoCustomScalarWhereWithAggregatesInput | TipoContratoCustomScalarWhereWithAggregatesInput[]
+    tipoCustomId?: StringWithAggregatesFilter<"TipoContratoCustom"> | string
+    nombre?: StringWithAggregatesFilter<"TipoContratoCustom"> | string
+    descripcion?: StringNullableWithAggregatesFilter<"TipoContratoCustom"> | string | null
+    activo?: BoolWithAggregatesFilter<"TipoContratoCustom"> | boolean
+    creadoPor?: StringWithAggregatesFilter<"TipoContratoCustom"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"TipoContratoCustom"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"TipoContratoCustom"> | Date | string
   }
 
   export type FacturaWhereInput = {
@@ -123206,6 +124542,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoCreateNestedManyWithoutGeneradorInput
     contratoFirmas?: ContratoFirmaCreateNestedManyWithoutFirmanteInput
     contratoVersiones?: ContratoVersionCreateNestedManyWithoutCreadorInput
+    tiposContratosCustom?: TipoContratoCustomCreateNestedManyWithoutCreadorInput
     licencias?: LicenciaCreateNestedManyWithoutUsuarioInput
     licenciasAudit?: LicenciaAuditCreateNestedManyWithoutActorInput
     notifications?: NotificationCreateNestedManyWithoutUserInput
@@ -123235,6 +124572,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoUncheckedCreateNestedManyWithoutGeneradorInput
     contratoFirmas?: ContratoFirmaUncheckedCreateNestedManyWithoutFirmanteInput
     contratoVersiones?: ContratoVersionUncheckedCreateNestedManyWithoutCreadorInput
+    tiposContratosCustom?: TipoContratoCustomUncheckedCreateNestedManyWithoutCreadorInput
     licencias?: LicenciaUncheckedCreateNestedManyWithoutUsuarioInput
     licenciasAudit?: LicenciaAuditUncheckedCreateNestedManyWithoutActorInput
     notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
@@ -123264,6 +124602,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoUpdateManyWithoutGeneradorNestedInput
     contratoFirmas?: ContratoFirmaUpdateManyWithoutFirmanteNestedInput
     contratoVersiones?: ContratoVersionUpdateManyWithoutCreadorNestedInput
+    tiposContratosCustom?: TipoContratoCustomUpdateManyWithoutCreadorNestedInput
     licencias?: LicenciaUpdateManyWithoutUsuarioNestedInput
     licenciasAudit?: LicenciaAuditUpdateManyWithoutActorNestedInput
     notifications?: NotificationUpdateManyWithoutUserNestedInput
@@ -123293,6 +124632,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoUncheckedUpdateManyWithoutGeneradorNestedInput
     contratoFirmas?: ContratoFirmaUncheckedUpdateManyWithoutFirmanteNestedInput
     contratoVersiones?: ContratoVersionUncheckedUpdateManyWithoutCreadorNestedInput
+    tiposContratosCustom?: TipoContratoCustomUncheckedUpdateManyWithoutCreadorNestedInput
     licencias?: LicenciaUncheckedUpdateManyWithoutUsuarioNestedInput
     licenciasAudit?: LicenciaAuditUncheckedUpdateManyWithoutActorNestedInput
     notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
@@ -127214,6 +128554,8 @@ export namespace Prisma {
   export type ContratoCreateInput = {
     contratoId?: string
     numeroContrato: string
+    numeroConsecutivo: number
+    numeroContratoClienteProveedor?: string | null
     tipo: $Enums.TipoContrato
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
@@ -127241,6 +128583,8 @@ export namespace Prisma {
   export type ContratoUncheckedCreateInput = {
     contratoId?: string
     numeroContrato: string
+    numeroConsecutivo: number
+    numeroContratoClienteProveedor?: string | null
     tipo: $Enums.TipoContrato
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
@@ -127268,6 +128612,8 @@ export namespace Prisma {
   export type ContratoUpdateInput = {
     contratoId?: StringFieldUpdateOperationsInput | string
     numeroContrato?: StringFieldUpdateOperationsInput | string
+    numeroConsecutivo?: IntFieldUpdateOperationsInput | number
+    numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
     tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -127295,6 +128641,8 @@ export namespace Prisma {
   export type ContratoUncheckedUpdateInput = {
     contratoId?: StringFieldUpdateOperationsInput | string
     numeroContrato?: StringFieldUpdateOperationsInput | string
+    numeroConsecutivo?: IntFieldUpdateOperationsInput | number
+    numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
     tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -127322,6 +128670,8 @@ export namespace Prisma {
   export type ContratoCreateManyInput = {
     contratoId?: string
     numeroContrato: string
+    numeroConsecutivo: number
+    numeroContratoClienteProveedor?: string | null
     tipo: $Enums.TipoContrato
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
@@ -127344,6 +128694,8 @@ export namespace Prisma {
   export type ContratoUpdateManyMutationInput = {
     contratoId?: StringFieldUpdateOperationsInput | string
     numeroContrato?: StringFieldUpdateOperationsInput | string
+    numeroConsecutivo?: IntFieldUpdateOperationsInput | number
+    numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
     tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -127362,6 +128714,8 @@ export namespace Prisma {
   export type ContratoUncheckedUpdateManyInput = {
     contratoId?: StringFieldUpdateOperationsInput | string
     numeroContrato?: StringFieldUpdateOperationsInput | string
+    numeroConsecutivo?: IntFieldUpdateOperationsInput | number
+    numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
     tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -127772,6 +129126,75 @@ export namespace Prisma {
     mensaje?: StringFieldUpdateOperationsInput | string
     accionRequerida?: BoolFieldUpdateOperationsInput | boolean
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TipoContratoCustomCreateInput = {
+    tipoCustomId?: string
+    nombre: string
+    descripcion?: string | null
+    activo?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    creador: UserCreateNestedOneWithoutTiposContratosCustomInput
+  }
+
+  export type TipoContratoCustomUncheckedCreateInput = {
+    tipoCustomId?: string
+    nombre: string
+    descripcion?: string | null
+    activo?: boolean
+    creadoPor: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TipoContratoCustomUpdateInput = {
+    tipoCustomId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    creador?: UserUpdateOneRequiredWithoutTiposContratosCustomNestedInput
+  }
+
+  export type TipoContratoCustomUncheckedUpdateInput = {
+    tipoCustomId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    creadoPor?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TipoContratoCustomCreateManyInput = {
+    tipoCustomId?: string
+    nombre: string
+    descripcion?: string | null
+    activo?: boolean
+    creadoPor: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TipoContratoCustomUpdateManyMutationInput = {
+    tipoCustomId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TipoContratoCustomUncheckedUpdateManyInput = {
+    tipoCustomId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    creadoPor?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type FacturaCreateInput = {
@@ -131606,6 +133029,12 @@ export namespace Prisma {
     none?: ContratoVersionWhereInput
   }
 
+  export type TipoContratoCustomListRelationFilter = {
+    every?: TipoContratoCustomWhereInput
+    some?: TipoContratoCustomWhereInput
+    none?: TipoContratoCustomWhereInput
+  }
+
   export type LicenciaListRelationFilter = {
     every?: LicenciaWhereInput
     some?: LicenciaWhereInput
@@ -131649,6 +133078,10 @@ export namespace Prisma {
   }
 
   export type ContratoVersionOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type TipoContratoCustomOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -134009,9 +135442,16 @@ export namespace Prisma {
     _count?: SortOrder
   }
 
+  export type ContratoTipoNumeroConsecutivoCompoundUniqueInput = {
+    tipo: $Enums.TipoContrato
+    numeroConsecutivo: number
+  }
+
   export type ContratoCountOrderByAggregateInput = {
     contratoId?: SortOrder
     numeroContrato?: SortOrder
+    numeroConsecutivo?: SortOrder
+    numeroContratoClienteProveedor?: SortOrder
     tipo?: SortOrder
     estado?: SortOrder
     fechaInicio?: SortOrder
@@ -134032,6 +135472,7 @@ export namespace Prisma {
   }
 
   export type ContratoAvgOrderByAggregateInput = {
+    numeroConsecutivo?: SortOrder
     monto?: SortOrder
     diasAvisoVencimiento?: SortOrder
   }
@@ -134039,6 +135480,8 @@ export namespace Prisma {
   export type ContratoMaxOrderByAggregateInput = {
     contratoId?: SortOrder
     numeroContrato?: SortOrder
+    numeroConsecutivo?: SortOrder
+    numeroContratoClienteProveedor?: SortOrder
     tipo?: SortOrder
     estado?: SortOrder
     fechaInicio?: SortOrder
@@ -134060,6 +135503,8 @@ export namespace Prisma {
   export type ContratoMinOrderByAggregateInput = {
     contratoId?: SortOrder
     numeroContrato?: SortOrder
+    numeroConsecutivo?: SortOrder
+    numeroContratoClienteProveedor?: SortOrder
     tipo?: SortOrder
     estado?: SortOrder
     fechaInicio?: SortOrder
@@ -134079,6 +135524,7 @@ export namespace Prisma {
   }
 
   export type ContratoSumOrderByAggregateInput = {
+    numeroConsecutivo?: SortOrder
     monto?: SortOrder
     diasAvisoVencimiento?: SortOrder
   }
@@ -134367,6 +135813,36 @@ export namespace Prisma {
     mensaje?: SortOrder
     accionRequerida?: SortOrder
     createdAt?: SortOrder
+  }
+
+  export type TipoContratoCustomCountOrderByAggregateInput = {
+    tipoCustomId?: SortOrder
+    nombre?: SortOrder
+    descripcion?: SortOrder
+    activo?: SortOrder
+    creadoPor?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TipoContratoCustomMaxOrderByAggregateInput = {
+    tipoCustomId?: SortOrder
+    nombre?: SortOrder
+    descripcion?: SortOrder
+    activo?: SortOrder
+    creadoPor?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type TipoContratoCustomMinOrderByAggregateInput = {
+    tipoCustomId?: SortOrder
+    nombre?: SortOrder
+    descripcion?: SortOrder
+    activo?: SortOrder
+    creadoPor?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
   }
 
   export type EnumTipoDocumentoFilter<$PrismaModel = never> = {
@@ -138283,6 +139759,13 @@ export namespace Prisma {
     connect?: ContratoVersionWhereUniqueInput | ContratoVersionWhereUniqueInput[]
   }
 
+  export type TipoContratoCustomCreateNestedManyWithoutCreadorInput = {
+    create?: XOR<TipoContratoCustomCreateWithoutCreadorInput, TipoContratoCustomUncheckedCreateWithoutCreadorInput> | TipoContratoCustomCreateWithoutCreadorInput[] | TipoContratoCustomUncheckedCreateWithoutCreadorInput[]
+    connectOrCreate?: TipoContratoCustomCreateOrConnectWithoutCreadorInput | TipoContratoCustomCreateOrConnectWithoutCreadorInput[]
+    createMany?: TipoContratoCustomCreateManyCreadorInputEnvelope
+    connect?: TipoContratoCustomWhereUniqueInput | TipoContratoCustomWhereUniqueInput[]
+  }
+
   export type LicenciaCreateNestedManyWithoutUsuarioInput = {
     create?: XOR<LicenciaCreateWithoutUsuarioInput, LicenciaUncheckedCreateWithoutUsuarioInput> | LicenciaCreateWithoutUsuarioInput[] | LicenciaUncheckedCreateWithoutUsuarioInput[]
     connectOrCreate?: LicenciaCreateOrConnectWithoutUsuarioInput | LicenciaCreateOrConnectWithoutUsuarioInput[]
@@ -138358,6 +139841,13 @@ export namespace Prisma {
     connectOrCreate?: ContratoVersionCreateOrConnectWithoutCreadorInput | ContratoVersionCreateOrConnectWithoutCreadorInput[]
     createMany?: ContratoVersionCreateManyCreadorInputEnvelope
     connect?: ContratoVersionWhereUniqueInput | ContratoVersionWhereUniqueInput[]
+  }
+
+  export type TipoContratoCustomUncheckedCreateNestedManyWithoutCreadorInput = {
+    create?: XOR<TipoContratoCustomCreateWithoutCreadorInput, TipoContratoCustomUncheckedCreateWithoutCreadorInput> | TipoContratoCustomCreateWithoutCreadorInput[] | TipoContratoCustomUncheckedCreateWithoutCreadorInput[]
+    connectOrCreate?: TipoContratoCustomCreateOrConnectWithoutCreadorInput | TipoContratoCustomCreateOrConnectWithoutCreadorInput[]
+    createMany?: TipoContratoCustomCreateManyCreadorInputEnvelope
+    connect?: TipoContratoCustomWhereUniqueInput | TipoContratoCustomWhereUniqueInput[]
   }
 
   export type LicenciaUncheckedCreateNestedManyWithoutUsuarioInput = {
@@ -138477,6 +139967,20 @@ export namespace Prisma {
     update?: ContratoVersionUpdateWithWhereUniqueWithoutCreadorInput | ContratoVersionUpdateWithWhereUniqueWithoutCreadorInput[]
     updateMany?: ContratoVersionUpdateManyWithWhereWithoutCreadorInput | ContratoVersionUpdateManyWithWhereWithoutCreadorInput[]
     deleteMany?: ContratoVersionScalarWhereInput | ContratoVersionScalarWhereInput[]
+  }
+
+  export type TipoContratoCustomUpdateManyWithoutCreadorNestedInput = {
+    create?: XOR<TipoContratoCustomCreateWithoutCreadorInput, TipoContratoCustomUncheckedCreateWithoutCreadorInput> | TipoContratoCustomCreateWithoutCreadorInput[] | TipoContratoCustomUncheckedCreateWithoutCreadorInput[]
+    connectOrCreate?: TipoContratoCustomCreateOrConnectWithoutCreadorInput | TipoContratoCustomCreateOrConnectWithoutCreadorInput[]
+    upsert?: TipoContratoCustomUpsertWithWhereUniqueWithoutCreadorInput | TipoContratoCustomUpsertWithWhereUniqueWithoutCreadorInput[]
+    createMany?: TipoContratoCustomCreateManyCreadorInputEnvelope
+    set?: TipoContratoCustomWhereUniqueInput | TipoContratoCustomWhereUniqueInput[]
+    disconnect?: TipoContratoCustomWhereUniqueInput | TipoContratoCustomWhereUniqueInput[]
+    delete?: TipoContratoCustomWhereUniqueInput | TipoContratoCustomWhereUniqueInput[]
+    connect?: TipoContratoCustomWhereUniqueInput | TipoContratoCustomWhereUniqueInput[]
+    update?: TipoContratoCustomUpdateWithWhereUniqueWithoutCreadorInput | TipoContratoCustomUpdateWithWhereUniqueWithoutCreadorInput[]
+    updateMany?: TipoContratoCustomUpdateManyWithWhereWithoutCreadorInput | TipoContratoCustomUpdateManyWithWhereWithoutCreadorInput[]
+    deleteMany?: TipoContratoCustomScalarWhereInput | TipoContratoCustomScalarWhereInput[]
   }
 
   export type LicenciaUpdateManyWithoutUsuarioNestedInput = {
@@ -138631,6 +140135,20 @@ export namespace Prisma {
     update?: ContratoVersionUpdateWithWhereUniqueWithoutCreadorInput | ContratoVersionUpdateWithWhereUniqueWithoutCreadorInput[]
     updateMany?: ContratoVersionUpdateManyWithWhereWithoutCreadorInput | ContratoVersionUpdateManyWithWhereWithoutCreadorInput[]
     deleteMany?: ContratoVersionScalarWhereInput | ContratoVersionScalarWhereInput[]
+  }
+
+  export type TipoContratoCustomUncheckedUpdateManyWithoutCreadorNestedInput = {
+    create?: XOR<TipoContratoCustomCreateWithoutCreadorInput, TipoContratoCustomUncheckedCreateWithoutCreadorInput> | TipoContratoCustomCreateWithoutCreadorInput[] | TipoContratoCustomUncheckedCreateWithoutCreadorInput[]
+    connectOrCreate?: TipoContratoCustomCreateOrConnectWithoutCreadorInput | TipoContratoCustomCreateOrConnectWithoutCreadorInput[]
+    upsert?: TipoContratoCustomUpsertWithWhereUniqueWithoutCreadorInput | TipoContratoCustomUpsertWithWhereUniqueWithoutCreadorInput[]
+    createMany?: TipoContratoCustomCreateManyCreadorInputEnvelope
+    set?: TipoContratoCustomWhereUniqueInput | TipoContratoCustomWhereUniqueInput[]
+    disconnect?: TipoContratoCustomWhereUniqueInput | TipoContratoCustomWhereUniqueInput[]
+    delete?: TipoContratoCustomWhereUniqueInput | TipoContratoCustomWhereUniqueInput[]
+    connect?: TipoContratoCustomWhereUniqueInput | TipoContratoCustomWhereUniqueInput[]
+    update?: TipoContratoCustomUpdateWithWhereUniqueWithoutCreadorInput | TipoContratoCustomUpdateWithWhereUniqueWithoutCreadorInput[]
+    updateMany?: TipoContratoCustomUpdateManyWithWhereWithoutCreadorInput | TipoContratoCustomUpdateManyWithWhereWithoutCreadorInput[]
+    deleteMany?: TipoContratoCustomScalarWhereInput | TipoContratoCustomScalarWhereInput[]
   }
 
   export type LicenciaUncheckedUpdateManyWithoutUsuarioNestedInput = {
@@ -141313,6 +142831,20 @@ export namespace Prisma {
     upsert?: ContratoUpsertWithoutAlertasInput
     connect?: ContratoWhereUniqueInput
     update?: XOR<XOR<ContratoUpdateToOneWithWhereWithoutAlertasInput, ContratoUpdateWithoutAlertasInput>, ContratoUncheckedUpdateWithoutAlertasInput>
+  }
+
+  export type UserCreateNestedOneWithoutTiposContratosCustomInput = {
+    create?: XOR<UserCreateWithoutTiposContratosCustomInput, UserUncheckedCreateWithoutTiposContratosCustomInput>
+    connectOrCreate?: UserCreateOrConnectWithoutTiposContratosCustomInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type UserUpdateOneRequiredWithoutTiposContratosCustomNestedInput = {
+    create?: XOR<UserCreateWithoutTiposContratosCustomInput, UserUncheckedCreateWithoutTiposContratosCustomInput>
+    connectOrCreate?: UserCreateOrConnectWithoutTiposContratosCustomInput
+    upsert?: UserUpsertWithoutTiposContratosCustomInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutTiposContratosCustomInput, UserUpdateWithoutTiposContratosCustomInput>, UserUncheckedUpdateWithoutTiposContratosCustomInput>
   }
 
   export type CuentaPorCobrarCreateNestedOneWithoutFacturaInput = {
@@ -144033,6 +145565,8 @@ export namespace Prisma {
   export type ContratoCreateWithoutVendorInput = {
     contratoId?: string
     numeroContrato: string
+    numeroConsecutivo: number
+    numeroContratoClienteProveedor?: string | null
     tipo: $Enums.TipoContrato
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
@@ -144059,6 +145593,8 @@ export namespace Prisma {
   export type ContratoUncheckedCreateWithoutVendorInput = {
     contratoId?: string
     numeroContrato: string
+    numeroConsecutivo: number
+    numeroContratoClienteProveedor?: string | null
     tipo: $Enums.TipoContrato
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
@@ -144383,6 +145919,8 @@ export namespace Prisma {
     NOT?: ContratoScalarWhereInput | ContratoScalarWhereInput[]
     contratoId?: StringFilter<"Contrato"> | string
     numeroContrato?: StringFilter<"Contrato"> | string
+    numeroConsecutivo?: IntFilter<"Contrato"> | number
+    numeroContratoClienteProveedor?: StringNullableFilter<"Contrato"> | string | null
     tipo?: EnumTipoContratoFilter<"Contrato"> | $Enums.TipoContrato
     estado?: EnumEstadoContratoFilter<"Contrato"> | $Enums.EstadoContrato
     fechaInicio?: DateTimeFilter<"Contrato"> | Date | string
@@ -144898,6 +146436,8 @@ export namespace Prisma {
   export type ContratoCreateWithoutClienteInput = {
     contratoId?: string
     numeroContrato: string
+    numeroConsecutivo: number
+    numeroContratoClienteProveedor?: string | null
     tipo: $Enums.TipoContrato
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
@@ -144924,6 +146464,8 @@ export namespace Prisma {
   export type ContratoUncheckedCreateWithoutClienteInput = {
     contratoId?: string
     numeroContrato: string
+    numeroConsecutivo: number
+    numeroContratoClienteProveedor?: string | null
     tipo: $Enums.TipoContrato
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
@@ -149137,6 +150679,8 @@ export namespace Prisma {
   export type ContratoCreateWithoutAprobadorInput = {
     contratoId?: string
     numeroContrato: string
+    numeroConsecutivo: number
+    numeroContratoClienteProveedor?: string | null
     tipo: $Enums.TipoContrato
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
@@ -149163,6 +150707,8 @@ export namespace Prisma {
   export type ContratoUncheckedCreateWithoutAprobadorInput = {
     contratoId?: string
     numeroContrato: string
+    numeroConsecutivo: number
+    numeroContratoClienteProveedor?: string | null
     tipo: $Enums.TipoContrato
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
@@ -149199,6 +150745,8 @@ export namespace Prisma {
   export type ContratoCreateWithoutCreadorInput = {
     contratoId?: string
     numeroContrato: string
+    numeroConsecutivo: number
+    numeroContratoClienteProveedor?: string | null
     tipo: $Enums.TipoContrato
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
@@ -149225,6 +150773,8 @@ export namespace Prisma {
   export type ContratoUncheckedCreateWithoutCreadorInput = {
     contratoId?: string
     numeroContrato: string
+    numeroConsecutivo: number
+    numeroContratoClienteProveedor?: string | null
     tipo: $Enums.TipoContrato
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
@@ -149381,6 +150931,34 @@ export namespace Prisma {
 
   export type ContratoVersionCreateManyCreadorInputEnvelope = {
     data: ContratoVersionCreateManyCreadorInput | ContratoVersionCreateManyCreadorInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type TipoContratoCustomCreateWithoutCreadorInput = {
+    tipoCustomId?: string
+    nombre: string
+    descripcion?: string | null
+    activo?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TipoContratoCustomUncheckedCreateWithoutCreadorInput = {
+    tipoCustomId?: string
+    nombre: string
+    descripcion?: string | null
+    activo?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type TipoContratoCustomCreateOrConnectWithoutCreadorInput = {
+    where: TipoContratoCustomWhereUniqueInput
+    create: XOR<TipoContratoCustomCreateWithoutCreadorInput, TipoContratoCustomUncheckedCreateWithoutCreadorInput>
+  }
+
+  export type TipoContratoCustomCreateManyCreadorInputEnvelope = {
+    data: TipoContratoCustomCreateManyCreadorInput | TipoContratoCustomCreateManyCreadorInput[]
     skipDuplicates?: boolean
   }
 
@@ -149696,6 +151274,35 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"ContratoVersion"> | Date | string
   }
 
+  export type TipoContratoCustomUpsertWithWhereUniqueWithoutCreadorInput = {
+    where: TipoContratoCustomWhereUniqueInput
+    update: XOR<TipoContratoCustomUpdateWithoutCreadorInput, TipoContratoCustomUncheckedUpdateWithoutCreadorInput>
+    create: XOR<TipoContratoCustomCreateWithoutCreadorInput, TipoContratoCustomUncheckedCreateWithoutCreadorInput>
+  }
+
+  export type TipoContratoCustomUpdateWithWhereUniqueWithoutCreadorInput = {
+    where: TipoContratoCustomWhereUniqueInput
+    data: XOR<TipoContratoCustomUpdateWithoutCreadorInput, TipoContratoCustomUncheckedUpdateWithoutCreadorInput>
+  }
+
+  export type TipoContratoCustomUpdateManyWithWhereWithoutCreadorInput = {
+    where: TipoContratoCustomScalarWhereInput
+    data: XOR<TipoContratoCustomUpdateManyMutationInput, TipoContratoCustomUncheckedUpdateManyWithoutCreadorInput>
+  }
+
+  export type TipoContratoCustomScalarWhereInput = {
+    AND?: TipoContratoCustomScalarWhereInput | TipoContratoCustomScalarWhereInput[]
+    OR?: TipoContratoCustomScalarWhereInput[]
+    NOT?: TipoContratoCustomScalarWhereInput | TipoContratoCustomScalarWhereInput[]
+    tipoCustomId?: StringFilter<"TipoContratoCustom"> | string
+    nombre?: StringFilter<"TipoContratoCustom"> | string
+    descripcion?: StringNullableFilter<"TipoContratoCustom"> | string | null
+    activo?: BoolFilter<"TipoContratoCustom"> | boolean
+    creadoPor?: StringFilter<"TipoContratoCustom"> | string
+    createdAt?: DateTimeFilter<"TipoContratoCustom"> | Date | string
+    updatedAt?: DateTimeFilter<"TipoContratoCustom"> | Date | string
+  }
+
   export type LicenciaUpsertWithWhereUniqueWithoutUsuarioInput = {
     where: LicenciaWhereUniqueInput
     update: XOR<LicenciaUpdateWithoutUsuarioInput, LicenciaUncheckedUpdateWithoutUsuarioInput>
@@ -149952,6 +151559,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoCreateNestedManyWithoutGeneradorInput
     contratoFirmas?: ContratoFirmaCreateNestedManyWithoutFirmanteInput
     contratoVersiones?: ContratoVersionCreateNestedManyWithoutCreadorInput
+    tiposContratosCustom?: TipoContratoCustomCreateNestedManyWithoutCreadorInput
     licenciasAudit?: LicenciaAuditCreateNestedManyWithoutActorInput
     notifications?: NotificationCreateNestedManyWithoutUserInput
     activityLogs?: UserActivityLogCreateNestedManyWithoutUserInput
@@ -149980,6 +151588,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoUncheckedCreateNestedManyWithoutGeneradorInput
     contratoFirmas?: ContratoFirmaUncheckedCreateNestedManyWithoutFirmanteInput
     contratoVersiones?: ContratoVersionUncheckedCreateNestedManyWithoutCreadorInput
+    tiposContratosCustom?: TipoContratoCustomUncheckedCreateNestedManyWithoutCreadorInput
     licenciasAudit?: LicenciaAuditUncheckedCreateNestedManyWithoutActorInput
     notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
     activityLogs?: UserActivityLogUncheckedCreateNestedManyWithoutUserInput
@@ -150091,6 +151700,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoUpdateManyWithoutGeneradorNestedInput
     contratoFirmas?: ContratoFirmaUpdateManyWithoutFirmanteNestedInput
     contratoVersiones?: ContratoVersionUpdateManyWithoutCreadorNestedInput
+    tiposContratosCustom?: TipoContratoCustomUpdateManyWithoutCreadorNestedInput
     licenciasAudit?: LicenciaAuditUpdateManyWithoutActorNestedInput
     notifications?: NotificationUpdateManyWithoutUserNestedInput
     activityLogs?: UserActivityLogUpdateManyWithoutUserNestedInput
@@ -150119,6 +151729,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoUncheckedUpdateManyWithoutGeneradorNestedInput
     contratoFirmas?: ContratoFirmaUncheckedUpdateManyWithoutFirmanteNestedInput
     contratoVersiones?: ContratoVersionUncheckedUpdateManyWithoutCreadorNestedInput
+    tiposContratosCustom?: TipoContratoCustomUncheckedUpdateManyWithoutCreadorNestedInput
     licenciasAudit?: LicenciaAuditUncheckedUpdateManyWithoutActorNestedInput
     notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
     activityLogs?: UserActivityLogUncheckedUpdateManyWithoutUserNestedInput
@@ -150192,6 +151803,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoCreateNestedManyWithoutGeneradorInput
     contratoFirmas?: ContratoFirmaCreateNestedManyWithoutFirmanteInput
     contratoVersiones?: ContratoVersionCreateNestedManyWithoutCreadorInput
+    tiposContratosCustom?: TipoContratoCustomCreateNestedManyWithoutCreadorInput
     licencias?: LicenciaCreateNestedManyWithoutUsuarioInput
     notifications?: NotificationCreateNestedManyWithoutUserInput
     activityLogs?: UserActivityLogCreateNestedManyWithoutUserInput
@@ -150220,6 +151832,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoUncheckedCreateNestedManyWithoutGeneradorInput
     contratoFirmas?: ContratoFirmaUncheckedCreateNestedManyWithoutFirmanteInput
     contratoVersiones?: ContratoVersionUncheckedCreateNestedManyWithoutCreadorInput
+    tiposContratosCustom?: TipoContratoCustomUncheckedCreateNestedManyWithoutCreadorInput
     licencias?: LicenciaUncheckedCreateNestedManyWithoutUsuarioInput
     notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
     activityLogs?: UserActivityLogUncheckedCreateNestedManyWithoutUserInput
@@ -150299,6 +151912,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoUpdateManyWithoutGeneradorNestedInput
     contratoFirmas?: ContratoFirmaUpdateManyWithoutFirmanteNestedInput
     contratoVersiones?: ContratoVersionUpdateManyWithoutCreadorNestedInput
+    tiposContratosCustom?: TipoContratoCustomUpdateManyWithoutCreadorNestedInput
     licencias?: LicenciaUpdateManyWithoutUsuarioNestedInput
     notifications?: NotificationUpdateManyWithoutUserNestedInput
     activityLogs?: UserActivityLogUpdateManyWithoutUserNestedInput
@@ -150327,6 +151941,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoUncheckedUpdateManyWithoutGeneradorNestedInput
     contratoFirmas?: ContratoFirmaUncheckedUpdateManyWithoutFirmanteNestedInput
     contratoVersiones?: ContratoVersionUncheckedUpdateManyWithoutCreadorNestedInput
+    tiposContratosCustom?: TipoContratoCustomUncheckedUpdateManyWithoutCreadorNestedInput
     licencias?: LicenciaUncheckedUpdateManyWithoutUsuarioNestedInput
     notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
     activityLogs?: UserActivityLogUncheckedUpdateManyWithoutUserNestedInput
@@ -150355,6 +151970,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoCreateNestedManyWithoutGeneradorInput
     contratoFirmas?: ContratoFirmaCreateNestedManyWithoutFirmanteInput
     contratoVersiones?: ContratoVersionCreateNestedManyWithoutCreadorInput
+    tiposContratosCustom?: TipoContratoCustomCreateNestedManyWithoutCreadorInput
     licencias?: LicenciaCreateNestedManyWithoutUsuarioInput
     licenciasAudit?: LicenciaAuditCreateNestedManyWithoutActorInput
     activityLogs?: UserActivityLogCreateNestedManyWithoutUserInput
@@ -150383,6 +151999,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoUncheckedCreateNestedManyWithoutGeneradorInput
     contratoFirmas?: ContratoFirmaUncheckedCreateNestedManyWithoutFirmanteInput
     contratoVersiones?: ContratoVersionUncheckedCreateNestedManyWithoutCreadorInput
+    tiposContratosCustom?: TipoContratoCustomUncheckedCreateNestedManyWithoutCreadorInput
     licencias?: LicenciaUncheckedCreateNestedManyWithoutUsuarioInput
     licenciasAudit?: LicenciaAuditUncheckedCreateNestedManyWithoutActorInput
     activityLogs?: UserActivityLogUncheckedCreateNestedManyWithoutUserInput
@@ -150427,6 +152044,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoUpdateManyWithoutGeneradorNestedInput
     contratoFirmas?: ContratoFirmaUpdateManyWithoutFirmanteNestedInput
     contratoVersiones?: ContratoVersionUpdateManyWithoutCreadorNestedInput
+    tiposContratosCustom?: TipoContratoCustomUpdateManyWithoutCreadorNestedInput
     licencias?: LicenciaUpdateManyWithoutUsuarioNestedInput
     licenciasAudit?: LicenciaAuditUpdateManyWithoutActorNestedInput
     activityLogs?: UserActivityLogUpdateManyWithoutUserNestedInput
@@ -150455,6 +152073,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoUncheckedUpdateManyWithoutGeneradorNestedInput
     contratoFirmas?: ContratoFirmaUncheckedUpdateManyWithoutFirmanteNestedInput
     contratoVersiones?: ContratoVersionUncheckedUpdateManyWithoutCreadorNestedInput
+    tiposContratosCustom?: TipoContratoCustomUncheckedUpdateManyWithoutCreadorNestedInput
     licencias?: LicenciaUncheckedUpdateManyWithoutUsuarioNestedInput
     licenciasAudit?: LicenciaAuditUncheckedUpdateManyWithoutActorNestedInput
     activityLogs?: UserActivityLogUncheckedUpdateManyWithoutUserNestedInput
@@ -150483,6 +152102,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoCreateNestedManyWithoutGeneradorInput
     contratoFirmas?: ContratoFirmaCreateNestedManyWithoutFirmanteInput
     contratoVersiones?: ContratoVersionCreateNestedManyWithoutCreadorInput
+    tiposContratosCustom?: TipoContratoCustomCreateNestedManyWithoutCreadorInput
     licencias?: LicenciaCreateNestedManyWithoutUsuarioInput
     licenciasAudit?: LicenciaAuditCreateNestedManyWithoutActorInput
     notifications?: NotificationCreateNestedManyWithoutUserInput
@@ -150511,6 +152131,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoUncheckedCreateNestedManyWithoutGeneradorInput
     contratoFirmas?: ContratoFirmaUncheckedCreateNestedManyWithoutFirmanteInput
     contratoVersiones?: ContratoVersionUncheckedCreateNestedManyWithoutCreadorInput
+    tiposContratosCustom?: TipoContratoCustomUncheckedCreateNestedManyWithoutCreadorInput
     licencias?: LicenciaUncheckedCreateNestedManyWithoutUsuarioInput
     licenciasAudit?: LicenciaAuditUncheckedCreateNestedManyWithoutActorInput
     notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
@@ -150555,6 +152176,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoUpdateManyWithoutGeneradorNestedInput
     contratoFirmas?: ContratoFirmaUpdateManyWithoutFirmanteNestedInput
     contratoVersiones?: ContratoVersionUpdateManyWithoutCreadorNestedInput
+    tiposContratosCustom?: TipoContratoCustomUpdateManyWithoutCreadorNestedInput
     licencias?: LicenciaUpdateManyWithoutUsuarioNestedInput
     licenciasAudit?: LicenciaAuditUpdateManyWithoutActorNestedInput
     notifications?: NotificationUpdateManyWithoutUserNestedInput
@@ -150583,6 +152205,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoUncheckedUpdateManyWithoutGeneradorNestedInput
     contratoFirmas?: ContratoFirmaUncheckedUpdateManyWithoutFirmanteNestedInput
     contratoVersiones?: ContratoVersionUncheckedUpdateManyWithoutCreadorNestedInput
+    tiposContratosCustom?: TipoContratoCustomUncheckedUpdateManyWithoutCreadorNestedInput
     licencias?: LicenciaUncheckedUpdateManyWithoutUsuarioNestedInput
     licenciasAudit?: LicenciaAuditUncheckedUpdateManyWithoutActorNestedInput
     notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
@@ -150611,6 +152234,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoCreateNestedManyWithoutGeneradorInput
     contratoFirmas?: ContratoFirmaCreateNestedManyWithoutFirmanteInput
     contratoVersiones?: ContratoVersionCreateNestedManyWithoutCreadorInput
+    tiposContratosCustom?: TipoContratoCustomCreateNestedManyWithoutCreadorInput
     licencias?: LicenciaCreateNestedManyWithoutUsuarioInput
     licenciasAudit?: LicenciaAuditCreateNestedManyWithoutActorInput
     notifications?: NotificationCreateNestedManyWithoutUserInput
@@ -150639,6 +152263,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoUncheckedCreateNestedManyWithoutGeneradorInput
     contratoFirmas?: ContratoFirmaUncheckedCreateNestedManyWithoutFirmanteInput
     contratoVersiones?: ContratoVersionUncheckedCreateNestedManyWithoutCreadorInput
+    tiposContratosCustom?: TipoContratoCustomUncheckedCreateNestedManyWithoutCreadorInput
     licencias?: LicenciaUncheckedCreateNestedManyWithoutUsuarioInput
     licenciasAudit?: LicenciaAuditUncheckedCreateNestedManyWithoutActorInput
     notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
@@ -150683,6 +152308,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoUpdateManyWithoutGeneradorNestedInput
     contratoFirmas?: ContratoFirmaUpdateManyWithoutFirmanteNestedInput
     contratoVersiones?: ContratoVersionUpdateManyWithoutCreadorNestedInput
+    tiposContratosCustom?: TipoContratoCustomUpdateManyWithoutCreadorNestedInput
     licencias?: LicenciaUpdateManyWithoutUsuarioNestedInput
     licenciasAudit?: LicenciaAuditUpdateManyWithoutActorNestedInput
     notifications?: NotificationUpdateManyWithoutUserNestedInput
@@ -150711,6 +152337,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoUncheckedUpdateManyWithoutGeneradorNestedInput
     contratoFirmas?: ContratoFirmaUncheckedUpdateManyWithoutFirmanteNestedInput
     contratoVersiones?: ContratoVersionUncheckedUpdateManyWithoutCreadorNestedInput
+    tiposContratosCustom?: TipoContratoCustomUncheckedUpdateManyWithoutCreadorNestedInput
     licencias?: LicenciaUncheckedUpdateManyWithoutUsuarioNestedInput
     licenciasAudit?: LicenciaAuditUncheckedUpdateManyWithoutActorNestedInput
     notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
@@ -156484,6 +158111,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoCreateNestedManyWithoutGeneradorInput
     contratoFirmas?: ContratoFirmaCreateNestedManyWithoutFirmanteInput
     contratoVersiones?: ContratoVersionCreateNestedManyWithoutCreadorInput
+    tiposContratosCustom?: TipoContratoCustomCreateNestedManyWithoutCreadorInput
     licencias?: LicenciaCreateNestedManyWithoutUsuarioInput
     licenciasAudit?: LicenciaAuditCreateNestedManyWithoutActorInput
     notifications?: NotificationCreateNestedManyWithoutUserInput
@@ -156512,6 +158140,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoUncheckedCreateNestedManyWithoutGeneradorInput
     contratoFirmas?: ContratoFirmaUncheckedCreateNestedManyWithoutFirmanteInput
     contratoVersiones?: ContratoVersionUncheckedCreateNestedManyWithoutCreadorInput
+    tiposContratosCustom?: TipoContratoCustomUncheckedCreateNestedManyWithoutCreadorInput
     licencias?: LicenciaUncheckedCreateNestedManyWithoutUsuarioInput
     licenciasAudit?: LicenciaAuditUncheckedCreateNestedManyWithoutActorInput
     notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
@@ -156590,6 +158219,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoCreateNestedManyWithoutGeneradorInput
     contratoFirmas?: ContratoFirmaCreateNestedManyWithoutFirmanteInput
     contratoVersiones?: ContratoVersionCreateNestedManyWithoutCreadorInput
+    tiposContratosCustom?: TipoContratoCustomCreateNestedManyWithoutCreadorInput
     licencias?: LicenciaCreateNestedManyWithoutUsuarioInput
     licenciasAudit?: LicenciaAuditCreateNestedManyWithoutActorInput
     notifications?: NotificationCreateNestedManyWithoutUserInput
@@ -156618,6 +158248,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoUncheckedCreateNestedManyWithoutGeneradorInput
     contratoFirmas?: ContratoFirmaUncheckedCreateNestedManyWithoutFirmanteInput
     contratoVersiones?: ContratoVersionUncheckedCreateNestedManyWithoutCreadorInput
+    tiposContratosCustom?: TipoContratoCustomUncheckedCreateNestedManyWithoutCreadorInput
     licencias?: LicenciaUncheckedCreateNestedManyWithoutUsuarioInput
     licenciasAudit?: LicenciaAuditUncheckedCreateNestedManyWithoutActorInput
     notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
@@ -156863,6 +158494,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoUpdateManyWithoutGeneradorNestedInput
     contratoFirmas?: ContratoFirmaUpdateManyWithoutFirmanteNestedInput
     contratoVersiones?: ContratoVersionUpdateManyWithoutCreadorNestedInput
+    tiposContratosCustom?: TipoContratoCustomUpdateManyWithoutCreadorNestedInput
     licencias?: LicenciaUpdateManyWithoutUsuarioNestedInput
     licenciasAudit?: LicenciaAuditUpdateManyWithoutActorNestedInput
     notifications?: NotificationUpdateManyWithoutUserNestedInput
@@ -156891,6 +158523,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoUncheckedUpdateManyWithoutGeneradorNestedInput
     contratoFirmas?: ContratoFirmaUncheckedUpdateManyWithoutFirmanteNestedInput
     contratoVersiones?: ContratoVersionUncheckedUpdateManyWithoutCreadorNestedInput
+    tiposContratosCustom?: TipoContratoCustomUncheckedUpdateManyWithoutCreadorNestedInput
     licencias?: LicenciaUncheckedUpdateManyWithoutUsuarioNestedInput
     licenciasAudit?: LicenciaAuditUncheckedUpdateManyWithoutActorNestedInput
     notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
@@ -156981,6 +158614,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoUpdateManyWithoutGeneradorNestedInput
     contratoFirmas?: ContratoFirmaUpdateManyWithoutFirmanteNestedInput
     contratoVersiones?: ContratoVersionUpdateManyWithoutCreadorNestedInput
+    tiposContratosCustom?: TipoContratoCustomUpdateManyWithoutCreadorNestedInput
     licencias?: LicenciaUpdateManyWithoutUsuarioNestedInput
     licenciasAudit?: LicenciaAuditUpdateManyWithoutActorNestedInput
     notifications?: NotificationUpdateManyWithoutUserNestedInput
@@ -157009,6 +158643,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoUncheckedUpdateManyWithoutGeneradorNestedInput
     contratoFirmas?: ContratoFirmaUncheckedUpdateManyWithoutFirmanteNestedInput
     contratoVersiones?: ContratoVersionUncheckedUpdateManyWithoutCreadorNestedInput
+    tiposContratosCustom?: TipoContratoCustomUncheckedUpdateManyWithoutCreadorNestedInput
     licencias?: LicenciaUncheckedUpdateManyWithoutUsuarioNestedInput
     licenciasAudit?: LicenciaAuditUncheckedUpdateManyWithoutActorNestedInput
     notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
@@ -157194,6 +158829,8 @@ export namespace Prisma {
   export type ContratoCreateWithoutVersionesInput = {
     contratoId?: string
     numeroContrato: string
+    numeroConsecutivo: number
+    numeroContratoClienteProveedor?: string | null
     tipo: $Enums.TipoContrato
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
@@ -157220,6 +158857,8 @@ export namespace Prisma {
   export type ContratoUncheckedCreateWithoutVersionesInput = {
     contratoId?: string
     numeroContrato: string
+    numeroConsecutivo: number
+    numeroContratoClienteProveedor?: string | null
     tipo: $Enums.TipoContrato
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
@@ -157269,6 +158908,7 @@ export namespace Prisma {
     contratoAprobaciones?: ContratoAprobacionCreateNestedManyWithoutAprobadorInput
     contratoArchivos?: ContratoArchivoCreateNestedManyWithoutGeneradorInput
     contratoFirmas?: ContratoFirmaCreateNestedManyWithoutFirmanteInput
+    tiposContratosCustom?: TipoContratoCustomCreateNestedManyWithoutCreadorInput
     licencias?: LicenciaCreateNestedManyWithoutUsuarioInput
     licenciasAudit?: LicenciaAuditCreateNestedManyWithoutActorInput
     notifications?: NotificationCreateNestedManyWithoutUserInput
@@ -157297,6 +158937,7 @@ export namespace Prisma {
     contratoAprobaciones?: ContratoAprobacionUncheckedCreateNestedManyWithoutAprobadorInput
     contratoArchivos?: ContratoArchivoUncheckedCreateNestedManyWithoutGeneradorInput
     contratoFirmas?: ContratoFirmaUncheckedCreateNestedManyWithoutFirmanteInput
+    tiposContratosCustom?: TipoContratoCustomUncheckedCreateNestedManyWithoutCreadorInput
     licencias?: LicenciaUncheckedCreateNestedManyWithoutUsuarioInput
     licenciasAudit?: LicenciaAuditUncheckedCreateNestedManyWithoutActorInput
     notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
@@ -157339,6 +158980,8 @@ export namespace Prisma {
   export type ContratoUpdateWithoutVersionesInput = {
     contratoId?: StringFieldUpdateOperationsInput | string
     numeroContrato?: StringFieldUpdateOperationsInput | string
+    numeroConsecutivo?: IntFieldUpdateOperationsInput | number
+    numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
     tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -157365,6 +159008,8 @@ export namespace Prisma {
   export type ContratoUncheckedUpdateWithoutVersionesInput = {
     contratoId?: StringFieldUpdateOperationsInput | string
     numeroContrato?: StringFieldUpdateOperationsInput | string
+    numeroConsecutivo?: IntFieldUpdateOperationsInput | number
+    numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
     tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -157420,6 +159065,7 @@ export namespace Prisma {
     contratoAprobaciones?: ContratoAprobacionUpdateManyWithoutAprobadorNestedInput
     contratoArchivos?: ContratoArchivoUpdateManyWithoutGeneradorNestedInput
     contratoFirmas?: ContratoFirmaUpdateManyWithoutFirmanteNestedInput
+    tiposContratosCustom?: TipoContratoCustomUpdateManyWithoutCreadorNestedInput
     licencias?: LicenciaUpdateManyWithoutUsuarioNestedInput
     licenciasAudit?: LicenciaAuditUpdateManyWithoutActorNestedInput
     notifications?: NotificationUpdateManyWithoutUserNestedInput
@@ -157448,6 +159094,7 @@ export namespace Prisma {
     contratoAprobaciones?: ContratoAprobacionUncheckedUpdateManyWithoutAprobadorNestedInput
     contratoArchivos?: ContratoArchivoUncheckedUpdateManyWithoutGeneradorNestedInput
     contratoFirmas?: ContratoFirmaUncheckedUpdateManyWithoutFirmanteNestedInput
+    tiposContratosCustom?: TipoContratoCustomUncheckedUpdateManyWithoutCreadorNestedInput
     licencias?: LicenciaUncheckedUpdateManyWithoutUsuarioNestedInput
     licenciasAudit?: LicenciaAuditUncheckedUpdateManyWithoutActorNestedInput
     notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
@@ -157458,6 +159105,8 @@ export namespace Prisma {
   export type ContratoCreateWithoutFirmasInput = {
     contratoId?: string
     numeroContrato: string
+    numeroConsecutivo: number
+    numeroContratoClienteProveedor?: string | null
     tipo: $Enums.TipoContrato
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
@@ -157484,6 +159133,8 @@ export namespace Prisma {
   export type ContratoUncheckedCreateWithoutFirmasInput = {
     contratoId?: string
     numeroContrato: string
+    numeroConsecutivo: number
+    numeroContratoClienteProveedor?: string | null
     tipo: $Enums.TipoContrato
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
@@ -157533,6 +159184,7 @@ export namespace Prisma {
     contratoAprobaciones?: ContratoAprobacionCreateNestedManyWithoutAprobadorInput
     contratoArchivos?: ContratoArchivoCreateNestedManyWithoutGeneradorInput
     contratoVersiones?: ContratoVersionCreateNestedManyWithoutCreadorInput
+    tiposContratosCustom?: TipoContratoCustomCreateNestedManyWithoutCreadorInput
     licencias?: LicenciaCreateNestedManyWithoutUsuarioInput
     licenciasAudit?: LicenciaAuditCreateNestedManyWithoutActorInput
     notifications?: NotificationCreateNestedManyWithoutUserInput
@@ -157561,6 +159213,7 @@ export namespace Prisma {
     contratoAprobaciones?: ContratoAprobacionUncheckedCreateNestedManyWithoutAprobadorInput
     contratoArchivos?: ContratoArchivoUncheckedCreateNestedManyWithoutGeneradorInput
     contratoVersiones?: ContratoVersionUncheckedCreateNestedManyWithoutCreadorInput
+    tiposContratosCustom?: TipoContratoCustomUncheckedCreateNestedManyWithoutCreadorInput
     licencias?: LicenciaUncheckedCreateNestedManyWithoutUsuarioInput
     licenciasAudit?: LicenciaAuditUncheckedCreateNestedManyWithoutActorInput
     notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
@@ -157587,6 +159240,8 @@ export namespace Prisma {
   export type ContratoUpdateWithoutFirmasInput = {
     contratoId?: StringFieldUpdateOperationsInput | string
     numeroContrato?: StringFieldUpdateOperationsInput | string
+    numeroConsecutivo?: IntFieldUpdateOperationsInput | number
+    numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
     tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -157613,6 +159268,8 @@ export namespace Prisma {
   export type ContratoUncheckedUpdateWithoutFirmasInput = {
     contratoId?: StringFieldUpdateOperationsInput | string
     numeroContrato?: StringFieldUpdateOperationsInput | string
+    numeroConsecutivo?: IntFieldUpdateOperationsInput | number
+    numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
     tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -157668,6 +159325,7 @@ export namespace Prisma {
     contratoAprobaciones?: ContratoAprobacionUpdateManyWithoutAprobadorNestedInput
     contratoArchivos?: ContratoArchivoUpdateManyWithoutGeneradorNestedInput
     contratoVersiones?: ContratoVersionUpdateManyWithoutCreadorNestedInput
+    tiposContratosCustom?: TipoContratoCustomUpdateManyWithoutCreadorNestedInput
     licencias?: LicenciaUpdateManyWithoutUsuarioNestedInput
     licenciasAudit?: LicenciaAuditUpdateManyWithoutActorNestedInput
     notifications?: NotificationUpdateManyWithoutUserNestedInput
@@ -157696,6 +159354,7 @@ export namespace Prisma {
     contratoAprobaciones?: ContratoAprobacionUncheckedUpdateManyWithoutAprobadorNestedInput
     contratoArchivos?: ContratoArchivoUncheckedUpdateManyWithoutGeneradorNestedInput
     contratoVersiones?: ContratoVersionUncheckedUpdateManyWithoutCreadorNestedInput
+    tiposContratosCustom?: TipoContratoCustomUncheckedUpdateManyWithoutCreadorNestedInput
     licencias?: LicenciaUncheckedUpdateManyWithoutUsuarioNestedInput
     licenciasAudit?: LicenciaAuditUncheckedUpdateManyWithoutActorNestedInput
     notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
@@ -157724,6 +159383,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoCreateNestedManyWithoutGeneradorInput
     contratoFirmas?: ContratoFirmaCreateNestedManyWithoutFirmanteInput
     contratoVersiones?: ContratoVersionCreateNestedManyWithoutCreadorInput
+    tiposContratosCustom?: TipoContratoCustomCreateNestedManyWithoutCreadorInput
     licencias?: LicenciaCreateNestedManyWithoutUsuarioInput
     licenciasAudit?: LicenciaAuditCreateNestedManyWithoutActorInput
     notifications?: NotificationCreateNestedManyWithoutUserInput
@@ -157752,6 +159412,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoUncheckedCreateNestedManyWithoutGeneradorInput
     contratoFirmas?: ContratoFirmaUncheckedCreateNestedManyWithoutFirmanteInput
     contratoVersiones?: ContratoVersionUncheckedCreateNestedManyWithoutCreadorInput
+    tiposContratosCustom?: TipoContratoCustomUncheckedCreateNestedManyWithoutCreadorInput
     licencias?: LicenciaUncheckedCreateNestedManyWithoutUsuarioInput
     licenciasAudit?: LicenciaAuditUncheckedCreateNestedManyWithoutActorInput
     notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
@@ -157767,6 +159428,8 @@ export namespace Prisma {
   export type ContratoCreateWithoutAprobacionesInput = {
     contratoId?: string
     numeroContrato: string
+    numeroConsecutivo: number
+    numeroContratoClienteProveedor?: string | null
     tipo: $Enums.TipoContrato
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
@@ -157793,6 +159456,8 @@ export namespace Prisma {
   export type ContratoUncheckedCreateWithoutAprobacionesInput = {
     contratoId?: string
     numeroContrato: string
+    numeroConsecutivo: number
+    numeroContratoClienteProveedor?: string | null
     tipo: $Enums.TipoContrato
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
@@ -157853,6 +159518,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoUpdateManyWithoutGeneradorNestedInput
     contratoFirmas?: ContratoFirmaUpdateManyWithoutFirmanteNestedInput
     contratoVersiones?: ContratoVersionUpdateManyWithoutCreadorNestedInput
+    tiposContratosCustom?: TipoContratoCustomUpdateManyWithoutCreadorNestedInput
     licencias?: LicenciaUpdateManyWithoutUsuarioNestedInput
     licenciasAudit?: LicenciaAuditUpdateManyWithoutActorNestedInput
     notifications?: NotificationUpdateManyWithoutUserNestedInput
@@ -157881,6 +159547,7 @@ export namespace Prisma {
     contratoArchivos?: ContratoArchivoUncheckedUpdateManyWithoutGeneradorNestedInput
     contratoFirmas?: ContratoFirmaUncheckedUpdateManyWithoutFirmanteNestedInput
     contratoVersiones?: ContratoVersionUncheckedUpdateManyWithoutCreadorNestedInput
+    tiposContratosCustom?: TipoContratoCustomUncheckedUpdateManyWithoutCreadorNestedInput
     licencias?: LicenciaUncheckedUpdateManyWithoutUsuarioNestedInput
     licenciasAudit?: LicenciaAuditUncheckedUpdateManyWithoutActorNestedInput
     notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
@@ -157902,6 +159569,8 @@ export namespace Prisma {
   export type ContratoUpdateWithoutAprobacionesInput = {
     contratoId?: StringFieldUpdateOperationsInput | string
     numeroContrato?: StringFieldUpdateOperationsInput | string
+    numeroConsecutivo?: IntFieldUpdateOperationsInput | number
+    numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
     tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -157928,6 +159597,8 @@ export namespace Prisma {
   export type ContratoUncheckedUpdateWithoutAprobacionesInput = {
     contratoId?: StringFieldUpdateOperationsInput | string
     numeroContrato?: StringFieldUpdateOperationsInput | string
+    numeroConsecutivo?: IntFieldUpdateOperationsInput | number
+    numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
     tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -157954,6 +159625,8 @@ export namespace Prisma {
   export type ContratoCreateWithoutArchivosInput = {
     contratoId?: string
     numeroContrato: string
+    numeroConsecutivo: number
+    numeroContratoClienteProveedor?: string | null
     tipo: $Enums.TipoContrato
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
@@ -157980,6 +159653,8 @@ export namespace Prisma {
   export type ContratoUncheckedCreateWithoutArchivosInput = {
     contratoId?: string
     numeroContrato: string
+    numeroConsecutivo: number
+    numeroContratoClienteProveedor?: string | null
     tipo: $Enums.TipoContrato
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
@@ -158029,6 +159704,7 @@ export namespace Prisma {
     contratoAprobaciones?: ContratoAprobacionCreateNestedManyWithoutAprobadorInput
     contratoFirmas?: ContratoFirmaCreateNestedManyWithoutFirmanteInput
     contratoVersiones?: ContratoVersionCreateNestedManyWithoutCreadorInput
+    tiposContratosCustom?: TipoContratoCustomCreateNestedManyWithoutCreadorInput
     licencias?: LicenciaCreateNestedManyWithoutUsuarioInput
     licenciasAudit?: LicenciaAuditCreateNestedManyWithoutActorInput
     notifications?: NotificationCreateNestedManyWithoutUserInput
@@ -158057,6 +159733,7 @@ export namespace Prisma {
     contratoAprobaciones?: ContratoAprobacionUncheckedCreateNestedManyWithoutAprobadorInput
     contratoFirmas?: ContratoFirmaUncheckedCreateNestedManyWithoutFirmanteInput
     contratoVersiones?: ContratoVersionUncheckedCreateNestedManyWithoutCreadorInput
+    tiposContratosCustom?: TipoContratoCustomUncheckedCreateNestedManyWithoutCreadorInput
     licencias?: LicenciaUncheckedCreateNestedManyWithoutUsuarioInput
     licenciasAudit?: LicenciaAuditUncheckedCreateNestedManyWithoutActorInput
     notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
@@ -158108,6 +159785,8 @@ export namespace Prisma {
   export type ContratoUpdateWithoutArchivosInput = {
     contratoId?: StringFieldUpdateOperationsInput | string
     numeroContrato?: StringFieldUpdateOperationsInput | string
+    numeroConsecutivo?: IntFieldUpdateOperationsInput | number
+    numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
     tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -158134,6 +159813,8 @@ export namespace Prisma {
   export type ContratoUncheckedUpdateWithoutArchivosInput = {
     contratoId?: StringFieldUpdateOperationsInput | string
     numeroContrato?: StringFieldUpdateOperationsInput | string
+    numeroConsecutivo?: IntFieldUpdateOperationsInput | number
+    numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
     tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -158189,6 +159870,7 @@ export namespace Prisma {
     contratoAprobaciones?: ContratoAprobacionUpdateManyWithoutAprobadorNestedInput
     contratoFirmas?: ContratoFirmaUpdateManyWithoutFirmanteNestedInput
     contratoVersiones?: ContratoVersionUpdateManyWithoutCreadorNestedInput
+    tiposContratosCustom?: TipoContratoCustomUpdateManyWithoutCreadorNestedInput
     licencias?: LicenciaUpdateManyWithoutUsuarioNestedInput
     licenciasAudit?: LicenciaAuditUpdateManyWithoutActorNestedInput
     notifications?: NotificationUpdateManyWithoutUserNestedInput
@@ -158217,6 +159899,7 @@ export namespace Prisma {
     contratoAprobaciones?: ContratoAprobacionUncheckedUpdateManyWithoutAprobadorNestedInput
     contratoFirmas?: ContratoFirmaUncheckedUpdateManyWithoutFirmanteNestedInput
     contratoVersiones?: ContratoVersionUncheckedUpdateManyWithoutCreadorNestedInput
+    tiposContratosCustom?: TipoContratoCustomUncheckedUpdateManyWithoutCreadorNestedInput
     licencias?: LicenciaUncheckedUpdateManyWithoutUsuarioNestedInput
     licenciasAudit?: LicenciaAuditUncheckedUpdateManyWithoutActorNestedInput
     notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
@@ -158258,6 +159941,8 @@ export namespace Prisma {
   export type ContratoCreateWithoutAlertasInput = {
     contratoId?: string
     numeroContrato: string
+    numeroConsecutivo: number
+    numeroContratoClienteProveedor?: string | null
     tipo: $Enums.TipoContrato
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
@@ -158284,6 +159969,8 @@ export namespace Prisma {
   export type ContratoUncheckedCreateWithoutAlertasInput = {
     contratoId?: string
     numeroContrato: string
+    numeroConsecutivo: number
+    numeroContratoClienteProveedor?: string | null
     tipo: $Enums.TipoContrato
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
@@ -158326,6 +160013,8 @@ export namespace Prisma {
   export type ContratoUpdateWithoutAlertasInput = {
     contratoId?: StringFieldUpdateOperationsInput | string
     numeroContrato?: StringFieldUpdateOperationsInput | string
+    numeroConsecutivo?: IntFieldUpdateOperationsInput | number
+    numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
     tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -158352,6 +160041,8 @@ export namespace Prisma {
   export type ContratoUncheckedUpdateWithoutAlertasInput = {
     contratoId?: StringFieldUpdateOperationsInput | string
     numeroContrato?: StringFieldUpdateOperationsInput | string
+    numeroConsecutivo?: IntFieldUpdateOperationsInput | number
+    numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
     tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -158373,6 +160064,138 @@ export namespace Prisma {
     archivos?: ContratoArchivoUncheckedUpdateManyWithoutContratoNestedInput
     firmas?: ContratoFirmaUncheckedUpdateManyWithoutContratoNestedInput
     versiones?: ContratoVersionUncheckedUpdateManyWithoutContratoNestedInput
+  }
+
+  export type UserCreateWithoutTiposContratosCustomInput = {
+    userId?: string
+    name: string
+    email: string
+    password: string
+    role?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    activatedAt?: Date | string | null
+    avatar?: string | null
+    expiresAt?: Date | string | null
+    isActive?: boolean
+    lastFailedLogin?: Date | string | null
+    lastModifiedBy?: string | null
+    lockedUntil?: Date | string | null
+    loginAttempts?: number
+    contratosAprobados?: ContratoCreateNestedManyWithoutAprobadorInput
+    contratosCreados?: ContratoCreateNestedManyWithoutCreadorInput
+    contratoAprobaciones?: ContratoAprobacionCreateNestedManyWithoutAprobadorInput
+    contratoArchivos?: ContratoArchivoCreateNestedManyWithoutGeneradorInput
+    contratoFirmas?: ContratoFirmaCreateNestedManyWithoutFirmanteInput
+    contratoVersiones?: ContratoVersionCreateNestedManyWithoutCreadorInput
+    licencias?: LicenciaCreateNestedManyWithoutUsuarioInput
+    licenciasAudit?: LicenciaAuditCreateNestedManyWithoutActorInput
+    notifications?: NotificationCreateNestedManyWithoutUserInput
+    activityLogs?: UserActivityLogCreateNestedManyWithoutUserInput
+    sessions?: UserSessionCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutTiposContratosCustomInput = {
+    userId?: string
+    name: string
+    email: string
+    password: string
+    role?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    activatedAt?: Date | string | null
+    avatar?: string | null
+    expiresAt?: Date | string | null
+    isActive?: boolean
+    lastFailedLogin?: Date | string | null
+    lastModifiedBy?: string | null
+    lockedUntil?: Date | string | null
+    loginAttempts?: number
+    contratosAprobados?: ContratoUncheckedCreateNestedManyWithoutAprobadorInput
+    contratosCreados?: ContratoUncheckedCreateNestedManyWithoutCreadorInput
+    contratoAprobaciones?: ContratoAprobacionUncheckedCreateNestedManyWithoutAprobadorInput
+    contratoArchivos?: ContratoArchivoUncheckedCreateNestedManyWithoutGeneradorInput
+    contratoFirmas?: ContratoFirmaUncheckedCreateNestedManyWithoutFirmanteInput
+    contratoVersiones?: ContratoVersionUncheckedCreateNestedManyWithoutCreadorInput
+    licencias?: LicenciaUncheckedCreateNestedManyWithoutUsuarioInput
+    licenciasAudit?: LicenciaAuditUncheckedCreateNestedManyWithoutActorInput
+    notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
+    activityLogs?: UserActivityLogUncheckedCreateNestedManyWithoutUserInput
+    sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutTiposContratosCustomInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutTiposContratosCustomInput, UserUncheckedCreateWithoutTiposContratosCustomInput>
+  }
+
+  export type UserUpsertWithoutTiposContratosCustomInput = {
+    update: XOR<UserUpdateWithoutTiposContratosCustomInput, UserUncheckedUpdateWithoutTiposContratosCustomInput>
+    create: XOR<UserCreateWithoutTiposContratosCustomInput, UserUncheckedCreateWithoutTiposContratosCustomInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutTiposContratosCustomInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutTiposContratosCustomInput, UserUncheckedUpdateWithoutTiposContratosCustomInput>
+  }
+
+  export type UserUpdateWithoutTiposContratosCustomInput = {
+    userId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    avatar?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    lastFailedLogin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastModifiedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    lockedUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    loginAttempts?: IntFieldUpdateOperationsInput | number
+    contratosAprobados?: ContratoUpdateManyWithoutAprobadorNestedInput
+    contratosCreados?: ContratoUpdateManyWithoutCreadorNestedInput
+    contratoAprobaciones?: ContratoAprobacionUpdateManyWithoutAprobadorNestedInput
+    contratoArchivos?: ContratoArchivoUpdateManyWithoutGeneradorNestedInput
+    contratoFirmas?: ContratoFirmaUpdateManyWithoutFirmanteNestedInput
+    contratoVersiones?: ContratoVersionUpdateManyWithoutCreadorNestedInput
+    licencias?: LicenciaUpdateManyWithoutUsuarioNestedInput
+    licenciasAudit?: LicenciaAuditUpdateManyWithoutActorNestedInput
+    notifications?: NotificationUpdateManyWithoutUserNestedInput
+    activityLogs?: UserActivityLogUpdateManyWithoutUserNestedInput
+    sessions?: UserSessionUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutTiposContratosCustomInput = {
+    userId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    avatar?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    lastFailedLogin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastModifiedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    lockedUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    loginAttempts?: IntFieldUpdateOperationsInput | number
+    contratosAprobados?: ContratoUncheckedUpdateManyWithoutAprobadorNestedInput
+    contratosCreados?: ContratoUncheckedUpdateManyWithoutCreadorNestedInput
+    contratoAprobaciones?: ContratoAprobacionUncheckedUpdateManyWithoutAprobadorNestedInput
+    contratoArchivos?: ContratoArchivoUncheckedUpdateManyWithoutGeneradorNestedInput
+    contratoFirmas?: ContratoFirmaUncheckedUpdateManyWithoutFirmanteNestedInput
+    contratoVersiones?: ContratoVersionUncheckedUpdateManyWithoutCreadorNestedInput
+    licencias?: LicenciaUncheckedUpdateManyWithoutUsuarioNestedInput
+    licenciasAudit?: LicenciaAuditUncheckedUpdateManyWithoutActorNestedInput
+    notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
+    activityLogs?: UserActivityLogUncheckedUpdateManyWithoutUserNestedInput
+    sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type CuentaPorCobrarCreateWithoutFacturaInput = {
@@ -164215,6 +166038,8 @@ export namespace Prisma {
   export type ContratoCreateManyVendorInput = {
     contratoId?: string
     numeroContrato: string
+    numeroConsecutivo: number
+    numeroContratoClienteProveedor?: string | null
     tipo: $Enums.TipoContrato
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
@@ -164368,6 +166193,8 @@ export namespace Prisma {
   export type ContratoUpdateWithoutVendorInput = {
     contratoId?: StringFieldUpdateOperationsInput | string
     numeroContrato?: StringFieldUpdateOperationsInput | string
+    numeroConsecutivo?: IntFieldUpdateOperationsInput | number
+    numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
     tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -164394,6 +166221,8 @@ export namespace Prisma {
   export type ContratoUncheckedUpdateWithoutVendorInput = {
     contratoId?: StringFieldUpdateOperationsInput | string
     numeroContrato?: StringFieldUpdateOperationsInput | string
+    numeroConsecutivo?: IntFieldUpdateOperationsInput | number
+    numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
     tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -164420,6 +166249,8 @@ export namespace Prisma {
   export type ContratoUncheckedUpdateManyWithoutVendorInput = {
     contratoId?: StringFieldUpdateOperationsInput | string
     numeroContrato?: StringFieldUpdateOperationsInput | string
+    numeroConsecutivo?: IntFieldUpdateOperationsInput | number
+    numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
     tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -164754,6 +166585,8 @@ export namespace Prisma {
   export type ContratoCreateManyClienteInput = {
     contratoId?: string
     numeroContrato: string
+    numeroConsecutivo: number
+    numeroContratoClienteProveedor?: string | null
     tipo: $Enums.TipoContrato
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
@@ -164907,6 +166740,8 @@ export namespace Prisma {
   export type ContratoUpdateWithoutClienteInput = {
     contratoId?: StringFieldUpdateOperationsInput | string
     numeroContrato?: StringFieldUpdateOperationsInput | string
+    numeroConsecutivo?: IntFieldUpdateOperationsInput | number
+    numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
     tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -164933,6 +166768,8 @@ export namespace Prisma {
   export type ContratoUncheckedUpdateWithoutClienteInput = {
     contratoId?: StringFieldUpdateOperationsInput | string
     numeroContrato?: StringFieldUpdateOperationsInput | string
+    numeroConsecutivo?: IntFieldUpdateOperationsInput | number
+    numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
     tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -164959,6 +166796,8 @@ export namespace Prisma {
   export type ContratoUncheckedUpdateManyWithoutClienteInput = {
     contratoId?: StringFieldUpdateOperationsInput | string
     numeroContrato?: StringFieldUpdateOperationsInput | string
+    numeroConsecutivo?: IntFieldUpdateOperationsInput | number
+    numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
     tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -166638,6 +168477,8 @@ export namespace Prisma {
   export type ContratoCreateManyAprobadorInput = {
     contratoId?: string
     numeroContrato: string
+    numeroConsecutivo: number
+    numeroContratoClienteProveedor?: string | null
     tipo: $Enums.TipoContrato
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
@@ -166659,6 +168500,8 @@ export namespace Prisma {
   export type ContratoCreateManyCreadorInput = {
     contratoId?: string
     numeroContrato: string
+    numeroConsecutivo: number
+    numeroContratoClienteProveedor?: string | null
     tipo: $Enums.TipoContrato
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
@@ -166719,6 +168562,15 @@ export namespace Prisma {
     createdAt?: Date | string
   }
 
+  export type TipoContratoCustomCreateManyCreadorInput = {
+    tipoCustomId?: string
+    nombre: string
+    descripcion?: string | null
+    activo?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type LicenciaCreateManyUsuarioInput = {
     licenciaId?: string
     clave: string
@@ -166775,6 +168627,8 @@ export namespace Prisma {
   export type ContratoUpdateWithoutAprobadorInput = {
     contratoId?: StringFieldUpdateOperationsInput | string
     numeroContrato?: StringFieldUpdateOperationsInput | string
+    numeroConsecutivo?: IntFieldUpdateOperationsInput | number
+    numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
     tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -166801,6 +168655,8 @@ export namespace Prisma {
   export type ContratoUncheckedUpdateWithoutAprobadorInput = {
     contratoId?: StringFieldUpdateOperationsInput | string
     numeroContrato?: StringFieldUpdateOperationsInput | string
+    numeroConsecutivo?: IntFieldUpdateOperationsInput | number
+    numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
     tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -166827,6 +168683,8 @@ export namespace Prisma {
   export type ContratoUncheckedUpdateManyWithoutAprobadorInput = {
     contratoId?: StringFieldUpdateOperationsInput | string
     numeroContrato?: StringFieldUpdateOperationsInput | string
+    numeroConsecutivo?: IntFieldUpdateOperationsInput | number
+    numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
     tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -166848,6 +168706,8 @@ export namespace Prisma {
   export type ContratoUpdateWithoutCreadorInput = {
     contratoId?: StringFieldUpdateOperationsInput | string
     numeroContrato?: StringFieldUpdateOperationsInput | string
+    numeroConsecutivo?: IntFieldUpdateOperationsInput | number
+    numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
     tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -166874,6 +168734,8 @@ export namespace Prisma {
   export type ContratoUncheckedUpdateWithoutCreadorInput = {
     contratoId?: StringFieldUpdateOperationsInput | string
     numeroContrato?: StringFieldUpdateOperationsInput | string
+    numeroConsecutivo?: IntFieldUpdateOperationsInput | number
+    numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
     tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -166900,6 +168762,8 @@ export namespace Prisma {
   export type ContratoUncheckedUpdateManyWithoutCreadorInput = {
     contratoId?: StringFieldUpdateOperationsInput | string
     numeroContrato?: StringFieldUpdateOperationsInput | string
+    numeroConsecutivo?: IntFieldUpdateOperationsInput | number
+    numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
     tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -167044,6 +168908,33 @@ export namespace Prisma {
     contenido?: JsonNullValueInput | InputJsonValue
     cambios?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TipoContratoCustomUpdateWithoutCreadorInput = {
+    tipoCustomId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TipoContratoCustomUncheckedUpdateWithoutCreadorInput = {
+    tipoCustomId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type TipoContratoCustomUncheckedUpdateManyWithoutCreadorInput = {
+    tipoCustomId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    activo?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type LicenciaUpdateWithoutUsuarioInput = {

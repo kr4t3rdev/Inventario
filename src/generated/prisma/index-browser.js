@@ -867,6 +867,8 @@ exports.Prisma.ScenarioSimulationScalarFieldEnum = {
 exports.Prisma.ContratoScalarFieldEnum = {
   contratoId: 'contratoId',
   numeroContrato: 'numeroContrato',
+  numeroConsecutivo: 'numeroConsecutivo',
+  numeroContratoClienteProveedor: 'numeroContratoClienteProveedor',
   tipo: 'tipo',
   estado: 'estado',
   fechaInicio: 'fechaInicio',
@@ -941,6 +943,16 @@ exports.Prisma.ContratoAlertaScalarFieldEnum = {
   mensaje: 'mensaje',
   accionRequerida: 'accionRequerida',
   createdAt: 'createdAt'
+};
+
+exports.Prisma.TipoContratoCustomScalarFieldEnum = {
+  tipoCustomId: 'tipoCustomId',
+  nombre: 'nombre',
+  descripcion: 'descripcion',
+  activo: 'activo',
+  creadoPor: 'creadoPor',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.FacturaScalarFieldEnum = {
@@ -1334,9 +1346,9 @@ exports.EstadoDeuda = exports.$Enums.EstadoDeuda = {
 };
 
 exports.TipoContrato = exports.$Enums.TipoContrato = {
-  VENTA: 'VENTA',
+  COMPRA_VENTA: 'COMPRA_VENTA',
   SERVICIO: 'SERVICIO',
-  PROVEEDOR: 'PROVEEDOR'
+  SUMINISTROS: 'SUMINISTROS'
 };
 
 exports.EstadoContrato = exports.$Enums.EstadoContrato = {
@@ -1485,6 +1497,7 @@ exports.Prisma.ModelName = {
   ContratoAprobacion: 'ContratoAprobacion',
   ContratoArchivo: 'ContratoArchivo',
   ContratoAlerta: 'ContratoAlerta',
+  TipoContratoCustom: 'TipoContratoCustom',
   Factura: 'Factura',
   SerieFacturacion: 'SerieFacturacion',
   Oferta: 'Oferta',
