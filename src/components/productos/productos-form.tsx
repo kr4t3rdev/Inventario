@@ -71,24 +71,18 @@ const productosSchema = z.object({
     .string({ required_error: 'El campo Categoría no ha sido seleccionada' })
     .min(1, 'El campo Categoría no ha sido seleccionada'),
   subcategoriaId: z.string().optional(),
-  precioCosto: z.preprocess(
-    (v) => (v === '' || v === null || v === undefined ? undefined : Number(v)),
-    z
-      .number({
-        required_error: 'El campo Precio de costo no ha sido rellenado',
-        invalid_type_error: 'El campo Precio de costo no ha sido rellenado',
-      })
-      .positive('El precio de costo debe ser mayor a 0')
-  ),
-  precioVenta: z.preprocess(
-    (v) => (v === '' || v === null || v === undefined ? undefined : Number(v)),
-    z
-      .number({
-        required_error: 'El campo Precio de venta no ha sido rellenado',
-        invalid_type_error: 'El campo Precio de venta no ha sido rellenado',
-      })
-      .positive('El precio de venta debe ser mayor a 0')
-  ),
+  precioCosto: z.coerce
+    .number({
+      required_error: 'El campo Precio de costo no ha sido rellenado',
+      invalid_type_error: 'El campo Precio de costo no ha sido rellenado',
+    })
+    .positive('El precio de costo debe ser mayor a 0'),
+  precioVenta: z.coerce
+    .number({
+      required_error: 'El campo Precio de venta no ha sido rellenado',
+      invalid_type_error: 'El campo Precio de venta no ha sido rellenado',
+    })
+    .positive('El precio de venta debe ser mayor a 0'),
   stock: z.coerce
     .number({ invalid_type_error: 'Ingrese un número válido' })
     .int('El stock debe ser un número entero')
@@ -465,7 +459,7 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.45 }}
     >
-      <Card className="overflow-hidden border-dashed bg-gradient-to-br from-primary/[0.05] via-background to-purple-500/[0.08] dark:from-primary/10 dark:to-purple-500/10">
+      <Card className="overflow-hidden border-dashed bg-linear-to-br from-primary/5 via-background to-purple-500/8 dark:from-primary/10 dark:to-purple-500/10">
         <CardContent className="pt-6">
           <motion.div
             className="mb-7 flex items-start gap-3"
@@ -474,7 +468,7 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
             transition={{ delay: 0.1 }}
           >
             <motion.div
-              className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-purple-600 text-white shadow-lg"
+              className="relative flex h-11 w-11 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple-600 text-white shadow-lg"
               whileHover={{ scale: 1.05, rotate: 4 }}
               transition={{ duration: 0.2 }}
             >
@@ -1043,7 +1037,7 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
                     )}
                   />
 
-                  <div className="rounded-xl border border-dashed bg-gradient-to-br from-primary/[0.05] to-purple-500/[0.08] dark:from-primary/10 dark:to-purple-500/10 p-4">
+                  <div className="rounded-xl border border-dashed bg-linear-to-br from-primary/5 to-purple-500/8 dark:from-primary/10 dark:to-purple-500/10 p-4">
                     <p className="text-sm font-semibold">Estado de inventario estimado</p>
                     <p className="mt-2 text-sm text-muted-foreground">
                       Con los valores actuales, el sistema marcará este producto como:
@@ -1128,7 +1122,7 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
                     <Button
                       type="submit"
                       disabled={isLoading || isPending}
-                      className="cursor-pointer min-w-[170px] gap-2 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                      className="cursor-pointer min-w-42.5 gap-2 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
                     >
                       {isLoading || isPending ? (
                         <>

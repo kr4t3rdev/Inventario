@@ -134,13 +134,13 @@ export function EditUserDialog({ open, onClose, user }: EditUserDialogProps): Re
   return (
     <Dialog open={open} onOpenChange={handleDialogChange}>
       <DialogContent className="overflow-hidden border bg-background sm:max-w-[500px]">
-        <div className="absolute left-0 right-0 top-0 h-1 bg-gradient-to-r from-primary via-purple-500 to-primary" />
+        <div className="absolute left-0 right-0 top-0 h-1 bg-linear-to-r from-primary via-purple-500 to-primary" />
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-purple-600 shadow-md">
+            <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-linear-to-br from-primary to-purple-600 shadow-md">
               <UserPen className="h-4 w-4 text-white" />
             </span>
-            <span className="bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
+            <span className="bg-linear-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
               Editar Usuario
             </span>
           </DialogTitle>
@@ -252,7 +252,7 @@ export function EditUserDialog({ open, onClose, user }: EditUserDialogProps): Re
             <Button
               type="submit"
               disabled={loading}
-              className="min-w-40 bg-gradient-to-r from-primary to-purple-600 text-white hover:from-primary/90 hover:to-purple-600/90"
+              className="min-w-40 bg-linear-to-r from-primary to-purple-600 text-white hover:from-primary/90 hover:to-purple-600/90"
             >
               {loading ? (
                 <>

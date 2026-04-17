@@ -54,14 +54,14 @@ export default function GastosReconciliacionPage(): React.JSX.Element {
       <div className="pointer-events-none absolute inset-0 -z-10">
         <div
           className={cn(
-            'absolute inset-0 bg-gradient-to-b from-slate-50 via-white to-slate-100',
+            'absolute inset-0 bg-linear-to-b from-slate-50 via-white to-slate-100',
             'dark:from-slate-900/10 dark:via-slate-900/10 dark:to-slate-900/10',
           )}
         />
         <div
           className={cn(
             'absolute -top-24 right-[-10%] h-72 w-72 rounded-full',
-            'bg-gradient-to-br from-amber-400/25 via-orange-500/20 to-transparent',
+            'bg-linear-to-br from-amber-400/25 via-orange-500/20 to-transparent',
             'blur-3xl dark:from-amber-400/20 dark:via-orange-500/20',
           )}
         />

@@ -137,10 +137,10 @@ export default function EditCompraProductoPage() {
                 </Button>
               </Link>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <div className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
                   <ShoppingCart className="h-5 w-5 text-white" />
                 </div>
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+                <h1 className="text-2xl font-bold bg-linear-to-r from-primary to-purple-600 bg-clip-text text-transparent">
                   Editar Compra
                 </h1>
               </div>
@@ -264,7 +264,7 @@ export default function EditCompraProductoPage() {
                       <Button
                         type="submit"
                         disabled={isUpdating}
-                        className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                        className="bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
                       >
                         {isUpdating ? (
                           <>

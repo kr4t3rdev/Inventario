@@ -447,7 +447,7 @@ export function ReporteVentaDiaria() {
             </Card>
           ))}
         </div>
-        <Skeleton className="h-[400px] w-full rounded-xl" />
+        <Skeleton className="h-100 w-full rounded-xl" />
       </div>
     )
   }

@@ -236,7 +236,7 @@ export default function OfertaDetailPage() {
             </Button>
             
             <div className="flex items-center gap-3 flex-1">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
                 <Receipt className="h-5 w-5 text-white" />
               </div>
               <div>
@@ -255,7 +255,7 @@ export default function OfertaDetailPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <Card className="border-dashed overflow-hidden">
-              <div className="h-1 bg-gradient-to-r from-primary via-purple-500 to-primary" />
+              <div className="h-1 bg-linear-to-r from-primary via-purple-500 to-primary" />
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <User className="h-5 w-5 text-primary" />
@@ -268,7 +268,7 @@ export default function OfertaDetailPage() {
             </Card>
             
             <Card className="border-dashed overflow-hidden">
-              <div className="h-1 bg-gradient-to-r from-primary via-purple-500 to-primary" />
+              <div className="h-1 bg-linear-to-r from-primary via-purple-500 to-primary" />
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <Calendar className="h-5 w-5 text-primary" />
@@ -289,7 +289,7 @@ export default function OfertaDetailPage() {
           </div>
 
           <Card className="border-dashed overflow-hidden">
-            <div className="h-1 bg-gradient-to-r from-primary via-purple-500 to-primary" />
+            <div className="h-1 bg-linear-to-r from-primary via-purple-500 to-primary" />
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Receipt className="h-5 w-5 text-primary" />
@@ -337,7 +337,7 @@ export default function OfertaDetailPage() {
                 </Button>
                 <Button 
                   onClick={() => handleUpdateStatus('ACEPTADA')}
-                  className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                  className="bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
                 >
                   <Check className="mr-2 h-4 w-4" /> Aceptar
                 </Button>
@@ -353,7 +353,7 @@ export default function OfertaDetailPage() {
             {oferta.estado === 'ACEPTADA' && (
               <Button 
                 onClick={() => setIsFacturarDialogOpen(true)}
-                className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                className="bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
               >
                 <ShoppingCart className="mr-2 h-4 w-4" /> Facturar
               </Button>
@@ -372,7 +372,7 @@ export default function OfertaDetailPage() {
             <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <div className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
                     <ShoppingCart className="h-5 w-5 text-white" />
                   </div>
                   <DialogTitle>Facturar Oferta</DialogTitle>
@@ -534,7 +534,7 @@ export default function OfertaDetailPage() {
                 <Button 
                   onClick={handleFacturar} 
                   disabled={isFacturing}
-                  className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                  className="bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
                 >
                   {isFacturing ? (
                     <>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback } from 'react'
-import { showErrorToast } from '@/components/contabilidad/toast-notifications'
+import { showErrorToast, type ToastOptions } from '@/components/contabilidad/toast-notifications'
 
 export interface ErrorContext {
   operation: string
@@ -169,15 +169,17 @@ export function useErrorHandler(): UseErrorHandlerReturn {
 
     // Show appropriate toast notification
     if (showToast) {
-      const toastOptions = {
-        action: retryAction ? {
-          label: 'Reintentar',
-          onClick: retryAction,
-        } : undefined,
-      }
+      const toastOptions: ToastOptions | undefined = retryAction
+        ? {
+            action: {
+              label: 'Reintentar',
+              onClick: retryAction,
+            },
+          }
+        : undefined
 
       if (isNetworkError(errorObj)) {
-        showErrorToast.networkError(context.operation, toastOptions)
+        showErrorToast.networkError(context.operation)
       } else if (isCurrencyError(errorObj)) {
         if (message.includes('rate') || message.includes('tasa')) {
           showErrorToast.exchangeRateNotFound('', '', toastOptions)

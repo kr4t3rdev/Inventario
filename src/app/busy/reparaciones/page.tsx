@@ -202,7 +202,7 @@ export default function ReparacionesConfigPage() {
       >
         <div className='flex items-center gap-3'>
           <motion.div
-            className='w-10 h-10 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg'
+            className='w-10 h-10 bg-linear-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg'
             whileHover={{ scale: 1.05, rotate: 5 }}
             transition={{ duration: 0.2 }}
           >
@@ -224,7 +224,7 @@ export default function ReparacionesConfigPage() {
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             <Button 
               onClick={() => setIsAddEquipoOpen(true)}
-              className='bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg'
+              className='bg-linear-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg'
             >
               <Plus className='mr-2 h-4 w-4' /> Nuevo Equipo
             </Button>
@@ -253,7 +253,7 @@ export default function ReparacionesConfigPage() {
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Button 
                   onClick={handleOpenAddDefectacion}
-                  className='bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg'
+                  className='bg-linear-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg'
                 >
                   <Plus className='mr-2 h-4 w-4' /> Nueva Defectación
                 </Button>
@@ -343,7 +343,7 @@ export default function ReparacionesConfigPage() {
                       <Button 
                         size='sm' 
                         onClick={() => handleOpenAddPieza(equipo.id)}
-                        className='bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg'
+                        className='bg-linear-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg'
                       >
                         <Plus className='mr-2 h-3 w-3' /> Agregar Pieza
                       </Button>
@@ -408,7 +408,7 @@ export default function ReparacionesConfigPage() {
             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
               <Button 
                 onClick={() => setIsAddEquipoOpen(true)}
-                className='bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg'
+                className='bg-linear-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg'
               >
                 <Plus className='mr-2 h-4 w-4' /> Nuevo Equipo
               </Button>
@@ -448,7 +448,7 @@ export default function ReparacionesConfigPage() {
               <Button 
                 onClick={handleSaveDefectacion} 
                 disabled={!newDefectacion.defecto}
-                className='bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg disabled:opacity-50'
+                className='bg-linear-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg disabled:opacity-50'
               >
                 {editingDefectacionId ? 'Guardar Cambios' : 'Agregar'}
               </Button>
@@ -488,7 +488,7 @@ export default function ReparacionesConfigPage() {
               <Button 
                 onClick={handleCreateEquipo} 
                 disabled={!newEquipo.nombre}
-                className='bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg disabled:opacity-50'
+                className='bg-linear-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg disabled:opacity-50'
               >
                 Crear Equipo
               </Button>
@@ -549,7 +549,7 @@ export default function ReparacionesConfigPage() {
               <Button 
                 onClick={handleSavePieza} 
                 disabled={!newPieza.nombre}
-                className='bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg disabled:opacity-50'
+                className='bg-linear-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg disabled:opacity-50'
               >
                 {editingPiezaId ? "Guardar Cambios" : "Agregar Pieza"}
               </Button>

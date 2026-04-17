@@ -120,7 +120,7 @@ export function NewVersionDialog({ contratoId, onSuccess }: NewVersionDialogProp
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-          <Button className="gap-2 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90">
+          <Button className="gap-2 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90">
             <FileUp className="h-4 w-4" />
             Nueva Versión
           </Button>
@@ -135,7 +135,7 @@ export function NewVersionDialog({ contratoId, onSuccess }: NewVersionDialogProp
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <motion.div
-                className="w-8 h-8 bg-gradient-to-br from-primary to-purple-600 rounded-lg flex items-center justify-center"
+                className="w-8 h-8 bg-linear-to-br from-primary to-purple-600 rounded-lg flex items-center justify-center"
                 whileHover={{ scale: 1.05 }}
               >
                 <FileText className="h-4 w-4 text-white" />
@@ -257,7 +257,7 @@ export function NewVersionDialog({ contratoId, onSuccess }: NewVersionDialogProp
                            value={cambios}
                            onChange={(e) => setCambios(e.target.value)}
                            placeholder="Describa qué se modificó en esta versión..."
-                           className="min-h-[100px] transition-all duration-200 focus:scale-[1.01]"
+                           className="min-h-25 transition-all duration-200 focus:scale-[1.01]"
                          />
                        </motion.div>
                      )}
@@ -272,7 +272,7 @@ export function NewVersionDialog({ contratoId, onSuccess }: NewVersionDialogProp
             <Button 
               onClick={handleSubmit} 
               disabled={!file || isChecking || isSubmitting || (!!diffResult && !diffResult.hasChanges)}
-              className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+              className="bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
             >
               {isSubmitting ? (
                 <>

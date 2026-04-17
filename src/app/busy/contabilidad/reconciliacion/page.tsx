@@ -34,7 +34,7 @@ const accentStyles: Record<
 > = {
   emerald: {
     gradient: cn(
-      'bg-gradient-to-br from-emerald-500/20 via-emerald-500/10 to-transparent',
+      'bg-linear-to-br from-emerald-500/20 via-emerald-500/10 to-transparent',
       'dark:from-emerald-400/25 dark:via-emerald-400/10',
     ),
     icon: cn(
@@ -49,7 +49,7 @@ const accentStyles: Record<
   },
   blue: {
     gradient: cn(
-      'bg-gradient-to-br from-blue-500/20 via-blue-500/10 to-transparent',
+      'bg-linear-to-br from-blue-500/20 via-blue-500/10 to-transparent',
       'dark:from-blue-400/25 dark:via-blue-400/10',
     ),
     icon: cn(
@@ -64,7 +64,7 @@ const accentStyles: Record<
   },
   amber: {
     gradient: cn(
-      'bg-gradient-to-br from-amber-500/25 via-amber-500/10 to-transparent',
+      'bg-linear-to-br from-amber-500/25 via-amber-500/10 to-transparent',
       'dark:from-amber-400/25 dark:via-amber-400/10',
     ),
     icon: cn(
@@ -258,7 +258,7 @@ export default function ReconciliacionHubPage(): React.JSX.Element {
         <SidebarInset className="bg-background">
           <motion.div className="relative space-y-6 p-8" variants={fadeIn} initial="hidden" animate="show">
             <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950/5 dark:via-slate-900/5 dark:to-slate-950/5" />
+              <div className="absolute inset-0 bg-linear-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950/5 dark:via-slate-900/5 dark:to-slate-950/5" />
             </div>
             <Button variant="ghost" size="sm" asChild>
               <Link href="/busy/contabilidad" className="flex items-center text-slate-600 dark:text-slate-300">
@@ -286,21 +286,21 @@ export default function ReconciliacionHubPage(): React.JSX.Element {
           <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
             <div
               className={cn(
-                'absolute inset-0 bg-gradient-to-b from-slate-50 via-white to-slate-100',
+                'absolute inset-0 bg-linear-to-b from-slate-50 via-white to-slate-100',
                 'dark:from-slate-950 dark:via-slate-900 dark:to-slate-950',
               )}
             />
             <div
               className={cn(
                 'absolute -top-24 right-[-10%] h-72 w-72 rounded-full',
-                'bg-gradient-to-br from-emerald-400/25 via-blue-500/20 to-transparent',
+                'bg-linear-to-br from-emerald-400/25 via-blue-500/20 to-transparent',
                 'blur-3xl dark:from-emerald-400/20 dark:via-blue-500/25',
               )}
             />
             <div
               className={cn(
                 'absolute -bottom-24 left-[-10%] h-72 w-72 rounded-full',
-                'bg-gradient-to-br from-amber-400/25 via-orange-500/20 to-transparent',
+                'bg-linear-to-br from-amber-400/25 via-orange-500/20 to-transparent',
                 'blur-3xl dark:from-amber-400/20 dark:via-orange-500/20',
               )}
             />
@@ -339,7 +339,7 @@ export default function ReconciliacionHubPage(): React.JSX.Element {
                 >
                   <Receipt className="h-5 w-5" />
                 </span>
-                <h1 className="bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-3xl font-semibold tracking-tight text-transparent dark:from-white dark:to-slate-300">
+                <h1 className="bg-linear-to-r from-slate-900 to-slate-600 bg-clip-text text-3xl font-semibold tracking-tight text-transparent dark:from-white dark:to-slate-300">
                   Reconciliación
                 </h1>
               </div>
@@ -575,7 +575,7 @@ function ReconciliacionHubSkeleton(): React.JSX.Element {
   return (
     <div className="space-y-8 p-8">
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950" />
+        <div className="absolute inset-0 bg-linear-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950" />
       </div>
       <div className="flex items-center gap-4">
         <Skeleton className="h-10 w-20" />

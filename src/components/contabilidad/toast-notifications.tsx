@@ -1,11 +1,11 @@
 'use client'
 
+import type { ExternalToast } from 'sonner'
+
 import { sileo } from '@/lib/sileo-shim'
 import { CheckCircle, XCircle, AlertCircle, Info, DollarSign, ArrowRightLeft } from 'lucide-react'
 
-export interface ToastOptions {
-  duration?: number
-}
+export interface ToastOptions extends Pick<ExternalToast, 'duration' | 'action'> {}
 
 // Success notifications
 export const showSuccessToast = {
@@ -138,6 +138,7 @@ export const showErrorToast = {
       title: message,
       icon: <XCircle className="h-4 w-4" />,
       duration: options?.duration || 6000,
+      action: options?.action,
     })
   },
 
@@ -148,6 +149,7 @@ export const showErrorToast = {
       description: 'Verifique su conexión a internet e intente nuevamente',
       icon: <XCircle className="h-4 w-4" />,
       duration: options?.duration || 6000,
+      action: options?.action,
     })
   },
 
@@ -158,6 +160,7 @@ export const showErrorToast = {
       description: `ID: ${accountId}`,
       icon: <XCircle className="h-4 w-4" />,
       duration: options?.duration || 5000,
+      action: options?.action,
     })
   },
 
@@ -167,6 +170,7 @@ export const showErrorToast = {
       description: 'La cuenta tiene movimientos asociados',
       icon: <XCircle className="h-4 w-4" />,
       duration: options?.duration || 5000,
+      action: options?.action,
     })
   },
 
@@ -176,6 +180,7 @@ export const showErrorToast = {
       description: `${accountName}: Disponible ${available.toLocaleString()} ${currency}, Requerido ${required.toLocaleString()} ${currency}`,
       icon: <XCircle className="h-4 w-4" />,
       duration: options?.duration || 6000,
+      action: options?.action,
     })
   },
 
@@ -186,6 +191,7 @@ export const showErrorToast = {
       description: `La tasa ${rate} debe ser mayor que 0`,
       icon: <XCircle className="h-4 w-4" />,
       duration: options?.duration || 5000,
+      action: options?.action,
     })
   },
 
@@ -195,6 +201,7 @@ export const showErrorToast = {
       description: `No hay tasa definida para ${fromCurrency}/${toCurrency}`,
       icon: <XCircle className="h-4 w-4" />,
       duration: options?.duration || 5000,
+      action: options?.action,
     })
   },
 
@@ -203,6 +210,7 @@ export const showErrorToast = {
       title: `Moneda "${currencyCode}" no encontrada`,
       icon: <XCircle className="h-4 w-4" />,
       duration: options?.duration || 5000,
+      action: options?.action,
     })
   },
 
@@ -213,6 +221,7 @@ export const showErrorToast = {
       description: reason,
       icon: <XCircle className="h-4 w-4" />,
       duration: options?.duration || 6000,
+      action: options?.action,
     })
   },
 
@@ -222,6 +231,7 @@ export const showErrorToast = {
       description: `Transferencia ID: ${transferId}`,
       icon: <XCircle className="h-4 w-4" />,
       duration: options?.duration || 6000,
+      action: options?.action,
     })
   },
 
@@ -231,6 +241,7 @@ export const showErrorToast = {
       description: 'La cuenta origen y destino deben ser diferentes',
       icon: <XCircle className="h-4 w-4" />,
       duration: options?.duration || 5000,
+      action: options?.action,
     })
   },
 
@@ -241,6 +252,7 @@ export const showErrorToast = {
       description: `ID: ${id}`,
       icon: <XCircle className="h-4 w-4" />,
       duration: options?.duration || 5000,
+      action: options?.action,
     })
   },
 
@@ -250,6 +262,7 @@ export const showErrorToast = {
       description: reason,
       icon: <XCircle className="h-4 w-4" />,
       duration: options?.duration || 6000,
+      action: options?.action,
     })
   },
 
@@ -260,6 +273,7 @@ export const showErrorToast = {
       description: message,
       icon: <XCircle className="h-4 w-4" />,
       duration: options?.duration || 5000,
+      action: options?.action,
     })
   },
 }

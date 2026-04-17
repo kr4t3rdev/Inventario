@@ -30,7 +30,7 @@ const createSchema = z.object({
  * @param {NextRequest} request - Request de Next.js
  * @returns {Promise<NextResponse>} Respuesta con cuentas por pagar y paginación
  */
-export async function GET(request: NextRequest): Promise<NextResponse> {
+export async function GET(request: NextRequest): Promise<Response> {
   try {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
@@ -304,7 +304,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
  * @param {NextRequest} request - Request de Next.js
  * @returns {Promise<NextResponse>} Cuenta por pagar creada
  */
-export async function POST(request: NextRequest): Promise<NextResponse> {
+export async function POST(request: NextRequest): Promise<Response> {
   try {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response

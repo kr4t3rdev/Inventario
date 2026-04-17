@@ -533,7 +533,7 @@ export function CuentasPorCobrarTable({ cuentas, isLoading, error, onPagar }: Cu
           <Skeleton className="h-10 w-[300px]" />
           <Skeleton className="h-10 w-[150px]" />
         </div>
-        <Skeleton className="w-full h-[400px]" />
+        <Skeleton className="w-full h-100" />
       </div>
     )
   }

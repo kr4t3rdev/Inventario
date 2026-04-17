@@ -2,22 +2,24 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { validateAllSecrets } from '@/lib/secrets'
 
-// Validar secretos al iniciar el middleware (falla rápido si faltan vars de entorno)
+// Validar secretos al iniciar el proxy (falla rápido si faltan vars de entorno)
 validateAllSecrets()
 
 /**
- * @description Middleware de Next.js que maneja la protección de rutas.
+ * @description Proxy de Next.js que maneja la protección de rutas.
  * La lógica pesada de autenticación (JWT + sesión + usuario) está delegada
  * a los wrappers `withAuth*` en cada route handler.
  * Este nivel solo hace verificación de presencia del token.
+ * @param {NextRequest} request - Request entrante de Next.js
+ * @returns {Promise<NextResponse>} Respuesta que permite o bloquea el acceso
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const url = new URL(request.url)
   const path = url.pathname
   const method = request.method
 
   if (process.env.NODE_ENV === 'development') {
-    console.log('[Middleware]', method, path)
+    console.log('[Proxy]', method, path)
   }
 
   // Rutas públicas que no requieren token
@@ -68,7 +70,7 @@ export async function middleware(request: NextRequest) {
   return NextResponse.next()
 }
 
-export const config = {
+export const proxyConfig = {
   matcher: [
     '/busy/:path*',
     '/login',

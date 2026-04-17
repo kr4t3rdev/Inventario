@@ -235,12 +235,12 @@ export function UserMonitoringPanel() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-purple-600 shadow-md">
+              <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple-600 shadow-md">
                 <Activity className="h-5 w-5 text-white" />
                 <Sparkles className="absolute -right-1 -top-1 h-4 w-4 text-yellow-400" />
               </div>
               <div>
-                <CardTitle className="bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
+                <CardTitle className="bg-linear-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
                   Monitoreo de Usuarios
                 </CardTitle>
                 <CardDescription>Historial de actividad y sesiones activas</CardDescription>

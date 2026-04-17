@@ -144,7 +144,7 @@ export default function BalanceResultadosPage() {
                     </Link>
                   </Button>
                 </div>
-                <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
+                <h1 className="text-3xl font-bold tracking-tight bg-linear-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
                   Reportes Financieros
                 </h1>
                 <p className="text-muted-foreground">Balance de Comprobación y Estado de Resultados</p>
@@ -358,7 +358,7 @@ export default function BalanceResultadosPage() {
                             <CardTitle>Rendimiento Mensual</CardTitle>
                             <CardDescription>Comparativa de Ingresos, Gastos y Utilidad Neta</CardDescription>
                           </CardHeader>
-                          <CardContent className="h-[400px]">
+                          <CardContent className="h-100">
                             <ResponsiveContainer width="100%" height="100%">
                               <BarChart data={data?.estadoResultados.mensual}>
                                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />

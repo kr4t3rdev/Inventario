@@ -107,23 +107,6 @@ describe('MiEmpresaForm', () => {
           },
         }),
       })
-      .mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          id: 1,
-          nombre: 'Mi Empresa',
-          propietario: null,
-          direccion: null,
-          telefono: null,
-          email: null,
-          carnetIdentidad: null,
-          nit: null,
-          licenciaOperacion: null,
-          logoUrl: null,
-          cuentaBancariaId: null,
-          usaCodigoEan13: true,
-        }),
-      })
 
     vi.stubGlobal('fetch', mockFetch)
   })
@@ -144,6 +127,7 @@ describe('MiEmpresaForm', () => {
     fireEvent.click(screen.getByText('Sí, activar EAN-13'))
 
     await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledTimes(2)
       expect(mockFetch).toHaveBeenCalledWith(
         '/api/mi-empresa',
         expect.objectContaining({
@@ -151,6 +135,10 @@ describe('MiEmpresaForm', () => {
           body: JSON.stringify({ usaCodigoEan13: true, confirmReset: true }),
         }),
       )
+    })
+
+    await waitFor(() => {
+      expect(screen.getByRole('switch')).toBeChecked()
     })
   })
 })

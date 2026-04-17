@@ -358,7 +358,7 @@ export function NominaView() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
         >
-          <Card className="border-l-4 border-l-chart-2 shadow-sm bg-gradient-to-br from-card to-chart-2/10 dark:to-chart-2/5">
+          <Card className="border-l-4 border-l-chart-2 shadow-sm bg-linear-to-br from-card to-chart-2/10 dark:to-chart-2/5">
             <CardContent className="p-6">
               <div className="flex justify-between items-start">
                 <div>
@@ -380,7 +380,7 @@ export function NominaView() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <Card className="border-l-4 border-l-primary shadow-sm bg-gradient-to-br from-card to-primary/10 dark:to-primary/5">
+          <Card className="border-l-4 border-l-primary shadow-sm bg-linear-to-br from-card to-primary/10 dark:to-primary/5">
             <CardContent className="p-6">
               <div className="flex justify-between items-start">
                 <div>
@@ -402,7 +402,7 @@ export function NominaView() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
         >
-          <Card className="border-l-4 border-l-chart-3 shadow-sm bg-gradient-to-br from-card to-chart-3/10 dark:to-chart-3/5">
+          <Card className="border-l-4 border-l-chart-3 shadow-sm bg-linear-to-br from-card to-chart-3/10 dark:to-chart-3/5">
             <CardContent className="p-6">
               <div className="flex justify-between items-start">
                 <div>
@@ -460,7 +460,7 @@ export function NominaView() {
               <Button
                 onClick={handleCalculatePayroll}
                 disabled={calculating}
-                className="h-11 w-full sm:w-auto bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-md hover:shadow-lg transition-all"
+                className="h-11 w-full sm:w-auto bg-linear-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-md hover:shadow-lg transition-all"
               >
                 {calculating ? (
                   <>

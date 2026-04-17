@@ -264,7 +264,7 @@ export default function AdminUsersPage(): React.JSX.Element {
             animate="visible"
           >
             <motion.div
-              className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-purple-600 shadow-lg"
+              className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-violet-600 to-purple-600 shadow-lg"
               variants={headerIconVariants}
               initial="initial"
               whileHover="hover"
@@ -288,7 +288,7 @@ export default function AdminUsersPage(): React.JSX.Element {
             </motion.div>
             <div>
               <motion.h1
-                className="text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent"
+                className="text-2xl font-bold bg-linear-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2, duration: 0.5 }}
@@ -322,7 +322,7 @@ export default function AdminUsersPage(): React.JSX.Element {
               </Button>
               <Button
                 onClick={() => setCreateDialogOpen(true)}
-                className="bg-gradient-to-r from-violet-600 to-purple-600 text-white transition-all duration-200 hover:from-violet-600/90 hover:to-purple-600/90 hover:shadow-sm"
+                className="bg-linear-to-r from-violet-600 to-purple-600 text-white transition-all duration-200 hover:from-violet-600/90 hover:to-purple-600/90 hover:shadow-sm"
               >
                 <Plus className="mr-2 h-4 w-4" />
                 Crear Usuario
@@ -346,7 +346,7 @@ export default function AdminUsersPage(): React.JSX.Element {
                 >
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 mt-4">
                     <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
-                    <div className="rounded-md bg-gradient-to-br from-violet-600/15 to-purple-600/15 p-2">
+                    <div className="rounded-md bg-linear-to-br from-violet-600/15 to-purple-600/15 p-2">
                       <Icon className="h-4 w-4 text-violet-600 dark:text-violet-400" />
                     </div>
                   </CardHeader>

@@ -246,11 +246,11 @@ export function BulkStockMinimoManager(): React.JSX.Element {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4 }}
     >
-      <Card className="overflow-hidden border-dashed bg-gradient-to-br from-primary/[0.05] via-background to-purple-500/[0.08] dark:from-primary/10 dark:to-purple-500/10">
+      <Card className="overflow-hidden border-dashed bg-linear-to-br from-primary/[0.05] via-background to-purple-500/[0.08] dark:from-primary/10 dark:to-purple-500/10">
         <CardHeader className="space-y-3">
           <CardTitle className="flex items-center gap-3 text-xl">
             <motion.div
-              className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-purple-600 text-white shadow-md"
+              className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple-600 text-white shadow-md"
               whileHover={{ scale: 1.05, rotate: 3 }}
               transition={{ duration: 0.2 }}
             >
@@ -306,7 +306,7 @@ export function BulkStockMinimoManager(): React.JSX.Element {
               <Button
                 onClick={handleBulkUpdate}
                 disabled={selectedProductos.length === 0 || isUpdating}
-                className="min-w-[170px] gap-2 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                className="min-w-42.5 gap-2 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
               >
                 {isUpdating ? (
                   <>

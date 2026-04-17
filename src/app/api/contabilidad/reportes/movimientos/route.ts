@@ -335,7 +335,7 @@ export async function GET(request: NextRequest) {
       })),
       ...gastosMovimientos.map((mov: any) => ({
         id: mov.reconciliacionId,
-        tipo: (mov.tipoGasto === 'salario' ? 'salario' : 'gasto') as const,
+        tipo: mov.tipoGasto === 'salario' ? 'salario' : 'gasto',
         fecha: mov.fechaReconciliacion,
         monto: -Number(mov.monto),
         moneda: mov.moneda || 'CUP',

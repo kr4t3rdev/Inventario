@@ -88,7 +88,7 @@ export function GastoElementoForm({ conceptoId, conceptoNombre, initialData }: G
             className="flex items-center gap-3 mb-6"
           >
             <motion.div
-              className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg relative"
+              className="w-10 h-10 bg-linear-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg relative"
               whileHover={{ scale: 1.05, rotate: 5 }}
               transition={{ duration: 0.2 }}
             >
@@ -174,7 +174,7 @@ export function GastoElementoForm({ conceptoId, conceptoNombre, initialData }: G
                   </Button>
                 </motion.div>
                 <motion.div whileHover={{ scale: isLoading ? 1 : 1.02 }} whileTap={{ scale: isLoading ? 1 : 0.98 }}>
-                  <Button type="submit" disabled={isLoading} className="min-w-[140px] gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-500/90 hover:to-indigo-600/90">
+                  <Button type="submit" disabled={isLoading} className="min-w-35 gap-2 bg-linear-to-r from-blue-500 to-indigo-600 hover:from-blue-500/90 hover:to-indigo-600/90">
                     {isLoading ? (
                       <>
                         <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}>

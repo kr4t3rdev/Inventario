@@ -213,7 +213,7 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return(
-      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+      <div className="flex flex-col items-center justify-center min-h-100 space-y-4">
         <Loader2 />
       </div>
     )
@@ -280,7 +280,7 @@ export default function ProfilePage() {
         transition={{ duration: 0.4, ease: "easeOut" }}
         className="space-y-1"
       >
-        <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-400">
+        <h1 className="text-3xl font-bold tracking-tight bg-linear-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-400">
           Mi Perfil
         </h1>
         <p className="text-muted-foreground">

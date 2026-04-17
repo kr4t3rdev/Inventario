@@ -7,18 +7,14 @@ export const GET = withAuthGet(async (request: NextRequest, { params }: { params
   try {
     const { id } = await params
 
-    const recibo = await prisma.reciboOrdenReparacion.findUnique({
+    const recibo = await prisma.ordenReparacion.findUnique({
       where: { id },
       include: {
-        orden: {
+        cliente: true,
+        equipoTipo: true,
+        equipos: {
           include: {
-            cliente: true,
-            equipoTipo: true,
-            equipos: {
-              include: {
-                equipoTipo: true
-              }
-            }
+            equipoTipo: true
           }
         }
       }

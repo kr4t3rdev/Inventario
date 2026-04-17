@@ -6,15 +6,6 @@ const prismaMock = vi.hoisted(() => ({
     findMany: vi.fn(),
     create: vi.fn(),
   },
-  vendor: {
-    findUnique: vi.fn(),
-  },
-  categoria: {
-    findUnique: vi.fn(),
-  },
-  unidad: {
-    findUnique: vi.fn(),
-  },
 }))
 
 vi.mock('@/lib/auth-middleware', () => ({
@@ -32,18 +23,15 @@ describe('API /servicios', () => {
     vi.clearAllMocks()
   })
 
-  describe('POST - FK Validation', () => {
-    it('returns 400 when vendorId does not exist', async () => {
+  describe('POST', () => {
+    it('returns 400 when payload is invalid', async () => {
       const { POST } = await import('../route')
-
-      prismaMock.vendor.findUnique.mockResolvedValueOnce(null)
 
       const request = new NextRequest('http://localhost/api/servicios', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          nombre: 'Servicio de prueba',
-          vendorId: 'vendor-inexistente',
+          nombre: '',
         }),
       })
 
@@ -51,60 +39,37 @@ describe('API /servicios', () => {
       const data = await response.json()
 
       expect(response.status).toBe(400)
-      expect(data.error).toBe('El proveedor especificado no existe')
-      expect(data.field).toBe('proveedor')
+      expect(data.error).toBe('Datos de entrada inválidos')
     })
 
-    it('returns 400 when categoriaId does not exist', async () => {
+    it('returns 403 for dependiente users', async () => {
       const { POST } = await import('../route')
-
-      prismaMock.categoria.findUnique.mockResolvedValueOnce(null)
 
       const request = new NextRequest('http://localhost/api/servicios', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           nombre: 'Servicio de prueba',
-          categoriaId: 'categoria-inexistente',
+          descripcion: 'Descripcion de prueba',
+          precio: 1000,
         }),
       })
 
-      const response = await POST(request, {}, { userId: 'user-1', role: 'admin' })
+      const response = await POST(request, {}, { userId: 'user-1', role: 'dependiente' })
       const data = await response.json()
 
-      expect(response.status).toBe(400)
-      expect(data.error).toBe('La categoría especificada no existe')
-      expect(data.field).toBe('categoría')
+      expect(response.status).toBe(403)
+      expect(data.error).toBe('Acceso restringido')
     })
 
-    it('returns 400 when unidadId does not exist', async () => {
-      const { POST } = await import('../route')
-
-      prismaMock.unidad.findUnique.mockResolvedValueOnce(null)
-
-      const request = new NextRequest('http://localhost/api/servicios', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          nombre: 'Servicio de prueba',
-          unidadId: 'unidad-inexistente',
-        }),
-      })
-
-      const response = await POST(request, {}, { userId: 'user-1', role: 'admin' })
-      const data = await response.json()
-
-      expect(response.status).toBe(400)
-      expect(data.error).toBe('La unidad especificada no existe')
-      expect(data.field).toBe('unidad')
-    })
-
-    it('creates service when all FKs are valid', async () => {
+    it('creates service with the current Prisma shape', async () => {
       const { POST } = await import('../route')
 
       prismaMock.servicios.create.mockResolvedValueOnce({
         servicioId: 'servicio-1',
         nombre: 'Servicio de prueba',
+        descripcion: 'Descripcion de prueba',
+        precio: 1000,
       })
 
       const request = new NextRequest('http://localhost/api/servicios', {
@@ -112,6 +77,7 @@ describe('API /servicios', () => {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           nombre: 'Servicio de prueba',
+          descripcion: 'Descripcion de prueba',
           precio: 1000,
         }),
       })
@@ -121,32 +87,13 @@ describe('API /servicios', () => {
 
       expect(response.status).toBe(200)
       expect(data.servicioId).toBe('servicio-1')
-    })
-
-    it('creates service when FKs are null', async () => {
-      const { POST } = await import('../route')
-
-      prismaMock.servicios.create.mockResolvedValueOnce({
-        servicioId: 'servicio-1',
-        nombre: 'Servicio de prueba',
-      })
-
-      const request = new NextRequest('http://localhost/api/servicios', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
+      expect(prismaMock.servicios.create).toHaveBeenCalledWith({
+        data: {
           nombre: 'Servicio de prueba',
-          vendorId: null,
-          categoriaId: null,
-          unidadId: null,
-        }),
+          descripcion: 'Descripcion de prueba',
+          precio: 1000,
+        },
       })
-
-      const response = await POST(request, {}, { userId: 'user-1', role: 'admin' })
-      const data = await response.json()
-
-      expect(response.status).toBe(200)
-      expect(prismaMock.vendor.findUnique).not.toHaveBeenCalled()
     })
   })
 

@@ -427,7 +427,7 @@ function InvoicePrintContent() {
         </div>
 
         {/* TABLA PRODUCTOS */}
-        <div className={`mb-1 min-h-[400px] relative border-t-0 ${getBorderClass()} border`}>
+        <div className={`mb-1 min-h-100 relative border-t-0 ${getBorderClass()} border`}>
             <table className="w-full text-xs">
                 <thead className={`font-bold uppercase border-b ${getBorderClass()} ${getTableHeaderClass()}`}>
                     <tr>

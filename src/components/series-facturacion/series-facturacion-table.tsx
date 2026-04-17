@@ -330,14 +330,14 @@ export default function SeriesFacturacionTable() {
           transition={{ delay: 0.1 }}
         >
           <motion.div 
-            className="w-10 h-10 bg-gradient-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
+            className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
             whileHover={{ scale: 1.05, rotate: 5 }}
             transition={{ type: "spring", stiffness: 400, damping: 10 }}
           >
             <FileText className="h-5 w-5 text-white" />
           </motion.div>
           <div className="relative">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+            <h1 className="text-2xl font-bold bg-linear-to-r from-primary to-purple-600 bg-clip-text text-transparent">
               Series de Facturación
             </h1>
             <motion.div
@@ -373,7 +373,7 @@ export default function SeriesFacturacionTable() {
           }}>
             <DialogTrigger asChild>
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Button className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90">
+                <Button className="bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90">
                   <Plus className="w-4 h-4 mr-2" />
                   Nueva Serie
                 </Button>
@@ -388,7 +388,7 @@ export default function SeriesFacturacionTable() {
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
                     <motion.div
-                      className="w-8 h-8 bg-gradient-to-br from-primary to-purple-600 rounded-lg flex items-center justify-center"
+                      className="w-8 h-8 bg-linear-to-br from-primary to-purple-600 rounded-lg flex items-center justify-center"
                       whileHover={{ scale: 1.05 }}
                     >
                       <FileText className="h-4 w-4 text-white" />
@@ -511,7 +511,7 @@ export default function SeriesFacturacionTable() {
                       <Button 
                         type="submit"
                         disabled={isSubmitting}
-                        className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                        className="bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
                       >
                         {isSubmitting ? (
                           <>

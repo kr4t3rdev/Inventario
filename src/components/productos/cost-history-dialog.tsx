@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, ReactNode } from 'react'
+import { useState, ReactNode, JSX } from 'react'
 import {
   Dialog,
   DialogContent,

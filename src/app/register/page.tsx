@@ -67,7 +67,7 @@ export default function RegisterPage() {
         className="relative"
       >
         {/* Card Glow Effect */}
-        <div className="absolute -inset-1 bg-gradient-to-r from-purple-500/30 via-primary/30 to-purple-500/30 rounded-3xl blur-xl opacity-60 animate-pulse" />
+        <div className="absolute -inset-1 bg-linear-to-r from-purple-500/30 via-primary/30 to-purple-500/30 rounded-3xl blur-xl opacity-60 animate-pulse" />
         
         {/* Main Card */}
         <div className="relative bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 dark:border-slate-700/30 overflow-hidden">
@@ -90,8 +90,8 @@ export default function RegisterPage() {
               }}
               className="relative mx-auto mb-6"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-primary rounded-2xl blur-lg opacity-60" />
-              <div className="relative w-16 h-16 bg-gradient-to-br from-purple-600 to-primary rounded-2xl flex items-center justify-center shadow-lg">
+              <div className="absolute inset-0 bg-linear-to-r from-purple-600 to-primary rounded-2xl blur-lg opacity-60" />
+              <div className="relative w-16 h-16 bg-linear-to-br from-purple-600 to-primary rounded-2xl flex items-center justify-center shadow-lg">
                 <UserPlusIcon className="h-8 w-8 text-white" />
               </div>
               {/* Sparkle effect */}
@@ -114,7 +114,7 @@ export default function RegisterPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 0.5, ease: 'easeOut' as const }}
-              className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent mb-2"
+              className="text-3xl font-bold bg-linear-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent mb-2"
             >
               Crear Cuenta
             </motion.h1>
@@ -297,7 +297,7 @@ export default function RegisterPage() {
                   <Button
                     type="submit"
                     disabled={loading}
-                    className="w-full h-12 bg-gradient-to-r from-purple-600 to-primary hover:from-purple-600/90 hover:to-primary/90 text-white font-semibold shadow-lg shadow-primary/25 transition-all duration-300"
+                    className="w-full h-12 bg-linear-to-r from-purple-600 to-primary hover:from-purple-600/90 hover:to-primary/90 text-white font-semibold shadow-lg shadow-primary/25 transition-all duration-300"
                   >
                     {loading ? (
                       <span className="flex items-center gap-2">
@@ -353,7 +353,7 @@ export default function RegisterPage() {
           </form>
 
           {/* Bottom decorative line */}
-          <div className="h-1 bg-gradient-to-r from-purple-500 via-primary to-purple-500" />
+          <div className="h-1 bg-linear-to-r from-purple-500 via-primary to-purple-500" />
         </div>
       </motion.div>
     </AuthLayout>

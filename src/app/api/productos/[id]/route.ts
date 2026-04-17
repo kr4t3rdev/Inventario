@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { withAuth } from "@/lib/auth-middleware"
 import { generateEan13BusinessCode } from '@/lib/ean13-utils'
-import { recordCostChange } from '@/lib/cost-history-utils'
 
 type ProductoRouteContext = { params: Promise<{ id: string }> }
 const CODIGO_INTERNO_REGEX = /^[0-9]{11}$/
@@ -28,7 +27,7 @@ function normalizeCodigoInterno(value: unknown): string | null | undefined {
   return normalizedValue
 }
 
-export const GET = withAuth(async (request: NextRequest, context: ProductoRouteContext, _user: any) => {
+export const GET = withAuth(async (_request: NextRequest, context: ProductoRouteContext, _user: any) => {
   try {
 
     const { id } = await context.params
@@ -281,21 +280,9 @@ export const PATCH = withAuth(async (request: NextRequest, context: ProductoRout
   }
 })
 
-export const DELETE = withAuth(async (request: NextRequest, context: ProductoRouteContext, _user: any) => {
+export const DELETE = withAuth(async (_request: NextRequest, context: ProductoRouteContext, _user: any) => {
   try {
     const { id } = await context.params;
-
-    // Verificar si es un producto padre con hijos
-    const hijos = await prisma.producto.findMany({
-      where: { productoPadreId: id },
-      select: { id: true }
-    })
-
-    if (hijos.length > 0) {
-      return NextResponse.json({
-        error: 'No se puede eliminar un producto padre que tiene productos hijos asociados'
-      }, { status: 400 })
-    }
 
     await prisma.producto.delete({
       where: { id: id },

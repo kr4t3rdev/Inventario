@@ -103,8 +103,8 @@ export default function ListasPreciosPage(): React.JSX.Element {
         sileo.error({
           title: 'No se puede eliminar una lista de precios asociada a un punto de venta',
           description: `Está asociada a: ${puntoDeVenta.nombre}`,
-          button: {
-            title: 'Ir al punto de venta',
+          action: {
+            label: 'Ir al punto de venta',
             onClick: () => router.push(`/busy/puntosDeVenta/update/${puntoDeVenta.pvId}`),
           },
           duration: 8000,

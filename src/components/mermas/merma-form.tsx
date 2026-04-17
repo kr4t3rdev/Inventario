@@ -133,7 +133,7 @@ export function MermaForm({ initialData }: MermaFormProps) {
       transition={{ duration: 0.5 }}
     >
       <Card className="border-dashed overflow-hidden">
-        <div className="h-1 bg-gradient-to-r from-orange-500 via-red-500 to-orange-500" />
+        <div className="h-1 bg-linear-to-r from-orange-500 via-red-500 to-orange-500" />
         <CardContent className="pt-6">
           <motion.div 
             className="flex items-center gap-3 mb-6"
@@ -142,7 +142,7 @@ export function MermaForm({ initialData }: MermaFormProps) {
             transition={{ delay: 0.1 }}
           >
             <motion.div 
-              className="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg"
+              className="w-10 h-10 bg-linear-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg"
               whileHover={{ scale: 1.05, rotate: 5 }}
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
             >
@@ -242,7 +242,7 @@ export function MermaForm({ initialData }: MermaFormProps) {
                       <FormControl>
                         <Textarea 
                           placeholder="Describa el motivo de la merma" 
-                          className="resize-none transition-all duration-200 focus:scale-[1.01] min-h-[100px]" 
+                          className="resize-none transition-all duration-200 focus:scale-[1.01] min-h-25" 
                           {...field} 
                         />
                       </FormControl>
@@ -268,7 +268,7 @@ export function MermaForm({ initialData }: MermaFormProps) {
                   <Button 
                     type="submit" 
                     disabled={isLoading}
-                    className="bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-500/90 hover:to-red-600/90"
+                    className="bg-linear-to-r from-orange-500 to-red-600 hover:from-orange-500/90 hover:to-red-600/90"
                   >
                     {isLoading ? (
                       <>

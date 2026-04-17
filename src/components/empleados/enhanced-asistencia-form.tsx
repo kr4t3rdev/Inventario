@@ -350,7 +350,7 @@ export function EnhancedAsistenciaForm() {
                 className="grid gap-6 md:grid-cols-2"
               >
                 {/* Panel de Control Principal */}
-                <Card className="border shadow-sm overflow-hidden md:col-span-2 lg:col-span-1 bg-gradient-to-br from-card to-secondary/10">
+                <Card className="border shadow-sm overflow-hidden md:col-span-2 lg:col-span-1 bg-linear-to-br from-card to-secondary/10">
                   <CardHeader className="pb-2">
                     <CardTitle className="flex items-center gap-2 text-xl">
                       <Clock className="h-5 w-5 text-primary" />

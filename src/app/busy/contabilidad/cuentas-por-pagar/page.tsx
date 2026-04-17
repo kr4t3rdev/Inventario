@@ -265,7 +265,7 @@ export default function CuentasPorPagarPage() {
                       </Link>
                     </Button>
                   </div>
-                  <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
+                  <h1 className="text-3xl font-bold tracking-tight bg-linear-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
                     Cuentas por Pagar
                   </h1>
                   <p className="text-muted-foreground mt-1">
@@ -547,7 +547,7 @@ export default function CuentasPorPagarPage() {
                                     </TableCell>
                                     <TableCell className="py-3">
                                       <div className="flex items-center gap-2">
-                                        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center text-xs font-bold text-primary shadow-sm">
+                                        <div className="h-8 w-8 rounded-full bg-linear-to-br from-primary/20 to-primary/10 flex items-center justify-center text-xs font-bold text-primary shadow-sm">
                                           {proveedor.charAt(0).toUpperCase()}
                                         </div>
                                         <span className="font-medium">{proveedor}</span>

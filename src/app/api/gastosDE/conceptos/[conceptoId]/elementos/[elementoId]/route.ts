@@ -12,9 +12,7 @@ const elementoPatchSchema = z.object({
 export async function GET(request: NextRequest, { params }: { params: Promise<{ conceptoId: string; elementoId: string }> }) {
   try {
     const authResult = await authenticateUser(request)
-    if (!authResult.success) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
+    if ('status' in authResult) return authResult as Response
 
     const { elementoId } = await params
     const elemento = await prisma.gastoElemento.findUnique({
@@ -36,9 +34,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ conceptoId: string; elementoId: string }> }) {
   try {
     const authResult = await authenticateUser(request)
-    if (!authResult.success) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
+    if ('status' in authResult) return authResult as Response
 
     const { elementoId } = await params
     const body = await request.json()
@@ -64,9 +60,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ conceptoId: string; elementoId: string }> }) {
   try {
     const authResult = await authenticateUser(request)
-    if (!authResult.success) {
-      return NextResponse.json({ error: "No autorizado" }, { status: 401 })
-    }
+    if ('status' in authResult) return authResult as Response
 
     const { elementoId } = await params
 

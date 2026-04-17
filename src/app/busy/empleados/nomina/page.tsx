@@ -40,7 +40,7 @@ export default function NominaPage() {
               <div className="p-2 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg text-emerald-600 dark:text-emerald-400">
                 <Banknote className="w-8 h-8" />
               </div>
-              <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-emerald-500 to-teal-500 bg-clip-text text-transparent">
+              <h1 className="text-4xl font-extrabold tracking-tight bg-linear-to-r from-emerald-500 to-teal-500 bg-clip-text text-transparent">
                 Gestión de Nómina
               </h1>
             </motion.div>

@@ -278,7 +278,7 @@ export function AdminUsersTable({
       >
         <Table>
           <TableHeader>
-            <TableRow className="bg-gradient-to-r from-primary/10 via-purple-600/5 to-primary/10">
+            <TableRow className="bg-linear-to-r from-primary/10 via-purple-600/5 to-primary/10">
               <TableHead>Usuario</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Rol</TableHead>

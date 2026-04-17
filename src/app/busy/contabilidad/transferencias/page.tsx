@@ -21,14 +21,14 @@ const TransferenciasTable = dynamic(() =>
   import('@/components/contabilidad/transferencias-table').then((mod) => ({
     default: mod.TransferenciasTable,
   })),
-  { loading: () => <Skeleton className="w-full h-[400px]" /> }
+  { loading: () => <Skeleton className="w-full h-100" /> }
 );
 
 const TransferenciaBancariaForm = dynamic(() =>
   import('@/components/contabilidad/transferencia-bancaria-form').then((mod) => ({
     default: mod.TransferenciaBancariaForm,
   })),
-  { loading: () => <Skeleton className="w-full h-[400px]" /> }
+  { loading: () => <Skeleton className="w-full h-100" /> }
 );
 
 export default function TransferenciasBancariasPage(): React.JSX.Element {
@@ -110,7 +110,7 @@ export default function TransferenciasBancariasPage(): React.JSX.Element {
           animate="show"
         >
           <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950" />
+            <div className="absolute inset-0 bg-linear-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950" />
             <div className="absolute -top-24 right-[-10%] h-72 w-72 rounded-full bg-blue-500/10 blur-3xl" />
             <div className="absolute -bottom-24 left-[-10%] h-72 w-72 rounded-full bg-emerald-500/10 blur-3xl" />
           </div>
@@ -131,7 +131,7 @@ export default function TransferenciasBancariasPage(): React.JSX.Element {
                     <ArrowLeft className="h-4 w-4" />
                   </Link>
                 </Button>
-                <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
+                <h2 className="text-3xl font-bold tracking-tight bg-linear-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
                   Transferencias
                 </h2>
               </div>

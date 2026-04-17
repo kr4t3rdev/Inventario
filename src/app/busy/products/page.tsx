@@ -589,7 +589,7 @@ export default function ProductosPage() {
           >
             <div className="flex items-center gap-3">
               <motion.div 
-                className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-purple-600 shadow-lg"
+                className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple-600 shadow-lg"
                 whileHover={{ scale: 1.05, rotate: 5 }}
                 transition={{ duration: 0.2 }}
               >
@@ -606,7 +606,7 @@ export default function ProductosPage() {
                 </motion.div>
               </motion.div>
               <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
+                <h1 className="text-3xl font-bold bg-linear-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
                   Productos
                 </h1>
                 <p className="text-muted-foreground text-sm">
@@ -625,7 +625,7 @@ export default function ProductosPage() {
               </motion.div>
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Link href='/busy/products/new'>
-                  <Button className="gap-2 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90">
+                  <Button className="gap-2 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90">
                     <Plus className="h-4 w-4" /> 
                     Nuevo Producto
                   </Button>
@@ -640,25 +640,25 @@ export default function ProductosPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.16, duration: 0.45 }}
           >
-            <Card className="border-dashed bg-gradient-to-br from-primary/[0.06] to-transparent dark:from-primary/10">
+            <Card className="border-dashed bg-linear-to-br from-primary/[0.06] to-transparent dark:from-primary/10">
               <CardContent className="pt-4">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Productos visibles</p>
                 <p className="mt-2 text-2xl font-semibold">{stockSummary.total}</p>
               </CardContent>
             </Card>
-            <Card className="border-dashed bg-gradient-to-br from-primary/[0.06] to-transparent dark:from-primary/10">
+            <Card className="border-dashed bg-linear-to-br from-primary/[0.06] to-transparent dark:from-primary/10">
               <CardContent className="pt-4">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Stock normal</p>
                 <p className="mt-2 text-2xl font-semibold text-emerald-500">{stockSummary.stockNormal}</p>
               </CardContent>
             </Card>
-            <Card className="border-dashed bg-gradient-to-br from-primary/[0.06] to-transparent dark:from-primary/10">
+            <Card className="border-dashed bg-linear-to-br from-primary/[0.06] to-transparent dark:from-primary/10">
               <CardContent className="pt-4">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Stock bajo</p>
                 <p className="mt-2 text-2xl font-semibold text-amber-500">{stockSummary.stockBajo}</p>
               </CardContent>
             </Card>
-            <Card className="border-dashed bg-gradient-to-br from-primary/[0.06] to-transparent dark:from-primary/10">
+            <Card className="border-dashed bg-linear-to-br from-primary/[0.06] to-transparent dark:from-primary/10">
               <CardContent className="pt-4">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Sin stock</p>
                 <p className="mt-2 text-2xl font-semibold text-destructive">{stockSummary.sinStock}</p>
@@ -686,7 +686,7 @@ export default function ProductosPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.5 }}
           >
-            <Card className="mb-4 border-dashed bg-gradient-to-br from-primary/[0.05] via-background to-purple-500/[0.08] dark:from-primary/10 dark:to-purple-500/10">
+            <Card className="mb-4 border-dashed bg-linear-to-br from-primary/[0.05] via-background to-purple-500/[0.08] dark:from-primary/10 dark:to-purple-500/10">
               <CardHeader className="pb-3">
                 <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                   <CardTitle className="flex items-center gap-2 text-lg">

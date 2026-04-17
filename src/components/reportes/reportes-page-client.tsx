@@ -96,7 +96,7 @@ export function ReportesPageClient() {
       <SidebarInset className='bg-background'>
         <PageTransition className='space-y-8 p-8'>
           <div className='pointer-events-none absolute inset-0 -z-10 overflow-hidden'>
-            <div className='absolute inset-0 bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950' />
+            <div className='absolute inset-0 bg-linear-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950' />
             <div className='absolute -top-24 right-[-8%] h-72 w-72 rounded-full bg-rose-500/10 blur-3xl' />
             <div className='absolute bottom-0 left-[-8%] h-72 w-72 rounded-full bg-orange-500/10 blur-3xl' />
           </div>
@@ -127,7 +127,7 @@ export function ReportesPageClient() {
                   <div className='rounded-xl bg-rose-100 p-2 text-rose-600 dark:bg-rose-900/30 dark:text-rose-300'>
                     <BarChart3 className='h-5 w-5' />
                   </div>
-                  <h1 className='bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-3xl font-bold tracking-tight text-transparent dark:from-white dark:to-slate-300'>
+                  <h1 className='bg-linear-to-r from-slate-900 to-slate-600 bg-clip-text text-3xl font-bold tracking-tight text-transparent dark:from-white dark:to-slate-300'>
                     Reportes de Inventario
                   </h1>
                 </div>

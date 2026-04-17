@@ -41,7 +41,7 @@ export function MermasTable({ mermas, isLoading, error, onDelete }: MermasTableP
     {
       accessorKey: "mermaId",
       header: "ID",
-      cell: ({ row }) => <div className="truncate max-w-[50px]">{row.getValue("mermaId")}</div>,
+      cell: ({ row }) => <div className="truncate max-w-12.5">{row.getValue("mermaId")}</div>,
     },
     {
       id: "producto",
@@ -67,7 +67,7 @@ export function MermasTable({ mermas, isLoading, error, onDelete }: MermasTableP
     {
       accessorKey: "cantidad",
       header: "Cantidad",
-      cell: ({ row }) => <div className="text-center truncate max-w-[50px]">{row.getValue("cantidad")}</div>,
+      cell: ({ row }) => <div className="text-center truncate max-w-12.5">{row.getValue("cantidad")}</div>,
     },
     {
       accessorKey: "createdAt",

@@ -144,7 +144,7 @@ export function ReportePorUbicacion() {
       {!ubicacionId ? (
         <StaggerItem>
           <div>
-            <div className="flex h-[400px] items-center justify-center rounded-md border border-dashed">
+            <div className="flex h-100 items-center justify-center rounded-md border border-dashed">
               <div className="text-center">
                 <h3 className="text-lg font-medium">Selecciona una ubicación</h3>
                 <p className="text-sm text-muted-foreground">Elige un almacén o punto de venta para ver su inventario</p>
@@ -155,7 +155,7 @@ export function ReportePorUbicacion() {
       ) : isError ? (
         <StaggerItem>
           <div>
-            <div className="flex h-[400px] items-center justify-center rounded-md border border-dashed border-destructive/30 bg-destructive/10">
+            <div className="flex h-100 items-center justify-center rounded-md border border-dashed border-destructive/30 bg-destructive/10">
               <div className="text-center text-destructive">
                 <h3 className="text-lg font-medium">Error al cargar datos</h3>
                 <p className="text-sm">
@@ -169,7 +169,7 @@ export function ReportePorUbicacion() {
         </StaggerItem>
       ) : isLoadingProductosUbicacion ? (
         <StaggerItem>
-          <Skeleton className="h-[400px] w-full" />
+          <Skeleton className="h-100 w-full" />
         </StaggerItem>
       ) : (
         <StaggerItem className="grid gap-4 md:grid-cols-3">

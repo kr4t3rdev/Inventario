@@ -163,14 +163,14 @@ export default function NewContratoPage() {
             transition={{ delay: 0.1 }}
           >
             <motion.div 
-              className="w-10 h-10 bg-gradient-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
+              className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
               whileHover={{ scale: 1.05, rotate: 5 }}
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
             >
               <FileText className="h-5 w-5 text-white" />
             </motion.div>
             <div className="relative">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+              <h1 className="text-2xl font-bold bg-linear-to-r from-primary to-purple-600 bg-clip-text text-transparent">
                 Nuevo Contrato
               </h1>
               <motion.div
@@ -203,7 +203,7 @@ export default function NewContratoPage() {
           transition={{ duration: 0.5, delay: 0.2 }}
         >
           <Card className="border-dashed overflow-hidden">
-            <div className="h-1 bg-gradient-to-r from-primary via-purple-500 to-primary" />
+            <div className="h-1 bg-linear-to-r from-primary via-purple-500 to-primary" />
             <CardContent className="pt-6">
               <div className="space-y-6">
                 {/* Tipo de Contrato */}
@@ -212,7 +212,7 @@ export default function NewContratoPage() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.3 }}
                 >
-                  <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+                  <label className="text-sm font-medium mb-2 flex items-center gap-2">
                     <FileText className="h-4 w-4 text-muted-foreground" />
                     Tipo de Contrato
                   </label>
@@ -251,7 +251,7 @@ export default function NewContratoPage() {
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ duration: 0.3 }}
                     >
-                      <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+                      <label className="text-sm font-medium mb-2 flex items-center gap-2">
                         <UserCircle className="h-4 w-4 text-muted-foreground" />
                         Cliente
                       </label>
@@ -292,7 +292,7 @@ export default function NewContratoPage() {
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ duration: 0.3 }}
                     >
-                      <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+                      <label className="text-sm font-medium mb-2 flex items-center gap-2">
                         <Building2 className="h-4 w-4 text-muted-foreground" />
                         Proveedor
                       </label>
@@ -332,7 +332,7 @@ export default function NewContratoPage() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.35 }}
                 >
-                  <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+                  <label className="text-sm font-medium mb-2 flex items-center gap-2">
                     <FileText className="h-4 w-4 text-muted-foreground" />
                     Número de Contrato (Cliente/Proveedor)
                   </label>
@@ -352,7 +352,7 @@ export default function NewContratoPage() {
                   transition={{ delay: 0.4 }}
                 >
                   <div>
-                    <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+                    <label className="text-sm font-medium mb-2 flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
                       Fecha de Inicio
                     </label>
@@ -365,7 +365,7 @@ export default function NewContratoPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+                    <label className="text-sm font-medium mb-2 flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
                       Fecha de Fin
                     </label>
@@ -388,7 +388,7 @@ export default function NewContratoPage() {
                     <CardContent className="pt-4">
                       <div className="space-y-4">
                         <div>
-                          <Label className="block text-sm font-medium mb-3 flex items-center gap-2">
+                          <Label className="text-sm font-medium mb-3 flex items-center gap-2">
                             <Receipt className="h-4 w-4 text-muted-foreground" />
                             Configuración de Moneda
                           </Label>
@@ -471,7 +471,7 @@ export default function NewContratoPage() {
                     value={formData.observaciones}
                     onChange={(e) => setFormData(prev => ({ ...prev, observaciones: e.target.value }))}
                     placeholder="Ingrese observaciones adicionales..."
-                    className="min-h-[100px] resize-none transition-all duration-200 focus:scale-[1.01]"
+                    className="min-h-25 resize-none transition-all duration-200 focus:scale-[1.01]"
                   />
                 </motion.div>
               </div>
@@ -500,7 +500,7 @@ export default function NewContratoPage() {
             <Button
               type="submit"
               disabled={isLoading}
-              className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+              className="bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
             >
               {isLoading ? (
                 <>

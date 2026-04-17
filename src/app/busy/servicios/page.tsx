@@ -194,7 +194,7 @@ const Servicio = () => {
           >
             <div className='flex items-center gap-3'>
               <motion.div
-                className='w-10 h-10 bg-gradient-to-br from-orange-600 to-red-600 rounded-xl flex items-center justify-center shadow-lg'
+                className='w-10 h-10 bg-linear-to-br from-orange-600 to-red-600 rounded-xl flex items-center justify-center shadow-lg'
                 whileHover={{ scale: 1.05, rotate: 5 }}
                 transition={{ duration: 0.2 }}
               >
@@ -224,7 +224,7 @@ const Servicio = () => {
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Button 
                   asChild 
-                  className='bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg'
+                  className='bg-linear-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg'
                 >
                   <Link href='/busy/servicios/new'>
                     <Plus className='mr-2 h-4 w-4' /> Nuevo Servicio
@@ -242,7 +242,7 @@ const Servicio = () => {
                 <Button 
                   onClick={() => setIsCartDialogOpen(true)}
                   disabled={cart.length === 0}
-                  className='bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg disabled:opacity-50'
+                  className='bg-linear-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg disabled:opacity-50'
                 >
                   <ShoppingCart className='mr-2 h-4 w-4' /> 
                   Carrito ({cart.length})
@@ -348,7 +348,7 @@ const Servicio = () => {
                           <CardFooter className='bg-muted/50 pt-3 border-t'>
                             <motion.div className='w-full' whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                               <Button 
-                                className='w-full bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg' 
+                                className='w-full bg-linear-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg' 
                                 onClick={() => addToCart(servicio)}
                               >
                                 <ShoppingCart className='mr-2 h-4 w-4' /> Agregar al Carrito
@@ -378,7 +378,7 @@ const Servicio = () => {
                       <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                         <Button 
                           asChild
-                          className='bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg'
+                          className='bg-linear-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg'
                         >
                           <Link href='/busy/servicios/new'>
                             <Plus className='mr-2 h-4 w-4' /> Crear Servicio
@@ -412,7 +412,7 @@ const Servicio = () => {
                       onClick={() => setIsCartDialogOpen(true)}
                       disabled={cart.length === 0}
                       size='lg'
-                      className='bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg disabled:opacity-50'
+                      className='bg-linear-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg disabled:opacity-50'
                     >
                       <ShoppingCart className='mr-2 h-5 w-5' />
                       Abrir Carrito ({cart.length})

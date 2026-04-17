@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
     // Comprehensive validation using the error handling system
     const validation = await RestockValidator.validateCompleteRestockOperation(
       body,
-      user as Record<string, unknown>
+      user
     )
 
     if (!validation.success) {

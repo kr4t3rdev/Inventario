@@ -39,7 +39,7 @@ export default function InyeccionCapitalPage() {
     >
       <motion.div className="flex items-center justify-between" variants={itemVariants}>
         <div className="space-y-1">
-          <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
+          <h2 className="text-3xl font-bold tracking-tight bg-linear-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
             Inyección de Capital
           </h2>
           <p className="text-muted-foreground">

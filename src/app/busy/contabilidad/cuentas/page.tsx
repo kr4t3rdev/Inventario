@@ -24,7 +24,7 @@ const CuentasBancariasTable = dynamic(
       default: mod.CuentasBancariasTable,
     })),
   {
-    loading: () => <Skeleton className="w-full h-[400px]" />,
+    loading: () => <Skeleton className="w-full h-100" />,
   },
 );
 import { cn, formatCurrency } from '@/lib/utils';
@@ -41,7 +41,7 @@ import {
 import type { CuentaBancaria } from '@/app/models/model';
 
 const formFallback = (
-  <div className="flex h-[360px] w-full items-center justify-center rounded-xl border border-dashed bg-muted/50 text-muted-foreground">
+  <div className="flex h-90 w-full items-center justify-center rounded-xl border border-dashed bg-muted/50 text-muted-foreground">
     <div className="space-y-3 text-center">
       <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
       <p className="text-sm">Cargando formulario...</p>
@@ -121,7 +121,7 @@ export default function CuentasBancariasPage(): React.JSX.Element {
       <SidebarInset className="bg-background">
         <PageTransition className="space-y-8 p-8">
           <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950" />
+            <div className="absolute inset-0 bg-linear-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950" />
             <div className="absolute -top-24 right-[-10%] h-72 w-72 rounded-full bg-blue-500/10 blur-3xl" />
             <div className="absolute -bottom-24 left-[-10%] h-72 w-72 rounded-full bg-emerald-500/10 blur-3xl" />
           </div>
@@ -140,7 +140,7 @@ export default function CuentasBancariasPage(): React.JSX.Element {
                       <ArrowLeft className="h-4 w-4" />
                     </Link>
                   </Button>
-                  <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
+                  <h2 className="text-3xl font-bold tracking-tight bg-linear-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
                     Cuentas Bancarias
                   </h2>
                 </div>

@@ -279,7 +279,7 @@ export default function Unidades() {
             >
               <div className="flex items-center gap-3">
                 <motion.div 
-                  className="w-10 h-10 bg-gradient-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg relative"
+                  className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg relative"
                   whileHover={{ scale: 1.05, rotate: 5 }}
                   transition={{ duration: 0.2 }}
                 >
@@ -299,7 +299,7 @@ export default function Unidades() {
                   </motion.div>
                 </motion.div>
                 <div>
-                  <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
+                  <h1 className="text-3xl font-bold bg-linear-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
                     Unidades
                   </h1>
                   <p className="text-muted-foreground text-sm">
@@ -317,7 +317,7 @@ export default function Unidades() {
               >
                 <Button 
                   asChild 
-                  className="gap-2 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                  className="gap-2 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
                 >
                   <Link href="/busy/unidad/new">
                     <Plus className="h-4 w-4" /> 

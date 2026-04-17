@@ -103,12 +103,6 @@ export const GET = withAuthGet(async (request: NextRequest, _context: any, _user
             nombre: true,
           },
         },
-        createdBy: {
-          select: {
-            userId: true,
-            name: true,
-          },
-        },
       },
       orderBy: { fechaCompra: 'desc' },
     })
@@ -127,7 +121,7 @@ export const GET = withAuthGet(async (request: NextRequest, _context: any, _user
       formaPago: compra.formaPago,
       estado: compra.estado,
       margen: compra.producto ? ((compra.producto.precioVenta - compra.producto.precioCosto) / compra.producto.precioCosto * 100).toFixed(2) + '%' : 'N/A',
-      creadoPor: compra.createdBy?.name || 'N/A',
+      creadoPor: 'N/A',
       descripcion: compra.descripcion || '',
     }))
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import React, { JSX, useState, useEffect, useCallback } from 'react'
 import {
   Table,
   TableBody,

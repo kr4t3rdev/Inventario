@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import type { JSX } from 'react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';

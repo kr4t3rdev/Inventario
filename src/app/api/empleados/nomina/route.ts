@@ -197,7 +197,6 @@ export async function POST(request: NextRequest) {
             salario: Math.round(calculations.netoACobrar), 
             bonificaciones,
             deducciones: Math.round(calculations.deducciones.total),
-            aportes: 0, // En este modelo del Excel, todo parece ser deducción al empleado
             horasExtras: Math.round(overtimeHours),
             periodo,
             observaciones: `Devengado: ${devengadoReal.toFixed(2)}, Vacaciones (9.09%): ${calculations.vacaciones.toFixed(2)}. ` +

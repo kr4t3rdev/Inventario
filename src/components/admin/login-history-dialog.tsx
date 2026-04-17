@@ -68,7 +68,7 @@ export function LoginHistoryDialog({
     return (
       <Dialog open={open} onOpenChange={onClose}>
         <DialogContent className="max-h-[82vh] overflow-y-auto border bg-background sm:max-w-[900px]">
-          <div className="absolute left-0 right-0 top-0 h-1 bg-gradient-to-r from-primary via-purple-500 to-primary" />
+          <div className="absolute left-0 right-0 top-0 h-1 bg-linear-to-r from-primary via-purple-500 to-primary" />
           <DialogHeader>
             <DialogTitle>Historial de Intentos de Login</DialogTitle>
             <DialogDescription>Cargando actividad de seguridad...</DialogDescription>
@@ -94,15 +94,15 @@ export function LoginHistoryDialog({
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-h-[82vh] overflow-y-auto border bg-background sm:max-w-[900px]">
-        <div className="absolute left-0 right-0 top-0 h-1 bg-gradient-to-r from-primary via-purple-500 to-primary" />
+        <div className="absolute left-0 right-0 top-0 h-1 bg-linear-to-r from-primary via-purple-500 to-primary" />
         <DialogHeader>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <DialogTitle className="flex items-center gap-2">
-                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary to-purple-600 shadow-md">
+                <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-linear-to-br from-primary to-purple-600 shadow-md">
                   <Lock className="h-4 w-4 text-white" />
                 </span>
-                <span className="bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
+                <span className="bg-linear-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
                   Historial de Intentos de Login
                 </span>
                 <Sparkles className="h-4 w-4 text-yellow-400" />

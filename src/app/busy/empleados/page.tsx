@@ -148,14 +148,14 @@ const Empleado = () => {
           >
             <motion.div className="flex items-center gap-3">
               <motion.div
-                className="w-10 h-10 bg-gradient-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
+                className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
                 whileHover={{ scale: 1.05, rotate: 5 }}
                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
               >
                 <Users className="h-5 w-5 text-white" />
               </motion.div>
               <div className="relative">
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+                <h1 className="text-2xl font-bold bg-linear-to-r from-primary to-purple-600 bg-clip-text text-transparent">
                   Empleados
                 </h1>
                 <motion.div
@@ -185,7 +185,7 @@ const Empleado = () => {
                 </motion.div>
               )}
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Button asChild className="bg-gradient-to-r from-primary to-purple-600 text-white shadow-lg hover:shadow-xl transition-shadow">
+                <Button asChild className="bg-linear-to-r from-primary to-purple-600 text-white shadow-lg hover:shadow-xl transition-shadow">
                   <Link href="/busy/empleados/new">
                     <Plus className="mr-2 h-4 w-4" /> Nuevo Empleado
                   </Link>
@@ -205,7 +205,7 @@ const Empleado = () => {
                 whileHover={{ y: -4, transition: { duration: 0.2 } }}
               >
                 <Card className="border-dashed dark:border-slate-700 dark:bg-slate-900/50 overflow-hidden group">
-                  <div className="h-1 bg-gradient-to-r from-primary via-purple-500 to-primary" />
+                  <div className="h-1 bg-linear-to-r from-primary via-purple-500 to-primary" />
                   <CardHeader>
                     <div className="flex justify-between items-start">
                       <div>
@@ -217,7 +217,7 @@ const Empleado = () => {
                         transition={{ type: "spring", stiffness: 400, damping: 10 }}
                       >
                         <Avatar className="h-12 w-12 ring-2 ring-primary/20">
-                          <AvatarFallback className="bg-gradient-to-br from-primary/20 to-purple-600/20 text-primary font-semibold">
+                          <AvatarFallback className="bg-linear-to-br from-primary/20 to-purple-600/20 text-primary font-semibold">
                             {empleado.nombre.charAt(0)}{empleado.apellido?.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
@@ -266,12 +266,12 @@ const Empleado = () => {
           <motion.div className="mt-8" variants={itemVariants}>
             <motion.div className="flex items-center gap-3 mb-4">
               <motion.div
-                className="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center"
+                className="w-8 h-8 bg-linear-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center"
                 whileHover={{ scale: 1.1, rotate: 5 }}
               >
                 <CreditCard className="h-4 w-4 text-white" />
               </motion.div>
-              <h2 className="text-xl font-bold bg-gradient-to-r from-emerald-500 to-teal-600 bg-clip-text text-transparent">
+              <h2 className="text-xl font-bold bg-linear-to-r from-emerald-500 to-teal-600 bg-clip-text text-transparent">
                 Historial de Pagos de Salario
               </h2>
             </motion.div>
@@ -298,7 +298,7 @@ const Empleado = () => {
 
                   <TabsContent value="historial" className="mt-4">
                     <Card className="border-dashed dark:border-slate-700 dark:bg-slate-900/50">
-                      <div className="h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500" />
+                      <div className="h-1 bg-linear-to-r from-emerald-500 via-teal-500 to-emerald-500" />
                       <CardContent className="pt-6">
                         <Table>
                           <TableHeader>
@@ -349,7 +349,7 @@ const Empleado = () => {
 
                   <TabsContent value="resumen" className="mt-4">
                     <Card className="border-dashed dark:border-slate-700 dark:bg-slate-900/50">
-                      <div className="h-1 bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500" />
+                      <div className="h-1 bg-linear-to-r from-emerald-500 via-teal-500 to-emerald-500" />
                       <CardContent className="pt-6">
                         <Table>
                           <TableHeader>
@@ -495,7 +495,7 @@ const Empleado = () => {
                   <Button type="button" variant="outline" onClick={() => dispatch(closeDialog())} className="dark:border-slate-700 dark:hover:bg-slate-800">
                     Cancelar
                   </Button>
-                  <Button type="submit" className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
+                  <Button type="submit" className="bg-linear-to-r from-emerald-500 to-teal-600 text-white">
                     Registrar Pago
                   </Button>
                 </DialogFooter>

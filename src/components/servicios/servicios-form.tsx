@@ -100,7 +100,7 @@ export function ServicioForm({ initialData }: ServicioFormProps) {
 
   if (isLoadingServicios) {
     return (
-      <div className='min-h-screen bg-gradient-to-br  py-8 px-4'>
+      <div className='min-h-screen bg-linear-to-br  py-8 px-4'>
         <div className='container mx-auto max-w-2xl'>
           <Card className='border-slate-200 backdrop-blur-sm shadow-xl'>
             <CardContent className='pt-8'>
@@ -121,7 +121,7 @@ export function ServicioForm({ initialData }: ServicioFormProps) {
   }
 
   return (
-    <div className='min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900/10 dark:to-slate-800/10 py-8 px-4'>
+    <div className='min-h-screen bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-900/10 dark:to-slate-800/10 py-8 px-4'>
       <motion.div 
         className='container mx-auto max-w-2xl'
         initial={{ opacity: 0, y: 20 }}
@@ -144,13 +144,13 @@ export function ServicioForm({ initialData }: ServicioFormProps) {
         </motion.div>
 
         <Card className='border-slate-200 dark:border-slate-700/10 bg-white/80 dark:bg-slate-900/10 backdrop-blur-sm shadow-xl overflow-hidden'>
-          <CardHeader className='border-b border-slate-100 dark:border-slate-700/10 bg-gradient-to-r pb-6'>
+          <CardHeader className='border-b border-slate-100 dark:border-slate-700/10 bg-linear-to-r pb-6'>
             <div className='flex items-center gap-3'>
               <motion.div
                 initial={{ scale: 0, rotate: -180 }}
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
-                className='p-3 bg-gradient-to-br from-orange-500 to-red-600 dark:from-orange-600 dark:to-red-700 rounded-xl shadow-lg shadow-orange-500/25'
+                className='p-3 bg-linear-to-br from-orange-500 to-red-600 dark:from-orange-600 dark:to-red-700 rounded-xl shadow-lg shadow-orange-500/25'
               >
                 <Package className='h-6 w-6 text-white' />
               </motion.div>
@@ -322,7 +322,7 @@ export function ServicioForm({ initialData }: ServicioFormProps) {
                     <Button 
                       type='submit' 
                       disabled={isLoading}
-                      className='bg-gradient-to-r from-orange-600 to-red-700 hover:from-orange-700 hover:to-red-800 text-white shadow-lg shadow-orange-500/25 disabled:opacity-50'
+                      className='bg-linear-to-r from-orange-600 to-red-700 hover:from-orange-700 hover:to-red-800 text-white shadow-lg shadow-orange-500/25 disabled:opacity-50'
                     >
                       {isLoading ? (
                         <>

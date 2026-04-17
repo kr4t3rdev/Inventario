@@ -21,7 +21,7 @@ export default function EditarGastoDEPage() {
               <Skeleton className="h-8 w-64 mb-2" />
               <Skeleton className="h-4 w-96" />
             </div>
-            <Skeleton className="h-[400px] w-full" />
+            <Skeleton className="h-100 w-full" />
           </div>
         </SidebarInset>
       </SidebarProvider>
@@ -54,9 +54,13 @@ export default function EditarGastoDEPage() {
           <GastoDEForm initialData={{
             gastosDEId: gastosDE.gastosDEId,
             tipo: gastosDE.tipo,
+            conceptoId: gastosDE.conceptoId,
+            elementoId: gastosDE.elementoId,
+            numeroFactura: gastosDE.numeroFactura,
             proveedor: gastosDE.proveedor,
             monto: gastosDE.monto,
-            descripcion: gastosDE.descripcion
+            descripcion: gastosDE.descripcion,
+            periodo: gastosDE.periodo,
           }} />
         </div>
       </SidebarInset>

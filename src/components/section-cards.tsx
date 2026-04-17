@@ -258,7 +258,7 @@ export function SectionCards() {
             </CardFooter>
             {/* Efecto de brillo en hover */}
             <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"
+              className="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"
               initial={false}
             />
           </Card>

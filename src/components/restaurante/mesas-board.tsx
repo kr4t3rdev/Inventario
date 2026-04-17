@@ -232,7 +232,7 @@ export function MesasBoard(_props: Record<string, never>): JSX.Element {
               setEstadoFilter(value as MesaRestauranteEstado | 'TODAS')
             }
           >
-            <SelectTrigger className='h-11 min-w-[180px]'>
+            <SelectTrigger className='h-11 min-w-45'>
               <SelectValue placeholder='Filtrar por estado' />
             </SelectTrigger>
             <SelectContent>
@@ -245,7 +245,7 @@ export function MesasBoard(_props: Record<string, never>): JSX.Element {
 
           <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
             <DialogTrigger asChild>
-              <Button className='h-11 min-w-[180px] cursor-pointer'>
+              <Button className='h-11 min-w-45 cursor-pointer'>
                 <Plus className='mr-2 h-4 w-4' />
                 Nueva mesa
               </Button>

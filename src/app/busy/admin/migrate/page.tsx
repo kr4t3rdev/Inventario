@@ -110,7 +110,7 @@ export default function MigratePage() {
                 animate="visible"
               >
                 <motion.div
-                  className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-purple-600 shadow-lg"
+                  className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-violet-600 to-purple-600 shadow-lg"
                   variants={headerIconVariants}
                   initial="initial"
                   whileHover="hover"
@@ -134,7 +134,7 @@ export default function MigratePage() {
                 </motion.div>
                 <div>
                   <motion.h1
-                    className="text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent"
+                    className="text-2xl font-bold bg-linear-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent"
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.2, duration: 0.5 }}

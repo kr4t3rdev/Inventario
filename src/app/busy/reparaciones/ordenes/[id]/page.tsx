@@ -689,7 +689,7 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
                   variant="secondary" 
                   onClick={handleFacturarClick} 
                   disabled={isFacturing}
-                  className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg disabled:opacity-50"
+                  className="bg-linear-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg disabled:opacity-50"
                 >
                     <FileText className="mr-2 h-4 w-4" /> Facturar
                 </Button>
@@ -711,7 +711,7 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
               <Button 
                 onClick={handleSave} 
                 disabled={isUpdating}
-                className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg disabled:opacity-50"
+                className="bg-linear-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg disabled:opacity-50"
               >
                   <Save className="mr-2 h-4 w-4" /> Guardar Cambios
               </Button>
@@ -815,7 +815,7 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
                             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                               <Button 
                                 size="sm"
-                                className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg"
+                                className="bg-linear-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg"
                               >
                                 <Plus className="mr-2 h-4 w-4"/> Agregar Defecto
                               </Button>
@@ -1038,7 +1038,7 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
                                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                                   <Button 
                                     onClick={handleAddItem}
-                                    className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg"
+                                    className="bg-linear-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg"
                                   >
                                     Agregar
                                   </Button>
@@ -1116,7 +1116,7 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
                             <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                               <Button 
                                 size="sm"
-                                className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg"
+                                className="bg-linear-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg"
                               >
                                 <Plus className="mr-2 h-4 w-4"/> Agregar Material
                               </Button>
@@ -1159,7 +1159,7 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
                                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                                   <Button 
                                     onClick={handleAddMaterial}
-                                    className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg"
+                                    className="bg-linear-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg"
                                   >
                                     Agregar
                                   </Button>
@@ -1465,7 +1465,7 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
                      <Button 
                        onClick={confirmFacturar} 
                        disabled={isFacturing}
-                       className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg disabled:opacity-50"
+                       className="bg-linear-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-lg disabled:opacity-50"
                      >
                          {isFacturing ? "Generando..." : "Generar Factura"}
                      </Button>

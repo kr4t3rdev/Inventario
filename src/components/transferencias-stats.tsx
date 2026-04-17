@@ -56,7 +56,7 @@ export function TransferenciasStats() {
       <CardContent>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {/* Almacén a Almacén */}
-          <div className="flex items-center justify-between p-3 rounded-lg border bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900">
+          <div className="flex items-center justify-between p-3 rounded-lg border bg-linear-to-r from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1">
                 <Warehouse className="h-4 w-4 text-blue-600" />
@@ -74,7 +74,7 @@ export function TransferenciasStats() {
           </div>
 
           {/* Almacén a Punto de Venta */}
-          <div className="flex items-center justify-between p-3 rounded-lg border bg-gradient-to-r from-green-50 to-green-100 dark:from-green-950 dark:to-green-900">
+          <div className="flex items-center justify-between p-3 rounded-lg border bg-linear-to-r from-green-50 to-green-100 dark:from-green-950 dark:to-green-900">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1">
                 <Warehouse className="h-4 w-4 text-green-600" />
@@ -92,7 +92,7 @@ export function TransferenciasStats() {
           </div>
 
           {/* Punto de Venta a Almacén */}
-          <div className="flex items-center justify-between p-3 rounded-lg border bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-950 dark:to-orange-900">
+          <div className="flex items-center justify-between p-3 rounded-lg border bg-linear-to-r from-orange-50 to-orange-100 dark:from-orange-950 dark:to-orange-900">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1">
                 <Store className="h-4 w-4 text-orange-600" />
@@ -113,7 +113,7 @@ export function TransferenciasStats() {
           </div>
 
           {/* Punto de Venta a Punto de Venta */}
-          <div className="flex items-center justify-between p-3 rounded-lg border bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900">
+          <div className="flex items-center justify-between p-3 rounded-lg border bg-linear-to-r from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1">
                 <Store className="h-4 w-4 text-purple-600" />

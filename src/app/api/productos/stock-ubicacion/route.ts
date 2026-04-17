@@ -1,23 +1,6 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 
-// Definir interfaces para los tipos de datos que vamos a manejar
-interface ProductoBase {
-  id: string
-  stock: number
-  almacenId?: string | null
-}
-
-interface Transferencia {
-  productoId: string
-  cantidad: number
-}
-
-interface VentaItem {
-  productoId: string
-  cantidad: number
-}
-
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
@@ -27,6 +10,10 @@ export async function GET(request: Request) {
 
     if (!ubicacionId || !tipoUbicacion) {
       return NextResponse.json({ error: "ubicacionId y tipoUbicacion son requeridos" }, { status: 400 })
+    }
+
+    if (tipoUbicacion !== "almacen" && tipoUbicacion !== "punto_venta") {
+      return NextResponse.json({ error: "tipoUbicacion inválido" }, { status: 400 })
     }
 
     // 1. Obtener todos los productos con select limitado a campos necesarios
@@ -53,34 +40,7 @@ export async function GET(request: Request) {
     const ventasMap = new Map<string, number>()
 
     // 2. Obtener movimientos relevantes en bulk según el tipo de ubicación
-    if (tipoUbicacion === "almacen") {
-      // Transferencias entrantes al almacén (desde cualquier origen, excluyendo devoluciones de PV si aplica lógica específica)
-      // Asumimos que si destinoId es el almacén, es una entrada
-      const transferenciasEntrada = await prisma.transferencia.findMany({
-        where: {
-          destinoId: ubicacionId,
-          // Opcional: filtrar si viene de PV o no, según lógica de negocio.
-          // Por ahora asumimos que todo lo que entra al almacén suma.
-        },
-        select: { productoId: true, cantidad: true },
-      })
-
-      // Transferencias salientes del almacén
-      const transferenciasSalida = await prisma.transferencia.findMany({
-        where: {
-          origenId: ubicacionId,
-        },
-        select: { productoId: true, cantidad: true },
-      })
-
-      // Procesar en memoria
-      transferenciasEntrada.forEach((t) => {
-        entradasMap.set(t.productoId, (entradasMap.get(t.productoId) || 0) + t.cantidad)
-      })
-      transferenciasSalida.forEach((t) => {
-        salidasMap.set(t.productoId, (salidasMap.get(t.productoId) || 0) + t.cantidad)
-      })
-    } else if (tipoUbicacion === "punto_venta") {
+    if (tipoUbicacion === "punto_venta") {
       // Transferencias entrantes al PV
       const transferenciasEntrada = await prisma.transferencia.findMany({
         where: {
@@ -137,46 +97,19 @@ export async function GET(request: Request) {
     }
 
     // 3. Calcular stock final para cada producto
-    const productosConStock = productos.map((producto: any) => {
+    const productosConStock = productos.map((producto) => {
       let stockUbicacion = 0
 
-      // Stock base:
-      // Si es almacén, y el producto "pertenece" a este almacén (producto.almacenId === ubicacionId),
-      // tomamos su stock base.
-      // NOTA: Esto asume que producto.stock es el stock actual en su almacén asignado.
-      // Si el sistema usa producto.stock como "stock global", esta lógica cambia.
-      // Asumiremos la lógica original: stockBase = stock si id coincide.
-      let stockBase = 0
       if (tipoUbicacion === "almacen" && producto.almacenId === ubicacionId) {
-        stockBase = producto.stock
-      }
-
-      const entradas = entradasMap.get(producto.id) || 0
-      const salidas = salidasMap.get(producto.id) || 0
-      const ventas = ventasMap.get(producto.id) || 0
-
-      if (tipoUbicacion === "almacen") {
-        // En almacén: Base + Entradas - Salidas
-        // NOTA: Si 'stock' en DB ya se actualiza con transferencias, sumar transferencias de nuevo sería duplicar.
-        // Pero el código original sumaba transferencias. Asumiremos que es un cálculo "reconstruido" o que 'stock' es solo inicial.
-        // OJO: Si producto.stock es el stock ACTUAL y vivo del almacén, entonces NO deberíamos sumar transferencias históricas,
-        // a menos que queramos reconstruir historia.
-        // Sin embargo, para mantener compatibilidad con la lógica anterior (que sumaba entradas/salidas), lo mantendremos así.
-        // PERO: Si la lógica anterior estaba mal (sumando histórico al actual), esto arreglaría o replicaría el bug.
-        // La lógica anterior hacía: stockBase (del findFirst) + entradas - salidas.
-        // Si findFirst devuelve el registro actual, devuelve el stock ACTUAL.
-        // Si sumamos TODAS las transferencias históricas al stock ACTUAL, estamos duplicando.
-        //
-        // HIPÓTESIS: El sistema calcula stock dinámicamente y 'producto.stock' es quizás un stock inicial o un caché que no confiamos.
-        // O tal vez 'entradas' y 'salidas' son solo las recientes? No, el findMany no tiene filtro de fecha.
-        //
-        // CAMBIO SEGURO: Replicar la lógica exacta anterior pero optimizada.
-        // Anterior: stockUbicacion = stockBase + entradas - salidas
-        stockUbicacion = stockBase + entradas - salidas
-      } else {
-        // En punto de venta: Entradas - Salidas - Ventas
-        // (Los PVs no suelen tener "stock base" en la tabla producto, su stock es puramente derivado de movimientos)
+        // El stock del almacén ya está materializado en producto.stock.
+        stockUbicacion = producto.stock
+      } else if (tipoUbicacion === "punto_venta") {
+        const entradas = entradasMap.get(producto.id) || 0
+        const salidas = salidasMap.get(producto.id) || 0
+        const ventas = ventasMap.get(producto.id) || 0
         stockUbicacion = entradas - salidas - ventas
+      } else {
+        stockUbicacion = 0
       }
 
       // Evitar negativos

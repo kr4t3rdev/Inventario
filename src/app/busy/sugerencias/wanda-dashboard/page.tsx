@@ -206,7 +206,7 @@ export default function WandaDashboardPage() {
               <Skeleton className="h-40 rounded-xl" />
               <Skeleton className="h-40 rounded-xl" />
             </div>
-            <Skeleton className="h-[400px] rounded-xl" />
+            <Skeleton className="h-100 rounded-xl" />
           </div>
         </SidebarInset>
       </SidebarProvider>
@@ -280,7 +280,7 @@ export default function WandaDashboardPage() {
               <motion.div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
                   <motion.div 
-                    className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-purple-600 to-blue-600 shadow-lg"
+                    className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-purple-600 to-blue-600 shadow-lg"
                     whileHover={{ scale: 1.05, rotate: 5 }}
                     transition={{ duration: 0.2 }}
                   >
@@ -297,7 +297,7 @@ export default function WandaDashboardPage() {
                     </motion.div>
                   </motion.div>
                   <div>
-                    <h1 className="text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
+                    <h1 className="text-2xl font-bold bg-linear-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
                       Wanda Dashboard
                     </h1>
                     <p className="text-muted-foreground text-sm">

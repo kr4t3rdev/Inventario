@@ -429,25 +429,25 @@ export function RestockHistory({ data, isLoading, error }: RestockHistoryProps) 
         <SummaryCard
           title="Total Restocks"
           value={data.summary.totalRestocks}
-          className="bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200"
+          className="bg-linear-to-br from-blue-50 to-blue-100 border-blue-200"
           delay={0}
         />
         <SummaryCard
           title="Cantidad Agregada"
           value={`+${data.summary.totalQuantityAdded}`}
-          className="bg-gradient-to-br from-green-50 to-green-100 border-green-200"
+          className="bg-linear-to-br from-green-50 to-green-100 border-green-200"
           delay={0.1}
         />
         <SummaryCard
           title="Costo Total"
           value={formatCurrency(data.summary.totalCostSpent)}
-          className="bg-gradient-to-br from-red-50 to-red-100 border-red-200"
+          className="bg-linear-to-br from-red-50 to-red-100 border-red-200"
           delay={0.2}
         />
         <SummaryCard
           title="Cambios de Precio"
           value={data.summary.priceChanges}
-          className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200"
+          className="bg-linear-to-br from-orange-50 to-orange-100 border-orange-200"
           delay={0.3}
         />
       </div>

@@ -315,11 +315,11 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
     >
-      <Card className="overflow-hidden border-dashed bg-gradient-to-br from-primary/[0.05] via-background to-purple-500/[0.08] dark:from-primary/10 dark:to-purple-500/10">
-        <CardHeader className="border-b bg-gradient-to-r from-primary/[0.04] to-purple-500/[0.08] dark:from-primary/10 dark:to-purple-500/10">
+      <Card className="overflow-hidden border-dashed bg-linear-to-br from-primary/[0.05] via-background to-purple-500/[0.08] dark:from-primary/10 dark:to-purple-500/10">
+        <CardHeader className="border-b bg-linear-to-r from-primary/[0.04] to-purple-500/[0.08] dark:from-primary/10 dark:to-purple-500/10">
           <CardTitle className="flex items-center gap-3">
             <motion.div
-              className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-purple-600 text-white shadow-lg"
+              className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple-600 text-white shadow-lg"
               whileHover={{ scale: 1.05, rotate: 4 }}
               transition={{ duration: 0.2 }}
             >
@@ -706,7 +706,7 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
               <Button
                 type="submit"
                 disabled={isLoading || cantidad <= 0}
-                className="gap-2 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                className="gap-2 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
               >
                 {isLoading ? (
                   <>

@@ -224,14 +224,14 @@ export default function ComprasProductosPage() {
               transition={{ delay: 0.1 }}
             >
               <motion.div 
-                className="w-10 h-10 bg-gradient-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
+                className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
                 whileHover={{ scale: 1.05, rotate: 5 }}
                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
               >
                 <ShoppingCart className="h-5 w-5 text-white" />
               </motion.div>
               <div className="relative">
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+                <h1 className="text-2xl font-bold bg-linear-to-r from-primary to-purple-600 bg-clip-text text-transparent">
                   Compras de Productos
                 </h1>
                 <motion.div
@@ -255,7 +255,7 @@ export default function ComprasProductosPage() {
             >
               <Button 
                 asChild 
-                className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                className="bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
               >
                 <Link href="/busy/compras-productos/new">
                   <Plus className="mr-2 h-4 w-4" /> Nueva compra

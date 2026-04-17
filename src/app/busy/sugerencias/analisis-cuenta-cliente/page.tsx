@@ -151,7 +151,7 @@ export default function AnalisisCuentaClientePage() {
           <div className="space-y-8">
             <div className="flex items-center justify-between space-y-2">
               <div>
-                <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
+                <h2 className="text-3xl font-bold tracking-tight bg-linear-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
                   Análisis de Estado de Cuenta
                 </h2>
                 <p className="text-muted-foreground">

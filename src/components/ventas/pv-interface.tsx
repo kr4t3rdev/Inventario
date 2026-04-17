@@ -497,11 +497,11 @@ export function VentaInterface() {
           transition={{ duration: 0.5 }}
         >
           <Card className="border-dashed overflow-hidden">
-            <div className="h-1 bg-gradient-to-r from-primary via-purple-500 to-primary" />
+            <div className="h-1 bg-linear-to-r from-primary via-purple-500 to-primary" />
             <CardHeader className="pb-3">
               <div className="flex items-center gap-3 mb-4">
                 <motion.div 
-                  className="w-10 h-10 bg-gradient-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
+                  className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
                   whileHover={{ scale: 1.05, rotate: 5 }}
                   transition={{ type: "spring", stiffness: 400, damping: 10 }}
                 >
@@ -697,12 +697,12 @@ export function VentaInterface() {
           transition={{ duration: 0.5, delay: 0.2 }}
         >
           <Card className="border-dashed overflow-hidden">
-            <div className="h-1 bg-gradient-to-r from-primary via-purple-500 to-primary" />
+            <div className="h-1 bg-linear-to-r from-primary via-purple-500 to-primary" />
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div className="flex items-center gap-3">
                   <motion.div 
-                    className="w-8 h-8 bg-gradient-to-br from-primary to-purple-600 rounded-lg flex items-center justify-center"
+                    className="w-8 h-8 bg-linear-to-br from-primary to-purple-600 rounded-lg flex items-center justify-center"
                     whileHover={{ scale: 1.05 }}
                   >
                     <Package className="h-4 w-4 text-white" />
@@ -880,7 +880,7 @@ export function VentaInterface() {
                             </motion.div>
                           ) : (
                             <motion.div
-                              className="w-12 h-12 bg-gradient-to-br from-primary/20 to-purple-600/20 rounded-lg flex items-center justify-center flex-shrink-0"
+                              className="w-12 h-12 bg-linear-to-br from-primary/20 to-purple-600/20 rounded-lg flex items-center justify-center flex-shrink-0"
                               whileHover={{ scale: 1.05, rotate: 5 }}
                             >
                               <Package className="h-5 w-5 text-primary" />
@@ -967,7 +967,7 @@ export function VentaInterface() {
                                   </motion.div>
                                 ) : (
                                   <motion.div
-                                    className="w-10 h-10 bg-gradient-to-br from-primary/20 to-purple-600/20 rounded-lg flex items-center justify-center"
+                                    className="w-10 h-10 bg-linear-to-br from-primary/20 to-purple-600/20 rounded-lg flex items-center justify-center"
                                     whileHover={{ scale: 1.1, rotate: 5 }}
                                   >
                                     <Package className="h-4 w-4 text-primary" />
@@ -1070,11 +1070,11 @@ export function VentaInterface() {
           transition={{ duration: 0.5, delay: 0.3 }}
         >
           <Card className="border-dashed sticky top-20 overflow-hidden">
-            <div className="h-1 bg-gradient-to-r from-primary via-purple-500 to-primary" />
+            <div className="h-1 bg-linear-to-r from-primary via-purple-500 to-primary" />
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center">
                 <motion.div
-                  className="w-8 h-8 bg-gradient-to-br from-primary to-purple-600 rounded-lg flex items-center justify-center mr-2"
+                  className="w-8 h-8 bg-linear-to-br from-primary to-purple-600 rounded-lg flex items-center justify-center mr-2"
                   whileHover={{ scale: 1.05 }}
                 >
                   <ShoppingCart className="h-4 w-4 text-white" />
@@ -1114,7 +1114,7 @@ export function VentaInterface() {
                   <p className="text-muted-foreground">Añada productos al carrito para realizar una venta</p>
                 </motion.div>
               ) : (
-                <ScrollArea className="h-[400px] pr-4">
+                <ScrollArea className="h-100 pr-4">
                   <motion.div 
                     className="space-y-4"
                     initial="hidden"
@@ -1161,7 +1161,7 @@ export function VentaInterface() {
                 transition={{ delay: 0.2 }}
               >
                 <div>
-                  <span className="block text-sm font-medium mb-1 flex items-center gap-2">
+                  <span className="text-sm font-medium mb-1 flex items-center gap-2">
                     <TrendingUp className="h-3 w-3" />
                     Descuento
                   </span>
@@ -1206,7 +1206,7 @@ export function VentaInterface() {
                 <div className="flex justify-between items-center w-full">
                   <span className="text-lg font-medium">Total:</span>
                   <motion.span 
-                    className="text-xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent"
+                    className="text-xl font-bold bg-linear-to-r from-primary to-purple-600 bg-clip-text text-transparent"
                     key={totalConDescuento}
                     initial={{ scale: 1.2 }}
                     animate={{ scale: 1 }}
@@ -1225,7 +1225,7 @@ export function VentaInterface() {
               >
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   <Button
-                    className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white"
+                    className="w-full bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white"
                     size="lg"
                     disabled={cart.length === 0 || !selectedPuntoVenta || isProcessing}
                     onClick={processVenta}
@@ -1346,7 +1346,7 @@ export function VentaInvoiceDialog({
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <motion.div
-                className="w-8 h-8 bg-gradient-to-br from-primary to-purple-600 rounded-lg flex items-center justify-center"
+                className="w-8 h-8 bg-linear-to-br from-primary to-purple-600 rounded-lg flex items-center justify-center"
                 whileHover={{ scale: 1.05 }}
               >
                 <CreditCard className="h-4 w-4 text-white" />
@@ -1563,7 +1563,7 @@ export function VentaInvoiceDialog({
               <Button 
                 onClick={onConfirm} 
                 disabled={!selectedClienteId || isProcessing}
-                className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                className="bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
               >
                 {isProcessing ? (
                   <>

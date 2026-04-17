@@ -167,7 +167,7 @@ export function VendorForm({initialData}: VendorFormProps) {
             transition={{ duration: 0.5 }}
         >
             <Card className="border-dashed overflow-hidden">
-                <div className="h-1 bg-gradient-to-r from-primary via-purple-500 to-primary" />
+                <div className="h-1 bg-linear-to-r from-primary via-purple-500 to-primary" />
                 <CardContent className="pt-6">
                     <motion.div 
                         className="flex items-center gap-3 mb-6"
@@ -176,7 +176,7 @@ export function VendorForm({initialData}: VendorFormProps) {
                         transition={{ delay: 0.1 }}
                     >
                         <motion.div 
-                            className="w-10 h-10 bg-gradient-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
+                            className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
                             whileHover={{ scale: 1.05, rotate: 5 }}
                             transition={{ type: "spring", stiffness: 400, damping: 10 }}
                         >
@@ -235,7 +235,7 @@ export function VendorForm({initialData}: VendorFormProps) {
                                     <div className="space-y-2">
                                         <FormLabel className="text-sm">Código de Proveedor</FormLabel>
                                         <motion.div
-                                            className="flex items-center gap-2 p-3 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200"
+                                            className="flex items-center gap-2 p-3 bg-linear-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200"
                                             whileHover={{ scale: 1.02 }}
                                         >
                                             <Badge variant="secondary" className="text-lg font-mono">
@@ -261,7 +261,7 @@ export function VendorForm({initialData}: VendorFormProps) {
                                     <div className="space-y-2">
                                         <FormLabel className="text-sm">Código EAN13</FormLabel>
                                         <motion.div
-                                            className="flex items-center gap-2 p-3 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200"
+                                            className="flex items-center gap-2 p-3 bg-linear-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200"
                                             whileHover={{ scale: 1.02 }}
                                         >
                                             <Badge variant="secondary" className="text-sm font-mono">
@@ -421,7 +421,7 @@ export function VendorForm({initialData}: VendorFormProps) {
                                     <Button 
                                         type="submit" 
                                         disabled={isLoading}
-                                        className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                                        className="bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
                                     >
                                         {isLoading ? (
                                             <>

@@ -1,40 +1,28 @@
+export interface PayrollConfig {
+  vacacionesPorcentaje: number
+  impuesto3Porcentaje: number
+  impuesto5Porcentaje: number
+  impuesto12_5Porcentaje: number
+  impuesto1_5Porcentaje: number
+  aplicar12_5y1_5: boolean
+}
 
-import prisma from "@/lib/prisma";
+const DEFAULT_PAYROLL_CONFIG: PayrollConfig = {
+  vacacionesPorcentaje: 9.09,
+  impuesto3Porcentaje: 3,
+  impuesto5Porcentaje: 5,
+  impuesto12_5Porcentaje: 12.5,
+  impuesto1_5Porcentaje: 1.5,
+  aplicar12_5y1_5: true,
+}
 
-export async function getPayrollConfig(periodo: string) {
-  // Buscar configuración específica para el período
-  let config = await prisma.nominaConfig.findUnique({
-    where: { periodo }
-  });
-
-  // Si no existe, crear una por defecto que aplique todas las retenciones
-  if (!config) {
-    config = await prisma.nominaConfig.create({
-      data: {
-        periodo,
-        vacacionesPorcentaje: 9.09,
-        impuesto3Porcentaje: 3.0,
-        impuesto5Porcentaje: 5.0,
-        impuesto12_5Porcentaje: 12.5,
-        impuesto1_5Porcentaje: 1.5,
-        aplicar12_5y1_5: true // Siempre true para que aplique a todos los meses
-      }
-    });
-  }
-
-  return config;
+export async function getPayrollConfig(_periodo: string): Promise<PayrollConfig> {
+  return DEFAULT_PAYROLL_CONFIG
 }
 
 export function calculatePayrollFormulas(
   devengadoReal: number, 
-  config: {
-    vacacionesPorcentaje: number,
-    impuesto3Porcentaje: number,
-    impuesto5Porcentaje: number,
-    impuesto12_5Porcentaje: number,
-    impuesto1_5Porcentaje: number,
-    aplicar12_5y1_5: boolean
-  }
+  config: PayrollConfig
 ) {
   // 1. Cálculo de Vacaciones (9.09% del Devengado Real)
   const vacaciones = devengadoReal * (config.vacacionesPorcentaje / 100);

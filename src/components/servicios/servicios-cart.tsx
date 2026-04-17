@@ -230,7 +230,7 @@ export default function ServiciosCart({ cart, setCart, isOpen, onOpenChange }: S
           <Button 
             onClick={processVenta} 
             disabled={!selectedClienteId || isCartEmpty || isProcessing}
-            className="min-w-[140px]"
+            className="min-w-35"
           >
             {isProcessing ? (
               <>Procesando...</>

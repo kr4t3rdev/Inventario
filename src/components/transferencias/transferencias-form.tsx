@@ -550,7 +550,7 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
                 whileHover={{ scale: 1.01 }}
                 transition={{ type: "spring", stiffness: 300 }}
               >
-                <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-green-500 to-green-600 dark:from-green-600 dark:to-green-800" />
+                <div className="absolute top-0 left-0 w-1 h-full bg-linear-to-b from-green-500 to-green-600 dark:from-green-600 dark:to-green-800" />
                 <div className="flex items-center gap-2 mb-4">
                   <Badge variant="outline" className="bg-green-100/50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800">
                     <ArrowRight className="h-3 w-3 mr-1" /> ORIGEN
@@ -647,7 +647,7 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
                 whileHover={{ scale: 1.01 }}
                 transition={{ type: "spring", stiffness: 300 }}
               >
-                <div className="absolute top-0 right-0 w-1 h-full bg-gradient-to-b from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-800" />
+                <div className="absolute top-0 right-0 w-1 h-full bg-linear-to-b from-blue-500 to-blue-600 dark:from-blue-600 dark:to-blue-800" />
                 <div className="flex items-center justify-end gap-2 mb-4">
                   <h3 className="text-lg font-semibold text-foreground">¿Hacia dónde envía?</h3>
                   <Badge variant="outline" className="bg-blue-100/50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-800">

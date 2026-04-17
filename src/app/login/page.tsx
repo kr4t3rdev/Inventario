@@ -23,9 +23,9 @@ interface LoginFormBodyProps {
  * @description Formulario de login con estado local de campos para aislar re-renders
  * por keystroke del wrapper animado externo.
  * @param {LoginFormBodyProps} props
- * @returns {JSX.Element}
+ * @returns {React.ReactElement}
  */
-function LoginFormBody({ onSubmit, loading, error }: LoginFormBodyProps): JSX.Element {
+function LoginFormBody({ onSubmit, loading, error }: LoginFormBodyProps): React.ReactElement {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -129,7 +129,7 @@ function LoginFormBody({ onSubmit, loading, error }: LoginFormBodyProps): JSX.El
             <Button
               type="submit"
               disabled={loading}
-              className="w-full h-12 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white font-semibold shadow-lg shadow-primary/25 transition-all duration-300"
+              className="w-full h-12 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white font-semibold shadow-lg shadow-primary/25 transition-all duration-300"
             >
               {loading ? (
                 <span className="flex items-center gap-2">
@@ -188,9 +188,9 @@ function LoginFormBody({ onSubmit, loading, error }: LoginFormBodyProps): JSX.El
 
 /**
  * @description Página de login con animaciones de entrada y tarjeta glassmorphism
- * @returns {JSX.Element}
+ * @returns {React.ReactElement}
  */
-export default function LoginPage() {
+export default function LoginPage(): React.ReactElement {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const { login } = useAuth()
@@ -218,7 +218,7 @@ export default function LoginPage() {
         className="relative"
       >
         {/* Card Glow Effect */}
-        <div className="absolute -inset-1 bg-gradient-to-r from-primary/30 via-purple-500/30 to-primary/30 rounded-3xl blur-xl opacity-60 animate-pulse" />
+        <div className="absolute -inset-1 bg-linear-to-r from-primary/30 via-purple-500/30 to-primary/30 rounded-3xl blur-xl opacity-60 animate-pulse" />
         
         {/* Main Card */}
         <div className="relative bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 dark:border-slate-700/30 overflow-hidden">
@@ -241,8 +241,8 @@ export default function LoginPage() {
               }}
               className="relative mx-auto mb-6"
             >
-              <div className="absolute inset-0 bg-gradient-to-r from-primary to-purple-600 rounded-2xl blur-lg opacity-60" />
-              <div className="relative w-16 h-16 bg-gradient-to-br from-primary to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+              <div className="absolute inset-0 bg-linear-to-r from-primary to-purple-600 rounded-2xl blur-lg opacity-60" />
+              <div className="relative w-16 h-16 bg-linear-to-br from-primary to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
                 <LogInIcon className="h-8 w-8 text-white" />
               </div>
               {/* Sparkle effect */}
@@ -265,7 +265,7 @@ export default function LoginPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3, duration: 0.5, ease: 'easeOut' as const }}
-              className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent mb-2"
+              className="text-3xl font-bold bg-linear-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent mb-2"
             >
               Bienvenido de nuevo
             </motion.h1>
@@ -283,7 +283,7 @@ export default function LoginPage() {
           <LoginFormBody onSubmit={handleSubmit} loading={loading} error={error} />
 
           {/* Bottom decorative line */}
-          <div className="h-1 bg-gradient-to-r from-primary via-purple-500 to-primary" />
+          <div className="h-1 bg-linear-to-r from-primary via-purple-500 to-primary" />
         </div>
       </motion.div>
     </AuthLayout>

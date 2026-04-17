@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { AlertTriangle, TrendingUp } from "lucide-react"
+import { toast } from "sonner"
 import { useGetMonedasQuery, useGetTasasActualesQuery } from "@/lib/redux/services/contabilidadApi"
 
 const tasaConfirmacionSchema = z.object({
@@ -146,8 +147,6 @@ export function TasaCambioDialog({
   const watchedTasa = form.watch("tasaConfirmada")
   const tasaNumero = parseFloat(watchedTasa) || 0
   const montoConvertido = monto * tasaNumero
-  const montoConvertido2 = monto / tasaNumero
-
   const diferenciaTasa = tasaActualMoneda ?
     Math.abs(tasaNumero - parseFloat(tasaActualMoneda.toString())) / parseFloat(tasaActualMoneda.toString()) * 100 : 0
 
@@ -166,7 +165,7 @@ export function TasaCambioDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !isSubmitting && !open && onClose()}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-125">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <TrendingUp className="h-5 w-5" />
@@ -226,7 +225,7 @@ export function TasaCambioDialog({
           )}
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit, () => { toast.error('Completá los campos requeridos antes de continuar.') })} className="space-y-4">
               <FormField
                 control={form.control}
                 name="tasaConfirmada"

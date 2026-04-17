@@ -106,13 +106,13 @@ export const GET = withAuthGet(async (request: NextRequest) => {
         },
         puntoDeVentaOrigen: {
           select: {
-            puntoDeVentaId: true,
+            pvId: true,
             nombre: true,
           }
         },
         puntoDeVentaDestino: {
           select: {
-            puntoDeVentaId: true,
+            pvId: true,
             nombre: true,
           }
         },

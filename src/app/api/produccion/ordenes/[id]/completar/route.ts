@@ -43,9 +43,16 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
       }, { status: 404 });
     }
 
+    const productoId = orden.Receta.productoId;
+    if (!productoId) {
+      return NextResponse.json({
+        error: 'Producto final no configurado para esta receta.'
+      }, { status: 404 });
+    }
+
     // Validar que el stock no excederá límites
     const productoFinal = await prisma.producto.findUnique({
-      where: { id: orden.Receta.productoId },
+      where: { id: productoId },
     });
 
     if (!productoFinal) {
@@ -67,13 +74,11 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
       }
     }
 
-    const costoUnitario = orden.cantidad > 0 ? Math.round(costoMateriales / orden.cantidad) : 0;
-
     // Usar transacción para garantizar atomicity
     const ordenActualizada = await prisma.$transaction(async (tx) => {
       // 1. Incrementar stock del producto final
-      const productoActualizado = await tx.producto.update({
-        where: { id: orden.Receta.productoId },
+      await tx.producto.update({
+        where: { id: productoId },
         data: {
           stock: {
             increment: orden.cantidad * orden.Receta.rendimiento,
@@ -87,7 +92,6 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
         data: {
           estado: 'COMPLETADA',
           costoMateriales,
-          costoUnitario: costoUnitario || 0,
           updatedAt: new Date(),
         },
         include: {

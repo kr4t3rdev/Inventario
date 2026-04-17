@@ -54,7 +54,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     // Check for duplicate name if name is being changed
     if (validation.data.nombre) {
-      const existing = await prisma.gasto.findFirst({
+      const existing = await prisma.gastoConcepto.findFirst({
         where: { nombre: validation.data.nombre, conceptoId: { not: conceptoId } },
       })
       if (existing) {

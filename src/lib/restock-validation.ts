@@ -119,6 +119,12 @@ export interface ValidationResult {
   errors?: RestockError[]
 }
 
+export interface RestockUserContext {
+  userId?: string
+  id?: string
+  role?: string
+}
+
 /**
  * Enhanced validation class with detailed error handling
  */
@@ -279,7 +285,7 @@ export class RestockValidator {
   /**
    * Validate user permissions for restock operations
    */
-  static validatePermissions(user: Record<string, unknown> | null): ValidationResult {
+  static validatePermissions(user: RestockUserContext | null): ValidationResult {
     if (!user) {
       return {
         success: false,
@@ -400,7 +406,7 @@ export class RestockValidator {
    */
   static async validateCompleteRestockOperation(
     requestData: unknown,
-    user: Record<string, unknown> | null,
+    user: RestockUserContext | null,
     producto?: Record<string, unknown> | null
   ): Promise<ValidationResult> {
     const allErrors: RestockError[] = []

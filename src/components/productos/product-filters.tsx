@@ -80,11 +80,11 @@ export function ProductFilters({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
     >
-      <Card className="mb-4 overflow-hidden border-dashed bg-gradient-to-br from-primary/[0.06] via-background to-purple-500/[0.08] dark:from-primary/10 dark:to-purple-500/10">
+      <Card className="mb-4 overflow-hidden border-dashed bg-linear-to-br from-primary/[0.06] via-background to-purple-500/[0.08] dark:from-primary/10 dark:to-purple-500/10">
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-3 text-lg">
             <motion.div
-              className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-purple-600 text-white shadow-lg"
+              className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple-600 text-white shadow-lg"
               whileHover={{ scale: 1.05, rotate: 4 }}
               transition={{ duration: 0.2 }}
             >

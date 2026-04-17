@@ -104,7 +104,7 @@ export default function EditarProductosPage(): React.JSX.Element {
           >
             <div className="flex items-start gap-3">
               <motion.div
-                className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-purple-600 text-white shadow-lg"
+                className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple-600 text-white shadow-lg"
                 whileHover={{ scale: 1.05, rotate: 4 }}
                 transition={{ duration: 0.2 }}
               >
@@ -121,7 +121,7 @@ export default function EditarProductosPage(): React.JSX.Element {
                 </motion.span>
               </motion.div>
               <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
+                <h1 className="text-3xl font-bold bg-linear-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
                   Editar producto
                 </h1>
                 <p className="text-sm text-muted-foreground">
@@ -159,7 +159,7 @@ export default function EditarProductosPage(): React.JSX.Element {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.12 }}
           >
-            <Card className="border-dashed bg-gradient-to-br from-primary/[0.06] to-transparent dark:from-primary/10">
+            <Card className="border-dashed bg-linear-to-br from-primary/[0.06] to-transparent dark:from-primary/10">
               <CardContent className="pt-5">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Stock actual</p>
                 <p className="mt-2 text-2xl font-semibold">
@@ -167,7 +167,7 @@ export default function EditarProductosPage(): React.JSX.Element {
                 </p>
               </CardContent>
             </Card>
-            <Card className="border-dashed bg-gradient-to-br from-primary/[0.06] to-transparent dark:from-primary/10">
+            <Card className="border-dashed bg-linear-to-br from-primary/[0.06] to-transparent dark:from-primary/10">
               <CardContent className="pt-5">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Stock mínimo</p>
                 <p className="mt-2 text-2xl font-semibold">
@@ -175,7 +175,7 @@ export default function EditarProductosPage(): React.JSX.Element {
                 </p>
               </CardContent>
             </Card>
-            <Card className="border-dashed bg-gradient-to-br from-primary/[0.06] to-transparent dark:from-primary/10">
+            <Card className="border-dashed bg-linear-to-br from-primary/[0.06] to-transparent dark:from-primary/10">
               <CardContent className="pt-5">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Estado</p>
                 <Badge
@@ -190,7 +190,7 @@ export default function EditarProductosPage(): React.JSX.Element {
                 </Badge>
               </CardContent>
             </Card>
-            <Card className="border-dashed bg-gradient-to-br from-primary/[0.06] to-transparent dark:from-primary/10">
+            <Card className="border-dashed bg-linear-to-br from-primary/[0.06] to-transparent dark:from-primary/10">
               <CardContent className="pt-5">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Diferencia</p>
                 <p
@@ -209,7 +209,7 @@ export default function EditarProductosPage(): React.JSX.Element {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.18 }}
           >
-            <Card className="mb-6 border-dashed bg-gradient-to-br from-primary/[0.05] via-background to-purple-500/[0.08] dark:from-primary/10 dark:to-purple-500/10">
+            <Card className="mb-6 border-dashed bg-linear-to-br from-primary/[0.05] via-background to-purple-500/[0.08] dark:from-primary/10 dark:to-purple-500/10">
               <CardHeader className="pb-3">
                 <CardTitle className="text-base">Información de precios</CardTitle>
               </CardHeader>

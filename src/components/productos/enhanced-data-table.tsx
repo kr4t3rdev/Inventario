@@ -170,7 +170,7 @@ export function EnhancedDataTable<TData, TValue>({
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="bg-gradient-to-r from-muted/60 via-muted/40 to-muted/60">
+              <TableRow key={headerGroup.id} className="bg-linear-to-r from-muted/60 via-muted/40 to-muted/60">
                 {headerGroup.headers.map((header) => {
                   return (
                     <TableHead key={header.id} className="font-semibold">

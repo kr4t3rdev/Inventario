@@ -38,7 +38,7 @@ export default function AsistenciaPage() {
           <div>
             <motion.h1 
               variants={itemVariants}
-              className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent"
+              className="text-4xl font-extrabold tracking-tight bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent"
             >
               Control de Asistencia
             </motion.h1>

@@ -23,7 +23,7 @@ const pagarSchema = z.object({
  * @param {NextRequest} request - Request de Next.js
  * @returns {Promise<NextResponse>} Resultado del pago
  */
-export async function POST(request: NextRequest): Promise<NextResponse> {
+export async function POST(request: NextRequest): Promise<Response> {
   try {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response

@@ -116,7 +116,7 @@ export function CuadrePageClient() {
       <SidebarInset className='bg-background'>
         <motion.div className='space-y-8 p-8' variants={fadeIn} initial='hidden' animate='show'>
           <div className='pointer-events-none absolute inset-0 -z-10 overflow-hidden'>
-            <div className='absolute inset-0 bg-gradient-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950' />
+            <div className='absolute inset-0 bg-linear-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950' />
             <div className='absolute -top-24 right-[-10%] h-72 w-72 rounded-full bg-blue-500/10 blur-3xl' />
           </div>
 
@@ -144,7 +144,7 @@ export function CuadrePageClient() {
                   <div className='rounded-xl bg-blue-100 p-2 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300'>
                     <BriefcaseBusiness className='h-5 w-5' />
                   </div>
-                  <h1 className='bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-3xl font-bold tracking-tight text-transparent dark:from-white dark:to-slate-300'>
+                  <h1 className='bg-linear-to-r from-slate-900 to-slate-600 bg-clip-text text-3xl font-bold tracking-tight text-transparent dark:from-white dark:to-slate-300'>
                     Cuadre Diario Financiero
                   </h1>
                 </div>

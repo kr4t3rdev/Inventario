@@ -322,7 +322,7 @@ export default function ContabilidadDashboard(): React.JSX.Element {
                       "hover:shadow-lg dark:hover:shadow-blue-900/10",
                       styles.border
                     )}>
-                      <div className={cn("absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500", styles.gradient)} />
+                      <div className={cn("absolute inset-0 bg-linear-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500", styles.gradient)} />
                       <CardHeader>
                         <div className="flex justify-between items-start mb-2">
                           <div className={cn("p-3 rounded-xl transition-colors duration-300", styles.icon)}>

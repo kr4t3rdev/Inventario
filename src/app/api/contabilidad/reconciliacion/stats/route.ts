@@ -111,7 +111,7 @@ export async function GET(request: NextRequest) {
 
     // Normalize activity items
     const activity = [
-      ...lastVentas.map((item: { reconciliacionId: string; cuentaBancaria: { nombreBanco: string | null }; monto: unknown; createdAt: Date; venta: { ventaId: string | null } }) => ({
+      ...lastVentas.map((item) => ({
         id: item.reconciliacionId,
         type: 'venta' as const,
         description: `Venta reconciliada`,
@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
         date: item.createdAt,
         reference: `Venta #${item.venta?.ventaId?.slice(0, 8)}...`
       })),
-      ...lastServicios.map((item: { reconciliacionId: string; cuentaBancaria: { nombreBanco: string | null }; monto: unknown; createdAt: Date; ventasServicio: { ventaServicioId: string | null } }) => ({
+      ...lastServicios.map((item) => ({
         id: item.reconciliacionId,
         type: 'servicio' as const,
         description: `Servicio reconciliado`,
@@ -129,7 +129,7 @@ export async function GET(request: NextRequest) {
         date: item.createdAt,
         reference: `Servicio #${item.ventasServicio?.ventaServicioId?.slice(0, 8)}...`
       })),
-      ...lastGastos.map((item: { reconciliacionId: string; cuentaBancaria: { nombreBanco: string | null } | undefined; monto: unknown; createdAt: Date }) => ({
+      ...lastGastos.map((item) => ({
         id: item.reconciliacionId,
         type: 'gasto' as const,
         description: `Gasto reconciliado`,

@@ -149,7 +149,7 @@ export function SwipeableTabs({
     >
       {/* Indicador de scroll horizontal */}
       <div className="absolute left-0 top-1/2 -translate-y-1/2 z-10">
-        <div className="bg-gradient-to-r from-background to-transparent h-8 w-4 pointer-events-none" />
+        <div className="bg-linear-to-r from-background to-transparent h-8 w-4 pointer-events-none" />
       </div>
       <div className="absolute right-0 top-1/2 -translate-y-1/2 z-10">
         <div className="bg-gradient-to-l from-background to-transparent h-8 w-4 pointer-events-none" />

@@ -18,14 +18,15 @@ const nextConfig: NextConfig = {
   
   // Nota: Webpack no se usa con Turbopack en Next.js 15
   // Solo usamos configuración de turbopack a través de experimental.turbopack
+
+  // Incluir archivos del engine de Prisma en el output standalone de Next.js.
+  // Sin esto, next tracing omite los .node cargados dinámicamente y Vercel falla con 500.
+  outputFileTracingIncludes: {
+    '/**': ['./src/generated/prisma/**'],
+  },
   
   // Optimizaciones experimentales
   experimental: {
-    // Incluir archivos del engine de Prisma en el output standalone de Next.js.
-    // Sin esto, next tracing omite los .node cargados dinámicamente y Vercel falla con 500.
-    outputFileTracingIncludes: {
-      '/**': ['./src/generated/prisma/**'],
-    },
     // Optimizar imports de paquetes grandes
     optimizePackageImports: [
       'recharts',
@@ -42,10 +43,7 @@ const nextConfig: NextConfig = {
     ],
   },
   
-  // ESLint y TypeScript
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+  // TypeScript
   typescript: {
     ignoreBuildErrors: true,
   },

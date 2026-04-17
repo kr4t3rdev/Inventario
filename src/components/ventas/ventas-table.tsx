@@ -44,7 +44,7 @@ export function VentasTable({ ventas: ventasProp, isLoading, error, onDelete }: 
     {
       accessorKey: "ventaId",
       header: "ID",
-      cell: ({ row }) => <div className="truncate max-w-[50px]">{row.getValue("ventaId")}</div>,
+      cell: ({ row }) => <div className="truncate max-w-12.5">{row.getValue("ventaId")}</div>,
     },
     {      
       id: 'producto',    

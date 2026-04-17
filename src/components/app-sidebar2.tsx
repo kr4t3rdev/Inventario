@@ -575,7 +575,7 @@ export function AppSidebar2({
               <SidebarHeader className="px-3 pb-2 pt-3">
                 <Link
                   href={dashboardUrl}
-                  className="group/brand flex min-h-11 items-center gap-3 rounded-xl border border-sidebar-border/70 bg-gradient-to-br from-primary/15 via-sidebar-accent/55 to-transparent px-3 py-3 text-sidebar-foreground transition-colors duration-200 hover:border-primary/40 hover:from-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+                  className="group/brand flex min-h-11 items-center gap-3 rounded-xl border border-sidebar-border/70 bg-linear-to-br from-primary/15 via-sidebar-accent/55 to-transparent px-3 py-3 text-sidebar-foreground transition-colors duration-200 hover:border-primary/40 hover:from-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
                 >
                   <motion.span
                     className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary"
@@ -615,13 +615,13 @@ export function AppSidebar2({
               >
                 <SidebarGroup
                   className={cn(
-                    "rounded-xl border border-sidebar-border/70 bg-gradient-to-br p-2 shadow-sm transition-colors duration-200 hover:border-sidebar-border",
+                    "rounded-xl border border-sidebar-border/70 bg-linear-to-br p-2 shadow-sm transition-colors duration-200 hover:border-sidebar-border",
                     groupToneByTitle[group.title] ??
                       "from-sidebar-accent/55 via-sidebar-accent/30 to-transparent",
                     "group-data-[collapsible=icon]:border-transparent group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:shadow-none"
                   )}
                 >
-                  <SidebarGroupLabel className="h-auto px-2 py-1 text-[0.67rem] font-semibold uppercase tracking-[0.1em] text-sidebar-foreground/70">
+                  <SidebarGroupLabel className="h-auto px-2 py-1 text-[0.67rem] font-semibold uppercase tracking-widest text-sidebar-foreground/70">
                     {group.title}
                   </SidebarGroupLabel>
                   <NavMain items={group.items} />

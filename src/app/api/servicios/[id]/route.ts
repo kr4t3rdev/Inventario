@@ -6,22 +6,8 @@ import { withAuth } from '@/lib/auth-middleware'
 
 const patchServicioSchema = z.object({
   nombre: z.string().min(1).optional(),
-  descripcion: z.string().max(500).optional().nullable(),
+  descripcion: z.string().max(500).optional(),
   precio: z.coerce.number().int().nonnegative().optional(),
-  precioCosto: z.coerce.number().int().nonnegative().optional().nullable(),
-  precioVenta: z.coerce.number().int().nonnegative().optional().nullable(),
-  codigoInterno: z.string().max(11).optional().nullable(),
-  codigoNegocio: z.string().max(40).optional().nullable(),
-  proveedorCodigo: z.string().max(2).optional().nullable(),
-  idSeccionCodigo: z.string().max(2).optional().nullable(),
-  especificoCodigo: z.string().max(4).optional().nullable(),
-  surtidoCodigo: z.string().max(4).optional().nullable(),
-  dcCodigo: z.string().max(1).optional().nullable(),
-  categoriaId: z.string().optional().nullable(),
-  subcategoriaId: z.string().optional().nullable(),
-  unidadId: z.string().optional().nullable(),
-  vendorId: z.string().optional().nullable(),
-  activo: z.boolean().optional(),
 })
 
 /**
@@ -33,10 +19,9 @@ const patchServicioSchema = z.object({
 export const GET = withAuth(async (_request: NextRequest, context: { params: Promise<{ id: string }> }) => {
   try {
     const { id } = await context.params
-    const servicio = await prisma.servicios.findFirst({
+    const servicio = await prisma.servicios.findUnique({
       where: {
         servicioId: id,
-        deletedAt: null,
       },
     })
 
@@ -62,13 +47,39 @@ export const PATCH = withAuth(async (request: NextRequest, context: { params: Pr
     const { id } = await context.params
     const payload = patchServicioSchema.parse(await request.json())
 
+    const servicioExistente = await prisma.servicios.findUnique({
+      where: { servicioId: id },
+    })
+
+    if (!servicioExistente) {
+      return NextResponse.json({ error: 'Servicio no encontrado' }, { status: 404 })
+    }
+
+    const data: {
+      nombre?: string
+      descripcion?: string
+      precio?: number
+    } = {}
+
+    if (payload.nombre !== undefined) {
+      data.nombre = payload.nombre
+    }
+
+    if (payload.descripcion !== undefined) {
+      data.descripcion = payload.descripcion
+    }
+
+    if (payload.precio !== undefined) {
+      data.precio = payload.precio
+    }
+
+    if (Object.keys(data).length === 0) {
+      return NextResponse.json({ error: 'No hay campos para actualizar' }, { status: 400 })
+    }
+
     const servicio = await prisma.servicios.update({
       where: { servicioId: id },
-      data: {
-        ...payload,
-        precio: payload.precio ?? payload.precioVenta ?? undefined,
-        precioVenta: payload.precioVenta ?? payload.precio ?? undefined,
-      },
+      data,
     })
 
     return NextResponse.json(servicio)
@@ -87,10 +98,19 @@ export const PATCH = withAuth(async (request: NextRequest, context: { params: Pr
 export const DELETE = withAuth(async (_request: NextRequest, context: { params: Promise<{ id: string }> }) => {
   try {
     const { id } = await context.params
-    await prisma.servicios.update({
+
+    const servicioExistente = await prisma.servicios.findUnique({
       where: { servicioId: id },
-      data: { deletedAt: new Date() },
     })
+
+    if (!servicioExistente) {
+      return NextResponse.json({ error: 'Servicio no encontrado' }, { status: 404 })
+    }
+
+    await prisma.servicios.delete({
+      where: { servicioId: id },
+    })
+
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Error al eliminar el Servicio:', error)

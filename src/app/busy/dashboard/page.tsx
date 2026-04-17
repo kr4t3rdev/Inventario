@@ -56,7 +56,7 @@ const SectionCards = dynamic(() => import("@/components/section-cards").then(mod
 const ChartAreaInteractive = dynamic(() => import("@/components/chart-area-interactive").then(mod => ({ default: mod.ChartAreaInteractive })), {
   loading: () => (
     <AnimatedCard className="h-[300px] w-full">
-      <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/50 rounded-xl border-2 border-dashed border-muted-foreground/20">
+      <div className="h-full w-full flex items-center justify-center bg-linear-to-br from-muted/30 to-muted/50 rounded-xl border-2 border-dashed border-muted-foreground/20">
         <div className="flex flex-col items-center gap-4">
           <motion.div
             className="relative"
@@ -108,7 +108,7 @@ const ChartAreaInteractive = dynamic(() => import("@/components/chart-area-inter
 const TopProductsTable = dynamic(() => import("@/components/top-products-table").then(mod => ({ default: mod.TopProductsTable })), {
   loading: () => (
     <AnimatedCard className="h-[300px] w-full">
-      <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/50 rounded-xl border-2 border-dashed border-muted-foreground/20">
+      <div className="h-full w-full flex items-center justify-center bg-linear-to-br from-muted/30 to-muted/50 rounded-xl border-2 border-dashed border-muted-foreground/20">
         <div className="flex flex-col items-center gap-4">
           <motion.div
             className="relative"
@@ -160,7 +160,7 @@ const TopProductsTable = dynamic(() => import("@/components/top-products-table")
 const StockDistributionChart = dynamic(() => import("@/components/stock-distribution-chart").then(mod => ({ default: mod.StockDistributionChart })), {
   loading: () => (
     <AnimatedCard className="h-[300px] w-full">
-      <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/50 rounded-xl border-2 border-dashed border-muted-foreground/20">
+      <div className="h-full w-full flex items-center justify-center bg-linear-to-br from-muted/30 to-muted/50 rounded-xl border-2 border-dashed border-muted-foreground/20">
         <div className="flex flex-col items-center gap-4">
           <motion.div
             className="relative"
@@ -211,8 +211,8 @@ const StockDistributionChart = dynamic(() => import("@/components/stock-distribu
 
 const StockBajoTable = dynamic(() => import("@/components/stock-bajo-table").then(mod => ({ default: mod.StockBajoTable })), {
   loading: () => (
-    <AnimatedCard className="h-[400px] w-full">
-      <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/50 rounded-xl border-2 border-dashed border-muted-foreground/20">
+    <AnimatedCard className="h-100 w-full">
+      <div className="h-full w-full flex items-center justify-center bg-linear-to-br from-muted/30 to-muted/50 rounded-xl border-2 border-dashed border-muted-foreground/20">
         <div className="flex flex-col items-center gap-4">
           <motion.div
             className="relative"
@@ -267,7 +267,7 @@ const StockBajoTable = dynamic(() => import("@/components/stock-bajo-table").the
 const TransferenciasStats = dynamic(() => import("@/components/transferencias-stats").then(mod => ({ default: mod.TransferenciasStats })), {
   loading: () => (
     <AnimatedCard className="h-[300px] w-full">
-      <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-muted/30 to-muted/50 rounded-xl border-2 border-dashed border-muted-foreground/20">
+      <div className="h-full w-full flex items-center justify-center bg-linear-to-br from-muted/30 to-muted/50 rounded-xl border-2 border-dashed border-muted-foreground/20">
         <div className="flex flex-col items-center gap-4">
           <motion.div
             className="relative"
@@ -421,7 +421,7 @@ export default function DashboardPage() {
                   animate="visible"
                 >
                   <motion.div 
-                    className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-purple-600 shadow-lg"
+                    className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-blue-600 to-purple-600 shadow-lg"
                     variants={headerIconVariants}
                     initial="initial"
                     whileHover="hover"
@@ -450,7 +450,7 @@ export default function DashboardPage() {
                   </motion.div>
                   <div>
                     <motion.h1 
-                      className="text-2xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent"
+                      className="text-2xl font-bold bg-linear-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent"
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       transition={{ delay: 0.2, duration: 0.5 }}

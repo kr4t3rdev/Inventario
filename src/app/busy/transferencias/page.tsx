@@ -60,7 +60,7 @@ export default function TransferenciasPage() {
           >
             <div className="flex items-center gap-4">
               <motion.div
-                className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/20"
+                className="w-12 h-12 bg-linear-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-500/20"
                 whileHover={{ scale: 1.05, rotate: 5 }}
                 whileTap={{ scale: 0.95 }}
                 transition={{ type: "spring", stiffness: 400, damping: 17 }}
@@ -79,7 +79,7 @@ export default function TransferenciasPage() {
             >
               <Button 
                 asChild
-                className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-md transition-all duration-300"
+                className="bg-linear-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white shadow-md transition-all duration-300"
                 size="lg"
               >
                 <Link href="/busy/transferencias/new">

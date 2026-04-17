@@ -266,7 +266,7 @@ export function OfertaForm() {
       transition={{ duration: 0.5 }}
     >
       <Card className="border-dashed overflow-hidden">
-        <div className="h-1 bg-gradient-to-r from-primary via-purple-500 to-primary" />
+        <div className="h-1 bg-linear-to-r from-primary via-purple-500 to-primary" />
         <CardContent className="pt-6">
           {/* Header */}
           <motion.div 
@@ -276,7 +276,7 @@ export function OfertaForm() {
             transition={{ delay: 0.1 }}
           >
             <motion.div 
-              className="w-10 h-10 bg-gradient-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
+              className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
               whileHover={{ scale: 1.05, rotate: 5 }}
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
             >
@@ -564,7 +564,7 @@ export function OfertaForm() {
                   <Button 
                     type="submit" 
                     disabled={isSubmitting}
-                    className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                    className="bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
                   >
                     {isSubmitting ? (
                       <>

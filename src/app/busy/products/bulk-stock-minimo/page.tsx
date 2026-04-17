@@ -30,7 +30,7 @@ export default function BulkStockMinimoPage(): React.JSX.Element {
           >
             <div className="flex items-start gap-3">
               <motion.div
-                className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-purple-600 text-white shadow-lg"
+                className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple-600 text-white shadow-lg"
                 whileHover={{ scale: 1.05, rotate: 4 }}
                 transition={{ duration: 0.2 }}
               >
@@ -47,7 +47,7 @@ export default function BulkStockMinimoPage(): React.JSX.Element {
                 </motion.span>
               </motion.div>
               <div>
-                <h1 className="text-3xl font-bold bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
+                <h1 className="text-3xl font-bold bg-linear-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
                   Gestión Masiva de Stock Mínimo
                 </h1>
                 <p className="text-sm text-muted-foreground">

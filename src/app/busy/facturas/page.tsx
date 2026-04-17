@@ -279,14 +279,14 @@ export default function FacturasPage() {
               transition={{ delay: 0.1 }}
             >
               <motion.div 
-                className="w-10 h-10 bg-gradient-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
+                className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
                 whileHover={{ scale: 1.05, rotate: 5 }}
                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
               >
                 <FileText className="h-5 w-5 text-white" />
               </motion.div>
               <div className="relative">
-                <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+                <h1 className="text-2xl font-bold bg-linear-to-r from-primary to-purple-600 bg-clip-text text-transparent">
                   Gestión de Facturas
                 </h1>
                 <motion.div
@@ -333,7 +333,7 @@ export default function FacturasPage() {
                 whileHover={{ y: -4 }}
               >
                 <Card className="border-dashed hover:border-primary/30 transition-all duration-200">
-                  <div className="h-1 bg-gradient-to-r from-primary to-purple-500" />
+                  <div className="h-1 bg-linear-to-r from-primary to-purple-500" />
                   <CardContent className="pt-4">
                     <div className="flex items-center justify-between">
                       <div>
@@ -349,7 +349,7 @@ export default function FacturasPage() {
                       </div>
                       <EstadoFacturaBadge estado={estado as Factura['estado']} />
                     </div>
-                    <div className="mt-2 text-sm font-medium bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+                    <div className="mt-2 text-sm font-medium bg-linear-to-r from-primary to-purple-600 bg-clip-text text-transparent">
                       {formatCurrency(total)}
                     </div>
                   </CardContent>

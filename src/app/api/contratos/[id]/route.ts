@@ -14,6 +14,7 @@ const contratoUpdateSchema = z
     esMultiMoneda: z.boolean().optional(),
     condiciones: z.any().nullable().optional(),
     observaciones: z.string().nullable().optional(),
+    numeroContratoClienteProveedor: z.string().nullable().optional(),
     clienteId: z.string().nullable().optional(),
     vendorId: z.string().nullable().optional(),
     estado: z.enum(['BORRADOR', 'PENDIENTE_APROBACION', 'APROBADO', 'RECHAZADO', 'ACTIVO', 'FINALIZADO', 'ANULADO']).optional(),
@@ -137,6 +138,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (validatedBody.esMultiMoneda !== undefined) data.esMultiMoneda = validatedBody.esMultiMoneda;
     if (validatedBody.condiciones !== undefined) data.condiciones = validatedBody.condiciones;
     if (validatedBody.observaciones !== undefined) data.observaciones = validatedBody.observaciones;
+    if (validatedBody.numeroContratoClienteProveedor !== undefined) {
+      data.numeroContratoClienteProveedor = validatedBody.numeroContratoClienteProveedor;
+    }
     if (validatedBody.fechaInicio !== undefined) data.fechaInicio = new Date(validatedBody.fechaInicio);
     if (validatedBody.fechaFin !== undefined) data.fechaFin = validatedBody.fechaFin ? new Date(validatedBody.fechaFin) : null;
     if (validatedBody.fechaAprobacion !== undefined) data.fechaAprobacion = validatedBody.fechaAprobacion ? new Date(validatedBody.fechaAprobacion) : null;

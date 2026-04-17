@@ -100,7 +100,7 @@ export default function ConfiguracionPage(): React.JSX.Element {
                     <span className="sr-only">Volver</span>
                   </Link>
                 </Button>
-                <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
+                <h1 className="text-3xl font-bold tracking-tight bg-linear-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
                   Configuración Contable
                 </h1>
               </div>

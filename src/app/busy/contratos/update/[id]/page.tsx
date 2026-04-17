@@ -11,12 +11,11 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { getAuthToken } from "@/lib/token"
 import { motion, AnimatePresence } from "framer-motion"
-import { FileText, Sparkles, ArrowLeft, Loader2, Receipt, Building2, UserCircle, Calendar, AlertCircle } from "lucide-react"
+import { FileText, Sparkles, ArrowLeft, Loader2, Receipt, Building2, UserCircle, Calendar } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { SelectSeparator } from "@/components/ui/select"
 
 export default function UpdateContratoPage() {
@@ -84,6 +83,7 @@ export default function UpdateContratoPage() {
         esMultiMoneda: data.esMultiMoneda || false,
         clienteId: data.clienteId || '',
         vendorId: data.vendorId || '',
+        numeroContratoClienteProveedor: data.numeroContratoClienteProveedor || '',
         observaciones: data.observaciones || '',
         numeroContrato: data.numeroContrato || '',
       })
@@ -100,18 +100,18 @@ export default function UpdateContratoPage() {
     
     // Validación client-side
     if (!formData.fechaInicio) {
-      toast('La fecha de inicio es requerida')
+      toast.error('La fecha de inicio es requerida')
       return
     }
 
     if (formData.tipo === 'COMPRA_VENTA' || formData.tipo === 'SERVICIO') {
       if (!formData.clienteId) {
-        toast('El cliente es requerido para contratos de tipo ' + formData.tipo)
+        toast.error('El cliente es requerido para contratos de tipo ' + formData.tipo)
         return
       }
     } else if (formData.tipo === 'SUMINISTROS') {
       if (!formData.vendorId) {
-        toast('El proveedor es requerido para contratos de tipo SUMINISTROS')
+        toast.error('El proveedor es requerido para contratos de tipo SUMINISTROS')
         return
       }
     }
@@ -143,11 +143,11 @@ export default function UpdateContratoPage() {
         throw new Error(error.error || 'Error al actualizar contrato')
       }
 
-      toast('El contrato ha sido actualizado exitosamente.')
+      toast.success('El contrato ha sido actualizado exitosamente.')
       router.push('/busy/contratos')
     } catch (error) {
       console.error('Error al actualizar contrato:', error)
-      toast('Error al actualizar contrato')
+      toast.error('Error al actualizar contrato')
     } finally {
       setIsLoading(false)
     }
@@ -210,14 +210,14 @@ export default function UpdateContratoPage() {
             transition={{ delay: 0.1 }}
           >
             <motion.div 
-              className="w-10 h-10 bg-gradient-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
+              className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
               whileHover={{ scale: 1.05, rotate: 5 }}
               transition={{ type: "spring", stiffness: 400, damping: 10 }}
             >
               <FileText className="h-5 w-5 text-white" />
             </motion.div>
             <div className="relative">
-              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+              <h1 className="text-2xl font-bold bg-linear-to-r from-primary to-purple-600 bg-clip-text text-transparent">
                 Editar Contrato
               </h1>
               <motion.div
@@ -250,7 +250,7 @@ export default function UpdateContratoPage() {
           transition={{ duration: 0.5, delay: 0.2 }}
         >
           <Card className="border-dashed overflow-hidden">
-            <div className="h-1 bg-gradient-to-r from-primary via-purple-500 to-primary" />
+            <div className="h-1 bg-linear-to-r from-primary via-purple-500 to-primary" />
             <CardContent className="pt-6">
               <div className="space-y-6">
                 {/* Tipo de Contrato */}
@@ -259,7 +259,7 @@ export default function UpdateContratoPage() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.3 }}
                 >
-                  <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+                  <label className="flex items-center gap-2 text-sm font-medium mb-2">
                     <FileText className="h-4 w-4 text-muted-foreground" />
                     Tipo de Contrato
                   </label>
@@ -298,7 +298,7 @@ export default function UpdateContratoPage() {
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ duration: 0.3 }}
                     >
-                      <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+                      <label className="flex items-center gap-2 text-sm font-medium mb-2">
                         <UserCircle className="h-4 w-4 text-muted-foreground" />
                         Cliente
                       </label>
@@ -339,7 +339,7 @@ export default function UpdateContratoPage() {
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ duration: 0.3 }}
                     >
-                      <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+                      <label className="flex items-center gap-2 text-sm font-medium mb-2">
                         <Building2 className="h-4 w-4 text-muted-foreground" />
                         Proveedor
                       </label>
@@ -379,7 +379,7 @@ export default function UpdateContratoPage() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.35 }}
                 >
-                  <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+                  <label className="flex items-center gap-2 text-sm font-medium mb-2">
                     <FileText className="h-4 w-4 text-muted-foreground" />
                     Número de Contrato (Cliente/Proveedor)
                   </label>
@@ -401,7 +401,7 @@ export default function UpdateContratoPage() {
                   transition={{ delay: 0.4 }}
                 >
                   <div>
-                    <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+                    <label className="flex items-center gap-2 text-sm font-medium mb-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
                       Fecha de Inicio
                     </label>
@@ -414,7 +414,7 @@ export default function UpdateContratoPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium mb-2 flex items-center gap-2">
+                    <label className="flex items-center gap-2 text-sm font-medium mb-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
                       Fecha de Fin
                     </label>
@@ -437,7 +437,7 @@ export default function UpdateContratoPage() {
                     <CardContent className="pt-4">
                       <div className="space-y-4">
                         <div>
-                          <Label className="block text-sm font-medium mb-3 flex items-center gap-2">
+                          <Label className="flex items-center gap-2 text-sm font-medium mb-3">
                             <Receipt className="h-4 w-4 text-muted-foreground" />
                             Configuración de Moneda
                           </Label>
@@ -520,7 +520,7 @@ export default function UpdateContratoPage() {
                     value={formData.observaciones}
                     onChange={(e) => setFormData(prev => ({ ...prev, observaciones: e.target.value }))}
                     placeholder="Ingrese observaciones adicionales..."
-                    className="min-h-[100px] resize-none transition-all duration-200 focus:scale-[1.01]"
+                    className="min-h-25 resize-none transition-all duration-200 focus:scale-[1.01]"
                   />
                 </motion.div>
               </div>
@@ -549,7 +549,7 @@ export default function UpdateContratoPage() {
             <Button
               type="submit"
               disabled={isLoading}
-              className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+              className="bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
             >
               {isLoading ? (
                 <>

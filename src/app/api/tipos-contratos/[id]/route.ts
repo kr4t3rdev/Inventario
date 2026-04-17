@@ -7,13 +7,13 @@ import { authenticateUser } from '@/lib/auth-middleware'
  */
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
 
-    const { id } = params
+    const { id } = await params
 
     // Validar que el tipo existe
     const tipo = await prisma.tipoContratoCustom.findUnique({

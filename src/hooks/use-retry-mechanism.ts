@@ -165,27 +165,27 @@ export function useRetryMechanism(): UseRetryMechanismReturn {
               action: {
                 label: 'Reintentar',
                 onClick: () => {
-                  // This will be handled by manualRetry
-                }
-              }
+                  void manualRetry()
+                },
+              },
             })
           } else if (lastError.message.includes('transfer') || lastError.message.includes('transferencia')) {
             showErrorToast.transferValidationFailed(lastError.message, {
               action: {
                 label: 'Reintentar',
                 onClick: () => {
-                  // This will be handled by manualRetry
-                }
-              }
+                  void manualRetry()
+                },
+              },
             })
           } else {
             showErrorToast.networkError('completar la operación', {
               action: {
                 label: 'Reintentar',
                 onClick: () => {
-                  // This will be handled by manualRetry
-                }
-              }
+                  void manualRetry()
+                },
+              },
             })
           }
           
@@ -208,7 +208,7 @@ export function useRetryMechanism(): UseRetryMechanismReturn {
   }, [calculateDelay, delay])
 
   const manualRetry = useCallback(async (): Promise<void> => {
-    if (!lastOperationRef.current || !retryState.canRetry) {
+    if (!lastOperationRef.current || retryState.isRetrying) {
       return
     }
 
@@ -220,7 +220,7 @@ export function useRetryMechanism(): UseRetryMechanismReturn {
       // Error is already handled in executeWithRetry
       console.error('Manual retry failed:', error)
     }
-  }, [executeWithRetry, retryState.canRetry])
+  }, [executeWithRetry, retryState.isRetrying])
 
   return {
     retryState,

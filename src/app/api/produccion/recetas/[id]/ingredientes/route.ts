@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { convertToBase } from '@/lib/utils/unit-converter';
 import { calculateCostoUnitarioReceta } from '@/lib/utils/produccion';
 import { validateAndNormalizeIngredientUnit } from '@/lib/validators/production-units';
+import type { UnitError, UnitNormalization } from '@/lib/validators/production-units';
 import { z } from 'zod';
 
 const setIngredientesSchema = z.object({
@@ -16,6 +17,20 @@ const setIngredientesSchema = z.object({
     })
   ),
 });
+
+type IngredientValidationSuccess = {
+  isValid: true;
+  normalizedCantidad: number;
+  normalizedUnidadSimbolo: string | null;
+  normalization: UnitNormalization | null;
+};
+
+type IngredientValidationError = {
+  isValid: false;
+  error: UnitError;
+};
+
+type IngredientValidationResult = IngredientValidationSuccess | IngredientValidationError;
 
 /**
  * @description Agrega o actualiza ingredientes de una receta de producción.
@@ -73,7 +88,7 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
       );
     }
 
-    const normalizedIngredientes = ingredientes.map((ing) => {
+    const normalizedIngredientes: IngredientValidationResult[] = ingredientes.map((ing) => {
       const producto = productosInventario.find((p) => p.id === ing.productoId);
 
       if (!producto) {
@@ -89,13 +104,12 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
         };
       }
 
-      return validateAndNormalizeIngredientUnit(ing, producto);
+      return validateAndNormalizeIngredientUnit(ing, producto) as IngredientValidationSuccess;
     });
 
     const unitErrors = normalizedIngredientes
-      .filter((result) => !result.isValid)
-      .map((result) => result.error)
-      .filter(Boolean);
+      .filter((result): result is IngredientValidationError => !result.isValid)
+      .map((result) => result.error);
 
     if (unitErrors.length > 0) {
       return NextResponse.json(
@@ -107,10 +121,13 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
       );
     }
 
-    const unitNormalizations = normalizedIngredientes
-      .filter((result) => result.isValid && result.normalization)
+    const validNormalizedIngredientes = normalizedIngredientes.filter(
+      (result): result is IngredientValidationSuccess => result.isValid
+    );
+
+    const unitNormalizations = validNormalizedIngredientes
       .map((result) => result.normalization)
-      .filter(Boolean);
+      .filter((normalization): normalization is UnitNormalization => Boolean(normalization));
 
     // CRITICAL FIX #3: Wrap entire operation in transaction for atomicity
     const recetaActualizada = await prisma.$transaction(async (tx) => {
@@ -126,8 +143,8 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
             id: crypto.randomUUID(),
             recetaId,
             productoId: ing.productoId,
-            cantidad: normalizedIngredientes[index].normalizedCantidad ?? ing.cantidad,
-            unidadSimbolo: normalizedIngredientes[index].normalizedUnidadSimbolo ?? ing.unidadSimbolo ?? null,
+            cantidad: validNormalizedIngredientes[index].normalizedCantidad,
+            unidadSimbolo: validNormalizedIngredientes[index].normalizedUnidadSimbolo,
             desperdicio: ing.desperdicio,
             updatedAt: new Date(),
           })),
@@ -144,14 +161,15 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
           throw new Error(`Producto ${ing.productoId} no encontrado (inconsistencia de datos)`);
         }
 
-        const normalizedCantidad = normalizedIngredientes[index].normalizedCantidad ?? ing.cantidad;
-        const normalizedUnidadSimbolo =
-          normalizedIngredientes[index].normalizedUnidadSimbolo ?? ing.unidadSimbolo ?? null;
+        const normalizedIngrediente = validNormalizedIngredientes[index];
 
         return {
           productoId: ing.productoId,
-          cantidad: convertToBase(normalizedCantidad, normalizedUnidadSimbolo),
-          unidadSimbolo: normalizedUnidadSimbolo,
+          cantidad: convertToBase(
+            normalizedIngrediente.normalizedCantidad,
+            normalizedIngrediente.normalizedUnidadSimbolo
+          ),
+          unidadSimbolo: normalizedIngrediente.normalizedUnidadSimbolo,
           producto,
         };
       });

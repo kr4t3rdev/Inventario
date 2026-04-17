@@ -166,12 +166,12 @@ export function TemporalDashboard({ months: initialMonths = 6 }: TemporalDashboa
       <div className="space-y-6">
         <div className="flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between dark:border-slate-700/40 dark:bg-slate-900/65">
           <div className="flex items-center gap-3">
-            <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-purple-600 shadow-md">
+            <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple-600 shadow-md">
               <BarChart3 className="h-5 w-5 text-white" />
               <Sparkles className="absolute -right-1 -top-1 h-4 w-4 text-yellow-400" />
             </div>
             <div>
-              <h3 className="bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-lg font-semibold text-transparent dark:from-white dark:to-slate-300">
+              <h3 className="bg-linear-to-r from-slate-900 to-slate-600 bg-clip-text text-lg font-semibold text-transparent dark:from-white dark:to-slate-300">
                 Dashboard Temporal
               </h3>
               <p className="text-sm text-muted-foreground">Métricas mensuales y tendencias.</p>
@@ -227,12 +227,12 @@ export function TemporalDashboard({ months: initialMonths = 6 }: TemporalDashboa
       <AdminReveal>
         <div className="flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-sm md:flex-row md:items-center md:justify-between dark:border-slate-700/40 dark:bg-slate-900/65">
           <div className="flex items-center gap-3">
-            <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-purple-600 shadow-md">
+            <div className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple-600 shadow-md">
               <BarChart3 className="h-5 w-5 text-white" />
               <Sparkles className="absolute -right-1 -top-1 h-4 w-4 text-yellow-400" />
             </div>
             <div>
-              <h3 className="bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-lg font-semibold text-transparent dark:from-white dark:to-slate-300">
+              <h3 className="bg-linear-to-r from-slate-900 to-slate-600 bg-clip-text text-lg font-semibold text-transparent dark:from-white dark:to-slate-300">
                 Dashboard Temporal
               </h3>
               <p className="text-sm text-muted-foreground">
@@ -381,7 +381,7 @@ export function TemporalDashboard({ months: initialMonths = 6 }: TemporalDashboa
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="pt-6">
-                  <div className="h-[400px]">
+                  <div className="h-100">
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={chartData} margin={{ top: 20, right: 24, left: 8, bottom: 10 }}>
                         <defs>
@@ -536,7 +536,7 @@ export function TemporalDashboard({ months: initialMonths = 6 }: TemporalDashboa
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-6">
-                <div className="h-[400px]">
+                <div className="h-100">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={monthlyGrowth} margin={{ top: 20, right: 24, left: 8, bottom: 10 }}>
                       <CartesianGrid vertical={false} strokeDasharray="4 4" />
@@ -679,7 +679,7 @@ export function TemporalDashboard({ months: initialMonths = 6 }: TemporalDashboa
                 </div>
               </CardHeader>
               <CardContent className="pt-6">
-                <div className="h-[400px]">
+                <div className="h-100">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={chartData} margin={{ top: 20, right: 24, left: 8, bottom: 10 }}>
                       <CartesianGrid vertical={false} />

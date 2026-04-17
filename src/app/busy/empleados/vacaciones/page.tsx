@@ -40,7 +40,7 @@ export default function VacacionesPage() {
               <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg text-orange-600 dark:text-orange-400">
                 <Palmtree className="w-8 h-8" />
               </div>
-              <h1 className="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">
+              <h1 className="text-4xl font-extrabold tracking-tight bg-linear-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">
                 Gestión de Vacaciones
               </h1>
             </motion.div>

@@ -150,7 +150,7 @@ export function UnidadForm({ initialData }: UnidadFormProps) {
             className="flex items-center gap-3 mb-6"
           >
             <motion.div 
-              className="w-10 h-10 bg-gradient-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg relative"
+              className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg relative"
               whileHover={{ scale: 1.05, rotate: 5 }}
               transition={{ duration: 0.2 }}
             >
@@ -274,7 +274,7 @@ export function UnidadForm({ initialData }: UnidadFormProps) {
                   <Button 
                     type="submit" 
                     disabled={isLoading}
-                    className="min-w-[140px] gap-2 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 cursor-pointer transition-colors duration-200"
+                    className="min-w-35 gap-2 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 cursor-pointer transition-colors duration-200"
                   >
                     {isLoading ? (
                       <>

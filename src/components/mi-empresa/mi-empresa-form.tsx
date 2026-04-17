@@ -223,7 +223,11 @@ export function MiEmpresaForm() {
         }
 
         sileo.success({ title: (data as { message?: string }).message || 'Configuración actualizada' })
-        form.setValue('usaCodigoEan13', false)
+        form.setValue('usaCodigoEan13', false, {
+          shouldDirty: false,
+          shouldTouch: false,
+          shouldValidate: false,
+        })
         setSavedUsaEan13(false)
       } catch (error) {
         sileo.error({
@@ -243,6 +247,7 @@ export function MiEmpresaForm() {
    */
   const handleConfirmEan13Reset = async () => {
     setIsSubmitting(true)
+    setShowEan13Confirmation(false)
     try {
       const token = getAuthToken()
       const res = await fetch('/api/mi-empresa', {
@@ -262,31 +267,14 @@ export function MiEmpresaForm() {
         throw new Error((data as { error?: string }).error || 'Error al activar EAN-13')
       }
 
+      const responseData = (data as { data?: MiEmpresaApiResponse; message?: string }).data
       sileo.success({ title: (data as { message?: string }).message || 'EAN-13 activado correctamente' })
-      setShowEan13Confirmation(false)
-      form.setValue('usaCodigoEan13', true)
-      setSavedUsaEan13(true)
-
-      // Refetch Mi Empresa data
-      fetchMiEmpresa()
-        .then((data) => {
-          form.reset({
-            nombre: data.nombre ?? 'Mi Empresa',
-            propietario: data.propietario ?? '',
-            direccion: data.direccion ?? '',
-            telefono: data.telefono ?? '',
-            email: data.email ?? '',
-            carnetIdentidad: data.carnetIdentidad ?? '',
-            nit: data.nit ?? '',
-            licenciaOperacion: data.licenciaOperacion ?? '',
-            logoUrl: data.logoUrl ?? '',
-            cuentaBancariaId: data.cuentaBancariaId ?? 'none',
-            usaCodigoEan13: data.usaCodigoEan13 ?? false,
-          })
-        })
-        .catch(() => {
-          sileo.error({ title: 'Error al recargar configuración' })
-        })
+      form.setValue('usaCodigoEan13', responseData?.usaCodigoEan13 ?? true, {
+        shouldDirty: false,
+        shouldTouch: false,
+        shouldValidate: false,
+      })
+      setSavedUsaEan13(responseData?.usaCodigoEan13 ?? true)
     } catch (error) {
       sileo.error({
         title: error instanceof Error ? error.message : 'Error al activar EAN-13',

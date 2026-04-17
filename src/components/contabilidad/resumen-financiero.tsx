@@ -475,7 +475,7 @@ export function ResumenFinanciero({
             <Activity className="h-4 w-4" />
             <span className="uppercase tracking-wider text-xs">Resumen Financiero</span>
           </div>
-          <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
+          <h2 className="text-3xl font-bold tracking-tight bg-linear-to-r from-slate-900 to-slate-600 bg-clip-text text-transparent dark:from-white dark:to-slate-300">
             Estado General
           </h2>
           <p className="text-slate-600 dark:text-slate-400 max-w-2xl">
@@ -519,7 +519,7 @@ export function ResumenFinanciero({
                     )}>
                       {/* Background Gradient */}
                       <div className={cn(
-                        "absolute inset-0 bg-gradient-to-br opacity-100 dark:opacity-50",
+                        "absolute inset-0 bg-linear-to-br opacity-100 dark:opacity-50",
                         style.gradient
                       )} />
                       

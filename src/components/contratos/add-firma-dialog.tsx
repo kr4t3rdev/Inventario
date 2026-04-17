@@ -98,7 +98,7 @@ export function AddFirmaDialog({ contratoId, onSuccess, users }: AddFirmaDialogP
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-          <Button size="sm" className="gap-2 bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90">
+          <Button size="sm" className="gap-2 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90">
             <Plus className="h-4 w-4" />
             Agregar Firma
           </Button>
@@ -113,7 +113,7 @@ export function AddFirmaDialog({ contratoId, onSuccess, users }: AddFirmaDialogP
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <motion.div
-                className="w-8 h-8 bg-gradient-to-br from-primary to-purple-600 rounded-lg flex items-center justify-center"
+                className="w-8 h-8 bg-linear-to-br from-primary to-purple-600 rounded-lg flex items-center justify-center"
                 whileHover={{ scale: 1.05 }}
               >
                 <UserPlus className="h-4 w-4 text-white" />
@@ -230,7 +230,7 @@ export function AddFirmaDialog({ contratoId, onSuccess, users }: AddFirmaDialogP
                 <Button 
                   type="submit" 
                   disabled={isSubmitting}
-                  className="bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                  className="bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
                 >
                   {isSubmitting ? (
                     <>
