@@ -4,9 +4,11 @@ import { z } from 'zod';
 import { authenticateUser } from "@/lib/auth-middleware";
 import { generarProximoConsecutivo, formatearNumeroContrato } from './lib/numeroContratoGenerator';
 
+const TIPOS_BASE = ['COMPRA_VENTA', 'SERVICIO', 'SUMINISTROS'] as const
+
 const contratoSchema = z
   .object({
-    tipo: z.enum(['COMPRA_VENTA', 'SERVICIO', 'SUMINISTROS']),
+    tipo: z.string().min(1, 'El tipo de contrato es requerido'),
     fechaInicio: z.string().datetime(),
     fechaFin: z.string().datetime().nullable().optional(),
     monto: z.string().nullable().optional(),
@@ -20,13 +22,12 @@ const contratoSchema = z
   })
   .refine(
     (data) => {
-      // Si es COMPRA_VENTA o SERVICIO, clienteId es REQUERIDO
-      if ((data.tipo === 'COMPRA_VENTA' || data.tipo === 'SERVICIO') && !data.clienteId) {
-        return false;
+      // Solo los tipos base tienen restricciones de cliente/vendor
+      if (data.tipo === 'COMPRA_VENTA' || data.tipo === 'SERVICIO') {
+        if (!data.clienteId) return false;
       }
-      // Si es SUMINISTROS, vendorId es REQUERIDO
-      if (data.tipo === 'SUMINISTROS' && !data.vendorId) {
-        return false;
+      if (data.tipo === 'SUMINISTROS') {
+        if (!data.vendorId) return false;
       }
       return true;
     },

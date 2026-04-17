@@ -935,7 +935,7 @@ model Contrato {
   numeroContrato                 String               @unique
   numeroConsecutivo              Int
   numeroContratoClienteProveedor String?
-  tipo                           TipoContrato
+  tipo                           String
   estado                         EstadoContrato       @default(BORRADOR)
   fechaInicio                    DateTime
   fechaFin                       DateTime?
@@ -1493,12 +1493,6 @@ enum EstadoDeuda {
   ACTIVA
   PAGADA
   EN_MORA
-}
-
-enum TipoContrato {
-  COMPRA_VENTA
-  SERVICIO
-  SUMINISTROS
 }
 
 enum EstadoContrato {

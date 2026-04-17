@@ -1345,12 +1345,6 @@ exports.EstadoDeuda = exports.$Enums.EstadoDeuda = {
   EN_MORA: 'EN_MORA'
 };
 
-exports.TipoContrato = exports.$Enums.TipoContrato = {
-  COMPRA_VENTA: 'COMPRA_VENTA',
-  SERVICIO: 'SERVICIO',
-  SUMINISTROS: 'SUMINISTROS'
-};
-
 exports.EstadoContrato = exports.$Enums.EstadoContrato = {
   BORRADOR: 'BORRADOR',
   PENDIENTE_APROBACION: 'PENDIENTE_APROBACION',

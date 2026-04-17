@@ -461,15 +461,6 @@ export const EstadoDeuda: {
 export type EstadoDeuda = (typeof EstadoDeuda)[keyof typeof EstadoDeuda]
 
 
-export const TipoContrato: {
-  COMPRA_VENTA: 'COMPRA_VENTA',
-  SERVICIO: 'SERVICIO',
-  SUMINISTROS: 'SUMINISTROS'
-};
-
-export type TipoContrato = (typeof TipoContrato)[keyof typeof TipoContrato]
-
-
 export const EstadoContrato: {
   BORRADOR: 'BORRADOR',
   PENDIENTE_APROBACION: 'PENDIENTE_APROBACION',
@@ -602,10 +593,6 @@ export const TipoInyeccion: typeof $Enums.TipoInyeccion
 export type EstadoDeuda = $Enums.EstadoDeuda
 
 export const EstadoDeuda: typeof $Enums.EstadoDeuda
-
-export type TipoContrato = $Enums.TipoContrato
-
-export const TipoContrato: typeof $Enums.TipoContrato
 
 export type EstadoContrato = $Enums.EstadoContrato
 
@@ -73129,7 +73116,7 @@ export namespace Prisma {
     numeroContrato: string | null
     numeroConsecutivo: number | null
     numeroContratoClienteProveedor: string | null
-    tipo: $Enums.TipoContrato | null
+    tipo: string | null
     estado: $Enums.EstadoContrato | null
     fechaInicio: Date | null
     fechaFin: Date | null
@@ -73152,7 +73139,7 @@ export namespace Prisma {
     numeroContrato: string | null
     numeroConsecutivo: number | null
     numeroContratoClienteProveedor: string | null
-    tipo: $Enums.TipoContrato | null
+    tipo: string | null
     estado: $Enums.EstadoContrato | null
     fechaInicio: Date | null
     fechaFin: Date | null
@@ -73370,7 +73357,7 @@ export namespace Prisma {
     numeroContrato: string
     numeroConsecutivo: number
     numeroContratoClienteProveedor: string | null
-    tipo: $Enums.TipoContrato
+    tipo: string
     estado: $Enums.EstadoContrato
     fechaInicio: Date
     fechaFin: Date | null
@@ -73566,7 +73553,7 @@ export namespace Prisma {
       numeroContrato: string
       numeroConsecutivo: number
       numeroContratoClienteProveedor: string | null
-      tipo: $Enums.TipoContrato
+      tipo: string
       estado: $Enums.EstadoContrato
       fechaInicio: Date
       fechaFin: Date | null
@@ -74019,7 +74006,7 @@ export namespace Prisma {
     readonly numeroContrato: FieldRef<"Contrato", 'String'>
     readonly numeroConsecutivo: FieldRef<"Contrato", 'Int'>
     readonly numeroContratoClienteProveedor: FieldRef<"Contrato", 'String'>
-    readonly tipo: FieldRef<"Contrato", 'TipoContrato'>
+    readonly tipo: FieldRef<"Contrato", 'String'>
     readonly estado: FieldRef<"Contrato", 'EstadoContrato'>
     readonly fechaInicio: FieldRef<"Contrato", 'DateTime'>
     readonly fechaFin: FieldRef<"Contrato", 'DateTime'>
@@ -115072,20 +115059,6 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'TipoContrato'
-   */
-  export type EnumTipoContratoFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TipoContrato'>
-    
-
-
-  /**
-   * Reference to a field of type 'TipoContrato[]'
-   */
-  export type ListEnumTipoContratoFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TipoContrato[]'>
-    
-
-
-  /**
    * Reference to a field of type 'EstadoContrato'
    */
   export type EnumEstadoContratoFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EstadoContrato'>
@@ -120140,7 +120113,7 @@ export namespace Prisma {
     numeroContrato?: StringFilter<"Contrato"> | string
     numeroConsecutivo?: IntFilter<"Contrato"> | number
     numeroContratoClienteProveedor?: StringNullableFilter<"Contrato"> | string | null
-    tipo?: EnumTipoContratoFilter<"Contrato"> | $Enums.TipoContrato
+    tipo?: StringFilter<"Contrato"> | string
     estado?: EnumEstadoContratoFilter<"Contrato"> | $Enums.EstadoContrato
     fechaInicio?: DateTimeFilter<"Contrato"> | Date | string
     fechaFin?: DateTimeNullableFilter<"Contrato"> | Date | string | null
@@ -120210,7 +120183,7 @@ export namespace Prisma {
     NOT?: ContratoWhereInput | ContratoWhereInput[]
     numeroConsecutivo?: IntFilter<"Contrato"> | number
     numeroContratoClienteProveedor?: StringNullableFilter<"Contrato"> | string | null
-    tipo?: EnumTipoContratoFilter<"Contrato"> | $Enums.TipoContrato
+    tipo?: StringFilter<"Contrato"> | string
     estado?: EnumEstadoContratoFilter<"Contrato"> | $Enums.EstadoContrato
     fechaInicio?: DateTimeFilter<"Contrato"> | Date | string
     fechaFin?: DateTimeNullableFilter<"Contrato"> | Date | string | null
@@ -120275,7 +120248,7 @@ export namespace Prisma {
     numeroContrato?: StringWithAggregatesFilter<"Contrato"> | string
     numeroConsecutivo?: IntWithAggregatesFilter<"Contrato"> | number
     numeroContratoClienteProveedor?: StringNullableWithAggregatesFilter<"Contrato"> | string | null
-    tipo?: EnumTipoContratoWithAggregatesFilter<"Contrato"> | $Enums.TipoContrato
+    tipo?: StringWithAggregatesFilter<"Contrato"> | string
     estado?: EnumEstadoContratoWithAggregatesFilter<"Contrato"> | $Enums.EstadoContrato
     fechaInicio?: DateTimeWithAggregatesFilter<"Contrato"> | Date | string
     fechaFin?: DateTimeNullableWithAggregatesFilter<"Contrato"> | Date | string | null
@@ -128556,7 +128529,7 @@ export namespace Prisma {
     numeroContrato: string
     numeroConsecutivo: number
     numeroContratoClienteProveedor?: string | null
-    tipo: $Enums.TipoContrato
+    tipo: string
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
     fechaFin?: Date | string | null
@@ -128585,7 +128558,7 @@ export namespace Prisma {
     numeroContrato: string
     numeroConsecutivo: number
     numeroContratoClienteProveedor?: string | null
-    tipo: $Enums.TipoContrato
+    tipo: string
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
     fechaFin?: Date | string | null
@@ -128614,7 +128587,7 @@ export namespace Prisma {
     numeroContrato?: StringFieldUpdateOperationsInput | string
     numeroConsecutivo?: IntFieldUpdateOperationsInput | number
     numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
-    tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
+    tipo?: StringFieldUpdateOperationsInput | string
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -128643,7 +128616,7 @@ export namespace Prisma {
     numeroContrato?: StringFieldUpdateOperationsInput | string
     numeroConsecutivo?: IntFieldUpdateOperationsInput | number
     numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
-    tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
+    tipo?: StringFieldUpdateOperationsInput | string
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -128672,7 +128645,7 @@ export namespace Prisma {
     numeroContrato: string
     numeroConsecutivo: number
     numeroContratoClienteProveedor?: string | null
-    tipo: $Enums.TipoContrato
+    tipo: string
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
     fechaFin?: Date | string | null
@@ -128696,7 +128669,7 @@ export namespace Prisma {
     numeroContrato?: StringFieldUpdateOperationsInput | string
     numeroConsecutivo?: IntFieldUpdateOperationsInput | number
     numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
-    tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
+    tipo?: StringFieldUpdateOperationsInput | string
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -128716,7 +128689,7 @@ export namespace Prisma {
     numeroContrato?: StringFieldUpdateOperationsInput | string
     numeroConsecutivo?: IntFieldUpdateOperationsInput | number
     numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
-    tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
+    tipo?: StringFieldUpdateOperationsInput | string
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -135418,13 +135391,6 @@ export namespace Prisma {
     updatedAt?: SortOrder
   }
 
-  export type EnumTipoContratoFilter<$PrismaModel = never> = {
-    equals?: $Enums.TipoContrato | EnumTipoContratoFieldRefInput<$PrismaModel>
-    in?: $Enums.TipoContrato[] | ListEnumTipoContratoFieldRefInput<$PrismaModel>
-    notIn?: $Enums.TipoContrato[] | ListEnumTipoContratoFieldRefInput<$PrismaModel>
-    not?: NestedEnumTipoContratoFilter<$PrismaModel> | $Enums.TipoContrato
-  }
-
   export type EnumEstadoContratoFilter<$PrismaModel = never> = {
     equals?: $Enums.EstadoContrato | EnumEstadoContratoFieldRefInput<$PrismaModel>
     in?: $Enums.EstadoContrato[] | ListEnumEstadoContratoFieldRefInput<$PrismaModel>
@@ -135443,7 +135409,7 @@ export namespace Prisma {
   }
 
   export type ContratoTipoNumeroConsecutivoCompoundUniqueInput = {
-    tipo: $Enums.TipoContrato
+    tipo: string
     numeroConsecutivo: number
   }
 
@@ -135527,16 +135493,6 @@ export namespace Prisma {
     numeroConsecutivo?: SortOrder
     monto?: SortOrder
     diasAvisoVencimiento?: SortOrder
-  }
-
-  export type EnumTipoContratoWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.TipoContrato | EnumTipoContratoFieldRefInput<$PrismaModel>
-    in?: $Enums.TipoContrato[] | ListEnumTipoContratoFieldRefInput<$PrismaModel>
-    notIn?: $Enums.TipoContrato[] | ListEnumTipoContratoFieldRefInput<$PrismaModel>
-    not?: NestedEnumTipoContratoWithAggregatesFilter<$PrismaModel> | $Enums.TipoContrato
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedEnumTipoContratoFilter<$PrismaModel>
-    _max?: NestedEnumTipoContratoFilter<$PrismaModel>
   }
 
   export type EnumEstadoContratoWithAggregatesFilter<$PrismaModel = never> = {
@@ -142459,10 +142415,6 @@ export namespace Prisma {
     connect?: ContratoVersionWhereUniqueInput | ContratoVersionWhereUniqueInput[]
   }
 
-  export type EnumTipoContratoFieldUpdateOperationsInput = {
-    set?: $Enums.TipoContrato
-  }
-
   export type EnumEstadoContratoFieldUpdateOperationsInput = {
     set?: $Enums.EstadoContrato
   }
@@ -144806,28 +144758,11 @@ export namespace Prisma {
     not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
-  export type NestedEnumTipoContratoFilter<$PrismaModel = never> = {
-    equals?: $Enums.TipoContrato | EnumTipoContratoFieldRefInput<$PrismaModel>
-    in?: $Enums.TipoContrato[] | ListEnumTipoContratoFieldRefInput<$PrismaModel>
-    notIn?: $Enums.TipoContrato[] | ListEnumTipoContratoFieldRefInput<$PrismaModel>
-    not?: NestedEnumTipoContratoFilter<$PrismaModel> | $Enums.TipoContrato
-  }
-
   export type NestedEnumEstadoContratoFilter<$PrismaModel = never> = {
     equals?: $Enums.EstadoContrato | EnumEstadoContratoFieldRefInput<$PrismaModel>
     in?: $Enums.EstadoContrato[] | ListEnumEstadoContratoFieldRefInput<$PrismaModel>
     notIn?: $Enums.EstadoContrato[] | ListEnumEstadoContratoFieldRefInput<$PrismaModel>
     not?: NestedEnumEstadoContratoFilter<$PrismaModel> | $Enums.EstadoContrato
-  }
-
-  export type NestedEnumTipoContratoWithAggregatesFilter<$PrismaModel = never> = {
-    equals?: $Enums.TipoContrato | EnumTipoContratoFieldRefInput<$PrismaModel>
-    in?: $Enums.TipoContrato[] | ListEnumTipoContratoFieldRefInput<$PrismaModel>
-    notIn?: $Enums.TipoContrato[] | ListEnumTipoContratoFieldRefInput<$PrismaModel>
-    not?: NestedEnumTipoContratoWithAggregatesFilter<$PrismaModel> | $Enums.TipoContrato
-    _count?: NestedIntFilter<$PrismaModel>
-    _min?: NestedEnumTipoContratoFilter<$PrismaModel>
-    _max?: NestedEnumTipoContratoFilter<$PrismaModel>
   }
 
   export type NestedEnumEstadoContratoWithAggregatesFilter<$PrismaModel = never> = {
@@ -145567,7 +145502,7 @@ export namespace Prisma {
     numeroContrato: string
     numeroConsecutivo: number
     numeroContratoClienteProveedor?: string | null
-    tipo: $Enums.TipoContrato
+    tipo: string
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
     fechaFin?: Date | string | null
@@ -145595,7 +145530,7 @@ export namespace Prisma {
     numeroContrato: string
     numeroConsecutivo: number
     numeroContratoClienteProveedor?: string | null
-    tipo: $Enums.TipoContrato
+    tipo: string
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
     fechaFin?: Date | string | null
@@ -145921,7 +145856,7 @@ export namespace Prisma {
     numeroContrato?: StringFilter<"Contrato"> | string
     numeroConsecutivo?: IntFilter<"Contrato"> | number
     numeroContratoClienteProveedor?: StringNullableFilter<"Contrato"> | string | null
-    tipo?: EnumTipoContratoFilter<"Contrato"> | $Enums.TipoContrato
+    tipo?: StringFilter<"Contrato"> | string
     estado?: EnumEstadoContratoFilter<"Contrato"> | $Enums.EstadoContrato
     fechaInicio?: DateTimeFilter<"Contrato"> | Date | string
     fechaFin?: DateTimeNullableFilter<"Contrato"> | Date | string | null
@@ -146438,7 +146373,7 @@ export namespace Prisma {
     numeroContrato: string
     numeroConsecutivo: number
     numeroContratoClienteProveedor?: string | null
-    tipo: $Enums.TipoContrato
+    tipo: string
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
     fechaFin?: Date | string | null
@@ -146466,7 +146401,7 @@ export namespace Prisma {
     numeroContrato: string
     numeroConsecutivo: number
     numeroContratoClienteProveedor?: string | null
-    tipo: $Enums.TipoContrato
+    tipo: string
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
     fechaFin?: Date | string | null
@@ -150681,7 +150616,7 @@ export namespace Prisma {
     numeroContrato: string
     numeroConsecutivo: number
     numeroContratoClienteProveedor?: string | null
-    tipo: $Enums.TipoContrato
+    tipo: string
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
     fechaFin?: Date | string | null
@@ -150709,7 +150644,7 @@ export namespace Prisma {
     numeroContrato: string
     numeroConsecutivo: number
     numeroContratoClienteProveedor?: string | null
-    tipo: $Enums.TipoContrato
+    tipo: string
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
     fechaFin?: Date | string | null
@@ -150747,7 +150682,7 @@ export namespace Prisma {
     numeroContrato: string
     numeroConsecutivo: number
     numeroContratoClienteProveedor?: string | null
-    tipo: $Enums.TipoContrato
+    tipo: string
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
     fechaFin?: Date | string | null
@@ -150775,7 +150710,7 @@ export namespace Prisma {
     numeroContrato: string
     numeroConsecutivo: number
     numeroContratoClienteProveedor?: string | null
-    tipo: $Enums.TipoContrato
+    tipo: string
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
     fechaFin?: Date | string | null
@@ -158831,7 +158766,7 @@ export namespace Prisma {
     numeroContrato: string
     numeroConsecutivo: number
     numeroContratoClienteProveedor?: string | null
-    tipo: $Enums.TipoContrato
+    tipo: string
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
     fechaFin?: Date | string | null
@@ -158859,7 +158794,7 @@ export namespace Prisma {
     numeroContrato: string
     numeroConsecutivo: number
     numeroContratoClienteProveedor?: string | null
-    tipo: $Enums.TipoContrato
+    tipo: string
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
     fechaFin?: Date | string | null
@@ -158982,7 +158917,7 @@ export namespace Prisma {
     numeroContrato?: StringFieldUpdateOperationsInput | string
     numeroConsecutivo?: IntFieldUpdateOperationsInput | number
     numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
-    tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
+    tipo?: StringFieldUpdateOperationsInput | string
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -159010,7 +158945,7 @@ export namespace Prisma {
     numeroContrato?: StringFieldUpdateOperationsInput | string
     numeroConsecutivo?: IntFieldUpdateOperationsInput | number
     numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
-    tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
+    tipo?: StringFieldUpdateOperationsInput | string
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -159107,7 +159042,7 @@ export namespace Prisma {
     numeroContrato: string
     numeroConsecutivo: number
     numeroContratoClienteProveedor?: string | null
-    tipo: $Enums.TipoContrato
+    tipo: string
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
     fechaFin?: Date | string | null
@@ -159135,7 +159070,7 @@ export namespace Prisma {
     numeroContrato: string
     numeroConsecutivo: number
     numeroContratoClienteProveedor?: string | null
-    tipo: $Enums.TipoContrato
+    tipo: string
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
     fechaFin?: Date | string | null
@@ -159242,7 +159177,7 @@ export namespace Prisma {
     numeroContrato?: StringFieldUpdateOperationsInput | string
     numeroConsecutivo?: IntFieldUpdateOperationsInput | number
     numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
-    tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
+    tipo?: StringFieldUpdateOperationsInput | string
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -159270,7 +159205,7 @@ export namespace Prisma {
     numeroContrato?: StringFieldUpdateOperationsInput | string
     numeroConsecutivo?: IntFieldUpdateOperationsInput | number
     numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
-    tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
+    tipo?: StringFieldUpdateOperationsInput | string
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -159430,7 +159365,7 @@ export namespace Prisma {
     numeroContrato: string
     numeroConsecutivo: number
     numeroContratoClienteProveedor?: string | null
-    tipo: $Enums.TipoContrato
+    tipo: string
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
     fechaFin?: Date | string | null
@@ -159458,7 +159393,7 @@ export namespace Prisma {
     numeroContrato: string
     numeroConsecutivo: number
     numeroContratoClienteProveedor?: string | null
-    tipo: $Enums.TipoContrato
+    tipo: string
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
     fechaFin?: Date | string | null
@@ -159571,7 +159506,7 @@ export namespace Prisma {
     numeroContrato?: StringFieldUpdateOperationsInput | string
     numeroConsecutivo?: IntFieldUpdateOperationsInput | number
     numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
-    tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
+    tipo?: StringFieldUpdateOperationsInput | string
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -159599,7 +159534,7 @@ export namespace Prisma {
     numeroContrato?: StringFieldUpdateOperationsInput | string
     numeroConsecutivo?: IntFieldUpdateOperationsInput | number
     numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
-    tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
+    tipo?: StringFieldUpdateOperationsInput | string
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -159627,7 +159562,7 @@ export namespace Prisma {
     numeroContrato: string
     numeroConsecutivo: number
     numeroContratoClienteProveedor?: string | null
-    tipo: $Enums.TipoContrato
+    tipo: string
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
     fechaFin?: Date | string | null
@@ -159655,7 +159590,7 @@ export namespace Prisma {
     numeroContrato: string
     numeroConsecutivo: number
     numeroContratoClienteProveedor?: string | null
-    tipo: $Enums.TipoContrato
+    tipo: string
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
     fechaFin?: Date | string | null
@@ -159787,7 +159722,7 @@ export namespace Prisma {
     numeroContrato?: StringFieldUpdateOperationsInput | string
     numeroConsecutivo?: IntFieldUpdateOperationsInput | number
     numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
-    tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
+    tipo?: StringFieldUpdateOperationsInput | string
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -159815,7 +159750,7 @@ export namespace Prisma {
     numeroContrato?: StringFieldUpdateOperationsInput | string
     numeroConsecutivo?: IntFieldUpdateOperationsInput | number
     numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
-    tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
+    tipo?: StringFieldUpdateOperationsInput | string
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -159943,7 +159878,7 @@ export namespace Prisma {
     numeroContrato: string
     numeroConsecutivo: number
     numeroContratoClienteProveedor?: string | null
-    tipo: $Enums.TipoContrato
+    tipo: string
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
     fechaFin?: Date | string | null
@@ -159971,7 +159906,7 @@ export namespace Prisma {
     numeroContrato: string
     numeroConsecutivo: number
     numeroContratoClienteProveedor?: string | null
-    tipo: $Enums.TipoContrato
+    tipo: string
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
     fechaFin?: Date | string | null
@@ -160015,7 +159950,7 @@ export namespace Prisma {
     numeroContrato?: StringFieldUpdateOperationsInput | string
     numeroConsecutivo?: IntFieldUpdateOperationsInput | number
     numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
-    tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
+    tipo?: StringFieldUpdateOperationsInput | string
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -160043,7 +159978,7 @@ export namespace Prisma {
     numeroContrato?: StringFieldUpdateOperationsInput | string
     numeroConsecutivo?: IntFieldUpdateOperationsInput | number
     numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
-    tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
+    tipo?: StringFieldUpdateOperationsInput | string
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -166040,7 +165975,7 @@ export namespace Prisma {
     numeroContrato: string
     numeroConsecutivo: number
     numeroContratoClienteProveedor?: string | null
-    tipo: $Enums.TipoContrato
+    tipo: string
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
     fechaFin?: Date | string | null
@@ -166195,7 +166130,7 @@ export namespace Prisma {
     numeroContrato?: StringFieldUpdateOperationsInput | string
     numeroConsecutivo?: IntFieldUpdateOperationsInput | number
     numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
-    tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
+    tipo?: StringFieldUpdateOperationsInput | string
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -166223,7 +166158,7 @@ export namespace Prisma {
     numeroContrato?: StringFieldUpdateOperationsInput | string
     numeroConsecutivo?: IntFieldUpdateOperationsInput | number
     numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
-    tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
+    tipo?: StringFieldUpdateOperationsInput | string
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -166251,7 +166186,7 @@ export namespace Prisma {
     numeroContrato?: StringFieldUpdateOperationsInput | string
     numeroConsecutivo?: IntFieldUpdateOperationsInput | number
     numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
-    tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
+    tipo?: StringFieldUpdateOperationsInput | string
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -166587,7 +166522,7 @@ export namespace Prisma {
     numeroContrato: string
     numeroConsecutivo: number
     numeroContratoClienteProveedor?: string | null
-    tipo: $Enums.TipoContrato
+    tipo: string
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
     fechaFin?: Date | string | null
@@ -166742,7 +166677,7 @@ export namespace Prisma {
     numeroContrato?: StringFieldUpdateOperationsInput | string
     numeroConsecutivo?: IntFieldUpdateOperationsInput | number
     numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
-    tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
+    tipo?: StringFieldUpdateOperationsInput | string
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -166770,7 +166705,7 @@ export namespace Prisma {
     numeroContrato?: StringFieldUpdateOperationsInput | string
     numeroConsecutivo?: IntFieldUpdateOperationsInput | number
     numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
-    tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
+    tipo?: StringFieldUpdateOperationsInput | string
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -166798,7 +166733,7 @@ export namespace Prisma {
     numeroContrato?: StringFieldUpdateOperationsInput | string
     numeroConsecutivo?: IntFieldUpdateOperationsInput | number
     numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
-    tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
+    tipo?: StringFieldUpdateOperationsInput | string
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -168479,7 +168414,7 @@ export namespace Prisma {
     numeroContrato: string
     numeroConsecutivo: number
     numeroContratoClienteProveedor?: string | null
-    tipo: $Enums.TipoContrato
+    tipo: string
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
     fechaFin?: Date | string | null
@@ -168502,7 +168437,7 @@ export namespace Prisma {
     numeroContrato: string
     numeroConsecutivo: number
     numeroContratoClienteProveedor?: string | null
-    tipo: $Enums.TipoContrato
+    tipo: string
     estado?: $Enums.EstadoContrato
     fechaInicio: Date | string
     fechaFin?: Date | string | null
@@ -168629,7 +168564,7 @@ export namespace Prisma {
     numeroContrato?: StringFieldUpdateOperationsInput | string
     numeroConsecutivo?: IntFieldUpdateOperationsInput | number
     numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
-    tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
+    tipo?: StringFieldUpdateOperationsInput | string
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -168657,7 +168592,7 @@ export namespace Prisma {
     numeroContrato?: StringFieldUpdateOperationsInput | string
     numeroConsecutivo?: IntFieldUpdateOperationsInput | number
     numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
-    tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
+    tipo?: StringFieldUpdateOperationsInput | string
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -168685,7 +168620,7 @@ export namespace Prisma {
     numeroContrato?: StringFieldUpdateOperationsInput | string
     numeroConsecutivo?: IntFieldUpdateOperationsInput | number
     numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
-    tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
+    tipo?: StringFieldUpdateOperationsInput | string
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -168708,7 +168643,7 @@ export namespace Prisma {
     numeroContrato?: StringFieldUpdateOperationsInput | string
     numeroConsecutivo?: IntFieldUpdateOperationsInput | number
     numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
-    tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
+    tipo?: StringFieldUpdateOperationsInput | string
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -168736,7 +168671,7 @@ export namespace Prisma {
     numeroContrato?: StringFieldUpdateOperationsInput | string
     numeroConsecutivo?: IntFieldUpdateOperationsInput | number
     numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
-    tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
+    tipo?: StringFieldUpdateOperationsInput | string
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -168764,7 +168699,7 @@ export namespace Prisma {
     numeroContrato?: StringFieldUpdateOperationsInput | string
     numeroConsecutivo?: IntFieldUpdateOperationsInput | number
     numeroContratoClienteProveedor?: NullableStringFieldUpdateOperationsInput | string | null
-    tipo?: EnumTipoContratoFieldUpdateOperationsInput | $Enums.TipoContrato
+    tipo?: StringFieldUpdateOperationsInput | string
     estado?: EnumEstadoContratoFieldUpdateOperationsInput | $Enums.EstadoContrato
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null

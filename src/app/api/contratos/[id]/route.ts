@@ -6,7 +6,7 @@ import { z } from 'zod';
 // Schema para validar actualización de contratos
 const contratoUpdateSchema = z
   .object({
-    tipo: z.enum(['COMPRA_VENTA', 'SERVICIO', 'SUMINISTROS']).optional(),
+    tipo: z.string().min(1).optional(),
     fechaInicio: z.string().datetime().optional(),
     fechaFin: z.string().datetime().nullable().optional(),
     monto: z.string().nullable().optional(),

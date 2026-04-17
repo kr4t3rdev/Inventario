@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
@@ -16,17 +16,19 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { SelectSeparator } from "@/components/ui/select"
 
 export default function NewContratoPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const [tiposCustom, setTiposCustom] = useState<{ tipoCustomId: string; nombre: string }[]>([])
   
   // Queries
   const { data: clientes, isLoading: isLoadingClientes } = useGetClientesQuery()
   const { data: vendors, isLoading: isLoadingVendors } = useGetVendorsQuery()
 
   const [formData, setFormData] = useState({
-    tipo: 'COMPRA_VENTA' as 'COMPRA_VENTA' | 'SERVICIO' | 'SUMINISTROS',
+    tipo: 'COMPRA_VENTA' as string,
     fechaInicio: '',
     fechaFin: '',
     monto: '',
@@ -37,6 +39,15 @@ export default function NewContratoPage() {
     numeroContratoClienteProveedor: '',
     observaciones: '',
   })
+
+  useEffect(() => {
+    fetch('/api/tipos-contratos?activos=true', {
+      headers: { Authorization: getAuthToken() },
+    })
+      .then(r => r.json())
+      .then(data => setTiposCustom(data.data || []))
+      .catch(() => {})
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -98,7 +109,7 @@ export default function NewContratoPage() {
   const handleTipoChange = (value: string) => {
     setFormData(prev => ({
       ...prev,
-      tipo: value as 'COMPRA_VENTA' | 'SERVICIO' | 'SUMINISTROS',
+      tipo: value,
       clienteId: value === 'SUMINISTROS' ? '' : prev.clienteId,
       vendorId: value !== 'SUMINISTROS' ? '' : prev.vendorId,
     }))
@@ -216,6 +227,16 @@ export default function NewContratoPage() {
                       <SelectItem value="COMPRA_VENTA">Compra - Venta</SelectItem>
                       <SelectItem value="SERVICIO">Servicio</SelectItem>
                       <SelectItem value="SUMINISTROS">Suministros</SelectItem>
+                      {tiposCustom.length > 0 && (
+                        <>
+                          <SelectSeparator />
+                          {tiposCustom.map(t => (
+                            <SelectItem key={t.tipoCustomId} value={t.nombre}>
+                              {t.nombre}
+                            </SelectItem>
+                          ))}
+                        </>
+                      )}
                     </SelectContent>
                   </Select>
                 </motion.div>

@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { SelectSeparator } from "@/components/ui/select"
 
 export default function UpdateContratoPage() {
   const router = useRouter()
@@ -24,13 +25,14 @@ export default function UpdateContratoPage() {
   const id = params?.id as string
   const [isLoading, setIsLoading] = useState(false)
   const [isFetching, setIsFetching] = useState(true)
+  const [tiposCustom, setTiposCustom] = useState<{ tipoCustomId: string; nombre: string }[]>([])
   
   // Queries
   const { data: clientes, isLoading: isLoadingClientes } = useGetClientesQuery()
   const { data: vendors, isLoading: isLoadingVendors } = useGetVendorsQuery()
 
   const [formData, setFormData] = useState({
-    tipo: 'COMPRA_VENTA' as 'COMPRA_VENTA' | 'SERVICIO' | 'SUMINISTROS',
+    tipo: 'COMPRA_VENTA' as string,
     fechaInicio: '',
     fechaFin: '',
     monto: '',
@@ -48,6 +50,15 @@ export default function UpdateContratoPage() {
       fetchContrato(id)
     }
   }, [id])
+
+  useEffect(() => {
+    fetch('/api/tipos-contratos?activos=true', {
+      headers: { Authorization: getAuthToken() },
+    })
+      .then(r => r.json())
+      .then(data => setTiposCustom(data.data || []))
+      .catch(() => {})
+  }, [])
 
   const fetchContrato = async (contratoId: string) => {
     setIsFetching(true)
@@ -145,7 +156,7 @@ export default function UpdateContratoPage() {
   const handleTipoChange = (value: string) => {
     setFormData(prev => ({
       ...prev,
-      tipo: value as 'COMPRA_VENTA' | 'SERVICIO' | 'SUMINISTROS',
+      tipo: value,
       clienteId: value === 'SUMINISTROS' ? '' : prev.clienteId,
       vendorId: value !== 'SUMINISTROS' ? '' : prev.vendorId,
     }))
@@ -263,6 +274,16 @@ export default function UpdateContratoPage() {
                       <SelectItem value="COMPRA_VENTA">Compra - Venta</SelectItem>
                       <SelectItem value="SERVICIO">Servicio</SelectItem>
                       <SelectItem value="SUMINISTROS">Suministros</SelectItem>
+                      {tiposCustom.length > 0 && (
+                        <>
+                          <SelectSeparator />
+                          {tiposCustom.map(t => (
+                            <SelectItem key={t.tipoCustomId} value={t.nombre}>
+                              {t.nombre}
+                            </SelectItem>
+                          ))}
+                        </>
+                      )}
                     </SelectContent>
                   </Select>
                 </motion.div>
