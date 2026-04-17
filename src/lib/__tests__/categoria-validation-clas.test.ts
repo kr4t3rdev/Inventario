@@ -101,7 +101,7 @@ describe('validateCategoryAgainstCLAS', () => {
 
     const result = await validateCategoryAgainstCLAS(
       'BLOOMERS P/BEBE',
-      null,
+      'parent-123',
       '05',
       '0000'
     )
@@ -118,7 +118,7 @@ describe('validateCategoryAgainstCLAS', () => {
 
     const result = await validateCategoryAgainstCLAS(
       'BLOOMERS P/BEBE',
-      null,
+      'parent-123',
       '06',
       '0000'
     )
@@ -152,12 +152,32 @@ describe('validateCategoryAgainstCLAS', () => {
 
     const result = await validateCategoryAgainstCLAS(
       'NotAValidSubcategory',
+      'parent-123',
+      '05',
+      '0000'
+    )
+
+    expect(result.success).toBe(false)
+    expect(result.errors![0].message).toBe(
+      'Estas en modo generacion ean-13 por lo q la subcategoria ingresada debe coincidir con el especifico declarado en el clasificador'
+    )
+  })
+
+  it('should reject a specific without parentId when EAN-13 is enabled', async () => {
+    vi.mocked(prisma.miEmpresa.findUnique).mockResolvedValueOnce({
+      id: 1,
+      usaCodigoEan13: true
+    } as any)
+
+    const result = await validateCategoryAgainstCLAS(
+      'BLOOMERS P/BEBE',
       null,
       '05',
       '0000'
     )
 
     expect(result.success).toBe(false)
+    expect(result.errors).toHaveLength(1)
     expect(result.errors![0].message).toBe(
       'Estas en modo generacion ean-13 por lo q la subcategoria ingresada debe coincidir con el especifico declarado en el clasificador'
     )

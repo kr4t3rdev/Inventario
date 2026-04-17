@@ -19,7 +19,6 @@ import { ClasificadorInfoNote } from "@/components/productos/clasificador-info-n
 import { getAuthToken } from "@/lib/token";
 import { 
   CLASClassifierData,
-  getSpecificsForSection,
   parseClasClassifierMarkdown,
 } from "@/lib/clas-classifier";
 
@@ -71,19 +70,10 @@ export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
   const [usaEan13, setUsaEan13] = useState(false)
   const [clasClassifierData, setClasClassifierData] = useState<CLASClassifierData | null>(null)
   const [selectedSection, setSelectedSection] = useState('')
-  const [selectedSpecific, setSelectedSpecific] = useState('')
 
   const clasSections = useMemo(() => {
     return clasClassifierData?.sections ?? []
   }, [clasClassifierData])
-
-  const availableSpecifics = useMemo(() => {
-    if (!clasClassifierData || !selectedSection) {
-      return []
-    }
-
-    return getSpecificsForSection(clasClassifierData, selectedSection)
-  }, [clasClassifierData, selectedSection])
 
   const selectedSectionName = useMemo(() => {
     if (!clasClassifierData || !selectedSection) {
@@ -92,14 +82,6 @@ export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
 
     return clasClassifierData.sectionNameById[selectedSection] ?? ''
   }, [clasClassifierData, selectedSection])
-
-  const selectedSpecificName = useMemo(() => {
-    if (!clasClassifierData || !selectedSpecific) {
-      return ''
-    }
-
-    return clasClassifierData.specificNameById[selectedSpecific] ?? ''
-  }, [clasClassifierData, selectedSpecific])
 
   const {
     form,
@@ -175,7 +157,6 @@ export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
 
     if (sectionMatch) {
       setSelectedSection(sectionMatch.id)
-      setSelectedSpecific('')
       form.setValue('clasSectionId', sectionMatch.id)
       form.setValue('clasSpecificId', null)
       return
@@ -316,13 +297,11 @@ export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
                         value={selectedSection}
                         onValueChange={(val) => {
                           setSelectedSection(val)
-                          setSelectedSpecific('')
                           const sectionName = clasClassifierData?.sectionNameById[val] ?? ''
                           if (sectionName) {
                             form.setValue('nombre', sectionName)
                             form.setValue('clasSectionId', val)
                             form.setValue('clasSpecificId', null)
-                            form.setValue('parentId', 'none')
                           }
                         }}
                         disabled={isLoading}
@@ -336,38 +315,7 @@ export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
                           ))}
                         </SelectContent>
                       </Select>
-                      <FormDescription>Sección del clasificador. Si no selecciona específico, será una categoría raíz.</FormDescription>
-                    </FormItem>
-                  </motion.div>
-
-                  <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.27 }}>
-                    <FormItem>
-                      <FormLabel>Específico (subcategoría) <span className="text-muted-foreground font-normal">(opcional)</span></FormLabel>
-                      <Select
-                        value={selectedSpecific}
-                        onValueChange={(val) => {
-                          setSelectedSpecific(val)
-                          const specific = availableSpecifics.find(sp => sp.id === val)
-                          if (specific) {
-                            setSelectedSection(specific.sectionId)
-                            form.setValue('nombre', specific.name)
-                            form.setValue('clasSectionId', specific.sectionId)
-                            form.setValue('clasSpecificId', val)
-                            form.setValue('parentId', 'none')
-                          }
-                        }}
-                        disabled={isLoading || !selectedSection}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder={selectedSection ? "Seleccione un específico" : "Primero seleccione una sección"} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {availableSpecifics.map(sp => (
-                            <SelectItem key={sp.id} value={sp.id}>{sp.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormDescription>Si selecciona un específico, se creará una subcategoría bajo la sección elegida.</FormDescription>
+                      <FormDescription>Sección del clasificador para una categoría raíz en modo EAN-13.</FormDescription>
                     </FormItem>
                   </motion.div>
 
@@ -376,7 +324,6 @@ export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
                       <FormLabel>Resumen CLAS</FormLabel>
                       <div className="rounded-md border border-dashed p-3 text-sm text-muted-foreground space-y-1">
                         <div>Sección: {selectedSectionName || 'Sin seleccionar'}</div>
-                        <div>Subcategoría: {selectedSpecificName || 'Sin seleccionar'}</div>
                       </div>
                     </FormItem>
                   </motion.div>

@@ -152,10 +152,14 @@ export function useCategoryForm({
       const sectionId = normalizeSectionId(data.clasSectionId)
       const specificId = normalizeSpecificId(data.clasSpecificId)
       const needsSpecificSelection = requireSpecificSelection || !!specificId
+      const normalizedParentId = normalizeParentId(data.parentId)
 
       if (!needsSpecificSelection) {
         // Root category: must match a CLAS section
         if (!sectionId) {
+          return { valid: false, error: 'Estas en modo generacion ean-13 por lo q categoria debe coincidir con las secciones declaradas en el clasificador' }
+        }
+        if (normalizedParentId) {
           return { valid: false, error: 'Estas en modo generacion ean-13 por lo q categoria debe coincidir con las secciones declaradas en el clasificador' }
         }
         // Verify the nombre matches the selected section
@@ -165,7 +169,7 @@ export function useCategoryForm({
         }
       } else {
         // Subcategory: must match a CLAS specific
-        if (!sectionId || !specificId) {
+        if (!sectionId || !specificId || !normalizedParentId) {
           return { valid: false, error: 'Estas en modo generacion ean-13 por lo q la subcategoria ingresada debe coincidir con el especifico declarado en el clasificador' }
         }
 

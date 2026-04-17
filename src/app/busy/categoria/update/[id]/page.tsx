@@ -4,6 +4,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useGetCategoriaQuery } from "@/lib/redux/services/categoriasApi"
 import { CategoryForm } from "@/components/categorias/category-form"
+import { SubcategoryForm } from "@/components/categorias/subcategory-form"
 import { useParams } from "next/navigation"
 import { motion } from "framer-motion"
 import { FolderEdit, AlertCircle, Sparkles } from "lucide-react"
@@ -196,7 +197,11 @@ export default function EditarCategoryPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.5 }}
           >
-            <CategoryForm initialData={category} />
+            {category.parentId ? (
+              <SubcategoryForm initialData={category} />
+            ) : (
+              <CategoryForm initialData={category} />
+            )}
           </motion.div>
         </motion.div>
       </SidebarInset>

@@ -3,8 +3,13 @@ import prisma from "@/lib/prisma"
 import { withAuth } from "@/lib/auth-middleware"
 
 // PUT: Actualizar equipo
-const updateEquipo = async (request: NextRequest, { params }: { params: { id: string } }, user: any) => {
+const updateEquipo = async (
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+  user: any
+) => {
   try {
+    const { id } = await params
     const data = await request.json()
 
     if (user.role === 'dependiente') {
@@ -15,7 +20,7 @@ const updateEquipo = async (request: NextRequest, { params }: { params: { id: st
     }
 
     const updatedEquipo = await prisma.equipoReparacion.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         nombre: data.nombre,
         descripcion: data.descripcion,
@@ -30,8 +35,14 @@ const updateEquipo = async (request: NextRequest, { params }: { params: { id: st
 }
 
 // DELETE: Eliminar equipo
-const deleteEquipo = async (request: NextRequest, { params }: { params: { id: string } }, user: any) => {
+const deleteEquipo = async (
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+  user: any
+) => {
   try {
+    const { id } = await params
+
     if (user.role === 'dependiente') {
       return NextResponse.json({
         error: 'Acceso restringido',
@@ -40,7 +51,7 @@ const deleteEquipo = async (request: NextRequest, { params }: { params: { id: st
     }
 
     await prisma.equipoReparacion.delete({
-      where: { id: params.id },
+      where: { id },
     })
 
     return NextResponse.json({ message: "Equipo eliminado correctamente" })

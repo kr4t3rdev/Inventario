@@ -148,6 +148,14 @@ describe('CLAS validation functions for category forms', () => {
       )
     })
 
+    it('should reject subcategory without parent when EAN-13 is enabled', () => {
+      const result = validateForCLAS('CAMISAS CON MANGAS CORTAS (HOMBRE)', null, true)
+      expect(result.isValid).toBe(false)
+      expect(result.errorMessage).toBe(
+        'Estas en modo generacion ean-13 por lo q categoria debe coincidir con las secciones declaradas en el clasificador'
+      )
+    })
+
     it('should accept valid subcategory when EAN-13 is enabled', () => {
       const result = validateForCLAS(
         'CAMISAS CON MANGAS CORTAS (HOMBRE)',

@@ -122,7 +122,7 @@ export async function validateCategoryAgainstCLAS(
 
     try {
       if (normalizedSpecificId) {
-        if (!normalizedSectionId) {
+        if (!normalizedSectionId || !parentId) {
           return {
             success: false,
             errors: [{
@@ -185,7 +185,7 @@ export async function validateCategoryAgainstCLAS(
           }
         }
 
-        if (!matchedSectionId) {
+        if (!matchedSectionId || parentId) {
           return {
             success: false,
             errors: [{

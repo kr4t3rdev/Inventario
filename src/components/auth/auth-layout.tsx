@@ -4,37 +4,50 @@ import { motion, AnimatePresence, useReducedMotion, Variants } from 'framer-moti
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeftIcon } from 'lucide-react'
-import { ReactNode } from 'react'
+import { ReactNode, useEffect, useState } from 'react'
 
 interface AuthLayoutProps {
   children: ReactNode
 }
 
+/**
+ * @description Layout compartido para pantallas de autenticación con animaciones
+ * estabilizadas para evitar desajustes SSR/cliente durante la hidratación.
+ * @param {AuthLayoutProps} props - Contenido interno de la pantalla de auth.
+ * @returns {React.ReactElement} Contenedor visual de autenticación.
+ */
 export function AuthLayout({ children }: AuthLayoutProps) {
   const pathname = usePathname()
   const reducedMotion = useReducedMotion()
+  const [isHydrated, setIsHydrated] = useState(false)
+
+  useEffect(() => {
+    setIsHydrated(true)
+  }, [])
+
+  const prefersReducedMotion = isHydrated ? reducedMotion : false
 
   const pageVariants: Variants = {
     initial: {
       opacity: 0,
-      x: reducedMotion ? 0 : -20,
-      scale: reducedMotion ? 1 : 0.95,
+      x: prefersReducedMotion ? 0 : -20,
+      scale: prefersReducedMotion ? 1 : 0.95,
     },
     animate: {
       opacity: 1,
       x: 0,
       scale: 1,
       transition: {
-        duration: reducedMotion ? 0.15 : 0.4,
+        duration: prefersReducedMotion ? 0.15 : 0.4,
         ease: [0.25, 0.46, 0.45, 0.94] as const,
       },
     },
     exit: {
       opacity: 0,
-      x: reducedMotion ? 0 : 20,
-      scale: reducedMotion ? 1 : 0.95,
+      x: prefersReducedMotion ? 0 : 20,
+      scale: prefersReducedMotion ? 1 : 0.95,
       transition: {
-        duration: reducedMotion ? 0.1 : 0.3,
+        duration: prefersReducedMotion ? 0.1 : 0.3,
         ease: [0.25, 0.46, 0.45, 0.94] as const,
       },
     },
@@ -45,7 +58,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
     animate: {
       opacity: 1,
       transition: {
-        duration: reducedMotion ? 0.15 : 1,
+        duration: prefersReducedMotion ? 0.15 : 1,
         ease: 'easeOut' as const,
       },
     },
@@ -62,18 +75,18 @@ export function AuthLayout({ children }: AuthLayoutProps) {
       >
         {/* Gradient Orbs */}
         <motion.div
-          animate={reducedMotion ? {} : { y: [0, -20, 0] }}
-          transition={reducedMotion ? {} : { duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+          animate={prefersReducedMotion ? {} : { y: [0, -20, 0] }}
+          transition={prefersReducedMotion ? {} : { duration: 6, repeat: Infinity, ease: 'easeInOut' }}
           className="absolute -top-40 -left-40 w-96 h-96 bg-primary/20 rounded-full blur-3xl"
         />
         <motion.div
-          animate={reducedMotion ? {} : { y: [0, 20, 0] }}
-          transition={reducedMotion ? {} : { duration: 8, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+          animate={prefersReducedMotion ? {} : { y: [0, 20, 0] }}
+          transition={prefersReducedMotion ? {} : { duration: 8, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
           className="absolute top-1/3 -right-40 w-80 h-80 bg-purple-500/20 rounded-full blur-3xl"
         />
         <motion.div
-          animate={reducedMotion ? {} : { y: [0, -15, 0] }}
-          transition={reducedMotion ? {} : { duration: 7, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
+          animate={prefersReducedMotion ? {} : { y: [0, -15, 0] }}
+          transition={prefersReducedMotion ? {} : { duration: 7, repeat: Infinity, ease: 'easeInOut', delay: 2 }}
           className="absolute -bottom-40 left-1/4 w-72 h-72 bg-blue-500/15 rounded-full blur-3xl"
         />
         
