@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi, Mock } from 'vitest'
 import { NextRequest } from 'next/server'
 import { POST } from '../route'
 import { prisma } from '../../../../../lib/prisma'
-import { verify_token } from '../../../../../lib/auth-utils'
+import { authenticateUser } from '../../../../../lib/auth-middleware'
 
 // Mock dependencies
 vi.mock('../../../../../lib/prisma', () => ({
@@ -19,7 +19,7 @@ vi.mock('../../../../../lib/prisma', () => ({
     },
 }))
 
-vi.mock('../../../../../lib/auth-utils', () => ({
+vi.mock('../../../../../lib/auth-middleware', () => ({
     authenticateUser: vi.fn(),
 }))
 
@@ -28,7 +28,7 @@ vi.mock('../../../../../lib/restock-utils', () => ({
 }))
 
 const mockPrisma = prisma as any
-const mockVerifyToken = verify_token as Mock
+const mockAuthenticateUser = authenticateUser as Mock
 
 describe('Restock API - Transaction Handling', () => {
     const mockUser = { id: 'user1', email: 'test@example.com', role: 'admin' }
@@ -52,7 +52,7 @@ describe('Restock API - Transaction Handling', () => {
 
     beforeEach(() => {
         vi.clearAllMocks()
-        mockVerifyToken.mockResolvedValue(mockUser)
+        mockAuthenticateUser.mockResolvedValue({ user: mockUser })
         mockPrisma.producto.findUnique.mockResolvedValue(mockProduct)
     })
 

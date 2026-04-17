@@ -45,6 +45,53 @@ vi.mock('@/lib/utils/unit-converter', () => ({
   },
 }))
 
+const FIXED_DATE = new Date('2024-01-01T00:00:00.000Z')
+
+function createIngredientesRequest(
+  recetaId: string,
+  ingredientes: Array<Record<string, unknown>>
+): NextRequest {
+  return new NextRequest(`http://localhost/api/produccion/recetas/${recetaId}/ingredientes`, {
+    method: 'POST',
+    body: JSON.stringify({ ingredientes }),
+  })
+}
+
+function paramsFor(recetaId: string): Promise<{ id: string }> {
+  return Promise.resolve({ id: recetaId })
+}
+
+function buildRecetaBase({
+  recetaId = 'receta-123',
+  nombre = 'Receta Test',
+  rendimiento = 1,
+  costoUnitario = 0,
+  precioCostoProductoFinal = 100,
+}: {
+  recetaId?: string
+  nombre?: string
+  rendimiento?: number
+  costoUnitario?: number
+  precioCostoProductoFinal?: number
+} = {}) {
+  return {
+    recetaId,
+    nombre,
+    rendimiento,
+    costoUnitario,
+    productoId: 'prod-final',
+    instrucciones: null,
+    tiempoPrep: null,
+    createdAt: FIXED_DATE,
+    updatedAt: FIXED_DATE,
+    Producto: {
+      id: 'prod-final',
+      nombre: 'Producto Final',
+      precioCosto: precioCostoProductoFinal,
+    },
+  }
+}
+
 describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes', () => {
   beforeEach(() => {
     vi.resetAllMocks()
@@ -57,22 +104,12 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
     const recetaId = 'receta-123'
     const productoId = 'prod-1'
 
-    vi.mocked(prisma.receta.findUnique).mockResolvedValueOnce({
+    vi.mocked(prisma.receta.findUnique).mockResolvedValueOnce(buildRecetaBase({
       recetaId,
       nombre: 'Receta Test',
       rendimiento: 2,
-      costoUnitario: 0,
-      productoId: 'prod-final',
-      instrucciones: null,
-      tiempoPrep: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      Producto: {
-        id: 'prod-final',
-        nombre: 'Producto Final',
-        precioCosto: 100,
-      },
-    })
+      precioCostoProductoFinal: 100,
+    }))
 
     vi.mocked(prisma.recetaIngrediente.deleteMany).mockResolvedValueOnce({
       count: 0,
@@ -130,25 +167,16 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
 
     vi.mocked(prisma.receta.update).mockResolvedValueOnce(mockRecetaActualizada)
 
-    const request = new NextRequest(
-      `http://localhost/api/produccion/recetas/${recetaId}/ingredientes`,
+    const request = createIngredientesRequest(recetaId, [
       {
-        method: 'POST',
-        body: JSON.stringify({
-          ingredientes: [
-            {
-              productoId,
-              cantidad: 1,
-              unidadSimbolo: null,
-              desperdicio: 0,
-            },
-          ],
-        }),
-      }
-    )
+        productoId,
+        cantidad: 1,
+        unidadSimbolo: null,
+        desperdicio: 0,
+      },
+    ])
 
-    // Mock params
-    const params = Promise.resolve({ id: recetaId })
+    const params = paramsFor(recetaId)
 
     const response = await setIngredientesHandler(request, { params })
     const data = await response.json()
@@ -164,17 +192,9 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
 
     vi.mocked(prisma.receta.findUnique).mockResolvedValueOnce(null)
 
-    const request = new NextRequest(
-      `http://localhost/api/produccion/recetas/${recetaId}/ingredientes`,
-      {
-        method: 'POST',
-        body: JSON.stringify({
-          ingredientes: [],
-        }),
-      }
-    )
+    const request = createIngredientesRequest(recetaId, [])
 
-    const params = Promise.resolve({ id: recetaId })
+    const params = paramsFor(recetaId)
 
     const response = await setIngredientesHandler(request, { params })
 
@@ -186,22 +206,14 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
   it('debe rechazar payload inválido con status 400', async () => {
     const recetaId = 'receta-123'
 
-    const request = new NextRequest(
-      `http://localhost/api/produccion/recetas/${recetaId}/ingredientes`,
+    const request = createIngredientesRequest(recetaId, [
       {
-        method: 'POST',
-        body: JSON.stringify({
-          ingredientes: [
-            {
-              productoId: 'prod-1',
-              cantidad: -1, // Inválido - debe ser positivo
-            },
-          ],
-        }),
-      }
-    )
+        productoId: 'prod-1',
+        cantidad: -1,
+      },
+    ])
 
-    const params = Promise.resolve({ id: recetaId })
+    const params = paramsFor(recetaId)
 
     const response = await setIngredientesHandler(request, { params })
 
@@ -213,22 +225,12 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
   it('debe manejar múltiples ingredientes correctamente', async () => {
     const recetaId = 'receta-123'
 
-    vi.mocked(prisma.receta.findUnique).mockResolvedValueOnce({
+    vi.mocked(prisma.receta.findUnique).mockResolvedValueOnce(buildRecetaBase({
       recetaId,
       nombre: 'Receta Compleja',
       rendimiento: 4,
-      costoUnitario: 0,
-      productoId: 'prod-final',
-      instrucciones: null,
-      tiempoPrep: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      Producto: {
-        id: 'prod-final',
-        nombre: 'Producto Final',
-        precioCosto: 200,
-      },
-    })
+      precioCostoProductoFinal: 200,
+    }))
 
     vi.mocked(prisma.recetaIngrediente.deleteMany).mockResolvedValueOnce({
       count: 0,
@@ -309,30 +311,22 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
 
     vi.mocked(prisma.receta.update).mockResolvedValueOnce(mockRecetaActualizada)
 
-    const request = new NextRequest(
-      `http://localhost/api/produccion/recetas/${recetaId}/ingredientes`,
+    const request = createIngredientesRequest(recetaId, [
       {
-        method: 'POST',
-        body: JSON.stringify({
-          ingredientes: [
-            {
-              productoId: 'prod-1',
-              cantidad: 2,
-              unidadSimbolo: 'kg',
-              desperdicio: 0,
-            },
-            {
-              productoId: 'prod-2',
-              cantidad: 1,
-              unidadSimbolo: 'kg',
-              desperdicio: 0,
-            },
-          ],
-        }),
-      }
-    )
+        productoId: 'prod-1',
+        cantidad: 2,
+        unidadSimbolo: 'kg',
+        desperdicio: 0,
+      },
+      {
+        productoId: 'prod-2',
+        cantidad: 1,
+        unidadSimbolo: 'kg',
+        desperdicio: 0,
+      },
+    ])
 
-    const params = Promise.resolve({ id: recetaId })
+    const params = paramsFor(recetaId)
 
     const response = await setIngredientesHandler(request, { params })
     const data = await response.json()
@@ -345,22 +339,12 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
   it('debe manejar array vacío de ingredientes', async () => {
     const recetaId = 'receta-123'
 
-    vi.mocked(prisma.receta.findUnique).mockResolvedValueOnce({
+    vi.mocked(prisma.receta.findUnique).mockResolvedValueOnce(buildRecetaBase({
       recetaId,
       nombre: 'Receta Vacía',
       rendimiento: 1,
-      costoUnitario: 0,
-      productoId: 'prod-final',
-      instrucciones: null,
-      tiempoPrep: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      Producto: {
-        id: 'prod-final',
-        nombre: 'Producto Final',
-        precioCosto: 100,
-      },
-    })
+      precioCostoProductoFinal: 100,
+    }))
 
     vi.mocked(prisma.recetaIngrediente.deleteMany).mockResolvedValueOnce({
       count: 2,
@@ -388,17 +372,9 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
 
     vi.mocked(prisma.receta.update).mockResolvedValueOnce(mockRecetaActualizada)
 
-    const request = new NextRequest(
-      `http://localhost/api/produccion/recetas/${recetaId}/ingredientes`,
-      {
-        method: 'POST',
-        body: JSON.stringify({
-          ingredientes: [],
-        }),
-      }
-    )
+    const request = createIngredientesRequest(recetaId, [])
 
-    const params = Promise.resolve({ id: recetaId })
+    const params = paramsFor(recetaId)
 
     const response = await setIngredientesHandler(request, { params })
     const data = await response.json()
@@ -411,22 +387,12 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
   it('debe persistir en unidad canónica y retornar unitNormalizations', async () => {
     const recetaId = 'receta-123'
 
-    vi.mocked(prisma.receta.findUnique).mockResolvedValueOnce({
+    vi.mocked(prisma.receta.findUnique).mockResolvedValueOnce(buildRecetaBase({
       recetaId,
       nombre: 'Receta Normalizada',
       rendimiento: 1,
-      costoUnitario: 0,
-      productoId: 'prod-final',
-      instrucciones: null,
-      tiempoPrep: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      Producto: {
-        id: 'prod-final',
-        nombre: 'Producto Final',
-        precioCosto: 10,
-      },
-    })
+      precioCostoProductoFinal: 10,
+    }))
 
     vi.mocked(prisma.recetaIngrediente.deleteMany).mockResolvedValueOnce({ count: 0 })
     vi.mocked(prisma.recetaIngrediente.createMany).mockResolvedValueOnce({ count: 1 })
@@ -473,24 +439,16 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
       ],
     })
 
-    const request = new NextRequest(
-      `http://localhost/api/produccion/recetas/${recetaId}/ingredientes`,
+    const request = createIngredientesRequest(recetaId, [
       {
-        method: 'POST',
-        body: JSON.stringify({
-          ingredientes: [
-            {
-              productoId: 'prod-1',
-              cantidad: 500,
-              unidadSimbolo: 'g',
-              desperdicio: 0,
-            },
-          ],
-        }),
-      }
-    )
+        productoId: 'prod-1',
+        cantidad: 500,
+        unidadSimbolo: 'g',
+        desperdicio: 0,
+      },
+    ])
 
-    const response = await setIngredientesHandler(request, { params: Promise.resolve({ id: recetaId }) })
+    const response = await setIngredientesHandler(request, { params: paramsFor(recetaId) })
     const data = await response.json()
 
     expect(response.status).toBe(200)
@@ -520,22 +478,12 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
   it('debe rechazar ingredientes incompatibles con unitErrors y sin persistir cambios', async () => {
     const recetaId = 'receta-123'
 
-    vi.mocked(prisma.receta.findUnique).mockResolvedValueOnce({
+    vi.mocked(prisma.receta.findUnique).mockResolvedValueOnce(buildRecetaBase({
       recetaId,
       nombre: 'Receta Inválida',
       rendimiento: 1,
-      costoUnitario: 0,
-      productoId: 'prod-final',
-      instrucciones: null,
-      tiempoPrep: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      Producto: {
-        id: 'prod-final',
-        nombre: 'Producto Final',
-        precioCosto: 10,
-      },
-    })
+      precioCostoProductoFinal: 10,
+    }))
 
     vi.mocked(prisma.producto.findMany).mockResolvedValueOnce([
       {
@@ -546,24 +494,16 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
       },
     ])
 
-    const request = new NextRequest(
-      `http://localhost/api/produccion/recetas/${recetaId}/ingredientes`,
+    const request = createIngredientesRequest(recetaId, [
       {
-        method: 'POST',
-        body: JSON.stringify({
-          ingredientes: [
-            {
-              productoId: 'prod-1',
-              cantidad: 1,
-              unidadSimbolo: 'L',
-              desperdicio: 0,
-            },
-          ],
-        }),
-      }
-    )
+        productoId: 'prod-1',
+        cantidad: 1,
+        unidadSimbolo: 'L',
+        desperdicio: 0,
+      },
+    ])
 
-    const response = await setIngredientesHandler(request, { params: Promise.resolve({ id: recetaId }) })
+    const response = await setIngredientesHandler(request, { params: paramsFor(recetaId) })
     const data = await response.json()
 
     expect(response.status).toBe(400)

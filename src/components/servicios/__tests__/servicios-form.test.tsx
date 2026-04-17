@@ -30,6 +30,7 @@ vi.mock('framer-motion', () => ({
       return Component
     },
   }),
+  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }))
 
 vi.mock('sonner', () => ({

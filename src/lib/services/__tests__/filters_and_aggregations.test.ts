@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import * as fc from 'fast-check'
-import { ExchangeIntelligenceService } from '../exchange_intelligence_service'
 
 // Generadores de datos para pruebas de filtros
 const productArbitrary = fc.record({
@@ -44,6 +43,12 @@ function createMockPrisma() {
     producto: {
       findMany: vi.fn(),
     },
+    moneda: {
+      findFirst: vi.fn(),
+    },
+    reconciliacionGasto: {
+      findMany: vi.fn(),
+    },
     inyeccionCapital: {
       findMany: vi.fn(),
     },
@@ -58,7 +63,7 @@ function createMockPrisma() {
 }
 
 describe('ExchangeIntelligenceService - Property Tests for Filters and Aggregations', () => {
-  let service: ExchangeIntelligenceService
+  let service: InstanceType<typeof import('../exchange_intelligence_service').ExchangeIntelligenceService>
   let mockPrisma: any
 
   beforeEach(async () => {
@@ -69,8 +74,9 @@ describe('ExchangeIntelligenceService - Property Tests for Filters and Aggregati
     vi.clearAllMocks()
 
     // Mockear Prisma con el nuevo mock
-    vi.doMock('@/generated/prisma', () => ({
-      PrismaClient: vi.fn(() => mockPrisma),
+    vi.doMock('@/lib/prisma', () => ({
+      prisma: mockPrisma,
+      default: mockPrisma,
     }))
 
     // Limpiar cache del módulo para que se use el nuevo mock
@@ -132,6 +138,8 @@ describe('ExchangeIntelligenceService - Property Tests for Filters and Aggregati
 
             // Configurar mocks
             mockPrisma.producto.findMany.mockResolvedValue(productosFiltrados)
+            mockPrisma.moneda.findFirst.mockResolvedValue({ codigo: 'CUP' })
+            mockPrisma.reconciliacionGasto.findMany.mockResolvedValue([])
             mockPrisma.tasaCambio.findMany.mockResolvedValue(tasas)
             mockPrisma.tasaCambio.findFirst.mockResolvedValue(tasas[0])
 
@@ -148,6 +156,8 @@ describe('ExchangeIntelligenceService - Property Tests for Filters and Aggregati
 
             // Resetear mock
             mockPrisma.producto.findMany.mockResolvedValue(productosFiltrados)
+            mockPrisma.moneda.findFirst.mockResolvedValue({ codigo: 'CUP' })
+            mockPrisma.reconciliacionGasto.findMany.mockResolvedValue([])
             mockPrisma.tasaCambio.findMany.mockResolvedValue(tasas)
             mockPrisma.tasaCambio.findFirst.mockResolvedValue(tasas[0])
 
@@ -206,6 +216,8 @@ describe('ExchangeIntelligenceService - Property Tests for Filters and Aggregati
             }))
 
             mockPrisma.producto.findMany.mockResolvedValue(productosPreparados)
+            mockPrisma.moneda.findFirst.mockResolvedValue({ codigo: 'CUP' })
+            mockPrisma.reconciliacionGasto.findMany.mockResolvedValue([])
             mockPrisma.tasaCambio.findMany.mockResolvedValue(tasas)
             mockPrisma.tasaCambio.findFirst.mockResolvedValue(tasas[0])
 
@@ -218,6 +230,8 @@ describe('ExchangeIntelligenceService - Property Tests for Filters and Aggregati
 
             // Resetear mock
             mockPrisma.producto.findMany.mockResolvedValue(productosPreparados)
+            mockPrisma.moneda.findFirst.mockResolvedValue({ codigo: 'CUP' })
+            mockPrisma.reconciliacionGasto.findMany.mockResolvedValue([])
             mockPrisma.tasaCambio.findMany.mockResolvedValue(tasas)
             mockPrisma.tasaCambio.findFirst.mockResolvedValue(tasas[0])
 

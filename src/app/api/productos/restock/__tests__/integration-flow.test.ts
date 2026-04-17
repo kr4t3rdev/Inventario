@@ -21,7 +21,7 @@ vi.mock('../../../../../lib/prisma', () => ({
   },
 }))
 
-vi.mock('../../../../../lib/auth-utils', () => ({
+vi.mock('../../../../../lib/auth-middleware', () => ({
   authenticateUser: vi.fn(),
 }))
 
@@ -76,17 +76,17 @@ describe('Restock API - Complete Integration Flow', () => {
     it('should successfully restock without creating new product instance', async () => {
       // Import the mocked modules
       const { prisma } = await import('../../../../../lib/prisma')
-      const { verify_token } = await import('../../../../../lib/auth-utils')
+      const { authenticateUser } = await import('../../../../../lib/auth-middleware')
       const { RestockValidator } = await import('../../../../../lib/restock-validation')
       const { executeProductInstanceCreationWorkflow } = await import('../../../../../lib/restock-utils')
 
       const mockPrisma = prisma as any
-      const mockVerifyToken = verify_token as Mock
+      const mockAuthenticateUser = authenticateUser as Mock
       const mockValidator = RestockValidator as any
       const mockWorkflow = executeProductInstanceCreationWorkflow as Mock
 
       // Setup mocks
-      mockVerifyToken.mockResolvedValue(mockUser)
+      mockAuthenticateUser.mockResolvedValue({ user: mockUser })
       
       mockValidator.validateCompleteRestockOperation.mockResolvedValue({
         success: true,
@@ -171,17 +171,17 @@ describe('Restock API - Complete Integration Flow', () => {
     it('should create new product instance when cost price changes', async () => {
       // Import the mocked modules
       const { prisma } = await import('../../../../../lib/prisma')
-      const { verify_token } = await import('../../../../../lib/auth-utils')
+      const { authenticateUser } = await import('../../../../../lib/auth-middleware')
       const { RestockValidator } = await import('../../../../../lib/restock-validation')
       const { executeProductInstanceCreationWorkflow } = await import('../../../../../lib/restock-utils')
 
       const mockPrisma = prisma as any
-      const mockVerifyToken = verify_token as Mock
+      const mockAuthenticateUser = authenticateUser as Mock
       const mockValidator = RestockValidator as any
       const mockWorkflow = executeProductInstanceCreationWorkflow as Mock
 
       // Setup mocks
-      mockVerifyToken.mockResolvedValue(mockUser)
+      mockAuthenticateUser.mockResolvedValue({ user: mockUser })
       
       mockValidator.validateCompleteRestockOperation.mockResolvedValue({
         success: true,
@@ -310,16 +310,16 @@ describe('Restock API - Complete Integration Flow', () => {
     it('should rollback when product not found', async () => {
       // Import the mocked modules
       const { prisma } = await import('../../../../../lib/prisma')
-      const { verify_token } = await import('../../../../../lib/auth-utils')
+      const { authenticateUser } = await import('../../../../../lib/auth-middleware')
       const { RestockValidator, RestockApiErrorHandler } = await import('../../../../../lib/restock-validation')
 
       const mockPrisma = prisma as any
-      const mockVerifyToken = verify_token as Mock
+      const mockAuthenticateUser = authenticateUser as Mock
       const mockValidator = RestockValidator as any
       const mockErrorHandler = RestockApiErrorHandler as unknown
 
       // Setup mocks
-      mockVerifyToken.mockResolvedValue(mockUser)
+      mockAuthenticateUser.mockResolvedValue({ user: mockUser })
       
       mockValidator.validateCompleteRestockOperation.mockResolvedValue({
         success: true,

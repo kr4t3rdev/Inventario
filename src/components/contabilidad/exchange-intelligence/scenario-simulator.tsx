@@ -60,13 +60,17 @@ const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({ datos_actuales })
         <CardContent className="space-y-6">
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <Label htmlFor="variation-slider">Variación del T/C (%)</Label>
+              <Label id="variation-slider-label" htmlFor="variation-slider">
+                Variación del T/C (%)
+              </Label>
               <Badge variant={exchangeRateVariation > 0 ? 'destructive' : exchangeRateVariation < 0 ? 'default' : 'secondary'}>
                 {exchangeRateVariation > 0 ? '+' : ''}{exchangeRateVariation}%
               </Badge>
             </div>
             <Slider
               id="variation-slider"
+              aria-label="Variación del T/C (%)"
+              aria-labelledby="variation-slider-label"
               min={-20}
               max={20}
               step={0.5}
@@ -83,9 +87,11 @@ const ScenarioSimulator: React.FC<ScenarioSimulatorProps> = ({ datos_actuales })
           <Separator />
 
           <div className="space-y-4">
-            <Label>Entrada Directa</Label>
+            <Label htmlFor="variation-input">Entrada Directa</Label>
             <div className="flex items-center gap-2">
               <Input
+                id="variation-input"
+                aria-label="Entrada Directa"
                 type="number"
                 value={exchangeRateVariation}
                 onChange={(e) => setExchangeRateVariation(parseFloat(e.target.value) || 0)}

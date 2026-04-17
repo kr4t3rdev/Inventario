@@ -22,7 +22,7 @@ vi.mock('../../../../../lib/prisma', () => ({
   }
 }))
 
-vi.mock('../../../../../lib/auth-utils', () => ({
+vi.mock('../../../../../lib/auth-middleware', () => ({
   authenticateUser: vi.fn()
 }))
 
@@ -31,7 +31,7 @@ vi.mock('../../../../../lib/restock-utils', () => ({
 }))
 
 import { prisma } from '../../../../../lib/prisma'
-import { verify_token } from '../../../../../lib/auth-utils'
+import { authenticateUser } from '../../../../../lib/auth-middleware'
 import { executeProductInstanceCreationWorkflow } from '../../../../../lib/restock-utils'
 
 describe('Restock API Error Handling Integration', () => {
@@ -85,7 +85,17 @@ describe('Restock API Error Handling Integration', () => {
 
   describe('Authentication Errors', () => {
     it('should handle missing authentication', async () => {
-      vi.mocked(verify_token).mockResolvedValue(null)
+      vi.mocked(authenticateUser).mockResolvedValue(
+        Response.json(
+          {
+            success: false,
+            error: {
+              code: RestockErrorCode.AUTHENTICATION_FAILED,
+            },
+          },
+          { status: 401 }
+        ) as unknown as never
+      )
 
       const request = createMockRequest({
         productoId: 'prod-123',
@@ -101,7 +111,7 @@ describe('Restock API Error Handling Integration', () => {
     })
 
     it('should handle invalid token', async () => {
-      vi.mocked(verify_token).mockRejectedValue(new Error('Invalid token'))
+      vi.mocked(authenticateUser).mockRejectedValue(new Error('Invalid token'))
 
       const request = createMockRequest({
         productoId: 'prod-123',
@@ -118,7 +128,7 @@ describe('Restock API Error Handling Integration', () => {
 
   describe('Validation Errors', () => {
     beforeEach(() => {
-      vi.mocked(verify_token).mockResolvedValue(mockUser)
+      vi.mocked(authenticateUser).mockResolvedValue({ user: mockUser } as never)
     })
 
     it('should handle invalid quantity', async () => {
@@ -193,7 +203,7 @@ describe('Restock API Error Handling Integration', () => {
         permissions: ['view_products']
       }
 
-      vi.mocked(verify_token).mockResolvedValue(userWithoutPermissions)
+      vi.mocked(authenticateUser).mockResolvedValue({ user: userWithoutPermissions } as never)
 
       const request = createMockRequest({
         productoId: 'prod-123',
@@ -211,7 +221,7 @@ describe('Restock API Error Handling Integration', () => {
 
   describe('Business Logic Errors', () => {
     beforeEach(() => {
-      vi.mocked(verify_token).mockResolvedValue(mockUser)
+      vi.mocked(authenticateUser).mockResolvedValue({ user: mockUser } as never)
     })
 
     it('should handle product not found', async () => {
@@ -293,7 +303,7 @@ describe('Restock API Error Handling Integration', () => {
 
   describe('Database Errors', () => {
     beforeEach(() => {
-      vi.mocked(verify_token).mockResolvedValue(mockUser)
+      vi.mocked(authenticateUser).mockResolvedValue({ user: mockUser } as never)
       vi.mocked(prisma.producto.findUnique).mockResolvedValue(mockProduct)
       vi.mocked(executeProductInstanceCreationWorkflow).mockReturnValue({
         needsNewInstance: false,
@@ -392,7 +402,7 @@ describe('Restock API Error Handling Integration', () => {
 
   describe('Calculation Errors', () => {
     beforeEach(() => {
-      vi.mocked(verify_token).mockResolvedValue(mockUser)
+      vi.mocked(authenticateUser).mockResolvedValue({ user: mockUser } as never)
       vi.mocked(prisma.producto.findUnique).mockResolvedValue(mockProduct)
     })
 
@@ -485,7 +495,7 @@ describe('Restock API Error Handling Integration', () => {
 
   describe('Success Response Format', () => {
     beforeEach(() => {
-      vi.mocked(verify_token).mockResolvedValue(mockUser)
+      vi.mocked(authenticateUser).mockResolvedValue({ user: mockUser } as never)
       vi.mocked(prisma.producto.findUnique).mockResolvedValue(mockProduct)
       vi.mocked(executeProductInstanceCreationWorkflow).mockReturnValue({
         needsNewInstance: false,
@@ -556,7 +566,7 @@ describe('Restock API Error Handling Integration', () => {
 
   describe('Error Response Format Consistency', () => {
     beforeEach(() => {
-      vi.mocked(verify_token).mockResolvedValue(mockUser)
+      vi.mocked(authenticateUser).mockResolvedValue({ user: mockUser } as never)
     })
 
     it('should have consistent error response structure', async () => {
@@ -619,7 +629,7 @@ describe('Restock API Error Handling Integration', () => {
     })
 
     it('should log errors for debugging', async () => {
-      vi.mocked(verify_token).mockRejectedValue(new Error('Auth failed'))
+      vi.mocked(authenticateUser).mockRejectedValue(new Error('Auth failed'))
 
       const request = createMockRequest({
         productoId: 'prod-123',

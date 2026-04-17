@@ -1,3 +1,4 @@
+import * as fc from 'fast-check'
 import { describe, it, expect } from 'vitest'
 import {
   calculateCostoUnitarioReceta,
@@ -5,6 +6,36 @@ import {
   ProductoAgregado,
   ProductoInventario,
 } from '@/lib/utils/produccion'
+
+const moneyArbitrary = fc.double({
+  min: 0,
+  max: 10_000,
+  noNaN: true,
+  noDefaultInfinity: true,
+})
+
+const quantityArbitrary = fc.double({
+  min: 0,
+  max: 500,
+  noNaN: true,
+  noDefaultInfinity: true,
+})
+
+const rendimientoArbitrary = fc.integer({ min: 1, max: 250 })
+
+const productoAgregadoArbitrary = fc.record({
+  productoId: fc.uuid(),
+  cantidad: quantityArbitrary,
+  producto: fc.record({
+    id: fc.uuid(),
+    nombre: fc.string({ minLength: 1, maxLength: 30 }),
+    precioCosto: moneyArbitrary,
+  }),
+}) satisfies fc.Arbitrary<ProductoAgregado>
+
+function roundToTwoDecimals(value: number): number {
+  return Math.round(value * 100) / 100
+}
 
 describe('calculateCostoUnitarioReceta', () => {
   it('calcula correctamente con un producto agregado', () => {
@@ -117,6 +148,89 @@ describe('calculateCostoUnitarioReceta', () => {
     const resultado = calculateCostoUnitarioReceta(50, productosAgregados, 1)
     // (50 + 0) / 1 = 50
     expect(resultado).toBe(50)
+  })
+
+  it('respeta la fórmula exacta para cualquier combinación válida', () => {
+    fc.assert(
+      fc.property(
+        moneyArbitrary,
+        fc.array(productoAgregadoArbitrary, { maxLength: 12 }),
+        rendimientoArbitrary,
+        (precioCostoProductoFinal, productosAgregados, rendimiento) => {
+          const expected = roundToTwoDecimals(
+            (
+              precioCostoProductoFinal +
+              productosAgregados.reduce(
+                (total, producto) => total + producto.cantidad * (producto.producto?.precioCosto ?? 0),
+                0
+              )
+            ) / rendimiento
+          )
+
+          expect(
+            calculateCostoUnitarioReceta(
+              precioCostoProductoFinal,
+              productosAgregados,
+              rendimiento
+            )
+          ).toBe(expected)
+        }
+      ),
+      { numRuns: 100 }
+    )
+  })
+
+  it('es invariante al orden de los productos agregados', () => {
+    fc.assert(
+      fc.property(
+        moneyArbitrary,
+        fc.array(productoAgregadoArbitrary, { maxLength: 12 }),
+        rendimientoArbitrary,
+        (precioCostoProductoFinal, productosAgregados, rendimiento) => {
+          const original = calculateCostoUnitarioReceta(
+            precioCostoProductoFinal,
+            productosAgregados,
+            rendimiento
+          )
+
+          const reversed = calculateCostoUnitarioReceta(
+            precioCostoProductoFinal,
+            [...productosAgregados].reverse(),
+            rendimiento
+          )
+
+          expect(reversed).toBe(original)
+        }
+      ),
+      { numRuns: 100 }
+    )
+  })
+
+  it('no disminuye si aumenta el costo del producto final', () => {
+    fc.assert(
+      fc.property(
+        moneyArbitrary,
+        moneyArbitrary,
+        fc.array(productoAgregadoArbitrary, { maxLength: 12 }),
+        rendimientoArbitrary,
+        (precioBase, incremento, productosAgregados, rendimiento) => {
+          const costoBase = calculateCostoUnitarioReceta(
+            precioBase,
+            productosAgregados,
+            rendimiento
+          )
+
+          const costoIncrementado = calculateCostoUnitarioReceta(
+            precioBase + incremento,
+            productosAgregados,
+            rendimiento
+          )
+
+          expect(costoIncrementado).toBeGreaterThanOrEqual(costoBase)
+        }
+      ),
+      { numRuns: 100 }
+    )
   })
 })
 

@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { withAuth, withAuthGet } from '@/lib/auth-middleware';
 
 const DEFAULT_CURRENCY = 'USD';
+const VALID_CLASSIFICATION_MODES = ['estructura_usuario'] as const;
 const DEFAULT_MONEDA = {
   codigo: 'USD',
   nombre: 'Dolar Americano',
@@ -10,6 +11,17 @@ const DEFAULT_MONEDA = {
   esPrincipal: false,
   isActive: true,
 };
+
+function isValidClassificationMode(
+  modoClasificacion: unknown
+): modoClasificacion is (typeof VALID_CLASSIFICATION_MODES)[number] {
+  return (
+    typeof modoClasificacion === 'string' &&
+    VALID_CLASSIFICATION_MODES.includes(
+      modoClasificacion as (typeof VALID_CLASSIFICATION_MODES)[number]
+    )
+  );
+}
 
 export const GET = withAuthGet(async () => {
   try {
@@ -45,9 +57,20 @@ export const PUT = withAuth(async (request: Request, _context: any, user: any) =
 
     const body = await request.json();
     const monedaId = (body?.monedaId || '').toUpperCase();
+    const modoClasificacion = body?.modoClasificacion;
 
     if (!monedaId) {
       return NextResponse.json({ error: 'monedaId es requerido' }, { status: 400 });
+    }
+
+    if (
+      modoClasificacion !== undefined &&
+      !isValidClassificationMode(modoClasificacion)
+    ) {
+      return NextResponse.json(
+        { error: 'modoClasificacion inválido' },
+        { status: 400 }
+      );
     }
 
     const moneda = await prisma.moneda.findUnique({ where: { codigo: monedaId } });
@@ -61,7 +84,11 @@ export const PUT = withAuth(async (request: Request, _context: any, user: any) =
       create: { id: 1, monedaId },
     });
 
-    return NextResponse.json(config);
+    return NextResponse.json(
+      modoClasificacion !== undefined
+        ? { ...config, modoClasificacion }
+        : config
+    );
   } catch (error) {
     console.error('Error al actualizar config de catálogo reparaciones:', error);
     return NextResponse.json({ error: 'Error al actualizar configuración' }, { status: 500 });

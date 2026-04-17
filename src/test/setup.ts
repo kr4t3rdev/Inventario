@@ -1,3 +1,4 @@
+import React from 'react'
 import { vi } from 'vitest'
 
 // Mock de ResizeObserver para JSDOM
@@ -23,3 +24,29 @@ if (typeof window !== 'undefined') {
     })),
   })
 }
+
+vi.mock('framer-motion', () => ({
+  motion: new Proxy(
+    {},
+    {
+      get: (_, tag: string) => {
+        const Component = ({
+          children,
+          whileHover,
+          whileTap,
+          initial,
+          animate,
+          exit,
+          transition,
+          variants,
+          ...props
+        }: React.HTMLAttributes<HTMLElement> & Record<string, unknown>) =>
+          React.createElement(tag, props, children)
+        Component.displayName = `motion.${tag}`
+        return Component
+      },
+    },
+  ),
+  AnimatePresence: ({ children }: { children: React.ReactNode }) =>
+    React.createElement(React.Fragment, null, children),
+}))

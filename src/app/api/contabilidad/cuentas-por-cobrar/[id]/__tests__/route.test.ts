@@ -5,6 +5,7 @@ import { PATCH } from '../route'
 vi.mock('@/lib/prisma', () => ({
   default: {
     cuentaPorCobrar: {
+      findUnique: vi.fn(),
       update: vi.fn(),
     },
   },
@@ -14,14 +15,22 @@ vi.mock('@/lib/auth-middleware', () => ({
   authenticateUser: vi.fn(),
 }))
 
+vi.mock('@/lib/services/audit-log-service', () => ({
+  AuditLogService: {
+    log: vi.fn().mockResolvedValue(null),
+  },
+}))
+
 describe('Cuentas por Cobrar API - PATCH [id]', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
   it('debe retornar 401 cuando no hay usuario autenticado', async () => {
-    const { verify_token } = await import('@/lib/auth-utils')
-    vi.mocked(verify_token).mockResolvedValue(null)
+    const { authenticateUser } = await import('@/lib/auth-middleware')
+    vi.mocked(authenticateUser).mockResolvedValue(
+      Response.json({ error: 'Unauthorized' }, { status: 401 }) as unknown as never
+    )
 
     const request = new NextRequest('http://localhost/api/contabilidad/cuentas-por-cobrar/cxc-1', {
       method: 'PATCH',
@@ -36,8 +45,8 @@ describe('Cuentas por Cobrar API - PATCH [id]', () => {
   })
 
   it('debe retornar 400 cuando el id no está presente', async () => {
-    const { verify_token } = await import('@/lib/auth-utils')
-    vi.mocked(verify_token).mockResolvedValue({ userId: 'user-123' } as any)
+    const { authenticateUser } = await import('@/lib/auth-middleware')
+    vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-123' } } as never)
 
     const request = new NextRequest('http://localhost/api/contabilidad/cuentas-por-cobrar/', {
       method: 'PATCH',
@@ -52,8 +61,8 @@ describe('Cuentas por Cobrar API - PATCH [id]', () => {
   })
 
   it('debe retornar 400 cuando no se envían campos válidos', async () => {
-    const { verify_token } = await import('@/lib/auth-utils')
-    vi.mocked(verify_token).mockResolvedValue({ userId: 'user-123' } as any)
+    const { authenticateUser } = await import('@/lib/auth-middleware')
+    vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-123' } } as never)
 
     const request = new NextRequest('http://localhost/api/contabilidad/cuentas-por-cobrar/cxc-1', {
       method: 'PATCH',
@@ -68,10 +77,15 @@ describe('Cuentas por Cobrar API - PATCH [id]', () => {
   })
 
   it('debe actualizar una cuenta por cobrar exitosamente', async () => {
-    const { verify_token } = await import('@/lib/auth-utils')
+    const { authenticateUser } = await import('@/lib/auth-middleware')
     const prisma = (await import('@/lib/prisma')).default
 
-    vi.mocked(verify_token).mockResolvedValue({ userId: 'user-123' } as any)
+    vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-123' } } as never)
+    vi.mocked(prisma.cuentaPorCobrar.findUnique).mockResolvedValue({
+      id: 'cxc-1',
+      montoPagado: 0,
+      estado: 'PENDIENTE',
+    } as any)
     vi.mocked(prisma.cuentaPorCobrar.update).mockResolvedValue({
       id: 'cxc-1',
       estado: 'PARCIAL',
@@ -107,10 +121,11 @@ describe('Cuentas por Cobrar API - PATCH [id]', () => {
   })
 
   it('debe retornar 404 cuando la cuenta no existe', async () => {
-    const { verify_token } = await import('@/lib/auth-utils')
+    const { authenticateUser } = await import('@/lib/auth-middleware')
     const prisma = (await import('@/lib/prisma')).default
 
-    vi.mocked(verify_token).mockResolvedValue({ userId: 'user-123' } as any)
+    vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-123' } } as never)
+    vi.mocked(prisma.cuentaPorCobrar.findUnique).mockResolvedValue(null as any)
     vi.mocked(prisma.cuentaPorCobrar.update).mockRejectedValue({ code: 'P2025' })
 
     const request = new NextRequest('http://localhost/api/contabilidad/cuentas-por-cobrar/cxc-x', {

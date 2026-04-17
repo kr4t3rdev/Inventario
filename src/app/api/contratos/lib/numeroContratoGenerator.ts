@@ -7,20 +7,27 @@ const PREFIJOS_BASE: Record<string, string> = {
   SUMINISTROS: 'SUM',
 }
 
+function assertTipoContratoValido(tipo: string): asserts tipo is keyof typeof PREFIJOS_BASE {
+  if (!(tipo in PREFIJOS_BASE)) {
+    throw new Error('Tipo de contrato inválido')
+  }
+}
+
 /**
  * @description Genera el prefijo para un tipo de contrato.
  * Para tipos base usa el prefijo fijo; para tipos custom usa las primeras 3 letras en mayúsculas.
  */
 export function generarPrefijo(tipo: string): string {
-  if (PREFIJOS_BASE[tipo]) return PREFIJOS_BASE[tipo]
-  // Tipos custom: primeras 3 letras sin espacios, en mayúsculas
-  return tipo.replace(/\s+/g, '').substring(0, 3).toUpperCase()
+  assertTipoContratoValido(tipo)
+  return PREFIJOS_BASE[tipo]
 }
 
 /**
  * @description Obtiene el próximo número consecutivo para un tipo de contrato
  */
 export async function generarProximoConsecutivo(tipo: string): Promise<number> {
+  assertTipoContratoValido(tipo)
+
   const ultimoContrato = await prisma.contrato.findFirst({
     where: { tipo },
     orderBy: { numeroConsecutivo: 'desc' },
@@ -45,7 +52,7 @@ export function formatearNumeroContrato(tipo: string, consecutivo: number): stri
  * @description Valida que un número de contrato tenga el formato correcto
  */
 export function validarFormatoNumeroContrato(numeroContrato: string): boolean {
-  const regex = /^[A-Z]{2,4}-\d{4}$/
+  const regex = /^(CV|SER|SUM)-\d{4}$/
   return regex.test(numeroContrato)
 }
 

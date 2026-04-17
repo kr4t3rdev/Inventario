@@ -1,6 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import * as fc from 'fast-check'
-import { ExchangeIntelligenceService } from '../exchange_intelligence_service'
 import { DebtExposureResponse, PaymentEfficiencyResponse } from '@/lib/types/exchange-intelligence'
 
 // Generadores de datos compartidos
@@ -33,6 +32,12 @@ function createMockPrisma() {
     inyeccionCapital: {
       findMany: vi.fn(),
     },
+    moneda: {
+      findFirst: vi.fn(),
+    },
+    reconciliacionGasto: {
+      findMany: vi.fn(),
+    },
     tasaCambio: {
       findMany: vi.fn(),
       findFirst: vi.fn(),
@@ -44,10 +49,10 @@ function createMockPrisma() {
 }
 
 describe('ExchangeIntelligenceService - Debt Exposure Property Tests', () => {
-  let service: ExchangeIntelligenceService
+  let service: InstanceType<typeof import('../exchange_intelligence_service').ExchangeIntelligenceService>
   let mockPrisma: any
 
-  beforeEach(() => {
+  beforeEach(async () => {
     // Crear nuevo mock para cada test
     mockPrisma = createMockPrisma()
     
@@ -55,14 +60,16 @@ describe('ExchangeIntelligenceService - Debt Exposure Property Tests', () => {
     vi.clearAllMocks()
     
     // Mockear Prisma con el nuevo mock
-    vi.doMock('@/generated/prisma', () => ({
-      PrismaClient: vi.fn(() => mockPrisma),
+    vi.doMock('@/lib/prisma', () => ({
+      prisma: mockPrisma,
+      default: mockPrisma,
     }))
     
     // Limpiar cache del módulo para que se use el nuevo mock
     vi.resetModules()
     
     // Recrear el servicio después del mock
+    const { ExchangeIntelligenceService } = await import('../exchange_intelligence_service')
     service = new ExchangeIntelligenceService()
   })
 
@@ -419,10 +426,10 @@ describe('ExchangeIntelligenceService - Debt Exposure Property Tests', () => {
 })
 
 describe('ExchangeIntelligenceService - Payment Efficiency Property Tests', () => {
-  let service: ExchangeIntelligenceService
+  let service: InstanceType<typeof import('../exchange_intelligence_service').ExchangeIntelligenceService>
   let mockPrisma: any
 
-  beforeEach(() => {
+  beforeEach(async () => {
     // Crear nuevo mock para cada test
     mockPrisma = createMockPrisma()
     
@@ -430,14 +437,16 @@ describe('ExchangeIntelligenceService - Payment Efficiency Property Tests', () =
     vi.clearAllMocks()
     
     // Mockear Prisma con el nuevo mock
-    vi.doMock('@/generated/prisma', () => ({
-      PrismaClient: vi.fn(() => mockPrisma),
+    vi.doMock('@/lib/prisma', () => ({
+      prisma: mockPrisma,
+      default: mockPrisma,
     }))
     
     // Limpiar cache del módulo para que se use el nuevo mock
     vi.resetModules()
     
     // Recrear el servicio después del mock
+    const { ExchangeIntelligenceService } = await import('../exchange_intelligence_service')
     service = new ExchangeIntelligenceService()
   })
 

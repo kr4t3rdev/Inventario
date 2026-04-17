@@ -1,5 +1,5 @@
-import { defineConfig } from 'vitest/config'
-import path from 'path'
+import { defineConfig } from 'vitest/config';
+import path from 'path';
 
 export default defineConfig({
   test: {
@@ -10,10 +10,15 @@ export default defineConfig({
       './src/test/jest-dom-setup.ts',
     ],
     exclude: [
-      'node_modules',
+      '**/node_modules/**',
+      '**/.next/**',
+      '**/.kilocode/**',
+      '**/.opencode/**',
       'dist',
       '**/*.spec.ts', // Exclude Playwright E2E tests
       '**/*.spec.tsx',
+      '**/*.live.test.ts',
+      '**/*.live.test.tsx',
     ],
   },
   resolve: {
@@ -21,4 +26,4 @@ export default defineConfig({
       '@': path.resolve(process.cwd(), './src'),
     },
   },
-})
+});
