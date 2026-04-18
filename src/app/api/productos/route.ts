@@ -236,6 +236,7 @@ export const GET = withAuthGet(async (request: NextRequest) => {
     if (search) {
       andConditions.push({
         OR: [
+          { codigoInterno: { contains: search } },
           { nombre: { contains: search } },
           { descripcion: { contains: search } },
           { codigoNegocio: { contains: search } },
@@ -333,6 +334,7 @@ export const POST = withAuthPost(async (req: NextRequest) => {
     const {
       nombre,
       descripcion,
+      codigoInterno,
       proveedorCodigo,
       idSeccionCodigo,
       especificoCodigo,
@@ -363,6 +365,22 @@ export const POST = withAuthPost(async (req: NextRequest) => {
     // Verificar si la empresa usa codificación EAN-13
     const miEmpresa = await prisma.miEmpresa.findFirst({ select: { usaCodigoEan13: true } });
     const usaCodigoEan13 = miEmpresa?.usaCodigoEan13 ?? false;
+    const normalizedCodigoInterno = normalizeCodigoInterno(codigoInterno);
+
+    if (normalizedCodigoInterno && !CODIGO_INTERNO_REGEX.test(normalizedCodigoInterno)) {
+      return jsonError('El código interno debe contener exactamente 11 números', 400);
+    }
+
+    if (normalizedCodigoInterno) {
+      const existingProducto = await prisma.producto.findFirst({
+        where: { codigoInterno: normalizedCodigoInterno },
+        select: { id: true },
+      });
+
+      if (existingProducto) {
+        return jsonError('El código interno ya está asignado a otro producto', 409);
+      }
+    }
 
     // ── Rama SIN EAN-13 ──────────────────────────────────────────────────────
     if (!usaCodigoEan13) {
@@ -377,12 +395,11 @@ export const POST = withAuthPost(async (req: NextRequest) => {
         return jsonError('El stock mínimo debe ser un número entero mayor o igual a 0', 400);
       }
 
-      // codigoInterno no es soportado actualmente
-
       const productoSimple = await prisma.producto.create({
         data: {
           nombre,
           descripcion,
+          codigoInterno: normalizedCodigoInterno,
           codigoNegocio: null,
           proveedorCodigo: null,
           idSeccionCodigo: null,
@@ -461,6 +478,7 @@ export const POST = withAuthPost(async (req: NextRequest) => {
         data: {
           nombre,
           descripcion,
+          codigoInterno: normalizedCodigoInterno,
           codigoNegocio: generatedParentCode.codigoNegocio,
           proveedorCodigo: generatedParentCode.proveedorCodigo,
           idSeccionCodigo: generatedParentCode.idSeccionCodigo,

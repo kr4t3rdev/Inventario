@@ -27,7 +27,6 @@ export interface SurtidoLookupClient {
       where: {
         idSeccionCodigo: string
         especificoCodigo: string
-        deletedAt: null
       }
       select: {
         surtidoCodigo: true
@@ -236,7 +235,6 @@ export async function FindNextAvailableSurtido(
       where: {
         idSeccionCodigo: sectionCode.padStart(2, '0'),
         especificoCodigo: specificCode.padStart(4, '0'),
-        deletedAt: null,
       },
       select: {
         surtidoCodigo: true,

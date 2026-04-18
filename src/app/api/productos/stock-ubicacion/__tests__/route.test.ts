@@ -39,15 +39,21 @@ describe('API /productos/stock-ubicacion', () => {
         id: 'prod-1',
         nombre: 'Producto 1',
         descripcion: null,
+        codigoInterno: '12345678901',
         precioCosto: 100,
         precioVenta: 150,
         stock: 80,
         stockMinimo: 0,
         categoriaId: 'cat-1',
         subcategoriaId: null,
+        unidadId: 'unit-1',
+        vendorId: 'vendor-1',
         almacenId: 'alm-1',
+        fotos: ['foto-1.jpg'],
         categoria: { catId: 'cat-1', nombre: 'Bebidas' },
         subcategoria: null,
+        unidad: { unidadId: 'unit-1', nombre: 'Unidad', simbolo: 'u' },
+        vendor: { vendorId: 'vendor-1', nombre: 'Proveedor Test' },
       },
     ])
     prismaMock.transferencia.findMany.mockResolvedValue([{ productoId: 'prod-1', cantidad: 20 }])
@@ -62,6 +68,11 @@ describe('API /productos/stock-ubicacion', () => {
     expect(response.status).toBe(200)
     expect(data).toHaveLength(1)
     expect(data[0].stockUbicacion).toBe(80)
+    expect(data[0].codigoInterno).toBe('12345678901')
+    expect(data[0].descripcion).toBeNull()
+    expect(data[0].vendor?.nombre).toBe('Proveedor Test')
+    expect(data[0].unidad?.simbolo).toBe('u')
+    expect(data[0].fotos).toEqual(['foto-1.jpg'])
     expect(prismaMock.transferencia.findMany).not.toHaveBeenCalled()
     expect(prismaMock.ventaItem.findMany).not.toHaveBeenCalled()
     expect(prismaMock.venta.findMany).not.toHaveBeenCalled()
@@ -75,15 +86,21 @@ describe('API /productos/stock-ubicacion', () => {
         id: 'prod-2',
         nombre: 'Producto 2',
         descripcion: null,
+        codigoInterno: null,
         precioCosto: 200,
         precioVenta: 300,
         stock: 999,
         stockMinimo: 0,
         categoriaId: 'cat-1',
         subcategoriaId: null,
+        unidadId: null,
+        vendorId: null,
         almacenId: 'alm-1',
+        fotos: [],
         categoria: { catId: 'cat-1', nombre: 'Bebidas' },
         subcategoria: null,
+        unidad: null,
+        vendor: null,
       },
     ])
     prismaMock.transferencia.findMany

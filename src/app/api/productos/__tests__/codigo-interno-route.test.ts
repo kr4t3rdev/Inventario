@@ -6,6 +6,7 @@ const prismaMock = vi.hoisted(() => ({
     findMany: vi.fn(),
     count: vi.fn(),
     findFirst: vi.fn(),
+    findUnique: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
   },
@@ -26,6 +27,9 @@ const prismaMock = vi.hoisted(() => ({
   },
   gastoCompra: {
     create: vi.fn(),
+  },
+  miEmpresa: {
+    findFirst: vi.fn(),
   },
   $transaction: vi.fn(),
 }));
@@ -67,11 +71,25 @@ function buildProductPayload(overrides: Record<string, unknown> = {}): Record<st
 describe('Productos API - código interno', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    prismaMock.miEmpresa.findFirst.mockResolvedValue({ usaCodigoEan13: true });
     prismaMock.transferencia.aggregate.mockResolvedValue({ _sum: { cantidad: 0 } });
     prismaMock.ventaItem.aggregate.mockResolvedValue({ _sum: { cantidad: 0 } });
     prismaMock.venta.aggregate.mockResolvedValue({ _sum: { cantidad: 0 } });
     prismaMock.producto.count.mockResolvedValue(0);
     prismaMock.producto.findFirst.mockResolvedValue(null);
+    prismaMock.producto.findUnique.mockResolvedValue({
+      id: 'prod-1',
+      precioCosto: 100,
+      precioVenta: 150,
+      categoriaId: 'cat-1',
+      subcategoriaId: null,
+      vendorId: 'vendor-1',
+      proveedorCodigo: '01',
+    });
+    prismaMock.producto.update.mockResolvedValue({
+      id: 'prod-1',
+      codigoInterno: null,
+    });
     prismaMock.vendor.findUnique.mockResolvedValue({
       vendorId: 'vendor-1',
       productos: [{ proveedorCodigo: '01' }],
@@ -82,14 +100,10 @@ describe('Productos API - código interno', () => {
     prismaMock.$transaction.mockImplementation(async (callback: any) => {
       const tx = {
         producto: {
-          findMany: vi.fn().mockResolvedValue([]),
-          findFirst: vi.fn().mockResolvedValue(null),
-          create: vi.fn().mockResolvedValue({
-            id: 'prod-1',
-            nombre: 'Producto Test',
-            codigoInterno: '12345678901',
-            codigoNegocio: '0114028100014',
-          }),
+          update: prismaMock.producto.update,
+        },
+        productoCostHistory: {
+          create: vi.fn().mockResolvedValue({ id: 'history-1' }),
         },
       };
 
@@ -175,30 +189,16 @@ describe('Productos API - código interno', () => {
     const { POST } = await import('../route');
 
     let createdPayload: any;
-    prismaMock.$transaction.mockImplementation(async (callback: any) => {
-      const tx = {
-        producto: {
-          findMany: vi.fn().mockResolvedValue([]),
-          findFirst: vi.fn().mockResolvedValue(null),
-          create: vi.fn().mockImplementation(({ data }: any) => {
-            createdPayload = data;
-            return Promise.resolve({
-              id: 'prod-1',
-              nombre: data.nombre,
-              codigoInterno: data.codigoInterno,
-              codigoNegocio: data.codigoNegocio,
-            });
-          }),
-        },
-      };
-
-      return callback(tx);
+    prismaMock.miEmpresa.findFirst.mockResolvedValue({ usaCodigoEan13: false });
+    prismaMock.producto.create.mockImplementation(({ data }: any) => {
+      createdPayload = data;
+      return Promise.resolve({
+        id: 'prod-1',
+        nombre: data.nombre,
+        codigoInterno: data.codigoInterno,
+        codigoNegocio: data.codigoNegocio,
+      });
     });
-
-    prismaMock.categoria.findUnique.mockReset();
-    prismaMock.categoria.findUnique
-      .mockResolvedValueOnce({ catId: 'cat-1', nombre: 'Bebidas' })
-      .mockResolvedValueOnce({ catId: 'sub-1', nombre: 'Cerveza', parentId: 'cat-1' });
 
     const request = new NextRequest('http://localhost/api/productos', {
       method: 'POST',
@@ -217,6 +217,7 @@ describe('Productos API - código interno', () => {
   it('PATCH debe devolver 409 cuando codigoInterno pertenece a otro producto', async () => {
     const { PATCH } = await import('../[id]/route');
 
+    prismaMock.miEmpresa.findFirst.mockResolvedValue({ usaCodigoEan13: false });
     prismaMock.producto.findFirst.mockResolvedValue({ id: 'otro-prod' });
 
     const request = new NextRequest('http://localhost/api/productos/prod-1', {
@@ -235,6 +236,7 @@ describe('Productos API - código interno', () => {
   it('PATCH debe normalizar codigoInterno vacío a null', async () => {
     const { PATCH } = await import('../[id]/route');
 
+    prismaMock.miEmpresa.findFirst.mockResolvedValue({ usaCodigoEan13: false });
     prismaMock.producto.findFirst.mockResolvedValue(null);
     prismaMock.producto.update.mockResolvedValue({
       id: 'prod-1',

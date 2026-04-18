@@ -70,19 +70,26 @@ describe('FindNextAvailableSurtido()', () => {
     expect(result).toBe('0100')
   })
 
-  it('should omit soft-deleted products (deletedAt IS NULL)', async () => {
-    // Mock: query should exclude soft-deleted products
+  it('should not depend on deletedAt because Producto has no soft delete field', async () => {
     mockPrisma.producto.findMany.mockResolvedValue([
       { surtidoCodigo: '0001' },
-      // 0002 is deleted (excluded by WHERE deletedAt IS NULL)
       { surtidoCodigo: '0003' },
     ])
 
     const result = await FindNextAvailableSurtido(mockPrisma, '14', '0285')
     expect(result).toBe('0004')
 
-    // Verify SQL WHERE clause includes deletedAt check
+    // Verify the query only uses fields present in the current Producto schema.
     expect(mockPrisma.producto.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          idSeccionCodigo: '14',
+          especificoCodigo: '0285',
+        }),
+      })
+    )
+
+    expect(mockPrisma.producto.findMany).not.toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
           deletedAt: null,

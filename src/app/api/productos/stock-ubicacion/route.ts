@@ -21,16 +21,22 @@ export async function GET(request: Request) {
       select: {
         id: true,
         nombre: true,
+        descripcion: true,
         codigoInterno: true,
+        fotos: true,
         precioCosto: true,
         precioVenta: true,
         stock: true,
         stockMinimo: true,
         categoriaId: true,
         subcategoriaId: true,
+        unidadId: true,
+        vendorId: true,
         almacenId: true,
         categoria: { select: { catId: true, nombre: true } },
-        subcategoria: { select: { catId: true, nombre: true } },
+        subcategoria: { select: { catId: true, nombre: true, parentId: true } },
+        unidad: { select: { unidadId: true, nombre: true, simbolo: true } },
+        vendor: { select: { vendorId: true, nombre: true } },
       },
     })
 

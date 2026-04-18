@@ -14,13 +14,16 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiSlice } from "@/lib/redux/services/apiSlice";
+import { useGetCategoriasQuery } from "@/lib/redux/services/categoriasApi";
 import { useCategoryForm } from "@/hooks/use-category-form";
 import { ClasificadorInfoNote } from "@/components/productos/clasificador-info-note";
 import { getAuthToken } from "@/lib/token";
+import type { Categoria } from "@/app/models/model";
 import {
   CLASClassifierData,
   getSpecificsForSection,
   parseClasClassifierMarkdown,
+  validateCLASSection,
 } from "@/lib/clas-classifier";
 
 interface SubcategoryFormProps {
@@ -31,6 +34,68 @@ interface SubcategoryFormProps {
     parentId?: string | null;
   };
   onSuccess?: () => void;
+}
+
+interface AvailableClasSection {
+  sectionId: string;
+  sectionName: string;
+  parentCategoryId: string;
+  parentCategoryName: string;
+}
+
+/**
+ * @description Deriva las secciones CLAS que ya tienen una categoría raíz creada.
+ * @param {Categoria[]} categories - Categorías disponibles en el sistema.
+ * @param {CLASClassifierData | null} classifier - Clasificador CLAS cargado.
+ * @returns {AvailableClasSection[]} Secciones válidas para crear subcategorías.
+ */
+export function buildAvailableClasSections(
+  categories: Categoria[],
+  classifier: CLASClassifierData | null
+): AvailableClasSection[] {
+  if (!classifier) {
+    return [];
+  }
+
+  const sectionsById = new Map<string, AvailableClasSection>();
+
+  categories
+    .filter((category) => !category.parentId)
+    .forEach((category) => {
+      const sectionId = validateCLASSection(category.nombre);
+      if (!sectionId || sectionsById.has(sectionId)) {
+        return;
+      }
+
+      const sectionName = classifier.sectionNameById[sectionId];
+      if (!sectionName) {
+        return;
+      }
+
+      sectionsById.set(sectionId, {
+        sectionId,
+        sectionName,
+        parentCategoryId: category.catId,
+        parentCategoryName: category.nombre,
+      });
+    });
+
+  return Array.from(sectionsById.values()).sort((left, right) =>
+    left.sectionName.localeCompare(right.sectionName)
+  );
+}
+
+/**
+ * @description Resuelve la categoría padre real asociada a una sección CLAS seleccionada.
+ * @param {AvailableClasSection[]} availableSections - Secciones CLAS disponibles en el form.
+ * @param {string} sectionId - Sección seleccionada.
+ * @returns {string | null} Id de la categoría padre creada o null si no existe.
+ */
+export function resolveClasParentCategoryId(
+  availableSections: AvailableClasSection[],
+  sectionId: string
+): string | null {
+  return availableSections.find((section) => section.sectionId === sectionId)?.parentCategoryId ?? null;
 }
 
 /**
@@ -48,9 +113,15 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
   const [selectedSection, setSelectedSection] = useState('');
   const [selectedSpecific, setSelectedSpecific] = useState('');
 
-  const clasSections = useMemo(() => {
-    return clasClassifierData?.sections ?? [];
-  }, [clasClassifierData]);
+  const {
+    data: categories = [],
+    isLoading: isLoadingCategories,
+    error: categoriesError,
+  } = useGetCategoriasQuery();
+
+  const availableSections = useMemo(() => {
+    return buildAvailableClasSections(categories, clasClassifierData);
+  }, [categories, clasClassifierData]);
 
   const availableSpecifics = useMemo(() => {
     if (!clasClassifierData || !selectedSection) {
@@ -61,12 +132,8 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
   }, [clasClassifierData, selectedSection]);
 
   const selectedSectionName = useMemo(() => {
-    if (!clasClassifierData || !selectedSection) {
-      return '';
-    }
-
-    return clasClassifierData.sectionNameById[selectedSection] ?? '';
-  }, [clasClassifierData, selectedSection]);
+    return availableSections.find((section) => section.sectionId === selectedSection)?.sectionName ?? '';
+  }, [availableSections, selectedSection]);
 
   const selectedSpecificName = useMemo(() => {
     if (!clasClassifierData || !selectedSpecific) {
@@ -151,38 +218,42 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
   }, [usaEan13]);
 
   useEffect(() => {
-    if (usaEan13 !== true || !clasClassifierData || !initialData?.nombre) {
+    if (
+      usaEan13 !== true ||
+      !clasClassifierData ||
+      !initialData?.nombre ||
+      categories.length === 0
+    ) {
       return;
     }
 
     const normalizedName = initialData.nombre.trim().toUpperCase();
-    const sectionMatch = clasClassifierData.sections.find(
-      (section) => section.name.trim().toUpperCase() === normalizedName
-    );
-
-    if (sectionMatch) {
-      setSelectedSection(sectionMatch.id);
-      setSelectedSpecific('');
-      form.setValue('clasSectionId', sectionMatch.id);
-      form.setValue('clasSpecificId', null);
-      form.setValue('nombre', sectionMatch.name);
-      return;
-    }
-
     const specificMatch = clasClassifierData.specifics.find(
       (specific) => specific.name.trim().toUpperCase() === normalizedName
     );
 
     if (specificMatch) {
-      setSelectedSection(specificMatch.sectionId);
+      const parentSectionId = categories
+        .filter((category) => category.catId === initialData.parentId)
+        .map((category) => validateCLASSection(category.nombre))
+        .find((sectionId): sectionId is string => Boolean(sectionId));
+
+      const resolvedSectionId = parentSectionId ?? specificMatch.sectionId;
+
+      setSelectedSection(resolvedSectionId);
       setSelectedSpecific(specificMatch.id);
-      form.setValue('clasSectionId', specificMatch.sectionId);
+      form.setValue('clasSectionId', resolvedSectionId);
       form.setValue('clasSpecificId', specificMatch.id);
+      form.setValue('parentId', initialData.parentId ?? null);
       form.setValue('nombre', specificMatch.name);
     }
-  }, [usaEan13, clasClassifierData, form, initialData?.nombre]);
+  }, [usaEan13, categories, clasClassifierData, form, initialData?.nombre, initialData?.parentId]);
 
   const isLoading = isSubmitting || isValidating;
+  const showMissingSectionsMessage =
+    !isLoadingCategories &&
+    !categoriesError &&
+    availableSections.length === 0;
 
   if (usaEan13 === null || isClassifierLoading) {
     return (
@@ -337,30 +408,39 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
                   <Select
                     value={selectedSection}
                     onValueChange={(val) => {
+                      const parentCategoryId = resolveClasParentCategoryId(availableSections, val);
                       setSelectedSection(val);
                       setSelectedSpecific('');
-                      const sectionName = clasClassifierData?.sectionNameById[val] ?? '';
-                      if (sectionName) {
-                        form.setValue('nombre', sectionName);
+                      if (parentCategoryId) {
+                        form.setValue('nombre', '');
                         form.setValue('clasSectionId', val);
                         form.setValue('clasSpecificId', null);
-                        form.setValue('parentId', 'none');
+                        form.setValue('parentId', parentCategoryId);
                       }
                     }}
-                    disabled={isLoading}
+                    disabled={isLoading || isLoadingCategories || showMissingSectionsMessage}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Seleccione una sección" />
                     </SelectTrigger>
                     <SelectContent>
-                      {clasSections.map((section) => (
-                        <SelectItem key={section.id} value={section.id}>
-                          {section.name}
+                      {availableSections.map((section) => (
+                        <SelectItem key={section.sectionId} value={section.sectionId}>
+                          {section.sectionName}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  <FormDescription>Selecciona la sección oficial del clasificador CLAS.</FormDescription>
+                  <FormDescription>
+                    {showMissingSectionsMessage
+                      ? 'Debe crear secciones o categorias para despues elegir las subcategorias correspondientes'
+                      : 'Selecciona la sección oficial del clasificador CLAS que ya existe como categoría.'}
+                  </FormDescription>
+                  {categoriesError && (
+                    <p className="text-sm text-destructive">
+                      Error al cargar las categorías disponibles.
+                    </p>
+                  )}
                 </FormItem>
               </motion.div>
 
@@ -374,14 +454,15 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
                   <Select
                     value={selectedSpecific}
                     onValueChange={(val) => {
+                      const parentCategoryId = resolveClasParentCategoryId(availableSections, selectedSection);
                       setSelectedSpecific(val);
                       const specific = availableSpecifics.find((sp) => sp.id === val);
-                      if (specific) {
+                      if (specific && parentCategoryId) {
                         setSelectedSection(specific.sectionId);
                         form.setValue('nombre', specific.name);
                         form.setValue('clasSectionId', specific.sectionId);
                         form.setValue('clasSpecificId', val);
-                        form.setValue('parentId', 'none');
+                        form.setValue('parentId', parentCategoryId);
                       }
                     }}
                     disabled={isLoading || !selectedSection}
