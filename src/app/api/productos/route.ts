@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { withAuthGet, withAuthPost } from '@/lib/auth-middleware';
+import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import {
   FindNextAvailableSurtido,
   ValidateAssembledCode,
@@ -427,6 +428,16 @@ export const POST = withAuthPost(async (req: NextRequest) => {
         },
       });
 
+      if (stock > 0) {
+        await upsertStockUbicacion(prisma as any, {
+          productoId: productoSimple.id,
+          tipoUbicacion: 'almacen',
+          ubicacionId: almacenId,
+          modo: 'set',
+          valor: stock,
+        });
+      }
+
       return NextResponse.json({ producto: productoSimple }, { status: 201 });
     }
 
@@ -505,6 +516,16 @@ export const POST = withAuthPost(async (req: NextRequest) => {
             : undefined,
         },
       });
+
+      if (stock > 0) {
+        await upsertStockUbicacion(tx, {
+          productoId: producto.id,
+          tipoUbicacion: 'almacen',
+          ubicacionId: almacenId,
+          modo: 'set',
+          valor: stock,
+        });
+      }
 
       return { producto };
     });
