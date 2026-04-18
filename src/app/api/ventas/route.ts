@@ -7,6 +7,7 @@ import {
   reconciliarVentaDirecta
 } from "@/lib/services/facturacion-ventas-workflow"
 import { executeAnticipo, isAnticipoWorkflowError } from "@/lib/services/anticipos-workflow"
+import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service'
 
 // Function to invalidate dashboard cache after creating sales
 async function invalidateDashboardCache() {
@@ -595,6 +596,17 @@ async function crearVentaUnica(body: any, user: any) {
       )
     }
 
+    // Descontar stock del punto de venta para cada item
+    for (const item of productosConPrecio) {
+      await upsertStockUbicacion(tx, {
+        productoId: item.productoId,
+        tipoUbicacion: 'punto_venta',
+        ubicacionId: puntoDeVentaId,
+        modo: 'increment',
+        delta: -item.cantidad,
+      })
+    }
+
     // Sync stock padre para items que son hijos de un producto compuesto
     for (const item of productosConPrecio) {
       if (item.productoPadreId && item.cantidadEnPack && item.cantidadEnPack > 0) {
@@ -604,6 +616,20 @@ async function crearVentaUnica(body: any, user: any) {
             where: { id: item.productoPadreId },
             data: { stock: { decrement: parentDecrement } },
           })
+          // También decrementar StockUbicacion del almacén del padre
+          const productoPadre = await tx.producto.findUnique({
+            where: { id: item.productoPadreId },
+            select: { almacenId: true },
+          })
+          if (productoPadre) {
+            await upsertStockUbicacion(tx, {
+              productoId: item.productoPadreId,
+              tipoUbicacion: 'almacen',
+              ubicacionId: productoPadre.almacenId,
+              modo: 'increment',
+              delta: -parentDecrement,
+            })
+          }
         }
       }
     }
@@ -824,6 +850,15 @@ async function crearVentaIndividual(body: any, user: any) {
       )
     }
 
+    // Descontar stock del punto de venta
+    await upsertStockUbicacion(tx, {
+      productoId: producto.id,
+      tipoUbicacion: 'punto_venta',
+      ubicacionId: puntoDeVentaId,
+      modo: 'increment',
+      delta: -cantidad,
+    })
+
     // Sync stock padre si el producto vendido es un hijo
     if (producto.productoPadreId && producto.cantidadEnPack && producto.cantidadEnPack > 0) {
       const parentDecrement = Math.floor(cantidad / producto.cantidadEnPack)
@@ -832,6 +867,20 @@ async function crearVentaIndividual(body: any, user: any) {
           where: { id: producto.productoPadreId },
           data: { stock: { decrement: parentDecrement } },
         })
+        // También decrementar StockUbicacion del almacén del padre
+        const productoPadre = await tx.producto.findUnique({
+          where: { id: producto.productoPadreId },
+          select: { almacenId: true },
+        })
+        if (productoPadre) {
+          await upsertStockUbicacion(tx, {
+            productoId: producto.productoPadreId,
+            tipoUbicacion: 'almacen',
+            ubicacionId: productoPadre.almacenId,
+            modo: 'increment',
+            delta: -parentDecrement,
+          })
+        }
       }
     }
 
