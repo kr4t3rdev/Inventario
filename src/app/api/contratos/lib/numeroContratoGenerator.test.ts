@@ -75,6 +75,11 @@ describe('numeroContratoGenerator', () => {
       expect(resultado).toBe('SUM-0157')
     })
 
+    it('debería formatear tipos personalizados usando sus primeras tres letras', () => {
+      const resultado = formatearNumeroContrato('Mantenimiento', 1)
+      expect(resultado).toBe('MAN-0001')
+    })
+
     it('debería rellenar con ceros a la izquierda', () => {
       expect(formatearNumeroContrato('COMPRA_VENTA', 1)).toBe('CV-0001')
       expect(formatearNumeroContrato('COMPRA_VENTA', 10)).toBe('CV-0010')
@@ -83,10 +88,8 @@ describe('numeroContratoGenerator', () => {
       expect(formatearNumeroContrato('COMPRA_VENTA', 9999)).toBe('CV-9999')
     })
 
-    it('debería lanzar error para tipo inválido', () => {
-      expect(() => {
-        formatearNumeroContrato('TIPO_INEXISTENTE' as any, 1)
-      }).toThrow('Tipo de contrato inválido')
+    it('debería formatear tipos arbitrarios sin romper el consecutivo', () => {
+      expect(formatearNumeroContrato('TIPO_INEXISTENTE', 1)).toBe('TIP-0001')
     })
   })
 

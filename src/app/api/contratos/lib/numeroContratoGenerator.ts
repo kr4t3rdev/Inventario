@@ -18,16 +18,20 @@ function assertTipoContratoValido(tipo: string): asserts tipo is keyof typeof PR
  * Para tipos base usa el prefijo fijo; para tipos custom usa las primeras 3 letras en mayúsculas.
  */
 export function generarPrefijo(tipo: string): string {
-  assertTipoContratoValido(tipo)
-  return PREFIJOS_BASE[tipo]
+  if (tipo in PREFIJOS_BASE) {
+    return PREFIJOS_BASE[tipo]
+  }
+
+  return tipo
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .slice(0, 3)
+    .toUpperCase()
 }
 
 /**
  * @description Obtiene el próximo número consecutivo para un tipo de contrato
  */
 export async function generarProximoConsecutivo(tipo: string): Promise<number> {
-  assertTipoContratoValido(tipo)
-
   const ultimoContrato = await prisma.contrato.findFirst({
     where: { tipo },
     orderBy: { numeroConsecutivo: 'desc' },

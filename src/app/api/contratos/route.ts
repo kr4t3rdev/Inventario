@@ -21,29 +21,12 @@ const contratoSchema = z
     vendorId: z.string().nullable().optional(),
   })
   .refine(
-    (data) => {
-      // Solo los tipos base tienen restricciones de cliente/vendor
-      if (data.tipo === 'COMPRA_VENTA' || data.tipo === 'SERVICIO') {
-        if (!data.clienteId) return false;
-      }
-      if (data.tipo === 'SUMINISTROS') {
-        if (!data.vendorId) return false;
-      }
-      return true;
-    },
-    (data) => {
-      if (data.tipo === 'SUMINISTROS') {
-        return {
-          message: 'El campo Proveedor es requerido para contratos de tipo SUMINISTROS',
-          path: ['vendorId'],
-        };
-      }
-      return {
-        message: 'El campo Cliente es requerido para contratos de tipo COMPRA_VENTA o SERVICIO',
-        path: ['clienteId'],
-      };
+    (data) => Boolean(data.clienteId) !== Boolean(data.vendorId),
+    {
+      message: 'Debes seleccionar solo un cliente o un proveedor',
+      path: ['clienteId'],
     }
-  );
+  )
 
 export async function GET(request: NextRequest) {
   try {

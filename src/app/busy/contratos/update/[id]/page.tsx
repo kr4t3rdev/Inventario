@@ -12,7 +12,7 @@ import { Label } from "@/components/ui/label"
 import { getAuthToken } from "@/lib/token"
 import { motion, AnimatePresence } from "framer-motion"
 import { FileText, Sparkles, ArrowLeft, Loader2, Receipt, Building2, UserCircle, Calendar } from "lucide-react"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -43,6 +43,7 @@ export default function UpdateContratoPage() {
     observaciones: '',
     numeroContrato: '',
   })
+  const [partyType, setPartyType] = useState<'cliente' | 'proveedor' | ''>('')
 
   useEffect(() => {
     if (id) {
@@ -58,6 +59,18 @@ export default function UpdateContratoPage() {
       .then(data => setTiposCustom(data.data || []))
       .catch(() => {})
   }, [])
+
+  const selectedCliente = clientes?.find((cliente) => cliente.clienteId === formData.clienteId)
+  const selectedVendor = vendors?.find((vendor) => vendor.vendorId === formData.vendorId)
+
+  const handlePartyTypeChange = (value: 'cliente' | 'proveedor') => {
+    setPartyType(value)
+    setFormData((prev) => ({
+      ...prev,
+      clienteId: value === 'cliente' ? prev.clienteId : '',
+      vendorId: value === 'proveedor' ? prev.vendorId : '',
+    }))
+  }
 
   const fetchContrato = async (contratoId: string) => {
     setIsFetching(true)
@@ -87,6 +100,7 @@ export default function UpdateContratoPage() {
         observaciones: data.observaciones || '',
         numeroContrato: data.numeroContrato || '',
       })
+      setPartyType(data.clienteId ? 'cliente' : data.vendorId ? 'proveedor' : '')
     } catch (error) {
       console.error('Error:', error)
       toast.error('No se pudo cargar la información del contrato')
@@ -104,16 +118,9 @@ export default function UpdateContratoPage() {
       return
     }
 
-    if (formData.tipo === 'COMPRA_VENTA' || formData.tipo === 'SERVICIO') {
-      if (!formData.clienteId) {
-        toast.error('El cliente es requerido para contratos de tipo ' + formData.tipo)
-        return
-      }
-    } else if (formData.tipo === 'SUMINISTROS') {
-      if (!formData.vendorId) {
-        toast.error('El proveedor es requerido para contratos de tipo SUMINISTROS')
-        return
-      }
+    if (!formData.clienteId && !formData.vendorId) {
+      toast.error('Debes seleccionar solo un cliente o un proveedor')
+      return
     }
 
     setIsLoading(true)
@@ -157,8 +164,6 @@ export default function UpdateContratoPage() {
     setFormData(prev => ({
       ...prev,
       tipo: value,
-      clienteId: value === 'SUMINISTROS' ? '' : prev.clienteId,
-      vendorId: value !== 'SUMINISTROS' ? '' : prev.vendorId,
     }))
   }
 
@@ -288,90 +293,132 @@ export default function UpdateContratoPage() {
                   </Select>
                 </motion.div>
 
-                {/* Cliente o Proveedor */}
-                <AnimatePresence mode="wait">
-                  {(formData.tipo === 'COMPRA_VENTA' || formData.tipo === 'SERVICIO') && (
-                    <motion.div
-                      key="cliente"
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <label className="flex items-center gap-2 text-sm font-medium mb-2">
-                        <UserCircle className="h-4 w-4 text-muted-foreground" />
-                        Cliente
-                      </label>
-                      <Select
-                        value={formData.clienteId}
-                        onValueChange={(val) => setFormData(prev => ({ ...prev, clienteId: val }))}
-                        disabled={isLoadingClientes}
+                {/* Parte relacionada del contrato */}
+                <Card className="border-dashed bg-card/80">
+                  <CardHeader className="pb-4">
+                    <CardTitle className="flex items-center gap-2 text-base">
+                      <UserCircle className="h-4 w-4 text-primary" />
+                      Parte relacionada del contrato
+                    </CardTitle>
+                    <CardDescription>
+                      Selecciona solo una parte relacionada: cliente o proveedor.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="mb-3 text-xs text-muted-foreground">
+                      Solo puedes elegir un lado del contrato.
+                    </p>
+                    <div className="mb-4">
+                      <Label className="text-sm font-medium mb-2 block">Selecciona el lado del contrato</Label>
+                      <RadioGroup
+                        value={partyType}
+                        onValueChange={(value) => handlePartyTypeChange(value as 'cliente' | 'proveedor')}
+                        className="flex flex-row gap-6"
                       >
-                        <SelectTrigger className="transition-all duration-200 focus:scale-[1.01]">
-                          <SelectValue placeholder="Seleccione un cliente" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {clientes?.map(cliente => (
-                            <SelectItem key={cliente.clienteId} value={cliente.clienteId}>
-                              {cliente.nombre}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {isLoadingClientes && (
-                        <motion.p 
-                          className="text-xs text-muted-foreground mt-1 flex items-center gap-1"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="cliente" id="edit-party-cliente" />
+                          <Label htmlFor="edit-party-cliente" className="cursor-pointer font-normal">Cliente</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="proveedor" id="edit-party-proveedor" />
+                          <Label htmlFor="edit-party-proveedor" className="cursor-pointer font-normal">Proveedor</Label>
+                        </div>
+                      </RadioGroup>
+                    </div>
+                    <AnimatePresence mode="wait">
+                      {partyType === 'cliente' && (
+                        <motion.div
+                          key="cliente"
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.3 }}
                         >
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                          Cargando clientes...
-                        </motion.p>
+                          <label className="flex items-center gap-2 text-sm font-medium mb-2">
+                            <UserCircle className="h-4 w-4 text-muted-foreground" />
+                            Cliente
+                          </label>
+                          <Select
+                            value={formData.clienteId}
+                            onValueChange={(val) => setFormData(prev => ({ ...prev, clienteId: val }))}
+                            disabled={isLoadingClientes}
+                          >
+                            <SelectTrigger className="transition-all duration-200 focus:scale-[1.01]">
+                              <SelectValue placeholder="Seleccione un cliente" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {clientes?.map(cliente => (
+                                <SelectItem key={cliente.clienteId} value={cliente.clienteId}>
+                                  {cliente.nombre}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {isLoadingClientes && (
+                            <motion.p 
+                              className="text-xs text-muted-foreground mt-1 flex items-center gap-1"
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                            >
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                              Cargando clientes...
+                            </motion.p>
+                          )}
+                        </motion.div>
                       )}
-                    </motion.div>
-                  )}
 
-                  {formData.tipo === 'SUMINISTROS' && (
-                    <motion.div
-                      key="proveedor"
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      <label className="flex items-center gap-2 text-sm font-medium mb-2">
-                        <Building2 className="h-4 w-4 text-muted-foreground" />
-                        Proveedor
-                      </label>
-                      <Select
-                        value={formData.vendorId}
-                        onValueChange={(val) => setFormData(prev => ({ ...prev, vendorId: val }))}
-                        disabled={isLoadingVendors}
-                      >
-                        <SelectTrigger className="transition-all duration-200 focus:scale-[1.01]">
-                          <SelectValue placeholder="Seleccione un proveedor" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {vendors?.map(vendor => (
-                            <SelectItem key={vendor.vendorId} value={vendor.vendorId}>
-                              {vendor.nombre}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {isLoadingVendors && (
-                        <motion.p 
-                          className="text-xs text-muted-foreground mt-1 flex items-center gap-1"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
+                      {partyType === 'proveedor' && (
+                        <motion.div
+                          key="proveedor"
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.3 }}
                         >
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                          Cargando proveedores...
-                        </motion.p>
+                          <label className="flex items-center gap-2 text-sm font-medium mb-2">
+                            <Building2 className="h-4 w-4 text-muted-foreground" />
+                            Proveedor
+                          </label>
+                          <Select
+                            value={formData.vendorId}
+                            onValueChange={(val) => setFormData(prev => ({ ...prev, vendorId: val }))}
+                            disabled={isLoadingVendors}
+                          >
+                            <SelectTrigger className="transition-all duration-200 focus:scale-[1.01]">
+                              <SelectValue placeholder="Seleccione un proveedor" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {vendors?.map(vendor => (
+                                <SelectItem key={vendor.vendorId} value={vendor.vendorId}>
+                                  {vendor.nombre}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {isLoadingVendors && (
+                            <motion.p 
+                              className="text-xs text-muted-foreground mt-1 flex items-center gap-1"
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                            >
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                              Cargando proveedores...
+                            </motion.p>
+                          )}
+                        </motion.div>
                       )}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                    </AnimatePresence>
+
+                    <div className="mt-4 rounded-lg border bg-muted/30 p-3 text-sm">
+                      <p className="text-muted-foreground text-xs uppercase tracking-wide">Parte seleccionada</p>
+                      <p className="font-medium">
+                        {partyType === 'cliente' && (selectedCliente?.nombre || 'Sin seleccionar')}
+                        {partyType === 'proveedor' && (selectedVendor?.nombre || 'Sin seleccionar')}
+                        {!partyType && 'Sin seleccionar'}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
 
                 {/* Número de Contrato del Cliente/Proveedor */}
                 <motion.div

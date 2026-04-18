@@ -3,7 +3,7 @@
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { DataTable } from "@/components/data-table"
 import { Button } from "@/components/ui/button"
-import { Plus, Filter, Trash2, CheckCircle, XCircle, ChevronDown, AlertTriangle, Clock, Calendar, FileText, Sparkles, Loader2 } from "lucide-react"
+import { Plus, Filter, Trash2, CheckCircle, XCircle, ChevronDown, AlertTriangle, Clock, Calendar, FileText, Sparkles, Loader2, Settings } from "lucide-react"
 import Link from "next/link"
 import { ColumnDef } from "@tanstack/react-table"
 import { ArrowUp, Pencil } from "lucide-react"
@@ -25,7 +25,6 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { motion, AnimatePresence } from "framer-motion"
 import { Card, CardContent } from "@/components/ui/card"
-import { TiposContratosForm } from "@/components/contratos/tipos-contratos-form"
 
 interface Contrato {
   contratoId: string
@@ -498,6 +497,12 @@ export default function ContratosPage() {
               </motion.div>
               
               <div className="flex gap-2">
+                <Button variant="outline" asChild>
+                  <Link href="/busy/configuracion/contratos">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Tipos de contrato
+                  </Link>
+                </Button>
                 <AnimatePresence>
                   {Object.keys(rowSelection).length > 0 && (
                     <motion.div
@@ -532,7 +537,6 @@ export default function ContratosPage() {
                     </motion.div>
                   )}
                 </AnimatePresence>
-                <TiposContratosForm />
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   <Button asChild className="bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90">
                     <Link href="/busy/contratos/new">

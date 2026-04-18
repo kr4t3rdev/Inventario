@@ -43,7 +43,7 @@ interface Version {
   versionId: string
   numeroVersion: number
   cambios: string
-  fechaCreacion: string
+  createdAt: string
   creadoPor: string
 }
 
@@ -123,7 +123,13 @@ export default function ContratoDetailPage() {
       }
       
       const data = await response.json()
-      setContrato(data)
+      setContrato({
+        ...data,
+        versiones: (data.versiones || []).map((version: Version & { fechaCreacion?: string }) => ({
+          ...version,
+          createdAt: version.createdAt || version.fechaCreacion || '',
+        })),
+      })
     } catch (error) {
       console.error('Error:', error)
       toast.error('No se pudo cargar la información del contrato')
@@ -344,7 +350,7 @@ export default function ContratoDetailPage() {
                               <div className="flex-1">
                                 <div className="flex justify-between items-start">
                                   <p className="font-medium text-sm">Modificado por {version.creadoPor}</p>
-                                  <span className="text-xs text-muted-foreground">{formatDate(version.fechaCreacion)}</span>
+                                  <span className="text-xs text-muted-foreground">{formatDate(version.createdAt)}</span>
                                 </div>
                                 <p className="text-sm text-muted-foreground mt-1">{version.cambios || 'Sin descripción de cambios'}</p>
                               </div>
