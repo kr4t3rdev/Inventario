@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "../../../../lib/prisma"
 import { authenticateUser } from "@/lib/auth-middleware"
+import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service'
 
 import {
   RestockValidator,
@@ -374,6 +375,13 @@ export async function POST(request: NextRequest) {
               almacen: true
             }
           })
+          await upsertStockUbicacion(tx, {
+            productoId,
+            tipoUbicacion: 'almacen',
+            ubicacionId: producto!.almacenId,
+            modo: 'set',
+            valor: workflowResult.originalProductUpdate.newStock,
+          })
         } else {
           updatedProducto = await tx.producto.update({
             where: { id: productoId },
@@ -386,6 +394,13 @@ export async function POST(request: NextRequest) {
               vendor: true,
               almacen: true
             }
+          })
+          await upsertStockUbicacion(tx, {
+            productoId,
+            tipoUbicacion: 'almacen',
+            ubicacionId: producto!.almacenId,
+            modo: 'set',
+            valor: workflowResult.originalProductUpdate.newStock,
           })
         }
 
