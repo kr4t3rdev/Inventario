@@ -64,6 +64,11 @@ export type PuntoDeVenta = $Result.DefaultSelection<Prisma.$PuntoDeVentaPayload>
  */
 export type Producto = $Result.DefaultSelection<Prisma.$ProductoPayload>
 /**
+ * Model StockUbicacion
+ * 
+ */
+export type StockUbicacion = $Result.DefaultSelection<Prisma.$StockUbicacionPayload>
+/**
  * Model Venta
  * 
  */
@@ -908,6 +913,16 @@ export class PrismaClient<
     * ```
     */
   get producto(): Prisma.ProductoDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.stockUbicacion`: Exposes CRUD operations for the **StockUbicacion** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more StockUbicacions
+    * const stockUbicacions = await prisma.stockUbicacion.findMany()
+    * ```
+    */
+  get stockUbicacion(): Prisma.StockUbicacionDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.venta`: Exposes CRUD operations for the **Venta** model.
@@ -2129,6 +2144,7 @@ export namespace Prisma {
     Almacen: 'Almacen',
     PuntoDeVenta: 'PuntoDeVenta',
     Producto: 'Producto',
+    StockUbicacion: 'StockUbicacion',
     Venta: 'Venta',
     VentaItem: 'VentaItem',
     Merma: 'Merma',
@@ -2224,7 +2240,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "categoria" | "unidad" | "vendor" | "inyeccionCapital" | "pagoDeuda" | "cliente" | "miEmpresa" | "almacen" | "puntoDeVenta" | "producto" | "venta" | "ventaItem" | "merma" | "transferencia" | "user" | "plan" | "licencia" | "licenciaAudit" | "notification" | "userActivityLog" | "userSession" | "attendance" | "employeeWorkSchedule" | "vacationRequest" | "vacationAccrual" | "empleado" | "pagosalario" | "cierreContable" | "gastoCompra" | "compraProducto" | "servicios" | "ventaServicios" | "gastoConcepto" | "gastoElemento" | "gastosDE" | "moneda" | "catalogoReparacionConfig" | "tasaCambio" | "transaccionMoneda" | "cuentaBancaria" | "tipoPago" | "reconciliacionVenta" | "reconciliacionServicio" | "reconciliacionGasto" | "ajusteBancario" | "transferenciaBancaria" | "alertHistory" | "auditLog" | "reportHistory" | "scheduledReport" | "scenarioSimulation" | "contrato" | "contratoVersion" | "contratoFirma" | "contratoAprobacion" | "contratoArchivo" | "contratoAlerta" | "tipoContratoCustom" | "factura" | "serieFacturacion" | "oferta" | "ofertaItem" | "cuentaPorCobrar" | "cuentaPorPagar" | "deudaCash" | "prestamoCash" | "pagoCuentaPorPagar" | "equipoReparacion" | "piezaReparacion" | "ordenReparacion" | "ordenReparacionEquipo" | "ordenReparacionItem" | "ordenReparacionMaterial" | "defectacionCatalogo" | "configuracionSistema" | "ordenProduccion" | "ordenProduccionHistorial" | "receta" | "recetaIngrediente" | "valeSalida" | "valeSalidaItem" | "listaPrecio" | "precioProducto" | "productoCostHistory" | "vendorCodeSequence" | "anticipo" | "anticipoMovimiento"
+      modelProps: "categoria" | "unidad" | "vendor" | "inyeccionCapital" | "pagoDeuda" | "cliente" | "miEmpresa" | "almacen" | "puntoDeVenta" | "producto" | "stockUbicacion" | "venta" | "ventaItem" | "merma" | "transferencia" | "user" | "plan" | "licencia" | "licenciaAudit" | "notification" | "userActivityLog" | "userSession" | "attendance" | "employeeWorkSchedule" | "vacationRequest" | "vacationAccrual" | "empleado" | "pagosalario" | "cierreContable" | "gastoCompra" | "compraProducto" | "servicios" | "ventaServicios" | "gastoConcepto" | "gastoElemento" | "gastosDE" | "moneda" | "catalogoReparacionConfig" | "tasaCambio" | "transaccionMoneda" | "cuentaBancaria" | "tipoPago" | "reconciliacionVenta" | "reconciliacionServicio" | "reconciliacionGasto" | "ajusteBancario" | "transferenciaBancaria" | "alertHistory" | "auditLog" | "reportHistory" | "scheduledReport" | "scenarioSimulation" | "contrato" | "contratoVersion" | "contratoFirma" | "contratoAprobacion" | "contratoArchivo" | "contratoAlerta" | "tipoContratoCustom" | "factura" | "serieFacturacion" | "oferta" | "ofertaItem" | "cuentaPorCobrar" | "cuentaPorPagar" | "deudaCash" | "prestamoCash" | "pagoCuentaPorPagar" | "equipoReparacion" | "piezaReparacion" | "ordenReparacion" | "ordenReparacionEquipo" | "ordenReparacionItem" | "ordenReparacionMaterial" | "defectacionCatalogo" | "configuracionSistema" | "ordenProduccion" | "ordenProduccionHistorial" | "receta" | "recetaIngrediente" | "valeSalida" | "valeSalidaItem" | "listaPrecio" | "precioProducto" | "productoCostHistory" | "vendorCodeSequence" | "anticipo" | "anticipoMovimiento"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -2965,6 +2981,80 @@ export namespace Prisma {
           count: {
             args: Prisma.ProductoCountArgs<ExtArgs>
             result: $Utils.Optional<ProductoCountAggregateOutputType> | number
+          }
+        }
+      }
+      StockUbicacion: {
+        payload: Prisma.$StockUbicacionPayload<ExtArgs>
+        fields: Prisma.StockUbicacionFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.StockUbicacionFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StockUbicacionPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.StockUbicacionFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StockUbicacionPayload>
+          }
+          findFirst: {
+            args: Prisma.StockUbicacionFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StockUbicacionPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.StockUbicacionFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StockUbicacionPayload>
+          }
+          findMany: {
+            args: Prisma.StockUbicacionFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StockUbicacionPayload>[]
+          }
+          create: {
+            args: Prisma.StockUbicacionCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StockUbicacionPayload>
+          }
+          createMany: {
+            args: Prisma.StockUbicacionCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.StockUbicacionCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StockUbicacionPayload>[]
+          }
+          delete: {
+            args: Prisma.StockUbicacionDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StockUbicacionPayload>
+          }
+          update: {
+            args: Prisma.StockUbicacionUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StockUbicacionPayload>
+          }
+          deleteMany: {
+            args: Prisma.StockUbicacionDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.StockUbicacionUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.StockUbicacionUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StockUbicacionPayload>[]
+          }
+          upsert: {
+            args: Prisma.StockUbicacionUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$StockUbicacionPayload>
+          }
+          aggregate: {
+            args: Prisma.StockUbicacionAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateStockUbicacion>
+          }
+          groupBy: {
+            args: Prisma.StockUbicacionGroupByArgs<ExtArgs>
+            result: $Utils.Optional<StockUbicacionGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.StockUbicacionCountArgs<ExtArgs>
+            result: $Utils.Optional<StockUbicacionCountAggregateOutputType> | number
           }
         }
       }
@@ -8772,6 +8862,7 @@ export namespace Prisma {
     almacen?: AlmacenOmit
     puntoDeVenta?: PuntoDeVentaOmit
     producto?: ProductoOmit
+    stockUbicacion?: StockUbicacionOmit
     venta?: VentaOmit
     ventaItem?: VentaItemOmit
     merma?: MermaOmit
@@ -9349,6 +9440,7 @@ export namespace Prisma {
     ValeSalidaItem: number
     ventas: number
     ventaItems: number
+    stockUbicaciones: number
   }
 
   export type ProductoCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -9366,6 +9458,7 @@ export namespace Prisma {
     ValeSalidaItem?: boolean | ProductoCountOutputTypeCountValeSalidaItemArgs
     ventas?: boolean | ProductoCountOutputTypeCountVentasArgs
     ventaItems?: boolean | ProductoCountOutputTypeCountVentaItemsArgs
+    stockUbicaciones?: boolean | ProductoCountOutputTypeCountStockUbicacionesArgs
   }
 
   // Custom InputTypes
@@ -9475,6 +9568,13 @@ export namespace Prisma {
    */
   export type ProductoCountOutputTypeCountVentaItemsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: VentaItemWhereInput
+  }
+
+  /**
+   * ProductoCountOutputType without action
+   */
+  export type ProductoCountOutputTypeCountStockUbicacionesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: StockUbicacionWhereInput
   }
 
 
@@ -22237,6 +22337,7 @@ export namespace Prisma {
     ValeSalidaItem?: boolean | Producto$ValeSalidaItemArgs<ExtArgs>
     ventas?: boolean | Producto$ventasArgs<ExtArgs>
     ventaItems?: boolean | Producto$ventaItemsArgs<ExtArgs>
+    stockUbicaciones?: boolean | Producto$stockUbicacionesArgs<ExtArgs>
     _count?: boolean | ProductoCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["producto"]>
 
@@ -22364,6 +22465,7 @@ export namespace Prisma {
     ValeSalidaItem?: boolean | Producto$ValeSalidaItemArgs<ExtArgs>
     ventas?: boolean | Producto$ventasArgs<ExtArgs>
     ventaItems?: boolean | Producto$ventaItemsArgs<ExtArgs>
+    stockUbicaciones?: boolean | Producto$stockUbicacionesArgs<ExtArgs>
     _count?: boolean | ProductoCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type ProductoIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -22409,6 +22511,7 @@ export namespace Prisma {
       ValeSalidaItem: Prisma.$ValeSalidaItemPayload<ExtArgs>[]
       ventas: Prisma.$VentaPayload<ExtArgs>[]
       ventaItems: Prisma.$VentaItemPayload<ExtArgs>[]
+      stockUbicaciones: Prisma.$StockUbicacionPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       nombre: string
@@ -22852,6 +22955,7 @@ export namespace Prisma {
     ValeSalidaItem<T extends Producto$ValeSalidaItemArgs<ExtArgs> = {}>(args?: Subset<T, Producto$ValeSalidaItemArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ValeSalidaItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     ventas<T extends Producto$ventasArgs<ExtArgs> = {}>(args?: Subset<T, Producto$ventasArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$VentaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     ventaItems<T extends Producto$ventaItemsArgs<ExtArgs> = {}>(args?: Subset<T, Producto$ventaItemsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$VentaItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    stockUbicaciones<T extends Producto$stockUbicacionesArgs<ExtArgs> = {}>(args?: Subset<T, Producto$stockUbicacionesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StockUbicacionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -23734,6 +23838,30 @@ export namespace Prisma {
   }
 
   /**
+   * Producto.stockUbicaciones
+   */
+  export type Producto$stockUbicacionesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StockUbicacion
+     */
+    select?: StockUbicacionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StockUbicacion
+     */
+    omit?: StockUbicacionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StockUbicacionInclude<ExtArgs> | null
+    where?: StockUbicacionWhereInput
+    orderBy?: StockUbicacionOrderByWithRelationInput | StockUbicacionOrderByWithRelationInput[]
+    cursor?: StockUbicacionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: StockUbicacionScalarFieldEnum | StockUbicacionScalarFieldEnum[]
+  }
+
+  /**
    * Producto without action
    */
   export type ProductoDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -23749,6 +23877,1171 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: ProductoInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model StockUbicacion
+   */
+
+  export type AggregateStockUbicacion = {
+    _count: StockUbicacionCountAggregateOutputType | null
+    _avg: StockUbicacionAvgAggregateOutputType | null
+    _sum: StockUbicacionSumAggregateOutputType | null
+    _min: StockUbicacionMinAggregateOutputType | null
+    _max: StockUbicacionMaxAggregateOutputType | null
+  }
+
+  export type StockUbicacionAvgAggregateOutputType = {
+    cantidad: number | null
+    cantidadReservada: number | null
+    cantidadDisponible: number | null
+  }
+
+  export type StockUbicacionSumAggregateOutputType = {
+    cantidad: number | null
+    cantidadReservada: number | null
+    cantidadDisponible: number | null
+  }
+
+  export type StockUbicacionMinAggregateOutputType = {
+    id: string | null
+    productoId: string | null
+    tipoUbicacion: string | null
+    ubicacionId: string | null
+    cantidad: number | null
+    cantidadReservada: number | null
+    cantidadDisponible: number | null
+    ultimaActualizacion: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type StockUbicacionMaxAggregateOutputType = {
+    id: string | null
+    productoId: string | null
+    tipoUbicacion: string | null
+    ubicacionId: string | null
+    cantidad: number | null
+    cantidadReservada: number | null
+    cantidadDisponible: number | null
+    ultimaActualizacion: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type StockUbicacionCountAggregateOutputType = {
+    id: number
+    productoId: number
+    tipoUbicacion: number
+    ubicacionId: number
+    cantidad: number
+    cantidadReservada: number
+    cantidadDisponible: number
+    ultimaActualizacion: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type StockUbicacionAvgAggregateInputType = {
+    cantidad?: true
+    cantidadReservada?: true
+    cantidadDisponible?: true
+  }
+
+  export type StockUbicacionSumAggregateInputType = {
+    cantidad?: true
+    cantidadReservada?: true
+    cantidadDisponible?: true
+  }
+
+  export type StockUbicacionMinAggregateInputType = {
+    id?: true
+    productoId?: true
+    tipoUbicacion?: true
+    ubicacionId?: true
+    cantidad?: true
+    cantidadReservada?: true
+    cantidadDisponible?: true
+    ultimaActualizacion?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type StockUbicacionMaxAggregateInputType = {
+    id?: true
+    productoId?: true
+    tipoUbicacion?: true
+    ubicacionId?: true
+    cantidad?: true
+    cantidadReservada?: true
+    cantidadDisponible?: true
+    ultimaActualizacion?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type StockUbicacionCountAggregateInputType = {
+    id?: true
+    productoId?: true
+    tipoUbicacion?: true
+    ubicacionId?: true
+    cantidad?: true
+    cantidadReservada?: true
+    cantidadDisponible?: true
+    ultimaActualizacion?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type StockUbicacionAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which StockUbicacion to aggregate.
+     */
+    where?: StockUbicacionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of StockUbicacions to fetch.
+     */
+    orderBy?: StockUbicacionOrderByWithRelationInput | StockUbicacionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: StockUbicacionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` StockUbicacions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` StockUbicacions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned StockUbicacions
+    **/
+    _count?: true | StockUbicacionCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: StockUbicacionAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: StockUbicacionSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: StockUbicacionMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: StockUbicacionMaxAggregateInputType
+  }
+
+  export type GetStockUbicacionAggregateType<T extends StockUbicacionAggregateArgs> = {
+        [P in keyof T & keyof AggregateStockUbicacion]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateStockUbicacion[P]>
+      : GetScalarType<T[P], AggregateStockUbicacion[P]>
+  }
+
+
+
+
+  export type StockUbicacionGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: StockUbicacionWhereInput
+    orderBy?: StockUbicacionOrderByWithAggregationInput | StockUbicacionOrderByWithAggregationInput[]
+    by: StockUbicacionScalarFieldEnum[] | StockUbicacionScalarFieldEnum
+    having?: StockUbicacionScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: StockUbicacionCountAggregateInputType | true
+    _avg?: StockUbicacionAvgAggregateInputType
+    _sum?: StockUbicacionSumAggregateInputType
+    _min?: StockUbicacionMinAggregateInputType
+    _max?: StockUbicacionMaxAggregateInputType
+  }
+
+  export type StockUbicacionGroupByOutputType = {
+    id: string
+    productoId: string
+    tipoUbicacion: string
+    ubicacionId: string
+    cantidad: number
+    cantidadReservada: number
+    cantidadDisponible: number
+    ultimaActualizacion: Date
+    createdAt: Date
+    updatedAt: Date
+    _count: StockUbicacionCountAggregateOutputType | null
+    _avg: StockUbicacionAvgAggregateOutputType | null
+    _sum: StockUbicacionSumAggregateOutputType | null
+    _min: StockUbicacionMinAggregateOutputType | null
+    _max: StockUbicacionMaxAggregateOutputType | null
+  }
+
+  type GetStockUbicacionGroupByPayload<T extends StockUbicacionGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<StockUbicacionGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof StockUbicacionGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], StockUbicacionGroupByOutputType[P]>
+            : GetScalarType<T[P], StockUbicacionGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type StockUbicacionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    productoId?: boolean
+    tipoUbicacion?: boolean
+    ubicacionId?: boolean
+    cantidad?: boolean
+    cantidadReservada?: boolean
+    cantidadDisponible?: boolean
+    ultimaActualizacion?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["stockUbicacion"]>
+
+  export type StockUbicacionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    productoId?: boolean
+    tipoUbicacion?: boolean
+    ubicacionId?: boolean
+    cantidad?: boolean
+    cantidadReservada?: boolean
+    cantidadDisponible?: boolean
+    ultimaActualizacion?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["stockUbicacion"]>
+
+  export type StockUbicacionSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    productoId?: boolean
+    tipoUbicacion?: boolean
+    ubicacionId?: boolean
+    cantidad?: boolean
+    cantidadReservada?: boolean
+    cantidadDisponible?: boolean
+    ultimaActualizacion?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["stockUbicacion"]>
+
+  export type StockUbicacionSelectScalar = {
+    id?: boolean
+    productoId?: boolean
+    tipoUbicacion?: boolean
+    ubicacionId?: boolean
+    cantidad?: boolean
+    cantidadReservada?: boolean
+    cantidadDisponible?: boolean
+    ultimaActualizacion?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type StockUbicacionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "productoId" | "tipoUbicacion" | "ubicacionId" | "cantidad" | "cantidadReservada" | "cantidadDisponible" | "ultimaActualizacion" | "createdAt" | "updatedAt", ExtArgs["result"]["stockUbicacion"]>
+  export type StockUbicacionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }
+  export type StockUbicacionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }
+  export type StockUbicacionIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }
+
+  export type $StockUbicacionPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "StockUbicacion"
+    objects: {
+      producto: Prisma.$ProductoPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      productoId: string
+      tipoUbicacion: string
+      ubicacionId: string
+      cantidad: number
+      cantidadReservada: number
+      cantidadDisponible: number
+      ultimaActualizacion: Date
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["stockUbicacion"]>
+    composites: {}
+  }
+
+  type StockUbicacionGetPayload<S extends boolean | null | undefined | StockUbicacionDefaultArgs> = $Result.GetResult<Prisma.$StockUbicacionPayload, S>
+
+  type StockUbicacionCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<StockUbicacionFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: StockUbicacionCountAggregateInputType | true
+    }
+
+  export interface StockUbicacionDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['StockUbicacion'], meta: { name: 'StockUbicacion' } }
+    /**
+     * Find zero or one StockUbicacion that matches the filter.
+     * @param {StockUbicacionFindUniqueArgs} args - Arguments to find a StockUbicacion
+     * @example
+     * // Get one StockUbicacion
+     * const stockUbicacion = await prisma.stockUbicacion.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends StockUbicacionFindUniqueArgs>(args: SelectSubset<T, StockUbicacionFindUniqueArgs<ExtArgs>>): Prisma__StockUbicacionClient<$Result.GetResult<Prisma.$StockUbicacionPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one StockUbicacion that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {StockUbicacionFindUniqueOrThrowArgs} args - Arguments to find a StockUbicacion
+     * @example
+     * // Get one StockUbicacion
+     * const stockUbicacion = await prisma.stockUbicacion.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends StockUbicacionFindUniqueOrThrowArgs>(args: SelectSubset<T, StockUbicacionFindUniqueOrThrowArgs<ExtArgs>>): Prisma__StockUbicacionClient<$Result.GetResult<Prisma.$StockUbicacionPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first StockUbicacion that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StockUbicacionFindFirstArgs} args - Arguments to find a StockUbicacion
+     * @example
+     * // Get one StockUbicacion
+     * const stockUbicacion = await prisma.stockUbicacion.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends StockUbicacionFindFirstArgs>(args?: SelectSubset<T, StockUbicacionFindFirstArgs<ExtArgs>>): Prisma__StockUbicacionClient<$Result.GetResult<Prisma.$StockUbicacionPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first StockUbicacion that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StockUbicacionFindFirstOrThrowArgs} args - Arguments to find a StockUbicacion
+     * @example
+     * // Get one StockUbicacion
+     * const stockUbicacion = await prisma.stockUbicacion.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends StockUbicacionFindFirstOrThrowArgs>(args?: SelectSubset<T, StockUbicacionFindFirstOrThrowArgs<ExtArgs>>): Prisma__StockUbicacionClient<$Result.GetResult<Prisma.$StockUbicacionPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more StockUbicacions that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StockUbicacionFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all StockUbicacions
+     * const stockUbicacions = await prisma.stockUbicacion.findMany()
+     * 
+     * // Get first 10 StockUbicacions
+     * const stockUbicacions = await prisma.stockUbicacion.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const stockUbicacionWithIdOnly = await prisma.stockUbicacion.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends StockUbicacionFindManyArgs>(args?: SelectSubset<T, StockUbicacionFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StockUbicacionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a StockUbicacion.
+     * @param {StockUbicacionCreateArgs} args - Arguments to create a StockUbicacion.
+     * @example
+     * // Create one StockUbicacion
+     * const StockUbicacion = await prisma.stockUbicacion.create({
+     *   data: {
+     *     // ... data to create a StockUbicacion
+     *   }
+     * })
+     * 
+     */
+    create<T extends StockUbicacionCreateArgs>(args: SelectSubset<T, StockUbicacionCreateArgs<ExtArgs>>): Prisma__StockUbicacionClient<$Result.GetResult<Prisma.$StockUbicacionPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many StockUbicacions.
+     * @param {StockUbicacionCreateManyArgs} args - Arguments to create many StockUbicacions.
+     * @example
+     * // Create many StockUbicacions
+     * const stockUbicacion = await prisma.stockUbicacion.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends StockUbicacionCreateManyArgs>(args?: SelectSubset<T, StockUbicacionCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many StockUbicacions and returns the data saved in the database.
+     * @param {StockUbicacionCreateManyAndReturnArgs} args - Arguments to create many StockUbicacions.
+     * @example
+     * // Create many StockUbicacions
+     * const stockUbicacion = await prisma.stockUbicacion.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many StockUbicacions and only return the `id`
+     * const stockUbicacionWithIdOnly = await prisma.stockUbicacion.createManyAndReturn({
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends StockUbicacionCreateManyAndReturnArgs>(args?: SelectSubset<T, StockUbicacionCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StockUbicacionPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a StockUbicacion.
+     * @param {StockUbicacionDeleteArgs} args - Arguments to delete one StockUbicacion.
+     * @example
+     * // Delete one StockUbicacion
+     * const StockUbicacion = await prisma.stockUbicacion.delete({
+     *   where: {
+     *     // ... filter to delete one StockUbicacion
+     *   }
+     * })
+     * 
+     */
+    delete<T extends StockUbicacionDeleteArgs>(args: SelectSubset<T, StockUbicacionDeleteArgs<ExtArgs>>): Prisma__StockUbicacionClient<$Result.GetResult<Prisma.$StockUbicacionPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one StockUbicacion.
+     * @param {StockUbicacionUpdateArgs} args - Arguments to update one StockUbicacion.
+     * @example
+     * // Update one StockUbicacion
+     * const stockUbicacion = await prisma.stockUbicacion.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends StockUbicacionUpdateArgs>(args: SelectSubset<T, StockUbicacionUpdateArgs<ExtArgs>>): Prisma__StockUbicacionClient<$Result.GetResult<Prisma.$StockUbicacionPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more StockUbicacions.
+     * @param {StockUbicacionDeleteManyArgs} args - Arguments to filter StockUbicacions to delete.
+     * @example
+     * // Delete a few StockUbicacions
+     * const { count } = await prisma.stockUbicacion.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends StockUbicacionDeleteManyArgs>(args?: SelectSubset<T, StockUbicacionDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more StockUbicacions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StockUbicacionUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many StockUbicacions
+     * const stockUbicacion = await prisma.stockUbicacion.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends StockUbicacionUpdateManyArgs>(args: SelectSubset<T, StockUbicacionUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more StockUbicacions and returns the data updated in the database.
+     * @param {StockUbicacionUpdateManyAndReturnArgs} args - Arguments to update many StockUbicacions.
+     * @example
+     * // Update many StockUbicacions
+     * const stockUbicacion = await prisma.stockUbicacion.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more StockUbicacions and only return the `id`
+     * const stockUbicacionWithIdOnly = await prisma.stockUbicacion.updateManyAndReturn({
+     *   select: { id: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends StockUbicacionUpdateManyAndReturnArgs>(args: SelectSubset<T, StockUbicacionUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$StockUbicacionPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one StockUbicacion.
+     * @param {StockUbicacionUpsertArgs} args - Arguments to update or create a StockUbicacion.
+     * @example
+     * // Update or create a StockUbicacion
+     * const stockUbicacion = await prisma.stockUbicacion.upsert({
+     *   create: {
+     *     // ... data to create a StockUbicacion
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the StockUbicacion we want to update
+     *   }
+     * })
+     */
+    upsert<T extends StockUbicacionUpsertArgs>(args: SelectSubset<T, StockUbicacionUpsertArgs<ExtArgs>>): Prisma__StockUbicacionClient<$Result.GetResult<Prisma.$StockUbicacionPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of StockUbicacions.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StockUbicacionCountArgs} args - Arguments to filter StockUbicacions to count.
+     * @example
+     * // Count the number of StockUbicacions
+     * const count = await prisma.stockUbicacion.count({
+     *   where: {
+     *     // ... the filter for the StockUbicacions we want to count
+     *   }
+     * })
+    **/
+    count<T extends StockUbicacionCountArgs>(
+      args?: Subset<T, StockUbicacionCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], StockUbicacionCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a StockUbicacion.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StockUbicacionAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends StockUbicacionAggregateArgs>(args: Subset<T, StockUbicacionAggregateArgs>): Prisma.PrismaPromise<GetStockUbicacionAggregateType<T>>
+
+    /**
+     * Group by StockUbicacion.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {StockUbicacionGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends StockUbicacionGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: StockUbicacionGroupByArgs['orderBy'] }
+        : { orderBy?: StockUbicacionGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, StockUbicacionGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetStockUbicacionGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the StockUbicacion model
+   */
+  readonly fields: StockUbicacionFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for StockUbicacion.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__StockUbicacionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    producto<T extends ProductoDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ProductoDefaultArgs<ExtArgs>>): Prisma__ProductoClient<$Result.GetResult<Prisma.$ProductoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the StockUbicacion model
+   */
+  interface StockUbicacionFieldRefs {
+    readonly id: FieldRef<"StockUbicacion", 'String'>
+    readonly productoId: FieldRef<"StockUbicacion", 'String'>
+    readonly tipoUbicacion: FieldRef<"StockUbicacion", 'String'>
+    readonly ubicacionId: FieldRef<"StockUbicacion", 'String'>
+    readonly cantidad: FieldRef<"StockUbicacion", 'Int'>
+    readonly cantidadReservada: FieldRef<"StockUbicacion", 'Int'>
+    readonly cantidadDisponible: FieldRef<"StockUbicacion", 'Int'>
+    readonly ultimaActualizacion: FieldRef<"StockUbicacion", 'DateTime'>
+    readonly createdAt: FieldRef<"StockUbicacion", 'DateTime'>
+    readonly updatedAt: FieldRef<"StockUbicacion", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * StockUbicacion findUnique
+   */
+  export type StockUbicacionFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StockUbicacion
+     */
+    select?: StockUbicacionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StockUbicacion
+     */
+    omit?: StockUbicacionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StockUbicacionInclude<ExtArgs> | null
+    /**
+     * Filter, which StockUbicacion to fetch.
+     */
+    where: StockUbicacionWhereUniqueInput
+  }
+
+  /**
+   * StockUbicacion findUniqueOrThrow
+   */
+  export type StockUbicacionFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StockUbicacion
+     */
+    select?: StockUbicacionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StockUbicacion
+     */
+    omit?: StockUbicacionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StockUbicacionInclude<ExtArgs> | null
+    /**
+     * Filter, which StockUbicacion to fetch.
+     */
+    where: StockUbicacionWhereUniqueInput
+  }
+
+  /**
+   * StockUbicacion findFirst
+   */
+  export type StockUbicacionFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StockUbicacion
+     */
+    select?: StockUbicacionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StockUbicacion
+     */
+    omit?: StockUbicacionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StockUbicacionInclude<ExtArgs> | null
+    /**
+     * Filter, which StockUbicacion to fetch.
+     */
+    where?: StockUbicacionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of StockUbicacions to fetch.
+     */
+    orderBy?: StockUbicacionOrderByWithRelationInput | StockUbicacionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for StockUbicacions.
+     */
+    cursor?: StockUbicacionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` StockUbicacions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` StockUbicacions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of StockUbicacions.
+     */
+    distinct?: StockUbicacionScalarFieldEnum | StockUbicacionScalarFieldEnum[]
+  }
+
+  /**
+   * StockUbicacion findFirstOrThrow
+   */
+  export type StockUbicacionFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StockUbicacion
+     */
+    select?: StockUbicacionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StockUbicacion
+     */
+    omit?: StockUbicacionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StockUbicacionInclude<ExtArgs> | null
+    /**
+     * Filter, which StockUbicacion to fetch.
+     */
+    where?: StockUbicacionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of StockUbicacions to fetch.
+     */
+    orderBy?: StockUbicacionOrderByWithRelationInput | StockUbicacionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for StockUbicacions.
+     */
+    cursor?: StockUbicacionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` StockUbicacions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` StockUbicacions.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of StockUbicacions.
+     */
+    distinct?: StockUbicacionScalarFieldEnum | StockUbicacionScalarFieldEnum[]
+  }
+
+  /**
+   * StockUbicacion findMany
+   */
+  export type StockUbicacionFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StockUbicacion
+     */
+    select?: StockUbicacionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StockUbicacion
+     */
+    omit?: StockUbicacionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StockUbicacionInclude<ExtArgs> | null
+    /**
+     * Filter, which StockUbicacions to fetch.
+     */
+    where?: StockUbicacionWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of StockUbicacions to fetch.
+     */
+    orderBy?: StockUbicacionOrderByWithRelationInput | StockUbicacionOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing StockUbicacions.
+     */
+    cursor?: StockUbicacionWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` StockUbicacions from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` StockUbicacions.
+     */
+    skip?: number
+    distinct?: StockUbicacionScalarFieldEnum | StockUbicacionScalarFieldEnum[]
+  }
+
+  /**
+   * StockUbicacion create
+   */
+  export type StockUbicacionCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StockUbicacion
+     */
+    select?: StockUbicacionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StockUbicacion
+     */
+    omit?: StockUbicacionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StockUbicacionInclude<ExtArgs> | null
+    /**
+     * The data needed to create a StockUbicacion.
+     */
+    data: XOR<StockUbicacionCreateInput, StockUbicacionUncheckedCreateInput>
+  }
+
+  /**
+   * StockUbicacion createMany
+   */
+  export type StockUbicacionCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many StockUbicacions.
+     */
+    data: StockUbicacionCreateManyInput | StockUbicacionCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * StockUbicacion createManyAndReturn
+   */
+  export type StockUbicacionCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StockUbicacion
+     */
+    select?: StockUbicacionSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the StockUbicacion
+     */
+    omit?: StockUbicacionOmit<ExtArgs> | null
+    /**
+     * The data used to create many StockUbicacions.
+     */
+    data: StockUbicacionCreateManyInput | StockUbicacionCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StockUbicacionIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * StockUbicacion update
+   */
+  export type StockUbicacionUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StockUbicacion
+     */
+    select?: StockUbicacionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StockUbicacion
+     */
+    omit?: StockUbicacionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StockUbicacionInclude<ExtArgs> | null
+    /**
+     * The data needed to update a StockUbicacion.
+     */
+    data: XOR<StockUbicacionUpdateInput, StockUbicacionUncheckedUpdateInput>
+    /**
+     * Choose, which StockUbicacion to update.
+     */
+    where: StockUbicacionWhereUniqueInput
+  }
+
+  /**
+   * StockUbicacion updateMany
+   */
+  export type StockUbicacionUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update StockUbicacions.
+     */
+    data: XOR<StockUbicacionUpdateManyMutationInput, StockUbicacionUncheckedUpdateManyInput>
+    /**
+     * Filter which StockUbicacions to update
+     */
+    where?: StockUbicacionWhereInput
+    /**
+     * Limit how many StockUbicacions to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * StockUbicacion updateManyAndReturn
+   */
+  export type StockUbicacionUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StockUbicacion
+     */
+    select?: StockUbicacionSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the StockUbicacion
+     */
+    omit?: StockUbicacionOmit<ExtArgs> | null
+    /**
+     * The data used to update StockUbicacions.
+     */
+    data: XOR<StockUbicacionUpdateManyMutationInput, StockUbicacionUncheckedUpdateManyInput>
+    /**
+     * Filter which StockUbicacions to update
+     */
+    where?: StockUbicacionWhereInput
+    /**
+     * Limit how many StockUbicacions to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StockUbicacionIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * StockUbicacion upsert
+   */
+  export type StockUbicacionUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StockUbicacion
+     */
+    select?: StockUbicacionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StockUbicacion
+     */
+    omit?: StockUbicacionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StockUbicacionInclude<ExtArgs> | null
+    /**
+     * The filter to search for the StockUbicacion to update in case it exists.
+     */
+    where: StockUbicacionWhereUniqueInput
+    /**
+     * In case the StockUbicacion found by the `where` argument doesn't exist, create a new StockUbicacion with this data.
+     */
+    create: XOR<StockUbicacionCreateInput, StockUbicacionUncheckedCreateInput>
+    /**
+     * In case the StockUbicacion was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<StockUbicacionUpdateInput, StockUbicacionUncheckedUpdateInput>
+  }
+
+  /**
+   * StockUbicacion delete
+   */
+  export type StockUbicacionDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StockUbicacion
+     */
+    select?: StockUbicacionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StockUbicacion
+     */
+    omit?: StockUbicacionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StockUbicacionInclude<ExtArgs> | null
+    /**
+     * Filter which StockUbicacion to delete.
+     */
+    where: StockUbicacionWhereUniqueInput
+  }
+
+  /**
+   * StockUbicacion deleteMany
+   */
+  export type StockUbicacionDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which StockUbicacions to delete
+     */
+    where?: StockUbicacionWhereInput
+    /**
+     * Limit how many StockUbicacions to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * StockUbicacion without action
+   */
+  export type StockUbicacionDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the StockUbicacion
+     */
+    select?: StockUbicacionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the StockUbicacion
+     */
+    omit?: StockUbicacionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: StockUbicacionInclude<ExtArgs> | null
   }
 
 
@@ -117097,6 +118390,22 @@ export namespace Prisma {
   export type ProductoScalarFieldEnum = (typeof ProductoScalarFieldEnum)[keyof typeof ProductoScalarFieldEnum]
 
 
+  export const StockUbicacionScalarFieldEnum: {
+    id: 'id',
+    productoId: 'productoId',
+    tipoUbicacion: 'tipoUbicacion',
+    ubicacionId: 'ubicacionId',
+    cantidad: 'cantidad',
+    cantidadReservada: 'cantidadReservada',
+    cantidadDisponible: 'cantidadDisponible',
+    ultimaActualizacion: 'ultimaActualizacion',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type StockUbicacionScalarFieldEnum = (typeof StockUbicacionScalarFieldEnum)[keyof typeof StockUbicacionScalarFieldEnum]
+
+
   export const VentaScalarFieldEnum: {
     ventaId: 'ventaId',
     productoId: 'productoId',
@@ -119636,6 +120945,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemListRelationFilter
     ventas?: VentaListRelationFilter
     ventaItems?: VentaItemListRelationFilter
+    stockUbicaciones?: StockUbicacionListRelationFilter
   }
 
   export type ProductoOrderByWithRelationInput = {
@@ -119686,6 +120996,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemOrderByRelationAggregateInput
     ventas?: VentaOrderByRelationAggregateInput
     ventaItems?: VentaItemOrderByRelationAggregateInput
+    stockUbicaciones?: StockUbicacionOrderByRelationAggregateInput
   }
 
   export type ProductoWhereUniqueInput = Prisma.AtLeast<{
@@ -119739,6 +121050,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemListRelationFilter
     ventas?: VentaListRelationFilter
     ventaItems?: VentaItemListRelationFilter
+    stockUbicaciones?: StockUbicacionListRelationFilter
   }, "id" | "codigoInterno" | "codigoNegocio">
 
   export type ProductoOrderByWithAggregationInput = {
@@ -119805,6 +121117,89 @@ export namespace Prisma {
     surtidoCodigo?: StringNullableWithAggregatesFilter<"Producto"> | string | null
     dcCodigo?: StringNullableWithAggregatesFilter<"Producto"> | string | null
     fotos?: StringNullableListFilter<"Producto">
+  }
+
+  export type StockUbicacionWhereInput = {
+    AND?: StockUbicacionWhereInput | StockUbicacionWhereInput[]
+    OR?: StockUbicacionWhereInput[]
+    NOT?: StockUbicacionWhereInput | StockUbicacionWhereInput[]
+    id?: StringFilter<"StockUbicacion"> | string
+    productoId?: StringFilter<"StockUbicacion"> | string
+    tipoUbicacion?: StringFilter<"StockUbicacion"> | string
+    ubicacionId?: StringFilter<"StockUbicacion"> | string
+    cantidad?: IntFilter<"StockUbicacion"> | number
+    cantidadReservada?: IntFilter<"StockUbicacion"> | number
+    cantidadDisponible?: IntFilter<"StockUbicacion"> | number
+    ultimaActualizacion?: DateTimeFilter<"StockUbicacion"> | Date | string
+    createdAt?: DateTimeFilter<"StockUbicacion"> | Date | string
+    updatedAt?: DateTimeFilter<"StockUbicacion"> | Date | string
+    producto?: XOR<ProductoScalarRelationFilter, ProductoWhereInput>
+  }
+
+  export type StockUbicacionOrderByWithRelationInput = {
+    id?: SortOrder
+    productoId?: SortOrder
+    tipoUbicacion?: SortOrder
+    ubicacionId?: SortOrder
+    cantidad?: SortOrder
+    cantidadReservada?: SortOrder
+    cantidadDisponible?: SortOrder
+    ultimaActualizacion?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    producto?: ProductoOrderByWithRelationInput
+  }
+
+  export type StockUbicacionWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    productoId_tipoUbicacion_ubicacionId?: StockUbicacionProductoIdTipoUbicacionUbicacionIdCompoundUniqueInput
+    AND?: StockUbicacionWhereInput | StockUbicacionWhereInput[]
+    OR?: StockUbicacionWhereInput[]
+    NOT?: StockUbicacionWhereInput | StockUbicacionWhereInput[]
+    productoId?: StringFilter<"StockUbicacion"> | string
+    tipoUbicacion?: StringFilter<"StockUbicacion"> | string
+    ubicacionId?: StringFilter<"StockUbicacion"> | string
+    cantidad?: IntFilter<"StockUbicacion"> | number
+    cantidadReservada?: IntFilter<"StockUbicacion"> | number
+    cantidadDisponible?: IntFilter<"StockUbicacion"> | number
+    ultimaActualizacion?: DateTimeFilter<"StockUbicacion"> | Date | string
+    createdAt?: DateTimeFilter<"StockUbicacion"> | Date | string
+    updatedAt?: DateTimeFilter<"StockUbicacion"> | Date | string
+    producto?: XOR<ProductoScalarRelationFilter, ProductoWhereInput>
+  }, "id" | "productoId_tipoUbicacion_ubicacionId">
+
+  export type StockUbicacionOrderByWithAggregationInput = {
+    id?: SortOrder
+    productoId?: SortOrder
+    tipoUbicacion?: SortOrder
+    ubicacionId?: SortOrder
+    cantidad?: SortOrder
+    cantidadReservada?: SortOrder
+    cantidadDisponible?: SortOrder
+    ultimaActualizacion?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: StockUbicacionCountOrderByAggregateInput
+    _avg?: StockUbicacionAvgOrderByAggregateInput
+    _max?: StockUbicacionMaxOrderByAggregateInput
+    _min?: StockUbicacionMinOrderByAggregateInput
+    _sum?: StockUbicacionSumOrderByAggregateInput
+  }
+
+  export type StockUbicacionScalarWhereWithAggregatesInput = {
+    AND?: StockUbicacionScalarWhereWithAggregatesInput | StockUbicacionScalarWhereWithAggregatesInput[]
+    OR?: StockUbicacionScalarWhereWithAggregatesInput[]
+    NOT?: StockUbicacionScalarWhereWithAggregatesInput | StockUbicacionScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"StockUbicacion"> | string
+    productoId?: StringWithAggregatesFilter<"StockUbicacion"> | string
+    tipoUbicacion?: StringWithAggregatesFilter<"StockUbicacion"> | string
+    ubicacionId?: StringWithAggregatesFilter<"StockUbicacion"> | string
+    cantidad?: IntWithAggregatesFilter<"StockUbicacion"> | number
+    cantidadReservada?: IntWithAggregatesFilter<"StockUbicacion"> | number
+    cantidadDisponible?: IntWithAggregatesFilter<"StockUbicacion"> | number
+    ultimaActualizacion?: DateTimeWithAggregatesFilter<"StockUbicacion"> | Date | string
+    createdAt?: DateTimeWithAggregatesFilter<"StockUbicacion"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"StockUbicacion"> | Date | string
   }
 
   export type VentaWhereInput = {
@@ -127894,6 +129289,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemCreateNestedManyWithoutProductoInput
     ventas?: VentaCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateInput = {
@@ -127937,6 +129333,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUpdateInput = {
@@ -127980,6 +129377,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
     ventas?: VentaUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateInput = {
@@ -128023,6 +129421,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoCreateManyInput = {
@@ -128103,6 +129502,96 @@ export namespace Prisma {
     surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+  }
+
+  export type StockUbicacionCreateInput = {
+    id?: string
+    tipoUbicacion: string
+    ubicacionId: string
+    cantidad?: number
+    cantidadReservada?: number
+    cantidadDisponible?: number
+    ultimaActualizacion?: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    producto: ProductoCreateNestedOneWithoutStockUbicacionesInput
+  }
+
+  export type StockUbicacionUncheckedCreateInput = {
+    id?: string
+    productoId: string
+    tipoUbicacion: string
+    ubicacionId: string
+    cantidad?: number
+    cantidadReservada?: number
+    cantidadDisponible?: number
+    ultimaActualizacion?: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type StockUbicacionUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tipoUbicacion?: StringFieldUpdateOperationsInput | string
+    ubicacionId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    cantidadReservada?: IntFieldUpdateOperationsInput | number
+    cantidadDisponible?: IntFieldUpdateOperationsInput | number
+    ultimaActualizacion?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    producto?: ProductoUpdateOneRequiredWithoutStockUbicacionesNestedInput
+  }
+
+  export type StockUbicacionUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    productoId?: StringFieldUpdateOperationsInput | string
+    tipoUbicacion?: StringFieldUpdateOperationsInput | string
+    ubicacionId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    cantidadReservada?: IntFieldUpdateOperationsInput | number
+    cantidadDisponible?: IntFieldUpdateOperationsInput | number
+    ultimaActualizacion?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type StockUbicacionCreateManyInput = {
+    id?: string
+    productoId: string
+    tipoUbicacion: string
+    ubicacionId: string
+    cantidad?: number
+    cantidadReservada?: number
+    cantidadDisponible?: number
+    ultimaActualizacion?: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type StockUbicacionUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tipoUbicacion?: StringFieldUpdateOperationsInput | string
+    ubicacionId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    cantidadReservada?: IntFieldUpdateOperationsInput | number
+    cantidadDisponible?: IntFieldUpdateOperationsInput | number
+    ultimaActualizacion?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type StockUbicacionUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    productoId?: StringFieldUpdateOperationsInput | string
+    tipoUbicacion?: StringFieldUpdateOperationsInput | string
+    ubicacionId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    cantidadReservada?: IntFieldUpdateOperationsInput | number
+    cantidadDisponible?: IntFieldUpdateOperationsInput | number
+    ultimaActualizacion?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type VentaCreateInput = {
@@ -136956,6 +138445,12 @@ export namespace Prisma {
     none?: VentaItemWhereInput
   }
 
+  export type StockUbicacionListRelationFilter = {
+    every?: StockUbicacionWhereInput
+    some?: StockUbicacionWhereInput
+    none?: StockUbicacionWhereInput
+  }
+
   export type MermaOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -136989,6 +138484,10 @@ export namespace Prisma {
   }
 
   export type VentaItemOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type StockUbicacionOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -137091,6 +138590,68 @@ export namespace Prisma {
     stock?: SortOrder
     stockMinimo?: SortOrder
     cantidadEnPack?: SortOrder
+  }
+
+  export type ProductoScalarRelationFilter = {
+    is?: ProductoWhereInput
+    isNot?: ProductoWhereInput
+  }
+
+  export type StockUbicacionProductoIdTipoUbicacionUbicacionIdCompoundUniqueInput = {
+    productoId: string
+    tipoUbicacion: string
+    ubicacionId: string
+  }
+
+  export type StockUbicacionCountOrderByAggregateInput = {
+    id?: SortOrder
+    productoId?: SortOrder
+    tipoUbicacion?: SortOrder
+    ubicacionId?: SortOrder
+    cantidad?: SortOrder
+    cantidadReservada?: SortOrder
+    cantidadDisponible?: SortOrder
+    ultimaActualizacion?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type StockUbicacionAvgOrderByAggregateInput = {
+    cantidad?: SortOrder
+    cantidadReservada?: SortOrder
+    cantidadDisponible?: SortOrder
+  }
+
+  export type StockUbicacionMaxOrderByAggregateInput = {
+    id?: SortOrder
+    productoId?: SortOrder
+    tipoUbicacion?: SortOrder
+    ubicacionId?: SortOrder
+    cantidad?: SortOrder
+    cantidadReservada?: SortOrder
+    cantidadDisponible?: SortOrder
+    ultimaActualizacion?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type StockUbicacionMinOrderByAggregateInput = {
+    id?: SortOrder
+    productoId?: SortOrder
+    tipoUbicacion?: SortOrder
+    ubicacionId?: SortOrder
+    cantidad?: SortOrder
+    cantidadReservada?: SortOrder
+    cantidadDisponible?: SortOrder
+    ultimaActualizacion?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type StockUbicacionSumOrderByAggregateInput = {
+    cantidad?: SortOrder
+    cantidadReservada?: SortOrder
+    cantidadDisponible?: SortOrder
   }
 
   export type OrdenReparacionNullableScalarRelationFilter = {
@@ -137197,11 +138758,6 @@ export namespace Prisma {
     cantidad?: SortOrder
     total?: SortOrder
     descuento?: SortOrder
-  }
-
-  export type ProductoScalarRelationFilter = {
-    is?: ProductoWhereInput
-    isNot?: ProductoWhereInput
   }
 
   export type VentaScalarRelationFilter = {
@@ -143534,6 +145090,13 @@ export namespace Prisma {
     connect?: VentaItemWhereUniqueInput | VentaItemWhereUniqueInput[]
   }
 
+  export type StockUbicacionCreateNestedManyWithoutProductoInput = {
+    create?: XOR<StockUbicacionCreateWithoutProductoInput, StockUbicacionUncheckedCreateWithoutProductoInput> | StockUbicacionCreateWithoutProductoInput[] | StockUbicacionUncheckedCreateWithoutProductoInput[]
+    connectOrCreate?: StockUbicacionCreateOrConnectWithoutProductoInput | StockUbicacionCreateOrConnectWithoutProductoInput[]
+    createMany?: StockUbicacionCreateManyProductoInputEnvelope
+    connect?: StockUbicacionWhereUniqueInput | StockUbicacionWhereUniqueInput[]
+  }
+
   export type CompraProductoUncheckedCreateNestedManyWithoutProductoInput = {
     create?: XOR<CompraProductoCreateWithoutProductoInput, CompraProductoUncheckedCreateWithoutProductoInput> | CompraProductoCreateWithoutProductoInput[] | CompraProductoUncheckedCreateWithoutProductoInput[]
     connectOrCreate?: CompraProductoCreateOrConnectWithoutProductoInput | CompraProductoCreateOrConnectWithoutProductoInput[]
@@ -143630,6 +145193,13 @@ export namespace Prisma {
     connectOrCreate?: VentaItemCreateOrConnectWithoutProductoInput | VentaItemCreateOrConnectWithoutProductoInput[]
     createMany?: VentaItemCreateManyProductoInputEnvelope
     connect?: VentaItemWhereUniqueInput | VentaItemWhereUniqueInput[]
+  }
+
+  export type StockUbicacionUncheckedCreateNestedManyWithoutProductoInput = {
+    create?: XOR<StockUbicacionCreateWithoutProductoInput, StockUbicacionUncheckedCreateWithoutProductoInput> | StockUbicacionCreateWithoutProductoInput[] | StockUbicacionUncheckedCreateWithoutProductoInput[]
+    connectOrCreate?: StockUbicacionCreateOrConnectWithoutProductoInput | StockUbicacionCreateOrConnectWithoutProductoInput[]
+    createMany?: StockUbicacionCreateManyProductoInputEnvelope
+    connect?: StockUbicacionWhereUniqueInput | StockUbicacionWhereUniqueInput[]
   }
 
   export type ProductoUpdatefotosInput = {
@@ -143899,6 +145469,20 @@ export namespace Prisma {
     deleteMany?: VentaItemScalarWhereInput | VentaItemScalarWhereInput[]
   }
 
+  export type StockUbicacionUpdateManyWithoutProductoNestedInput = {
+    create?: XOR<StockUbicacionCreateWithoutProductoInput, StockUbicacionUncheckedCreateWithoutProductoInput> | StockUbicacionCreateWithoutProductoInput[] | StockUbicacionUncheckedCreateWithoutProductoInput[]
+    connectOrCreate?: StockUbicacionCreateOrConnectWithoutProductoInput | StockUbicacionCreateOrConnectWithoutProductoInput[]
+    upsert?: StockUbicacionUpsertWithWhereUniqueWithoutProductoInput | StockUbicacionUpsertWithWhereUniqueWithoutProductoInput[]
+    createMany?: StockUbicacionCreateManyProductoInputEnvelope
+    set?: StockUbicacionWhereUniqueInput | StockUbicacionWhereUniqueInput[]
+    disconnect?: StockUbicacionWhereUniqueInput | StockUbicacionWhereUniqueInput[]
+    delete?: StockUbicacionWhereUniqueInput | StockUbicacionWhereUniqueInput[]
+    connect?: StockUbicacionWhereUniqueInput | StockUbicacionWhereUniqueInput[]
+    update?: StockUbicacionUpdateWithWhereUniqueWithoutProductoInput | StockUbicacionUpdateWithWhereUniqueWithoutProductoInput[]
+    updateMany?: StockUbicacionUpdateManyWithWhereWithoutProductoInput | StockUbicacionUpdateManyWithWhereWithoutProductoInput[]
+    deleteMany?: StockUbicacionScalarWhereInput | StockUbicacionScalarWhereInput[]
+  }
+
   export type CompraProductoUncheckedUpdateManyWithoutProductoNestedInput = {
     create?: XOR<CompraProductoCreateWithoutProductoInput, CompraProductoUncheckedCreateWithoutProductoInput> | CompraProductoCreateWithoutProductoInput[] | CompraProductoUncheckedCreateWithoutProductoInput[]
     connectOrCreate?: CompraProductoCreateOrConnectWithoutProductoInput | CompraProductoCreateOrConnectWithoutProductoInput[]
@@ -144093,6 +145677,34 @@ export namespace Prisma {
     update?: VentaItemUpdateWithWhereUniqueWithoutProductoInput | VentaItemUpdateWithWhereUniqueWithoutProductoInput[]
     updateMany?: VentaItemUpdateManyWithWhereWithoutProductoInput | VentaItemUpdateManyWithWhereWithoutProductoInput[]
     deleteMany?: VentaItemScalarWhereInput | VentaItemScalarWhereInput[]
+  }
+
+  export type StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput = {
+    create?: XOR<StockUbicacionCreateWithoutProductoInput, StockUbicacionUncheckedCreateWithoutProductoInput> | StockUbicacionCreateWithoutProductoInput[] | StockUbicacionUncheckedCreateWithoutProductoInput[]
+    connectOrCreate?: StockUbicacionCreateOrConnectWithoutProductoInput | StockUbicacionCreateOrConnectWithoutProductoInput[]
+    upsert?: StockUbicacionUpsertWithWhereUniqueWithoutProductoInput | StockUbicacionUpsertWithWhereUniqueWithoutProductoInput[]
+    createMany?: StockUbicacionCreateManyProductoInputEnvelope
+    set?: StockUbicacionWhereUniqueInput | StockUbicacionWhereUniqueInput[]
+    disconnect?: StockUbicacionWhereUniqueInput | StockUbicacionWhereUniqueInput[]
+    delete?: StockUbicacionWhereUniqueInput | StockUbicacionWhereUniqueInput[]
+    connect?: StockUbicacionWhereUniqueInput | StockUbicacionWhereUniqueInput[]
+    update?: StockUbicacionUpdateWithWhereUniqueWithoutProductoInput | StockUbicacionUpdateWithWhereUniqueWithoutProductoInput[]
+    updateMany?: StockUbicacionUpdateManyWithWhereWithoutProductoInput | StockUbicacionUpdateManyWithWhereWithoutProductoInput[]
+    deleteMany?: StockUbicacionScalarWhereInput | StockUbicacionScalarWhereInput[]
+  }
+
+  export type ProductoCreateNestedOneWithoutStockUbicacionesInput = {
+    create?: XOR<ProductoCreateWithoutStockUbicacionesInput, ProductoUncheckedCreateWithoutStockUbicacionesInput>
+    connectOrCreate?: ProductoCreateOrConnectWithoutStockUbicacionesInput
+    connect?: ProductoWhereUniqueInput
+  }
+
+  export type ProductoUpdateOneRequiredWithoutStockUbicacionesNestedInput = {
+    create?: XOR<ProductoCreateWithoutStockUbicacionesInput, ProductoUncheckedCreateWithoutStockUbicacionesInput>
+    connectOrCreate?: ProductoCreateOrConnectWithoutStockUbicacionesInput
+    upsert?: ProductoUpsertWithoutStockUbicacionesInput
+    connect?: ProductoWhereUniqueInput
+    update?: XOR<XOR<ProductoUpdateToOneWithWhereWithoutStockUbicacionesInput, ProductoUpdateWithoutStockUbicacionesInput>, ProductoUncheckedUpdateWithoutStockUbicacionesInput>
   }
 
   export type OrdenReparacionCreateNestedOneWithoutVentaInput = {
@@ -150377,6 +151989,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemCreateNestedManyWithoutProductoInput
     ventas?: VentaCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateWithoutCategoriaInput = {
@@ -150419,6 +152032,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoCreateOrConnectWithoutCategoriaInput = {
@@ -150471,6 +152085,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemCreateNestedManyWithoutProductoInput
     ventas?: VentaCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateWithoutSubcategoriaInput = {
@@ -150513,6 +152128,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoCreateOrConnectWithoutSubcategoriaInput = {
@@ -150690,6 +152306,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemCreateNestedManyWithoutProductoInput
     ventas?: VentaCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateWithoutUnidadInput = {
@@ -150732,6 +152349,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoCreateOrConnectWithoutUnidadInput = {
@@ -151122,6 +152740,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemCreateNestedManyWithoutProductoInput
     ventas?: VentaCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateWithoutVendorInput = {
@@ -151164,6 +152783,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoCreateOrConnectWithoutVendorInput = {
@@ -152723,6 +154343,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemCreateNestedManyWithoutProductoInput
     ventas?: VentaCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateWithoutAlmacenInput = {
@@ -152765,6 +154386,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoCreateOrConnectWithoutAlmacenInput = {
@@ -152979,6 +154601,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemCreateNestedManyWithoutProductoInput
     ventas?: VentaCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateWithoutPuntoDeVentaInput = {
@@ -153021,6 +154644,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoCreateOrConnectWithoutPuntoDeVentaInput = {
@@ -153618,6 +155242,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemCreateNestedManyWithoutProductoInput
     ventas?: VentaCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateWithoutProductosHijosInput = {
@@ -153660,6 +155285,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoCreateOrConnectWithoutProductosHijosInput = {
@@ -153707,6 +155333,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemCreateNestedManyWithoutProductoInput
     ventas?: VentaCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateWithoutProductoPadreInput = {
@@ -153749,6 +155376,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoCreateOrConnectWithoutProductoPadreInput = {
@@ -154110,6 +155738,40 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type StockUbicacionCreateWithoutProductoInput = {
+    id?: string
+    tipoUbicacion: string
+    ubicacionId: string
+    cantidad?: number
+    cantidadReservada?: number
+    cantidadDisponible?: number
+    ultimaActualizacion?: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type StockUbicacionUncheckedCreateWithoutProductoInput = {
+    id?: string
+    tipoUbicacion: string
+    ubicacionId: string
+    cantidad?: number
+    cantidadReservada?: number
+    cantidadDisponible?: number
+    ultimaActualizacion?: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type StockUbicacionCreateOrConnectWithoutProductoInput = {
+    where: StockUbicacionWhereUniqueInput
+    create: XOR<StockUbicacionCreateWithoutProductoInput, StockUbicacionUncheckedCreateWithoutProductoInput>
+  }
+
+  export type StockUbicacionCreateManyProductoInputEnvelope = {
+    data: StockUbicacionCreateManyProductoInput | StockUbicacionCreateManyProductoInput[]
+    skipDuplicates?: boolean
+  }
+
   export type CompraProductoUpsertWithWhereUniqueWithoutProductoInput = {
     where: CompraProductoWhereUniqueInput
     update: XOR<CompraProductoUpdateWithoutProductoInput, CompraProductoUncheckedUpdateWithoutProductoInput>
@@ -154404,6 +156066,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
     ventas?: VentaUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateWithoutProductosHijosInput = {
@@ -154446,6 +156109,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUpsertWithWhereUniqueWithoutProductoPadreInput = {
@@ -154760,6 +156424,226 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"VentaItem"> | Date | string
   }
 
+  export type StockUbicacionUpsertWithWhereUniqueWithoutProductoInput = {
+    where: StockUbicacionWhereUniqueInput
+    update: XOR<StockUbicacionUpdateWithoutProductoInput, StockUbicacionUncheckedUpdateWithoutProductoInput>
+    create: XOR<StockUbicacionCreateWithoutProductoInput, StockUbicacionUncheckedCreateWithoutProductoInput>
+  }
+
+  export type StockUbicacionUpdateWithWhereUniqueWithoutProductoInput = {
+    where: StockUbicacionWhereUniqueInput
+    data: XOR<StockUbicacionUpdateWithoutProductoInput, StockUbicacionUncheckedUpdateWithoutProductoInput>
+  }
+
+  export type StockUbicacionUpdateManyWithWhereWithoutProductoInput = {
+    where: StockUbicacionScalarWhereInput
+    data: XOR<StockUbicacionUpdateManyMutationInput, StockUbicacionUncheckedUpdateManyWithoutProductoInput>
+  }
+
+  export type StockUbicacionScalarWhereInput = {
+    AND?: StockUbicacionScalarWhereInput | StockUbicacionScalarWhereInput[]
+    OR?: StockUbicacionScalarWhereInput[]
+    NOT?: StockUbicacionScalarWhereInput | StockUbicacionScalarWhereInput[]
+    id?: StringFilter<"StockUbicacion"> | string
+    productoId?: StringFilter<"StockUbicacion"> | string
+    tipoUbicacion?: StringFilter<"StockUbicacion"> | string
+    ubicacionId?: StringFilter<"StockUbicacion"> | string
+    cantidad?: IntFilter<"StockUbicacion"> | number
+    cantidadReservada?: IntFilter<"StockUbicacion"> | number
+    cantidadDisponible?: IntFilter<"StockUbicacion"> | number
+    ultimaActualizacion?: DateTimeFilter<"StockUbicacion"> | Date | string
+    createdAt?: DateTimeFilter<"StockUbicacion"> | Date | string
+    updatedAt?: DateTimeFilter<"StockUbicacion"> | Date | string
+  }
+
+  export type ProductoCreateWithoutStockUbicacionesInput = {
+    nombre: string
+    descripcion?: string | null
+    precioCosto: number
+    precioVenta: number
+    stock: number
+    createdAt?: Date | string
+    id?: string
+    updatedAt?: Date | string
+    esCompuesto?: boolean
+    stockMinimo?: number
+    cantidadEnPack?: number | null
+    codigoInterno?: string | null
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
+    fotos?: ProductoCreatefotosInput | string[]
+    compras?: CompraProductoCreateNestedManyWithoutProductoInput
+    gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
+    mermas?: MermaCreateNestedManyWithoutProductoInput
+    ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
+    ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
+    precios?: PrecioProductoCreateNestedManyWithoutProductoInput
+    almacen: AlmacenCreateNestedOneWithoutProductosInput
+    categoria: CategoriaCreateNestedOneWithoutProductosInput
+    puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
+    productoPadre?: ProductoCreateNestedOneWithoutProductosHijosInput
+    productosHijos?: ProductoCreateNestedManyWithoutProductoPadreInput
+    subcategoria?: CategoriaCreateNestedOneWithoutProductosSubcategoriaInput
+    unidad?: UnidadCreateNestedOneWithoutProductosInput
+    vendor?: VendorCreateNestedOneWithoutProductosInput
+    costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
+    Receta?: RecetaCreateNestedManyWithoutProductoInput
+    RecetaIngrediente?: RecetaIngredienteCreateNestedManyWithoutProductoInput
+    transferencias?: TransferenciaCreateNestedManyWithoutProductoInput
+    ValeSalidaItem?: ValeSalidaItemCreateNestedManyWithoutProductoInput
+    ventas?: VentaCreateNestedManyWithoutProductoInput
+    ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+  }
+
+  export type ProductoUncheckedCreateWithoutStockUbicacionesInput = {
+    nombre: string
+    descripcion?: string | null
+    precioCosto: number
+    precioVenta: number
+    stock: number
+    categoriaId: string
+    unidadId?: string | null
+    vendorId?: string | null
+    createdAt?: Date | string
+    id?: string
+    updatedAt?: Date | string
+    esCompuesto?: boolean
+    almacenId: string
+    puntoDeVentaId?: string | null
+    stockMinimo?: number
+    subcategoriaId?: string | null
+    cantidadEnPack?: number | null
+    productoPadreId?: string | null
+    codigoInterno?: string | null
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
+    fotos?: ProductoCreatefotosInput | string[]
+    compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
+    gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
+    mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
+    ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
+    ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
+    precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
+    productosHijos?: ProductoUncheckedCreateNestedManyWithoutProductoPadreInput
+    costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
+    Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
+    RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
+    transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
+    ValeSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
+    ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
+    ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+  }
+
+  export type ProductoCreateOrConnectWithoutStockUbicacionesInput = {
+    where: ProductoWhereUniqueInput
+    create: XOR<ProductoCreateWithoutStockUbicacionesInput, ProductoUncheckedCreateWithoutStockUbicacionesInput>
+  }
+
+  export type ProductoUpsertWithoutStockUbicacionesInput = {
+    update: XOR<ProductoUpdateWithoutStockUbicacionesInput, ProductoUncheckedUpdateWithoutStockUbicacionesInput>
+    create: XOR<ProductoCreateWithoutStockUbicacionesInput, ProductoUncheckedCreateWithoutStockUbicacionesInput>
+    where?: ProductoWhereInput
+  }
+
+  export type ProductoUpdateToOneWithWhereWithoutStockUbicacionesInput = {
+    where?: ProductoWhereInput
+    data: XOR<ProductoUpdateWithoutStockUbicacionesInput, ProductoUncheckedUpdateWithoutStockUbicacionesInput>
+  }
+
+  export type ProductoUpdateWithoutStockUbicacionesInput = {
+    nombre?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    precioCosto?: IntFieldUpdateOperationsInput | number
+    precioVenta?: IntFieldUpdateOperationsInput | number
+    stock?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    id?: StringFieldUpdateOperationsInput | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    esCompuesto?: BoolFieldUpdateOperationsInput | boolean
+    stockMinimo?: IntFieldUpdateOperationsInput | number
+    cantidadEnPack?: NullableIntFieldUpdateOperationsInput | number | null
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    fotos?: ProductoUpdatefotosInput | string[]
+    compras?: CompraProductoUpdateManyWithoutProductoNestedInput
+    gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
+    mermas?: MermaUpdateManyWithoutProductoNestedInput
+    ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
+    ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
+    precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
+    almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
+    categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
+    puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
+    productoPadre?: ProductoUpdateOneWithoutProductosHijosNestedInput
+    productosHijos?: ProductoUpdateManyWithoutProductoPadreNestedInput
+    subcategoria?: CategoriaUpdateOneWithoutProductosSubcategoriaNestedInput
+    unidad?: UnidadUpdateOneWithoutProductosNestedInput
+    vendor?: VendorUpdateOneWithoutProductosNestedInput
+    costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
+    Receta?: RecetaUpdateManyWithoutProductoNestedInput
+    RecetaIngrediente?: RecetaIngredienteUpdateManyWithoutProductoNestedInput
+    transferencias?: TransferenciaUpdateManyWithoutProductoNestedInput
+    ValeSalidaItem?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
+    ventas?: VentaUpdateManyWithoutProductoNestedInput
+    ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+  }
+
+  export type ProductoUncheckedUpdateWithoutStockUbicacionesInput = {
+    nombre?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    precioCosto?: IntFieldUpdateOperationsInput | number
+    precioVenta?: IntFieldUpdateOperationsInput | number
+    stock?: IntFieldUpdateOperationsInput | number
+    categoriaId?: StringFieldUpdateOperationsInput | string
+    unidadId?: NullableStringFieldUpdateOperationsInput | string | null
+    vendorId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    id?: StringFieldUpdateOperationsInput | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    esCompuesto?: BoolFieldUpdateOperationsInput | boolean
+    almacenId?: StringFieldUpdateOperationsInput | string
+    puntoDeVentaId?: NullableStringFieldUpdateOperationsInput | string | null
+    stockMinimo?: IntFieldUpdateOperationsInput | number
+    subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
+    cantidadEnPack?: NullableIntFieldUpdateOperationsInput | number | null
+    productoPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    fotos?: ProductoUpdatefotosInput | string[]
+    compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
+    gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
+    mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
+    ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
+    ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
+    precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
+    productosHijos?: ProductoUncheckedUpdateManyWithoutProductoPadreNestedInput
+    costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
+    Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
+    RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
+    transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
+    ValeSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
+    ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
+    ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+  }
+
   export type OrdenReparacionCreateWithoutVentaInput = {
     id?: string
     numeroOrden?: number
@@ -155052,6 +156936,7 @@ export namespace Prisma {
     transferencias?: TransferenciaCreateNestedManyWithoutProductoInput
     ValeSalidaItem?: ValeSalidaItemCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateWithoutVentasInput = {
@@ -155094,6 +156979,7 @@ export namespace Prisma {
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
     ValeSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoCreateOrConnectWithoutVentasInput = {
@@ -155540,6 +157426,7 @@ export namespace Prisma {
     transferencias?: TransferenciaUpdateManyWithoutProductoNestedInput
     ValeSalidaItem?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateWithoutVentasInput = {
@@ -155582,6 +157469,7 @@ export namespace Prisma {
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
     ValeSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type PuntoDeVentaUpsertWithoutVentasInput = {
@@ -155744,6 +157632,7 @@ export namespace Prisma {
     transferencias?: TransferenciaCreateNestedManyWithoutProductoInput
     ValeSalidaItem?: ValeSalidaItemCreateNestedManyWithoutProductoInput
     ventas?: VentaCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateWithoutVentaItemsInput = {
@@ -155786,6 +157675,7 @@ export namespace Prisma {
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
     ValeSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoCreateOrConnectWithoutVentaItemsInput = {
@@ -155891,6 +157781,7 @@ export namespace Prisma {
     transferencias?: TransferenciaUpdateManyWithoutProductoNestedInput
     ValeSalidaItem?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
     ventas?: VentaUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateWithoutVentaItemsInput = {
@@ -155933,6 +157824,7 @@ export namespace Prisma {
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
     ValeSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type VentaUpsertWithoutItemsInput = {
@@ -156028,6 +157920,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemCreateNestedManyWithoutProductoInput
     ventas?: VentaCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateWithoutMermasInput = {
@@ -156070,6 +157963,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoCreateOrConnectWithoutMermasInput = {
@@ -156128,6 +158022,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
     ventas?: VentaUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateWithoutMermasInput = {
@@ -156170,6 +158065,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type AlmacenCreateWithoutTransferenciasDestinoInput = {
@@ -156258,6 +158154,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemCreateNestedManyWithoutProductoInput
     ventas?: VentaCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateWithoutTransferenciasInput = {
@@ -156300,6 +158197,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoCreateOrConnectWithoutTransferenciasInput = {
@@ -156541,6 +158439,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
     ventas?: VentaUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateWithoutTransferenciasInput = {
@@ -156583,6 +158482,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type UserUpsertWithoutTransferenciasCreadasInput = {
@@ -159855,6 +161755,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemCreateNestedManyWithoutProductoInput
     ventas?: VentaCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateWithoutGastoComprasInput = {
@@ -159897,6 +161798,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoCreateOrConnectWithoutGastoComprasInput = {
@@ -160168,6 +162070,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
     ventas?: VentaUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateWithoutGastoComprasInput = {
@@ -160210,6 +162113,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type VendorUpsertWithoutGastoComprasInput = {
@@ -160462,6 +162366,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemCreateNestedManyWithoutProductoInput
     ventas?: VentaCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateWithoutComprasInput = {
@@ -160504,6 +162409,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoCreateOrConnectWithoutComprasInput = {
@@ -160768,6 +162674,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
     ventas?: VentaUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateWithoutComprasInput = {
@@ -160810,6 +162717,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type VendorUpsertWithoutComprasInput = {
@@ -167719,6 +169627,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemCreateNestedManyWithoutProductoInput
     ventas?: VentaCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateWithoutOfertaItemsInput = {
@@ -167761,6 +169670,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoCreateOrConnectWithoutOfertaItemsInput = {
@@ -167887,6 +169797,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
     ventas?: VentaUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateWithoutOfertaItemsInput = {
@@ -167929,6 +169840,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type ServiciosUpsertWithoutOfertaItemsInput = {
@@ -171043,6 +172955,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemCreateNestedManyWithoutProductoInput
     ventas?: VentaCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateWithoutOrdenMaterialesInput = {
@@ -171085,6 +172998,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoCreateOrConnectWithoutOrdenMaterialesInput = {
@@ -171218,6 +173132,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
     ventas?: VentaUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateWithoutOrdenMaterialesInput = {
@@ -171260,6 +173175,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type OrdenReparacionItemCreateWithoutDefectacionInput = {
@@ -171573,6 +173489,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemCreateNestedManyWithoutProductoInput
     ventas?: VentaCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateWithoutRecetaInput = {
@@ -171615,6 +173532,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoCreateOrConnectWithoutRecetaInput = {
@@ -171734,6 +173652,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
     ventas?: VentaUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateWithoutRecetaInput = {
@@ -171776,6 +173695,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type RecetaIngredienteUpsertWithWhereUniqueWithoutRecetaInput = {
@@ -171834,6 +173754,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemCreateNestedManyWithoutProductoInput
     ventas?: VentaCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateWithoutRecetaIngredienteInput = {
@@ -171876,6 +173797,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoCreateOrConnectWithoutRecetaIngredienteInput = {
@@ -171965,6 +173887,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
     ventas?: VentaUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateWithoutRecetaIngredienteInput = {
@@ -172007,6 +173930,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type RecetaUpsertWithoutRecetaIngredienteInput = {
@@ -172126,6 +174050,7 @@ export namespace Prisma {
     transferencias?: TransferenciaCreateNestedManyWithoutProductoInput
     ventas?: VentaCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateWithoutValeSalidaItemInput = {
@@ -172168,6 +174093,7 @@ export namespace Prisma {
     transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoCreateOrConnectWithoutValeSalidaItemInput = {
@@ -172249,6 +174175,7 @@ export namespace Prisma {
     transferencias?: TransferenciaUpdateManyWithoutProductoNestedInput
     ventas?: VentaUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateWithoutValeSalidaItemInput = {
@@ -172291,6 +174218,7 @@ export namespace Prisma {
     transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type ValeSalidaUpsertWithoutValeSalidaItemInput = {
@@ -172491,6 +174419,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemCreateNestedManyWithoutProductoInput
     ventas?: VentaCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateWithoutPreciosInput = {
@@ -172533,6 +174462,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoCreateOrConnectWithoutPreciosInput = {
@@ -172622,6 +174552,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
     ventas?: VentaUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateWithoutPreciosInput = {
@@ -172664,6 +174595,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoCreateWithoutCostHistoryInput = {
@@ -172706,6 +174638,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemCreateNestedManyWithoutProductoInput
     ventas?: VentaCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoUncheckedCreateWithoutCostHistoryInput = {
@@ -172748,6 +174681,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
     ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
     ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
   }
 
   export type ProductoCreateOrConnectWithoutCostHistoryInput = {
@@ -172806,6 +174740,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
     ventas?: VentaUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateWithoutCostHistoryInput = {
@@ -172848,6 +174783,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type ContratoCreateWithoutAnticiposInput = {
@@ -173879,6 +175815,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
     ventas?: VentaUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateWithoutCategoriaInput = {
@@ -173921,6 +175858,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateManyWithoutCategoriaInput = {
@@ -173991,6 +175929,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
     ventas?: VentaUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateWithoutSubcategoriaInput = {
@@ -174033,6 +175972,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateManyWithoutSubcategoriaInput = {
@@ -174131,6 +176071,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
     ventas?: VentaUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateWithoutUnidadInput = {
@@ -174173,6 +176114,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateManyWithoutUnidadInput = {
@@ -174763,6 +176705,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
     ventas?: VentaUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateWithoutVendorInput = {
@@ -174805,6 +176748,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateManyWithoutVendorInput = {
@@ -175737,6 +177681,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
     ventas?: VentaUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateWithoutAlmacenInput = {
@@ -175779,6 +177724,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateManyWithoutAlmacenInput = {
@@ -176038,6 +177984,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
     ventas?: VentaUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateWithoutPuntoDeVentaInput = {
@@ -176080,6 +178027,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateManyWithoutPuntoDeVentaInput = {
@@ -176458,6 +178406,18 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type StockUbicacionCreateManyProductoInput = {
+    id?: string
+    tipoUbicacion: string
+    ubicacionId: string
+    cantidad?: number
+    cantidadReservada?: number
+    cantidadDisponible?: number
+    ultimaActualizacion?: Date | string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type CompraProductoUpdateWithoutProductoInput = {
     compraProductoId?: StringFieldUpdateOperationsInput | string
     numeroFactura?: StringFieldUpdateOperationsInput | string
@@ -176707,6 +178667,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
     ventas?: VentaUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateWithoutProductoPadreInput = {
@@ -176749,6 +178710,7 @@ export namespace Prisma {
     ValeSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
     ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
     ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type ProductoUncheckedUpdateManyWithoutProductoPadreInput = {
@@ -177045,6 +179007,42 @@ export namespace Prisma {
     cantidad?: IntFieldUpdateOperationsInput | number
     precioUnitario?: IntFieldUpdateOperationsInput | number
     total?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type StockUbicacionUpdateWithoutProductoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tipoUbicacion?: StringFieldUpdateOperationsInput | string
+    ubicacionId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    cantidadReservada?: IntFieldUpdateOperationsInput | number
+    cantidadDisponible?: IntFieldUpdateOperationsInput | number
+    ultimaActualizacion?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type StockUbicacionUncheckedUpdateWithoutProductoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tipoUbicacion?: StringFieldUpdateOperationsInput | string
+    ubicacionId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    cantidadReservada?: IntFieldUpdateOperationsInput | number
+    cantidadDisponible?: IntFieldUpdateOperationsInput | number
+    ultimaActualizacion?: DateTimeFieldUpdateOperationsInput | Date | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type StockUbicacionUncheckedUpdateManyWithoutProductoInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    tipoUbicacion?: StringFieldUpdateOperationsInput | string
+    ubicacionId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    cantidadReservada?: IntFieldUpdateOperationsInput | number
+    cantidadDisponible?: IntFieldUpdateOperationsInput | number
+    ultimaActualizacion?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

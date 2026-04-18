@@ -205,6 +205,25 @@ model Producto {
   ValeSalidaItem    ValeSalidaItem[]
   ventas            Venta[]
   ventaItems        VentaItem[]
+  stockUbicaciones  StockUbicacion[]
+}
+
+model StockUbicacion {
+  id                  String   @id @default(cuid())
+  productoId          String
+  tipoUbicacion       String // "almacen" | "punto_venta"
+  ubicacionId         String // Almacen.almacenId o PuntoDeVenta.pvId
+  cantidad            Int      @default(0)
+  cantidadReservada   Int      @default(0)
+  cantidadDisponible  Int      @default(0)
+  ultimaActualizacion DateTime @default(now())
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  producto            Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
+
+  @@unique([productoId, tipoUbicacion, ubicacionId])
+  @@index([ubicacionId, tipoUbicacion])
+  @@index([productoId])
 }
 
 model Venta {
