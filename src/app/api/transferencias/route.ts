@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { withAuthGet, withAuthPost } from "@/lib/auth-middleware"
 import { notificarTransferencia } from "@/lib/notificaciones-utils"
+import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service'
 
 /**
  * @description Calcula el stock disponible para un producto en un punto de venta.
@@ -378,6 +379,24 @@ export const POST = withAuthPost(async (request: NextRequest, _context: any, use
         }
 
         transferenciasCreadas.push(transferencia)
+        
+        // Decrementar stock en ubicación origen
+        await upsertStockUbicacion(tx, {
+          productoId: producto.id,
+          tipoUbicacion: tipoOrigen,
+          ubicacionId: origenId,
+          modo: 'increment',
+          delta: -cantidad,
+        })
+
+        // Incrementar stock en ubicación destino
+        await upsertStockUbicacion(tx, {
+          productoId: producto.id,
+          tipoUbicacion: tipoDestino,
+          ubicacionId: destinoId,
+          modo: 'increment',
+          delta: cantidad,
+        })
       }
 
       return transferenciasCreadas
