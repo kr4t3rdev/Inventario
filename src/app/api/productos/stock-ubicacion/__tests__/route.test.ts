@@ -2,6 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { NextRequest } from 'next/server'
 
 const prismaMock = vi.hoisted(() => ({
+  producto: {
+    findMany: vi.fn(),
+  },
   stockUbicacion: {
     findMany: vi.fn(),
   },
@@ -83,6 +86,28 @@ describe('API /productos/stock-ubicacion', () => {
         },
       },
     ])
+    prismaMock.producto.findMany.mockResolvedValue([
+      {
+        id: 'prod-1',
+        nombre: 'Producto 1',
+        descripcion: null,
+        codigoInterno: '12345678901',
+        precioCosto: 100,
+        precioVenta: 150,
+        stock: 80,
+        stockMinimo: 0,
+        categoriaId: 'cat-1',
+        subcategoriaId: null,
+        unidadId: 'unit-1',
+        vendorId: 'vendor-1',
+        almacenId: 'alm-1',
+        fotos: ['foto-1.jpg'],
+        categoria: { catId: 'cat-1', nombre: 'Bebidas' },
+        subcategoria: null,
+        unidad: { unidadId: 'unit-1', nombre: 'Unidad', simbolo: 'u' },
+        vendor: { vendorId: 'vendor-1', nombre: 'Proveedor Test' },
+      },
+    ])
 
     const request = new NextRequest(
       'http://localhost/api/productos/stock-ubicacion?ubicacionId=alm-1&tipoUbicacion=almacen&includeZero=true',
@@ -101,9 +126,15 @@ describe('API /productos/stock-ubicacion', () => {
     expect(data[0].unidad?.simbolo).toBe('u')
     expect(data[0].fotos).toEqual(['foto-1.jpg'])
     expect(prismaMock.stockUbicacion.findMany).toHaveBeenCalledOnce()
+    expect(prismaMock.producto.findMany).toHaveBeenCalledOnce()
     expect(prismaMock.stockUbicacion.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({ ubicacionId: 'alm-1', tipoUbicacion: 'almacen' }),
+      }),
+    )
+    expect(prismaMock.producto.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { almacenId: 'alm-1' },
       }),
     )
   })
@@ -144,6 +175,7 @@ describe('API /productos/stock-ubicacion', () => {
         },
       },
     ])
+    prismaMock.producto.findMany.mockResolvedValue([])
 
     const request = new NextRequest(
       'http://localhost/api/productos/stock-ubicacion?ubicacionId=pv-1&tipoUbicacion=punto_venta&includeZero=true',
@@ -156,6 +188,50 @@ describe('API /productos/stock-ubicacion', () => {
     expect(data[0].stockUbicacion).toBe(6)
     expect(data[0].stockTotal).toBe(999)
     expect(prismaMock.stockUbicacion.findMany).toHaveBeenCalledOnce()
+    expect(prismaMock.producto.findMany).toHaveBeenCalledOnce()
+  })
+
+  it('completa stockUbicacion en 0 cuando includeZero=true y no hay filas materializadas', async () => {
+    const { GET } = await import('../route')
+
+    prismaMock.stockUbicacion.findMany.mockResolvedValue([])
+    prismaMock.producto.findMany.mockResolvedValue([
+      {
+        id: 'prod-1',
+        nombre: 'Producto sin materializar',
+        descripcion: null,
+        codigoInterno: 'ABC-1',
+        precioCosto: 100,
+        precioVenta: 150,
+        stock: 0,
+        stockMinimo: 0,
+        categoriaId: 'cat-1',
+        subcategoriaId: null,
+        unidadId: null,
+        vendorId: null,
+        almacenId: 'alm-1',
+        fotos: [],
+        categoria: { catId: 'cat-1', nombre: 'Bebidas' },
+        subcategoria: null,
+        unidad: null,
+        vendor: null,
+      },
+    ])
+
+    const request = new NextRequest(
+      'http://localhost/api/productos/stock-ubicacion?ubicacionId=alm-1&tipoUbicacion=almacen&includeZero=true',
+    )
+
+    const response = await GET(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data).toHaveLength(1)
+    expect(data[0].id).toBe('prod-1')
+    expect(data[0].stockUbicacion).toBe(0)
+    expect(data[0].stockTotal).toBe(0)
+    expect(prismaMock.stockUbicacion.findMany).toHaveBeenCalledOnce()
+    expect(prismaMock.producto.findMany).toHaveBeenCalledOnce()
   })
 
   it('filtra registros con cantidad 0 cuando includeZero no está presente', async () => {
@@ -172,6 +248,7 @@ describe('API /productos/stock-ubicacion', () => {
 
     expect(response.status).toBe(200)
     expect(data).toHaveLength(0)
+    expect(prismaMock.producto.findMany).not.toHaveBeenCalled()
     expect(prismaMock.stockUbicacion.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({ cantidad: { gt: 0 } }),

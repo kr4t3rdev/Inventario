@@ -57,11 +57,69 @@ export async function GET(request: Request) {
       },
     })
 
-    const resultado = registros.map((r) => ({
-      ...r.producto,
-      stockUbicacion: r.cantidad,
-      stockTotal: r.producto.stock,
-    }))
+    if (!includeZero) {
+      const resultado = registros.map((r) => ({
+        ...r.producto,
+        stockUbicacion: r.cantidad,
+        stockTotal: r.producto.stock,
+      }))
+
+      return NextResponse.json(resultado)
+    }
+
+    const productosBase = await prisma.producto.findMany({
+      where:
+        tipoUbicacion === 'almacen'
+          ? { almacenId: ubicacionId }
+          : undefined,
+      select: {
+        id: true,
+        nombre: true,
+        descripcion: true,
+        codigoInterno: true,
+        fotos: true,
+        precioCosto: true,
+        precioVenta: true,
+        stock: true,
+        stockMinimo: true,
+        categoriaId: true,
+        subcategoriaId: true,
+        unidadId: true,
+        vendorId: true,
+        almacenId: true,
+        categoria: { select: { catId: true, nombre: true } },
+        subcategoria: { select: { catId: true, nombre: true, parentId: true } },
+        unidad: { select: { unidadId: true, nombre: true, simbolo: true } },
+        vendor: { select: { vendorId: true, nombre: true } },
+      },
+    })
+
+    const stockPorProducto = new Map(
+      registros.map((registro) => [registro.productoId, registro.cantidad]),
+    )
+
+    const productosMap = new Map(
+      productosBase.map((producto) => [
+        producto.id,
+        {
+          ...producto,
+          stockUbicacion: stockPorProducto.get(producto.id) ?? 0,
+          stockTotal: producto.stock,
+        },
+      ]),
+    )
+
+    for (const registro of registros) {
+      if (!productosMap.has(registro.productoId)) {
+        productosMap.set(registro.productoId, {
+          ...registro.producto,
+          stockUbicacion: registro.cantidad,
+          stockTotal: registro.producto.stock,
+        })
+      }
+    }
+
+    const resultado = Array.from(productosMap.values())
 
     return NextResponse.json(resultado)
   } catch (error) {

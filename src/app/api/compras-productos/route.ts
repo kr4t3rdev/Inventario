@@ -329,7 +329,6 @@ export const POST = withAuthPost(async (request: NextRequest, _context: any, use
           fechaCompra: now,
           gastoCompraId: gastoCompra?.gastoCompraId,
           cuentaPorPagarId: cuentaPorPagar?.cuentaPorPagarId,
-          createdById: user.userId || user.id,
         },
         include: {
           producto: true,
