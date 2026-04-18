@@ -7,6 +7,7 @@ import { calcularPrecioCostoCompra } from '@/lib/inventory-cost-utils'
 import { applyPagoGastoWorkflow } from '@/lib/services/pago-gastos-workflow'
 import { executeAnticipo, isAnticipoWorkflowError } from '@/lib/services/anticipos-workflow'
 import { FORMA_PAGO_ANTICIPO_PAGO } from '@/lib/constants/anticipos'
+import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service'
 
 const querySchema = z.object({
   search: z.string().optional(),
@@ -237,31 +238,12 @@ export const POST = withAuthPost(async (request: NextRequest, _context: any, use
         }
       })
 
-      await tx.stockUbicacion.upsert({
-        where: {
-          productoId_tipoUbicacion_ubicacionId: {
-            productoId: producto.id,
-            tipoUbicacion: 'almacen',
-            ubicacionId: producto.almacenId
-          }
-        },
-        update: {
-          cantidad: {
-            increment: data.cantidad
-          },
-          cantidadDisponible: {
-            increment: data.cantidad
-          },
-          ultimaActualizacion: new Date()
-        },
-        create: {
-          productoId: producto.id,
-          tipoUbicacion: 'almacen',
-          ubicacionId: producto.almacenId,
-          cantidad: stockDespues,
-          cantidadReservada: 0,
-          cantidadDisponible: stockDespues
-        }
+      await upsertStockUbicacion(tx, {
+        productoId: producto.id,
+        tipoUbicacion: 'almacen',
+        ubicacionId: producto.almacenId,
+        modo: 'increment',
+        delta: data.cantidad,
       })
 
       const totalCost = data.cantidad * data.precioCosto
