@@ -269,27 +269,49 @@ export class TreasuryIntegrationService {
     datos_anteriores?: Record<string, unknown>,
     datos_nuevos?: Record<string, unknown>
   ): Promise<any> {
+    const timestamp = new Date()
     const detalles = {
       datos_anteriores,
       datos_nuevos
     }
 
-    // Guardar en la tabla AuditLog de Prisma
-    const log = await (prisma as any).auditLog.create({
-      data: {
-        accion,
-        entidad: entidad_tipo,
-        entidadId: entidad_id,
-        usuarioId: usuario_id,
-        detalles: detalles as any,
-        userAgent: 'exchange-intelligence-dashboard',
-        ip: 'internal'
+    const audit_log: AuditLog = {
+      id: `audit-${timestamp.getTime()}-${Math.random().toString(36).slice(2, 10)}`,
+      accion,
+      entidad_tipo,
+      entidad_id,
+      usuario_id,
+      datos_anteriores,
+      datos_nuevos,
+      timestamp,
+    }
+
+    try {
+      const auditLogModel = (prisma as any).auditLog
+      if (typeof auditLogModel?.create === 'function') {
+        const persisted_log = await auditLogModel.create({
+          data: {
+            accion,
+            entidad: entidad_tipo,
+            entidadId: entidad_id,
+            usuarioId: usuario_id,
+            detalles: detalles as any,
+            userAgent: 'exchange-intelligence-dashboard',
+            ip: 'internal'
+          }
+        })
+
+        audit_log.id = persisted_log.id ?? audit_log.id
+        audit_log.timestamp = persisted_log.createdAt ?? timestamp
+        audit_log.metadata = persisted_log.detalles ?? undefined
       }
-    })
+    } catch (error) {
+      console.warn('No se pudo persistir el audit log de tesoreria:', error)
+    }
 
-    console.log('[AUDIT LOG CREATED]', log)
+    console.log('[AUDIT LOG]', audit_log)
 
-    return log
+    return audit_log
   }
 
   /**

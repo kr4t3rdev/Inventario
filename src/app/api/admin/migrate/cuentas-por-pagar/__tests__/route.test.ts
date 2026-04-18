@@ -22,10 +22,10 @@ describe('admin migrate cuentas por pagar - GET', () => {
   });
 
   it('permite acceso a roles legacy de admin', async () => {
-    const { verify_token } = await import('@/lib/auth-utils');
+    const { authenticateUser } = await import('@/lib/auth-middleware');
     const { prisma } = await import('@/lib/prisma');
 
-    vi.mocked(verify_token).mockResolvedValue({ role: 'ADMIN' } as never);
+    vi.mocked(authenticateUser).mockResolvedValue({ user: { role: 'ADMIN' } } as never);
     vi.mocked(prisma.cuentaPorPagar.count).mockResolvedValue(0);
     vi.mocked(prisma.cuentaPorPagar.findMany).mockResolvedValue([]);
 
@@ -36,9 +36,9 @@ describe('admin migrate cuentas por pagar - GET', () => {
   });
 
   it('deniega acceso si el rol no es administrador', async () => {
-    const { verify_token } = await import('@/lib/auth-utils');
+    const { authenticateUser } = await import('@/lib/auth-middleware');
 
-    vi.mocked(verify_token).mockResolvedValue({ role: 'regularUser' } as never);
+    vi.mocked(authenticateUser).mockResolvedValue({ user: { role: 'regularUser' } } as never);
 
     const request = new NextRequest('http://localhost/api/admin/migrate/cuentas-por-pagar');
     const response = await GET(request);

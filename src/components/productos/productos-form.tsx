@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm } from 'react-hook-form'
+import { useForm, type FieldErrors } from 'react-hook-form'
 import { z } from 'zod'
 import { motion } from 'framer-motion'
 import {
@@ -51,69 +51,124 @@ import { getAuthToken } from '@/lib/token'
 import { mapCategoryToSection, mapSubcategoryToSpecific } from '@/lib/category-mapping'
 import type { Vendor } from '@/app/models/model'
 
-const productosSchema = z.object({
-  nombre: z
-    .string({ required_error: 'El campo Nombre no ha sido rellenado' })
-    .min(1, 'El campo Nombre no ha sido rellenado')
-    .max(120, 'El nombre no puede superar los 120 caracteres'),
-  descripcion: z
-    .string()
-    .max(300, 'La descripción no puede superar los 300 caracteres')
-    .optional()
-    .or(z.literal('')),
-  codigoInterno: z
-    .string({ required_error: 'El código interno es requerido' })
-    .min(1, 'El código interno es requerido')
-    .regex(/^[0-9]{11}$/, 'El código interno debe contener exactamente 11 números'),
-  proveedorCodigo: z.string().optional(),
-  vendorId: z.string().optional(),
-  categoriaId: z
-    .string({ required_error: 'El campo Categoría no ha sido seleccionada' })
-    .min(1, 'El campo Categoría no ha sido seleccionada'),
-  subcategoriaId: z.string().optional(),
-  precioCosto: z.coerce
-    .number({
-      required_error: 'El campo Precio de costo no ha sido rellenado',
-      invalid_type_error: 'El campo Precio de costo no ha sido rellenado',
-    })
-    .positive('El precio de costo debe ser mayor a 0'),
-  precioVenta: z.coerce
-    .number({
-      required_error: 'El campo Precio de venta no ha sido rellenado',
-      invalid_type_error: 'El campo Precio de venta no ha sido rellenado',
-    })
-    .positive('El precio de venta debe ser mayor a 0'),
-  stock: z.coerce
-    .number({ invalid_type_error: 'Ingrese un número válido' })
-    .int('El stock debe ser un número entero')
-    .min(0, 'El stock debe ser mayor o igual a 0'),
-  stockMinimo: z.coerce
-    .number({ invalid_type_error: 'Ingrese un número válido' })
-    .int('El stock mínimo debe ser un número entero')
-    .min(0, 'El stock mínimo debe ser mayor o igual a 0'),
-  fotos: z.array(z.string()),
-  unidadId: z
-    .string({ required_error: 'El campo Unidad no ha sido seleccionada' })
-    .min(1, 'El campo Unidad no ha sido seleccionada'),
-  almacenId: z
-    .string({ required_error: 'El campo Almacén no ha sido seleccionado' })
-    .min(1, 'El campo Almacén no ha sido seleccionado'),
-}).superRefine((value, ctx) => {
-  // Validación cruzada: precio de venta no debería ser menor al costo
-  if (
-    value.precioCosto > 0 &&
-    value.precioVenta > 0 &&
-    value.precioVenta < value.precioCosto
-  ) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ['precioVenta'],
-      message: 'El precio de venta es menor al precio de costo — ¿es correcto?',
-    })
-  }
-})
+export function buildProductosSchema(usaEan13: boolean) {
+  return z.object({
+    nombre: z
+      .string({ required_error: 'El campo Nombre no ha sido rellenado' })
+      .min(1, 'El campo Nombre no ha sido rellenado')
+      .max(120, 'El nombre no puede superar los 120 caracteres'),
+    descripcion: z
+      .string()
+      .max(300, 'La descripción no puede superar los 300 caracteres')
+      .optional()
+      .or(z.literal('')),
+    codigoInterno: z
+      .string({ required_error: 'El código interno es requerido' })
+      .min(1, 'El código interno es requerido')
+      .regex(/^[0-9]{11}$/, 'El código interno debe contener exactamente 11 números'),
+    proveedorCodigo: z.string().optional(),
+    vendorId: z.string().optional(),
+    categoriaId: z
+      .string({ required_error: 'El campo Categoría no ha sido seleccionada' })
+      .min(1, 'El campo Categoría no ha sido seleccionada'),
+    subcategoriaId: z.string().optional(),
+    precioCosto: z.coerce
+      .number({
+        required_error: 'El campo Precio de costo no ha sido rellenado',
+        invalid_type_error: 'El campo Precio de costo no ha sido rellenado',
+      })
+      .positive('El precio de costo debe ser mayor a 0'),
+    precioVenta: z.coerce
+      .number({
+        required_error: 'El campo Precio de venta no ha sido rellenado',
+        invalid_type_error: 'El campo Precio de venta no ha sido rellenado',
+      })
+      .positive('El precio de venta debe ser mayor a 0'),
+    stock: z.coerce
+      .number({ invalid_type_error: 'Ingrese un número válido' })
+      .int('El stock debe ser un número entero')
+      .min(0, 'El stock debe ser mayor o igual a 0'),
+    stockMinimo: z.coerce
+      .number({ invalid_type_error: 'Ingrese un número válido' })
+      .int('El stock mínimo debe ser un número entero')
+      .min(0, 'El stock mínimo debe ser mayor o igual a 0'),
+    fotos: z.array(z.string()),
+    unidadId: z
+      .string({ required_error: 'El campo Unidad no ha sido seleccionada' })
+      .min(1, 'El campo Unidad no ha sido seleccionada'),
+    almacenId: z
+      .string({ required_error: 'El campo Almacén no ha sido seleccionado' })
+      .min(1, 'El campo Almacén no ha sido seleccionado'),
+  }).superRefine((value, ctx) => {
+    if (
+      value.precioCosto > 0 &&
+      value.precioVenta > 0 &&
+      value.precioVenta < value.precioCosto
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['precioVenta'],
+        message: 'El precio de venta es menor al precio de costo — ¿es correcto?',
+      })
+    }
 
-export type ProductosFormValues = z.infer<typeof productosSchema>
+    if (!usaEan13) {
+      return
+    }
+
+    if (!value.vendorId?.trim() && !value.proveedorCodigo?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['vendorId'],
+        message: 'Seleccione un proveedor para generar el EAN-13',
+      })
+    }
+
+    if (!value.subcategoriaId?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['subcategoriaId'],
+        message: 'Selecciona una subcategoría para generar el EAN-13',
+      })
+    }
+
+    if (
+      value.proveedorCodigo?.trim() &&
+      !/^\d{1,2}$/.test(value.proveedorCodigo.trim())
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['proveedorCodigo'],
+        message: 'Proveedor debe tener hasta 2 dígitos',
+      })
+    }
+  })
+}
+
+export type ProductosFormValues = z.infer<ReturnType<typeof buildProductosSchema>>
+
+function getFirstFormErrorMessage(errors: FieldErrors<ProductosFormValues>): string | null {
+  for (const value of Object.values(errors)) {
+    if (!value) {
+      continue
+    }
+
+    if (typeof value === 'object' && 'message' in value && typeof value.message === 'string') {
+      return value.message
+    }
+
+    if (typeof value === 'object') {
+      const nestedMessage = getFirstFormErrorMessage(
+        value as FieldErrors<ProductosFormValues>
+      )
+      if (nestedMessage) {
+        return nestedMessage
+      }
+    }
+  }
+
+  return null
+}
 
 interface ProductosFormProps {
   initialData?: {
@@ -173,6 +228,7 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
   const [usaEan13, setUsaEan13] = useState(false)
   const [isPending, startTransition] = useTransition()
   const isEditing = Boolean(initialData)
+  const isTaxonomyLocked = usaEan13 && isEditing
 
   useEffect(() => {
     const token = getAuthToken()
@@ -203,7 +259,7 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
   const [updateProducto] = useUpdateProductoMutation()
 
   const form = useForm<ProductosFormValues>({
-    resolver: zodResolver(productosSchema),
+    resolver: zodResolver(buildProductosSchema(usaEan13)),
     defaultValues: {
       nombre: initialData?.nombre || '',
       descripcion: initialData?.descripcion || '',
@@ -279,33 +335,10 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
     setIsLoading(true)
 
     try {
-      // Validar código interno
-      if (!data.codigoInterno || !/^[0-9]{11}$/.test(data.codigoInterno.trim())) {
-        form.setError('codigoInterno', {
-          type: 'manual',
-          message: 'El código interno debe contener exactamente 11 números',
-        })
-        sileo.error({
-          title: 'Código interno inválido',
-          description: 'El código interno es requerido y debe contener exactamente 11 números.',
-        })
-        setIsLoading(false)
-        return
-      }
-
        if (initialData) {
          const resolvedProveedorCodigo = selectedVendorProviderCode || data.proveedorCodigo
 
          if (usaEan13) {
-           if (!data.vendorId && !data.proveedorCodigo) {
-             form.setError('vendorId', {
-               type: 'manual',
-               message: 'Seleccione un proveedor para generar el EAN-13',
-             })
-             sileo.error({ title: 'Seleccioná un proveedor para generar el EAN-13.' })
-             return
-           }
-
            if (!resolvedProveedorCodigo) {
              form.setError('vendorId', {
                type: 'manual',
@@ -343,29 +376,12 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
         const resolvedProveedorCodigo = selectedVendorProviderCode || watchedProveedorCodigo
 
         if (usaEan13) {
-          if (!data.vendorId && !data.proveedorCodigo) {
-            form.setError('vendorId', {
-              type: 'manual',
-              message: 'Seleccione un proveedor para generar el EAN-13',
-            })
-            sileo.error({ title: 'Seleccioná un proveedor para generar el EAN-13.' })
-            return
-          }
-
           if (!resolvedProveedorCodigo) {
             form.setError('vendorId', {
               type: 'manual',
               message: 'El proveedor seleccionado no tiene código configurado para generar el EAN-13',
             })
             sileo.error({ title: 'Seleccioná un proveedor con código configurado para generar el EAN-13.' })
-            return
-          }
-
-          if (data.proveedorCodigo && !/^\d{1,2}$/.test(data.proveedorCodigo.trim())) {
-            form.setError('proveedorCodigo', {
-              type: 'manual',
-              message: 'Proveedor debe tener hasta 2 dígitos',
-            })
             return
           }
         }
@@ -499,8 +515,12 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
           <TooltipProvider>
             <Form {...form}>
               <form
-                onSubmit={form.handleSubmit(onSubmit, () => {
-                  sileo.error({ title: 'Completá los campos requeridos antes de continuar.' })
+                onSubmit={form.handleSubmit(onSubmit, (errors) => {
+                  sileo.error({
+                    title:
+                      getFirstFormErrorMessage(errors) ||
+                      'Completa los campos requeridos antes de continuar.',
+                  })
                 })}
                 className="space-y-6"
               >
@@ -594,6 +614,7 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
                               shouldValidate: true,
                               shouldDirty: true,
                             })
+                            form.clearErrors(['vendorId', 'proveedorCodigo'])
                           }}
                           disabled={isLoading}
                         >
@@ -612,7 +633,7 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
                         </Select>
                         <FormDescription>
                           {usaEan13
-                            ? 'Seleccioná un proveedor activo. El sistema toma su código configurado y genera el EAN-13.'
+                            ? 'Selecciona un proveedor activo. El sistema toma su código configurado y genera el EAN-13.'
                             : 'Proveedor del producto (opcional).'}
                         </FormDescription>
                         <FormMessage />
@@ -789,7 +810,14 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
                           onCategoryChange={(categoryId) => {
                             field.onChange(categoryId)
                             form.setValue('subcategoriaId', '')
-                            form.clearErrors('subcategoriaId')
+                            if (usaEan13) {
+                              form.setError('subcategoriaId', {
+                                type: 'manual',
+                                message: 'Selecciona una subcategoría para generar el EAN-13',
+                              })
+                            } else {
+                              form.clearErrors('subcategoriaId')
+                            }
                             if (usaEan13 && categoryId) {
                               const cat = categorias.find((c) => c.catId === categoryId)
                               if (cat) {
@@ -809,7 +837,10 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
                             }
                           }}
                           onSubcategoryChange={(subcategoryId) => {
-                            form.setValue('subcategoriaId', subcategoryId || '')
+                            form.setValue('subcategoriaId', subcategoryId || '', {
+                              shouldDirty: true,
+                              shouldValidate: true,
+                            })
                             if (usaEan13 && subcategoryId) {
                               const sub = subcategorias.find((s) => s.catId === subcategoryId)
                               if (sub) {
@@ -824,16 +855,25 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
                                   })
                                 }
                               }
+                            } else if (usaEan13) {
+                              form.setError('subcategoriaId', {
+                                type: 'manual',
+                                message: 'Selecciona una subcategoría para generar el EAN-13',
+                              })
                             } else {
                               form.clearErrors('subcategoriaId')
                             }
                           }}
                           required={usaEan13}
                           showLabels
-                          disabled={isLoading}
+                          disabled={isLoading || isTaxonomyLocked}
                         />
                         <FormDescription>
-                          Selecciona una categoría y, opcionalmente, una subcategoría.
+                          {isTaxonomyLocked
+                            ? 'La categoría y la subcategoría quedan bloqueadas cuando el producto ya tiene EAN-13 emitido.'
+                            : usaEan13
+                            ? 'Selecciona una categoría y una subcategoría para generar el EAN-13.'
+                            : 'Selecciona una categoría y, opcionalmente, una subcategoría.'}
                         </FormDescription>
                         <FormMessage />
                       </FormItem>

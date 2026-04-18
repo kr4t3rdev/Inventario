@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 vi.mock('@/lib/prisma', () => ({
   default: {
@@ -31,8 +31,10 @@ describe('Cuentas por pagar API - pagar POST', () => {
 
   it('responde 401 si no hay usuario autenticado', async () => {
     const { POST } = await import('../route')
-    const { verify_token } = await import('@/lib/auth-utils')
-    vi.mocked(verify_token).mockResolvedValue(null)
+    const { authenticateUser } = await import('@/lib/auth-middleware')
+    vi.mocked(authenticateUser).mockResolvedValue(
+      NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) as any
+    )
 
     const request = new NextRequest('http://localhost/api/contabilidad/cuentas-por-pagar/pagar', {
       method: 'POST',
@@ -53,9 +55,9 @@ describe('Cuentas por pagar API - pagar POST', () => {
   it('responde 404 cuando factura de compra no existe para crear CxP', async () => {
     const { POST } = await import('../route')
     const prisma = (await import('@/lib/prisma')).default as any
-    const { verify_token } = await import('@/lib/auth-utils')
+    const { authenticateUser } = await import('@/lib/auth-middleware')
 
-    vi.mocked(verify_token).mockResolvedValue({ userId: 'user-1' } as any)
+    vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-1' } } as any)
 
     prisma.$transaction.mockImplementation(async (callback: any) => {
       const tx = {
@@ -98,10 +100,10 @@ describe('Cuentas por pagar API - pagar POST', () => {
   it('mapea errores de negocio del workflow con status/code', async () => {
     const { POST } = await import('../route')
     const prisma = (await import('@/lib/prisma')).default as any
-    const { verify_token } = await import('@/lib/auth-utils')
+    const { authenticateUser } = await import('@/lib/auth-middleware')
     const { applyPagoGastoWorkflow } = await import('@/lib/services/pago-gastos-workflow')
 
-    vi.mocked(verify_token).mockResolvedValue({ userId: 'user-1' } as any)
+    vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-1' } } as any)
 
     prisma.$transaction.mockImplementation(async (callback: any) => {
       const tx = {
@@ -157,10 +159,10 @@ describe('Cuentas por pagar API - pagar POST', () => {
   it('retorna cuenta y pago cuando el workflow se aplica correctamente', async () => {
     const { POST } = await import('../route')
     const prisma = (await import('@/lib/prisma')).default as any
-    const { verify_token } = await import('@/lib/auth-utils')
+    const { authenticateUser } = await import('@/lib/auth-middleware')
     const { applyPagoGastoWorkflow } = await import('@/lib/services/pago-gastos-workflow')
 
-    vi.mocked(verify_token).mockResolvedValue({ userId: 'user-9' } as any)
+    vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-9' } } as any)
 
     const cuentaFindFirst = vi.fn().mockResolvedValue({
       cuentaPorPagarId: 'cxp-9',

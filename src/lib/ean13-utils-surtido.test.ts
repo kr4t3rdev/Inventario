@@ -28,23 +28,23 @@ describe('FindNextAvailableSurtido()', () => {
     vi.clearAllMocks()
   })
 
-  it('should return 0001 for a new section/specific pair', async () => {
+  it('should return 0000 for a new section/specific pair', async () => {
     // Mock: no existing products
     mockPrisma.producto.findMany.mockResolvedValue([])
 
     const result = await FindNextAvailableSurtido(mockPrisma, '14', '0285')
-    expect(result).toBe('0001')
+    expect(result).toBe('0000')
   })
 
   it('should return next sequential surtido after existing products', async () => {
-    // Mock: existing products with surtidos 0001, 0002
+    // Mock: existing products with surtidos 0000, 0001
     mockPrisma.producto.findMany.mockResolvedValue([
+      { surtidoCodigo: '0000' },
       { surtidoCodigo: '0001' },
-      { surtidoCodigo: '0002' },
     ])
 
     const result = await FindNextAvailableSurtido(mockPrisma, '14', '0285')
-    expect(result).toBe('0003')
+    expect(result).toBe('0002')
   })
 
   it('should return incremented surtido when products with gaps exist', async () => {

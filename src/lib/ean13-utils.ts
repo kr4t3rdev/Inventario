@@ -214,8 +214,8 @@ export function ValidateAssembledCode(code: unknown): boolean {
  * @throws Error si se alcanza el máximo de surtido (9999)
  *
  * @example
- * FindNextAvailableSurtido(prisma, '14', '0285') → '0001' (si no existen productos)
- * FindNextAvailableSurtido(prisma, '14', '0285') → '0003' (si existen 0001 y 0002)
+ * FindNextAvailableSurtido(prisma, '14', '0285') → '0000' (si no existen productos)
+ * FindNextAvailableSurtido(prisma, '14', '0285') → '0002' (si existen 0000 y 0001)
  */
 export async function FindNextAvailableSurtido(
   prismaClient: SurtidoLookupClient,
@@ -253,7 +253,7 @@ export async function FindNextAvailableSurtido(
       .sort((a, b) => b - a) // Ordenar descendente para obtener máximo
 
     // Calcular siguiente
-    const maxSurtido = surtidoNumbers.length > 0 ? surtidoNumbers[0] : 0
+    const maxSurtido = surtidoNumbers.length > 0 ? surtidoNumbers[0] : -1
     const nextSurtido = maxSurtido + 1
 
     // Validar no desbordamiento

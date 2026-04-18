@@ -5,19 +5,37 @@ import { authenticateUser } from "@/lib/auth-middleware"
 import { z } from "zod"
 // import { z } from "zod" // Removed for simplified query handling
 
-// Simplified query parameter handling - no Zod validation for now
+interface QueryParamsResult {
+  error?: string
+  page?: number
+  limit?: number
+  sortBy?: 'fecha' | 'cantidad' | 'total'
+  sortOrder?: 'asc' | 'desc'
+}
+
 const getQueryParams = (searchParams: URLSearchParams) => {
   const page = parseInt(searchParams.get('page') || '1', 10)
   const limit = parseInt(searchParams.get('limit') || '10', 10)
   const sortBy = searchParams.get('sortBy') || 'fecha'
   const sortOrder = searchParams.get('sortOrder') || 'desc'
 
-  // Basic validation
+  if (
+    Number.isNaN(page) ||
+    Number.isNaN(limit) ||
+    page < 1 ||
+    limit < 1 ||
+    limit > 100 ||
+    !['fecha', 'cantidad', 'total'].includes(sortBy) ||
+    !['asc', 'desc'].includes(sortOrder)
+  ) {
+    return { error: 'Invalid query parameters' }
+  }
+
   return {
-    page: Math.max(1, page),
-    limit: Math.min(100, Math.max(1, limit)),
-    sortBy: ['fecha', 'cantidad', 'total'].includes(sortBy) ? sortBy : 'fecha',
-    sortOrder: ['asc', 'desc'].includes(sortOrder) ? sortOrder : 'desc'
+    page,
+    limit,
+    sortBy: sortBy as QueryParamsResult['sortBy'],
+    sortOrder: sortOrder as QueryParamsResult['sortOrder']
   }
 }
 
@@ -69,29 +87,15 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    console.log('[DEBUG] Restock history API called')
-    console.log('[DEBUG] Request URL:', request.url)
-    console.log('[DEBUG] Params object:', params)
-
     // Await params for Next.js 15 compatibility
     const { id: productoId } = await params
-    console.log('[DEBUG] Extracted product ID:', productoId)
-
-    // JWT Authentication temporarily disabled for debugging
-    console.log('[DEBUG] Skipping auth check for debugging purposes')
-    // const user = await verify_token(request)
-    // if (!user) {
-    //   return NextResponse.json(
-    //     { error: "Unauthorized - Invalid or missing token" },
-    //     { status: 401 }
-    //   )
-    // }
-
-    console.log('[DEBUG] Product ID received:', productoId, 'Type:', typeof productoId)
+    const authResultUser = await authenticateUser(request)
+    if ('status' in authResultUser) {
+      return authResultUser as Response
+    }
 
     // Validate product ID
     if (!productoId || typeof productoId !== 'string') {
-      console.log('[DEBUG] Invalid product ID - returning 400')
       return NextResponse.json(
         { error: "Invalid product ID", received: productoId, type: typeof productoId },
         { status: 400 }
@@ -100,10 +104,16 @@ export async function GET(
 
     // Parse and validate query parameters - simplified approach
     const { searchParams } = new URL(request.url)
-    const { page, limit, sortBy, sortOrder } = getQueryParams(searchParams)
+    const queryParams = getQueryParams(searchParams)
 
-    console.log('[DEBUG] Parsed query params:', { page, limit, sortBy, sortOrder })
-    console.log('[DEBUG] Validated params:', { page, limit, sortBy, sortOrder })
+    if (queryParams.error) {
+      return NextResponse.json(
+        { error: queryParams.error },
+        { status: 400 }
+      )
+    }
+
+    const { page, limit, sortBy, sortOrder } = queryParams
 
     // Verify product exists
     const producto = await prisma.producto.findUnique({
@@ -126,26 +136,6 @@ export async function GET(
 
     // Calculate pagination offset
     const offset = (page - 1) * limit
-
-    // Debug: Check all GastoCompra records for this product
-    const allGastoCompraForProduct = await prisma.gastoCompra.findMany({
-      where: {
-        productoId: productoId
-      },
-      select: {
-        gastoCompraId: true,
-        descripcion: true,
-        fechaCompra: true,
-        cantidad: true
-      },
-      orderBy: { fechaCompra: 'desc' },
-      take: 5
-    })
-
-    console.log(`[DEBUG] Product ${productoId} has ${allGastoCompraForProduct.length} GastoCompra records:`)
-    allGastoCompraForProduct.forEach((gc: { fechaCompra: Date; descripcion?: string | null; cantidad: number }) => {
-      console.log(`  - ${gc.fechaCompra.toISOString()}: "${gc.descripcion}" (cantidad: ${gc.cantidad})`)
-    })
 
     // Query for restock operations (GastoCompra entries with restock descriptions)
     // Simplified query to avoid potential Prisma issues
@@ -188,9 +178,6 @@ export async function GET(
         }
       })
     ])
-
-    console.log(`[DEBUG] Found ${restockEntries.length} restock entries, total count: ${totalCount}`)
-
     // Build restock history with simplified price change tracking
     const history: RestockHistoryItem[] = []
 
@@ -223,11 +210,12 @@ export async function GET(
         precioVentaAnterior = producto.precioVenta
       }
 
-      // Determine operation type - since we no longer create instances, it's either same prices or price change
+      const isNewInstance = entry.producto.id !== productoId
       let tipoOperacion: RestockHistoryItem['tipoOperacion'] = 'restock_same_prices'
 
-      // Check if the unit price in this restock differs from the previous one
-      if (previousEntries.length > 0 && Math.abs(entry.precioUnitario - previousEntries[0].precioUnitario) > 0.01) {
+      if (isNewInstance) {
+        tipoOperacion = 'restock_new_instance'
+      } else if (previousEntries.length > 0 && Math.abs(entry.precioUnitario - previousEntries[0].precioUnitario) > 0.01) {
         tipoOperacion = 'restock_price_change'
       } else if (previousEntries.length === 0 && Math.abs(entry.precioUnitario - producto.precioCosto) > 0.01) {
         // First restock with different price than current product price
@@ -245,7 +233,7 @@ export async function GET(
         totalCompra: entry.total,
         descripcion: entry.descripcion,
         tipoOperacion,
-        productInstance: undefined, // No instances created anymore
+        productInstance: isNewInstance ? entry.producto : undefined,
         vendor: entry.vendor
       }
 

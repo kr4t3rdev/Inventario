@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 vi.mock('@/lib/prisma', () => ({
   default: {
@@ -25,8 +25,10 @@ describe('Reconciliacion gastos historial API - GET', () => {
 
   it('retorna 401 cuando no hay usuario autenticado', async () => {
     const { GET } = await import('../route')
-    const { verify_token } = await import('@/lib/auth-utils')
-    vi.mocked(verify_token).mockResolvedValue(null)
+    const { authenticateUser } = await import('@/lib/auth-middleware')
+    vi.mocked(authenticateUser).mockResolvedValue(
+      NextResponse.json({ code: 'UNAUTHORIZED' }, { status: 401 }) as any
+    )
 
     const request = new NextRequest(
       'http://localhost/api/contabilidad/reconciliacion/gastos/historial?page=1&limit=10'

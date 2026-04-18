@@ -9,6 +9,7 @@ vi.mock('@/lib/prisma', () => ({
   prisma: {
     puntoDeVenta: {
       count: vi.fn(),
+      findFirst: vi.fn(),
       update: vi.fn(),
     },
     listaPrecio: {
@@ -28,6 +29,10 @@ describe('API /listas-precios/[id]', () => {
     const { DELETE } = await import('../route');
     const { prisma } = await import('@/lib/prisma');
     (prisma.puntoDeVenta.count as any).mockResolvedValue(2);
+    (prisma.puntoDeVenta.findFirst as any).mockResolvedValue({
+      pvId: 'pv-1',
+      nombre: 'PV Centro',
+    });
 
     const res = await DELETE(new Request('http://localhost'), { params: { id: 'lp-1' } });
     const body = await res.json();

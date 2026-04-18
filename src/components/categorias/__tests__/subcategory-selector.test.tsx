@@ -242,8 +242,45 @@ describe('SubcategorySelector', () => {
     )
 
     await waitFor(() => {
-      expect(screen.getByText('Subcategoría (Opcional)')).toBeInTheDocument()
+      expect(screen.getByText('Subcategoría')).toBeInTheDocument()
       expect(screen.getByText('Seleccionar subcategoría (opcional)')).toBeInTheDocument()
+    })
+  })
+
+  it('should remove optional text and disallow empty subcategory when required', async () => {
+    mockUseGetCategoriasQuery.mockReturnValue({
+      data: mockCategories,
+      isLoading: false,
+      error: null,
+    })
+
+    mockUseGetSubcategoriasQuery.mockReturnValue({
+      data: mockSubcategories,
+      isLoading: false,
+      error: null,
+    })
+
+    renderWithProvider(
+      <SubcategorySelector
+        selectedCategoryId="cat1"
+        required
+        onCategoryChange={mockOnCategoryChange}
+        onSubcategoryChange={mockOnSubcategoryChange}
+      />
+    )
+
+    await waitFor(() => {
+      expect(screen.getByText('Subcategoría')).toBeInTheDocument()
+      expect(screen.queryByText('Subcategoría (Opcional)')).not.toBeInTheDocument()
+      expect(screen.getByText('Seleccionar subcategoría')).toBeInTheDocument()
+      expect(screen.queryByText('Seleccionar subcategoría (opcional)')).not.toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByText('Seleccionar subcategoría'))
+
+    await waitFor(() => {
+      expect(screen.queryByText('Sin subcategoría')).not.toBeInTheDocument()
+      expect(screen.getByText('Smartphones')).toBeInTheDocument()
     })
   })
 
@@ -442,7 +479,8 @@ describe('SubcategorySelector', () => {
       />
     )
 
-    const categoryTrigger = screen.getByRole('combobox')
+    const [categoryTrigger, subcategoryTrigger] = screen.getAllByRole('combobox')
     expect(categoryTrigger).toBeDisabled()
+    expect(subcategoryTrigger).toBeDisabled()
   })
 })

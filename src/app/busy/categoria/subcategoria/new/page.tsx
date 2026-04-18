@@ -3,14 +3,14 @@
 import Link from "next/link";
 import type { ReactElement } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Layers, Sparkles } from "lucide-react";
+import { ArrowLeft, Sparkles } from "lucide-react";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { SubcategoryHierarchyForm } from "@/components/categorias/subcategory-hierarchy-form";
+import { SubcategoryForm } from "@/components/categorias/subcategory-form";
 
 /**
- * @description Página para crear una nueva subcategoría a partir de una categoría existente.
- * @returns {ReactElement} Vista de creación de subcategorías basadas en jerarquía existente.
+ * @description Página para crear una nueva subcategoría CLAS en modo EAN-13.
+ * @returns {ReactElement} Vista de creación de subcategorías CLAS.
  */
 export default function NuevaSubcategoriaPage(): ReactElement {
   return (
@@ -47,7 +47,7 @@ export default function NuevaSubcategoriaPage(): ReactElement {
                 whileHover={{ scale: 1.05, rotate: 5 }}
                 transition={{ duration: 0.2 }}
               >
-                <Layers className="h-6 w-6 text-white" />
+                <Sparkles className="h-6 w-6 text-white" />
                 <motion.div
                   animate={{
                     rotate: 360,
@@ -64,10 +64,10 @@ export default function NuevaSubcategoriaPage(): ReactElement {
               </motion.div>
               <div>
                 <h1 className="text-3xl font-bold tracking-tight bg-linear-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
-                  Nueva Subcategoría
+                  Nueva Subcategoría CLAS
                 </h1>
                 <p className="text-muted-foreground">
-                  Selecciona una categoría ya creada y luego su subcategoría.
+                  Selecciona la sección CLAS y luego el específico que deseas registrar.
                 </p>
               </div>
             </div>
@@ -78,7 +78,7 @@ export default function NuevaSubcategoriaPage(): ReactElement {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.5 }}
           >
-            <SubcategoryHierarchyForm />
+            <SubcategoryForm />
           </motion.div>
         </motion.div>
       </SidebarInset>

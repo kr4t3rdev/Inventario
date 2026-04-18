@@ -22,9 +22,9 @@ describe('Facturar oferta API - POST rollback por fallo de facturación', () => 
   it('debe responder 500 cuando falla factura en transacción y no continuar con CxC', async () => {
     const { POST } = await import('../route');
     const prisma = (await import('@/lib/prisma')).default as any;
-    const { verify_token } = await import('@/lib/auth-utils');
+    const { authenticateUser } = await import('@/lib/auth-middleware');
 
-    vi.mocked(verify_token).mockResolvedValue({ userId: 'user-123' } as any);
+    vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-123' } } as any);
 
     prisma.oferta.findUnique.mockResolvedValue({
       id: 'oferta-1',

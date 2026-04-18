@@ -1,9 +1,9 @@
 import React from 'react'
 import '@testing-library/jest-dom/vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { ProductoForm } from '../productos-form'
+import { ProductoForm, buildProductosSchema } from '../productos-form'
 
 const mockPush = vi.fn()
 const mockRefresh = vi.fn()
@@ -16,6 +16,11 @@ const mockUseGetCategoriasQuery = vi.fn()
 const mockUseGetSubcategoriasQuery = vi.fn()
 const mockUseGetVendorsQuery = vi.fn()
 const mockFetch = vi.fn()
+const mockToastError = vi.fn()
+const mockToastSuccess = vi.fn()
+const mockToastWarning = vi.fn()
+const mockToastInfo = vi.fn()
+const mockToastDismiss = vi.fn()
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({
@@ -45,7 +50,13 @@ vi.mock('framer-motion', () => ({
 }))
 
 vi.mock('sonner', () => ({
-  toast: vi.fn(),
+  toast: {
+    error: mockToastError,
+    success: mockToastSuccess,
+    warning: mockToastWarning,
+    info: mockToastInfo,
+    dismiss: mockToastDismiss,
+  },
 }))
 
 vi.mock('@/lib/redux/services/productosApi', () => ({
@@ -79,7 +90,11 @@ vi.mock('@/lib/token', () => ({
 }))
 
 vi.mock('@/components/categorias/subcategory-selector', () => ({
-  SubcategorySelector: () => <div data-testid='subcategory-selector'>selector</div>,
+  SubcategorySelector: ({ disabled }: { disabled?: boolean }) => (
+    <div data-testid='subcategory-selector' data-disabled={String(Boolean(disabled))}>
+      selector
+    </div>
+  ),
 }))
 
 vi.mock('../product-photo-upload', () => ({
@@ -118,7 +133,62 @@ describe('ProductoForm', () => {
     mockFetch.mockResolvedValue({
       json: async () => ({ usaCodigoEan13: false }),
     })
+    mockToastError.mockReset()
+    mockToastSuccess.mockReset()
+    mockToastWarning.mockReset()
+    mockToastInfo.mockReset()
+    mockToastDismiss.mockReset()
     vi.stubGlobal('fetch', mockFetch)
+  })
+
+  it('requiere proveedor y subcategoría cuando EAN-13 está activo', () => {
+    const result = buildProductosSchema(true).safeParse({
+      nombre: 'Producto demo',
+      descripcion: '',
+      codigoInterno: '12345678901',
+      proveedorCodigo: '',
+      vendorId: '',
+      categoriaId: 'cat-1',
+      subcategoriaId: '',
+      precioCosto: 100,
+      precioVenta: 120,
+      stock: 10,
+      stockMinimo: 2,
+      fotos: [],
+      unidadId: 'u1',
+      almacenId: 'a1',
+    })
+
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.flatten().fieldErrors.vendorId).toContain(
+        'Seleccione un proveedor para generar el EAN-13'
+      )
+      expect(result.error.flatten().fieldErrors.subcategoriaId).toContain(
+        'Selecciona una subcategoría para generar el EAN-13'
+      )
+    }
+  })
+
+  it('no requiere proveedor ni subcategoría cuando EAN-13 está desactivado', () => {
+    const result = buildProductosSchema(false).safeParse({
+      nombre: 'Producto demo',
+      descripcion: '',
+      codigoInterno: '12345678901',
+      proveedorCodigo: '',
+      vendorId: '',
+      categoriaId: 'cat-1',
+      subcategoriaId: '',
+      precioCosto: 100,
+      precioVenta: 120,
+      stock: 10,
+      stockMinimo: 2,
+      fotos: [],
+      unidadId: 'u1',
+      almacenId: 'a1',
+    })
+
+    expect(result.success).toBe(true)
   })
 
   it('en creación muestra selector de proveedor y oculta inputs manuales de segmentos', () => {
@@ -194,5 +264,57 @@ describe('ProductoForm', () => {
     })
 
     expect(screen.getByLabelText('Código de negocio (EAN-13)')).toBeInTheDocument()
+  })
+
+  it('en edición con EAN-13 activado bloquea la taxonomía del producto', async () => {
+    mockFetch.mockResolvedValueOnce({
+      json: async () => ({ usaCodigoEan13: true }),
+    })
+
+    render(
+      <ProductoForm
+        initialData={{
+          id: 'prod-3',
+          nombre: 'Producto 3',
+          descripcion: null,
+          codigoInterno: '12345678901',
+          codigoNegocio: '1234567890123',
+          proveedorCodigo: '01',
+          idSeccionCodigo: '12',
+          especificoCodigo: '3456',
+          surtidoCodigo: '0000',
+          categoriaId: 'cat-1',
+          subcategoriaId: 'sub-1',
+          precioCosto: 100,
+          precioVenta: 120,
+          stock: 10,
+          stockMinimo: 2,
+          fotos: [],
+          unidadId: 'u1',
+          almacenId: 'a1',
+          vendorId: 'vendor-1',
+        }}
+      />
+    )
+
+    await waitFor(() => {
+      expect(screen.getByTestId('subcategory-selector')).toHaveAttribute('data-disabled', 'true')
+    })
+
+    expect(
+      screen.getByText('La categoría y la subcategoría quedan bloqueadas cuando el producto ya tiene EAN-13 emitido.')
+    ).toBeInTheDocument()
+  })
+
+  it('muestra en toast el primer mensaje de validación al enviar un formulario inválido', async () => {
+    render(<ProductoForm />)
+
+    fireEvent.click(screen.getByRole('button', { name: 'Crear producto' }))
+
+    await waitFor(() => {
+      expect(mockToastError).toHaveBeenCalled()
+    })
+
+    expect(mockToastError.mock.calls[0]?.[0]).toBe('El campo Nombre no ha sido rellenado')
   })
 })

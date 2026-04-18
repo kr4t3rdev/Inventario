@@ -133,7 +133,7 @@ export function SubcategorySelector({
       <div className="space-y-2">
         {showLabels && (
           <Label htmlFor="subcategory-select">
-            Subcategoría (Opcional)
+            Subcategoría {required && <span className="text-destructive">*</span>}
           </Label>
         )}
         {internalCategoryId && isLoadingSubcategories ? (
@@ -153,14 +153,16 @@ export function SubcategorySelector({
                 placeholder={
                   !internalCategoryId
                     ? "Primero seleccioná una categoría"
-                    : "Seleccionar subcategoría (opcional)"
+                    : required
+                      ? "Seleccionar subcategoría"
+                      : "Seleccionar subcategoría (opcional)"
                 }
               />
             </SelectTrigger>
             <SelectContent>
               {internalCategoryId && (
                 <>
-                  <SelectItem value="none">Sin subcategoría</SelectItem>
+                  {!required && <SelectItem value="none">Sin subcategoría</SelectItem>}
                   {subcategories.map((subcategory: Categoria) => (
                     <SelectItem key={subcategory.catId} value={subcategory.catId}>
                       {subcategory.nombre}

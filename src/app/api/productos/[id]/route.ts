@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { withAuth } from "@/lib/auth-middleware"
-import { generateEan13BusinessCode } from '@/lib/ean13-utils'
+import {
+  assertServerOwnedCodeFields,
+  normalizeProveedorCodigo,
+} from '@/lib/product-business-code'
 
 type ProductoRouteContext = { params: Promise<{ id: string }> }
 const CODIGO_INTERNO_REGEX = /^[0-9]{11}$/
@@ -79,6 +82,23 @@ export const PATCH = withAuth(async (request: NextRequest, context: ProductoRout
       precios
     } = body
 
+    const currentProducto = await prisma.producto.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        precioCosto: true,
+        precioVenta: true,
+        categoriaId: true,
+        subcategoriaId: true,
+        vendorId: true,
+        proveedorCodigo: true,
+      },
+    })
+
+    if (!currentProducto) {
+      return NextResponse.json({ error: 'Producto no encontrado' }, { status: 404 })
+    }
+
     // Validate stockMinimo if provided
     if (stockMinimo !== undefined && (typeof stockMinimo !== 'number' || stockMinimo < 0 || !Number.isInteger(stockMinimo))) {
       return NextResponse.json({
@@ -99,17 +119,19 @@ export const PATCH = withAuth(async (request: NextRequest, context: ProductoRout
     const normalizedCodigoInterno = normalizeCodigoInterno(codigoInterno)
     const miEmpresa = await prisma.miEmpresa.findFirst({ select: { usaCodigoEan13: true } })
     const usaEan13 = miEmpresa?.usaCodigoEan13 ?? false
-    const hasAnyEanSegment =
-      [proveedorCodigo, idSeccionCodigo, especificoCodigo, surtidoCodigo].some((value) => {
-        if (value === undefined || value === null) return false
-        return String(value).trim() !== ''
-      })
 
-    let generatedBusinessCode: ReturnType<typeof generateEan13BusinessCode> | null = null
-    if (usaEan13 && hasAnyEanSegment) {
+    const effectiveCategoriaId = categoriaId ?? currentProducto.categoriaId
+    const effectiveSubcategoriaId =
+      subcategoriaId === undefined ? currentProducto.subcategoriaId : subcategoriaId
+    const effectiveVendorId = vendorId === undefined ? currentProducto.vendorId : vendorId
+    const effectiveProveedorCodigoRaw =
+      proveedorCodigo === undefined ? currentProducto.proveedorCodigo : proveedorCodigo
+
+    let normalizedProveedorCodigo: string | undefined
+
+    if (usaEan13) {
       try {
-        generatedBusinessCode = generateEan13BusinessCode({
-          proveedorCodigo,
+        assertServerOwnedCodeFields({
           idSeccionCodigo,
           especificoCodigo,
           surtidoCodigo,
@@ -119,7 +141,62 @@ export const PATCH = withAuth(async (request: NextRequest, context: ProductoRout
           error: error instanceof Error ? error.message : 'Error validando segmentos EAN-13'
         }, { status: 400 })
       }
+
+      if (!effectiveCategoriaId) {
+        return NextResponse.json({
+          error: 'La categoría es requerida para productos con EAN-13'
+        }, { status: 400 })
+      }
+
+      if (!effectiveSubcategoriaId) {
+        return NextResponse.json({
+          error: 'La subcategoría es requerida para productos con EAN-13'
+        }, { status: 400 })
+      }
+
+      if (
+        effectiveProveedorCodigoRaw === undefined ||
+        effectiveProveedorCodigoRaw === null ||
+        String(effectiveProveedorCodigoRaw).trim() === ''
+      ) {
+        return NextResponse.json({
+          error: 'Seleccione un proveedor para generar el EAN-13'
+        }, { status: 400 })
+      }
+
+      try {
+        normalizedProveedorCodigo = normalizeProveedorCodigo(effectiveProveedorCodigoRaw)
+      } catch (error) {
+        return NextResponse.json({
+          error: error instanceof Error ? error.message : 'Proveedor inválido'
+        }, { status: 400 })
+      }
+
+      if (effectiveVendorId) {
+        const existingVendor = await prisma.vendor.findUnique({
+          where: { vendorId: effectiveVendorId },
+          select: { vendorId: true },
+        })
+
+        if (!existingVendor) {
+          return NextResponse.json({
+            error: 'El proveedor seleccionado no existe'
+          }, { status: 400 })
+        }
+      }
+
+      const isCategoriaChanging =
+        categoriaId !== undefined && categoriaId !== currentProducto.categoriaId
+      const isSubcategoriaChanging =
+        subcategoriaId !== undefined && subcategoriaId !== currentProducto.subcategoriaId
+
+      if (isCategoriaChanging || isSubcategoriaChanging) {
+        return NextResponse.json({
+          error: 'La categoría y la subcategoría no se pueden cambiar en productos con EAN-13 ya generado'
+        }, { status: 400 })
+      }
     }
+
     if (normalizedCodigoInterno && !CODIGO_INTERNO_REGEX.test(normalizedCodigoInterno)) {
       return NextResponse.json({
         error: 'El código interno debe contener exactamente 11 números'
@@ -146,49 +223,20 @@ export const PATCH = withAuth(async (request: NextRequest, context: ProductoRout
       }
     }
 
-    if (generatedBusinessCode) {
-      const existingBusinessCode = await prisma.producto.findFirst({
-        where: {
-          codigoNegocio: generatedBusinessCode.codigoNegocio,
-          NOT: { id }
-        },
-        select: { id: true }
-      })
-
-      if (existingBusinessCode) {
-        return NextResponse.json({
-          error: 'El código de negocio EAN-13 ya está asignado a otro producto'
-        }, { status: 409 })
-      }
-    }
-
     // Validate subcategory belongs to category if both are provided
-    if (subcategoriaId && categoriaId) {
+    if (effectiveSubcategoriaId && effectiveCategoriaId) {
       const subcategoria = await prisma.categoria.findUnique({
-        where: { catId: subcategoriaId },
+        where: { catId: effectiveSubcategoriaId },
         select: { parentId: true }
       })
       
-      if (!subcategoria || subcategoria.parentId !== categoriaId) {
+      if (!subcategoria || subcategoria.parentId !== effectiveCategoriaId) {
         return NextResponse.json({
           error: 'La subcategoría debe pertenecer a la categoría seleccionada'
         }, {
           status: 400
         })
       }
-    }
-
-    // Fetch current product to detect price changes (for cost history tracking)
-    const currentProducto = await prisma.producto.findUnique({
-      where: { id },
-      select: {
-        precioCosto: true,
-        precioVenta: true,
-      },
-    })
-
-    if (!currentProducto) {
-      return NextResponse.json({ error: 'Producto no encontrado' }, { status: 404 })
     }
 
     if (precios && Array.isArray(precios)) {
@@ -224,16 +272,11 @@ export const PATCH = withAuth(async (request: NextRequest, context: ProductoRout
           ...(stockMinimo !== undefined && { stockMinimo }),
           ...(fotos !== undefined && { fotos }),
           ...(normalizedCodigoInterno !== undefined && { codigoInterno: normalizedCodigoInterno }),
-          ...(generatedBusinessCode && { codigoNegocio: generatedBusinessCode.codigoNegocio }),
-          ...(generatedBusinessCode && { proveedorCodigo: generatedBusinessCode.segments.proveedorCodigo }),
-          ...(generatedBusinessCode && { idSeccionCodigo: generatedBusinessCode.segments.idSeccionCodigo }),
-          ...(generatedBusinessCode && { especificoCodigo: generatedBusinessCode.segments.especificoCodigo }),
-          ...(generatedBusinessCode && { surtidoCodigo: generatedBusinessCode.segments.surtidoCodigo }),
-          ...(generatedBusinessCode && { dcCodigo: generatedBusinessCode.dcCodigo }),
-          categoriaId,
-          subcategoriaId: subcategoriaId || null,
+          ...(normalizedProveedorCodigo !== undefined && { proveedorCodigo: normalizedProveedorCodigo }),
+          ...(categoriaId !== undefined && { categoriaId }),
+          ...(subcategoriaId !== undefined && { subcategoriaId: subcategoriaId || null }),
           unidadId,
-          vendorId,
+          ...(vendorId !== undefined && { vendorId }),
           almacenId,
         },
         include: {

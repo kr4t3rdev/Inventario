@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { DELETE } from '../route'
 
 vi.mock('@/lib/prisma', () => ({
@@ -21,10 +21,10 @@ describe('Ofertas API - DELETE', () => {
   })
 
   it('debe eliminar una oferta pendiente exitosamente', async () => {
-    const { verify_token } = await import('@/lib/auth-utils')
+    const { authenticateUser } = await import('@/lib/auth-middleware')
     const prisma = (await import('@/lib/prisma')).default
 
-    vi.mocked(verify_token).mockResolvedValue({ userId: 'user-123' } as any)
+    vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-123' } } as any)
     vi.mocked(prisma.oferta.findUnique).mockResolvedValue({
       id: 'oferta-123',
       estado: 'PENDIENTE',
@@ -40,10 +40,10 @@ describe('Ofertas API - DELETE', () => {
   })
 
   it('debe rechazar eliminar una oferta facturada', async () => {
-    const { verify_token } = await import('@/lib/auth-utils')
+    const { authenticateUser } = await import('@/lib/auth-middleware')
     const prisma = (await import('@/lib/prisma')).default
 
-    vi.mocked(verify_token).mockResolvedValue({ userId: 'user-123' } as any)
+    vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-123' } } as any)
     vi.mocked(prisma.oferta.findUnique).mockResolvedValue({
       id: 'oferta-123',
       estado: 'FACTURADA',
@@ -58,10 +58,10 @@ describe('Ofertas API - DELETE', () => {
   })
 
   it('debe retornar 404 si la oferta no existe', async () => {
-    const { verify_token } = await import('@/lib/auth-utils')
+    const { authenticateUser } = await import('@/lib/auth-middleware')
     const prisma = (await import('@/lib/prisma')).default
 
-    vi.mocked(verify_token).mockResolvedValue({ userId: 'user-123' } as any)
+    vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-123' } } as any)
     vi.mocked(prisma.oferta.findUnique).mockResolvedValue(null)
 
     const request = new NextRequest('http://localhost/api/ofertas/oferta-123')
@@ -73,9 +73,11 @@ describe('Ofertas API - DELETE', () => {
   })
 
   it('debe retornar 401 si no hay usuario autenticado', async () => {
-    const { verify_token } = await import('@/lib/auth-utils')
+    const { authenticateUser } = await import('@/lib/auth-middleware')
 
-    vi.mocked(verify_token).mockResolvedValue(null)
+    vi.mocked(authenticateUser).mockResolvedValue(
+      NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) as any
+    )
 
     const request = new NextRequest('http://localhost/api/ofertas/oferta-123')
     const response = await DELETE(request, { params: Promise.resolve({ id: 'oferta-123' }) })

@@ -88,9 +88,9 @@ describe('Reconciliacion gastos API - POST', () => {
   it('registra reconciliacion PAGADA para gasto DE sin CxP', async () => {
     const { POST } = await import('../route')
     const prisma = (await import('@/lib/prisma')).default as any
-    const { verify_token } = await import('@/lib/auth-utils')
+    const { authenticateUser } = await import('@/lib/auth-middleware')
 
-    vi.mocked(verify_token).mockResolvedValue({ userId: 'user-1' } as any)
+    vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-1' } } as any)
     vi.mocked(prisma.gastosDE.findUnique).mockResolvedValue({
       gastosDEId: 'gde-1'
     })
@@ -167,9 +167,9 @@ describe('Reconciliacion gastos API - POST', () => {
   it('registra reconciliacion PARCIAL cuando CxP queda con saldo', async () => {
     const { POST } = await import('../route')
     const prisma = (await import('@/lib/prisma')).default as any
-    const { verify_token } = await import('@/lib/auth-utils')
+    const { authenticateUser } = await import('@/lib/auth-middleware')
 
-    vi.mocked(verify_token).mockResolvedValue({ userId: 'user-2' } as any)
+    vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-2' } } as any)
     vi.mocked(prisma.gastosDE.findUnique).mockResolvedValue({
       gastosDEId: 'gde-2'
     })
@@ -260,9 +260,9 @@ describe('Reconciliacion gastos API - POST', () => {
   it('retorna 409 cuando numeroTransaccion ya existe en la CxP', async () => {
     const { POST } = await import('../route')
     const prisma = (await import('@/lib/prisma')).default as any
-    const { verify_token } = await import('@/lib/auth-utils')
+    const { authenticateUser } = await import('@/lib/auth-middleware')
 
-    vi.mocked(verify_token).mockResolvedValue({ userId: 'user-3' } as any)
+    vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-3' } } as any)
     vi.mocked(prisma.gastosDE.findUnique).mockResolvedValue({
       gastosDEId: 'gde-3'
     })
