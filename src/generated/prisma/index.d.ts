@@ -23912,7 +23912,6 @@ export namespace Prisma {
     cantidad: number | null
     cantidadReservada: number | null
     cantidadDisponible: number | null
-    ultimaActualizacion: Date | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -23925,7 +23924,6 @@ export namespace Prisma {
     cantidad: number | null
     cantidadReservada: number | null
     cantidadDisponible: number | null
-    ultimaActualizacion: Date | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -23938,7 +23936,6 @@ export namespace Prisma {
     cantidad: number
     cantidadReservada: number
     cantidadDisponible: number
-    ultimaActualizacion: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -23965,7 +23962,6 @@ export namespace Prisma {
     cantidad?: true
     cantidadReservada?: true
     cantidadDisponible?: true
-    ultimaActualizacion?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -23978,7 +23974,6 @@ export namespace Prisma {
     cantidad?: true
     cantidadReservada?: true
     cantidadDisponible?: true
-    ultimaActualizacion?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -23991,7 +23986,6 @@ export namespace Prisma {
     cantidad?: true
     cantidadReservada?: true
     cantidadDisponible?: true
-    ultimaActualizacion?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -24091,7 +24085,6 @@ export namespace Prisma {
     cantidad: number
     cantidadReservada: number
     cantidadDisponible: number
-    ultimaActualizacion: Date
     createdAt: Date
     updatedAt: Date
     _count: StockUbicacionCountAggregateOutputType | null
@@ -24123,7 +24116,6 @@ export namespace Prisma {
     cantidad?: boolean
     cantidadReservada?: boolean
     cantidadDisponible?: boolean
-    ultimaActualizacion?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     producto?: boolean | ProductoDefaultArgs<ExtArgs>
@@ -24137,7 +24129,6 @@ export namespace Prisma {
     cantidad?: boolean
     cantidadReservada?: boolean
     cantidadDisponible?: boolean
-    ultimaActualizacion?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     producto?: boolean | ProductoDefaultArgs<ExtArgs>
@@ -24151,7 +24142,6 @@ export namespace Prisma {
     cantidad?: boolean
     cantidadReservada?: boolean
     cantidadDisponible?: boolean
-    ultimaActualizacion?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     producto?: boolean | ProductoDefaultArgs<ExtArgs>
@@ -24165,12 +24155,11 @@ export namespace Prisma {
     cantidad?: boolean
     cantidadReservada?: boolean
     cantidadDisponible?: boolean
-    ultimaActualizacion?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type StockUbicacionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "productoId" | "tipoUbicacion" | "ubicacionId" | "cantidad" | "cantidadReservada" | "cantidadDisponible" | "ultimaActualizacion" | "createdAt" | "updatedAt", ExtArgs["result"]["stockUbicacion"]>
+  export type StockUbicacionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "productoId" | "tipoUbicacion" | "ubicacionId" | "cantidad" | "cantidadReservada" | "cantidadDisponible" | "createdAt" | "updatedAt", ExtArgs["result"]["stockUbicacion"]>
   export type StockUbicacionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     producto?: boolean | ProductoDefaultArgs<ExtArgs>
   }
@@ -24194,7 +24183,6 @@ export namespace Prisma {
       cantidad: number
       cantidadReservada: number
       cantidadDisponible: number
-      ultimaActualizacion: Date
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["stockUbicacion"]>
@@ -24628,7 +24616,6 @@ export namespace Prisma {
     readonly cantidad: FieldRef<"StockUbicacion", 'Int'>
     readonly cantidadReservada: FieldRef<"StockUbicacion", 'Int'>
     readonly cantidadDisponible: FieldRef<"StockUbicacion", 'Int'>
-    readonly ultimaActualizacion: FieldRef<"StockUbicacion", 'DateTime'>
     readonly createdAt: FieldRef<"StockUbicacion", 'DateTime'>
     readonly updatedAt: FieldRef<"StockUbicacion", 'DateTime'>
   }
@@ -118398,7 +118385,6 @@ export namespace Prisma {
     cantidad: 'cantidad',
     cantidadReservada: 'cantidadReservada',
     cantidadDisponible: 'cantidadDisponible',
-    ultimaActualizacion: 'ultimaActualizacion',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
@@ -121130,7 +121116,6 @@ export namespace Prisma {
     cantidad?: IntFilter<"StockUbicacion"> | number
     cantidadReservada?: IntFilter<"StockUbicacion"> | number
     cantidadDisponible?: IntFilter<"StockUbicacion"> | number
-    ultimaActualizacion?: DateTimeFilter<"StockUbicacion"> | Date | string
     createdAt?: DateTimeFilter<"StockUbicacion"> | Date | string
     updatedAt?: DateTimeFilter<"StockUbicacion"> | Date | string
     producto?: XOR<ProductoScalarRelationFilter, ProductoWhereInput>
@@ -121144,7 +121129,6 @@ export namespace Prisma {
     cantidad?: SortOrder
     cantidadReservada?: SortOrder
     cantidadDisponible?: SortOrder
-    ultimaActualizacion?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     producto?: ProductoOrderByWithRelationInput
@@ -121162,7 +121146,6 @@ export namespace Prisma {
     cantidad?: IntFilter<"StockUbicacion"> | number
     cantidadReservada?: IntFilter<"StockUbicacion"> | number
     cantidadDisponible?: IntFilter<"StockUbicacion"> | number
-    ultimaActualizacion?: DateTimeFilter<"StockUbicacion"> | Date | string
     createdAt?: DateTimeFilter<"StockUbicacion"> | Date | string
     updatedAt?: DateTimeFilter<"StockUbicacion"> | Date | string
     producto?: XOR<ProductoScalarRelationFilter, ProductoWhereInput>
@@ -121176,7 +121159,6 @@ export namespace Prisma {
     cantidad?: SortOrder
     cantidadReservada?: SortOrder
     cantidadDisponible?: SortOrder
-    ultimaActualizacion?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: StockUbicacionCountOrderByAggregateInput
@@ -121197,7 +121179,6 @@ export namespace Prisma {
     cantidad?: IntWithAggregatesFilter<"StockUbicacion"> | number
     cantidadReservada?: IntWithAggregatesFilter<"StockUbicacion"> | number
     cantidadDisponible?: IntWithAggregatesFilter<"StockUbicacion"> | number
-    ultimaActualizacion?: DateTimeWithAggregatesFilter<"StockUbicacion"> | Date | string
     createdAt?: DateTimeWithAggregatesFilter<"StockUbicacion"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"StockUbicacion"> | Date | string
   }
@@ -129511,7 +129492,6 @@ export namespace Prisma {
     cantidad?: number
     cantidadReservada?: number
     cantidadDisponible?: number
-    ultimaActualizacion?: Date | string
     createdAt?: Date | string
     updatedAt?: Date | string
     producto: ProductoCreateNestedOneWithoutStockUbicacionesInput
@@ -129525,7 +129505,6 @@ export namespace Prisma {
     cantidad?: number
     cantidadReservada?: number
     cantidadDisponible?: number
-    ultimaActualizacion?: Date | string
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -129537,7 +129516,6 @@ export namespace Prisma {
     cantidad?: IntFieldUpdateOperationsInput | number
     cantidadReservada?: IntFieldUpdateOperationsInput | number
     cantidadDisponible?: IntFieldUpdateOperationsInput | number
-    ultimaActualizacion?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     producto?: ProductoUpdateOneRequiredWithoutStockUbicacionesNestedInput
@@ -129551,7 +129529,6 @@ export namespace Prisma {
     cantidad?: IntFieldUpdateOperationsInput | number
     cantidadReservada?: IntFieldUpdateOperationsInput | number
     cantidadDisponible?: IntFieldUpdateOperationsInput | number
-    ultimaActualizacion?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -129564,7 +129541,6 @@ export namespace Prisma {
     cantidad?: number
     cantidadReservada?: number
     cantidadDisponible?: number
-    ultimaActualizacion?: Date | string
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -129576,7 +129552,6 @@ export namespace Prisma {
     cantidad?: IntFieldUpdateOperationsInput | number
     cantidadReservada?: IntFieldUpdateOperationsInput | number
     cantidadDisponible?: IntFieldUpdateOperationsInput | number
-    ultimaActualizacion?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -129589,7 +129564,6 @@ export namespace Prisma {
     cantidad?: IntFieldUpdateOperationsInput | number
     cantidadReservada?: IntFieldUpdateOperationsInput | number
     cantidadDisponible?: IntFieldUpdateOperationsInput | number
-    ultimaActualizacion?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -138611,7 +138585,6 @@ export namespace Prisma {
     cantidad?: SortOrder
     cantidadReservada?: SortOrder
     cantidadDisponible?: SortOrder
-    ultimaActualizacion?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -138630,7 +138603,6 @@ export namespace Prisma {
     cantidad?: SortOrder
     cantidadReservada?: SortOrder
     cantidadDisponible?: SortOrder
-    ultimaActualizacion?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -138643,7 +138615,6 @@ export namespace Prisma {
     cantidad?: SortOrder
     cantidadReservada?: SortOrder
     cantidadDisponible?: SortOrder
-    ultimaActualizacion?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -155745,7 +155716,6 @@ export namespace Prisma {
     cantidad?: number
     cantidadReservada?: number
     cantidadDisponible?: number
-    ultimaActualizacion?: Date | string
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -155757,7 +155727,6 @@ export namespace Prisma {
     cantidad?: number
     cantidadReservada?: number
     cantidadDisponible?: number
-    ultimaActualizacion?: Date | string
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -156451,7 +156420,6 @@ export namespace Prisma {
     cantidad?: IntFilter<"StockUbicacion"> | number
     cantidadReservada?: IntFilter<"StockUbicacion"> | number
     cantidadDisponible?: IntFilter<"StockUbicacion"> | number
-    ultimaActualizacion?: DateTimeFilter<"StockUbicacion"> | Date | string
     createdAt?: DateTimeFilter<"StockUbicacion"> | Date | string
     updatedAt?: DateTimeFilter<"StockUbicacion"> | Date | string
   }
@@ -178413,7 +178381,6 @@ export namespace Prisma {
     cantidad?: number
     cantidadReservada?: number
     cantidadDisponible?: number
-    ultimaActualizacion?: Date | string
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -179018,7 +178985,6 @@ export namespace Prisma {
     cantidad?: IntFieldUpdateOperationsInput | number
     cantidadReservada?: IntFieldUpdateOperationsInput | number
     cantidadDisponible?: IntFieldUpdateOperationsInput | number
-    ultimaActualizacion?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -179030,7 +178996,6 @@ export namespace Prisma {
     cantidad?: IntFieldUpdateOperationsInput | number
     cantidadReservada?: IntFieldUpdateOperationsInput | number
     cantidadDisponible?: IntFieldUpdateOperationsInput | number
-    ultimaActualizacion?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -179042,7 +179007,6 @@ export namespace Prisma {
     cantidad?: IntFieldUpdateOperationsInput | number
     cantidadReservada?: IntFieldUpdateOperationsInput | number
     cantidadDisponible?: IntFieldUpdateOperationsInput | number
-    ultimaActualizacion?: DateTimeFieldUpdateOperationsInput | Date | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

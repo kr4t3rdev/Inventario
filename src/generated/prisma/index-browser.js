@@ -270,7 +270,6 @@ exports.Prisma.StockUbicacionScalarFieldEnum = {
   cantidad: 'cantidad',
   cantidadReservada: 'cantidadReservada',
   cantidadDisponible: 'cantidadDisponible',
-  ultimaActualizacion: 'ultimaActualizacion',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
