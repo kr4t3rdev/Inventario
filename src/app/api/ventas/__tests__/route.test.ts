@@ -172,6 +172,9 @@ describe('Ventas API - POST rollback por fallo de facturación', () => {
         venta: {
           create: txVentaCreate,
         },
+        stockUbicacion: {
+          upsert: vi.fn().mockResolvedValue({}),
+        },
       };
       return callback(tx);
     });
@@ -246,6 +249,7 @@ describe('Ventas API - POST rollback por fallo de facturación', () => {
       .mockImplementationOnce(async (callback: any) => {
         const tx = {
           venta: { create: txVentaCreate },
+          stockUbicacion: { upsert: vi.fn().mockResolvedValue({}) },
         };
         return callback(tx);
       })
@@ -314,7 +318,8 @@ describe('Ventas API - sync stock padre para productos hijos compuestos', () => 
     prisma.$transaction.mockImplementation(async (callback: any) => {
       const tx = {
         venta: { create: txVentaCreate },
-        producto: { update: txProductoUpdate },
+        producto: { update: txProductoUpdate, findUnique: vi.fn().mockResolvedValue(null) },
+        stockUbicacion: { upsert: vi.fn().mockResolvedValue({}) },
       };
       return callback(tx);
     });
@@ -380,7 +385,8 @@ describe('Ventas API - sync stock padre para productos hijos compuestos', () => 
     prisma.$transaction.mockImplementation(async (callback: any) => {
       const tx = {
         venta: { create: txVentaCreate },
-        producto: { update: txProductoUpdate },
+        producto: { update: txProductoUpdate, findUnique: vi.fn().mockResolvedValue(null) },
+        stockUbicacion: { upsert: vi.fn().mockResolvedValue({}) },
       };
       return callback(tx);
     });

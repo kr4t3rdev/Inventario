@@ -172,6 +172,9 @@ describe('Restock API - Transaction Handling', () => {
                     gastoCompra: {
                         create: vi.fn().mockRejectedValue(new Error('Foreign key constraint failed')),
                     },
+                    stockUbicacion: {
+                        upsert: vi.fn().mockResolvedValue({}),
+                    },
                 }
 
                 try {
@@ -547,6 +550,9 @@ describe('Restock API - Transaction Handling', () => {
                     },
                     gastoCompra: {
                         create: vi.fn().mockResolvedValue(expectedGastoCompra),
+                    },
+                    stockUbicacion: {
+                        upsert: vi.fn().mockResolvedValue({}),
                     },
                 }
 
