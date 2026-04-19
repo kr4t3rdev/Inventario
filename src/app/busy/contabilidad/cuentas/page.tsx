@@ -66,7 +66,7 @@ const CuentaBancariaForm = dynamic(
 export default function CuentasBancariasPage(): React.JSX.Element {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingCuenta, setEditingCuenta] = useState<CuentaBancaria | null>(null);
-  const shouldReduceMotion = useReducedMotion();
+  const shouldReduceMotion = useReduceMotion();
 
   const { data: cuentasData = { cuentas: [] }, refetch, isLoading } = useGetCuentasBancariasQuery();
   const [updateCuenta] = useUpdateCuentaBancariaMutation();
@@ -75,7 +75,18 @@ export default function CuentasBancariasPage(): React.JSX.Element {
   const totalCuentas = cuentas.length;
   const cuentasActivas = cuentas.filter((cuenta) => cuenta.isActive).length;
   
-  const saldoTotal = cuentas.reduce((sum, cuenta) => sum + Number(cuenta.saldo ?? 0), 0);
+  /**
+   * @description Calcula el saldo total en la moneda principal (CUP)
+   * Las cuentas retornadas por el backend ya incluyen 'saldoEnMonedaPrincipal'
+   * que ha sido convertido usando las tasas de cambio correspondientes.
+   * @returns {number} Saldo total en moneda principal
+   */
+  const saldoTotal = cuentas.reduce((sum, cuenta: any) => {
+    // Usar saldoEnMonedaPrincipal si está disponible (convertido por backend)
+    // Si no, usar el saldo original (fallback)
+    const saldoEnPrincipal = cuenta.saldoEnMonedaPrincipal ?? Number(cuenta.saldo ?? 0);
+    return sum + saldoEnPrincipal;
+  }, 0);
 
   const surfaceCardClass = cn(
     'relative overflow-hidden border-slate-600/10 shadow-sm backdrop-blur-xl',
@@ -145,7 +156,7 @@ export default function CuentasBancariasPage(): React.JSX.Element {
                   </h2>
                 </div>
                 <p className="pl-10 text-muted-foreground">
-                  Administra los bancos, tipos de cuenta y saldos disponibles.
+                  Administra los bancos, tipos de cuenta y saldos disponibles. Los saldos se muestran en la moneda principal (CUP).
                 </p>
               </div>
 
@@ -233,7 +244,7 @@ export default function CuentasBancariasPage(): React.JSX.Element {
                           <AnimatedNumber value={saldoTotal} currency="$" />
                         </div>
                         <p className="text-xs text-muted-foreground">
-                          Suma total aproximada
+                          Suma total en moneda principal (CUP)
                         </p>
                       </>
                     )}
@@ -284,4 +295,3 @@ export default function CuentasBancariasPage(): React.JSX.Element {
     </SidebarProvider>
   );
 }
-

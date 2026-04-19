@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { z } from "zod";
 import { authenticateUser } from "@/lib/auth-middleware";
 import { AuditLogService } from "@/lib/services/audit-log-service";
+import { CurrencyConversionService } from "@/lib/services/currency-conversion-service";
 
 // Schema for validating bank account creation/update
 const cuentaBancariaSchema = z.object({
@@ -14,7 +15,7 @@ const cuentaBancariaSchema = z.object({
   isActive: z.boolean().optional()
 });
 
-// GET /api/contabilidad/cuentas - List all bank accounts
+// GET /api/contabilidad/cuentas - List all bank accounts with saldos converted to main currency
 export async function GET() {
   try {
     const cuentas = await prisma.cuentaBancaria.findMany({
@@ -68,7 +69,52 @@ export async function GET() {
       }
     });
 
-    return NextResponse.json({ cuentas });
+    // Get the main currency
+    const monedaPrincipal = await CurrencyConversionService.getMainCurrency();
+
+    // Add converted balance to each account
+    const cuentasConConversion = await Promise.all(
+      cuentas.map(async (cuenta) => {
+        try {
+          // If the account is in the main currency, the conversion is 1:1
+          if (cuenta.moneda === monedaPrincipal.codigo) {
+            return {
+              ...cuenta,
+              saldoEnMonedaPrincipal: Number(cuenta.saldo),
+              tasaConversionAplicada: 1
+            };
+          }
+
+          // Otherwise, get the exchange rate and convert
+          const { montoEnPrincipal, tasa } = await CurrencyConversionService.convertToMainCurrency(
+            Number(cuenta.saldo),
+            cuenta.moneda
+          );
+
+          return {
+            ...cuenta,
+            saldoEnMonedaPrincipal: montoEnPrincipal,
+            tasaConversionAplicada: tasa
+          };
+        } catch (error) {
+          console.warn(
+            `Warning: Could not convert balance for account ${cuenta.cuentaId} (${cuenta.moneda}):`,
+            error
+          );
+          // Return account as-is if conversion fails
+          return {
+            ...cuenta,
+            saldoEnMonedaPrincipal: Number(cuenta.saldo),
+            tasaConversionAplicada: 1
+          };
+        }
+      })
+    );
+
+    return NextResponse.json({ 
+      cuentas: cuentasConConversion,
+      monedaPrincipal: monedaPrincipal.codigo 
+    });
   } catch (error) {
     console.error('Error al obtener cuentas bancarias:', error);
     return NextResponse.json({
