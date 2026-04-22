@@ -3,7 +3,7 @@ import { isCategoryNameUnique, validateParentAssignment } from '@/lib/enhanced-c
 
 export async function POST(request: Request) {
   try {
-    const { categoryId, name, parentId } = await request.json();
+    const { categoryId, name, parentId, clasSectionId, clasSpecificId } = await request.json();
 
     if (!name) {
       return NextResponse.json(
@@ -16,8 +16,8 @@ export async function POST(request: Request) {
     const isNameUnique = await isCategoryNameUnique(name, parentId || null, categoryId);
     if (!isNameUnique) {
       return NextResponse.json(
-        { 
-          isValid: false, 
+        {
+          isValid: false,
           error: 'Ya existe una categoría con este nombre en el mismo nivel jerárquico',
           field: 'name'
         },
@@ -34,8 +34,8 @@ export async function POST(request: Request) {
 
       if (!parentValidation.isValid) {
         return NextResponse.json(
-          { 
-            isValid: false, 
+          {
+            isValid: false,
             error: parentValidation.reason,
             field: 'parentId'
           },
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Error validating category:', error);
     return NextResponse.json(
-      { 
+      {
         error: 'Ocurrió un error al validar la categoría',
         details: process.env.NODE_ENV === 'development' ? (error as Error).message : undefined
       },

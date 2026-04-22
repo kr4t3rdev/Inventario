@@ -13,6 +13,8 @@ export async function GET() {
                 nombre: true,
                 descripcion: true,
                 parentId: true,
+                clasSectionId: true,
+                clasSpecificId: true,
                 createdAt: true,
                 updatedAt: true,
                 parent: {
@@ -57,13 +59,17 @@ export async function POST(req: NextRequest) {
             data: {
                 nombre: validatedData.nombre,
                 descripcion: validatedData.descripcion,
-                parentId: validatedData.parentId
+                parentId: validatedData.parentId,
+                clasSectionId: validatedData.clasSectionId,
+                clasSpecificId: validatedData.clasSpecificId
             },
             select: {
                 catId: true,
                 nombre: true,
                 descripcion: true,
                 parentId: true,
+                clasSectionId: true,
+                clasSpecificId: true,
                 createdAt: true,
                 updatedAt: true,
                 parent: {

@@ -29,6 +29,8 @@ interface UseCategoryFormProps {
     nombre: string;
     descripcion?: string | null;
     parentId?: string | null;
+    clasSectionId?: string | null;
+    clasSpecificId?: string | null;
   };
   onSuccess?: () => void;
   usaEan13?: boolean;
@@ -94,8 +96,8 @@ export function useCategoryForm({
         nombre: initialData.nombre,
         descripcion: initialData.descripcion || '',
         parentId: initialData.parentId || 'none',
-        clasSectionId: undefined,
-        clasSpecificId: undefined,
+        clasSectionId: initialData.clasSectionId || undefined,
+        clasSpecificId: initialData.clasSpecificId || undefined,
       })
     }
   }, [initialData, form]);

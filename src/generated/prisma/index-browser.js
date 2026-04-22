@@ -127,7 +127,9 @@ exports.Prisma.CategoriaScalarFieldEnum = {
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   descripcion: 'descripcion',
-  parentId: 'parentId'
+  parentId: 'parentId',
+  clasSectionId: 'clasSectionId',
+  clasSpecificId: 'clasSpecificId'
 };
 
 exports.Prisma.UnidadScalarFieldEnum = {

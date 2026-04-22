@@ -11105,6 +11105,8 @@ export namespace Prisma {
     updatedAt: Date | null
     descripcion: string | null
     parentId: string | null
+    clasSectionId: string | null
+    clasSpecificId: string | null
   }
 
   export type CategoriaMaxAggregateOutputType = {
@@ -11114,6 +11116,8 @@ export namespace Prisma {
     updatedAt: Date | null
     descripcion: string | null
     parentId: string | null
+    clasSectionId: string | null
+    clasSpecificId: string | null
   }
 
   export type CategoriaCountAggregateOutputType = {
@@ -11123,6 +11127,8 @@ export namespace Prisma {
     updatedAt: number
     descripcion: number
     parentId: number
+    clasSectionId: number
+    clasSpecificId: number
     _all: number
   }
 
@@ -11134,6 +11140,8 @@ export namespace Prisma {
     updatedAt?: true
     descripcion?: true
     parentId?: true
+    clasSectionId?: true
+    clasSpecificId?: true
   }
 
   export type CategoriaMaxAggregateInputType = {
@@ -11143,6 +11151,8 @@ export namespace Prisma {
     updatedAt?: true
     descripcion?: true
     parentId?: true
+    clasSectionId?: true
+    clasSpecificId?: true
   }
 
   export type CategoriaCountAggregateInputType = {
@@ -11152,6 +11162,8 @@ export namespace Prisma {
     updatedAt?: true
     descripcion?: true
     parentId?: true
+    clasSectionId?: true
+    clasSpecificId?: true
     _all?: true
   }
 
@@ -11234,6 +11246,8 @@ export namespace Prisma {
     updatedAt: Date
     descripcion: string | null
     parentId: string | null
+    clasSectionId: string | null
+    clasSpecificId: string | null
     _count: CategoriaCountAggregateOutputType | null
     _min: CategoriaMinAggregateOutputType | null
     _max: CategoriaMaxAggregateOutputType | null
@@ -11260,6 +11274,8 @@ export namespace Prisma {
     updatedAt?: boolean
     descripcion?: boolean
     parentId?: boolean
+    clasSectionId?: boolean
+    clasSpecificId?: boolean
     parent?: boolean | Categoria$parentArgs<ExtArgs>
     subcategorias?: boolean | Categoria$subcategoriasArgs<ExtArgs>
     productos?: boolean | Categoria$productosArgs<ExtArgs>
@@ -11274,6 +11290,8 @@ export namespace Prisma {
     updatedAt?: boolean
     descripcion?: boolean
     parentId?: boolean
+    clasSectionId?: boolean
+    clasSpecificId?: boolean
     parent?: boolean | Categoria$parentArgs<ExtArgs>
   }, ExtArgs["result"]["categoria"]>
 
@@ -11284,6 +11302,8 @@ export namespace Prisma {
     updatedAt?: boolean
     descripcion?: boolean
     parentId?: boolean
+    clasSectionId?: boolean
+    clasSpecificId?: boolean
     parent?: boolean | Categoria$parentArgs<ExtArgs>
   }, ExtArgs["result"]["categoria"]>
 
@@ -11294,9 +11314,11 @@ export namespace Prisma {
     updatedAt?: boolean
     descripcion?: boolean
     parentId?: boolean
+    clasSectionId?: boolean
+    clasSpecificId?: boolean
   }
 
-  export type CategoriaOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"catId" | "nombre" | "createdAt" | "updatedAt" | "descripcion" | "parentId", ExtArgs["result"]["categoria"]>
+  export type CategoriaOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"catId" | "nombre" | "createdAt" | "updatedAt" | "descripcion" | "parentId" | "clasSectionId" | "clasSpecificId", ExtArgs["result"]["categoria"]>
   export type CategoriaInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     parent?: boolean | Categoria$parentArgs<ExtArgs>
     subcategorias?: boolean | Categoria$subcategoriasArgs<ExtArgs>
@@ -11326,6 +11348,8 @@ export namespace Prisma {
       updatedAt: Date
       descripcion: string | null
       parentId: string | null
+      clasSectionId: string | null
+      clasSpecificId: string | null
     }, ExtArgs["result"]["categoria"]>
     composites: {}
   }
@@ -11759,6 +11783,8 @@ export namespace Prisma {
     readonly updatedAt: FieldRef<"Categoria", 'DateTime'>
     readonly descripcion: FieldRef<"Categoria", 'String'>
     readonly parentId: FieldRef<"Categoria", 'String'>
+    readonly clasSectionId: FieldRef<"Categoria", 'String'>
+    readonly clasSpecificId: FieldRef<"Categoria", 'String'>
   }
     
 
@@ -119621,7 +119647,9 @@ export namespace Prisma {
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
     descripcion: 'descripcion',
-    parentId: 'parentId'
+    parentId: 'parentId',
+    clasSectionId: 'clasSectionId',
+    clasSpecificId: 'clasSpecificId'
   };
 
   export type CategoriaScalarFieldEnum = (typeof CategoriaScalarFieldEnum)[keyof typeof CategoriaScalarFieldEnum]
@@ -121543,6 +121571,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Categoria"> | Date | string
     descripcion?: StringNullableFilter<"Categoria"> | string | null
     parentId?: StringNullableFilter<"Categoria"> | string | null
+    clasSectionId?: StringNullableFilter<"Categoria"> | string | null
+    clasSpecificId?: StringNullableFilter<"Categoria"> | string | null
     parent?: XOR<CategoriaNullableScalarRelationFilter, CategoriaWhereInput> | null
     subcategorias?: CategoriaListRelationFilter
     productos?: ProductoListRelationFilter
@@ -121556,6 +121586,8 @@ export namespace Prisma {
     updatedAt?: SortOrder
     descripcion?: SortOrderInput | SortOrder
     parentId?: SortOrderInput | SortOrder
+    clasSectionId?: SortOrderInput | SortOrder
+    clasSpecificId?: SortOrderInput | SortOrder
     parent?: CategoriaOrderByWithRelationInput
     subcategorias?: CategoriaOrderByRelationAggregateInput
     productos?: ProductoOrderByRelationAggregateInput
@@ -121572,6 +121604,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Categoria"> | Date | string
     descripcion?: StringNullableFilter<"Categoria"> | string | null
     parentId?: StringNullableFilter<"Categoria"> | string | null
+    clasSectionId?: StringNullableFilter<"Categoria"> | string | null
+    clasSpecificId?: StringNullableFilter<"Categoria"> | string | null
     parent?: XOR<CategoriaNullableScalarRelationFilter, CategoriaWhereInput> | null
     subcategorias?: CategoriaListRelationFilter
     productos?: ProductoListRelationFilter
@@ -121585,6 +121619,8 @@ export namespace Prisma {
     updatedAt?: SortOrder
     descripcion?: SortOrderInput | SortOrder
     parentId?: SortOrderInput | SortOrder
+    clasSectionId?: SortOrderInput | SortOrder
+    clasSpecificId?: SortOrderInput | SortOrder
     _count?: CategoriaCountOrderByAggregateInput
     _max?: CategoriaMaxOrderByAggregateInput
     _min?: CategoriaMinOrderByAggregateInput
@@ -121600,6 +121636,8 @@ export namespace Prisma {
     updatedAt?: DateTimeWithAggregatesFilter<"Categoria"> | Date | string
     descripcion?: StringNullableWithAggregatesFilter<"Categoria"> | string | null
     parentId?: StringNullableWithAggregatesFilter<"Categoria"> | string | null
+    clasSectionId?: StringNullableWithAggregatesFilter<"Categoria"> | string | null
+    clasSpecificId?: StringNullableWithAggregatesFilter<"Categoria"> | string | null
   }
 
   export type UnidadWhereInput = {
@@ -129885,6 +129923,8 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     descripcion?: string | null
+    clasSectionId?: string | null
+    clasSpecificId?: string | null
     parent?: CategoriaCreateNestedOneWithoutSubcategoriasInput
     subcategorias?: CategoriaCreateNestedManyWithoutParentInput
     productos?: ProductoCreateNestedManyWithoutCategoriaInput
@@ -129898,6 +129938,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     descripcion?: string | null
     parentId?: string | null
+    clasSectionId?: string | null
+    clasSpecificId?: string | null
     subcategorias?: CategoriaUncheckedCreateNestedManyWithoutParentInput
     productos?: ProductoUncheckedCreateNestedManyWithoutCategoriaInput
     productosSubcategoria?: ProductoUncheckedCreateNestedManyWithoutSubcategoriaInput
@@ -129909,6 +129951,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    clasSectionId?: NullableStringFieldUpdateOperationsInput | string | null
+    clasSpecificId?: NullableStringFieldUpdateOperationsInput | string | null
     parent?: CategoriaUpdateOneWithoutSubcategoriasNestedInput
     subcategorias?: CategoriaUpdateManyWithoutParentNestedInput
     productos?: ProductoUpdateManyWithoutCategoriaNestedInput
@@ -129922,6 +129966,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     descripcion?: NullableStringFieldUpdateOperationsInput | string | null
     parentId?: NullableStringFieldUpdateOperationsInput | string | null
+    clasSectionId?: NullableStringFieldUpdateOperationsInput | string | null
+    clasSpecificId?: NullableStringFieldUpdateOperationsInput | string | null
     subcategorias?: CategoriaUncheckedUpdateManyWithoutParentNestedInput
     productos?: ProductoUncheckedUpdateManyWithoutCategoriaNestedInput
     productosSubcategoria?: ProductoUncheckedUpdateManyWithoutSubcategoriaNestedInput
@@ -129934,6 +129980,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     descripcion?: string | null
     parentId?: string | null
+    clasSectionId?: string | null
+    clasSpecificId?: string | null
   }
 
   export type CategoriaUpdateManyMutationInput = {
@@ -129942,6 +129990,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    clasSectionId?: NullableStringFieldUpdateOperationsInput | string | null
+    clasSpecificId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type CategoriaUncheckedUpdateManyInput = {
@@ -129951,6 +130001,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     descripcion?: NullableStringFieldUpdateOperationsInput | string | null
     parentId?: NullableStringFieldUpdateOperationsInput | string | null
+    clasSectionId?: NullableStringFieldUpdateOperationsInput | string | null
+    clasSpecificId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type UnidadCreateInput = {
@@ -139227,6 +139279,8 @@ export namespace Prisma {
     updatedAt?: SortOrder
     descripcion?: SortOrder
     parentId?: SortOrder
+    clasSectionId?: SortOrder
+    clasSpecificId?: SortOrder
   }
 
   export type CategoriaMaxOrderByAggregateInput = {
@@ -139236,6 +139290,8 @@ export namespace Prisma {
     updatedAt?: SortOrder
     descripcion?: SortOrder
     parentId?: SortOrder
+    clasSectionId?: SortOrder
+    clasSpecificId?: SortOrder
   }
 
   export type CategoriaMinOrderByAggregateInput = {
@@ -139245,6 +139301,8 @@ export namespace Prisma {
     updatedAt?: SortOrder
     descripcion?: SortOrder
     parentId?: SortOrder
+    clasSectionId?: SortOrder
+    clasSpecificId?: SortOrder
   }
 
   export type StringWithAggregatesFilter<$PrismaModel = never> = {
@@ -153719,6 +153777,8 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     descripcion?: string | null
+    clasSectionId?: string | null
+    clasSpecificId?: string | null
     parent?: CategoriaCreateNestedOneWithoutSubcategoriasInput
     productos?: ProductoCreateNestedManyWithoutCategoriaInput
     productosSubcategoria?: ProductoCreateNestedManyWithoutSubcategoriaInput
@@ -153731,6 +153791,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     descripcion?: string | null
     parentId?: string | null
+    clasSectionId?: string | null
+    clasSpecificId?: string | null
     productos?: ProductoUncheckedCreateNestedManyWithoutCategoriaInput
     productosSubcategoria?: ProductoUncheckedCreateNestedManyWithoutSubcategoriaInput
   }
@@ -153746,6 +153808,8 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     descripcion?: string | null
+    clasSectionId?: string | null
+    clasSpecificId?: string | null
     subcategorias?: CategoriaCreateNestedManyWithoutParentInput
     productos?: ProductoCreateNestedManyWithoutCategoriaInput
     productosSubcategoria?: ProductoCreateNestedManyWithoutSubcategoriaInput
@@ -153757,6 +153821,8 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     descripcion?: string | null
+    clasSectionId?: string | null
+    clasSpecificId?: string | null
     subcategorias?: CategoriaUncheckedCreateNestedManyWithoutParentInput
     productos?: ProductoUncheckedCreateNestedManyWithoutCategoriaInput
     productosSubcategoria?: ProductoUncheckedCreateNestedManyWithoutSubcategoriaInput
@@ -153981,6 +154047,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    clasSectionId?: NullableStringFieldUpdateOperationsInput | string | null
+    clasSpecificId?: NullableStringFieldUpdateOperationsInput | string | null
     parent?: CategoriaUpdateOneWithoutSubcategoriasNestedInput
     productos?: ProductoUpdateManyWithoutCategoriaNestedInput
     productosSubcategoria?: ProductoUpdateManyWithoutSubcategoriaNestedInput
@@ -153993,6 +154061,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     descripcion?: NullableStringFieldUpdateOperationsInput | string | null
     parentId?: NullableStringFieldUpdateOperationsInput | string | null
+    clasSectionId?: NullableStringFieldUpdateOperationsInput | string | null
+    clasSpecificId?: NullableStringFieldUpdateOperationsInput | string | null
     productos?: ProductoUncheckedUpdateManyWithoutCategoriaNestedInput
     productosSubcategoria?: ProductoUncheckedUpdateManyWithoutSubcategoriaNestedInput
   }
@@ -154023,6 +154093,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Categoria"> | Date | string
     descripcion?: StringNullableFilter<"Categoria"> | string | null
     parentId?: StringNullableFilter<"Categoria"> | string | null
+    clasSectionId?: StringNullableFilter<"Categoria"> | string | null
+    clasSpecificId?: StringNullableFilter<"Categoria"> | string | null
   }
 
   export type ProductoUpsertWithWhereUniqueWithoutCategoriaInput = {
@@ -157053,6 +157125,8 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     descripcion?: string | null
+    clasSectionId?: string | null
+    clasSpecificId?: string | null
     parent?: CategoriaCreateNestedOneWithoutSubcategoriasInput
     subcategorias?: CategoriaCreateNestedManyWithoutParentInput
     productosSubcategoria?: ProductoCreateNestedManyWithoutSubcategoriaInput
@@ -157065,6 +157139,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     descripcion?: string | null
     parentId?: string | null
+    clasSectionId?: string | null
+    clasSpecificId?: string | null
     subcategorias?: CategoriaUncheckedCreateNestedManyWithoutParentInput
     productosSubcategoria?: ProductoUncheckedCreateNestedManyWithoutSubcategoriaInput
   }
@@ -157296,6 +157372,8 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     descripcion?: string | null
+    clasSectionId?: string | null
+    clasSpecificId?: string | null
     parent?: CategoriaCreateNestedOneWithoutSubcategoriasInput
     subcategorias?: CategoriaCreateNestedManyWithoutParentInput
     productos?: ProductoCreateNestedManyWithoutCategoriaInput
@@ -157308,6 +157386,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     descripcion?: string | null
     parentId?: string | null
+    clasSectionId?: string | null
+    clasSpecificId?: string | null
     subcategorias?: CategoriaUncheckedCreateNestedManyWithoutParentInput
     productos?: ProductoUncheckedCreateNestedManyWithoutCategoriaInput
   }
@@ -157865,6 +157945,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    clasSectionId?: NullableStringFieldUpdateOperationsInput | string | null
+    clasSpecificId?: NullableStringFieldUpdateOperationsInput | string | null
     parent?: CategoriaUpdateOneWithoutSubcategoriasNestedInput
     subcategorias?: CategoriaUpdateManyWithoutParentNestedInput
     productosSubcategoria?: ProductoUpdateManyWithoutSubcategoriaNestedInput
@@ -157877,6 +157959,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     descripcion?: NullableStringFieldUpdateOperationsInput | string | null
     parentId?: NullableStringFieldUpdateOperationsInput | string | null
+    clasSectionId?: NullableStringFieldUpdateOperationsInput | string | null
+    clasSpecificId?: NullableStringFieldUpdateOperationsInput | string | null
     subcategorias?: CategoriaUncheckedUpdateManyWithoutParentNestedInput
     productosSubcategoria?: ProductoUncheckedUpdateManyWithoutSubcategoriaNestedInput
   }
@@ -158046,6 +158130,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    clasSectionId?: NullableStringFieldUpdateOperationsInput | string | null
+    clasSpecificId?: NullableStringFieldUpdateOperationsInput | string | null
     parent?: CategoriaUpdateOneWithoutSubcategoriasNestedInput
     subcategorias?: CategoriaUpdateManyWithoutParentNestedInput
     productos?: ProductoUpdateManyWithoutCategoriaNestedInput
@@ -158058,6 +158144,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     descripcion?: NullableStringFieldUpdateOperationsInput | string | null
     parentId?: NullableStringFieldUpdateOperationsInput | string | null
+    clasSectionId?: NullableStringFieldUpdateOperationsInput | string | null
+    clasSpecificId?: NullableStringFieldUpdateOperationsInput | string | null
     subcategorias?: CategoriaUncheckedUpdateManyWithoutParentNestedInput
     productos?: ProductoUncheckedUpdateManyWithoutCategoriaNestedInput
   }
@@ -177843,6 +177931,8 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     descripcion?: string | null
+    clasSectionId?: string | null
+    clasSpecificId?: string | null
   }
 
   export type ProductoCreateManyCategoriaInput = {
@@ -177907,6 +177997,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    clasSectionId?: NullableStringFieldUpdateOperationsInput | string | null
+    clasSpecificId?: NullableStringFieldUpdateOperationsInput | string | null
     subcategorias?: CategoriaUpdateManyWithoutParentNestedInput
     productos?: ProductoUpdateManyWithoutCategoriaNestedInput
     productosSubcategoria?: ProductoUpdateManyWithoutSubcategoriaNestedInput
@@ -177918,6 +178010,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    clasSectionId?: NullableStringFieldUpdateOperationsInput | string | null
+    clasSpecificId?: NullableStringFieldUpdateOperationsInput | string | null
     subcategorias?: CategoriaUncheckedUpdateManyWithoutParentNestedInput
     productos?: ProductoUncheckedUpdateManyWithoutCategoriaNestedInput
     productosSubcategoria?: ProductoUncheckedUpdateManyWithoutSubcategoriaNestedInput
@@ -177929,6 +178023,8 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    clasSectionId?: NullableStringFieldUpdateOperationsInput | string | null
+    clasSpecificId?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ProductoUpdateWithoutCategoriaInput = {

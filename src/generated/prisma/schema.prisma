@@ -16,10 +16,15 @@ model Categoria {
   updatedAt             DateTime    @updatedAt
   descripcion           String?
   parentId              String?
+  clasSectionId         String?
+  clasSpecificId        String?
   parent                Categoria?  @relation("CategoriaHierarchy", fields: [parentId], references: [catId], onDelete: Cascade)
   subcategorias         Categoria[] @relation("CategoriaHierarchy")
   productos             Producto[]
   productosSubcategoria Producto[]  @relation("ProductoSubcategoria")
+
+  @@index([clasSectionId])
+  @@index([clasSpecificId])
 }
 
 model Unidad {
