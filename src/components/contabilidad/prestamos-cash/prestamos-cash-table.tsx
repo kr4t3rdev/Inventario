@@ -30,6 +30,7 @@ import { Label } from "@/components/ui/label"
 import { getAuthToken } from "@/lib/token"
 import React from "react"
 import type { PrestamoCash } from "@/app/models/model"
+import { calcularSaldoPendientePrestamo, normalizarEstadoPrestamoCash } from "@/lib/utils/prestamo-cash"
 
 interface PrestamosCashTableProps {
   prestamos: PrestamoCash[]
@@ -354,7 +355,9 @@ export function PrestamosCashTable({ prestamos, isLoading, error, onPagar }: Pre
       header: "Saldo Pendiente",
       cell: ({ row }) => {
         const cpc = row.original.cuentaPorCobrar
-        const saldo = cpc ? Number(cpc.montoDeuda) - Number(cpc.montoPagado) : Number(row.original.montoCapital)
+        const saldo = cpc
+          ? calcularSaldoPendientePrestamo(Number(cpc.montoDeuda), Number(cpc.montoPagado))
+          : Number(row.original.montoCapital)
         return (
           <span className={cn("font-medium", saldo > 0 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400")}>
             {formatTableCurrency(saldo)}
@@ -370,7 +373,17 @@ export function PrestamosCashTable({ prestamos, isLoading, error, onPagar }: Pre
     {
       accessorKey: "estado",
       header: "Estado",
-      cell: ({ getValue }) => <EstadoBadge estado={getValue() as string} />,
+      cell: ({ row, getValue }) => {
+        const cpc = row.original.cuentaPorCobrar
+        const estado = cpc
+          ? normalizarEstadoPrestamoCash(row.original.estado, {
+              montoDeuda: Number(cpc.montoDeuda),
+              montoPagado: Number(cpc.montoPagado),
+              estado: cpc.estado,
+            })
+          : (getValue() as string)
+        return <EstadoBadge estado={estado} />
+      },
     },
     {
       accessorKey: "fechaOtorgamiento",
@@ -394,7 +407,17 @@ export function PrestamosCashTable({ prestamos, isLoading, error, onPagar }: Pre
       header: "Acciones",
       cell: ({ row }) => {
         const prestamo = row.original
-        const activo = prestamo.estado === "ACTIVO" || prestamo.estado === "VENCIDO"
+        const saldoPendiente = prestamo.cuentaPorCobrar
+          ? calcularSaldoPendientePrestamo(Number(prestamo.cuentaPorCobrar.montoDeuda), Number(prestamo.cuentaPorCobrar.montoPagado))
+          : Number(prestamo.montoCapital)
+        const estadoNormalizado = prestamo.cuentaPorCobrar
+          ? normalizarEstadoPrestamoCash(prestamo.estado, {
+              montoDeuda: Number(prestamo.cuentaPorCobrar.montoDeuda),
+              montoPagado: Number(prestamo.cuentaPorCobrar.montoPagado),
+              estado: prestamo.cuentaPorCobrar.estado,
+            })
+          : prestamo.estado
+        const activo = estadoNormalizado === "ACTIVO" || estadoNormalizado === "VENCIDO"
         const [descargando, setDescargando] = useState(false)
 
         const descargarComprobante = async () => {
@@ -451,7 +474,16 @@ export function PrestamosCashTable({ prestamos, isLoading, error, onPagar }: Pre
 
   const prestamosFiltrados = useMemo(() => {
     if (estadoFiltro === "TODOS") return prestamos
-    return prestamos.filter((p) => p.estado === estadoFiltro)
+    return prestamos.filter((p) => {
+      const estadoNormalizado = p.cuentaPorCobrar
+        ? normalizarEstadoPrestamoCash(p.estado, {
+            montoDeuda: Number(p.cuentaPorCobrar.montoDeuda),
+            montoPagado: Number(p.cuentaPorCobrar.montoPagado),
+            estado: p.cuentaPorCobrar.estado,
+          })
+        : p.estado
+      return estadoNormalizado === estadoFiltro
+    })
   }, [prestamos, estadoFiltro])
 
   const table = useReactTable({

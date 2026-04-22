@@ -3,12 +3,15 @@
  * @module produccion
  */
 
+import { convertToBase } from '@/lib/utils/unit-converter'
+
 /**
  * @description Interfaz para un ingrediente de receta.
  */
 export interface IngredienteReceta {
   productoId: string
   cantidad: number
+  unidadSimbolo?: string | null
   desperdicio?: number
   producto?: {
     nombre: string
@@ -25,6 +28,21 @@ export interface MaterialFaltante {
   productoNombre: string
   requerido: number
   disponible: number
+}
+
+/**
+ * @description Calcula la cantidad requerida de un ingrediente considerando unidad y desperdicio.
+ * @param {IngredienteReceta} ingrediente - Ingrediente de receta.
+ * @param {number} cantidadProducir - Cantidad de producto a producir.
+ * @returns {number} Cantidad requerida normalizada.
+ */
+export function calcularCantidadRequeridaMaterial(
+  ingrediente: IngredienteReceta,
+  cantidadProducir: number
+): number {
+  const cantidadBase = convertToBase(ingrediente.cantidad, ingrediente.unidadSimbolo)
+  const factorDesperdicio = 1 + (ingrediente.desperdicio ?? 0)
+  return Math.ceil((cantidadBase * factorDesperdicio * cantidadProducir) - 1e-9)
 }
 
 /**
@@ -72,12 +90,12 @@ export function calcularCostoProduccion(
     })
   }
 
-  const costoUnitario = cantidadProducir > 0 
-    ? Math.round(costoMateriales / cantidadProducir) 
+  const costoUnitario = cantidadProducir > 0
+    ? Math.round((costoMateriales / cantidadProducir) * 100) / 100
     : 0
 
   return {
-    costoMateriales,
+    costoMateriales: Math.round(costoMateriales * 100) / 100,
     costoUnitario,
     detalle,
   }
@@ -96,7 +114,7 @@ export function validarDisponibilidadMateriales(
   const materialesFaltantes: MaterialFaltante[] = []
 
   for (const ingrediente of ingredientes) {
-    const cantidadRequerida = ingrediente.cantidad * cantidadProducir
+    const cantidadRequerida = calcularCantidadRequeridaMaterial(ingrediente, cantidadProducir)
     const disponible = ingrediente.producto?.stock || 0
 
     if (disponible < cantidadRequerida) {

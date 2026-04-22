@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 
-import { ServiciosRecibidosForm } from '@/components/servicios'
+import { ServiciosRecibidosForm, ServiciosRecibidosTable } from '@/components/servicios'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 
 export const metadata: Metadata = {
@@ -9,8 +9,8 @@ export const metadata: Metadata = {
 }
 
 /**
- * @description Página para registrar servicios recibidos.
- * @returns {JSX.Element} Vista de registro de servicios recibidos.
+ * @description Página para registrar y ver servicios recibidos.
+ * @returns {JSX.Element} Vista de registro y listado de servicios recibidos.
  */
 export default function ServiciosRecibidosPage() {
   return (
@@ -23,9 +23,22 @@ export default function ServiciosRecibidosPage() {
               Registra servicios por los que se paga periódicamente.
             </p>
           </div>
-          <ServiciosRecibidosForm />
+
+          <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
+            <div className='lg:col-span-2'>
+              <div className='mb-8'>
+                <h2 className='text-lg font-semibold mb-4'>Servicios Registrados</h2>
+                <ServiciosRecibidosTable />
+              </div>
+            </div>
+            <div>
+              <h2 className='text-lg font-semibold mb-4'>Registrar Nuevo Servicio</h2>
+              <ServiciosRecibidosForm />
+            </div>
+          </div>
         </div>
       </SidebarInset>
     </SidebarProvider>
   )
 }
+

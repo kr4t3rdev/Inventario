@@ -15,6 +15,7 @@ import { useCreateDeudaCashMutation } from "@/lib/redux/services/deudasCashApi"
 import { ImageIcon, Loader2, TrendingUp, Upload, X } from "lucide-react"
 import { sileo } from "@/lib/sileo-shim"
 import { getAuthToken } from "@/lib/token"
+import { calcularTotalDeudaConInteres } from "@/lib/utils/deuda-cash"
 
 const deudaSchema = z.object({
   proveedorId: z.string().min(1, "Seleccione un proveedor"),
@@ -45,7 +46,7 @@ function CuotasEstimadasDeuda({ control }: { control: any }) {
 
   if (monto <= 0) return null
 
-  const totalConInteres = monto * (1 + tasa / 100)
+  const totalConInteres = calcularTotalDeudaConInteres(monto, tasa)
   const interes = totalConInteres - monto
 
   let dias = 0
@@ -154,6 +155,10 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], cuentasBan
     },
   })
 
+  const montoCapital = useWatch({ control: form.control, name: 'montoCapital' })
+  const tasaInteres = useWatch({ control: form.control, name: 'tasaInteres' })
+  const saldoPendientePreview = calcularTotalDeudaConInteres(Number(montoCapital) || 0, Number(tasaInteres) || 0)
+
   const onSubmit = async (data: DeudaFormValues) => {
     try {
       let comprobanteUrl: string | undefined
@@ -216,6 +221,14 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], cuentasBan
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-4 overflow-y-auto flex-1 pr-1">
+            {Number(montoCapital) > 0 && (
+              <div className="rounded-lg border bg-muted/40 p-4 text-sm space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Saldo a pagar</span>
+                  <span className="font-semibold text-primary">{saldoPendientePreview.toLocaleString('es-CU', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} {form.watch('moneda')}</span>
+                </div>
+              </div>
+            )}
             <FormField
               control={form.control}
               name="cuentaBancariaId"

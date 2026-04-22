@@ -15,6 +15,7 @@ import { useCreatePrestamoCashMutation } from "@/lib/redux/services/prestamosCas
 import { useGetTasasActualesQuery } from "@/lib/redux/services/contabilidadApi"
 import { Loader2, TrendingUp, ArrowRightLeft } from "lucide-react"
 import { sileo } from "@/lib/sileo-shim"
+import { calcularMontoTotalACobrar } from "@/lib/utils/prestamo-cash"
 
 const prestamoSchema = z.object({
   clienteId: z.string().min(1, "Seleccione un cliente"),
@@ -46,7 +47,7 @@ function CuotasEstimadas({ control }: { control: any }) {
 
   if (monto <= 0) return null
 
-  const totalConInteres = monto * (1 + tasa / 100)
+  const totalConInteres = calcularMontoTotalACobrar(monto, tasa)
   const interes = totalConInteres - monto
 
   let dias = 0
@@ -81,7 +82,7 @@ function CuotasEstimadas({ control }: { control: any }) {
           </div>
         )}
         <div className="flex justify-between font-semibold border-t pt-2">
-          <span>Total a cobrar</span>
+          <span>Saldo a pagar</span>
           <span className="text-primary">{fmt(totalConInteres)} {moneda}</span>
         </div>
       </div>

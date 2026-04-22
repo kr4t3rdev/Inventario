@@ -4,6 +4,7 @@ import { z } from 'zod'
 import prisma from '@/lib/prisma'
 import { withAuthPost } from '@/lib/auth-middleware'
 import { AuditLogService } from '@/lib/services/audit-log-service'
+import { calcularSaldoPendientePrestamo } from '@/lib/utils/prestamo-cash'
 
 const pagoSchema = z.object({
   monto: z.coerce.number().positive('El monto debe ser positivo'),
@@ -50,7 +51,10 @@ export const POST = withAuthPost(async (request: NextRequest, context: unknown, 
       return NextResponse.json({ error: 'El préstamo no admite más pagos' }, { status: 400 })
     }
 
-    const saldoPendiente = Number(prestamo.cuentaPorCobrar.montoDeuda) - Number(prestamo.cuentaPorCobrar.montoPagado)
+    const saldoPendiente = calcularSaldoPendientePrestamo(
+      Number(prestamo.cuentaPorCobrar.montoDeuda),
+      Number(prestamo.cuentaPorCobrar.montoPagado)
+    )
 
     if (body.monto > saldoPendiente) {
       return NextResponse.json(
@@ -79,9 +83,10 @@ export const POST = withAuthPost(async (request: NextRequest, context: unknown, 
         data: { saldo: { increment: body.monto } }
       })
 
-      const nuevoMontoPagado = Number(prestamo.cuentaPorCobrar.montoPagado) + body.monto
+      const nuevoMontoPagado = Number((Number(prestamo.cuentaPorCobrar.montoPagado) + body.monto).toFixed(2))
       const totalDeuda = Number(prestamo.cuentaPorCobrar.montoDeuda)
-      const nuevoEstadoCuenta = nuevoMontoPagado >= totalDeuda ? 'PAGADA' : 'PARCIAL'
+      const nuevoSaldo = calcularSaldoPendientePrestamo(totalDeuda, nuevoMontoPagado)
+      const nuevoEstadoCuenta = nuevoSaldo <= 0.01 ? 'PAGADA' : 'PARCIAL'
 
       await tx.cuentaPorCobrar.update({
         where: { id: prestamo.cuentaPorCobrarId },

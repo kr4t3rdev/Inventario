@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { OrdenProduccion, RecetaProduccion, ValeSalida, Producto } from '@/app/models/model'
+import { OrdenProduccion, RecetaProduccion, Producto } from '@/app/models/model'
 import { 
   Factory, 
   Plus, 
@@ -20,7 +20,6 @@ import {
   Package, 
   ClipboardList, 
   FileText,
-  Download,
   CheckCircle,
   XCircle,
   Clock,
@@ -35,6 +34,7 @@ import {
   formatIngrediente,
   formatIngredientesList,
 } from '@/lib/utils/unit-converter'
+import { PRODUCTION_STATE_LABELS, PRODUCTION_STATES } from '@/lib/constants/production'
 import {
   validateAndNormalizeIngredientUnit,
   type UnitError,
@@ -44,21 +44,20 @@ import { filterProductos } from '@/lib/utils/produccion'
 import { 
   useGetRecetasProduccionQuery, 
   useGetOrdenesProduccionQuery, 
-  useGetValesSalidaQuery,
-  useGetConceptosQuery,
   useCreateRecetaProduccionMutation,
   useSetIngredientesRecetaProduccionMutation,
   useCreateOrdenProduccionMutation,
   useAprobarOrdenProduccionMutation,
   useCompletarOrdenProduccionMutation,
   useCancelarOrdenProduccionMutation,
-  useCreateValeSalidaMutation,
   useDeleteRecetaProduccionMutation,
   useUpdateRecetaProduccionMutation
 } from '@/lib/redux/services/produccionApi'
 import { useGetProductosQuery } from '@/lib/redux/services/productosApi'
 import { useGetGastosDEQuery } from '@/lib/redux/services/gastosDEApi'
 import { RecipeOutputSelector, type RecipeOutputMode } from '@/components/produccion/recipe-output-selector'
+import { ProductionDialogs } from '@/components/produccion/production-dialogs'
+import { RecipeEditorDialog } from '@/components/produccion/recipe-editor-dialog'
 
 type RecipeEditorItem = {
   productoId: string
@@ -86,6 +85,18 @@ type RecipeUnitPreview = {
   blockingMessages: string[]
   normalizationMessages: string[]
   rows: RecipeUnitPreviewRow[]
+}
+
+type ProductionApiError = {
+  data?: {
+    error?: string
+    unitErrors?: UnitError[]
+    materialesFaltantes?: Array<{
+      productoNombre: string
+      requerido: number
+      disponible: number
+    }>
+  }
 }
 
 function formatPreviewQuantity(value: number): string {
@@ -168,18 +179,15 @@ export function buildRecipeUnitPreview(
 export default function ProduccionPage() {
   const [searchRecetas, setSearchRecetas] = useState('')
   const [searchOrdenes, setSearchOrdenes] = useState('')
-  const [searchVales, setSearchVales] = useState('')
   const [filtroEstadoOrden, setFiltroEstadoOrden] = useState<string>('all')
-  const [filtroConceptoVale, setFiltroConceptoVale] = useState<string>('all')
   
   // Dialog states
   const [dialogRecetaOpen, setDialogRecetaOpen] = useState(false)
   const [dialogOrdenOpen, setDialogOrdenOpen] = useState(false)
-  const [dialogValeOpen, setDialogValeOpen] = useState(false)
   const [confirmacion, setConfirmacion] = useState<{ tipo: 'aprobar' | 'completar' | 'cancelar'; ordenId: string; recetaNombre: string; cantidad: number } | null>(null)
-  const [recetaVer, setRecetaVer] = useState<any | null>(null)
+  const [recetaVer, setRecetaVer] = useState<RecetaProduccion | null>(null)
   const [recetaEliminar, setRecetaEliminar] = useState<{ recetaId: string; nombre: string } | null>(null)
-  const [recetaEdit, setRecetaEdit] = useState<any | null>(null)
+  const [recetaEdit, setRecetaEdit] = useState<RecetaProduccion | null>(null)
   const [editNombre, setEditNombre] = useState('')
   const [editRendimiento, setEditRendimiento] = useState<number | string>(1)
   const [editProductoId, setEditProductoId] = useState('')
@@ -192,8 +200,6 @@ export default function ProduccionPage() {
   // Data
   const { data: recetasTyped, isLoading: loadingRecetas } = useGetRecetasProduccionQuery(searchRecetas ? { search: searchRecetas } : undefined)
   const { data: ordenesTyped, isLoading: loadingOrdenes } = useGetOrdenesProduccionQuery(filtroEstadoOrden !== 'all' ? { estado: filtroEstadoOrden } : undefined)
-  const { data: valesTyped, isLoading: loadingVales } = useGetValesSalidaQuery(filtroConceptoVale !== 'all' ? { concepto: filtroConceptoVale } : undefined)
-  const { data: conceptos } = useGetConceptosQuery()
   const { data: productosTyped } = useGetProductosQuery()
   const { data: gastosDE } = useGetGastosDEQuery()
 
@@ -204,7 +210,6 @@ export default function ProduccionPage() {
   const [aprobarOrden] = useAprobarOrdenProduccionMutation()
   const [completarOrden] = useCompletarOrdenProduccionMutation()
   const [cancelarOrden] = useCancelarOrdenProduccionMutation()
-  const [createVale] = useCreateValeSalidaMutation()
   const [deleteReceta] = useDeleteRecetaProduccionMutation()
   const [updateReceta] = useUpdateRecetaProduccionMutation()
 
@@ -214,29 +219,27 @@ export default function ProduccionPage() {
   const [selectedProducto, setSelectedProducto] = useState('')
   const [selectedReceta, setSelectedReceta] = useState('')
   const [cantidadOrden, setCantidadOrden] = useState(1)
-  const [selectedConcepto, setSelectedConcepto] = useState('')
-  const [valeItems, setValeItems] = useState<Array<{ productoId: string; cantidad: number }>>([])
   const [nuevoItems, setNuevoItems] = useState<RecipeEditorItem[]>([])
   const [busquedaProductos, setBusquedaProductos] = useState('')
 
   const UNIT_OPTION_NONE = 'none'
   const NO_CONVERSION_UNITS = ['unidad', 'pieza']
 
-  const getRecetaIngredientes = (receta: any) => {
+  const getRecetaIngredientes = (receta: RecetaProduccion | null | undefined) => {
     return receta?.ingredientes ?? receta?.RecetaIngrediente ?? []
   }
 
-  const getRecetaProducto = (receta: any) => {
+  const getRecetaProducto = (receta: RecetaProduccion | null | undefined) => {
     return receta?.producto ?? receta?.Producto ?? null
   }
 
-  const getIngredienteProducto = (ingrediente: any) => {
+  const getIngredienteProducto = (ingrediente: RecetaProduccion['ingredientes'][number] | null | undefined) => {
     return ingrediente?.producto ?? ingrediente?.Producto ?? null
   }
 
-  const getInsumosTexto = (receta: any) => {
+  const getInsumosTexto = (receta: RecetaProduccion | null | undefined) => {
     const nombres = getRecetaIngredientes(receta)
-      .map((ing: any) => getIngredienteProducto(ing)?.nombre)
+      .map((ing) => getIngredienteProducto(ing)?.nombre)
       .filter(Boolean)
 
     if (nombres.length === 0) return '-'
@@ -266,7 +269,7 @@ export default function ProduccionPage() {
     )
   }
 
-  const recetasOperativas = recetasTyped?.filter((receta: any) => Boolean(getRecetaProducto(receta)?.id)) || []
+  const recetasOperativas = recetasTyped?.filter((receta) => Boolean(getRecetaProducto(receta)?.id)) || []
 
   const newRecipePreview = buildRecipeUnitPreview(nuevoItems, productosTyped || [])
   const editRecipePreview = buildRecipeUnitPreview(editItems, productosTyped || [])
@@ -280,14 +283,14 @@ export default function ProduccionPage() {
 
   const getEstadoBadge = (estado: string) => {
     switch (String(estado).toUpperCase()) {
-      case 'PENDIENTE':
-        return <Badge variant="secondary"><Clock className="w-3 h-3 mr-1" /> Pendiente</Badge>
-      case 'EN_PROCESO':
-        return <Badge variant="default"><Clock className="w-3 h-3 mr-1" /> En Proceso</Badge>
-      case 'COMPLETADA':
-        return <Badge variant="default" className="bg-green-500"><CheckCircle className="w-3 h-3 mr-1" /> Completada</Badge>
-      case 'CANCELADA':
-        return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" /> Cancelada</Badge>
+      case PRODUCTION_STATES.PENDIENTE:
+        return <Badge variant="secondary"><Clock className="w-3 h-3 mr-1" /> {PRODUCTION_STATE_LABELS.PENDIENTE}</Badge>
+      case PRODUCTION_STATES.EN_PROCESO:
+        return <Badge variant="default"><Clock className="w-3 h-3 mr-1" /> {PRODUCTION_STATE_LABELS.EN_PROCESO}</Badge>
+      case PRODUCTION_STATES.COMPLETADA:
+        return <Badge variant="default" className="bg-green-500"><CheckCircle className="w-3 h-3 mr-1" /> {PRODUCTION_STATE_LABELS.COMPLETADA}</Badge>
+      case PRODUCTION_STATES.CANCELADA:
+        return <Badge variant="destructive"><XCircle className="w-3 h-3 mr-1" /> {PRODUCTION_STATE_LABELS.CANCELADA}</Badge>
       default:
         return <Badge>{estado}</Badge>
     }
@@ -337,7 +340,7 @@ export default function ProduccionPage() {
       setCreatedOutputProductName(null)
       setNuevoItems([])
     } catch (error) {
-      const unitErrors = (error as any)?.data?.unitErrors
+      const unitErrors = (error as ProductionApiError)?.data?.unitErrors
       if (Array.isArray(unitErrors) && unitErrors.length > 0) {
         toast.error('No se pudo guardar la receta', {
           description: unitErrors.map(formatUnitErrorMessage).join(' '),
@@ -364,40 +367,24 @@ export default function ProduccionPage() {
     }
   }
 
-  const handleCrearVale = async () => {
-    if (!selectedConcepto || valeItems.length === 0) return
-    
-    try {
-      await createVale({
-        concepto: selectedConcepto,
-        items: valeItems
-      }).unwrap()
-      
-      setDialogValeOpen(false)
-      setSelectedConcepto('')
-      setValeItems([])
-    } catch (error) {
-      console.error('Error al crear vale:', error)
-    }
-  }
-
   const handleAprobarOrden = async (ordenId: string) => {
     try {
       const result = await aprobarOrden({ ordenProduccionId: ordenId }).unwrap()
       toast.success('Orden aprobada', {
         description: 'Materiales reservados exitosamente'
       })
-    } catch (error: any) {
-      if (error?.data?.materialesFaltantes?.length > 0) {
-        const faltantes = error.data.materialesFaltantes
-          .map((m: any) => `${m.productoNombre}: necesita ${m.requerido}, disponible ${m.disponible}`)
+    } catch (error: unknown) {
+      const apiError = error as ProductionApiError
+      if (apiError?.data?.materialesFaltantes?.length > 0) {
+        const faltantes = apiError.data.materialesFaltantes
+          .map((m) => `${m.productoNombre}: necesita ${m.requerido}, disponible ${m.disponible}`)
           .join('\n')
         toast.error('Materiales insuficientes', {
           description: faltantes
         })
-      } else if (error?.data?.error) {
+      } else if (apiError?.data?.error) {
         toast.error('Error', {
-          description: error.data.error
+          description: apiError.data.error
         })
       } else {
         toast.error('Error al aprobar orden', {
@@ -414,10 +401,11 @@ export default function ProduccionPage() {
       toast.success('Orden completada', {
         description: 'Stock del producto final incrementado'
       })
-    } catch (error: any) {
-      if (error?.data?.error) {
+    } catch (error: unknown) {
+      const apiError = error as ProductionApiError
+      if (apiError?.data?.error) {
         toast.error('Error al completar orden', {
-          description: error.data.error
+          description: apiError.data.error
         })
       } else {
         toast.error('Error', {
@@ -434,10 +422,11 @@ export default function ProduccionPage() {
       toast.success('Orden cancelada', {
         description: 'Los materiales reservados han sido liberados al inventario'
       })
-    } catch (error: any) {
-      if (error?.data?.error) {
+    } catch (error: unknown) {
+      const apiError = error as ProductionApiError
+      if (apiError?.data?.error) {
         toast.error('Error al cancelar orden', {
-          description: error.data.error
+          description: apiError.data.error
         })
       } else {
         toast.error('Error', {
@@ -476,7 +465,7 @@ export default function ProduccionPage() {
       setEditOutputMode('existing')
       setEditCreatedOutputProductName(null)
     } catch (error) {
-      const unitErrors = (error as any)?.data?.unitErrors
+      const unitErrors = (error as ProductionApiError)?.data?.unitErrors
       if (Array.isArray(unitErrors) && unitErrors.length > 0) {
         toast.error('No se pudo actualizar la receta', {
           description: unitErrors.map(formatUnitErrorMessage).join(' '),
@@ -504,28 +493,10 @@ export default function ProduccionPage() {
     setNuevoItems(nuevoItems.filter((item) => item.productoId !== productoId))
   }
 
-  const agregarItemVale = (productoId: string) => {
-    if (valeItems.find(i => i.productoId === productoId)) return
-    setValeItems([...valeItems, { productoId, cantidad: 1 }])
-  }
-
-  const actualizarCantidadVale = (productoId: string, cantidad: number) => {
-    setValeItems(valeItems.map(i => 
-      i.productoId === productoId ? { ...i, cantidad } : i
-    ))
-  }
-
-  const eliminarItemVale = (productoId: string) => {
-    setValeItems(valeItems.filter(i => i.productoId !== productoId))
-  }
-
   // Stats
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const ordenesPendientes = ordenesTyped?.filter((o: any) => String(o.estado) === 'PENDIENTE').length || 0
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const ordenesEnProceso = ordenesTyped?.filter((o: any) => String(o.estado) === 'EN_PROCESO').length || 0
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const ordenesCompletadas = ordenesTyped?.filter((o: any) => String(o.estado) === 'COMPLETADA').length || 0
+  const ordenesPendientes = ordenesTyped?.filter((o: OrdenProduccion) => String(o.estado) === PRODUCTION_STATES.PENDIENTE).length || 0
+  const ordenesEnProceso = ordenesTyped?.filter((o: OrdenProduccion) => String(o.estado) === PRODUCTION_STATES.EN_PROCESO).length || 0
+  const ordenesCompletadas = ordenesTyped?.filter((o: OrdenProduccion) => String(o.estado) === PRODUCTION_STATES.COMPLETADA).length || 0
 
   return (
     <div className="space-y-4">
@@ -582,7 +553,6 @@ export default function ProduccionPage() {
         <TabsList>
           <TabsTrigger value="recetasTyped">Recetas</TabsTrigger>
           <TabsTrigger value="ordenesTyped">Órdenes de Producción</TabsTrigger>
-          <TabsTrigger value="valesTyped">Vales de Salida</TabsTrigger>
         </TabsList>
 
         {/* Recetas Tab */}
@@ -900,7 +870,7 @@ export default function ProduccionPage() {
                         <TableCell colSpan={7} className="text-center">No hay recetas</TableCell>
                       </TableRow>
                     ) : (
-                      recetasTyped?.map((receta: any) => (
+                      recetasTyped?.map((receta: RecetaProduccion) => (
                         <TableRow key={receta.recetaId}>
                           <TableCell className="font-medium">{receta.nombre}</TableCell>
                           <TableCell>{receta.rendimiento}</TableCell>
@@ -933,7 +903,7 @@ export default function ProduccionPage() {
                                   setEditProductoId(getRecetaProducto(receta)?.id || '')
                                   setEditOutputMode(getRecetaProducto(receta)?.id ? 'existing' : 'create')
                                   setEditCreatedOutputProductName(null)
-                                  setEditItems(getRecetaIngredientes(receta).map((i: any) => ({
+                                  setEditItems(getRecetaIngredientes(receta).map((i) => ({
                                     productoId: i.productoId,
                                     cantidad: i.cantidad,
                                     unidadSimbolo: i.unidadSimbolo ?? null,
@@ -978,10 +948,10 @@ export default function ProduccionPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">Todos</SelectItem>
-                      <SelectItem value="PENDIENTE">Pendiente</SelectItem>
-                      <SelectItem value="EN_PROCESO">En Proceso</SelectItem>
-                      <SelectItem value="COMPLETADA">Completada</SelectItem>
-                      <SelectItem value="CANCELADA">Cancelada</SelectItem>
+                      <SelectItem value={PRODUCTION_STATES.PENDIENTE}>{PRODUCTION_STATE_LABELS.PENDIENTE}</SelectItem>
+                      <SelectItem value={PRODUCTION_STATES.EN_PROCESO}>{PRODUCTION_STATE_LABELS.EN_PROCESO}</SelectItem>
+                      <SelectItem value={PRODUCTION_STATES.COMPLETADA}>{PRODUCTION_STATE_LABELS.COMPLETADA}</SelectItem>
+                      <SelectItem value={PRODUCTION_STATES.CANCELADA}>{PRODUCTION_STATE_LABELS.CANCELADA}</SelectItem>
                     </SelectContent>
                   </Select>
                   <Dialog open={dialogOrdenOpen} onOpenChange={setDialogOrdenOpen}>
@@ -1066,7 +1036,7 @@ export default function ProduccionPage() {
                         <TableCell colSpan={6} className="text-center">No hay órdenes</TableCell>
                       </TableRow>
                     ) : (
-                        ordenesTyped?.map((orden: any) => (
+                        ordenesTyped?.map((orden: OrdenProduccion) => (
                         <TableRow key={orden.ordenProduccionId}>
                           <TableCell className="font-medium">{orden.receta?.nombre}</TableCell>
                           <TableCell>{orden.cantidad}</TableCell>
@@ -1075,7 +1045,7 @@ export default function ProduccionPage() {
                           <TableCell>{format(new Date(orden.fechaProduccion), 'dd/MM/yyyy')}</TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
-                              {String(orden.estado).toUpperCase() === 'PENDIENTE' && (
+                              {String(orden.estado).toUpperCase() === PRODUCTION_STATES.PENDIENTE && (
                                 <Button 
                                   variant="outline" 
                                   size="sm"
@@ -1084,7 +1054,7 @@ export default function ProduccionPage() {
                                   Aprobar
                                 </Button>
                               )}
-                              {String(orden.estado).toUpperCase() === 'EN_PROCESO' && (
+                              {String(orden.estado).toUpperCase() === PRODUCTION_STATES.EN_PROCESO && (
                                 <Button 
                                   variant="default" 
                                   size="sm"
@@ -1093,7 +1063,7 @@ export default function ProduccionPage() {
                                   Completar
                                 </Button>
                               )}
-                              {['PENDIENTE', 'EN_PROCESO'].includes(String(orden.estado).toUpperCase()) && (
+                              {[PRODUCTION_STATES.PENDIENTE, PRODUCTION_STATES.EN_PROCESO].includes(String(orden.estado).toUpperCase() as typeof PRODUCTION_STATES[keyof typeof PRODUCTION_STATES]) && (
                                 <Button 
                                   variant="destructive" 
                                   size="sm"
@@ -1114,506 +1084,72 @@ export default function ProduccionPage() {
           </Card>
         </TabsContent>
 
-        {/* Vales Tab */}
-        <TabsContent value="valesTyped">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle>Vales de Salida</CardTitle>
-                  <CardDescription>Gestiona los valesTyped de salida de productosTyped</CardDescription>
-                </div>
-                <div className="flex gap-2">
-                  <Select value={filtroConceptoVale} onValueChange={setFiltroConceptoVale}>
-                    <SelectTrigger className="w-40">
-                      <SelectValue placeholder="Todos los conceptos" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos</SelectItem>
-                      {conceptos?.map((concepto: any) => (
-                        <SelectItem key={concepto} value={concepto}>
-                          {concepto}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Dialog open={dialogValeOpen} onOpenChange={setDialogValeOpen}>
-                    <DialogTrigger asChild>
-                      <Button>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Nuevo Vale
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="max-w-2xl">
-                      <DialogHeader>
-                        <DialogTitle>Nuevo Vale de Salida</DialogTitle>
-                        <DialogDescription>
-                          Registra la salida de productosTyped por un concepto
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="grid gap-4 py-4">
-                        <div className="grid gap-2">
-                          <Label htmlFor="concepto">Concepto</Label>
-                          <Input
-                            id="concepto"
-                            list="conceptos-list"
-                            value={selectedConcepto}
-                            onChange={(e) => setSelectedConcepto(e.target.value)}
-                            placeholder="Ej: Mantenimiento, Arrendamiento..."
-                          />
-                          <datalist id="conceptos-list">
-                            {conceptos?.map((concepto: any) => (
-                              <option key={concepto} value={concepto} />
-                            ))}
-                          </datalist>
-                        </div>
-                        <div className="grid gap-2">
-                          <Label>Productos</Label>
-                          <Select onValueChange={agregarItemVale}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Agregar producto" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {productosTyped?.filter(p => !valeItems.find(i => i.productoId === p.id)).map((producto) => (
-                                <SelectItem key={producto.id} value={producto.id}>
-                                  {producto.nombre} (Stock: {producto.stock})
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        {valeItems.length > 0 && (
-                          <div className="rounded-md border">
-                            <Table>
-                              <TableHeader>
-                                <TableRow>
-                                  <TableHead>Producto</TableHead>
-                                  <TableHead>Cantidad</TableHead>
-                                  <TableHead className="text-right">Acciones</TableHead>
-                                </TableRow>
-                              </TableHeader>
-                              <TableBody>
-                                {valeItems.map((item) => {
-                                  const producto = productosTyped?.find(p => p.id === item.productoId)
-                                  return (
-                                    <TableRow key={item.productoId}>
-                                      <TableCell>{producto?.nombre}</TableCell>
-                                      <TableCell>
-                                        <Input 
-                                          type="number"
-                                          min={1}
-                                          max={producto?.stock || 1}
-                                          value={item.cantidad}
-                                          onChange={(e) => actualizarCantidadVale(item.productoId, parseInt(e.target.value) || 1)}
-                                          className="w-20"
-                                        />
-                                      </TableCell>
-                                      <TableCell className="text-right">
-                                        <Button 
-                                          variant="ghost" 
-                                          size="icon"
-                                          onClick={() => eliminarItemVale(item.productoId)}
-                                        >
-                                          <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                      </TableCell>
-                                    </TableRow>
-                                  )
-                                })}
-                              </TableBody>
-                            </Table>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex justify-end gap-2">
-                        <Button variant="outline" onClick={() => setDialogValeOpen(false)}>
-                          Cancelar
-                        </Button>
-                        <Button onClick={handleCrearVale} disabled={valeItems.length === 0 || !selectedConcepto}>
-                          Crear Vale
-                        </Button>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Concepto</TableHead>
-                      <TableHead>Productos</TableHead>
-                      <TableHead>Estado</TableHead>
-                      <TableHead>Fecha</TableHead>
-                      <TableHead className="text-right">Acciones</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {loadingVales ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center">Cargando...</TableCell>
-                      </TableRow>
-                    ) : valesTyped?.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center">No hay valesTyped</TableCell>
-                      </TableRow>
-                    ) : (
-                      valesTyped?.map((vale: any) => (
-                        <TableRow key={vale.valeSalidaId}>
-                          <TableCell className="font-medium">{vale.concepto}</TableCell>
-                          <TableCell>
-                            <div className="flex flex-wrap gap-1">
-                              {vale.items?.map((item: any) => (
-                                <Badge key={item.valeSalidaItemId} variant="outline">
-                                  {item.producto?.nombre} x{item.cantidad}
-                                </Badge>
-                              ))}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={vale.estado === 'completada' ? 'default' : 'secondary'}>
-                              {vale.estado}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>{format(new Date(vale.createdAt), 'dd/MM/yyyy')}</TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-2">
-                              <Button variant="ghost" size="icon">
-                                <Download className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+        {/* Vales de salida desactivado temporalmente. */}
       </Tabs>
 
-      {/* Dialog: Ver Receta */}
-      <Dialog open={recetaVer !== null} onOpenChange={(open) => { if (!open) setRecetaVer(null) }}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>{recetaVer?.nombre}</DialogTitle>
-            <DialogDescription>Detalle completo de la receta de producción</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div><span className="font-medium">Rendimiento:</span> {recetaVer?.rendimiento} unidad(es)</div>
-              <div><span className="font-medium">Producto asociado:</span> {getRecetaProducto(recetaVer)?.nombre || '—'}</div>
-              <div><span className="font-medium">Instrucciones:</span> {recetaVer?.instrucciones || 'No especificado'}</div>
-              <div><span className="font-medium">Tiempo de prep.:</span> {recetaVer?.tiempoPrep ? `${recetaVer.tiempoPrep} min` : 'No especificado'}</div>
-            </div>
-            <div>
-              <p className="text-sm font-medium mb-2">Ingredientes</p>
-              {getRecetaIngredientes(recetaVer).length === 0 ? (
-                <p className="text-sm text-muted-foreground">Sin ingredientes definidos</p>
-              ) : (
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Producto</TableHead>
-                        <TableHead>Cantidad</TableHead>
-                        <TableHead>Desperdicio</TableHead>
-                        <TableHead className="text-right">Costo estimado</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {getRecetaIngredientes(recetaVer).map((ing: any) => {
-                        const productoIngrediente = getIngredienteProducto(ing)
-                        return (
-                        <TableRow key={ing.productoId}>
-                          <TableCell>{productoIngrediente?.nombre}</TableCell>
-                          <TableCell>{formatIngrediente(ing.cantidad, ing.unidadSimbolo, '').trim()}</TableCell>
-                          <TableCell>{((ing.desperdicio ?? 0) * 100).toFixed(0)}%</TableCell>
-                          <TableCell className="text-right">
-                            {formatCurrency((productoIngrediente?.precioCosto ?? 0) * ing.cantidad * (1 + (ing.desperdicio ?? 0)))}
-                          </TableCell>
-                        </TableRow>
-                        )
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </div>
-            <div className="flex justify-between items-center pt-2 border-t text-sm">
-              <span className="font-medium">Costo unitario total</span>
-              <span className="font-bold">{formatCurrency(recetaVer?.costoUnitario || 0)}</span>
-            </div>
-          </div>
-          <div className="flex justify-end">
-            <Button variant="outline" onClick={() => setRecetaVer(null)}>Cerrar</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ProductionDialogs
+        recetaVer={recetaVer}
+        recetaEliminar={recetaEliminar}
+        confirmacion={confirmacion}
+        onCloseView={() => setRecetaVer(null)}
+        onCloseDelete={() => setRecetaEliminar(null)}
+        onCloseConfirmation={() => setConfirmacion(null)}
+        onDeleteRecipe={(recetaId) => {
+          deleteReceta(recetaId)
+          setRecetaEliminar(null)
+        }}
+        onConfirmApprove={(ordenId) => {
+          handleAprobarOrden(ordenId)
+          setConfirmacion(null)
+        }}
+        onConfirmComplete={(ordenId) => {
+          handleCompletarOrden(ordenId)
+          setConfirmacion(null)
+        }}
+        onConfirmCancel={(ordenId) => {
+          handleCancelarOrden(ordenId)
+          setConfirmacion(null)
+        }}
+      />
 
-      {/* Dialog: Editar Receta */}
-      <Dialog open={recetaEdit !== null} onOpenChange={(open) => { if (!open) setRecetaEdit(null) }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Editar Receta</DialogTitle>
-            <DialogDescription>Modificá los metadatos y los ingredientes de la receta</DialogDescription>
-          </DialogHeader>
-          {(editRecipePreview.blockingMessages.length > 0 || editRecipePreview.normalizationMessages.length > 0) && (
-            <div className={`shrink-0 p-4 rounded-r-md ${editRecipePreview.hasBlockingIssues ? 'border-l-4 border-yellow-500 bg-yellow-50' : 'border-l-4 border-blue-500 bg-blue-50'}`}>
-              <p className={`text-sm font-medium ${editRecipePreview.hasBlockingIssues ? 'text-yellow-800' : 'text-blue-800'}`}>
-                {editRecipePreview.hasBlockingIssues ? 'Problemas de Unidad de Medida' : 'Normalización de Unidad de Medida'}
-              </p>
-              {editRecipePreview.blockingMessages.length > 0 && (
-                <ul className="mt-2 list-disc list-inside text-sm text-yellow-700 space-y-1">
-                  {editRecipePreview.blockingMessages.map((message, idx) => (
-                    <li key={`edit-block-${idx}`}>{message}</li>
-                  ))}
-                </ul>
-              )}
-              {editRecipePreview.normalizationMessages.length > 0 && (
-                <ul className="mt-2 list-disc list-inside text-sm text-blue-700 space-y-1">
-                  {editRecipePreview.normalizationMessages.map((message, idx) => (
-                    <li key={`edit-norm-${idx}`}>{message}</li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          )}
-          <div className="grid gap-4 py-4 w-full">
-            <div className="grid gap-2">
-              <Label htmlFor="editNombre">Nombre</Label>
-              <Input
-                id="editNombre"
-                value={editNombre}
-                onChange={(e) => setEditNombre(e.target.value)}
-                className={!editNombre ? 'border-destructive' : ''}
-              />
-              {!editNombre && <p className="text-xs text-destructive">El nombre es obligatorio</p>}
-            </div>
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="editRendimiento">Rendimiento</Label>
-                <Input
-                  id="editRendimiento"
-                  type="number"
-                  min={1}
-                  value={editRendimiento}
-                  onChange={(e) => {
-                    const val = e.target.value
-                    if (val === '') {
-                      setEditRendimiento('')
-                    } else {
-                      const num = parseInt(val)
-                      setEditRendimiento(num >= 1 ? num : 1)
-                    }
-                  }}
-                  placeholder="1"
-                />
-              </div>
-              <RecipeOutputSelector
-                createdProductName={editCreatedOutputProductName}
-                onCreatedProduct={(product) => {
-                  setEditProductoId(product.id)
-                  setEditCreatedOutputProductName(product.nombre)
-                }}
-                onModeChange={setEditOutputMode}
-                onProductChange={setEditProductoId}
-                products={productosTyped?.map((product) => ({
-                  id: product.id,
-                  nombre: product.nombre,
-                })) || []}
-                selectedMode={editOutputMode}
-                selectedProductId={editProductoId}
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label>Ingredientes</Label>
-              <Select
-                onValueChange={(productoId) => {
-                  if (!editItems.find((i) => i.productoId === productoId)) {
-                    setEditItems([...editItems, { productoId, cantidad: 1, unidadSimbolo: null, desperdicio: 0 }])
-                  }
-                }}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Agregar ingrediente" />
-                </SelectTrigger>
-                <SelectContent className="max-w-sm">
-                  {productosTyped?.filter((p) => !editItems.find((i) => i.productoId === p.id)).map((p) => (
-                    <SelectItem key={p.id} value={p.id}>{p.nombre}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {editItems.length > 0 && (
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Producto</TableHead>
-                        <TableHead>Cantidad</TableHead>
-                        <TableHead>Unidad</TableHead>
-                        <TableHead>Desperdicio</TableHead>
-                        <TableHead className="text-right">Quitar</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {editItems.map((item) => {
-                        const prod = productosTyped?.find((p) => p.id === item.productoId)
-                        const previewRow = getPreviewRowState(editRecipePreview, item.productoId)
-                        return (
-                          <TableRow key={item.productoId}>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <span>{prod?.nombre}</span>
-                                {previewRow.blockingMessage && (
-                                  <span className="text-yellow-600 text-lg" title={previewRow.blockingMessage}>⚠️</span>
-                                )}
-                                {!previewRow.blockingMessage && previewRow.normalizationMessage && (
-                                  <span className="text-blue-600 text-lg" title={previewRow.normalizationMessage}>ℹ️</span>
-                                )}
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Input
-                                type="number"
-                                min={0.01}
-                                step={0.01}
-                                value={item.cantidad}
-                                onChange={(e) => setEditItems(editItems.map((i) => i.productoId === item.productoId ? { ...i, cantidad: parseFloat(e.target.value) || 1 } : i))}
-                                className="w-20"
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <Select
-                                value={getUnitSelectValue(item.unidadSimbolo)}
-                                onValueChange={(value) => setEditItems(editItems.map((i) => i.productoId === item.productoId ? { ...i, unidadSimbolo: parseUnitSelectValue(value) } : i))}
-                              >
-                                <SelectTrigger className="w-28">
-                                  <SelectValue placeholder="Sin unidad" />
-                                </SelectTrigger>
-                                <SelectContent className="max-w-xs">
-                                  <SelectItem value={UNIT_OPTION_NONE}>Sin unidad</SelectItem>
-                                  {MASS_UNITS.map((unit) => (
-                                    <SelectItem key={`edit-mass-${unit}`} value={unit}>{unit}</SelectItem>
-                                  ))}
-                                  {VOLUME_UNITS.map((unit) => (
-                                    <SelectItem key={`edit-volume-${unit}`} value={unit}>{unit}</SelectItem>
-                                  ))}
-                                  {NO_CONVERSION_UNITS.map((unit) => (
-                                    <SelectItem key={`edit-plain-${unit}`} value={unit}>{unit}</SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </TableCell>
-                            <TableCell>
-                              <Input
-                                type="number"
-                                min={0}
-                                max={1}
-                                step={0.01}
-                                value={item.desperdicio}
-                                onChange={(e) => setEditItems(editItems.map((i) => i.productoId === item.productoId ? { ...i, desperdicio: parseFloat(e.target.value) || 0 } : i))}
-                                className="w-20"
-                              />
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => setEditItems(editItems.filter((i) => i.productoId !== item.productoId))}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        )
-                      })}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setRecetaEdit(null)}>Cancelar</Button>
-            <Button
-              onClick={handleGuardarEdicion}
-              disabled={!editNombre || editRecipePreview.hasBlockingIssues}
-              title={editRecipePreview.hasBlockingIssues ? 'Corregí las unidades incompatibles antes de guardar' : undefined}
-            >
-              Guardar
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <RecipeEditorDialog
+        open={recetaEdit !== null}
+        nombreReceta={editNombre}
+        rendimiento={editRendimiento}
+        selectedProducto={editProductoId}
+        outputMode={editOutputMode}
+        createdOutputProductName={editCreatedOutputProductName}
+        productosTyped={productosTyped}
+        busquedaProductos={busquedaProductos}
+        nuevoItems={editItems}
+        newRecipePreview={editRecipePreview}
+        unitOptionNone={UNIT_OPTION_NONE}
+        noConversionUnits={NO_CONVERSION_UNITS}
+        onClose={() => setRecetaEdit(null)}
+        onNombreChange={setEditNombre}
+        onRendimientoChange={setEditRendimiento}
+        onModeChange={setEditOutputMode}
+        onProductChange={setEditProductoId}
+        onCreatedProduct={(product) => {
+          setEditProductoId(product.id)
+          setEditCreatedOutputProductName(product.nombre)
+        }}
+        onBusquedaChange={setBusquedaProductos}
+        onAddItem={(productoId) => {
+          if (!editItems.find((i) => i.productoId === productoId)) {
+            setEditItems([...editItems, { productoId, cantidad: 1, unidadSimbolo: null, desperdicio: 0 }])
+          }
+        }}
+        onUpdateItem={(productoId, patch) => {
+          setEditItems(editItems.map((i) => (i.productoId === productoId ? { ...i, ...patch } : i)))
+        }}
+        onRemoveItem={(productoId) => {
+          setEditItems(editItems.filter((i) => i.productoId !== productoId))
+        }}
+        onSubmit={handleGuardarEdicion}
+        onCancel={() => setRecetaEdit(null)}
+      />
 
-      {/* AlertDialog: Confirmar eliminación de receta */}
-      <AlertDialog open={recetaEliminar !== null} onOpenChange={(open) => { if (!open) setRecetaEliminar(null) }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Eliminar receta</AlertDialogTitle>
-            <AlertDialogDescription>
-              ¿Eliminar la receta <strong>{recetaEliminar?.nombre}</strong>? Esta acción no se puede deshacer.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setRecetaEliminar(null)}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => {
-                if (recetaEliminar) {
-                  deleteReceta(recetaEliminar.recetaId)
-                  setRecetaEliminar(null)
-                }
-              }}
-            >
-              Eliminar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* AlertDialog de confirmación para acciones de estado */}
-      <AlertDialog open={confirmacion !== null} onOpenChange={(open) => { if (!open) setConfirmacion(null) }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              {confirmacion?.tipo === 'aprobar' && 'Aprobar orden de producción'}
-              {confirmacion?.tipo === 'completar' && 'Completar orden de producción'}
-              {confirmacion?.tipo === 'cancelar' && 'Cancelar orden de producción'}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {confirmacion?.tipo === 'aprobar' && (
-                <>¿Confirmar aprobación de <strong>{confirmacion.recetaNombre}</strong> (cantidad: {confirmacion.cantidad})? Se reservarán los materiales del inventario.</>
-              )}
-              {confirmacion?.tipo === 'completar' && (
-                <>¿Confirmar que la producción de <strong>{confirmacion?.recetaNombre}</strong> está terminada? Se incrementará el stock del producto terminado.</>
-              )}
-              {confirmacion?.tipo === 'cancelar' && (
-                <>¿Cancelar la orden de <strong>{confirmacion?.recetaNombre}</strong>? Si estaba en proceso, los materiales reservados serán liberados al inventario.</>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setConfirmacion(null)}>Volver</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (!confirmacion) return
-                if (confirmacion.tipo === 'aprobar') handleAprobarOrden(confirmacion.ordenId)
-                if (confirmacion.tipo === 'completar') handleCompletarOrden(confirmacion.ordenId)
-                if (confirmacion.tipo === 'cancelar') handleCancelarOrden(confirmacion.ordenId)
-                setConfirmacion(null)
-              }}
-            >
-              Confirmar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   )
 }

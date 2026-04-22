@@ -140,6 +140,25 @@ describe('produccion utilities', () => {
       expect(conCero.costoUnitario).toBe(sinCampo.costoUnitario)
       expect(conCero.detalle[0].cantidad).toBe(sinCampo.detalle[0].cantidad)
     })
+
+    it('redondea el costo unitario a dos decimales', () => {
+      const ingredientes = [
+        {
+          productoId: 'prod-1',
+          cantidad: 1,
+          producto: {
+            nombre: 'Esencia',
+            precioCosto: 0.1,
+            stock: 100,
+          },
+        },
+      ]
+
+      const resultado = calcularCostoProduccion(ingredientes, 3)
+
+      expect(resultado.costoMateriales).toBeCloseTo(0.3, 2)
+      expect(resultado.costoUnitario).toBeCloseTo(0.1, 2)
+    })
   })
 
   describe('validarDisponibilidadMateriales', () => {
@@ -246,6 +265,28 @@ describe('produccion utilities', () => {
 
       expect(faltantes).toHaveLength(1)
       expect(faltantes[0].disponible).toBe(0)
+    })
+
+    it('considera unidad y desperdicio al calcular stock requerido', () => {
+      const ingredientes = [
+        {
+          productoId: 'prod-1',
+          cantidad: 1,
+          unidadSimbolo: 'kg',
+          desperdicio: 0.1,
+          producto: {
+            nombre: 'Harina',
+            precioCosto: 10,
+            stock: 1000
+          }
+        }
+      ]
+
+      const faltantes = validarDisponibilidadMateriales(ingredientes, 1)
+
+      expect(faltantes).toHaveLength(1)
+      expect(faltantes[0].requerido).toBe(1100)
+      expect(faltantes[0].disponible).toBe(1000)
     })
   })
 

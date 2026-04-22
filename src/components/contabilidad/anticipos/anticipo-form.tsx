@@ -24,10 +24,37 @@ const anticipoSchema = z.object({
   moneda: z.string().min(1, "Seleccione la moneda"),
   cuentaOrigenId: z.string().optional(),
   tipoPagoOrigenId: z.string().optional(),
+  referenciaExterna: z.string().optional(),
   vigenciaHasta: z.string().optional(),
 })
 
 type AnticipoFormValues = z.infer<typeof anticipoSchema>
+
+/**
+ * @description Normaliza los valores del formulario al payload de creación de anticipos.
+ * @param {AnticipoFormValues} data - Valores ingresados en el formulario.
+ * @param {string | undefined} proveedorId - Proveedor resuelto desde el contrato.
+ * @param {string | undefined} clienteId - Cliente resuelto desde el contrato.
+ * @returns {import('@/app/models/model').CreateAnticipoRequest} Payload listo para la API.
+ */
+export function buildCreateAnticipoPayload(
+  data: AnticipoFormValues,
+  proveedorId?: string,
+  clienteId?: string,
+): import('@/app/models/model').CreateAnticipoRequest {
+  return {
+    tipo: data.tipo,
+    contratoId: data.contratoId,
+    proveedorId: data.tipo === 'PAGO' ? (proveedorId || data.proveedorId) : undefined,
+    clienteId: data.tipo === 'COBRO' ? (clienteId || data.clienteId) : undefined,
+    monto: data.monto,
+    moneda: data.moneda,
+    cuentaOrigenId: data.cuentaOrigenId,
+    tipoPagoOrigenId: data.tipoPagoOrigenId,
+    referenciaExterna: data.referenciaExterna,
+    vigenciaHasta: data.vigenciaHasta || undefined,
+  }
+}
 
 interface AnticipoFormProps {
   open: boolean
@@ -90,17 +117,13 @@ export function AnticipoForm({
 
   const onSubmit = async (data: AnticipoFormValues) => {
     try {
-      await createAnticipo({
-        tipo: data.tipo,
-        contratoId: data.contratoId,
-        proveedorId: data.tipo === "PAGO" ? (proveedorDelContrato?.vendorId || data.proveedorId) : undefined,
-        clienteId: data.tipo === "COBRO" ? (clienteDelContrato?.clienteId || data.clienteId) : undefined,
-        monto: data.monto,
-        moneda: data.moneda,
-        cuentaOrigenId: data.cuentaOrigenId,
-        tipoPagoOrigenId: data.tipoPagoOrigenId,
-        vigenciaHasta: data.vigenciaHasta || undefined,
-      }).unwrap()
+      await createAnticipo(
+        buildCreateAnticipoPayload(
+          data,
+          proveedorDelContrato?.vendorId,
+          clienteDelContrato?.clienteId,
+        )
+      ).unwrap()
 
       sileo.success({ title: `El anticipo de ${data.tipo === "PAGO" ? "pago" : "cobro"} ha sido creado exitosamente.` })
 
@@ -292,6 +315,21 @@ export function AnticipoForm({
                 )}
               />
             )}
+
+            {/* Referencia Externa */}
+            <FormField
+              control={form.control}
+              name="referenciaExterna"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Referencia Externa (Opcional)</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Factura, comprobante, nota..." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             {/* Vigencia */}
             <FormField

@@ -18,14 +18,19 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useGetClientesQuery } from '@/lib/redux/services/ClienteApi'
 import { useGetServiciosQuery } from '@/lib/redux/services/serviciosApi'
 import { useAddVentaServicioMutation } from '@/lib/redux/services/ventaServiciosApi'
+import { AnticipoSelector } from '@/components/contabilidad/anticipos/anticipo-selector'
+import type { AnticipoAllocation } from '@/components/contabilidad/anticipos/anticipo-selector'
 import { ArrowLeft, Handshake, Save, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+
+const FORMA_COBRO_ANTICIPO = 'ANTICIPO_COBRO' as const
 
 const schema = z.object({
   servicioId: z.string().min(1, 'Seleccione un servicio'),
   clienteId: z.string().optional(),
   cantidad: z.coerce.number().int().positive(),
   precioUnitario: z.coerce.number().int().positive(),
+  formaCobro: z.enum(['COBRO_DIRECTO', FORMA_COBRO_ANTICIPO]).default('COBRO_DIRECTO'),
   observaciones: z.string().optional(),
 })
 
@@ -40,6 +45,7 @@ const servicioInputClassName = 'bg-slate-50 dark:bg-slate-900/10 border-slate-20
 export function ServiciosPrestadosForm(): ReactElement {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const [anticipoAllocations, setAnticipoAllocations] = useState<AnticipoAllocation[]>([])
   const { data: servicios, isLoading: isLoadingServicios } = useGetServiciosQuery()
   const { data: clientes, isLoading: isLoadingClientes } = useGetClientesQuery()
   const [addVentaServicio] = useAddVentaServicioMutation()
@@ -51,11 +57,17 @@ export function ServiciosPrestadosForm(): ReactElement {
       clienteId: '',
       cantidad: 1,
       precioUnitario: 0,
+      formaCobro: 'COBRO_DIRECTO',
       observaciones: '',
     },
   })
 
   const servicioId = form.watch('servicioId')
+  const clienteId = form.watch('clienteId')
+  const cantidad = form.watch('cantidad') || 1
+  const precioUnitario = form.watch('precioUnitario') || 0
+  const totalServicio = cantidad * precioUnitario
+  const formaCobro = form.watch('formaCobro')
 
   /**
    * @description Maneja el envío del formulario de servicio prestado.
@@ -71,6 +83,7 @@ export function ServiciosPrestadosForm(): ReactElement {
         cantidad: values.cantidad,
         total: values.cantidad * values.precioUnitario,
         observaciones: values.observaciones,
+        anticipos: values.formaCobro === FORMA_COBRO_ANTICIPO ? anticipoAllocations : undefined,
       }).unwrap()
 
       sileo.success({ title: 'Servicio prestado registrado correctamente.' })
@@ -275,6 +288,48 @@ export function ServiciosPrestadosForm(): ReactElement {
                     />
                   </motion.div>
                 </div>
+
+                <motion.div
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.38 }}
+                >
+                  <FormField
+                    control={form.control}
+                    name='formaCobro'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className='text-slate-700 dark:text-slate-300 text-base'>Forma de cobro</FormLabel>
+                        <Select onValueChange={field.onChange} value={field.value}>
+                          <FormControl>
+                            <SelectTrigger className={servicioInputClassName}>
+                              <SelectValue />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value='COBRO_DIRECTO'>Cobro directo</SelectItem>
+                            <SelectItem value={FORMA_COBRO_ANTICIPO}>Cobro con anticipo</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormDescription className='text-slate-500 dark:text-slate-500'>
+                          Tipo de cobro a realizar.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </motion.div>
+
+                {formaCobro === FORMA_COBRO_ANTICIPO && (
+                  <AnticipoSelector
+                    tipo="COBRO"
+                    entidadId={clienteId}
+                    montoTotal={totalServicio}
+                    onSelectionChange={setAnticipoAllocations}
+                    moneda="CUP"
+                    disabled={isLoading}
+                  />
+                )}
 
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}

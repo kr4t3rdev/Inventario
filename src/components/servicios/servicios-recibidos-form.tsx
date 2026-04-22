@@ -18,15 +18,19 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useCreateCompraServicioMutation } from '@/lib/redux/services/comprasServiciosApi'
 import { useGetServiciosQuery } from '@/lib/redux/services/serviciosApi'
 import { useGetVendorsQuery } from '@/lib/redux/services/vendorsApi'
+import { AnticipoSelector } from '@/components/contabilidad/anticipos/anticipo-selector'
+import type { AnticipoAllocation } from '@/components/contabilidad/anticipos/anticipo-selector'
 import { ArrowLeft, Truck, Save, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+
+const FORMA_PAGO_ANTICIPO = 'ANTICIPO_PAGO' as const
 
 const schema = z.object({
   servicioId: z.string().min(1, 'Seleccione un servicio'),
   proveedorId: z.string().optional(),
   costoUnitario: z.coerce.number().int().positive(),
   cantidad: z.coerce.number().int().positive(),
-  formaPago: z.enum(['PAGO_PARCIAL', 'PAGO_COMPLETO']),
+  formaPago: z.enum(['PAGO_PARCIAL', 'PAGO_COMPLETO', FORMA_PAGO_ANTICIPO]),
   estado: z.enum(['PENDIENTE', 'PAGADA']),
   numeroFactura: z.string().optional(),
   descripcion: z.string().optional(),
@@ -43,6 +47,7 @@ const servicioInputClassName = 'bg-slate-50 dark:bg-slate-900/10 border-slate-20
 export function ServiciosRecibidosForm(): ReactElement {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const [anticipoAllocations, setAnticipoAllocations] = useState<AnticipoAllocation[]>([])
   const { data: servicios, isLoading: isLoadingServicios } = useGetServiciosQuery()
   const { data: vendors, isLoading: isLoadingVendors } = useGetVendorsQuery()
   const [createCompraServicio] = useCreateCompraServicioMutation()
@@ -62,6 +67,10 @@ export function ServiciosRecibidosForm(): ReactElement {
   })
 
   const formaPago = form.watch('formaPago')
+  const proveedorId = form.watch('proveedorId')
+  const costoUnitario = form.watch('costoUnitario') || 0
+  const cantidad = form.watch('cantidad') || 1
+  const costoTotal = costoUnitario * cantidad
 
   /**
    * @description Registra un servicio recibido.
@@ -77,9 +86,10 @@ export function ServiciosRecibidosForm(): ReactElement {
         numeroFactura: values.numeroFactura || null,
         costoUnitario: values.costoUnitario,
         cantidad: values.cantidad,
-        formaPago: values.formaPago,
-        estado: values.formaPago === 'PAGO_COMPLETO' ? 'PAGADA' : 'PENDIENTE',
+        formaPago: values.formaPago === FORMA_PAGO_ANTICIPO ? 'PAGO_COMPLETO' : values.formaPago,
+        estado: values.formaPago === 'PAGO_COMPLETO' || values.formaPago === FORMA_PAGO_ANTICIPO ? 'PAGADA' : 'PENDIENTE',
         descripcion: values.descripcion || null,
+        anticipos: values.formaPago === FORMA_PAGO_ANTICIPO ? anticipoAllocations : undefined,
       }).unwrap()
 
       sileo.success({ title: 'Servicio recibido registrado correctamente.' })
@@ -117,7 +127,7 @@ export function ServiciosRecibidosForm(): ReactElement {
   }
 
   return (
-    <div className='min-h-screen bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-900/10 dark:to-slate-800/10 py-8 px-4'>
+    <div className='bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-900/10 dark:to-slate-800/10 py-4 px-2 rounded-lg'>
       <motion.div 
         className='container mx-auto max-w-2xl'
         initial={{ opacity: 0, y: 20 }}
@@ -306,10 +316,11 @@ export function ServiciosRecibidosForm(): ReactElement {
                                 <SelectValue />
                               </SelectTrigger>
                             </FormControl>
-                            <SelectContent>
-                              <SelectItem value='PAGO_COMPLETO'>Pago completo</SelectItem>
-                              <SelectItem value='PAGO_PARCIAL'>Pago parcial</SelectItem>
-                            </SelectContent>
+<SelectContent>
+                               <SelectItem value='PAGO_COMPLETO'>Pago completo</SelectItem>
+                               <SelectItem value='PAGO_PARCIAL'>Pago parcial</SelectItem>
+                               <SelectItem value={FORMA_PAGO_ANTICIPO}>Pago con anticipo</SelectItem>
+                             </SelectContent>
                           </Select>
                           <FormDescription className='text-slate-500 dark:text-slate-500'>
                             Tipo de pago a realizar.
@@ -344,6 +355,17 @@ export function ServiciosRecibidosForm(): ReactElement {
                     />
                   </motion.div>
                 </div>
+
+                {formaPago === FORMA_PAGO_ANTICIPO && (
+                  <AnticipoSelector
+                    tipo="PAGO"
+                    entidadId={proveedorId}
+                    montoTotal={costoTotal}
+                    onSelectionChange={setAnticipoAllocations}
+                    moneda="CUP"
+                    disabled={isLoading}
+                  />
+                )}
 
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}

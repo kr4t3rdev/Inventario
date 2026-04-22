@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useState } from 'react';
-import { useReducedMotion, AnimatePresence } from 'framer-motion';
+import { useReducedMotion } from 'framer-motion';
 import { ArrowLeft, Plus, Wallet, TrendingUp, CreditCard, Building2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
@@ -66,8 +66,6 @@ const CuentaBancariaForm = dynamic(
 export default function CuentasBancariasPage(): React.JSX.Element {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [editingCuenta, setEditingCuenta] = useState<CuentaBancaria | null>(null);
-  const shouldReduceMotion = useReduceMotion();
-
   const { data: cuentasData = { cuentas: [] }, refetch, isLoading } = useGetCuentasBancariasQuery();
   const [updateCuenta] = useUpdateCuentaBancariaMutation();
 

@@ -7,7 +7,9 @@ import {
   ExecuteAnticipoPersistedResult,
   ExecuteAnticipoResult,
   ExecuteReconciliacionHandler,
-  ReverseAnticipoParams
+  ReverseAnticipoParams,
+  AnticipoAllocation,
+  AnticipoAllocationResult,
 } from '@/lib/services/anticipos-workflow.types'
 
 function createAnticipoWorkflowError(
@@ -172,8 +174,7 @@ export async function createAnticipo(
 
 export async function executeAnticipo(
   tx: Prisma.TransactionClient,
-  params: ExecuteAnticipoParams,
-  executeReconciliacion: ExecuteReconciliacionHandler
+  params: ExecuteAnticipoParams
 ): Promise<ExecuteAnticipoResult> {
   if (!params.idempotencyKey?.trim()) {
     throw createAnticipoWorkflowError(
@@ -293,7 +294,8 @@ export async function executeAnticipo(
       )
     }
 
-  const reconciliacion = await executeReconciliacion(tx)
+  // NO se llama a reconciliación aquí.
+  // La reconciliación vive en el flujo que consume el anticipo (applyAnticipoAllocations).
 
   const movimiento = await tx.anticipoMovimiento.create({
       data: {
@@ -301,8 +303,6 @@ export async function executeAnticipo(
         tipoMovimiento: 'EJECUCION',
         contexto: params.contexto,
         documentoDestinoId: params.documentoDestinoId,
-        reconciliacionVentaId: reconciliacion.reconciliacionVentaId || null,
-        reconciliacionGastoId: reconciliacion.reconciliacionGastoId || null,
         monto: montoObjetivo,
         moneda: anticipo.moneda,
         tasaAplicada: tasaAplicada || null,
@@ -320,9 +320,7 @@ export async function executeAnticipo(
     anticipoId: anticipo.anticipoId,
     estado: estadoFinal,
     saldoDisponible: nuevoSaldo,
-    movimientoId: movimiento.movimientoId,
-    reconciliacionVentaId: reconciliacion.reconciliacionVentaId,
-    reconciliacionGastoId: reconciliacion.reconciliacionGastoId
+    movimientoId: movimiento.movimientoId
   }
 
   await setIdempotentResult<ExecuteAnticipoPersistedResult>(idempotencyCacheKey, {
@@ -408,4 +406,128 @@ export async function reverseAnticipo(
     saldoDisponible: saldoRepuesto,
     movimientoId: movimiento.movimientoId
   }
+}
+
+/**
+ * @description Aplica una o varias allocations de anticipo a un documento.
+ * Valida ownership, saldo y moneda; luego descuenta cada anticipo y crea los movimientos.
+ * @param {Prisma.TransactionClient} tx - Transaction client de Prisma.
+ * @param {AnticipoAllocation[]} allocations - Lista de allocations (anticipoId + montoAplicado).
+ * @param {Object} context - Contexto del documento destino.
+ * @param {string} context.documentoDestinoId - ID del documento (compra servicio, venta servicio, etc).
+ * @param {AnticipoContexto} context.contexto - Tipo de contexto del anticipo.
+ * @param {string} context.usuarioId - ID del usuario que ejecuta.
+ * @param {string} [context.idempotencyKey] - Clave de idempotencia (una por documento, no por anticipo).
+ * @param {string} [context.observaciones] - Observaciones opcionales.
+ * @returns {Promise<AnticipoAllocationResult[]>} Lista de resultados por cada allocation aplicada.
+ */
+export async function applyAnticipoAllocations(
+  tx: Prisma.TransactionClient,
+  allocations: AnticipoAllocation[],
+  context: {
+    documentoDestinoId: string
+    contexto: AnticipoContexto
+    usuarioId: string
+    idempotencyKey?: string
+    observaciones?: string
+  }
+): Promise<AnticipoAllocationResult[]> {
+  if (!allocations || allocations.length === 0) {
+    return []
+  }
+
+  const results: AnticipoAllocationResult[] = []
+
+  for (const allocation of allocations) {
+    const { anticipoId, montoAplicado } = allocation
+
+    if (!Number.isFinite(montoAplicado) || montoAplicado <= 0) {
+      throw createAnticipoWorkflowError(
+        400,
+        'MONTO_APLICADO_INVALIDO',
+        `El monto aplicado para el anticipo ${anticipoId} debe ser mayor que cero`
+      )
+    }
+
+    // Cargar anticipo con validaciones
+    const anticipo = await tx.anticipo.findUnique({
+      where: { anticipoId },
+      select: {
+        anticipoId: true,
+        tipo: true,
+        estado: true,
+        saldoDisponible: true,
+        moneda: true,
+        vigenciaHasta: true,
+        proveedorId: true,
+        clienteId: true,
+        cuentaOrigenId: true,
+      },
+    })
+
+    if (!anticipo) {
+      throw createAnticipoWorkflowError(404, 'ANTICIPO_NO_ENCONTRADO', `Anticipo ${anticipoId} no encontrado`)
+    }
+
+    if (anticipo.estado !== 'RESERVADO') {
+      throw createAnticipoWorkflowError(
+        409,
+        'ANTICIPO_NO_ELEGIBLE',
+        `El anticipo ${anticipoId} no está en estado reservado (estado: ${anticipo.estado})`
+      )
+    }
+
+    if (anticipo.vigenciaHasta && new Date(anticipo.vigenciaHasta).getTime() < Date.now()) {
+      throw createAnticipoWorkflowError(409, 'ANTICIPO_VENCIDO', `El anticipo ${anticipoId} está vencido`)
+    }
+
+    const saldoDisponible = Number(anticipo.saldoDisponible)
+    if (saldoDisponible + 0.000001 < montoAplicado) {
+      throw createAnticipoWorkflowError(
+        409,
+        'COBERTURA_INSUFICIENTE',
+        `El anticipo ${anticipoId} tiene saldo ${saldoDisponible} pero se intenta aplicar ${montoAplicado}`
+      )
+    }
+
+    // Descontar saldo
+    const nuevoSaldo = saldoDisponible - montoAplicado
+
+    await tx.anticipo.update({
+      where: { anticipoId },
+      data: {
+        saldoDisponible: nuevoSaldo,
+        estado: nuevoSaldo <= 0.000001 ? 'EJECUTADO' : 'RESERVADO',
+        fechaEjecucion: nuevoSaldo <= 0.000001 ? new Date() : undefined,
+      },
+    })
+
+    // Crear movimiento de aplicación
+    const movimiento = await tx.anticipoMovimiento.create({
+      data: {
+        anticipoId,
+        tipoMovimiento: 'EJECUCION',
+        contexto: context.contexto,
+        documentoDestinoId: context.documentoDestinoId,
+        monto: montoAplicado,
+        moneda: anticipo.moneda,
+        saldoAntes: saldoDisponible,
+        saldoDespues: nuevoSaldo,
+        usuarioId: context.usuarioId,
+        idempotencyKey: context.idempotencyKey
+          ? `${context.idempotencyKey}:${anticipoId}`
+          : undefined,
+        observaciones: context.observaciones || null,
+      },
+    })
+
+    results.push({
+      anticipoId,
+      movimientoId: movimiento.movimientoId,
+      montoAplicado,
+      saldoRestante: nuevoSaldo,
+    })
+  }
+
+  return results
 }

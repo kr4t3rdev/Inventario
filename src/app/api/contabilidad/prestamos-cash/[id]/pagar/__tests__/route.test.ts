@@ -51,6 +51,7 @@ describe('API contabilidad/prestamos-cash/[id]/pagar', () => {
     prisma.$transaction.mockImplementation(async (callback: any) => {
       const tx = {
         reconciliacionVenta: { create: vi.fn().mockResolvedValue(mockReconciliacion) },
+        cuentaBancaria: { update: vi.fn() },
         cuentaPorCobrar: { update: vi.fn() },
         prestamoCash: { update: vi.fn() }
       }

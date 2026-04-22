@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuthPost } from '@/lib/auth-middleware';
 import { prisma } from '@/lib/prisma';
+import { PRODUCTION_STATES } from '@/lib/constants/production';
 
 /**
  * @description Cancela una orden de producción, liberando los materiales reservados.
@@ -14,88 +15,96 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
     const body = await request.json();
     const userId = body.userId || 'system';
 
-    // Obtener la orden con sus ingredientes
-    const orden = await prisma.ordenProduccion.findUnique({
-      where: { ordenProduccionId: id },
-      include: {
-        Receta: {
-          include: {
-            RecetaIngrediente: true,
+    const ordenActualizada = await prisma.$transaction(async (tx) => {
+      const orden = await tx.ordenProduccion.findUnique({
+        where: { ordenProduccionId: id },
+        include: {
+          Receta: {
+            include: {
+              RecetaIngrediente: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    if (!orden) {
-      return NextResponse.json({ error: 'Orden de producción no encontrada.' }, { status: 404 });
-    }
-
-    const estadoOrden = String(orden.estado);
-    if (estadoOrden === 'COMPLETADA' || estadoOrden === 'CANCELADA') {
-      return NextResponse.json({ error: 'La orden ya no puede ser cancelada.' }, { status: 400 });
-    }
-
-    // Si estaba en proceso, liberar los materiales reservados
-    if (estadoOrden === 'EN_PROCESO') {
-      for (const ingrediente of orden.Receta.RecetaIngrediente) {
-        const cantidadReservada = ingrediente.cantidad * orden.cantidad;
-        
-        await prisma.producto.update({
-          where: { id: ingrediente.productoId },
-          data: {
-            stock: {
-              increment: cantidadReservada,
-            },
-          },
-        });
+      if (!orden) {
+        return null;
       }
-    }
 
-    // Actualizar estado de la orden
-    const ordenActualizada = await prisma.ordenProduccion.update({
-      where: { ordenProduccionId: id },
-      data: {
-        estado: 'CANCELADA',
-      },
-      include: {
-        Receta: {
-          include: {
-            Producto: {
-              select: {
-                id: true,
-                nombre: true,
+      const estadoOrden = String(orden.estado);
+      if (estadoOrden === PRODUCTION_STATES.COMPLETADA || estadoOrden === PRODUCTION_STATES.CANCELADA) {
+        throw new Error('La orden ya no puede ser cancelada.');
+      }
+
+      if (estadoOrden === PRODUCTION_STATES.EN_PROCESO) {
+        for (const ingrediente of orden.Receta.RecetaIngrediente) {
+          const cantidadReservada = ingrediente.cantidad * orden.cantidad;
+
+          await tx.producto.update({
+            where: { id: ingrediente.productoId },
+            data: {
+              stock: {
+                increment: cantidadReservada,
               },
             },
-            RecetaIngrediente: {
-              include: {
-                Producto: {
-                  select: {
-                    id: true,
-                    nombre: true,
-                    precioCosto: true,
-                    stock: true,
+          });
+        }
+      }
+
+      const ordenActualizadaInterna = await tx.ordenProduccion.update({
+        where: { ordenProduccionId: id },
+        data: {
+          estado: PRODUCTION_STATES.CANCELADA,
+        },
+        include: {
+          Receta: {
+            include: {
+              Producto: {
+                select: {
+                  id: true,
+                  nombre: true,
+                },
+              },
+              RecetaIngrediente: {
+                include: {
+                  Producto: {
+                    select: {
+                      id: true,
+                      nombre: true,
+                      precioCosto: true,
+                      stock: true,
+                    },
                   },
                 },
               },
             },
           },
         },
-      },
+      });
+
+      await tx.ordenProduccionHistorial.create({
+        data: {
+          ordenProduccionId: id,
+          estadoAnterior: orden.estado,
+          estadoNuevo: PRODUCTION_STATES.CANCELADA,
+          observaciones: body.observaciones || 'Orden cancelada',
+          usuarioId: userId,
+        },
+      });
+
+      return ordenActualizadaInterna;
     });
 
-    // Crear historial de estado
-    await prisma.ordenProduccionHistorial.create({
-      data: {
-        ordenProduccionId: id,
-        estadoAnterior: orden.estado,
-        estadoNuevo: 'CANCELADA',
-        observaciones: body.observaciones || 'Orden cancelada',
-        usuarioId: userId,
-      },
-    });
+    if (!ordenActualizada) {
+      return NextResponse.json({ error: 'Orden de producción no encontrada.' }, { status: 404 });
+    }
 
     return NextResponse.json(ordenActualizada);
   } catch (error) {
+    if (error instanceof Error && error.message === 'La orden ya no puede ser cancelada.') {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
     console.error('Error al cancelar orden de producción:', error);
     return NextResponse.json({ error: 'Error al cancelar orden de producción.' }, { status: 500 });
   }

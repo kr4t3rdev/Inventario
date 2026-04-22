@@ -248,25 +248,34 @@ export async function GET(
         transaccionId: rec.reconciliacionId,
         fecha: rec.fechaReconciliacion,
         tipoMovimiento: rec.tipoReconciliacion === 'PRESTAMO_CASH'
-          ? 'prestamo_cash'
+          ? 'prestamo_cash_pago'
+          : rec.tipoReconciliacion === 'PRESTAMO_CASH_DESEMBOLSO'
+          ? 'prestamo_cash_desembolso'
           : rec.tipoReconciliacion === 'DEUDA_CASH'
-          ? 'deuda_cash'
+          ? 'deuda_cash_pago'
+          : rec.tipoReconciliacion === 'DEUDA_CASH_DESEMBOLSO'
+          ? 'deuda_cash_desembolso'
           : 'venta',
         descripcion: rec.tipoReconciliacion === 'PRESTAMO_CASH'
           ? `Préstamo Cash - ${rec.prestamoCash?.cliente?.nombre ?? rec.reconciliacionId}`
+          : rec.tipoReconciliacion === 'PRESTAMO_CASH_DESEMBOLSO'
+          ? `Desembolso Préstamo Cash - ${rec.prestamoCash?.cliente?.nombre ?? rec.reconciliacionId}`
           : rec.tipoReconciliacion === 'DEUDA_CASH'
-          ? `Deuda Cash - ${rec.deudaCash?.proveedor?.nombre ?? rec.reconciliacionId}`
+          ? `Pago Deuda Cash - ${rec.deudaCash?.proveedor?.nombre ?? rec.reconciliacionId}`
+          : rec.tipoReconciliacion === 'DEUDA_CASH_DESEMBOLSO'
+          ? `Desembolso Deuda Cash - ${rec.deudaCash?.proveedor?.nombre ?? rec.reconciliacionId}`
           : `Venta reconciliada - ${rec.venta?.ventaId || 'N/A'}`,
         observaciones: rec.observaciones,
         monedaOriginal: rec.moneda,
         montoOriginal: Number(rec.monto),
         tasaCambio: rec.tasaCambio ? Number(rec.tasaCambio) : null,
         montoConvertido: calcularMontoConvertido(Number(rec.monto), rec.moneda, cuenta.moneda, rec.tasaCambio ? Number(rec.tasaCambio) : null),
-        esIngreso: rec.tipoReconciliacion !== 'DEUDA_CASH',
+        esIngreso: rec.tipoReconciliacion !== 'PRESTAMO_CASH_DESEMBOLSO' && rec.tipoReconciliacion !== 'DEUDA_CASH_DESEMBOLSO',
         detalles: {
           tipoPago: rec.tipoPago?.nombre,
           tipoReconciliacion: rec.tipoReconciliacion,
-          venta: rec.venta
+          venta: rec.venta,
+          prestamoCashId: rec.prestamoCash?.id ?? null
         }
       })
     })

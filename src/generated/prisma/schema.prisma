@@ -51,6 +51,7 @@ model Vendor {
   gastoCompras    GastoCompra[]
   anticipos       Anticipo[]
   productos       Producto[]
+  compraServicios CompraServicio[]
 
   @@index([vendorCode])
 }
@@ -615,6 +616,7 @@ model Servicios {
   updatedAt       DateTime         @updatedAt
   ofertaItems     OfertaItem[]
   ventasServicios VentaServicios[]
+  compraServicios CompraServicio[]
 }
 
 model VentaServicios {
@@ -630,6 +632,29 @@ model VentaServicios {
   reconciliaciones ReconciliacionServicio[]
   cliente          Cliente?                 @relation(fields: [clienteId], references: [clienteId], onDelete: Cascade)
   servicio         Servicios                @relation(fields: [servicioId], references: [servicioId], onDelete: Cascade)
+}
+
+model CompraServicio {
+  compraServicioId String    @id @default(cuid())
+  servicioId       String
+  proveedorId      String?
+  numeroFactura    String?
+  costoUnitario    Int
+  cantidad         Int
+  total            Int
+  formaPago        String
+  estado           String
+  descripcion      String?
+  fechaServicio    DateTime  @default(now())
+  fechaVencimiento DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  servicio         Servicios @relation(fields: [servicioId], references: [servicioId], onDelete: Cascade)
+  proveedor        Vendor?   @relation(fields: [proveedorId], references: [vendorId], onDelete: SetNull)
+
+  @@index([servicioId])
+  @@index([proveedorId])
+  @@index([estado])
 }
 
 model GastoConcepto {

@@ -6,7 +6,7 @@ import {
   applyFacturacionCobroWorkflow,
   reconciliarVentaDirecta
 } from "@/lib/services/facturacion-ventas-workflow"
-import { executeAnticipo, isAnticipoWorkflowError } from "@/lib/services/anticipos-workflow"
+import { applyAnticipoAllocations } from "@/lib/services/anticipos-workflow"
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service'
 
 // Function to invalidate dashboard cache after creating sales
@@ -148,36 +148,35 @@ async function crearFacturaParaVenta(
   })
 
   if (anticipoCobroId && idempotencyKey) {
-    await executeAnticipo(
+    // Consumir anticipo y crear reconciliación dentro de la transacción
+    await applyAnticipoAllocations(
       tx,
+      [{ anticipoId: anticipoCobroId, montoAplicado: Number(total) }],
       {
-        anticipoId: anticipoCobroId,
-        contexto: 'FACTURA_DIRECTA',
         documentoDestinoId: factura.idFactura,
-        montoObjetivo: Number(total),
-        monedaObjetivo: 'CUP',
-        idempotencyKey,
+        contexto: 'FACTURA_DIRECTA',
         usuarioId: creadoPor,
-        observaciones: observaciones || `Cobro anticipado aplicado a factura ${factura.idFactura}`
-      },
-      async (trx) => {
-        const reconciliacionVentaId = await reconciliarVentaDirecta(trx, {
-          ventaId,
-          montoTotal: Number(total),
-          usuarioId: creadoPor,
-          observaciones: observaciones || `Cobro anticipado factura ${factura.idFactura}`,
-          cuentaBancariaId
-        })
-        await trx.factura.update({
-          where: { idFactura: factura.idFactura },
-          data: {
-            estado: 'PAGADA',
-            fechaVencimiento: null
-          }
-        })
-        return { reconciliacionVentaId }
+        idempotencyKey,
+        observaciones: observaciones || `Cobro anticipado factura ${factura.idFactura}`,
       }
     )
+
+    // Reconciliar la venta directa
+    await reconciliarVentaDirecta(tx, {
+      ventaId,
+      montoTotal: Number(total),
+      usuarioId: creadoPor,
+      observaciones: observaciones || `Cobro anticipado factura ${factura.idFactura}`,
+      cuentaBancariaId
+    })
+
+    await tx.factura.update({
+      where: { idFactura: factura.idFactura },
+      data: {
+        estado: 'PAGADA',
+        fechaVencimiento: null
+      }
+    })
   } else {
     await applyFacturacionCobroWorkflow(tx, {
       ventaId,

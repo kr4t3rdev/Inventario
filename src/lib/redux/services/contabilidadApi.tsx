@@ -227,9 +227,14 @@ export const contabilidadApi = apiSlice.injectEndpoints({
       providesTags: ["Anticipos"],
     }),
 
+    getAnticipoById: builder.query<{ anticipo: Anticipo & { movimientos?: Array<Record<string, unknown>> } }, string>({
+      query: (id) => `anticipos/${id}`,
+      providesTags: (result, error, id) => [{ type: "Anticipos", id }],
+    }),
+
     createAnticipo: builder.mutation<{ anticipo: Anticipo }, CreateAnticipoRequest>({
       query: (data) => ({
-        url: "contabilidad/anticipos",
+        url: "anticipos",
         method: "POST",
         body: data
       }),
@@ -1053,6 +1058,7 @@ export const {
   useGetReconciliacionStatsQuery,
   useCreateCuentaPorCobrarMutation,
   useGetAnticiposQuery,
+  useGetAnticipoByIdQuery,
   useGetAnticiposDisponiblesQuery,
   useCreateAnticipoMutation,
   useExecuteAnticipoMutation,

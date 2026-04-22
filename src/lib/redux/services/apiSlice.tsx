@@ -2,10 +2,18 @@ import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react"
 import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from "@reduxjs/toolkit/query"
 import { getAuthToken } from "@/lib/token"
 
+export const buildAuthHeader = (token: string): string => {
+  if (!token) {
+    return ''
+  }
+
+  return token.startsWith('Bearer ') ? token : `Bearer ${token}`
+}
+
 const rawBaseQuery = fetchBaseQuery({
   baseUrl: "/api",
   prepareHeaders: (headers) => {
-    const token = getAuthToken()
+    const token = buildAuthHeader(getAuthToken())
     if (token) {
       headers.set("Authorization", token)
     }

@@ -21,6 +21,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Loader2 } from "lucide-react"
 import { useRegistrarPagoPrestamoMutation } from "@/lib/redux/services/prestamosCashApi"
 import type { PrestamoCash } from "@/app/models/model"
+import { calcularSaldoPendientePrestamo } from "@/lib/utils/prestamo-cash"
 
 const pagoSchema = z.object({
   monto: z.coerce.number().positive("El monto debe ser mayor que 0"),
@@ -59,7 +60,10 @@ export function PagoPrestamoModal({
 
   const saldoPendiente = useMemo(() => {
     if (!prestamo?.cuentaPorCobrar) return Number(prestamo?.montoCapital ?? 0)
-    return Number(prestamo.cuentaPorCobrar.montoDeuda) - Number(prestamo.cuentaPorCobrar.montoPagado)
+    return calcularSaldoPendientePrestamo(
+      Number(prestamo.cuentaPorCobrar.montoDeuda),
+      Number(prestamo.cuentaPorCobrar.montoPagado)
+    )
   }, [prestamo])
 
   const form = useForm<PagoFormValues>({
@@ -76,6 +80,7 @@ export function PagoPrestamoModal({
   const cuentaIdSeleccionada = form.watch("cuentaId")
   const tasaCambio = form.watch("tasaCambio")
   const montoConvertido = montoIngresado && tasaCambio ? montoIngresado * tasaCambio : null
+  const saldoRestanteLuegoDePago = Math.max(0, saldoPendiente - (Number(montoIngresado) || 0))
 
   const cuentaSeleccionada = useMemo(
     () => cuentasBancarias.find((c) => c.cuentaId === cuentaIdSeleccionada),
@@ -146,6 +151,12 @@ export function PagoPrestamoModal({
                   <FormControl>
                     <Input type="number" step="0.01" min="0" max={saldoPendiente} {...field} />
                   </FormControl>
+                  <p className="text-xs text-muted-foreground">
+                    Saldo pendiente actual: {saldoPendiente.toFixed(2)} {prestamo?.moneda}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Saldo restante tras este pago: {saldoRestanteLuegoDePago.toFixed(2)} {prestamo?.moneda}
+                  </p>
                   {montoIngresado > saldoPendiente && (
                     <p className="text-xs text-red-500">Excede el saldo pendiente ({saldoPendiente.toFixed(2)})</p>
                   )}

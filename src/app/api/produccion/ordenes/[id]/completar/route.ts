@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { withAuthPost } from '@/lib/auth-middleware';
 import { prisma } from '@/lib/prisma';
+import { PRODUCTION_STATES } from '@/lib/constants/production';
 
 /**
  * @description Completa una orden de producción, incrementando el stock del producto terminado
@@ -15,67 +16,56 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
     const body = await request.json();
     const userId = body.userId || 'system';
 
-    // Obtener la orden con sus ingredientes
-    const orden = await prisma.ordenProduccion.findUnique({
-      where: { ordenProduccionId: id },
-      include: {
-        Receta: {
-          include: {
-            Producto: true,
-            RecetaIngrediente: true,
+    const ordenActualizada = await prisma.$transaction(async (tx) => {
+      const orden = await tx.ordenProduccion.findUnique({
+        where: { ordenProduccionId: id },
+        include: {
+          Receta: {
+            include: {
+              Producto: true,
+              RecetaIngrediente: true,
+            },
           },
         },
-      },
-    });
-
-    if (!orden) {
-      return NextResponse.json({ error: 'Orden de producción no encontrada.' }, { status: 404 });
-    }
-
-    if (String(orden.estado) !== 'EN_PROCESO') {
-      return NextResponse.json({ error: 'La orden no está en proceso.' }, { status: 400 });
-    }
-
-    // Validar que el producto final existe en el catálogo
-    if (!orden.Receta.Producto) {
-      return NextResponse.json({
-        error: 'Producto final no configurado para esta receta.'
-      }, { status: 404 });
-    }
-
-    const productoId = orden.Receta.productoId;
-    if (!productoId) {
-      return NextResponse.json({
-        error: 'Producto final no configurado para esta receta.'
-      }, { status: 404 });
-    }
-
-    // Validar que el stock no excederá límites
-    const productoFinal = await prisma.producto.findUnique({
-      where: { id: productoId },
-    });
-
-    if (!productoFinal) {
-      return NextResponse.json({
-        error: 'Producto final no encontrado en catálogo.'
-      }, { status: 404 });
-    }
-
-    // Calcular costo de materiales
-    let costoMateriales = 0;
-    for (const ingrediente of orden.Receta.RecetaIngrediente) {
-      const factorDesperdicio = 1 + (ingrediente.desperdicio ?? 0);
-      const cantidadUsada = ingrediente.cantidad * factorDesperdicio * orden.cantidad;
-      const producto = await prisma.producto.findUnique({
-        where: { id: ingrediente.productoId },
       });
-      if (producto) {
-        costoMateriales += producto.precioCosto * cantidadUsada;
-      }
-    }
 
-    // Usar transacción para garantizar atomicity
-    const ordenActualizada = await prisma.$transaction(async (tx) => {
+      if (!orden) {
+        return null;
+      }
+
+      if (String(orden.estado) !== PRODUCTION_STATES.EN_PROCESO) {
+        throw new Error('La orden no está en proceso.');
+      }
+
+      if (!orden.Receta.Producto) {
+        throw new Error('Producto final no configurado para esta receta.');
+      }
+
+      const productoId = orden.Receta.productoId;
+      if (!productoId) {
+        throw new Error('Producto final no configurado para esta receta.');
+      }
+
+      const productoFinal = await tx.producto.findUnique({
+        where: { id: productoId },
+      });
+
+      if (!productoFinal) {
+        throw new Error('Producto final no encontrado en catálogo.');
+      }
+
+      let costoMateriales = 0;
+      for (const ingrediente of orden.Receta.RecetaIngrediente) {
+        const factorDesperdicio = 1 + (ingrediente.desperdicio ?? 0);
+        const cantidadUsada = ingrediente.cantidad * factorDesperdicio * orden.cantidad;
+        const producto = await tx.producto.findUnique({
+          where: { id: ingrediente.productoId },
+        });
+        if (producto) {
+          costoMateriales += producto.precioCosto * cantidadUsada;
+        }
+      }
+
       // 1. Incrementar stock del producto final
       await tx.producto.update({
         where: { id: productoId },
@@ -90,7 +80,7 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
       const orden_updated = await tx.ordenProduccion.update({
         where: { ordenProduccionId: id },
         data: {
-          estado: 'COMPLETADA',
+          estado: PRODUCTION_STATES.COMPLETADA,
           costoMateriales,
           updatedAt: new Date(),
         },
@@ -124,8 +114,8 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
       await tx.ordenProduccionHistorial.create({
         data: {
           ordenProduccionId: id,
-          estadoAnterior: 'EN_PROCESO',
-          estadoNuevo: 'COMPLETADA',
+          estadoAnterior: PRODUCTION_STATES.EN_PROCESO,
+          estadoNuevo: PRODUCTION_STATES.COMPLETADA,
           observaciones: `Producción completada. Costo de materiales: ${costoMateriales}. Stock incrementado: ${orden.cantidad * orden.Receta.rendimiento}`,
           usuarioId: userId,
         },
@@ -154,8 +144,25 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
       return orden_updated;
     });
 
+    if (!ordenActualizada) {
+      return NextResponse.json({ error: 'Orden de producción no encontrada.' }, { status: 404 });
+    }
+
     return NextResponse.json(ordenActualizada);
   } catch (error) {
+    if (error instanceof Error) {
+      if (error.message === 'La orden no está en proceso.') {
+        return NextResponse.json({ error: error.message }, { status: 400 });
+      }
+
+      if (
+        error.message === 'Producto final no configurado para esta receta.' ||
+        error.message === 'Producto final no encontrado en catálogo.'
+      ) {
+        return NextResponse.json({ error: error.message }, { status: 404 });
+      }
+    }
+
     console.error('Error al completar orden de producción:', error);
     return NextResponse.json({ error: 'Error al completar orden de producción.' }, { status: 500 });
   }

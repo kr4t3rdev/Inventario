@@ -22,7 +22,7 @@ export const GET = withAuthGet(async (_request: NextRequest) => {
       return NextResponse.json({ error: 'Módulo de préstamos cash deshabilitado' }, { status: 404 })
     }
 
-    const [totalActivos, totalPagados, totalVencidos, montosPorMoneda, pendientePorMoneda] = await Promise.all([
+    const [totalActivos, totalPagados, totalVencidos, montosPorMoneda, cuentasPendientes, resumenMovimientos] = await Promise.all([
       prisma.prestamoCash.count({
         where: { estado: 'ACTIVO', deletedAt: null }
       }),
@@ -40,33 +40,31 @@ export const GET = withAuthGet(async (_request: NextRequest) => {
         },
         _sum: { montoCapital: true }
       }),
-      prisma.cuentaPorCobrar.groupBy({
-        by: ['id'],
+      prisma.cuentaPorCobrar.findMany({
         where: {
           tipoCuenta: 'PRESTAMO_CASH',
           estado: { not: 'PAGADA' }
         },
-        _sum: {
+        select: {
           montoDeuda: true,
-          montoPagado: true
+          montoPagado: true,
+          prestamoCash: {
+            select: { moneda: true }
+          }
+        }
+      }),
+      prisma.reconciliacionVenta.aggregate({
+        where: {
+          tipoReconciliacion: 'PRESTAMO_CASH'
+        },
+        _sum: {
+          monto: true
+        },
+        _avg: {
+          monto: true
         }
       })
     ])
-
-    // Calcular monto pendiente agrupado por moneda del préstamo
-    const cuentasPendientes = await prisma.cuentaPorCobrar.findMany({
-      where: {
-        tipoCuenta: 'PRESTAMO_CASH',
-        estado: { not: 'PAGADA' }
-      },
-      select: {
-        montoDeuda: true,
-        montoPagado: true,
-        prestamoCash: {
-          select: { moneda: true }
-        }
-      }
-    })
 
     const pendienteCobro: Record<string, number> = {}
     for (const cuenta of cuentasPendientes) {
@@ -85,7 +83,11 @@ export const GET = withAuthGet(async (_request: NextRequest) => {
       totalPagados,
       totalVencidos,
       montoTotalPrestado,
-      montoPendienteCobro: pendienteCobro
+      montoPendienteCobro: pendienteCobro,
+      resumenMovimientos: {
+        totalPagos: Number(resumenMovimientos._sum.monto ?? 0),
+        promedioPago: Number(resumenMovimientos._avg.monto ?? 0),
+      }
     })
   } catch (error) {
     console.error('Error obteniendo estadísticas de préstamos:', error)

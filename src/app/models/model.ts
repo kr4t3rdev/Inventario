@@ -826,6 +826,7 @@ export interface CompraServicio {
   createdAt: string
   updatedAt: string
   servicio?: Servicios
+  proveedor?: Vendor | null
 }
 export interface Currency {
   id: string
@@ -1197,8 +1198,6 @@ export interface ExecuteAnticipoResponse {
   estado: EstadoAnticipo
   saldoDisponible: number
   movimientoId: string
-  reconciliacionVentaId?: string
-  reconciliacionGastoId?: string
   idempotentReplay: boolean
 }
 
@@ -1660,6 +1659,42 @@ export interface PrestamoCash {
   cuentaPorCobrar?: CuentaPorCobrar
 }
 
+export interface HistorialPrestamoCashItem {
+  id: string
+  fecha: string
+  monto: number
+  moneda: string
+  tasaCambio?: number | null
+  montoConvertido?: number | null
+  observaciones?: string | null
+  tipoPago: string
+  cuentaBancaria: string
+}
+
+export interface HistorialPrestamoCashResponse {
+  prestamo: PrestamoCash
+  resumen: {
+    montoCapital: number
+    totalDeuda: number
+    montoPagado: number
+    saldoPendiente: number
+    cantidadPagos: number
+  }
+  historial: HistorialPrestamoCashItem[]
+}
+
+export interface PrestamosCashStats {
+  totalActivos: number
+  totalPagados: number
+  totalVencidos: number
+  montoTotalPrestado: Record<string, number>
+  montoPendienteCobro: Record<string, number>
+  resumenMovimientos?: {
+    totalPagos: number
+    promedioPago: number
+  }
+}
+
 export interface DeudaCash {
   id: string
   idNumerico: number
@@ -2022,16 +2057,16 @@ export interface AuditLog {
 
 // Enum para estados de orden de producción
 export type EstadoProduccion =
-  | 'pendiente'
-  | 'en_proceso'
-  | 'completada'
-  | 'cancelada'
+  | 'PENDIENTE'
+  | 'EN_PROCESO'
+  | 'COMPLETADA'
+  | 'CANCELADA'
 
 // Enum para estados de vale de salida
 export type EstadoValeSalida =
-  | 'pendiente'
-  | 'completada'
-  | 'anulada'
+  | 'PENDIENTE'
+  | 'COMPLETADA'
+  | 'ANULADA'
 
 // Ingrediente de receta para producción
 export interface RecetaProduccionIngrediente {

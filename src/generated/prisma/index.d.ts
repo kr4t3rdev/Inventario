@@ -180,6 +180,11 @@ export type Servicios = $Result.DefaultSelection<Prisma.$ServiciosPayload>
  */
 export type VentaServicios = $Result.DefaultSelection<Prisma.$VentaServiciosPayload>
 /**
+ * Model CompraServicio
+ * 
+ */
+export type CompraServicio = $Result.DefaultSelection<Prisma.$CompraServicioPayload>
+/**
  * Model GastoConcepto
  * 
  */
@@ -1143,6 +1148,16 @@ export class PrismaClient<
     * ```
     */
   get ventaServicios(): Prisma.VentaServiciosDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.compraServicio`: Exposes CRUD operations for the **CompraServicio** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more CompraServicios
+    * const compraServicios = await prisma.compraServicio.findMany()
+    * ```
+    */
+  get compraServicio(): Prisma.CompraServicioDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.gastoConcepto`: Exposes CRUD operations for the **GastoConcepto** model.
@@ -2167,6 +2182,7 @@ export namespace Prisma {
     CompraProducto: 'CompraProducto',
     Servicios: 'Servicios',
     VentaServicios: 'VentaServicios',
+    CompraServicio: 'CompraServicio',
     GastoConcepto: 'GastoConcepto',
     GastoElemento: 'GastoElemento',
     GastosDE: 'GastosDE',
@@ -2240,7 +2256,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "categoria" | "unidad" | "vendor" | "inyeccionCapital" | "pagoDeuda" | "cliente" | "miEmpresa" | "almacen" | "puntoDeVenta" | "producto" | "stockUbicacion" | "venta" | "ventaItem" | "merma" | "transferencia" | "user" | "plan" | "licencia" | "licenciaAudit" | "notification" | "userActivityLog" | "userSession" | "attendance" | "employeeWorkSchedule" | "vacationRequest" | "vacationAccrual" | "empleado" | "pagosalario" | "cierreContable" | "gastoCompra" | "compraProducto" | "servicios" | "ventaServicios" | "gastoConcepto" | "gastoElemento" | "gastosDE" | "moneda" | "catalogoReparacionConfig" | "tasaCambio" | "transaccionMoneda" | "cuentaBancaria" | "tipoPago" | "reconciliacionVenta" | "reconciliacionServicio" | "reconciliacionGasto" | "ajusteBancario" | "transferenciaBancaria" | "alertHistory" | "auditLog" | "reportHistory" | "scheduledReport" | "scenarioSimulation" | "contrato" | "contratoVersion" | "contratoFirma" | "contratoAprobacion" | "contratoArchivo" | "contratoAlerta" | "tipoContratoCustom" | "factura" | "serieFacturacion" | "oferta" | "ofertaItem" | "cuentaPorCobrar" | "cuentaPorPagar" | "deudaCash" | "prestamoCash" | "pagoCuentaPorPagar" | "equipoReparacion" | "piezaReparacion" | "ordenReparacion" | "ordenReparacionEquipo" | "ordenReparacionItem" | "ordenReparacionMaterial" | "defectacionCatalogo" | "configuracionSistema" | "ordenProduccion" | "ordenProduccionHistorial" | "receta" | "recetaIngrediente" | "valeSalida" | "valeSalidaItem" | "listaPrecio" | "precioProducto" | "productoCostHistory" | "vendorCodeSequence" | "anticipo" | "anticipoMovimiento"
+      modelProps: "categoria" | "unidad" | "vendor" | "inyeccionCapital" | "pagoDeuda" | "cliente" | "miEmpresa" | "almacen" | "puntoDeVenta" | "producto" | "stockUbicacion" | "venta" | "ventaItem" | "merma" | "transferencia" | "user" | "plan" | "licencia" | "licenciaAudit" | "notification" | "userActivityLog" | "userSession" | "attendance" | "employeeWorkSchedule" | "vacationRequest" | "vacationAccrual" | "empleado" | "pagosalario" | "cierreContable" | "gastoCompra" | "compraProducto" | "servicios" | "ventaServicios" | "compraServicio" | "gastoConcepto" | "gastoElemento" | "gastosDE" | "moneda" | "catalogoReparacionConfig" | "tasaCambio" | "transaccionMoneda" | "cuentaBancaria" | "tipoPago" | "reconciliacionVenta" | "reconciliacionServicio" | "reconciliacionGasto" | "ajusteBancario" | "transferenciaBancaria" | "alertHistory" | "auditLog" | "reportHistory" | "scheduledReport" | "scenarioSimulation" | "contrato" | "contratoVersion" | "contratoFirma" | "contratoAprobacion" | "contratoArchivo" | "contratoAlerta" | "tipoContratoCustom" | "factura" | "serieFacturacion" | "oferta" | "ofertaItem" | "cuentaPorCobrar" | "cuentaPorPagar" | "deudaCash" | "prestamoCash" | "pagoCuentaPorPagar" | "equipoReparacion" | "piezaReparacion" | "ordenReparacion" | "ordenReparacionEquipo" | "ordenReparacionItem" | "ordenReparacionMaterial" | "defectacionCatalogo" | "configuracionSistema" | "ordenProduccion" | "ordenProduccionHistorial" | "receta" | "recetaIngrediente" | "valeSalida" | "valeSalidaItem" | "listaPrecio" | "precioProducto" | "productoCostHistory" | "vendorCodeSequence" | "anticipo" | "anticipoMovimiento"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -4683,6 +4699,80 @@ export namespace Prisma {
           count: {
             args: Prisma.VentaServiciosCountArgs<ExtArgs>
             result: $Utils.Optional<VentaServiciosCountAggregateOutputType> | number
+          }
+        }
+      }
+      CompraServicio: {
+        payload: Prisma.$CompraServicioPayload<ExtArgs>
+        fields: Prisma.CompraServicioFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.CompraServicioFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompraServicioPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.CompraServicioFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompraServicioPayload>
+          }
+          findFirst: {
+            args: Prisma.CompraServicioFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompraServicioPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.CompraServicioFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompraServicioPayload>
+          }
+          findMany: {
+            args: Prisma.CompraServicioFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompraServicioPayload>[]
+          }
+          create: {
+            args: Prisma.CompraServicioCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompraServicioPayload>
+          }
+          createMany: {
+            args: Prisma.CompraServicioCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.CompraServicioCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompraServicioPayload>[]
+          }
+          delete: {
+            args: Prisma.CompraServicioDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompraServicioPayload>
+          }
+          update: {
+            args: Prisma.CompraServicioUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompraServicioPayload>
+          }
+          deleteMany: {
+            args: Prisma.CompraServicioDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.CompraServicioUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.CompraServicioUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompraServicioPayload>[]
+          }
+          upsert: {
+            args: Prisma.CompraServicioUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompraServicioPayload>
+          }
+          aggregate: {
+            args: Prisma.CompraServicioAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateCompraServicio>
+          }
+          groupBy: {
+            args: Prisma.CompraServicioGroupByArgs<ExtArgs>
+            result: $Utils.Optional<CompraServicioGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.CompraServicioCountArgs<ExtArgs>
+            result: $Utils.Optional<CompraServicioCountAggregateOutputType> | number
           }
         }
       }
@@ -8885,6 +8975,7 @@ export namespace Prisma {
     compraProducto?: CompraProductoOmit
     servicios?: ServiciosOmit
     ventaServicios?: VentaServiciosOmit
+    compraServicio?: CompraServicioOmit
     gastoConcepto?: GastoConceptoOmit
     gastoElemento?: GastoElementoOmit
     gastosDE?: GastosDEOmit
@@ -9107,6 +9198,7 @@ export namespace Prisma {
     gastoCompras: number
     anticipos: number
     productos: number
+    compraServicios: number
   }
 
   export type VendorCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -9117,6 +9209,7 @@ export namespace Prisma {
     gastoCompras?: boolean | VendorCountOutputTypeCountGastoComprasArgs
     anticipos?: boolean | VendorCountOutputTypeCountAnticiposArgs
     productos?: boolean | VendorCountOutputTypeCountProductosArgs
+    compraServicios?: boolean | VendorCountOutputTypeCountCompraServiciosArgs
   }
 
   // Custom InputTypes
@@ -9177,6 +9270,13 @@ export namespace Prisma {
    */
   export type VendorCountOutputTypeCountProductosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ProductoWhereInput
+  }
+
+  /**
+   * VendorCountOutputType without action
+   */
+  export type VendorCountOutputTypeCountCompraServiciosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CompraServicioWhereInput
   }
 
 
@@ -9982,11 +10082,13 @@ export namespace Prisma {
   export type ServiciosCountOutputType = {
     ofertaItems: number
     ventasServicios: number
+    compraServicios: number
   }
 
   export type ServiciosCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     ofertaItems?: boolean | ServiciosCountOutputTypeCountOfertaItemsArgs
     ventasServicios?: boolean | ServiciosCountOutputTypeCountVentasServiciosArgs
+    compraServicios?: boolean | ServiciosCountOutputTypeCountCompraServiciosArgs
   }
 
   // Custom InputTypes
@@ -10012,6 +10114,13 @@ export namespace Prisma {
    */
   export type ServiciosCountOutputTypeCountVentasServiciosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: VentaServiciosWhereInput
+  }
+
+  /**
+   * ServiciosCountOutputType without action
+   */
+  export type ServiciosCountOutputTypeCountCompraServiciosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CompraServicioWhereInput
   }
 
 
@@ -13452,6 +13561,7 @@ export namespace Prisma {
     gastoCompras?: boolean | Vendor$gastoComprasArgs<ExtArgs>
     anticipos?: boolean | Vendor$anticiposArgs<ExtArgs>
     productos?: boolean | Vendor$productosArgs<ExtArgs>
+    compraServicios?: boolean | Vendor$compraServiciosArgs<ExtArgs>
     _count?: boolean | VendorCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["vendor"]>
 
@@ -13509,6 +13619,7 @@ export namespace Prisma {
     gastoCompras?: boolean | Vendor$gastoComprasArgs<ExtArgs>
     anticipos?: boolean | Vendor$anticiposArgs<ExtArgs>
     productos?: boolean | Vendor$productosArgs<ExtArgs>
+    compraServicios?: boolean | Vendor$compraServiciosArgs<ExtArgs>
     _count?: boolean | VendorCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type VendorIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -13524,6 +13635,7 @@ export namespace Prisma {
       gastoCompras: Prisma.$GastoCompraPayload<ExtArgs>[]
       anticipos: Prisma.$AnticipoPayload<ExtArgs>[]
       productos: Prisma.$ProductoPayload<ExtArgs>[]
+      compraServicios: Prisma.$CompraServicioPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       vendorId: string
@@ -13939,6 +14051,7 @@ export namespace Prisma {
     gastoCompras<T extends Vendor$gastoComprasArgs<ExtArgs> = {}>(args?: Subset<T, Vendor$gastoComprasArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$GastoCompraPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     anticipos<T extends Vendor$anticiposArgs<ExtArgs> = {}>(args?: Subset<T, Vendor$anticiposArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AnticipoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     productos<T extends Vendor$productosArgs<ExtArgs> = {}>(args?: Subset<T, Vendor$productosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ProductoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    compraServicios<T extends Vendor$compraServiciosArgs<ExtArgs> = {}>(args?: Subset<T, Vendor$compraServiciosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CompraServicioPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -14533,6 +14646,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: ProductoScalarFieldEnum | ProductoScalarFieldEnum[]
+  }
+
+  /**
+   * Vendor.compraServicios
+   */
+  export type Vendor$compraServiciosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraServicio
+     */
+    select?: CompraServicioSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraServicio
+     */
+    omit?: CompraServicioOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraServicioInclude<ExtArgs> | null
+    where?: CompraServicioWhereInput
+    orderBy?: CompraServicioOrderByWithRelationInput | CompraServicioOrderByWithRelationInput[]
+    cursor?: CompraServicioWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: CompraServicioScalarFieldEnum | CompraServicioScalarFieldEnum[]
   }
 
   /**
@@ -50023,6 +50160,7 @@ export namespace Prisma {
     updatedAt?: boolean
     ofertaItems?: boolean | Servicios$ofertaItemsArgs<ExtArgs>
     ventasServicios?: boolean | Servicios$ventasServiciosArgs<ExtArgs>
+    compraServicios?: boolean | Servicios$compraServiciosArgs<ExtArgs>
     _count?: boolean | ServiciosCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["servicios"]>
 
@@ -50057,6 +50195,7 @@ export namespace Prisma {
   export type ServiciosInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     ofertaItems?: boolean | Servicios$ofertaItemsArgs<ExtArgs>
     ventasServicios?: boolean | Servicios$ventasServiciosArgs<ExtArgs>
+    compraServicios?: boolean | Servicios$compraServiciosArgs<ExtArgs>
     _count?: boolean | ServiciosCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type ServiciosIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -50067,6 +50206,7 @@ export namespace Prisma {
     objects: {
       ofertaItems: Prisma.$OfertaItemPayload<ExtArgs>[]
       ventasServicios: Prisma.$VentaServiciosPayload<ExtArgs>[]
+      compraServicios: Prisma.$CompraServicioPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       servicioId: string
@@ -50471,6 +50611,7 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     ofertaItems<T extends Servicios$ofertaItemsArgs<ExtArgs> = {}>(args?: Subset<T, Servicios$ofertaItemsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OfertaItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     ventasServicios<T extends Servicios$ventasServiciosArgs<ExtArgs> = {}>(args?: Subset<T, Servicios$ventasServiciosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$VentaServiciosPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    compraServicios<T extends Servicios$compraServiciosArgs<ExtArgs> = {}>(args?: Subset<T, Servicios$compraServiciosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CompraServicioPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -50939,6 +51080,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: VentaServiciosScalarFieldEnum | VentaServiciosScalarFieldEnum[]
+  }
+
+  /**
+   * Servicios.compraServicios
+   */
+  export type Servicios$compraServiciosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraServicio
+     */
+    select?: CompraServicioSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraServicio
+     */
+    omit?: CompraServicioOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraServicioInclude<ExtArgs> | null
+    where?: CompraServicioWhereInput
+    orderBy?: CompraServicioOrderByWithRelationInput | CompraServicioOrderByWithRelationInput[]
+    cursor?: CompraServicioWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: CompraServicioScalarFieldEnum | CompraServicioScalarFieldEnum[]
   }
 
   /**
@@ -52162,6 +52327,1250 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: VentaServiciosInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model CompraServicio
+   */
+
+  export type AggregateCompraServicio = {
+    _count: CompraServicioCountAggregateOutputType | null
+    _avg: CompraServicioAvgAggregateOutputType | null
+    _sum: CompraServicioSumAggregateOutputType | null
+    _min: CompraServicioMinAggregateOutputType | null
+    _max: CompraServicioMaxAggregateOutputType | null
+  }
+
+  export type CompraServicioAvgAggregateOutputType = {
+    costoUnitario: number | null
+    cantidad: number | null
+    total: number | null
+  }
+
+  export type CompraServicioSumAggregateOutputType = {
+    costoUnitario: number | null
+    cantidad: number | null
+    total: number | null
+  }
+
+  export type CompraServicioMinAggregateOutputType = {
+    compraServicioId: string | null
+    servicioId: string | null
+    proveedorId: string | null
+    numeroFactura: string | null
+    costoUnitario: number | null
+    cantidad: number | null
+    total: number | null
+    formaPago: string | null
+    estado: string | null
+    descripcion: string | null
+    fechaServicio: Date | null
+    fechaVencimiento: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type CompraServicioMaxAggregateOutputType = {
+    compraServicioId: string | null
+    servicioId: string | null
+    proveedorId: string | null
+    numeroFactura: string | null
+    costoUnitario: number | null
+    cantidad: number | null
+    total: number | null
+    formaPago: string | null
+    estado: string | null
+    descripcion: string | null
+    fechaServicio: Date | null
+    fechaVencimiento: Date | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type CompraServicioCountAggregateOutputType = {
+    compraServicioId: number
+    servicioId: number
+    proveedorId: number
+    numeroFactura: number
+    costoUnitario: number
+    cantidad: number
+    total: number
+    formaPago: number
+    estado: number
+    descripcion: number
+    fechaServicio: number
+    fechaVencimiento: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type CompraServicioAvgAggregateInputType = {
+    costoUnitario?: true
+    cantidad?: true
+    total?: true
+  }
+
+  export type CompraServicioSumAggregateInputType = {
+    costoUnitario?: true
+    cantidad?: true
+    total?: true
+  }
+
+  export type CompraServicioMinAggregateInputType = {
+    compraServicioId?: true
+    servicioId?: true
+    proveedorId?: true
+    numeroFactura?: true
+    costoUnitario?: true
+    cantidad?: true
+    total?: true
+    formaPago?: true
+    estado?: true
+    descripcion?: true
+    fechaServicio?: true
+    fechaVencimiento?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type CompraServicioMaxAggregateInputType = {
+    compraServicioId?: true
+    servicioId?: true
+    proveedorId?: true
+    numeroFactura?: true
+    costoUnitario?: true
+    cantidad?: true
+    total?: true
+    formaPago?: true
+    estado?: true
+    descripcion?: true
+    fechaServicio?: true
+    fechaVencimiento?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type CompraServicioCountAggregateInputType = {
+    compraServicioId?: true
+    servicioId?: true
+    proveedorId?: true
+    numeroFactura?: true
+    costoUnitario?: true
+    cantidad?: true
+    total?: true
+    formaPago?: true
+    estado?: true
+    descripcion?: true
+    fechaServicio?: true
+    fechaVencimiento?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type CompraServicioAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CompraServicio to aggregate.
+     */
+    where?: CompraServicioWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CompraServicios to fetch.
+     */
+    orderBy?: CompraServicioOrderByWithRelationInput | CompraServicioOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: CompraServicioWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CompraServicios from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CompraServicios.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned CompraServicios
+    **/
+    _count?: true | CompraServicioCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: CompraServicioAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: CompraServicioSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: CompraServicioMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: CompraServicioMaxAggregateInputType
+  }
+
+  export type GetCompraServicioAggregateType<T extends CompraServicioAggregateArgs> = {
+        [P in keyof T & keyof AggregateCompraServicio]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateCompraServicio[P]>
+      : GetScalarType<T[P], AggregateCompraServicio[P]>
+  }
+
+
+
+
+  export type CompraServicioGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CompraServicioWhereInput
+    orderBy?: CompraServicioOrderByWithAggregationInput | CompraServicioOrderByWithAggregationInput[]
+    by: CompraServicioScalarFieldEnum[] | CompraServicioScalarFieldEnum
+    having?: CompraServicioScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: CompraServicioCountAggregateInputType | true
+    _avg?: CompraServicioAvgAggregateInputType
+    _sum?: CompraServicioSumAggregateInputType
+    _min?: CompraServicioMinAggregateInputType
+    _max?: CompraServicioMaxAggregateInputType
+  }
+
+  export type CompraServicioGroupByOutputType = {
+    compraServicioId: string
+    servicioId: string
+    proveedorId: string | null
+    numeroFactura: string | null
+    costoUnitario: number
+    cantidad: number
+    total: number
+    formaPago: string
+    estado: string
+    descripcion: string | null
+    fechaServicio: Date
+    fechaVencimiento: Date | null
+    createdAt: Date
+    updatedAt: Date
+    _count: CompraServicioCountAggregateOutputType | null
+    _avg: CompraServicioAvgAggregateOutputType | null
+    _sum: CompraServicioSumAggregateOutputType | null
+    _min: CompraServicioMinAggregateOutputType | null
+    _max: CompraServicioMaxAggregateOutputType | null
+  }
+
+  type GetCompraServicioGroupByPayload<T extends CompraServicioGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<CompraServicioGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof CompraServicioGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], CompraServicioGroupByOutputType[P]>
+            : GetScalarType<T[P], CompraServicioGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type CompraServicioSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    compraServicioId?: boolean
+    servicioId?: boolean
+    proveedorId?: boolean
+    numeroFactura?: boolean
+    costoUnitario?: boolean
+    cantidad?: boolean
+    total?: boolean
+    formaPago?: boolean
+    estado?: boolean
+    descripcion?: boolean
+    fechaServicio?: boolean
+    fechaVencimiento?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    servicio?: boolean | ServiciosDefaultArgs<ExtArgs>
+    proveedor?: boolean | CompraServicio$proveedorArgs<ExtArgs>
+  }, ExtArgs["result"]["compraServicio"]>
+
+  export type CompraServicioSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    compraServicioId?: boolean
+    servicioId?: boolean
+    proveedorId?: boolean
+    numeroFactura?: boolean
+    costoUnitario?: boolean
+    cantidad?: boolean
+    total?: boolean
+    formaPago?: boolean
+    estado?: boolean
+    descripcion?: boolean
+    fechaServicio?: boolean
+    fechaVencimiento?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    servicio?: boolean | ServiciosDefaultArgs<ExtArgs>
+    proveedor?: boolean | CompraServicio$proveedorArgs<ExtArgs>
+  }, ExtArgs["result"]["compraServicio"]>
+
+  export type CompraServicioSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    compraServicioId?: boolean
+    servicioId?: boolean
+    proveedorId?: boolean
+    numeroFactura?: boolean
+    costoUnitario?: boolean
+    cantidad?: boolean
+    total?: boolean
+    formaPago?: boolean
+    estado?: boolean
+    descripcion?: boolean
+    fechaServicio?: boolean
+    fechaVencimiento?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    servicio?: boolean | ServiciosDefaultArgs<ExtArgs>
+    proveedor?: boolean | CompraServicio$proveedorArgs<ExtArgs>
+  }, ExtArgs["result"]["compraServicio"]>
+
+  export type CompraServicioSelectScalar = {
+    compraServicioId?: boolean
+    servicioId?: boolean
+    proveedorId?: boolean
+    numeroFactura?: boolean
+    costoUnitario?: boolean
+    cantidad?: boolean
+    total?: boolean
+    formaPago?: boolean
+    estado?: boolean
+    descripcion?: boolean
+    fechaServicio?: boolean
+    fechaVencimiento?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type CompraServicioOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"compraServicioId" | "servicioId" | "proveedorId" | "numeroFactura" | "costoUnitario" | "cantidad" | "total" | "formaPago" | "estado" | "descripcion" | "fechaServicio" | "fechaVencimiento" | "createdAt" | "updatedAt", ExtArgs["result"]["compraServicio"]>
+  export type CompraServicioInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    servicio?: boolean | ServiciosDefaultArgs<ExtArgs>
+    proveedor?: boolean | CompraServicio$proveedorArgs<ExtArgs>
+  }
+  export type CompraServicioIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    servicio?: boolean | ServiciosDefaultArgs<ExtArgs>
+    proveedor?: boolean | CompraServicio$proveedorArgs<ExtArgs>
+  }
+  export type CompraServicioIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    servicio?: boolean | ServiciosDefaultArgs<ExtArgs>
+    proveedor?: boolean | CompraServicio$proveedorArgs<ExtArgs>
+  }
+
+  export type $CompraServicioPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "CompraServicio"
+    objects: {
+      servicio: Prisma.$ServiciosPayload<ExtArgs>
+      proveedor: Prisma.$VendorPayload<ExtArgs> | null
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      compraServicioId: string
+      servicioId: string
+      proveedorId: string | null
+      numeroFactura: string | null
+      costoUnitario: number
+      cantidad: number
+      total: number
+      formaPago: string
+      estado: string
+      descripcion: string | null
+      fechaServicio: Date
+      fechaVencimiento: Date | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["compraServicio"]>
+    composites: {}
+  }
+
+  type CompraServicioGetPayload<S extends boolean | null | undefined | CompraServicioDefaultArgs> = $Result.GetResult<Prisma.$CompraServicioPayload, S>
+
+  type CompraServicioCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<CompraServicioFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: CompraServicioCountAggregateInputType | true
+    }
+
+  export interface CompraServicioDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['CompraServicio'], meta: { name: 'CompraServicio' } }
+    /**
+     * Find zero or one CompraServicio that matches the filter.
+     * @param {CompraServicioFindUniqueArgs} args - Arguments to find a CompraServicio
+     * @example
+     * // Get one CompraServicio
+     * const compraServicio = await prisma.compraServicio.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends CompraServicioFindUniqueArgs>(args: SelectSubset<T, CompraServicioFindUniqueArgs<ExtArgs>>): Prisma__CompraServicioClient<$Result.GetResult<Prisma.$CompraServicioPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one CompraServicio that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {CompraServicioFindUniqueOrThrowArgs} args - Arguments to find a CompraServicio
+     * @example
+     * // Get one CompraServicio
+     * const compraServicio = await prisma.compraServicio.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends CompraServicioFindUniqueOrThrowArgs>(args: SelectSubset<T, CompraServicioFindUniqueOrThrowArgs<ExtArgs>>): Prisma__CompraServicioClient<$Result.GetResult<Prisma.$CompraServicioPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CompraServicio that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompraServicioFindFirstArgs} args - Arguments to find a CompraServicio
+     * @example
+     * // Get one CompraServicio
+     * const compraServicio = await prisma.compraServicio.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends CompraServicioFindFirstArgs>(args?: SelectSubset<T, CompraServicioFindFirstArgs<ExtArgs>>): Prisma__CompraServicioClient<$Result.GetResult<Prisma.$CompraServicioPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CompraServicio that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompraServicioFindFirstOrThrowArgs} args - Arguments to find a CompraServicio
+     * @example
+     * // Get one CompraServicio
+     * const compraServicio = await prisma.compraServicio.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends CompraServicioFindFirstOrThrowArgs>(args?: SelectSubset<T, CompraServicioFindFirstOrThrowArgs<ExtArgs>>): Prisma__CompraServicioClient<$Result.GetResult<Prisma.$CompraServicioPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more CompraServicios that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompraServicioFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all CompraServicios
+     * const compraServicios = await prisma.compraServicio.findMany()
+     * 
+     * // Get first 10 CompraServicios
+     * const compraServicios = await prisma.compraServicio.findMany({ take: 10 })
+     * 
+     * // Only select the `compraServicioId`
+     * const compraServicioWithCompraServicioIdOnly = await prisma.compraServicio.findMany({ select: { compraServicioId: true } })
+     * 
+     */
+    findMany<T extends CompraServicioFindManyArgs>(args?: SelectSubset<T, CompraServicioFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CompraServicioPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a CompraServicio.
+     * @param {CompraServicioCreateArgs} args - Arguments to create a CompraServicio.
+     * @example
+     * // Create one CompraServicio
+     * const CompraServicio = await prisma.compraServicio.create({
+     *   data: {
+     *     // ... data to create a CompraServicio
+     *   }
+     * })
+     * 
+     */
+    create<T extends CompraServicioCreateArgs>(args: SelectSubset<T, CompraServicioCreateArgs<ExtArgs>>): Prisma__CompraServicioClient<$Result.GetResult<Prisma.$CompraServicioPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many CompraServicios.
+     * @param {CompraServicioCreateManyArgs} args - Arguments to create many CompraServicios.
+     * @example
+     * // Create many CompraServicios
+     * const compraServicio = await prisma.compraServicio.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends CompraServicioCreateManyArgs>(args?: SelectSubset<T, CompraServicioCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many CompraServicios and returns the data saved in the database.
+     * @param {CompraServicioCreateManyAndReturnArgs} args - Arguments to create many CompraServicios.
+     * @example
+     * // Create many CompraServicios
+     * const compraServicio = await prisma.compraServicio.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many CompraServicios and only return the `compraServicioId`
+     * const compraServicioWithCompraServicioIdOnly = await prisma.compraServicio.createManyAndReturn({
+     *   select: { compraServicioId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends CompraServicioCreateManyAndReturnArgs>(args?: SelectSubset<T, CompraServicioCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CompraServicioPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a CompraServicio.
+     * @param {CompraServicioDeleteArgs} args - Arguments to delete one CompraServicio.
+     * @example
+     * // Delete one CompraServicio
+     * const CompraServicio = await prisma.compraServicio.delete({
+     *   where: {
+     *     // ... filter to delete one CompraServicio
+     *   }
+     * })
+     * 
+     */
+    delete<T extends CompraServicioDeleteArgs>(args: SelectSubset<T, CompraServicioDeleteArgs<ExtArgs>>): Prisma__CompraServicioClient<$Result.GetResult<Prisma.$CompraServicioPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one CompraServicio.
+     * @param {CompraServicioUpdateArgs} args - Arguments to update one CompraServicio.
+     * @example
+     * // Update one CompraServicio
+     * const compraServicio = await prisma.compraServicio.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends CompraServicioUpdateArgs>(args: SelectSubset<T, CompraServicioUpdateArgs<ExtArgs>>): Prisma__CompraServicioClient<$Result.GetResult<Prisma.$CompraServicioPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more CompraServicios.
+     * @param {CompraServicioDeleteManyArgs} args - Arguments to filter CompraServicios to delete.
+     * @example
+     * // Delete a few CompraServicios
+     * const { count } = await prisma.compraServicio.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends CompraServicioDeleteManyArgs>(args?: SelectSubset<T, CompraServicioDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CompraServicios.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompraServicioUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many CompraServicios
+     * const compraServicio = await prisma.compraServicio.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends CompraServicioUpdateManyArgs>(args: SelectSubset<T, CompraServicioUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CompraServicios and returns the data updated in the database.
+     * @param {CompraServicioUpdateManyAndReturnArgs} args - Arguments to update many CompraServicios.
+     * @example
+     * // Update many CompraServicios
+     * const compraServicio = await prisma.compraServicio.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more CompraServicios and only return the `compraServicioId`
+     * const compraServicioWithCompraServicioIdOnly = await prisma.compraServicio.updateManyAndReturn({
+     *   select: { compraServicioId: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends CompraServicioUpdateManyAndReturnArgs>(args: SelectSubset<T, CompraServicioUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CompraServicioPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one CompraServicio.
+     * @param {CompraServicioUpsertArgs} args - Arguments to update or create a CompraServicio.
+     * @example
+     * // Update or create a CompraServicio
+     * const compraServicio = await prisma.compraServicio.upsert({
+     *   create: {
+     *     // ... data to create a CompraServicio
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the CompraServicio we want to update
+     *   }
+     * })
+     */
+    upsert<T extends CompraServicioUpsertArgs>(args: SelectSubset<T, CompraServicioUpsertArgs<ExtArgs>>): Prisma__CompraServicioClient<$Result.GetResult<Prisma.$CompraServicioPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of CompraServicios.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompraServicioCountArgs} args - Arguments to filter CompraServicios to count.
+     * @example
+     * // Count the number of CompraServicios
+     * const count = await prisma.compraServicio.count({
+     *   where: {
+     *     // ... the filter for the CompraServicios we want to count
+     *   }
+     * })
+    **/
+    count<T extends CompraServicioCountArgs>(
+      args?: Subset<T, CompraServicioCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], CompraServicioCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a CompraServicio.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompraServicioAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends CompraServicioAggregateArgs>(args: Subset<T, CompraServicioAggregateArgs>): Prisma.PrismaPromise<GetCompraServicioAggregateType<T>>
+
+    /**
+     * Group by CompraServicio.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompraServicioGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends CompraServicioGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: CompraServicioGroupByArgs['orderBy'] }
+        : { orderBy?: CompraServicioGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, CompraServicioGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCompraServicioGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the CompraServicio model
+   */
+  readonly fields: CompraServicioFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for CompraServicio.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__CompraServicioClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    servicio<T extends ServiciosDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ServiciosDefaultArgs<ExtArgs>>): Prisma__ServiciosClient<$Result.GetResult<Prisma.$ServiciosPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    proveedor<T extends CompraServicio$proveedorArgs<ExtArgs> = {}>(args?: Subset<T, CompraServicio$proveedorArgs<ExtArgs>>): Prisma__VendorClient<$Result.GetResult<Prisma.$VendorPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the CompraServicio model
+   */
+  interface CompraServicioFieldRefs {
+    readonly compraServicioId: FieldRef<"CompraServicio", 'String'>
+    readonly servicioId: FieldRef<"CompraServicio", 'String'>
+    readonly proveedorId: FieldRef<"CompraServicio", 'String'>
+    readonly numeroFactura: FieldRef<"CompraServicio", 'String'>
+    readonly costoUnitario: FieldRef<"CompraServicio", 'Int'>
+    readonly cantidad: FieldRef<"CompraServicio", 'Int'>
+    readonly total: FieldRef<"CompraServicio", 'Int'>
+    readonly formaPago: FieldRef<"CompraServicio", 'String'>
+    readonly estado: FieldRef<"CompraServicio", 'String'>
+    readonly descripcion: FieldRef<"CompraServicio", 'String'>
+    readonly fechaServicio: FieldRef<"CompraServicio", 'DateTime'>
+    readonly fechaVencimiento: FieldRef<"CompraServicio", 'DateTime'>
+    readonly createdAt: FieldRef<"CompraServicio", 'DateTime'>
+    readonly updatedAt: FieldRef<"CompraServicio", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * CompraServicio findUnique
+   */
+  export type CompraServicioFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraServicio
+     */
+    select?: CompraServicioSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraServicio
+     */
+    omit?: CompraServicioOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraServicioInclude<ExtArgs> | null
+    /**
+     * Filter, which CompraServicio to fetch.
+     */
+    where: CompraServicioWhereUniqueInput
+  }
+
+  /**
+   * CompraServicio findUniqueOrThrow
+   */
+  export type CompraServicioFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraServicio
+     */
+    select?: CompraServicioSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraServicio
+     */
+    omit?: CompraServicioOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraServicioInclude<ExtArgs> | null
+    /**
+     * Filter, which CompraServicio to fetch.
+     */
+    where: CompraServicioWhereUniqueInput
+  }
+
+  /**
+   * CompraServicio findFirst
+   */
+  export type CompraServicioFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraServicio
+     */
+    select?: CompraServicioSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraServicio
+     */
+    omit?: CompraServicioOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraServicioInclude<ExtArgs> | null
+    /**
+     * Filter, which CompraServicio to fetch.
+     */
+    where?: CompraServicioWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CompraServicios to fetch.
+     */
+    orderBy?: CompraServicioOrderByWithRelationInput | CompraServicioOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CompraServicios.
+     */
+    cursor?: CompraServicioWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CompraServicios from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CompraServicios.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CompraServicios.
+     */
+    distinct?: CompraServicioScalarFieldEnum | CompraServicioScalarFieldEnum[]
+  }
+
+  /**
+   * CompraServicio findFirstOrThrow
+   */
+  export type CompraServicioFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraServicio
+     */
+    select?: CompraServicioSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraServicio
+     */
+    omit?: CompraServicioOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraServicioInclude<ExtArgs> | null
+    /**
+     * Filter, which CompraServicio to fetch.
+     */
+    where?: CompraServicioWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CompraServicios to fetch.
+     */
+    orderBy?: CompraServicioOrderByWithRelationInput | CompraServicioOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CompraServicios.
+     */
+    cursor?: CompraServicioWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CompraServicios from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CompraServicios.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CompraServicios.
+     */
+    distinct?: CompraServicioScalarFieldEnum | CompraServicioScalarFieldEnum[]
+  }
+
+  /**
+   * CompraServicio findMany
+   */
+  export type CompraServicioFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraServicio
+     */
+    select?: CompraServicioSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraServicio
+     */
+    omit?: CompraServicioOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraServicioInclude<ExtArgs> | null
+    /**
+     * Filter, which CompraServicios to fetch.
+     */
+    where?: CompraServicioWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CompraServicios to fetch.
+     */
+    orderBy?: CompraServicioOrderByWithRelationInput | CompraServicioOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing CompraServicios.
+     */
+    cursor?: CompraServicioWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CompraServicios from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CompraServicios.
+     */
+    skip?: number
+    distinct?: CompraServicioScalarFieldEnum | CompraServicioScalarFieldEnum[]
+  }
+
+  /**
+   * CompraServicio create
+   */
+  export type CompraServicioCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraServicio
+     */
+    select?: CompraServicioSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraServicio
+     */
+    omit?: CompraServicioOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraServicioInclude<ExtArgs> | null
+    /**
+     * The data needed to create a CompraServicio.
+     */
+    data: XOR<CompraServicioCreateInput, CompraServicioUncheckedCreateInput>
+  }
+
+  /**
+   * CompraServicio createMany
+   */
+  export type CompraServicioCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many CompraServicios.
+     */
+    data: CompraServicioCreateManyInput | CompraServicioCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * CompraServicio createManyAndReturn
+   */
+  export type CompraServicioCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraServicio
+     */
+    select?: CompraServicioSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraServicio
+     */
+    omit?: CompraServicioOmit<ExtArgs> | null
+    /**
+     * The data used to create many CompraServicios.
+     */
+    data: CompraServicioCreateManyInput | CompraServicioCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraServicioIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * CompraServicio update
+   */
+  export type CompraServicioUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraServicio
+     */
+    select?: CompraServicioSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraServicio
+     */
+    omit?: CompraServicioOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraServicioInclude<ExtArgs> | null
+    /**
+     * The data needed to update a CompraServicio.
+     */
+    data: XOR<CompraServicioUpdateInput, CompraServicioUncheckedUpdateInput>
+    /**
+     * Choose, which CompraServicio to update.
+     */
+    where: CompraServicioWhereUniqueInput
+  }
+
+  /**
+   * CompraServicio updateMany
+   */
+  export type CompraServicioUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update CompraServicios.
+     */
+    data: XOR<CompraServicioUpdateManyMutationInput, CompraServicioUncheckedUpdateManyInput>
+    /**
+     * Filter which CompraServicios to update
+     */
+    where?: CompraServicioWhereInput
+    /**
+     * Limit how many CompraServicios to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * CompraServicio updateManyAndReturn
+   */
+  export type CompraServicioUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraServicio
+     */
+    select?: CompraServicioSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraServicio
+     */
+    omit?: CompraServicioOmit<ExtArgs> | null
+    /**
+     * The data used to update CompraServicios.
+     */
+    data: XOR<CompraServicioUpdateManyMutationInput, CompraServicioUncheckedUpdateManyInput>
+    /**
+     * Filter which CompraServicios to update
+     */
+    where?: CompraServicioWhereInput
+    /**
+     * Limit how many CompraServicios to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraServicioIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * CompraServicio upsert
+   */
+  export type CompraServicioUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraServicio
+     */
+    select?: CompraServicioSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraServicio
+     */
+    omit?: CompraServicioOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraServicioInclude<ExtArgs> | null
+    /**
+     * The filter to search for the CompraServicio to update in case it exists.
+     */
+    where: CompraServicioWhereUniqueInput
+    /**
+     * In case the CompraServicio found by the `where` argument doesn't exist, create a new CompraServicio with this data.
+     */
+    create: XOR<CompraServicioCreateInput, CompraServicioUncheckedCreateInput>
+    /**
+     * In case the CompraServicio was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<CompraServicioUpdateInput, CompraServicioUncheckedUpdateInput>
+  }
+
+  /**
+   * CompraServicio delete
+   */
+  export type CompraServicioDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraServicio
+     */
+    select?: CompraServicioSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraServicio
+     */
+    omit?: CompraServicioOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraServicioInclude<ExtArgs> | null
+    /**
+     * Filter which CompraServicio to delete.
+     */
+    where: CompraServicioWhereUniqueInput
+  }
+
+  /**
+   * CompraServicio deleteMany
+   */
+  export type CompraServicioDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CompraServicios to delete
+     */
+    where?: CompraServicioWhereInput
+    /**
+     * Limit how many CompraServicios to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * CompraServicio.proveedor
+   */
+  export type CompraServicio$proveedorArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Vendor
+     */
+    select?: VendorSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Vendor
+     */
+    omit?: VendorOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: VendorInclude<ExtArgs> | null
+    where?: VendorWhereInput
+  }
+
+  /**
+   * CompraServicio without action
+   */
+  export type CompraServicioDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraServicio
+     */
+    select?: CompraServicioSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraServicio
+     */
+    omit?: CompraServicioOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraServicioInclude<ExtArgs> | null
   }
 
 
@@ -118780,6 +120189,26 @@ export namespace Prisma {
   export type VentaServiciosScalarFieldEnum = (typeof VentaServiciosScalarFieldEnum)[keyof typeof VentaServiciosScalarFieldEnum]
 
 
+  export const CompraServicioScalarFieldEnum: {
+    compraServicioId: 'compraServicioId',
+    servicioId: 'servicioId',
+    proveedorId: 'proveedorId',
+    numeroFactura: 'numeroFactura',
+    costoUnitario: 'costoUnitario',
+    cantidad: 'cantidad',
+    total: 'total',
+    formaPago: 'formaPago',
+    estado: 'estado',
+    descripcion: 'descripcion',
+    fechaServicio: 'fechaServicio',
+    fechaVencimiento: 'fechaVencimiento',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type CompraServicioScalarFieldEnum = (typeof CompraServicioScalarFieldEnum)[keyof typeof CompraServicioScalarFieldEnum]
+
+
   export const GastoConceptoScalarFieldEnum: {
     conceptoId: 'conceptoId',
     nombre: 'nombre',
@@ -120251,6 +121680,7 @@ export namespace Prisma {
     gastoCompras?: GastoCompraListRelationFilter
     anticipos?: AnticipoListRelationFilter
     productos?: ProductoListRelationFilter
+    compraServicios?: CompraServicioListRelationFilter
   }
 
   export type VendorOrderByWithRelationInput = {
@@ -120273,6 +121703,7 @@ export namespace Prisma {
     gastoCompras?: GastoCompraOrderByRelationAggregateInput
     anticipos?: AnticipoOrderByRelationAggregateInput
     productos?: ProductoOrderByRelationAggregateInput
+    compraServicios?: CompraServicioOrderByRelationAggregateInput
   }
 
   export type VendorWhereUniqueInput = Prisma.AtLeast<{
@@ -120298,6 +121729,7 @@ export namespace Prisma {
     gastoCompras?: GastoCompraListRelationFilter
     anticipos?: AnticipoListRelationFilter
     productos?: ProductoListRelationFilter
+    compraServicios?: CompraServicioListRelationFilter
   }, "vendorId" | "vendorCode">
 
   export type VendorOrderByWithAggregationInput = {
@@ -123163,6 +124595,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Servicios"> | Date | string
     ofertaItems?: OfertaItemListRelationFilter
     ventasServicios?: VentaServiciosListRelationFilter
+    compraServicios?: CompraServicioListRelationFilter
   }
 
   export type ServiciosOrderByWithRelationInput = {
@@ -123174,6 +124607,7 @@ export namespace Prisma {
     updatedAt?: SortOrder
     ofertaItems?: OfertaItemOrderByRelationAggregateInput
     ventasServicios?: VentaServiciosOrderByRelationAggregateInput
+    compraServicios?: CompraServicioOrderByRelationAggregateInput
   }
 
   export type ServiciosWhereUniqueInput = Prisma.AtLeast<{
@@ -123188,6 +124622,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Servicios"> | Date | string
     ofertaItems?: OfertaItemListRelationFilter
     ventasServicios?: VentaServiciosListRelationFilter
+    compraServicios?: CompraServicioListRelationFilter
   }, "servicioId">
 
   export type ServiciosOrderByWithAggregationInput = {
@@ -123297,6 +124732,111 @@ export namespace Prisma {
     clienteId?: StringNullableWithAggregatesFilter<"VentaServicios"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"VentaServicios"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"VentaServicios"> | Date | string
+  }
+
+  export type CompraServicioWhereInput = {
+    AND?: CompraServicioWhereInput | CompraServicioWhereInput[]
+    OR?: CompraServicioWhereInput[]
+    NOT?: CompraServicioWhereInput | CompraServicioWhereInput[]
+    compraServicioId?: StringFilter<"CompraServicio"> | string
+    servicioId?: StringFilter<"CompraServicio"> | string
+    proveedorId?: StringNullableFilter<"CompraServicio"> | string | null
+    numeroFactura?: StringNullableFilter<"CompraServicio"> | string | null
+    costoUnitario?: IntFilter<"CompraServicio"> | number
+    cantidad?: IntFilter<"CompraServicio"> | number
+    total?: IntFilter<"CompraServicio"> | number
+    formaPago?: StringFilter<"CompraServicio"> | string
+    estado?: StringFilter<"CompraServicio"> | string
+    descripcion?: StringNullableFilter<"CompraServicio"> | string | null
+    fechaServicio?: DateTimeFilter<"CompraServicio"> | Date | string
+    fechaVencimiento?: DateTimeNullableFilter<"CompraServicio"> | Date | string | null
+    createdAt?: DateTimeFilter<"CompraServicio"> | Date | string
+    updatedAt?: DateTimeFilter<"CompraServicio"> | Date | string
+    servicio?: XOR<ServiciosScalarRelationFilter, ServiciosWhereInput>
+    proveedor?: XOR<VendorNullableScalarRelationFilter, VendorWhereInput> | null
+  }
+
+  export type CompraServicioOrderByWithRelationInput = {
+    compraServicioId?: SortOrder
+    servicioId?: SortOrder
+    proveedorId?: SortOrderInput | SortOrder
+    numeroFactura?: SortOrderInput | SortOrder
+    costoUnitario?: SortOrder
+    cantidad?: SortOrder
+    total?: SortOrder
+    formaPago?: SortOrder
+    estado?: SortOrder
+    descripcion?: SortOrderInput | SortOrder
+    fechaServicio?: SortOrder
+    fechaVencimiento?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    servicio?: ServiciosOrderByWithRelationInput
+    proveedor?: VendorOrderByWithRelationInput
+  }
+
+  export type CompraServicioWhereUniqueInput = Prisma.AtLeast<{
+    compraServicioId?: string
+    AND?: CompraServicioWhereInput | CompraServicioWhereInput[]
+    OR?: CompraServicioWhereInput[]
+    NOT?: CompraServicioWhereInput | CompraServicioWhereInput[]
+    servicioId?: StringFilter<"CompraServicio"> | string
+    proveedorId?: StringNullableFilter<"CompraServicio"> | string | null
+    numeroFactura?: StringNullableFilter<"CompraServicio"> | string | null
+    costoUnitario?: IntFilter<"CompraServicio"> | number
+    cantidad?: IntFilter<"CompraServicio"> | number
+    total?: IntFilter<"CompraServicio"> | number
+    formaPago?: StringFilter<"CompraServicio"> | string
+    estado?: StringFilter<"CompraServicio"> | string
+    descripcion?: StringNullableFilter<"CompraServicio"> | string | null
+    fechaServicio?: DateTimeFilter<"CompraServicio"> | Date | string
+    fechaVencimiento?: DateTimeNullableFilter<"CompraServicio"> | Date | string | null
+    createdAt?: DateTimeFilter<"CompraServicio"> | Date | string
+    updatedAt?: DateTimeFilter<"CompraServicio"> | Date | string
+    servicio?: XOR<ServiciosScalarRelationFilter, ServiciosWhereInput>
+    proveedor?: XOR<VendorNullableScalarRelationFilter, VendorWhereInput> | null
+  }, "compraServicioId">
+
+  export type CompraServicioOrderByWithAggregationInput = {
+    compraServicioId?: SortOrder
+    servicioId?: SortOrder
+    proveedorId?: SortOrderInput | SortOrder
+    numeroFactura?: SortOrderInput | SortOrder
+    costoUnitario?: SortOrder
+    cantidad?: SortOrder
+    total?: SortOrder
+    formaPago?: SortOrder
+    estado?: SortOrder
+    descripcion?: SortOrderInput | SortOrder
+    fechaServicio?: SortOrder
+    fechaVencimiento?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: CompraServicioCountOrderByAggregateInput
+    _avg?: CompraServicioAvgOrderByAggregateInput
+    _max?: CompraServicioMaxOrderByAggregateInput
+    _min?: CompraServicioMinOrderByAggregateInput
+    _sum?: CompraServicioSumOrderByAggregateInput
+  }
+
+  export type CompraServicioScalarWhereWithAggregatesInput = {
+    AND?: CompraServicioScalarWhereWithAggregatesInput | CompraServicioScalarWhereWithAggregatesInput[]
+    OR?: CompraServicioScalarWhereWithAggregatesInput[]
+    NOT?: CompraServicioScalarWhereWithAggregatesInput | CompraServicioScalarWhereWithAggregatesInput[]
+    compraServicioId?: StringWithAggregatesFilter<"CompraServicio"> | string
+    servicioId?: StringWithAggregatesFilter<"CompraServicio"> | string
+    proveedorId?: StringNullableWithAggregatesFilter<"CompraServicio"> | string | null
+    numeroFactura?: StringNullableWithAggregatesFilter<"CompraServicio"> | string | null
+    costoUnitario?: IntWithAggregatesFilter<"CompraServicio"> | number
+    cantidad?: IntWithAggregatesFilter<"CompraServicio"> | number
+    total?: IntWithAggregatesFilter<"CompraServicio"> | number
+    formaPago?: StringWithAggregatesFilter<"CompraServicio"> | string
+    estado?: StringWithAggregatesFilter<"CompraServicio"> | string
+    descripcion?: StringNullableWithAggregatesFilter<"CompraServicio"> | string | null
+    fechaServicio?: DateTimeWithAggregatesFilter<"CompraServicio"> | Date | string
+    fechaVencimiento?: DateTimeNullableWithAggregatesFilter<"CompraServicio"> | Date | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"CompraServicio"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"CompraServicio"> | Date | string
   }
 
   export type GastoConceptoWhereInput = {
@@ -128493,6 +130033,7 @@ export namespace Prisma {
     gastoCompras?: GastoCompraCreateNestedManyWithoutVendorInput
     anticipos?: AnticipoCreateNestedManyWithoutProveedorInput
     productos?: ProductoCreateNestedManyWithoutVendorInput
+    compraServicios?: CompraServicioCreateNestedManyWithoutProveedorInput
   }
 
   export type VendorUncheckedCreateInput = {
@@ -128515,6 +130056,7 @@ export namespace Prisma {
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutVendorInput
     anticipos?: AnticipoUncheckedCreateNestedManyWithoutProveedorInput
     productos?: ProductoUncheckedCreateNestedManyWithoutVendorInput
+    compraServicios?: CompraServicioUncheckedCreateNestedManyWithoutProveedorInput
   }
 
   export type VendorUpdateInput = {
@@ -128537,6 +130079,7 @@ export namespace Prisma {
     gastoCompras?: GastoCompraUpdateManyWithoutVendorNestedInput
     anticipos?: AnticipoUpdateManyWithoutProveedorNestedInput
     productos?: ProductoUpdateManyWithoutVendorNestedInput
+    compraServicios?: CompraServicioUpdateManyWithoutProveedorNestedInput
   }
 
   export type VendorUncheckedUpdateInput = {
@@ -128559,6 +130102,7 @@ export namespace Prisma {
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutVendorNestedInput
     anticipos?: AnticipoUncheckedUpdateManyWithoutProveedorNestedInput
     productos?: ProductoUncheckedUpdateManyWithoutVendorNestedInput
+    compraServicios?: CompraServicioUncheckedUpdateManyWithoutProveedorNestedInput
   }
 
   export type VendorCreateManyInput = {
@@ -131780,6 +133324,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     ofertaItems?: OfertaItemCreateNestedManyWithoutServicioInput
     ventasServicios?: VentaServiciosCreateNestedManyWithoutServicioInput
+    compraServicios?: CompraServicioCreateNestedManyWithoutServicioInput
   }
 
   export type ServiciosUncheckedCreateInput = {
@@ -131791,6 +133336,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutServicioInput
     ventasServicios?: VentaServiciosUncheckedCreateNestedManyWithoutServicioInput
+    compraServicios?: CompraServicioUncheckedCreateNestedManyWithoutServicioInput
   }
 
   export type ServiciosUpdateInput = {
@@ -131802,6 +133348,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ofertaItems?: OfertaItemUpdateManyWithoutServicioNestedInput
     ventasServicios?: VentaServiciosUpdateManyWithoutServicioNestedInput
+    compraServicios?: CompraServicioUpdateManyWithoutServicioNestedInput
   }
 
   export type ServiciosUncheckedUpdateInput = {
@@ -131813,6 +133360,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutServicioNestedInput
     ventasServicios?: VentaServiciosUncheckedUpdateManyWithoutServicioNestedInput
+    compraServicios?: CompraServicioUncheckedUpdateManyWithoutServicioNestedInput
   }
 
   export type ServiciosCreateManyInput = {
@@ -131924,6 +133472,123 @@ export namespace Prisma {
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     reconciliado?: NullableBoolFieldUpdateOperationsInput | boolean | null
     clienteId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CompraServicioCreateInput = {
+    compraServicioId?: string
+    numeroFactura?: string | null
+    costoUnitario: number
+    cantidad: number
+    total: number
+    formaPago: string
+    estado: string
+    descripcion?: string | null
+    fechaServicio?: Date | string
+    fechaVencimiento?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    servicio: ServiciosCreateNestedOneWithoutCompraServiciosInput
+    proveedor?: VendorCreateNestedOneWithoutCompraServiciosInput
+  }
+
+  export type CompraServicioUncheckedCreateInput = {
+    compraServicioId?: string
+    servicioId: string
+    proveedorId?: string | null
+    numeroFactura?: string | null
+    costoUnitario: number
+    cantidad: number
+    total: number
+    formaPago: string
+    estado: string
+    descripcion?: string | null
+    fechaServicio?: Date | string
+    fechaVencimiento?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CompraServicioUpdateInput = {
+    compraServicioId?: StringFieldUpdateOperationsInput | string
+    numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
+    costoUnitario?: IntFieldUpdateOperationsInput | number
+    cantidad?: IntFieldUpdateOperationsInput | number
+    total?: IntFieldUpdateOperationsInput | number
+    formaPago?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaServicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    servicio?: ServiciosUpdateOneRequiredWithoutCompraServiciosNestedInput
+    proveedor?: VendorUpdateOneWithoutCompraServiciosNestedInput
+  }
+
+  export type CompraServicioUncheckedUpdateInput = {
+    compraServicioId?: StringFieldUpdateOperationsInput | string
+    servicioId?: StringFieldUpdateOperationsInput | string
+    proveedorId?: NullableStringFieldUpdateOperationsInput | string | null
+    numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
+    costoUnitario?: IntFieldUpdateOperationsInput | number
+    cantidad?: IntFieldUpdateOperationsInput | number
+    total?: IntFieldUpdateOperationsInput | number
+    formaPago?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaServicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CompraServicioCreateManyInput = {
+    compraServicioId?: string
+    servicioId: string
+    proveedorId?: string | null
+    numeroFactura?: string | null
+    costoUnitario: number
+    cantidad: number
+    total: number
+    formaPago: string
+    estado: string
+    descripcion?: string | null
+    fechaServicio?: Date | string
+    fechaVencimiento?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CompraServicioUpdateManyMutationInput = {
+    compraServicioId?: StringFieldUpdateOperationsInput | string
+    numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
+    costoUnitario?: IntFieldUpdateOperationsInput | number
+    cantidad?: IntFieldUpdateOperationsInput | number
+    total?: IntFieldUpdateOperationsInput | number
+    formaPago?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaServicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CompraServicioUncheckedUpdateManyInput = {
+    compraServicioId?: StringFieldUpdateOperationsInput | string
+    servicioId?: StringFieldUpdateOperationsInput | string
+    proveedorId?: NullableStringFieldUpdateOperationsInput | string | null
+    numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
+    costoUnitario?: IntFieldUpdateOperationsInput | number
+    cantidad?: IntFieldUpdateOperationsInput | number
+    total?: IntFieldUpdateOperationsInput | number
+    formaPago?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaServicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -137692,6 +139357,12 @@ export namespace Prisma {
     none?: AnticipoWhereInput
   }
 
+  export type CompraServicioListRelationFilter = {
+    every?: CompraServicioWhereInput
+    some?: CompraServicioWhereInput
+    none?: CompraServicioWhereInput
+  }
+
   export type CompraProductoOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -137713,6 +139384,10 @@ export namespace Prisma {
   }
 
   export type AnticipoOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type CompraServicioOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -140098,6 +141773,69 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedBoolNullableFilter<$PrismaModel>
     _max?: NestedBoolNullableFilter<$PrismaModel>
+  }
+
+  export type CompraServicioCountOrderByAggregateInput = {
+    compraServicioId?: SortOrder
+    servicioId?: SortOrder
+    proveedorId?: SortOrder
+    numeroFactura?: SortOrder
+    costoUnitario?: SortOrder
+    cantidad?: SortOrder
+    total?: SortOrder
+    formaPago?: SortOrder
+    estado?: SortOrder
+    descripcion?: SortOrder
+    fechaServicio?: SortOrder
+    fechaVencimiento?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CompraServicioAvgOrderByAggregateInput = {
+    costoUnitario?: SortOrder
+    cantidad?: SortOrder
+    total?: SortOrder
+  }
+
+  export type CompraServicioMaxOrderByAggregateInput = {
+    compraServicioId?: SortOrder
+    servicioId?: SortOrder
+    proveedorId?: SortOrder
+    numeroFactura?: SortOrder
+    costoUnitario?: SortOrder
+    cantidad?: SortOrder
+    total?: SortOrder
+    formaPago?: SortOrder
+    estado?: SortOrder
+    descripcion?: SortOrder
+    fechaServicio?: SortOrder
+    fechaVencimiento?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CompraServicioMinOrderByAggregateInput = {
+    compraServicioId?: SortOrder
+    servicioId?: SortOrder
+    proveedorId?: SortOrder
+    numeroFactura?: SortOrder
+    costoUnitario?: SortOrder
+    cantidad?: SortOrder
+    total?: SortOrder
+    formaPago?: SortOrder
+    estado?: SortOrder
+    descripcion?: SortOrder
+    fechaServicio?: SortOrder
+    fechaVencimiento?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CompraServicioSumOrderByAggregateInput = {
+    costoUnitario?: SortOrder
+    cantidad?: SortOrder
+    total?: SortOrder
   }
 
   export type GastoElementoListRelationFilter = {
@@ -143836,6 +145574,13 @@ export namespace Prisma {
     connect?: ProductoWhereUniqueInput | ProductoWhereUniqueInput[]
   }
 
+  export type CompraServicioCreateNestedManyWithoutProveedorInput = {
+    create?: XOR<CompraServicioCreateWithoutProveedorInput, CompraServicioUncheckedCreateWithoutProveedorInput> | CompraServicioCreateWithoutProveedorInput[] | CompraServicioUncheckedCreateWithoutProveedorInput[]
+    connectOrCreate?: CompraServicioCreateOrConnectWithoutProveedorInput | CompraServicioCreateOrConnectWithoutProveedorInput[]
+    createMany?: CompraServicioCreateManyProveedorInputEnvelope
+    connect?: CompraServicioWhereUniqueInput | CompraServicioWhereUniqueInput[]
+  }
+
   export type CompraProductoUncheckedCreateNestedManyWithoutProveedorInput = {
     create?: XOR<CompraProductoCreateWithoutProveedorInput, CompraProductoUncheckedCreateWithoutProveedorInput> | CompraProductoCreateWithoutProveedorInput[] | CompraProductoUncheckedCreateWithoutProveedorInput[]
     connectOrCreate?: CompraProductoCreateOrConnectWithoutProveedorInput | CompraProductoCreateOrConnectWithoutProveedorInput[]
@@ -143883,6 +145628,13 @@ export namespace Prisma {
     connectOrCreate?: ProductoCreateOrConnectWithoutVendorInput | ProductoCreateOrConnectWithoutVendorInput[]
     createMany?: ProductoCreateManyVendorInputEnvelope
     connect?: ProductoWhereUniqueInput | ProductoWhereUniqueInput[]
+  }
+
+  export type CompraServicioUncheckedCreateNestedManyWithoutProveedorInput = {
+    create?: XOR<CompraServicioCreateWithoutProveedorInput, CompraServicioUncheckedCreateWithoutProveedorInput> | CompraServicioCreateWithoutProveedorInput[] | CompraServicioUncheckedCreateWithoutProveedorInput[]
+    connectOrCreate?: CompraServicioCreateOrConnectWithoutProveedorInput | CompraServicioCreateOrConnectWithoutProveedorInput[]
+    createMany?: CompraServicioCreateManyProveedorInputEnvelope
+    connect?: CompraServicioWhereUniqueInput | CompraServicioWhereUniqueInput[]
   }
 
   export type CompraProductoUpdateManyWithoutProveedorNestedInput = {
@@ -143983,6 +145735,20 @@ export namespace Prisma {
     deleteMany?: ProductoScalarWhereInput | ProductoScalarWhereInput[]
   }
 
+  export type CompraServicioUpdateManyWithoutProveedorNestedInput = {
+    create?: XOR<CompraServicioCreateWithoutProveedorInput, CompraServicioUncheckedCreateWithoutProveedorInput> | CompraServicioCreateWithoutProveedorInput[] | CompraServicioUncheckedCreateWithoutProveedorInput[]
+    connectOrCreate?: CompraServicioCreateOrConnectWithoutProveedorInput | CompraServicioCreateOrConnectWithoutProveedorInput[]
+    upsert?: CompraServicioUpsertWithWhereUniqueWithoutProveedorInput | CompraServicioUpsertWithWhereUniqueWithoutProveedorInput[]
+    createMany?: CompraServicioCreateManyProveedorInputEnvelope
+    set?: CompraServicioWhereUniqueInput | CompraServicioWhereUniqueInput[]
+    disconnect?: CompraServicioWhereUniqueInput | CompraServicioWhereUniqueInput[]
+    delete?: CompraServicioWhereUniqueInput | CompraServicioWhereUniqueInput[]
+    connect?: CompraServicioWhereUniqueInput | CompraServicioWhereUniqueInput[]
+    update?: CompraServicioUpdateWithWhereUniqueWithoutProveedorInput | CompraServicioUpdateWithWhereUniqueWithoutProveedorInput[]
+    updateMany?: CompraServicioUpdateManyWithWhereWithoutProveedorInput | CompraServicioUpdateManyWithWhereWithoutProveedorInput[]
+    deleteMany?: CompraServicioScalarWhereInput | CompraServicioScalarWhereInput[]
+  }
+
   export type CompraProductoUncheckedUpdateManyWithoutProveedorNestedInput = {
     create?: XOR<CompraProductoCreateWithoutProveedorInput, CompraProductoUncheckedCreateWithoutProveedorInput> | CompraProductoCreateWithoutProveedorInput[] | CompraProductoUncheckedCreateWithoutProveedorInput[]
     connectOrCreate?: CompraProductoCreateOrConnectWithoutProveedorInput | CompraProductoCreateOrConnectWithoutProveedorInput[]
@@ -144079,6 +145845,20 @@ export namespace Prisma {
     update?: ProductoUpdateWithWhereUniqueWithoutVendorInput | ProductoUpdateWithWhereUniqueWithoutVendorInput[]
     updateMany?: ProductoUpdateManyWithWhereWithoutVendorInput | ProductoUpdateManyWithWhereWithoutVendorInput[]
     deleteMany?: ProductoScalarWhereInput | ProductoScalarWhereInput[]
+  }
+
+  export type CompraServicioUncheckedUpdateManyWithoutProveedorNestedInput = {
+    create?: XOR<CompraServicioCreateWithoutProveedorInput, CompraServicioUncheckedCreateWithoutProveedorInput> | CompraServicioCreateWithoutProveedorInput[] | CompraServicioUncheckedCreateWithoutProveedorInput[]
+    connectOrCreate?: CompraServicioCreateOrConnectWithoutProveedorInput | CompraServicioCreateOrConnectWithoutProveedorInput[]
+    upsert?: CompraServicioUpsertWithWhereUniqueWithoutProveedorInput | CompraServicioUpsertWithWhereUniqueWithoutProveedorInput[]
+    createMany?: CompraServicioCreateManyProveedorInputEnvelope
+    set?: CompraServicioWhereUniqueInput | CompraServicioWhereUniqueInput[]
+    disconnect?: CompraServicioWhereUniqueInput | CompraServicioWhereUniqueInput[]
+    delete?: CompraServicioWhereUniqueInput | CompraServicioWhereUniqueInput[]
+    connect?: CompraServicioWhereUniqueInput | CompraServicioWhereUniqueInput[]
+    update?: CompraServicioUpdateWithWhereUniqueWithoutProveedorInput | CompraServicioUpdateWithWhereUniqueWithoutProveedorInput[]
+    updateMany?: CompraServicioUpdateManyWithWhereWithoutProveedorInput | CompraServicioUpdateManyWithWhereWithoutProveedorInput[]
+    deleteMany?: CompraServicioScalarWhereInput | CompraServicioScalarWhereInput[]
   }
 
   export type CuentaBancariaCreateNestedOneWithoutInyeccionesCapitalInput = {
@@ -147458,6 +149238,13 @@ export namespace Prisma {
     connect?: VentaServiciosWhereUniqueInput | VentaServiciosWhereUniqueInput[]
   }
 
+  export type CompraServicioCreateNestedManyWithoutServicioInput = {
+    create?: XOR<CompraServicioCreateWithoutServicioInput, CompraServicioUncheckedCreateWithoutServicioInput> | CompraServicioCreateWithoutServicioInput[] | CompraServicioUncheckedCreateWithoutServicioInput[]
+    connectOrCreate?: CompraServicioCreateOrConnectWithoutServicioInput | CompraServicioCreateOrConnectWithoutServicioInput[]
+    createMany?: CompraServicioCreateManyServicioInputEnvelope
+    connect?: CompraServicioWhereUniqueInput | CompraServicioWhereUniqueInput[]
+  }
+
   export type OfertaItemUncheckedCreateNestedManyWithoutServicioInput = {
     create?: XOR<OfertaItemCreateWithoutServicioInput, OfertaItemUncheckedCreateWithoutServicioInput> | OfertaItemCreateWithoutServicioInput[] | OfertaItemUncheckedCreateWithoutServicioInput[]
     connectOrCreate?: OfertaItemCreateOrConnectWithoutServicioInput | OfertaItemCreateOrConnectWithoutServicioInput[]
@@ -147470,6 +149257,13 @@ export namespace Prisma {
     connectOrCreate?: VentaServiciosCreateOrConnectWithoutServicioInput | VentaServiciosCreateOrConnectWithoutServicioInput[]
     createMany?: VentaServiciosCreateManyServicioInputEnvelope
     connect?: VentaServiciosWhereUniqueInput | VentaServiciosWhereUniqueInput[]
+  }
+
+  export type CompraServicioUncheckedCreateNestedManyWithoutServicioInput = {
+    create?: XOR<CompraServicioCreateWithoutServicioInput, CompraServicioUncheckedCreateWithoutServicioInput> | CompraServicioCreateWithoutServicioInput[] | CompraServicioUncheckedCreateWithoutServicioInput[]
+    connectOrCreate?: CompraServicioCreateOrConnectWithoutServicioInput | CompraServicioCreateOrConnectWithoutServicioInput[]
+    createMany?: CompraServicioCreateManyServicioInputEnvelope
+    connect?: CompraServicioWhereUniqueInput | CompraServicioWhereUniqueInput[]
   }
 
   export type OfertaItemUpdateManyWithoutServicioNestedInput = {
@@ -147500,6 +149294,20 @@ export namespace Prisma {
     deleteMany?: VentaServiciosScalarWhereInput | VentaServiciosScalarWhereInput[]
   }
 
+  export type CompraServicioUpdateManyWithoutServicioNestedInput = {
+    create?: XOR<CompraServicioCreateWithoutServicioInput, CompraServicioUncheckedCreateWithoutServicioInput> | CompraServicioCreateWithoutServicioInput[] | CompraServicioUncheckedCreateWithoutServicioInput[]
+    connectOrCreate?: CompraServicioCreateOrConnectWithoutServicioInput | CompraServicioCreateOrConnectWithoutServicioInput[]
+    upsert?: CompraServicioUpsertWithWhereUniqueWithoutServicioInput | CompraServicioUpsertWithWhereUniqueWithoutServicioInput[]
+    createMany?: CompraServicioCreateManyServicioInputEnvelope
+    set?: CompraServicioWhereUniqueInput | CompraServicioWhereUniqueInput[]
+    disconnect?: CompraServicioWhereUniqueInput | CompraServicioWhereUniqueInput[]
+    delete?: CompraServicioWhereUniqueInput | CompraServicioWhereUniqueInput[]
+    connect?: CompraServicioWhereUniqueInput | CompraServicioWhereUniqueInput[]
+    update?: CompraServicioUpdateWithWhereUniqueWithoutServicioInput | CompraServicioUpdateWithWhereUniqueWithoutServicioInput[]
+    updateMany?: CompraServicioUpdateManyWithWhereWithoutServicioInput | CompraServicioUpdateManyWithWhereWithoutServicioInput[]
+    deleteMany?: CompraServicioScalarWhereInput | CompraServicioScalarWhereInput[]
+  }
+
   export type OfertaItemUncheckedUpdateManyWithoutServicioNestedInput = {
     create?: XOR<OfertaItemCreateWithoutServicioInput, OfertaItemUncheckedCreateWithoutServicioInput> | OfertaItemCreateWithoutServicioInput[] | OfertaItemUncheckedCreateWithoutServicioInput[]
     connectOrCreate?: OfertaItemCreateOrConnectWithoutServicioInput | OfertaItemCreateOrConnectWithoutServicioInput[]
@@ -147526,6 +149334,20 @@ export namespace Prisma {
     update?: VentaServiciosUpdateWithWhereUniqueWithoutServicioInput | VentaServiciosUpdateWithWhereUniqueWithoutServicioInput[]
     updateMany?: VentaServiciosUpdateManyWithWhereWithoutServicioInput | VentaServiciosUpdateManyWithWhereWithoutServicioInput[]
     deleteMany?: VentaServiciosScalarWhereInput | VentaServiciosScalarWhereInput[]
+  }
+
+  export type CompraServicioUncheckedUpdateManyWithoutServicioNestedInput = {
+    create?: XOR<CompraServicioCreateWithoutServicioInput, CompraServicioUncheckedCreateWithoutServicioInput> | CompraServicioCreateWithoutServicioInput[] | CompraServicioUncheckedCreateWithoutServicioInput[]
+    connectOrCreate?: CompraServicioCreateOrConnectWithoutServicioInput | CompraServicioCreateOrConnectWithoutServicioInput[]
+    upsert?: CompraServicioUpsertWithWhereUniqueWithoutServicioInput | CompraServicioUpsertWithWhereUniqueWithoutServicioInput[]
+    createMany?: CompraServicioCreateManyServicioInputEnvelope
+    set?: CompraServicioWhereUniqueInput | CompraServicioWhereUniqueInput[]
+    disconnect?: CompraServicioWhereUniqueInput | CompraServicioWhereUniqueInput[]
+    delete?: CompraServicioWhereUniqueInput | CompraServicioWhereUniqueInput[]
+    connect?: CompraServicioWhereUniqueInput | CompraServicioWhereUniqueInput[]
+    update?: CompraServicioUpdateWithWhereUniqueWithoutServicioInput | CompraServicioUpdateWithWhereUniqueWithoutServicioInput[]
+    updateMany?: CompraServicioUpdateManyWithWhereWithoutServicioInput | CompraServicioUpdateManyWithWhereWithoutServicioInput[]
+    deleteMany?: CompraServicioScalarWhereInput | CompraServicioScalarWhereInput[]
   }
 
   export type ReconciliacionServicioCreateNestedManyWithoutVentasServicioInput = {
@@ -147602,6 +149424,36 @@ export namespace Prisma {
     update?: ReconciliacionServicioUpdateWithWhereUniqueWithoutVentasServicioInput | ReconciliacionServicioUpdateWithWhereUniqueWithoutVentasServicioInput[]
     updateMany?: ReconciliacionServicioUpdateManyWithWhereWithoutVentasServicioInput | ReconciliacionServicioUpdateManyWithWhereWithoutVentasServicioInput[]
     deleteMany?: ReconciliacionServicioScalarWhereInput | ReconciliacionServicioScalarWhereInput[]
+  }
+
+  export type ServiciosCreateNestedOneWithoutCompraServiciosInput = {
+    create?: XOR<ServiciosCreateWithoutCompraServiciosInput, ServiciosUncheckedCreateWithoutCompraServiciosInput>
+    connectOrCreate?: ServiciosCreateOrConnectWithoutCompraServiciosInput
+    connect?: ServiciosWhereUniqueInput
+  }
+
+  export type VendorCreateNestedOneWithoutCompraServiciosInput = {
+    create?: XOR<VendorCreateWithoutCompraServiciosInput, VendorUncheckedCreateWithoutCompraServiciosInput>
+    connectOrCreate?: VendorCreateOrConnectWithoutCompraServiciosInput
+    connect?: VendorWhereUniqueInput
+  }
+
+  export type ServiciosUpdateOneRequiredWithoutCompraServiciosNestedInput = {
+    create?: XOR<ServiciosCreateWithoutCompraServiciosInput, ServiciosUncheckedCreateWithoutCompraServiciosInput>
+    connectOrCreate?: ServiciosCreateOrConnectWithoutCompraServiciosInput
+    upsert?: ServiciosUpsertWithoutCompraServiciosInput
+    connect?: ServiciosWhereUniqueInput
+    update?: XOR<XOR<ServiciosUpdateToOneWithWhereWithoutCompraServiciosInput, ServiciosUpdateWithoutCompraServiciosInput>, ServiciosUncheckedUpdateWithoutCompraServiciosInput>
+  }
+
+  export type VendorUpdateOneWithoutCompraServiciosNestedInput = {
+    create?: XOR<VendorCreateWithoutCompraServiciosInput, VendorUncheckedCreateWithoutCompraServiciosInput>
+    connectOrCreate?: VendorCreateOrConnectWithoutCompraServiciosInput
+    upsert?: VendorUpsertWithoutCompraServiciosInput
+    disconnect?: VendorWhereInput | boolean
+    delete?: VendorWhereInput | boolean
+    connect?: VendorWhereUniqueInput
+    update?: XOR<XOR<VendorUpdateToOneWithWhereWithoutCompraServiciosInput, VendorUpdateWithoutCompraServiciosInput>, VendorUncheckedUpdateWithoutCompraServiciosInput>
   }
 
   export type GastoElementoCreateNestedManyWithoutConceptoInput = {
@@ -152767,6 +154619,48 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type CompraServicioCreateWithoutProveedorInput = {
+    compraServicioId?: string
+    numeroFactura?: string | null
+    costoUnitario: number
+    cantidad: number
+    total: number
+    formaPago: string
+    estado: string
+    descripcion?: string | null
+    fechaServicio?: Date | string
+    fechaVencimiento?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    servicio: ServiciosCreateNestedOneWithoutCompraServiciosInput
+  }
+
+  export type CompraServicioUncheckedCreateWithoutProveedorInput = {
+    compraServicioId?: string
+    servicioId: string
+    numeroFactura?: string | null
+    costoUnitario: number
+    cantidad: number
+    total: number
+    formaPago: string
+    estado: string
+    descripcion?: string | null
+    fechaServicio?: Date | string
+    fechaVencimiento?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CompraServicioCreateOrConnectWithoutProveedorInput = {
+    where: CompraServicioWhereUniqueInput
+    create: XOR<CompraServicioCreateWithoutProveedorInput, CompraServicioUncheckedCreateWithoutProveedorInput>
+  }
+
+  export type CompraServicioCreateManyProveedorInputEnvelope = {
+    data: CompraServicioCreateManyProveedorInput | CompraServicioCreateManyProveedorInput[]
+    skipDuplicates?: boolean
+  }
+
   export type CompraProductoUpsertWithWhereUniqueWithoutProveedorInput = {
     where: CompraProductoWhereUniqueInput
     update: XOR<CompraProductoUpdateWithoutProveedorInput, CompraProductoUncheckedUpdateWithoutProveedorInput>
@@ -153016,6 +154910,42 @@ export namespace Prisma {
   export type ProductoUpdateManyWithWhereWithoutVendorInput = {
     where: ProductoScalarWhereInput
     data: XOR<ProductoUpdateManyMutationInput, ProductoUncheckedUpdateManyWithoutVendorInput>
+  }
+
+  export type CompraServicioUpsertWithWhereUniqueWithoutProveedorInput = {
+    where: CompraServicioWhereUniqueInput
+    update: XOR<CompraServicioUpdateWithoutProveedorInput, CompraServicioUncheckedUpdateWithoutProveedorInput>
+    create: XOR<CompraServicioCreateWithoutProveedorInput, CompraServicioUncheckedCreateWithoutProveedorInput>
+  }
+
+  export type CompraServicioUpdateWithWhereUniqueWithoutProveedorInput = {
+    where: CompraServicioWhereUniqueInput
+    data: XOR<CompraServicioUpdateWithoutProveedorInput, CompraServicioUncheckedUpdateWithoutProveedorInput>
+  }
+
+  export type CompraServicioUpdateManyWithWhereWithoutProveedorInput = {
+    where: CompraServicioScalarWhereInput
+    data: XOR<CompraServicioUpdateManyMutationInput, CompraServicioUncheckedUpdateManyWithoutProveedorInput>
+  }
+
+  export type CompraServicioScalarWhereInput = {
+    AND?: CompraServicioScalarWhereInput | CompraServicioScalarWhereInput[]
+    OR?: CompraServicioScalarWhereInput[]
+    NOT?: CompraServicioScalarWhereInput | CompraServicioScalarWhereInput[]
+    compraServicioId?: StringFilter<"CompraServicio"> | string
+    servicioId?: StringFilter<"CompraServicio"> | string
+    proveedorId?: StringNullableFilter<"CompraServicio"> | string | null
+    numeroFactura?: StringNullableFilter<"CompraServicio"> | string | null
+    costoUnitario?: IntFilter<"CompraServicio"> | number
+    cantidad?: IntFilter<"CompraServicio"> | number
+    total?: IntFilter<"CompraServicio"> | number
+    formaPago?: StringFilter<"CompraServicio"> | string
+    estado?: StringFilter<"CompraServicio"> | string
+    descripcion?: StringNullableFilter<"CompraServicio"> | string | null
+    fechaServicio?: DateTimeFilter<"CompraServicio"> | Date | string
+    fechaVencimiento?: DateTimeNullableFilter<"CompraServicio"> | Date | string | null
+    createdAt?: DateTimeFilter<"CompraServicio"> | Date | string
+    updatedAt?: DateTimeFilter<"CompraServicio"> | Date | string
   }
 
   export type CuentaBancariaCreateWithoutInyeccionesCapitalInput = {
@@ -155427,6 +157357,7 @@ export namespace Prisma {
     deudasCash?: DeudaCashCreateNestedManyWithoutProveedorInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutVendorInput
     anticipos?: AnticipoCreateNestedManyWithoutProveedorInput
+    compraServicios?: CompraServicioCreateNestedManyWithoutProveedorInput
   }
 
   export type VendorUncheckedCreateWithoutProductosInput = {
@@ -155448,6 +157379,7 @@ export namespace Prisma {
     deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutProveedorInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutVendorInput
     anticipos?: AnticipoUncheckedCreateNestedManyWithoutProveedorInput
+    compraServicios?: CompraServicioUncheckedCreateNestedManyWithoutProveedorInput
   }
 
   export type VendorCreateOrConnectWithoutProductosInput = {
@@ -156187,6 +158119,7 @@ export namespace Prisma {
     deudasCash?: DeudaCashUpdateManyWithoutProveedorNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutVendorNestedInput
     anticipos?: AnticipoUpdateManyWithoutProveedorNestedInput
+    compraServicios?: CompraServicioUpdateManyWithoutProveedorNestedInput
   }
 
   export type VendorUncheckedUpdateWithoutProductosInput = {
@@ -156208,6 +158141,7 @@ export namespace Prisma {
     deudasCash?: DeudaCashUncheckedUpdateManyWithoutProveedorNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutVendorNestedInput
     anticipos?: AnticipoUncheckedUpdateManyWithoutProveedorNestedInput
+    compraServicios?: CompraServicioUncheckedUpdateManyWithoutProveedorNestedInput
   }
 
   export type ProductoCostHistoryUpsertWithWhereUniqueWithoutProductoInput = {
@@ -161793,6 +163727,7 @@ export namespace Prisma {
     deudasCash?: DeudaCashCreateNestedManyWithoutProveedorInput
     anticipos?: AnticipoCreateNestedManyWithoutProveedorInput
     productos?: ProductoCreateNestedManyWithoutVendorInput
+    compraServicios?: CompraServicioCreateNestedManyWithoutProveedorInput
   }
 
   export type VendorUncheckedCreateWithoutGastoComprasInput = {
@@ -161814,6 +163749,7 @@ export namespace Prisma {
     deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutProveedorInput
     anticipos?: AnticipoUncheckedCreateNestedManyWithoutProveedorInput
     productos?: ProductoUncheckedCreateNestedManyWithoutVendorInput
+    compraServicios?: CompraServicioUncheckedCreateNestedManyWithoutProveedorInput
   }
 
   export type VendorCreateOrConnectWithoutGastoComprasInput = {
@@ -162114,6 +164050,7 @@ export namespace Prisma {
     deudasCash?: DeudaCashUpdateManyWithoutProveedorNestedInput
     anticipos?: AnticipoUpdateManyWithoutProveedorNestedInput
     productos?: ProductoUpdateManyWithoutVendorNestedInput
+    compraServicios?: CompraServicioUpdateManyWithoutProveedorNestedInput
   }
 
   export type VendorUncheckedUpdateWithoutGastoComprasInput = {
@@ -162135,6 +164072,7 @@ export namespace Prisma {
     deudasCash?: DeudaCashUncheckedUpdateManyWithoutProveedorNestedInput
     anticipos?: AnticipoUncheckedUpdateManyWithoutProveedorNestedInput
     productos?: ProductoUncheckedUpdateManyWithoutVendorNestedInput
+    compraServicios?: CompraServicioUncheckedUpdateManyWithoutProveedorNestedInput
   }
 
   export type ReconciliacionGastoUpsertWithWhereUniqueWithoutGastoCompraInput = {
@@ -162404,6 +164342,7 @@ export namespace Prisma {
     gastoCompras?: GastoCompraCreateNestedManyWithoutVendorInput
     anticipos?: AnticipoCreateNestedManyWithoutProveedorInput
     productos?: ProductoCreateNestedManyWithoutVendorInput
+    compraServicios?: CompraServicioCreateNestedManyWithoutProveedorInput
   }
 
   export type VendorUncheckedCreateWithoutComprasInput = {
@@ -162425,6 +164364,7 @@ export namespace Prisma {
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutVendorInput
     anticipos?: AnticipoUncheckedCreateNestedManyWithoutProveedorInput
     productos?: ProductoUncheckedCreateNestedManyWithoutVendorInput
+    compraServicios?: CompraServicioUncheckedCreateNestedManyWithoutProveedorInput
   }
 
   export type VendorCreateOrConnectWithoutComprasInput = {
@@ -162718,6 +164658,7 @@ export namespace Prisma {
     gastoCompras?: GastoCompraUpdateManyWithoutVendorNestedInput
     anticipos?: AnticipoUpdateManyWithoutProveedorNestedInput
     productos?: ProductoUpdateManyWithoutVendorNestedInput
+    compraServicios?: CompraServicioUpdateManyWithoutProveedorNestedInput
   }
 
   export type VendorUncheckedUpdateWithoutComprasInput = {
@@ -162739,6 +164680,7 @@ export namespace Prisma {
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutVendorNestedInput
     anticipos?: AnticipoUncheckedUpdateManyWithoutProveedorNestedInput
     productos?: ProductoUncheckedUpdateManyWithoutVendorNestedInput
+    compraServicios?: CompraServicioUncheckedUpdateManyWithoutProveedorNestedInput
   }
 
   export type OfertaItemCreateWithoutServicioInput = {
@@ -162803,6 +164745,48 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type CompraServicioCreateWithoutServicioInput = {
+    compraServicioId?: string
+    numeroFactura?: string | null
+    costoUnitario: number
+    cantidad: number
+    total: number
+    formaPago: string
+    estado: string
+    descripcion?: string | null
+    fechaServicio?: Date | string
+    fechaVencimiento?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    proveedor?: VendorCreateNestedOneWithoutCompraServiciosInput
+  }
+
+  export type CompraServicioUncheckedCreateWithoutServicioInput = {
+    compraServicioId?: string
+    proveedorId?: string | null
+    numeroFactura?: string | null
+    costoUnitario: number
+    cantidad: number
+    total: number
+    formaPago: string
+    estado: string
+    descripcion?: string | null
+    fechaServicio?: Date | string
+    fechaVencimiento?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CompraServicioCreateOrConnectWithoutServicioInput = {
+    where: CompraServicioWhereUniqueInput
+    create: XOR<CompraServicioCreateWithoutServicioInput, CompraServicioUncheckedCreateWithoutServicioInput>
+  }
+
+  export type CompraServicioCreateManyServicioInputEnvelope = {
+    data: CompraServicioCreateManyServicioInput | CompraServicioCreateManyServicioInput[]
+    skipDuplicates?: boolean
+  }
+
   export type OfertaItemUpsertWithWhereUniqueWithoutServicioInput = {
     where: OfertaItemWhereUniqueInput
     update: XOR<OfertaItemUpdateWithoutServicioInput, OfertaItemUncheckedUpdateWithoutServicioInput>
@@ -162833,6 +164817,22 @@ export namespace Prisma {
   export type VentaServiciosUpdateManyWithWhereWithoutServicioInput = {
     where: VentaServiciosScalarWhereInput
     data: XOR<VentaServiciosUpdateManyMutationInput, VentaServiciosUncheckedUpdateManyWithoutServicioInput>
+  }
+
+  export type CompraServicioUpsertWithWhereUniqueWithoutServicioInput = {
+    where: CompraServicioWhereUniqueInput
+    update: XOR<CompraServicioUpdateWithoutServicioInput, CompraServicioUncheckedUpdateWithoutServicioInput>
+    create: XOR<CompraServicioCreateWithoutServicioInput, CompraServicioUncheckedCreateWithoutServicioInput>
+  }
+
+  export type CompraServicioUpdateWithWhereUniqueWithoutServicioInput = {
+    where: CompraServicioWhereUniqueInput
+    data: XOR<CompraServicioUpdateWithoutServicioInput, CompraServicioUncheckedUpdateWithoutServicioInput>
+  }
+
+  export type CompraServicioUpdateManyWithWhereWithoutServicioInput = {
+    where: CompraServicioScalarWhereInput
+    data: XOR<CompraServicioUpdateManyMutationInput, CompraServicioUncheckedUpdateManyWithoutServicioInput>
   }
 
   export type ReconciliacionServicioCreateWithoutVentasServicioInput = {
@@ -162930,6 +164930,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ofertaItems?: OfertaItemCreateNestedManyWithoutServicioInput
+    compraServicios?: CompraServicioCreateNestedManyWithoutServicioInput
   }
 
   export type ServiciosUncheckedCreateWithoutVentasServiciosInput = {
@@ -162940,6 +164941,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutServicioInput
+    compraServicios?: CompraServicioUncheckedCreateNestedManyWithoutServicioInput
   }
 
   export type ServiciosCreateOrConnectWithoutVentasServiciosInput = {
@@ -163054,6 +165056,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ofertaItems?: OfertaItemUpdateManyWithoutServicioNestedInput
+    compraServicios?: CompraServicioUpdateManyWithoutServicioNestedInput
   }
 
   export type ServiciosUncheckedUpdateWithoutVentasServiciosInput = {
@@ -163064,6 +165067,171 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutServicioNestedInput
+    compraServicios?: CompraServicioUncheckedUpdateManyWithoutServicioNestedInput
+  }
+
+  export type ServiciosCreateWithoutCompraServiciosInput = {
+    servicioId?: string
+    nombre: string
+    precio: number
+    descripcion: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    ofertaItems?: OfertaItemCreateNestedManyWithoutServicioInput
+    ventasServicios?: VentaServiciosCreateNestedManyWithoutServicioInput
+  }
+
+  export type ServiciosUncheckedCreateWithoutCompraServiciosInput = {
+    servicioId?: string
+    nombre: string
+    precio: number
+    descripcion: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutServicioInput
+    ventasServicios?: VentaServiciosUncheckedCreateNestedManyWithoutServicioInput
+  }
+
+  export type ServiciosCreateOrConnectWithoutCompraServiciosInput = {
+    where: ServiciosWhereUniqueInput
+    create: XOR<ServiciosCreateWithoutCompraServiciosInput, ServiciosUncheckedCreateWithoutCompraServiciosInput>
+  }
+
+  export type VendorCreateWithoutCompraServiciosInput = {
+    vendorId?: string
+    nombre: string
+    contacto?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    contrato?: string | null
+    cuentaCUP?: string | null
+    cuentaUSD?: string | null
+    direccion?: string | null
+    logo?: string | null
+    telefono?: string | null
+    vendorCode?: string | null
+    compras?: CompraProductoCreateNestedManyWithoutProveedorInput
+    contratos?: ContratoCreateNestedManyWithoutVendorInput
+    cuentasPorPagar?: CuentaPorPagarCreateNestedManyWithoutProveedorInput
+    deudasCash?: DeudaCashCreateNestedManyWithoutProveedorInput
+    gastoCompras?: GastoCompraCreateNestedManyWithoutVendorInput
+    anticipos?: AnticipoCreateNestedManyWithoutProveedorInput
+    productos?: ProductoCreateNestedManyWithoutVendorInput
+  }
+
+  export type VendorUncheckedCreateWithoutCompraServiciosInput = {
+    vendorId?: string
+    nombre: string
+    contacto?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    contrato?: string | null
+    cuentaCUP?: string | null
+    cuentaUSD?: string | null
+    direccion?: string | null
+    logo?: string | null
+    telefono?: string | null
+    vendorCode?: string | null
+    compras?: CompraProductoUncheckedCreateNestedManyWithoutProveedorInput
+    contratos?: ContratoUncheckedCreateNestedManyWithoutVendorInput
+    cuentasPorPagar?: CuentaPorPagarUncheckedCreateNestedManyWithoutProveedorInput
+    deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutProveedorInput
+    gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutVendorInput
+    anticipos?: AnticipoUncheckedCreateNestedManyWithoutProveedorInput
+    productos?: ProductoUncheckedCreateNestedManyWithoutVendorInput
+  }
+
+  export type VendorCreateOrConnectWithoutCompraServiciosInput = {
+    where: VendorWhereUniqueInput
+    create: XOR<VendorCreateWithoutCompraServiciosInput, VendorUncheckedCreateWithoutCompraServiciosInput>
+  }
+
+  export type ServiciosUpsertWithoutCompraServiciosInput = {
+    update: XOR<ServiciosUpdateWithoutCompraServiciosInput, ServiciosUncheckedUpdateWithoutCompraServiciosInput>
+    create: XOR<ServiciosCreateWithoutCompraServiciosInput, ServiciosUncheckedCreateWithoutCompraServiciosInput>
+    where?: ServiciosWhereInput
+  }
+
+  export type ServiciosUpdateToOneWithWhereWithoutCompraServiciosInput = {
+    where?: ServiciosWhereInput
+    data: XOR<ServiciosUpdateWithoutCompraServiciosInput, ServiciosUncheckedUpdateWithoutCompraServiciosInput>
+  }
+
+  export type ServiciosUpdateWithoutCompraServiciosInput = {
+    servicioId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    precio?: IntFieldUpdateOperationsInput | number
+    descripcion?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ofertaItems?: OfertaItemUpdateManyWithoutServicioNestedInput
+    ventasServicios?: VentaServiciosUpdateManyWithoutServicioNestedInput
+  }
+
+  export type ServiciosUncheckedUpdateWithoutCompraServiciosInput = {
+    servicioId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    precio?: IntFieldUpdateOperationsInput | number
+    descripcion?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    ofertaItems?: OfertaItemUncheckedUpdateManyWithoutServicioNestedInput
+    ventasServicios?: VentaServiciosUncheckedUpdateManyWithoutServicioNestedInput
+  }
+
+  export type VendorUpsertWithoutCompraServiciosInput = {
+    update: XOR<VendorUpdateWithoutCompraServiciosInput, VendorUncheckedUpdateWithoutCompraServiciosInput>
+    create: XOR<VendorCreateWithoutCompraServiciosInput, VendorUncheckedCreateWithoutCompraServiciosInput>
+    where?: VendorWhereInput
+  }
+
+  export type VendorUpdateToOneWithWhereWithoutCompraServiciosInput = {
+    where?: VendorWhereInput
+    data: XOR<VendorUpdateWithoutCompraServiciosInput, VendorUncheckedUpdateWithoutCompraServiciosInput>
+  }
+
+  export type VendorUpdateWithoutCompraServiciosInput = {
+    vendorId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    contacto?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    contrato?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaCUP?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaUSD?: NullableStringFieldUpdateOperationsInput | string | null
+    direccion?: NullableStringFieldUpdateOperationsInput | string | null
+    logo?: NullableStringFieldUpdateOperationsInput | string | null
+    telefono?: NullableStringFieldUpdateOperationsInput | string | null
+    vendorCode?: NullableStringFieldUpdateOperationsInput | string | null
+    compras?: CompraProductoUpdateManyWithoutProveedorNestedInput
+    contratos?: ContratoUpdateManyWithoutVendorNestedInput
+    cuentasPorPagar?: CuentaPorPagarUpdateManyWithoutProveedorNestedInput
+    deudasCash?: DeudaCashUpdateManyWithoutProveedorNestedInput
+    gastoCompras?: GastoCompraUpdateManyWithoutVendorNestedInput
+    anticipos?: AnticipoUpdateManyWithoutProveedorNestedInput
+    productos?: ProductoUpdateManyWithoutVendorNestedInput
+  }
+
+  export type VendorUncheckedUpdateWithoutCompraServiciosInput = {
+    vendorId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    contacto?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    contrato?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaCUP?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaUSD?: NullableStringFieldUpdateOperationsInput | string | null
+    direccion?: NullableStringFieldUpdateOperationsInput | string | null
+    logo?: NullableStringFieldUpdateOperationsInput | string | null
+    telefono?: NullableStringFieldUpdateOperationsInput | string | null
+    vendorCode?: NullableStringFieldUpdateOperationsInput | string | null
+    compras?: CompraProductoUncheckedUpdateManyWithoutProveedorNestedInput
+    contratos?: ContratoUncheckedUpdateManyWithoutVendorNestedInput
+    cuentasPorPagar?: CuentaPorPagarUncheckedUpdateManyWithoutProveedorNestedInput
+    deudasCash?: DeudaCashUncheckedUpdateManyWithoutProveedorNestedInput
+    gastoCompras?: GastoCompraUncheckedUpdateManyWithoutVendorNestedInput
+    anticipos?: AnticipoUncheckedUpdateManyWithoutProveedorNestedInput
+    productos?: ProductoUncheckedUpdateManyWithoutVendorNestedInput
   }
 
   export type GastoElementoCreateWithoutConceptoInput = {
@@ -166578,6 +168746,7 @@ export namespace Prisma {
     gastoCompras?: GastoCompraCreateNestedManyWithoutVendorInput
     anticipos?: AnticipoCreateNestedManyWithoutProveedorInput
     productos?: ProductoCreateNestedManyWithoutVendorInput
+    compraServicios?: CompraServicioCreateNestedManyWithoutProveedorInput
   }
 
   export type VendorUncheckedCreateWithoutContratosInput = {
@@ -166599,6 +168768,7 @@ export namespace Prisma {
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutVendorInput
     anticipos?: AnticipoUncheckedCreateNestedManyWithoutProveedorInput
     productos?: ProductoUncheckedCreateNestedManyWithoutVendorInput
+    compraServicios?: CompraServicioUncheckedCreateNestedManyWithoutProveedorInput
   }
 
   export type VendorCreateOrConnectWithoutContratosInput = {
@@ -167047,6 +169217,7 @@ export namespace Prisma {
     gastoCompras?: GastoCompraUpdateManyWithoutVendorNestedInput
     anticipos?: AnticipoUpdateManyWithoutProveedorNestedInput
     productos?: ProductoUpdateManyWithoutVendorNestedInput
+    compraServicios?: CompraServicioUpdateManyWithoutProveedorNestedInput
   }
 
   export type VendorUncheckedUpdateWithoutContratosInput = {
@@ -167068,6 +169239,7 @@ export namespace Prisma {
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutVendorNestedInput
     anticipos?: AnticipoUncheckedUpdateManyWithoutProveedorNestedInput
     productos?: ProductoUncheckedUpdateManyWithoutVendorNestedInput
+    compraServicios?: CompraServicioUncheckedUpdateManyWithoutProveedorNestedInput
   }
 
   export type ContratoAlertaUpsertWithWhereUniqueWithoutContratoInput = {
@@ -169654,6 +171826,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ventasServicios?: VentaServiciosCreateNestedManyWithoutServicioInput
+    compraServicios?: CompraServicioCreateNestedManyWithoutServicioInput
   }
 
   export type ServiciosUncheckedCreateWithoutOfertaItemsInput = {
@@ -169664,6 +171837,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     ventasServicios?: VentaServiciosUncheckedCreateNestedManyWithoutServicioInput
+    compraServicios?: CompraServicioUncheckedCreateNestedManyWithoutServicioInput
   }
 
   export type ServiciosCreateOrConnectWithoutOfertaItemsInput = {
@@ -169830,6 +172004,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ventasServicios?: VentaServiciosUpdateManyWithoutServicioNestedInput
+    compraServicios?: CompraServicioUpdateManyWithoutServicioNestedInput
   }
 
   export type ServiciosUncheckedUpdateWithoutOfertaItemsInput = {
@@ -169840,6 +172015,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     ventasServicios?: VentaServiciosUncheckedUpdateManyWithoutServicioNestedInput
+    compraServicios?: CompraServicioUncheckedUpdateManyWithoutServicioNestedInput
   }
 
   export type ClienteCreateWithoutCuentasPorCobrarInput = {
@@ -170310,6 +172486,7 @@ export namespace Prisma {
     gastoCompras?: GastoCompraCreateNestedManyWithoutVendorInput
     anticipos?: AnticipoCreateNestedManyWithoutProveedorInput
     productos?: ProductoCreateNestedManyWithoutVendorInput
+    compraServicios?: CompraServicioCreateNestedManyWithoutProveedorInput
   }
 
   export type VendorUncheckedCreateWithoutCuentasPorPagarInput = {
@@ -170331,6 +172508,7 @@ export namespace Prisma {
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutVendorInput
     anticipos?: AnticipoUncheckedCreateNestedManyWithoutProveedorInput
     productos?: ProductoUncheckedCreateNestedManyWithoutVendorInput
+    compraServicios?: CompraServicioUncheckedCreateNestedManyWithoutProveedorInput
   }
 
   export type VendorCreateOrConnectWithoutCuentasPorPagarInput = {
@@ -170640,6 +172818,7 @@ export namespace Prisma {
     gastoCompras?: GastoCompraUpdateManyWithoutVendorNestedInput
     anticipos?: AnticipoUpdateManyWithoutProveedorNestedInput
     productos?: ProductoUpdateManyWithoutVendorNestedInput
+    compraServicios?: CompraServicioUpdateManyWithoutProveedorNestedInput
   }
 
   export type VendorUncheckedUpdateWithoutCuentasPorPagarInput = {
@@ -170661,6 +172840,7 @@ export namespace Prisma {
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutVendorNestedInput
     anticipos?: AnticipoUncheckedUpdateManyWithoutProveedorNestedInput
     productos?: ProductoUncheckedUpdateManyWithoutVendorNestedInput
+    compraServicios?: CompraServicioUncheckedUpdateManyWithoutProveedorNestedInput
   }
 
   export type DeudaCashUpsertWithoutCuentaPorPagarInput = {
@@ -170778,6 +172958,7 @@ export namespace Prisma {
     gastoCompras?: GastoCompraCreateNestedManyWithoutVendorInput
     anticipos?: AnticipoCreateNestedManyWithoutProveedorInput
     productos?: ProductoCreateNestedManyWithoutVendorInput
+    compraServicios?: CompraServicioCreateNestedManyWithoutProveedorInput
   }
 
   export type VendorUncheckedCreateWithoutDeudasCashInput = {
@@ -170799,6 +172980,7 @@ export namespace Prisma {
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutVendorInput
     anticipos?: AnticipoUncheckedCreateNestedManyWithoutProveedorInput
     productos?: ProductoUncheckedCreateNestedManyWithoutVendorInput
+    compraServicios?: CompraServicioUncheckedCreateNestedManyWithoutProveedorInput
   }
 
   export type VendorCreateOrConnectWithoutDeudasCashInput = {
@@ -170937,6 +173119,7 @@ export namespace Prisma {
     gastoCompras?: GastoCompraUpdateManyWithoutVendorNestedInput
     anticipos?: AnticipoUpdateManyWithoutProveedorNestedInput
     productos?: ProductoUpdateManyWithoutVendorNestedInput
+    compraServicios?: CompraServicioUpdateManyWithoutProveedorNestedInput
   }
 
   export type VendorUncheckedUpdateWithoutDeudasCashInput = {
@@ -170958,6 +173141,7 @@ export namespace Prisma {
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutVendorNestedInput
     anticipos?: AnticipoUncheckedUpdateManyWithoutProveedorNestedInput
     productos?: ProductoUncheckedUpdateManyWithoutVendorNestedInput
+    compraServicios?: CompraServicioUncheckedUpdateManyWithoutProveedorNestedInput
   }
 
   export type CuentaPorPagarUpsertWithoutDeudaCashInput = {
@@ -174836,6 +177020,7 @@ export namespace Prisma {
     deudasCash?: DeudaCashCreateNestedManyWithoutProveedorInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutVendorInput
     productos?: ProductoCreateNestedManyWithoutVendorInput
+    compraServicios?: CompraServicioCreateNestedManyWithoutProveedorInput
   }
 
   export type VendorUncheckedCreateWithoutAnticiposInput = {
@@ -174857,6 +177042,7 @@ export namespace Prisma {
     deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutProveedorInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutVendorInput
     productos?: ProductoUncheckedCreateNestedManyWithoutVendorInput
+    compraServicios?: CompraServicioUncheckedCreateNestedManyWithoutProveedorInput
   }
 
   export type VendorCreateOrConnectWithoutAnticiposInput = {
@@ -175233,6 +177419,7 @@ export namespace Prisma {
     deudasCash?: DeudaCashUpdateManyWithoutProveedorNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutVendorNestedInput
     productos?: ProductoUpdateManyWithoutVendorNestedInput
+    compraServicios?: CompraServicioUpdateManyWithoutProveedorNestedInput
   }
 
   export type VendorUncheckedUpdateWithoutAnticiposInput = {
@@ -175254,6 +177441,7 @@ export namespace Prisma {
     deudasCash?: DeudaCashUncheckedUpdateManyWithoutProveedorNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutVendorNestedInput
     productos?: ProductoUncheckedUpdateManyWithoutVendorNestedInput
+    compraServicios?: CompraServicioUncheckedUpdateManyWithoutProveedorNestedInput
   }
 
   export type ClienteUpsertWithoutAnticiposInput = {
@@ -176256,6 +178444,22 @@ export namespace Prisma {
     fotos?: ProductoCreatefotosInput | string[]
   }
 
+  export type CompraServicioCreateManyProveedorInput = {
+    compraServicioId?: string
+    servicioId: string
+    numeroFactura?: string | null
+    costoUnitario: number
+    cantidad: number
+    total: number
+    formaPago: string
+    estado: string
+    descripcion?: string | null
+    fechaServicio?: Date | string
+    fechaVencimiento?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type CompraProductoUpdateWithoutProveedorInput = {
     compraProductoId?: StringFieldUpdateOperationsInput | string
     numeroFactura?: StringFieldUpdateOperationsInput | string
@@ -176745,6 +178949,54 @@ export namespace Prisma {
     surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+  }
+
+  export type CompraServicioUpdateWithoutProveedorInput = {
+    compraServicioId?: StringFieldUpdateOperationsInput | string
+    numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
+    costoUnitario?: IntFieldUpdateOperationsInput | number
+    cantidad?: IntFieldUpdateOperationsInput | number
+    total?: IntFieldUpdateOperationsInput | number
+    formaPago?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaServicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    servicio?: ServiciosUpdateOneRequiredWithoutCompraServiciosNestedInput
+  }
+
+  export type CompraServicioUncheckedUpdateWithoutProveedorInput = {
+    compraServicioId?: StringFieldUpdateOperationsInput | string
+    servicioId?: StringFieldUpdateOperationsInput | string
+    numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
+    costoUnitario?: IntFieldUpdateOperationsInput | number
+    cantidad?: IntFieldUpdateOperationsInput | number
+    total?: IntFieldUpdateOperationsInput | number
+    formaPago?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaServicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CompraServicioUncheckedUpdateManyWithoutProveedorInput = {
+    compraServicioId?: StringFieldUpdateOperationsInput | string
+    servicioId?: StringFieldUpdateOperationsInput | string
+    numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
+    costoUnitario?: IntFieldUpdateOperationsInput | number
+    cantidad?: IntFieldUpdateOperationsInput | number
+    total?: IntFieldUpdateOperationsInput | number
+    formaPago?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaServicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type PagoDeudaCreateManyInyeccionInput = {
@@ -180703,6 +182955,22 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type CompraServicioCreateManyServicioInput = {
+    compraServicioId?: string
+    proveedorId?: string | null
+    numeroFactura?: string | null
+    costoUnitario: number
+    cantidad: number
+    total: number
+    formaPago: string
+    estado: string
+    descripcion?: string | null
+    fechaServicio?: Date | string
+    fechaVencimiento?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type OfertaItemUpdateWithoutServicioInput = {
     id?: StringFieldUpdateOperationsInput | string
     cantidad?: IntFieldUpdateOperationsInput | number
@@ -180761,6 +183029,54 @@ export namespace Prisma {
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     reconciliado?: NullableBoolFieldUpdateOperationsInput | boolean | null
     clienteId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CompraServicioUpdateWithoutServicioInput = {
+    compraServicioId?: StringFieldUpdateOperationsInput | string
+    numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
+    costoUnitario?: IntFieldUpdateOperationsInput | number
+    cantidad?: IntFieldUpdateOperationsInput | number
+    total?: IntFieldUpdateOperationsInput | number
+    formaPago?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaServicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    proveedor?: VendorUpdateOneWithoutCompraServiciosNestedInput
+  }
+
+  export type CompraServicioUncheckedUpdateWithoutServicioInput = {
+    compraServicioId?: StringFieldUpdateOperationsInput | string
+    proveedorId?: NullableStringFieldUpdateOperationsInput | string | null
+    numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
+    costoUnitario?: IntFieldUpdateOperationsInput | number
+    cantidad?: IntFieldUpdateOperationsInput | number
+    total?: IntFieldUpdateOperationsInput | number
+    formaPago?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaServicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CompraServicioUncheckedUpdateManyWithoutServicioInput = {
+    compraServicioId?: StringFieldUpdateOperationsInput | string
+    proveedorId?: NullableStringFieldUpdateOperationsInput | string | null
+    numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
+    costoUnitario?: IntFieldUpdateOperationsInput | number
+    cantidad?: IntFieldUpdateOperationsInput | number
+    total?: IntFieldUpdateOperationsInput | number
+    formaPago?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaServicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }

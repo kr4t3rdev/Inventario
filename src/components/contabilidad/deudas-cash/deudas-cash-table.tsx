@@ -29,6 +29,7 @@ import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
 import React from "react"
 import type { DeudaCash } from "@/app/models/model"
+import { calcularSaldoPendienteDeuda, normalizarEstadoDeudaCash } from "@/lib/utils/deuda-cash"
 
 interface DeudasCashTableProps {
   deudas: DeudaCash[]
@@ -302,7 +303,9 @@ export function DeudasCashTable({ deudas, isLoading, error, onPagar }: DeudasCas
       header: "Saldo Pendiente",
       cell: ({ row }) => {
         const cpp = row.original.cuentaPorPagar
-        const saldo = cpp ? Number(cpp.saldoPendiente) : Number(row.original.montoCapital)
+        const saldo = cpp
+          ? calcularSaldoPendienteDeuda(Number(cpp.montoDeuda), Number(cpp.montoPagado))
+          : Number(row.original.montoCapital)
         return (
           <span className={cn("font-medium", saldo > 0 ? "text-red-600 dark:text-red-400" : "text-green-600 dark:text-green-400")}>
             {formatTableCurrency(saldo)}
@@ -318,7 +321,17 @@ export function DeudasCashTable({ deudas, isLoading, error, onPagar }: DeudasCas
     {
       accessorKey: "estado",
       header: "Estado",
-      cell: ({ getValue }) => <EstadoBadge estado={getValue() as string} />,
+      cell: ({ row, getValue }) => {
+        const cpp = row.original.cuentaPorPagar
+        const estado = cpp
+          ? normalizarEstadoDeudaCash(row.original.estado, {
+              montoDeuda: Number(cpp.montoDeuda),
+              montoPagado: Number(cpp.montoPagado),
+              estado: cpp.estado,
+            })
+          : (getValue() as string)
+        return <EstadoBadge estado={estado} />
+      },
     },
     {
       accessorKey: "fechaOtorgamiento",
@@ -342,7 +355,15 @@ export function DeudasCashTable({ deudas, isLoading, error, onPagar }: DeudasCas
       header: "Acciones",
       cell: ({ row }) => {
         const deuda = row.original
-        const activa = deuda.estado === "ACTIVO" || deuda.estado === "VENCIDO"
+        const cpp = deuda.cuentaPorPagar
+        const estado = cpp
+          ? normalizarEstadoDeudaCash(deuda.estado, {
+              montoDeuda: Number(cpp.montoDeuda),
+              montoPagado: Number(cpp.montoPagado),
+              estado: cpp.estado,
+            })
+          : deuda.estado
+        const activa = estado === "ACTIVO" || estado === "VENCIDO"
         return (
           <Button
             variant="outline"
@@ -359,7 +380,17 @@ export function DeudasCashTable({ deudas, isLoading, error, onPagar }: DeudasCas
 
   const deudasFiltradas = useMemo(() => {
     if (estadoFiltro === "TODOS") return deudas
-    return deudas.filter((d) => d.estado === estadoFiltro)
+    return deudas.filter((d) => {
+      const cpp = d.cuentaPorPagar
+      const estado = cpp
+        ? normalizarEstadoDeudaCash(d.estado, {
+            montoDeuda: Number(cpp.montoDeuda),
+            montoPagado: Number(cpp.montoPagado),
+            estado: cpp.estado,
+          })
+        : d.estado
+      return estado === estadoFiltro
+    })
   }, [deudas, estadoFiltro])
 
   const table = useReactTable({

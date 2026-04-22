@@ -26,6 +26,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   useGetAjustesByCuentaQuery,
+  useGetResumenAnticiposQuery,
   useGetGastosPendientesQuery,
   useGetHistorialReconciliacionGastosQuery,
   useGetHistorialReconciliacionServiciosQuery,
@@ -38,6 +39,7 @@ import {
   useGetVentasPendientesQuery,
   useInvalidateContabilidadCache,
 } from '@/lib/redux/services/contabilidadApi';
+import { useGetPrestamosCashStatsQuery } from '@/lib/redux/services/prestamosCashApi';
 import { formatCurrency } from '@/lib/redux/utils/contabilidadUtils';
 import { cn } from '@/lib/utils';
 
@@ -71,6 +73,15 @@ interface ResumenFinancieroProps {
 }
 
 type AccentTone = 'emerald' | 'rose' | 'blue' | 'amber' | 'slate' | 'violet';
+
+/**
+ * @description Calcula el total de anticipos desde el resumen contable.
+ * @param {Array<{ moneda: string; total: number }>} porMoneda - Totales por moneda.
+ * @returns {number} Total acumulado de anticipos.
+ */
+export function calculateAnticiposTotal(porMoneda?: Array<{ moneda: string; total: number }>): number {
+  return (porMoneda || []).reduce((total, item) => total + (item.total || 0), 0);
+}
 
 import {
   Tooltip,
@@ -259,6 +270,8 @@ export function ResumenFinanciero({
 
   const { data: gastosData } = useGetGastosPendientesQuery({ fechaDesde: fechaFin, fechaHasta: fechaFin, tipoGasto, periodo, soloNoReconciliados, page, limit });
   const { data: gastosHistoryData } = useGetHistorialReconciliacionGastosQuery({ fechaFin, fechaInicio, cuentaId, tipoGasto });
+  const { data: prestamosStats } = useGetPrestamosCashStatsQuery();
+  const { data: resumenAnticiposData } = useGetResumenAnticiposQuery({ fechaInicio, fechaFin });
 
   // --- Calculations ---
   const ventasPend = ventasData?.ventas?.length || 0;
@@ -401,6 +414,12 @@ export function ResumenFinanciero({
   const resumenPrincipal = resumen.resumenPorMoneda?.find((m) => m.moneda === monedaPrincipal);
   const ingresosTotales = resumenPrincipal?.totalIngresos ?? 0;
   const egresosTotales = resumenPrincipal?.totalEgresos ?? 0;
+  const totalAnticipos = calculateAnticiposTotal(
+    Object.entries(resumenAnticiposData?.resumen?.porMoneda || {}).map(([moneda, value]) => ({
+      moneda,
+      total: value?.total || 0,
+    }))
+  );
   const saldoTone: AccentTone = saldoNetoEnPrincipal >= 0 ? 'emerald' : 'rose';
 
   const cards = [
@@ -427,6 +446,22 @@ export function ResumenFinanciero({
       icon: Wallet,
       tone: saldoTone,
       description: "Balance total en moneda principal"
+    },
+    {
+      title: "Saldo Préstamos",
+      subtitle: monedaPrincipal,
+      value: Object.values(prestamosStats?.montoPendienteCobro ?? {}).reduce((acc, value) => acc + value, 0),
+      icon: Calculator,
+      tone: 'violet' as AccentTone,
+      description: "Monto pendiente por cobrar de préstamos cash"
+    },
+    {
+      title: "Monto Anticipos",
+      subtitle: monedaPrincipal,
+      value: totalAnticipos,
+      icon: DollarSign,
+      tone: 'amber' as AccentTone,
+      description: "Monto total acumulado de anticipos"
     },
   ];
 

@@ -25,16 +25,3 @@ CREATE INDEX "StockUbicacion_productoId_idx" ON "StockUbicacion"("productoId");
 
 -- AddForeignKey
 ALTER TABLE "StockUbicacion" ADD CONSTRAINT "StockUbicacion_productoId_fkey" FOREIGN KEY ("productoId") REFERENCES "Producto"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
-
--- CreateIndex
-CREATE UNIQUE INDEX "StockUbicacion_productoId_tipoUbicacion_ubicacionId_key" ON "StockUbicacion"("productoId", "tipoUbicacion", "ubicacionId");
-
--- CreateIndex
-CREATE INDEX "StockUbicacion_ubicacionId_tipoUbicacion_idx" ON "StockUbicacion"("ubicacionId", "tipoUbicacion");
-
--- CreateIndex
-CREATE INDEX "StockUbicacion_productoId_idx" ON "StockUbicacion"("productoId");
-
--- AddForeignKey
-ALTER TABLE "StockUbicacion" ADD CONSTRAINT "StockUbicacion_productoId_fkey" FOREIGN KEY ("productoId") REFERENCES "Producto"("id") ON DELETE CASCADE ON UPDATE CASCADE;

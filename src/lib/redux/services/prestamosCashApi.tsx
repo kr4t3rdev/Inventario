@@ -2,6 +2,7 @@ import { apiSlice } from './apiSlice'
 import {
   PrestamoCash,
   PrestamosCashStats,
+  HistorialPrestamoCashResponse,
   CreatePrestamoCashRequest,
   UpdatePrestamoCashRequest,
   RegistrarPagoPrestamoRequest,
@@ -29,6 +30,10 @@ export const prestamosCashApi = apiSlice.injectEndpoints({
     getPrestamoCash: builder.query<PrestamoCash, string>({
       query: (id) => `/contabilidad/prestamos-cash/${id}`,
       transformResponse: (response: { prestamo: PrestamoCash }) => response.prestamo,
+      providesTags: (result, error, id) => [{ type: 'PrestamosCash', id }],
+    }),
+    getPrestamoCashHistorial: builder.query<HistorialPrestamoCashResponse, string>({
+      query: (id) => `/contabilidad/prestamos-cash/${id}/historial`,
       providesTags: (result, error, id) => [{ type: 'PrestamosCash', id }],
     }),
     createPrestamoCash: builder.mutation<PrestamoCash, CreatePrestamoCashRequest>({
@@ -64,6 +69,7 @@ export const {
   useGetPrestamosCashQuery,
   useGetPrestamosCashStatsQuery,
   useGetPrestamoCashQuery,
+  useGetPrestamoCashHistorialQuery,
   useCreatePrestamoCashMutation,
   useUpdatePrestamoCashMutation,
   useRegistrarPagoPrestamoMutation,

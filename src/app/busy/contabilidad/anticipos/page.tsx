@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PageTransition, StaggerContainer, StaggerItem } from "@/components/ui/animations"
-import { useGetAnticiposQuery, useGetCuentasBancariasQuery } from "@/lib/redux/services/contabilidadApi"
+import { useGetAnticiposQuery, useGetAnticipoByIdQuery, useGetCuentasBancariasQuery } from "@/lib/redux/services/contabilidadApi"
 import { useGetClientesQuery } from "@/lib/redux/services/ClienteApi"
 import { useGetVendorsQuery } from "@/lib/redux/services/vendorsApi"
 import { AnticiposTable } from "@/components/contabilidad/anticipos/anticipos-table"
@@ -38,6 +38,7 @@ function AnticiposContent() {
   const [openEjecutar, setOpenEjecutar] = useState(false)
   const [openRevertir, setOpenRevertir] = useState(false)
   const [anticipoSeleccionado, setAnticipoSeleccionado] = useState<Anticipo | null>(null)
+  const [anticipoDetailId, setAnticipoDetailId] = useState<string | null>(null)
   const [tabActiva, setTabActiva] = useState("lista")
   const [contratos, setContratos] = useState<ContratoAnticipo[]>([])
 
@@ -54,6 +55,12 @@ function AnticiposContent() {
   const { data: dataClientes } = useGetClientesQuery()
   const { data: dataProveedores } = useGetVendorsQuery()
   const { data: dataCuentas } = useGetCuentasBancariasQuery()
+
+  // Query para detalle completo con movimientos enriquecidos
+  const { data: anticipoDetailData, isLoading: loadingDetail } = useGetAnticipoByIdQuery(
+    anticipoDetailId || '',
+    { skip: !anticipoDetailId }
+  )
 
   
   const anticipos = dataAnticipos?.anticipos || []
@@ -88,6 +95,7 @@ function AnticiposContent() {
   // Handlers
   const handleVerDetalle = (anticipo: Anticipo) => {
     setAnticipoSeleccionado(anticipo)
+    setAnticipoDetailId(anticipo.anticipoId)
     setOpenDetail(true)
   }
 
@@ -191,10 +199,19 @@ function AnticiposContent() {
       />
 
       <AnticipoDetail
-        anticipo={anticipoSeleccionado}
+        anticipo={anticipoDetailData?.anticipo || anticipoSeleccionado}
         open={openDetail}
-        onOpenChange={setOpenDetail}
-        onCerrar={() => setOpenDetail(false)}
+        onOpenChange={(open) => {
+          setOpenDetail(open)
+          if (!open) {
+            setAnticipoDetailId(null)
+          }
+        }}
+        onCerrar={() => {
+          setOpenDetail(false)
+          setAnticipoDetailId(null)
+        }}
+        isLoading={loadingDetail}
       />
 
       <AnticipoEjecutarDialog

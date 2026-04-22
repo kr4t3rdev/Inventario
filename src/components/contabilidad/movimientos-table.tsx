@@ -9,8 +9,10 @@ import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Search, Filter, Download, ArrowUpDown, TrendingUp, TrendingDown, Wallet, Receipt, FileText, Calendar } from "lucide-react"
+import { Search, Filter, Download, ArrowUpDown, TrendingUp, TrendingDown, Wallet, Receipt, FileText, Calendar, Eye } from "lucide-react"
 import { useGetMovimientosQuery, useGetCuentasBancariasQuery } from "@/lib/redux/services/contabilidadApi"
+import { useGetPrestamoCashHistorialQuery } from "@/lib/redux/services/prestamosCashApi"
+import { useGetDeudaCashQuery } from "@/lib/redux/services/deudasCashApi"
 import { formatCurrencySimple, formatDate } from "@/lib/redux/utils/contabilidadUtils"
 import { DateRangePicker } from "./date-range-picker"
 import { cn } from "@/lib/utils"
@@ -20,6 +22,7 @@ import {
   StaggerItem,
   AnimatedCard
 } from "@/components/ui/animations"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 
 interface MovimientosTableProps {
   cuentaId?: string
@@ -42,7 +45,8 @@ const typeColors: Record<string, string> = {
   'transferencia_salida': 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 border-orange-200/80',
   'ajuste_ingreso': 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300 border-emerald-200/80',
   'ajuste_egreso': 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-300 border-rose-200/80',
-  'prestamo_cash': 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300 border-violet-200/80',
+  'prestamo_cash_pago': 'bg-violet-100 text-violet-800 dark:bg-violet-900/30 dark:text-violet-300 border-violet-200/80',
+  'prestamo_cash_desembolso': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-200/80',
   'deuda_cash': 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300 border-red-200/80',
 }
 
@@ -53,6 +57,12 @@ export function MovimientosTable({
   onExport,
 }: MovimientosTableProps) {
   const shouldReduceMotion = useReducedMotion()
+  const [prestamoSheetOpen, setPrestamoSheetOpen] = useState(false)
+  const [selectedPrestamoCashId, setSelectedPrestamoCashId] = useState<string | null>(null)
+  const [selectedPrestamoLabel, setSelectedPrestamoLabel] = useState('')
+  const [deudaSheetOpen, setDeudaSheetOpen] = useState(false)
+  const [selectedDeudaCashId, setSelectedDeudaCashId] = useState<string | null>(null)
+  const [selectedDeudaLabel, setSelectedDeudaLabel] = useState('')
   const [filtros, setFiltros] = useState({
     busqueda: "",
     cuentaId: initialCuentaId || "all",
@@ -68,6 +78,12 @@ export function MovimientosTable({
     ...filtros,
     cuentaId: filtros.cuentaId === 'all' ? undefined : filtros.cuentaId,
     moneda: filtros.moneda === 'all' ? undefined : filtros.moneda,
+  })
+  const { data: prestamoHistorial } = useGetPrestamoCashHistorialQuery(selectedPrestamoCashId ?? '', {
+    skip: !selectedPrestamoCashId || !prestamoSheetOpen,
+  })
+  const { data: deudaHistorial } = useGetDeudaCashQuery(selectedDeudaCashId ?? '', {
+    skip: !selectedDeudaCashId || !deudaSheetOpen,
   })
   const { data: cuentasData = { cuentas: [] } } = useGetCuentasBancariasQuery()
   const cuentas = cuentasData.cuentas || []
@@ -112,12 +128,13 @@ export function MovimientosTable({
       case 'servicio':
       case 'ajuste_ingreso':
       case 'transferencia_entrada':
-      case 'prestamo_cash':
+      case 'prestamo_cash_pago':
         return <TrendingUp className="h-3.5 w-3.5" />
       case 'gasto':
       case 'salario':
       case 'ajuste_egreso':
       case 'transferencia_salida':
+      case 'prestamo_cash_desembolso':
       case 'deuda_cash':
         return <TrendingDown className="h-3.5 w-3.5" />
       default:
@@ -135,10 +152,37 @@ export function MovimientosTable({
       'transferencia_salida': 'Transferencia Salida',
       'ajuste_ingreso': 'Ajuste Ingreso',
       'ajuste_egreso': 'Ajuste Egreso',
-      'prestamo_cash': 'Préstamo Cash',
+      'prestamo_cash_pago': 'Cobro Préstamo Cash',
+      'prestamo_cash_desembolso': 'Desembolso Préstamo Cash',
       'deuda_cash': 'Deuda Cash',
     }
     return labels[tipo] || tipo
+  }
+
+  const openPrestamoDetalle = (movimiento: any): void => {
+    const esPrestamoCash = movimiento.tipo === 'prestamo_cash_desembolso'
+    const prestamoCashId = movimiento?.detalles?.prestamoCashId ?? movimiento.referencia ?? null
+
+    if (!esPrestamoCash || !prestamoCashId) {
+      return
+    }
+
+    setSelectedPrestamoCashId(prestamoCashId)
+    setSelectedPrestamoLabel(movimiento?.detalles?.clientePrestamo || movimiento.descripcion)
+    setPrestamoSheetOpen(true)
+  }
+
+  const openDeudaDetalle = (movimiento: any): void => {
+    const esDeudaCash = movimiento.tipo === 'deuda_cash_desembolso'
+    const deudaCashId = movimiento.referencia ?? null
+
+    if (!esDeudaCash || !deudaCashId) {
+      return
+    }
+
+    setSelectedDeudaCashId(deudaCashId)
+    setSelectedDeudaLabel(movimiento.descripcion)
+    setDeudaSheetOpen(true)
   }
 
   const containerVariants = {
@@ -336,6 +380,7 @@ export function MovimientosTable({
                       <TableHead className="font-semibold">Cuenta</TableHead>
                       <TableHead className="font-semibold">Tipo</TableHead>
                       <TableHead className="font-semibold">Descripción</TableHead>
+                      <TableHead className="font-semibold">Referencia</TableHead>
                       <TableHead className="font-semibold">Moneda</TableHead>
                       <TableHead className="font-semibold">Monto Original</TableHead>
                       <TableHead className="font-semibold">Tasa</TableHead>
@@ -406,6 +451,33 @@ export function MovimientosTable({
                             </div>
                           </TableCell>
                           <TableCell>
+                            {movimiento.tipo === 'prestamo_cash_desembolso' ? (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="gap-1 border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100 dark:border-violet-900/60 dark:bg-violet-900/20 dark:text-violet-300"
+                                onClick={() => openPrestamoDetalle(movimiento)}
+                              >
+                                <Eye className="h-3.5 w-3.5" />
+                                Ver préstamo
+                                </Button>
+                              ) : movimiento.tipo === 'deuda_cash_desembolso' ? (
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="gap-1 border-red-200 bg-red-50 text-red-700 hover:bg-red-100 dark:border-red-900/60 dark:bg-red-900/20 dark:text-red-300"
+                                onClick={() => openDeudaDetalle(movimiento)}
+                              >
+                                <Eye className="h-3.5 w-3.5" />
+                                Ver deuda
+                              </Button>
+                            ) : (
+                              <span className="text-muted-foreground">-</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
                             <Badge variant="outline" className="font-mono">{movimiento.moneda}</Badge>
                           </TableCell>
                           <TableCell>
@@ -419,16 +491,16 @@ export function MovimientosTable({
                             </span>
                           </TableCell>
                           <TableCell className="text-right">
-                            <span className={cn(
-                              "font-mono font-semibold",
-                              movimiento.tipo.includes('ingreso') ||
-                                movimiento.tipo === 'venta' ||
-                                movimiento.tipo === 'servicio' ||
-                                movimiento.tipo === 'transferencia_entrada' ||
-                                movimiento.tipo === 'prestamo_cash'
-                                ? 'text-green-600 dark:text-green-400'
-                                : 'text-red-600 dark:text-red-400'
-                            )}>
+                              <span className={cn(
+                                "font-mono font-semibold",
+                                movimiento.tipo.includes('ingreso') ||
+                                  movimiento.tipo === 'venta' ||
+                                  movimiento.tipo === 'servicio' ||
+                                  movimiento.tipo === 'transferencia_entrada' ||
+                                  movimiento.tipo === 'prestamo_cash_pago'
+                                  ? 'text-green-600 dark:text-green-400'
+                                  : 'text-red-600 dark:text-red-400'
+                              )}>
                               {formatCurrencySimple(movimiento.montoConvertido ?? 0, movimiento.moneda)}
                             </span>
                           </TableCell>
@@ -475,6 +547,72 @@ export function MovimientosTable({
           </Card>
         </AnimatedCard>
       </StaggerItem>
+
+      <Sheet open={prestamoSheetOpen} onOpenChange={setPrestamoSheetOpen}>
+        <SheetContent side="right" className="w-[420px] sm:max-w-none">
+          <SheetHeader>
+            <SheetTitle>Detalle de préstamo cash</SheetTitle>
+            <SheetDescription>
+              {selectedPrestamoLabel
+                ? `Historial completo de ${selectedPrestamoLabel}`
+                : 'Historial completo del préstamo seleccionado.'}
+            </SheetDescription>
+          </SheetHeader>
+          {prestamoHistorial ? (
+            <div className="space-y-4 p-4">
+              <div className="rounded-lg border p-4">
+                <p className="text-sm text-muted-foreground">Saldo pendiente</p>
+                <p className="text-xl font-semibold">
+                  {formatCurrencySimple(prestamoHistorial.resumen.saldoPendiente, prestamoHistorial.prestamo.moneda)}
+                </p>
+              </div>
+              <div className="space-y-2">
+                {prestamoHistorial.historial.length > 0 ? (
+                  prestamoHistorial.historial.map((pago) => (
+                    <div key={pago.id} className="rounded-lg border p-3 text-sm">
+                      <p className="font-medium">{formatDate(pago.fecha)}</p>
+                      <p>{pago.tipoPago} · {pago.cuentaBancaria}</p>
+                      <p>{formatCurrencySimple(pago.monto, pago.moneda)}</p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">El préstamo todavía no registra pagos.</p>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="p-4 text-sm text-muted-foreground">Seleccioná un préstamo para ver el detalle.</div>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={deudaSheetOpen} onOpenChange={setDeudaSheetOpen}>
+        <SheetContent side="right" className="w-[420px] sm:max-w-none">
+          <SheetHeader>
+            <SheetTitle>Detalle de deuda cash</SheetTitle>
+            <SheetDescription>
+              {selectedDeudaLabel
+                ? `Historial completo de ${selectedDeudaLabel}`
+                : 'Historial completo de la deuda seleccionada.'}
+            </SheetDescription>
+          </SheetHeader>
+          {deudaHistorial ? (
+            <div className="space-y-4 p-4">
+              <div className="rounded-lg border p-4">
+                <p className="text-sm text-muted-foreground">Monto capital</p>
+                <p className="text-xl font-semibold">
+                  {formatCurrencySimple(deudaHistorial.montoCapital, deudaHistorial.moneda)}
+                </p>
+              </div>
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">Detalle cargado desde la ficha de deuda.</p>
+              </div>
+            </div>
+          ) : (
+            <div className="p-4 text-sm text-muted-foreground">Seleccioná una deuda para ver el detalle.</div>
+          )}
+        </SheetContent>
+      </Sheet>
     </StaggerContainer>
   )
 }

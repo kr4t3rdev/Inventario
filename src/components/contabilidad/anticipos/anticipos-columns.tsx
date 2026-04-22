@@ -7,6 +7,29 @@ import { Badge } from "@/components/ui/badge"
 import { Anticipo } from "@/app/models/model"
 import { cn } from "@/lib/utils"
 
+type AnticipoConRelaciones = Anticipo & {
+  cliente?: { clienteId: string; nombre: string } | null
+  proveedor?: { vendorId: string; nombre: string } | null
+}
+
+/**
+ * @description Devuelve el nombre del cliente si viene embebido, o su ID como fallback.
+ * @param {AnticipoConRelaciones} anticipo - Anticipo con relación de cliente opcional.
+ * @returns {string} Nombre del cliente o identificador.
+ */
+export function formatAnticipoCliente(anticipo: AnticipoConRelaciones): string {
+  return anticipo.cliente?.nombre || anticipo.clienteId || "-"
+}
+
+/**
+ * @description Devuelve el nombre del proveedor si viene embebido, o su ID como fallback.
+ * @param {AnticipoConRelaciones} anticipo - Anticipo con relación de proveedor opcional.
+ * @returns {string} Nombre del proveedor o identificador.
+ */
+export function formatAnticipoProveedor(anticipo: AnticipoConRelaciones): string {
+  return anticipo.proveedor?.nombre || anticipo.proveedorId || "-"
+}
+
 /**
  * @description Define las columnas para la tabla de anticipos
  * @returns {ColumnDef<Anticipo>[]} Columnas configuradas
@@ -116,16 +139,16 @@ export const anticiposColumns: ColumnDef<Anticipo>[] = [
   },
   {
     accessorKey: "clienteId",
-    header: "Cliente ID",
+    header: "Cliente",
     cell: ({ row }) => {
-      return row.original.clienteId || "-"
+      return formatAnticipoCliente(row.original as AnticipoConRelaciones)
     },
   },
   {
     accessorKey: "proveedorId",
-    header: "Proveedor ID",
+    header: "Proveedor",
     cell: ({ row }) => {
-      return row.original.proveedorId || "-"
+      return formatAnticipoProveedor(row.original as AnticipoConRelaciones)
     },
   },
   {

@@ -7,7 +7,7 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useDeleteServiciosMutation, useGetServiciosQuery } from '@/lib/redux/services/serviciosApi'
 import { ColumnDef } from '@tanstack/react-table'
-import { Pencil, Plus, Trash2, ShoppingCart, Search, Wrench, Package, CheckCircle } from 'lucide-react'
+import { Pencil, Plus, Trash2, ShoppingCart, Search, Wrench, Package, CheckCircle, Truck } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
@@ -20,6 +20,7 @@ import dynamic from 'next/dynamic'
 
 const DataTable = dynamic(() => import('@/components/data-table').then(mod => ({default:mod.DataTable})))
 const ServiciosCart = dynamic(() => import('@/components/servicios').then(mod => ({default:mod.ServiciosCart})))
+const ServiciosRecibidosTable = dynamic(() => import('@/components/servicios').then(mod => mod.ServiciosRecibidosTable))
 
 interface Servicio {
   servicioId: string
@@ -268,7 +269,11 @@ const Servicio = () => {
                 </TabsTrigger>
                 <TabsTrigger value='vendidos'>
                   <CheckCircle className='mr-2 h-4 w-4' />
-                  Servicios Vendidos
+                  Servicios Utilizados
+                </TabsTrigger>
+                <TabsTrigger value='recibidos'>
+                  <Truck className='mr-2 h-4 w-4' />
+                  Servicios Recibidos
                 </TabsTrigger>
               </TabsList>
             </motion.div>
@@ -452,6 +457,30 @@ const Servicio = () => {
                           searchPlaceholder='Buscar ventas de servicios...'
                         />
                       )}
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              </TabsContent>
+
+              <TabsContent value='recibidos' className='mt-0'>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                >
+                  <Card>
+                    <CardHeader>
+                      <div className='flex items-center gap-3'>
+                        <Truck className='h-6 w-6 text-orange-600' />
+                        <div>
+                          <CardTitle>Servicios Recibidos</CardTitle>
+                          <CardDescription>Registro de todos los servicios recibidos</CardDescription>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <ServiciosRecibidosTable />
                     </CardContent>
                   </Card>
                 </motion.div>

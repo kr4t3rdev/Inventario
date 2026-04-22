@@ -4,6 +4,7 @@ import { z } from 'zod'
 import prisma from '@/lib/prisma'
 import { withAuthGet, withAuthPost } from '@/lib/auth-middleware'
 import { AuditLogService } from '@/lib/services/audit-log-service'
+import { calcularSaldoPendienteDeuda, calcularTotalDeudaConInteres, normalizarEstadoDeudaCash } from '@/lib/utils/deuda-cash'
 
 const querySchema = z.object({
   estado: z.enum(['ACTIVO', 'PAGADO', 'VENCIDO', 'CANCELADO']).optional(),
@@ -89,8 +90,21 @@ export const GET = withAuthGet(async (request: NextRequest) => {
       prisma.deudaCash.count({ where })
     ])
 
+    const deudasNormalizadas = deudas.map((deuda) => ({
+      ...deuda,
+      estado: normalizarEstadoDeudaCash(deuda.estado, {
+        montoDeuda: Number(deuda.cuentaPorPagar?.montoDeuda ?? deuda.montoCapital),
+        montoPagado: Number(deuda.cuentaPorPagar?.montoPagado ?? 0),
+        estado: deuda.cuentaPorPagar?.estado,
+      }),
+      saldoPendiente: calcularSaldoPendienteDeuda(
+        Number(deuda.cuentaPorPagar?.montoDeuda ?? deuda.montoCapital),
+        Number(deuda.cuentaPorPagar?.montoPagado ?? 0)
+      )
+    }))
+
     return NextResponse.json({
-      deudas,
+      deudas: deudasNormalizadas,
       pagination: {
         total,
         page: query.page,
@@ -121,6 +135,7 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
     const rawBody = await request.json()
     console.log('[DeudaCash POST] body recibido:', JSON.stringify(rawBody))
     const body = createSchema.parse(rawBody)
+    const totalDeuda = calcularTotalDeudaConInteres(body.montoCapital, body.tasaInteres)
 
     const proveedor = await prisma.vendor.findUnique({
       where: { vendorId: body.proveedorId },
@@ -132,6 +147,14 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
     }
 
     const deuda = await prisma.$transaction(async (tx) => {
+      const tipoPagoDesembolso =
+        (await tx.tipoPago.findFirst({ where: { nombre: 'Transferencia', isActive: true } })) ||
+        (await tx.tipoPago.findFirst({ where: { nombre: 'Efectivo', isActive: true } }))
+
+      if (!tipoPagoDesembolso) {
+        throw new Error('No existe un tipo de pago válido para el desembolso de deuda')
+      }
+
       await tx.cuentaBancaria.update({
         where: { cuentaId: body.cuentaBancariaId },
         data: { saldo: { increment: body.montoCapital } }
@@ -148,9 +171,9 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
           numeroFactura: `DC-${nextNum}`,
           proveedorId: body.proveedorId,
           proveedorNombre: proveedor.nombre,
-          montoDeuda: body.montoCapital,
+          montoDeuda: totalDeuda,
           montoPagado: 0,
-          saldoPendiente: body.montoCapital,
+          saldoPendiente: totalDeuda,
           moneda: body.moneda,
           tipo: 'compra',
           tipoDeuda: 'DEUDA_CASH',
@@ -159,11 +182,27 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
         }
       })
 
+      await tx.reconciliacionVenta.create({
+        data: {
+          cuentaId: body.cuentaBancariaId,
+          tipoPagoId: tipoPagoDesembolso.tipoId,
+          monto: body.montoCapital,
+          moneda: body.moneda,
+          montoConvertido: body.montoCapital,
+          fechaReconciliacion: new Date(),
+          observaciones: body.observaciones || `Desembolso de deuda cash para proveedor ${body.proveedorId}`,
+          reconciliadoPor: user.userId,
+          deudaCashId: null,
+          tipoReconciliacion: 'DEUDA_CASH_DESEMBOLSO'
+        }
+      })
+
       return tx.deudaCash.create({
         data: {
           proveedorId: body.proveedorId,
           cuentaPorPagarId: cuentaPorPagar.cuentaPorPagarId,
           montoCapital: body.montoCapital,
+          montoTotalDeuda: totalDeuda,
           moneda: body.moneda,
           tasaInteres: body.tasaInteres,
           fechaVencimiento: body.fechaVencimiento ? new Date(body.fechaVencimiento) : undefined,

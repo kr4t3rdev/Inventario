@@ -2,76 +2,64 @@ import { describe, it, expect, vi, beforeEach, Mock } from 'vitest'
 import { NextRequest } from 'next/server'
 
 const { prismaMock, transactionClientMock } = vi.hoisted(() => {
+  const receta = {
+    findMany: vi.fn(),
+    findUnique: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+  }
+
+  const ordenProduccion = {
+    findMany: vi.fn(),
+    findUnique: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+  }
+
+  const valeSalida = {
+    findMany: vi.fn(),
+    findUnique: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+  }
+
+  const valeSalidaItem = {
+    create: vi.fn(),
+  }
+
+  const producto = {
+    findUnique: vi.fn(),
+    update: vi.fn(),
+  }
+
+  const reconciliacionGasto = {
+    create: vi.fn(),
+  }
+
+  const ordenProduccionHistorial = {
+    create: vi.fn(),
+  }
+
   const transactionClientMock = {
-    receta: {
-      findMany: vi.fn(),
-      findUnique: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-    },
-    ordenProduccion: {
-      findMany: vi.fn(),
-      findUnique: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-    },
-    valeSalida: {
-      findMany: vi.fn(),
-      findUnique: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-    },
-    valeSalidaItem: {
-      create: vi.fn(),
-    },
-    producto: {
-      findUnique: vi.fn(),
-      update: vi.fn(),
-    },
-    reconciliacionGasto: {
-      create: vi.fn(),
-    },
-    ordenProduccionHistorial: {
-      create: vi.fn(),
-    },
+    receta,
+    ordenProduccion,
+    valeSalida,
+    valeSalidaItem,
+    producto,
+    reconciliacionGasto,
+    ordenProduccionHistorial,
   }
 
   const prismaMock = {
-    receta: {
-      findMany: vi.fn(),
-      findUnique: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-    },
-    ordenProduccion: {
-      findMany: vi.fn(),
-      findUnique: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-    },
-    valeSalida: {
-      findMany: vi.fn(),
-      findUnique: vi.fn(),
-      create: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-    },
-    valeSalidaItem: {
-      create: vi.fn(),
-    },
-    producto: {
-      findUnique: vi.fn(),
-      update: vi.fn(),
-    },
-    reconciliacionGasto: {
-      create: vi.fn(),
-    },
-    ordenProduccionHistorial: {
-      create: vi.fn(),
-    },
+    receta,
+    ordenProduccion,
+    valeSalida,
+    valeSalidaItem,
+    producto,
+    reconciliacionGasto,
+    ordenProduccionHistorial,
     $transaction: vi.fn((fn: Function) => fn(transactionClientMock)),
   }
 
@@ -255,11 +243,11 @@ describe('Production Module API Routes', () => {
         },
       }
       
-      ;(prisma.ordenProduccion.findUnique as Mock).mockResolvedValue(mockOrden)
-      ;(prisma.ordenProduccion.update as Mock).mockResolvedValue(mockUpdatedOrden)
-      ;(prisma.producto.findUnique as Mock).mockResolvedValue({ id: 'prod-1', nombre: 'Harina', stock: 100 })
-      ;(prisma.producto.update as Mock).mockResolvedValue({})
-      ;(prisma.ordenProduccionHistorial.create as Mock).mockResolvedValue({})
+      ;(transactionClientMock.ordenProduccion.update as Mock).mockResolvedValue(mockUpdatedOrden)
+      ;(transactionClientMock.ordenProduccion.findUnique as Mock).mockResolvedValue(mockOrden)
+      ;(transactionClientMock.producto.findUnique as Mock).mockResolvedValue({ id: 'prod-1', nombre: 'Harina', stock: 100 })
+      ;(transactionClientMock.producto.update as Mock).mockResolvedValue({})
+      ;(transactionClientMock.ordenProduccionHistorial.create as Mock).mockResolvedValue({})
 
       const request = new NextRequest('http://localhost:3000/api/produccion/ordenes/orden-1/aprobar', {
         method: 'POST',
@@ -346,31 +334,14 @@ describe('Production Module API Routes', () => {
       }
       const mockUpdatedOrden = { ...mockOrden, estado: 'COMPLETADA', costoMateriales: 200, costoUnitario: 20 }
       
-      ;(prisma.ordenProduccion.findUnique as Mock).mockResolvedValue(mockOrden)
-      ;(prisma.ordenProduccion.update as Mock).mockResolvedValue(mockUpdatedOrden)
-      ;(prisma.producto.findUnique as Mock)
+      ;(transactionClientMock.ordenProduccion.findUnique as Mock).mockResolvedValue(mockOrden)
+      ;(transactionClientMock.ordenProduccion.update as Mock).mockResolvedValue(mockUpdatedOrden)
+      ;(transactionClientMock.producto.findUnique as Mock)
         .mockResolvedValueOnce({ id: 'prod-terminado', nombre: 'Pan', stock: 0, precioCosto: 20 })
         .mockResolvedValueOnce({ id: 'prod-1', nombre: 'Harina', stock: 100, precioCosto: 10 })
-      ;(prisma.producto.update as Mock).mockResolvedValue({})
-      ;(prisma.ordenProduccionHistorial.create as Mock).mockResolvedValue({})
-      ;(prisma.reconciliacionGasto.create as Mock).mockResolvedValue({})
-      ;(prisma.$transaction as Mock).mockImplementation(async (fn: Function) => {
-        const tx = {
-          producto: {
-            update: prisma.producto.update,
-          },
-          ordenProduccion: {
-            update: prisma.ordenProduccion.update,
-          },
-          ordenProduccionHistorial: {
-            create: prisma.ordenProduccionHistorial.create,
-          },
-          reconciliacionGasto: {
-            create: prisma.reconciliacionGasto.create,
-          },
-        }
-        return fn(tx)
-      })
+      ;(transactionClientMock.producto.update as Mock).mockResolvedValue({})
+      ;(transactionClientMock.ordenProduccionHistorial.create as Mock).mockResolvedValue({})
+      ;(transactionClientMock.reconciliacionGasto.create as Mock).mockResolvedValue({})
 
       const request = new NextRequest('http://localhost:3000/api/produccion/ordenes/orden-1/completar', {
         method: 'POST',
@@ -465,30 +436,14 @@ describe('Production Module API Routes', () => {
         items: [{ productoId: 'prod-1', cantidad: 10, producto: mockProducto }],
       }
       
-      ;(prisma.producto.findUnique as Mock).mockResolvedValue(mockProducto)
+      ;(transactionClientMock.producto.findUnique as Mock).mockResolvedValue(mockProducto)
       ;(prisma.valeSalida.create as Mock).mockResolvedValue(mockVale)
       ;(prisma.valeSalidaItem.create as Mock).mockResolvedValue({})
       ;(prisma.producto.update as Mock).mockResolvedValue({})
       ;(prisma.valeSalida.findUnique as Mock).mockResolvedValue(mockVale)
 
       // Mock transaction
-      const mockTransaction = vi.fn(async (fn: Function) => {
-        const tx = {
-          valeSalida: {
-            create: prisma.valeSalida.create,
-            findUnique: prisma.valeSalida.findUnique,
-          },
-          valeSalidaItem: {
-            create: prisma.valeSalidaItem.create,
-          },
-          producto: {
-            findUnique: prisma.producto.findUnique,
-            update: prisma.producto.update,
-          },
-        }
-        return fn(tx)
-      })
-      ;(prisma.$transaction as Mock).mockImplementation(mockTransaction)
+      ;(prisma.$transaction as Mock).mockImplementation(async (fn: Function) => fn(transactionClientMock))
 
       const request = new NextRequest('http://localhost:3000/api/produccion/vales', {
         method: 'POST',

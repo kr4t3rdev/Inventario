@@ -4,6 +4,7 @@ import { z } from 'zod'
 import prisma from '@/lib/prisma'
 import { withAuthGet, withAuthPost } from '@/lib/auth-middleware'
 import { AuditLogService } from '@/lib/services/audit-log-service'
+import { calcularSaldoPendientePrestamo, normalizarEstadoPrestamoCash } from '@/lib/utils/prestamo-cash'
 
 const updateSchema = z.object({
   fechaVencimiento: z.string().optional(),
@@ -52,7 +53,22 @@ export const GET = withAuthGet(async (request: NextRequest, context: unknown) =>
       return NextResponse.json({ error: 'Préstamo no encontrado' }, { status: 404 })
     }
 
-    return NextResponse.json({ prestamo })
+    const saldoPendiente = calcularSaldoPendientePrestamo(
+      Number(prestamo.cuentaPorCobrar.montoDeuda),
+      Number(prestamo.cuentaPorCobrar.montoPagado)
+    )
+
+    const prestamoNormalizado = {
+      ...prestamo,
+      estado: normalizarEstadoPrestamoCash(prestamo.estado, {
+        montoDeuda: Number(prestamo.cuentaPorCobrar.montoDeuda),
+        montoPagado: Number(prestamo.cuentaPorCobrar.montoPagado),
+        estado: prestamo.cuentaPorCobrar.estado,
+      }),
+      saldoPendiente,
+    }
+
+    return NextResponse.json({ prestamo: prestamoNormalizado })
   } catch (error) {
     console.error('Error obteniendo préstamo cash:', error)
     return NextResponse.json({ error: 'Error obteniendo préstamo cash' }, { status: 500 })
@@ -124,7 +140,20 @@ export const PUT = withAuthPost(async (request: NextRequest, context: unknown, u
       }
     })
 
-    return NextResponse.json({ prestamo })
+    return NextResponse.json({
+      prestamo: {
+        ...prestamo,
+        estado: normalizarEstadoPrestamoCash(prestamo.estado, {
+          montoDeuda: Number(prestamo.cuentaPorCobrar.montoDeuda),
+          montoPagado: Number(prestamo.cuentaPorCobrar.montoPagado),
+          estado: prestamo.cuentaPorCobrar.estado,
+        }),
+        saldoPendiente: calcularSaldoPendientePrestamo(
+          Number(prestamo.cuentaPorCobrar.montoDeuda),
+          Number(prestamo.cuentaPorCobrar.montoPagado)
+        ),
+      },
+    })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Parámetros inválidos', details: error.errors }, { status: 400 })

@@ -4,6 +4,7 @@ import { z } from 'zod'
 import prisma from '@/lib/prisma'
 import { withAuthGet, withAuthPost } from '@/lib/auth-middleware'
 import { AuditLogService } from '@/lib/services/audit-log-service'
+import { calcularSaldoPendientePrestamo, normalizarEstadoPrestamoCash } from '@/lib/utils/prestamo-cash'
 
 const querySchema = z.object({
   estado: z.enum(['ACTIVO', 'PAGADO', 'VENCIDO', 'CANCELADO']).optional(),
@@ -71,6 +72,7 @@ export const GET = withAuthGet(async (request: NextRequest) => {
               nombre: true
             }
           },
+          cuentaPorCobrar: true,
           reconciliaciones: {
             include: {
               tipoPago: true,
@@ -88,8 +90,21 @@ export const GET = withAuthGet(async (request: NextRequest) => {
       prisma.prestamoCash.count({ where })
     ])
 
+    const prestamosNormalizados = prestamos.map((prestamo) => ({
+      ...prestamo,
+      estado: normalizarEstadoPrestamoCash(prestamo.estado, {
+        montoDeuda: Number(prestamo.cuentaPorCobrar?.montoDeuda ?? prestamo.montoCapital),
+        montoPagado: Number(prestamo.cuentaPorCobrar?.montoPagado ?? 0),
+        estado: prestamo.cuentaPorCobrar?.estado,
+      }),
+      saldoPendiente: calcularSaldoPendientePrestamo(
+        Number(prestamo.cuentaPorCobrar?.montoDeuda ?? prestamo.montoCapital),
+        Number(prestamo.cuentaPorCobrar?.montoPagado ?? 0)
+      ),
+    }))
+
     return NextResponse.json({
-      prestamos,
+      prestamos: prestamosNormalizados,
       pagination: {
         total,
         page: query.page,
@@ -133,6 +148,14 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
       )
     }
 
+    const tipoPagoDesembolso =
+      (await prisma.tipoPago.findFirst({ where: { nombre: 'Transferencia', isActive: true } })) ||
+      (await prisma.tipoPago.findFirst({ where: { nombre: 'Efectivo', isActive: true } }))
+
+    if (!tipoPagoDesembolso) {
+      return NextResponse.json({ error: 'No existe un tipo de pago válido para registrar el desembolso' }, { status: 400 })
+    }
+
     const prestamo = await prisma.$transaction(async (tx) => {
       await tx.cuentaBancaria.update({
         where: { cuentaId: body.cuentaBancariaId },
@@ -151,6 +174,22 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
           tipoCuenta: 'PRESTAMO_CASH',
           estado: 'PENDIENTE',
           fechaVencimiento: body.fechaVencimiento ? new Date(body.fechaVencimiento) : undefined
+        }
+      })
+
+      await tx.reconciliacionVenta.create({
+        data: {
+          cuentaId: body.cuentaBancariaId,
+          tipoPagoId: tipoPagoDesembolso.tipoId,
+          monto: body.montoCapital,
+          moneda: body.moneda,
+          montoConvertido: body.tasaCambioAlCrear ? body.montoCapital * body.tasaCambioAlCrear : body.montoCapital,
+          tasaCambio: body.tasaCambioAlCrear,
+          fechaReconciliacion: new Date(),
+          observaciones: body.observaciones || `Desembolso de préstamo cash para cliente ${body.clienteId}`,
+          reconciliadoPor: user.userId,
+          prestamoCashId: null,
+          tipoReconciliacion: 'PRESTAMO_CASH_DESEMBOLSO'
         }
       })
 

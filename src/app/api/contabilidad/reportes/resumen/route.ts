@@ -153,13 +153,15 @@ export async function GET(request: NextRequest) {
     const reconciliacionesVentas = await prisma.reconciliacionVenta.findMany({
       where: {
         ...accountFilter,
-        ...(Object.keys(dateFilter).length > 0 ? { fechaReconciliacion: dateFilter } : {})
+        ...(Object.keys(dateFilter).length > 0 ? { fechaReconciliacion: dateFilter } : {}),
+        tipoReconciliacion: { notIn: ['PRESTAMO_CASH_DESEMBOLSO'] }
       },
       select: {
         monto: true,
         moneda: true,
         montoConvertido: true,
         fechaReconciliacion: true,
+        tipoReconciliacion: true,
         cuentaBancaria: {
           select: {
             nombreBanco: true,
@@ -310,8 +312,26 @@ export async function GET(request: NextRequest) {
       }
     })
 
+    const movimientosPrestamoCash = await prisma.reconciliacionVenta.findMany({
+      where: {
+        ...accountFilter,
+        ...(Object.keys(dateFilter).length > 0 ? { fechaReconciliacion: dateFilter } : {}),
+        tipoReconciliacion: { in: ['PRESTAMO_CASH_DESEMBOLSO'] }
+      },
+      select: {
+        monto: true,
+        moneda: true,
+        cuentaBancaria: {
+          select: { moneda: true }
+        }
+      }
+    })
+
     // Calcular totales de ingresos por moneda
     const ingresosVentas = reconciliacionesVentas.reduce((acc: any, rec: any) => {
+      if (rec.tipoReconciliacion?.startsWith('PRESTAMO_CASH')) {
+        return acc
+      }
       const monedaRec = rec.moneda || 'CUP'
       if (!acc[monedaRec]) acc[monedaRec] = 0
       acc[monedaRec] += Number(rec.monto)
@@ -347,6 +367,13 @@ export async function GET(request: NextRequest) {
       return acc
     }, {} as Record<string, number>)
 
+    const egresosPrestamosCash = movimientosPrestamoCash.reduce((acc: any, mov: any) => {
+      const monedaMov = mov.moneda || mov.cuentaBancaria.moneda || 'CUP'
+      if (!acc[monedaMov]) acc[monedaMov] = 0
+      acc[monedaMov] += Number(mov.monto)
+      return acc
+    }, {} as Record<string, number>)
+
     const egresosAjustes = ajustesBancarios
       .filter((ajuste: any) => ajuste.tipo === 'egreso')
       .reduce((acc: any, ajuste: any) => {
@@ -373,6 +400,7 @@ export async function GET(request: NextRequest) {
       ...Object.keys(ingresosInyecciones),
       ...Object.keys(egresosGastos),
       ...Object.keys(egresosPagosDeuda),
+      ...Object.keys(egresosPrestamosCash),
       ...Object.keys(egresosAjustes),
       ...Object.keys(ingresosAjustes)
     ])
@@ -385,8 +413,9 @@ export async function GET(request: NextRequest) {
                            (ingresosInyecciones[monedaCode] || 0)
       
       const totalEgresos = (egresosGastos[monedaCode] || 0) + 
-                          (egresosAjustes[monedaCode] || 0) +
-                          (egresosPagosDeuda[monedaCode] || 0)
+                           (egresosAjustes[monedaCode] || 0) +
+                           (egresosPagosDeuda[monedaCode] || 0) +
+                           (egresosPrestamosCash[monedaCode] || 0)
       
       return {
         moneda: monedaCode,
@@ -404,7 +433,8 @@ export async function GET(request: NextRequest) {
           egresos: {
             gastos: egresosGastos[monedaCode] || 0,
             ajustes: egresosAjustes[monedaCode] || 0,
-            pagosDeuda: egresosPagosDeuda[monedaCode] || 0
+            pagosDeuda: egresosPagosDeuda[monedaCode] || 0,
+            prestamosCash: egresosPrestamosCash[monedaCode] || 0
           }
         }
       }

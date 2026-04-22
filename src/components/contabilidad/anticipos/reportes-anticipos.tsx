@@ -36,16 +36,18 @@ export function ReportesAnticipos({
   const [proveedorSeleccionado, setProveedorSeleccionado] = useState<string>("")
   const [fechaInicio, setFechaInicio] = useState<string>("")
   const [fechaFin, setFechaFin] = useState<string>("")
+  const [clienteFiltro, setClienteFiltro] = useState<string>("all")
+  const [proveedorFiltro, setProveedorFiltro] = useState<string>("all")
 
   // Queries
   const { data: dataReporteCliente, isLoading: loadingReporteCliente } = useGetReporteAnticiposClienteQuery({
-    clienteId: clienteSeleccionado || undefined,
+    clienteId: clienteFiltro === "all" ? undefined : clienteFiltro,
     fechaInicio: fechaInicio || undefined,
     fechaFin: fechaFin || undefined,
   })
 
   const { data: dataReporteProveedor, isLoading: loadingReporteProveedor } = useGetReporteAnticiposProveedorQuery({
-    proveedorId: proveedorSeleccionado || undefined,
+    proveedorId: proveedorFiltro === "all" ? undefined : proveedorFiltro,
     fechaInicio: fechaInicio || undefined,
     fechaFin: fechaFin || undefined,
   })
@@ -123,12 +125,12 @@ export function ReportesAnticipos({
               <div className="flex items-center gap-4">
                 <div className="space-y-2">
                   <Label>Cliente</Label>
-                  <Select value={clienteSeleccionado} onValueChange={setClienteSeleccionado}>
+                  <Select value={clienteFiltro} onValueChange={setClienteFiltro}>
                     <SelectTrigger className="w-[250px]">
                       <SelectValue placeholder="Todos los clientes" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todos los clientes</SelectItem>
+                      <SelectItem value="all">Todos los clientes</SelectItem>
                       {clientes.map((c) => (
                         <SelectItem key={c.clienteId} value={c.clienteId}>
                           {c.nombre}
@@ -231,12 +233,12 @@ export function ReportesAnticipos({
               <div className="flex items-center gap-4">
                 <div className="space-y-2">
                   <Label>Proveedor</Label>
-                  <Select value={proveedorSeleccionado} onValueChange={setProveedorSeleccionado}>
+                  <Select value={proveedorFiltro} onValueChange={setProveedorFiltro}>
                     <SelectTrigger className="w-[250px]">
                       <SelectValue placeholder="Todos los proveedores" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todos los proveedores</SelectItem>
+                      <SelectItem value="all">Todos los proveedores</SelectItem>
                       {proveedores.map((p) => (
                         <SelectItem key={p.vendorId} value={p.vendorId}>
                           {p.nombre}

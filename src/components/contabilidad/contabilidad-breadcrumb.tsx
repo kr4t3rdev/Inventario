@@ -32,6 +32,9 @@ const breadcrumbMap: Record<string, string> = {
   "/busy/contabilidad/analisis-cuenta-cliente": "Análisis de Cuenta",
   "/busy/contabilidad/facturas-vencidas": "Facturas Vencidas",
   "/busy/contabilidad/balance-resultados": "Balance y Resultados",
+  "/busy/contabilidad/anticipos": "Anticipos",
+  "/busy/contabilidad/prestamos-cash": "Préstamos",
+  "/busy/contabilidad/deudas-cash": "Deudas",
 }
 
 export function ContabilidadBreadcrumb() {

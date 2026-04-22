@@ -3,6 +3,7 @@ import { z } from 'zod'
 
 import { withAuthGet, withAuthPost } from '@/lib/auth-middleware'
 import { prisma } from '@/lib/prisma'
+import { applyAnticipoAllocations, isAnticipoWorkflowError } from '@/lib/services/anticipos-workflow'
 
 async function invalidateDashboardCache() {
   try {
@@ -13,12 +14,18 @@ async function invalidateDashboardCache() {
   }
 }
 
+const anticipoAllocationSchema = z.object({
+  anticipoId: z.string().min(1),
+  montoAplicado: z.number().positive(),
+})
+
 const ventaServicioLegacySchema = z.object({
   servicioId: z.string().min(1),
   cantidad: z.coerce.number().int().positive(),
   total: z.coerce.number().int().positive(),
   observaciones: z.string().optional().nullable(),
   clienteId: z.string().optional().nullable(),
+  anticipos: z.array(anticipoAllocationSchema).optional(),
 })
 
 const lineaMixtaSchema = z.object({
@@ -116,18 +123,70 @@ export const POST = withAuthPost(async (request: NextRequest) => {
     }
 
     const data = ventaServicioLegacySchema.parse(raw)
-    const ventaServicio = await prisma.ventaServicios.create({
-      data: {
-        servicioId: data.servicioId,
-        cantidad: data.cantidad,
-        total: data.total,
-        observaciones: data.observaciones ?? null,
-        clienteId: data.clienteId ?? null,
-      },
+
+    // Crear todo dentro de transacción: documento + anticipos + reconciliación
+    const resultado = await prisma.$transaction(async (tx) => {
+      const ventaServicio = await tx.ventaServicios.create({
+        data: {
+          servicioId: data.servicioId,
+          cantidad: data.cantidad,
+          total: data.total,
+          observaciones: data.observaciones ?? null,
+          clienteId: data.clienteId ?? null,
+        },
+      })
+
+      // Si hay anticipos, consumirlos
+      let allocationsResult = []
+      if (data.anticipos && data.anticipos.length > 0) {
+        // Obtener tipo de pago y cuenta por defecto para anticipos
+        const tipoPagoDefault = await tx.tipoPago.findFirst({
+          where: { isActive: true },
+          orderBy: { createdAt: 'asc' },
+        })
+        const cuentaDefault = await tx.cuentaBancaria.findFirst({
+          where: { isActive: true },
+          orderBy: { createdAt: 'asc' },
+        })
+
+        allocationsResult = await applyAnticipoAllocations(tx, data.anticipos, {
+          documentoDestinoId: ventaServicio.ventaServicioId,
+          contexto: 'FACTURA_DIRECTA',
+          usuarioId: data.clienteId || 'system',
+          observaciones: `Anticipo aplicado a venta de servicio ${ventaServicio.ventaServicioId}`,
+        })
+
+        // Crear ReconciliacionServicio por cada allocation
+        for (const alloc of allocationsResult) {
+          const anticipo = await tx.anticipo.findUnique({
+            where: { anticipoId: alloc.anticipoId },
+            select: {
+              tipo: true,
+              cuentaOrigenId: true,
+              tipoPagoOrigenId: true,
+              clienteId: true,
+            },
+          })
+
+          await tx.reconciliacionServicio.create({
+            data: {
+              ventaServicioId: ventaServicio.ventaServicioId,
+              cuentaId: anticipo?.cuentaOrigenId || cuentaDefault?.cuentaId || '',
+              tipoPagoId: anticipo?.tipoPagoOrigenId || tipoPagoDefault?.tipoId || '',
+              monto: alloc.montoAplicado,
+              moneda: anticipo?.tipo === 'COBRO' ? 'CUP' : 'USD',
+              observaciones: `Cobro anticipado en servicio ${ventaServicio.ventaServicioId}`,
+              reconciliadoPor: data.clienteId || 'system',
+            },
+          })
+        }
+      }
+
+      return { ventaServicio, allocationsResult }
     })
 
     await invalidateDashboardCache()
-    return NextResponse.json(ventaServicio, { status: 201 })
+    return NextResponse.json(resultado, { status: 201 })
   } catch (error) {
     console.error('Error al crear venta de servicio:', error)
     return NextResponse.json({ error: 'Error al crear venta de servicio' }, { status: 500 })

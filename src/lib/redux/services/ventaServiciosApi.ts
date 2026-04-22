@@ -20,12 +20,18 @@ interface VentaServicio {
   updatedAt?: string;
 }
 
+interface AnticipoAllocation {
+  anticipoId: string
+  montoAplicado: number
+}
+
 interface CreateVentaServicioRequest {
   servicioId?: string;
   clienteId?: string;
   cantidad?: number;
   total?: number;
   observaciones?: string;
+  anticipos?: AnticipoAllocation[];
   lineas?: Array<{
     tipoLinea: 'SERVICIO' | 'PRODUCTO';
     servicioId?: string;

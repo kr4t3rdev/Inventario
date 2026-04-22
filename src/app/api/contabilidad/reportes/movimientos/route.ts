@@ -285,34 +285,47 @@ export async function GET(request: NextRequest) {
     const movimientos = [
       ...ventasMovimientos.map((mov: any) => ({
         id: mov.reconciliacionId,
-        tipo: (mov.tipoReconciliacion === 'PRESTAMO_CASH'
-          ? 'prestamo_cash'
-          : mov.tipoReconciliacion === 'DEUDA_CASH'
-          ? 'deuda_cash'
-          : 'venta'),
+        tipo: (
+          mov.tipoReconciliacion === 'PRESTAMO_CASH'
+            ? 'prestamo_cash_pago'
+            : mov.tipoReconciliacion === 'PRESTAMO_CASH_DESEMBOLSO'
+            ? 'prestamo_cash_desembolso'
+            : mov.tipoReconciliacion === 'DEUDA_CASH'
+            ? 'deuda_cash_pago'
+            : mov.tipoReconciliacion === 'DEUDA_CASH_DESEMBOLSO'
+            ? 'deuda_cash_desembolso'
+            : 'venta'
+        ),
         fecha: mov.fechaReconciliacion,
         monto: Number(mov.monto),
         moneda: mov.moneda || 'CUP',
         montoConvertido: mov.tasaCambio ? Number(mov.monto) * Number(mov.tasaCambio) : Number(mov.monto),
         tasaCambio: mov.tasaCambio ? Number(mov.tasaCambio) : null,
         descripcion: mov.tipoReconciliacion === 'PRESTAMO_CASH'
-          ? `Préstamo Cash - ${mov.prestamoCash?.cliente?.nombre ?? mov.reconciliacionId}`
+          ? `Cobro de Préstamo Cash - ${mov.prestamoCash?.cliente?.nombre ?? mov.reconciliacionId}`
+          : mov.tipoReconciliacion === 'PRESTAMO_CASH_DESEMBOLSO'
+          ? `Desembolso de Préstamo Cash - ${mov.prestamoCash?.cliente?.nombre ?? mov.reconciliacionId}`
           : mov.tipoReconciliacion === 'DEUDA_CASH'
-          ? `Deuda Cash - ${mov.deudaCash?.proveedor?.nombre ?? mov.reconciliacionId}`
+          ? `Pago de Deuda Cash - ${mov.deudaCash?.proveedor?.nombre ?? mov.reconciliacionId}`
+          : mov.tipoReconciliacion === 'DEUDA_CASH_DESEMBOLSO'
+          ? `Desembolso de Deuda Cash - ${mov.deudaCash?.proveedor?.nombre ?? mov.reconciliacionId}`
           : mov.venta ? `Venta ${mov.venta.ventaId}` : `Cobro reconciliado ${mov.reconciliacionId}`,
         cuenta: `${mov.cuentaBancaria.nombreBanco} - ${mov.cuentaBancaria.numeroCuenta}`,
         tipoPago: mov.tipoPago.nombre,
         observaciones: mov.observaciones,
         realizadoPor: mov.reconciliadoPor,
-        referencia: mov.tipoReconciliacion === 'PRESTAMO_CASH'
+        referencia: mov.tipoReconciliacion === 'PRESTAMO_CASH' || mov.tipoReconciliacion === 'PRESTAMO_CASH_DESEMBOLSO'
           ? (mov.prestamoCash?.id ?? mov.reconciliacionId)
-          : mov.tipoReconciliacion === 'DEUDA_CASH'
+          : mov.tipoReconciliacion === 'DEUDA_CASH' || mov.tipoReconciliacion === 'DEUDA_CASH_DESEMBOLSO'
           ? (mov.deudaCash?.id ?? mov.reconciliacionId)
           : (mov.venta?.ventaId ?? mov.reconciliacionId),
         detalles: {
           tipoReconciliacion: mov.tipoReconciliacion,
           totalVenta: mov.venta ? Number(mov.venta.total) : null,
-          fechaVenta: mov.venta?.createdAt ?? null
+          fechaVenta: mov.venta?.createdAt ?? null,
+          prestamoCashId: mov.tipoReconciliacion === 'PRESTAMO_CASH' || mov.tipoReconciliacion === 'PRESTAMO_CASH_DESEMBOLSO' ? mov.prestamoCash?.id ?? null : null,
+          clientePrestamo: mov.tipoReconciliacion === 'PRESTAMO_CASH' || mov.tipoReconciliacion === 'PRESTAMO_CASH_DESEMBOLSO' ? mov.prestamoCash?.cliente?.nombre ?? null : null,
+          esPrestamoCash: mov.tipoReconciliacion === 'PRESTAMO_CASH' || mov.tipoReconciliacion === 'PRESTAMO_CASH_DESEMBOLSO'
         }
       })),
       ...serviciosMovimientos.map((mov: any) => ({

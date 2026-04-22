@@ -44,8 +44,6 @@ export interface ExecuteAnticipoResult {
   estado: AnticipoEstado
   saldoDisponible: number
   movimientoId: string
-  reconciliacionVentaId?: string
-  reconciliacionGastoId?: string
   idempotentReplay: boolean
 }
 
@@ -62,9 +60,43 @@ export interface ReverseAnticipoParams {
   usuarioId: string
 }
 
+/**
+ * Allocation de anticipo: par anticipoId + monto aplicado.
+ */
+export interface AnticipoAllocation {
+  anticipoId: string
+  montoAplicado: number
+}
+
+/**
+ * Resultado de aplicar una allocation de anticipo.
+ */
+export interface AnticipoAllocationResult {
+  anticipoId: string
+  movimientoId: string
+  montoAplicado: number
+  saldoRestante: number
+}
+
+/**
+ * Handler para ejecutar reconciliación de negocio después de consumir anticipo.
+ * Recibe el contexto completo para tomar decisiones de qué tipo de reconciliación crear.
+ */
 export type ExecuteReconciliacionHandler = (
-  tx: Prisma.TransactionClient
+  tx: Prisma.TransactionClient,
+  context: {
+    anticipoId: string
+    tipoAnticipo: AnticipoTipo
+    documentoDestinoId: string
+    contexto: AnticipoContexto
+    montoObjetivo: number
+    monedaObjetivo: string
+    cuentaBancariaId: string
+    tipoPagoId: string
+    usuarioId: string
+  }
 ) => Promise<{
   reconciliacionVentaId?: string
   reconciliacionGastoId?: string
+  reconciliacionServicioId?: string
 }>

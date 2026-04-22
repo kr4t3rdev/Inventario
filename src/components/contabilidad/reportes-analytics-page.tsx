@@ -15,6 +15,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useGetCuentasBancariasQuery } from '@/lib/redux/services/contabilidadApi';
+import { useGetPrestamosCashStatsQuery } from '@/lib/redux/services/prestamosCashApi';
+import { getAuthToken } from '@/lib/token';
 import { cn } from '@/lib/utils';
 
 interface FiltrosGlobales {
@@ -44,6 +46,11 @@ export function ReportesAnalyticsPage() {
   const { data: cuentasData = { cuentas: [] } } = useGetCuentasBancariasQuery();
   const cuentas = cuentasData.cuentas ?? [];
   const cuentaSeleccionada = cuentas.find((cuenta) => cuenta.cuentaId === filtrosGlobales.cuentaId);
+  const { data: prestamosStats } = useGetPrestamosCashStatsQuery();
+  const saldoPendientePrestamos = Object.values(prestamosStats?.montoPendienteCobro ?? {}).reduce(
+    (acc, value) => acc + value,
+    0,
+  );
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -101,9 +108,9 @@ export function ReportesAnalyticsPage() {
         ...(filtrosGlobales.cuentaId && { cuentaId: filtrosGlobales.cuentaId }),
       });
 
-      const token = sessionStorage.getItem('token');
+      const token = getAuthToken();
       const response = await fetch(`/api/contabilidad/reportes/movimientos?${params}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        headers: token ? { Authorization: token } : {},
         credentials: 'include',
       });
 
@@ -142,6 +149,7 @@ export function ReportesAnalyticsPage() {
         <div className="flex flex-wrap gap-2">
           <Badge variant="outline">Tab activa: {tabActiva}</Badge>
           <Badge variant="outline">{cuentas.length} cuentas disponibles</Badge>
+          <Badge variant="outline">Préstamos pendientes: {saldoPendientePrestamos.toFixed(2)}</Badge>
         </div>
       </motion.div>
 

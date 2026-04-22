@@ -360,34 +360,32 @@ export const POST = withAuthPost(async (request: NextRequest, _context: any, use
 
       let ejecucionAnticipo: any = null
       if (data.formaPago === FORMA_PAGO_ANTICIPO_PAGO && data.anticipoPagoId && data.idempotencyKey) {
-        ejecucionAnticipo = await executeAnticipo(
+        // consume anticipo y crea reconciliación en la misma transacción
+        const allocResult = await applyAnticipoAllocations(
           tx,
+          [{ anticipoId: data.anticipoPagoId, montoAplicado: totalCost }],
           {
-            anticipoId: data.anticipoPagoId,
-            contexto: 'COMPRA_PRODUCTO',
             documentoDestinoId: compraProducto.compraProductoId,
-            montoObjetivo: totalCost,
-            monedaObjetivo: 'CUP',
-            idempotencyKey: data.idempotencyKey,
+            contexto: 'COMPRA_PRODUCTO',
             usuarioId: user.userId || user.id,
-            observaciones: `Ejecución en compra ${compraProducto.compraProductoId}`
-          },
-          async (trx) => {
-            const workflowResult = await applyPagoGastoWorkflow(trx, {
-              tipoGasto: 'compra',
-              referenciaId: gastoCompra.gastoCompraId,
-              reconciliadoPor: user.userId || user.id,
-              descripcion: `Pago anticipado de compra ${compraProducto.compraProductoId}`,
-              monto: totalCost,
-              moneda: 'CUP',
-              estado: 'PAGADA',
-              gastoCompraId: gastoCompra.gastoCompraId
-            })
-            return {
-              reconciliacionGastoId: workflowResult.reconciliaciones[0]?.reconciliacionId
-            }
+            idempotencyKey: data.idempotencyKey,
+            observaciones: `Anticipo aplicado a compra ${compraProducto.compraProductoId}`,
           }
         )
+
+        // crear la reconciliación de gasto
+        await applyPagoGastoWorkflow(tx, {
+          tipoGasto: 'compra',
+          referenciaId: gastoCompra.gastoCompraId,
+          reconciliadoPor: user.userId || user.id,
+          descripcion: `Pago anticipado de compra ${compraProducto.compraProductoId}`,
+          monto: totalCost,
+          moneda: 'CUP',
+          estado: 'PAGADA',
+          gastoCompraId: gastoCompra.gastoCompraId
+        })
+
+        ejecucionAnticipo = allocResult[0] ?? null
       }
 
       return {

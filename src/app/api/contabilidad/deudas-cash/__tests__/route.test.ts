@@ -96,11 +96,16 @@ describe('API contabilidad/deudas-cash', () => {
 
     prisma.$transaction.mockImplementation(async (callback: any) => {
       const tx = {
+        tipoPago: {
+          findFirst: vi.fn().mockResolvedValue({ tipoId: 'tp-transferencia', nombre: 'Transferencia' })
+        },
         deudaCash: {
           findFirst: vi.fn().mockResolvedValue({ idNumerico: 5 }),
           create: vi.fn().mockResolvedValue(mockDeuda)
         },
-        cuentaPorPagar: { create: vi.fn().mockResolvedValue(mockCuenta) }
+        cuentaPorPagar: { create: vi.fn().mockResolvedValue(mockCuenta) },
+        cuentaBancaria: { update: vi.fn().mockResolvedValue({}) },
+        reconciliacionVenta: { create: vi.fn().mockResolvedValue({ reconciliacionId: 'rec-deuda-1' }) }
       }
       return callback(tx)
     })
@@ -111,7 +116,8 @@ describe('API contabilidad/deudas-cash', () => {
       body: JSON.stringify({
         proveedorId: 'v-1',
         montoCapital: 3000,
-        moneda: 'CUP'
+        moneda: 'CUP',
+        cuentaBancariaId: 'cb-1'
       })
     })
 
@@ -132,7 +138,8 @@ describe('API contabilidad/deudas-cash', () => {
       body: JSON.stringify({
         proveedorId: 'v-inexistente',
         montoCapital: 1000,
-        moneda: 'CUP'
+        moneda: 'CUP',
+        cuentaBancariaId: 'cb-1'
       })
     })
 
@@ -170,7 +177,8 @@ describe('API contabilidad/deudas-cash/[id]/pagar', () => {
       estado: 'ACTIVO',
       moneda: 'CUP',
       cuentaPorPagarId: 'cxp-1',
-      cuentaPorPagar: { montoDeuda: 2000, montoPagado: 0, saldoPendiente: 2000 }
+      cuentaPorPagar: { montoDeuda: 2000, montoPagado: 0, saldoPendiente: 2000 },
+      cuentaBancariaId: 'cb-1'
     }
     const mockReconciliacion = { reconciliacionId: 'rec-1' }
 
@@ -178,6 +186,7 @@ describe('API contabilidad/deudas-cash/[id]/pagar', () => {
     prisma.$transaction.mockImplementation(async (callback: any) => {
       const tx = {
         reconciliacionVenta: { create: vi.fn().mockResolvedValue(mockReconciliacion) },
+        cuentaBancaria: { update: vi.fn().mockResolvedValue({}) },
         cuentaPorPagar: { update: vi.fn() },
         deudaCash: { update: vi.fn() }
       }

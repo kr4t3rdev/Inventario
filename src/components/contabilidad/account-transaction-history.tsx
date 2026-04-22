@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { motion, useReducedMotion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -12,9 +12,12 @@ import { TrendingUp, TrendingDown, ArrowUpDown, Calendar, DollarSign, Info, Wall
 import { useGetCuentaTransactionHistoryQuery } from "@/lib/redux/services/contabilidadApi"
 import { formatCurrency, formatDate, convertCurrency } from "@/lib/redux/utils/contabilidadUtils"
 import { useGetMonedasQuery } from "@/lib/redux/services/contabilidadApi"
+import { useGetPrestamoCashHistorialQuery } from "@/lib/redux/services/prestamosCashApi"
 import { DateRangePicker } from "./date-range-picker"
 import { ExportDialog } from "./export-dialog"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
+import { getAuthToken } from "@/lib/token"
 import {
   StaggerContainer,
   StaggerItem,
@@ -83,9 +86,9 @@ export function AccountTransactionHistory({
   useEffect(() => {
     const fetchExchangeRates = async () => {
       try {
-        const token = sessionStorage.getItem('token')
+        const token = getAuthToken()
         const response = await fetch('/api/contabilidad/exchange/tasas', {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          headers: token ? { Authorization: token } : {},
           credentials: 'include'
         })
 
@@ -110,6 +113,14 @@ export function AccountTransactionHistory({
   const { data: historial, isLoading, error } = useGetCuentaTransactionHistoryQuery({
     cuentaId,
     ...filtros
+  })
+  const prestamoCashId = useMemo(() => {
+    const prestamo = historial?.transacciones?.find((tx: any) => tx.tipoMovimiento === 'prestamo_cash')
+    return prestamo?.detalles?.prestamoCashId ?? null
+  }, [historial?.transacciones])
+  const [prestamoSheetOpen, setPrestamoSheetOpen] = useState(false)
+  const { data: prestamoHistorial } = useGetPrestamoCashHistorialQuery(prestamoCashId ?? '', {
+    skip: !prestamoCashId || !prestamoSheetOpen,
   })
   const { data: monedasData = { data: [] } } = useGetMonedasQuery()
   const monedas = monedasData.data || []
@@ -201,9 +212,9 @@ export function AccountTransactionHistory({
       incluirConversiones: config.incluirConversiones.toString()
     })
 
-    const token = sessionStorage.getItem('token');
+    const token = getAuthToken();
     const response = await fetch(`/api/contabilidad/cuentas/${cuentaId}/historial?${params}`, {
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      headers: token ? { Authorization: token } : {},
       credentials: 'include'
     })
 
@@ -236,10 +247,16 @@ export function AccountTransactionHistory({
       'transferencia_salida': 'Transferencia Salida',
       'ajuste_ingreso': 'Ajuste Ingreso',
       'ajuste_egreso': 'Ajuste Egreso',
-      'prestamo_cash': 'Préstamo Cash',
+      'prestamo_cash_pago': 'Cobro Préstamo Cash',
+      'prestamo_cash_desembolso': 'Desembolso Préstamo Cash',
       'deuda_cash': 'Deuda Cash',
     }
     return labels[tipo] || tipo
+  }
+
+  const openPrestamoDetalle = (transaccion: any): void => {
+    if (transaccion.tipoMovimiento !== 'prestamo_cash_desembolso') return
+    setPrestamoSheetOpen(true)
   }
 
   const getTipoMovimientoIcon = (tipo: string) => {
@@ -248,7 +265,9 @@ export function AccountTransactionHistory({
       case 'servicio':
       case 'ajuste_ingreso':
       case 'transferencia_entrada':
-      case 'prestamo_cash':
+      case 'prestamo_cash_pago':
+        return <TrendingUp className="h-3.5 w-3.5" />
+      case 'prestamo_cash_desembolso':
         return <TrendingUp className="h-3.5 w-3.5" />
       case 'gasto':
       case 'salario':
@@ -474,7 +493,8 @@ export function AccountTransactionHistory({
                     <SelectItem value="transferencia_salida">Transferencias Salida</SelectItem>
                     <SelectItem value="ajuste_ingreso">Ajustes Ingreso</SelectItem>
                     <SelectItem value="ajuste_egreso">Ajustes Egreso</SelectItem>
-                    <SelectItem value="prestamo_cash">Préstamos Cash</SelectItem>
+                    <SelectItem value="prestamo_cash_pago">Préstamos Cash (cobros)</SelectItem>
+                    <SelectItem value="prestamo_cash_desembolso">Préstamos Cash (desembolsos)</SelectItem>
                     <SelectItem value="deuda_cash">Deudas Cash</SelectItem>
                   </SelectContent>
                 </Select>
@@ -523,7 +543,14 @@ export function AccountTransactionHistory({
                       </TableRow>
                     ) : (
                       historial?.transacciones?.map((transaccion) => (
-                        <TableRow key={transaccion.transaccionId} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30">
+                          <TableRow
+                          key={transaccion.transaccionId}
+                          className={cn(
+                            "hover:bg-slate-50/50 dark:hover:bg-slate-900/30",
+                            transaccion.tipoMovimiento === 'prestamo_cash_desembolso' && 'cursor-pointer'
+                          )}
+                          onClick={() => openPrestamoDetalle(transaccion)}
+                        >
                           <TableCell>
                             <div className="flex items-center gap-2">
                               <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -570,7 +597,7 @@ export function AccountTransactionHistory({
                                 transaccion.tipoMovimiento === 'venta' ||
                                 transaccion.tipoMovimiento === 'servicio' ||
                                 transaccion.tipoMovimiento === 'transferencia_entrada' ||
-                                transaccion.tipoMovimiento === 'prestamo_cash'
+                                transaccion.tipoMovimiento === 'prestamo_cash_desembolso'
                                 ? 'text-green-600 dark:text-green-400'
                                 : 'text-red-600 dark:text-red-400'
                             )}>
@@ -578,7 +605,7 @@ export function AccountTransactionHistory({
                                 transaccion.tipoMovimiento === 'venta' ||
                                 transaccion.tipoMovimiento === 'servicio' ||
                                 transaccion.tipoMovimiento === 'transferencia_entrada' ||
-                                transaccion.tipoMovimiento === 'prestamo_cash' ? '+' : '-'}
+                                transaccion.tipoMovimiento === 'prestamo_cash_desembolso' ? '+' : '-'}
                               {formatCurrencySimple(Math.abs(getConvertedAmount(transaccion)), monedaCuenta)}
                             </span>
                           </TableCell>
@@ -627,6 +654,38 @@ export function AccountTransactionHistory({
           </Card>
         </AnimatedCard>
       </StaggerItem>
+
+      <Sheet open={prestamoSheetOpen} onOpenChange={setPrestamoSheetOpen}>
+        <SheetContent side="right" className="w-[420px] sm:max-w-none">
+          <SheetHeader>
+            <SheetTitle>Detalle de préstamo cash</SheetTitle>
+            <SheetDescription>
+              Historial completo y saldo del préstamo seleccionado.
+            </SheetDescription>
+          </SheetHeader>
+          {prestamoHistorial ? (
+            <div className="space-y-4 p-4">
+              <div className="rounded-lg border p-4">
+                <p className="text-sm text-muted-foreground">Saldo pendiente</p>
+                <p className="text-xl font-semibold">
+                  {formatCurrencySimple(prestamoHistorial.resumen.saldoPendiente, prestamoHistorial.prestamo.moneda)}
+                </p>
+              </div>
+              <div className="space-y-2">
+                {prestamoHistorial.historial.map((pago) => (
+                  <div key={pago.id} className="rounded-lg border p-3 text-sm">
+                    <p className="font-medium">{formatDate(pago.fecha)}</p>
+                    <p>{pago.tipoPago} · {pago.cuentaBancaria}</p>
+                    <p>{formatCurrencySimple(pago.monto, pago.moneda)}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="p-4 text-sm text-muted-foreground">Seleccioná un préstamo para ver el detalle.</div>
+          )}
+        </SheetContent>
+      </Sheet>
     </StaggerContainer>
   )
 }

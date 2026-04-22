@@ -3,7 +3,12 @@ import { CompraServicio } from '@/app/models/model'
 import { apiSlice } from './apiSlice'
 
 type EstadoCompraServicio = 'PENDIENTE' | 'PAGADA'
-type FormaPagoCompraServicio = 'PAGO_PARCIAL' | 'PAGO_COMPLETO'
+type FormaPagoCompraServicio = 'PAGO_PARCIAL' | 'PAGO_COMPLETO' | 'ANTICIPO_PAGO'
+
+interface AnticipoAllocation {
+  anticipoId: string
+  montoAplicado: number
+}
 
 interface CreateCompraServicioRequest {
   servicioId: string
@@ -16,6 +21,7 @@ interface CreateCompraServicioRequest {
   descripcion?: string | null
   fechaServicio?: string | null
   fechaVencimiento?: string | null
+  anticipos?: AnticipoAllocation[]
 }
 
 export const comprasServiciosApi = apiSlice.injectEndpoints({

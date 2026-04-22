@@ -8,23 +8,38 @@ import { Separator } from "@/components/ui/separator"
 import { Button } from "@/components/ui/button"
 import { Anticipo, AnticipoMovimiento } from "@/app/models/model"
 import { cn } from "@/lib/utils"
-import { ArrowDownCircle, ArrowUpCircle, Clock, Calendar, User, FileText, RotateCcw } from "lucide-react"
+import { ArrowDownCircle, ArrowUpCircle, Clock, Calendar, User, FileText, RotateCcw, Link2, Receipt, ShoppingCart, DollarSign } from "lucide-react"
 
 interface AnticipoDetailProps {
   anticipo: Anticipo | null
   open: boolean
   onOpenChange: (open: boolean) => void
   onCerrar?: () => void
+  isLoading?: boolean
+}
+
+interface MovimientoEnriquecido extends AnticipoMovimiento {
+  documentoDestino?: {
+    tipo: string
+    id: string
+    proveedor?: string
+    cliente?: string
+    servicio?: string
+    numeroFactura?: string
+    total?: number
+    estado?: string
+    fecha?: string
+  } | null
 }
 
 /**
  * @description Muestra el detalle de un anticipo con su historial de movimientos
  * @param {AnticipoDetailProps} props - Props del componente
  */
-export function AnticipoDetail({ anticipo, open, onOpenChange, onCerrar }: AnticipoDetailProps) {
+export function AnticipoDetail({ anticipo, open, onOpenChange, onCerrar, isLoading }: AnticipoDetailProps) {
   if (!anticipo) return <></>
 
-  const movimientos = anticipo.movimientos || []
+  const movimientos = (anticipo.movimientos || []) as unknown as MovimientoEnriquecido[]
 
   const getMovimientoIcon = (tipo: string) => {
     switch (tipo) {
@@ -38,6 +53,19 @@ export function AnticipoDetail({ anticipo, open, onOpenChange, onCerrar }: Antic
         return <ArrowUpCircle className="h-4 w-4 text-red-500" />
       default:
         return <FileText className="h-4 w-4" />
+    }
+  }
+
+  const getDocumentoDestinoIcon = (tipo: string) => {
+    switch (tipo) {
+      case "Compra de producto":
+        return <ShoppingCart className="h-3.5 w-3.5" />
+      case "Compra de servicio":
+        return <Receipt className="h-3.5 w-3.5" />
+      case "Factura":
+        return <DollarSign className="h-3.5 w-3.5" />
+      default:
+        return <Link2 className="h-3.5 w-3.5" />
     }
   }
 
@@ -137,13 +165,17 @@ export function AnticipoDetail({ anticipo, open, onOpenChange, onCerrar }: Antic
               <CardTitle className="text-lg">Historial de Movimientos</CardTitle>
             </CardHeader>
             <CardContent>
-              {movimientos.length === 0 ? (
+              {isLoading ? (
+                <p className="text-center text-muted-foreground py-4">
+                  Cargando movimientos...
+                </p>
+              ) : movimientos.length === 0 ? (
                 <p className="text-center text-muted-foreground py-4">
                   No hay movimientos registrados
                 </p>
               ) : (
                 <div className="space-y-3">
-                  {movimientos.map((movimiento, index) => (
+                  {movimientos.map((movimiento: MovimientoEnriquecido, index) => (
                     <div
                       key={movimiento.movimientoId || index}
                       className="flex items-start gap-3 p-3 rounded-lg border bg-card"
@@ -186,6 +218,65 @@ export function AnticipoDetail({ anticipo, open, onOpenChange, onCerrar }: Antic
                             </div>
                           )}
                         </div>
+
+                        {/* Documento destino - en qué se gastó */}
+                        {movimiento.documentoDestino && (
+                          <div className="mt-2 p-2 rounded-md bg-muted/50 border border-border/50">
+                            <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                              {getDocumentoDestinoIcon(movimiento.documentoDestino.tipo)}
+                              Documento destino
+                            </p>
+                            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                              <p className="font-medium">
+                                {movimiento.documentoDestino.tipo}
+                              </p>
+                              <p className="text-xs font-mono text-muted-foreground">
+                                {movimiento.documentoDestino.id.slice(-8)}
+                              </p>
+                              {movimiento.documentoDestino.proveedor && (
+                                <>
+                                  <p className="text-muted-foreground">Proveedor</p>
+                                  <p>{movimiento.documentoDestino.proveedor}</p>
+                                </>
+                              )}
+                              {movimiento.documentoDestino.cliente && (
+                                <>
+                                  <p className="text-muted-foreground">Cliente</p>
+                                  <p>{movimiento.documentoDestino.cliente}</p>
+                                </>
+                              )}
+                              {movimiento.documentoDestino.servicio && (
+                                <>
+                                  <p className="text-muted-foreground">Servicio</p>
+                                  <p>{movimiento.documentoDestino.servicio}</p>
+                                </>
+                              )}
+                              {movimiento.documentoDestino.numeroFactura && (
+                                <>
+                                  <p className="text-muted-foreground">Factura</p>
+                                  <p>{movimiento.documentoDestino.numeroFactura}</p>
+                                </>
+                              )}
+                              {movimiento.documentoDestino.total && (
+                                <>
+                                  <p className="text-muted-foreground">Total del documento</p>
+                                  <p className="font-medium">
+                                    {Number(movimiento.documentoDestino.total).toLocaleString("es-ES")}
+                                  </p>
+                                </>
+                              )}
+                              {movimiento.documentoDestino.estado && (
+                                <>
+                                  <p className="text-muted-foreground">Estado</p>
+                                  <Badge variant="outline" className="text-xs">
+                                    {movimiento.documentoDestino.estado}
+                                  </Badge>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
                         {movimiento.observaciones && (
                           <p className="mt-2 text-sm text-muted-foreground">
                             {movimiento.observaciones}
