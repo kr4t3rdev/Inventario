@@ -102,7 +102,7 @@ vi.mock('../product-photo-upload', () => ({
 }))
 
 vi.mock('../clasificador-info-note', () => ({
-  ClasificadorInfoNote: () => <div data-testid='clasificador-info-note'>clasificador</div>,
+  ClasificadorInfoNote: (props: Record<string, unknown>) => <div data-testid='clasificador-info-note' data-mode={props.mode}>clasificador</div>,
 }))
 
 vi.mock('../compound-product-section', () => ({

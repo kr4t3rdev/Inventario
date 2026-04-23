@@ -6,11 +6,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useDispatch } from "react-redux";
 import { motion } from "framer-motion";
-import { AlertCircle, ArrowLeft, Folder, Layers, Loader2, Sparkles } from "lucide-react";
+import { AlertCircle, ArrowLeft, ChevronDown, Folder, Layers, Loader2, Search, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiSlice } from "@/lib/redux/services/apiSlice";
@@ -100,6 +102,34 @@ export function resolveClasParentCategoryId(
   return availableSections.find((section) => section.sectionId === sectionId)?.parentCategoryId ?? null;
 }
 
+export interface ClasSpecificOption {
+  id: string;
+  name: string;
+  sectionId: string;
+}
+
+/**
+ * @description Filtra específicos CLAS por nombre o ID parcial.
+ * @param {ClasSpecificOption[]} specifics - Lista de específicos disponibles.
+ * @param {string} searchTerm - Término de búsqueda.
+ * @returns {ClasSpecificOption[]} Específicos que coinciden con el término.
+ */
+export function filterSpecifics(
+  specifics: ClasSpecificOption[],
+  searchTerm: string
+): ClasSpecificOption[] {
+  const term = searchTerm.trim().toLowerCase();
+  if (!term) {
+    return specifics;
+  }
+
+  return specifics.filter(
+    (sp) =>
+      sp.name.toLowerCase().includes(term) ||
+      sp.id.includes(term)
+  );
+}
+
 /**
  * @description Formulario dedicado para crear o editar subcategorías/específicos CLAS.
  * @param {SubcategoryFormProps} props - Props del formulario.
@@ -112,6 +142,8 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
   const [clasClassifierData, setClasClassifierData] = useState<CLASClassifierData | null>(null);
   const [isClassifierLoading, setIsClassifierLoading] = useState(false);
   const [classifierError, setClassifierError] = useState<string | null>(null);
+  const [specificSearch, setSpecificSearch] = useState('');
+  const [specificOpen, setSpecificOpen] = useState(false);
 
   const {
     data: categories = [],
@@ -154,6 +186,10 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
     return getSpecificsForSection(clasClassifierData, clasSectionId);
   }, [clasClassifierData, clasSectionId]);
 
+  const filteredSpecifics = useMemo(() => {
+    return filterSpecifics(availableSpecifics, specificSearch);
+  }, [availableSpecifics, specificSearch]);
+
   const selectedSectionName = useMemo(() => {
     return availableSections.find((section) => section.sectionId === clasSectionId)?.sectionName ?? '';
   }, [availableSections, clasSectionId]);
@@ -165,6 +201,10 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
 
     return clasClassifierData.specificNameById[clasSpecificId] ?? '';
   }, [clasClassifierData, clasSpecificId]);
+
+  useEffect(() => {
+    setSpecificSearch('');
+  }, [clasSectionId]);
 
   useEffect(() => {
     const token = getAuthToken();
@@ -442,32 +482,85 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
               >
                 <FormItem>
                   <FormLabel>Específico (subcategoría) *</FormLabel>
-                  <Select
-                    value={clasSpecificId ?? ''}
-                    onValueChange={(val) => {
-                      const parentCategoryId = resolveClasParentCategoryId(availableSections, clasSectionId ?? '');
-                      const specific = availableSpecifics.find((sp) => sp.id === val);
-                      if (specific && parentCategoryId) {
-                        form.setValue('nombre', specific.name);
-                        form.setValue('clasSectionId', specific.sectionId);
-                        form.setValue('clasSpecificId', val);
-                        form.setValue('parentId', parentCategoryId);
-                      }
-                    }}
-                    disabled={isLoading || !clasSectionId}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={clasSectionId ? 'Seleccione un específico' : 'Primero seleccione una sección'} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableSpecifics.map((specific) => (
-                        <SelectItem key={specific.id} value={specific.id}>
-                          {specific.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormDescription>El específico se filtra según la sección seleccionada.</FormDescription>
+                  <Popover open={specificOpen} onOpenChange={setSpecificOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={isLoading || !clasSectionId}
+                        className="w-full justify-between font-normal"
+                      >
+                        {clasSpecificId && selectedSpecificName ? (
+                          <span className="flex items-center gap-2 truncate">
+                            <span className="font-mono text-xs text-muted-foreground">{clasSpecificId}</span>
+                            <span className="truncate">{selectedSpecificName}</span>
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">
+                            {clasSectionId ? 'Seleccione un específico' : 'Primero seleccione una sección'}
+                          </span>
+                        )}
+                        <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                      <div className="p-2">
+                        <div className="flex items-center gap-2 px-2 pb-2">
+                          <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+                          <Input
+                            placeholder="Buscar por nombre o ID…"
+                            value={specificSearch}
+                            onChange={(e) => setSpecificSearch(e.target.value)}
+                            className="h-8 border-0 bg-transparent p-0 shadow-none focus-visible:ring-0"
+                          />
+                          {specificSearch && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 shrink-0"
+                              onClick={() => setSpecificSearch('')}
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </Button>
+                          )}
+                        </div>
+                        <ScrollArea className="h-60">
+                          {filteredSpecifics.length === 0 ? (
+                            <div className="px-2 py-4 text-center text-sm text-muted-foreground">
+                              Sin resultados
+                            </div>
+                          ) : (
+                            <div className="flex flex-col">
+                              {filteredSpecifics.map((specific) => (
+                                <button
+                                  key={specific.id}
+                                  type="button"
+                                  onClick={() => {
+                                    const parentCategoryId = resolveClasParentCategoryId(availableSections, clasSectionId ?? '');
+                                    if (parentCategoryId) {
+                                      form.setValue('nombre', specific.name);
+                                      form.setValue('clasSectionId', specific.sectionId);
+                                      form.setValue('clasSpecificId', specific.id);
+                                      form.setValue('parentId', parentCategoryId);
+                                      setSpecificOpen(false);
+                                    }
+                                  }}
+                                  className="flex items-center gap-2 px-2 py-1.5 text-left text-sm hover:bg-muted rounded-sm transition-colors"
+                                >
+                                  <span className="font-mono text-xs font-semibold text-primary shrink-0 w-10">
+                                    {specific.id}
+                                  </span>
+                                  <span className="truncate">{specific.name}</span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </ScrollArea>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                  <FormDescription>El específico se filtra según la sección seleccionada. Podés buscar por nombre o ID.</FormDescription>
                 </FormItem>
               </motion.div>
 
@@ -490,7 +583,7 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.28 }}
               >
-                <ClasificadorInfoNote />
+                <ClasificadorInfoNote mode="all-specifics" />
               </motion.div>
 
               <motion.div

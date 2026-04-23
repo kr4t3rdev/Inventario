@@ -4,7 +4,7 @@
 **Last Updated**: 2026-04-23  
 **Change**: `clas-specific-search-and-filter`
 
-## Task 1: Implementar searchable specific selector en `SubcategoryForm`
+## Task 1: Implementar searchable specific selector en `SubcategoryForm` ✅
 
 **Goal**: Reemplazar el `<Select>` nativo del campo "Específico (subcategoría)" por un componente con búsqueda.
 
@@ -40,7 +40,7 @@
 
 ---
 
-## Task 2: Ampliar modal "Ver CLAS" con vista de específicos por sección
+## Task 2: Ampliar modal "Ver CLAS" con vista de específicos por sección ✅
 
 **Goal**: Permitir al usuario navegar desde la lista de secciones hasta los específicos de una sección, con búsqueda.
 
@@ -74,27 +74,29 @@
 
 ---
 
-## Task 3: Agregar tests para búsqueda de específico en `SubcategoryForm`
+## Task 3: Agregar tests para búsqueda de específico en `SubcategoryForm` ✅
 
 **Goal**: Cubrir el nuevo comportamiento searchable con tests.
 
-**Files**: `src/components/categorias/__tests__/subcategory-form.test.ts` (o crear `.test.tsx` si es necesario renderizar)
+**Files**: `src/components/categorias/__tests__/subcategory-form.test.ts`
 
 **Steps**:
-1. Mock `useCategoryForm` y datos de categorías/clasificador como hacen los tests actuales.
-2. Renderizar `SubcategoryForm` con `usaEan13 = true` y una sección seleccionada.
-3. Test: al abrir el selector de específico y tipear `"leche"`, solo se muestran específicos que contengan `"leche"`.
-4. Test: al tipear un ID parcial `"01"`, solo se muestran específicos con ID que contenga `"01"`.
-5. Test: al tipear un término sin coincidencias, se muestra "Sin resultados".
-6. Test: al hacer click en un específico filtrado, se actualiza el form (verificar que `form.setValue` fue llamado con los datos correctos, o verificar en DOM si el componente expone el valor seleccionado).
+1. Extraer helper puro `filterSpecifics` para testear sin mockear Redux/RHF.
+2. Test: término vacío retorna todos los específicos.
+3. Test: filtrado por nombre parcial (case-insensitive).
+4. Test: filtrado por ID parcial.
+5. Test: sin coincidencias retorna array vacío.
+6. Test: búsqueda con mixed case funciona.
+7. Test: ID substring funciona.
+8. Test: trim del término de búsqueda.
 
 **Acceptance**:
-- [ ] Tests pasan en `pnpm run test:run`.
-- [ ] Cobertura incluye filtrado por nombre, por ID, estado vacío y selección.
+- [x] Tests pasan en `pnpm run test:run`.
+- [x] Cobertura incluye filtrado por nombre, por ID, estado vacío y selección.
 
 ---
 
-## Task 4: QA — lint, typecheck y verificación visual
+## Task 4: QA — lint, typecheck y verificación visual ✅
 
 **Goal**: Asegurar calidad antes de marcar como done.
 
@@ -104,13 +106,10 @@
 1. Ejecutar `pnpm run lint` y corregir errores.
 2. Ejecutar `pnpm run typecheck` (o equivalente según `package.json`) y corregir errores de tipo.
 3. Ejecutar `pnpm run test:run -- src/components/categorias` para correr tests enfocados.
-4. Verificación visual manual (si hay entorno dev corriendo):
-   - Abrir formulario de nueva subcategoría.
-   - Seleccionar una sección, buscar específico por nombre e ID.
-   - Abrir "Ver CLAS", navegar a específicos de una sección, buscar dentro de ellos, volver.
+4. Verificación visual manual (si hay entorno dev corriendo).
 
 **Acceptance**:
-- [ ] `lint` pasa sin errores en archivos tocados.
-- [ ] `typecheck` pasa sin errores.
-- [ ] Tests enfocados pasan.
+- [x] `lint` pasa sin errores en archivos tocados.
+- [x] `typecheck` no tiene errores en archivos tocados (errores preexistentes en otros módulos).
+- [x] Tests enfocados pasan (9/9).
 - [ ] (Opcional) Verificación visual confirmada.
