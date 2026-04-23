@@ -462,7 +462,7 @@ async function generateOfferPDF(
 }
 
 export const GET = withAuth(async (request: NextRequest, context: any, user: any) => {
-  const id = context?.params?.id as string | undefined
+  const { id } = await context.params
   if (!id) {
     return NextResponse.json({ error: 'ID de oferta requerido' }, { status: 400 })
   }
