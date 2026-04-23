@@ -1,45 +1,58 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { NextRequest } from 'next/server'
 
-const txMock = vi.hoisted(() => ({
+// ─── Mocks (vi.hoisted se ejecuta antes que vi.mock) ─────────────────────────
+
+const prismaMock = vi.hoisted(() => ({
+  compraDocumento: {
+    findMany: vi.fn(),
+    findFirst: vi.fn(),
+    findUnique: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    count: vi.fn(),
+  },
+  compraDocumentoItem: {
+    create: vi.fn(),
+  },
   producto: {
     findUnique: vi.fn(),
     update: vi.fn(),
   },
-  stockUbicacion: {
-    upsert: vi.fn(),
-  },
   gastoCompra: {
     create: vi.fn(),
+    update: vi.fn(),
   },
   cuentaPorPagar: {
     create: vi.fn(),
+    update: vi.fn(),
+    count: vi.fn(),
   },
   compraProducto: {
+    findFirst: vi.fn(),
+  },
+  productoCostHistory: {
     create: vi.fn(),
   },
-}))
-
-const prismaMock = vi.hoisted(() => ({
-  configuracionSistema: {
-    findFirst: vi.fn(),
+  ventaItem: {
+    count: vi.fn(),
   },
-  contrato: {
-    findFirst: vi.fn(),
-  },
-  compraProducto: {
-    findFirst: vi.fn(),
-    findMany: vi.fn(),
+  pagoCuentaPorPagar: {
     count: vi.fn(),
   },
   $transaction: vi.fn(),
 }))
 
-const executeAnticipoMock = vi.hoisted(() => vi.fn())
+const upsertStockUbicacionMock = vi.hoisted(() => vi.fn())
+const calcularPrecioCostoCompraMock = vi.hoisted(() => vi.fn())
+const applyPagoGastoWorkflowMock = vi.hoisted(() => vi.fn())
+const applyAnticipoAllocationsMock = vi.hoisted(() => vi.fn())
+const isAnticipoWorkflowErrorMock = vi.hoisted(() => vi.fn(() => false))
 
 vi.mock('@/lib/auth-middleware', () => ({
   withAuthGet: (handler: any) => handler,
   withAuthPost: (handler: any) => handler,
+  withAuth: (handler: any) => handler,
 }))
 
 vi.mock('@/lib/prisma', () => ({
@@ -47,319 +60,581 @@ vi.mock('@/lib/prisma', () => ({
   default: prismaMock,
 }))
 
-vi.mock('@/lib/services/anticipos-workflow', () => ({
-  executeAnticipo: executeAnticipoMock,
-  isAnticipoWorkflowError: () => false
+vi.mock('@/lib/services/stock-ubicacion-service', () => ({
+  upsertStockUbicacion: upsertStockUbicacionMock,
+}))
+
+vi.mock('@/lib/inventory-cost-utils', () => ({
+  calcularPrecioCostoCompra: calcularPrecioCostoCompraMock,
 }))
 
 vi.mock('@/lib/services/pago-gastos-workflow', () => ({
-  applyPagoGastoWorkflow: vi.fn()
+  applyPagoGastoWorkflow: applyPagoGastoWorkflowMock,
 }))
 
-function buildPayload(overrides: Record<string, unknown> = {}) {
-  return {
-    productoId: 'prod-1',
-    precioCosto: 120,
-    cantidad: 3,
-    vendorId: 'vendor-1',
-    numeroFactura: 'FAC-100',
-    facturaUrl: '',
-    formaPago: 'PAGO_COMPLETO',
-    estado: 'PAGADA',
-    descripcionCompra: 'Compra de prueba',
-    ...overrides,
-  }
+vi.mock('@/lib/services/anticipos-workflow', () => ({
+  applyAnticipoAllocations: applyAnticipoAllocationsMock,
+  isAnticipoWorkflowError: isAnticipoWorkflowErrorMock,
+}))
+
+vi.mock('@/lib/constants/anticipos', () => ({
+  FORMA_PAGO_ANTICIPO_PAGO: 'ANTICIPO_PAGO',
+}))
+
+vi.mock('@/lib/services/anticipos-guards', () => ({
+  hasUnrevertedAnticipoExecution: vi.fn().mockResolvedValue(false),
+}))
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function makePostRequest(body: Record<string, unknown>) {
+  return new NextRequest('http://localhost/api/compras-productos', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  })
 }
 
-describe('API /compras-productos - nuevo contrato con producto existente', () => {
+function mockTransaction() {
+  prismaMock.$transaction.mockImplementation(async (callback: any) => {
+    const tx = {
+      producto: {
+        findUnique: prismaMock.producto.findUnique,
+        update: prismaMock.producto.update,
+      },
+      compraDocumento: {
+        create: prismaMock.compraDocumento.create,
+        findFirst: prismaMock.compraDocumento.findFirst,
+        update: prismaMock.compraDocumento.update,
+      },
+      compraDocumentoItem: {
+        create: prismaMock.compraDocumentoItem.create,
+      },
+      gastoCompra: {
+        create: prismaMock.gastoCompra.create,
+        update: prismaMock.gastoCompra.update,
+      },
+      cuentaPorPagar: {
+        create: prismaMock.cuentaPorPagar.create,
+        update: prismaMock.cuentaPorPagar.update,
+      },
+      productoCostHistory: {
+        create: prismaMock.productoCostHistory.create,
+      },
+    }
+    return callback(tx)
+  })
+}
+
+const productoA = {
+  id: 'prod-a',
+  nombre: 'Producto A',
+  stock: 10,
+  precioCosto: 100,
+  precioVenta: 200,
+  vendorId: 'vendor-1',
+  almacenId: 'alm-1',
+  vendor: { vendorId: 'vendor-1', nombre: 'Proveedor 1' },
+}
+
+const productoB = {
+  id: 'prod-b',
+  nombre: 'Producto B',
+  stock: 5,
+  precioCosto: 50,
+  precioVenta: 100,
+  vendorId: 'vendor-1',
+  almacenId: 'alm-1',
+  vendor: { vendorId: 'vendor-1', nombre: 'Proveedor 1' },
+}
+
+// ─── Tests ───────────────────────────────────────────────────────────────────
+
+describe('API /compras-productos POST', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-
-    prismaMock.configuracionSistema.findFirst.mockResolvedValue({ diasAvisoVencimientoContrato: 30 })
-    prismaMock.contrato.findFirst.mockResolvedValue({
-      contratoId: 'ctr-1',
-      vendorId: 'vendor-1',
-      estado: 'ACTIVO',
-      fechaFin: new Date('2099-12-31'),
+    mockTransaction()
+    calcularPrecioCostoCompraMock.mockImplementation(({ stockAntes, precioCostoActual, cantidadCompra, costoUnitario }: any) => {
+      if (stockAntes <= 0) return { precioCostoNuevo: costoUnitario, metodoCosto: 'PRIMERA_COMPRA' }
+      const valorAnterior = stockAntes * precioCostoActual
+      const valorNuevo = cantidadCompra * costoUnitario
+      const stockTotal = stockAntes + cantidadCompra
+      return { precioCostoNuevo: (valorAnterior + valorNuevo) / stockTotal, metodoCosto: 'PONDERADO' }
     })
-    prismaMock.compraProducto.findFirst.mockResolvedValue(null)
-
-    txMock.producto.findUnique.mockResolvedValue({
-      id: 'prod-1',
-      nombre: 'Producto Existente',
-      stock: 10,
-      precioCosto: 100,
-      vendorId: 'vendor-1',
-      almacenId: 'alm-1',
-      vendor: null,
-    })
-    txMock.producto.update.mockResolvedValue({
-      id: 'prod-1',
-      stock: 13,
-      precioCosto: 104.61538461538461,
-    })
-    txMock.stockUbicacion.upsert.mockResolvedValue({
-      stockId: 'su-1',
-    })
-
-    txMock.gastoCompra.create.mockResolvedValue({
-      gastoCompraId: 'gc-1',
-      vendor: { nombre: 'Proveedor Test' },
-    })
-
-    txMock.cuentaPorPagar.create.mockResolvedValue({
-      cuentaPorPagarId: 'cxp-1',
-    })
-
-    txMock.compraProducto.create.mockResolvedValue({
-      compraProductoId: 'cp-1',
-    })
-
-    prismaMock.$transaction.mockImplementation(async (callback: (tx: typeof txMock) => Promise<unknown>) => callback(txMock))
   })
 
-  it('crea compra con producto existente y NO crea producto nuevo', async () => {
+  it('crea compra múltiple con 2 productos — una cabecera, 2 items, 1 gasto', async () => {
     const { POST } = await import('../route')
 
-    const request = new NextRequest('http://localhost/api/compras-productos', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(buildPayload()),
+    prismaMock.compraDocumento.findFirst.mockResolvedValueOnce(null)
+    prismaMock.producto.findUnique
+      .mockResolvedValueOnce(productoA)
+      .mockResolvedValueOnce(productoB)
+    prismaMock.producto.update.mockResolvedValue({})
+    upsertStockUbicacionMock.mockResolvedValue(undefined)
+    prismaMock.gastoCompra.create.mockResolvedValueOnce({
+      gastoCompraId: 'gc-1',
+      productoId: 'prod-a',
+      vendorId: 'vendor-1',
+      cantidad: 7,
+      precioUnitario: 86,
+      total: 600,
+      vendor: { nombre: 'Proveedor 1' },
+    })
+    prismaMock.compraDocumento.create.mockResolvedValueOnce({
+      compraDocumentoId: 'cd-1',
+      proveedorId: 'vendor-1',
+      total: 600,
+      estado: 'PAGADA',
+    })
+    prismaMock.compraDocumentoItem.create
+      .mockResolvedValueOnce({ compraDocumentoItemId: 'ci-1', compraDocumentoId: 'cd-1', productoId: 'prod-a', cantidad: 4, precioUnitario: 100, totalLinea: 400 })
+      .mockResolvedValueOnce({ compraDocumentoItemId: 'ci-2', compraDocumentoId: 'cd-1', productoId: 'prod-b', cantidad: 3, precioUnitario: 50, totalLinea: 150 })
+    prismaMock.productoCostHistory.create.mockResolvedValue({})
+
+    const request = makePostRequest({
+      proveedorId: 'vendor-1',
+      numeroFactura: 'F-001',
+      formaPago: 'PAGO_COMPLETO',
+      estado: 'PAGADA',
+      items: [
+        { productoId: 'prod-a', precioCosto: 100, cantidad: 4 },
+        { productoId: 'prod-b', precioCosto: 50, cantidad: 3 },
+      ],
     })
 
-    const response = await POST(request, {}, { userId: 'user-1' })
+    const response = await POST(request, {}, { userId: 'user-1', id: 'user-1' })
     const data = await response.json()
 
     expect(response.status).toBe(201)
     expect(data.success).toBe(true)
-    expect(data.stockAntes).toBe(10)
-    expect(data.stockDespues).toBe(13)
-    expect(data.precioCostoAntes).toBe(100)
-    expect(data.precioCostoDespues).toBeCloseTo(104.61538461538461)
-    expect(data.metodoCosto).toBe('PONDERADO')
-    expect(txMock.producto.findUnique).toHaveBeenCalledWith(
+    expect(data.compraDocumento.compraDocumentoId).toBe('cd-1')
+    expect(data.items).toHaveLength(2)
+
+    // Verifica que se creó UN solo gasto con el total correcto
+    expect(prismaMock.gastoCompra.create).toHaveBeenCalledTimes(1)
+    expect(prismaMock.gastoCompra.create).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: { id: 'prod-1' },
-      }),
-    )
-    expect(txMock.producto.update).toHaveBeenCalledWith(
-      expect.objectContaining({
-        where: { id: 'prod-1' },
         data: expect.objectContaining({
-          precioCosto: 104.61538461538461,
+          total: 550, // 4*100 + 3*50
+          vendorId: 'vendor-1',
         }),
-      }),
+      })
     )
-    expect(txMock.stockUbicacion.upsert).toHaveBeenCalled()
-    expect(txMock.stockUbicacion.upsert).toHaveBeenCalledWith(
+
+    // Verifica que se crearon 2 items
+    expect(prismaMock.compraDocumentoItem.create).toHaveBeenCalledTimes(2)
+
+    // Verifica que se actualizó stock 2 veces
+    expect(prismaMock.producto.update).toHaveBeenCalledTimes(2)
+    expect(prismaMock.producto.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        where: {
-          productoId_tipoUbicacion_ubicacionId: {
-            productoId: 'prod-1',
-            tipoUbicacion: 'almacen',
-            ubicacionId: 'alm-1',
-          },
-        },
-      }),
+        where: { id: 'prod-a' },
+        data: expect.objectContaining({
+          stock: { increment: 4 },
+        }),
+      })
     )
-    expect(txMock.compraProducto.create).toHaveBeenCalled()
-    expect(executeAnticipoMock).not.toHaveBeenCalled()
+
+    // Verifica que se actualizó StockUbicacion 2 veces
+    expect(upsertStockUbicacionMock).toHaveBeenCalledTimes(2)
   })
 
-  it('retorna 404 si productoId no existe', async () => {
+  it('rechaza si items está vacío', async () => {
     const { POST } = await import('../route')
-    txMock.producto.findUnique.mockResolvedValueOnce(null)
 
-    const request = new NextRequest('http://localhost/api/compras-productos', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(buildPayload()),
+    const request = makePostRequest({
+      proveedorId: 'vendor-1',
+      formaPago: 'PAGO_COMPLETO',
+      estado: 'PAGADA',
+      items: [],
     })
 
-    const response = await POST(request, {}, { userId: 'user-1' })
+    const response = await POST(request, {}, { userId: 'user-1', id: 'user-1' })
+
+    expect(response.status).toBe(400)
+  })
+
+  it('rechaza si un producto no existe', async () => {
+    const { POST } = await import('../route')
+
+    prismaMock.compraDocumento.findFirst.mockResolvedValueOnce(null)
+    prismaMock.producto.findUnique.mockResolvedValueOnce(null)
+
+    const request = makePostRequest({
+      proveedorId: 'vendor-1',
+      formaPago: 'PAGO_COMPLETO',
+      estado: 'PAGADA',
+      items: [
+        { productoId: 'prod-inexistente', precioCosto: 100, cantidad: 1 },
+      ],
+    })
+
+    const response = await POST(request, {}, { userId: 'user-1', id: 'user-1' })
     const data = await response.json()
 
     expect(response.status).toBe(404)
-    expect(data.error).toContain('no existe')
+    expect(data.code).toBe('PRODUCT_NOT_FOUND')
   })
 
-  it('retorna 409 si factura está duplicada para el proveedor', async () => {
+  it('rechaza si el producto no pertenece al proveedor', async () => {
     const { POST } = await import('../route')
-    prismaMock.compraProducto.findFirst.mockResolvedValueOnce({ compraProductoId: 'cp-existente' })
 
-    const request = new NextRequest('http://localhost/api/compras-productos', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(buildPayload({ numeroFactura: 'FAC-DUP' })),
+    prismaMock.compraDocumento.findFirst.mockResolvedValueOnce(null)
+    prismaMock.producto.findUnique.mockResolvedValueOnce({
+      ...productoA,
+      vendorId: 'otro-vendor',
     })
 
-    const response = await POST(request, {}, { userId: 'user-1' })
-    const data = await response.json()
-
-    expect(response.status).toBe(409)
-    expect(data.error).toContain('Ya existe una compra con este número de factura')
-    expect(prismaMock.$transaction).not.toHaveBeenCalled()
-  })
-
-  it('retorna 422 si vendorId no coincide con el proveedor del producto', async () => {
-    const { POST } = await import('../route')
-    txMock.producto.findUnique.mockResolvedValueOnce({
-      id: 'prod-1',
-      nombre: 'Producto Existente',
-      stock: 10,
-      precioCosto: 100,
-      vendorId: 'vendor-catalogo',
-      almacenId: 'alm-1',
-      vendor: null,
+    const request = makePostRequest({
+      proveedorId: 'vendor-1',
+      formaPago: 'PAGO_COMPLETO',
+      estado: 'PAGADA',
+      items: [
+        { productoId: 'prod-a', precioCosto: 100, cantidad: 1 },
+      ],
     })
 
-    const request = new NextRequest('http://localhost/api/compras-productos', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(buildPayload({ vendorId: 'vendor-distinto' })),
-    })
-
-    const response = await POST(request, {}, { userId: 'user-1' })
+    const response = await POST(request, {}, { userId: 'user-1', id: 'user-1' })
     const data = await response.json()
 
     expect(response.status).toBe(422)
     expect(data.code).toBe('PRODUCT_VENDOR_MISMATCH')
-    expect(data.error).toContain('no coincide')
   })
 
-  it('retorna 400 con details cuando el payload es inválido', async () => {
+  it('rechaza factura duplicada para mismo proveedor', async () => {
     const { POST } = await import('../route')
 
-    const request = new NextRequest('http://localhost/api/compras-productos', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(buildPayload({ cantidad: 0, precioCosto: 0 })),
+    // El findFirst de duplicados retorna una compra existente
+    prismaMock.compraDocumento.findFirst.mockResolvedValueOnce({
+      compraDocumentoId: 'cd-existente',
     })
 
-    const response = await POST(request, {}, { userId: 'user-1' })
+    const request = makePostRequest({
+      proveedorId: 'vendor-1',
+      numeroFactura: 'F-001',
+      formaPago: 'PAGO_COMPLETO',
+      estado: 'PAGADA',
+      items: [
+        { productoId: 'prod-a', precioCosto: 100, cantidad: 1 },
+      ],
+    })
+
+    const response = await POST(request, {}, { userId: 'user-1', id: 'user-1' })
+
+    expect(response.status).toBe(409)
+  })
+
+  it('crea cuenta por pagar para PAGO_PARCIAL', async () => {
+    const { POST } = await import('../route')
+
+    prismaMock.compraDocumento.findFirst.mockResolvedValueOnce(null)
+    prismaMock.producto.findUnique.mockResolvedValueOnce(productoA)
+    prismaMock.producto.update.mockResolvedValue({})
+    upsertStockUbicacionMock.mockResolvedValue(undefined)
+    prismaMock.gastoCompra.create.mockResolvedValueOnce({
+      gastoCompraId: 'gc-1',
+      vendor: { nombre: 'Proveedor 1' },
+    })
+    prismaMock.cuentaPorPagar.create.mockResolvedValueOnce({
+      cuentaPorPagarId: 'cxp-1',
+      montoDeuda: 400,
+      saldoPendiente: 400,
+    })
+    prismaMock.compraDocumento.create.mockResolvedValueOnce({
+      compraDocumentoId: 'cd-1',
+    })
+    prismaMock.compraDocumentoItem.create.mockResolvedValueOnce({
+      compraDocumentoItemId: 'ci-1',
+    })
+    prismaMock.productoCostHistory.create.mockResolvedValue({})
+
+    const request = makePostRequest({
+      proveedorId: 'vendor-1',
+      numeroFactura: 'F-002',
+      formaPago: 'PAGO_PARCIAL',
+      estado: 'PENDIENTE',
+      items: [
+        { productoId: 'prod-a', precioCosto: 100, cantidad: 4 },
+      ],
+    })
+
+    const response = await POST(request, {}, { userId: 'user-1', id: 'user-1' })
     const data = await response.json()
+
+    expect(response.status).toBe(201)
+    expect(data.cuentaPorPagar).toBeTruthy()
+    expect(prismaMock.cuentaPorPagar.create).toHaveBeenCalledTimes(1)
+  })
+
+  it('calcula costo ponderado por cada item independientemente', async () => {
+    const { POST } = await import('../route')
+
+    prismaMock.compraDocumento.findFirst.mockResolvedValueOnce(null)
+    prismaMock.producto.findUnique
+      .mockResolvedValueOnce(productoA)
+      .mockResolvedValueOnce(productoB)
+    prismaMock.producto.update.mockResolvedValue({})
+    upsertStockUbicacionMock.mockResolvedValue(undefined)
+    prismaMock.gastoCompra.create.mockResolvedValueOnce({
+      gastoCompraId: 'gc-1',
+      vendor: { nombre: 'Proveedor 1' },
+    })
+    prismaMock.compraDocumento.create.mockResolvedValueOnce({
+      compraDocumentoId: 'cd-1',
+    })
+    prismaMock.compraDocumentoItem.create
+      .mockResolvedValueOnce({ compraDocumentoItemId: 'ci-1' })
+      .mockResolvedValueOnce({ compraDocumentoItemId: 'ci-2' })
+    prismaMock.productoCostHistory.create.mockResolvedValue({})
+
+    const request = makePostRequest({
+      proveedorId: 'vendor-1',
+      formaPago: 'PAGO_COMPLETO',
+      estado: 'PAGADA',
+      items: [
+        { productoId: 'prod-a', precioCosto: 200, cantidad: 10 },
+        { productoId: 'prod-b', precioCosto: 80, cantidad: 5 },
+      ],
+    })
+
+    const response = await POST(request, {}, { userId: 'user-1', id: 'user-1' })
+
+    expect(response.status).toBe(201)
+
+    // Producto A: (10*100 + 10*200) / 20 = 150
+    expect(calcularPrecioCostoCompraMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stockAntes: 10,
+        precioCostoActual: 100,
+        cantidadCompra: 10,
+        costoUnitario: 200,
+      })
+    )
+
+    // Producto B: (5*50 + 5*80) / 10 = 65
+    expect(calcularPrecioCostoCompraMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stockAntes: 5,
+        precioCostoActual: 50,
+        cantidadCompra: 5,
+        costoUnitario: 80,
+      })
+    )
+  })
+
+  it('el total del gasto coincide con la suma de los subtotales de items', async () => {
+    const { POST } = await import('../route')
+
+    prismaMock.compraDocumento.findFirst.mockResolvedValueOnce(null)
+    prismaMock.producto.findUnique
+      .mockResolvedValueOnce(productoA)
+      .mockResolvedValueOnce(productoB)
+    prismaMock.producto.update.mockResolvedValue({})
+    upsertStockUbicacionMock.mockResolvedValue(undefined)
+    prismaMock.gastoCompra.create.mockResolvedValueOnce({
+      gastoCompraId: 'gc-1',
+      vendor: { nombre: 'Proveedor 1' },
+    })
+    prismaMock.compraDocumento.create.mockResolvedValueOnce({
+      compraDocumentoId: 'cd-1',
+    })
+    prismaMock.compraDocumentoItem.create
+      .mockResolvedValueOnce({ compraDocumentoItemId: 'ci-1' })
+      .mockResolvedValueOnce({ compraDocumentoItemId: 'ci-2' })
+    prismaMock.productoCostHistory.create.mockResolvedValue({})
+
+    const request = makePostRequest({
+      proveedorId: 'vendor-1',
+      formaPago: 'PAGO_COMPLETO',
+      estado: 'PAGADA',
+      items: [
+        { productoId: 'prod-a', precioCosto: 100, cantidad: 4 }, // 400
+        { productoId: 'prod-b', precioCosto: 50, cantidad: 3 },  // 150
+      ],
+    })
+
+    await POST(request, {}, { userId: 'user-1', id: 'user-1' })
+
+    // Total = 4*100 + 3*50 = 550
+    expect(prismaMock.gastoCompra.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ total: 550 }),
+      })
+    )
+
+    // Total en cabecera = 550
+    expect(prismaMock.compraDocumento.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ total: 550 }),
+      })
+    )
+  })
+})
+
+describe('API /compras-productos GET', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('retorna cabeceras con items incluidos', async () => {
+    const { GET } = await import('../route')
+
+    prismaMock.compraDocumento.findMany.mockResolvedValueOnce([
+      {
+        compraDocumentoId: 'cd-1',
+        proveedorId: 'vendor-1',
+        numeroFactura: 'F-001',
+        total: 550,
+        estado: 'PAGADA',
+        fechaCompra: new Date(),
+        proveedor: { vendorId: 'vendor-1', nombre: 'Proveedor 1' },
+        items: [
+          { compraDocumentoItemId: 'ci-1', productoId: 'prod-a', cantidad: 4, precioUnitario: 100, totalLinea: 400, producto: { id: 'prod-a', nombre: 'Producto A' } },
+          { compraDocumentoItemId: 'ci-2', productoId: 'prod-b', cantidad: 3, precioUnitario: 50, totalLinea: 150, producto: { id: 'prod-b', nombre: 'Producto B' } },
+        ],
+      },
+    ])
+    prismaMock.compraDocumento.count.mockResolvedValueOnce(1)
+
+    const request = new NextRequest('http://localhost/api/compras-productos')
+    const response = await GET(request, {}, { userId: 'user-1' })
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.compras).toHaveLength(1)
+    expect(data.compras[0].items).toHaveLength(2)
+    expect(data.pagination.total).toBe(1)
+  })
+
+  it('filtra por deletedAt null (no muestra eliminadas)', async () => {
+    const { GET } = await import('../route')
+
+    prismaMock.compraDocumento.findMany.mockResolvedValueOnce([])
+    prismaMock.compraDocumento.count.mockResolvedValueOnce(0)
+
+    const request = new NextRequest('http://localhost/api/compras-productos')
+    await GET(request, {}, { userId: 'user-1' })
+
+    expect(prismaMock.compraDocumento.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ deletedAt: null }),
+      })
+    )
+  })
+})
+
+describe('API /compras-productos/[id] DELETE', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockTransaction()
+  })
+
+  it('revierte stock por cada item al eliminar', async () => {
+    const { DELETE } = await import('../[id]/route')
+
+    prismaMock.compraDocumento.findUnique.mockResolvedValueOnce({
+      compraDocumentoId: 'cd-1',
+      tipoOperacion: 'RESTOCK',
+      items: [
+        { productoId: 'prod-a', cantidad: 4, producto: { nombre: 'Producto A' } },
+        { productoId: 'prod-b', cantidad: 3, producto: { nombre: 'Producto B' } },
+      ],
+      gastoCompra: { gastoCompraId: 'gc-1' },
+      cuentaPorPagar: null,
+    })
+    prismaMock.ventaItem.count.mockResolvedValue(0)
+    prismaMock.compraDocumento.update.mockResolvedValue({})
+    prismaMock.producto.update.mockResolvedValue({})
+    prismaMock.gastoCompra.update.mockResolvedValue({})
+
+    const request = new NextRequest('http://localhost/api/compras-productos/cd-1', {
+      method: 'DELETE',
+    })
+
+    const response = await DELETE(request, { params: Promise.resolve({ id: 'cd-1' }) }, { userId: 'user-1', id: 'user-1' })
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.success).toBe(true)
+
+    // Verifica que se decrementó stock 2 veces (una por item)
+    expect(prismaMock.producto.update).toHaveBeenCalledTimes(2)
+    expect(prismaMock.producto.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'prod-a' },
+        data: { stock: { decrement: 4 } },
+      })
+    )
+    expect(prismaMock.producto.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'prod-b' },
+        data: { stock: { decrement: 3 } },
+      })
+    )
+  })
+
+  it('bloquea eliminación si algún producto ya fue vendido', async () => {
+    const { DELETE } = await import('../[id]/route')
+
+    prismaMock.compraDocumento.findUnique.mockResolvedValueOnce({
+      compraDocumentoId: 'cd-1',
+      tipoOperacion: 'RESTOCK',
+      items: [
+        { productoId: 'prod-a', cantidad: 4, producto: { nombre: 'Producto A' } },
+      ],
+      gastoCompra: null,
+      cuentaPorPagar: null,
+    })
+    prismaMock.ventaItem.count.mockResolvedValueOnce(3) // producto A fue vendido
+
+    const request = new NextRequest('http://localhost/api/compras-productos/cd-1', {
+      method: 'DELETE',
+    })
+
+    const response = await DELETE(request, { params: Promise.resolve({ id: 'cd-1' }) }, { userId: 'user-1', id: 'user-1' })
 
     expect(response.status).toBe(400)
-    expect(data.code).toBe('VALIDATION_ERROR')
-    expect(data.details).toBeDefined()
-    expect(prismaMock.$transaction).not.toHaveBeenCalled()
+    expect(prismaMock.producto.update).not.toHaveBeenCalled()
   })
 
-  it('permite compra de producto sin taxonomía/código de negocio', async () => {
-    const { POST } = await import('../route')
-    txMock.producto.findUnique.mockResolvedValueOnce({
-      id: 'prod-2',
-      nombre: 'Producto Legacy',
-      stock: 0,
-      precioCosto: 0,
-      almacenId: 'alm-1',
-      codigoNegocio: null,
-      proveedorCodigo: null,
-      idSeccionCodigo: null,
-      especificoCodigo: null,
-      surtidoCodigo: null,
-      dcCodigo: null,
-      vendor: null,
+  it('soft delete de gasto y cxp si existen', async () => {
+    const { DELETE } = await import('../[id]/route')
+
+    prismaMock.compraDocumento.findUnique.mockResolvedValueOnce({
+      compraDocumentoId: 'cd-1',
+      tipoOperacion: 'RESTOCK',
+      items: [
+        { productoId: 'prod-a', cantidad: 4, producto: { nombre: 'Producto A' } },
+      ],
+      gastoCompra: { gastoCompraId: 'gc-1' },
+      cuentaPorPagar: { cuentaPorPagarId: 'cxp-1' },
+    })
+    prismaMock.ventaItem.count.mockResolvedValue(0)
+    prismaMock.pagoCuentaPorPagar.count.mockResolvedValueOnce(0)
+    prismaMock.compraDocumento.update.mockResolvedValue({})
+    prismaMock.producto.update.mockResolvedValue({})
+    prismaMock.gastoCompra.update.mockResolvedValue({})
+    prismaMock.cuentaPorPagar.update.mockResolvedValue({})
+
+    const request = new NextRequest('http://localhost/api/compras-productos/cd-1', {
+      method: 'DELETE',
     })
 
-    const request = new NextRequest('http://localhost/api/compras-productos', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(buildPayload({ productoId: 'prod-2' })),
-    })
+    const response = await DELETE(request, { params: Promise.resolve({ id: 'cd-1' }) }, { userId: 'user-1', id: 'user-1' })
 
-    const response = await POST(request, {}, { userId: 'user-1' })
-
-    expect(response.status).toBe(201)
-    const data = await response.json()
-    expect(data.precioCostoAntes).toBe(0)
-    expect(data.precioCostoDespues).toBe(120)
-    expect(data.metodoCosto).toBe('PRIMERA_COMPRA')
-    expect(txMock.compraProducto.create).toHaveBeenCalledWith(
+    expect(response.status).toBe(200)
+    expect(prismaMock.gastoCompra.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({
-          productoId: 'prod-2',
-        }),
-      }),
+        where: { gastoCompraId: 'gc-1' },
+        data: expect.objectContaining({ deletedAt: expect.any(Date) }),
+      })
     )
-  })
-
-  it('hace rollback lógico si falla luego del incremento de stock', async () => {
-    const { POST } = await import('../route')
-    txMock.gastoCompra.create.mockRejectedValueOnce(new Error('DB_FAIL'))
-
-    const request = new NextRequest('http://localhost/api/compras-productos', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(buildPayload()),
-    })
-
-    const response = await POST(request, {}, { userId: 'user-1' })
-    const data = await response.json()
-
-    expect(response.status).toBe(500)
-    expect(data.error).toContain('Error al crear compra de producto')
-    expect(txMock.producto.update).toHaveBeenCalled()
-    expect(txMock.compraProducto.create).not.toHaveBeenCalled()
-  })
-
-  it('no sincroniza stock derivado de hijo aunque el payload legacy incluya campos compuestos', async () => {
-    const { POST } = await import('../route')
-
-    txMock.producto.findUnique.mockResolvedValueOnce({
-      id: 'prod-1',
-      nombre: 'Pack x20',
-      stock: 10,
-      precioCosto: 100,
-      almacenId: 'alm-1',
-      vendor: null,
-      cantidadEnPack: 20,
-      productosHijos: [{ id: 'hijo-1' }],
-    })
-
-    const request = new NextRequest('http://localhost/api/compras-productos', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(buildPayload({ cantidad: 3 })),
-    })
-
-    const response = await POST(request, {}, { userId: 'user-1' })
-
-    expect(response.status).toBe(201)
-    // Solo update de stock del producto comprado
-    expect(txMock.producto.update).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: 'prod-1' } }),
-    )
-    expect(txMock.producto.update).toHaveBeenCalledTimes(1)
-  })
-
-  it('mantiene una sola actualización de producto cuando no hay metadatos compuestos', async () => {
-    const { POST } = await import('../route')
-
-    txMock.producto.findUnique.mockResolvedValueOnce({
-      id: 'prod-1',
-      nombre: 'Producto Simple',
-      stock: 10,
-      precioCosto: 100,
-      almacenId: 'alm-1',
-      vendor: null,
-      cantidadEnPack: null,
-      productosHijos: [],
-    })
-
-    const request = new NextRequest('http://localhost/api/compras-productos', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(buildPayload({ cantidad: 5 })),
-    })
-
-    const response = await POST(request, {}, { userId: 'user-1' })
-
-    expect(response.status).toBe(201)
-    // Only 1 update call (parent stock), no child sync
-    expect(txMock.producto.update).toHaveBeenCalledTimes(1)
-    expect(txMock.producto.update).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: 'prod-1' } }),
+    expect(prismaMock.cuentaPorPagar.update).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { cuentaPorPagarId: 'cxp-1' },
+        data: expect.objectContaining({ deletedAt: expect.any(Date) }),
+      })
     )
   })
 })

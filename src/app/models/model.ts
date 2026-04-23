@@ -149,6 +149,52 @@ export interface CompraProducto {
   proveedor?: Vendor
 }
 
+export interface CompraDocumentoItem {
+  compraDocumentoItemId: string
+  compraDocumentoId: string
+  productoId: string
+  cantidad: number
+  precioUnitario: number
+  totalLinea: number
+  createdAt: string
+  updatedAt: string
+  producto?: Producto
+  stockAntes?: number
+  stockDespues?: number
+  precioCostoAntes?: number
+  precioCostoDespues?: number
+  metodoCosto?: 'PRIMERA_COMPRA' | 'PONDERADO'
+}
+
+export interface CompraDocumento {
+  compraDocumentoId: string
+  proveedorId: string
+  numeroFactura: string
+  facturaUrl: string
+  formaPago: 'PAGO_PARCIAL' | 'PAGO_COMPLETO' | 'ANTICIPO_PAGO'
+  estado: 'PENDIENTE' | 'PAGADA'
+  tipoOperacion: 'RESTOCK' | 'REGULAR'
+  descripcion?: string | null
+  fechaCompra: string
+  total: number
+  gastoCompraId?: string | null
+  cuentaPorPagarId?: string | null
+  deletedAt?: string | null
+  updatedById?: string | null
+  createdAt: string
+  updatedAt: string
+  proveedor?: Vendor
+  items?: CompraDocumentoItem[]
+}
+
+export interface CompraDocumentoResponse {
+  success: boolean
+  compraDocumento: CompraDocumento
+  items: CompraDocumentoItem[]
+  gastoCompra?: any
+  cuentaPorPagar?: any
+}
+
 export interface CompraProductoResponse {
   success: boolean
   producto: Producto

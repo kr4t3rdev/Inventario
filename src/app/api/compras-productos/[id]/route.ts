@@ -28,7 +28,7 @@ const updateSchema = z.object({
 )
 
 /**
- * @description Obtener una compra de producto por ID
+ * @description Obtener una compra de producto por ID (cabecera + items)
  * @param {NextRequest} request - Request de Next.js
  * @param {Object} context - Contexto con params
  * @returns {Promise<NextResponse>} Compra encontrada o error 404
@@ -37,18 +37,22 @@ export const GET = withAuthGet(async (request: NextRequest, context: { params: P
   try {
     const { id } = await context.params
 
-    const compra = await prisma.compraProducto.findUnique({
-      where: { compraProductoId: id },
+    const compra = await prisma.compraDocumento.findUnique({
+      where: { compraDocumentoId: id },
       include: {
-        producto: {
-          include: {
-            categoria: true,
-            unidad: true,
-          },
-        },
         proveedor: true,
         gastoCompra: true,
         cuentaPorPagar: true,
+        items: {
+          include: {
+            producto: {
+              include: {
+                categoria: true,
+                unidad: true,
+              },
+            },
+          },
+        },
       },
     })
 
@@ -64,7 +68,7 @@ export const GET = withAuthGet(async (request: NextRequest, context: { params: P
 })
 
 /**
- * @description Actualizar una compra de producto existente
+ * @description Actualizar una compra de producto existente (cabecera)
  * @param {NextRequest} request - Request de Next.js
  * @param {Object} context - Contexto con params
  * @returns {Promise<NextResponse>} Compra actualizada
@@ -75,8 +79,8 @@ export const PUT = withAuth(async (request: NextRequest, context: { params: Prom
     const body = await request.json()
     const data = updateSchema.parse(body)
 
-    const existingCompra = await prisma.compraProducto.findUnique({
-      where: { compraProductoId: id },
+    const existingCompra = await prisma.compraDocumento.findUnique({
+      where: { compraDocumentoId: id },
       include: {
         gastoCompra: true,
         cuentaPorPagar: true,
@@ -90,7 +94,7 @@ export const PUT = withAuth(async (request: NextRequest, context: { params: Prom
     const requiresReversion = await hasUnrevertedAnticipoExecution(prisma, id)
     if (requiresReversion) {
       return NextResponse.json(
-        { error: 'Debe revertir el anticipo ejecutado antes de eliminar la compra' },
+        { error: 'Debe revertir el anticipo ejecutado antes de modificar la compra' },
         { status: 409 }
       )
     }
@@ -110,9 +114,9 @@ export const PUT = withAuth(async (request: NextRequest, context: { params: Prom
     }
 
     const result = await prisma.$transaction(async (tx: any) => {
-      // Actualizar compra
-      const compraActualizada = await tx.compraProducto.update({
-        where: { compraProductoId: id },
+      // Actualizar cabecera
+      const compraActualizada = await tx.compraDocumento.update({
+        where: { compraDocumentoId: id },
         data: {
           numeroFactura: data.numeroFactura,
           facturaUrl: data.facturaUrl,
@@ -122,15 +126,16 @@ export const PUT = withAuth(async (request: NextRequest, context: { params: Prom
           updatedById: user.userId || user.id,
         },
         include: {
-          producto: {
-            include: {
-              categoria: true,
-              unidad: true,
-            },
-          },
           proveedor: true,
           gastoCompra: true,
           cuentaPorPagar: true,
+          items: {
+            include: {
+              producto: {
+                include: { categoria: true, unidad: true },
+              },
+            },
+          },
         },
       })
 
@@ -175,7 +180,8 @@ export const PUT = withAuth(async (request: NextRequest, context: { params: Prom
 })
 
 /**
- * @description Eliminar una compra de producto (soft delete)
+ * @description Eliminar una compra de producto (soft delete de cabecera + items)
+ * Revierte stock de cada item y soft delete de gasto/cxp.
  * @param {NextRequest} request - Request de Next.js
  * @param {Object} context - Contexto con params
  * @returns {Promise<NextResponse>} Confirmación de eliminación
@@ -184,10 +190,12 @@ export const DELETE = withAuth(async (request: NextRequest, context: { params: P
   try {
     const { id } = await context.params
 
-    const existingCompra = await prisma.compraProducto.findUnique({
-      where: { compraProductoId: id },
+    const existingCompra = await prisma.compraDocumento.findUnique({
+      where: { compraDocumentoId: id },
       include: {
-        producto: true,
+        items: {
+          include: { producto: true },
+        },
         gastoCompra: true,
         cuentaPorPagar: true,
       },
@@ -211,27 +219,48 @@ export const DELETE = withAuth(async (request: NextRequest, context: { params: P
       }
     }
 
-    // Verificar si el producto ya ha sido vendido
-    const ventas = await prisma.ventaItem.count({
-      where: { productoId: existingCompra.productoId },
-    })
+    // Verificar si algún producto de los items ya ha sido vendido
+    for (const item of existingCompra.items) {
+      const ventas = await prisma.ventaItem.count({
+        where: { productoId: item.productoId },
+      })
 
-    if (ventas > 0) {
-      return NextResponse.json(
-        { error: 'No se puede eliminar la compra porque el producto ya ha sido vendido' },
-        { status: 400 }
-      )
+      if (ventas > 0) {
+        return NextResponse.json(
+          { error: `No se puede eliminar la compra porque el producto "${item.producto.nombre}" ya ha sido vendido` },
+          { status: 400 }
+        )
+      }
     }
 
     await prisma.$transaction(async (tx: any) => {
-      // Soft delete de la compra
-      await tx.compraProducto.update({
-        where: { compraProductoId: id },
+      // Soft delete de la cabecera
+      await tx.compraDocumento.update({
+        where: { compraDocumentoId: id },
         data: {
           deletedAt: new Date(),
           updatedById: user.userId || user.id,
         },
       })
+
+      // Revertir stock por cada item
+      for (const item of existingCompra.items) {
+        if (existingCompra.tipoOperacion === 'REGULAR') {
+          // Si es REGULAR, soft delete del producto
+          await tx.producto.update({
+            where: { id: item.productoId },
+            data: { deletedAt: new Date() },
+          })
+        } else {
+          // Si es RESTOCK, revertir el stock
+          await tx.producto.update({
+            where: { id: item.productoId },
+            data: {
+              stock: { decrement: item.cantidad },
+            },
+          })
+        }
+      }
 
       // Soft delete del gastoCompra relacionado
       if (existingCompra.gastoCompra) {
@@ -246,24 +275,6 @@ export const DELETE = withAuth(async (request: NextRequest, context: { params: P
         await tx.cuentaPorPagar.update({
           where: { cuentaPorPagarId: existingCompra.cuentaPorPagar.cuentaPorPagarId },
           data: { deletedAt: new Date() },
-        })
-      }
-
-      // Si es tipo REGULAR (nuevo producto), eliminar el producto creado
-      if (existingCompra.tipoOperacion === 'REGULAR') {
-        await tx.producto.update({
-          where: { id: existingCompra.productoId },
-          data: { deletedAt: new Date() },
-        })
-      } else {
-        // Si es RESTOCK, revertir el stock
-        await tx.producto.update({
-          where: { id: existingCompra.productoId },
-          data: {
-            stock: {
-              decrement: existingCompra.cantidad,
-            },
-          },
         })
       }
     })

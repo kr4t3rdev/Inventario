@@ -1,18 +1,21 @@
 import { apiSlice } from "./apiSlice"
 import type {
-  CompraProducto,
-  CompraProductoResponse,
+  CompraDocumento,
+  CompraDocumentoResponse,
 } from "@/app/models/model"
 
 type EstadoCompraProducto = 'PENDIENTE' | 'PAGADA'
 type FormaPagoCompra = 'PAGO_PARCIAL' | 'PAGO_COMPLETO' | 'ANTICIPO_PAGO'
 type TipoOperacionCompra = 'RESTOCK' | 'REGULAR'
 
-interface CompraProductoRequest {
+interface CompraItemRequest {
   productoId: string
   precioCosto: number
   cantidad: number
-  vendorId: string
+}
+
+interface CompraDocumentoRequest {
+  proveedorId: string
   numeroFactura?: string
   facturaUrl?: string
   formaPago: FormaPagoCompra
@@ -21,6 +24,7 @@ interface CompraProductoRequest {
   fechaVencimiento?: string
   anticipoPagoId?: string
   idempotencyKey?: string
+  items: CompraItemRequest[]
 }
 
 interface ComprasProductosQueryParams {
@@ -47,7 +51,7 @@ interface PaginationInfo {
 }
 
 interface ComprasProductosResponse {
-  compras: CompraProducto[]
+  compras: CompraDocumento[]
   pagination: PaginationInfo
 }
 
@@ -74,7 +78,7 @@ export const comprasProductosApi = apiSlice.injectEndpoints({
       },
       providesTags: ["ComprasProductos"],
     }),
-    createCompraProducto: builder.mutation<CompraProductoResponse, CompraProductoRequest>({
+    createCompraProducto: builder.mutation<CompraDocumentoResponse, CompraDocumentoRequest>({
       query: (payload) => ({
         url: "/compras-productos",
         method: "POST",
@@ -82,13 +86,13 @@ export const comprasProductosApi = apiSlice.injectEndpoints({
       }),
       invalidatesTags: ["ComprasProductos", "Productos", "Dashboard", "GastosCompra"],
     }),
-    getCompraProductoById: builder.query<{ compra: CompraProducto }, string>({
+    getCompraProductoById: builder.query<{ compra: CompraDocumento }, string>({
       query: (id) => `/compras-productos/${id}`,
       providesTags: (result, error, id) => [{ type: "ComprasProductos", id }],
     }),
     updateCompraProducto: builder.mutation<
-      { success: boolean; compra: CompraProducto; message: string },
-      { id: string; data: Partial<CompraProductoRequest> }
+      { success: boolean; compra: CompraDocumento; message: string },
+      { id: string; data: Partial<CompraDocumentoRequest> }
     >({
       query: ({ id, data }) => ({
         url: `/compras-productos/${id}`,

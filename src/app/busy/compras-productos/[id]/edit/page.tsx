@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Loader2, ShoppingCart } from 'lucide-react'
+import { ArrowLeft, Loader2, ShoppingCart, Package } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 import { Button } from '@/components/ui/button'
@@ -57,7 +57,7 @@ const updateSchema = z.object({
 type UpdateFormData = z.infer<typeof updateSchema>
 
 /**
- * @description Página de edición de compra de producto.
+ * @description Página de edición de compra de producto (cabecera).
  * @returns {JSX.Element} Formulario de edición
  */
 export default function EditCompraProductoPage() {
@@ -121,6 +121,8 @@ export default function EditCompraProductoPage() {
     )
   }
 
+  const compra = compraData?.compra
+
   return (
     <SidebarProvider>
       <SidebarInset>
@@ -146,19 +148,40 @@ export default function EditCompraProductoPage() {
               </div>
             </div>
 
-            {compraData?.compra && (
+            {compra && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.1 }}
                 className="bg-card border rounded-lg p-6"
               >
+                {/* Resumen de la compra */}
                 <div className="mb-6 p-4 bg-muted rounded-lg">
-                  <h2 className="font-semibold mb-2">Información del Producto</h2>
-                  <p><span className="text-muted-foreground">Producto:</span> {compraData.compra.producto?.nombre}</p>
-                  <p><span className="text-muted-foreground">Proveedor:</span> {compraData.compra.proveedor?.nombre}</p>
-                  <p><span className="text-muted-foreground">Cantidad:</span> {compraData.compra.cantidad}</p>
-                  <p><span className="text-muted-foreground">Total:</span> ${compraData.compra.total}</p>
+                  <h2 className="font-semibold mb-2">Resumen de la Compra</h2>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <p><span className="text-muted-foreground">Proveedor:</span> {compra.proveedor?.nombre || 'N/A'}</p>
+                    <p><span className="text-muted-foreground">Total:</span> <span className="font-bold">${compra.total?.toLocaleString()}</span></p>
+                    <p><span className="text-muted-foreground">Productos:</span> {compra.items?.length || 0}</p>
+                    <p><span className="text-muted-foreground">Fecha:</span> {new Date(compra.fechaCompra).toLocaleDateString()}</p>
+                  </div>
+
+                  {/* Items de la compra (solo lectura) */}
+                  {compra.items && compra.items.length > 0 && (
+                    <div className="mt-3 pt-3 border-t">
+                      <div className="flex items-center gap-1 mb-2">
+                        <Package className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-xs font-medium text-muted-foreground">Detalle de productos</span>
+                      </div>
+                      <div className="space-y-1">
+                        {compra.items.map((item) => (
+                          <div key={item.compraDocumentoItemId} className="flex justify-between text-xs">
+                            <span>{item.producto?.nombre || 'N/A'} x{item.cantidad}</span>
+                            <span className="font-medium">${item.totalLinea?.toLocaleString()}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <Form {...form}>

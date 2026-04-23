@@ -554,7 +554,8 @@ exports.Prisma.GastoCompraScalarFieldEnum = {
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
   periodo: 'periodo',
-  numeroFactura: 'numeroFactura'
+  numeroFactura: 'numeroFactura',
+  deletedAt: 'deletedAt'
 };
 
 exports.Prisma.CompraProductoScalarFieldEnum = {
@@ -574,7 +575,39 @@ exports.Prisma.CompraProductoScalarFieldEnum = {
   proveedorId: 'proveedorId',
   formaPago: 'formaPago',
   estado: 'estado',
-  tipoOperacion: 'tipoOperacion'
+  tipoOperacion: 'tipoOperacion',
+  deletedAt: 'deletedAt',
+  updatedById: 'updatedById'
+};
+
+exports.Prisma.CompraDocumentoScalarFieldEnum = {
+  compraDocumentoId: 'compraDocumentoId',
+  proveedorId: 'proveedorId',
+  numeroFactura: 'numeroFactura',
+  facturaUrl: 'facturaUrl',
+  formaPago: 'formaPago',
+  estado: 'estado',
+  tipoOperacion: 'tipoOperacion',
+  descripcion: 'descripcion',
+  fechaCompra: 'fechaCompra',
+  total: 'total',
+  gastoCompraId: 'gastoCompraId',
+  cuentaPorPagarId: 'cuentaPorPagarId',
+  deletedAt: 'deletedAt',
+  updatedById: 'updatedById',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.CompraDocumentoItemScalarFieldEnum = {
+  compraDocumentoItemId: 'compraDocumentoItemId',
+  compraDocumentoId: 'compraDocumentoId',
+  productoId: 'productoId',
+  cantidad: 'cantidad',
+  precioUnitario: 'precioUnitario',
+  totalLinea: 'totalLinea',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
 };
 
 exports.Prisma.ServiciosScalarFieldEnum = {
@@ -1093,7 +1126,8 @@ exports.Prisma.CuentaPorPagarScalarFieldEnum = {
   updatedAt: 'updatedAt',
   proveedorId: 'proveedorId',
   tipo: 'tipo',
-  tipoDeuda: 'tipoDeuda'
+  tipoDeuda: 'tipoDeuda',
+  deletedAt: 'deletedAt'
 };
 
 exports.Prisma.DeudaCashScalarFieldEnum = {
@@ -1567,6 +1601,8 @@ exports.Prisma.ModelName = {
   CierreContable: 'CierreContable',
   GastoCompra: 'GastoCompra',
   CompraProducto: 'CompraProducto',
+  CompraDocumento: 'CompraDocumento',
+  CompraDocumentoItem: 'CompraDocumentoItem',
   Servicios: 'Servicios',
   VentaServicios: 'VentaServicios',
   CompraServicio: 'CompraServicio',

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Plus, ShoppingCart, Sparkles, Loader2, Eye, Pencil, Trash2 } from 'lucide-react'
+import { Plus, ShoppingCart, Sparkles, Loader2, Eye, Pencil, Trash2, Package } from 'lucide-react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { motion } from 'framer-motion'
 
@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useGetComprasProductosQuery, useDeleteCompraProductoMutation } from '@/lib/redux/services/comprasProductosApi'
-import type { CompraProducto } from '@/app/models/model'
+import type { CompraDocumento } from '@/app/models/model'
 import {
   Dialog,
   DialogContent,
@@ -24,7 +24,7 @@ import {
 import { toast } from 'sonner'
 
 /**
- * @description Página de listado de compras de productos.
+ * @description Página de listado de compras de productos (cabeceras).
  * @returns {JSX.Element} Vista con tabla de compras
  */
 export default function ComprasProductosPage() {
@@ -33,16 +33,16 @@ export default function ComprasProductosPage() {
   const [deleteCompra] = useDeleteCompraProductoMutation()
   
   // Estados para los diálogos
-  const [selectedCompra, setSelectedCompra] = useState<CompraProducto | null>(null)
+  const [selectedCompra, setSelectedCompra] = useState<CompraDocumento | null>(null)
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
 
-  const handleView = (compra: CompraProducto) => {
+  const handleView = (compra: CompraDocumento) => {
     setSelectedCompra(compra)
     setIsViewDialogOpen(true)
   }
 
-  const handleDelete = (compra: CompraProducto) => {
+  const handleDelete = (compra: CompraDocumento) => {
     setSelectedCompra(compra)
     setIsDeleteDialogOpen(true)
   }
@@ -51,7 +51,7 @@ export default function ComprasProductosPage() {
     if (!selectedCompra) return
     
     try {
-      await deleteCompra(selectedCompra.compraProductoId).unwrap()
+      await deleteCompra(selectedCompra.compraDocumentoId).unwrap()
       toast.success('Compra eliminada exitosamente')
       setIsDeleteDialogOpen(false)
       setSelectedCompra(null)
@@ -60,7 +60,7 @@ export default function ComprasProductosPage() {
     }
   }
 
-  const columns = useMemo<ColumnDef<CompraProducto>[]>(() => ([
+  const columns = useMemo<ColumnDef<CompraDocumento>[]>(() => ([
     {
       accessorKey: 'fechaCompra',
       header: 'Fecha',
@@ -68,13 +68,6 @@ export default function ComprasProductosPage() {
         const fecha = row.getValue('fechaCompra') as string
         return <span>{new Date(fecha).toLocaleDateString()}</span>
       }
-    },
-    {
-      accessorKey: 'producto',
-      header: 'Producto',
-      cell: ({ row }) => (
-        <span className="font-medium">{row.original.producto?.nombre || 'N/A'}</span>
-      )
     },
     {
       accessorKey: 'proveedor',
@@ -85,6 +78,34 @@ export default function ComprasProductosPage() {
       accessorKey: 'numeroFactura',
       header: 'Factura',
       cell: ({ row }) => row.original.numeroFactura || 'S/N'
+    },
+    {
+      id: 'productos',
+      header: 'Productos',
+      cell: ({ row }) => {
+        const items = row.original.items || []
+        const count = items.length
+        if (count === 0) return <span className="text-muted-foreground">Sin items</span>
+        if (count === 1) {
+          return <span className="font-medium">{items[0].producto?.nombre || 'N/A'}</span>
+        }
+        return (
+          <div className="flex items-center gap-1">
+            <Package className="h-3 w-3 text-muted-foreground" />
+            <span className="font-medium">{items[0].producto?.nombre || 'N/A'}</span>
+            <span className="text-muted-foreground text-xs">+{count - 1} más</span>
+          </div>
+        )
+      }
+    },
+    {
+      id: 'cantidadTotal',
+      header: 'Cant.',
+      cell: ({ row }) => {
+        const items = row.original.items || []
+        const total = items.reduce((sum, item) => sum + item.cantidad, 0)
+        return <span className="text-right block">{total}</span>
+      }
     },
     {
       accessorKey: 'tipoOperacion',
@@ -98,11 +119,11 @@ export default function ComprasProductosPage() {
     {
       accessorKey: 'formaPago',
       header: 'Pago',
-      cell: ({ row }) => (
-        <Badge variant="outline">
-          {row.original.formaPago === 'PAGO_COMPLETO' ? 'Completo' : 'Parcial'}
-        </Badge>
-      )
+      cell: ({ row }) => {
+        const fp = row.original.formaPago
+        const label = fp === 'PAGO_COMPLETO' ? 'Completo' : fp === 'PAGO_PARCIAL' ? 'Parcial' : 'Anticipo'
+        return <Badge variant="outline">{label}</Badge>
+      }
     },
     {
       accessorKey: 'estado',
@@ -114,14 +135,9 @@ export default function ComprasProductosPage() {
       )
     },
     {
-      accessorKey: 'cantidad',
-      header: 'Cantidad',
-      cell: ({ row }) => <span className="text-right block">{row.original.cantidad}</span>
-    },
-    {
       accessorKey: 'total',
       header: 'Total',
-      cell: ({ row }) => <span className="text-right block">{row.original.total}</span>
+      cell: ({ row }) => <span className="text-right block font-medium">${row.original.total.toLocaleString()}</span>
     },
     {
       id: 'acciones',
@@ -136,7 +152,7 @@ export default function ComprasProductosPage() {
           >
             <Eye className="h-4 w-4" />
           </Button>
-          <Link href={`/busy/compras-productos/${row.original.compraProductoId}/edit`}>
+          <Link href={`/busy/compras-productos/${row.original.compraDocumentoId}/edit`}>
             <Button
               variant="ghost"
               size="icon"
@@ -281,7 +297,7 @@ export default function ComprasProductosPage() {
 
         {/* Diálogo para ver detalles */}
         <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Detalles de la Compra</DialogTitle>
               <DialogDescription>
@@ -292,12 +308,8 @@ export default function ComprasProductosPage() {
               <div className="space-y-4 py-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Producto</label>
-                    <p className="font-medium">{selectedCompra.producto?.nombre || 'N/A'}</p>
-                  </div>
-                  <div>
                     <label className="text-sm font-medium text-muted-foreground">Proveedor</label>
-                    <p>{selectedCompra.proveedor?.nombre || 'N/A'}</p>
+                    <p className="font-medium">{selectedCompra.proveedor?.nombre || 'N/A'}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Fecha</label>
@@ -320,26 +332,50 @@ export default function ComprasProductosPage() {
                     </Badge>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-muted-foreground">Cantidad</label>
-                    <p>{selectedCompra.cantidad}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Precio Unitario</label>
-                    <p>${selectedCompra.precioUnitario}</p>
+                    <label className="text-sm font-medium text-muted-foreground">Forma de Pago</label>
+                    <p>{selectedCompra.formaPago === 'PAGO_COMPLETO' ? 'Completo' : selectedCompra.formaPago === 'PAGO_PARCIAL' ? 'Parcial' : 'Anticipo'}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Total</label>
-                    <p className="font-bold text-lg">${selectedCompra.total}</p>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium text-muted-foreground">Forma de Pago</label>
-                    <p>{selectedCompra.formaPago === 'PAGO_COMPLETO' ? 'Completo' : 'Parcial'}</p>
+                    <p className="font-bold text-lg">${selectedCompra.total.toLocaleString()}</p>
                   </div>
                 </div>
+
                 {selectedCompra.descripcion && (
                   <div>
                     <label className="text-sm font-medium text-muted-foreground">Descripción</label>
                     <p className="text-sm mt-1">{selectedCompra.descripcion}</p>
+                  </div>
+                )}
+
+                {/* Items de la compra */}
+                {selectedCompra.items && selectedCompra.items.length > 0 && (
+                  <div>
+                    <label className="text-sm font-medium text-muted-foreground mb-2 block">
+                      Productos ({selectedCompra.items.length})
+                    </label>
+                    <div className="border rounded-lg overflow-hidden">
+                      <table className="w-full text-sm">
+                        <thead className="bg-muted/50">
+                          <tr>
+                            <th className="text-left p-2 font-medium">Producto</th>
+                            <th className="text-right p-2 font-medium">Cant.</th>
+                            <th className="text-right p-2 font-medium">Costo Unit.</th>
+                            <th className="text-right p-2 font-medium">Subtotal</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {selectedCompra.items.map((item) => (
+                            <tr key={item.compraDocumentoItemId} className="border-t">
+                              <td className="p-2 font-medium">{item.producto?.nombre || 'N/A'}</td>
+                              <td className="p-2 text-right">{item.cantidad}</td>
+                              <td className="p-2 text-right">${item.precioUnitario.toLocaleString()}</td>
+                              <td className="p-2 text-right font-medium">${item.totalLinea.toLocaleString()}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 )}
               </div>
@@ -362,13 +398,16 @@ export default function ComprasProductosPage() {
             {selectedCompra && (
               <div className="py-4">
                 <p className="text-sm">
-                  <span className="font-medium">Producto:</span> {selectedCompra.producto?.nombre || 'N/A'}
+                  <span className="font-medium">Proveedor:</span> {selectedCompra.proveedor?.nombre || 'N/A'}
                 </p>
                 <p className="text-sm">
                   <span className="font-medium">Factura:</span> {selectedCompra.numeroFactura || 'S/N'}
                 </p>
                 <p className="text-sm">
-                  <span className="font-medium">Total:</span> ${selectedCompra.total}
+                  <span className="font-medium">Productos:</span> {selectedCompra.items?.length || 0}
+                </p>
+                <p className="text-sm">
+                  <span className="font-medium">Total:</span> ${selectedCompra.total.toLocaleString()}
                 </p>
               </div>
             )}

@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { withAuthGet, withAuthPost } from '@/lib/auth-middleware'
 import { calcularPrecioCostoCompra } from '@/lib/inventory-cost-utils'
 import { applyPagoGastoWorkflow } from '@/lib/services/pago-gastos-workflow'
-import { applyAnticipoAllocations, executeAnticipo, isAnticipoWorkflowError } from '@/lib/services/anticipos-workflow'
+import { applyAnticipoAllocations, isAnticipoWorkflowError } from '@/lib/services/anticipos-workflow'
 import { FORMA_PAGO_ANTICIPO_PAGO } from '@/lib/constants/anticipos'
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service'
 
@@ -23,11 +23,14 @@ const querySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).optional().default(20),
 })
 
-const createSchema = z.object({
+const itemSchema = z.object({
   productoId: z.string().min(1, 'Seleccione un producto'),
   precioCosto: z.coerce.number().positive('El precio de costo debe ser mayor a 0'),
   cantidad: z.coerce.number().int('La cantidad debe ser un entero').positive('La cantidad debe ser mayor a 0'),
-  vendorId: z.string().min(1, 'Seleccione un proveedor'),
+})
+
+const createSchema = z.object({
+  proveedorId: z.string().min(1, 'Seleccione un proveedor'),
   numeroFactura: z.string().optional().default(''),
   facturaUrl: z.string().optional().default(''),
   formaPago: z.enum(['PAGO_PARCIAL', 'PAGO_COMPLETO', FORMA_PAGO_ANTICIPO_PAGO]),
@@ -35,7 +38,8 @@ const createSchema = z.object({
   descripcionCompra: z.string().max(500).optional(),
   fechaVencimiento: z.string().optional(),
   anticipoPagoId: z.string().optional(),
-  idempotencyKey: z.string().optional()
+  idempotencyKey: z.string().optional(),
+  items: z.array(itemSchema).min(1, 'Debe incluir al menos un producto'),
 }).refine(
   (data) => {
     if (data.formaPago === 'PAGO_COMPLETO' || data.formaPago === FORMA_PAGO_ANTICIPO_PAGO) {
@@ -59,16 +63,11 @@ const createSchema = z.object({
     message: 'Debe indicar idempotencyKey para ejecutar anticipo',
     path: ['idempotencyKey'],
   }
-).refine(
-  (data) => data.cantidad > 0,
-  {
-    message: 'La cantidad debe ser mayor a 0',
-    path: ['cantidad'],
-  }
 )
 
 /**
  * @description Obtener compras de productos con filtros básicos.
+ * Retorna cabeceras (CompraDocumento) con sus items.
  * @param {NextRequest} request - Request de Next.js
  * @returns {Promise<NextResponse>} Lista de compras de productos
  */
@@ -89,7 +88,7 @@ export const GET = withAuthGet(async (request: NextRequest, _context: any, _user
       limit: searchParams.get('limit') || undefined,
     })
 
-    const whereClause: Record<string, any> = {}
+    const whereClause: Record<string, any> = { deletedAt: null }
 
     if (params.tipoOperacion) {
       whereClause.tipoOperacion = params.tipoOperacion
@@ -130,7 +129,7 @@ export const GET = withAuthGet(async (request: NextRequest, _context: any, _user
     if (params.search) {
       whereClause.OR = [
         { numeroFactura: { contains: params.search, mode: 'insensitive' } },
-        { producto: { nombre: { contains: params.search, mode: 'insensitive' } } },
+        { items: { some: { producto: { nombre: { contains: params.search, mode: 'insensitive' } } } } },
         { proveedor: { nombre: { contains: params.search, mode: 'insensitive' } } },
       ]
     }
@@ -140,17 +139,21 @@ export const GET = withAuthGet(async (request: NextRequest, _context: any, _user
     const skip = (page - 1) * limit
 
     const [compras, total] = await Promise.all([
-      prisma.compraProducto.findMany({
+      prisma.compraDocumento.findMany({
         where: whereClause,
         include: {
-          producto: { select: { id: true, nombre: true } },
           proveedor: { select: { vendorId: true, nombre: true } },
+          items: {
+            include: {
+              producto: { select: { id: true, nombre: true } },
+            },
+          },
         },
         orderBy: { fechaCompra: 'desc' },
         skip,
         take: limit,
       }),
-      prisma.compraProducto.count({ where: whereClause }),
+      prisma.compraDocumento.count({ where: whereClause }),
     ])
 
     return NextResponse.json({
@@ -171,9 +174,11 @@ export const GET = withAuthGet(async (request: NextRequest, _context: any, _user
 })
 
 /**
- * @description Crear una compra de producto existente, incrementando inventario en Producto y StockUbicacion.
+ * @description Crear una compra múltiple de productos.
+ * Crea una cabecera (CompraDocumento) con N items (CompraDocumentoItem).
+ * Actualiza stock y costo ponderado por cada item.
  * @param {NextRequest} request - Request de Next.js
- * @returns {Promise<NextResponse>} Compra creada
+ * @returns {Promise<NextResponse>} Compra creada con cabecera y detalle
  */
 export const POST = withAuthPost(async (request: NextRequest, _context: any, user: any) => {
   try {
@@ -182,17 +187,18 @@ export const POST = withAuthPost(async (request: NextRequest, _context: any, use
 
     // Verificar factura duplicada (solo si se proporciona número de factura)
     if (data.numeroFactura && data.numeroFactura.trim() !== '') {
-      const existingCompra = await prisma.compraProducto.findFirst({
+      const existingCompra = await prisma.compraDocumento.findFirst({
         where: {
           numeroFactura: data.numeroFactura.trim(),
-          proveedorId: data.vendorId,
+          proveedorId: data.proveedorId,
+          deletedAt: null,
         },
       })
 
       if (existingCompra) {
         return NextResponse.json({
           error: 'Ya existe una compra con este número de factura para el mismo proveedor',
-          compraExistente: existingCompra.compraProductoId,
+          compraExistente: existingCompra.compraDocumentoId,
         }, { status: 409 })
       }
     }
@@ -203,212 +209,227 @@ export const POST = withAuthPost(async (request: NextRequest, _context: any, use
         : 'PENDIENTE'
 
     const result = await prisma.$transaction(async (tx: any) => {
-      const producto = await tx.producto.findUnique({
-        where: { id: data.productoId },
-        include: {
-          vendor: true,
-        },
-      })
+      // 1. Validar todos los productos ANTES de crear nada
+      const productosValidados: Array<{
+        producto: any
+        stockAntes: number
+        precioCostoAntes: number
+        precioCostoNuevo: number
+        metodoCosto: string
+        stockDespues: number
+        item: z.infer<typeof itemSchema>
+      }> = []
 
-      if (!producto) {
-        throw new Error('PRODUCTO_NOT_FOUND')
-      }
+      for (const item of data.items) {
+        const producto = await tx.producto.findUnique({
+          where: { id: item.productoId },
+          include: { vendor: true },
+        })
 
-      if (producto.vendorId && producto.vendorId !== data.vendorId) {
-        throw new Error('PRODUCT_VENDOR_MISMATCH')
-      }
-
-      const stockAntes = producto.stock
-      const stockDespues = stockAntes + data.cantidad
-      const precioCostoAntes = producto.precioCosto
-      const { precioCostoNuevo, metodoCosto } = calcularPrecioCostoCompra({
-        stockAntes,
-        precioCostoActual: precioCostoAntes,
-        cantidadCompra: data.cantidad,
-        costoUnitario: data.precioCosto
-      })
-
-      const productoActualizado = await tx.producto.update({
-        where: { id: producto.id },
-        data: {
-          precioCosto: precioCostoNuevo,
-          stock: {
-            increment: data.cantidad
-          }
+        if (!producto) {
+          throw new Error(`PRODUCTO_NOT_FOUND:${item.productoId}`)
         }
-      })
 
-      await upsertStockUbicacion(tx, {
-        productoId: producto.id,
-        tipoUbicacion: 'almacen',
-        ubicacionId: producto.almacenId,
-        modo: 'increment',
-        delta: data.cantidad,
-      })
+        if (producto.vendorId && producto.vendorId !== data.proveedorId) {
+          throw new Error(`PRODUCT_VENDOR_MISMATCH:${item.productoId}`)
+        }
 
-      const totalCost = data.cantidad * data.precioCosto
-      if (totalCost <= 0 || !Number.isFinite(totalCost)) {
-        throw new Error('Invalid total cost')
+        const stockAntes = producto.stock
+        const precioCostoAntes = producto.precioCosto
+        const { precioCostoNuevo, metodoCosto } = calcularPrecioCostoCompra({
+          stockAntes,
+          precioCostoActual: precioCostoAntes,
+          cantidadCompra: item.cantidad,
+          costoUnitario: item.precioCosto,
+        })
+
+        productosValidados.push({
+          producto,
+          stockAntes,
+          precioCostoAntes,
+          precioCostoNuevo,
+          metodoCosto,
+          stockDespues: stockAntes + item.cantidad,
+          item,
+        })
       }
 
+      // 2. Calcular total general
+      const totalGeneral = productosValidados.reduce(
+        (sum, pv) => sum + pv.item.cantidad * pv.item.precioCosto,
+        0
+      )
+
+      if (totalGeneral <= 0 || !Number.isFinite(totalGeneral)) {
+        throw new Error('INVALID_TOTAL_COST')
+      }
+
+      // 3. Crear GastoCompra (uno solo para toda la compra)
       const now = new Date()
       const periodo = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
-      const descripcionCompra = data.descripcionCompra || `Compra - ${producto.nombre}`
+      const descripcionCompra = data.descripcionCompra || `Compra múltiple - ${data.items.length} productos`
 
-      let gastoCompra = null
+      const gastoCompra = await tx.gastoCompra.create({
+        data: {
+          productoId: productosValidados[0].producto.id,
+          vendorId: data.proveedorId,
+          numeroFactura: data.numeroFactura,
+          cantidad: data.items.reduce((sum, item) => sum + item.cantidad, 0),
+          precioUnitario: Math.round(totalGeneral / data.items.reduce((sum, item) => sum + item.cantidad, 0)),
+          total: totalGeneral,
+          fechaCompra: now,
+          descripcion: descripcionCompra,
+          periodo,
+        },
+        include: { producto: true, vendor: true },
+      })
+
+      // 4. Crear CuentaPorPagar si es pago parcial
       let cuentaPorPagar = null
-
-      if (data.formaPago === 'PAGO_COMPLETO' || data.formaPago === FORMA_PAGO_ANTICIPO_PAGO) {
-        gastoCompra = await tx.gastoCompra.create({
-          data: {
-            productoId: producto.id,
-            vendorId: data.vendorId,
-            numeroFactura: data.numeroFactura,
-            cantidad: data.cantidad,
-            precioUnitario: data.precioCosto,
-            total: totalCost,
-            fechaCompra: now,
-            descripcion: descripcionCompra,
-            periodo: periodo,
-          },
-          include: {
-            producto: true,
-            vendor: true
-          }
-        })
-      } else {
-        // Para pago parcial, crear primero el gastoCompra
-        gastoCompra = await tx.gastoCompra.create({
-          data: {
-            productoId: producto.id,
-            vendorId: data.vendorId,
-            numeroFactura: data.numeroFactura,
-            cantidad: data.cantidad,
-            precioUnitario: data.precioCosto,
-            total: totalCost,
-            fechaCompra: now,
-            descripcion: descripcionCompra,
-            periodo: periodo,
-          },
-          include: {
-            producto: true,
-            vendor: true
-          }
-        })
-
-        // Luego crear la cuenta por pagar vinculada al gastoCompra
+      if (data.formaPago === 'PAGO_PARCIAL') {
         cuentaPorPagar = await tx.cuentaPorPagar.create({
           data: {
             numeroFactura: data.numeroFactura,
             tipo: 'compra',
             gastoCompraId: gastoCompra.gastoCompraId,
-            proveedorId: data.vendorId,
+            proveedorId: data.proveedorId,
             proveedorNombre: gastoCompra.vendor?.nombre,
-            montoDeuda: totalCost,
-            saldoPendiente: totalCost,
+            montoDeuda: totalGeneral,
+            saldoPendiente: totalGeneral,
             estado: 'PENDIENTE',
             fechaEmision: now,
-            ...(data.fechaVencimiento ? { fechaVencimiento: new Date(data.fechaVencimiento) } : {})
-          }
+            ...(data.fechaVencimiento ? { fechaVencimiento: new Date(data.fechaVencimiento) } : {}),
+          },
         })
       }
 
-      const compraProducto = await tx.compraProducto.create({
+      // 5. Crear cabecera (CompraDocumento)
+      const compraDocumento = await tx.compraDocumento.create({
         data: {
-          productoId: producto.id,
-          proveedorId: data.vendorId,
+          proveedorId: data.proveedorId,
           numeroFactura: data.numeroFactura,
           facturaUrl: data.facturaUrl,
-          cantidad: data.cantidad,
-          precioUnitario: data.precioCosto,
-          total: totalCost,
           formaPago: data.formaPago,
           estado: resolvedEstado,
           tipoOperacion: 'REGULAR',
           descripcion: descripcionCompra,
           fechaCompra: now,
-          gastoCompraId: gastoCompra?.gastoCompraId,
+          total: totalGeneral,
+          gastoCompraId: gastoCompra.gastoCompraId,
           cuentaPorPagarId: cuentaPorPagar?.cuentaPorPagarId,
+          updatedById: user.userId || user.id,
         },
-        include: {
-          producto: true,
-          proveedor: true
-        }
       })
 
-      // Record cost change due to restock (RESTOCK reason)
-      if (precioCostoAntes !== precioCostoNuevo) {
-        try {
-          await tx.productoCostHistory.create({
-            data: {
-              productoId: producto.id,
-              oldPrecioCosto: precioCostoAntes,
-              newPrecioCosto: precioCostoNuevo,
-              oldPrecioVenta: producto.precioVenta,
-              newPrecioVenta: producto.precioVenta, // No cambia en restock
-              reason: 'RESTOCK',
-              changedBy: user?.id || user?.userId || 'system',
-              changedAt: now,
-              notes: `Restock: ${data.cantidad} unidades a ${data.precioCosto} c/u. Método: ${metodoCosto}`,
-            },
+      // 6. Crear items y actualizar stock/costo por cada producto
+      const itemsCreados: any[] = []
+      const costHistoryEntries: any[] = []
+
+      for (const pv of productosValidados) {
+        // Actualizar stock y costo ponderado del producto
+        await tx.producto.update({
+          where: { id: pv.producto.id },
+          data: {
+            precioCosto: pv.precioCostoNuevo,
+            stock: { increment: pv.item.cantidad },
+          },
+        })
+
+        // Actualizar StockUbicacion
+        await upsertStockUbicacion(tx, {
+          productoId: pv.producto.id,
+          tipoUbicacion: 'almacen',
+          ubicacionId: pv.producto.almacenId,
+          modo: 'increment',
+          delta: pv.item.cantidad,
+        })
+
+        // Crear línea de detalle
+        const totalLinea = pv.item.cantidad * pv.item.precioCosto
+        const itemCreado = await tx.compraDocumentoItem.create({
+          data: {
+            compraDocumentoId: compraDocumento.compraDocumentoId,
+            productoId: pv.producto.id,
+            cantidad: pv.item.cantidad,
+            precioUnitario: pv.item.precioCosto,
+            totalLinea,
+          },
+        })
+
+        itemsCreados.push({
+          ...itemCreado,
+          producto: pv.producto,
+          stockAntes: pv.stockAntes,
+          stockDespues: pv.stockDespues,
+          precioCostoAntes: pv.precioCostoAntes,
+          precioCostoDespues: pv.precioCostoNuevo,
+          metodoCosto: pv.metodoCosto,
+        })
+
+        // Registrar cambio de costo si aplica
+        if (pv.precioCostoAntes !== pv.precioCostoNuevo) {
+          costHistoryEntries.push({
+            productoId: pv.producto.id,
+            oldPrecioCosto: pv.precioCostoAntes,
+            newPrecioCosto: pv.precioCostoNuevo,
+            oldPrecioVenta: pv.producto.precioVenta,
+            newPrecioVenta: pv.producto.precioVenta,
+            reason: 'RESTOCK',
+            changedBy: user?.id || user?.userId || 'system',
+            changedAt: now,
+            notes: `Restock: ${pv.item.cantidad} unidades a ${pv.item.precioCosto} c/u. Método: ${pv.metodoCosto}`,
           })
-        } catch (historyError) {
-          console.error('Error recording cost history for restock:', historyError)
-          // Don't fail the transaction if history recording fails, but log it
         }
       }
 
+      // 7. Registrar historial de costos (batch)
+      for (const entry of costHistoryEntries) {
+        try {
+          await tx.productoCostHistory.create({ data: entry })
+        } catch (historyError) {
+          console.error('Error recording cost history for restock:', historyError)
+        }
+      }
+
+      // 8. Ejecutar anticipo si aplica
       let ejecucionAnticipo: any = null
       if (data.formaPago === FORMA_PAGO_ANTICIPO_PAGO && data.anticipoPagoId && data.idempotencyKey) {
-        // consume anticipo y crea reconciliación en la misma transacción
         const allocResult = await applyAnticipoAllocations(
           tx,
-          [{ anticipoId: data.anticipoPagoId, montoAplicado: totalCost }],
+          [{ anticipoId: data.anticipoPagoId, montoAplicado: totalGeneral }],
           {
-            documentoDestinoId: compraProducto.compraProductoId,
+            documentoDestinoId: compraDocumento.compraDocumentoId,
             contexto: 'COMPRA_PRODUCTO',
             usuarioId: user.userId || user.id,
             idempotencyKey: data.idempotencyKey,
-            observaciones: `Anticipo aplicado a compra ${compraProducto.compraProductoId}`,
+            observaciones: `Anticipo aplicado a compra múltiple ${compraDocumento.compraDocumentoId}`,
           }
         )
 
-        // crear la reconciliación de gasto
         await applyPagoGastoWorkflow(tx, {
           tipoGasto: 'compra',
           referenciaId: gastoCompra.gastoCompraId,
           reconciliadoPor: user.userId || user.id,
-          descripcion: `Pago anticipado de compra ${compraProducto.compraProductoId}`,
-          monto: totalCost,
+          descripcion: `Pago anticipado de compra múltiple ${compraDocumento.compraDocumentoId}`,
+          monto: totalGeneral,
           moneda: 'CUP',
           estado: 'PAGADA',
-          gastoCompraId: gastoCompra.gastoCompraId
+          gastoCompraId: gastoCompra.gastoCompraId,
         })
 
         ejecucionAnticipo = allocResult[0] ?? null
       }
 
       return {
-        producto,
-        productoActualizado,
-        stockAntes,
-        stockDespues,
-        precioCostoAntes,
-        precioCostoDespues: precioCostoNuevo,
-        metodoCosto,
-        compraProducto,
+        compraDocumento,
+        items: itemsCreados,
         gastoCompra,
         cuentaPorPagar,
-        ejecucionAnticipo
+        ejecucionAnticipo,
       }
     })
 
-    const response: any = {
-      ...result,
-      success: true
-    }
-
-    return NextResponse.json(response, { status: 201 })
+    return NextResponse.json({ ...result, success: true }, { status: 201 })
   } catch (error) {
     console.error('Error al crear compra de producto:', error)
     if (error instanceof z.ZodError) {
@@ -416,34 +437,36 @@ export const POST = withAuthPost(async (request: NextRequest, _context: any, use
         code: 'VALIDATION_ERROR',
         message: 'Error de validación en la compra de producto',
         error: 'Error de validación en la compra de producto',
-        details: error.flatten()
+        details: error.flatten(),
       }, { status: 400 })
     }
     if (isAnticipoWorkflowError(error)) {
       return NextResponse.json({
         code: error.code,
         message: error.message,
-        error: error.message
+        error: error.message,
       }, { status: error.status })
     }
-    if (error instanceof Error && error.message === 'PRODUCTO_NOT_FOUND') {
+    if (error instanceof Error && error.message.startsWith('PRODUCTO_NOT_FOUND')) {
+      const productoId = error.message.split(':')[1]
       return NextResponse.json({
         code: 'PRODUCT_NOT_FOUND',
-        message: 'El producto seleccionado no existe',
-        error: 'El producto seleccionado no existe'
+        message: `El producto ${productoId} no existe`,
+        error: `El producto ${productoId} no existe`,
       }, { status: 404 })
     }
-    if (error instanceof Error && error.message === 'PRODUCT_VENDOR_MISMATCH') {
+    if (error instanceof Error && error.message.startsWith('PRODUCT_VENDOR_MISMATCH')) {
+      const productoId = error.message.split(':')[1]
       return NextResponse.json({
         code: 'PRODUCT_VENDOR_MISMATCH',
-        message: 'El proveedor seleccionado no coincide con el proveedor del producto',
-        error: 'El proveedor seleccionado no coincide con el proveedor del producto'
+        message: `El producto ${productoId} no pertenece al proveedor seleccionado`,
+        error: `El producto ${productoId} no pertenece al proveedor seleccionado`,
       }, { status: 422 })
     }
     return NextResponse.json({
       code: 'UNEXPECTED_ERROR',
       message: 'Error al crear compra de producto',
-      error: 'Error al crear compra de producto'
+      error: 'Error al crear compra de producto',
     }, { status: 500 })
   }
 })

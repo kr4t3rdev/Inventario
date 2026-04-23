@@ -170,6 +170,16 @@ export type GastoCompra = $Result.DefaultSelection<Prisma.$GastoCompraPayload>
  */
 export type CompraProducto = $Result.DefaultSelection<Prisma.$CompraProductoPayload>
 /**
+ * Model CompraDocumento
+ * * Cabecera de compra múltiple. Una factura/proveedor → N items.
+ */
+export type CompraDocumento = $Result.DefaultSelection<Prisma.$CompraDocumentoPayload>
+/**
+ * Model CompraDocumentoItem
+ * * Línea de detalle de una compra múltiple.
+ */
+export type CompraDocumentoItem = $Result.DefaultSelection<Prisma.$CompraDocumentoItemPayload>
+/**
  * Model Servicios
  * 
  */
@@ -1128,6 +1138,26 @@ export class PrismaClient<
     * ```
     */
   get compraProducto(): Prisma.CompraProductoDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.compraDocumento`: Exposes CRUD operations for the **CompraDocumento** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more CompraDocumentos
+    * const compraDocumentos = await prisma.compraDocumento.findMany()
+    * ```
+    */
+  get compraDocumento(): Prisma.CompraDocumentoDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.compraDocumentoItem`: Exposes CRUD operations for the **CompraDocumentoItem** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more CompraDocumentoItems
+    * const compraDocumentoItems = await prisma.compraDocumentoItem.findMany()
+    * ```
+    */
+  get compraDocumentoItem(): Prisma.CompraDocumentoItemDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.servicios`: Exposes CRUD operations for the **Servicios** model.
@@ -2180,6 +2210,8 @@ export namespace Prisma {
     CierreContable: 'CierreContable',
     GastoCompra: 'GastoCompra',
     CompraProducto: 'CompraProducto',
+    CompraDocumento: 'CompraDocumento',
+    CompraDocumentoItem: 'CompraDocumentoItem',
     Servicios: 'Servicios',
     VentaServicios: 'VentaServicios',
     CompraServicio: 'CompraServicio',
@@ -2256,7 +2288,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "categoria" | "unidad" | "vendor" | "inyeccionCapital" | "pagoDeuda" | "cliente" | "miEmpresa" | "almacen" | "puntoDeVenta" | "producto" | "stockUbicacion" | "venta" | "ventaItem" | "merma" | "transferencia" | "user" | "plan" | "licencia" | "licenciaAudit" | "notification" | "userActivityLog" | "userSession" | "attendance" | "employeeWorkSchedule" | "vacationRequest" | "vacationAccrual" | "empleado" | "pagosalario" | "cierreContable" | "gastoCompra" | "compraProducto" | "servicios" | "ventaServicios" | "compraServicio" | "gastoConcepto" | "gastoElemento" | "gastosDE" | "moneda" | "catalogoReparacionConfig" | "tasaCambio" | "transaccionMoneda" | "cuentaBancaria" | "tipoPago" | "reconciliacionVenta" | "reconciliacionServicio" | "reconciliacionGasto" | "ajusteBancario" | "transferenciaBancaria" | "alertHistory" | "auditLog" | "reportHistory" | "scheduledReport" | "scenarioSimulation" | "contrato" | "contratoVersion" | "contratoFirma" | "contratoAprobacion" | "contratoArchivo" | "contratoAlerta" | "tipoContratoCustom" | "factura" | "serieFacturacion" | "oferta" | "ofertaItem" | "cuentaPorCobrar" | "cuentaPorPagar" | "deudaCash" | "prestamoCash" | "pagoCuentaPorPagar" | "equipoReparacion" | "piezaReparacion" | "ordenReparacion" | "ordenReparacionEquipo" | "ordenReparacionItem" | "ordenReparacionMaterial" | "defectacionCatalogo" | "configuracionSistema" | "ordenProduccion" | "ordenProduccionHistorial" | "receta" | "recetaIngrediente" | "valeSalida" | "valeSalidaItem" | "listaPrecio" | "precioProducto" | "productoCostHistory" | "vendorCodeSequence" | "anticipo" | "anticipoMovimiento"
+      modelProps: "categoria" | "unidad" | "vendor" | "inyeccionCapital" | "pagoDeuda" | "cliente" | "miEmpresa" | "almacen" | "puntoDeVenta" | "producto" | "stockUbicacion" | "venta" | "ventaItem" | "merma" | "transferencia" | "user" | "plan" | "licencia" | "licenciaAudit" | "notification" | "userActivityLog" | "userSession" | "attendance" | "employeeWorkSchedule" | "vacationRequest" | "vacationAccrual" | "empleado" | "pagosalario" | "cierreContable" | "gastoCompra" | "compraProducto" | "compraDocumento" | "compraDocumentoItem" | "servicios" | "ventaServicios" | "compraServicio" | "gastoConcepto" | "gastoElemento" | "gastosDE" | "moneda" | "catalogoReparacionConfig" | "tasaCambio" | "transaccionMoneda" | "cuentaBancaria" | "tipoPago" | "reconciliacionVenta" | "reconciliacionServicio" | "reconciliacionGasto" | "ajusteBancario" | "transferenciaBancaria" | "alertHistory" | "auditLog" | "reportHistory" | "scheduledReport" | "scenarioSimulation" | "contrato" | "contratoVersion" | "contratoFirma" | "contratoAprobacion" | "contratoArchivo" | "contratoAlerta" | "tipoContratoCustom" | "factura" | "serieFacturacion" | "oferta" | "ofertaItem" | "cuentaPorCobrar" | "cuentaPorPagar" | "deudaCash" | "prestamoCash" | "pagoCuentaPorPagar" | "equipoReparacion" | "piezaReparacion" | "ordenReparacion" | "ordenReparacionEquipo" | "ordenReparacionItem" | "ordenReparacionMaterial" | "defectacionCatalogo" | "configuracionSistema" | "ordenProduccion" | "ordenProduccionHistorial" | "receta" | "recetaIngrediente" | "valeSalida" | "valeSalidaItem" | "listaPrecio" | "precioProducto" | "productoCostHistory" | "vendorCodeSequence" | "anticipo" | "anticipoMovimiento"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -4551,6 +4583,154 @@ export namespace Prisma {
           count: {
             args: Prisma.CompraProductoCountArgs<ExtArgs>
             result: $Utils.Optional<CompraProductoCountAggregateOutputType> | number
+          }
+        }
+      }
+      CompraDocumento: {
+        payload: Prisma.$CompraDocumentoPayload<ExtArgs>
+        fields: Prisma.CompraDocumentoFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.CompraDocumentoFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompraDocumentoPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.CompraDocumentoFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompraDocumentoPayload>
+          }
+          findFirst: {
+            args: Prisma.CompraDocumentoFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompraDocumentoPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.CompraDocumentoFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompraDocumentoPayload>
+          }
+          findMany: {
+            args: Prisma.CompraDocumentoFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompraDocumentoPayload>[]
+          }
+          create: {
+            args: Prisma.CompraDocumentoCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompraDocumentoPayload>
+          }
+          createMany: {
+            args: Prisma.CompraDocumentoCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.CompraDocumentoCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompraDocumentoPayload>[]
+          }
+          delete: {
+            args: Prisma.CompraDocumentoDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompraDocumentoPayload>
+          }
+          update: {
+            args: Prisma.CompraDocumentoUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompraDocumentoPayload>
+          }
+          deleteMany: {
+            args: Prisma.CompraDocumentoDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.CompraDocumentoUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.CompraDocumentoUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompraDocumentoPayload>[]
+          }
+          upsert: {
+            args: Prisma.CompraDocumentoUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompraDocumentoPayload>
+          }
+          aggregate: {
+            args: Prisma.CompraDocumentoAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateCompraDocumento>
+          }
+          groupBy: {
+            args: Prisma.CompraDocumentoGroupByArgs<ExtArgs>
+            result: $Utils.Optional<CompraDocumentoGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.CompraDocumentoCountArgs<ExtArgs>
+            result: $Utils.Optional<CompraDocumentoCountAggregateOutputType> | number
+          }
+        }
+      }
+      CompraDocumentoItem: {
+        payload: Prisma.$CompraDocumentoItemPayload<ExtArgs>
+        fields: Prisma.CompraDocumentoItemFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.CompraDocumentoItemFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompraDocumentoItemPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.CompraDocumentoItemFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompraDocumentoItemPayload>
+          }
+          findFirst: {
+            args: Prisma.CompraDocumentoItemFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompraDocumentoItemPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.CompraDocumentoItemFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompraDocumentoItemPayload>
+          }
+          findMany: {
+            args: Prisma.CompraDocumentoItemFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompraDocumentoItemPayload>[]
+          }
+          create: {
+            args: Prisma.CompraDocumentoItemCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompraDocumentoItemPayload>
+          }
+          createMany: {
+            args: Prisma.CompraDocumentoItemCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.CompraDocumentoItemCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompraDocumentoItemPayload>[]
+          }
+          delete: {
+            args: Prisma.CompraDocumentoItemDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompraDocumentoItemPayload>
+          }
+          update: {
+            args: Prisma.CompraDocumentoItemUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompraDocumentoItemPayload>
+          }
+          deleteMany: {
+            args: Prisma.CompraDocumentoItemDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.CompraDocumentoItemUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.CompraDocumentoItemUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompraDocumentoItemPayload>[]
+          }
+          upsert: {
+            args: Prisma.CompraDocumentoItemUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CompraDocumentoItemPayload>
+          }
+          aggregate: {
+            args: Prisma.CompraDocumentoItemAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateCompraDocumentoItem>
+          }
+          groupBy: {
+            args: Prisma.CompraDocumentoItemGroupByArgs<ExtArgs>
+            result: $Utils.Optional<CompraDocumentoItemGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.CompraDocumentoItemCountArgs<ExtArgs>
+            result: $Utils.Optional<CompraDocumentoItemCountAggregateOutputType> | number
           }
         }
       }
@@ -8973,6 +9153,8 @@ export namespace Prisma {
     cierreContable?: CierreContableOmit
     gastoCompra?: GastoCompraOmit
     compraProducto?: CompraProductoOmit
+    compraDocumento?: CompraDocumentoOmit
+    compraDocumentoItem?: CompraDocumentoItemOmit
     servicios?: ServiciosOmit
     ventaServicios?: VentaServiciosOmit
     compraServicio?: CompraServicioOmit
@@ -9192,6 +9374,7 @@ export namespace Prisma {
 
   export type VendorCountOutputType = {
     compras: number
+    compraDocumentos: number
     contratos: number
     cuentasPorPagar: number
     deudasCash: number
@@ -9203,6 +9386,7 @@ export namespace Prisma {
 
   export type VendorCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     compras?: boolean | VendorCountOutputTypeCountComprasArgs
+    compraDocumentos?: boolean | VendorCountOutputTypeCountCompraDocumentosArgs
     contratos?: boolean | VendorCountOutputTypeCountContratosArgs
     cuentasPorPagar?: boolean | VendorCountOutputTypeCountCuentasPorPagarArgs
     deudasCash?: boolean | VendorCountOutputTypeCountDeudasCashArgs
@@ -9228,6 +9412,13 @@ export namespace Prisma {
    */
   export type VendorCountOutputTypeCountComprasArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: CompraProductoWhereInput
+  }
+
+  /**
+   * VendorCountOutputType without action
+   */
+  export type VendorCountOutputTypeCountCompraDocumentosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CompraDocumentoWhereInput
   }
 
   /**
@@ -9527,6 +9718,7 @@ export namespace Prisma {
 
   export type ProductoCountOutputType = {
     compras: number
+    compraDocumentoItems: number
     gastoCompras: number
     mermas: number
     ofertaItems: number
@@ -9545,6 +9737,7 @@ export namespace Prisma {
 
   export type ProductoCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     compras?: boolean | ProductoCountOutputTypeCountComprasArgs
+    compraDocumentoItems?: boolean | ProductoCountOutputTypeCountCompraDocumentoItemsArgs
     gastoCompras?: boolean | ProductoCountOutputTypeCountGastoComprasArgs
     mermas?: boolean | ProductoCountOutputTypeCountMermasArgs
     ofertaItems?: boolean | ProductoCountOutputTypeCountOfertaItemsArgs
@@ -9577,6 +9770,13 @@ export namespace Prisma {
    */
   export type ProductoCountOutputTypeCountComprasArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: CompraProductoWhereInput
+  }
+
+  /**
+   * ProductoCountOutputType without action
+   */
+  export type ProductoCountOutputTypeCountCompraDocumentoItemsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CompraDocumentoItemWhereInput
   }
 
   /**
@@ -9736,6 +9936,7 @@ export namespace Prisma {
     activityLogs: number
     sessions: number
     anticiposCreados: number
+    compraDocumentosEditados: number
     transferenciasCreadas: number
   }
 
@@ -9753,6 +9954,7 @@ export namespace Prisma {
     activityLogs?: boolean | UserCountOutputTypeCountActivityLogsArgs
     sessions?: boolean | UserCountOutputTypeCountSessionsArgs
     anticiposCreados?: boolean | UserCountOutputTypeCountAnticiposCreadosArgs
+    compraDocumentosEditados?: boolean | UserCountOutputTypeCountCompraDocumentosEditadosArgs
     transferenciasCreadas?: boolean | UserCountOutputTypeCountTransferenciasCreadasArgs
   }
 
@@ -9856,6 +10058,13 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountAnticiposCreadosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: AnticipoWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountCompraDocumentosEditadosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CompraDocumentoWhereInput
   }
 
   /**
@@ -10072,6 +10281,37 @@ export namespace Prisma {
    */
   export type GastoCompraCountOutputTypeCountReconciliacionesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ReconciliacionGastoWhereInput
+  }
+
+
+  /**
+   * Count Type CompraDocumentoCountOutputType
+   */
+
+  export type CompraDocumentoCountOutputType = {
+    items: number
+  }
+
+  export type CompraDocumentoCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    items?: boolean | CompraDocumentoCountOutputTypeCountItemsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * CompraDocumentoCountOutputType without action
+   */
+  export type CompraDocumentoCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraDocumentoCountOutputType
+     */
+    select?: CompraDocumentoCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * CompraDocumentoCountOutputType without action
+   */
+  export type CompraDocumentoCountOutputTypeCountItemsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CompraDocumentoItemWhereInput
   }
 
 
@@ -13581,6 +13821,7 @@ export namespace Prisma {
     telefono?: boolean
     vendorCode?: boolean
     compras?: boolean | Vendor$comprasArgs<ExtArgs>
+    compraDocumentos?: boolean | Vendor$compraDocumentosArgs<ExtArgs>
     contratos?: boolean | Vendor$contratosArgs<ExtArgs>
     cuentasPorPagar?: boolean | Vendor$cuentasPorPagarArgs<ExtArgs>
     deudasCash?: boolean | Vendor$deudasCashArgs<ExtArgs>
@@ -13639,6 +13880,7 @@ export namespace Prisma {
   export type VendorOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"vendorId" | "nombre" | "contacto" | "createdAt" | "updatedAt" | "contrato" | "cuentaCUP" | "cuentaUSD" | "direccion" | "logo" | "telefono" | "vendorCode", ExtArgs["result"]["vendor"]>
   export type VendorInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     compras?: boolean | Vendor$comprasArgs<ExtArgs>
+    compraDocumentos?: boolean | Vendor$compraDocumentosArgs<ExtArgs>
     contratos?: boolean | Vendor$contratosArgs<ExtArgs>
     cuentasPorPagar?: boolean | Vendor$cuentasPorPagarArgs<ExtArgs>
     deudasCash?: boolean | Vendor$deudasCashArgs<ExtArgs>
@@ -13655,6 +13897,7 @@ export namespace Prisma {
     name: "Vendor"
     objects: {
       compras: Prisma.$CompraProductoPayload<ExtArgs>[]
+      compraDocumentos: Prisma.$CompraDocumentoPayload<ExtArgs>[]
       contratos: Prisma.$ContratoPayload<ExtArgs>[]
       cuentasPorPagar: Prisma.$CuentaPorPagarPayload<ExtArgs>[]
       deudasCash: Prisma.$DeudaCashPayload<ExtArgs>[]
@@ -14071,6 +14314,7 @@ export namespace Prisma {
   export interface Prisma__VendorClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     compras<T extends Vendor$comprasArgs<ExtArgs> = {}>(args?: Subset<T, Vendor$comprasArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CompraProductoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    compraDocumentos<T extends Vendor$compraDocumentosArgs<ExtArgs> = {}>(args?: Subset<T, Vendor$compraDocumentosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CompraDocumentoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     contratos<T extends Vendor$contratosArgs<ExtArgs> = {}>(args?: Subset<T, Vendor$contratosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ContratoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     cuentasPorPagar<T extends Vendor$cuentasPorPagarArgs<ExtArgs> = {}>(args?: Subset<T, Vendor$cuentasPorPagarArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CuentaPorPagarPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     deudasCash<T extends Vendor$deudasCashArgs<ExtArgs> = {}>(args?: Subset<T, Vendor$deudasCashArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$DeudaCashPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -14528,6 +14772,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: CompraProductoScalarFieldEnum | CompraProductoScalarFieldEnum[]
+  }
+
+  /**
+   * Vendor.compraDocumentos
+   */
+  export type Vendor$compraDocumentosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraDocumento
+     */
+    select?: CompraDocumentoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraDocumento
+     */
+    omit?: CompraDocumentoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraDocumentoInclude<ExtArgs> | null
+    where?: CompraDocumentoWhereInput
+    orderBy?: CompraDocumentoOrderByWithRelationInput | CompraDocumentoOrderByWithRelationInput[]
+    cursor?: CompraDocumentoWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: CompraDocumentoScalarFieldEnum | CompraDocumentoScalarFieldEnum[]
   }
 
   /**
@@ -22480,6 +22748,7 @@ export namespace Prisma {
     dcCodigo?: boolean
     fotos?: boolean
     compras?: boolean | Producto$comprasArgs<ExtArgs>
+    compraDocumentoItems?: boolean | Producto$compraDocumentoItemsArgs<ExtArgs>
     gastoCompras?: boolean | Producto$gastoComprasArgs<ExtArgs>
     mermas?: boolean | Producto$mermasArgs<ExtArgs>
     ofertaItems?: boolean | Producto$ofertaItemsArgs<ExtArgs>
@@ -22608,6 +22877,7 @@ export namespace Prisma {
   export type ProductoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"nombre" | "descripcion" | "precioCosto" | "precioVenta" | "stock" | "categoriaId" | "unidadId" | "vendorId" | "createdAt" | "id" | "updatedAt" | "esCompuesto" | "almacenId" | "puntoDeVentaId" | "stockMinimo" | "subcategoriaId" | "cantidadEnPack" | "productoPadreId" | "codigoInterno" | "codigoNegocio" | "proveedorCodigo" | "idSeccionCodigo" | "especificoCodigo" | "surtidoCodigo" | "dcCodigo" | "fotos", ExtArgs["result"]["producto"]>
   export type ProductoInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     compras?: boolean | Producto$comprasArgs<ExtArgs>
+    compraDocumentoItems?: boolean | Producto$compraDocumentoItemsArgs<ExtArgs>
     gastoCompras?: boolean | Producto$gastoComprasArgs<ExtArgs>
     mermas?: boolean | Producto$mermasArgs<ExtArgs>
     ofertaItems?: boolean | Producto$ofertaItemsArgs<ExtArgs>
@@ -22654,6 +22924,7 @@ export namespace Prisma {
     name: "Producto"
     objects: {
       compras: Prisma.$CompraProductoPayload<ExtArgs>[]
+      compraDocumentoItems: Prisma.$CompraDocumentoItemPayload<ExtArgs>[]
       gastoCompras: Prisma.$GastoCompraPayload<ExtArgs>[]
       mermas: Prisma.$MermaPayload<ExtArgs>[]
       ofertaItems: Prisma.$OfertaItemPayload<ExtArgs>[]
@@ -23098,6 +23369,7 @@ export namespace Prisma {
   export interface Prisma__ProductoClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     compras<T extends Producto$comprasArgs<ExtArgs> = {}>(args?: Subset<T, Producto$comprasArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CompraProductoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    compraDocumentoItems<T extends Producto$compraDocumentoItemsArgs<ExtArgs> = {}>(args?: Subset<T, Producto$compraDocumentoItemsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CompraDocumentoItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     gastoCompras<T extends Producto$gastoComprasArgs<ExtArgs> = {}>(args?: Subset<T, Producto$gastoComprasArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$GastoCompraPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     mermas<T extends Producto$mermasArgs<ExtArgs> = {}>(args?: Subset<T, Producto$mermasArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MermaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     ofertaItems<T extends Producto$ofertaItemsArgs<ExtArgs> = {}>(args?: Subset<T, Producto$ofertaItemsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$OfertaItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
@@ -23591,6 +23863,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: CompraProductoScalarFieldEnum | CompraProductoScalarFieldEnum[]
+  }
+
+  /**
+   * Producto.compraDocumentoItems
+   */
+  export type Producto$compraDocumentoItemsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraDocumentoItem
+     */
+    select?: CompraDocumentoItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraDocumentoItem
+     */
+    omit?: CompraDocumentoItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraDocumentoItemInclude<ExtArgs> | null
+    where?: CompraDocumentoItemWhereInput
+    orderBy?: CompraDocumentoItemOrderByWithRelationInput | CompraDocumentoItemOrderByWithRelationInput[]
+    cursor?: CompraDocumentoItemWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: CompraDocumentoItemScalarFieldEnum | CompraDocumentoItemScalarFieldEnum[]
   }
 
   /**
@@ -30575,6 +30871,7 @@ export namespace Prisma {
     activityLogs?: boolean | User$activityLogsArgs<ExtArgs>
     sessions?: boolean | User$sessionsArgs<ExtArgs>
     anticiposCreados?: boolean | User$anticiposCreadosArgs<ExtArgs>
+    compraDocumentosEditados?: boolean | User$compraDocumentosEditadosArgs<ExtArgs>
     transferenciasCreadas?: boolean | User$transferenciasCreadasArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
@@ -30648,6 +30945,7 @@ export namespace Prisma {
     activityLogs?: boolean | User$activityLogsArgs<ExtArgs>
     sessions?: boolean | User$sessionsArgs<ExtArgs>
     anticiposCreados?: boolean | User$anticiposCreadosArgs<ExtArgs>
+    compraDocumentosEditados?: boolean | User$compraDocumentosEditadosArgs<ExtArgs>
     transferenciasCreadas?: boolean | User$transferenciasCreadasArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
@@ -30670,6 +30968,7 @@ export namespace Prisma {
       activityLogs: Prisma.$UserActivityLogPayload<ExtArgs>[]
       sessions: Prisma.$UserSessionPayload<ExtArgs>[]
       anticiposCreados: Prisma.$AnticipoPayload<ExtArgs>[]
+      compraDocumentosEditados: Prisma.$CompraDocumentoPayload<ExtArgs>[]
       transferenciasCreadas: Prisma.$TransferenciaPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
@@ -31095,6 +31394,7 @@ export namespace Prisma {
     activityLogs<T extends User$activityLogsArgs<ExtArgs> = {}>(args?: Subset<T, User$activityLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserActivityLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     sessions<T extends User$sessionsArgs<ExtArgs> = {}>(args?: Subset<T, User$sessionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$UserSessionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     anticiposCreados<T extends User$anticiposCreadosArgs<ExtArgs> = {}>(args?: Subset<T, User$anticiposCreadosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AnticipoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    compraDocumentosEditados<T extends User$compraDocumentosEditadosArgs<ExtArgs> = {}>(args?: Subset<T, User$compraDocumentosEditadosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CompraDocumentoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     transferenciasCreadas<T extends User$transferenciasCreadasArgs<ExtArgs> = {}>(args?: Subset<T, User$transferenciasCreadasArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TransferenciaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -31837,6 +32137,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: AnticipoScalarFieldEnum | AnticipoScalarFieldEnum[]
+  }
+
+  /**
+   * User.compraDocumentosEditados
+   */
+  export type User$compraDocumentosEditadosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraDocumento
+     */
+    select?: CompraDocumentoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraDocumento
+     */
+    omit?: CompraDocumentoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraDocumentoInclude<ExtArgs> | null
+    where?: CompraDocumentoWhereInput
+    orderBy?: CompraDocumentoOrderByWithRelationInput | CompraDocumentoOrderByWithRelationInput[]
+    cursor?: CompraDocumentoWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: CompraDocumentoScalarFieldEnum | CompraDocumentoScalarFieldEnum[]
   }
 
   /**
@@ -47399,6 +47723,7 @@ export namespace Prisma {
     updatedAt: Date | null
     periodo: string | null
     numeroFactura: string | null
+    deletedAt: Date | null
   }
 
   export type GastoCompraMaxAggregateOutputType = {
@@ -47414,6 +47739,7 @@ export namespace Prisma {
     updatedAt: Date | null
     periodo: string | null
     numeroFactura: string | null
+    deletedAt: Date | null
   }
 
   export type GastoCompraCountAggregateOutputType = {
@@ -47429,6 +47755,7 @@ export namespace Prisma {
     updatedAt: number
     periodo: number
     numeroFactura: number
+    deletedAt: number
     _all: number
   }
 
@@ -47458,6 +47785,7 @@ export namespace Prisma {
     updatedAt?: true
     periodo?: true
     numeroFactura?: true
+    deletedAt?: true
   }
 
   export type GastoCompraMaxAggregateInputType = {
@@ -47473,6 +47801,7 @@ export namespace Prisma {
     updatedAt?: true
     periodo?: true
     numeroFactura?: true
+    deletedAt?: true
   }
 
   export type GastoCompraCountAggregateInputType = {
@@ -47488,6 +47817,7 @@ export namespace Prisma {
     updatedAt?: true
     periodo?: true
     numeroFactura?: true
+    deletedAt?: true
     _all?: true
   }
 
@@ -47590,6 +47920,7 @@ export namespace Prisma {
     updatedAt: Date
     periodo: string | null
     numeroFactura: string | null
+    deletedAt: Date | null
     _count: GastoCompraCountAggregateOutputType | null
     _avg: GastoCompraAvgAggregateOutputType | null
     _sum: GastoCompraSumAggregateOutputType | null
@@ -47624,7 +47955,9 @@ export namespace Prisma {
     updatedAt?: boolean
     periodo?: boolean
     numeroFactura?: boolean
+    deletedAt?: boolean
     compraProducto?: boolean | GastoCompra$compraProductoArgs<ExtArgs>
+    compraDocumento?: boolean | GastoCompra$compraDocumentoArgs<ExtArgs>
     cuentaPorPagar?: boolean | GastoCompra$cuentaPorPagarArgs<ExtArgs>
     producto?: boolean | ProductoDefaultArgs<ExtArgs>
     vendor?: boolean | VendorDefaultArgs<ExtArgs>
@@ -47645,6 +47978,7 @@ export namespace Prisma {
     updatedAt?: boolean
     periodo?: boolean
     numeroFactura?: boolean
+    deletedAt?: boolean
     producto?: boolean | ProductoDefaultArgs<ExtArgs>
     vendor?: boolean | VendorDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["gastoCompra"]>
@@ -47662,6 +47996,7 @@ export namespace Prisma {
     updatedAt?: boolean
     periodo?: boolean
     numeroFactura?: boolean
+    deletedAt?: boolean
     producto?: boolean | ProductoDefaultArgs<ExtArgs>
     vendor?: boolean | VendorDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["gastoCompra"]>
@@ -47679,11 +48014,13 @@ export namespace Prisma {
     updatedAt?: boolean
     periodo?: boolean
     numeroFactura?: boolean
+    deletedAt?: boolean
   }
 
-  export type GastoCompraOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"gastoCompraId" | "productoId" | "vendorId" | "cantidad" | "precioUnitario" | "total" | "fechaCompra" | "descripcion" | "createdAt" | "updatedAt" | "periodo" | "numeroFactura", ExtArgs["result"]["gastoCompra"]>
+  export type GastoCompraOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"gastoCompraId" | "productoId" | "vendorId" | "cantidad" | "precioUnitario" | "total" | "fechaCompra" | "descripcion" | "createdAt" | "updatedAt" | "periodo" | "numeroFactura" | "deletedAt", ExtArgs["result"]["gastoCompra"]>
   export type GastoCompraInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     compraProducto?: boolean | GastoCompra$compraProductoArgs<ExtArgs>
+    compraDocumento?: boolean | GastoCompra$compraDocumentoArgs<ExtArgs>
     cuentaPorPagar?: boolean | GastoCompra$cuentaPorPagarArgs<ExtArgs>
     producto?: boolean | ProductoDefaultArgs<ExtArgs>
     vendor?: boolean | VendorDefaultArgs<ExtArgs>
@@ -47703,6 +48040,7 @@ export namespace Prisma {
     name: "GastoCompra"
     objects: {
       compraProducto: Prisma.$CompraProductoPayload<ExtArgs> | null
+      compraDocumento: Prisma.$CompraDocumentoPayload<ExtArgs> | null
       cuentaPorPagar: Prisma.$CuentaPorPagarPayload<ExtArgs> | null
       producto: Prisma.$ProductoPayload<ExtArgs>
       vendor: Prisma.$VendorPayload<ExtArgs>
@@ -47721,6 +48059,7 @@ export namespace Prisma {
       updatedAt: Date
       periodo: string | null
       numeroFactura: string | null
+      deletedAt: Date | null
     }, ExtArgs["result"]["gastoCompra"]>
     composites: {}
   }
@@ -48116,6 +48455,7 @@ export namespace Prisma {
   export interface Prisma__GastoCompraClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     compraProducto<T extends GastoCompra$compraProductoArgs<ExtArgs> = {}>(args?: Subset<T, GastoCompra$compraProductoArgs<ExtArgs>>): Prisma__CompraProductoClient<$Result.GetResult<Prisma.$CompraProductoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    compraDocumento<T extends GastoCompra$compraDocumentoArgs<ExtArgs> = {}>(args?: Subset<T, GastoCompra$compraDocumentoArgs<ExtArgs>>): Prisma__CompraDocumentoClient<$Result.GetResult<Prisma.$CompraDocumentoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     cuentaPorPagar<T extends GastoCompra$cuentaPorPagarArgs<ExtArgs> = {}>(args?: Subset<T, GastoCompra$cuentaPorPagarArgs<ExtArgs>>): Prisma__CuentaPorPagarClient<$Result.GetResult<Prisma.$CuentaPorPagarPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     producto<T extends ProductoDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ProductoDefaultArgs<ExtArgs>>): Prisma__ProductoClient<$Result.GetResult<Prisma.$ProductoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     vendor<T extends VendorDefaultArgs<ExtArgs> = {}>(args?: Subset<T, VendorDefaultArgs<ExtArgs>>): Prisma__VendorClient<$Result.GetResult<Prisma.$VendorPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
@@ -48161,6 +48501,7 @@ export namespace Prisma {
     readonly updatedAt: FieldRef<"GastoCompra", 'DateTime'>
     readonly periodo: FieldRef<"GastoCompra", 'String'>
     readonly numeroFactura: FieldRef<"GastoCompra", 'String'>
+    readonly deletedAt: FieldRef<"GastoCompra", 'DateTime'>
   }
     
 
@@ -48576,6 +48917,25 @@ export namespace Prisma {
   }
 
   /**
+   * GastoCompra.compraDocumento
+   */
+  export type GastoCompra$compraDocumentoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraDocumento
+     */
+    select?: CompraDocumentoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraDocumento
+     */
+    omit?: CompraDocumentoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraDocumentoInclude<ExtArgs> | null
+    where?: CompraDocumentoWhereInput
+  }
+
+  /**
    * GastoCompra.cuentaPorPagar
    */
   export type GastoCompra$cuentaPorPagarArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -48679,6 +49039,8 @@ export namespace Prisma {
     formaPago: string | null
     estado: string | null
     tipoOperacion: string | null
+    deletedAt: Date | null
+    updatedById: string | null
   }
 
   export type CompraProductoMaxAggregateOutputType = {
@@ -48699,6 +49061,8 @@ export namespace Prisma {
     formaPago: string | null
     estado: string | null
     tipoOperacion: string | null
+    deletedAt: Date | null
+    updatedById: string | null
   }
 
   export type CompraProductoCountAggregateOutputType = {
@@ -48719,6 +49083,8 @@ export namespace Prisma {
     formaPago: number
     estado: number
     tipoOperacion: number
+    deletedAt: number
+    updatedById: number
     _all: number
   }
 
@@ -48753,6 +49119,8 @@ export namespace Prisma {
     formaPago?: true
     estado?: true
     tipoOperacion?: true
+    deletedAt?: true
+    updatedById?: true
   }
 
   export type CompraProductoMaxAggregateInputType = {
@@ -48773,6 +49141,8 @@ export namespace Prisma {
     formaPago?: true
     estado?: true
     tipoOperacion?: true
+    deletedAt?: true
+    updatedById?: true
   }
 
   export type CompraProductoCountAggregateInputType = {
@@ -48793,6 +49163,8 @@ export namespace Prisma {
     formaPago?: true
     estado?: true
     tipoOperacion?: true
+    deletedAt?: true
+    updatedById?: true
     _all?: true
   }
 
@@ -48900,6 +49272,8 @@ export namespace Prisma {
     formaPago: string
     estado: string
     tipoOperacion: string
+    deletedAt: Date | null
+    updatedById: string | null
     _count: CompraProductoCountAggregateOutputType | null
     _avg: CompraProductoAvgAggregateOutputType | null
     _sum: CompraProductoSumAggregateOutputType | null
@@ -48939,6 +49313,8 @@ export namespace Prisma {
     formaPago?: boolean
     estado?: boolean
     tipoOperacion?: boolean
+    deletedAt?: boolean
+    updatedById?: boolean
     cuentaPorPagar?: boolean | CompraProducto$cuentaPorPagarArgs<ExtArgs>
     gastoCompra?: boolean | CompraProducto$gastoCompraArgs<ExtArgs>
     anticipo?: boolean | CompraProducto$anticipoArgs<ExtArgs>
@@ -48964,6 +49340,8 @@ export namespace Prisma {
     formaPago?: boolean
     estado?: boolean
     tipoOperacion?: boolean
+    deletedAt?: boolean
+    updatedById?: boolean
     cuentaPorPagar?: boolean | CompraProducto$cuentaPorPagarArgs<ExtArgs>
     gastoCompra?: boolean | CompraProducto$gastoCompraArgs<ExtArgs>
     producto?: boolean | ProductoDefaultArgs<ExtArgs>
@@ -48988,6 +49366,8 @@ export namespace Prisma {
     formaPago?: boolean
     estado?: boolean
     tipoOperacion?: boolean
+    deletedAt?: boolean
+    updatedById?: boolean
     cuentaPorPagar?: boolean | CompraProducto$cuentaPorPagarArgs<ExtArgs>
     gastoCompra?: boolean | CompraProducto$gastoCompraArgs<ExtArgs>
     producto?: boolean | ProductoDefaultArgs<ExtArgs>
@@ -49012,9 +49392,11 @@ export namespace Prisma {
     formaPago?: boolean
     estado?: boolean
     tipoOperacion?: boolean
+    deletedAt?: boolean
+    updatedById?: boolean
   }
 
-  export type CompraProductoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"compraProductoId" | "productoId" | "numeroFactura" | "facturaUrl" | "cantidad" | "precioUnitario" | "total" | "descripcion" | "fechaCompra" | "gastoCompraId" | "cuentaPorPagarId" | "createdAt" | "updatedAt" | "proveedorId" | "formaPago" | "estado" | "tipoOperacion", ExtArgs["result"]["compraProducto"]>
+  export type CompraProductoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"compraProductoId" | "productoId" | "numeroFactura" | "facturaUrl" | "cantidad" | "precioUnitario" | "total" | "descripcion" | "fechaCompra" | "gastoCompraId" | "cuentaPorPagarId" | "createdAt" | "updatedAt" | "proveedorId" | "formaPago" | "estado" | "tipoOperacion" | "deletedAt" | "updatedById", ExtArgs["result"]["compraProducto"]>
   export type CompraProductoInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     cuentaPorPagar?: boolean | CompraProducto$cuentaPorPagarArgs<ExtArgs>
     gastoCompra?: boolean | CompraProducto$gastoCompraArgs<ExtArgs>
@@ -49062,6 +49444,8 @@ export namespace Prisma {
       formaPago: string
       estado: string
       tipoOperacion: string
+      deletedAt: Date | null
+      updatedById: string | null
     }, ExtArgs["result"]["compraProducto"]>
     composites: {}
   }
@@ -49507,6 +49891,8 @@ export namespace Prisma {
     readonly formaPago: FieldRef<"CompraProducto", 'String'>
     readonly estado: FieldRef<"CompraProducto", 'String'>
     readonly tipoOperacion: FieldRef<"CompraProducto", 'String'>
+    readonly deletedAt: FieldRef<"CompraProducto", 'DateTime'>
+    readonly updatedById: FieldRef<"CompraProducto", 'String'>
   }
     
 
@@ -49975,6 +50361,2499 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: CompraProductoInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model CompraDocumento
+   */
+
+  export type AggregateCompraDocumento = {
+    _count: CompraDocumentoCountAggregateOutputType | null
+    _avg: CompraDocumentoAvgAggregateOutputType | null
+    _sum: CompraDocumentoSumAggregateOutputType | null
+    _min: CompraDocumentoMinAggregateOutputType | null
+    _max: CompraDocumentoMaxAggregateOutputType | null
+  }
+
+  export type CompraDocumentoAvgAggregateOutputType = {
+    total: number | null
+  }
+
+  export type CompraDocumentoSumAggregateOutputType = {
+    total: number | null
+  }
+
+  export type CompraDocumentoMinAggregateOutputType = {
+    compraDocumentoId: string | null
+    proveedorId: string | null
+    numeroFactura: string | null
+    facturaUrl: string | null
+    formaPago: string | null
+    estado: string | null
+    tipoOperacion: string | null
+    descripcion: string | null
+    fechaCompra: Date | null
+    total: number | null
+    gastoCompraId: string | null
+    cuentaPorPagarId: string | null
+    deletedAt: Date | null
+    updatedById: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type CompraDocumentoMaxAggregateOutputType = {
+    compraDocumentoId: string | null
+    proveedorId: string | null
+    numeroFactura: string | null
+    facturaUrl: string | null
+    formaPago: string | null
+    estado: string | null
+    tipoOperacion: string | null
+    descripcion: string | null
+    fechaCompra: Date | null
+    total: number | null
+    gastoCompraId: string | null
+    cuentaPorPagarId: string | null
+    deletedAt: Date | null
+    updatedById: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type CompraDocumentoCountAggregateOutputType = {
+    compraDocumentoId: number
+    proveedorId: number
+    numeroFactura: number
+    facturaUrl: number
+    formaPago: number
+    estado: number
+    tipoOperacion: number
+    descripcion: number
+    fechaCompra: number
+    total: number
+    gastoCompraId: number
+    cuentaPorPagarId: number
+    deletedAt: number
+    updatedById: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type CompraDocumentoAvgAggregateInputType = {
+    total?: true
+  }
+
+  export type CompraDocumentoSumAggregateInputType = {
+    total?: true
+  }
+
+  export type CompraDocumentoMinAggregateInputType = {
+    compraDocumentoId?: true
+    proveedorId?: true
+    numeroFactura?: true
+    facturaUrl?: true
+    formaPago?: true
+    estado?: true
+    tipoOperacion?: true
+    descripcion?: true
+    fechaCompra?: true
+    total?: true
+    gastoCompraId?: true
+    cuentaPorPagarId?: true
+    deletedAt?: true
+    updatedById?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type CompraDocumentoMaxAggregateInputType = {
+    compraDocumentoId?: true
+    proveedorId?: true
+    numeroFactura?: true
+    facturaUrl?: true
+    formaPago?: true
+    estado?: true
+    tipoOperacion?: true
+    descripcion?: true
+    fechaCompra?: true
+    total?: true
+    gastoCompraId?: true
+    cuentaPorPagarId?: true
+    deletedAt?: true
+    updatedById?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type CompraDocumentoCountAggregateInputType = {
+    compraDocumentoId?: true
+    proveedorId?: true
+    numeroFactura?: true
+    facturaUrl?: true
+    formaPago?: true
+    estado?: true
+    tipoOperacion?: true
+    descripcion?: true
+    fechaCompra?: true
+    total?: true
+    gastoCompraId?: true
+    cuentaPorPagarId?: true
+    deletedAt?: true
+    updatedById?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type CompraDocumentoAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CompraDocumento to aggregate.
+     */
+    where?: CompraDocumentoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CompraDocumentos to fetch.
+     */
+    orderBy?: CompraDocumentoOrderByWithRelationInput | CompraDocumentoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: CompraDocumentoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CompraDocumentos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CompraDocumentos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned CompraDocumentos
+    **/
+    _count?: true | CompraDocumentoCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: CompraDocumentoAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: CompraDocumentoSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: CompraDocumentoMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: CompraDocumentoMaxAggregateInputType
+  }
+
+  export type GetCompraDocumentoAggregateType<T extends CompraDocumentoAggregateArgs> = {
+        [P in keyof T & keyof AggregateCompraDocumento]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateCompraDocumento[P]>
+      : GetScalarType<T[P], AggregateCompraDocumento[P]>
+  }
+
+
+
+
+  export type CompraDocumentoGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CompraDocumentoWhereInput
+    orderBy?: CompraDocumentoOrderByWithAggregationInput | CompraDocumentoOrderByWithAggregationInput[]
+    by: CompraDocumentoScalarFieldEnum[] | CompraDocumentoScalarFieldEnum
+    having?: CompraDocumentoScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: CompraDocumentoCountAggregateInputType | true
+    _avg?: CompraDocumentoAvgAggregateInputType
+    _sum?: CompraDocumentoSumAggregateInputType
+    _min?: CompraDocumentoMinAggregateInputType
+    _max?: CompraDocumentoMaxAggregateInputType
+  }
+
+  export type CompraDocumentoGroupByOutputType = {
+    compraDocumentoId: string
+    proveedorId: string
+    numeroFactura: string
+    facturaUrl: string
+    formaPago: string
+    estado: string
+    tipoOperacion: string
+    descripcion: string | null
+    fechaCompra: Date
+    total: number
+    gastoCompraId: string | null
+    cuentaPorPagarId: string | null
+    deletedAt: Date | null
+    updatedById: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: CompraDocumentoCountAggregateOutputType | null
+    _avg: CompraDocumentoAvgAggregateOutputType | null
+    _sum: CompraDocumentoSumAggregateOutputType | null
+    _min: CompraDocumentoMinAggregateOutputType | null
+    _max: CompraDocumentoMaxAggregateOutputType | null
+  }
+
+  type GetCompraDocumentoGroupByPayload<T extends CompraDocumentoGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<CompraDocumentoGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof CompraDocumentoGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], CompraDocumentoGroupByOutputType[P]>
+            : GetScalarType<T[P], CompraDocumentoGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type CompraDocumentoSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    compraDocumentoId?: boolean
+    proveedorId?: boolean
+    numeroFactura?: boolean
+    facturaUrl?: boolean
+    formaPago?: boolean
+    estado?: boolean
+    tipoOperacion?: boolean
+    descripcion?: boolean
+    fechaCompra?: boolean
+    total?: boolean
+    gastoCompraId?: boolean
+    cuentaPorPagarId?: boolean
+    deletedAt?: boolean
+    updatedById?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    cuentaPorPagar?: boolean | CompraDocumento$cuentaPorPagarArgs<ExtArgs>
+    gastoCompra?: boolean | CompraDocumento$gastoCompraArgs<ExtArgs>
+    proveedor?: boolean | VendorDefaultArgs<ExtArgs>
+    updatedBy?: boolean | CompraDocumento$updatedByArgs<ExtArgs>
+    items?: boolean | CompraDocumento$itemsArgs<ExtArgs>
+    _count?: boolean | CompraDocumentoCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["compraDocumento"]>
+
+  export type CompraDocumentoSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    compraDocumentoId?: boolean
+    proveedorId?: boolean
+    numeroFactura?: boolean
+    facturaUrl?: boolean
+    formaPago?: boolean
+    estado?: boolean
+    tipoOperacion?: boolean
+    descripcion?: boolean
+    fechaCompra?: boolean
+    total?: boolean
+    gastoCompraId?: boolean
+    cuentaPorPagarId?: boolean
+    deletedAt?: boolean
+    updatedById?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    cuentaPorPagar?: boolean | CompraDocumento$cuentaPorPagarArgs<ExtArgs>
+    gastoCompra?: boolean | CompraDocumento$gastoCompraArgs<ExtArgs>
+    proveedor?: boolean | VendorDefaultArgs<ExtArgs>
+    updatedBy?: boolean | CompraDocumento$updatedByArgs<ExtArgs>
+  }, ExtArgs["result"]["compraDocumento"]>
+
+  export type CompraDocumentoSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    compraDocumentoId?: boolean
+    proveedorId?: boolean
+    numeroFactura?: boolean
+    facturaUrl?: boolean
+    formaPago?: boolean
+    estado?: boolean
+    tipoOperacion?: boolean
+    descripcion?: boolean
+    fechaCompra?: boolean
+    total?: boolean
+    gastoCompraId?: boolean
+    cuentaPorPagarId?: boolean
+    deletedAt?: boolean
+    updatedById?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    cuentaPorPagar?: boolean | CompraDocumento$cuentaPorPagarArgs<ExtArgs>
+    gastoCompra?: boolean | CompraDocumento$gastoCompraArgs<ExtArgs>
+    proveedor?: boolean | VendorDefaultArgs<ExtArgs>
+    updatedBy?: boolean | CompraDocumento$updatedByArgs<ExtArgs>
+  }, ExtArgs["result"]["compraDocumento"]>
+
+  export type CompraDocumentoSelectScalar = {
+    compraDocumentoId?: boolean
+    proveedorId?: boolean
+    numeroFactura?: boolean
+    facturaUrl?: boolean
+    formaPago?: boolean
+    estado?: boolean
+    tipoOperacion?: boolean
+    descripcion?: boolean
+    fechaCompra?: boolean
+    total?: boolean
+    gastoCompraId?: boolean
+    cuentaPorPagarId?: boolean
+    deletedAt?: boolean
+    updatedById?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type CompraDocumentoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"compraDocumentoId" | "proveedorId" | "numeroFactura" | "facturaUrl" | "formaPago" | "estado" | "tipoOperacion" | "descripcion" | "fechaCompra" | "total" | "gastoCompraId" | "cuentaPorPagarId" | "deletedAt" | "updatedById" | "createdAt" | "updatedAt", ExtArgs["result"]["compraDocumento"]>
+  export type CompraDocumentoInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    cuentaPorPagar?: boolean | CompraDocumento$cuentaPorPagarArgs<ExtArgs>
+    gastoCompra?: boolean | CompraDocumento$gastoCompraArgs<ExtArgs>
+    proveedor?: boolean | VendorDefaultArgs<ExtArgs>
+    updatedBy?: boolean | CompraDocumento$updatedByArgs<ExtArgs>
+    items?: boolean | CompraDocumento$itemsArgs<ExtArgs>
+    _count?: boolean | CompraDocumentoCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type CompraDocumentoIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    cuentaPorPagar?: boolean | CompraDocumento$cuentaPorPagarArgs<ExtArgs>
+    gastoCompra?: boolean | CompraDocumento$gastoCompraArgs<ExtArgs>
+    proveedor?: boolean | VendorDefaultArgs<ExtArgs>
+    updatedBy?: boolean | CompraDocumento$updatedByArgs<ExtArgs>
+  }
+  export type CompraDocumentoIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    cuentaPorPagar?: boolean | CompraDocumento$cuentaPorPagarArgs<ExtArgs>
+    gastoCompra?: boolean | CompraDocumento$gastoCompraArgs<ExtArgs>
+    proveedor?: boolean | VendorDefaultArgs<ExtArgs>
+    updatedBy?: boolean | CompraDocumento$updatedByArgs<ExtArgs>
+  }
+
+  export type $CompraDocumentoPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "CompraDocumento"
+    objects: {
+      cuentaPorPagar: Prisma.$CuentaPorPagarPayload<ExtArgs> | null
+      gastoCompra: Prisma.$GastoCompraPayload<ExtArgs> | null
+      proveedor: Prisma.$VendorPayload<ExtArgs>
+      updatedBy: Prisma.$UserPayload<ExtArgs> | null
+      items: Prisma.$CompraDocumentoItemPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      compraDocumentoId: string
+      proveedorId: string
+      numeroFactura: string
+      facturaUrl: string
+      formaPago: string
+      estado: string
+      tipoOperacion: string
+      descripcion: string | null
+      fechaCompra: Date
+      total: number
+      gastoCompraId: string | null
+      cuentaPorPagarId: string | null
+      deletedAt: Date | null
+      updatedById: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["compraDocumento"]>
+    composites: {}
+  }
+
+  type CompraDocumentoGetPayload<S extends boolean | null | undefined | CompraDocumentoDefaultArgs> = $Result.GetResult<Prisma.$CompraDocumentoPayload, S>
+
+  type CompraDocumentoCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<CompraDocumentoFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: CompraDocumentoCountAggregateInputType | true
+    }
+
+  export interface CompraDocumentoDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['CompraDocumento'], meta: { name: 'CompraDocumento' } }
+    /**
+     * Find zero or one CompraDocumento that matches the filter.
+     * @param {CompraDocumentoFindUniqueArgs} args - Arguments to find a CompraDocumento
+     * @example
+     * // Get one CompraDocumento
+     * const compraDocumento = await prisma.compraDocumento.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends CompraDocumentoFindUniqueArgs>(args: SelectSubset<T, CompraDocumentoFindUniqueArgs<ExtArgs>>): Prisma__CompraDocumentoClient<$Result.GetResult<Prisma.$CompraDocumentoPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one CompraDocumento that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {CompraDocumentoFindUniqueOrThrowArgs} args - Arguments to find a CompraDocumento
+     * @example
+     * // Get one CompraDocumento
+     * const compraDocumento = await prisma.compraDocumento.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends CompraDocumentoFindUniqueOrThrowArgs>(args: SelectSubset<T, CompraDocumentoFindUniqueOrThrowArgs<ExtArgs>>): Prisma__CompraDocumentoClient<$Result.GetResult<Prisma.$CompraDocumentoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CompraDocumento that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompraDocumentoFindFirstArgs} args - Arguments to find a CompraDocumento
+     * @example
+     * // Get one CompraDocumento
+     * const compraDocumento = await prisma.compraDocumento.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends CompraDocumentoFindFirstArgs>(args?: SelectSubset<T, CompraDocumentoFindFirstArgs<ExtArgs>>): Prisma__CompraDocumentoClient<$Result.GetResult<Prisma.$CompraDocumentoPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CompraDocumento that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompraDocumentoFindFirstOrThrowArgs} args - Arguments to find a CompraDocumento
+     * @example
+     * // Get one CompraDocumento
+     * const compraDocumento = await prisma.compraDocumento.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends CompraDocumentoFindFirstOrThrowArgs>(args?: SelectSubset<T, CompraDocumentoFindFirstOrThrowArgs<ExtArgs>>): Prisma__CompraDocumentoClient<$Result.GetResult<Prisma.$CompraDocumentoPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more CompraDocumentos that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompraDocumentoFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all CompraDocumentos
+     * const compraDocumentos = await prisma.compraDocumento.findMany()
+     * 
+     * // Get first 10 CompraDocumentos
+     * const compraDocumentos = await prisma.compraDocumento.findMany({ take: 10 })
+     * 
+     * // Only select the `compraDocumentoId`
+     * const compraDocumentoWithCompraDocumentoIdOnly = await prisma.compraDocumento.findMany({ select: { compraDocumentoId: true } })
+     * 
+     */
+    findMany<T extends CompraDocumentoFindManyArgs>(args?: SelectSubset<T, CompraDocumentoFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CompraDocumentoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a CompraDocumento.
+     * @param {CompraDocumentoCreateArgs} args - Arguments to create a CompraDocumento.
+     * @example
+     * // Create one CompraDocumento
+     * const CompraDocumento = await prisma.compraDocumento.create({
+     *   data: {
+     *     // ... data to create a CompraDocumento
+     *   }
+     * })
+     * 
+     */
+    create<T extends CompraDocumentoCreateArgs>(args: SelectSubset<T, CompraDocumentoCreateArgs<ExtArgs>>): Prisma__CompraDocumentoClient<$Result.GetResult<Prisma.$CompraDocumentoPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many CompraDocumentos.
+     * @param {CompraDocumentoCreateManyArgs} args - Arguments to create many CompraDocumentos.
+     * @example
+     * // Create many CompraDocumentos
+     * const compraDocumento = await prisma.compraDocumento.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends CompraDocumentoCreateManyArgs>(args?: SelectSubset<T, CompraDocumentoCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many CompraDocumentos and returns the data saved in the database.
+     * @param {CompraDocumentoCreateManyAndReturnArgs} args - Arguments to create many CompraDocumentos.
+     * @example
+     * // Create many CompraDocumentos
+     * const compraDocumento = await prisma.compraDocumento.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many CompraDocumentos and only return the `compraDocumentoId`
+     * const compraDocumentoWithCompraDocumentoIdOnly = await prisma.compraDocumento.createManyAndReturn({
+     *   select: { compraDocumentoId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends CompraDocumentoCreateManyAndReturnArgs>(args?: SelectSubset<T, CompraDocumentoCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CompraDocumentoPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a CompraDocumento.
+     * @param {CompraDocumentoDeleteArgs} args - Arguments to delete one CompraDocumento.
+     * @example
+     * // Delete one CompraDocumento
+     * const CompraDocumento = await prisma.compraDocumento.delete({
+     *   where: {
+     *     // ... filter to delete one CompraDocumento
+     *   }
+     * })
+     * 
+     */
+    delete<T extends CompraDocumentoDeleteArgs>(args: SelectSubset<T, CompraDocumentoDeleteArgs<ExtArgs>>): Prisma__CompraDocumentoClient<$Result.GetResult<Prisma.$CompraDocumentoPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one CompraDocumento.
+     * @param {CompraDocumentoUpdateArgs} args - Arguments to update one CompraDocumento.
+     * @example
+     * // Update one CompraDocumento
+     * const compraDocumento = await prisma.compraDocumento.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends CompraDocumentoUpdateArgs>(args: SelectSubset<T, CompraDocumentoUpdateArgs<ExtArgs>>): Prisma__CompraDocumentoClient<$Result.GetResult<Prisma.$CompraDocumentoPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more CompraDocumentos.
+     * @param {CompraDocumentoDeleteManyArgs} args - Arguments to filter CompraDocumentos to delete.
+     * @example
+     * // Delete a few CompraDocumentos
+     * const { count } = await prisma.compraDocumento.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends CompraDocumentoDeleteManyArgs>(args?: SelectSubset<T, CompraDocumentoDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CompraDocumentos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompraDocumentoUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many CompraDocumentos
+     * const compraDocumento = await prisma.compraDocumento.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends CompraDocumentoUpdateManyArgs>(args: SelectSubset<T, CompraDocumentoUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CompraDocumentos and returns the data updated in the database.
+     * @param {CompraDocumentoUpdateManyAndReturnArgs} args - Arguments to update many CompraDocumentos.
+     * @example
+     * // Update many CompraDocumentos
+     * const compraDocumento = await prisma.compraDocumento.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more CompraDocumentos and only return the `compraDocumentoId`
+     * const compraDocumentoWithCompraDocumentoIdOnly = await prisma.compraDocumento.updateManyAndReturn({
+     *   select: { compraDocumentoId: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends CompraDocumentoUpdateManyAndReturnArgs>(args: SelectSubset<T, CompraDocumentoUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CompraDocumentoPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one CompraDocumento.
+     * @param {CompraDocumentoUpsertArgs} args - Arguments to update or create a CompraDocumento.
+     * @example
+     * // Update or create a CompraDocumento
+     * const compraDocumento = await prisma.compraDocumento.upsert({
+     *   create: {
+     *     // ... data to create a CompraDocumento
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the CompraDocumento we want to update
+     *   }
+     * })
+     */
+    upsert<T extends CompraDocumentoUpsertArgs>(args: SelectSubset<T, CompraDocumentoUpsertArgs<ExtArgs>>): Prisma__CompraDocumentoClient<$Result.GetResult<Prisma.$CompraDocumentoPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of CompraDocumentos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompraDocumentoCountArgs} args - Arguments to filter CompraDocumentos to count.
+     * @example
+     * // Count the number of CompraDocumentos
+     * const count = await prisma.compraDocumento.count({
+     *   where: {
+     *     // ... the filter for the CompraDocumentos we want to count
+     *   }
+     * })
+    **/
+    count<T extends CompraDocumentoCountArgs>(
+      args?: Subset<T, CompraDocumentoCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], CompraDocumentoCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a CompraDocumento.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompraDocumentoAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends CompraDocumentoAggregateArgs>(args: Subset<T, CompraDocumentoAggregateArgs>): Prisma.PrismaPromise<GetCompraDocumentoAggregateType<T>>
+
+    /**
+     * Group by CompraDocumento.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompraDocumentoGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends CompraDocumentoGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: CompraDocumentoGroupByArgs['orderBy'] }
+        : { orderBy?: CompraDocumentoGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, CompraDocumentoGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCompraDocumentoGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the CompraDocumento model
+   */
+  readonly fields: CompraDocumentoFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for CompraDocumento.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__CompraDocumentoClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    cuentaPorPagar<T extends CompraDocumento$cuentaPorPagarArgs<ExtArgs> = {}>(args?: Subset<T, CompraDocumento$cuentaPorPagarArgs<ExtArgs>>): Prisma__CuentaPorPagarClient<$Result.GetResult<Prisma.$CuentaPorPagarPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    gastoCompra<T extends CompraDocumento$gastoCompraArgs<ExtArgs> = {}>(args?: Subset<T, CompraDocumento$gastoCompraArgs<ExtArgs>>): Prisma__GastoCompraClient<$Result.GetResult<Prisma.$GastoCompraPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    proveedor<T extends VendorDefaultArgs<ExtArgs> = {}>(args?: Subset<T, VendorDefaultArgs<ExtArgs>>): Prisma__VendorClient<$Result.GetResult<Prisma.$VendorPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    updatedBy<T extends CompraDocumento$updatedByArgs<ExtArgs> = {}>(args?: Subset<T, CompraDocumento$updatedByArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    items<T extends CompraDocumento$itemsArgs<ExtArgs> = {}>(args?: Subset<T, CompraDocumento$itemsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CompraDocumentoItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the CompraDocumento model
+   */
+  interface CompraDocumentoFieldRefs {
+    readonly compraDocumentoId: FieldRef<"CompraDocumento", 'String'>
+    readonly proveedorId: FieldRef<"CompraDocumento", 'String'>
+    readonly numeroFactura: FieldRef<"CompraDocumento", 'String'>
+    readonly facturaUrl: FieldRef<"CompraDocumento", 'String'>
+    readonly formaPago: FieldRef<"CompraDocumento", 'String'>
+    readonly estado: FieldRef<"CompraDocumento", 'String'>
+    readonly tipoOperacion: FieldRef<"CompraDocumento", 'String'>
+    readonly descripcion: FieldRef<"CompraDocumento", 'String'>
+    readonly fechaCompra: FieldRef<"CompraDocumento", 'DateTime'>
+    readonly total: FieldRef<"CompraDocumento", 'Int'>
+    readonly gastoCompraId: FieldRef<"CompraDocumento", 'String'>
+    readonly cuentaPorPagarId: FieldRef<"CompraDocumento", 'String'>
+    readonly deletedAt: FieldRef<"CompraDocumento", 'DateTime'>
+    readonly updatedById: FieldRef<"CompraDocumento", 'String'>
+    readonly createdAt: FieldRef<"CompraDocumento", 'DateTime'>
+    readonly updatedAt: FieldRef<"CompraDocumento", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * CompraDocumento findUnique
+   */
+  export type CompraDocumentoFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraDocumento
+     */
+    select?: CompraDocumentoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraDocumento
+     */
+    omit?: CompraDocumentoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraDocumentoInclude<ExtArgs> | null
+    /**
+     * Filter, which CompraDocumento to fetch.
+     */
+    where: CompraDocumentoWhereUniqueInput
+  }
+
+  /**
+   * CompraDocumento findUniqueOrThrow
+   */
+  export type CompraDocumentoFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraDocumento
+     */
+    select?: CompraDocumentoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraDocumento
+     */
+    omit?: CompraDocumentoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraDocumentoInclude<ExtArgs> | null
+    /**
+     * Filter, which CompraDocumento to fetch.
+     */
+    where: CompraDocumentoWhereUniqueInput
+  }
+
+  /**
+   * CompraDocumento findFirst
+   */
+  export type CompraDocumentoFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraDocumento
+     */
+    select?: CompraDocumentoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraDocumento
+     */
+    omit?: CompraDocumentoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraDocumentoInclude<ExtArgs> | null
+    /**
+     * Filter, which CompraDocumento to fetch.
+     */
+    where?: CompraDocumentoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CompraDocumentos to fetch.
+     */
+    orderBy?: CompraDocumentoOrderByWithRelationInput | CompraDocumentoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CompraDocumentos.
+     */
+    cursor?: CompraDocumentoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CompraDocumentos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CompraDocumentos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CompraDocumentos.
+     */
+    distinct?: CompraDocumentoScalarFieldEnum | CompraDocumentoScalarFieldEnum[]
+  }
+
+  /**
+   * CompraDocumento findFirstOrThrow
+   */
+  export type CompraDocumentoFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraDocumento
+     */
+    select?: CompraDocumentoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraDocumento
+     */
+    omit?: CompraDocumentoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraDocumentoInclude<ExtArgs> | null
+    /**
+     * Filter, which CompraDocumento to fetch.
+     */
+    where?: CompraDocumentoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CompraDocumentos to fetch.
+     */
+    orderBy?: CompraDocumentoOrderByWithRelationInput | CompraDocumentoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CompraDocumentos.
+     */
+    cursor?: CompraDocumentoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CompraDocumentos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CompraDocumentos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CompraDocumentos.
+     */
+    distinct?: CompraDocumentoScalarFieldEnum | CompraDocumentoScalarFieldEnum[]
+  }
+
+  /**
+   * CompraDocumento findMany
+   */
+  export type CompraDocumentoFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraDocumento
+     */
+    select?: CompraDocumentoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraDocumento
+     */
+    omit?: CompraDocumentoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraDocumentoInclude<ExtArgs> | null
+    /**
+     * Filter, which CompraDocumentos to fetch.
+     */
+    where?: CompraDocumentoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CompraDocumentos to fetch.
+     */
+    orderBy?: CompraDocumentoOrderByWithRelationInput | CompraDocumentoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing CompraDocumentos.
+     */
+    cursor?: CompraDocumentoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CompraDocumentos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CompraDocumentos.
+     */
+    skip?: number
+    distinct?: CompraDocumentoScalarFieldEnum | CompraDocumentoScalarFieldEnum[]
+  }
+
+  /**
+   * CompraDocumento create
+   */
+  export type CompraDocumentoCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraDocumento
+     */
+    select?: CompraDocumentoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraDocumento
+     */
+    omit?: CompraDocumentoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraDocumentoInclude<ExtArgs> | null
+    /**
+     * The data needed to create a CompraDocumento.
+     */
+    data: XOR<CompraDocumentoCreateInput, CompraDocumentoUncheckedCreateInput>
+  }
+
+  /**
+   * CompraDocumento createMany
+   */
+  export type CompraDocumentoCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many CompraDocumentos.
+     */
+    data: CompraDocumentoCreateManyInput | CompraDocumentoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * CompraDocumento createManyAndReturn
+   */
+  export type CompraDocumentoCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraDocumento
+     */
+    select?: CompraDocumentoSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraDocumento
+     */
+    omit?: CompraDocumentoOmit<ExtArgs> | null
+    /**
+     * The data used to create many CompraDocumentos.
+     */
+    data: CompraDocumentoCreateManyInput | CompraDocumentoCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraDocumentoIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * CompraDocumento update
+   */
+  export type CompraDocumentoUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraDocumento
+     */
+    select?: CompraDocumentoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraDocumento
+     */
+    omit?: CompraDocumentoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraDocumentoInclude<ExtArgs> | null
+    /**
+     * The data needed to update a CompraDocumento.
+     */
+    data: XOR<CompraDocumentoUpdateInput, CompraDocumentoUncheckedUpdateInput>
+    /**
+     * Choose, which CompraDocumento to update.
+     */
+    where: CompraDocumentoWhereUniqueInput
+  }
+
+  /**
+   * CompraDocumento updateMany
+   */
+  export type CompraDocumentoUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update CompraDocumentos.
+     */
+    data: XOR<CompraDocumentoUpdateManyMutationInput, CompraDocumentoUncheckedUpdateManyInput>
+    /**
+     * Filter which CompraDocumentos to update
+     */
+    where?: CompraDocumentoWhereInput
+    /**
+     * Limit how many CompraDocumentos to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * CompraDocumento updateManyAndReturn
+   */
+  export type CompraDocumentoUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraDocumento
+     */
+    select?: CompraDocumentoSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraDocumento
+     */
+    omit?: CompraDocumentoOmit<ExtArgs> | null
+    /**
+     * The data used to update CompraDocumentos.
+     */
+    data: XOR<CompraDocumentoUpdateManyMutationInput, CompraDocumentoUncheckedUpdateManyInput>
+    /**
+     * Filter which CompraDocumentos to update
+     */
+    where?: CompraDocumentoWhereInput
+    /**
+     * Limit how many CompraDocumentos to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraDocumentoIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * CompraDocumento upsert
+   */
+  export type CompraDocumentoUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraDocumento
+     */
+    select?: CompraDocumentoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraDocumento
+     */
+    omit?: CompraDocumentoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraDocumentoInclude<ExtArgs> | null
+    /**
+     * The filter to search for the CompraDocumento to update in case it exists.
+     */
+    where: CompraDocumentoWhereUniqueInput
+    /**
+     * In case the CompraDocumento found by the `where` argument doesn't exist, create a new CompraDocumento with this data.
+     */
+    create: XOR<CompraDocumentoCreateInput, CompraDocumentoUncheckedCreateInput>
+    /**
+     * In case the CompraDocumento was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<CompraDocumentoUpdateInput, CompraDocumentoUncheckedUpdateInput>
+  }
+
+  /**
+   * CompraDocumento delete
+   */
+  export type CompraDocumentoDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraDocumento
+     */
+    select?: CompraDocumentoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraDocumento
+     */
+    omit?: CompraDocumentoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraDocumentoInclude<ExtArgs> | null
+    /**
+     * Filter which CompraDocumento to delete.
+     */
+    where: CompraDocumentoWhereUniqueInput
+  }
+
+  /**
+   * CompraDocumento deleteMany
+   */
+  export type CompraDocumentoDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CompraDocumentos to delete
+     */
+    where?: CompraDocumentoWhereInput
+    /**
+     * Limit how many CompraDocumentos to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * CompraDocumento.cuentaPorPagar
+   */
+  export type CompraDocumento$cuentaPorPagarArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaPorPagar
+     */
+    select?: CuentaPorPagarSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CuentaPorPagar
+     */
+    omit?: CuentaPorPagarOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CuentaPorPagarInclude<ExtArgs> | null
+    where?: CuentaPorPagarWhereInput
+  }
+
+  /**
+   * CompraDocumento.gastoCompra
+   */
+  export type CompraDocumento$gastoCompraArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the GastoCompra
+     */
+    select?: GastoCompraSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the GastoCompra
+     */
+    omit?: GastoCompraOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: GastoCompraInclude<ExtArgs> | null
+    where?: GastoCompraWhereInput
+  }
+
+  /**
+   * CompraDocumento.updatedBy
+   */
+  export type CompraDocumento$updatedByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the User
+     */
+    select?: UserSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the User
+     */
+    omit?: UserOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: UserInclude<ExtArgs> | null
+    where?: UserWhereInput
+  }
+
+  /**
+   * CompraDocumento.items
+   */
+  export type CompraDocumento$itemsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraDocumentoItem
+     */
+    select?: CompraDocumentoItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraDocumentoItem
+     */
+    omit?: CompraDocumentoItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraDocumentoItemInclude<ExtArgs> | null
+    where?: CompraDocumentoItemWhereInput
+    orderBy?: CompraDocumentoItemOrderByWithRelationInput | CompraDocumentoItemOrderByWithRelationInput[]
+    cursor?: CompraDocumentoItemWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: CompraDocumentoItemScalarFieldEnum | CompraDocumentoItemScalarFieldEnum[]
+  }
+
+  /**
+   * CompraDocumento without action
+   */
+  export type CompraDocumentoDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraDocumento
+     */
+    select?: CompraDocumentoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraDocumento
+     */
+    omit?: CompraDocumentoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraDocumentoInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model CompraDocumentoItem
+   */
+
+  export type AggregateCompraDocumentoItem = {
+    _count: CompraDocumentoItemCountAggregateOutputType | null
+    _avg: CompraDocumentoItemAvgAggregateOutputType | null
+    _sum: CompraDocumentoItemSumAggregateOutputType | null
+    _min: CompraDocumentoItemMinAggregateOutputType | null
+    _max: CompraDocumentoItemMaxAggregateOutputType | null
+  }
+
+  export type CompraDocumentoItemAvgAggregateOutputType = {
+    cantidad: number | null
+    precioUnitario: number | null
+    totalLinea: number | null
+  }
+
+  export type CompraDocumentoItemSumAggregateOutputType = {
+    cantidad: number | null
+    precioUnitario: number | null
+    totalLinea: number | null
+  }
+
+  export type CompraDocumentoItemMinAggregateOutputType = {
+    compraDocumentoItemId: string | null
+    compraDocumentoId: string | null
+    productoId: string | null
+    cantidad: number | null
+    precioUnitario: number | null
+    totalLinea: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type CompraDocumentoItemMaxAggregateOutputType = {
+    compraDocumentoItemId: string | null
+    compraDocumentoId: string | null
+    productoId: string | null
+    cantidad: number | null
+    precioUnitario: number | null
+    totalLinea: number | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type CompraDocumentoItemCountAggregateOutputType = {
+    compraDocumentoItemId: number
+    compraDocumentoId: number
+    productoId: number
+    cantidad: number
+    precioUnitario: number
+    totalLinea: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type CompraDocumentoItemAvgAggregateInputType = {
+    cantidad?: true
+    precioUnitario?: true
+    totalLinea?: true
+  }
+
+  export type CompraDocumentoItemSumAggregateInputType = {
+    cantidad?: true
+    precioUnitario?: true
+    totalLinea?: true
+  }
+
+  export type CompraDocumentoItemMinAggregateInputType = {
+    compraDocumentoItemId?: true
+    compraDocumentoId?: true
+    productoId?: true
+    cantidad?: true
+    precioUnitario?: true
+    totalLinea?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type CompraDocumentoItemMaxAggregateInputType = {
+    compraDocumentoItemId?: true
+    compraDocumentoId?: true
+    productoId?: true
+    cantidad?: true
+    precioUnitario?: true
+    totalLinea?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type CompraDocumentoItemCountAggregateInputType = {
+    compraDocumentoItemId?: true
+    compraDocumentoId?: true
+    productoId?: true
+    cantidad?: true
+    precioUnitario?: true
+    totalLinea?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type CompraDocumentoItemAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CompraDocumentoItem to aggregate.
+     */
+    where?: CompraDocumentoItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CompraDocumentoItems to fetch.
+     */
+    orderBy?: CompraDocumentoItemOrderByWithRelationInput | CompraDocumentoItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: CompraDocumentoItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CompraDocumentoItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CompraDocumentoItems.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned CompraDocumentoItems
+    **/
+    _count?: true | CompraDocumentoItemCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: CompraDocumentoItemAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: CompraDocumentoItemSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: CompraDocumentoItemMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: CompraDocumentoItemMaxAggregateInputType
+  }
+
+  export type GetCompraDocumentoItemAggregateType<T extends CompraDocumentoItemAggregateArgs> = {
+        [P in keyof T & keyof AggregateCompraDocumentoItem]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateCompraDocumentoItem[P]>
+      : GetScalarType<T[P], AggregateCompraDocumentoItem[P]>
+  }
+
+
+
+
+  export type CompraDocumentoItemGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CompraDocumentoItemWhereInput
+    orderBy?: CompraDocumentoItemOrderByWithAggregationInput | CompraDocumentoItemOrderByWithAggregationInput[]
+    by: CompraDocumentoItemScalarFieldEnum[] | CompraDocumentoItemScalarFieldEnum
+    having?: CompraDocumentoItemScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: CompraDocumentoItemCountAggregateInputType | true
+    _avg?: CompraDocumentoItemAvgAggregateInputType
+    _sum?: CompraDocumentoItemSumAggregateInputType
+    _min?: CompraDocumentoItemMinAggregateInputType
+    _max?: CompraDocumentoItemMaxAggregateInputType
+  }
+
+  export type CompraDocumentoItemGroupByOutputType = {
+    compraDocumentoItemId: string
+    compraDocumentoId: string
+    productoId: string
+    cantidad: number
+    precioUnitario: number
+    totalLinea: number
+    createdAt: Date
+    updatedAt: Date
+    _count: CompraDocumentoItemCountAggregateOutputType | null
+    _avg: CompraDocumentoItemAvgAggregateOutputType | null
+    _sum: CompraDocumentoItemSumAggregateOutputType | null
+    _min: CompraDocumentoItemMinAggregateOutputType | null
+    _max: CompraDocumentoItemMaxAggregateOutputType | null
+  }
+
+  type GetCompraDocumentoItemGroupByPayload<T extends CompraDocumentoItemGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<CompraDocumentoItemGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof CompraDocumentoItemGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], CompraDocumentoItemGroupByOutputType[P]>
+            : GetScalarType<T[P], CompraDocumentoItemGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type CompraDocumentoItemSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    compraDocumentoItemId?: boolean
+    compraDocumentoId?: boolean
+    productoId?: boolean
+    cantidad?: boolean
+    precioUnitario?: boolean
+    totalLinea?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    compraDocumento?: boolean | CompraDocumentoDefaultArgs<ExtArgs>
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["compraDocumentoItem"]>
+
+  export type CompraDocumentoItemSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    compraDocumentoItemId?: boolean
+    compraDocumentoId?: boolean
+    productoId?: boolean
+    cantidad?: boolean
+    precioUnitario?: boolean
+    totalLinea?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    compraDocumento?: boolean | CompraDocumentoDefaultArgs<ExtArgs>
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["compraDocumentoItem"]>
+
+  export type CompraDocumentoItemSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    compraDocumentoItemId?: boolean
+    compraDocumentoId?: boolean
+    productoId?: boolean
+    cantidad?: boolean
+    precioUnitario?: boolean
+    totalLinea?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    compraDocumento?: boolean | CompraDocumentoDefaultArgs<ExtArgs>
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["compraDocumentoItem"]>
+
+  export type CompraDocumentoItemSelectScalar = {
+    compraDocumentoItemId?: boolean
+    compraDocumentoId?: boolean
+    productoId?: boolean
+    cantidad?: boolean
+    precioUnitario?: boolean
+    totalLinea?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type CompraDocumentoItemOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"compraDocumentoItemId" | "compraDocumentoId" | "productoId" | "cantidad" | "precioUnitario" | "totalLinea" | "createdAt" | "updatedAt", ExtArgs["result"]["compraDocumentoItem"]>
+  export type CompraDocumentoItemInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    compraDocumento?: boolean | CompraDocumentoDefaultArgs<ExtArgs>
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }
+  export type CompraDocumentoItemIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    compraDocumento?: boolean | CompraDocumentoDefaultArgs<ExtArgs>
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }
+  export type CompraDocumentoItemIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    compraDocumento?: boolean | CompraDocumentoDefaultArgs<ExtArgs>
+    producto?: boolean | ProductoDefaultArgs<ExtArgs>
+  }
+
+  export type $CompraDocumentoItemPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "CompraDocumentoItem"
+    objects: {
+      compraDocumento: Prisma.$CompraDocumentoPayload<ExtArgs>
+      producto: Prisma.$ProductoPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      compraDocumentoItemId: string
+      compraDocumentoId: string
+      productoId: string
+      cantidad: number
+      precioUnitario: number
+      totalLinea: number
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["compraDocumentoItem"]>
+    composites: {}
+  }
+
+  type CompraDocumentoItemGetPayload<S extends boolean | null | undefined | CompraDocumentoItemDefaultArgs> = $Result.GetResult<Prisma.$CompraDocumentoItemPayload, S>
+
+  type CompraDocumentoItemCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<CompraDocumentoItemFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: CompraDocumentoItemCountAggregateInputType | true
+    }
+
+  export interface CompraDocumentoItemDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['CompraDocumentoItem'], meta: { name: 'CompraDocumentoItem' } }
+    /**
+     * Find zero or one CompraDocumentoItem that matches the filter.
+     * @param {CompraDocumentoItemFindUniqueArgs} args - Arguments to find a CompraDocumentoItem
+     * @example
+     * // Get one CompraDocumentoItem
+     * const compraDocumentoItem = await prisma.compraDocumentoItem.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends CompraDocumentoItemFindUniqueArgs>(args: SelectSubset<T, CompraDocumentoItemFindUniqueArgs<ExtArgs>>): Prisma__CompraDocumentoItemClient<$Result.GetResult<Prisma.$CompraDocumentoItemPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one CompraDocumentoItem that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {CompraDocumentoItemFindUniqueOrThrowArgs} args - Arguments to find a CompraDocumentoItem
+     * @example
+     * // Get one CompraDocumentoItem
+     * const compraDocumentoItem = await prisma.compraDocumentoItem.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends CompraDocumentoItemFindUniqueOrThrowArgs>(args: SelectSubset<T, CompraDocumentoItemFindUniqueOrThrowArgs<ExtArgs>>): Prisma__CompraDocumentoItemClient<$Result.GetResult<Prisma.$CompraDocumentoItemPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CompraDocumentoItem that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompraDocumentoItemFindFirstArgs} args - Arguments to find a CompraDocumentoItem
+     * @example
+     * // Get one CompraDocumentoItem
+     * const compraDocumentoItem = await prisma.compraDocumentoItem.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends CompraDocumentoItemFindFirstArgs>(args?: SelectSubset<T, CompraDocumentoItemFindFirstArgs<ExtArgs>>): Prisma__CompraDocumentoItemClient<$Result.GetResult<Prisma.$CompraDocumentoItemPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CompraDocumentoItem that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompraDocumentoItemFindFirstOrThrowArgs} args - Arguments to find a CompraDocumentoItem
+     * @example
+     * // Get one CompraDocumentoItem
+     * const compraDocumentoItem = await prisma.compraDocumentoItem.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends CompraDocumentoItemFindFirstOrThrowArgs>(args?: SelectSubset<T, CompraDocumentoItemFindFirstOrThrowArgs<ExtArgs>>): Prisma__CompraDocumentoItemClient<$Result.GetResult<Prisma.$CompraDocumentoItemPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more CompraDocumentoItems that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompraDocumentoItemFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all CompraDocumentoItems
+     * const compraDocumentoItems = await prisma.compraDocumentoItem.findMany()
+     * 
+     * // Get first 10 CompraDocumentoItems
+     * const compraDocumentoItems = await prisma.compraDocumentoItem.findMany({ take: 10 })
+     * 
+     * // Only select the `compraDocumentoItemId`
+     * const compraDocumentoItemWithCompraDocumentoItemIdOnly = await prisma.compraDocumentoItem.findMany({ select: { compraDocumentoItemId: true } })
+     * 
+     */
+    findMany<T extends CompraDocumentoItemFindManyArgs>(args?: SelectSubset<T, CompraDocumentoItemFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CompraDocumentoItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a CompraDocumentoItem.
+     * @param {CompraDocumentoItemCreateArgs} args - Arguments to create a CompraDocumentoItem.
+     * @example
+     * // Create one CompraDocumentoItem
+     * const CompraDocumentoItem = await prisma.compraDocumentoItem.create({
+     *   data: {
+     *     // ... data to create a CompraDocumentoItem
+     *   }
+     * })
+     * 
+     */
+    create<T extends CompraDocumentoItemCreateArgs>(args: SelectSubset<T, CompraDocumentoItemCreateArgs<ExtArgs>>): Prisma__CompraDocumentoItemClient<$Result.GetResult<Prisma.$CompraDocumentoItemPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many CompraDocumentoItems.
+     * @param {CompraDocumentoItemCreateManyArgs} args - Arguments to create many CompraDocumentoItems.
+     * @example
+     * // Create many CompraDocumentoItems
+     * const compraDocumentoItem = await prisma.compraDocumentoItem.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends CompraDocumentoItemCreateManyArgs>(args?: SelectSubset<T, CompraDocumentoItemCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many CompraDocumentoItems and returns the data saved in the database.
+     * @param {CompraDocumentoItemCreateManyAndReturnArgs} args - Arguments to create many CompraDocumentoItems.
+     * @example
+     * // Create many CompraDocumentoItems
+     * const compraDocumentoItem = await prisma.compraDocumentoItem.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many CompraDocumentoItems and only return the `compraDocumentoItemId`
+     * const compraDocumentoItemWithCompraDocumentoItemIdOnly = await prisma.compraDocumentoItem.createManyAndReturn({
+     *   select: { compraDocumentoItemId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends CompraDocumentoItemCreateManyAndReturnArgs>(args?: SelectSubset<T, CompraDocumentoItemCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CompraDocumentoItemPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a CompraDocumentoItem.
+     * @param {CompraDocumentoItemDeleteArgs} args - Arguments to delete one CompraDocumentoItem.
+     * @example
+     * // Delete one CompraDocumentoItem
+     * const CompraDocumentoItem = await prisma.compraDocumentoItem.delete({
+     *   where: {
+     *     // ... filter to delete one CompraDocumentoItem
+     *   }
+     * })
+     * 
+     */
+    delete<T extends CompraDocumentoItemDeleteArgs>(args: SelectSubset<T, CompraDocumentoItemDeleteArgs<ExtArgs>>): Prisma__CompraDocumentoItemClient<$Result.GetResult<Prisma.$CompraDocumentoItemPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one CompraDocumentoItem.
+     * @param {CompraDocumentoItemUpdateArgs} args - Arguments to update one CompraDocumentoItem.
+     * @example
+     * // Update one CompraDocumentoItem
+     * const compraDocumentoItem = await prisma.compraDocumentoItem.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends CompraDocumentoItemUpdateArgs>(args: SelectSubset<T, CompraDocumentoItemUpdateArgs<ExtArgs>>): Prisma__CompraDocumentoItemClient<$Result.GetResult<Prisma.$CompraDocumentoItemPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more CompraDocumentoItems.
+     * @param {CompraDocumentoItemDeleteManyArgs} args - Arguments to filter CompraDocumentoItems to delete.
+     * @example
+     * // Delete a few CompraDocumentoItems
+     * const { count } = await prisma.compraDocumentoItem.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends CompraDocumentoItemDeleteManyArgs>(args?: SelectSubset<T, CompraDocumentoItemDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CompraDocumentoItems.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompraDocumentoItemUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many CompraDocumentoItems
+     * const compraDocumentoItem = await prisma.compraDocumentoItem.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends CompraDocumentoItemUpdateManyArgs>(args: SelectSubset<T, CompraDocumentoItemUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CompraDocumentoItems and returns the data updated in the database.
+     * @param {CompraDocumentoItemUpdateManyAndReturnArgs} args - Arguments to update many CompraDocumentoItems.
+     * @example
+     * // Update many CompraDocumentoItems
+     * const compraDocumentoItem = await prisma.compraDocumentoItem.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more CompraDocumentoItems and only return the `compraDocumentoItemId`
+     * const compraDocumentoItemWithCompraDocumentoItemIdOnly = await prisma.compraDocumentoItem.updateManyAndReturn({
+     *   select: { compraDocumentoItemId: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends CompraDocumentoItemUpdateManyAndReturnArgs>(args: SelectSubset<T, CompraDocumentoItemUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CompraDocumentoItemPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one CompraDocumentoItem.
+     * @param {CompraDocumentoItemUpsertArgs} args - Arguments to update or create a CompraDocumentoItem.
+     * @example
+     * // Update or create a CompraDocumentoItem
+     * const compraDocumentoItem = await prisma.compraDocumentoItem.upsert({
+     *   create: {
+     *     // ... data to create a CompraDocumentoItem
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the CompraDocumentoItem we want to update
+     *   }
+     * })
+     */
+    upsert<T extends CompraDocumentoItemUpsertArgs>(args: SelectSubset<T, CompraDocumentoItemUpsertArgs<ExtArgs>>): Prisma__CompraDocumentoItemClient<$Result.GetResult<Prisma.$CompraDocumentoItemPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of CompraDocumentoItems.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompraDocumentoItemCountArgs} args - Arguments to filter CompraDocumentoItems to count.
+     * @example
+     * // Count the number of CompraDocumentoItems
+     * const count = await prisma.compraDocumentoItem.count({
+     *   where: {
+     *     // ... the filter for the CompraDocumentoItems we want to count
+     *   }
+     * })
+    **/
+    count<T extends CompraDocumentoItemCountArgs>(
+      args?: Subset<T, CompraDocumentoItemCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], CompraDocumentoItemCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a CompraDocumentoItem.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompraDocumentoItemAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends CompraDocumentoItemAggregateArgs>(args: Subset<T, CompraDocumentoItemAggregateArgs>): Prisma.PrismaPromise<GetCompraDocumentoItemAggregateType<T>>
+
+    /**
+     * Group by CompraDocumentoItem.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CompraDocumentoItemGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends CompraDocumentoItemGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: CompraDocumentoItemGroupByArgs['orderBy'] }
+        : { orderBy?: CompraDocumentoItemGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, CompraDocumentoItemGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCompraDocumentoItemGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the CompraDocumentoItem model
+   */
+  readonly fields: CompraDocumentoItemFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for CompraDocumentoItem.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__CompraDocumentoItemClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    compraDocumento<T extends CompraDocumentoDefaultArgs<ExtArgs> = {}>(args?: Subset<T, CompraDocumentoDefaultArgs<ExtArgs>>): Prisma__CompraDocumentoClient<$Result.GetResult<Prisma.$CompraDocumentoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    producto<T extends ProductoDefaultArgs<ExtArgs> = {}>(args?: Subset<T, ProductoDefaultArgs<ExtArgs>>): Prisma__ProductoClient<$Result.GetResult<Prisma.$ProductoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the CompraDocumentoItem model
+   */
+  interface CompraDocumentoItemFieldRefs {
+    readonly compraDocumentoItemId: FieldRef<"CompraDocumentoItem", 'String'>
+    readonly compraDocumentoId: FieldRef<"CompraDocumentoItem", 'String'>
+    readonly productoId: FieldRef<"CompraDocumentoItem", 'String'>
+    readonly cantidad: FieldRef<"CompraDocumentoItem", 'Int'>
+    readonly precioUnitario: FieldRef<"CompraDocumentoItem", 'Int'>
+    readonly totalLinea: FieldRef<"CompraDocumentoItem", 'Int'>
+    readonly createdAt: FieldRef<"CompraDocumentoItem", 'DateTime'>
+    readonly updatedAt: FieldRef<"CompraDocumentoItem", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * CompraDocumentoItem findUnique
+   */
+  export type CompraDocumentoItemFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraDocumentoItem
+     */
+    select?: CompraDocumentoItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraDocumentoItem
+     */
+    omit?: CompraDocumentoItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraDocumentoItemInclude<ExtArgs> | null
+    /**
+     * Filter, which CompraDocumentoItem to fetch.
+     */
+    where: CompraDocumentoItemWhereUniqueInput
+  }
+
+  /**
+   * CompraDocumentoItem findUniqueOrThrow
+   */
+  export type CompraDocumentoItemFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraDocumentoItem
+     */
+    select?: CompraDocumentoItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraDocumentoItem
+     */
+    omit?: CompraDocumentoItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraDocumentoItemInclude<ExtArgs> | null
+    /**
+     * Filter, which CompraDocumentoItem to fetch.
+     */
+    where: CompraDocumentoItemWhereUniqueInput
+  }
+
+  /**
+   * CompraDocumentoItem findFirst
+   */
+  export type CompraDocumentoItemFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraDocumentoItem
+     */
+    select?: CompraDocumentoItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraDocumentoItem
+     */
+    omit?: CompraDocumentoItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraDocumentoItemInclude<ExtArgs> | null
+    /**
+     * Filter, which CompraDocumentoItem to fetch.
+     */
+    where?: CompraDocumentoItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CompraDocumentoItems to fetch.
+     */
+    orderBy?: CompraDocumentoItemOrderByWithRelationInput | CompraDocumentoItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CompraDocumentoItems.
+     */
+    cursor?: CompraDocumentoItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CompraDocumentoItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CompraDocumentoItems.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CompraDocumentoItems.
+     */
+    distinct?: CompraDocumentoItemScalarFieldEnum | CompraDocumentoItemScalarFieldEnum[]
+  }
+
+  /**
+   * CompraDocumentoItem findFirstOrThrow
+   */
+  export type CompraDocumentoItemFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraDocumentoItem
+     */
+    select?: CompraDocumentoItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraDocumentoItem
+     */
+    omit?: CompraDocumentoItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraDocumentoItemInclude<ExtArgs> | null
+    /**
+     * Filter, which CompraDocumentoItem to fetch.
+     */
+    where?: CompraDocumentoItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CompraDocumentoItems to fetch.
+     */
+    orderBy?: CompraDocumentoItemOrderByWithRelationInput | CompraDocumentoItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CompraDocumentoItems.
+     */
+    cursor?: CompraDocumentoItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CompraDocumentoItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CompraDocumentoItems.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CompraDocumentoItems.
+     */
+    distinct?: CompraDocumentoItemScalarFieldEnum | CompraDocumentoItemScalarFieldEnum[]
+  }
+
+  /**
+   * CompraDocumentoItem findMany
+   */
+  export type CompraDocumentoItemFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraDocumentoItem
+     */
+    select?: CompraDocumentoItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraDocumentoItem
+     */
+    omit?: CompraDocumentoItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraDocumentoItemInclude<ExtArgs> | null
+    /**
+     * Filter, which CompraDocumentoItems to fetch.
+     */
+    where?: CompraDocumentoItemWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CompraDocumentoItems to fetch.
+     */
+    orderBy?: CompraDocumentoItemOrderByWithRelationInput | CompraDocumentoItemOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing CompraDocumentoItems.
+     */
+    cursor?: CompraDocumentoItemWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CompraDocumentoItems from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CompraDocumentoItems.
+     */
+    skip?: number
+    distinct?: CompraDocumentoItemScalarFieldEnum | CompraDocumentoItemScalarFieldEnum[]
+  }
+
+  /**
+   * CompraDocumentoItem create
+   */
+  export type CompraDocumentoItemCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraDocumentoItem
+     */
+    select?: CompraDocumentoItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraDocumentoItem
+     */
+    omit?: CompraDocumentoItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraDocumentoItemInclude<ExtArgs> | null
+    /**
+     * The data needed to create a CompraDocumentoItem.
+     */
+    data: XOR<CompraDocumentoItemCreateInput, CompraDocumentoItemUncheckedCreateInput>
+  }
+
+  /**
+   * CompraDocumentoItem createMany
+   */
+  export type CompraDocumentoItemCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many CompraDocumentoItems.
+     */
+    data: CompraDocumentoItemCreateManyInput | CompraDocumentoItemCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * CompraDocumentoItem createManyAndReturn
+   */
+  export type CompraDocumentoItemCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraDocumentoItem
+     */
+    select?: CompraDocumentoItemSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraDocumentoItem
+     */
+    omit?: CompraDocumentoItemOmit<ExtArgs> | null
+    /**
+     * The data used to create many CompraDocumentoItems.
+     */
+    data: CompraDocumentoItemCreateManyInput | CompraDocumentoItemCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraDocumentoItemIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * CompraDocumentoItem update
+   */
+  export type CompraDocumentoItemUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraDocumentoItem
+     */
+    select?: CompraDocumentoItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraDocumentoItem
+     */
+    omit?: CompraDocumentoItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraDocumentoItemInclude<ExtArgs> | null
+    /**
+     * The data needed to update a CompraDocumentoItem.
+     */
+    data: XOR<CompraDocumentoItemUpdateInput, CompraDocumentoItemUncheckedUpdateInput>
+    /**
+     * Choose, which CompraDocumentoItem to update.
+     */
+    where: CompraDocumentoItemWhereUniqueInput
+  }
+
+  /**
+   * CompraDocumentoItem updateMany
+   */
+  export type CompraDocumentoItemUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update CompraDocumentoItems.
+     */
+    data: XOR<CompraDocumentoItemUpdateManyMutationInput, CompraDocumentoItemUncheckedUpdateManyInput>
+    /**
+     * Filter which CompraDocumentoItems to update
+     */
+    where?: CompraDocumentoItemWhereInput
+    /**
+     * Limit how many CompraDocumentoItems to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * CompraDocumentoItem updateManyAndReturn
+   */
+  export type CompraDocumentoItemUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraDocumentoItem
+     */
+    select?: CompraDocumentoItemSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraDocumentoItem
+     */
+    omit?: CompraDocumentoItemOmit<ExtArgs> | null
+    /**
+     * The data used to update CompraDocumentoItems.
+     */
+    data: XOR<CompraDocumentoItemUpdateManyMutationInput, CompraDocumentoItemUncheckedUpdateManyInput>
+    /**
+     * Filter which CompraDocumentoItems to update
+     */
+    where?: CompraDocumentoItemWhereInput
+    /**
+     * Limit how many CompraDocumentoItems to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraDocumentoItemIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * CompraDocumentoItem upsert
+   */
+  export type CompraDocumentoItemUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraDocumentoItem
+     */
+    select?: CompraDocumentoItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraDocumentoItem
+     */
+    omit?: CompraDocumentoItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraDocumentoItemInclude<ExtArgs> | null
+    /**
+     * The filter to search for the CompraDocumentoItem to update in case it exists.
+     */
+    where: CompraDocumentoItemWhereUniqueInput
+    /**
+     * In case the CompraDocumentoItem found by the `where` argument doesn't exist, create a new CompraDocumentoItem with this data.
+     */
+    create: XOR<CompraDocumentoItemCreateInput, CompraDocumentoItemUncheckedCreateInput>
+    /**
+     * In case the CompraDocumentoItem was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<CompraDocumentoItemUpdateInput, CompraDocumentoItemUncheckedUpdateInput>
+  }
+
+  /**
+   * CompraDocumentoItem delete
+   */
+  export type CompraDocumentoItemDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraDocumentoItem
+     */
+    select?: CompraDocumentoItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraDocumentoItem
+     */
+    omit?: CompraDocumentoItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraDocumentoItemInclude<ExtArgs> | null
+    /**
+     * Filter which CompraDocumentoItem to delete.
+     */
+    where: CompraDocumentoItemWhereUniqueInput
+  }
+
+  /**
+   * CompraDocumentoItem deleteMany
+   */
+  export type CompraDocumentoItemDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CompraDocumentoItems to delete
+     */
+    where?: CompraDocumentoItemWhereInput
+    /**
+     * Limit how many CompraDocumentoItems to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * CompraDocumentoItem without action
+   */
+  export type CompraDocumentoItemDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraDocumentoItem
+     */
+    select?: CompraDocumentoItemSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraDocumentoItem
+     */
+    omit?: CompraDocumentoItemOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraDocumentoItemInclude<ExtArgs> | null
   }
 
 
@@ -91117,6 +93996,7 @@ export namespace Prisma {
     proveedorId: string | null
     tipo: $Enums.TipoCuentaPorPagar | null
     tipoDeuda: string | null
+    deletedAt: Date | null
   }
 
   export type CuentaPorPagarMaxAggregateOutputType = {
@@ -91137,6 +94017,7 @@ export namespace Prisma {
     proveedorId: string | null
     tipo: $Enums.TipoCuentaPorPagar | null
     tipoDeuda: string | null
+    deletedAt: Date | null
   }
 
   export type CuentaPorPagarCountAggregateOutputType = {
@@ -91157,6 +94038,7 @@ export namespace Prisma {
     proveedorId: number
     tipo: number
     tipoDeuda: number
+    deletedAt: number
     _all: number
   }
 
@@ -91191,6 +94073,7 @@ export namespace Prisma {
     proveedorId?: true
     tipo?: true
     tipoDeuda?: true
+    deletedAt?: true
   }
 
   export type CuentaPorPagarMaxAggregateInputType = {
@@ -91211,6 +94094,7 @@ export namespace Prisma {
     proveedorId?: true
     tipo?: true
     tipoDeuda?: true
+    deletedAt?: true
   }
 
   export type CuentaPorPagarCountAggregateInputType = {
@@ -91231,6 +94115,7 @@ export namespace Prisma {
     proveedorId?: true
     tipo?: true
     tipoDeuda?: true
+    deletedAt?: true
     _all?: true
   }
 
@@ -91338,6 +94223,7 @@ export namespace Prisma {
     proveedorId: string | null
     tipo: $Enums.TipoCuentaPorPagar
     tipoDeuda: string | null
+    deletedAt: Date | null
     _count: CuentaPorPagarCountAggregateOutputType | null
     _avg: CuentaPorPagarAvgAggregateOutputType | null
     _sum: CuentaPorPagarSumAggregateOutputType | null
@@ -91377,7 +94263,9 @@ export namespace Prisma {
     proveedorId?: boolean
     tipo?: boolean
     tipoDeuda?: boolean
+    deletedAt?: boolean
     compraProducto?: boolean | CuentaPorPagar$compraProductoArgs<ExtArgs>
+    compraDocumento?: boolean | CuentaPorPagar$compraDocumentoArgs<ExtArgs>
     gastoCompra?: boolean | CuentaPorPagar$gastoCompraArgs<ExtArgs>
     gastosDE?: boolean | CuentaPorPagar$gastosDEArgs<ExtArgs>
     proveedor?: boolean | CuentaPorPagar$proveedorArgs<ExtArgs>
@@ -91405,6 +94293,7 @@ export namespace Prisma {
     proveedorId?: boolean
     tipo?: boolean
     tipoDeuda?: boolean
+    deletedAt?: boolean
     gastoCompra?: boolean | CuentaPorPagar$gastoCompraArgs<ExtArgs>
     gastosDE?: boolean | CuentaPorPagar$gastosDEArgs<ExtArgs>
     proveedor?: boolean | CuentaPorPagar$proveedorArgs<ExtArgs>
@@ -91428,6 +94317,7 @@ export namespace Prisma {
     proveedorId?: boolean
     tipo?: boolean
     tipoDeuda?: boolean
+    deletedAt?: boolean
     gastoCompra?: boolean | CuentaPorPagar$gastoCompraArgs<ExtArgs>
     gastosDE?: boolean | CuentaPorPagar$gastosDEArgs<ExtArgs>
     proveedor?: boolean | CuentaPorPagar$proveedorArgs<ExtArgs>
@@ -91451,11 +94341,13 @@ export namespace Prisma {
     proveedorId?: boolean
     tipo?: boolean
     tipoDeuda?: boolean
+    deletedAt?: boolean
   }
 
-  export type CuentaPorPagarOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"cuentaPorPagarId" | "numeroFactura" | "gastoCompraId" | "gastosDEId" | "proveedorNombre" | "montoDeuda" | "montoPagado" | "saldoPendiente" | "moneda" | "fechaEmision" | "fechaVencimiento" | "estado" | "createdAt" | "updatedAt" | "proveedorId" | "tipo" | "tipoDeuda", ExtArgs["result"]["cuentaPorPagar"]>
+  export type CuentaPorPagarOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"cuentaPorPagarId" | "numeroFactura" | "gastoCompraId" | "gastosDEId" | "proveedorNombre" | "montoDeuda" | "montoPagado" | "saldoPendiente" | "moneda" | "fechaEmision" | "fechaVencimiento" | "estado" | "createdAt" | "updatedAt" | "proveedorId" | "tipo" | "tipoDeuda" | "deletedAt", ExtArgs["result"]["cuentaPorPagar"]>
   export type CuentaPorPagarInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     compraProducto?: boolean | CuentaPorPagar$compraProductoArgs<ExtArgs>
+    compraDocumento?: boolean | CuentaPorPagar$compraDocumentoArgs<ExtArgs>
     gastoCompra?: boolean | CuentaPorPagar$gastoCompraArgs<ExtArgs>
     gastosDE?: boolean | CuentaPorPagar$gastosDEArgs<ExtArgs>
     proveedor?: boolean | CuentaPorPagar$proveedorArgs<ExtArgs>
@@ -91479,6 +94371,7 @@ export namespace Prisma {
     name: "CuentaPorPagar"
     objects: {
       compraProducto: Prisma.$CompraProductoPayload<ExtArgs> | null
+      compraDocumento: Prisma.$CompraDocumentoPayload<ExtArgs> | null
       gastoCompra: Prisma.$GastoCompraPayload<ExtArgs> | null
       gastosDE: Prisma.$GastosDEPayload<ExtArgs> | null
       proveedor: Prisma.$VendorPayload<ExtArgs> | null
@@ -91504,6 +94397,7 @@ export namespace Prisma {
       proveedorId: string | null
       tipo: $Enums.TipoCuentaPorPagar
       tipoDeuda: string | null
+      deletedAt: Date | null
     }, ExtArgs["result"]["cuentaPorPagar"]>
     composites: {}
   }
@@ -91899,6 +94793,7 @@ export namespace Prisma {
   export interface Prisma__CuentaPorPagarClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     compraProducto<T extends CuentaPorPagar$compraProductoArgs<ExtArgs> = {}>(args?: Subset<T, CuentaPorPagar$compraProductoArgs<ExtArgs>>): Prisma__CompraProductoClient<$Result.GetResult<Prisma.$CompraProductoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    compraDocumento<T extends CuentaPorPagar$compraDocumentoArgs<ExtArgs> = {}>(args?: Subset<T, CuentaPorPagar$compraDocumentoArgs<ExtArgs>>): Prisma__CompraDocumentoClient<$Result.GetResult<Prisma.$CompraDocumentoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     gastoCompra<T extends CuentaPorPagar$gastoCompraArgs<ExtArgs> = {}>(args?: Subset<T, CuentaPorPagar$gastoCompraArgs<ExtArgs>>): Prisma__GastoCompraClient<$Result.GetResult<Prisma.$GastoCompraPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     gastosDE<T extends CuentaPorPagar$gastosDEArgs<ExtArgs> = {}>(args?: Subset<T, CuentaPorPagar$gastosDEArgs<ExtArgs>>): Prisma__GastosDEClient<$Result.GetResult<Prisma.$GastosDEPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     proveedor<T extends CuentaPorPagar$proveedorArgs<ExtArgs> = {}>(args?: Subset<T, CuentaPorPagar$proveedorArgs<ExtArgs>>): Prisma__VendorClient<$Result.GetResult<Prisma.$VendorPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
@@ -91951,6 +94846,7 @@ export namespace Prisma {
     readonly proveedorId: FieldRef<"CuentaPorPagar", 'String'>
     readonly tipo: FieldRef<"CuentaPorPagar", 'TipoCuentaPorPagar'>
     readonly tipoDeuda: FieldRef<"CuentaPorPagar", 'String'>
+    readonly deletedAt: FieldRef<"CuentaPorPagar", 'DateTime'>
   }
     
 
@@ -92363,6 +95259,25 @@ export namespace Prisma {
      */
     include?: CompraProductoInclude<ExtArgs> | null
     where?: CompraProductoWhereInput
+  }
+
+  /**
+   * CuentaPorPagar.compraDocumento
+   */
+  export type CuentaPorPagar$compraDocumentoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CompraDocumento
+     */
+    select?: CompraDocumentoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CompraDocumento
+     */
+    omit?: CompraDocumentoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CompraDocumentoInclude<ExtArgs> | null
+    where?: CompraDocumentoWhereInput
   }
 
   /**
@@ -120161,7 +123076,8 @@ export namespace Prisma {
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
     periodo: 'periodo',
-    numeroFactura: 'numeroFactura'
+    numeroFactura: 'numeroFactura',
+    deletedAt: 'deletedAt'
   };
 
   export type GastoCompraScalarFieldEnum = (typeof GastoCompraScalarFieldEnum)[keyof typeof GastoCompraScalarFieldEnum]
@@ -120184,10 +123100,48 @@ export namespace Prisma {
     proveedorId: 'proveedorId',
     formaPago: 'formaPago',
     estado: 'estado',
-    tipoOperacion: 'tipoOperacion'
+    tipoOperacion: 'tipoOperacion',
+    deletedAt: 'deletedAt',
+    updatedById: 'updatedById'
   };
 
   export type CompraProductoScalarFieldEnum = (typeof CompraProductoScalarFieldEnum)[keyof typeof CompraProductoScalarFieldEnum]
+
+
+  export const CompraDocumentoScalarFieldEnum: {
+    compraDocumentoId: 'compraDocumentoId',
+    proveedorId: 'proveedorId',
+    numeroFactura: 'numeroFactura',
+    facturaUrl: 'facturaUrl',
+    formaPago: 'formaPago',
+    estado: 'estado',
+    tipoOperacion: 'tipoOperacion',
+    descripcion: 'descripcion',
+    fechaCompra: 'fechaCompra',
+    total: 'total',
+    gastoCompraId: 'gastoCompraId',
+    cuentaPorPagarId: 'cuentaPorPagarId',
+    deletedAt: 'deletedAt',
+    updatedById: 'updatedById',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type CompraDocumentoScalarFieldEnum = (typeof CompraDocumentoScalarFieldEnum)[keyof typeof CompraDocumentoScalarFieldEnum]
+
+
+  export const CompraDocumentoItemScalarFieldEnum: {
+    compraDocumentoItemId: 'compraDocumentoItemId',
+    compraDocumentoId: 'compraDocumentoId',
+    productoId: 'productoId',
+    cantidad: 'cantidad',
+    precioUnitario: 'precioUnitario',
+    totalLinea: 'totalLinea',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type CompraDocumentoItemScalarFieldEnum = (typeof CompraDocumentoItemScalarFieldEnum)[keyof typeof CompraDocumentoItemScalarFieldEnum]
 
 
   export const ServiciosScalarFieldEnum: {
@@ -120808,7 +123762,8 @@ export namespace Prisma {
     updatedAt: 'updatedAt',
     proveedorId: 'proveedorId',
     tipo: 'tipo',
-    tipoDeuda: 'tipoDeuda'
+    tipoDeuda: 'tipoDeuda',
+    deletedAt: 'deletedAt'
   };
 
   export type CuentaPorPagarScalarFieldEnum = (typeof CuentaPorPagarScalarFieldEnum)[keyof typeof CuentaPorPagarScalarFieldEnum]
@@ -121712,6 +124667,7 @@ export namespace Prisma {
     telefono?: StringNullableFilter<"Vendor"> | string | null
     vendorCode?: StringNullableFilter<"Vendor"> | string | null
     compras?: CompraProductoListRelationFilter
+    compraDocumentos?: CompraDocumentoListRelationFilter
     contratos?: ContratoListRelationFilter
     cuentasPorPagar?: CuentaPorPagarListRelationFilter
     deudasCash?: DeudaCashListRelationFilter
@@ -121735,6 +124691,7 @@ export namespace Prisma {
     telefono?: SortOrderInput | SortOrder
     vendorCode?: SortOrderInput | SortOrder
     compras?: CompraProductoOrderByRelationAggregateInput
+    compraDocumentos?: CompraDocumentoOrderByRelationAggregateInput
     contratos?: ContratoOrderByRelationAggregateInput
     cuentasPorPagar?: CuentaPorPagarOrderByRelationAggregateInput
     deudasCash?: DeudaCashOrderByRelationAggregateInput
@@ -121761,6 +124718,7 @@ export namespace Prisma {
     logo?: StringNullableFilter<"Vendor"> | string | null
     telefono?: StringNullableFilter<"Vendor"> | string | null
     compras?: CompraProductoListRelationFilter
+    compraDocumentos?: CompraDocumentoListRelationFilter
     contratos?: ContratoListRelationFilter
     cuentasPorPagar?: CuentaPorPagarListRelationFilter
     deudasCash?: DeudaCashListRelationFilter
@@ -122381,6 +125339,7 @@ export namespace Prisma {
     dcCodigo?: StringNullableFilter<"Producto"> | string | null
     fotos?: StringNullableListFilter<"Producto">
     compras?: CompraProductoListRelationFilter
+    compraDocumentoItems?: CompraDocumentoItemListRelationFilter
     gastoCompras?: GastoCompraListRelationFilter
     mermas?: MermaListRelationFilter
     ofertaItems?: OfertaItemListRelationFilter
@@ -122432,6 +125391,7 @@ export namespace Prisma {
     dcCodigo?: SortOrderInput | SortOrder
     fotos?: SortOrder
     compras?: CompraProductoOrderByRelationAggregateInput
+    compraDocumentoItems?: CompraDocumentoItemOrderByRelationAggregateInput
     gastoCompras?: GastoCompraOrderByRelationAggregateInput
     mermas?: MermaOrderByRelationAggregateInput
     ofertaItems?: OfertaItemOrderByRelationAggregateInput
@@ -122486,6 +125446,7 @@ export namespace Prisma {
     dcCodigo?: StringNullableFilter<"Producto"> | string | null
     fotos?: StringNullableListFilter<"Producto">
     compras?: CompraProductoListRelationFilter
+    compraDocumentoItems?: CompraDocumentoItemListRelationFilter
     gastoCompras?: GastoCompraListRelationFilter
     mermas?: MermaListRelationFilter
     ofertaItems?: OfertaItemListRelationFilter
@@ -123085,6 +126046,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogListRelationFilter
     sessions?: UserSessionListRelationFilter
     anticiposCreados?: AnticipoListRelationFilter
+    compraDocumentosEditados?: CompraDocumentoListRelationFilter
     transferenciasCreadas?: TransferenciaListRelationFilter
   }
 
@@ -123117,6 +126079,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogOrderByRelationAggregateInput
     sessions?: UserSessionOrderByRelationAggregateInput
     anticiposCreados?: AnticipoOrderByRelationAggregateInput
+    compraDocumentosEditados?: CompraDocumentoOrderByRelationAggregateInput
     transferenciasCreadas?: TransferenciaOrderByRelationAggregateInput
   }
 
@@ -123152,6 +126115,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogListRelationFilter
     sessions?: UserSessionListRelationFilter
     anticiposCreados?: AnticipoListRelationFilter
+    compraDocumentosEditados?: CompraDocumentoListRelationFilter
     transferenciasCreadas?: TransferenciaListRelationFilter
   }, "userId" | "email">
 
@@ -124404,7 +127368,9 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"GastoCompra"> | Date | string
     periodo?: StringNullableFilter<"GastoCompra"> | string | null
     numeroFactura?: StringNullableFilter<"GastoCompra"> | string | null
+    deletedAt?: DateTimeNullableFilter<"GastoCompra"> | Date | string | null
     compraProducto?: XOR<CompraProductoNullableScalarRelationFilter, CompraProductoWhereInput> | null
+    compraDocumento?: XOR<CompraDocumentoNullableScalarRelationFilter, CompraDocumentoWhereInput> | null
     cuentaPorPagar?: XOR<CuentaPorPagarNullableScalarRelationFilter, CuentaPorPagarWhereInput> | null
     producto?: XOR<ProductoScalarRelationFilter, ProductoWhereInput>
     vendor?: XOR<VendorScalarRelationFilter, VendorWhereInput>
@@ -124424,7 +127390,9 @@ export namespace Prisma {
     updatedAt?: SortOrder
     periodo?: SortOrderInput | SortOrder
     numeroFactura?: SortOrderInput | SortOrder
+    deletedAt?: SortOrderInput | SortOrder
     compraProducto?: CompraProductoOrderByWithRelationInput
+    compraDocumento?: CompraDocumentoOrderByWithRelationInput
     cuentaPorPagar?: CuentaPorPagarOrderByWithRelationInput
     producto?: ProductoOrderByWithRelationInput
     vendor?: VendorOrderByWithRelationInput
@@ -124447,7 +127415,9 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"GastoCompra"> | Date | string
     periodo?: StringNullableFilter<"GastoCompra"> | string | null
     numeroFactura?: StringNullableFilter<"GastoCompra"> | string | null
+    deletedAt?: DateTimeNullableFilter<"GastoCompra"> | Date | string | null
     compraProducto?: XOR<CompraProductoNullableScalarRelationFilter, CompraProductoWhereInput> | null
+    compraDocumento?: XOR<CompraDocumentoNullableScalarRelationFilter, CompraDocumentoWhereInput> | null
     cuentaPorPagar?: XOR<CuentaPorPagarNullableScalarRelationFilter, CuentaPorPagarWhereInput> | null
     producto?: XOR<ProductoScalarRelationFilter, ProductoWhereInput>
     vendor?: XOR<VendorScalarRelationFilter, VendorWhereInput>
@@ -124467,6 +127437,7 @@ export namespace Prisma {
     updatedAt?: SortOrder
     periodo?: SortOrderInput | SortOrder
     numeroFactura?: SortOrderInput | SortOrder
+    deletedAt?: SortOrderInput | SortOrder
     _count?: GastoCompraCountOrderByAggregateInput
     _avg?: GastoCompraAvgOrderByAggregateInput
     _max?: GastoCompraMaxOrderByAggregateInput
@@ -124490,6 +127461,7 @@ export namespace Prisma {
     updatedAt?: DateTimeWithAggregatesFilter<"GastoCompra"> | Date | string
     periodo?: StringNullableWithAggregatesFilter<"GastoCompra"> | string | null
     numeroFactura?: StringNullableWithAggregatesFilter<"GastoCompra"> | string | null
+    deletedAt?: DateTimeNullableWithAggregatesFilter<"GastoCompra"> | Date | string | null
   }
 
   export type CompraProductoWhereInput = {
@@ -124513,6 +127485,8 @@ export namespace Prisma {
     formaPago?: StringFilter<"CompraProducto"> | string
     estado?: StringFilter<"CompraProducto"> | string
     tipoOperacion?: StringFilter<"CompraProducto"> | string
+    deletedAt?: DateTimeNullableFilter<"CompraProducto"> | Date | string | null
+    updatedById?: StringNullableFilter<"CompraProducto"> | string | null
     cuentaPorPagar?: XOR<CuentaPorPagarNullableScalarRelationFilter, CuentaPorPagarWhereInput> | null
     gastoCompra?: XOR<GastoCompraNullableScalarRelationFilter, GastoCompraWhereInput> | null
     anticipo?: XOR<AnticipoNullableScalarRelationFilter, AnticipoWhereInput> | null
@@ -124538,6 +127512,8 @@ export namespace Prisma {
     formaPago?: SortOrder
     estado?: SortOrder
     tipoOperacion?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    updatedById?: SortOrderInput | SortOrder
     cuentaPorPagar?: CuentaPorPagarOrderByWithRelationInput
     gastoCompra?: GastoCompraOrderByWithRelationInput
     anticipo?: AnticipoOrderByWithRelationInput
@@ -124566,6 +127542,8 @@ export namespace Prisma {
     formaPago?: StringFilter<"CompraProducto"> | string
     estado?: StringFilter<"CompraProducto"> | string
     tipoOperacion?: StringFilter<"CompraProducto"> | string
+    deletedAt?: DateTimeNullableFilter<"CompraProducto"> | Date | string | null
+    updatedById?: StringNullableFilter<"CompraProducto"> | string | null
     cuentaPorPagar?: XOR<CuentaPorPagarNullableScalarRelationFilter, CuentaPorPagarWhereInput> | null
     gastoCompra?: XOR<GastoCompraNullableScalarRelationFilter, GastoCompraWhereInput> | null
     anticipo?: XOR<AnticipoNullableScalarRelationFilter, AnticipoWhereInput> | null
@@ -124591,6 +127569,8 @@ export namespace Prisma {
     formaPago?: SortOrder
     estado?: SortOrder
     tipoOperacion?: SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    updatedById?: SortOrderInput | SortOrder
     _count?: CompraProductoCountOrderByAggregateInput
     _avg?: CompraProductoAvgOrderByAggregateInput
     _max?: CompraProductoMaxOrderByAggregateInput
@@ -124619,6 +127599,207 @@ export namespace Prisma {
     formaPago?: StringWithAggregatesFilter<"CompraProducto"> | string
     estado?: StringWithAggregatesFilter<"CompraProducto"> | string
     tipoOperacion?: StringWithAggregatesFilter<"CompraProducto"> | string
+    deletedAt?: DateTimeNullableWithAggregatesFilter<"CompraProducto"> | Date | string | null
+    updatedById?: StringNullableWithAggregatesFilter<"CompraProducto"> | string | null
+  }
+
+  export type CompraDocumentoWhereInput = {
+    AND?: CompraDocumentoWhereInput | CompraDocumentoWhereInput[]
+    OR?: CompraDocumentoWhereInput[]
+    NOT?: CompraDocumentoWhereInput | CompraDocumentoWhereInput[]
+    compraDocumentoId?: StringFilter<"CompraDocumento"> | string
+    proveedorId?: StringFilter<"CompraDocumento"> | string
+    numeroFactura?: StringFilter<"CompraDocumento"> | string
+    facturaUrl?: StringFilter<"CompraDocumento"> | string
+    formaPago?: StringFilter<"CompraDocumento"> | string
+    estado?: StringFilter<"CompraDocumento"> | string
+    tipoOperacion?: StringFilter<"CompraDocumento"> | string
+    descripcion?: StringNullableFilter<"CompraDocumento"> | string | null
+    fechaCompra?: DateTimeFilter<"CompraDocumento"> | Date | string
+    total?: IntFilter<"CompraDocumento"> | number
+    gastoCompraId?: StringNullableFilter<"CompraDocumento"> | string | null
+    cuentaPorPagarId?: StringNullableFilter<"CompraDocumento"> | string | null
+    deletedAt?: DateTimeNullableFilter<"CompraDocumento"> | Date | string | null
+    updatedById?: StringNullableFilter<"CompraDocumento"> | string | null
+    createdAt?: DateTimeFilter<"CompraDocumento"> | Date | string
+    updatedAt?: DateTimeFilter<"CompraDocumento"> | Date | string
+    cuentaPorPagar?: XOR<CuentaPorPagarNullableScalarRelationFilter, CuentaPorPagarWhereInput> | null
+    gastoCompra?: XOR<GastoCompraNullableScalarRelationFilter, GastoCompraWhereInput> | null
+    proveedor?: XOR<VendorScalarRelationFilter, VendorWhereInput>
+    updatedBy?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
+    items?: CompraDocumentoItemListRelationFilter
+  }
+
+  export type CompraDocumentoOrderByWithRelationInput = {
+    compraDocumentoId?: SortOrder
+    proveedorId?: SortOrder
+    numeroFactura?: SortOrder
+    facturaUrl?: SortOrder
+    formaPago?: SortOrder
+    estado?: SortOrder
+    tipoOperacion?: SortOrder
+    descripcion?: SortOrderInput | SortOrder
+    fechaCompra?: SortOrder
+    total?: SortOrder
+    gastoCompraId?: SortOrderInput | SortOrder
+    cuentaPorPagarId?: SortOrderInput | SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    updatedById?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    cuentaPorPagar?: CuentaPorPagarOrderByWithRelationInput
+    gastoCompra?: GastoCompraOrderByWithRelationInput
+    proveedor?: VendorOrderByWithRelationInput
+    updatedBy?: UserOrderByWithRelationInput
+    items?: CompraDocumentoItemOrderByRelationAggregateInput
+  }
+
+  export type CompraDocumentoWhereUniqueInput = Prisma.AtLeast<{
+    compraDocumentoId?: string
+    gastoCompraId?: string
+    cuentaPorPagarId?: string
+    AND?: CompraDocumentoWhereInput | CompraDocumentoWhereInput[]
+    OR?: CompraDocumentoWhereInput[]
+    NOT?: CompraDocumentoWhereInput | CompraDocumentoWhereInput[]
+    proveedorId?: StringFilter<"CompraDocumento"> | string
+    numeroFactura?: StringFilter<"CompraDocumento"> | string
+    facturaUrl?: StringFilter<"CompraDocumento"> | string
+    formaPago?: StringFilter<"CompraDocumento"> | string
+    estado?: StringFilter<"CompraDocumento"> | string
+    tipoOperacion?: StringFilter<"CompraDocumento"> | string
+    descripcion?: StringNullableFilter<"CompraDocumento"> | string | null
+    fechaCompra?: DateTimeFilter<"CompraDocumento"> | Date | string
+    total?: IntFilter<"CompraDocumento"> | number
+    deletedAt?: DateTimeNullableFilter<"CompraDocumento"> | Date | string | null
+    updatedById?: StringNullableFilter<"CompraDocumento"> | string | null
+    createdAt?: DateTimeFilter<"CompraDocumento"> | Date | string
+    updatedAt?: DateTimeFilter<"CompraDocumento"> | Date | string
+    cuentaPorPagar?: XOR<CuentaPorPagarNullableScalarRelationFilter, CuentaPorPagarWhereInput> | null
+    gastoCompra?: XOR<GastoCompraNullableScalarRelationFilter, GastoCompraWhereInput> | null
+    proveedor?: XOR<VendorScalarRelationFilter, VendorWhereInput>
+    updatedBy?: XOR<UserNullableScalarRelationFilter, UserWhereInput> | null
+    items?: CompraDocumentoItemListRelationFilter
+  }, "compraDocumentoId" | "gastoCompraId" | "cuentaPorPagarId">
+
+  export type CompraDocumentoOrderByWithAggregationInput = {
+    compraDocumentoId?: SortOrder
+    proveedorId?: SortOrder
+    numeroFactura?: SortOrder
+    facturaUrl?: SortOrder
+    formaPago?: SortOrder
+    estado?: SortOrder
+    tipoOperacion?: SortOrder
+    descripcion?: SortOrderInput | SortOrder
+    fechaCompra?: SortOrder
+    total?: SortOrder
+    gastoCompraId?: SortOrderInput | SortOrder
+    cuentaPorPagarId?: SortOrderInput | SortOrder
+    deletedAt?: SortOrderInput | SortOrder
+    updatedById?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: CompraDocumentoCountOrderByAggregateInput
+    _avg?: CompraDocumentoAvgOrderByAggregateInput
+    _max?: CompraDocumentoMaxOrderByAggregateInput
+    _min?: CompraDocumentoMinOrderByAggregateInput
+    _sum?: CompraDocumentoSumOrderByAggregateInput
+  }
+
+  export type CompraDocumentoScalarWhereWithAggregatesInput = {
+    AND?: CompraDocumentoScalarWhereWithAggregatesInput | CompraDocumentoScalarWhereWithAggregatesInput[]
+    OR?: CompraDocumentoScalarWhereWithAggregatesInput[]
+    NOT?: CompraDocumentoScalarWhereWithAggregatesInput | CompraDocumentoScalarWhereWithAggregatesInput[]
+    compraDocumentoId?: StringWithAggregatesFilter<"CompraDocumento"> | string
+    proveedorId?: StringWithAggregatesFilter<"CompraDocumento"> | string
+    numeroFactura?: StringWithAggregatesFilter<"CompraDocumento"> | string
+    facturaUrl?: StringWithAggregatesFilter<"CompraDocumento"> | string
+    formaPago?: StringWithAggregatesFilter<"CompraDocumento"> | string
+    estado?: StringWithAggregatesFilter<"CompraDocumento"> | string
+    tipoOperacion?: StringWithAggregatesFilter<"CompraDocumento"> | string
+    descripcion?: StringNullableWithAggregatesFilter<"CompraDocumento"> | string | null
+    fechaCompra?: DateTimeWithAggregatesFilter<"CompraDocumento"> | Date | string
+    total?: IntWithAggregatesFilter<"CompraDocumento"> | number
+    gastoCompraId?: StringNullableWithAggregatesFilter<"CompraDocumento"> | string | null
+    cuentaPorPagarId?: StringNullableWithAggregatesFilter<"CompraDocumento"> | string | null
+    deletedAt?: DateTimeNullableWithAggregatesFilter<"CompraDocumento"> | Date | string | null
+    updatedById?: StringNullableWithAggregatesFilter<"CompraDocumento"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"CompraDocumento"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"CompraDocumento"> | Date | string
+  }
+
+  export type CompraDocumentoItemWhereInput = {
+    AND?: CompraDocumentoItemWhereInput | CompraDocumentoItemWhereInput[]
+    OR?: CompraDocumentoItemWhereInput[]
+    NOT?: CompraDocumentoItemWhereInput | CompraDocumentoItemWhereInput[]
+    compraDocumentoItemId?: StringFilter<"CompraDocumentoItem"> | string
+    compraDocumentoId?: StringFilter<"CompraDocumentoItem"> | string
+    productoId?: StringFilter<"CompraDocumentoItem"> | string
+    cantidad?: IntFilter<"CompraDocumentoItem"> | number
+    precioUnitario?: IntFilter<"CompraDocumentoItem"> | number
+    totalLinea?: IntFilter<"CompraDocumentoItem"> | number
+    createdAt?: DateTimeFilter<"CompraDocumentoItem"> | Date | string
+    updatedAt?: DateTimeFilter<"CompraDocumentoItem"> | Date | string
+    compraDocumento?: XOR<CompraDocumentoScalarRelationFilter, CompraDocumentoWhereInput>
+    producto?: XOR<ProductoScalarRelationFilter, ProductoWhereInput>
+  }
+
+  export type CompraDocumentoItemOrderByWithRelationInput = {
+    compraDocumentoItemId?: SortOrder
+    compraDocumentoId?: SortOrder
+    productoId?: SortOrder
+    cantidad?: SortOrder
+    precioUnitario?: SortOrder
+    totalLinea?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    compraDocumento?: CompraDocumentoOrderByWithRelationInput
+    producto?: ProductoOrderByWithRelationInput
+  }
+
+  export type CompraDocumentoItemWhereUniqueInput = Prisma.AtLeast<{
+    compraDocumentoItemId?: string
+    AND?: CompraDocumentoItemWhereInput | CompraDocumentoItemWhereInput[]
+    OR?: CompraDocumentoItemWhereInput[]
+    NOT?: CompraDocumentoItemWhereInput | CompraDocumentoItemWhereInput[]
+    compraDocumentoId?: StringFilter<"CompraDocumentoItem"> | string
+    productoId?: StringFilter<"CompraDocumentoItem"> | string
+    cantidad?: IntFilter<"CompraDocumentoItem"> | number
+    precioUnitario?: IntFilter<"CompraDocumentoItem"> | number
+    totalLinea?: IntFilter<"CompraDocumentoItem"> | number
+    createdAt?: DateTimeFilter<"CompraDocumentoItem"> | Date | string
+    updatedAt?: DateTimeFilter<"CompraDocumentoItem"> | Date | string
+    compraDocumento?: XOR<CompraDocumentoScalarRelationFilter, CompraDocumentoWhereInput>
+    producto?: XOR<ProductoScalarRelationFilter, ProductoWhereInput>
+  }, "compraDocumentoItemId">
+
+  export type CompraDocumentoItemOrderByWithAggregationInput = {
+    compraDocumentoItemId?: SortOrder
+    compraDocumentoId?: SortOrder
+    productoId?: SortOrder
+    cantidad?: SortOrder
+    precioUnitario?: SortOrder
+    totalLinea?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: CompraDocumentoItemCountOrderByAggregateInput
+    _avg?: CompraDocumentoItemAvgOrderByAggregateInput
+    _max?: CompraDocumentoItemMaxOrderByAggregateInput
+    _min?: CompraDocumentoItemMinOrderByAggregateInput
+    _sum?: CompraDocumentoItemSumOrderByAggregateInput
+  }
+
+  export type CompraDocumentoItemScalarWhereWithAggregatesInput = {
+    AND?: CompraDocumentoItemScalarWhereWithAggregatesInput | CompraDocumentoItemScalarWhereWithAggregatesInput[]
+    OR?: CompraDocumentoItemScalarWhereWithAggregatesInput[]
+    NOT?: CompraDocumentoItemScalarWhereWithAggregatesInput | CompraDocumentoItemScalarWhereWithAggregatesInput[]
+    compraDocumentoItemId?: StringWithAggregatesFilter<"CompraDocumentoItem"> | string
+    compraDocumentoId?: StringWithAggregatesFilter<"CompraDocumentoItem"> | string
+    productoId?: StringWithAggregatesFilter<"CompraDocumentoItem"> | string
+    cantidad?: IntWithAggregatesFilter<"CompraDocumentoItem"> | number
+    precioUnitario?: IntWithAggregatesFilter<"CompraDocumentoItem"> | number
+    totalLinea?: IntWithAggregatesFilter<"CompraDocumentoItem"> | number
+    createdAt?: DateTimeWithAggregatesFilter<"CompraDocumentoItem"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"CompraDocumentoItem"> | Date | string
   }
 
   export type ServiciosWhereInput = {
@@ -127865,7 +131046,9 @@ export namespace Prisma {
     proveedorId?: StringNullableFilter<"CuentaPorPagar"> | string | null
     tipo?: EnumTipoCuentaPorPagarFilter<"CuentaPorPagar"> | $Enums.TipoCuentaPorPagar
     tipoDeuda?: StringNullableFilter<"CuentaPorPagar"> | string | null
+    deletedAt?: DateTimeNullableFilter<"CuentaPorPagar"> | Date | string | null
     compraProducto?: XOR<CompraProductoNullableScalarRelationFilter, CompraProductoWhereInput> | null
+    compraDocumento?: XOR<CompraDocumentoNullableScalarRelationFilter, CompraDocumentoWhereInput> | null
     gastoCompra?: XOR<GastoCompraNullableScalarRelationFilter, GastoCompraWhereInput> | null
     gastosDE?: XOR<GastosDENullableScalarRelationFilter, GastosDEWhereInput> | null
     proveedor?: XOR<VendorNullableScalarRelationFilter, VendorWhereInput> | null
@@ -127892,7 +131075,9 @@ export namespace Prisma {
     proveedorId?: SortOrderInput | SortOrder
     tipo?: SortOrder
     tipoDeuda?: SortOrderInput | SortOrder
+    deletedAt?: SortOrderInput | SortOrder
     compraProducto?: CompraProductoOrderByWithRelationInput
+    compraDocumento?: CompraDocumentoOrderByWithRelationInput
     gastoCompra?: GastoCompraOrderByWithRelationInput
     gastosDE?: GastosDEOrderByWithRelationInput
     proveedor?: VendorOrderByWithRelationInput
@@ -127922,7 +131107,9 @@ export namespace Prisma {
     proveedorId?: StringNullableFilter<"CuentaPorPagar"> | string | null
     tipo?: EnumTipoCuentaPorPagarFilter<"CuentaPorPagar"> | $Enums.TipoCuentaPorPagar
     tipoDeuda?: StringNullableFilter<"CuentaPorPagar"> | string | null
+    deletedAt?: DateTimeNullableFilter<"CuentaPorPagar"> | Date | string | null
     compraProducto?: XOR<CompraProductoNullableScalarRelationFilter, CompraProductoWhereInput> | null
+    compraDocumento?: XOR<CompraDocumentoNullableScalarRelationFilter, CompraDocumentoWhereInput> | null
     gastoCompra?: XOR<GastoCompraNullableScalarRelationFilter, GastoCompraWhereInput> | null
     gastosDE?: XOR<GastosDENullableScalarRelationFilter, GastosDEWhereInput> | null
     proveedor?: XOR<VendorNullableScalarRelationFilter, VendorWhereInput> | null
@@ -127949,6 +131136,7 @@ export namespace Prisma {
     proveedorId?: SortOrderInput | SortOrder
     tipo?: SortOrder
     tipoDeuda?: SortOrderInput | SortOrder
+    deletedAt?: SortOrderInput | SortOrder
     _count?: CuentaPorPagarCountOrderByAggregateInput
     _avg?: CuentaPorPagarAvgOrderByAggregateInput
     _max?: CuentaPorPagarMaxOrderByAggregateInput
@@ -127977,6 +131165,7 @@ export namespace Prisma {
     proveedorId?: StringNullableWithAggregatesFilter<"CuentaPorPagar"> | string | null
     tipo?: EnumTipoCuentaPorPagarWithAggregatesFilter<"CuentaPorPagar"> | $Enums.TipoCuentaPorPagar
     tipoDeuda?: StringNullableWithAggregatesFilter<"CuentaPorPagar"> | string | null
+    deletedAt?: DateTimeNullableWithAggregatesFilter<"CuentaPorPagar"> | Date | string | null
   }
 
   export type DeudaCashWhereInput = {
@@ -130079,6 +133268,7 @@ export namespace Prisma {
     telefono?: string | null
     vendorCode?: string | null
     compras?: CompraProductoCreateNestedManyWithoutProveedorInput
+    compraDocumentos?: CompraDocumentoCreateNestedManyWithoutProveedorInput
     contratos?: ContratoCreateNestedManyWithoutVendorInput
     cuentasPorPagar?: CuentaPorPagarCreateNestedManyWithoutProveedorInput
     deudasCash?: DeudaCashCreateNestedManyWithoutProveedorInput
@@ -130102,6 +133292,7 @@ export namespace Prisma {
     telefono?: string | null
     vendorCode?: string | null
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProveedorInput
+    compraDocumentos?: CompraDocumentoUncheckedCreateNestedManyWithoutProveedorInput
     contratos?: ContratoUncheckedCreateNestedManyWithoutVendorInput
     cuentasPorPagar?: CuentaPorPagarUncheckedCreateNestedManyWithoutProveedorInput
     deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutProveedorInput
@@ -130125,6 +133316,7 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     vendorCode?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUpdateManyWithoutProveedorNestedInput
+    compraDocumentos?: CompraDocumentoUpdateManyWithoutProveedorNestedInput
     contratos?: ContratoUpdateManyWithoutVendorNestedInput
     cuentasPorPagar?: CuentaPorPagarUpdateManyWithoutProveedorNestedInput
     deudasCash?: DeudaCashUpdateManyWithoutProveedorNestedInput
@@ -130148,6 +133340,7 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     vendorCode?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUncheckedUpdateManyWithoutProveedorNestedInput
+    compraDocumentos?: CompraDocumentoUncheckedUpdateManyWithoutProveedorNestedInput
     contratos?: ContratoUncheckedUpdateManyWithoutVendorNestedInput
     cuentasPorPagar?: CuentaPorPagarUncheckedUpdateManyWithoutProveedorNestedInput
     deudasCash?: DeudaCashUncheckedUpdateManyWithoutProveedorNestedInput
@@ -130846,6 +134039,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
@@ -130897,6 +134091,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
@@ -130934,6 +134129,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
@@ -130985,6 +134181,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
@@ -131601,6 +134798,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogCreateNestedManyWithoutUserInput
     sessions?: UserSessionCreateNestedManyWithoutUserInput
     anticiposCreados?: AnticipoCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaCreateNestedManyWithoutCreadoPorInput
   }
 
@@ -131633,6 +134831,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUncheckedCreateNestedManyWithoutUserInput
     sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
     anticiposCreados?: AnticipoUncheckedCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput
   }
 
@@ -131665,6 +134864,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUpdateManyWithoutUserNestedInput
     anticiposCreados?: AnticipoUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUpdateManyWithoutCreadoPorNestedInput
   }
 
@@ -131697,6 +134897,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUncheckedUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
     anticiposCreados?: AnticipoUncheckedUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput
   }
 
@@ -133123,7 +136324,9 @@ export namespace Prisma {
     updatedAt?: Date | string
     periodo?: string | null
     numeroFactura?: string | null
+    deletedAt?: Date | string | null
     compraProducto?: CompraProductoCreateNestedOneWithoutGastoCompraInput
+    compraDocumento?: CompraDocumentoCreateNestedOneWithoutGastoCompraInput
     cuentaPorPagar?: CuentaPorPagarCreateNestedOneWithoutGastoCompraInput
     producto: ProductoCreateNestedOneWithoutGastoComprasInput
     vendor: VendorCreateNestedOneWithoutGastoComprasInput
@@ -133143,7 +136346,9 @@ export namespace Prisma {
     updatedAt?: Date | string
     periodo?: string | null
     numeroFactura?: string | null
+    deletedAt?: Date | string | null
     compraProducto?: CompraProductoUncheckedCreateNestedOneWithoutGastoCompraInput
+    compraDocumento?: CompraDocumentoUncheckedCreateNestedOneWithoutGastoCompraInput
     cuentaPorPagar?: CuentaPorPagarUncheckedCreateNestedOneWithoutGastoCompraInput
     reconciliaciones?: ReconciliacionGastoUncheckedCreateNestedManyWithoutGastoCompraInput
   }
@@ -133159,7 +136364,9 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     periodo?: NullableStringFieldUpdateOperationsInput | string | null
     numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     compraProducto?: CompraProductoUpdateOneWithoutGastoCompraNestedInput
+    compraDocumento?: CompraDocumentoUpdateOneWithoutGastoCompraNestedInput
     cuentaPorPagar?: CuentaPorPagarUpdateOneWithoutGastoCompraNestedInput
     producto?: ProductoUpdateOneRequiredWithoutGastoComprasNestedInput
     vendor?: VendorUpdateOneRequiredWithoutGastoComprasNestedInput
@@ -133179,7 +136386,9 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     periodo?: NullableStringFieldUpdateOperationsInput | string | null
     numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     compraProducto?: CompraProductoUncheckedUpdateOneWithoutGastoCompraNestedInput
+    compraDocumento?: CompraDocumentoUncheckedUpdateOneWithoutGastoCompraNestedInput
     cuentaPorPagar?: CuentaPorPagarUncheckedUpdateOneWithoutGastoCompraNestedInput
     reconciliaciones?: ReconciliacionGastoUncheckedUpdateManyWithoutGastoCompraNestedInput
   }
@@ -133197,6 +136406,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     periodo?: string | null
     numeroFactura?: string | null
+    deletedAt?: Date | string | null
   }
 
   export type GastoCompraUpdateManyMutationInput = {
@@ -133210,6 +136420,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     periodo?: NullableStringFieldUpdateOperationsInput | string | null
     numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type GastoCompraUncheckedUpdateManyInput = {
@@ -133225,6 +136436,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     periodo?: NullableStringFieldUpdateOperationsInput | string | null
     numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type CompraProductoCreateInput = {
@@ -133241,6 +136453,8 @@ export namespace Prisma {
     formaPago: string
     estado: string
     tipoOperacion?: string
+    deletedAt?: Date | string | null
+    updatedById?: string | null
     cuentaPorPagar?: CuentaPorPagarCreateNestedOneWithoutCompraProductoInput
     gastoCompra?: GastoCompraCreateNestedOneWithoutCompraProductoInput
     anticipo?: AnticipoCreateNestedOneWithoutCompraProductoInput
@@ -133266,6 +136480,8 @@ export namespace Prisma {
     formaPago: string
     estado: string
     tipoOperacion?: string
+    deletedAt?: Date | string | null
+    updatedById?: string | null
     anticipo?: AnticipoUncheckedCreateNestedOneWithoutCompraProductoInput
   }
 
@@ -133283,6 +136499,8 @@ export namespace Prisma {
     formaPago?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     tipoOperacion?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
     cuentaPorPagar?: CuentaPorPagarUpdateOneWithoutCompraProductoNestedInput
     gastoCompra?: GastoCompraUpdateOneWithoutCompraProductoNestedInput
     anticipo?: AnticipoUpdateOneWithoutCompraProductoNestedInput
@@ -133308,6 +136526,8 @@ export namespace Prisma {
     formaPago?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     tipoOperacion?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
     anticipo?: AnticipoUncheckedUpdateOneWithoutCompraProductoNestedInput
   }
 
@@ -133329,6 +136549,8 @@ export namespace Prisma {
     formaPago: string
     estado: string
     tipoOperacion?: string
+    deletedAt?: Date | string | null
+    updatedById?: string | null
   }
 
   export type CompraProductoUpdateManyMutationInput = {
@@ -133345,6 +136567,8 @@ export namespace Prisma {
     formaPago?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     tipoOperacion?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type CompraProductoUncheckedUpdateManyInput = {
@@ -133365,6 +136589,216 @@ export namespace Prisma {
     formaPago?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     tipoOperacion?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type CompraDocumentoCreateInput = {
+    compraDocumentoId?: string
+    numeroFactura?: string
+    facturaUrl?: string
+    formaPago: string
+    estado: string
+    tipoOperacion?: string
+    descripcion?: string | null
+    fechaCompra?: Date | string
+    total?: number
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    cuentaPorPagar?: CuentaPorPagarCreateNestedOneWithoutCompraDocumentoInput
+    gastoCompra?: GastoCompraCreateNestedOneWithoutCompraDocumentoInput
+    proveedor: VendorCreateNestedOneWithoutCompraDocumentosInput
+    updatedBy?: UserCreateNestedOneWithoutCompraDocumentosEditadosInput
+    items?: CompraDocumentoItemCreateNestedManyWithoutCompraDocumentoInput
+  }
+
+  export type CompraDocumentoUncheckedCreateInput = {
+    compraDocumentoId?: string
+    proveedorId: string
+    numeroFactura?: string
+    facturaUrl?: string
+    formaPago: string
+    estado: string
+    tipoOperacion?: string
+    descripcion?: string | null
+    fechaCompra?: Date | string
+    total?: number
+    gastoCompraId?: string | null
+    cuentaPorPagarId?: string | null
+    deletedAt?: Date | string | null
+    updatedById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    items?: CompraDocumentoItemUncheckedCreateNestedManyWithoutCompraDocumentoInput
+  }
+
+  export type CompraDocumentoUpdateInput = {
+    compraDocumentoId?: StringFieldUpdateOperationsInput | string
+    numeroFactura?: StringFieldUpdateOperationsInput | string
+    facturaUrl?: StringFieldUpdateOperationsInput | string
+    formaPago?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    tipoOperacion?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaCompra?: DateTimeFieldUpdateOperationsInput | Date | string
+    total?: IntFieldUpdateOperationsInput | number
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cuentaPorPagar?: CuentaPorPagarUpdateOneWithoutCompraDocumentoNestedInput
+    gastoCompra?: GastoCompraUpdateOneWithoutCompraDocumentoNestedInput
+    proveedor?: VendorUpdateOneRequiredWithoutCompraDocumentosNestedInput
+    updatedBy?: UserUpdateOneWithoutCompraDocumentosEditadosNestedInput
+    items?: CompraDocumentoItemUpdateManyWithoutCompraDocumentoNestedInput
+  }
+
+  export type CompraDocumentoUncheckedUpdateInput = {
+    compraDocumentoId?: StringFieldUpdateOperationsInput | string
+    proveedorId?: StringFieldUpdateOperationsInput | string
+    numeroFactura?: StringFieldUpdateOperationsInput | string
+    facturaUrl?: StringFieldUpdateOperationsInput | string
+    formaPago?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    tipoOperacion?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaCompra?: DateTimeFieldUpdateOperationsInput | Date | string
+    total?: IntFieldUpdateOperationsInput | number
+    gastoCompraId?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaPorPagarId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    items?: CompraDocumentoItemUncheckedUpdateManyWithoutCompraDocumentoNestedInput
+  }
+
+  export type CompraDocumentoCreateManyInput = {
+    compraDocumentoId?: string
+    proveedorId: string
+    numeroFactura?: string
+    facturaUrl?: string
+    formaPago: string
+    estado: string
+    tipoOperacion?: string
+    descripcion?: string | null
+    fechaCompra?: Date | string
+    total?: number
+    gastoCompraId?: string | null
+    cuentaPorPagarId?: string | null
+    deletedAt?: Date | string | null
+    updatedById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CompraDocumentoUpdateManyMutationInput = {
+    compraDocumentoId?: StringFieldUpdateOperationsInput | string
+    numeroFactura?: StringFieldUpdateOperationsInput | string
+    facturaUrl?: StringFieldUpdateOperationsInput | string
+    formaPago?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    tipoOperacion?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaCompra?: DateTimeFieldUpdateOperationsInput | Date | string
+    total?: IntFieldUpdateOperationsInput | number
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CompraDocumentoUncheckedUpdateManyInput = {
+    compraDocumentoId?: StringFieldUpdateOperationsInput | string
+    proveedorId?: StringFieldUpdateOperationsInput | string
+    numeroFactura?: StringFieldUpdateOperationsInput | string
+    facturaUrl?: StringFieldUpdateOperationsInput | string
+    formaPago?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    tipoOperacion?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaCompra?: DateTimeFieldUpdateOperationsInput | Date | string
+    total?: IntFieldUpdateOperationsInput | number
+    gastoCompraId?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaPorPagarId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CompraDocumentoItemCreateInput = {
+    compraDocumentoItemId?: string
+    cantidad: number
+    precioUnitario: number
+    totalLinea: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    compraDocumento: CompraDocumentoCreateNestedOneWithoutItemsInput
+    producto: ProductoCreateNestedOneWithoutCompraDocumentoItemsInput
+  }
+
+  export type CompraDocumentoItemUncheckedCreateInput = {
+    compraDocumentoItemId?: string
+    compraDocumentoId: string
+    productoId: string
+    cantidad: number
+    precioUnitario: number
+    totalLinea: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CompraDocumentoItemUpdateInput = {
+    compraDocumentoItemId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    precioUnitario?: IntFieldUpdateOperationsInput | number
+    totalLinea?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    compraDocumento?: CompraDocumentoUpdateOneRequiredWithoutItemsNestedInput
+    producto?: ProductoUpdateOneRequiredWithoutCompraDocumentoItemsNestedInput
+  }
+
+  export type CompraDocumentoItemUncheckedUpdateInput = {
+    compraDocumentoItemId?: StringFieldUpdateOperationsInput | string
+    compraDocumentoId?: StringFieldUpdateOperationsInput | string
+    productoId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    precioUnitario?: IntFieldUpdateOperationsInput | number
+    totalLinea?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CompraDocumentoItemCreateManyInput = {
+    compraDocumentoItemId?: string
+    compraDocumentoId: string
+    productoId: string
+    cantidad: number
+    precioUnitario: number
+    totalLinea: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CompraDocumentoItemUpdateManyMutationInput = {
+    compraDocumentoItemId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    precioUnitario?: IntFieldUpdateOperationsInput | number
+    totalLinea?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CompraDocumentoItemUncheckedUpdateManyInput = {
+    compraDocumentoItemId?: StringFieldUpdateOperationsInput | string
+    compraDocumentoId?: StringFieldUpdateOperationsInput | string
+    productoId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    precioUnitario?: IntFieldUpdateOperationsInput | number
+    totalLinea?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ServiciosCreateInput = {
@@ -136975,7 +140409,9 @@ export namespace Prisma {
     updatedAt?: Date | string
     tipo: $Enums.TipoCuentaPorPagar
     tipoDeuda?: string | null
+    deletedAt?: Date | string | null
     compraProducto?: CompraProductoCreateNestedOneWithoutCuentaPorPagarInput
+    compraDocumento?: CompraDocumentoCreateNestedOneWithoutCuentaPorPagarInput
     gastoCompra?: GastoCompraCreateNestedOneWithoutCuentaPorPagarInput
     gastosDE?: GastosDECreateNestedOneWithoutCuentaPorPagarInput
     proveedor?: VendorCreateNestedOneWithoutCuentasPorPagarInput
@@ -137002,7 +140438,9 @@ export namespace Prisma {
     proveedorId?: string | null
     tipo: $Enums.TipoCuentaPorPagar
     tipoDeuda?: string | null
+    deletedAt?: Date | string | null
     compraProducto?: CompraProductoUncheckedCreateNestedOneWithoutCuentaPorPagarInput
+    compraDocumento?: CompraDocumentoUncheckedCreateNestedOneWithoutCuentaPorPagarInput
     deudaCash?: DeudaCashUncheckedCreateNestedOneWithoutCuentaPorPagarInput
     pagos?: PagoCuentaPorPagarUncheckedCreateNestedManyWithoutCuentaPorPagarInput
     reconciliaciones?: ReconciliacionGastoUncheckedCreateNestedManyWithoutCuentaPorPagarInput
@@ -137023,7 +140461,9 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     tipo?: EnumTipoCuentaPorPagarFieldUpdateOperationsInput | $Enums.TipoCuentaPorPagar
     tipoDeuda?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     compraProducto?: CompraProductoUpdateOneWithoutCuentaPorPagarNestedInput
+    compraDocumento?: CompraDocumentoUpdateOneWithoutCuentaPorPagarNestedInput
     gastoCompra?: GastoCompraUpdateOneWithoutCuentaPorPagarNestedInput
     gastosDE?: GastosDEUpdateOneWithoutCuentaPorPagarNestedInput
     proveedor?: VendorUpdateOneWithoutCuentasPorPagarNestedInput
@@ -137050,7 +140490,9 @@ export namespace Prisma {
     proveedorId?: NullableStringFieldUpdateOperationsInput | string | null
     tipo?: EnumTipoCuentaPorPagarFieldUpdateOperationsInput | $Enums.TipoCuentaPorPagar
     tipoDeuda?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     compraProducto?: CompraProductoUncheckedUpdateOneWithoutCuentaPorPagarNestedInput
+    compraDocumento?: CompraDocumentoUncheckedUpdateOneWithoutCuentaPorPagarNestedInput
     deudaCash?: DeudaCashUncheckedUpdateOneWithoutCuentaPorPagarNestedInput
     pagos?: PagoCuentaPorPagarUncheckedUpdateManyWithoutCuentaPorPagarNestedInput
     reconciliaciones?: ReconciliacionGastoUncheckedUpdateManyWithoutCuentaPorPagarNestedInput
@@ -137074,6 +140516,7 @@ export namespace Prisma {
     proveedorId?: string | null
     tipo: $Enums.TipoCuentaPorPagar
     tipoDeuda?: string | null
+    deletedAt?: Date | string | null
   }
 
   export type CuentaPorPagarUpdateManyMutationInput = {
@@ -137091,6 +140534,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     tipo?: EnumTipoCuentaPorPagarFieldUpdateOperationsInput | $Enums.TipoCuentaPorPagar
     tipoDeuda?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type CuentaPorPagarUncheckedUpdateManyInput = {
@@ -137111,6 +140555,7 @@ export namespace Prisma {
     proveedorId?: NullableStringFieldUpdateOperationsInput | string | null
     tipo?: EnumTipoCuentaPorPagarFieldUpdateOperationsInput | $Enums.TipoCuentaPorPagar
     tipoDeuda?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type DeudaCashCreateInput = {
@@ -139385,6 +142830,12 @@ export namespace Prisma {
     none?: CompraProductoWhereInput
   }
 
+  export type CompraDocumentoListRelationFilter = {
+    every?: CompraDocumentoWhereInput
+    some?: CompraDocumentoWhereInput
+    none?: CompraDocumentoWhereInput
+  }
+
   export type ContratoListRelationFilter = {
     every?: ContratoWhereInput
     some?: ContratoWhereInput
@@ -139422,6 +142873,10 @@ export namespace Prisma {
   }
 
   export type CompraProductoOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type CompraDocumentoOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -140068,6 +143523,12 @@ export namespace Prisma {
     isEmpty?: boolean
   }
 
+  export type CompraDocumentoItemListRelationFilter = {
+    every?: CompraDocumentoItemWhereInput
+    some?: CompraDocumentoItemWhereInput
+    none?: CompraDocumentoItemWhereInput
+  }
+
   export type MermaListRelationFilter = {
     every?: MermaWhereInput
     some?: MermaWhereInput
@@ -140156,6 +143617,10 @@ export namespace Prisma {
     every?: StockUbicacionWhereInput
     some?: StockUbicacionWhereInput
     none?: StockUbicacionWhereInput
+  }
+
+  export type CompraDocumentoItemOrderByRelationAggregateInput = {
+    _count?: SortOrder
   }
 
   export type MermaOrderByRelationAggregateInput = {
@@ -141575,6 +145040,11 @@ export namespace Prisma {
     isNot?: CompraProductoWhereInput | null
   }
 
+  export type CompraDocumentoNullableScalarRelationFilter = {
+    is?: CompraDocumentoWhereInput | null
+    isNot?: CompraDocumentoWhereInput | null
+  }
+
   export type CuentaPorPagarNullableScalarRelationFilter = {
     is?: CuentaPorPagarWhereInput | null
     isNot?: CuentaPorPagarWhereInput | null
@@ -141598,6 +145068,7 @@ export namespace Prisma {
     updatedAt?: SortOrder
     periodo?: SortOrder
     numeroFactura?: SortOrder
+    deletedAt?: SortOrder
   }
 
   export type GastoCompraAvgOrderByAggregateInput = {
@@ -141619,6 +145090,7 @@ export namespace Prisma {
     updatedAt?: SortOrder
     periodo?: SortOrder
     numeroFactura?: SortOrder
+    deletedAt?: SortOrder
   }
 
   export type GastoCompraMinOrderByAggregateInput = {
@@ -141634,6 +145106,7 @@ export namespace Prisma {
     updatedAt?: SortOrder
     periodo?: SortOrder
     numeroFactura?: SortOrder
+    deletedAt?: SortOrder
   }
 
   export type GastoCompraSumOrderByAggregateInput = {
@@ -141670,6 +145143,8 @@ export namespace Prisma {
     formaPago?: SortOrder
     estado?: SortOrder
     tipoOperacion?: SortOrder
+    deletedAt?: SortOrder
+    updatedById?: SortOrder
   }
 
   export type CompraProductoAvgOrderByAggregateInput = {
@@ -141696,6 +145171,8 @@ export namespace Prisma {
     formaPago?: SortOrder
     estado?: SortOrder
     tipoOperacion?: SortOrder
+    deletedAt?: SortOrder
+    updatedById?: SortOrder
   }
 
   export type CompraProductoMinOrderByAggregateInput = {
@@ -141716,12 +145193,129 @@ export namespace Prisma {
     formaPago?: SortOrder
     estado?: SortOrder
     tipoOperacion?: SortOrder
+    deletedAt?: SortOrder
+    updatedById?: SortOrder
   }
 
   export type CompraProductoSumOrderByAggregateInput = {
     cantidad?: SortOrder
     precioUnitario?: SortOrder
     total?: SortOrder
+  }
+
+  export type CompraDocumentoCountOrderByAggregateInput = {
+    compraDocumentoId?: SortOrder
+    proveedorId?: SortOrder
+    numeroFactura?: SortOrder
+    facturaUrl?: SortOrder
+    formaPago?: SortOrder
+    estado?: SortOrder
+    tipoOperacion?: SortOrder
+    descripcion?: SortOrder
+    fechaCompra?: SortOrder
+    total?: SortOrder
+    gastoCompraId?: SortOrder
+    cuentaPorPagarId?: SortOrder
+    deletedAt?: SortOrder
+    updatedById?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CompraDocumentoAvgOrderByAggregateInput = {
+    total?: SortOrder
+  }
+
+  export type CompraDocumentoMaxOrderByAggregateInput = {
+    compraDocumentoId?: SortOrder
+    proveedorId?: SortOrder
+    numeroFactura?: SortOrder
+    facturaUrl?: SortOrder
+    formaPago?: SortOrder
+    estado?: SortOrder
+    tipoOperacion?: SortOrder
+    descripcion?: SortOrder
+    fechaCompra?: SortOrder
+    total?: SortOrder
+    gastoCompraId?: SortOrder
+    cuentaPorPagarId?: SortOrder
+    deletedAt?: SortOrder
+    updatedById?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CompraDocumentoMinOrderByAggregateInput = {
+    compraDocumentoId?: SortOrder
+    proveedorId?: SortOrder
+    numeroFactura?: SortOrder
+    facturaUrl?: SortOrder
+    formaPago?: SortOrder
+    estado?: SortOrder
+    tipoOperacion?: SortOrder
+    descripcion?: SortOrder
+    fechaCompra?: SortOrder
+    total?: SortOrder
+    gastoCompraId?: SortOrder
+    cuentaPorPagarId?: SortOrder
+    deletedAt?: SortOrder
+    updatedById?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CompraDocumentoSumOrderByAggregateInput = {
+    total?: SortOrder
+  }
+
+  export type CompraDocumentoScalarRelationFilter = {
+    is?: CompraDocumentoWhereInput
+    isNot?: CompraDocumentoWhereInput
+  }
+
+  export type CompraDocumentoItemCountOrderByAggregateInput = {
+    compraDocumentoItemId?: SortOrder
+    compraDocumentoId?: SortOrder
+    productoId?: SortOrder
+    cantidad?: SortOrder
+    precioUnitario?: SortOrder
+    totalLinea?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CompraDocumentoItemAvgOrderByAggregateInput = {
+    cantidad?: SortOrder
+    precioUnitario?: SortOrder
+    totalLinea?: SortOrder
+  }
+
+  export type CompraDocumentoItemMaxOrderByAggregateInput = {
+    compraDocumentoItemId?: SortOrder
+    compraDocumentoId?: SortOrder
+    productoId?: SortOrder
+    cantidad?: SortOrder
+    precioUnitario?: SortOrder
+    totalLinea?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CompraDocumentoItemMinOrderByAggregateInput = {
+    compraDocumentoItemId?: SortOrder
+    compraDocumentoId?: SortOrder
+    productoId?: SortOrder
+    cantidad?: SortOrder
+    precioUnitario?: SortOrder
+    totalLinea?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CompraDocumentoItemSumOrderByAggregateInput = {
+    cantidad?: SortOrder
+    precioUnitario?: SortOrder
+    totalLinea?: SortOrder
   }
 
   export type ServiciosCountOrderByAggregateInput = {
@@ -143958,6 +147552,7 @@ export namespace Prisma {
     proveedorId?: SortOrder
     tipo?: SortOrder
     tipoDeuda?: SortOrder
+    deletedAt?: SortOrder
   }
 
   export type CuentaPorPagarAvgOrderByAggregateInput = {
@@ -143984,6 +147579,7 @@ export namespace Prisma {
     proveedorId?: SortOrder
     tipo?: SortOrder
     tipoDeuda?: SortOrder
+    deletedAt?: SortOrder
   }
 
   export type CuentaPorPagarMinOrderByAggregateInput = {
@@ -144004,6 +147600,7 @@ export namespace Prisma {
     proveedorId?: SortOrder
     tipo?: SortOrder
     tipoDeuda?: SortOrder
+    deletedAt?: SortOrder
   }
 
   export type CuentaPorPagarSumOrderByAggregateInput = {
@@ -145590,6 +149187,13 @@ export namespace Prisma {
     connect?: CompraProductoWhereUniqueInput | CompraProductoWhereUniqueInput[]
   }
 
+  export type CompraDocumentoCreateNestedManyWithoutProveedorInput = {
+    create?: XOR<CompraDocumentoCreateWithoutProveedorInput, CompraDocumentoUncheckedCreateWithoutProveedorInput> | CompraDocumentoCreateWithoutProveedorInput[] | CompraDocumentoUncheckedCreateWithoutProveedorInput[]
+    connectOrCreate?: CompraDocumentoCreateOrConnectWithoutProveedorInput | CompraDocumentoCreateOrConnectWithoutProveedorInput[]
+    createMany?: CompraDocumentoCreateManyProveedorInputEnvelope
+    connect?: CompraDocumentoWhereUniqueInput | CompraDocumentoWhereUniqueInput[]
+  }
+
   export type ContratoCreateNestedManyWithoutVendorInput = {
     create?: XOR<ContratoCreateWithoutVendorInput, ContratoUncheckedCreateWithoutVendorInput> | ContratoCreateWithoutVendorInput[] | ContratoUncheckedCreateWithoutVendorInput[]
     connectOrCreate?: ContratoCreateOrConnectWithoutVendorInput | ContratoCreateOrConnectWithoutVendorInput[]
@@ -145644,6 +149248,13 @@ export namespace Prisma {
     connectOrCreate?: CompraProductoCreateOrConnectWithoutProveedorInput | CompraProductoCreateOrConnectWithoutProveedorInput[]
     createMany?: CompraProductoCreateManyProveedorInputEnvelope
     connect?: CompraProductoWhereUniqueInput | CompraProductoWhereUniqueInput[]
+  }
+
+  export type CompraDocumentoUncheckedCreateNestedManyWithoutProveedorInput = {
+    create?: XOR<CompraDocumentoCreateWithoutProveedorInput, CompraDocumentoUncheckedCreateWithoutProveedorInput> | CompraDocumentoCreateWithoutProveedorInput[] | CompraDocumentoUncheckedCreateWithoutProveedorInput[]
+    connectOrCreate?: CompraDocumentoCreateOrConnectWithoutProveedorInput | CompraDocumentoCreateOrConnectWithoutProveedorInput[]
+    createMany?: CompraDocumentoCreateManyProveedorInputEnvelope
+    connect?: CompraDocumentoWhereUniqueInput | CompraDocumentoWhereUniqueInput[]
   }
 
   export type ContratoUncheckedCreateNestedManyWithoutVendorInput = {
@@ -145707,6 +149318,20 @@ export namespace Prisma {
     update?: CompraProductoUpdateWithWhereUniqueWithoutProveedorInput | CompraProductoUpdateWithWhereUniqueWithoutProveedorInput[]
     updateMany?: CompraProductoUpdateManyWithWhereWithoutProveedorInput | CompraProductoUpdateManyWithWhereWithoutProveedorInput[]
     deleteMany?: CompraProductoScalarWhereInput | CompraProductoScalarWhereInput[]
+  }
+
+  export type CompraDocumentoUpdateManyWithoutProveedorNestedInput = {
+    create?: XOR<CompraDocumentoCreateWithoutProveedorInput, CompraDocumentoUncheckedCreateWithoutProveedorInput> | CompraDocumentoCreateWithoutProveedorInput[] | CompraDocumentoUncheckedCreateWithoutProveedorInput[]
+    connectOrCreate?: CompraDocumentoCreateOrConnectWithoutProveedorInput | CompraDocumentoCreateOrConnectWithoutProveedorInput[]
+    upsert?: CompraDocumentoUpsertWithWhereUniqueWithoutProveedorInput | CompraDocumentoUpsertWithWhereUniqueWithoutProveedorInput[]
+    createMany?: CompraDocumentoCreateManyProveedorInputEnvelope
+    set?: CompraDocumentoWhereUniqueInput | CompraDocumentoWhereUniqueInput[]
+    disconnect?: CompraDocumentoWhereUniqueInput | CompraDocumentoWhereUniqueInput[]
+    delete?: CompraDocumentoWhereUniqueInput | CompraDocumentoWhereUniqueInput[]
+    connect?: CompraDocumentoWhereUniqueInput | CompraDocumentoWhereUniqueInput[]
+    update?: CompraDocumentoUpdateWithWhereUniqueWithoutProveedorInput | CompraDocumentoUpdateWithWhereUniqueWithoutProveedorInput[]
+    updateMany?: CompraDocumentoUpdateManyWithWhereWithoutProveedorInput | CompraDocumentoUpdateManyWithWhereWithoutProveedorInput[]
+    deleteMany?: CompraDocumentoScalarWhereInput | CompraDocumentoScalarWhereInput[]
   }
 
   export type ContratoUpdateManyWithoutVendorNestedInput = {
@@ -145819,6 +149444,20 @@ export namespace Prisma {
     update?: CompraProductoUpdateWithWhereUniqueWithoutProveedorInput | CompraProductoUpdateWithWhereUniqueWithoutProveedorInput[]
     updateMany?: CompraProductoUpdateManyWithWhereWithoutProveedorInput | CompraProductoUpdateManyWithWhereWithoutProveedorInput[]
     deleteMany?: CompraProductoScalarWhereInput | CompraProductoScalarWhereInput[]
+  }
+
+  export type CompraDocumentoUncheckedUpdateManyWithoutProveedorNestedInput = {
+    create?: XOR<CompraDocumentoCreateWithoutProveedorInput, CompraDocumentoUncheckedCreateWithoutProveedorInput> | CompraDocumentoCreateWithoutProveedorInput[] | CompraDocumentoUncheckedCreateWithoutProveedorInput[]
+    connectOrCreate?: CompraDocumentoCreateOrConnectWithoutProveedorInput | CompraDocumentoCreateOrConnectWithoutProveedorInput[]
+    upsert?: CompraDocumentoUpsertWithWhereUniqueWithoutProveedorInput | CompraDocumentoUpsertWithWhereUniqueWithoutProveedorInput[]
+    createMany?: CompraDocumentoCreateManyProveedorInputEnvelope
+    set?: CompraDocumentoWhereUniqueInput | CompraDocumentoWhereUniqueInput[]
+    disconnect?: CompraDocumentoWhereUniqueInput | CompraDocumentoWhereUniqueInput[]
+    delete?: CompraDocumentoWhereUniqueInput | CompraDocumentoWhereUniqueInput[]
+    connect?: CompraDocumentoWhereUniqueInput | CompraDocumentoWhereUniqueInput[]
+    update?: CompraDocumentoUpdateWithWhereUniqueWithoutProveedorInput | CompraDocumentoUpdateWithWhereUniqueWithoutProveedorInput[]
+    updateMany?: CompraDocumentoUpdateManyWithWhereWithoutProveedorInput | CompraDocumentoUpdateManyWithWhereWithoutProveedorInput[]
+    deleteMany?: CompraDocumentoScalarWhereInput | CompraDocumentoScalarWhereInput[]
   }
 
   export type ContratoUncheckedUpdateManyWithoutVendorNestedInput = {
@@ -146766,6 +150405,13 @@ export namespace Prisma {
     connect?: CompraProductoWhereUniqueInput | CompraProductoWhereUniqueInput[]
   }
 
+  export type CompraDocumentoItemCreateNestedManyWithoutProductoInput = {
+    create?: XOR<CompraDocumentoItemCreateWithoutProductoInput, CompraDocumentoItemUncheckedCreateWithoutProductoInput> | CompraDocumentoItemCreateWithoutProductoInput[] | CompraDocumentoItemUncheckedCreateWithoutProductoInput[]
+    connectOrCreate?: CompraDocumentoItemCreateOrConnectWithoutProductoInput | CompraDocumentoItemCreateOrConnectWithoutProductoInput[]
+    createMany?: CompraDocumentoItemCreateManyProductoInputEnvelope
+    connect?: CompraDocumentoItemWhereUniqueInput | CompraDocumentoItemWhereUniqueInput[]
+  }
+
   export type GastoCompraCreateNestedManyWithoutProductoInput = {
     create?: XOR<GastoCompraCreateWithoutProductoInput, GastoCompraUncheckedCreateWithoutProductoInput> | GastoCompraCreateWithoutProductoInput[] | GastoCompraUncheckedCreateWithoutProductoInput[]
     connectOrCreate?: GastoCompraCreateOrConnectWithoutProductoInput | GastoCompraCreateOrConnectWithoutProductoInput[]
@@ -146913,6 +150559,13 @@ export namespace Prisma {
     connect?: CompraProductoWhereUniqueInput | CompraProductoWhereUniqueInput[]
   }
 
+  export type CompraDocumentoItemUncheckedCreateNestedManyWithoutProductoInput = {
+    create?: XOR<CompraDocumentoItemCreateWithoutProductoInput, CompraDocumentoItemUncheckedCreateWithoutProductoInput> | CompraDocumentoItemCreateWithoutProductoInput[] | CompraDocumentoItemUncheckedCreateWithoutProductoInput[]
+    connectOrCreate?: CompraDocumentoItemCreateOrConnectWithoutProductoInput | CompraDocumentoItemCreateOrConnectWithoutProductoInput[]
+    createMany?: CompraDocumentoItemCreateManyProductoInputEnvelope
+    connect?: CompraDocumentoItemWhereUniqueInput | CompraDocumentoItemWhereUniqueInput[]
+  }
+
   export type GastoCompraUncheckedCreateNestedManyWithoutProductoInput = {
     create?: XOR<GastoCompraCreateWithoutProductoInput, GastoCompraUncheckedCreateWithoutProductoInput> | GastoCompraCreateWithoutProductoInput[] | GastoCompraUncheckedCreateWithoutProductoInput[]
     connectOrCreate?: GastoCompraCreateOrConnectWithoutProductoInput | GastoCompraCreateOrConnectWithoutProductoInput[]
@@ -147028,6 +150681,20 @@ export namespace Prisma {
     update?: CompraProductoUpdateWithWhereUniqueWithoutProductoInput | CompraProductoUpdateWithWhereUniqueWithoutProductoInput[]
     updateMany?: CompraProductoUpdateManyWithWhereWithoutProductoInput | CompraProductoUpdateManyWithWhereWithoutProductoInput[]
     deleteMany?: CompraProductoScalarWhereInput | CompraProductoScalarWhereInput[]
+  }
+
+  export type CompraDocumentoItemUpdateManyWithoutProductoNestedInput = {
+    create?: XOR<CompraDocumentoItemCreateWithoutProductoInput, CompraDocumentoItemUncheckedCreateWithoutProductoInput> | CompraDocumentoItemCreateWithoutProductoInput[] | CompraDocumentoItemUncheckedCreateWithoutProductoInput[]
+    connectOrCreate?: CompraDocumentoItemCreateOrConnectWithoutProductoInput | CompraDocumentoItemCreateOrConnectWithoutProductoInput[]
+    upsert?: CompraDocumentoItemUpsertWithWhereUniqueWithoutProductoInput | CompraDocumentoItemUpsertWithWhereUniqueWithoutProductoInput[]
+    createMany?: CompraDocumentoItemCreateManyProductoInputEnvelope
+    set?: CompraDocumentoItemWhereUniqueInput | CompraDocumentoItemWhereUniqueInput[]
+    disconnect?: CompraDocumentoItemWhereUniqueInput | CompraDocumentoItemWhereUniqueInput[]
+    delete?: CompraDocumentoItemWhereUniqueInput | CompraDocumentoItemWhereUniqueInput[]
+    connect?: CompraDocumentoItemWhereUniqueInput | CompraDocumentoItemWhereUniqueInput[]
+    update?: CompraDocumentoItemUpdateWithWhereUniqueWithoutProductoInput | CompraDocumentoItemUpdateWithWhereUniqueWithoutProductoInput[]
+    updateMany?: CompraDocumentoItemUpdateManyWithWhereWithoutProductoInput | CompraDocumentoItemUpdateManyWithWhereWithoutProductoInput[]
+    deleteMany?: CompraDocumentoItemScalarWhereInput | CompraDocumentoItemScalarWhereInput[]
   }
 
   export type GastoCompraUpdateManyWithoutProductoNestedInput = {
@@ -147304,6 +150971,20 @@ export namespace Prisma {
     update?: CompraProductoUpdateWithWhereUniqueWithoutProductoInput | CompraProductoUpdateWithWhereUniqueWithoutProductoInput[]
     updateMany?: CompraProductoUpdateManyWithWhereWithoutProductoInput | CompraProductoUpdateManyWithWhereWithoutProductoInput[]
     deleteMany?: CompraProductoScalarWhereInput | CompraProductoScalarWhereInput[]
+  }
+
+  export type CompraDocumentoItemUncheckedUpdateManyWithoutProductoNestedInput = {
+    create?: XOR<CompraDocumentoItemCreateWithoutProductoInput, CompraDocumentoItemUncheckedCreateWithoutProductoInput> | CompraDocumentoItemCreateWithoutProductoInput[] | CompraDocumentoItemUncheckedCreateWithoutProductoInput[]
+    connectOrCreate?: CompraDocumentoItemCreateOrConnectWithoutProductoInput | CompraDocumentoItemCreateOrConnectWithoutProductoInput[]
+    upsert?: CompraDocumentoItemUpsertWithWhereUniqueWithoutProductoInput | CompraDocumentoItemUpsertWithWhereUniqueWithoutProductoInput[]
+    createMany?: CompraDocumentoItemCreateManyProductoInputEnvelope
+    set?: CompraDocumentoItemWhereUniqueInput | CompraDocumentoItemWhereUniqueInput[]
+    disconnect?: CompraDocumentoItemWhereUniqueInput | CompraDocumentoItemWhereUniqueInput[]
+    delete?: CompraDocumentoItemWhereUniqueInput | CompraDocumentoItemWhereUniqueInput[]
+    connect?: CompraDocumentoItemWhereUniqueInput | CompraDocumentoItemWhereUniqueInput[]
+    update?: CompraDocumentoItemUpdateWithWhereUniqueWithoutProductoInput | CompraDocumentoItemUpdateWithWhereUniqueWithoutProductoInput[]
+    updateMany?: CompraDocumentoItemUpdateManyWithWhereWithoutProductoInput | CompraDocumentoItemUpdateManyWithWhereWithoutProductoInput[]
+    deleteMany?: CompraDocumentoItemScalarWhereInput | CompraDocumentoItemScalarWhereInput[]
   }
 
   export type GastoCompraUncheckedUpdateManyWithoutProductoNestedInput = {
@@ -147969,6 +151650,13 @@ export namespace Prisma {
     connect?: AnticipoWhereUniqueInput | AnticipoWhereUniqueInput[]
   }
 
+  export type CompraDocumentoCreateNestedManyWithoutUpdatedByInput = {
+    create?: XOR<CompraDocumentoCreateWithoutUpdatedByInput, CompraDocumentoUncheckedCreateWithoutUpdatedByInput> | CompraDocumentoCreateWithoutUpdatedByInput[] | CompraDocumentoUncheckedCreateWithoutUpdatedByInput[]
+    connectOrCreate?: CompraDocumentoCreateOrConnectWithoutUpdatedByInput | CompraDocumentoCreateOrConnectWithoutUpdatedByInput[]
+    createMany?: CompraDocumentoCreateManyUpdatedByInputEnvelope
+    connect?: CompraDocumentoWhereUniqueInput | CompraDocumentoWhereUniqueInput[]
+  }
+
   export type TransferenciaCreateNestedManyWithoutCreadoPorInput = {
     create?: XOR<TransferenciaCreateWithoutCreadoPorInput, TransferenciaUncheckedCreateWithoutCreadoPorInput> | TransferenciaCreateWithoutCreadoPorInput[] | TransferenciaUncheckedCreateWithoutCreadoPorInput[]
     connectOrCreate?: TransferenciaCreateOrConnectWithoutCreadoPorInput | TransferenciaCreateOrConnectWithoutCreadoPorInput[]
@@ -148065,6 +151753,13 @@ export namespace Prisma {
     connectOrCreate?: AnticipoCreateOrConnectWithoutCreadorInput | AnticipoCreateOrConnectWithoutCreadorInput[]
     createMany?: AnticipoCreateManyCreadorInputEnvelope
     connect?: AnticipoWhereUniqueInput | AnticipoWhereUniqueInput[]
+  }
+
+  export type CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput = {
+    create?: XOR<CompraDocumentoCreateWithoutUpdatedByInput, CompraDocumentoUncheckedCreateWithoutUpdatedByInput> | CompraDocumentoCreateWithoutUpdatedByInput[] | CompraDocumentoUncheckedCreateWithoutUpdatedByInput[]
+    connectOrCreate?: CompraDocumentoCreateOrConnectWithoutUpdatedByInput | CompraDocumentoCreateOrConnectWithoutUpdatedByInput[]
+    createMany?: CompraDocumentoCreateManyUpdatedByInputEnvelope
+    connect?: CompraDocumentoWhereUniqueInput | CompraDocumentoWhereUniqueInput[]
   }
 
   export type TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput = {
@@ -148254,6 +151949,20 @@ export namespace Prisma {
     update?: AnticipoUpdateWithWhereUniqueWithoutCreadorInput | AnticipoUpdateWithWhereUniqueWithoutCreadorInput[]
     updateMany?: AnticipoUpdateManyWithWhereWithoutCreadorInput | AnticipoUpdateManyWithWhereWithoutCreadorInput[]
     deleteMany?: AnticipoScalarWhereInput | AnticipoScalarWhereInput[]
+  }
+
+  export type CompraDocumentoUpdateManyWithoutUpdatedByNestedInput = {
+    create?: XOR<CompraDocumentoCreateWithoutUpdatedByInput, CompraDocumentoUncheckedCreateWithoutUpdatedByInput> | CompraDocumentoCreateWithoutUpdatedByInput[] | CompraDocumentoUncheckedCreateWithoutUpdatedByInput[]
+    connectOrCreate?: CompraDocumentoCreateOrConnectWithoutUpdatedByInput | CompraDocumentoCreateOrConnectWithoutUpdatedByInput[]
+    upsert?: CompraDocumentoUpsertWithWhereUniqueWithoutUpdatedByInput | CompraDocumentoUpsertWithWhereUniqueWithoutUpdatedByInput[]
+    createMany?: CompraDocumentoCreateManyUpdatedByInputEnvelope
+    set?: CompraDocumentoWhereUniqueInput | CompraDocumentoWhereUniqueInput[]
+    disconnect?: CompraDocumentoWhereUniqueInput | CompraDocumentoWhereUniqueInput[]
+    delete?: CompraDocumentoWhereUniqueInput | CompraDocumentoWhereUniqueInput[]
+    connect?: CompraDocumentoWhereUniqueInput | CompraDocumentoWhereUniqueInput[]
+    update?: CompraDocumentoUpdateWithWhereUniqueWithoutUpdatedByInput | CompraDocumentoUpdateWithWhereUniqueWithoutUpdatedByInput[]
+    updateMany?: CompraDocumentoUpdateManyWithWhereWithoutUpdatedByInput | CompraDocumentoUpdateManyWithWhereWithoutUpdatedByInput[]
+    deleteMany?: CompraDocumentoScalarWhereInput | CompraDocumentoScalarWhereInput[]
   }
 
   export type TransferenciaUpdateManyWithoutCreadoPorNestedInput = {
@@ -148450,6 +152159,20 @@ export namespace Prisma {
     update?: AnticipoUpdateWithWhereUniqueWithoutCreadorInput | AnticipoUpdateWithWhereUniqueWithoutCreadorInput[]
     updateMany?: AnticipoUpdateManyWithWhereWithoutCreadorInput | AnticipoUpdateManyWithWhereWithoutCreadorInput[]
     deleteMany?: AnticipoScalarWhereInput | AnticipoScalarWhereInput[]
+  }
+
+  export type CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput = {
+    create?: XOR<CompraDocumentoCreateWithoutUpdatedByInput, CompraDocumentoUncheckedCreateWithoutUpdatedByInput> | CompraDocumentoCreateWithoutUpdatedByInput[] | CompraDocumentoUncheckedCreateWithoutUpdatedByInput[]
+    connectOrCreate?: CompraDocumentoCreateOrConnectWithoutUpdatedByInput | CompraDocumentoCreateOrConnectWithoutUpdatedByInput[]
+    upsert?: CompraDocumentoUpsertWithWhereUniqueWithoutUpdatedByInput | CompraDocumentoUpsertWithWhereUniqueWithoutUpdatedByInput[]
+    createMany?: CompraDocumentoCreateManyUpdatedByInputEnvelope
+    set?: CompraDocumentoWhereUniqueInput | CompraDocumentoWhereUniqueInput[]
+    disconnect?: CompraDocumentoWhereUniqueInput | CompraDocumentoWhereUniqueInput[]
+    delete?: CompraDocumentoWhereUniqueInput | CompraDocumentoWhereUniqueInput[]
+    connect?: CompraDocumentoWhereUniqueInput | CompraDocumentoWhereUniqueInput[]
+    update?: CompraDocumentoUpdateWithWhereUniqueWithoutUpdatedByInput | CompraDocumentoUpdateWithWhereUniqueWithoutUpdatedByInput[]
+    updateMany?: CompraDocumentoUpdateManyWithWhereWithoutUpdatedByInput | CompraDocumentoUpdateManyWithWhereWithoutUpdatedByInput[]
+    deleteMany?: CompraDocumentoScalarWhereInput | CompraDocumentoScalarWhereInput[]
   }
 
   export type TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput = {
@@ -149062,6 +152785,12 @@ export namespace Prisma {
     connect?: CompraProductoWhereUniqueInput
   }
 
+  export type CompraDocumentoCreateNestedOneWithoutGastoCompraInput = {
+    create?: XOR<CompraDocumentoCreateWithoutGastoCompraInput, CompraDocumentoUncheckedCreateWithoutGastoCompraInput>
+    connectOrCreate?: CompraDocumentoCreateOrConnectWithoutGastoCompraInput
+    connect?: CompraDocumentoWhereUniqueInput
+  }
+
   export type CuentaPorPagarCreateNestedOneWithoutGastoCompraInput = {
     create?: XOR<CuentaPorPagarCreateWithoutGastoCompraInput, CuentaPorPagarUncheckedCreateWithoutGastoCompraInput>
     connectOrCreate?: CuentaPorPagarCreateOrConnectWithoutGastoCompraInput
@@ -149093,6 +152822,12 @@ export namespace Prisma {
     connect?: CompraProductoWhereUniqueInput
   }
 
+  export type CompraDocumentoUncheckedCreateNestedOneWithoutGastoCompraInput = {
+    create?: XOR<CompraDocumentoCreateWithoutGastoCompraInput, CompraDocumentoUncheckedCreateWithoutGastoCompraInput>
+    connectOrCreate?: CompraDocumentoCreateOrConnectWithoutGastoCompraInput
+    connect?: CompraDocumentoWhereUniqueInput
+  }
+
   export type CuentaPorPagarUncheckedCreateNestedOneWithoutGastoCompraInput = {
     create?: XOR<CuentaPorPagarCreateWithoutGastoCompraInput, CuentaPorPagarUncheckedCreateWithoutGastoCompraInput>
     connectOrCreate?: CuentaPorPagarCreateOrConnectWithoutGastoCompraInput
@@ -149114,6 +152849,16 @@ export namespace Prisma {
     delete?: CompraProductoWhereInput | boolean
     connect?: CompraProductoWhereUniqueInput
     update?: XOR<XOR<CompraProductoUpdateToOneWithWhereWithoutGastoCompraInput, CompraProductoUpdateWithoutGastoCompraInput>, CompraProductoUncheckedUpdateWithoutGastoCompraInput>
+  }
+
+  export type CompraDocumentoUpdateOneWithoutGastoCompraNestedInput = {
+    create?: XOR<CompraDocumentoCreateWithoutGastoCompraInput, CompraDocumentoUncheckedCreateWithoutGastoCompraInput>
+    connectOrCreate?: CompraDocumentoCreateOrConnectWithoutGastoCompraInput
+    upsert?: CompraDocumentoUpsertWithoutGastoCompraInput
+    disconnect?: CompraDocumentoWhereInput | boolean
+    delete?: CompraDocumentoWhereInput | boolean
+    connect?: CompraDocumentoWhereUniqueInput
+    update?: XOR<XOR<CompraDocumentoUpdateToOneWithWhereWithoutGastoCompraInput, CompraDocumentoUpdateWithoutGastoCompraInput>, CompraDocumentoUncheckedUpdateWithoutGastoCompraInput>
   }
 
   export type CuentaPorPagarUpdateOneWithoutGastoCompraNestedInput = {
@@ -149164,6 +152909,16 @@ export namespace Prisma {
     delete?: CompraProductoWhereInput | boolean
     connect?: CompraProductoWhereUniqueInput
     update?: XOR<XOR<CompraProductoUpdateToOneWithWhereWithoutGastoCompraInput, CompraProductoUpdateWithoutGastoCompraInput>, CompraProductoUncheckedUpdateWithoutGastoCompraInput>
+  }
+
+  export type CompraDocumentoUncheckedUpdateOneWithoutGastoCompraNestedInput = {
+    create?: XOR<CompraDocumentoCreateWithoutGastoCompraInput, CompraDocumentoUncheckedCreateWithoutGastoCompraInput>
+    connectOrCreate?: CompraDocumentoCreateOrConnectWithoutGastoCompraInput
+    upsert?: CompraDocumentoUpsertWithoutGastoCompraInput
+    disconnect?: CompraDocumentoWhereInput | boolean
+    delete?: CompraDocumentoWhereInput | boolean
+    connect?: CompraDocumentoWhereUniqueInput
+    update?: XOR<XOR<CompraDocumentoUpdateToOneWithWhereWithoutGastoCompraInput, CompraDocumentoUpdateWithoutGastoCompraInput>, CompraDocumentoUncheckedUpdateWithoutGastoCompraInput>
   }
 
   export type CuentaPorPagarUncheckedUpdateOneWithoutGastoCompraNestedInput = {
@@ -149280,6 +153035,138 @@ export namespace Prisma {
     delete?: AnticipoWhereInput | boolean
     connect?: AnticipoWhereUniqueInput
     update?: XOR<XOR<AnticipoUpdateToOneWithWhereWithoutCompraProductoInput, AnticipoUpdateWithoutCompraProductoInput>, AnticipoUncheckedUpdateWithoutCompraProductoInput>
+  }
+
+  export type CuentaPorPagarCreateNestedOneWithoutCompraDocumentoInput = {
+    create?: XOR<CuentaPorPagarCreateWithoutCompraDocumentoInput, CuentaPorPagarUncheckedCreateWithoutCompraDocumentoInput>
+    connectOrCreate?: CuentaPorPagarCreateOrConnectWithoutCompraDocumentoInput
+    connect?: CuentaPorPagarWhereUniqueInput
+  }
+
+  export type GastoCompraCreateNestedOneWithoutCompraDocumentoInput = {
+    create?: XOR<GastoCompraCreateWithoutCompraDocumentoInput, GastoCompraUncheckedCreateWithoutCompraDocumentoInput>
+    connectOrCreate?: GastoCompraCreateOrConnectWithoutCompraDocumentoInput
+    connect?: GastoCompraWhereUniqueInput
+  }
+
+  export type VendorCreateNestedOneWithoutCompraDocumentosInput = {
+    create?: XOR<VendorCreateWithoutCompraDocumentosInput, VendorUncheckedCreateWithoutCompraDocumentosInput>
+    connectOrCreate?: VendorCreateOrConnectWithoutCompraDocumentosInput
+    connect?: VendorWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutCompraDocumentosEditadosInput = {
+    create?: XOR<UserCreateWithoutCompraDocumentosEditadosInput, UserUncheckedCreateWithoutCompraDocumentosEditadosInput>
+    connectOrCreate?: UserCreateOrConnectWithoutCompraDocumentosEditadosInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type CompraDocumentoItemCreateNestedManyWithoutCompraDocumentoInput = {
+    create?: XOR<CompraDocumentoItemCreateWithoutCompraDocumentoInput, CompraDocumentoItemUncheckedCreateWithoutCompraDocumentoInput> | CompraDocumentoItemCreateWithoutCompraDocumentoInput[] | CompraDocumentoItemUncheckedCreateWithoutCompraDocumentoInput[]
+    connectOrCreate?: CompraDocumentoItemCreateOrConnectWithoutCompraDocumentoInput | CompraDocumentoItemCreateOrConnectWithoutCompraDocumentoInput[]
+    createMany?: CompraDocumentoItemCreateManyCompraDocumentoInputEnvelope
+    connect?: CompraDocumentoItemWhereUniqueInput | CompraDocumentoItemWhereUniqueInput[]
+  }
+
+  export type CompraDocumentoItemUncheckedCreateNestedManyWithoutCompraDocumentoInput = {
+    create?: XOR<CompraDocumentoItemCreateWithoutCompraDocumentoInput, CompraDocumentoItemUncheckedCreateWithoutCompraDocumentoInput> | CompraDocumentoItemCreateWithoutCompraDocumentoInput[] | CompraDocumentoItemUncheckedCreateWithoutCompraDocumentoInput[]
+    connectOrCreate?: CompraDocumentoItemCreateOrConnectWithoutCompraDocumentoInput | CompraDocumentoItemCreateOrConnectWithoutCompraDocumentoInput[]
+    createMany?: CompraDocumentoItemCreateManyCompraDocumentoInputEnvelope
+    connect?: CompraDocumentoItemWhereUniqueInput | CompraDocumentoItemWhereUniqueInput[]
+  }
+
+  export type CuentaPorPagarUpdateOneWithoutCompraDocumentoNestedInput = {
+    create?: XOR<CuentaPorPagarCreateWithoutCompraDocumentoInput, CuentaPorPagarUncheckedCreateWithoutCompraDocumentoInput>
+    connectOrCreate?: CuentaPorPagarCreateOrConnectWithoutCompraDocumentoInput
+    upsert?: CuentaPorPagarUpsertWithoutCompraDocumentoInput
+    disconnect?: CuentaPorPagarWhereInput | boolean
+    delete?: CuentaPorPagarWhereInput | boolean
+    connect?: CuentaPorPagarWhereUniqueInput
+    update?: XOR<XOR<CuentaPorPagarUpdateToOneWithWhereWithoutCompraDocumentoInput, CuentaPorPagarUpdateWithoutCompraDocumentoInput>, CuentaPorPagarUncheckedUpdateWithoutCompraDocumentoInput>
+  }
+
+  export type GastoCompraUpdateOneWithoutCompraDocumentoNestedInput = {
+    create?: XOR<GastoCompraCreateWithoutCompraDocumentoInput, GastoCompraUncheckedCreateWithoutCompraDocumentoInput>
+    connectOrCreate?: GastoCompraCreateOrConnectWithoutCompraDocumentoInput
+    upsert?: GastoCompraUpsertWithoutCompraDocumentoInput
+    disconnect?: GastoCompraWhereInput | boolean
+    delete?: GastoCompraWhereInput | boolean
+    connect?: GastoCompraWhereUniqueInput
+    update?: XOR<XOR<GastoCompraUpdateToOneWithWhereWithoutCompraDocumentoInput, GastoCompraUpdateWithoutCompraDocumentoInput>, GastoCompraUncheckedUpdateWithoutCompraDocumentoInput>
+  }
+
+  export type VendorUpdateOneRequiredWithoutCompraDocumentosNestedInput = {
+    create?: XOR<VendorCreateWithoutCompraDocumentosInput, VendorUncheckedCreateWithoutCompraDocumentosInput>
+    connectOrCreate?: VendorCreateOrConnectWithoutCompraDocumentosInput
+    upsert?: VendorUpsertWithoutCompraDocumentosInput
+    connect?: VendorWhereUniqueInput
+    update?: XOR<XOR<VendorUpdateToOneWithWhereWithoutCompraDocumentosInput, VendorUpdateWithoutCompraDocumentosInput>, VendorUncheckedUpdateWithoutCompraDocumentosInput>
+  }
+
+  export type UserUpdateOneWithoutCompraDocumentosEditadosNestedInput = {
+    create?: XOR<UserCreateWithoutCompraDocumentosEditadosInput, UserUncheckedCreateWithoutCompraDocumentosEditadosInput>
+    connectOrCreate?: UserCreateOrConnectWithoutCompraDocumentosEditadosInput
+    upsert?: UserUpsertWithoutCompraDocumentosEditadosInput
+    disconnect?: UserWhereInput | boolean
+    delete?: UserWhereInput | boolean
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutCompraDocumentosEditadosInput, UserUpdateWithoutCompraDocumentosEditadosInput>, UserUncheckedUpdateWithoutCompraDocumentosEditadosInput>
+  }
+
+  export type CompraDocumentoItemUpdateManyWithoutCompraDocumentoNestedInput = {
+    create?: XOR<CompraDocumentoItemCreateWithoutCompraDocumentoInput, CompraDocumentoItemUncheckedCreateWithoutCompraDocumentoInput> | CompraDocumentoItemCreateWithoutCompraDocumentoInput[] | CompraDocumentoItemUncheckedCreateWithoutCompraDocumentoInput[]
+    connectOrCreate?: CompraDocumentoItemCreateOrConnectWithoutCompraDocumentoInput | CompraDocumentoItemCreateOrConnectWithoutCompraDocumentoInput[]
+    upsert?: CompraDocumentoItemUpsertWithWhereUniqueWithoutCompraDocumentoInput | CompraDocumentoItemUpsertWithWhereUniqueWithoutCompraDocumentoInput[]
+    createMany?: CompraDocumentoItemCreateManyCompraDocumentoInputEnvelope
+    set?: CompraDocumentoItemWhereUniqueInput | CompraDocumentoItemWhereUniqueInput[]
+    disconnect?: CompraDocumentoItemWhereUniqueInput | CompraDocumentoItemWhereUniqueInput[]
+    delete?: CompraDocumentoItemWhereUniqueInput | CompraDocumentoItemWhereUniqueInput[]
+    connect?: CompraDocumentoItemWhereUniqueInput | CompraDocumentoItemWhereUniqueInput[]
+    update?: CompraDocumentoItemUpdateWithWhereUniqueWithoutCompraDocumentoInput | CompraDocumentoItemUpdateWithWhereUniqueWithoutCompraDocumentoInput[]
+    updateMany?: CompraDocumentoItemUpdateManyWithWhereWithoutCompraDocumentoInput | CompraDocumentoItemUpdateManyWithWhereWithoutCompraDocumentoInput[]
+    deleteMany?: CompraDocumentoItemScalarWhereInput | CompraDocumentoItemScalarWhereInput[]
+  }
+
+  export type CompraDocumentoItemUncheckedUpdateManyWithoutCompraDocumentoNestedInput = {
+    create?: XOR<CompraDocumentoItemCreateWithoutCompraDocumentoInput, CompraDocumentoItemUncheckedCreateWithoutCompraDocumentoInput> | CompraDocumentoItemCreateWithoutCompraDocumentoInput[] | CompraDocumentoItemUncheckedCreateWithoutCompraDocumentoInput[]
+    connectOrCreate?: CompraDocumentoItemCreateOrConnectWithoutCompraDocumentoInput | CompraDocumentoItemCreateOrConnectWithoutCompraDocumentoInput[]
+    upsert?: CompraDocumentoItemUpsertWithWhereUniqueWithoutCompraDocumentoInput | CompraDocumentoItemUpsertWithWhereUniqueWithoutCompraDocumentoInput[]
+    createMany?: CompraDocumentoItemCreateManyCompraDocumentoInputEnvelope
+    set?: CompraDocumentoItemWhereUniqueInput | CompraDocumentoItemWhereUniqueInput[]
+    disconnect?: CompraDocumentoItemWhereUniqueInput | CompraDocumentoItemWhereUniqueInput[]
+    delete?: CompraDocumentoItemWhereUniqueInput | CompraDocumentoItemWhereUniqueInput[]
+    connect?: CompraDocumentoItemWhereUniqueInput | CompraDocumentoItemWhereUniqueInput[]
+    update?: CompraDocumentoItemUpdateWithWhereUniqueWithoutCompraDocumentoInput | CompraDocumentoItemUpdateWithWhereUniqueWithoutCompraDocumentoInput[]
+    updateMany?: CompraDocumentoItemUpdateManyWithWhereWithoutCompraDocumentoInput | CompraDocumentoItemUpdateManyWithWhereWithoutCompraDocumentoInput[]
+    deleteMany?: CompraDocumentoItemScalarWhereInput | CompraDocumentoItemScalarWhereInput[]
+  }
+
+  export type CompraDocumentoCreateNestedOneWithoutItemsInput = {
+    create?: XOR<CompraDocumentoCreateWithoutItemsInput, CompraDocumentoUncheckedCreateWithoutItemsInput>
+    connectOrCreate?: CompraDocumentoCreateOrConnectWithoutItemsInput
+    connect?: CompraDocumentoWhereUniqueInput
+  }
+
+  export type ProductoCreateNestedOneWithoutCompraDocumentoItemsInput = {
+    create?: XOR<ProductoCreateWithoutCompraDocumentoItemsInput, ProductoUncheckedCreateWithoutCompraDocumentoItemsInput>
+    connectOrCreate?: ProductoCreateOrConnectWithoutCompraDocumentoItemsInput
+    connect?: ProductoWhereUniqueInput
+  }
+
+  export type CompraDocumentoUpdateOneRequiredWithoutItemsNestedInput = {
+    create?: XOR<CompraDocumentoCreateWithoutItemsInput, CompraDocumentoUncheckedCreateWithoutItemsInput>
+    connectOrCreate?: CompraDocumentoCreateOrConnectWithoutItemsInput
+    upsert?: CompraDocumentoUpsertWithoutItemsInput
+    connect?: CompraDocumentoWhereUniqueInput
+    update?: XOR<XOR<CompraDocumentoUpdateToOneWithWhereWithoutItemsInput, CompraDocumentoUpdateWithoutItemsInput>, CompraDocumentoUncheckedUpdateWithoutItemsInput>
+  }
+
+  export type ProductoUpdateOneRequiredWithoutCompraDocumentoItemsNestedInput = {
+    create?: XOR<ProductoCreateWithoutCompraDocumentoItemsInput, ProductoUncheckedCreateWithoutCompraDocumentoItemsInput>
+    connectOrCreate?: ProductoCreateOrConnectWithoutCompraDocumentoItemsInput
+    upsert?: ProductoUpsertWithoutCompraDocumentoItemsInput
+    connect?: ProductoWhereUniqueInput
+    update?: XOR<XOR<ProductoUpdateToOneWithWhereWithoutCompraDocumentoItemsInput, ProductoUpdateWithoutCompraDocumentoItemsInput>, ProductoUncheckedUpdateWithoutCompraDocumentoItemsInput>
   }
 
   export type OfertaItemCreateNestedManyWithoutServicioInput = {
@@ -151618,6 +155505,12 @@ export namespace Prisma {
     connect?: CompraProductoWhereUniqueInput
   }
 
+  export type CompraDocumentoCreateNestedOneWithoutCuentaPorPagarInput = {
+    create?: XOR<CompraDocumentoCreateWithoutCuentaPorPagarInput, CompraDocumentoUncheckedCreateWithoutCuentaPorPagarInput>
+    connectOrCreate?: CompraDocumentoCreateOrConnectWithoutCuentaPorPagarInput
+    connect?: CompraDocumentoWhereUniqueInput
+  }
+
   export type GastoCompraCreateNestedOneWithoutCuentaPorPagarInput = {
     create?: XOR<GastoCompraCreateWithoutCuentaPorPagarInput, GastoCompraUncheckedCreateWithoutCuentaPorPagarInput>
     connectOrCreate?: GastoCompraCreateOrConnectWithoutCuentaPorPagarInput
@@ -151662,6 +155555,12 @@ export namespace Prisma {
     connect?: CompraProductoWhereUniqueInput
   }
 
+  export type CompraDocumentoUncheckedCreateNestedOneWithoutCuentaPorPagarInput = {
+    create?: XOR<CompraDocumentoCreateWithoutCuentaPorPagarInput, CompraDocumentoUncheckedCreateWithoutCuentaPorPagarInput>
+    connectOrCreate?: CompraDocumentoCreateOrConnectWithoutCuentaPorPagarInput
+    connect?: CompraDocumentoWhereUniqueInput
+  }
+
   export type DeudaCashUncheckedCreateNestedOneWithoutCuentaPorPagarInput = {
     create?: XOR<DeudaCashCreateWithoutCuentaPorPagarInput, DeudaCashUncheckedCreateWithoutCuentaPorPagarInput>
     connectOrCreate?: DeudaCashCreateOrConnectWithoutCuentaPorPagarInput
@@ -151698,6 +155597,16 @@ export namespace Prisma {
     delete?: CompraProductoWhereInput | boolean
     connect?: CompraProductoWhereUniqueInput
     update?: XOR<XOR<CompraProductoUpdateToOneWithWhereWithoutCuentaPorPagarInput, CompraProductoUpdateWithoutCuentaPorPagarInput>, CompraProductoUncheckedUpdateWithoutCuentaPorPagarInput>
+  }
+
+  export type CompraDocumentoUpdateOneWithoutCuentaPorPagarNestedInput = {
+    create?: XOR<CompraDocumentoCreateWithoutCuentaPorPagarInput, CompraDocumentoUncheckedCreateWithoutCuentaPorPagarInput>
+    connectOrCreate?: CompraDocumentoCreateOrConnectWithoutCuentaPorPagarInput
+    upsert?: CompraDocumentoUpsertWithoutCuentaPorPagarInput
+    disconnect?: CompraDocumentoWhereInput | boolean
+    delete?: CompraDocumentoWhereInput | boolean
+    connect?: CompraDocumentoWhereUniqueInput
+    update?: XOR<XOR<CompraDocumentoUpdateToOneWithWhereWithoutCuentaPorPagarInput, CompraDocumentoUpdateWithoutCuentaPorPagarInput>, CompraDocumentoUncheckedUpdateWithoutCuentaPorPagarInput>
   }
 
   export type GastoCompraUpdateOneWithoutCuentaPorPagarNestedInput = {
@@ -151776,6 +155685,16 @@ export namespace Prisma {
     delete?: CompraProductoWhereInput | boolean
     connect?: CompraProductoWhereUniqueInput
     update?: XOR<XOR<CompraProductoUpdateToOneWithWhereWithoutCuentaPorPagarInput, CompraProductoUpdateWithoutCuentaPorPagarInput>, CompraProductoUncheckedUpdateWithoutCuentaPorPagarInput>
+  }
+
+  export type CompraDocumentoUncheckedUpdateOneWithoutCuentaPorPagarNestedInput = {
+    create?: XOR<CompraDocumentoCreateWithoutCuentaPorPagarInput, CompraDocumentoUncheckedCreateWithoutCuentaPorPagarInput>
+    connectOrCreate?: CompraDocumentoCreateOrConnectWithoutCuentaPorPagarInput
+    upsert?: CompraDocumentoUpsertWithoutCuentaPorPagarInput
+    disconnect?: CompraDocumentoWhereInput | boolean
+    delete?: CompraDocumentoWhereInput | boolean
+    connect?: CompraDocumentoWhereUniqueInput
+    update?: XOR<XOR<CompraDocumentoUpdateToOneWithWhereWithoutCuentaPorPagarInput, CompraDocumentoUpdateWithoutCuentaPorPagarInput>, CompraDocumentoUncheckedUpdateWithoutCuentaPorPagarInput>
   }
 
   export type DeudaCashUncheckedUpdateOneWithoutCuentaPorPagarNestedInput = {
@@ -153859,6 +157778,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
@@ -153908,6 +157828,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
@@ -153955,6 +157876,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
@@ -154004,6 +157926,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
@@ -154182,6 +158105,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
@@ -154231,6 +158155,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
@@ -154287,6 +158212,8 @@ export namespace Prisma {
     formaPago: string
     estado: string
     tipoOperacion?: string
+    deletedAt?: Date | string | null
+    updatedById?: string | null
     cuentaPorPagar?: CuentaPorPagarCreateNestedOneWithoutCompraProductoInput
     gastoCompra?: GastoCompraCreateNestedOneWithoutCompraProductoInput
     anticipo?: AnticipoCreateNestedOneWithoutCompraProductoInput
@@ -154310,6 +158237,8 @@ export namespace Prisma {
     formaPago: string
     estado: string
     tipoOperacion?: string
+    deletedAt?: Date | string | null
+    updatedById?: string | null
     anticipo?: AnticipoUncheckedCreateNestedOneWithoutCompraProductoInput
   }
 
@@ -154320,6 +158249,54 @@ export namespace Prisma {
 
   export type CompraProductoCreateManyProveedorInputEnvelope = {
     data: CompraProductoCreateManyProveedorInput | CompraProductoCreateManyProveedorInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type CompraDocumentoCreateWithoutProveedorInput = {
+    compraDocumentoId?: string
+    numeroFactura?: string
+    facturaUrl?: string
+    formaPago: string
+    estado: string
+    tipoOperacion?: string
+    descripcion?: string | null
+    fechaCompra?: Date | string
+    total?: number
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    cuentaPorPagar?: CuentaPorPagarCreateNestedOneWithoutCompraDocumentoInput
+    gastoCompra?: GastoCompraCreateNestedOneWithoutCompraDocumentoInput
+    updatedBy?: UserCreateNestedOneWithoutCompraDocumentosEditadosInput
+    items?: CompraDocumentoItemCreateNestedManyWithoutCompraDocumentoInput
+  }
+
+  export type CompraDocumentoUncheckedCreateWithoutProveedorInput = {
+    compraDocumentoId?: string
+    numeroFactura?: string
+    facturaUrl?: string
+    formaPago: string
+    estado: string
+    tipoOperacion?: string
+    descripcion?: string | null
+    fechaCompra?: Date | string
+    total?: number
+    gastoCompraId?: string | null
+    cuentaPorPagarId?: string | null
+    deletedAt?: Date | string | null
+    updatedById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    items?: CompraDocumentoItemUncheckedCreateNestedManyWithoutCompraDocumentoInput
+  }
+
+  export type CompraDocumentoCreateOrConnectWithoutProveedorInput = {
+    where: CompraDocumentoWhereUniqueInput
+    create: XOR<CompraDocumentoCreateWithoutProveedorInput, CompraDocumentoUncheckedCreateWithoutProveedorInput>
+  }
+
+  export type CompraDocumentoCreateManyProveedorInputEnvelope = {
+    data: CompraDocumentoCreateManyProveedorInput | CompraDocumentoCreateManyProveedorInput[]
     skipDuplicates?: boolean
   }
 
@@ -154406,7 +158383,9 @@ export namespace Prisma {
     updatedAt?: Date | string
     tipo: $Enums.TipoCuentaPorPagar
     tipoDeuda?: string | null
+    deletedAt?: Date | string | null
     compraProducto?: CompraProductoCreateNestedOneWithoutCuentaPorPagarInput
+    compraDocumento?: CompraDocumentoCreateNestedOneWithoutCuentaPorPagarInput
     gastoCompra?: GastoCompraCreateNestedOneWithoutCuentaPorPagarInput
     gastosDE?: GastosDECreateNestedOneWithoutCuentaPorPagarInput
     deudaCash?: DeudaCashCreateNestedOneWithoutCuentaPorPagarInput
@@ -154431,7 +158410,9 @@ export namespace Prisma {
     updatedAt?: Date | string
     tipo: $Enums.TipoCuentaPorPagar
     tipoDeuda?: string | null
+    deletedAt?: Date | string | null
     compraProducto?: CompraProductoUncheckedCreateNestedOneWithoutCuentaPorPagarInput
+    compraDocumento?: CompraDocumentoUncheckedCreateNestedOneWithoutCuentaPorPagarInput
     deudaCash?: DeudaCashUncheckedCreateNestedOneWithoutCuentaPorPagarInput
     pagos?: PagoCuentaPorPagarUncheckedCreateNestedManyWithoutCuentaPorPagarInput
     reconciliaciones?: ReconciliacionGastoUncheckedCreateNestedManyWithoutCuentaPorPagarInput
@@ -154506,7 +158487,9 @@ export namespace Prisma {
     updatedAt?: Date | string
     periodo?: string | null
     numeroFactura?: string | null
+    deletedAt?: Date | string | null
     compraProducto?: CompraProductoCreateNestedOneWithoutGastoCompraInput
+    compraDocumento?: CompraDocumentoCreateNestedOneWithoutGastoCompraInput
     cuentaPorPagar?: CuentaPorPagarCreateNestedOneWithoutGastoCompraInput
     producto: ProductoCreateNestedOneWithoutGastoComprasInput
     reconciliaciones?: ReconciliacionGastoCreateNestedManyWithoutGastoCompraInput
@@ -154524,7 +158507,9 @@ export namespace Prisma {
     updatedAt?: Date | string
     periodo?: string | null
     numeroFactura?: string | null
+    deletedAt?: Date | string | null
     compraProducto?: CompraProductoUncheckedCreateNestedOneWithoutGastoCompraInput
+    compraDocumento?: CompraDocumentoUncheckedCreateNestedOneWithoutGastoCompraInput
     cuentaPorPagar?: CuentaPorPagarUncheckedCreateNestedOneWithoutGastoCompraInput
     reconciliaciones?: ReconciliacionGastoUncheckedCreateNestedManyWithoutGastoCompraInput
   }
@@ -154616,6 +158601,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
@@ -154665,6 +158651,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
@@ -154770,6 +158757,46 @@ export namespace Prisma {
     formaPago?: StringFilter<"CompraProducto"> | string
     estado?: StringFilter<"CompraProducto"> | string
     tipoOperacion?: StringFilter<"CompraProducto"> | string
+    deletedAt?: DateTimeNullableFilter<"CompraProducto"> | Date | string | null
+    updatedById?: StringNullableFilter<"CompraProducto"> | string | null
+  }
+
+  export type CompraDocumentoUpsertWithWhereUniqueWithoutProveedorInput = {
+    where: CompraDocumentoWhereUniqueInput
+    update: XOR<CompraDocumentoUpdateWithoutProveedorInput, CompraDocumentoUncheckedUpdateWithoutProveedorInput>
+    create: XOR<CompraDocumentoCreateWithoutProveedorInput, CompraDocumentoUncheckedCreateWithoutProveedorInput>
+  }
+
+  export type CompraDocumentoUpdateWithWhereUniqueWithoutProveedorInput = {
+    where: CompraDocumentoWhereUniqueInput
+    data: XOR<CompraDocumentoUpdateWithoutProveedorInput, CompraDocumentoUncheckedUpdateWithoutProveedorInput>
+  }
+
+  export type CompraDocumentoUpdateManyWithWhereWithoutProveedorInput = {
+    where: CompraDocumentoScalarWhereInput
+    data: XOR<CompraDocumentoUpdateManyMutationInput, CompraDocumentoUncheckedUpdateManyWithoutProveedorInput>
+  }
+
+  export type CompraDocumentoScalarWhereInput = {
+    AND?: CompraDocumentoScalarWhereInput | CompraDocumentoScalarWhereInput[]
+    OR?: CompraDocumentoScalarWhereInput[]
+    NOT?: CompraDocumentoScalarWhereInput | CompraDocumentoScalarWhereInput[]
+    compraDocumentoId?: StringFilter<"CompraDocumento"> | string
+    proveedorId?: StringFilter<"CompraDocumento"> | string
+    numeroFactura?: StringFilter<"CompraDocumento"> | string
+    facturaUrl?: StringFilter<"CompraDocumento"> | string
+    formaPago?: StringFilter<"CompraDocumento"> | string
+    estado?: StringFilter<"CompraDocumento"> | string
+    tipoOperacion?: StringFilter<"CompraDocumento"> | string
+    descripcion?: StringNullableFilter<"CompraDocumento"> | string | null
+    fechaCompra?: DateTimeFilter<"CompraDocumento"> | Date | string
+    total?: IntFilter<"CompraDocumento"> | number
+    gastoCompraId?: StringNullableFilter<"CompraDocumento"> | string | null
+    cuentaPorPagarId?: StringNullableFilter<"CompraDocumento"> | string | null
+    deletedAt?: DateTimeNullableFilter<"CompraDocumento"> | Date | string | null
+    updatedById?: StringNullableFilter<"CompraDocumento"> | string | null
+    createdAt?: DateTimeFilter<"CompraDocumento"> | Date | string
+    updatedAt?: DateTimeFilter<"CompraDocumento"> | Date | string
   }
 
   export type ContratoUpsertWithWhereUniqueWithoutVendorInput = {
@@ -154852,6 +158879,7 @@ export namespace Prisma {
     proveedorId?: StringNullableFilter<"CuentaPorPagar"> | string | null
     tipo?: EnumTipoCuentaPorPagarFilter<"CuentaPorPagar"> | $Enums.TipoCuentaPorPagar
     tipoDeuda?: StringNullableFilter<"CuentaPorPagar"> | string | null
+    deletedAt?: DateTimeNullableFilter<"CuentaPorPagar"> | Date | string | null
   }
 
   export type DeudaCashUpsertWithWhereUniqueWithoutProveedorInput = {
@@ -154924,6 +158952,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"GastoCompra"> | Date | string
     periodo?: StringNullableFilter<"GastoCompra"> | string | null
     numeroFactura?: StringNullableFilter<"GastoCompra"> | string | null
+    deletedAt?: DateTimeNullableFilter<"GastoCompra"> | Date | string | null
   }
 
   export type AnticipoUpsertWithWhereUniqueWithoutProveedorInput = {
@@ -156297,6 +160326,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
@@ -156346,6 +160376,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
@@ -156555,6 +160586,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
@@ -156604,6 +160636,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
@@ -156908,6 +160941,8 @@ export namespace Prisma {
     formaPago: string
     estado: string
     tipoOperacion?: string
+    deletedAt?: Date | string | null
+    updatedById?: string | null
     cuentaPorPagar?: CuentaPorPagarCreateNestedOneWithoutCompraProductoInput
     gastoCompra?: GastoCompraCreateNestedOneWithoutCompraProductoInput
     anticipo?: AnticipoCreateNestedOneWithoutCompraProductoInput
@@ -156931,6 +160966,8 @@ export namespace Prisma {
     formaPago: string
     estado: string
     tipoOperacion?: string
+    deletedAt?: Date | string | null
+    updatedById?: string | null
     anticipo?: AnticipoUncheckedCreateNestedOneWithoutCompraProductoInput
   }
 
@@ -156941,6 +160978,36 @@ export namespace Prisma {
 
   export type CompraProductoCreateManyProductoInputEnvelope = {
     data: CompraProductoCreateManyProductoInput | CompraProductoCreateManyProductoInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type CompraDocumentoItemCreateWithoutProductoInput = {
+    compraDocumentoItemId?: string
+    cantidad: number
+    precioUnitario: number
+    totalLinea: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    compraDocumento: CompraDocumentoCreateNestedOneWithoutItemsInput
+  }
+
+  export type CompraDocumentoItemUncheckedCreateWithoutProductoInput = {
+    compraDocumentoItemId?: string
+    compraDocumentoId: string
+    cantidad: number
+    precioUnitario: number
+    totalLinea: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CompraDocumentoItemCreateOrConnectWithoutProductoInput = {
+    where: CompraDocumentoItemWhereUniqueInput
+    create: XOR<CompraDocumentoItemCreateWithoutProductoInput, CompraDocumentoItemUncheckedCreateWithoutProductoInput>
+  }
+
+  export type CompraDocumentoItemCreateManyProductoInputEnvelope = {
+    data: CompraDocumentoItemCreateManyProductoInput | CompraDocumentoItemCreateManyProductoInput[]
     skipDuplicates?: boolean
   }
 
@@ -156955,7 +161022,9 @@ export namespace Prisma {
     updatedAt?: Date | string
     periodo?: string | null
     numeroFactura?: string | null
+    deletedAt?: Date | string | null
     compraProducto?: CompraProductoCreateNestedOneWithoutGastoCompraInput
+    compraDocumento?: CompraDocumentoCreateNestedOneWithoutGastoCompraInput
     cuentaPorPagar?: CuentaPorPagarCreateNestedOneWithoutGastoCompraInput
     vendor: VendorCreateNestedOneWithoutGastoComprasInput
     reconciliaciones?: ReconciliacionGastoCreateNestedManyWithoutGastoCompraInput
@@ -156973,7 +161042,9 @@ export namespace Prisma {
     updatedAt?: Date | string
     periodo?: string | null
     numeroFactura?: string | null
+    deletedAt?: Date | string | null
     compraProducto?: CompraProductoUncheckedCreateNestedOneWithoutGastoCompraInput
+    compraDocumento?: CompraDocumentoUncheckedCreateNestedOneWithoutGastoCompraInput
     cuentaPorPagar?: CuentaPorPagarUncheckedCreateNestedOneWithoutGastoCompraInput
     reconciliaciones?: ReconciliacionGastoUncheckedCreateNestedManyWithoutGastoCompraInput
   }
@@ -157200,6 +161271,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
@@ -157250,6 +161322,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
@@ -157291,6 +161364,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
@@ -157340,6 +161414,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
@@ -157432,6 +161507,7 @@ export namespace Prisma {
     telefono?: string | null
     vendorCode?: string | null
     compras?: CompraProductoCreateNestedManyWithoutProveedorInput
+    compraDocumentos?: CompraDocumentoCreateNestedManyWithoutProveedorInput
     contratos?: ContratoCreateNestedManyWithoutVendorInput
     cuentasPorPagar?: CuentaPorPagarCreateNestedManyWithoutProveedorInput
     deudasCash?: DeudaCashCreateNestedManyWithoutProveedorInput
@@ -157454,6 +161530,7 @@ export namespace Prisma {
     telefono?: string | null
     vendorCode?: string | null
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProveedorInput
+    compraDocumentos?: CompraDocumentoUncheckedCreateNestedManyWithoutProveedorInput
     contratos?: ContratoUncheckedCreateNestedManyWithoutVendorInput
     cuentasPorPagar?: CuentaPorPagarUncheckedCreateNestedManyWithoutProveedorInput
     deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutProveedorInput
@@ -157769,6 +161846,36 @@ export namespace Prisma {
     data: XOR<CompraProductoUpdateManyMutationInput, CompraProductoUncheckedUpdateManyWithoutProductoInput>
   }
 
+  export type CompraDocumentoItemUpsertWithWhereUniqueWithoutProductoInput = {
+    where: CompraDocumentoItemWhereUniqueInput
+    update: XOR<CompraDocumentoItemUpdateWithoutProductoInput, CompraDocumentoItemUncheckedUpdateWithoutProductoInput>
+    create: XOR<CompraDocumentoItemCreateWithoutProductoInput, CompraDocumentoItemUncheckedCreateWithoutProductoInput>
+  }
+
+  export type CompraDocumentoItemUpdateWithWhereUniqueWithoutProductoInput = {
+    where: CompraDocumentoItemWhereUniqueInput
+    data: XOR<CompraDocumentoItemUpdateWithoutProductoInput, CompraDocumentoItemUncheckedUpdateWithoutProductoInput>
+  }
+
+  export type CompraDocumentoItemUpdateManyWithWhereWithoutProductoInput = {
+    where: CompraDocumentoItemScalarWhereInput
+    data: XOR<CompraDocumentoItemUpdateManyMutationInput, CompraDocumentoItemUncheckedUpdateManyWithoutProductoInput>
+  }
+
+  export type CompraDocumentoItemScalarWhereInput = {
+    AND?: CompraDocumentoItemScalarWhereInput | CompraDocumentoItemScalarWhereInput[]
+    OR?: CompraDocumentoItemScalarWhereInput[]
+    NOT?: CompraDocumentoItemScalarWhereInput | CompraDocumentoItemScalarWhereInput[]
+    compraDocumentoItemId?: StringFilter<"CompraDocumentoItem"> | string
+    compraDocumentoId?: StringFilter<"CompraDocumentoItem"> | string
+    productoId?: StringFilter<"CompraDocumentoItem"> | string
+    cantidad?: IntFilter<"CompraDocumentoItem"> | number
+    precioUnitario?: IntFilter<"CompraDocumentoItem"> | number
+    totalLinea?: IntFilter<"CompraDocumentoItem"> | number
+    createdAt?: DateTimeFilter<"CompraDocumentoItem"> | Date | string
+    updatedAt?: DateTimeFilter<"CompraDocumentoItem"> | Date | string
+  }
+
   export type GastoCompraUpsertWithWhereUniqueWithoutProductoInput = {
     where: GastoCompraWhereUniqueInput
     update: XOR<GastoCompraUpdateWithoutProductoInput, GastoCompraUncheckedUpdateWithoutProductoInput>
@@ -158032,6 +162139,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
@@ -158082,6 +162190,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
@@ -158202,6 +162311,7 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     vendorCode?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUpdateManyWithoutProveedorNestedInput
+    compraDocumentos?: CompraDocumentoUpdateManyWithoutProveedorNestedInput
     contratos?: ContratoUpdateManyWithoutVendorNestedInput
     cuentasPorPagar?: CuentaPorPagarUpdateManyWithoutProveedorNestedInput
     deudasCash?: DeudaCashUpdateManyWithoutProveedorNestedInput
@@ -158224,6 +162334,7 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     vendorCode?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUncheckedUpdateManyWithoutProveedorNestedInput
+    compraDocumentos?: CompraDocumentoUncheckedUpdateManyWithoutProveedorNestedInput
     contratos?: ContratoUncheckedUpdateManyWithoutVendorNestedInput
     cuentasPorPagar?: CuentaPorPagarUncheckedUpdateManyWithoutProveedorNestedInput
     deudasCash?: DeudaCashUncheckedUpdateManyWithoutProveedorNestedInput
@@ -158467,6 +162578,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
@@ -158517,6 +162629,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
@@ -158569,6 +162682,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
@@ -158619,6 +162733,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
@@ -158907,6 +163022,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
@@ -158957,6 +163073,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
@@ -159397,6 +163514,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
@@ -159447,6 +163565,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
@@ -159603,6 +163722,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
@@ -159653,6 +163773,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
@@ -159752,6 +163873,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
@@ -159802,6 +163924,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
@@ -159891,6 +164014,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
@@ -159941,6 +164065,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
@@ -159993,6 +164118,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
@@ -160043,6 +164169,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
@@ -160125,6 +164252,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
@@ -160175,6 +164303,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
@@ -160224,6 +164353,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogCreateNestedManyWithoutUserInput
     sessions?: UserSessionCreateNestedManyWithoutUserInput
     anticiposCreados?: AnticipoCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoCreateNestedManyWithoutUpdatedByInput
   }
 
   export type UserUncheckedCreateWithoutTransferenciasCreadasInput = {
@@ -160255,6 +164385,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUncheckedCreateNestedManyWithoutUserInput
     sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
     anticiposCreados?: AnticipoUncheckedCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput
   }
 
   export type UserCreateOrConnectWithoutTransferenciasCreadasInput = {
@@ -160410,6 +164541,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
@@ -160460,6 +164592,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
@@ -160515,6 +164648,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUpdateManyWithoutUserNestedInput
     anticiposCreados?: AnticipoUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUpdateManyWithoutUpdatedByNestedInput
   }
 
   export type UserUncheckedUpdateWithoutTransferenciasCreadasInput = {
@@ -160546,6 +164680,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUncheckedUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
     anticiposCreados?: AnticipoUncheckedUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput
   }
 
   export type PuntoDeVentaUpsertWithoutTransferenciasDestinoInput = {
@@ -161122,6 +165257,54 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type CompraDocumentoCreateWithoutUpdatedByInput = {
+    compraDocumentoId?: string
+    numeroFactura?: string
+    facturaUrl?: string
+    formaPago: string
+    estado: string
+    tipoOperacion?: string
+    descripcion?: string | null
+    fechaCompra?: Date | string
+    total?: number
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    cuentaPorPagar?: CuentaPorPagarCreateNestedOneWithoutCompraDocumentoInput
+    gastoCompra?: GastoCompraCreateNestedOneWithoutCompraDocumentoInput
+    proveedor: VendorCreateNestedOneWithoutCompraDocumentosInput
+    items?: CompraDocumentoItemCreateNestedManyWithoutCompraDocumentoInput
+  }
+
+  export type CompraDocumentoUncheckedCreateWithoutUpdatedByInput = {
+    compraDocumentoId?: string
+    proveedorId: string
+    numeroFactura?: string
+    facturaUrl?: string
+    formaPago: string
+    estado: string
+    tipoOperacion?: string
+    descripcion?: string | null
+    fechaCompra?: Date | string
+    total?: number
+    gastoCompraId?: string | null
+    cuentaPorPagarId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    items?: CompraDocumentoItemUncheckedCreateNestedManyWithoutCompraDocumentoInput
+  }
+
+  export type CompraDocumentoCreateOrConnectWithoutUpdatedByInput = {
+    where: CompraDocumentoWhereUniqueInput
+    create: XOR<CompraDocumentoCreateWithoutUpdatedByInput, CompraDocumentoUncheckedCreateWithoutUpdatedByInput>
+  }
+
+  export type CompraDocumentoCreateManyUpdatedByInputEnvelope = {
+    data: CompraDocumentoCreateManyUpdatedByInput | CompraDocumentoCreateManyUpdatedByInput[]
+    skipDuplicates?: boolean
+  }
+
   export type TransferenciaCreateWithoutCreadoPorInput = {
     transferenciaId?: string
     cantidad: number
@@ -161520,6 +165703,22 @@ export namespace Prisma {
     data: XOR<AnticipoUpdateManyMutationInput, AnticipoUncheckedUpdateManyWithoutCreadorInput>
   }
 
+  export type CompraDocumentoUpsertWithWhereUniqueWithoutUpdatedByInput = {
+    where: CompraDocumentoWhereUniqueInput
+    update: XOR<CompraDocumentoUpdateWithoutUpdatedByInput, CompraDocumentoUncheckedUpdateWithoutUpdatedByInput>
+    create: XOR<CompraDocumentoCreateWithoutUpdatedByInput, CompraDocumentoUncheckedCreateWithoutUpdatedByInput>
+  }
+
+  export type CompraDocumentoUpdateWithWhereUniqueWithoutUpdatedByInput = {
+    where: CompraDocumentoWhereUniqueInput
+    data: XOR<CompraDocumentoUpdateWithoutUpdatedByInput, CompraDocumentoUncheckedUpdateWithoutUpdatedByInput>
+  }
+
+  export type CompraDocumentoUpdateManyWithWhereWithoutUpdatedByInput = {
+    where: CompraDocumentoScalarWhereInput
+    data: XOR<CompraDocumentoUpdateManyMutationInput, CompraDocumentoUncheckedUpdateManyWithoutUpdatedByInput>
+  }
+
   export type TransferenciaUpsertWithWhereUniqueWithoutCreadoPorInput = {
     where: TransferenciaWhereUniqueInput
     update: XOR<TransferenciaUpdateWithoutCreadoPorInput, TransferenciaUncheckedUpdateWithoutCreadoPorInput>
@@ -161645,6 +165844,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogCreateNestedManyWithoutUserInput
     sessions?: UserSessionCreateNestedManyWithoutUserInput
     anticiposCreados?: AnticipoCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaCreateNestedManyWithoutCreadoPorInput
   }
 
@@ -161676,6 +165876,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUncheckedCreateNestedManyWithoutUserInput
     sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
     anticiposCreados?: AnticipoUncheckedCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput
   }
 
@@ -161790,6 +165991,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUpdateManyWithoutUserNestedInput
     anticiposCreados?: AnticipoUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUpdateManyWithoutCreadoPorNestedInput
   }
 
@@ -161821,6 +166023,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUncheckedUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
     anticiposCreados?: AnticipoUncheckedUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput
   }
 
@@ -161897,6 +166100,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogCreateNestedManyWithoutUserInput
     sessions?: UserSessionCreateNestedManyWithoutUserInput
     anticiposCreados?: AnticipoCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaCreateNestedManyWithoutCreadoPorInput
   }
 
@@ -161928,6 +166132,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUncheckedCreateNestedManyWithoutUserInput
     sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
     anticiposCreados?: AnticipoUncheckedCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput
   }
 
@@ -162010,6 +166215,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUpdateManyWithoutUserNestedInput
     anticiposCreados?: AnticipoUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUpdateManyWithoutCreadoPorNestedInput
   }
 
@@ -162041,6 +166247,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUncheckedUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
     anticiposCreados?: AnticipoUncheckedUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput
   }
 
@@ -162072,6 +166279,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogCreateNestedManyWithoutUserInput
     sessions?: UserSessionCreateNestedManyWithoutUserInput
     anticiposCreados?: AnticipoCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaCreateNestedManyWithoutCreadoPorInput
   }
 
@@ -162103,6 +166311,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUncheckedCreateNestedManyWithoutUserInput
     sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
     anticiposCreados?: AnticipoUncheckedCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput
   }
 
@@ -162150,6 +166359,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUpdateManyWithoutUserNestedInput
     anticiposCreados?: AnticipoUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUpdateManyWithoutCreadoPorNestedInput
   }
 
@@ -162181,6 +166391,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUncheckedUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
     anticiposCreados?: AnticipoUncheckedUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput
   }
 
@@ -162212,6 +166423,7 @@ export namespace Prisma {
     notifications?: NotificationCreateNestedManyWithoutUserInput
     sessions?: UserSessionCreateNestedManyWithoutUserInput
     anticiposCreados?: AnticipoCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaCreateNestedManyWithoutCreadoPorInput
   }
 
@@ -162243,6 +166455,7 @@ export namespace Prisma {
     notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
     sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
     anticiposCreados?: AnticipoUncheckedCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput
   }
 
@@ -162290,6 +166503,7 @@ export namespace Prisma {
     notifications?: NotificationUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUpdateManyWithoutUserNestedInput
     anticiposCreados?: AnticipoUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUpdateManyWithoutCreadoPorNestedInput
   }
 
@@ -162321,6 +166535,7 @@ export namespace Prisma {
     notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
     anticiposCreados?: AnticipoUncheckedUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput
   }
 
@@ -162352,6 +166567,7 @@ export namespace Prisma {
     notifications?: NotificationCreateNestedManyWithoutUserInput
     activityLogs?: UserActivityLogCreateNestedManyWithoutUserInput
     anticiposCreados?: AnticipoCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaCreateNestedManyWithoutCreadoPorInput
   }
 
@@ -162383,6 +166599,7 @@ export namespace Prisma {
     notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
     activityLogs?: UserActivityLogUncheckedCreateNestedManyWithoutUserInput
     anticiposCreados?: AnticipoUncheckedCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput
   }
 
@@ -162430,6 +166647,7 @@ export namespace Prisma {
     notifications?: NotificationUpdateManyWithoutUserNestedInput
     activityLogs?: UserActivityLogUpdateManyWithoutUserNestedInput
     anticiposCreados?: AnticipoUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUpdateManyWithoutCreadoPorNestedInput
   }
 
@@ -162461,6 +166679,7 @@ export namespace Prisma {
     notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
     activityLogs?: UserActivityLogUncheckedUpdateManyWithoutUserNestedInput
     anticiposCreados?: AnticipoUncheckedUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput
   }
 
@@ -163623,6 +167842,8 @@ export namespace Prisma {
     formaPago: string
     estado: string
     tipoOperacion?: string
+    deletedAt?: Date | string | null
+    updatedById?: string | null
     cuentaPorPagar?: CuentaPorPagarCreateNestedOneWithoutCompraProductoInput
     anticipo?: AnticipoCreateNestedOneWithoutCompraProductoInput
     producto: ProductoCreateNestedOneWithoutComprasInput
@@ -163646,12 +167867,57 @@ export namespace Prisma {
     formaPago: string
     estado: string
     tipoOperacion?: string
+    deletedAt?: Date | string | null
+    updatedById?: string | null
     anticipo?: AnticipoUncheckedCreateNestedOneWithoutCompraProductoInput
   }
 
   export type CompraProductoCreateOrConnectWithoutGastoCompraInput = {
     where: CompraProductoWhereUniqueInput
     create: XOR<CompraProductoCreateWithoutGastoCompraInput, CompraProductoUncheckedCreateWithoutGastoCompraInput>
+  }
+
+  export type CompraDocumentoCreateWithoutGastoCompraInput = {
+    compraDocumentoId?: string
+    numeroFactura?: string
+    facturaUrl?: string
+    formaPago: string
+    estado: string
+    tipoOperacion?: string
+    descripcion?: string | null
+    fechaCompra?: Date | string
+    total?: number
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    cuentaPorPagar?: CuentaPorPagarCreateNestedOneWithoutCompraDocumentoInput
+    proveedor: VendorCreateNestedOneWithoutCompraDocumentosInput
+    updatedBy?: UserCreateNestedOneWithoutCompraDocumentosEditadosInput
+    items?: CompraDocumentoItemCreateNestedManyWithoutCompraDocumentoInput
+  }
+
+  export type CompraDocumentoUncheckedCreateWithoutGastoCompraInput = {
+    compraDocumentoId?: string
+    proveedorId: string
+    numeroFactura?: string
+    facturaUrl?: string
+    formaPago: string
+    estado: string
+    tipoOperacion?: string
+    descripcion?: string | null
+    fechaCompra?: Date | string
+    total?: number
+    cuentaPorPagarId?: string | null
+    deletedAt?: Date | string | null
+    updatedById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    items?: CompraDocumentoItemUncheckedCreateNestedManyWithoutCompraDocumentoInput
+  }
+
+  export type CompraDocumentoCreateOrConnectWithoutGastoCompraInput = {
+    where: CompraDocumentoWhereUniqueInput
+    create: XOR<CompraDocumentoCreateWithoutGastoCompraInput, CompraDocumentoUncheckedCreateWithoutGastoCompraInput>
   }
 
   export type CuentaPorPagarCreateWithoutGastoCompraInput = {
@@ -163669,7 +167935,9 @@ export namespace Prisma {
     updatedAt?: Date | string
     tipo: $Enums.TipoCuentaPorPagar
     tipoDeuda?: string | null
+    deletedAt?: Date | string | null
     compraProducto?: CompraProductoCreateNestedOneWithoutCuentaPorPagarInput
+    compraDocumento?: CompraDocumentoCreateNestedOneWithoutCuentaPorPagarInput
     gastosDE?: GastosDECreateNestedOneWithoutCuentaPorPagarInput
     proveedor?: VendorCreateNestedOneWithoutCuentasPorPagarInput
     deudaCash?: DeudaCashCreateNestedOneWithoutCuentaPorPagarInput
@@ -163694,7 +167962,9 @@ export namespace Prisma {
     proveedorId?: string | null
     tipo: $Enums.TipoCuentaPorPagar
     tipoDeuda?: string | null
+    deletedAt?: Date | string | null
     compraProducto?: CompraProductoUncheckedCreateNestedOneWithoutCuentaPorPagarInput
+    compraDocumento?: CompraDocumentoUncheckedCreateNestedOneWithoutCuentaPorPagarInput
     deudaCash?: DeudaCashUncheckedCreateNestedOneWithoutCuentaPorPagarInput
     pagos?: PagoCuentaPorPagarUncheckedCreateNestedManyWithoutCuentaPorPagarInput
     reconciliaciones?: ReconciliacionGastoUncheckedCreateNestedManyWithoutCuentaPorPagarInput
@@ -163726,6 +167996,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
@@ -163776,6 +168047,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
@@ -163810,6 +168082,7 @@ export namespace Prisma {
     telefono?: string | null
     vendorCode?: string | null
     compras?: CompraProductoCreateNestedManyWithoutProveedorInput
+    compraDocumentos?: CompraDocumentoCreateNestedManyWithoutProveedorInput
     contratos?: ContratoCreateNestedManyWithoutVendorInput
     cuentasPorPagar?: CuentaPorPagarCreateNestedManyWithoutProveedorInput
     deudasCash?: DeudaCashCreateNestedManyWithoutProveedorInput
@@ -163832,6 +168105,7 @@ export namespace Prisma {
     telefono?: string | null
     vendorCode?: string | null
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProveedorInput
+    compraDocumentos?: CompraDocumentoUncheckedCreateNestedManyWithoutProveedorInput
     contratos?: ContratoUncheckedCreateNestedManyWithoutVendorInput
     cuentasPorPagar?: CuentaPorPagarUncheckedCreateNestedManyWithoutProveedorInput
     deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutProveedorInput
@@ -163928,6 +168202,8 @@ export namespace Prisma {
     formaPago?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     tipoOperacion?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
     cuentaPorPagar?: CuentaPorPagarUpdateOneWithoutCompraProductoNestedInput
     anticipo?: AnticipoUpdateOneWithoutCompraProductoNestedInput
     producto?: ProductoUpdateOneRequiredWithoutComprasNestedInput
@@ -163951,7 +168227,58 @@ export namespace Prisma {
     formaPago?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     tipoOperacion?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
     anticipo?: AnticipoUncheckedUpdateOneWithoutCompraProductoNestedInput
+  }
+
+  export type CompraDocumentoUpsertWithoutGastoCompraInput = {
+    update: XOR<CompraDocumentoUpdateWithoutGastoCompraInput, CompraDocumentoUncheckedUpdateWithoutGastoCompraInput>
+    create: XOR<CompraDocumentoCreateWithoutGastoCompraInput, CompraDocumentoUncheckedCreateWithoutGastoCompraInput>
+    where?: CompraDocumentoWhereInput
+  }
+
+  export type CompraDocumentoUpdateToOneWithWhereWithoutGastoCompraInput = {
+    where?: CompraDocumentoWhereInput
+    data: XOR<CompraDocumentoUpdateWithoutGastoCompraInput, CompraDocumentoUncheckedUpdateWithoutGastoCompraInput>
+  }
+
+  export type CompraDocumentoUpdateWithoutGastoCompraInput = {
+    compraDocumentoId?: StringFieldUpdateOperationsInput | string
+    numeroFactura?: StringFieldUpdateOperationsInput | string
+    facturaUrl?: StringFieldUpdateOperationsInput | string
+    formaPago?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    tipoOperacion?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaCompra?: DateTimeFieldUpdateOperationsInput | Date | string
+    total?: IntFieldUpdateOperationsInput | number
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cuentaPorPagar?: CuentaPorPagarUpdateOneWithoutCompraDocumentoNestedInput
+    proveedor?: VendorUpdateOneRequiredWithoutCompraDocumentosNestedInput
+    updatedBy?: UserUpdateOneWithoutCompraDocumentosEditadosNestedInput
+    items?: CompraDocumentoItemUpdateManyWithoutCompraDocumentoNestedInput
+  }
+
+  export type CompraDocumentoUncheckedUpdateWithoutGastoCompraInput = {
+    compraDocumentoId?: StringFieldUpdateOperationsInput | string
+    proveedorId?: StringFieldUpdateOperationsInput | string
+    numeroFactura?: StringFieldUpdateOperationsInput | string
+    facturaUrl?: StringFieldUpdateOperationsInput | string
+    formaPago?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    tipoOperacion?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaCompra?: DateTimeFieldUpdateOperationsInput | Date | string
+    total?: IntFieldUpdateOperationsInput | number
+    cuentaPorPagarId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    items?: CompraDocumentoItemUncheckedUpdateManyWithoutCompraDocumentoNestedInput
   }
 
   export type CuentaPorPagarUpsertWithoutGastoCompraInput = {
@@ -163980,7 +168307,9 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     tipo?: EnumTipoCuentaPorPagarFieldUpdateOperationsInput | $Enums.TipoCuentaPorPagar
     tipoDeuda?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     compraProducto?: CompraProductoUpdateOneWithoutCuentaPorPagarNestedInput
+    compraDocumento?: CompraDocumentoUpdateOneWithoutCuentaPorPagarNestedInput
     gastosDE?: GastosDEUpdateOneWithoutCuentaPorPagarNestedInput
     proveedor?: VendorUpdateOneWithoutCuentasPorPagarNestedInput
     deudaCash?: DeudaCashUpdateOneWithoutCuentaPorPagarNestedInput
@@ -164005,7 +168334,9 @@ export namespace Prisma {
     proveedorId?: NullableStringFieldUpdateOperationsInput | string | null
     tipo?: EnumTipoCuentaPorPagarFieldUpdateOperationsInput | $Enums.TipoCuentaPorPagar
     tipoDeuda?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     compraProducto?: CompraProductoUncheckedUpdateOneWithoutCuentaPorPagarNestedInput
+    compraDocumento?: CompraDocumentoUncheckedUpdateOneWithoutCuentaPorPagarNestedInput
     deudaCash?: DeudaCashUncheckedUpdateOneWithoutCuentaPorPagarNestedInput
     pagos?: PagoCuentaPorPagarUncheckedUpdateManyWithoutCuentaPorPagarNestedInput
     reconciliaciones?: ReconciliacionGastoUncheckedUpdateManyWithoutCuentaPorPagarNestedInput
@@ -164043,6 +168374,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
@@ -164093,6 +168425,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
@@ -164133,6 +168466,7 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     vendorCode?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUpdateManyWithoutProveedorNestedInput
+    compraDocumentos?: CompraDocumentoUpdateManyWithoutProveedorNestedInput
     contratos?: ContratoUpdateManyWithoutVendorNestedInput
     cuentasPorPagar?: CuentaPorPagarUpdateManyWithoutProveedorNestedInput
     deudasCash?: DeudaCashUpdateManyWithoutProveedorNestedInput
@@ -164155,6 +168489,7 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     vendorCode?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUncheckedUpdateManyWithoutProveedorNestedInput
+    compraDocumentos?: CompraDocumentoUncheckedUpdateManyWithoutProveedorNestedInput
     contratos?: ContratoUncheckedUpdateManyWithoutVendorNestedInput
     cuentasPorPagar?: CuentaPorPagarUncheckedUpdateManyWithoutProveedorNestedInput
     deudasCash?: DeudaCashUncheckedUpdateManyWithoutProveedorNestedInput
@@ -164194,6 +168529,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     tipo: $Enums.TipoCuentaPorPagar
     tipoDeuda?: string | null
+    deletedAt?: Date | string | null
+    compraDocumento?: CompraDocumentoCreateNestedOneWithoutCuentaPorPagarInput
     gastoCompra?: GastoCompraCreateNestedOneWithoutCuentaPorPagarInput
     gastosDE?: GastosDECreateNestedOneWithoutCuentaPorPagarInput
     proveedor?: VendorCreateNestedOneWithoutCuentasPorPagarInput
@@ -164220,6 +168557,8 @@ export namespace Prisma {
     proveedorId?: string | null
     tipo: $Enums.TipoCuentaPorPagar
     tipoDeuda?: string | null
+    deletedAt?: Date | string | null
+    compraDocumento?: CompraDocumentoUncheckedCreateNestedOneWithoutCuentaPorPagarInput
     deudaCash?: DeudaCashUncheckedCreateNestedOneWithoutCuentaPorPagarInput
     pagos?: PagoCuentaPorPagarUncheckedCreateNestedManyWithoutCuentaPorPagarInput
     reconciliaciones?: ReconciliacionGastoUncheckedCreateNestedManyWithoutCuentaPorPagarInput
@@ -164241,6 +168580,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     periodo?: string | null
     numeroFactura?: string | null
+    deletedAt?: Date | string | null
+    compraDocumento?: CompraDocumentoCreateNestedOneWithoutGastoCompraInput
     cuentaPorPagar?: CuentaPorPagarCreateNestedOneWithoutGastoCompraInput
     producto: ProductoCreateNestedOneWithoutGastoComprasInput
     vendor: VendorCreateNestedOneWithoutGastoComprasInput
@@ -164260,6 +168601,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     periodo?: string | null
     numeroFactura?: string | null
+    deletedAt?: Date | string | null
+    compraDocumento?: CompraDocumentoUncheckedCreateNestedOneWithoutGastoCompraInput
     cuentaPorPagar?: CuentaPorPagarUncheckedCreateNestedOneWithoutGastoCompraInput
     reconciliaciones?: ReconciliacionGastoUncheckedCreateNestedManyWithoutGastoCompraInput
   }
@@ -164340,6 +168683,7 @@ export namespace Prisma {
     surtidoCodigo?: string | null
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    compraDocumentoItems?: CompraDocumentoItemCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
@@ -164390,6 +168734,7 @@ export namespace Prisma {
     surtidoCodigo?: string | null
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
+    compraDocumentoItems?: CompraDocumentoItemUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
@@ -164424,6 +168769,7 @@ export namespace Prisma {
     logo?: string | null
     telefono?: string | null
     vendorCode?: string | null
+    compraDocumentos?: CompraDocumentoCreateNestedManyWithoutProveedorInput
     contratos?: ContratoCreateNestedManyWithoutVendorInput
     cuentasPorPagar?: CuentaPorPagarCreateNestedManyWithoutProveedorInput
     deudasCash?: DeudaCashCreateNestedManyWithoutProveedorInput
@@ -164446,6 +168792,7 @@ export namespace Prisma {
     logo?: string | null
     telefono?: string | null
     vendorCode?: string | null
+    compraDocumentos?: CompraDocumentoUncheckedCreateNestedManyWithoutProveedorInput
     contratos?: ContratoUncheckedCreateNestedManyWithoutVendorInput
     cuentasPorPagar?: CuentaPorPagarUncheckedCreateNestedManyWithoutProveedorInput
     deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutProveedorInput
@@ -164486,6 +168833,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     tipo?: EnumTipoCuentaPorPagarFieldUpdateOperationsInput | $Enums.TipoCuentaPorPagar
     tipoDeuda?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    compraDocumento?: CompraDocumentoUpdateOneWithoutCuentaPorPagarNestedInput
     gastoCompra?: GastoCompraUpdateOneWithoutCuentaPorPagarNestedInput
     gastosDE?: GastosDEUpdateOneWithoutCuentaPorPagarNestedInput
     proveedor?: VendorUpdateOneWithoutCuentasPorPagarNestedInput
@@ -164512,6 +168861,8 @@ export namespace Prisma {
     proveedorId?: NullableStringFieldUpdateOperationsInput | string | null
     tipo?: EnumTipoCuentaPorPagarFieldUpdateOperationsInput | $Enums.TipoCuentaPorPagar
     tipoDeuda?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    compraDocumento?: CompraDocumentoUncheckedUpdateOneWithoutCuentaPorPagarNestedInput
     deudaCash?: DeudaCashUncheckedUpdateOneWithoutCuentaPorPagarNestedInput
     pagos?: PagoCuentaPorPagarUncheckedUpdateManyWithoutCuentaPorPagarNestedInput
     reconciliaciones?: ReconciliacionGastoUncheckedUpdateManyWithoutCuentaPorPagarNestedInput
@@ -164539,6 +168890,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     periodo?: NullableStringFieldUpdateOperationsInput | string | null
     numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    compraDocumento?: CompraDocumentoUpdateOneWithoutGastoCompraNestedInput
     cuentaPorPagar?: CuentaPorPagarUpdateOneWithoutGastoCompraNestedInput
     producto?: ProductoUpdateOneRequiredWithoutGastoComprasNestedInput
     vendor?: VendorUpdateOneRequiredWithoutGastoComprasNestedInput
@@ -164558,6 +168911,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     periodo?: NullableStringFieldUpdateOperationsInput | string | null
     numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    compraDocumento?: CompraDocumentoUncheckedUpdateOneWithoutGastoCompraNestedInput
     cuentaPorPagar?: CuentaPorPagarUncheckedUpdateOneWithoutGastoCompraNestedInput
     reconciliaciones?: ReconciliacionGastoUncheckedUpdateManyWithoutGastoCompraNestedInput
   }
@@ -164650,6 +169005,7 @@ export namespace Prisma {
     surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    compraDocumentoItems?: CompraDocumentoItemUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
@@ -164700,6 +169056,7 @@ export namespace Prisma {
     surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
+    compraDocumentoItems?: CompraDocumentoItemUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
@@ -164740,6 +169097,7 @@ export namespace Prisma {
     logo?: NullableStringFieldUpdateOperationsInput | string | null
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     vendorCode?: NullableStringFieldUpdateOperationsInput | string | null
+    compraDocumentos?: CompraDocumentoUpdateManyWithoutProveedorNestedInput
     contratos?: ContratoUpdateManyWithoutVendorNestedInput
     cuentasPorPagar?: CuentaPorPagarUpdateManyWithoutProveedorNestedInput
     deudasCash?: DeudaCashUpdateManyWithoutProveedorNestedInput
@@ -164762,6 +169120,7 @@ export namespace Prisma {
     logo?: NullableStringFieldUpdateOperationsInput | string | null
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     vendorCode?: NullableStringFieldUpdateOperationsInput | string | null
+    compraDocumentos?: CompraDocumentoUncheckedUpdateManyWithoutProveedorNestedInput
     contratos?: ContratoUncheckedUpdateManyWithoutVendorNestedInput
     cuentasPorPagar?: CuentaPorPagarUncheckedUpdateManyWithoutProveedorNestedInput
     deudasCash?: DeudaCashUncheckedUpdateManyWithoutProveedorNestedInput
@@ -164769,6 +169128,796 @@ export namespace Prisma {
     anticipos?: AnticipoUncheckedUpdateManyWithoutProveedorNestedInput
     productos?: ProductoUncheckedUpdateManyWithoutVendorNestedInput
     compraServicios?: CompraServicioUncheckedUpdateManyWithoutProveedorNestedInput
+  }
+
+  export type CuentaPorPagarCreateWithoutCompraDocumentoInput = {
+    cuentaPorPagarId?: string
+    numeroFactura: string
+    proveedorNombre?: string | null
+    montoDeuda: Decimal | DecimalJsLike | number | string
+    montoPagado?: Decimal | DecimalJsLike | number | string
+    saldoPendiente: Decimal | DecimalJsLike | number | string
+    moneda?: string
+    fechaEmision?: Date | string
+    fechaVencimiento?: Date | string | null
+    estado?: $Enums.EstadoCuentaPorPagar
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    tipo: $Enums.TipoCuentaPorPagar
+    tipoDeuda?: string | null
+    deletedAt?: Date | string | null
+    compraProducto?: CompraProductoCreateNestedOneWithoutCuentaPorPagarInput
+    gastoCompra?: GastoCompraCreateNestedOneWithoutCuentaPorPagarInput
+    gastosDE?: GastosDECreateNestedOneWithoutCuentaPorPagarInput
+    proveedor?: VendorCreateNestedOneWithoutCuentasPorPagarInput
+    deudaCash?: DeudaCashCreateNestedOneWithoutCuentaPorPagarInput
+    pagos?: PagoCuentaPorPagarCreateNestedManyWithoutCuentaPorPagarInput
+    reconciliaciones?: ReconciliacionGastoCreateNestedManyWithoutCuentaPorPagarInput
+  }
+
+  export type CuentaPorPagarUncheckedCreateWithoutCompraDocumentoInput = {
+    cuentaPorPagarId?: string
+    numeroFactura: string
+    gastoCompraId?: string | null
+    gastosDEId?: string | null
+    proveedorNombre?: string | null
+    montoDeuda: Decimal | DecimalJsLike | number | string
+    montoPagado?: Decimal | DecimalJsLike | number | string
+    saldoPendiente: Decimal | DecimalJsLike | number | string
+    moneda?: string
+    fechaEmision?: Date | string
+    fechaVencimiento?: Date | string | null
+    estado?: $Enums.EstadoCuentaPorPagar
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    proveedorId?: string | null
+    tipo: $Enums.TipoCuentaPorPagar
+    tipoDeuda?: string | null
+    deletedAt?: Date | string | null
+    compraProducto?: CompraProductoUncheckedCreateNestedOneWithoutCuentaPorPagarInput
+    deudaCash?: DeudaCashUncheckedCreateNestedOneWithoutCuentaPorPagarInput
+    pagos?: PagoCuentaPorPagarUncheckedCreateNestedManyWithoutCuentaPorPagarInput
+    reconciliaciones?: ReconciliacionGastoUncheckedCreateNestedManyWithoutCuentaPorPagarInput
+  }
+
+  export type CuentaPorPagarCreateOrConnectWithoutCompraDocumentoInput = {
+    where: CuentaPorPagarWhereUniqueInput
+    create: XOR<CuentaPorPagarCreateWithoutCompraDocumentoInput, CuentaPorPagarUncheckedCreateWithoutCompraDocumentoInput>
+  }
+
+  export type GastoCompraCreateWithoutCompraDocumentoInput = {
+    gastoCompraId?: string
+    cantidad: number
+    precioUnitario: number
+    total: number
+    fechaCompra?: Date | string
+    descripcion?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    periodo?: string | null
+    numeroFactura?: string | null
+    deletedAt?: Date | string | null
+    compraProducto?: CompraProductoCreateNestedOneWithoutGastoCompraInput
+    cuentaPorPagar?: CuentaPorPagarCreateNestedOneWithoutGastoCompraInput
+    producto: ProductoCreateNestedOneWithoutGastoComprasInput
+    vendor: VendorCreateNestedOneWithoutGastoComprasInput
+    reconciliaciones?: ReconciliacionGastoCreateNestedManyWithoutGastoCompraInput
+  }
+
+  export type GastoCompraUncheckedCreateWithoutCompraDocumentoInput = {
+    gastoCompraId?: string
+    productoId: string
+    vendorId: string
+    cantidad: number
+    precioUnitario: number
+    total: number
+    fechaCompra?: Date | string
+    descripcion?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    periodo?: string | null
+    numeroFactura?: string | null
+    deletedAt?: Date | string | null
+    compraProducto?: CompraProductoUncheckedCreateNestedOneWithoutGastoCompraInput
+    cuentaPorPagar?: CuentaPorPagarUncheckedCreateNestedOneWithoutGastoCompraInput
+    reconciliaciones?: ReconciliacionGastoUncheckedCreateNestedManyWithoutGastoCompraInput
+  }
+
+  export type GastoCompraCreateOrConnectWithoutCompraDocumentoInput = {
+    where: GastoCompraWhereUniqueInput
+    create: XOR<GastoCompraCreateWithoutCompraDocumentoInput, GastoCompraUncheckedCreateWithoutCompraDocumentoInput>
+  }
+
+  export type VendorCreateWithoutCompraDocumentosInput = {
+    vendorId?: string
+    nombre: string
+    contacto?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    contrato?: string | null
+    cuentaCUP?: string | null
+    cuentaUSD?: string | null
+    direccion?: string | null
+    logo?: string | null
+    telefono?: string | null
+    vendorCode?: string | null
+    compras?: CompraProductoCreateNestedManyWithoutProveedorInput
+    contratos?: ContratoCreateNestedManyWithoutVendorInput
+    cuentasPorPagar?: CuentaPorPagarCreateNestedManyWithoutProveedorInput
+    deudasCash?: DeudaCashCreateNestedManyWithoutProveedorInput
+    gastoCompras?: GastoCompraCreateNestedManyWithoutVendorInput
+    anticipos?: AnticipoCreateNestedManyWithoutProveedorInput
+    productos?: ProductoCreateNestedManyWithoutVendorInput
+    compraServicios?: CompraServicioCreateNestedManyWithoutProveedorInput
+  }
+
+  export type VendorUncheckedCreateWithoutCompraDocumentosInput = {
+    vendorId?: string
+    nombre: string
+    contacto?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    contrato?: string | null
+    cuentaCUP?: string | null
+    cuentaUSD?: string | null
+    direccion?: string | null
+    logo?: string | null
+    telefono?: string | null
+    vendorCode?: string | null
+    compras?: CompraProductoUncheckedCreateNestedManyWithoutProveedorInput
+    contratos?: ContratoUncheckedCreateNestedManyWithoutVendorInput
+    cuentasPorPagar?: CuentaPorPagarUncheckedCreateNestedManyWithoutProveedorInput
+    deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutProveedorInput
+    gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutVendorInput
+    anticipos?: AnticipoUncheckedCreateNestedManyWithoutProveedorInput
+    productos?: ProductoUncheckedCreateNestedManyWithoutVendorInput
+    compraServicios?: CompraServicioUncheckedCreateNestedManyWithoutProveedorInput
+  }
+
+  export type VendorCreateOrConnectWithoutCompraDocumentosInput = {
+    where: VendorWhereUniqueInput
+    create: XOR<VendorCreateWithoutCompraDocumentosInput, VendorUncheckedCreateWithoutCompraDocumentosInput>
+  }
+
+  export type UserCreateWithoutCompraDocumentosEditadosInput = {
+    userId?: string
+    name: string
+    email: string
+    password: string
+    role?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    activatedAt?: Date | string | null
+    avatar?: string | null
+    expiresAt?: Date | string | null
+    isActive?: boolean
+    lastFailedLogin?: Date | string | null
+    lastModifiedBy?: string | null
+    lockedUntil?: Date | string | null
+    loginAttempts?: number
+    contratosAprobados?: ContratoCreateNestedManyWithoutAprobadorInput
+    contratosCreados?: ContratoCreateNestedManyWithoutCreadorInput
+    contratoAprobaciones?: ContratoAprobacionCreateNestedManyWithoutAprobadorInput
+    contratoArchivos?: ContratoArchivoCreateNestedManyWithoutGeneradorInput
+    contratoFirmas?: ContratoFirmaCreateNestedManyWithoutFirmanteInput
+    contratoVersiones?: ContratoVersionCreateNestedManyWithoutCreadorInput
+    tiposContratosCustom?: TipoContratoCustomCreateNestedManyWithoutCreadorInput
+    licencias?: LicenciaCreateNestedManyWithoutUsuarioInput
+    licenciasAudit?: LicenciaAuditCreateNestedManyWithoutActorInput
+    notifications?: NotificationCreateNestedManyWithoutUserInput
+    activityLogs?: UserActivityLogCreateNestedManyWithoutUserInput
+    sessions?: UserSessionCreateNestedManyWithoutUserInput
+    anticiposCreados?: AnticipoCreateNestedManyWithoutCreadorInput
+    transferenciasCreadas?: TransferenciaCreateNestedManyWithoutCreadoPorInput
+  }
+
+  export type UserUncheckedCreateWithoutCompraDocumentosEditadosInput = {
+    userId?: string
+    name: string
+    email: string
+    password: string
+    role?: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    activatedAt?: Date | string | null
+    avatar?: string | null
+    expiresAt?: Date | string | null
+    isActive?: boolean
+    lastFailedLogin?: Date | string | null
+    lastModifiedBy?: string | null
+    lockedUntil?: Date | string | null
+    loginAttempts?: number
+    contratosAprobados?: ContratoUncheckedCreateNestedManyWithoutAprobadorInput
+    contratosCreados?: ContratoUncheckedCreateNestedManyWithoutCreadorInput
+    contratoAprobaciones?: ContratoAprobacionUncheckedCreateNestedManyWithoutAprobadorInput
+    contratoArchivos?: ContratoArchivoUncheckedCreateNestedManyWithoutGeneradorInput
+    contratoFirmas?: ContratoFirmaUncheckedCreateNestedManyWithoutFirmanteInput
+    contratoVersiones?: ContratoVersionUncheckedCreateNestedManyWithoutCreadorInput
+    tiposContratosCustom?: TipoContratoCustomUncheckedCreateNestedManyWithoutCreadorInput
+    licencias?: LicenciaUncheckedCreateNestedManyWithoutUsuarioInput
+    licenciasAudit?: LicenciaAuditUncheckedCreateNestedManyWithoutActorInput
+    notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
+    activityLogs?: UserActivityLogUncheckedCreateNestedManyWithoutUserInput
+    sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
+    anticiposCreados?: AnticipoUncheckedCreateNestedManyWithoutCreadorInput
+    transferenciasCreadas?: TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput
+  }
+
+  export type UserCreateOrConnectWithoutCompraDocumentosEditadosInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutCompraDocumentosEditadosInput, UserUncheckedCreateWithoutCompraDocumentosEditadosInput>
+  }
+
+  export type CompraDocumentoItemCreateWithoutCompraDocumentoInput = {
+    compraDocumentoItemId?: string
+    cantidad: number
+    precioUnitario: number
+    totalLinea: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    producto: ProductoCreateNestedOneWithoutCompraDocumentoItemsInput
+  }
+
+  export type CompraDocumentoItemUncheckedCreateWithoutCompraDocumentoInput = {
+    compraDocumentoItemId?: string
+    productoId: string
+    cantidad: number
+    precioUnitario: number
+    totalLinea: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CompraDocumentoItemCreateOrConnectWithoutCompraDocumentoInput = {
+    where: CompraDocumentoItemWhereUniqueInput
+    create: XOR<CompraDocumentoItemCreateWithoutCompraDocumentoInput, CompraDocumentoItemUncheckedCreateWithoutCompraDocumentoInput>
+  }
+
+  export type CompraDocumentoItemCreateManyCompraDocumentoInputEnvelope = {
+    data: CompraDocumentoItemCreateManyCompraDocumentoInput | CompraDocumentoItemCreateManyCompraDocumentoInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type CuentaPorPagarUpsertWithoutCompraDocumentoInput = {
+    update: XOR<CuentaPorPagarUpdateWithoutCompraDocumentoInput, CuentaPorPagarUncheckedUpdateWithoutCompraDocumentoInput>
+    create: XOR<CuentaPorPagarCreateWithoutCompraDocumentoInput, CuentaPorPagarUncheckedCreateWithoutCompraDocumentoInput>
+    where?: CuentaPorPagarWhereInput
+  }
+
+  export type CuentaPorPagarUpdateToOneWithWhereWithoutCompraDocumentoInput = {
+    where?: CuentaPorPagarWhereInput
+    data: XOR<CuentaPorPagarUpdateWithoutCompraDocumentoInput, CuentaPorPagarUncheckedUpdateWithoutCompraDocumentoInput>
+  }
+
+  export type CuentaPorPagarUpdateWithoutCompraDocumentoInput = {
+    cuentaPorPagarId?: StringFieldUpdateOperationsInput | string
+    numeroFactura?: StringFieldUpdateOperationsInput | string
+    proveedorNombre?: NullableStringFieldUpdateOperationsInput | string | null
+    montoDeuda?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    montoPagado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoPendiente?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    fechaEmision?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    estado?: EnumEstadoCuentaPorPagarFieldUpdateOperationsInput | $Enums.EstadoCuentaPorPagar
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tipo?: EnumTipoCuentaPorPagarFieldUpdateOperationsInput | $Enums.TipoCuentaPorPagar
+    tipoDeuda?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    compraProducto?: CompraProductoUpdateOneWithoutCuentaPorPagarNestedInput
+    gastoCompra?: GastoCompraUpdateOneWithoutCuentaPorPagarNestedInput
+    gastosDE?: GastosDEUpdateOneWithoutCuentaPorPagarNestedInput
+    proveedor?: VendorUpdateOneWithoutCuentasPorPagarNestedInput
+    deudaCash?: DeudaCashUpdateOneWithoutCuentaPorPagarNestedInput
+    pagos?: PagoCuentaPorPagarUpdateManyWithoutCuentaPorPagarNestedInput
+    reconciliaciones?: ReconciliacionGastoUpdateManyWithoutCuentaPorPagarNestedInput
+  }
+
+  export type CuentaPorPagarUncheckedUpdateWithoutCompraDocumentoInput = {
+    cuentaPorPagarId?: StringFieldUpdateOperationsInput | string
+    numeroFactura?: StringFieldUpdateOperationsInput | string
+    gastoCompraId?: NullableStringFieldUpdateOperationsInput | string | null
+    gastosDEId?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorNombre?: NullableStringFieldUpdateOperationsInput | string | null
+    montoDeuda?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    montoPagado?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoPendiente?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    fechaEmision?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaVencimiento?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    estado?: EnumEstadoCuentaPorPagarFieldUpdateOperationsInput | $Enums.EstadoCuentaPorPagar
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    proveedorId?: NullableStringFieldUpdateOperationsInput | string | null
+    tipo?: EnumTipoCuentaPorPagarFieldUpdateOperationsInput | $Enums.TipoCuentaPorPagar
+    tipoDeuda?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    compraProducto?: CompraProductoUncheckedUpdateOneWithoutCuentaPorPagarNestedInput
+    deudaCash?: DeudaCashUncheckedUpdateOneWithoutCuentaPorPagarNestedInput
+    pagos?: PagoCuentaPorPagarUncheckedUpdateManyWithoutCuentaPorPagarNestedInput
+    reconciliaciones?: ReconciliacionGastoUncheckedUpdateManyWithoutCuentaPorPagarNestedInput
+  }
+
+  export type GastoCompraUpsertWithoutCompraDocumentoInput = {
+    update: XOR<GastoCompraUpdateWithoutCompraDocumentoInput, GastoCompraUncheckedUpdateWithoutCompraDocumentoInput>
+    create: XOR<GastoCompraCreateWithoutCompraDocumentoInput, GastoCompraUncheckedCreateWithoutCompraDocumentoInput>
+    where?: GastoCompraWhereInput
+  }
+
+  export type GastoCompraUpdateToOneWithWhereWithoutCompraDocumentoInput = {
+    where?: GastoCompraWhereInput
+    data: XOR<GastoCompraUpdateWithoutCompraDocumentoInput, GastoCompraUncheckedUpdateWithoutCompraDocumentoInput>
+  }
+
+  export type GastoCompraUpdateWithoutCompraDocumentoInput = {
+    gastoCompraId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    precioUnitario?: IntFieldUpdateOperationsInput | number
+    total?: IntFieldUpdateOperationsInput | number
+    fechaCompra?: DateTimeFieldUpdateOperationsInput | Date | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    periodo?: NullableStringFieldUpdateOperationsInput | string | null
+    numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    compraProducto?: CompraProductoUpdateOneWithoutGastoCompraNestedInput
+    cuentaPorPagar?: CuentaPorPagarUpdateOneWithoutGastoCompraNestedInput
+    producto?: ProductoUpdateOneRequiredWithoutGastoComprasNestedInput
+    vendor?: VendorUpdateOneRequiredWithoutGastoComprasNestedInput
+    reconciliaciones?: ReconciliacionGastoUpdateManyWithoutGastoCompraNestedInput
+  }
+
+  export type GastoCompraUncheckedUpdateWithoutCompraDocumentoInput = {
+    gastoCompraId?: StringFieldUpdateOperationsInput | string
+    productoId?: StringFieldUpdateOperationsInput | string
+    vendorId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    precioUnitario?: IntFieldUpdateOperationsInput | number
+    total?: IntFieldUpdateOperationsInput | number
+    fechaCompra?: DateTimeFieldUpdateOperationsInput | Date | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    periodo?: NullableStringFieldUpdateOperationsInput | string | null
+    numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    compraProducto?: CompraProductoUncheckedUpdateOneWithoutGastoCompraNestedInput
+    cuentaPorPagar?: CuentaPorPagarUncheckedUpdateOneWithoutGastoCompraNestedInput
+    reconciliaciones?: ReconciliacionGastoUncheckedUpdateManyWithoutGastoCompraNestedInput
+  }
+
+  export type VendorUpsertWithoutCompraDocumentosInput = {
+    update: XOR<VendorUpdateWithoutCompraDocumentosInput, VendorUncheckedUpdateWithoutCompraDocumentosInput>
+    create: XOR<VendorCreateWithoutCompraDocumentosInput, VendorUncheckedCreateWithoutCompraDocumentosInput>
+    where?: VendorWhereInput
+  }
+
+  export type VendorUpdateToOneWithWhereWithoutCompraDocumentosInput = {
+    where?: VendorWhereInput
+    data: XOR<VendorUpdateWithoutCompraDocumentosInput, VendorUncheckedUpdateWithoutCompraDocumentosInput>
+  }
+
+  export type VendorUpdateWithoutCompraDocumentosInput = {
+    vendorId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    contacto?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    contrato?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaCUP?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaUSD?: NullableStringFieldUpdateOperationsInput | string | null
+    direccion?: NullableStringFieldUpdateOperationsInput | string | null
+    logo?: NullableStringFieldUpdateOperationsInput | string | null
+    telefono?: NullableStringFieldUpdateOperationsInput | string | null
+    vendorCode?: NullableStringFieldUpdateOperationsInput | string | null
+    compras?: CompraProductoUpdateManyWithoutProveedorNestedInput
+    contratos?: ContratoUpdateManyWithoutVendorNestedInput
+    cuentasPorPagar?: CuentaPorPagarUpdateManyWithoutProveedorNestedInput
+    deudasCash?: DeudaCashUpdateManyWithoutProveedorNestedInput
+    gastoCompras?: GastoCompraUpdateManyWithoutVendorNestedInput
+    anticipos?: AnticipoUpdateManyWithoutProveedorNestedInput
+    productos?: ProductoUpdateManyWithoutVendorNestedInput
+    compraServicios?: CompraServicioUpdateManyWithoutProveedorNestedInput
+  }
+
+  export type VendorUncheckedUpdateWithoutCompraDocumentosInput = {
+    vendorId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    contacto?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    contrato?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaCUP?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaUSD?: NullableStringFieldUpdateOperationsInput | string | null
+    direccion?: NullableStringFieldUpdateOperationsInput | string | null
+    logo?: NullableStringFieldUpdateOperationsInput | string | null
+    telefono?: NullableStringFieldUpdateOperationsInput | string | null
+    vendorCode?: NullableStringFieldUpdateOperationsInput | string | null
+    compras?: CompraProductoUncheckedUpdateManyWithoutProveedorNestedInput
+    contratos?: ContratoUncheckedUpdateManyWithoutVendorNestedInput
+    cuentasPorPagar?: CuentaPorPagarUncheckedUpdateManyWithoutProveedorNestedInput
+    deudasCash?: DeudaCashUncheckedUpdateManyWithoutProveedorNestedInput
+    gastoCompras?: GastoCompraUncheckedUpdateManyWithoutVendorNestedInput
+    anticipos?: AnticipoUncheckedUpdateManyWithoutProveedorNestedInput
+    productos?: ProductoUncheckedUpdateManyWithoutVendorNestedInput
+    compraServicios?: CompraServicioUncheckedUpdateManyWithoutProveedorNestedInput
+  }
+
+  export type UserUpsertWithoutCompraDocumentosEditadosInput = {
+    update: XOR<UserUpdateWithoutCompraDocumentosEditadosInput, UserUncheckedUpdateWithoutCompraDocumentosEditadosInput>
+    create: XOR<UserCreateWithoutCompraDocumentosEditadosInput, UserUncheckedCreateWithoutCompraDocumentosEditadosInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutCompraDocumentosEditadosInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutCompraDocumentosEditadosInput, UserUncheckedUpdateWithoutCompraDocumentosEditadosInput>
+  }
+
+  export type UserUpdateWithoutCompraDocumentosEditadosInput = {
+    userId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    avatar?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    lastFailedLogin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastModifiedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    lockedUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    loginAttempts?: IntFieldUpdateOperationsInput | number
+    contratosAprobados?: ContratoUpdateManyWithoutAprobadorNestedInput
+    contratosCreados?: ContratoUpdateManyWithoutCreadorNestedInput
+    contratoAprobaciones?: ContratoAprobacionUpdateManyWithoutAprobadorNestedInput
+    contratoArchivos?: ContratoArchivoUpdateManyWithoutGeneradorNestedInput
+    contratoFirmas?: ContratoFirmaUpdateManyWithoutFirmanteNestedInput
+    contratoVersiones?: ContratoVersionUpdateManyWithoutCreadorNestedInput
+    tiposContratosCustom?: TipoContratoCustomUpdateManyWithoutCreadorNestedInput
+    licencias?: LicenciaUpdateManyWithoutUsuarioNestedInput
+    licenciasAudit?: LicenciaAuditUpdateManyWithoutActorNestedInput
+    notifications?: NotificationUpdateManyWithoutUserNestedInput
+    activityLogs?: UserActivityLogUpdateManyWithoutUserNestedInput
+    sessions?: UserSessionUpdateManyWithoutUserNestedInput
+    anticiposCreados?: AnticipoUpdateManyWithoutCreadorNestedInput
+    transferenciasCreadas?: TransferenciaUpdateManyWithoutCreadoPorNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutCompraDocumentosEditadosInput = {
+    userId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    role?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    avatar?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    lastFailedLogin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastModifiedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    lockedUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    loginAttempts?: IntFieldUpdateOperationsInput | number
+    contratosAprobados?: ContratoUncheckedUpdateManyWithoutAprobadorNestedInput
+    contratosCreados?: ContratoUncheckedUpdateManyWithoutCreadorNestedInput
+    contratoAprobaciones?: ContratoAprobacionUncheckedUpdateManyWithoutAprobadorNestedInput
+    contratoArchivos?: ContratoArchivoUncheckedUpdateManyWithoutGeneradorNestedInput
+    contratoFirmas?: ContratoFirmaUncheckedUpdateManyWithoutFirmanteNestedInput
+    contratoVersiones?: ContratoVersionUncheckedUpdateManyWithoutCreadorNestedInput
+    tiposContratosCustom?: TipoContratoCustomUncheckedUpdateManyWithoutCreadorNestedInput
+    licencias?: LicenciaUncheckedUpdateManyWithoutUsuarioNestedInput
+    licenciasAudit?: LicenciaAuditUncheckedUpdateManyWithoutActorNestedInput
+    notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
+    activityLogs?: UserActivityLogUncheckedUpdateManyWithoutUserNestedInput
+    sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
+    anticiposCreados?: AnticipoUncheckedUpdateManyWithoutCreadorNestedInput
+    transferenciasCreadas?: TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput
+  }
+
+  export type CompraDocumentoItemUpsertWithWhereUniqueWithoutCompraDocumentoInput = {
+    where: CompraDocumentoItemWhereUniqueInput
+    update: XOR<CompraDocumentoItemUpdateWithoutCompraDocumentoInput, CompraDocumentoItemUncheckedUpdateWithoutCompraDocumentoInput>
+    create: XOR<CompraDocumentoItemCreateWithoutCompraDocumentoInput, CompraDocumentoItemUncheckedCreateWithoutCompraDocumentoInput>
+  }
+
+  export type CompraDocumentoItemUpdateWithWhereUniqueWithoutCompraDocumentoInput = {
+    where: CompraDocumentoItemWhereUniqueInput
+    data: XOR<CompraDocumentoItemUpdateWithoutCompraDocumentoInput, CompraDocumentoItemUncheckedUpdateWithoutCompraDocumentoInput>
+  }
+
+  export type CompraDocumentoItemUpdateManyWithWhereWithoutCompraDocumentoInput = {
+    where: CompraDocumentoItemScalarWhereInput
+    data: XOR<CompraDocumentoItemUpdateManyMutationInput, CompraDocumentoItemUncheckedUpdateManyWithoutCompraDocumentoInput>
+  }
+
+  export type CompraDocumentoCreateWithoutItemsInput = {
+    compraDocumentoId?: string
+    numeroFactura?: string
+    facturaUrl?: string
+    formaPago: string
+    estado: string
+    tipoOperacion?: string
+    descripcion?: string | null
+    fechaCompra?: Date | string
+    total?: number
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    cuentaPorPagar?: CuentaPorPagarCreateNestedOneWithoutCompraDocumentoInput
+    gastoCompra?: GastoCompraCreateNestedOneWithoutCompraDocumentoInput
+    proveedor: VendorCreateNestedOneWithoutCompraDocumentosInput
+    updatedBy?: UserCreateNestedOneWithoutCompraDocumentosEditadosInput
+  }
+
+  export type CompraDocumentoUncheckedCreateWithoutItemsInput = {
+    compraDocumentoId?: string
+    proveedorId: string
+    numeroFactura?: string
+    facturaUrl?: string
+    formaPago: string
+    estado: string
+    tipoOperacion?: string
+    descripcion?: string | null
+    fechaCompra?: Date | string
+    total?: number
+    gastoCompraId?: string | null
+    cuentaPorPagarId?: string | null
+    deletedAt?: Date | string | null
+    updatedById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CompraDocumentoCreateOrConnectWithoutItemsInput = {
+    where: CompraDocumentoWhereUniqueInput
+    create: XOR<CompraDocumentoCreateWithoutItemsInput, CompraDocumentoUncheckedCreateWithoutItemsInput>
+  }
+
+  export type ProductoCreateWithoutCompraDocumentoItemsInput = {
+    nombre: string
+    descripcion?: string | null
+    precioCosto: number
+    precioVenta: number
+    stock: number
+    createdAt?: Date | string
+    id?: string
+    updatedAt?: Date | string
+    esCompuesto?: boolean
+    stockMinimo?: number
+    cantidadEnPack?: number | null
+    codigoInterno?: string | null
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
+    fotos?: ProductoCreatefotosInput | string[]
+    compras?: CompraProductoCreateNestedManyWithoutProductoInput
+    gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
+    mermas?: MermaCreateNestedManyWithoutProductoInput
+    ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
+    ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
+    precios?: PrecioProductoCreateNestedManyWithoutProductoInput
+    almacen: AlmacenCreateNestedOneWithoutProductosInput
+    categoria: CategoriaCreateNestedOneWithoutProductosInput
+    puntoDeVenta?: PuntoDeVentaCreateNestedOneWithoutProductosInput
+    productoPadre?: ProductoCreateNestedOneWithoutProductosHijosInput
+    productosHijos?: ProductoCreateNestedManyWithoutProductoPadreInput
+    subcategoria?: CategoriaCreateNestedOneWithoutProductosSubcategoriaInput
+    unidad?: UnidadCreateNestedOneWithoutProductosInput
+    vendor?: VendorCreateNestedOneWithoutProductosInput
+    costHistory?: ProductoCostHistoryCreateNestedManyWithoutProductoInput
+    Receta?: RecetaCreateNestedManyWithoutProductoInput
+    RecetaIngrediente?: RecetaIngredienteCreateNestedManyWithoutProductoInput
+    transferencias?: TransferenciaCreateNestedManyWithoutProductoInput
+    ValeSalidaItem?: ValeSalidaItemCreateNestedManyWithoutProductoInput
+    ventas?: VentaCreateNestedManyWithoutProductoInput
+    ventaItems?: VentaItemCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutProductoInput
+  }
+
+  export type ProductoUncheckedCreateWithoutCompraDocumentoItemsInput = {
+    nombre: string
+    descripcion?: string | null
+    precioCosto: number
+    precioVenta: number
+    stock: number
+    categoriaId: string
+    unidadId?: string | null
+    vendorId?: string | null
+    createdAt?: Date | string
+    id?: string
+    updatedAt?: Date | string
+    esCompuesto?: boolean
+    almacenId: string
+    puntoDeVentaId?: string | null
+    stockMinimo?: number
+    subcategoriaId?: string | null
+    cantidadEnPack?: number | null
+    productoPadreId?: string | null
+    codigoInterno?: string | null
+    codigoNegocio?: string | null
+    proveedorCodigo?: string | null
+    idSeccionCodigo?: string | null
+    especificoCodigo?: string | null
+    surtidoCodigo?: string | null
+    dcCodigo?: string | null
+    fotos?: ProductoCreatefotosInput | string[]
+    compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
+    gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
+    mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
+    ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
+    ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
+    precios?: PrecioProductoUncheckedCreateNestedManyWithoutProductoInput
+    productosHijos?: ProductoUncheckedCreateNestedManyWithoutProductoPadreInput
+    costHistory?: ProductoCostHistoryUncheckedCreateNestedManyWithoutProductoInput
+    Receta?: RecetaUncheckedCreateNestedManyWithoutProductoInput
+    RecetaIngrediente?: RecetaIngredienteUncheckedCreateNestedManyWithoutProductoInput
+    transferencias?: TransferenciaUncheckedCreateNestedManyWithoutProductoInput
+    ValeSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutProductoInput
+    ventas?: VentaUncheckedCreateNestedManyWithoutProductoInput
+    ventaItems?: VentaItemUncheckedCreateNestedManyWithoutProductoInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutProductoInput
+  }
+
+  export type ProductoCreateOrConnectWithoutCompraDocumentoItemsInput = {
+    where: ProductoWhereUniqueInput
+    create: XOR<ProductoCreateWithoutCompraDocumentoItemsInput, ProductoUncheckedCreateWithoutCompraDocumentoItemsInput>
+  }
+
+  export type CompraDocumentoUpsertWithoutItemsInput = {
+    update: XOR<CompraDocumentoUpdateWithoutItemsInput, CompraDocumentoUncheckedUpdateWithoutItemsInput>
+    create: XOR<CompraDocumentoCreateWithoutItemsInput, CompraDocumentoUncheckedCreateWithoutItemsInput>
+    where?: CompraDocumentoWhereInput
+  }
+
+  export type CompraDocumentoUpdateToOneWithWhereWithoutItemsInput = {
+    where?: CompraDocumentoWhereInput
+    data: XOR<CompraDocumentoUpdateWithoutItemsInput, CompraDocumentoUncheckedUpdateWithoutItemsInput>
+  }
+
+  export type CompraDocumentoUpdateWithoutItemsInput = {
+    compraDocumentoId?: StringFieldUpdateOperationsInput | string
+    numeroFactura?: StringFieldUpdateOperationsInput | string
+    facturaUrl?: StringFieldUpdateOperationsInput | string
+    formaPago?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    tipoOperacion?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaCompra?: DateTimeFieldUpdateOperationsInput | Date | string
+    total?: IntFieldUpdateOperationsInput | number
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cuentaPorPagar?: CuentaPorPagarUpdateOneWithoutCompraDocumentoNestedInput
+    gastoCompra?: GastoCompraUpdateOneWithoutCompraDocumentoNestedInput
+    proveedor?: VendorUpdateOneRequiredWithoutCompraDocumentosNestedInput
+    updatedBy?: UserUpdateOneWithoutCompraDocumentosEditadosNestedInput
+  }
+
+  export type CompraDocumentoUncheckedUpdateWithoutItemsInput = {
+    compraDocumentoId?: StringFieldUpdateOperationsInput | string
+    proveedorId?: StringFieldUpdateOperationsInput | string
+    numeroFactura?: StringFieldUpdateOperationsInput | string
+    facturaUrl?: StringFieldUpdateOperationsInput | string
+    formaPago?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    tipoOperacion?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaCompra?: DateTimeFieldUpdateOperationsInput | Date | string
+    total?: IntFieldUpdateOperationsInput | number
+    gastoCompraId?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaPorPagarId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type ProductoUpsertWithoutCompraDocumentoItemsInput = {
+    update: XOR<ProductoUpdateWithoutCompraDocumentoItemsInput, ProductoUncheckedUpdateWithoutCompraDocumentoItemsInput>
+    create: XOR<ProductoCreateWithoutCompraDocumentoItemsInput, ProductoUncheckedCreateWithoutCompraDocumentoItemsInput>
+    where?: ProductoWhereInput
+  }
+
+  export type ProductoUpdateToOneWithWhereWithoutCompraDocumentoItemsInput = {
+    where?: ProductoWhereInput
+    data: XOR<ProductoUpdateWithoutCompraDocumentoItemsInput, ProductoUncheckedUpdateWithoutCompraDocumentoItemsInput>
+  }
+
+  export type ProductoUpdateWithoutCompraDocumentoItemsInput = {
+    nombre?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    precioCosto?: IntFieldUpdateOperationsInput | number
+    precioVenta?: IntFieldUpdateOperationsInput | number
+    stock?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    id?: StringFieldUpdateOperationsInput | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    esCompuesto?: BoolFieldUpdateOperationsInput | boolean
+    stockMinimo?: IntFieldUpdateOperationsInput | number
+    cantidadEnPack?: NullableIntFieldUpdateOperationsInput | number | null
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    fotos?: ProductoUpdatefotosInput | string[]
+    compras?: CompraProductoUpdateManyWithoutProductoNestedInput
+    gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
+    mermas?: MermaUpdateManyWithoutProductoNestedInput
+    ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
+    ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
+    precios?: PrecioProductoUpdateManyWithoutProductoNestedInput
+    almacen?: AlmacenUpdateOneRequiredWithoutProductosNestedInput
+    categoria?: CategoriaUpdateOneRequiredWithoutProductosNestedInput
+    puntoDeVenta?: PuntoDeVentaUpdateOneWithoutProductosNestedInput
+    productoPadre?: ProductoUpdateOneWithoutProductosHijosNestedInput
+    productosHijos?: ProductoUpdateManyWithoutProductoPadreNestedInput
+    subcategoria?: CategoriaUpdateOneWithoutProductosSubcategoriaNestedInput
+    unidad?: UnidadUpdateOneWithoutProductosNestedInput
+    vendor?: VendorUpdateOneWithoutProductosNestedInput
+    costHistory?: ProductoCostHistoryUpdateManyWithoutProductoNestedInput
+    Receta?: RecetaUpdateManyWithoutProductoNestedInput
+    RecetaIngrediente?: RecetaIngredienteUpdateManyWithoutProductoNestedInput
+    transferencias?: TransferenciaUpdateManyWithoutProductoNestedInput
+    ValeSalidaItem?: ValeSalidaItemUpdateManyWithoutProductoNestedInput
+    ventas?: VentaUpdateManyWithoutProductoNestedInput
+    ventaItems?: VentaItemUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutProductoNestedInput
+  }
+
+  export type ProductoUncheckedUpdateWithoutCompraDocumentoItemsInput = {
+    nombre?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    precioCosto?: IntFieldUpdateOperationsInput | number
+    precioVenta?: IntFieldUpdateOperationsInput | number
+    stock?: IntFieldUpdateOperationsInput | number
+    categoriaId?: StringFieldUpdateOperationsInput | string
+    unidadId?: NullableStringFieldUpdateOperationsInput | string | null
+    vendorId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    id?: StringFieldUpdateOperationsInput | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    esCompuesto?: BoolFieldUpdateOperationsInput | boolean
+    almacenId?: StringFieldUpdateOperationsInput | string
+    puntoDeVentaId?: NullableStringFieldUpdateOperationsInput | string | null
+    stockMinimo?: IntFieldUpdateOperationsInput | number
+    subcategoriaId?: NullableStringFieldUpdateOperationsInput | string | null
+    cantidadEnPack?: NullableIntFieldUpdateOperationsInput | number | null
+    productoPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    codigoInterno?: NullableStringFieldUpdateOperationsInput | string | null
+    codigoNegocio?: NullableStringFieldUpdateOperationsInput | string | null
+    proveedorCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    idSeccionCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    especificoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    surtidoCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
+    fotos?: ProductoUpdatefotosInput | string[]
+    compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
+    gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
+    mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
+    ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
+    ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
+    precios?: PrecioProductoUncheckedUpdateManyWithoutProductoNestedInput
+    productosHijos?: ProductoUncheckedUpdateManyWithoutProductoPadreNestedInput
+    costHistory?: ProductoCostHistoryUncheckedUpdateManyWithoutProductoNestedInput
+    Receta?: RecetaUncheckedUpdateManyWithoutProductoNestedInput
+    RecetaIngrediente?: RecetaIngredienteUncheckedUpdateManyWithoutProductoNestedInput
+    transferencias?: TransferenciaUncheckedUpdateManyWithoutProductoNestedInput
+    ValeSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutProductoNestedInput
+    ventas?: VentaUncheckedUpdateManyWithoutProductoNestedInput
+    ventaItems?: VentaItemUncheckedUpdateManyWithoutProductoNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutProductoNestedInput
   }
 
   export type OfertaItemCreateWithoutServicioInput = {
@@ -165199,6 +170348,7 @@ export namespace Prisma {
     telefono?: string | null
     vendorCode?: string | null
     compras?: CompraProductoCreateNestedManyWithoutProveedorInput
+    compraDocumentos?: CompraDocumentoCreateNestedManyWithoutProveedorInput
     contratos?: ContratoCreateNestedManyWithoutVendorInput
     cuentasPorPagar?: CuentaPorPagarCreateNestedManyWithoutProveedorInput
     deudasCash?: DeudaCashCreateNestedManyWithoutProveedorInput
@@ -165221,6 +170371,7 @@ export namespace Prisma {
     telefono?: string | null
     vendorCode?: string | null
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProveedorInput
+    compraDocumentos?: CompraDocumentoUncheckedCreateNestedManyWithoutProveedorInput
     contratos?: ContratoUncheckedCreateNestedManyWithoutVendorInput
     cuentasPorPagar?: CuentaPorPagarUncheckedCreateNestedManyWithoutProveedorInput
     deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutProveedorInput
@@ -165292,6 +170443,7 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     vendorCode?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUpdateManyWithoutProveedorNestedInput
+    compraDocumentos?: CompraDocumentoUpdateManyWithoutProveedorNestedInput
     contratos?: ContratoUpdateManyWithoutVendorNestedInput
     cuentasPorPagar?: CuentaPorPagarUpdateManyWithoutProveedorNestedInput
     deudasCash?: DeudaCashUpdateManyWithoutProveedorNestedInput
@@ -165314,6 +170466,7 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     vendorCode?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUncheckedUpdateManyWithoutProveedorNestedInput
+    compraDocumentos?: CompraDocumentoUncheckedUpdateManyWithoutProveedorNestedInput
     contratos?: ContratoUncheckedUpdateManyWithoutVendorNestedInput
     cuentasPorPagar?: CuentaPorPagarUncheckedUpdateManyWithoutProveedorNestedInput
     deudasCash?: DeudaCashUncheckedUpdateManyWithoutProveedorNestedInput
@@ -165636,7 +170789,9 @@ export namespace Prisma {
     updatedAt?: Date | string
     tipo: $Enums.TipoCuentaPorPagar
     tipoDeuda?: string | null
+    deletedAt?: Date | string | null
     compraProducto?: CompraProductoCreateNestedOneWithoutCuentaPorPagarInput
+    compraDocumento?: CompraDocumentoCreateNestedOneWithoutCuentaPorPagarInput
     gastoCompra?: GastoCompraCreateNestedOneWithoutCuentaPorPagarInput
     proveedor?: VendorCreateNestedOneWithoutCuentasPorPagarInput
     deudaCash?: DeudaCashCreateNestedOneWithoutCuentaPorPagarInput
@@ -165661,7 +170816,9 @@ export namespace Prisma {
     proveedorId?: string | null
     tipo: $Enums.TipoCuentaPorPagar
     tipoDeuda?: string | null
+    deletedAt?: Date | string | null
     compraProducto?: CompraProductoUncheckedCreateNestedOneWithoutCuentaPorPagarInput
+    compraDocumento?: CompraDocumentoUncheckedCreateNestedOneWithoutCuentaPorPagarInput
     deudaCash?: DeudaCashUncheckedCreateNestedOneWithoutCuentaPorPagarInput
     pagos?: PagoCuentaPorPagarUncheckedCreateNestedManyWithoutCuentaPorPagarInput
     reconciliaciones?: ReconciliacionGastoUncheckedCreateNestedManyWithoutCuentaPorPagarInput
@@ -165818,7 +170975,9 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     tipo?: EnumTipoCuentaPorPagarFieldUpdateOperationsInput | $Enums.TipoCuentaPorPagar
     tipoDeuda?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     compraProducto?: CompraProductoUpdateOneWithoutCuentaPorPagarNestedInput
+    compraDocumento?: CompraDocumentoUpdateOneWithoutCuentaPorPagarNestedInput
     gastoCompra?: GastoCompraUpdateOneWithoutCuentaPorPagarNestedInput
     proveedor?: VendorUpdateOneWithoutCuentasPorPagarNestedInput
     deudaCash?: DeudaCashUpdateOneWithoutCuentaPorPagarNestedInput
@@ -165843,7 +171002,9 @@ export namespace Prisma {
     proveedorId?: NullableStringFieldUpdateOperationsInput | string | null
     tipo?: EnumTipoCuentaPorPagarFieldUpdateOperationsInput | $Enums.TipoCuentaPorPagar
     tipoDeuda?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     compraProducto?: CompraProductoUncheckedUpdateOneWithoutCuentaPorPagarNestedInput
+    compraDocumento?: CompraDocumentoUncheckedUpdateOneWithoutCuentaPorPagarNestedInput
     deudaCash?: DeudaCashUncheckedUpdateOneWithoutCuentaPorPagarNestedInput
     pagos?: PagoCuentaPorPagarUncheckedUpdateManyWithoutCuentaPorPagarNestedInput
     reconciliaciones?: ReconciliacionGastoUncheckedUpdateManyWithoutCuentaPorPagarNestedInput
@@ -167888,7 +173049,9 @@ export namespace Prisma {
     updatedAt?: Date | string
     tipo: $Enums.TipoCuentaPorPagar
     tipoDeuda?: string | null
+    deletedAt?: Date | string | null
     compraProducto?: CompraProductoCreateNestedOneWithoutCuentaPorPagarInput
+    compraDocumento?: CompraDocumentoCreateNestedOneWithoutCuentaPorPagarInput
     gastoCompra?: GastoCompraCreateNestedOneWithoutCuentaPorPagarInput
     gastosDE?: GastosDECreateNestedOneWithoutCuentaPorPagarInput
     proveedor?: VendorCreateNestedOneWithoutCuentasPorPagarInput
@@ -167914,7 +173077,9 @@ export namespace Prisma {
     proveedorId?: string | null
     tipo: $Enums.TipoCuentaPorPagar
     tipoDeuda?: string | null
+    deletedAt?: Date | string | null
     compraProducto?: CompraProductoUncheckedCreateNestedOneWithoutCuentaPorPagarInput
+    compraDocumento?: CompraDocumentoUncheckedCreateNestedOneWithoutCuentaPorPagarInput
     deudaCash?: DeudaCashUncheckedCreateNestedOneWithoutCuentaPorPagarInput
     pagos?: PagoCuentaPorPagarUncheckedCreateNestedManyWithoutCuentaPorPagarInput
   }
@@ -167935,7 +173100,9 @@ export namespace Prisma {
     updatedAt?: Date | string
     periodo?: string | null
     numeroFactura?: string | null
+    deletedAt?: Date | string | null
     compraProducto?: CompraProductoCreateNestedOneWithoutGastoCompraInput
+    compraDocumento?: CompraDocumentoCreateNestedOneWithoutGastoCompraInput
     cuentaPorPagar?: CuentaPorPagarCreateNestedOneWithoutGastoCompraInput
     producto: ProductoCreateNestedOneWithoutGastoComprasInput
     vendor: VendorCreateNestedOneWithoutGastoComprasInput
@@ -167954,7 +173121,9 @@ export namespace Prisma {
     updatedAt?: Date | string
     periodo?: string | null
     numeroFactura?: string | null
+    deletedAt?: Date | string | null
     compraProducto?: CompraProductoUncheckedCreateNestedOneWithoutGastoCompraInput
+    compraDocumento?: CompraDocumentoUncheckedCreateNestedOneWithoutGastoCompraInput
     cuentaPorPagar?: CuentaPorPagarUncheckedCreateNestedOneWithoutGastoCompraInput
   }
 
@@ -168141,7 +173310,9 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     tipo?: EnumTipoCuentaPorPagarFieldUpdateOperationsInput | $Enums.TipoCuentaPorPagar
     tipoDeuda?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     compraProducto?: CompraProductoUpdateOneWithoutCuentaPorPagarNestedInput
+    compraDocumento?: CompraDocumentoUpdateOneWithoutCuentaPorPagarNestedInput
     gastoCompra?: GastoCompraUpdateOneWithoutCuentaPorPagarNestedInput
     gastosDE?: GastosDEUpdateOneWithoutCuentaPorPagarNestedInput
     proveedor?: VendorUpdateOneWithoutCuentasPorPagarNestedInput
@@ -168167,7 +173338,9 @@ export namespace Prisma {
     proveedorId?: NullableStringFieldUpdateOperationsInput | string | null
     tipo?: EnumTipoCuentaPorPagarFieldUpdateOperationsInput | $Enums.TipoCuentaPorPagar
     tipoDeuda?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     compraProducto?: CompraProductoUncheckedUpdateOneWithoutCuentaPorPagarNestedInput
+    compraDocumento?: CompraDocumentoUncheckedUpdateOneWithoutCuentaPorPagarNestedInput
     deudaCash?: DeudaCashUncheckedUpdateOneWithoutCuentaPorPagarNestedInput
     pagos?: PagoCuentaPorPagarUncheckedUpdateManyWithoutCuentaPorPagarNestedInput
   }
@@ -168194,7 +173367,9 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     periodo?: NullableStringFieldUpdateOperationsInput | string | null
     numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     compraProducto?: CompraProductoUpdateOneWithoutGastoCompraNestedInput
+    compraDocumento?: CompraDocumentoUpdateOneWithoutGastoCompraNestedInput
     cuentaPorPagar?: CuentaPorPagarUpdateOneWithoutGastoCompraNestedInput
     producto?: ProductoUpdateOneRequiredWithoutGastoComprasNestedInput
     vendor?: VendorUpdateOneRequiredWithoutGastoComprasNestedInput
@@ -168213,7 +173388,9 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     periodo?: NullableStringFieldUpdateOperationsInput | string | null
     numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     compraProducto?: CompraProductoUncheckedUpdateOneWithoutGastoCompraNestedInput
+    compraDocumento?: CompraDocumentoUncheckedUpdateOneWithoutGastoCompraNestedInput
     cuentaPorPagar?: CuentaPorPagarUncheckedUpdateOneWithoutGastoCompraNestedInput
   }
 
@@ -168662,6 +173839,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogCreateNestedManyWithoutUserInput
     sessions?: UserSessionCreateNestedManyWithoutUserInput
     anticiposCreados?: AnticipoCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaCreateNestedManyWithoutCreadoPorInput
   }
 
@@ -168693,6 +173871,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUncheckedCreateNestedManyWithoutUserInput
     sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
     anticiposCreados?: AnticipoUncheckedCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput
   }
 
@@ -168776,6 +173955,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogCreateNestedManyWithoutUserInput
     sessions?: UserSessionCreateNestedManyWithoutUserInput
     anticiposCreados?: AnticipoCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaCreateNestedManyWithoutCreadoPorInput
   }
 
@@ -168807,6 +173987,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUncheckedCreateNestedManyWithoutUserInput
     sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
     anticiposCreados?: AnticipoUncheckedCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput
   }
 
@@ -168829,6 +174010,7 @@ export namespace Prisma {
     telefono?: string | null
     vendorCode?: string | null
     compras?: CompraProductoCreateNestedManyWithoutProveedorInput
+    compraDocumentos?: CompraDocumentoCreateNestedManyWithoutProveedorInput
     cuentasPorPagar?: CuentaPorPagarCreateNestedManyWithoutProveedorInput
     deudasCash?: DeudaCashCreateNestedManyWithoutProveedorInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutVendorInput
@@ -168851,6 +174033,7 @@ export namespace Prisma {
     telefono?: string | null
     vendorCode?: string | null
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProveedorInput
+    compraDocumentos?: CompraDocumentoUncheckedCreateNestedManyWithoutProveedorInput
     cuentasPorPagar?: CuentaPorPagarUncheckedCreateNestedManyWithoutProveedorInput
     deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutProveedorInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutVendorInput
@@ -169115,6 +174298,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUpdateManyWithoutUserNestedInput
     anticiposCreados?: AnticipoUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUpdateManyWithoutCreadoPorNestedInput
   }
 
@@ -169146,6 +174330,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUncheckedUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
     anticiposCreados?: AnticipoUncheckedUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput
   }
 
@@ -169241,6 +174426,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUpdateManyWithoutUserNestedInput
     anticiposCreados?: AnticipoUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUpdateManyWithoutCreadoPorNestedInput
   }
 
@@ -169272,6 +174458,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUncheckedUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
     anticiposCreados?: AnticipoUncheckedUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput
   }
 
@@ -169300,6 +174487,7 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     vendorCode?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUpdateManyWithoutProveedorNestedInput
+    compraDocumentos?: CompraDocumentoUpdateManyWithoutProveedorNestedInput
     cuentasPorPagar?: CuentaPorPagarUpdateManyWithoutProveedorNestedInput
     deudasCash?: DeudaCashUpdateManyWithoutProveedorNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutVendorNestedInput
@@ -169322,6 +174510,7 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     vendorCode?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUncheckedUpdateManyWithoutProveedorNestedInput
+    compraDocumentos?: CompraDocumentoUncheckedUpdateManyWithoutProveedorNestedInput
     cuentasPorPagar?: CuentaPorPagarUncheckedUpdateManyWithoutProveedorNestedInput
     deudasCash?: DeudaCashUncheckedUpdateManyWithoutProveedorNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutVendorNestedInput
@@ -169561,6 +174750,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogCreateNestedManyWithoutUserInput
     sessions?: UserSessionCreateNestedManyWithoutUserInput
     anticiposCreados?: AnticipoCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaCreateNestedManyWithoutCreadoPorInput
   }
 
@@ -169592,6 +174782,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUncheckedCreateNestedManyWithoutUserInput
     sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
     anticiposCreados?: AnticipoUncheckedCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput
   }
 
@@ -169724,6 +174915,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUpdateManyWithoutUserNestedInput
     anticiposCreados?: AnticipoUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUpdateManyWithoutCreadoPorNestedInput
   }
 
@@ -169755,6 +174947,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUncheckedUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
     anticiposCreados?: AnticipoUncheckedUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput
   }
 
@@ -169849,6 +175042,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogCreateNestedManyWithoutUserInput
     sessions?: UserSessionCreateNestedManyWithoutUserInput
     anticiposCreados?: AnticipoCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaCreateNestedManyWithoutCreadoPorInput
   }
 
@@ -169880,6 +175074,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUncheckedCreateNestedManyWithoutUserInput
     sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
     anticiposCreados?: AnticipoUncheckedCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput
   }
 
@@ -169996,6 +175191,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUpdateManyWithoutUserNestedInput
     anticiposCreados?: AnticipoUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUpdateManyWithoutCreadoPorNestedInput
   }
 
@@ -170027,6 +175223,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUncheckedUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
     anticiposCreados?: AnticipoUncheckedUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput
   }
 
@@ -170058,6 +175255,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogCreateNestedManyWithoutUserInput
     sessions?: UserSessionCreateNestedManyWithoutUserInput
     anticiposCreados?: AnticipoCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaCreateNestedManyWithoutCreadoPorInput
   }
 
@@ -170089,6 +175287,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUncheckedCreateNestedManyWithoutUserInput
     sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
     anticiposCreados?: AnticipoUncheckedCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput
   }
 
@@ -170199,6 +175398,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUpdateManyWithoutUserNestedInput
     anticiposCreados?: AnticipoUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUpdateManyWithoutCreadoPorNestedInput
   }
 
@@ -170230,6 +175430,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUncheckedUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
     anticiposCreados?: AnticipoUncheckedUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput
   }
 
@@ -170393,6 +175594,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogCreateNestedManyWithoutUserInput
     sessions?: UserSessionCreateNestedManyWithoutUserInput
     anticiposCreados?: AnticipoCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaCreateNestedManyWithoutCreadoPorInput
   }
 
@@ -170424,6 +175626,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUncheckedCreateNestedManyWithoutUserInput
     sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
     anticiposCreados?: AnticipoUncheckedCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput
   }
 
@@ -170565,6 +175768,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUpdateManyWithoutUserNestedInput
     anticiposCreados?: AnticipoUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUpdateManyWithoutCreadoPorNestedInput
   }
 
@@ -170596,6 +175800,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUncheckedUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
     anticiposCreados?: AnticipoUncheckedUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput
   }
 
@@ -170790,6 +175995,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogCreateNestedManyWithoutUserInput
     sessions?: UserSessionCreateNestedManyWithoutUserInput
     anticiposCreados?: AnticipoCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaCreateNestedManyWithoutCreadoPorInput
   }
 
@@ -170821,6 +176027,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUncheckedCreateNestedManyWithoutUserInput
     sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
     anticiposCreados?: AnticipoUncheckedCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput
   }
 
@@ -170868,6 +176075,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUpdateManyWithoutUserNestedInput
     anticiposCreados?: AnticipoUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUpdateManyWithoutCreadoPorNestedInput
   }
 
@@ -170899,6 +176107,7 @@ export namespace Prisma {
     activityLogs?: UserActivityLogUncheckedUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
     anticiposCreados?: AnticipoUncheckedUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput
   }
 
@@ -171836,6 +177045,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialCreateNestedManyWithoutProductoInput
@@ -171886,6 +177096,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutProductoInput
@@ -172008,6 +177219,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUpdateManyWithoutProductoNestedInput
@@ -172058,6 +177270,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
     ordenMateriales?: OrdenReparacionMaterialUncheckedUpdateManyWithoutProductoNestedInput
@@ -172448,6 +177661,8 @@ export namespace Prisma {
     formaPago: string
     estado: string
     tipoOperacion?: string
+    deletedAt?: Date | string | null
+    updatedById?: string | null
     gastoCompra?: GastoCompraCreateNestedOneWithoutCompraProductoInput
     anticipo?: AnticipoCreateNestedOneWithoutCompraProductoInput
     producto: ProductoCreateNestedOneWithoutComprasInput
@@ -172471,12 +177686,57 @@ export namespace Prisma {
     formaPago: string
     estado: string
     tipoOperacion?: string
+    deletedAt?: Date | string | null
+    updatedById?: string | null
     anticipo?: AnticipoUncheckedCreateNestedOneWithoutCompraProductoInput
   }
 
   export type CompraProductoCreateOrConnectWithoutCuentaPorPagarInput = {
     where: CompraProductoWhereUniqueInput
     create: XOR<CompraProductoCreateWithoutCuentaPorPagarInput, CompraProductoUncheckedCreateWithoutCuentaPorPagarInput>
+  }
+
+  export type CompraDocumentoCreateWithoutCuentaPorPagarInput = {
+    compraDocumentoId?: string
+    numeroFactura?: string
+    facturaUrl?: string
+    formaPago: string
+    estado: string
+    tipoOperacion?: string
+    descripcion?: string | null
+    fechaCompra?: Date | string
+    total?: number
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    gastoCompra?: GastoCompraCreateNestedOneWithoutCompraDocumentoInput
+    proveedor: VendorCreateNestedOneWithoutCompraDocumentosInput
+    updatedBy?: UserCreateNestedOneWithoutCompraDocumentosEditadosInput
+    items?: CompraDocumentoItemCreateNestedManyWithoutCompraDocumentoInput
+  }
+
+  export type CompraDocumentoUncheckedCreateWithoutCuentaPorPagarInput = {
+    compraDocumentoId?: string
+    proveedorId: string
+    numeroFactura?: string
+    facturaUrl?: string
+    formaPago: string
+    estado: string
+    tipoOperacion?: string
+    descripcion?: string | null
+    fechaCompra?: Date | string
+    total?: number
+    gastoCompraId?: string | null
+    deletedAt?: Date | string | null
+    updatedById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    items?: CompraDocumentoItemUncheckedCreateNestedManyWithoutCompraDocumentoInput
+  }
+
+  export type CompraDocumentoCreateOrConnectWithoutCuentaPorPagarInput = {
+    where: CompraDocumentoWhereUniqueInput
+    create: XOR<CompraDocumentoCreateWithoutCuentaPorPagarInput, CompraDocumentoUncheckedCreateWithoutCuentaPorPagarInput>
   }
 
   export type GastoCompraCreateWithoutCuentaPorPagarInput = {
@@ -172490,7 +177750,9 @@ export namespace Prisma {
     updatedAt?: Date | string
     periodo?: string | null
     numeroFactura?: string | null
+    deletedAt?: Date | string | null
     compraProducto?: CompraProductoCreateNestedOneWithoutGastoCompraInput
+    compraDocumento?: CompraDocumentoCreateNestedOneWithoutGastoCompraInput
     producto: ProductoCreateNestedOneWithoutGastoComprasInput
     vendor: VendorCreateNestedOneWithoutGastoComprasInput
     reconciliaciones?: ReconciliacionGastoCreateNestedManyWithoutGastoCompraInput
@@ -172509,7 +177771,9 @@ export namespace Prisma {
     updatedAt?: Date | string
     periodo?: string | null
     numeroFactura?: string | null
+    deletedAt?: Date | string | null
     compraProducto?: CompraProductoUncheckedCreateNestedOneWithoutGastoCompraInput
+    compraDocumento?: CompraDocumentoUncheckedCreateNestedOneWithoutGastoCompraInput
     reconciliaciones?: ReconciliacionGastoUncheckedCreateNestedManyWithoutGastoCompraInput
   }
 
@@ -172569,6 +177833,7 @@ export namespace Prisma {
     telefono?: string | null
     vendorCode?: string | null
     compras?: CompraProductoCreateNestedManyWithoutProveedorInput
+    compraDocumentos?: CompraDocumentoCreateNestedManyWithoutProveedorInput
     contratos?: ContratoCreateNestedManyWithoutVendorInput
     deudasCash?: DeudaCashCreateNestedManyWithoutProveedorInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutVendorInput
@@ -172591,6 +177856,7 @@ export namespace Prisma {
     telefono?: string | null
     vendorCode?: string | null
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProveedorInput
+    compraDocumentos?: CompraDocumentoUncheckedCreateNestedManyWithoutProveedorInput
     contratos?: ContratoUncheckedCreateNestedManyWithoutVendorInput
     deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutProveedorInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutVendorInput
@@ -172762,6 +178028,8 @@ export namespace Prisma {
     formaPago?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     tipoOperacion?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
     gastoCompra?: GastoCompraUpdateOneWithoutCompraProductoNestedInput
     anticipo?: AnticipoUpdateOneWithoutCompraProductoNestedInput
     producto?: ProductoUpdateOneRequiredWithoutComprasNestedInput
@@ -172785,7 +178053,58 @@ export namespace Prisma {
     formaPago?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     tipoOperacion?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
     anticipo?: AnticipoUncheckedUpdateOneWithoutCompraProductoNestedInput
+  }
+
+  export type CompraDocumentoUpsertWithoutCuentaPorPagarInput = {
+    update: XOR<CompraDocumentoUpdateWithoutCuentaPorPagarInput, CompraDocumentoUncheckedUpdateWithoutCuentaPorPagarInput>
+    create: XOR<CompraDocumentoCreateWithoutCuentaPorPagarInput, CompraDocumentoUncheckedCreateWithoutCuentaPorPagarInput>
+    where?: CompraDocumentoWhereInput
+  }
+
+  export type CompraDocumentoUpdateToOneWithWhereWithoutCuentaPorPagarInput = {
+    where?: CompraDocumentoWhereInput
+    data: XOR<CompraDocumentoUpdateWithoutCuentaPorPagarInput, CompraDocumentoUncheckedUpdateWithoutCuentaPorPagarInput>
+  }
+
+  export type CompraDocumentoUpdateWithoutCuentaPorPagarInput = {
+    compraDocumentoId?: StringFieldUpdateOperationsInput | string
+    numeroFactura?: StringFieldUpdateOperationsInput | string
+    facturaUrl?: StringFieldUpdateOperationsInput | string
+    formaPago?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    tipoOperacion?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaCompra?: DateTimeFieldUpdateOperationsInput | Date | string
+    total?: IntFieldUpdateOperationsInput | number
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    gastoCompra?: GastoCompraUpdateOneWithoutCompraDocumentoNestedInput
+    proveedor?: VendorUpdateOneRequiredWithoutCompraDocumentosNestedInput
+    updatedBy?: UserUpdateOneWithoutCompraDocumentosEditadosNestedInput
+    items?: CompraDocumentoItemUpdateManyWithoutCompraDocumentoNestedInput
+  }
+
+  export type CompraDocumentoUncheckedUpdateWithoutCuentaPorPagarInput = {
+    compraDocumentoId?: StringFieldUpdateOperationsInput | string
+    proveedorId?: StringFieldUpdateOperationsInput | string
+    numeroFactura?: StringFieldUpdateOperationsInput | string
+    facturaUrl?: StringFieldUpdateOperationsInput | string
+    formaPago?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    tipoOperacion?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaCompra?: DateTimeFieldUpdateOperationsInput | Date | string
+    total?: IntFieldUpdateOperationsInput | number
+    gastoCompraId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    items?: CompraDocumentoItemUncheckedUpdateManyWithoutCompraDocumentoNestedInput
   }
 
   export type GastoCompraUpsertWithoutCuentaPorPagarInput = {
@@ -172810,7 +178129,9 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     periodo?: NullableStringFieldUpdateOperationsInput | string | null
     numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     compraProducto?: CompraProductoUpdateOneWithoutGastoCompraNestedInput
+    compraDocumento?: CompraDocumentoUpdateOneWithoutGastoCompraNestedInput
     producto?: ProductoUpdateOneRequiredWithoutGastoComprasNestedInput
     vendor?: VendorUpdateOneRequiredWithoutGastoComprasNestedInput
     reconciliaciones?: ReconciliacionGastoUpdateManyWithoutGastoCompraNestedInput
@@ -172829,7 +178150,9 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     periodo?: NullableStringFieldUpdateOperationsInput | string | null
     numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     compraProducto?: CompraProductoUncheckedUpdateOneWithoutGastoCompraNestedInput
+    compraDocumento?: CompraDocumentoUncheckedUpdateOneWithoutGastoCompraNestedInput
     reconciliaciones?: ReconciliacionGastoUncheckedUpdateManyWithoutGastoCompraNestedInput
   }
 
@@ -172901,6 +178224,7 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     vendorCode?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUpdateManyWithoutProveedorNestedInput
+    compraDocumentos?: CompraDocumentoUpdateManyWithoutProveedorNestedInput
     contratos?: ContratoUpdateManyWithoutVendorNestedInput
     deudasCash?: DeudaCashUpdateManyWithoutProveedorNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutVendorNestedInput
@@ -172923,6 +178247,7 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     vendorCode?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUncheckedUpdateManyWithoutProveedorNestedInput
+    compraDocumentos?: CompraDocumentoUncheckedUpdateManyWithoutProveedorNestedInput
     contratos?: ContratoUncheckedUpdateManyWithoutVendorNestedInput
     deudasCash?: DeudaCashUncheckedUpdateManyWithoutProveedorNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutVendorNestedInput
@@ -173041,6 +178366,7 @@ export namespace Prisma {
     telefono?: string | null
     vendorCode?: string | null
     compras?: CompraProductoCreateNestedManyWithoutProveedorInput
+    compraDocumentos?: CompraDocumentoCreateNestedManyWithoutProveedorInput
     contratos?: ContratoCreateNestedManyWithoutVendorInput
     cuentasPorPagar?: CuentaPorPagarCreateNestedManyWithoutProveedorInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutVendorInput
@@ -173063,6 +178389,7 @@ export namespace Prisma {
     telefono?: string | null
     vendorCode?: string | null
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProveedorInput
+    compraDocumentos?: CompraDocumentoUncheckedCreateNestedManyWithoutProveedorInput
     contratos?: ContratoUncheckedCreateNestedManyWithoutVendorInput
     cuentasPorPagar?: CuentaPorPagarUncheckedCreateNestedManyWithoutProveedorInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutVendorInput
@@ -173091,7 +178418,9 @@ export namespace Prisma {
     updatedAt?: Date | string
     tipo: $Enums.TipoCuentaPorPagar
     tipoDeuda?: string | null
+    deletedAt?: Date | string | null
     compraProducto?: CompraProductoCreateNestedOneWithoutCuentaPorPagarInput
+    compraDocumento?: CompraDocumentoCreateNestedOneWithoutCuentaPorPagarInput
     gastoCompra?: GastoCompraCreateNestedOneWithoutCuentaPorPagarInput
     gastosDE?: GastosDECreateNestedOneWithoutCuentaPorPagarInput
     proveedor?: VendorCreateNestedOneWithoutCuentasPorPagarInput
@@ -173117,7 +178446,9 @@ export namespace Prisma {
     proveedorId?: string | null
     tipo: $Enums.TipoCuentaPorPagar
     tipoDeuda?: string | null
+    deletedAt?: Date | string | null
     compraProducto?: CompraProductoUncheckedCreateNestedOneWithoutCuentaPorPagarInput
+    compraDocumento?: CompraDocumentoUncheckedCreateNestedOneWithoutCuentaPorPagarInput
     pagos?: PagoCuentaPorPagarUncheckedCreateNestedManyWithoutCuentaPorPagarInput
     reconciliaciones?: ReconciliacionGastoUncheckedCreateNestedManyWithoutCuentaPorPagarInput
   }
@@ -173202,6 +178533,7 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     vendorCode?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUpdateManyWithoutProveedorNestedInput
+    compraDocumentos?: CompraDocumentoUpdateManyWithoutProveedorNestedInput
     contratos?: ContratoUpdateManyWithoutVendorNestedInput
     cuentasPorPagar?: CuentaPorPagarUpdateManyWithoutProveedorNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutVendorNestedInput
@@ -173224,6 +178556,7 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     vendorCode?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUncheckedUpdateManyWithoutProveedorNestedInput
+    compraDocumentos?: CompraDocumentoUncheckedUpdateManyWithoutProveedorNestedInput
     contratos?: ContratoUncheckedUpdateManyWithoutVendorNestedInput
     cuentasPorPagar?: CuentaPorPagarUncheckedUpdateManyWithoutProveedorNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutVendorNestedInput
@@ -173258,7 +178591,9 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     tipo?: EnumTipoCuentaPorPagarFieldUpdateOperationsInput | $Enums.TipoCuentaPorPagar
     tipoDeuda?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     compraProducto?: CompraProductoUpdateOneWithoutCuentaPorPagarNestedInput
+    compraDocumento?: CompraDocumentoUpdateOneWithoutCuentaPorPagarNestedInput
     gastoCompra?: GastoCompraUpdateOneWithoutCuentaPorPagarNestedInput
     gastosDE?: GastosDEUpdateOneWithoutCuentaPorPagarNestedInput
     proveedor?: VendorUpdateOneWithoutCuentasPorPagarNestedInput
@@ -173284,7 +178619,9 @@ export namespace Prisma {
     proveedorId?: NullableStringFieldUpdateOperationsInput | string | null
     tipo?: EnumTipoCuentaPorPagarFieldUpdateOperationsInput | $Enums.TipoCuentaPorPagar
     tipoDeuda?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     compraProducto?: CompraProductoUncheckedUpdateOneWithoutCuentaPorPagarNestedInput
+    compraDocumento?: CompraDocumentoUncheckedUpdateOneWithoutCuentaPorPagarNestedInput
     pagos?: PagoCuentaPorPagarUncheckedUpdateManyWithoutCuentaPorPagarNestedInput
     reconciliaciones?: ReconciliacionGastoUncheckedUpdateManyWithoutCuentaPorPagarNestedInput
   }
@@ -173566,7 +178903,9 @@ export namespace Prisma {
     updatedAt?: Date | string
     tipo: $Enums.TipoCuentaPorPagar
     tipoDeuda?: string | null
+    deletedAt?: Date | string | null
     compraProducto?: CompraProductoCreateNestedOneWithoutCuentaPorPagarInput
+    compraDocumento?: CompraDocumentoCreateNestedOneWithoutCuentaPorPagarInput
     gastoCompra?: GastoCompraCreateNestedOneWithoutCuentaPorPagarInput
     gastosDE?: GastosDECreateNestedOneWithoutCuentaPorPagarInput
     proveedor?: VendorCreateNestedOneWithoutCuentasPorPagarInput
@@ -173592,7 +178931,9 @@ export namespace Prisma {
     proveedorId?: string | null
     tipo: $Enums.TipoCuentaPorPagar
     tipoDeuda?: string | null
+    deletedAt?: Date | string | null
     compraProducto?: CompraProductoUncheckedCreateNestedOneWithoutCuentaPorPagarInput
+    compraDocumento?: CompraDocumentoUncheckedCreateNestedOneWithoutCuentaPorPagarInput
     deudaCash?: DeudaCashUncheckedCreateNestedOneWithoutCuentaPorPagarInput
     reconciliaciones?: ReconciliacionGastoUncheckedCreateNestedManyWithoutCuentaPorPagarInput
   }
@@ -173628,7 +178969,9 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     tipo?: EnumTipoCuentaPorPagarFieldUpdateOperationsInput | $Enums.TipoCuentaPorPagar
     tipoDeuda?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     compraProducto?: CompraProductoUpdateOneWithoutCuentaPorPagarNestedInput
+    compraDocumento?: CompraDocumentoUpdateOneWithoutCuentaPorPagarNestedInput
     gastoCompra?: GastoCompraUpdateOneWithoutCuentaPorPagarNestedInput
     gastosDE?: GastosDEUpdateOneWithoutCuentaPorPagarNestedInput
     proveedor?: VendorUpdateOneWithoutCuentasPorPagarNestedInput
@@ -173654,7 +178997,9 @@ export namespace Prisma {
     proveedorId?: NullableStringFieldUpdateOperationsInput | string | null
     tipo?: EnumTipoCuentaPorPagarFieldUpdateOperationsInput | $Enums.TipoCuentaPorPagar
     tipoDeuda?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     compraProducto?: CompraProductoUncheckedUpdateOneWithoutCuentaPorPagarNestedInput
+    compraDocumento?: CompraDocumentoUncheckedUpdateOneWithoutCuentaPorPagarNestedInput
     deudaCash?: DeudaCashUncheckedUpdateOneWithoutCuentaPorPagarNestedInput
     reconciliaciones?: ReconciliacionGastoUncheckedUpdateManyWithoutCuentaPorPagarNestedInput
   }
@@ -175176,6 +180521,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
@@ -175226,6 +180572,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
@@ -175353,6 +180700,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
@@ -175403,6 +180751,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
@@ -175710,6 +181059,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
@@ -175760,6 +181110,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
@@ -175873,6 +181224,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
@@ -175923,6 +181275,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
@@ -175975,6 +181328,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
@@ -176025,6 +181379,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
@@ -176108,6 +181463,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
@@ -176158,6 +181514,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
@@ -176271,6 +181628,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
@@ -176321,6 +181679,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
@@ -176396,6 +181755,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
@@ -176446,6 +181806,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
@@ -176640,6 +182001,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
@@ -176690,6 +182052,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
@@ -176773,6 +182136,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
@@ -176823,6 +182187,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
@@ -176859,6 +182224,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraCreateNestedManyWithoutProductoInput
     mermas?: MermaCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemCreateNestedManyWithoutProductoInput
@@ -176909,6 +182275,7 @@ export namespace Prisma {
     dcCodigo?: string | null
     fotos?: ProductoCreatefotosInput | string[]
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProductoInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedCreateNestedManyWithoutProductoInput
     gastoCompras?: GastoCompraUncheckedCreateNestedManyWithoutProductoInput
     mermas?: MermaUncheckedCreateNestedManyWithoutProductoInput
     ofertaItems?: OfertaItemUncheckedCreateNestedManyWithoutProductoInput
@@ -176961,6 +182328,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
@@ -177011,6 +182379,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
@@ -177103,6 +182472,7 @@ export namespace Prisma {
     telefono?: string | null
     vendorCode?: string | null
     compras?: CompraProductoCreateNestedManyWithoutProveedorInput
+    compraDocumentos?: CompraDocumentoCreateNestedManyWithoutProveedorInput
     contratos?: ContratoCreateNestedManyWithoutVendorInput
     cuentasPorPagar?: CuentaPorPagarCreateNestedManyWithoutProveedorInput
     deudasCash?: DeudaCashCreateNestedManyWithoutProveedorInput
@@ -177125,6 +182495,7 @@ export namespace Prisma {
     telefono?: string | null
     vendorCode?: string | null
     compras?: CompraProductoUncheckedCreateNestedManyWithoutProveedorInput
+    compraDocumentos?: CompraDocumentoUncheckedCreateNestedManyWithoutProveedorInput
     contratos?: ContratoUncheckedCreateNestedManyWithoutVendorInput
     cuentasPorPagar?: CuentaPorPagarUncheckedCreateNestedManyWithoutProveedorInput
     deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutProveedorInput
@@ -177262,6 +182633,8 @@ export namespace Prisma {
     formaPago: string
     estado: string
     tipoOperacion?: string
+    deletedAt?: Date | string | null
+    updatedById?: string | null
     cuentaPorPagar?: CuentaPorPagarCreateNestedOneWithoutCompraProductoInput
     gastoCompra?: GastoCompraCreateNestedOneWithoutCompraProductoInput
     producto: ProductoCreateNestedOneWithoutComprasInput
@@ -177286,6 +182659,8 @@ export namespace Prisma {
     formaPago: string
     estado: string
     tipoOperacion?: string
+    deletedAt?: Date | string | null
+    updatedById?: string | null
   }
 
   export type CompraProductoCreateOrConnectWithoutAnticipoInput = {
@@ -177321,6 +182696,7 @@ export namespace Prisma {
     notifications?: NotificationCreateNestedManyWithoutUserInput
     activityLogs?: UserActivityLogCreateNestedManyWithoutUserInput
     sessions?: UserSessionCreateNestedManyWithoutUserInput
+    compraDocumentosEditados?: CompraDocumentoCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaCreateNestedManyWithoutCreadoPorInput
   }
 
@@ -177352,6 +182728,7 @@ export namespace Prisma {
     notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
     activityLogs?: UserActivityLogUncheckedCreateNestedManyWithoutUserInput
     sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput
   }
 
@@ -177502,6 +182879,7 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     vendorCode?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUpdateManyWithoutProveedorNestedInput
+    compraDocumentos?: CompraDocumentoUpdateManyWithoutProveedorNestedInput
     contratos?: ContratoUpdateManyWithoutVendorNestedInput
     cuentasPorPagar?: CuentaPorPagarUpdateManyWithoutProveedorNestedInput
     deudasCash?: DeudaCashUpdateManyWithoutProveedorNestedInput
@@ -177524,6 +182902,7 @@ export namespace Prisma {
     telefono?: NullableStringFieldUpdateOperationsInput | string | null
     vendorCode?: NullableStringFieldUpdateOperationsInput | string | null
     compras?: CompraProductoUncheckedUpdateManyWithoutProveedorNestedInput
+    compraDocumentos?: CompraDocumentoUncheckedUpdateManyWithoutProveedorNestedInput
     contratos?: ContratoUncheckedUpdateManyWithoutVendorNestedInput
     cuentasPorPagar?: CuentaPorPagarUncheckedUpdateManyWithoutProveedorNestedInput
     deudasCash?: DeudaCashUncheckedUpdateManyWithoutProveedorNestedInput
@@ -177679,6 +183058,8 @@ export namespace Prisma {
     formaPago?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     tipoOperacion?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
     cuentaPorPagar?: CuentaPorPagarUpdateOneWithoutCompraProductoNestedInput
     gastoCompra?: GastoCompraUpdateOneWithoutCompraProductoNestedInput
     producto?: ProductoUpdateOneRequiredWithoutComprasNestedInput
@@ -177703,6 +183084,8 @@ export namespace Prisma {
     formaPago?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     tipoOperacion?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type UserUpsertWithoutAnticiposCreadosInput = {
@@ -177744,6 +183127,7 @@ export namespace Prisma {
     notifications?: NotificationUpdateManyWithoutUserNestedInput
     activityLogs?: UserActivityLogUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUpdateManyWithoutUserNestedInput
+    compraDocumentosEditados?: CompraDocumentoUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUpdateManyWithoutCreadoPorNestedInput
   }
 
@@ -177775,6 +183159,7 @@ export namespace Prisma {
     notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
     activityLogs?: UserActivityLogUncheckedUpdateManyWithoutUserNestedInput
     sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput
   }
 
@@ -178048,6 +183433,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
@@ -178097,6 +183483,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
@@ -178162,6 +183549,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
@@ -178211,6 +183599,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
@@ -178304,6 +183693,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
@@ -178353,6 +183743,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
@@ -178414,6 +183805,26 @@ export namespace Prisma {
     formaPago: string
     estado: string
     tipoOperacion?: string
+    deletedAt?: Date | string | null
+    updatedById?: string | null
+  }
+
+  export type CompraDocumentoCreateManyProveedorInput = {
+    compraDocumentoId?: string
+    numeroFactura?: string
+    facturaUrl?: string
+    formaPago: string
+    estado: string
+    tipoOperacion?: string
+    descripcion?: string | null
+    fechaCompra?: Date | string
+    total?: number
+    gastoCompraId?: string | null
+    cuentaPorPagarId?: string | null
+    deletedAt?: Date | string | null
+    updatedById?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type ContratoCreateManyVendorInput = {
@@ -178456,6 +183867,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     tipo: $Enums.TipoCuentaPorPagar
     tipoDeuda?: string | null
+    deletedAt?: Date | string | null
   }
 
   export type DeudaCashCreateManyProveedorInput = {
@@ -178488,6 +183900,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     periodo?: string | null
     numeroFactura?: string | null
+    deletedAt?: Date | string | null
   }
 
   export type AnticipoCreateManyProveedorInput = {
@@ -178570,6 +183983,8 @@ export namespace Prisma {
     formaPago?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     tipoOperacion?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
     cuentaPorPagar?: CuentaPorPagarUpdateOneWithoutCompraProductoNestedInput
     gastoCompra?: GastoCompraUpdateOneWithoutCompraProductoNestedInput
     anticipo?: AnticipoUpdateOneWithoutCompraProductoNestedInput
@@ -178593,6 +184008,8 @@ export namespace Prisma {
     formaPago?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     tipoOperacion?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
     anticipo?: AnticipoUncheckedUpdateOneWithoutCompraProductoNestedInput
   }
 
@@ -178613,6 +184030,64 @@ export namespace Prisma {
     formaPago?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     tipoOperacion?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type CompraDocumentoUpdateWithoutProveedorInput = {
+    compraDocumentoId?: StringFieldUpdateOperationsInput | string
+    numeroFactura?: StringFieldUpdateOperationsInput | string
+    facturaUrl?: StringFieldUpdateOperationsInput | string
+    formaPago?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    tipoOperacion?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaCompra?: DateTimeFieldUpdateOperationsInput | Date | string
+    total?: IntFieldUpdateOperationsInput | number
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cuentaPorPagar?: CuentaPorPagarUpdateOneWithoutCompraDocumentoNestedInput
+    gastoCompra?: GastoCompraUpdateOneWithoutCompraDocumentoNestedInput
+    updatedBy?: UserUpdateOneWithoutCompraDocumentosEditadosNestedInput
+    items?: CompraDocumentoItemUpdateManyWithoutCompraDocumentoNestedInput
+  }
+
+  export type CompraDocumentoUncheckedUpdateWithoutProveedorInput = {
+    compraDocumentoId?: StringFieldUpdateOperationsInput | string
+    numeroFactura?: StringFieldUpdateOperationsInput | string
+    facturaUrl?: StringFieldUpdateOperationsInput | string
+    formaPago?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    tipoOperacion?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaCompra?: DateTimeFieldUpdateOperationsInput | Date | string
+    total?: IntFieldUpdateOperationsInput | number
+    gastoCompraId?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaPorPagarId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    items?: CompraDocumentoItemUncheckedUpdateManyWithoutCompraDocumentoNestedInput
+  }
+
+  export type CompraDocumentoUncheckedUpdateManyWithoutProveedorInput = {
+    compraDocumentoId?: StringFieldUpdateOperationsInput | string
+    numeroFactura?: StringFieldUpdateOperationsInput | string
+    facturaUrl?: StringFieldUpdateOperationsInput | string
+    formaPago?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    tipoOperacion?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaCompra?: DateTimeFieldUpdateOperationsInput | Date | string
+    total?: IntFieldUpdateOperationsInput | number
+    gastoCompraId?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaPorPagarId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type ContratoUpdateWithoutVendorInput = {
@@ -178711,7 +184186,9 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     tipo?: EnumTipoCuentaPorPagarFieldUpdateOperationsInput | $Enums.TipoCuentaPorPagar
     tipoDeuda?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     compraProducto?: CompraProductoUpdateOneWithoutCuentaPorPagarNestedInput
+    compraDocumento?: CompraDocumentoUpdateOneWithoutCuentaPorPagarNestedInput
     gastoCompra?: GastoCompraUpdateOneWithoutCuentaPorPagarNestedInput
     gastosDE?: GastosDEUpdateOneWithoutCuentaPorPagarNestedInput
     deudaCash?: DeudaCashUpdateOneWithoutCuentaPorPagarNestedInput
@@ -178736,7 +184213,9 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     tipo?: EnumTipoCuentaPorPagarFieldUpdateOperationsInput | $Enums.TipoCuentaPorPagar
     tipoDeuda?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     compraProducto?: CompraProductoUncheckedUpdateOneWithoutCuentaPorPagarNestedInput
+    compraDocumento?: CompraDocumentoUncheckedUpdateOneWithoutCuentaPorPagarNestedInput
     deudaCash?: DeudaCashUncheckedUpdateOneWithoutCuentaPorPagarNestedInput
     pagos?: PagoCuentaPorPagarUncheckedUpdateManyWithoutCuentaPorPagarNestedInput
     reconciliaciones?: ReconciliacionGastoUncheckedUpdateManyWithoutCuentaPorPagarNestedInput
@@ -178759,6 +184238,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     tipo?: EnumTipoCuentaPorPagarFieldUpdateOperationsInput | $Enums.TipoCuentaPorPagar
     tipoDeuda?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type DeudaCashUpdateWithoutProveedorInput = {
@@ -178828,7 +184308,9 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     periodo?: NullableStringFieldUpdateOperationsInput | string | null
     numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     compraProducto?: CompraProductoUpdateOneWithoutGastoCompraNestedInput
+    compraDocumento?: CompraDocumentoUpdateOneWithoutGastoCompraNestedInput
     cuentaPorPagar?: CuentaPorPagarUpdateOneWithoutGastoCompraNestedInput
     producto?: ProductoUpdateOneRequiredWithoutGastoComprasNestedInput
     reconciliaciones?: ReconciliacionGastoUpdateManyWithoutGastoCompraNestedInput
@@ -178846,7 +184328,9 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     periodo?: NullableStringFieldUpdateOperationsInput | string | null
     numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     compraProducto?: CompraProductoUncheckedUpdateOneWithoutGastoCompraNestedInput
+    compraDocumento?: CompraDocumentoUncheckedUpdateOneWithoutGastoCompraNestedInput
     cuentaPorPagar?: CuentaPorPagarUncheckedUpdateOneWithoutGastoCompraNestedInput
     reconciliaciones?: ReconciliacionGastoUncheckedUpdateManyWithoutGastoCompraNestedInput
   }
@@ -178863,6 +184347,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     periodo?: NullableStringFieldUpdateOperationsInput | string | null
     numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type AnticipoUpdateWithoutProveedorInput = {
@@ -178954,6 +184439,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
@@ -179003,6 +184489,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
@@ -179978,6 +185465,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
@@ -180027,6 +185515,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
@@ -180281,6 +185770,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
@@ -180330,6 +185820,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
@@ -180558,6 +186049,18 @@ export namespace Prisma {
     formaPago: string
     estado: string
     tipoOperacion?: string
+    deletedAt?: Date | string | null
+    updatedById?: string | null
+  }
+
+  export type CompraDocumentoItemCreateManyProductoInput = {
+    compraDocumentoItemId?: string
+    compraDocumentoId: string
+    cantidad: number
+    precioUnitario: number
+    totalLinea: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type GastoCompraCreateManyProductoInput = {
@@ -180572,6 +186075,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     periodo?: string | null
     numeroFactura?: string | null
+    deletedAt?: Date | string | null
   }
 
   export type MermaCreateManyProductoInput = {
@@ -180747,6 +186251,8 @@ export namespace Prisma {
     formaPago?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     tipoOperacion?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
     cuentaPorPagar?: CuentaPorPagarUpdateOneWithoutCompraProductoNestedInput
     gastoCompra?: GastoCompraUpdateOneWithoutCompraProductoNestedInput
     anticipo?: AnticipoUpdateOneWithoutCompraProductoNestedInput
@@ -180770,6 +186276,8 @@ export namespace Prisma {
     formaPago?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     tipoOperacion?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
     anticipo?: AnticipoUncheckedUpdateOneWithoutCompraProductoNestedInput
   }
 
@@ -180790,6 +186298,38 @@ export namespace Prisma {
     formaPago?: StringFieldUpdateOperationsInput | string
     estado?: StringFieldUpdateOperationsInput | string
     tipoOperacion?: StringFieldUpdateOperationsInput | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    updatedById?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type CompraDocumentoItemUpdateWithoutProductoInput = {
+    compraDocumentoItemId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    precioUnitario?: IntFieldUpdateOperationsInput | number
+    totalLinea?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    compraDocumento?: CompraDocumentoUpdateOneRequiredWithoutItemsNestedInput
+  }
+
+  export type CompraDocumentoItemUncheckedUpdateWithoutProductoInput = {
+    compraDocumentoItemId?: StringFieldUpdateOperationsInput | string
+    compraDocumentoId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    precioUnitario?: IntFieldUpdateOperationsInput | number
+    totalLinea?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CompraDocumentoItemUncheckedUpdateManyWithoutProductoInput = {
+    compraDocumentoItemId?: StringFieldUpdateOperationsInput | string
+    compraDocumentoId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    precioUnitario?: IntFieldUpdateOperationsInput | number
+    totalLinea?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type GastoCompraUpdateWithoutProductoInput = {
@@ -180803,7 +186343,9 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     periodo?: NullableStringFieldUpdateOperationsInput | string | null
     numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     compraProducto?: CompraProductoUpdateOneWithoutGastoCompraNestedInput
+    compraDocumento?: CompraDocumentoUpdateOneWithoutGastoCompraNestedInput
     cuentaPorPagar?: CuentaPorPagarUpdateOneWithoutGastoCompraNestedInput
     vendor?: VendorUpdateOneRequiredWithoutGastoComprasNestedInput
     reconciliaciones?: ReconciliacionGastoUpdateManyWithoutGastoCompraNestedInput
@@ -180821,7 +186363,9 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     periodo?: NullableStringFieldUpdateOperationsInput | string | null
     numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     compraProducto?: CompraProductoUncheckedUpdateOneWithoutGastoCompraNestedInput
+    compraDocumento?: CompraDocumentoUncheckedUpdateOneWithoutGastoCompraNestedInput
     cuentaPorPagar?: CuentaPorPagarUncheckedUpdateOneWithoutGastoCompraNestedInput
     reconciliaciones?: ReconciliacionGastoUncheckedUpdateManyWithoutGastoCompraNestedInput
   }
@@ -180838,6 +186382,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     periodo?: NullableStringFieldUpdateOperationsInput | string | null
     numeroFactura?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type MermaUpdateWithoutProductoInput = {
@@ -180963,6 +186508,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUpdateManyWithoutProductoNestedInput
     mermas?: MermaUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUpdateManyWithoutProductoNestedInput
@@ -181012,6 +186558,7 @@ export namespace Prisma {
     dcCodigo?: NullableStringFieldUpdateOperationsInput | string | null
     fotos?: ProductoUpdatefotosInput | string[]
     compras?: CompraProductoUncheckedUpdateManyWithoutProductoNestedInput
+    compraDocumentoItems?: CompraDocumentoItemUncheckedUpdateManyWithoutProductoNestedInput
     gastoCompras?: GastoCompraUncheckedUpdateManyWithoutProductoNestedInput
     mermas?: MermaUncheckedUpdateManyWithoutProductoNestedInput
     ofertaItems?: OfertaItemUncheckedUpdateManyWithoutProductoNestedInput
@@ -181651,6 +187198,24 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
+  export type CompraDocumentoCreateManyUpdatedByInput = {
+    compraDocumentoId?: string
+    proveedorId: string
+    numeroFactura?: string
+    facturaUrl?: string
+    formaPago: string
+    estado: string
+    tipoOperacion?: string
+    descripcion?: string | null
+    fechaCompra?: Date | string
+    total?: number
+    gastoCompraId?: string | null
+    cuentaPorPagarId?: string | null
+    deletedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type TransferenciaCreateManyCreadoPorInput = {
     transferenciaId?: string
     productoId: string
@@ -182211,6 +187776,62 @@ export namespace Prisma {
     vigenciaHasta?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fechaReserva?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaEjecucion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CompraDocumentoUpdateWithoutUpdatedByInput = {
+    compraDocumentoId?: StringFieldUpdateOperationsInput | string
+    numeroFactura?: StringFieldUpdateOperationsInput | string
+    facturaUrl?: StringFieldUpdateOperationsInput | string
+    formaPago?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    tipoOperacion?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaCompra?: DateTimeFieldUpdateOperationsInput | Date | string
+    total?: IntFieldUpdateOperationsInput | number
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cuentaPorPagar?: CuentaPorPagarUpdateOneWithoutCompraDocumentoNestedInput
+    gastoCompra?: GastoCompraUpdateOneWithoutCompraDocumentoNestedInput
+    proveedor?: VendorUpdateOneRequiredWithoutCompraDocumentosNestedInput
+    items?: CompraDocumentoItemUpdateManyWithoutCompraDocumentoNestedInput
+  }
+
+  export type CompraDocumentoUncheckedUpdateWithoutUpdatedByInput = {
+    compraDocumentoId?: StringFieldUpdateOperationsInput | string
+    proveedorId?: StringFieldUpdateOperationsInput | string
+    numeroFactura?: StringFieldUpdateOperationsInput | string
+    facturaUrl?: StringFieldUpdateOperationsInput | string
+    formaPago?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    tipoOperacion?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaCompra?: DateTimeFieldUpdateOperationsInput | Date | string
+    total?: IntFieldUpdateOperationsInput | number
+    gastoCompraId?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaPorPagarId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    items?: CompraDocumentoItemUncheckedUpdateManyWithoutCompraDocumentoNestedInput
+  }
+
+  export type CompraDocumentoUncheckedUpdateManyWithoutUpdatedByInput = {
+    compraDocumentoId?: StringFieldUpdateOperationsInput | string
+    proveedorId?: StringFieldUpdateOperationsInput | string
+    numeroFactura?: StringFieldUpdateOperationsInput | string
+    facturaUrl?: StringFieldUpdateOperationsInput | string
+    formaPago?: StringFieldUpdateOperationsInput | string
+    estado?: StringFieldUpdateOperationsInput | string
+    tipoOperacion?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaCompra?: DateTimeFieldUpdateOperationsInput | Date | string
+    total?: IntFieldUpdateOperationsInput | number
+    gastoCompraId?: NullableStringFieldUpdateOperationsInput | string | null
+    cuentaPorPagarId?: NullableStringFieldUpdateOperationsInput | string | null
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -183029,6 +188650,46 @@ export namespace Prisma {
     gastosDEId?: NullableStringFieldUpdateOperationsInput | string | null
     isReconciliada?: NullableBoolFieldUpdateOperationsInput | boolean | null
     pgId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type CompraDocumentoItemCreateManyCompraDocumentoInput = {
+    compraDocumentoItemId?: string
+    productoId: string
+    cantidad: number
+    precioUnitario: number
+    totalLinea: number
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CompraDocumentoItemUpdateWithoutCompraDocumentoInput = {
+    compraDocumentoItemId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    precioUnitario?: IntFieldUpdateOperationsInput | number
+    totalLinea?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    producto?: ProductoUpdateOneRequiredWithoutCompraDocumentoItemsNestedInput
+  }
+
+  export type CompraDocumentoItemUncheckedUpdateWithoutCompraDocumentoInput = {
+    compraDocumentoItemId?: StringFieldUpdateOperationsInput | string
+    productoId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    precioUnitario?: IntFieldUpdateOperationsInput | number
+    totalLinea?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CompraDocumentoItemUncheckedUpdateManyWithoutCompraDocumentoInput = {
+    compraDocumentoItemId?: StringFieldUpdateOperationsInput | string
+    productoId?: StringFieldUpdateOperationsInput | string
+    cantidad?: IntFieldUpdateOperationsInput | number
+    precioUnitario?: IntFieldUpdateOperationsInput | number
+    totalLinea?: IntFieldUpdateOperationsInput | number
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type OfertaItemCreateManyServicioInput = {

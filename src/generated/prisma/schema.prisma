@@ -37,26 +37,27 @@ model Unidad {
 }
 
 model Vendor {
-  vendorId        String           @id @default(cuid())
-  nombre          String
-  contacto        String?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  contrato        String?
-  cuentaCUP       String?
-  cuentaUSD       String?
-  direccion       String?
-  logo            String?
-  telefono        String?
-  vendorCode      String?          @unique @db.VarChar(2)
-  compras         CompraProducto[]
-  contratos       Contrato[]       @relation("ContratoVendor")
-  cuentasPorPagar CuentaPorPagar[]
-  deudasCash      DeudaCash[]
-  gastoCompras    GastoCompra[]
-  anticipos       Anticipo[]
-  productos       Producto[]
-  compraServicios CompraServicio[]
+  vendorId         String            @id @default(cuid())
+  nombre           String
+  contacto         String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  contrato         String?
+  cuentaCUP        String?
+  cuentaUSD        String?
+  direccion        String?
+  logo             String?
+  telefono         String?
+  vendorCode       String?           @unique @db.VarChar(2)
+  compras          CompraProducto[]
+  compraDocumentos CompraDocumento[]
+  contratos        Contrato[]        @relation("ContratoVendor")
+  cuentasPorPagar  CuentaPorPagar[]
+  deudasCash       DeudaCash[]
+  gastoCompras     GastoCompra[]
+  anticipos        Anticipo[]
+  productos        Producto[]
+  compraServicios  CompraServicio[]
 
   @@index([vendorCode])
 }
@@ -164,54 +165,55 @@ model PuntoDeVenta {
 }
 
 model Producto {
-  nombre            String
-  descripcion       String?
-  precioCosto       Int
-  precioVenta       Int
-  stock             Int
-  categoriaId       String
-  unidadId          String?
-  vendorId          String?
-  createdAt         DateTime                  @default(now())
-  id                String                    @id @default(cuid())
-  updatedAt         DateTime                  @updatedAt
-  esCompuesto       Boolean                   @default(false)
-  almacenId         String
-  puntoDeVentaId    String?
-  stockMinimo       Int                       @default(0)
-  subcategoriaId    String?
-  cantidadEnPack    Int?
-  productoPadreId   String?
-  codigoInterno     String?                   @unique @db.VarChar(11)
-  codigoNegocio     String?                   @unique
-  proveedorCodigo   String?
-  idSeccionCodigo   String?
-  especificoCodigo  String?
-  surtidoCodigo     String?
-  dcCodigo          String?
-  fotos             String[]                  @default([])
-  compras           CompraProducto[]
-  gastoCompras      GastoCompra[]
-  mermas            Merma[]
-  ofertaItems       OfertaItem[]
-  ordenMateriales   OrdenReparacionMaterial[]
-  precios           PrecioProducto[]
-  almacen           Almacen                   @relation(fields: [almacenId], references: [almacenId], onDelete: Cascade)
-  categoria         Categoria                 @relation(fields: [categoriaId], references: [catId], onDelete: Cascade)
-  puntoDeVenta      PuntoDeVenta?             @relation(fields: [puntoDeVentaId], references: [pvId], onDelete: Cascade)
-  productoPadre     Producto?                 @relation("ProductoCompuesto", fields: [productoPadreId], references: [id])
-  productosHijos    Producto[]                @relation("ProductoCompuesto")
-  subcategoria      Categoria?                @relation("ProductoSubcategoria", fields: [subcategoriaId], references: [catId])
-  unidad            Unidad?                   @relation(fields: [unidadId], references: [unidadId], onDelete: Cascade)
-  vendor            Vendor?                   @relation(fields: [vendorId], references: [vendorId], onDelete: Cascade)
-  costHistory       ProductoCostHistory[]
-  Receta            Receta[]
-  RecetaIngrediente RecetaIngrediente[]
-  transferencias    Transferencia[]
-  ValeSalidaItem    ValeSalidaItem[]
-  ventas            Venta[]
-  ventaItems        VentaItem[]
-  stockUbicaciones  StockUbicacion[]
+  nombre               String
+  descripcion          String?
+  precioCosto          Int
+  precioVenta          Int
+  stock                Int
+  categoriaId          String
+  unidadId             String?
+  vendorId             String?
+  createdAt            DateTime                  @default(now())
+  id                   String                    @id @default(cuid())
+  updatedAt            DateTime                  @updatedAt
+  esCompuesto          Boolean                   @default(false)
+  almacenId            String
+  puntoDeVentaId       String?
+  stockMinimo          Int                       @default(0)
+  subcategoriaId       String?
+  cantidadEnPack       Int?
+  productoPadreId      String?
+  codigoInterno        String?                   @unique @db.VarChar(11)
+  codigoNegocio        String?                   @unique
+  proveedorCodigo      String?
+  idSeccionCodigo      String?
+  especificoCodigo     String?
+  surtidoCodigo        String?
+  dcCodigo             String?
+  fotos                String[]                  @default([])
+  compras              CompraProducto[]
+  compraDocumentoItems CompraDocumentoItem[]
+  gastoCompras         GastoCompra[]
+  mermas               Merma[]
+  ofertaItems          OfertaItem[]
+  ordenMateriales      OrdenReparacionMaterial[]
+  precios              PrecioProducto[]
+  almacen              Almacen                   @relation(fields: [almacenId], references: [almacenId], onDelete: Cascade)
+  categoria            Categoria                 @relation(fields: [categoriaId], references: [catId], onDelete: Cascade)
+  puntoDeVenta         PuntoDeVenta?             @relation(fields: [puntoDeVentaId], references: [pvId], onDelete: Cascade)
+  productoPadre        Producto?                 @relation("ProductoCompuesto", fields: [productoPadreId], references: [id])
+  productosHijos       Producto[]                @relation("ProductoCompuesto")
+  subcategoria         Categoria?                @relation("ProductoSubcategoria", fields: [subcategoriaId], references: [catId])
+  unidad               Unidad?                   @relation(fields: [unidadId], references: [unidadId], onDelete: Cascade)
+  vendor               Vendor?                   @relation(fields: [vendorId], references: [vendorId], onDelete: Cascade)
+  costHistory          ProductoCostHistory[]
+  Receta               Receta[]
+  RecetaIngrediente    RecetaIngrediente[]
+  transferencias       Transferencia[]
+  ValeSalidaItem       ValeSalidaItem[]
+  ventas               Venta[]
+  ventaItems           VentaItem[]
+  stockUbicaciones     StockUbicacion[]
 }
 
 model StockUbicacion {
@@ -310,35 +312,36 @@ model Transferencia {
 }
 
 model User {
-  userId                String               @id @default(cuid())
-  name                  String
-  email                 String               @unique
-  password              String
-  role                  String               @default("regularUser")
-  createdAt             DateTime             @default(now())
-  updatedAt             DateTime             @updatedAt
-  activatedAt           DateTime?
-  avatar                String?
-  expiresAt             DateTime?
-  isActive              Boolean              @default(true)
-  lastFailedLogin       DateTime?
-  lastModifiedBy        String?
-  lockedUntil           DateTime?
-  loginAttempts         Int                  @default(0)
-  contratosAprobados    Contrato[]           @relation("AprobadorContrato")
-  contratosCreados      Contrato[]           @relation("CreadorContrato")
-  contratoAprobaciones  ContratoAprobacion[]
-  contratoArchivos      ContratoArchivo[]
-  contratoFirmas        ContratoFirma[]
-  contratoVersiones     ContratoVersion[]
-  tiposContratosCustom  TipoContratoCustom[]
-  licencias             Licencia[]
-  licenciasAudit        LicenciaAudit[]      @relation("LicenciaAuditActor")
-  notifications         Notification[]
-  activityLogs          UserActivityLog[]
-  sessions              UserSession[]
-  anticiposCreados      Anticipo[]
-  transferenciasCreadas Transferencia[]
+  userId                   String               @id @default(cuid())
+  name                     String
+  email                    String               @unique
+  password                 String
+  role                     String               @default("regularUser")
+  createdAt                DateTime             @default(now())
+  updatedAt                DateTime             @updatedAt
+  activatedAt              DateTime?
+  avatar                   String?
+  expiresAt                DateTime?
+  isActive                 Boolean              @default(true)
+  lastFailedLogin          DateTime?
+  lastModifiedBy           String?
+  lockedUntil              DateTime?
+  loginAttempts            Int                  @default(0)
+  contratosAprobados       Contrato[]           @relation("AprobadorContrato")
+  contratosCreados         Contrato[]           @relation("CreadorContrato")
+  contratoAprobaciones     ContratoAprobacion[]
+  contratoArchivos         ContratoArchivo[]
+  contratoFirmas           ContratoFirma[]
+  contratoVersiones        ContratoVersion[]
+  tiposContratosCustom     TipoContratoCustom[]
+  licencias                Licencia[]
+  licenciasAudit           LicenciaAudit[]      @relation("LicenciaAuditActor")
+  notifications            Notification[]
+  activityLogs             UserActivityLog[]
+  sessions                 UserSession[]
+  anticiposCreados         Anticipo[]
+  compraDocumentosEditados CompraDocumento[]    @relation("CompraDocumentoActualizado")
+  transferenciasCreadas    Transferencia[]
 }
 
 model Plan {
@@ -576,7 +579,9 @@ model GastoCompra {
   updatedAt        DateTime              @updatedAt
   periodo          String?
   numeroFactura    String?
+  deletedAt        DateTime?
   compraProducto   CompraProducto?
+  compraDocumento  CompraDocumento?
   cuentaPorPagar   CuentaPorPagar?
   producto         Producto              @relation(fields: [productoId], references: [id], onDelete: Cascade)
   vendor           Vendor                @relation(fields: [vendorId], references: [vendorId], onDelete: Cascade)
@@ -601,6 +606,8 @@ model CompraProducto {
   formaPago        String
   estado           String
   tipoOperacion    String          @default("REGULAR")
+  deletedAt        DateTime?
+  updatedById      String?
   cuentaPorPagar   CuentaPorPagar? @relation(fields: [cuentaPorPagarId], references: [cuentaPorPagarId])
   gastoCompra      GastoCompra?    @relation(fields: [gastoCompraId], references: [gastoCompraId])
   anticipo         Anticipo?
@@ -609,6 +616,54 @@ model CompraProducto {
 
   @@index([estado])
   @@index([proveedorId])
+  @@index([productoId])
+  @@index([deletedAt])
+}
+
+/// * Cabecera de compra múltiple. Una factura/proveedor → N items.
+model CompraDocumento {
+  compraDocumentoId String                @id @default(cuid())
+  proveedorId       String
+  numeroFactura     String                @default("")
+  facturaUrl        String                @default("")
+  formaPago         String
+  estado            String
+  tipoOperacion     String                @default("REGULAR")
+  descripcion       String?
+  fechaCompra       DateTime              @default(now())
+  total             Int                   @default(0)
+  gastoCompraId     String?               @unique
+  cuentaPorPagarId  String?               @unique
+  deletedAt         DateTime?
+  updatedById       String?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  cuentaPorPagar    CuentaPorPagar?       @relation(fields: [cuentaPorPagarId], references: [cuentaPorPagarId])
+  gastoCompra       GastoCompra?          @relation(fields: [gastoCompraId], references: [gastoCompraId])
+  proveedor         Vendor                @relation(fields: [proveedorId], references: [vendorId], onDelete: Cascade)
+  updatedBy         User?                 @relation("CompraDocumentoActualizado", fields: [updatedById], references: [userId], onDelete: SetNull)
+  items             CompraDocumentoItem[]
+
+  @@index([estado])
+  @@index([proveedorId])
+  @@index([fechaCompra])
+  @@index([deletedAt])
+}
+
+/// * Línea de detalle de una compra múltiple.
+model CompraDocumentoItem {
+  compraDocumentoItemId String          @id @default(cuid())
+  compraDocumentoId     String
+  productoId            String
+  cantidad              Int
+  precioUnitario        Int
+  totalLinea            Int
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  compraDocumento       CompraDocumento @relation(fields: [compraDocumentoId], references: [compraDocumentoId], onDelete: Cascade)
+  producto              Producto        @relation(fields: [productoId], references: [id], onDelete: Cascade)
+
+  @@index([compraDocumentoId])
   @@index([productoId])
 }
 
@@ -1234,7 +1289,9 @@ model CuentaPorPagar {
   proveedorId      String?
   tipo             TipoCuentaPorPagar
   tipoDeuda        String?
+  deletedAt        DateTime?
   compraProducto   CompraProducto?
+  compraDocumento  CompraDocumento?
   gastoCompra      GastoCompra?          @relation(fields: [gastoCompraId], references: [gastoCompraId])
   gastosDE         GastosDE?             @relation(fields: [gastosDEId], references: [gastosDEId])
   proveedor        Vendor?               @relation(fields: [proveedorId], references: [vendorId])
@@ -1245,6 +1302,7 @@ model CuentaPorPagar {
   @@index([estado])
   @@index([tipo])
   @@index([numeroFactura])
+  @@index([deletedAt])
 }
 
 model DeudaCash {

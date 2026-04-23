@@ -49,11 +49,12 @@ model Vendor {
   logo            String?
   telefono        String?
   vendorCode      String?          @unique @db.VarChar(2)
-  compras         CompraProducto[]
-  contratos       Contrato[]       @relation("ContratoVendor")
-  cuentasPorPagar CuentaPorPagar[]
-  deudasCash      DeudaCash[]
-  gastoCompras    GastoCompra[]
+  compras          CompraProducto[]
+  compraDocumentos CompraDocumento[]
+  contratos        Contrato[]       @relation("ContratoVendor")
+  cuentasPorPagar  CuentaPorPagar[]
+  deudasCash       DeudaCash[]
+  gastoCompras     GastoCompra[]
   anticipos       Anticipo[]
   productos       Producto[]
   compraServicios CompraServicio[]
@@ -190,8 +191,9 @@ model Producto {
   surtidoCodigo     String?
   dcCodigo          String?
   fotos             String[]                  @default([])
-  compras           CompraProducto[]
-  gastoCompras      GastoCompra[]
+  compras              CompraProducto[]
+  compraDocumentoItems CompraDocumentoItem[]
+  gastoCompras         GastoCompra[]
   mermas            Merma[]
   ofertaItems       OfertaItem[]
   ordenMateriales   OrdenReparacionMaterial[]
@@ -337,8 +339,9 @@ model User {
   notifications        Notification[]
   activityLogs         UserActivityLog[]
   sessions             UserSession[]
-  anticiposCreados     Anticipo[]
-  transferenciasCreadas Transferencia[]
+  anticiposCreados        Anticipo[]
+  compraDocumentosEditados CompraDocumento[] @relation("CompraDocumentoActualizado")
+  transferenciasCreadas   Transferencia[]
 }
 
 model Plan {
@@ -576,7 +579,9 @@ model GastoCompra {
   updatedAt        DateTime              @updatedAt
   periodo          String?
   numeroFactura    String?
+  deletedAt        DateTime?
   compraProducto   CompraProducto?
+  compraDocumento  CompraDocumento?
   cuentaPorPagar   CuentaPorPagar?
   producto         Producto              @relation(fields: [productoId], references: [id], onDelete: Cascade)
   vendor           Vendor                @relation(fields: [vendorId], references: [vendorId], onDelete: Cascade)
@@ -601,6 +606,8 @@ model CompraProducto {
   formaPago        String
   estado           String
   tipoOperacion    String          @default("REGULAR")
+  deletedAt        DateTime?
+  updatedById      String?
   cuentaPorPagar   CuentaPorPagar? @relation(fields: [cuentaPorPagarId], references: [cuentaPorPagarId])
   gastoCompra      GastoCompra?    @relation(fields: [gastoCompraId], references: [gastoCompraId])
   anticipo         Anticipo?
@@ -609,6 +616,54 @@ model CompraProducto {
 
   @@index([estado])
   @@index([proveedorId])
+  @@index([productoId])
+  @@index([deletedAt])
+}
+
+/// * Cabecera de compra múltiple. Una factura/proveedor → N items.
+model CompraDocumento {
+  compraDocumentoId String             @id @default(cuid())
+  proveedorId       String
+  numeroFactura     String             @default("")
+  facturaUrl        String             @default("")
+  formaPago         String
+  estado            String
+  tipoOperacion     String             @default("REGULAR")
+  descripcion       String?
+  fechaCompra       DateTime           @default(now())
+  total             Int                @default(0)
+  gastoCompraId     String?            @unique
+  cuentaPorPagarId  String?            @unique
+  deletedAt         DateTime?
+  updatedById       String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  cuentaPorPagar    CuentaPorPagar?    @relation(fields: [cuentaPorPagarId], references: [cuentaPorPagarId])
+  gastoCompra       GastoCompra?       @relation(fields: [gastoCompraId], references: [gastoCompraId])
+  proveedor         Vendor             @relation(fields: [proveedorId], references: [vendorId], onDelete: Cascade)
+  updatedBy         User?              @relation("CompraDocumentoActualizado", fields: [updatedById], references: [userId], onDelete: SetNull)
+  items             CompraDocumentoItem[]
+
+  @@index([estado])
+  @@index([proveedorId])
+  @@index([fechaCompra])
+  @@index([deletedAt])
+}
+
+/// * Línea de detalle de una compra múltiple.
+model CompraDocumentoItem {
+  compraDocumentoItemId String          @id @default(cuid())
+  compraDocumentoId     String
+  productoId            String
+  cantidad              Int
+  precioUnitario        Int
+  totalLinea            Int
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  compraDocumento       CompraDocumento @relation(fields: [compraDocumentoId], references: [compraDocumentoId], onDelete: Cascade)
+  producto              Producto        @relation(fields: [productoId], references: [id], onDelete: Cascade)
+
+  @@index([compraDocumentoId])
   @@index([productoId])
 }
 
@@ -1234,7 +1289,9 @@ model CuentaPorPagar {
   proveedorId      String?
   tipo             TipoCuentaPorPagar
   tipoDeuda        String?
+  deletedAt        DateTime?
   compraProducto   CompraProducto?
+  compraDocumento  CompraDocumento?
   gastoCompra      GastoCompra?          @relation(fields: [gastoCompraId], references: [gastoCompraId])
   gastosDE         GastosDE?             @relation(fields: [gastosDEId], references: [gastosDEId])
   proveedor        Vendor?               @relation(fields: [proveedorId], references: [vendorId])
@@ -1245,6 +1302,7 @@ model CuentaPorPagar {
   @@index([estado])
   @@index([tipo])
   @@index([numeroFactura])
+  @@index([deletedAt])
 }
 
 model DeudaCash {

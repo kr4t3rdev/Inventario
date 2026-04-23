@@ -21,6 +21,7 @@ import { Button } from '@/components/ui/button'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
+import { CurrencyInput } from '@/components/ui/currency-input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -887,59 +888,49 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
                 >
-                  <FormField
-                    control={form.control}
-                    name="precioCosto"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-2">
-                          <DollarSign className="h-4 w-4 text-muted-foreground" />
-                          Precio de costo <span className="text-destructive">*</span>
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min={0}
-                            step="0.01"
-                            placeholder="0.00"
-                            disabled={isLoading}
-                            className="transition-all duration-200 focus-visible:ring-primary/30"
-                            {...field}
-                            value={field.value ?? ''}
-                          />
-                        </FormControl>
-                        <FormDescription>Monto de compra por unidad.</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                   <FormField
+                     control={form.control}
+                     name="precioCosto"
+                     render={({ field }) => (
+                       <FormItem>
+                         <FormLabel className="flex items-center gap-2">
+                           <DollarSign className="h-4 w-4 text-muted-foreground" />
+                           Precio de costo <span className="text-destructive">*</span>
+                         </FormLabel>
+                         <FormControl>
+                           <CurrencyInput
+                             disabled={isLoading}
+                             value={field.value ?? ''}
+                             onChange={field.onChange}
+                           />
+                         </FormControl>
+                         <FormDescription>Monto de compra por unidad.</FormDescription>
+                         <FormMessage />
+                       </FormItem>
+                     )}
+                   />
 
-                  <FormField
-                    control={form.control}
-                    name="precioVenta"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="flex items-center gap-2">
-                          <DollarSign className="h-4 w-4 text-muted-foreground" />
-                          Precio de venta <span className="text-destructive">*</span>
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            min={0}
-                            step="0.01"
-                            placeholder="0.00"
-                            disabled={isLoading}
-                            className="transition-all duration-200 focus-visible:ring-primary/30"
-                            {...field}
-                            value={field.value ?? ''}
-                          />
-                        </FormControl>
-                        <FormDescription>Monto de venta por unidad.</FormDescription>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                   <FormField
+                     control={form.control}
+                     name="precioVenta"
+                     render={({ field }) => (
+                       <FormItem>
+                         <FormLabel className="flex items-center gap-2">
+                           <DollarSign className="h-4 w-4 text-muted-foreground" />
+                           Precio de venta <span className="text-destructive">*</span>
+                         </FormLabel>
+                         <FormControl>
+                           <CurrencyInput
+                             disabled={isLoading}
+                             value={field.value ?? ''}
+                             onChange={field.onChange}
+                           />
+                         </FormControl>
+                         <FormDescription>Monto de venta por unidad.</FormDescription>
+                         <FormMessage />
+                       </FormItem>
+                     )}
+                   />
                 </motion.div>
 
                 <motion.div
@@ -1108,26 +1099,23 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
                       Si dejas vacío un campo, el sistema usará el precio base de venta.
                     </p>
                     <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-                      {listasPrecios.map((lista) => (
-                        <div key={lista.id} className="space-y-1">
-                          <label className="text-xs text-muted-foreground">{lista.nombre}</label>
-                          <Input
-                            type="number"
-                            min={0}
-                            step="0.01"
-                            placeholder={`Base: ${Number(form.watch('precioVenta') || 0).toFixed(2)}`}
-                            value={preciosPorLista[lista.id] ?? ''}
-                            onChange={(event) =>
-                              setPreciosPorLista((prev) => ({
-                                ...prev,
-                                [lista.id]: event.target.value,
-                              }))
-                            }
-                            disabled={isLoading}
-                          />
-                        </div>
-                      ))}
-                    </div>
+                       {listasPrecios.map((lista) => (
+                         <div key={lista.id} className="space-y-1">
+                           <label className="text-xs text-muted-foreground">{lista.nombre}</label>
+                           <CurrencyInput
+                             value={preciosPorLista[lista.id] ?? ''}
+                             onChange={(newValue) =>
+                               setPreciosPorLista((prev) => ({
+                                 ...prev,
+                                 [lista.id]: newValue,
+                               }))
+                             }
+                             disabled={isLoading}
+                             placeholder={`Base: ${Number(form.watch('precioVenta') || 0).toFixed(2)}`}
+                           />
+                         </div>
+                       ))}
+                     </div>
                   </motion.div>
                 )}
 

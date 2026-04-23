@@ -123,6 +123,26 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
     return buildAvailableClasSections(categories, clasClassifierData);
   }, [categories, clasClassifierData]);
 
+  const {
+    form,
+    isSubmitting,
+    isValidating,
+    onSubmit,
+    getFieldError,
+    isDirty,
+    isValid,
+  } = useCategoryForm({
+    initialData,
+    usaEan13: usaEan13 === true,
+    clasClassifierData,
+    requireSpecificSelection: true,
+    onSuccess: onSuccess || (() => {
+      router.push('/busy/categoria');
+      router.refresh();
+      dispatch(apiSlice.util.invalidateTags(['Categorias']));
+    }),
+  });
+
   const clasSectionId = form.watch('clasSectionId');
   const clasSpecificId = form.watch('clasSpecificId');
 
@@ -145,26 +165,6 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
 
     return clasClassifierData.specificNameById[clasSpecificId] ?? '';
   }, [clasClassifierData, clasSpecificId]);
-
-  const {
-    form,
-    isSubmitting,
-    isValidating,
-    onSubmit,
-    getFieldError,
-    isDirty,
-    isValid,
-  } = useCategoryForm({
-    initialData,
-    usaEan13: usaEan13 === true,
-    clasClassifierData,
-    requireSpecificSelection: true,
-    onSuccess: onSuccess || (() => {
-      router.push('/busy/categoria');
-      router.refresh();
-      dispatch(apiSlice.util.invalidateTags(['Categorias']));
-    }),
-  });
 
   useEffect(() => {
     const token = getAuthToken();

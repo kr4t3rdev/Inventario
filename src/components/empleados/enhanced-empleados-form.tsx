@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
+import { CurrencyInput } from "@/components/ui/currency-input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { sileo } from '@/lib/sileo-shim'
@@ -306,7 +307,10 @@ export function EnhancedEmpleadoForm({ initialData }: EnhancedEmpleadoFormProps)
                   <FormItem>
                     <FormLabel>Salario Base</FormLabel>
                     <FormControl>
-                      <Input type="number" step="0.01" min="0" {...field} />
+                      <CurrencyInput
+                        value={field.value ?? ''}
+                        onChange={field.onChange}
+                      />
                     </FormControl>
                     <FormDescription>
                       Ingrese el salario base en {selectedMoneda?.nombre || watchedValues.monedaSalario}.

@@ -7,6 +7,7 @@ import { z } from "zod"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { CurrencyInput } from "@/components/ui/currency-input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
@@ -248,7 +249,10 @@ export function PrestamoCashForm({ open, onOpenChange, clientes = [], cuentasBan
                 <FormItem>
                   <FormLabel>Monto del Préstamo</FormLabel>
                   <FormControl>
-                    <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                    <CurrencyInput
+                      value={field.value ?? ''}
+                      onChange={field.onChange}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -286,7 +290,10 @@ export function PrestamoCashForm({ open, onOpenChange, clientes = [], cuentasBan
                 <FormItem>
                   <FormLabel>Tasa de Interés % (Opcional)</FormLabel>
                   <FormControl>
-                    <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                    <CurrencyInput
+                      value={field.value ?? ''}
+                      onChange={field.onChange}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

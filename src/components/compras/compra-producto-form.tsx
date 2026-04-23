@@ -1,13 +1,13 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm } from 'react-hook-form'
+import { useFieldArray, useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { sileo } from '@/lib/sileo-shim'
-import { motion } from 'framer-motion'
-import { ShoppingCart, Sparkles, Loader2 } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { ShoppingCart, Sparkles, Loader2, Plus, Trash2, Package } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -25,18 +25,22 @@ import { useCreateCompraProductoMutation } from '@/lib/redux/services/comprasPro
 import { useGetAnticiposDisponiblesQuery } from '@/lib/redux/services/contabilidadApi'
 import { FORMA_PAGO_ANTICIPO_PAGO } from '@/lib/constants/anticipos'
 
-const compraProductoSchema = z.object({
+const itemSchema = z.object({
   productoId: z.string().min(1, 'Seleccione un producto'),
   precioCosto: z.coerce.number().positive('El precio de costo debe ser mayor a 0'),
   cantidad: z.coerce.number().int('La cantidad debe ser un entero').positive('La cantidad debe ser mayor a 0'),
-  vendorId: z.string().min(1, 'Seleccione un proveedor'),
+})
+
+const compraDocumentoSchema = z.object({
+  proveedorId: z.string().min(1, 'Seleccione un proveedor'),
   numeroFactura: z.string().optional().default(''),
   facturaUrl: z.string().optional().default(''),
   formaPago: z.enum(['PAGO_PARCIAL', 'PAGO_COMPLETO', FORMA_PAGO_ANTICIPO_PAGO]),
   estado: z.enum(['PENDIENTE', 'PAGADA']),
   descripcionCompra: z.string().max(500).optional().default(''),
   fechaVencimiento: z.string().optional().default(''),
-  anticipoPagoId: z.string().optional().default('')
+  anticipoPagoId: z.string().optional().default(''),
+  items: z.array(itemSchema).min(1, 'Agregue al menos un producto'),
 }).refine(
   (data) => {
     if (data.formaPago === 'PAGO_COMPLETO' || data.formaPago === FORMA_PAGO_ANTICIPO_PAGO) {
@@ -61,16 +65,17 @@ const compraProductoSchema = z.object({
   }
 )
 
-type CompraProductoFormValues = z.input<typeof compraProductoSchema>
+type CompraDocumentoFormValues = z.input<typeof compraDocumentoSchema>
 
 interface CompraProductoFormProps {
   onSuccess?: () => void
 }
 
 /**
- * @description Formulario simplificado para registrar compras de productos existentes.
+ * @description Formulario para registrar compras múltiples de productos.
+ * Permite agregar N productos con cantidades y costos individuales.
  * @param {CompraProductoFormProps} props - Props del componente
- * @returns {JSX.Element} Formulario de compra de productos
+ * @returns {JSX.Element} Formulario de compra múltiple
  */
 export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
   const router = useRouter()
@@ -81,32 +86,30 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
   const { data: vendors, isLoading: isLoadingVendors } = useGetVendorsQuery()
   const [createCompraProducto] = useCreateCompraProductoMutation()
 
-  const form = useForm<CompraProductoFormValues>({
-    resolver: zodResolver(compraProductoSchema),
+  const form = useForm<CompraDocumentoFormValues>({
+    resolver: zodResolver(compraDocumentoSchema),
     defaultValues: {
-      productoId: '',
-      precioCosto: '' as unknown as number,
-      cantidad: 1,
-      vendorId: '',
+      proveedorId: '',
       numeroFactura: '',
       facturaUrl: '',
       formaPago: 'PAGO_COMPLETO',
       estado: 'PAGADA',
       descripcionCompra: '',
       fechaVencimiento: '',
-      anticipoPagoId: ''
+      anticipoPagoId: '',
+      items: [{ productoId: '', precioCosto: '' as unknown as number, cantidad: 1 }],
     }
   })
 
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: 'items',
+  })
+
   const formaPagoSeleccionada = form.watch('formaPago')
-  const productoSeleccionado = form.watch('productoId')
-  const proveedorSeleccionado = form.watch('vendorId')
-  const precioCostoSeleccionado = form.watch('precioCosto')
-  const cantidadSeleccionada = form.watch('cantidad')
-  const montoEstimadoCompra = Number(precioCostoSeleccionado || 0) * Number(cantidadSeleccionada || 0)
-  const previousProductoIdRef = useRef<string | null>(null)
-  const lastAutofilledVendorRef = useRef<string | null>(null)
-  const lastAutofilledCostoRef = useRef<number | null>(null)
+  const proveedorSeleccionado = form.watch('proveedorId')
+  const items = form.watch('items')
+
   const productosCatalogo = useMemo<Producto[]>(
     () => (Array.isArray(products) ? products : []),
     [products]
@@ -139,6 +142,13 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
     }
   )
 
+  // Calcular monto total estimado
+  const montoEstimadoCompra = useMemo(() => {
+    return items.reduce((sum, item) => {
+      return sum + (Number(item.precioCosto || 0) * Number(item.cantidad || 0))
+    }, 0)
+  }, [items])
+
   useEffect(() => {
     if (!formaPagoSeleccionada) return
     const nextEstado =
@@ -151,51 +161,37 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
     }
   }, [formaPagoSeleccionada, form])
 
-  useEffect(() => {
-    if (!productoSeleccionado) {
-      previousProductoIdRef.current = null
-      return
-    }
-
-    const producto = productoLookup.get(productoSeleccionado)
+  const handleProductoChange = useCallback((index: number, productoId: string) => {
+    const producto = productoLookup.get(productoId)
     if (!producto) return
 
+    // Auto-fill proveedor si está vacío o si todos los items son del mismo proveedor
     const selectedVendorId = typeof producto.vendorId === 'string' ? producto.vendorId : ''
+    if (selectedVendorId) {
+      const currentVendor = form.getValues('proveedorId')
+      if (!currentVendor) {
+        form.setValue('proveedorId', selectedVendorId, { shouldValidate: true })
+      }
+    }
+
+    // Auto-fill precio costo
     const selectedPrecioCosto = Number(producto.precioCosto ?? 0)
-    const previousProductoId = previousProductoIdRef.current
-
-    const vendorActual = form.getValues('vendorId')
-    const costoActual = Number(form.getValues('precioCosto') || 0)
-    const vendorDirty = !!form.formState.dirtyFields.vendorId
-    const costoDirty = !!form.formState.dirtyFields.precioCosto
-
-    const canAutofillVendor =
-      !vendorDirty ||
-      !vendorActual ||
-      (lastAutofilledVendorRef.current !== null && vendorActual === lastAutofilledVendorRef.current) ||
-      previousProductoId !== productoSeleccionado
-
-    if (selectedVendorId && canAutofillVendor) {
-      form.setValue('vendorId', selectedVendorId, { shouldValidate: true })
-      lastAutofilledVendorRef.current = selectedVendorId
+    if (selectedPrecioCosto > 0) {
+      form.setValue(`items.${index}.precioCosto`, selectedPrecioCosto, { shouldValidate: true })
     }
+  }, [productoLookup, form])
 
-    const canAutofillCosto =
-      !costoDirty ||
-      !Number.isFinite(costoActual) ||
-      costoActual <= 0 ||
-      (lastAutofilledCostoRef.current !== null && costoActual === lastAutofilledCostoRef.current) ||
-      previousProductoId !== productoSeleccionado
+  const addItem = useCallback(() => {
+    append({ productoId: '', precioCosto: '' as unknown as number, cantidad: 1 })
+  }, [append])
 
-    if (selectedPrecioCosto > 0 && canAutofillCosto) {
-      form.setValue('precioCosto', selectedPrecioCosto, { shouldValidate: true })
-      lastAutofilledCostoRef.current = selectedPrecioCosto
+  const removeItem = useCallback((index: number) => {
+    if (fields.length > 1) {
+      remove(index)
     }
+  }, [fields.length, remove])
 
-    previousProductoIdRef.current = productoSeleccionado
-  }, [productoSeleccionado, productoLookup, form])
-
-  async function onSubmit(data: CompraProductoFormValues) {
+  async function onSubmit(data: CompraDocumentoFormValues) {
     setIsLoading(true)
     try {
       const idempotencyKey =
@@ -214,27 +210,23 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
         idempotencyKey: data.formaPago === FORMA_PAGO_ANTICIPO_PAGO ? idempotencyKey : undefined
       }).unwrap()
 
-      if (result.gastoCompra?.gastoCompraId) {
-        const stockTrace =
-          result.stockAntes !== undefined && result.stockDespues !== undefined
-            ? ` Stock: ${result.stockAntes} → ${result.stockDespues}.`
-            : ''
-        const costoTrace =
-          result.precioCostoAntes !== undefined && result.precioCostoDespues !== undefined
-            ? ` Costo catálogo: ${result.precioCostoAntes.toFixed(2)} → ${result.precioCostoDespues.toFixed(2)} (${result.metodoCosto === 'PRIMERA_COMPRA' ? 'primera compra' : 'ponderado'}).`
-            : ''
+      if (result.compraDocumento?.compraDocumentoId) {
+        const itemCount = result.items?.length || 0
+        const stockTraces = (result.items || [])
+          .filter((item: any) => item.stockAntes !== undefined && item.stockDespues !== undefined)
+          .map((item: any) => {
+            const producto = item.producto?.nombre || 'N/A'
+            return ` ${producto}: ${item.stockAntes} → ${item.stockDespues}`
+          })
+          .join(',')
 
         if (data.formaPago === 'PAGO_COMPLETO') {
-          sileo.success({ title: `Compra registrada exitosamente.${stockTrace}${costoTrace}` })
+          sileo.success({ title: `Compra múltiple registrada: ${itemCount} productos.${stockTraces}` })
         } else if (data.formaPago === FORMA_PAGO_ANTICIPO_PAGO) {
-          sileo.success({ title: `Compra registrada con anticipo ejecutado exitosamente.${stockTrace}${costoTrace}` })
+          sileo.success({ title: `Compra múltiple registrada con anticipo: ${itemCount} productos.${stockTraces}` })
         } else {
-          sileo.success({ title: `Compra registrada exitosamente. Se generó una cuenta por pagar.${stockTrace}${costoTrace}` })
+          sileo.success({ title: `Compra múltiple registrada: ${itemCount} productos. Se generó una cuenta por pagar.${stockTraces}` })
         }
-      }
-
-      if (result.advertencia) {
-        sileo.warning({ title: result.advertencia })
       }
 
       if (onSuccess) onSuccess()
@@ -286,7 +278,7 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
             </motion.div>
             <div className='relative'>
               <h2 className='text-lg font-semibold'>Datos de la Compra</h2>
-              <p className='text-sm text-muted-foreground'>Seleccione un producto del clasificador y registre la compra</p>
+              <p className='text-sm text-muted-foreground'>Agregue productos del clasificador y registre la compra múltiple</p>
               <motion.div className='absolute -right-4 -top-1' animate={{ rotate: 360 }} transition={{ rotate: { duration: 20, repeat: Infinity, ease: 'linear' } }}>
                 <Sparkles className='h-4 w-4 text-yellow-500' />
               </motion.div>
@@ -295,36 +287,11 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className='space-y-6'>
-              <FormField
-                control={form.control}
-                name='productoId'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Producto (clasificador)</FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder='Seleccione un producto' />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {productosComprables.map((product) => (
-                          <SelectItem key={product.id} value={product.id}>
-                            {product.nombre}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>Este flujo usa productos existentes del catálogo maestro.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
+              {/* Cabecera: Proveedor y Factura */}
               <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                 <FormField
                   control={form.control}
-                  name='vendorId'
+                  name='proveedorId'
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Proveedor</FormLabel>
@@ -349,48 +316,18 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
 
                 <FormField
                   control={form.control}
-                  name='cantidad'
+                  name='numeroFactura'
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Cantidad comprada</FormLabel>
+                      <FormLabel>Nro. Factura</FormLabel>
                       <FormControl>
-                        <Input type='number' min={1} {...field} />
+                        <Input type='text' placeholder='Ej: F-2024-0012' {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               </div>
-
-              <FormField
-                control={form.control}
-                name='precioCosto'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Costo unitario</FormLabel>
-                    <FormControl>
-                      <Input type='number' step='0.01' min={0} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <Separator className='my-6' />
-
-              <FormField
-                control={form.control}
-                name='numeroFactura'
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nro. Factura</FormLabel>
-                    <FormControl>
-                      <Input type='text' placeholder='Ej: F-2024-0012' {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
 
               <FormField
                 control={form.control}
@@ -504,6 +441,137 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
                 )}
               />
 
+              <Separator className='my-6' />
+
+              {/* Items de compra */}
+              <div className='space-y-4'>
+                <div className='flex items-center justify-between'>
+                  <div className='flex items-center gap-2'>
+                    <Package className='h-5 w-5 text-muted-foreground' />
+                    <h3 className='text-sm font-semibold'>Productos a comprar</h3>
+                  </div>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    onClick={addItem}
+                    className='cursor-pointer'
+                  >
+                    <Plus className='h-4 w-4 mr-1' />
+                    Agregar producto
+                  </Button>
+                </div>
+
+                <AnimatePresence>
+                  {fields.map((field, index) => (
+                    <motion.div
+                      key={field.id}
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <Card className='p-4 bg-muted/30'>
+                        <div className='flex items-start gap-3'>
+                          <div className='flex-1 grid grid-cols-1 md:grid-cols-3 gap-3'>
+                            <FormField
+                              control={form.control}
+                              name={`items.${index}.productoId`}
+                              render={({ field: itemField }) => (
+                                <FormItem>
+                                  <FormLabel className='text-xs'>Producto</FormLabel>
+                                  <Select
+                                    onValueChange={(value) => {
+                                      itemField.onChange(value)
+                                      handleProductoChange(index, value)
+                                    }}
+                                    value={itemField.value}
+                                  >
+                                    <FormControl>
+                                      <SelectTrigger>
+                                        <SelectValue placeholder='Seleccione' />
+                                      </SelectTrigger>
+                                    </FormControl>
+                                    <SelectContent>
+                                      {productosComprables.map((product) => (
+                                        <SelectItem key={product.id} value={product.id}>
+                                          {product.nombre}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name={`items.${index}.cantidad`}
+                              render={({ field: itemField }) => (
+                                <FormItem>
+                                  <FormLabel className='text-xs'>Cantidad</FormLabel>
+                                  <FormControl>
+                                    <Input type='number' min={1} {...itemField} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name={`items.${index}.precioCosto`}
+                              render={({ field: itemField }) => (
+                                <FormItem>
+                                  <FormLabel className='text-xs'>Costo unitario</FormLabel>
+                                  <FormControl>
+                                    <Input type='number' step='0.01' min={0} {...itemField} />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          {fields.length > 1 && (
+                            <Button
+                              type='button'
+                              variant='ghost'
+                              size='icon'
+                              onClick={() => removeItem(index)}
+                              className='mt-6 text-destructive hover:text-destructive cursor-pointer'
+                              title='Quitar producto'
+                            >
+                              <Trash2 className='h-4 w-4' />
+                            </Button>
+                          )}
+                        </div>
+
+                        {/* Subtotal por línea */}
+                        {items[index]?.precioCosto > 0 && items[index]?.cantidad > 0 && (
+                          <div className='mt-2 text-right text-sm text-muted-foreground'>
+                            Subtotal: <span className='font-medium text-foreground'>
+                              ${(items[index].precioCosto * items[index].cantidad).toLocaleString()}
+                            </span>
+                          </div>
+                        )}
+                      </Card>
+                    </motion.div>
+                  ))}
+                </AnimatePresence>
+
+                {/* Total general */}
+                <div className='flex justify-end pt-2'>
+                  <div className='text-right'>
+                    <span className='text-sm text-muted-foreground'>Total general: </span>
+                    <span className='text-lg font-bold'>
+                      ${montoEstimadoCompra.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
               <div className='flex justify-end space-x-4 pt-4'>
                 <Button type='button' variant='destructive' className='cursor-pointer' onClick={() => router.push('/busy/compras-productos')}>
                   Cancelar
@@ -515,7 +583,7 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
                       Procesando...
                     </>
                   ) : (
-                    'Registrar compra'
+                    `Registrar compra (${fields.length} ${fields.length === 1 ? 'producto' : 'productos'})`
                   )}
                 </Button>
               </div>
