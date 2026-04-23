@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { Input } from '@/components/ui/input'
+import { CurrencyInput } from '@/components/ui/currency-input'
 import { Button } from '@/components/ui/button'
 import { Trash2 } from 'lucide-react'
 
@@ -97,7 +98,12 @@ export function DefectacionesEditorPanel(): React.ReactElement {
       <h3 className="text-lg font-semibold mb-2">Defectaciones del catálogo</h3>
       <div className="flex gap-2 items-end">
         <Input placeholder="Tipo de defecto" value={defecto} onChange={(e) => setDefecto(e.target.value)} className="flex-1" />
-        <Input placeholder="Costo (USD)" value={costo} onChange={(e) => setCosto(e.target.value)} className="w-32" type="number" step="0.01" />
+        <CurrencyInput 
+          placeholder="Costo (USD)" 
+          value={costo} 
+          onChange={setCosto} 
+          className="w-32" 
+        />
         <Button onClick={addTarifa}>Guardar</Button>
       </div>
       <div className="mt-4">
