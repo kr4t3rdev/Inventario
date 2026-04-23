@@ -32,6 +32,8 @@ interface SubcategoryFormProps {
     nombre: string;
     descripcion?: string | null;
     parentId?: string | null;
+    clasSectionId?: string | null;
+    clasSpecificId?: string | null;
   };
   onSuccess?: () => void;
 }
@@ -110,8 +112,6 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
   const [clasClassifierData, setClasClassifierData] = useState<CLASClassifierData | null>(null);
   const [isClassifierLoading, setIsClassifierLoading] = useState(false);
   const [classifierError, setClassifierError] = useState<string | null>(null);
-  const [selectedSection, setSelectedSection] = useState('');
-  const [selectedSpecific, setSelectedSpecific] = useState('');
 
   const {
     data: categories = [],
@@ -123,25 +123,28 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
     return buildAvailableClasSections(categories, clasClassifierData);
   }, [categories, clasClassifierData]);
 
+  const clasSectionId = form.watch('clasSectionId');
+  const clasSpecificId = form.watch('clasSpecificId');
+
   const availableSpecifics = useMemo(() => {
-    if (!clasClassifierData || !selectedSection) {
+    if (!clasClassifierData || !clasSectionId) {
       return [];
     }
 
-    return getSpecificsForSection(clasClassifierData, selectedSection);
-  }, [clasClassifierData, selectedSection]);
+    return getSpecificsForSection(clasClassifierData, clasSectionId);
+  }, [clasClassifierData, clasSectionId]);
 
   const selectedSectionName = useMemo(() => {
-    return availableSections.find((section) => section.sectionId === selectedSection)?.sectionName ?? '';
-  }, [availableSections, selectedSection]);
+    return availableSections.find((section) => section.sectionId === clasSectionId)?.sectionName ?? '';
+  }, [availableSections, clasSectionId]);
 
   const selectedSpecificName = useMemo(() => {
-    if (!clasClassifierData || !selectedSpecific) {
+    if (!clasClassifierData || !clasSpecificId) {
       return '';
     }
 
-    return clasClassifierData.specificNameById[selectedSpecific] ?? '';
-  }, [clasClassifierData, selectedSpecific]);
+    return clasClassifierData.specificNameById[clasSpecificId] ?? '';
+  }, [clasClassifierData, clasSpecificId]);
 
   const {
     form,
@@ -221,33 +224,23 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
     if (
       usaEan13 !== true ||
       !clasClassifierData ||
-      !initialData?.nombre ||
-      categories.length === 0
+      !initialData ||
+      !initialData.clasSectionId ||
+      !initialData.clasSpecificId
     ) {
       return;
     }
 
-    const normalizedName = initialData.nombre.trim().toUpperCase();
-    const specificMatch = clasClassifierData.specifics.find(
-      (specific) => specific.name.trim().toUpperCase() === normalizedName
-    );
+    const parentCategoryId = resolveClasParentCategoryId(availableSections, initialData.clasSectionId);
+    const specificName = clasClassifierData.specificNameById[initialData.clasSpecificId];
 
-    if (specificMatch) {
-      const parentSectionId = categories
-        .filter((category) => category.catId === initialData.parentId)
-        .map((category) => validateCLASSection(category.nombre))
-        .find((sectionId): sectionId is string => Boolean(sectionId));
-
-      const resolvedSectionId = parentSectionId ?? specificMatch.sectionId;
-
-      setSelectedSection(resolvedSectionId);
-      setSelectedSpecific(specificMatch.id);
-      form.setValue('clasSectionId', resolvedSectionId);
-      form.setValue('clasSpecificId', specificMatch.id);
-      form.setValue('parentId', initialData.parentId ?? null);
-      form.setValue('nombre', specificMatch.name);
+    form.setValue('clasSectionId', initialData.clasSectionId);
+    form.setValue('clasSpecificId', initialData.clasSpecificId);
+    form.setValue('parentId', parentCategoryId ?? initialData.parentId ?? null);
+    if (specificName) {
+      form.setValue('nombre', specificName);
     }
-  }, [usaEan13, categories, clasClassifierData, form, initialData?.nombre, initialData?.parentId]);
+  }, [usaEan13, clasClassifierData, initialData, availableSections, form]);
 
   const isLoading = isSubmitting || isValidating;
   const showMissingSectionsMessage =
@@ -406,11 +399,9 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
                 <FormItem>
                   <FormLabel>Sección del Clasificador *</FormLabel>
                   <Select
-                    value={selectedSection}
+                    value={clasSectionId ?? ''}
                     onValueChange={(val) => {
                       const parentCategoryId = resolveClasParentCategoryId(availableSections, val);
-                      setSelectedSection(val);
-                      setSelectedSpecific('');
                       if (parentCategoryId) {
                         form.setValue('nombre', '');
                         form.setValue('clasSectionId', val);
@@ -452,23 +443,21 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
                 <FormItem>
                   <FormLabel>Específico (subcategoría) *</FormLabel>
                   <Select
-                    value={selectedSpecific}
+                    value={clasSpecificId ?? ''}
                     onValueChange={(val) => {
-                      const parentCategoryId = resolveClasParentCategoryId(availableSections, selectedSection);
-                      setSelectedSpecific(val);
+                      const parentCategoryId = resolveClasParentCategoryId(availableSections, clasSectionId ?? '');
                       const specific = availableSpecifics.find((sp) => sp.id === val);
                       if (specific && parentCategoryId) {
-                        setSelectedSection(specific.sectionId);
                         form.setValue('nombre', specific.name);
                         form.setValue('clasSectionId', specific.sectionId);
                         form.setValue('clasSpecificId', val);
                         form.setValue('parentId', parentCategoryId);
                       }
                     }}
-                    disabled={isLoading || !selectedSection}
+                    disabled={isLoading || !clasSectionId}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder={selectedSection ? 'Seleccione un específico' : 'Primero seleccione una sección'} />
+                      <SelectValue placeholder={clasSectionId ? 'Seleccione un específico' : 'Primero seleccione una sección'} />
                     </SelectTrigger>
                     <SelectContent>
                       {availableSpecifics.map((specific) => (
@@ -548,7 +537,7 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
                 </Button>
                 <Button
                   type="submit"
-                  disabled={isLoading || !isDirty || !isValid || !selectedSpecific}
+                  disabled={isLoading || !isDirty || !isValid || !clasSpecificId}
                   className="min-w-40 gap-2 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 cursor-pointer"
                 >
                   {isLoading ? (

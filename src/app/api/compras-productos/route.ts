@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { withAuthGet, withAuthPost } from '@/lib/auth-middleware'
 import { calcularPrecioCostoCompra } from '@/lib/inventory-cost-utils'
 import { applyPagoGastoWorkflow } from '@/lib/services/pago-gastos-workflow'
-import { executeAnticipo, isAnticipoWorkflowError } from '@/lib/services/anticipos-workflow'
+import { applyAnticipoAllocations, executeAnticipo, isAnticipoWorkflowError } from '@/lib/services/anticipos-workflow'
 import { FORMA_PAGO_ANTICIPO_PAGO } from '@/lib/constants/anticipos'
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service'
 
