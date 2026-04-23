@@ -142,11 +142,22 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
     }
   )
 
-  // Calcular monto total estimado
+  // Calcular monto total estimado (con parsing robusto)
   const montoEstimadoCompra = useMemo(() => {
     return items.reduce((sum, item) => {
-      return sum + (Number(item.precioCosto || 0) * Number(item.cantidad || 0))
+      const costo = parseFloat(String(item.precioCosto)) || 0
+      const cant = parseInt(String(item.cantidad), 10) || 0
+      return sum + (costo * cant)
     }, 0)
+  }, [items])
+
+  // Contar items válidos
+  const itemsValidos = useMemo(() => {
+    return items.filter((item) => {
+      const costo = parseFloat(String(item.precioCosto)) || 0
+      const cant = parseInt(String(item.cantidad), 10) || 0
+      return costo > 0 && cant > 0
+    }).length
   }, [items])
 
   useEffect(() => {
@@ -549,13 +560,18 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
                         </div>
 
                         {/* Subtotal por línea */}
-                        {items[index]?.precioCosto > 0 && items[index]?.cantidad > 0 && (
-                          <div className='mt-2 text-right text-sm text-muted-foreground'>
-                            Subtotal: <span className='font-medium text-foreground'>
-                              ${(items[index].precioCosto * items[index].cantidad).toLocaleString()}
-                            </span>
-                          </div>
-                        )}
+                        {(() => {
+                          const costo = parseFloat(String(items[index]?.precioCosto)) || 0
+                          const cant = parseInt(String(items[index]?.cantidad), 10) || 0
+                          if (costo <= 0 || cant <= 0) return null
+                          return (
+                            <div className='mt-2 text-right text-sm text-muted-foreground'>
+                              Subtotal: <span className='font-medium text-foreground'>
+                                ${(costo * cant).toLocaleString('es-CU')}
+                              </span>
+                            </div>
+                          )
+                        })()}
                       </Card>
                     </motion.div>
                   ))}
@@ -563,11 +579,16 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
 
                 {/* Total general */}
                 <div className='flex justify-end pt-2'>
-                  <div className='text-right'>
-                    <span className='text-sm text-muted-foreground'>Total general: </span>
-                    <span className='text-lg font-bold'>
-                      ${montoEstimadoCompra.toLocaleString()}
-                    </span>
+                  <div className='text-right space-y-1'>
+                    <div className='text-xs text-muted-foreground'>
+                      {itemsValidos} {itemsValidos === 1 ? 'producto' : 'productos'} con precio
+                    </div>
+                    <div className='flex items-baseline gap-2'>
+                      <span className='text-sm text-muted-foreground'>Total general:</span>
+                      <span className='text-xl font-bold text-primary'>
+                        ${montoEstimadoCompra.toLocaleString('es-CU')}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -583,7 +604,7 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
                       Procesando...
                     </>
                   ) : (
-                    `Registrar compra (${fields.length} ${fields.length === 1 ? 'producto' : 'productos'})`
+                    `Registrar compra (${itemsValidos} ${itemsValidos === 1 ? 'producto' : 'productos'})`
                   )}
                 </Button>
               </div>
