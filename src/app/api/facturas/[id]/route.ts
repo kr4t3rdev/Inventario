@@ -19,7 +19,7 @@ const UpdateFacturaSchema = z.object({
  */
 export const GET = withAuth(async (request: NextRequest, context: any, user: any) => {
   try {
-    const { id } = context.params
+    const { id } = await context.params
 
     const facturaInclude = {
       serie: true,
@@ -160,7 +160,7 @@ export const GET = withAuth(async (request: NextRequest, context: any, user: any
  */
 export const PATCH = withAuth(async (request: NextRequest, context: any, user: any) => {
   try {
-    const { id } = context.params
+    const { id } = await context.params
     const body = await request.json()
     const validatedData = UpdateFacturaSchema.parse(body)
 
@@ -235,7 +235,7 @@ export const PATCH = withAuth(async (request: NextRequest, context: any, user: a
  */
 export const DELETE = withAuth(async (request: NextRequest, context: any, user: any) => {
   try {
-    const { id } = context.params
+    const { id } = await context.params
 
     // Verificar que la factura existe
     const facturaExistente = await prisma.factura.findUnique({

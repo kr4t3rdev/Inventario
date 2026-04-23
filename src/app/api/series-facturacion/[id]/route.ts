@@ -16,7 +16,7 @@ const UpdateSerieSchema = z.object({
  */
 export const GET = withAuth(async (request: NextRequest, context: any, user: any) => {
   try {
-    const { id } = context.params
+    const { id } = await context.params
 
     const serie = await prisma.serieFacturacion.findUnique({
       where: { serieId: id },
@@ -51,7 +51,7 @@ export const GET = withAuth(async (request: NextRequest, context: any, user: any
  */
 export const PUT = withAuth(async (request: NextRequest, context: any, user: any) => {
   try {
-    const { id } = context.params
+    const { id } = await context.params
     const body = await request.json()
     const validatedData = UpdateSerieSchema.parse(body)
 
@@ -136,7 +136,7 @@ export const PUT = withAuth(async (request: NextRequest, context: any, user: any
  */
 export const DELETE = withAuth(async (request: NextRequest, context: any, user: any) => {
   try {
-    const { id } = context.params
+    const { id } = await context.params
 
     // Verificar que la serie existe
     const serieExistente = await prisma.serieFacturacion.findUnique({
