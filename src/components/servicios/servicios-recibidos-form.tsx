@@ -28,8 +28,8 @@ const FORMA_PAGO_ANTICIPO = 'ANTICIPO_PAGO' as const
 const schema = z.object({
   servicioId: z.string().min(1, 'Seleccione un servicio'),
   proveedorId: z.string().optional(),
-  costoUnitario: z.coerce.number().int().positive(),
-  cantidad: z.coerce.number().int().positive(),
+  costoUnitario: z.coerce.number().positive('El costo unitario debe ser mayor a 0'),
+  cantidad: z.coerce.number().int('La cantidad debe ser un entero').positive('La cantidad debe ser mayor a 0'),
   formaPago: z.enum(['PAGO_PARCIAL', 'PAGO_COMPLETO', FORMA_PAGO_ANTICIPO]),
   estado: z.enum(['PENDIENTE', 'PAGADA']),
   numeroFactura: z.string().optional(),
@@ -71,6 +71,22 @@ export function ServiciosRecibidosForm(): ReactElement {
   const costoUnitario = form.watch('costoUnitario') || 0
   const cantidad = form.watch('cantidad') || 1
   const costoTotal = costoUnitario * cantidad
+
+  const handleInvalidSubmit = (): void => {
+    const firstErrorMessage = [
+      form.formState.errors.servicioId?.message,
+      form.formState.errors.costoUnitario?.message,
+      form.formState.errors.cantidad?.message,
+      form.formState.errors.formaPago?.message,
+      form.formState.errors.estado?.message,
+      form.formState.errors.numeroFactura?.message,
+      form.formState.errors.descripcion?.message,
+    ].find((message): message is string => typeof message === 'string' && message.length > 0)
+
+    sileo.error({
+      title: firstErrorMessage || 'Completá los campos requeridos antes de continuar.',
+    })
+  }
 
   /**
    * @description Registra un servicio recibido.
@@ -172,7 +188,7 @@ export function ServiciosRecibidosForm(): ReactElement {
           
           <CardContent className='pt-8'>
             <Form {...form}>
-              <form className='space-y-6' onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })}>
+              <form className='space-y-6' onSubmit={form.handleSubmit(onSubmit, handleInvalidSubmit)}>
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -284,7 +300,8 @@ export function ServiciosRecibidosForm(): ReactElement {
                             <div className='relative'>
                               <span className='absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 dark:text-slate-500 text-lg'>$</span>
                               <Input 
-                                min={1} 
+                                min={0.01}
+                                step='0.01'
                                 type='number' 
                                 {...field} 
                                 className={`${servicioInputClassName} pl-8`}

@@ -44,6 +44,7 @@ import {
   UtensilsCrossed,
   Monitor,
   FolderOpen,
+  CalendarDays,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -460,6 +461,16 @@ export function AppSidebar2({
           //   url: "/busy/contabilidad/cierres",
           //   icon: Calculator,
           // },
+          {
+            title: "Períodos Contables",
+            url: "/busy/contabilidad/periodos",
+            icon: CalendarDays,
+          },
+          {
+            title: "Eventos Contables",
+            url: "/busy/contabilidad/eventos",
+            icon: FileText,
+          },
         ],
       },
       {

@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { NextRequest } from 'next/server'
 
+const assertOperationAllowedMock = vi.hoisted(() => vi.fn())
+
 vi.mock('@/lib/prisma', () => ({
   default: {
     gastosDE: {
@@ -31,6 +33,21 @@ vi.mock('@/lib/services/audit-log-service', () => ({
   AuditLogService: {
     log: vi.fn().mockResolvedValue(undefined)
   }
+}))
+
+vi.mock('@/lib/services/periodo-operacion-guard', () => ({
+  assertOperationAllowed: assertOperationAllowedMock,
+  isPeriodoOperacionError: (error: unknown) =>
+    Boolean(
+      error &&
+        typeof error === 'object' &&
+        'code' in (error as Record<string, unknown>) &&
+        (error as Record<string, unknown>).code === 'PERIODO_BLOQUEADO'
+    ),
+  serializePeriodoOperacionError: (error: { message: string; code: string }) => ({
+    error: error.message,
+    code: error.code,
+  }),
 }))
 
 /**
@@ -83,6 +100,7 @@ function createTxMock(overrides: Record<string, unknown> = {}) {
 describe('Reconciliacion gastos API - POST', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    assertOperationAllowedMock.mockResolvedValue(undefined)
   })
 
   it('registra reconciliacion PAGADA para gasto DE sin CxP', async () => {
@@ -318,5 +336,41 @@ describe('Reconciliacion gastos API - POST', () => {
     expect(response.status).toBe(409)
     expect(data.code).toBe('DUPLICADO_TRANSACCION')
     expect(tx.reconciliacionGasto.create).not.toHaveBeenCalled()
+  })
+
+  it('bloquea la reconciliación cuando el período contable está cerrado', async () => {
+    const { POST } = await import('../route')
+    const { authenticateUser } = await import('@/lib/auth-middleware')
+
+    vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-4' } } as any)
+    assertOperationAllowedMock.mockRejectedValueOnce({
+      message: 'Período de gastos cerrado',
+      status: 409,
+      code: 'PERIODO_BLOQUEADO'
+    })
+
+    const request = new NextRequest('http://localhost/api/contabilidad/reconciliacion/gastos', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        tipoGasto: 'gastoDE',
+        gastosDEId: 'gde-4',
+        cuentaId: 'cb-4',
+        tipoPagoId: 'tp-4',
+        monto: 20,
+        moneda: 'CUP',
+        descripcion: 'Pago bloqueado',
+        estado: 'PAGADA'
+      })
+    })
+
+    const response = await POST(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(409)
+    expect(data).toEqual({
+      error: 'Período de gastos cerrado',
+      code: 'PERIODO_BLOQUEADO'
+    })
   })
 })

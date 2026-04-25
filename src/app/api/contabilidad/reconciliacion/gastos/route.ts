@@ -8,6 +8,12 @@ import {
   applyPagoGastoWorkflow,
   isGastoWorkflowError
 } from '@/lib/services/pago-gastos-workflow'
+import {
+  assertOperationAllowed,
+  isPeriodoOperacionError,
+  serializePeriodoOperacionError
+} from '@/lib/services/periodo-operacion-guard'
+import { registrarEventoContable } from '@/lib/services/evento-contable-integration'
 
 // Schema para validar la reconciliación de gastos
 const reconciliacionGastoSchema = z.object({
@@ -318,6 +324,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const validatedData = reconciliacionGastoSchema.parse(body)
+    await assertOperationAllowed(new Date(), 'RECONCILIACION_GASTO')
 
     // Verificar que la referencia existe según el tipo de gasto
     let referenciaExiste = false
@@ -493,6 +500,19 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    for (const rec of (result.reconciliaciones ?? [])) {
+      if (rec && 'reconciliacionGastoId' in rec) {
+        await registrarEventoContable({
+          origenTipo: 'RECONCILIACION_GASTO',
+          origenId: (rec as Record<string, unknown>).reconciliacionGastoId as string,
+          monto: Number((rec as Record<string, unknown>).montoConvertido ?? (rec as Record<string, unknown>).monto ?? 0),
+          fechaOperacion: new Date(),
+          descripcion: `Reconciliación gasto ${(rec as Record<string, unknown>).reconciliacionGastoId as string}`,
+          usuarioId: authResultUser.user.userId,
+        });
+      }
+    }
+
     return NextResponse.json(
       {
         message: 'Gasto reconciliado exitosamente',
@@ -505,6 +525,13 @@ export async function POST(request: NextRequest) {
     )
 
   } catch (error:unknown) {
+    if (isPeriodoOperacionError(error)) {
+      return NextResponse.json(
+        serializePeriodoOperacionError(error),
+        { status: error.status }
+      )
+    }
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: 'Datos de entrada inválidos', details: error.errors },

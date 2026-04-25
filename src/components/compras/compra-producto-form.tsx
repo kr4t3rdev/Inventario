@@ -24,10 +24,18 @@ import { useGetProductosQuery } from '@/lib/redux/services/productosApi'
 import { useCreateCompraProductoMutation } from '@/lib/redux/services/comprasProductosApi'
 import { useGetAnticiposDisponiblesQuery } from '@/lib/redux/services/contabilidadApi'
 import { FORMA_PAGO_ANTICIPO_PAGO } from '@/lib/constants/anticipos'
+import {
+  normalizeLocaleDecimalInput,
+  normalizeLocaleDecimalValue,
+  parseLocaleNumber,
+} from '@/lib/locale-number'
 
 const itemSchema = z.object({
   productoId: z.string().min(1, 'Seleccione un producto'),
-  precioCosto: z.coerce.number().positive('El precio de costo debe ser mayor a 0'),
+  precioCosto: z.preprocess(
+    normalizeLocaleDecimalValue,
+    z.coerce.number().positive('El precio de costo debe ser mayor a 0')
+  ),
   cantidad: z.coerce.number().int('La cantidad debe ser un entero').positive('La cantidad debe ser mayor a 0'),
 })
 
@@ -145,7 +153,7 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
   // Calcular monto total estimado (con parsing robusto)
   const montoEstimadoCompra = useMemo(() => {
     return items.reduce((sum, item) => {
-      const costo = parseFloat(String(item.precioCosto)) || 0
+      const costo = parseLocaleNumber(item.precioCosto) || 0
       const cant = parseInt(String(item.cantidad), 10) || 0
       return sum + (costo * cant)
     }, 0)
@@ -154,11 +162,29 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
   // Contar items válidos
   const itemsValidos = useMemo(() => {
     return items.filter((item) => {
-      const costo = parseFloat(String(item.precioCosto)) || 0
+      const costo = parseLocaleNumber(item.precioCosto) || 0
       const cant = parseInt(String(item.cantidad), 10) || 0
       return costo > 0 && cant > 0
     }).length
   }, [items])
+
+  const handleInvalidSubmit = (): void => {
+    const firstItemError = form.formState.errors.items?.find((itemError) => itemError)?.productoId?.message
+      || form.formState.errors.items?.find((itemError) => itemError)?.precioCosto?.message
+      || form.formState.errors.items?.find((itemError) => itemError)?.cantidad?.message
+
+    const firstErrorMessage = [
+      form.formState.errors.proveedorId?.message,
+      form.formState.errors.formaPago?.message,
+      form.formState.errors.estado?.message,
+      form.formState.errors.anticipoPagoId?.message,
+      firstItemError,
+    ].find((message): message is string => typeof message === 'string' && message.length > 0)
+
+    sileo.error({
+      title: firstErrorMessage || 'Completá los campos requeridos antes de continuar.',
+    })
+  }
 
   useEffect(() => {
     if (!formaPagoSeleccionada) return
@@ -297,7 +323,7 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
           </motion.div>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className='space-y-6'>
+            <form onSubmit={form.handleSubmit(onSubmit, handleInvalidSubmit)} className='space-y-6'>
               {/* Cabecera: Proveedor y Factura */}
               <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
                 <FormField
@@ -537,7 +563,16 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
                                 <FormItem>
                                   <FormLabel className='text-xs'>Costo unitario</FormLabel>
                                   <FormControl>
-                                    <Input type='number' step='0.01' min={0} {...itemField} />
+                                    <Input
+                                      type='number'
+                                      step='0.01'
+                                      min={0}
+                                      {...itemField}
+                                      value={itemField.value ?? ''}
+                                      onChange={(event) => {
+                                        itemField.onChange(normalizeLocaleDecimalInput(event.target.value))
+                                      }}
+                                    />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -561,7 +596,7 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
 
                         {/* Subtotal por línea */}
                         {(() => {
-                          const costo = parseFloat(String(items[index]?.precioCosto)) || 0
+                          const costo = parseLocaleNumber(items[index]?.precioCosto) || 0
                           const cant = parseInt(String(items[index]?.cantidad), 10) || 0
                           if (costo <= 0 || cant <= 0) return null
                           return (

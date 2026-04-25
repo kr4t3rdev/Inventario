@@ -1,17 +1,33 @@
--- AlterTable: Add soft delete and audit fields to CompraProducto
-ALTER TABLE "CompraProducto" ADD COLUMN "deletedAt" TIMESTAMP(3);
-ALTER TABLE "CompraProducto" ADD COLUMN "updatedById" TEXT;
-CREATE INDEX "CompraProducto_deletedAt_idx" ON "CompraProducto"("deletedAt");
+-- Idempotent: Add soft delete and audit fields to CompraProducto (skip if exists)
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'CompraProducto' AND column_name = 'deletedAt') THEN
+    ALTER TABLE "CompraProducto" ADD COLUMN "deletedAt" TIMESTAMP(3);
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'CompraProducto' AND column_name = 'updatedById') THEN
+    ALTER TABLE "CompraProducto" ADD COLUMN "updatedById" TEXT;
+  END IF;
+END $$;
+
+CREATE INDEX IF NOT EXISTS "CompraProducto_deletedAt_idx" ON "CompraProducto"("deletedAt");
 
 -- AlterTable: Add soft delete to GastoCompra
-ALTER TABLE "GastoCompra" ADD COLUMN "deletedAt" TIMESTAMP(3);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'GastoCompra' AND column_name = 'deletedAt') THEN
+    ALTER TABLE "GastoCompra" ADD COLUMN "deletedAt" TIMESTAMP(3);
+  END IF;
+END $$;
 
 -- AlterTable: Add soft delete to CuentaPorPagar
-ALTER TABLE "CuentaPorPagar" ADD COLUMN "deletedAt" TIMESTAMP(3);
-CREATE INDEX "CuentaPorPagar_deletedAt_idx" ON "CuentaPorPagar"("deletedAt");
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'CuentaPorPagar' AND column_name = 'deletedAt') THEN
+    ALTER TABLE "CuentaPorPagar" ADD COLUMN "deletedAt" TIMESTAMP(3);
+  END IF;
+END $$;
 
--- CreateTable: CompraDocumento (cabecera de compra múltiple)
-CREATE TABLE "CompraDocumento" (
+CREATE INDEX IF NOT EXISTS "CuentaPorPagar_deletedAt_idx" ON "CuentaPorPagar"("deletedAt");
+
+-- CreateTable: CompraDocumento (cabecera de compra multiple)
+CREATE TABLE IF NOT EXISTS "CompraDocumento" (
     "compraDocumentoId" TEXT NOT NULL,
     "proveedorId" TEXT NOT NULL,
     "numeroFactura" TEXT NOT NULL DEFAULT '',
@@ -32,8 +48,8 @@ CREATE TABLE "CompraDocumento" (
     CONSTRAINT "CompraDocumento_pkey" PRIMARY KEY ("compraDocumentoId")
 );
 
--- CreateTable: CompraDocumentoItem (líneas de detalle)
-CREATE TABLE "CompraDocumentoItem" (
+-- CreateTable: CompraDocumentoItem (lineas de detalle)
+CREATE TABLE IF NOT EXISTS "CompraDocumentoItem" (
     "compraDocumentoItemId" TEXT NOT NULL,
     "compraDocumentoId" TEXT NOT NULL,
     "productoId" TEXT NOT NULL,
@@ -46,20 +62,34 @@ CREATE TABLE "CompraDocumentoItem" (
     CONSTRAINT "CompraDocumentoItem_pkey" PRIMARY KEY ("compraDocumentoItemId")
 );
 
--- CreateIndex
-CREATE UNIQUE INDEX "CompraDocumento_gastoCompraId_key" ON "CompraDocumento"("gastoCompraId");
-CREATE UNIQUE INDEX "CompraDocumento_cuentaPorPagarId_key" ON "CompraDocumento"("cuentaPorPagarId");
-CREATE INDEX "CompraDocumento_estado_idx" ON "CompraDocumento"("estado");
-CREATE INDEX "CompraDocumento_proveedorId_idx" ON "CompraDocumento"("proveedorId");
-CREATE INDEX "CompraDocumento_fechaCompra_idx" ON "CompraDocumento"("fechaCompra");
-CREATE INDEX "CompraDocumento_deletedAt_idx" ON "CompraDocumento"("deletedAt");
-CREATE INDEX "CompraDocumentoItem_compraDocumentoId_idx" ON "CompraDocumentoItem"("compraDocumentoId");
-CREATE INDEX "CompraDocumentoItem_productoId_idx" ON "CompraDocumentoItem"("productoId");
+-- CreateIndex (idempotent)
+CREATE UNIQUE INDEX IF NOT EXISTS "CompraDocumento_gastoCompraId_key" ON "CompraDocumento"("gastoCompraId");
+CREATE UNIQUE INDEX IF NOT EXISTS "CompraDocumento_cuentaPorPagarId_key" ON "CompraDocumento"("cuentaPorPagarId");
+CREATE INDEX IF NOT EXISTS "CompraDocumento_estado_idx" ON "CompraDocumento"("estado");
+CREATE INDEX IF NOT EXISTS "CompraDocumento_proveedorId_idx" ON "CompraDocumento"("proveedorId");
+CREATE INDEX IF NOT EXISTS "CompraDocumento_fechaCompra_idx" ON "CompraDocumento"("fechaCompra");
+CREATE INDEX IF NOT EXISTS "CompraDocumento_deletedAt_idx" ON "CompraDocumento"("deletedAt");
+CREATE INDEX IF NOT EXISTS "CompraDocumentoItem_compraDocumentoId_idx" ON "CompraDocumentoItem"("compraDocumentoId");
+CREATE INDEX IF NOT EXISTS "CompraDocumentoItem_productoId_idx" ON "CompraDocumentoItem"("productoId");
 
--- AddForeignKey
-ALTER TABLE "CompraDocumento" ADD CONSTRAINT "CompraDocumento_proveedorId_fkey" FOREIGN KEY ("proveedorId") REFERENCES "Vendor"("vendorId") ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE "CompraDocumento" ADD CONSTRAINT "CompraDocumento_gastoCompraId_fkey" FOREIGN KEY ("gastoCompraId") REFERENCES "GastoCompra"("gastoCompraId") ON DELETE SET NULL ON UPDATE CASCADE;
-ALTER TABLE "CompraDocumento" ADD CONSTRAINT "CompraDocumento_cuentaPorPagarId_fkey" FOREIGN KEY ("cuentaPorPagarId") REFERENCES "CuentaPorPagar"("cuentaPorPagarId") ON DELETE SET NULL ON UPDATE CASCADE;
-ALTER TABLE "CompraDocumento" ADD CONSTRAINT "CompraDocumento_updatedById_fkey" FOREIGN KEY ("updatedById") REFERENCES "User"("userId") ON DELETE SET NULL ON UPDATE CASCADE;
-ALTER TABLE "CompraDocumentoItem" ADD CONSTRAINT "CompraDocumentoItem_compraDocumentoId_fkey" FOREIGN KEY ("compraDocumentoId") REFERENCES "CompraDocumento"("compraDocumentoId") ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE "CompraDocumentoItem" ADD CONSTRAINT "CompraDocumentoItem_productoId_fkey" FOREIGN KEY ("productoId") REFERENCES "Producto"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+-- AddForeignKey (idempotent)
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'CompraDocumento_proveedorId_fkey') THEN
+    ALTER TABLE "CompraDocumento" ADD CONSTRAINT "CompraDocumento_proveedorId_fkey" FOREIGN KEY ("proveedorId") REFERENCES "Vendor"("vendorId") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'CompraDocumento_gastoCompraId_fkey') THEN
+    ALTER TABLE "CompraDocumento" ADD CONSTRAINT "CompraDocumento_gastoCompraId_fkey" FOREIGN KEY ("gastoCompraId") REFERENCES "GastoCompra"("gastoCompraId") ON DELETE SET NULL ON UPDATE CASCADE;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'CompraDocumento_cuentaPorPagarId_fkey') THEN
+    ALTER TABLE "CompraDocumento" ADD CONSTRAINT "CompraDocumento_cuentaPorPagarId_fkey" FOREIGN KEY ("cuentaPorPagarId") REFERENCES "CuentaPorPagar"("cuentaPorPagarId") ON DELETE SET NULL ON UPDATE CASCADE;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'CompraDocumento_updatedById_fkey') THEN
+    ALTER TABLE "CompraDocumento" ADD CONSTRAINT "CompraDocumento_updatedById_fkey" FOREIGN KEY ("updatedById") REFERENCES "User"("userId") ON DELETE SET NULL ON UPDATE CASCADE;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'CompraDocumentoItem_compraDocumentoId_fkey') THEN
+    ALTER TABLE "CompraDocumentoItem" ADD CONSTRAINT "CompraDocumentoItem_compraDocumentoId_fkey" FOREIGN KEY ("compraDocumentoId") REFERENCES "CompraDocumento"("compraDocumentoId") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+  IF NOT EXISTS (SELECT 1 FROM information_schema.table_constraints WHERE constraint_name = 'CompraDocumentoItem_productoId_fkey') THEN
+    ALTER TABLE "CompraDocumentoItem" ADD CONSTRAINT "CompraDocumentoItem_productoId_fkey" FOREIGN KEY ("productoId") REFERENCES "Producto"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+  END IF;
+END $$;

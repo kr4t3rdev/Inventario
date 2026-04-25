@@ -4,6 +4,8 @@ import { z } from "zod";
 import { VacationAccrualService } from "@/lib/vacation-accrual-service";
 import { calculateEmployeeDeductions, calculateEmployerContributions } from "@/lib/payroll-utils";
 import { calculatePayrollFormulas, getPayrollConfig } from "@/lib/payroll-formulas";
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from "@/lib/services/periodo-operacion-guard";
+import { registrarEventoContable } from "@/lib/services/evento-contable-integration";
 
 /**
  * Esquema de validación para cálculo de nómina
@@ -79,6 +81,8 @@ export async function POST(request: NextRequest) {
     const validatedData = calculatePayrollSchema.parse(body);
 
     const { periodo, employeeIds, includeVacationAccrual = true, forceRecalculate = false } = validatedData;
+
+    await assertOperationAllowed(new Date(), 'NOMINA');
     const [year, month] = periodo.split("-").map(Number);
     const startDate = new Date(year, month - 1, 1);
     const endDate = new Date(year, month, 0);
@@ -252,6 +256,19 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    for (const record of payrollRecords) {
+      if ('pgId' in record) {
+        await registrarEventoContable({
+          origenTipo: 'PAGO_SALARIO',
+          origenId: record.pgId,
+          monto: Number(record.salario ?? 0),
+          fechaOperacion: new Date(),
+          descripcion: `Nómina ${periodo} - ${record.pgId}`,
+          usuarioId: 'system',
+        });
+      }
+    }
+
     return NextResponse.json({
       payrolls: payrollRecords,
       vacationAccruals: vacationResults.length > 0 ? vacationResults : undefined,
@@ -259,6 +276,9 @@ export async function POST(request: NextRequest) {
     }, { status: 201 });
 
   } catch (error) {
+    if (isPeriodoOperacionError(error)) {
+      return NextResponse.json(serializePeriodoOperacionError(error), { status: error.status });
+    }
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: "Datos inválidos", details: error.errors },

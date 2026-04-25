@@ -8,6 +8,7 @@ import { applyPagoGastoWorkflow } from '@/lib/services/pago-gastos-workflow'
 import { applyAnticipoAllocations, isAnticipoWorkflowError } from '@/lib/services/anticipos-workflow'
 import { FORMA_PAGO_ANTICIPO_PAGO } from '@/lib/constants/anticipos'
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service'
+import { normalizeLocaleDecimalValue } from '@/lib/locale-number'
 
 const querySchema = z.object({
   search: z.string().optional(),
@@ -25,7 +26,10 @@ const querySchema = z.object({
 
 const itemSchema = z.object({
   productoId: z.string().min(1, 'Seleccione un producto'),
-  precioCosto: z.coerce.number().positive('El precio de costo debe ser mayor a 0'),
+  precioCosto: z.preprocess(
+    normalizeLocaleDecimalValue,
+    z.coerce.number().positive('El precio de costo debe ser mayor a 0')
+  ),
   cantidad: z.coerce.number().int('La cantidad debe ser un entero').positive('La cantidad debe ser mayor a 0'),
 })
 

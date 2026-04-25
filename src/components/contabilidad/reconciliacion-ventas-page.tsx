@@ -59,15 +59,6 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(50)
 
-  useState(() => {
-    const today = new Date()
-    const weekAgo = new Date(today)
-    weekAgo.setDate(today.getDate() - 7)
-
-    setFechaFin(today.toISOString().split('T')[0])
-    setFechaInicio(weekAgo.toISOString().split('T')[0])
-  })
-
   const { data: ventasData = { ventas: [], pagination: { page: 1, limit: 50, total: 0, totalPages: 0 } }, refetch } = useGetVentasPendientesQuery({
     fechaInicio,
     fechaFin,

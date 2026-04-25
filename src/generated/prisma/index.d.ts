@@ -160,6 +160,26 @@ export type Pagosalario = $Result.DefaultSelection<Prisma.$PagosalarioPayload>
  */
 export type CierreContable = $Result.DefaultSelection<Prisma.$CierreContablePayload>
 /**
+ * Model PeriodoContable
+ * 
+ */
+export type PeriodoContable = $Result.DefaultSelection<Prisma.$PeriodoContablePayload>
+/**
+ * Model AperturaPeriodo
+ * 
+ */
+export type AperturaPeriodo = $Result.DefaultSelection<Prisma.$AperturaPeriodoPayload>
+/**
+ * Model SnapshotPeriodo
+ * 
+ */
+export type SnapshotPeriodo = $Result.DefaultSelection<Prisma.$SnapshotPeriodoPayload>
+/**
+ * Model AuditoriaPeriodo
+ * 
+ */
+export type AuditoriaPeriodo = $Result.DefaultSelection<Prisma.$AuditoriaPeriodoPayload>
+/**
  * Model GastoCompra
  * 
  */
@@ -469,6 +489,16 @@ export type Anticipo = $Result.DefaultSelection<Prisma.$AnticipoPayload>
  * 
  */
 export type AnticipoMovimiento = $Result.DefaultSelection<Prisma.$AnticipoMovimientoPayload>
+/**
+ * Model EventoContable
+ * 
+ */
+export type EventoContable = $Result.DefaultSelection<Prisma.$EventoContablePayload>
+/**
+ * Model EventoContableLinea
+ * 
+ */
+export type EventoContableLinea = $Result.DefaultSelection<Prisma.$EventoContableLineaPayload>
 
 /**
  * Enums
@@ -507,6 +537,61 @@ export const TipoInyeccion: {
 };
 
 export type TipoInyeccion = (typeof TipoInyeccion)[keyof typeof TipoInyeccion]
+
+
+export const TipoPeriodo: {
+  DIARIO: 'DIARIO',
+  MENSUAL: 'MENSUAL',
+  ANUAL: 'ANUAL'
+};
+
+export type TipoPeriodo = (typeof TipoPeriodo)[keyof typeof TipoPeriodo]
+
+
+export const EstadoPeriodo: {
+  BORRADOR: 'BORRADOR',
+  ABIERTO: 'ABIERTO',
+  EN_CIERRE: 'EN_CIERRE',
+  CERRADO: 'CERRADO',
+  APROBADO: 'APROBADO',
+  REABIERTO: 'REABIERTO'
+};
+
+export type EstadoPeriodo = (typeof EstadoPeriodo)[keyof typeof EstadoPeriodo]
+
+
+export const AccionPeriodo: {
+  CREAR: 'CREAR',
+  ABRIR: 'ABRIR',
+  CERRAR: 'CERRAR',
+  APROBAR: 'APROBAR',
+  REABRIR: 'REABRIR',
+  BLOQUEAR_OPERACION: 'BLOQUEAR_OPERACION',
+  GENERAR_APERTURA: 'GENERAR_APERTURA',
+  GENERAR_SNAPSHOT: 'GENERAR_SNAPSHOT'
+};
+
+export type AccionPeriodo = (typeof AccionPeriodo)[keyof typeof AccionPeriodo]
+
+
+export const CriterioContable: {
+  CAJA: 'CAJA',
+  DEVENGO: 'DEVENGO'
+};
+
+export type CriterioContable = (typeof CriterioContable)[keyof typeof CriterioContable]
+
+
+export const NaturalezaEvento: {
+  INGRESO: 'INGRESO',
+  EGRESO: 'EGRESO',
+  ACTIVO: 'ACTIVO',
+  PASIVO: 'PASIVO',
+  PATRIMONIO: 'PATRIMONIO',
+  RESULTADO: 'RESULTADO'
+};
+
+export type NaturalezaEvento = (typeof NaturalezaEvento)[keyof typeof NaturalezaEvento]
 
 
 export const EstadoDeuda: {
@@ -658,6 +743,26 @@ export const ContextoAnticipo: typeof $Enums.ContextoAnticipo
 export type TipoInyeccion = $Enums.TipoInyeccion
 
 export const TipoInyeccion: typeof $Enums.TipoInyeccion
+
+export type TipoPeriodo = $Enums.TipoPeriodo
+
+export const TipoPeriodo: typeof $Enums.TipoPeriodo
+
+export type EstadoPeriodo = $Enums.EstadoPeriodo
+
+export const EstadoPeriodo: typeof $Enums.EstadoPeriodo
+
+export type AccionPeriodo = $Enums.AccionPeriodo
+
+export const AccionPeriodo: typeof $Enums.AccionPeriodo
+
+export type CriterioContable = $Enums.CriterioContable
+
+export const CriterioContable: typeof $Enums.CriterioContable
+
+export type NaturalezaEvento = $Enums.NaturalezaEvento
+
+export const NaturalezaEvento: typeof $Enums.NaturalezaEvento
 
 export type EstadoDeuda = $Enums.EstadoDeuda
 
@@ -1118,6 +1223,46 @@ export class PrismaClient<
     * ```
     */
   get cierreContable(): Prisma.CierreContableDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.periodoContable`: Exposes CRUD operations for the **PeriodoContable** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more PeriodoContables
+    * const periodoContables = await prisma.periodoContable.findMany()
+    * ```
+    */
+  get periodoContable(): Prisma.PeriodoContableDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.aperturaPeriodo`: Exposes CRUD operations for the **AperturaPeriodo** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AperturaPeriodos
+    * const aperturaPeriodos = await prisma.aperturaPeriodo.findMany()
+    * ```
+    */
+  get aperturaPeriodo(): Prisma.AperturaPeriodoDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.snapshotPeriodo`: Exposes CRUD operations for the **SnapshotPeriodo** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more SnapshotPeriodos
+    * const snapshotPeriodos = await prisma.snapshotPeriodo.findMany()
+    * ```
+    */
+  get snapshotPeriodo(): Prisma.SnapshotPeriodoDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.auditoriaPeriodo`: Exposes CRUD operations for the **AuditoriaPeriodo** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AuditoriaPeriodos
+    * const auditoriaPeriodos = await prisma.auditoriaPeriodo.findMany()
+    * ```
+    */
+  get auditoriaPeriodo(): Prisma.AuditoriaPeriodoDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.gastoCompra`: Exposes CRUD operations for the **GastoCompra** model.
@@ -1738,6 +1883,26 @@ export class PrismaClient<
     * ```
     */
   get anticipoMovimiento(): Prisma.AnticipoMovimientoDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.eventoContable`: Exposes CRUD operations for the **EventoContable** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more EventoContables
+    * const eventoContables = await prisma.eventoContable.findMany()
+    * ```
+    */
+  get eventoContable(): Prisma.EventoContableDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.eventoContableLinea`: Exposes CRUD operations for the **EventoContableLinea** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more EventoContableLineas
+    * const eventoContableLineas = await prisma.eventoContableLinea.findMany()
+    * ```
+    */
+  get eventoContableLinea(): Prisma.EventoContableLineaDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -2208,6 +2373,10 @@ export namespace Prisma {
     Empleado: 'Empleado',
     Pagosalario: 'Pagosalario',
     CierreContable: 'CierreContable',
+    PeriodoContable: 'PeriodoContable',
+    AperturaPeriodo: 'AperturaPeriodo',
+    SnapshotPeriodo: 'SnapshotPeriodo',
+    AuditoriaPeriodo: 'AuditoriaPeriodo',
     GastoCompra: 'GastoCompra',
     CompraProducto: 'CompraProducto',
     CompraDocumento: 'CompraDocumento',
@@ -2269,7 +2438,9 @@ export namespace Prisma {
     ProductoCostHistory: 'ProductoCostHistory',
     VendorCodeSequence: 'VendorCodeSequence',
     Anticipo: 'Anticipo',
-    AnticipoMovimiento: 'AnticipoMovimiento'
+    AnticipoMovimiento: 'AnticipoMovimiento',
+    EventoContable: 'EventoContable',
+    EventoContableLinea: 'EventoContableLinea'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -2288,7 +2459,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "categoria" | "unidad" | "vendor" | "inyeccionCapital" | "pagoDeuda" | "cliente" | "miEmpresa" | "almacen" | "puntoDeVenta" | "producto" | "stockUbicacion" | "venta" | "ventaItem" | "merma" | "transferencia" | "user" | "plan" | "licencia" | "licenciaAudit" | "notification" | "userActivityLog" | "userSession" | "attendance" | "employeeWorkSchedule" | "vacationRequest" | "vacationAccrual" | "empleado" | "pagosalario" | "cierreContable" | "gastoCompra" | "compraProducto" | "compraDocumento" | "compraDocumentoItem" | "servicios" | "ventaServicios" | "compraServicio" | "gastoConcepto" | "gastoElemento" | "gastosDE" | "moneda" | "catalogoReparacionConfig" | "tasaCambio" | "transaccionMoneda" | "cuentaBancaria" | "tipoPago" | "reconciliacionVenta" | "reconciliacionServicio" | "reconciliacionGasto" | "ajusteBancario" | "transferenciaBancaria" | "alertHistory" | "auditLog" | "reportHistory" | "scheduledReport" | "scenarioSimulation" | "contrato" | "contratoVersion" | "contratoFirma" | "contratoAprobacion" | "contratoArchivo" | "contratoAlerta" | "tipoContratoCustom" | "factura" | "serieFacturacion" | "oferta" | "ofertaItem" | "cuentaPorCobrar" | "cuentaPorPagar" | "deudaCash" | "prestamoCash" | "pagoCuentaPorPagar" | "equipoReparacion" | "piezaReparacion" | "ordenReparacion" | "ordenReparacionEquipo" | "ordenReparacionItem" | "ordenReparacionMaterial" | "defectacionCatalogo" | "configuracionSistema" | "ordenProduccion" | "ordenProduccionHistorial" | "receta" | "recetaIngrediente" | "valeSalida" | "valeSalidaItem" | "listaPrecio" | "precioProducto" | "productoCostHistory" | "vendorCodeSequence" | "anticipo" | "anticipoMovimiento"
+      modelProps: "categoria" | "unidad" | "vendor" | "inyeccionCapital" | "pagoDeuda" | "cliente" | "miEmpresa" | "almacen" | "puntoDeVenta" | "producto" | "stockUbicacion" | "venta" | "ventaItem" | "merma" | "transferencia" | "user" | "plan" | "licencia" | "licenciaAudit" | "notification" | "userActivityLog" | "userSession" | "attendance" | "employeeWorkSchedule" | "vacationRequest" | "vacationAccrual" | "empleado" | "pagosalario" | "cierreContable" | "periodoContable" | "aperturaPeriodo" | "snapshotPeriodo" | "auditoriaPeriodo" | "gastoCompra" | "compraProducto" | "compraDocumento" | "compraDocumentoItem" | "servicios" | "ventaServicios" | "compraServicio" | "gastoConcepto" | "gastoElemento" | "gastosDE" | "moneda" | "catalogoReparacionConfig" | "tasaCambio" | "transaccionMoneda" | "cuentaBancaria" | "tipoPago" | "reconciliacionVenta" | "reconciliacionServicio" | "reconciliacionGasto" | "ajusteBancario" | "transferenciaBancaria" | "alertHistory" | "auditLog" | "reportHistory" | "scheduledReport" | "scenarioSimulation" | "contrato" | "contratoVersion" | "contratoFirma" | "contratoAprobacion" | "contratoArchivo" | "contratoAlerta" | "tipoContratoCustom" | "factura" | "serieFacturacion" | "oferta" | "ofertaItem" | "cuentaPorCobrar" | "cuentaPorPagar" | "deudaCash" | "prestamoCash" | "pagoCuentaPorPagar" | "equipoReparacion" | "piezaReparacion" | "ordenReparacion" | "ordenReparacionEquipo" | "ordenReparacionItem" | "ordenReparacionMaterial" | "defectacionCatalogo" | "configuracionSistema" | "ordenProduccion" | "ordenProduccionHistorial" | "receta" | "recetaIngrediente" | "valeSalida" | "valeSalidaItem" | "listaPrecio" | "precioProducto" | "productoCostHistory" | "vendorCodeSequence" | "anticipo" | "anticipoMovimiento" | "eventoContable" | "eventoContableLinea"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -4435,6 +4606,302 @@ export namespace Prisma {
           count: {
             args: Prisma.CierreContableCountArgs<ExtArgs>
             result: $Utils.Optional<CierreContableCountAggregateOutputType> | number
+          }
+        }
+      }
+      PeriodoContable: {
+        payload: Prisma.$PeriodoContablePayload<ExtArgs>
+        fields: Prisma.PeriodoContableFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.PeriodoContableFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PeriodoContablePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.PeriodoContableFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PeriodoContablePayload>
+          }
+          findFirst: {
+            args: Prisma.PeriodoContableFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PeriodoContablePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.PeriodoContableFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PeriodoContablePayload>
+          }
+          findMany: {
+            args: Prisma.PeriodoContableFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PeriodoContablePayload>[]
+          }
+          create: {
+            args: Prisma.PeriodoContableCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PeriodoContablePayload>
+          }
+          createMany: {
+            args: Prisma.PeriodoContableCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.PeriodoContableCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PeriodoContablePayload>[]
+          }
+          delete: {
+            args: Prisma.PeriodoContableDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PeriodoContablePayload>
+          }
+          update: {
+            args: Prisma.PeriodoContableUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PeriodoContablePayload>
+          }
+          deleteMany: {
+            args: Prisma.PeriodoContableDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.PeriodoContableUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.PeriodoContableUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PeriodoContablePayload>[]
+          }
+          upsert: {
+            args: Prisma.PeriodoContableUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$PeriodoContablePayload>
+          }
+          aggregate: {
+            args: Prisma.PeriodoContableAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregatePeriodoContable>
+          }
+          groupBy: {
+            args: Prisma.PeriodoContableGroupByArgs<ExtArgs>
+            result: $Utils.Optional<PeriodoContableGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.PeriodoContableCountArgs<ExtArgs>
+            result: $Utils.Optional<PeriodoContableCountAggregateOutputType> | number
+          }
+        }
+      }
+      AperturaPeriodo: {
+        payload: Prisma.$AperturaPeriodoPayload<ExtArgs>
+        fields: Prisma.AperturaPeriodoFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.AperturaPeriodoFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AperturaPeriodoPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AperturaPeriodoFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AperturaPeriodoPayload>
+          }
+          findFirst: {
+            args: Prisma.AperturaPeriodoFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AperturaPeriodoPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AperturaPeriodoFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AperturaPeriodoPayload>
+          }
+          findMany: {
+            args: Prisma.AperturaPeriodoFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AperturaPeriodoPayload>[]
+          }
+          create: {
+            args: Prisma.AperturaPeriodoCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AperturaPeriodoPayload>
+          }
+          createMany: {
+            args: Prisma.AperturaPeriodoCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.AperturaPeriodoCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AperturaPeriodoPayload>[]
+          }
+          delete: {
+            args: Prisma.AperturaPeriodoDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AperturaPeriodoPayload>
+          }
+          update: {
+            args: Prisma.AperturaPeriodoUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AperturaPeriodoPayload>
+          }
+          deleteMany: {
+            args: Prisma.AperturaPeriodoDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AperturaPeriodoUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.AperturaPeriodoUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AperturaPeriodoPayload>[]
+          }
+          upsert: {
+            args: Prisma.AperturaPeriodoUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AperturaPeriodoPayload>
+          }
+          aggregate: {
+            args: Prisma.AperturaPeriodoAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateAperturaPeriodo>
+          }
+          groupBy: {
+            args: Prisma.AperturaPeriodoGroupByArgs<ExtArgs>
+            result: $Utils.Optional<AperturaPeriodoGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AperturaPeriodoCountArgs<ExtArgs>
+            result: $Utils.Optional<AperturaPeriodoCountAggregateOutputType> | number
+          }
+        }
+      }
+      SnapshotPeriodo: {
+        payload: Prisma.$SnapshotPeriodoPayload<ExtArgs>
+        fields: Prisma.SnapshotPeriodoFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.SnapshotPeriodoFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SnapshotPeriodoPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.SnapshotPeriodoFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SnapshotPeriodoPayload>
+          }
+          findFirst: {
+            args: Prisma.SnapshotPeriodoFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SnapshotPeriodoPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.SnapshotPeriodoFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SnapshotPeriodoPayload>
+          }
+          findMany: {
+            args: Prisma.SnapshotPeriodoFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SnapshotPeriodoPayload>[]
+          }
+          create: {
+            args: Prisma.SnapshotPeriodoCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SnapshotPeriodoPayload>
+          }
+          createMany: {
+            args: Prisma.SnapshotPeriodoCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.SnapshotPeriodoCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SnapshotPeriodoPayload>[]
+          }
+          delete: {
+            args: Prisma.SnapshotPeriodoDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SnapshotPeriodoPayload>
+          }
+          update: {
+            args: Prisma.SnapshotPeriodoUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SnapshotPeriodoPayload>
+          }
+          deleteMany: {
+            args: Prisma.SnapshotPeriodoDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.SnapshotPeriodoUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.SnapshotPeriodoUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SnapshotPeriodoPayload>[]
+          }
+          upsert: {
+            args: Prisma.SnapshotPeriodoUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SnapshotPeriodoPayload>
+          }
+          aggregate: {
+            args: Prisma.SnapshotPeriodoAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateSnapshotPeriodo>
+          }
+          groupBy: {
+            args: Prisma.SnapshotPeriodoGroupByArgs<ExtArgs>
+            result: $Utils.Optional<SnapshotPeriodoGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.SnapshotPeriodoCountArgs<ExtArgs>
+            result: $Utils.Optional<SnapshotPeriodoCountAggregateOutputType> | number
+          }
+        }
+      }
+      AuditoriaPeriodo: {
+        payload: Prisma.$AuditoriaPeriodoPayload<ExtArgs>
+        fields: Prisma.AuditoriaPeriodoFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.AuditoriaPeriodoFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuditoriaPeriodoPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AuditoriaPeriodoFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuditoriaPeriodoPayload>
+          }
+          findFirst: {
+            args: Prisma.AuditoriaPeriodoFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuditoriaPeriodoPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AuditoriaPeriodoFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuditoriaPeriodoPayload>
+          }
+          findMany: {
+            args: Prisma.AuditoriaPeriodoFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuditoriaPeriodoPayload>[]
+          }
+          create: {
+            args: Prisma.AuditoriaPeriodoCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuditoriaPeriodoPayload>
+          }
+          createMany: {
+            args: Prisma.AuditoriaPeriodoCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.AuditoriaPeriodoCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuditoriaPeriodoPayload>[]
+          }
+          delete: {
+            args: Prisma.AuditoriaPeriodoDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuditoriaPeriodoPayload>
+          }
+          update: {
+            args: Prisma.AuditoriaPeriodoUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuditoriaPeriodoPayload>
+          }
+          deleteMany: {
+            args: Prisma.AuditoriaPeriodoDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AuditoriaPeriodoUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.AuditoriaPeriodoUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuditoriaPeriodoPayload>[]
+          }
+          upsert: {
+            args: Prisma.AuditoriaPeriodoUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AuditoriaPeriodoPayload>
+          }
+          aggregate: {
+            args: Prisma.AuditoriaPeriodoAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateAuditoriaPeriodo>
+          }
+          groupBy: {
+            args: Prisma.AuditoriaPeriodoGroupByArgs<ExtArgs>
+            result: $Utils.Optional<AuditoriaPeriodoGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AuditoriaPeriodoCountArgs<ExtArgs>
+            result: $Utils.Optional<AuditoriaPeriodoCountAggregateOutputType> | number
           }
         }
       }
@@ -9026,6 +9493,154 @@ export namespace Prisma {
           }
         }
       }
+      EventoContable: {
+        payload: Prisma.$EventoContablePayload<ExtArgs>
+        fields: Prisma.EventoContableFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.EventoContableFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventoContablePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.EventoContableFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventoContablePayload>
+          }
+          findFirst: {
+            args: Prisma.EventoContableFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventoContablePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.EventoContableFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventoContablePayload>
+          }
+          findMany: {
+            args: Prisma.EventoContableFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventoContablePayload>[]
+          }
+          create: {
+            args: Prisma.EventoContableCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventoContablePayload>
+          }
+          createMany: {
+            args: Prisma.EventoContableCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.EventoContableCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventoContablePayload>[]
+          }
+          delete: {
+            args: Prisma.EventoContableDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventoContablePayload>
+          }
+          update: {
+            args: Prisma.EventoContableUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventoContablePayload>
+          }
+          deleteMany: {
+            args: Prisma.EventoContableDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.EventoContableUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.EventoContableUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventoContablePayload>[]
+          }
+          upsert: {
+            args: Prisma.EventoContableUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventoContablePayload>
+          }
+          aggregate: {
+            args: Prisma.EventoContableAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateEventoContable>
+          }
+          groupBy: {
+            args: Prisma.EventoContableGroupByArgs<ExtArgs>
+            result: $Utils.Optional<EventoContableGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.EventoContableCountArgs<ExtArgs>
+            result: $Utils.Optional<EventoContableCountAggregateOutputType> | number
+          }
+        }
+      }
+      EventoContableLinea: {
+        payload: Prisma.$EventoContableLineaPayload<ExtArgs>
+        fields: Prisma.EventoContableLineaFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.EventoContableLineaFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventoContableLineaPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.EventoContableLineaFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventoContableLineaPayload>
+          }
+          findFirst: {
+            args: Prisma.EventoContableLineaFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventoContableLineaPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.EventoContableLineaFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventoContableLineaPayload>
+          }
+          findMany: {
+            args: Prisma.EventoContableLineaFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventoContableLineaPayload>[]
+          }
+          create: {
+            args: Prisma.EventoContableLineaCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventoContableLineaPayload>
+          }
+          createMany: {
+            args: Prisma.EventoContableLineaCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.EventoContableLineaCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventoContableLineaPayload>[]
+          }
+          delete: {
+            args: Prisma.EventoContableLineaDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventoContableLineaPayload>
+          }
+          update: {
+            args: Prisma.EventoContableLineaUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventoContableLineaPayload>
+          }
+          deleteMany: {
+            args: Prisma.EventoContableLineaDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.EventoContableLineaUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.EventoContableLineaUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventoContableLineaPayload>[]
+          }
+          upsert: {
+            args: Prisma.EventoContableLineaUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$EventoContableLineaPayload>
+          }
+          aggregate: {
+            args: Prisma.EventoContableLineaAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateEventoContableLinea>
+          }
+          groupBy: {
+            args: Prisma.EventoContableLineaGroupByArgs<ExtArgs>
+            result: $Utils.Optional<EventoContableLineaGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.EventoContableLineaCountArgs<ExtArgs>
+            result: $Utils.Optional<EventoContableLineaCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -9151,6 +9766,10 @@ export namespace Prisma {
     empleado?: EmpleadoOmit
     pagosalario?: PagosalarioOmit
     cierreContable?: CierreContableOmit
+    periodoContable?: PeriodoContableOmit
+    aperturaPeriodo?: AperturaPeriodoOmit
+    snapshotPeriodo?: SnapshotPeriodoOmit
+    auditoriaPeriodo?: AuditoriaPeriodoOmit
     gastoCompra?: GastoCompraOmit
     compraProducto?: CompraProductoOmit
     compraDocumento?: CompraDocumentoOmit
@@ -9213,6 +9832,8 @@ export namespace Prisma {
     vendorCodeSequence?: VendorCodeSequenceOmit
     anticipo?: AnticipoOmit
     anticipoMovimiento?: AnticipoMovimientoOmit
+    eventoContable?: EventoContableOmit
+    eventoContableLinea?: EventoContableLineaOmit
   }
 
   /* Types for Logging */
@@ -10250,6 +10871,55 @@ export namespace Prisma {
    */
   export type PagosalarioCountOutputTypeCountReconciliacionGastoArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: ReconciliacionGastoWhereInput
+  }
+
+
+  /**
+   * Count Type PeriodoContableCountOutputType
+   */
+
+  export type PeriodoContableCountOutputType = {
+    subperiodos: number
+    snapshots: number
+    auditorias: number
+  }
+
+  export type PeriodoContableCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    subperiodos?: boolean | PeriodoContableCountOutputTypeCountSubperiodosArgs
+    snapshots?: boolean | PeriodoContableCountOutputTypeCountSnapshotsArgs
+    auditorias?: boolean | PeriodoContableCountOutputTypeCountAuditoriasArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * PeriodoContableCountOutputType without action
+   */
+  export type PeriodoContableCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PeriodoContableCountOutputType
+     */
+    select?: PeriodoContableCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * PeriodoContableCountOutputType without action
+   */
+  export type PeriodoContableCountOutputTypeCountSubperiodosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PeriodoContableWhereInput
+  }
+
+  /**
+   * PeriodoContableCountOutputType without action
+   */
+  export type PeriodoContableCountOutputTypeCountSnapshotsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SnapshotPeriodoWhereInput
+  }
+
+  /**
+   * PeriodoContableCountOutputType without action
+   */
+  export type PeriodoContableCountOutputTypeCountAuditoriasArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AuditoriaPeriodoWhereInput
   }
 
 
@@ -11321,6 +11991,37 @@ export namespace Prisma {
    */
   export type AnticipoCountOutputTypeCountMovimientosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: AnticipoMovimientoWhereInput
+  }
+
+
+  /**
+   * Count Type EventoContableCountOutputType
+   */
+
+  export type EventoContableCountOutputType = {
+    lineas: number
+  }
+
+  export type EventoContableCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    lineas?: boolean | EventoContableCountOutputTypeCountLineasArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * EventoContableCountOutputType without action
+   */
+  export type EventoContableCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoContableCountOutputType
+     */
+    select?: EventoContableCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * EventoContableCountOutputType without action
+   */
+  export type EventoContableCountOutputTypeCountLineasArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: EventoContableLineaWhereInput
   }
 
 
@@ -47683,6 +48384,4811 @@ export namespace Prisma {
      * Omit specific fields from the CierreContable
      */
     omit?: CierreContableOmit<ExtArgs> | null
+  }
+
+
+  /**
+   * Model PeriodoContable
+   */
+
+  export type AggregatePeriodoContable = {
+    _count: PeriodoContableCountAggregateOutputType | null
+    _min: PeriodoContableMinAggregateOutputType | null
+    _max: PeriodoContableMaxAggregateOutputType | null
+  }
+
+  export type PeriodoContableMinAggregateOutputType = {
+    periodoId: string | null
+    tipo: $Enums.TipoPeriodo | null
+    codigo: string | null
+    fechaInicio: Date | null
+    fechaFin: Date | null
+    estado: $Enums.EstadoPeriodo | null
+    periodoPadreId: string | null
+    aperturaAutomatica: boolean | null
+    cierreAutomatico: boolean | null
+    abiertoPorId: string | null
+    cerradoPorId: string | null
+    aprobadoPorId: string | null
+    reabiertoPorId: string | null
+    fechaApertura: Date | null
+    fechaCierre: Date | null
+    fechaAprobacion: Date | null
+    fechaReapertura: Date | null
+    observaciones: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PeriodoContableMaxAggregateOutputType = {
+    periodoId: string | null
+    tipo: $Enums.TipoPeriodo | null
+    codigo: string | null
+    fechaInicio: Date | null
+    fechaFin: Date | null
+    estado: $Enums.EstadoPeriodo | null
+    periodoPadreId: string | null
+    aperturaAutomatica: boolean | null
+    cierreAutomatico: boolean | null
+    abiertoPorId: string | null
+    cerradoPorId: string | null
+    aprobadoPorId: string | null
+    reabiertoPorId: string | null
+    fechaApertura: Date | null
+    fechaCierre: Date | null
+    fechaAprobacion: Date | null
+    fechaReapertura: Date | null
+    observaciones: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type PeriodoContableCountAggregateOutputType = {
+    periodoId: number
+    tipo: number
+    codigo: number
+    fechaInicio: number
+    fechaFin: number
+    estado: number
+    periodoPadreId: number
+    aperturaAutomatica: number
+    cierreAutomatico: number
+    abiertoPorId: number
+    cerradoPorId: number
+    aprobadoPorId: number
+    reabiertoPorId: number
+    fechaApertura: number
+    fechaCierre: number
+    fechaAprobacion: number
+    fechaReapertura: number
+    observaciones: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type PeriodoContableMinAggregateInputType = {
+    periodoId?: true
+    tipo?: true
+    codigo?: true
+    fechaInicio?: true
+    fechaFin?: true
+    estado?: true
+    periodoPadreId?: true
+    aperturaAutomatica?: true
+    cierreAutomatico?: true
+    abiertoPorId?: true
+    cerradoPorId?: true
+    aprobadoPorId?: true
+    reabiertoPorId?: true
+    fechaApertura?: true
+    fechaCierre?: true
+    fechaAprobacion?: true
+    fechaReapertura?: true
+    observaciones?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PeriodoContableMaxAggregateInputType = {
+    periodoId?: true
+    tipo?: true
+    codigo?: true
+    fechaInicio?: true
+    fechaFin?: true
+    estado?: true
+    periodoPadreId?: true
+    aperturaAutomatica?: true
+    cierreAutomatico?: true
+    abiertoPorId?: true
+    cerradoPorId?: true
+    aprobadoPorId?: true
+    reabiertoPorId?: true
+    fechaApertura?: true
+    fechaCierre?: true
+    fechaAprobacion?: true
+    fechaReapertura?: true
+    observaciones?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type PeriodoContableCountAggregateInputType = {
+    periodoId?: true
+    tipo?: true
+    codigo?: true
+    fechaInicio?: true
+    fechaFin?: true
+    estado?: true
+    periodoPadreId?: true
+    aperturaAutomatica?: true
+    cierreAutomatico?: true
+    abiertoPorId?: true
+    cerradoPorId?: true
+    aprobadoPorId?: true
+    reabiertoPorId?: true
+    fechaApertura?: true
+    fechaCierre?: true
+    fechaAprobacion?: true
+    fechaReapertura?: true
+    observaciones?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type PeriodoContableAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PeriodoContable to aggregate.
+     */
+    where?: PeriodoContableWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PeriodoContables to fetch.
+     */
+    orderBy?: PeriodoContableOrderByWithRelationInput | PeriodoContableOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: PeriodoContableWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PeriodoContables from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PeriodoContables.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned PeriodoContables
+    **/
+    _count?: true | PeriodoContableCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: PeriodoContableMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: PeriodoContableMaxAggregateInputType
+  }
+
+  export type GetPeriodoContableAggregateType<T extends PeriodoContableAggregateArgs> = {
+        [P in keyof T & keyof AggregatePeriodoContable]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregatePeriodoContable[P]>
+      : GetScalarType<T[P], AggregatePeriodoContable[P]>
+  }
+
+
+
+
+  export type PeriodoContableGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PeriodoContableWhereInput
+    orderBy?: PeriodoContableOrderByWithAggregationInput | PeriodoContableOrderByWithAggregationInput[]
+    by: PeriodoContableScalarFieldEnum[] | PeriodoContableScalarFieldEnum
+    having?: PeriodoContableScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: PeriodoContableCountAggregateInputType | true
+    _min?: PeriodoContableMinAggregateInputType
+    _max?: PeriodoContableMaxAggregateInputType
+  }
+
+  export type PeriodoContableGroupByOutputType = {
+    periodoId: string
+    tipo: $Enums.TipoPeriodo
+    codigo: string
+    fechaInicio: Date
+    fechaFin: Date
+    estado: $Enums.EstadoPeriodo
+    periodoPadreId: string | null
+    aperturaAutomatica: boolean
+    cierreAutomatico: boolean
+    abiertoPorId: string | null
+    cerradoPorId: string | null
+    aprobadoPorId: string | null
+    reabiertoPorId: string | null
+    fechaApertura: Date | null
+    fechaCierre: Date | null
+    fechaAprobacion: Date | null
+    fechaReapertura: Date | null
+    observaciones: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: PeriodoContableCountAggregateOutputType | null
+    _min: PeriodoContableMinAggregateOutputType | null
+    _max: PeriodoContableMaxAggregateOutputType | null
+  }
+
+  type GetPeriodoContableGroupByPayload<T extends PeriodoContableGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<PeriodoContableGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof PeriodoContableGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], PeriodoContableGroupByOutputType[P]>
+            : GetScalarType<T[P], PeriodoContableGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type PeriodoContableSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    periodoId?: boolean
+    tipo?: boolean
+    codigo?: boolean
+    fechaInicio?: boolean
+    fechaFin?: boolean
+    estado?: boolean
+    periodoPadreId?: boolean
+    aperturaAutomatica?: boolean
+    cierreAutomatico?: boolean
+    abiertoPorId?: boolean
+    cerradoPorId?: boolean
+    aprobadoPorId?: boolean
+    reabiertoPorId?: boolean
+    fechaApertura?: boolean
+    fechaCierre?: boolean
+    fechaAprobacion?: boolean
+    fechaReapertura?: boolean
+    observaciones?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    periodoPadre?: boolean | PeriodoContable$periodoPadreArgs<ExtArgs>
+    subperiodos?: boolean | PeriodoContable$subperiodosArgs<ExtArgs>
+    apertura?: boolean | PeriodoContable$aperturaArgs<ExtArgs>
+    snapshots?: boolean | PeriodoContable$snapshotsArgs<ExtArgs>
+    auditorias?: boolean | PeriodoContable$auditoriasArgs<ExtArgs>
+    _count?: boolean | PeriodoContableCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["periodoContable"]>
+
+  export type PeriodoContableSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    periodoId?: boolean
+    tipo?: boolean
+    codigo?: boolean
+    fechaInicio?: boolean
+    fechaFin?: boolean
+    estado?: boolean
+    periodoPadreId?: boolean
+    aperturaAutomatica?: boolean
+    cierreAutomatico?: boolean
+    abiertoPorId?: boolean
+    cerradoPorId?: boolean
+    aprobadoPorId?: boolean
+    reabiertoPorId?: boolean
+    fechaApertura?: boolean
+    fechaCierre?: boolean
+    fechaAprobacion?: boolean
+    fechaReapertura?: boolean
+    observaciones?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    periodoPadre?: boolean | PeriodoContable$periodoPadreArgs<ExtArgs>
+  }, ExtArgs["result"]["periodoContable"]>
+
+  export type PeriodoContableSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    periodoId?: boolean
+    tipo?: boolean
+    codigo?: boolean
+    fechaInicio?: boolean
+    fechaFin?: boolean
+    estado?: boolean
+    periodoPadreId?: boolean
+    aperturaAutomatica?: boolean
+    cierreAutomatico?: boolean
+    abiertoPorId?: boolean
+    cerradoPorId?: boolean
+    aprobadoPorId?: boolean
+    reabiertoPorId?: boolean
+    fechaApertura?: boolean
+    fechaCierre?: boolean
+    fechaAprobacion?: boolean
+    fechaReapertura?: boolean
+    observaciones?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    periodoPadre?: boolean | PeriodoContable$periodoPadreArgs<ExtArgs>
+  }, ExtArgs["result"]["periodoContable"]>
+
+  export type PeriodoContableSelectScalar = {
+    periodoId?: boolean
+    tipo?: boolean
+    codigo?: boolean
+    fechaInicio?: boolean
+    fechaFin?: boolean
+    estado?: boolean
+    periodoPadreId?: boolean
+    aperturaAutomatica?: boolean
+    cierreAutomatico?: boolean
+    abiertoPorId?: boolean
+    cerradoPorId?: boolean
+    aprobadoPorId?: boolean
+    reabiertoPorId?: boolean
+    fechaApertura?: boolean
+    fechaCierre?: boolean
+    fechaAprobacion?: boolean
+    fechaReapertura?: boolean
+    observaciones?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type PeriodoContableOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"periodoId" | "tipo" | "codigo" | "fechaInicio" | "fechaFin" | "estado" | "periodoPadreId" | "aperturaAutomatica" | "cierreAutomatico" | "abiertoPorId" | "cerradoPorId" | "aprobadoPorId" | "reabiertoPorId" | "fechaApertura" | "fechaCierre" | "fechaAprobacion" | "fechaReapertura" | "observaciones" | "createdAt" | "updatedAt", ExtArgs["result"]["periodoContable"]>
+  export type PeriodoContableInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    periodoPadre?: boolean | PeriodoContable$periodoPadreArgs<ExtArgs>
+    subperiodos?: boolean | PeriodoContable$subperiodosArgs<ExtArgs>
+    apertura?: boolean | PeriodoContable$aperturaArgs<ExtArgs>
+    snapshots?: boolean | PeriodoContable$snapshotsArgs<ExtArgs>
+    auditorias?: boolean | PeriodoContable$auditoriasArgs<ExtArgs>
+    _count?: boolean | PeriodoContableCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type PeriodoContableIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    periodoPadre?: boolean | PeriodoContable$periodoPadreArgs<ExtArgs>
+  }
+  export type PeriodoContableIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    periodoPadre?: boolean | PeriodoContable$periodoPadreArgs<ExtArgs>
+  }
+
+  export type $PeriodoContablePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "PeriodoContable"
+    objects: {
+      periodoPadre: Prisma.$PeriodoContablePayload<ExtArgs> | null
+      subperiodos: Prisma.$PeriodoContablePayload<ExtArgs>[]
+      apertura: Prisma.$AperturaPeriodoPayload<ExtArgs> | null
+      snapshots: Prisma.$SnapshotPeriodoPayload<ExtArgs>[]
+      auditorias: Prisma.$AuditoriaPeriodoPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      periodoId: string
+      tipo: $Enums.TipoPeriodo
+      codigo: string
+      fechaInicio: Date
+      fechaFin: Date
+      estado: $Enums.EstadoPeriodo
+      periodoPadreId: string | null
+      aperturaAutomatica: boolean
+      cierreAutomatico: boolean
+      abiertoPorId: string | null
+      cerradoPorId: string | null
+      aprobadoPorId: string | null
+      reabiertoPorId: string | null
+      fechaApertura: Date | null
+      fechaCierre: Date | null
+      fechaAprobacion: Date | null
+      fechaReapertura: Date | null
+      observaciones: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["periodoContable"]>
+    composites: {}
+  }
+
+  type PeriodoContableGetPayload<S extends boolean | null | undefined | PeriodoContableDefaultArgs> = $Result.GetResult<Prisma.$PeriodoContablePayload, S>
+
+  type PeriodoContableCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<PeriodoContableFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: PeriodoContableCountAggregateInputType | true
+    }
+
+  export interface PeriodoContableDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['PeriodoContable'], meta: { name: 'PeriodoContable' } }
+    /**
+     * Find zero or one PeriodoContable that matches the filter.
+     * @param {PeriodoContableFindUniqueArgs} args - Arguments to find a PeriodoContable
+     * @example
+     * // Get one PeriodoContable
+     * const periodoContable = await prisma.periodoContable.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends PeriodoContableFindUniqueArgs>(args: SelectSubset<T, PeriodoContableFindUniqueArgs<ExtArgs>>): Prisma__PeriodoContableClient<$Result.GetResult<Prisma.$PeriodoContablePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one PeriodoContable that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {PeriodoContableFindUniqueOrThrowArgs} args - Arguments to find a PeriodoContable
+     * @example
+     * // Get one PeriodoContable
+     * const periodoContable = await prisma.periodoContable.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends PeriodoContableFindUniqueOrThrowArgs>(args: SelectSubset<T, PeriodoContableFindUniqueOrThrowArgs<ExtArgs>>): Prisma__PeriodoContableClient<$Result.GetResult<Prisma.$PeriodoContablePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PeriodoContable that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PeriodoContableFindFirstArgs} args - Arguments to find a PeriodoContable
+     * @example
+     * // Get one PeriodoContable
+     * const periodoContable = await prisma.periodoContable.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends PeriodoContableFindFirstArgs>(args?: SelectSubset<T, PeriodoContableFindFirstArgs<ExtArgs>>): Prisma__PeriodoContableClient<$Result.GetResult<Prisma.$PeriodoContablePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first PeriodoContable that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PeriodoContableFindFirstOrThrowArgs} args - Arguments to find a PeriodoContable
+     * @example
+     * // Get one PeriodoContable
+     * const periodoContable = await prisma.periodoContable.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends PeriodoContableFindFirstOrThrowArgs>(args?: SelectSubset<T, PeriodoContableFindFirstOrThrowArgs<ExtArgs>>): Prisma__PeriodoContableClient<$Result.GetResult<Prisma.$PeriodoContablePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more PeriodoContables that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PeriodoContableFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all PeriodoContables
+     * const periodoContables = await prisma.periodoContable.findMany()
+     * 
+     * // Get first 10 PeriodoContables
+     * const periodoContables = await prisma.periodoContable.findMany({ take: 10 })
+     * 
+     * // Only select the `periodoId`
+     * const periodoContableWithPeriodoIdOnly = await prisma.periodoContable.findMany({ select: { periodoId: true } })
+     * 
+     */
+    findMany<T extends PeriodoContableFindManyArgs>(args?: SelectSubset<T, PeriodoContableFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PeriodoContablePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a PeriodoContable.
+     * @param {PeriodoContableCreateArgs} args - Arguments to create a PeriodoContable.
+     * @example
+     * // Create one PeriodoContable
+     * const PeriodoContable = await prisma.periodoContable.create({
+     *   data: {
+     *     // ... data to create a PeriodoContable
+     *   }
+     * })
+     * 
+     */
+    create<T extends PeriodoContableCreateArgs>(args: SelectSubset<T, PeriodoContableCreateArgs<ExtArgs>>): Prisma__PeriodoContableClient<$Result.GetResult<Prisma.$PeriodoContablePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many PeriodoContables.
+     * @param {PeriodoContableCreateManyArgs} args - Arguments to create many PeriodoContables.
+     * @example
+     * // Create many PeriodoContables
+     * const periodoContable = await prisma.periodoContable.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends PeriodoContableCreateManyArgs>(args?: SelectSubset<T, PeriodoContableCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many PeriodoContables and returns the data saved in the database.
+     * @param {PeriodoContableCreateManyAndReturnArgs} args - Arguments to create many PeriodoContables.
+     * @example
+     * // Create many PeriodoContables
+     * const periodoContable = await prisma.periodoContable.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many PeriodoContables and only return the `periodoId`
+     * const periodoContableWithPeriodoIdOnly = await prisma.periodoContable.createManyAndReturn({
+     *   select: { periodoId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends PeriodoContableCreateManyAndReturnArgs>(args?: SelectSubset<T, PeriodoContableCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PeriodoContablePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a PeriodoContable.
+     * @param {PeriodoContableDeleteArgs} args - Arguments to delete one PeriodoContable.
+     * @example
+     * // Delete one PeriodoContable
+     * const PeriodoContable = await prisma.periodoContable.delete({
+     *   where: {
+     *     // ... filter to delete one PeriodoContable
+     *   }
+     * })
+     * 
+     */
+    delete<T extends PeriodoContableDeleteArgs>(args: SelectSubset<T, PeriodoContableDeleteArgs<ExtArgs>>): Prisma__PeriodoContableClient<$Result.GetResult<Prisma.$PeriodoContablePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one PeriodoContable.
+     * @param {PeriodoContableUpdateArgs} args - Arguments to update one PeriodoContable.
+     * @example
+     * // Update one PeriodoContable
+     * const periodoContable = await prisma.periodoContable.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends PeriodoContableUpdateArgs>(args: SelectSubset<T, PeriodoContableUpdateArgs<ExtArgs>>): Prisma__PeriodoContableClient<$Result.GetResult<Prisma.$PeriodoContablePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more PeriodoContables.
+     * @param {PeriodoContableDeleteManyArgs} args - Arguments to filter PeriodoContables to delete.
+     * @example
+     * // Delete a few PeriodoContables
+     * const { count } = await prisma.periodoContable.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends PeriodoContableDeleteManyArgs>(args?: SelectSubset<T, PeriodoContableDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PeriodoContables.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PeriodoContableUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many PeriodoContables
+     * const periodoContable = await prisma.periodoContable.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends PeriodoContableUpdateManyArgs>(args: SelectSubset<T, PeriodoContableUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more PeriodoContables and returns the data updated in the database.
+     * @param {PeriodoContableUpdateManyAndReturnArgs} args - Arguments to update many PeriodoContables.
+     * @example
+     * // Update many PeriodoContables
+     * const periodoContable = await prisma.periodoContable.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more PeriodoContables and only return the `periodoId`
+     * const periodoContableWithPeriodoIdOnly = await prisma.periodoContable.updateManyAndReturn({
+     *   select: { periodoId: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends PeriodoContableUpdateManyAndReturnArgs>(args: SelectSubset<T, PeriodoContableUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PeriodoContablePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one PeriodoContable.
+     * @param {PeriodoContableUpsertArgs} args - Arguments to update or create a PeriodoContable.
+     * @example
+     * // Update or create a PeriodoContable
+     * const periodoContable = await prisma.periodoContable.upsert({
+     *   create: {
+     *     // ... data to create a PeriodoContable
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the PeriodoContable we want to update
+     *   }
+     * })
+     */
+    upsert<T extends PeriodoContableUpsertArgs>(args: SelectSubset<T, PeriodoContableUpsertArgs<ExtArgs>>): Prisma__PeriodoContableClient<$Result.GetResult<Prisma.$PeriodoContablePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of PeriodoContables.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PeriodoContableCountArgs} args - Arguments to filter PeriodoContables to count.
+     * @example
+     * // Count the number of PeriodoContables
+     * const count = await prisma.periodoContable.count({
+     *   where: {
+     *     // ... the filter for the PeriodoContables we want to count
+     *   }
+     * })
+    **/
+    count<T extends PeriodoContableCountArgs>(
+      args?: Subset<T, PeriodoContableCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], PeriodoContableCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a PeriodoContable.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PeriodoContableAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends PeriodoContableAggregateArgs>(args: Subset<T, PeriodoContableAggregateArgs>): Prisma.PrismaPromise<GetPeriodoContableAggregateType<T>>
+
+    /**
+     * Group by PeriodoContable.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {PeriodoContableGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends PeriodoContableGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: PeriodoContableGroupByArgs['orderBy'] }
+        : { orderBy?: PeriodoContableGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, PeriodoContableGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetPeriodoContableGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the PeriodoContable model
+   */
+  readonly fields: PeriodoContableFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for PeriodoContable.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__PeriodoContableClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    periodoPadre<T extends PeriodoContable$periodoPadreArgs<ExtArgs> = {}>(args?: Subset<T, PeriodoContable$periodoPadreArgs<ExtArgs>>): Prisma__PeriodoContableClient<$Result.GetResult<Prisma.$PeriodoContablePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    subperiodos<T extends PeriodoContable$subperiodosArgs<ExtArgs> = {}>(args?: Subset<T, PeriodoContable$subperiodosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PeriodoContablePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    apertura<T extends PeriodoContable$aperturaArgs<ExtArgs> = {}>(args?: Subset<T, PeriodoContable$aperturaArgs<ExtArgs>>): Prisma__AperturaPeriodoClient<$Result.GetResult<Prisma.$AperturaPeriodoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    snapshots<T extends PeriodoContable$snapshotsArgs<ExtArgs> = {}>(args?: Subset<T, PeriodoContable$snapshotsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SnapshotPeriodoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    auditorias<T extends PeriodoContable$auditoriasArgs<ExtArgs> = {}>(args?: Subset<T, PeriodoContable$auditoriasArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuditoriaPeriodoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the PeriodoContable model
+   */
+  interface PeriodoContableFieldRefs {
+    readonly periodoId: FieldRef<"PeriodoContable", 'String'>
+    readonly tipo: FieldRef<"PeriodoContable", 'TipoPeriodo'>
+    readonly codigo: FieldRef<"PeriodoContable", 'String'>
+    readonly fechaInicio: FieldRef<"PeriodoContable", 'DateTime'>
+    readonly fechaFin: FieldRef<"PeriodoContable", 'DateTime'>
+    readonly estado: FieldRef<"PeriodoContable", 'EstadoPeriodo'>
+    readonly periodoPadreId: FieldRef<"PeriodoContable", 'String'>
+    readonly aperturaAutomatica: FieldRef<"PeriodoContable", 'Boolean'>
+    readonly cierreAutomatico: FieldRef<"PeriodoContable", 'Boolean'>
+    readonly abiertoPorId: FieldRef<"PeriodoContable", 'String'>
+    readonly cerradoPorId: FieldRef<"PeriodoContable", 'String'>
+    readonly aprobadoPorId: FieldRef<"PeriodoContable", 'String'>
+    readonly reabiertoPorId: FieldRef<"PeriodoContable", 'String'>
+    readonly fechaApertura: FieldRef<"PeriodoContable", 'DateTime'>
+    readonly fechaCierre: FieldRef<"PeriodoContable", 'DateTime'>
+    readonly fechaAprobacion: FieldRef<"PeriodoContable", 'DateTime'>
+    readonly fechaReapertura: FieldRef<"PeriodoContable", 'DateTime'>
+    readonly observaciones: FieldRef<"PeriodoContable", 'String'>
+    readonly createdAt: FieldRef<"PeriodoContable", 'DateTime'>
+    readonly updatedAt: FieldRef<"PeriodoContable", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * PeriodoContable findUnique
+   */
+  export type PeriodoContableFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PeriodoContable
+     */
+    select?: PeriodoContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PeriodoContable
+     */
+    omit?: PeriodoContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PeriodoContableInclude<ExtArgs> | null
+    /**
+     * Filter, which PeriodoContable to fetch.
+     */
+    where: PeriodoContableWhereUniqueInput
+  }
+
+  /**
+   * PeriodoContable findUniqueOrThrow
+   */
+  export type PeriodoContableFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PeriodoContable
+     */
+    select?: PeriodoContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PeriodoContable
+     */
+    omit?: PeriodoContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PeriodoContableInclude<ExtArgs> | null
+    /**
+     * Filter, which PeriodoContable to fetch.
+     */
+    where: PeriodoContableWhereUniqueInput
+  }
+
+  /**
+   * PeriodoContable findFirst
+   */
+  export type PeriodoContableFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PeriodoContable
+     */
+    select?: PeriodoContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PeriodoContable
+     */
+    omit?: PeriodoContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PeriodoContableInclude<ExtArgs> | null
+    /**
+     * Filter, which PeriodoContable to fetch.
+     */
+    where?: PeriodoContableWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PeriodoContables to fetch.
+     */
+    orderBy?: PeriodoContableOrderByWithRelationInput | PeriodoContableOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PeriodoContables.
+     */
+    cursor?: PeriodoContableWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PeriodoContables from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PeriodoContables.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PeriodoContables.
+     */
+    distinct?: PeriodoContableScalarFieldEnum | PeriodoContableScalarFieldEnum[]
+  }
+
+  /**
+   * PeriodoContable findFirstOrThrow
+   */
+  export type PeriodoContableFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PeriodoContable
+     */
+    select?: PeriodoContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PeriodoContable
+     */
+    omit?: PeriodoContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PeriodoContableInclude<ExtArgs> | null
+    /**
+     * Filter, which PeriodoContable to fetch.
+     */
+    where?: PeriodoContableWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PeriodoContables to fetch.
+     */
+    orderBy?: PeriodoContableOrderByWithRelationInput | PeriodoContableOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for PeriodoContables.
+     */
+    cursor?: PeriodoContableWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PeriodoContables from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PeriodoContables.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of PeriodoContables.
+     */
+    distinct?: PeriodoContableScalarFieldEnum | PeriodoContableScalarFieldEnum[]
+  }
+
+  /**
+   * PeriodoContable findMany
+   */
+  export type PeriodoContableFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PeriodoContable
+     */
+    select?: PeriodoContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PeriodoContable
+     */
+    omit?: PeriodoContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PeriodoContableInclude<ExtArgs> | null
+    /**
+     * Filter, which PeriodoContables to fetch.
+     */
+    where?: PeriodoContableWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of PeriodoContables to fetch.
+     */
+    orderBy?: PeriodoContableOrderByWithRelationInput | PeriodoContableOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing PeriodoContables.
+     */
+    cursor?: PeriodoContableWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` PeriodoContables from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` PeriodoContables.
+     */
+    skip?: number
+    distinct?: PeriodoContableScalarFieldEnum | PeriodoContableScalarFieldEnum[]
+  }
+
+  /**
+   * PeriodoContable create
+   */
+  export type PeriodoContableCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PeriodoContable
+     */
+    select?: PeriodoContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PeriodoContable
+     */
+    omit?: PeriodoContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PeriodoContableInclude<ExtArgs> | null
+    /**
+     * The data needed to create a PeriodoContable.
+     */
+    data: XOR<PeriodoContableCreateInput, PeriodoContableUncheckedCreateInput>
+  }
+
+  /**
+   * PeriodoContable createMany
+   */
+  export type PeriodoContableCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many PeriodoContables.
+     */
+    data: PeriodoContableCreateManyInput | PeriodoContableCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * PeriodoContable createManyAndReturn
+   */
+  export type PeriodoContableCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PeriodoContable
+     */
+    select?: PeriodoContableSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PeriodoContable
+     */
+    omit?: PeriodoContableOmit<ExtArgs> | null
+    /**
+     * The data used to create many PeriodoContables.
+     */
+    data: PeriodoContableCreateManyInput | PeriodoContableCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PeriodoContableIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PeriodoContable update
+   */
+  export type PeriodoContableUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PeriodoContable
+     */
+    select?: PeriodoContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PeriodoContable
+     */
+    omit?: PeriodoContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PeriodoContableInclude<ExtArgs> | null
+    /**
+     * The data needed to update a PeriodoContable.
+     */
+    data: XOR<PeriodoContableUpdateInput, PeriodoContableUncheckedUpdateInput>
+    /**
+     * Choose, which PeriodoContable to update.
+     */
+    where: PeriodoContableWhereUniqueInput
+  }
+
+  /**
+   * PeriodoContable updateMany
+   */
+  export type PeriodoContableUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update PeriodoContables.
+     */
+    data: XOR<PeriodoContableUpdateManyMutationInput, PeriodoContableUncheckedUpdateManyInput>
+    /**
+     * Filter which PeriodoContables to update
+     */
+    where?: PeriodoContableWhereInput
+    /**
+     * Limit how many PeriodoContables to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * PeriodoContable updateManyAndReturn
+   */
+  export type PeriodoContableUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PeriodoContable
+     */
+    select?: PeriodoContableSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the PeriodoContable
+     */
+    omit?: PeriodoContableOmit<ExtArgs> | null
+    /**
+     * The data used to update PeriodoContables.
+     */
+    data: XOR<PeriodoContableUpdateManyMutationInput, PeriodoContableUncheckedUpdateManyInput>
+    /**
+     * Filter which PeriodoContables to update
+     */
+    where?: PeriodoContableWhereInput
+    /**
+     * Limit how many PeriodoContables to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PeriodoContableIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * PeriodoContable upsert
+   */
+  export type PeriodoContableUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PeriodoContable
+     */
+    select?: PeriodoContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PeriodoContable
+     */
+    omit?: PeriodoContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PeriodoContableInclude<ExtArgs> | null
+    /**
+     * The filter to search for the PeriodoContable to update in case it exists.
+     */
+    where: PeriodoContableWhereUniqueInput
+    /**
+     * In case the PeriodoContable found by the `where` argument doesn't exist, create a new PeriodoContable with this data.
+     */
+    create: XOR<PeriodoContableCreateInput, PeriodoContableUncheckedCreateInput>
+    /**
+     * In case the PeriodoContable was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<PeriodoContableUpdateInput, PeriodoContableUncheckedUpdateInput>
+  }
+
+  /**
+   * PeriodoContable delete
+   */
+  export type PeriodoContableDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PeriodoContable
+     */
+    select?: PeriodoContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PeriodoContable
+     */
+    omit?: PeriodoContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PeriodoContableInclude<ExtArgs> | null
+    /**
+     * Filter which PeriodoContable to delete.
+     */
+    where: PeriodoContableWhereUniqueInput
+  }
+
+  /**
+   * PeriodoContable deleteMany
+   */
+  export type PeriodoContableDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which PeriodoContables to delete
+     */
+    where?: PeriodoContableWhereInput
+    /**
+     * Limit how many PeriodoContables to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * PeriodoContable.periodoPadre
+   */
+  export type PeriodoContable$periodoPadreArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PeriodoContable
+     */
+    select?: PeriodoContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PeriodoContable
+     */
+    omit?: PeriodoContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PeriodoContableInclude<ExtArgs> | null
+    where?: PeriodoContableWhereInput
+  }
+
+  /**
+   * PeriodoContable.subperiodos
+   */
+  export type PeriodoContable$subperiodosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PeriodoContable
+     */
+    select?: PeriodoContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PeriodoContable
+     */
+    omit?: PeriodoContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PeriodoContableInclude<ExtArgs> | null
+    where?: PeriodoContableWhereInput
+    orderBy?: PeriodoContableOrderByWithRelationInput | PeriodoContableOrderByWithRelationInput[]
+    cursor?: PeriodoContableWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: PeriodoContableScalarFieldEnum | PeriodoContableScalarFieldEnum[]
+  }
+
+  /**
+   * PeriodoContable.apertura
+   */
+  export type PeriodoContable$aperturaArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AperturaPeriodo
+     */
+    select?: AperturaPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AperturaPeriodo
+     */
+    omit?: AperturaPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AperturaPeriodoInclude<ExtArgs> | null
+    where?: AperturaPeriodoWhereInput
+  }
+
+  /**
+   * PeriodoContable.snapshots
+   */
+  export type PeriodoContable$snapshotsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SnapshotPeriodo
+     */
+    select?: SnapshotPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SnapshotPeriodo
+     */
+    omit?: SnapshotPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SnapshotPeriodoInclude<ExtArgs> | null
+    where?: SnapshotPeriodoWhereInput
+    orderBy?: SnapshotPeriodoOrderByWithRelationInput | SnapshotPeriodoOrderByWithRelationInput[]
+    cursor?: SnapshotPeriodoWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SnapshotPeriodoScalarFieldEnum | SnapshotPeriodoScalarFieldEnum[]
+  }
+
+  /**
+   * PeriodoContable.auditorias
+   */
+  export type PeriodoContable$auditoriasArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditoriaPeriodo
+     */
+    select?: AuditoriaPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuditoriaPeriodo
+     */
+    omit?: AuditoriaPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditoriaPeriodoInclude<ExtArgs> | null
+    where?: AuditoriaPeriodoWhereInput
+    orderBy?: AuditoriaPeriodoOrderByWithRelationInput | AuditoriaPeriodoOrderByWithRelationInput[]
+    cursor?: AuditoriaPeriodoWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: AuditoriaPeriodoScalarFieldEnum | AuditoriaPeriodoScalarFieldEnum[]
+  }
+
+  /**
+   * PeriodoContable without action
+   */
+  export type PeriodoContableDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PeriodoContable
+     */
+    select?: PeriodoContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PeriodoContable
+     */
+    omit?: PeriodoContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PeriodoContableInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model AperturaPeriodo
+   */
+
+  export type AggregateAperturaPeriodo = {
+    _count: AperturaPeriodoCountAggregateOutputType | null
+    _avg: AperturaPeriodoAvgAggregateOutputType | null
+    _sum: AperturaPeriodoSumAggregateOutputType | null
+    _min: AperturaPeriodoMinAggregateOutputType | null
+    _max: AperturaPeriodoMaxAggregateOutputType | null
+  }
+
+  export type AperturaPeriodoAvgAggregateOutputType = {
+    saldoCajaInicial: Decimal | null
+    saldoBancoInicial: Decimal | null
+    saldoCuentasCobrarInicial: Decimal | null
+    saldoCuentasPagarInicial: Decimal | null
+    saldoInventarioInicial: Decimal | null
+    saldoCapitalInicial: Decimal | null
+    saldoResultadoAcumInicial: Decimal | null
+  }
+
+  export type AperturaPeriodoSumAggregateOutputType = {
+    saldoCajaInicial: Decimal | null
+    saldoBancoInicial: Decimal | null
+    saldoCuentasCobrarInicial: Decimal | null
+    saldoCuentasPagarInicial: Decimal | null
+    saldoInventarioInicial: Decimal | null
+    saldoCapitalInicial: Decimal | null
+    saldoResultadoAcumInicial: Decimal | null
+  }
+
+  export type AperturaPeriodoMinAggregateOutputType = {
+    aperturaId: string | null
+    periodoId: string | null
+    origenPeriodoId: string | null
+    saldoCajaInicial: Decimal | null
+    saldoBancoInicial: Decimal | null
+    saldoCuentasCobrarInicial: Decimal | null
+    saldoCuentasPagarInicial: Decimal | null
+    saldoInventarioInicial: Decimal | null
+    saldoCapitalInicial: Decimal | null
+    saldoResultadoAcumInicial: Decimal | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type AperturaPeriodoMaxAggregateOutputType = {
+    aperturaId: string | null
+    periodoId: string | null
+    origenPeriodoId: string | null
+    saldoCajaInicial: Decimal | null
+    saldoBancoInicial: Decimal | null
+    saldoCuentasCobrarInicial: Decimal | null
+    saldoCuentasPagarInicial: Decimal | null
+    saldoInventarioInicial: Decimal | null
+    saldoCapitalInicial: Decimal | null
+    saldoResultadoAcumInicial: Decimal | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type AperturaPeriodoCountAggregateOutputType = {
+    aperturaId: number
+    periodoId: number
+    origenPeriodoId: number
+    saldoCajaInicial: number
+    saldoBancoInicial: number
+    saldoCuentasCobrarInicial: number
+    saldoCuentasPagarInicial: number
+    saldoInventarioInicial: number
+    saldoCapitalInicial: number
+    saldoResultadoAcumInicial: number
+    detalleJson: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type AperturaPeriodoAvgAggregateInputType = {
+    saldoCajaInicial?: true
+    saldoBancoInicial?: true
+    saldoCuentasCobrarInicial?: true
+    saldoCuentasPagarInicial?: true
+    saldoInventarioInicial?: true
+    saldoCapitalInicial?: true
+    saldoResultadoAcumInicial?: true
+  }
+
+  export type AperturaPeriodoSumAggregateInputType = {
+    saldoCajaInicial?: true
+    saldoBancoInicial?: true
+    saldoCuentasCobrarInicial?: true
+    saldoCuentasPagarInicial?: true
+    saldoInventarioInicial?: true
+    saldoCapitalInicial?: true
+    saldoResultadoAcumInicial?: true
+  }
+
+  export type AperturaPeriodoMinAggregateInputType = {
+    aperturaId?: true
+    periodoId?: true
+    origenPeriodoId?: true
+    saldoCajaInicial?: true
+    saldoBancoInicial?: true
+    saldoCuentasCobrarInicial?: true
+    saldoCuentasPagarInicial?: true
+    saldoInventarioInicial?: true
+    saldoCapitalInicial?: true
+    saldoResultadoAcumInicial?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type AperturaPeriodoMaxAggregateInputType = {
+    aperturaId?: true
+    periodoId?: true
+    origenPeriodoId?: true
+    saldoCajaInicial?: true
+    saldoBancoInicial?: true
+    saldoCuentasCobrarInicial?: true
+    saldoCuentasPagarInicial?: true
+    saldoInventarioInicial?: true
+    saldoCapitalInicial?: true
+    saldoResultadoAcumInicial?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type AperturaPeriodoCountAggregateInputType = {
+    aperturaId?: true
+    periodoId?: true
+    origenPeriodoId?: true
+    saldoCajaInicial?: true
+    saldoBancoInicial?: true
+    saldoCuentasCobrarInicial?: true
+    saldoCuentasPagarInicial?: true
+    saldoInventarioInicial?: true
+    saldoCapitalInicial?: true
+    saldoResultadoAcumInicial?: true
+    detalleJson?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type AperturaPeriodoAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AperturaPeriodo to aggregate.
+     */
+    where?: AperturaPeriodoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AperturaPeriodos to fetch.
+     */
+    orderBy?: AperturaPeriodoOrderByWithRelationInput | AperturaPeriodoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AperturaPeriodoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AperturaPeriodos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AperturaPeriodos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AperturaPeriodos
+    **/
+    _count?: true | AperturaPeriodoCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: AperturaPeriodoAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: AperturaPeriodoSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AperturaPeriodoMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AperturaPeriodoMaxAggregateInputType
+  }
+
+  export type GetAperturaPeriodoAggregateType<T extends AperturaPeriodoAggregateArgs> = {
+        [P in keyof T & keyof AggregateAperturaPeriodo]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAperturaPeriodo[P]>
+      : GetScalarType<T[P], AggregateAperturaPeriodo[P]>
+  }
+
+
+
+
+  export type AperturaPeriodoGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AperturaPeriodoWhereInput
+    orderBy?: AperturaPeriodoOrderByWithAggregationInput | AperturaPeriodoOrderByWithAggregationInput[]
+    by: AperturaPeriodoScalarFieldEnum[] | AperturaPeriodoScalarFieldEnum
+    having?: AperturaPeriodoScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AperturaPeriodoCountAggregateInputType | true
+    _avg?: AperturaPeriodoAvgAggregateInputType
+    _sum?: AperturaPeriodoSumAggregateInputType
+    _min?: AperturaPeriodoMinAggregateInputType
+    _max?: AperturaPeriodoMaxAggregateInputType
+  }
+
+  export type AperturaPeriodoGroupByOutputType = {
+    aperturaId: string
+    periodoId: string
+    origenPeriodoId: string | null
+    saldoCajaInicial: Decimal
+    saldoBancoInicial: Decimal
+    saldoCuentasCobrarInicial: Decimal
+    saldoCuentasPagarInicial: Decimal
+    saldoInventarioInicial: Decimal
+    saldoCapitalInicial: Decimal
+    saldoResultadoAcumInicial: Decimal
+    detalleJson: JsonValue | null
+    createdAt: Date
+    updatedAt: Date
+    _count: AperturaPeriodoCountAggregateOutputType | null
+    _avg: AperturaPeriodoAvgAggregateOutputType | null
+    _sum: AperturaPeriodoSumAggregateOutputType | null
+    _min: AperturaPeriodoMinAggregateOutputType | null
+    _max: AperturaPeriodoMaxAggregateOutputType | null
+  }
+
+  type GetAperturaPeriodoGroupByPayload<T extends AperturaPeriodoGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<AperturaPeriodoGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AperturaPeriodoGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AperturaPeriodoGroupByOutputType[P]>
+            : GetScalarType<T[P], AperturaPeriodoGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AperturaPeriodoSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    aperturaId?: boolean
+    periodoId?: boolean
+    origenPeriodoId?: boolean
+    saldoCajaInicial?: boolean
+    saldoBancoInicial?: boolean
+    saldoCuentasCobrarInicial?: boolean
+    saldoCuentasPagarInicial?: boolean
+    saldoInventarioInicial?: boolean
+    saldoCapitalInicial?: boolean
+    saldoResultadoAcumInicial?: boolean
+    detalleJson?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    periodo?: boolean | PeriodoContableDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["aperturaPeriodo"]>
+
+  export type AperturaPeriodoSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    aperturaId?: boolean
+    periodoId?: boolean
+    origenPeriodoId?: boolean
+    saldoCajaInicial?: boolean
+    saldoBancoInicial?: boolean
+    saldoCuentasCobrarInicial?: boolean
+    saldoCuentasPagarInicial?: boolean
+    saldoInventarioInicial?: boolean
+    saldoCapitalInicial?: boolean
+    saldoResultadoAcumInicial?: boolean
+    detalleJson?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    periodo?: boolean | PeriodoContableDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["aperturaPeriodo"]>
+
+  export type AperturaPeriodoSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    aperturaId?: boolean
+    periodoId?: boolean
+    origenPeriodoId?: boolean
+    saldoCajaInicial?: boolean
+    saldoBancoInicial?: boolean
+    saldoCuentasCobrarInicial?: boolean
+    saldoCuentasPagarInicial?: boolean
+    saldoInventarioInicial?: boolean
+    saldoCapitalInicial?: boolean
+    saldoResultadoAcumInicial?: boolean
+    detalleJson?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    periodo?: boolean | PeriodoContableDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["aperturaPeriodo"]>
+
+  export type AperturaPeriodoSelectScalar = {
+    aperturaId?: boolean
+    periodoId?: boolean
+    origenPeriodoId?: boolean
+    saldoCajaInicial?: boolean
+    saldoBancoInicial?: boolean
+    saldoCuentasCobrarInicial?: boolean
+    saldoCuentasPagarInicial?: boolean
+    saldoInventarioInicial?: boolean
+    saldoCapitalInicial?: boolean
+    saldoResultadoAcumInicial?: boolean
+    detalleJson?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type AperturaPeriodoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"aperturaId" | "periodoId" | "origenPeriodoId" | "saldoCajaInicial" | "saldoBancoInicial" | "saldoCuentasCobrarInicial" | "saldoCuentasPagarInicial" | "saldoInventarioInicial" | "saldoCapitalInicial" | "saldoResultadoAcumInicial" | "detalleJson" | "createdAt" | "updatedAt", ExtArgs["result"]["aperturaPeriodo"]>
+  export type AperturaPeriodoInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    periodo?: boolean | PeriodoContableDefaultArgs<ExtArgs>
+  }
+  export type AperturaPeriodoIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    periodo?: boolean | PeriodoContableDefaultArgs<ExtArgs>
+  }
+  export type AperturaPeriodoIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    periodo?: boolean | PeriodoContableDefaultArgs<ExtArgs>
+  }
+
+  export type $AperturaPeriodoPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "AperturaPeriodo"
+    objects: {
+      periodo: Prisma.$PeriodoContablePayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      aperturaId: string
+      periodoId: string
+      origenPeriodoId: string | null
+      saldoCajaInicial: Prisma.Decimal
+      saldoBancoInicial: Prisma.Decimal
+      saldoCuentasCobrarInicial: Prisma.Decimal
+      saldoCuentasPagarInicial: Prisma.Decimal
+      saldoInventarioInicial: Prisma.Decimal
+      saldoCapitalInicial: Prisma.Decimal
+      saldoResultadoAcumInicial: Prisma.Decimal
+      detalleJson: Prisma.JsonValue | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["aperturaPeriodo"]>
+    composites: {}
+  }
+
+  type AperturaPeriodoGetPayload<S extends boolean | null | undefined | AperturaPeriodoDefaultArgs> = $Result.GetResult<Prisma.$AperturaPeriodoPayload, S>
+
+  type AperturaPeriodoCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<AperturaPeriodoFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: AperturaPeriodoCountAggregateInputType | true
+    }
+
+  export interface AperturaPeriodoDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AperturaPeriodo'], meta: { name: 'AperturaPeriodo' } }
+    /**
+     * Find zero or one AperturaPeriodo that matches the filter.
+     * @param {AperturaPeriodoFindUniqueArgs} args - Arguments to find a AperturaPeriodo
+     * @example
+     * // Get one AperturaPeriodo
+     * const aperturaPeriodo = await prisma.aperturaPeriodo.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends AperturaPeriodoFindUniqueArgs>(args: SelectSubset<T, AperturaPeriodoFindUniqueArgs<ExtArgs>>): Prisma__AperturaPeriodoClient<$Result.GetResult<Prisma.$AperturaPeriodoPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one AperturaPeriodo that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {AperturaPeriodoFindUniqueOrThrowArgs} args - Arguments to find a AperturaPeriodo
+     * @example
+     * // Get one AperturaPeriodo
+     * const aperturaPeriodo = await prisma.aperturaPeriodo.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends AperturaPeriodoFindUniqueOrThrowArgs>(args: SelectSubset<T, AperturaPeriodoFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AperturaPeriodoClient<$Result.GetResult<Prisma.$AperturaPeriodoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AperturaPeriodo that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AperturaPeriodoFindFirstArgs} args - Arguments to find a AperturaPeriodo
+     * @example
+     * // Get one AperturaPeriodo
+     * const aperturaPeriodo = await prisma.aperturaPeriodo.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends AperturaPeriodoFindFirstArgs>(args?: SelectSubset<T, AperturaPeriodoFindFirstArgs<ExtArgs>>): Prisma__AperturaPeriodoClient<$Result.GetResult<Prisma.$AperturaPeriodoPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AperturaPeriodo that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AperturaPeriodoFindFirstOrThrowArgs} args - Arguments to find a AperturaPeriodo
+     * @example
+     * // Get one AperturaPeriodo
+     * const aperturaPeriodo = await prisma.aperturaPeriodo.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends AperturaPeriodoFindFirstOrThrowArgs>(args?: SelectSubset<T, AperturaPeriodoFindFirstOrThrowArgs<ExtArgs>>): Prisma__AperturaPeriodoClient<$Result.GetResult<Prisma.$AperturaPeriodoPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more AperturaPeriodos that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AperturaPeriodoFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AperturaPeriodos
+     * const aperturaPeriodos = await prisma.aperturaPeriodo.findMany()
+     * 
+     * // Get first 10 AperturaPeriodos
+     * const aperturaPeriodos = await prisma.aperturaPeriodo.findMany({ take: 10 })
+     * 
+     * // Only select the `aperturaId`
+     * const aperturaPeriodoWithAperturaIdOnly = await prisma.aperturaPeriodo.findMany({ select: { aperturaId: true } })
+     * 
+     */
+    findMany<T extends AperturaPeriodoFindManyArgs>(args?: SelectSubset<T, AperturaPeriodoFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AperturaPeriodoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a AperturaPeriodo.
+     * @param {AperturaPeriodoCreateArgs} args - Arguments to create a AperturaPeriodo.
+     * @example
+     * // Create one AperturaPeriodo
+     * const AperturaPeriodo = await prisma.aperturaPeriodo.create({
+     *   data: {
+     *     // ... data to create a AperturaPeriodo
+     *   }
+     * })
+     * 
+     */
+    create<T extends AperturaPeriodoCreateArgs>(args: SelectSubset<T, AperturaPeriodoCreateArgs<ExtArgs>>): Prisma__AperturaPeriodoClient<$Result.GetResult<Prisma.$AperturaPeriodoPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many AperturaPeriodos.
+     * @param {AperturaPeriodoCreateManyArgs} args - Arguments to create many AperturaPeriodos.
+     * @example
+     * // Create many AperturaPeriodos
+     * const aperturaPeriodo = await prisma.aperturaPeriodo.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends AperturaPeriodoCreateManyArgs>(args?: SelectSubset<T, AperturaPeriodoCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many AperturaPeriodos and returns the data saved in the database.
+     * @param {AperturaPeriodoCreateManyAndReturnArgs} args - Arguments to create many AperturaPeriodos.
+     * @example
+     * // Create many AperturaPeriodos
+     * const aperturaPeriodo = await prisma.aperturaPeriodo.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many AperturaPeriodos and only return the `aperturaId`
+     * const aperturaPeriodoWithAperturaIdOnly = await prisma.aperturaPeriodo.createManyAndReturn({
+     *   select: { aperturaId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends AperturaPeriodoCreateManyAndReturnArgs>(args?: SelectSubset<T, AperturaPeriodoCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AperturaPeriodoPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a AperturaPeriodo.
+     * @param {AperturaPeriodoDeleteArgs} args - Arguments to delete one AperturaPeriodo.
+     * @example
+     * // Delete one AperturaPeriodo
+     * const AperturaPeriodo = await prisma.aperturaPeriodo.delete({
+     *   where: {
+     *     // ... filter to delete one AperturaPeriodo
+     *   }
+     * })
+     * 
+     */
+    delete<T extends AperturaPeriodoDeleteArgs>(args: SelectSubset<T, AperturaPeriodoDeleteArgs<ExtArgs>>): Prisma__AperturaPeriodoClient<$Result.GetResult<Prisma.$AperturaPeriodoPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one AperturaPeriodo.
+     * @param {AperturaPeriodoUpdateArgs} args - Arguments to update one AperturaPeriodo.
+     * @example
+     * // Update one AperturaPeriodo
+     * const aperturaPeriodo = await prisma.aperturaPeriodo.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends AperturaPeriodoUpdateArgs>(args: SelectSubset<T, AperturaPeriodoUpdateArgs<ExtArgs>>): Prisma__AperturaPeriodoClient<$Result.GetResult<Prisma.$AperturaPeriodoPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more AperturaPeriodos.
+     * @param {AperturaPeriodoDeleteManyArgs} args - Arguments to filter AperturaPeriodos to delete.
+     * @example
+     * // Delete a few AperturaPeriodos
+     * const { count } = await prisma.aperturaPeriodo.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends AperturaPeriodoDeleteManyArgs>(args?: SelectSubset<T, AperturaPeriodoDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AperturaPeriodos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AperturaPeriodoUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AperturaPeriodos
+     * const aperturaPeriodo = await prisma.aperturaPeriodo.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends AperturaPeriodoUpdateManyArgs>(args: SelectSubset<T, AperturaPeriodoUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AperturaPeriodos and returns the data updated in the database.
+     * @param {AperturaPeriodoUpdateManyAndReturnArgs} args - Arguments to update many AperturaPeriodos.
+     * @example
+     * // Update many AperturaPeriodos
+     * const aperturaPeriodo = await prisma.aperturaPeriodo.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more AperturaPeriodos and only return the `aperturaId`
+     * const aperturaPeriodoWithAperturaIdOnly = await prisma.aperturaPeriodo.updateManyAndReturn({
+     *   select: { aperturaId: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends AperturaPeriodoUpdateManyAndReturnArgs>(args: SelectSubset<T, AperturaPeriodoUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AperturaPeriodoPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one AperturaPeriodo.
+     * @param {AperturaPeriodoUpsertArgs} args - Arguments to update or create a AperturaPeriodo.
+     * @example
+     * // Update or create a AperturaPeriodo
+     * const aperturaPeriodo = await prisma.aperturaPeriodo.upsert({
+     *   create: {
+     *     // ... data to create a AperturaPeriodo
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the AperturaPeriodo we want to update
+     *   }
+     * })
+     */
+    upsert<T extends AperturaPeriodoUpsertArgs>(args: SelectSubset<T, AperturaPeriodoUpsertArgs<ExtArgs>>): Prisma__AperturaPeriodoClient<$Result.GetResult<Prisma.$AperturaPeriodoPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of AperturaPeriodos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AperturaPeriodoCountArgs} args - Arguments to filter AperturaPeriodos to count.
+     * @example
+     * // Count the number of AperturaPeriodos
+     * const count = await prisma.aperturaPeriodo.count({
+     *   where: {
+     *     // ... the filter for the AperturaPeriodos we want to count
+     *   }
+     * })
+    **/
+    count<T extends AperturaPeriodoCountArgs>(
+      args?: Subset<T, AperturaPeriodoCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AperturaPeriodoCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AperturaPeriodo.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AperturaPeriodoAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AperturaPeriodoAggregateArgs>(args: Subset<T, AperturaPeriodoAggregateArgs>): Prisma.PrismaPromise<GetAperturaPeriodoAggregateType<T>>
+
+    /**
+     * Group by AperturaPeriodo.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AperturaPeriodoGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AperturaPeriodoGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AperturaPeriodoGroupByArgs['orderBy'] }
+        : { orderBy?: AperturaPeriodoGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AperturaPeriodoGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAperturaPeriodoGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the AperturaPeriodo model
+   */
+  readonly fields: AperturaPeriodoFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AperturaPeriodo.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__AperturaPeriodoClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    periodo<T extends PeriodoContableDefaultArgs<ExtArgs> = {}>(args?: Subset<T, PeriodoContableDefaultArgs<ExtArgs>>): Prisma__PeriodoContableClient<$Result.GetResult<Prisma.$PeriodoContablePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the AperturaPeriodo model
+   */
+  interface AperturaPeriodoFieldRefs {
+    readonly aperturaId: FieldRef<"AperturaPeriodo", 'String'>
+    readonly periodoId: FieldRef<"AperturaPeriodo", 'String'>
+    readonly origenPeriodoId: FieldRef<"AperturaPeriodo", 'String'>
+    readonly saldoCajaInicial: FieldRef<"AperturaPeriodo", 'Decimal'>
+    readonly saldoBancoInicial: FieldRef<"AperturaPeriodo", 'Decimal'>
+    readonly saldoCuentasCobrarInicial: FieldRef<"AperturaPeriodo", 'Decimal'>
+    readonly saldoCuentasPagarInicial: FieldRef<"AperturaPeriodo", 'Decimal'>
+    readonly saldoInventarioInicial: FieldRef<"AperturaPeriodo", 'Decimal'>
+    readonly saldoCapitalInicial: FieldRef<"AperturaPeriodo", 'Decimal'>
+    readonly saldoResultadoAcumInicial: FieldRef<"AperturaPeriodo", 'Decimal'>
+    readonly detalleJson: FieldRef<"AperturaPeriodo", 'Json'>
+    readonly createdAt: FieldRef<"AperturaPeriodo", 'DateTime'>
+    readonly updatedAt: FieldRef<"AperturaPeriodo", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * AperturaPeriodo findUnique
+   */
+  export type AperturaPeriodoFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AperturaPeriodo
+     */
+    select?: AperturaPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AperturaPeriodo
+     */
+    omit?: AperturaPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AperturaPeriodoInclude<ExtArgs> | null
+    /**
+     * Filter, which AperturaPeriodo to fetch.
+     */
+    where: AperturaPeriodoWhereUniqueInput
+  }
+
+  /**
+   * AperturaPeriodo findUniqueOrThrow
+   */
+  export type AperturaPeriodoFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AperturaPeriodo
+     */
+    select?: AperturaPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AperturaPeriodo
+     */
+    omit?: AperturaPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AperturaPeriodoInclude<ExtArgs> | null
+    /**
+     * Filter, which AperturaPeriodo to fetch.
+     */
+    where: AperturaPeriodoWhereUniqueInput
+  }
+
+  /**
+   * AperturaPeriodo findFirst
+   */
+  export type AperturaPeriodoFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AperturaPeriodo
+     */
+    select?: AperturaPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AperturaPeriodo
+     */
+    omit?: AperturaPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AperturaPeriodoInclude<ExtArgs> | null
+    /**
+     * Filter, which AperturaPeriodo to fetch.
+     */
+    where?: AperturaPeriodoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AperturaPeriodos to fetch.
+     */
+    orderBy?: AperturaPeriodoOrderByWithRelationInput | AperturaPeriodoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AperturaPeriodos.
+     */
+    cursor?: AperturaPeriodoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AperturaPeriodos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AperturaPeriodos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AperturaPeriodos.
+     */
+    distinct?: AperturaPeriodoScalarFieldEnum | AperturaPeriodoScalarFieldEnum[]
+  }
+
+  /**
+   * AperturaPeriodo findFirstOrThrow
+   */
+  export type AperturaPeriodoFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AperturaPeriodo
+     */
+    select?: AperturaPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AperturaPeriodo
+     */
+    omit?: AperturaPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AperturaPeriodoInclude<ExtArgs> | null
+    /**
+     * Filter, which AperturaPeriodo to fetch.
+     */
+    where?: AperturaPeriodoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AperturaPeriodos to fetch.
+     */
+    orderBy?: AperturaPeriodoOrderByWithRelationInput | AperturaPeriodoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AperturaPeriodos.
+     */
+    cursor?: AperturaPeriodoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AperturaPeriodos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AperturaPeriodos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AperturaPeriodos.
+     */
+    distinct?: AperturaPeriodoScalarFieldEnum | AperturaPeriodoScalarFieldEnum[]
+  }
+
+  /**
+   * AperturaPeriodo findMany
+   */
+  export type AperturaPeriodoFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AperturaPeriodo
+     */
+    select?: AperturaPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AperturaPeriodo
+     */
+    omit?: AperturaPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AperturaPeriodoInclude<ExtArgs> | null
+    /**
+     * Filter, which AperturaPeriodos to fetch.
+     */
+    where?: AperturaPeriodoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AperturaPeriodos to fetch.
+     */
+    orderBy?: AperturaPeriodoOrderByWithRelationInput | AperturaPeriodoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AperturaPeriodos.
+     */
+    cursor?: AperturaPeriodoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AperturaPeriodos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AperturaPeriodos.
+     */
+    skip?: number
+    distinct?: AperturaPeriodoScalarFieldEnum | AperturaPeriodoScalarFieldEnum[]
+  }
+
+  /**
+   * AperturaPeriodo create
+   */
+  export type AperturaPeriodoCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AperturaPeriodo
+     */
+    select?: AperturaPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AperturaPeriodo
+     */
+    omit?: AperturaPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AperturaPeriodoInclude<ExtArgs> | null
+    /**
+     * The data needed to create a AperturaPeriodo.
+     */
+    data: XOR<AperturaPeriodoCreateInput, AperturaPeriodoUncheckedCreateInput>
+  }
+
+  /**
+   * AperturaPeriodo createMany
+   */
+  export type AperturaPeriodoCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many AperturaPeriodos.
+     */
+    data: AperturaPeriodoCreateManyInput | AperturaPeriodoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AperturaPeriodo createManyAndReturn
+   */
+  export type AperturaPeriodoCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AperturaPeriodo
+     */
+    select?: AperturaPeriodoSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AperturaPeriodo
+     */
+    omit?: AperturaPeriodoOmit<ExtArgs> | null
+    /**
+     * The data used to create many AperturaPeriodos.
+     */
+    data: AperturaPeriodoCreateManyInput | AperturaPeriodoCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AperturaPeriodoIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AperturaPeriodo update
+   */
+  export type AperturaPeriodoUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AperturaPeriodo
+     */
+    select?: AperturaPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AperturaPeriodo
+     */
+    omit?: AperturaPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AperturaPeriodoInclude<ExtArgs> | null
+    /**
+     * The data needed to update a AperturaPeriodo.
+     */
+    data: XOR<AperturaPeriodoUpdateInput, AperturaPeriodoUncheckedUpdateInput>
+    /**
+     * Choose, which AperturaPeriodo to update.
+     */
+    where: AperturaPeriodoWhereUniqueInput
+  }
+
+  /**
+   * AperturaPeriodo updateMany
+   */
+  export type AperturaPeriodoUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AperturaPeriodos.
+     */
+    data: XOR<AperturaPeriodoUpdateManyMutationInput, AperturaPeriodoUncheckedUpdateManyInput>
+    /**
+     * Filter which AperturaPeriodos to update
+     */
+    where?: AperturaPeriodoWhereInput
+    /**
+     * Limit how many AperturaPeriodos to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AperturaPeriodo updateManyAndReturn
+   */
+  export type AperturaPeriodoUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AperturaPeriodo
+     */
+    select?: AperturaPeriodoSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AperturaPeriodo
+     */
+    omit?: AperturaPeriodoOmit<ExtArgs> | null
+    /**
+     * The data used to update AperturaPeriodos.
+     */
+    data: XOR<AperturaPeriodoUpdateManyMutationInput, AperturaPeriodoUncheckedUpdateManyInput>
+    /**
+     * Filter which AperturaPeriodos to update
+     */
+    where?: AperturaPeriodoWhereInput
+    /**
+     * Limit how many AperturaPeriodos to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AperturaPeriodoIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AperturaPeriodo upsert
+   */
+  export type AperturaPeriodoUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AperturaPeriodo
+     */
+    select?: AperturaPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AperturaPeriodo
+     */
+    omit?: AperturaPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AperturaPeriodoInclude<ExtArgs> | null
+    /**
+     * The filter to search for the AperturaPeriodo to update in case it exists.
+     */
+    where: AperturaPeriodoWhereUniqueInput
+    /**
+     * In case the AperturaPeriodo found by the `where` argument doesn't exist, create a new AperturaPeriodo with this data.
+     */
+    create: XOR<AperturaPeriodoCreateInput, AperturaPeriodoUncheckedCreateInput>
+    /**
+     * In case the AperturaPeriodo was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AperturaPeriodoUpdateInput, AperturaPeriodoUncheckedUpdateInput>
+  }
+
+  /**
+   * AperturaPeriodo delete
+   */
+  export type AperturaPeriodoDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AperturaPeriodo
+     */
+    select?: AperturaPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AperturaPeriodo
+     */
+    omit?: AperturaPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AperturaPeriodoInclude<ExtArgs> | null
+    /**
+     * Filter which AperturaPeriodo to delete.
+     */
+    where: AperturaPeriodoWhereUniqueInput
+  }
+
+  /**
+   * AperturaPeriodo deleteMany
+   */
+  export type AperturaPeriodoDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AperturaPeriodos to delete
+     */
+    where?: AperturaPeriodoWhereInput
+    /**
+     * Limit how many AperturaPeriodos to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * AperturaPeriodo without action
+   */
+  export type AperturaPeriodoDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AperturaPeriodo
+     */
+    select?: AperturaPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AperturaPeriodo
+     */
+    omit?: AperturaPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AperturaPeriodoInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model SnapshotPeriodo
+   */
+
+  export type AggregateSnapshotPeriodo = {
+    _count: SnapshotPeriodoCountAggregateOutputType | null
+    _avg: SnapshotPeriodoAvgAggregateOutputType | null
+    _sum: SnapshotPeriodoSumAggregateOutputType | null
+    _min: SnapshotPeriodoMinAggregateOutputType | null
+    _max: SnapshotPeriodoMaxAggregateOutputType | null
+  }
+
+  export type SnapshotPeriodoAvgAggregateOutputType = {
+    version: number | null
+  }
+
+  export type SnapshotPeriodoSumAggregateOutputType = {
+    version: number | null
+  }
+
+  export type SnapshotPeriodoMinAggregateOutputType = {
+    snapshotId: string | null
+    periodoId: string | null
+    version: number | null
+    hashIntegridad: string | null
+    createdAt: Date | null
+  }
+
+  export type SnapshotPeriodoMaxAggregateOutputType = {
+    snapshotId: string | null
+    periodoId: string | null
+    version: number | null
+    hashIntegridad: string | null
+    createdAt: Date | null
+  }
+
+  export type SnapshotPeriodoCountAggregateOutputType = {
+    snapshotId: number
+    periodoId: number
+    version: number
+    baseCajaJson: number
+    baseDevengoJson: number
+    inconsistenciasJson: number
+    resumenJson: number
+    hashIntegridad: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type SnapshotPeriodoAvgAggregateInputType = {
+    version?: true
+  }
+
+  export type SnapshotPeriodoSumAggregateInputType = {
+    version?: true
+  }
+
+  export type SnapshotPeriodoMinAggregateInputType = {
+    snapshotId?: true
+    periodoId?: true
+    version?: true
+    hashIntegridad?: true
+    createdAt?: true
+  }
+
+  export type SnapshotPeriodoMaxAggregateInputType = {
+    snapshotId?: true
+    periodoId?: true
+    version?: true
+    hashIntegridad?: true
+    createdAt?: true
+  }
+
+  export type SnapshotPeriodoCountAggregateInputType = {
+    snapshotId?: true
+    periodoId?: true
+    version?: true
+    baseCajaJson?: true
+    baseDevengoJson?: true
+    inconsistenciasJson?: true
+    resumenJson?: true
+    hashIntegridad?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type SnapshotPeriodoAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SnapshotPeriodo to aggregate.
+     */
+    where?: SnapshotPeriodoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SnapshotPeriodos to fetch.
+     */
+    orderBy?: SnapshotPeriodoOrderByWithRelationInput | SnapshotPeriodoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: SnapshotPeriodoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SnapshotPeriodos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SnapshotPeriodos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned SnapshotPeriodos
+    **/
+    _count?: true | SnapshotPeriodoCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: SnapshotPeriodoAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: SnapshotPeriodoSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: SnapshotPeriodoMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: SnapshotPeriodoMaxAggregateInputType
+  }
+
+  export type GetSnapshotPeriodoAggregateType<T extends SnapshotPeriodoAggregateArgs> = {
+        [P in keyof T & keyof AggregateSnapshotPeriodo]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateSnapshotPeriodo[P]>
+      : GetScalarType<T[P], AggregateSnapshotPeriodo[P]>
+  }
+
+
+
+
+  export type SnapshotPeriodoGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SnapshotPeriodoWhereInput
+    orderBy?: SnapshotPeriodoOrderByWithAggregationInput | SnapshotPeriodoOrderByWithAggregationInput[]
+    by: SnapshotPeriodoScalarFieldEnum[] | SnapshotPeriodoScalarFieldEnum
+    having?: SnapshotPeriodoScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: SnapshotPeriodoCountAggregateInputType | true
+    _avg?: SnapshotPeriodoAvgAggregateInputType
+    _sum?: SnapshotPeriodoSumAggregateInputType
+    _min?: SnapshotPeriodoMinAggregateInputType
+    _max?: SnapshotPeriodoMaxAggregateInputType
+  }
+
+  export type SnapshotPeriodoGroupByOutputType = {
+    snapshotId: string
+    periodoId: string
+    version: number
+    baseCajaJson: JsonValue | null
+    baseDevengoJson: JsonValue | null
+    inconsistenciasJson: JsonValue | null
+    resumenJson: JsonValue | null
+    hashIntegridad: string | null
+    createdAt: Date
+    _count: SnapshotPeriodoCountAggregateOutputType | null
+    _avg: SnapshotPeriodoAvgAggregateOutputType | null
+    _sum: SnapshotPeriodoSumAggregateOutputType | null
+    _min: SnapshotPeriodoMinAggregateOutputType | null
+    _max: SnapshotPeriodoMaxAggregateOutputType | null
+  }
+
+  type GetSnapshotPeriodoGroupByPayload<T extends SnapshotPeriodoGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<SnapshotPeriodoGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof SnapshotPeriodoGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], SnapshotPeriodoGroupByOutputType[P]>
+            : GetScalarType<T[P], SnapshotPeriodoGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type SnapshotPeriodoSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    snapshotId?: boolean
+    periodoId?: boolean
+    version?: boolean
+    baseCajaJson?: boolean
+    baseDevengoJson?: boolean
+    inconsistenciasJson?: boolean
+    resumenJson?: boolean
+    hashIntegridad?: boolean
+    createdAt?: boolean
+    periodo?: boolean | PeriodoContableDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["snapshotPeriodo"]>
+
+  export type SnapshotPeriodoSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    snapshotId?: boolean
+    periodoId?: boolean
+    version?: boolean
+    baseCajaJson?: boolean
+    baseDevengoJson?: boolean
+    inconsistenciasJson?: boolean
+    resumenJson?: boolean
+    hashIntegridad?: boolean
+    createdAt?: boolean
+    periodo?: boolean | PeriodoContableDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["snapshotPeriodo"]>
+
+  export type SnapshotPeriodoSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    snapshotId?: boolean
+    periodoId?: boolean
+    version?: boolean
+    baseCajaJson?: boolean
+    baseDevengoJson?: boolean
+    inconsistenciasJson?: boolean
+    resumenJson?: boolean
+    hashIntegridad?: boolean
+    createdAt?: boolean
+    periodo?: boolean | PeriodoContableDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["snapshotPeriodo"]>
+
+  export type SnapshotPeriodoSelectScalar = {
+    snapshotId?: boolean
+    periodoId?: boolean
+    version?: boolean
+    baseCajaJson?: boolean
+    baseDevengoJson?: boolean
+    inconsistenciasJson?: boolean
+    resumenJson?: boolean
+    hashIntegridad?: boolean
+    createdAt?: boolean
+  }
+
+  export type SnapshotPeriodoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"snapshotId" | "periodoId" | "version" | "baseCajaJson" | "baseDevengoJson" | "inconsistenciasJson" | "resumenJson" | "hashIntegridad" | "createdAt", ExtArgs["result"]["snapshotPeriodo"]>
+  export type SnapshotPeriodoInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    periodo?: boolean | PeriodoContableDefaultArgs<ExtArgs>
+  }
+  export type SnapshotPeriodoIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    periodo?: boolean | PeriodoContableDefaultArgs<ExtArgs>
+  }
+  export type SnapshotPeriodoIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    periodo?: boolean | PeriodoContableDefaultArgs<ExtArgs>
+  }
+
+  export type $SnapshotPeriodoPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "SnapshotPeriodo"
+    objects: {
+      periodo: Prisma.$PeriodoContablePayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      snapshotId: string
+      periodoId: string
+      version: number
+      baseCajaJson: Prisma.JsonValue | null
+      baseDevengoJson: Prisma.JsonValue | null
+      inconsistenciasJson: Prisma.JsonValue | null
+      resumenJson: Prisma.JsonValue | null
+      hashIntegridad: string | null
+      createdAt: Date
+    }, ExtArgs["result"]["snapshotPeriodo"]>
+    composites: {}
+  }
+
+  type SnapshotPeriodoGetPayload<S extends boolean | null | undefined | SnapshotPeriodoDefaultArgs> = $Result.GetResult<Prisma.$SnapshotPeriodoPayload, S>
+
+  type SnapshotPeriodoCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<SnapshotPeriodoFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: SnapshotPeriodoCountAggregateInputType | true
+    }
+
+  export interface SnapshotPeriodoDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['SnapshotPeriodo'], meta: { name: 'SnapshotPeriodo' } }
+    /**
+     * Find zero or one SnapshotPeriodo that matches the filter.
+     * @param {SnapshotPeriodoFindUniqueArgs} args - Arguments to find a SnapshotPeriodo
+     * @example
+     * // Get one SnapshotPeriodo
+     * const snapshotPeriodo = await prisma.snapshotPeriodo.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends SnapshotPeriodoFindUniqueArgs>(args: SelectSubset<T, SnapshotPeriodoFindUniqueArgs<ExtArgs>>): Prisma__SnapshotPeriodoClient<$Result.GetResult<Prisma.$SnapshotPeriodoPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one SnapshotPeriodo that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {SnapshotPeriodoFindUniqueOrThrowArgs} args - Arguments to find a SnapshotPeriodo
+     * @example
+     * // Get one SnapshotPeriodo
+     * const snapshotPeriodo = await prisma.snapshotPeriodo.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends SnapshotPeriodoFindUniqueOrThrowArgs>(args: SelectSubset<T, SnapshotPeriodoFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SnapshotPeriodoClient<$Result.GetResult<Prisma.$SnapshotPeriodoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SnapshotPeriodo that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SnapshotPeriodoFindFirstArgs} args - Arguments to find a SnapshotPeriodo
+     * @example
+     * // Get one SnapshotPeriodo
+     * const snapshotPeriodo = await prisma.snapshotPeriodo.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends SnapshotPeriodoFindFirstArgs>(args?: SelectSubset<T, SnapshotPeriodoFindFirstArgs<ExtArgs>>): Prisma__SnapshotPeriodoClient<$Result.GetResult<Prisma.$SnapshotPeriodoPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SnapshotPeriodo that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SnapshotPeriodoFindFirstOrThrowArgs} args - Arguments to find a SnapshotPeriodo
+     * @example
+     * // Get one SnapshotPeriodo
+     * const snapshotPeriodo = await prisma.snapshotPeriodo.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends SnapshotPeriodoFindFirstOrThrowArgs>(args?: SelectSubset<T, SnapshotPeriodoFindFirstOrThrowArgs<ExtArgs>>): Prisma__SnapshotPeriodoClient<$Result.GetResult<Prisma.$SnapshotPeriodoPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more SnapshotPeriodos that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SnapshotPeriodoFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all SnapshotPeriodos
+     * const snapshotPeriodos = await prisma.snapshotPeriodo.findMany()
+     * 
+     * // Get first 10 SnapshotPeriodos
+     * const snapshotPeriodos = await prisma.snapshotPeriodo.findMany({ take: 10 })
+     * 
+     * // Only select the `snapshotId`
+     * const snapshotPeriodoWithSnapshotIdOnly = await prisma.snapshotPeriodo.findMany({ select: { snapshotId: true } })
+     * 
+     */
+    findMany<T extends SnapshotPeriodoFindManyArgs>(args?: SelectSubset<T, SnapshotPeriodoFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SnapshotPeriodoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a SnapshotPeriodo.
+     * @param {SnapshotPeriodoCreateArgs} args - Arguments to create a SnapshotPeriodo.
+     * @example
+     * // Create one SnapshotPeriodo
+     * const SnapshotPeriodo = await prisma.snapshotPeriodo.create({
+     *   data: {
+     *     // ... data to create a SnapshotPeriodo
+     *   }
+     * })
+     * 
+     */
+    create<T extends SnapshotPeriodoCreateArgs>(args: SelectSubset<T, SnapshotPeriodoCreateArgs<ExtArgs>>): Prisma__SnapshotPeriodoClient<$Result.GetResult<Prisma.$SnapshotPeriodoPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many SnapshotPeriodos.
+     * @param {SnapshotPeriodoCreateManyArgs} args - Arguments to create many SnapshotPeriodos.
+     * @example
+     * // Create many SnapshotPeriodos
+     * const snapshotPeriodo = await prisma.snapshotPeriodo.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends SnapshotPeriodoCreateManyArgs>(args?: SelectSubset<T, SnapshotPeriodoCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many SnapshotPeriodos and returns the data saved in the database.
+     * @param {SnapshotPeriodoCreateManyAndReturnArgs} args - Arguments to create many SnapshotPeriodos.
+     * @example
+     * // Create many SnapshotPeriodos
+     * const snapshotPeriodo = await prisma.snapshotPeriodo.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many SnapshotPeriodos and only return the `snapshotId`
+     * const snapshotPeriodoWithSnapshotIdOnly = await prisma.snapshotPeriodo.createManyAndReturn({
+     *   select: { snapshotId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends SnapshotPeriodoCreateManyAndReturnArgs>(args?: SelectSubset<T, SnapshotPeriodoCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SnapshotPeriodoPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a SnapshotPeriodo.
+     * @param {SnapshotPeriodoDeleteArgs} args - Arguments to delete one SnapshotPeriodo.
+     * @example
+     * // Delete one SnapshotPeriodo
+     * const SnapshotPeriodo = await prisma.snapshotPeriodo.delete({
+     *   where: {
+     *     // ... filter to delete one SnapshotPeriodo
+     *   }
+     * })
+     * 
+     */
+    delete<T extends SnapshotPeriodoDeleteArgs>(args: SelectSubset<T, SnapshotPeriodoDeleteArgs<ExtArgs>>): Prisma__SnapshotPeriodoClient<$Result.GetResult<Prisma.$SnapshotPeriodoPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one SnapshotPeriodo.
+     * @param {SnapshotPeriodoUpdateArgs} args - Arguments to update one SnapshotPeriodo.
+     * @example
+     * // Update one SnapshotPeriodo
+     * const snapshotPeriodo = await prisma.snapshotPeriodo.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends SnapshotPeriodoUpdateArgs>(args: SelectSubset<T, SnapshotPeriodoUpdateArgs<ExtArgs>>): Prisma__SnapshotPeriodoClient<$Result.GetResult<Prisma.$SnapshotPeriodoPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more SnapshotPeriodos.
+     * @param {SnapshotPeriodoDeleteManyArgs} args - Arguments to filter SnapshotPeriodos to delete.
+     * @example
+     * // Delete a few SnapshotPeriodos
+     * const { count } = await prisma.snapshotPeriodo.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends SnapshotPeriodoDeleteManyArgs>(args?: SelectSubset<T, SnapshotPeriodoDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SnapshotPeriodos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SnapshotPeriodoUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many SnapshotPeriodos
+     * const snapshotPeriodo = await prisma.snapshotPeriodo.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends SnapshotPeriodoUpdateManyArgs>(args: SelectSubset<T, SnapshotPeriodoUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SnapshotPeriodos and returns the data updated in the database.
+     * @param {SnapshotPeriodoUpdateManyAndReturnArgs} args - Arguments to update many SnapshotPeriodos.
+     * @example
+     * // Update many SnapshotPeriodos
+     * const snapshotPeriodo = await prisma.snapshotPeriodo.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more SnapshotPeriodos and only return the `snapshotId`
+     * const snapshotPeriodoWithSnapshotIdOnly = await prisma.snapshotPeriodo.updateManyAndReturn({
+     *   select: { snapshotId: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends SnapshotPeriodoUpdateManyAndReturnArgs>(args: SelectSubset<T, SnapshotPeriodoUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SnapshotPeriodoPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one SnapshotPeriodo.
+     * @param {SnapshotPeriodoUpsertArgs} args - Arguments to update or create a SnapshotPeriodo.
+     * @example
+     * // Update or create a SnapshotPeriodo
+     * const snapshotPeriodo = await prisma.snapshotPeriodo.upsert({
+     *   create: {
+     *     // ... data to create a SnapshotPeriodo
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the SnapshotPeriodo we want to update
+     *   }
+     * })
+     */
+    upsert<T extends SnapshotPeriodoUpsertArgs>(args: SelectSubset<T, SnapshotPeriodoUpsertArgs<ExtArgs>>): Prisma__SnapshotPeriodoClient<$Result.GetResult<Prisma.$SnapshotPeriodoPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of SnapshotPeriodos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SnapshotPeriodoCountArgs} args - Arguments to filter SnapshotPeriodos to count.
+     * @example
+     * // Count the number of SnapshotPeriodos
+     * const count = await prisma.snapshotPeriodo.count({
+     *   where: {
+     *     // ... the filter for the SnapshotPeriodos we want to count
+     *   }
+     * })
+    **/
+    count<T extends SnapshotPeriodoCountArgs>(
+      args?: Subset<T, SnapshotPeriodoCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], SnapshotPeriodoCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a SnapshotPeriodo.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SnapshotPeriodoAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends SnapshotPeriodoAggregateArgs>(args: Subset<T, SnapshotPeriodoAggregateArgs>): Prisma.PrismaPromise<GetSnapshotPeriodoAggregateType<T>>
+
+    /**
+     * Group by SnapshotPeriodo.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SnapshotPeriodoGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends SnapshotPeriodoGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: SnapshotPeriodoGroupByArgs['orderBy'] }
+        : { orderBy?: SnapshotPeriodoGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, SnapshotPeriodoGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSnapshotPeriodoGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the SnapshotPeriodo model
+   */
+  readonly fields: SnapshotPeriodoFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for SnapshotPeriodo.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__SnapshotPeriodoClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    periodo<T extends PeriodoContableDefaultArgs<ExtArgs> = {}>(args?: Subset<T, PeriodoContableDefaultArgs<ExtArgs>>): Prisma__PeriodoContableClient<$Result.GetResult<Prisma.$PeriodoContablePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the SnapshotPeriodo model
+   */
+  interface SnapshotPeriodoFieldRefs {
+    readonly snapshotId: FieldRef<"SnapshotPeriodo", 'String'>
+    readonly periodoId: FieldRef<"SnapshotPeriodo", 'String'>
+    readonly version: FieldRef<"SnapshotPeriodo", 'Int'>
+    readonly baseCajaJson: FieldRef<"SnapshotPeriodo", 'Json'>
+    readonly baseDevengoJson: FieldRef<"SnapshotPeriodo", 'Json'>
+    readonly inconsistenciasJson: FieldRef<"SnapshotPeriodo", 'Json'>
+    readonly resumenJson: FieldRef<"SnapshotPeriodo", 'Json'>
+    readonly hashIntegridad: FieldRef<"SnapshotPeriodo", 'String'>
+    readonly createdAt: FieldRef<"SnapshotPeriodo", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * SnapshotPeriodo findUnique
+   */
+  export type SnapshotPeriodoFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SnapshotPeriodo
+     */
+    select?: SnapshotPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SnapshotPeriodo
+     */
+    omit?: SnapshotPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SnapshotPeriodoInclude<ExtArgs> | null
+    /**
+     * Filter, which SnapshotPeriodo to fetch.
+     */
+    where: SnapshotPeriodoWhereUniqueInput
+  }
+
+  /**
+   * SnapshotPeriodo findUniqueOrThrow
+   */
+  export type SnapshotPeriodoFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SnapshotPeriodo
+     */
+    select?: SnapshotPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SnapshotPeriodo
+     */
+    omit?: SnapshotPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SnapshotPeriodoInclude<ExtArgs> | null
+    /**
+     * Filter, which SnapshotPeriodo to fetch.
+     */
+    where: SnapshotPeriodoWhereUniqueInput
+  }
+
+  /**
+   * SnapshotPeriodo findFirst
+   */
+  export type SnapshotPeriodoFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SnapshotPeriodo
+     */
+    select?: SnapshotPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SnapshotPeriodo
+     */
+    omit?: SnapshotPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SnapshotPeriodoInclude<ExtArgs> | null
+    /**
+     * Filter, which SnapshotPeriodo to fetch.
+     */
+    where?: SnapshotPeriodoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SnapshotPeriodos to fetch.
+     */
+    orderBy?: SnapshotPeriodoOrderByWithRelationInput | SnapshotPeriodoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SnapshotPeriodos.
+     */
+    cursor?: SnapshotPeriodoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SnapshotPeriodos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SnapshotPeriodos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SnapshotPeriodos.
+     */
+    distinct?: SnapshotPeriodoScalarFieldEnum | SnapshotPeriodoScalarFieldEnum[]
+  }
+
+  /**
+   * SnapshotPeriodo findFirstOrThrow
+   */
+  export type SnapshotPeriodoFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SnapshotPeriodo
+     */
+    select?: SnapshotPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SnapshotPeriodo
+     */
+    omit?: SnapshotPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SnapshotPeriodoInclude<ExtArgs> | null
+    /**
+     * Filter, which SnapshotPeriodo to fetch.
+     */
+    where?: SnapshotPeriodoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SnapshotPeriodos to fetch.
+     */
+    orderBy?: SnapshotPeriodoOrderByWithRelationInput | SnapshotPeriodoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SnapshotPeriodos.
+     */
+    cursor?: SnapshotPeriodoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SnapshotPeriodos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SnapshotPeriodos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SnapshotPeriodos.
+     */
+    distinct?: SnapshotPeriodoScalarFieldEnum | SnapshotPeriodoScalarFieldEnum[]
+  }
+
+  /**
+   * SnapshotPeriodo findMany
+   */
+  export type SnapshotPeriodoFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SnapshotPeriodo
+     */
+    select?: SnapshotPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SnapshotPeriodo
+     */
+    omit?: SnapshotPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SnapshotPeriodoInclude<ExtArgs> | null
+    /**
+     * Filter, which SnapshotPeriodos to fetch.
+     */
+    where?: SnapshotPeriodoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SnapshotPeriodos to fetch.
+     */
+    orderBy?: SnapshotPeriodoOrderByWithRelationInput | SnapshotPeriodoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing SnapshotPeriodos.
+     */
+    cursor?: SnapshotPeriodoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SnapshotPeriodos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SnapshotPeriodos.
+     */
+    skip?: number
+    distinct?: SnapshotPeriodoScalarFieldEnum | SnapshotPeriodoScalarFieldEnum[]
+  }
+
+  /**
+   * SnapshotPeriodo create
+   */
+  export type SnapshotPeriodoCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SnapshotPeriodo
+     */
+    select?: SnapshotPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SnapshotPeriodo
+     */
+    omit?: SnapshotPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SnapshotPeriodoInclude<ExtArgs> | null
+    /**
+     * The data needed to create a SnapshotPeriodo.
+     */
+    data: XOR<SnapshotPeriodoCreateInput, SnapshotPeriodoUncheckedCreateInput>
+  }
+
+  /**
+   * SnapshotPeriodo createMany
+   */
+  export type SnapshotPeriodoCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many SnapshotPeriodos.
+     */
+    data: SnapshotPeriodoCreateManyInput | SnapshotPeriodoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SnapshotPeriodo createManyAndReturn
+   */
+  export type SnapshotPeriodoCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SnapshotPeriodo
+     */
+    select?: SnapshotPeriodoSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SnapshotPeriodo
+     */
+    omit?: SnapshotPeriodoOmit<ExtArgs> | null
+    /**
+     * The data used to create many SnapshotPeriodos.
+     */
+    data: SnapshotPeriodoCreateManyInput | SnapshotPeriodoCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SnapshotPeriodoIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * SnapshotPeriodo update
+   */
+  export type SnapshotPeriodoUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SnapshotPeriodo
+     */
+    select?: SnapshotPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SnapshotPeriodo
+     */
+    omit?: SnapshotPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SnapshotPeriodoInclude<ExtArgs> | null
+    /**
+     * The data needed to update a SnapshotPeriodo.
+     */
+    data: XOR<SnapshotPeriodoUpdateInput, SnapshotPeriodoUncheckedUpdateInput>
+    /**
+     * Choose, which SnapshotPeriodo to update.
+     */
+    where: SnapshotPeriodoWhereUniqueInput
+  }
+
+  /**
+   * SnapshotPeriodo updateMany
+   */
+  export type SnapshotPeriodoUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update SnapshotPeriodos.
+     */
+    data: XOR<SnapshotPeriodoUpdateManyMutationInput, SnapshotPeriodoUncheckedUpdateManyInput>
+    /**
+     * Filter which SnapshotPeriodos to update
+     */
+    where?: SnapshotPeriodoWhereInput
+    /**
+     * Limit how many SnapshotPeriodos to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * SnapshotPeriodo updateManyAndReturn
+   */
+  export type SnapshotPeriodoUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SnapshotPeriodo
+     */
+    select?: SnapshotPeriodoSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SnapshotPeriodo
+     */
+    omit?: SnapshotPeriodoOmit<ExtArgs> | null
+    /**
+     * The data used to update SnapshotPeriodos.
+     */
+    data: XOR<SnapshotPeriodoUpdateManyMutationInput, SnapshotPeriodoUncheckedUpdateManyInput>
+    /**
+     * Filter which SnapshotPeriodos to update
+     */
+    where?: SnapshotPeriodoWhereInput
+    /**
+     * Limit how many SnapshotPeriodos to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SnapshotPeriodoIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * SnapshotPeriodo upsert
+   */
+  export type SnapshotPeriodoUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SnapshotPeriodo
+     */
+    select?: SnapshotPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SnapshotPeriodo
+     */
+    omit?: SnapshotPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SnapshotPeriodoInclude<ExtArgs> | null
+    /**
+     * The filter to search for the SnapshotPeriodo to update in case it exists.
+     */
+    where: SnapshotPeriodoWhereUniqueInput
+    /**
+     * In case the SnapshotPeriodo found by the `where` argument doesn't exist, create a new SnapshotPeriodo with this data.
+     */
+    create: XOR<SnapshotPeriodoCreateInput, SnapshotPeriodoUncheckedCreateInput>
+    /**
+     * In case the SnapshotPeriodo was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<SnapshotPeriodoUpdateInput, SnapshotPeriodoUncheckedUpdateInput>
+  }
+
+  /**
+   * SnapshotPeriodo delete
+   */
+  export type SnapshotPeriodoDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SnapshotPeriodo
+     */
+    select?: SnapshotPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SnapshotPeriodo
+     */
+    omit?: SnapshotPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SnapshotPeriodoInclude<ExtArgs> | null
+    /**
+     * Filter which SnapshotPeriodo to delete.
+     */
+    where: SnapshotPeriodoWhereUniqueInput
+  }
+
+  /**
+   * SnapshotPeriodo deleteMany
+   */
+  export type SnapshotPeriodoDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SnapshotPeriodos to delete
+     */
+    where?: SnapshotPeriodoWhereInput
+    /**
+     * Limit how many SnapshotPeriodos to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * SnapshotPeriodo without action
+   */
+  export type SnapshotPeriodoDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SnapshotPeriodo
+     */
+    select?: SnapshotPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SnapshotPeriodo
+     */
+    omit?: SnapshotPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SnapshotPeriodoInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model AuditoriaPeriodo
+   */
+
+  export type AggregateAuditoriaPeriodo = {
+    _count: AuditoriaPeriodoCountAggregateOutputType | null
+    _min: AuditoriaPeriodoMinAggregateOutputType | null
+    _max: AuditoriaPeriodoMaxAggregateOutputType | null
+  }
+
+  export type AuditoriaPeriodoMinAggregateOutputType = {
+    auditoriaId: string | null
+    periodoId: string | null
+    accion: $Enums.AccionPeriodo | null
+    usuarioId: string | null
+    motivo: string | null
+    createdAt: Date | null
+  }
+
+  export type AuditoriaPeriodoMaxAggregateOutputType = {
+    auditoriaId: string | null
+    periodoId: string | null
+    accion: $Enums.AccionPeriodo | null
+    usuarioId: string | null
+    motivo: string | null
+    createdAt: Date | null
+  }
+
+  export type AuditoriaPeriodoCountAggregateOutputType = {
+    auditoriaId: number
+    periodoId: number
+    accion: number
+    usuarioId: number
+    motivo: number
+    payloadJson: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type AuditoriaPeriodoMinAggregateInputType = {
+    auditoriaId?: true
+    periodoId?: true
+    accion?: true
+    usuarioId?: true
+    motivo?: true
+    createdAt?: true
+  }
+
+  export type AuditoriaPeriodoMaxAggregateInputType = {
+    auditoriaId?: true
+    periodoId?: true
+    accion?: true
+    usuarioId?: true
+    motivo?: true
+    createdAt?: true
+  }
+
+  export type AuditoriaPeriodoCountAggregateInputType = {
+    auditoriaId?: true
+    periodoId?: true
+    accion?: true
+    usuarioId?: true
+    motivo?: true
+    payloadJson?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type AuditoriaPeriodoAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AuditoriaPeriodo to aggregate.
+     */
+    where?: AuditoriaPeriodoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AuditoriaPeriodos to fetch.
+     */
+    orderBy?: AuditoriaPeriodoOrderByWithRelationInput | AuditoriaPeriodoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AuditoriaPeriodoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AuditoriaPeriodos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AuditoriaPeriodos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AuditoriaPeriodos
+    **/
+    _count?: true | AuditoriaPeriodoCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AuditoriaPeriodoMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AuditoriaPeriodoMaxAggregateInputType
+  }
+
+  export type GetAuditoriaPeriodoAggregateType<T extends AuditoriaPeriodoAggregateArgs> = {
+        [P in keyof T & keyof AggregateAuditoriaPeriodo]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAuditoriaPeriodo[P]>
+      : GetScalarType<T[P], AggregateAuditoriaPeriodo[P]>
+  }
+
+
+
+
+  export type AuditoriaPeriodoGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AuditoriaPeriodoWhereInput
+    orderBy?: AuditoriaPeriodoOrderByWithAggregationInput | AuditoriaPeriodoOrderByWithAggregationInput[]
+    by: AuditoriaPeriodoScalarFieldEnum[] | AuditoriaPeriodoScalarFieldEnum
+    having?: AuditoriaPeriodoScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AuditoriaPeriodoCountAggregateInputType | true
+    _min?: AuditoriaPeriodoMinAggregateInputType
+    _max?: AuditoriaPeriodoMaxAggregateInputType
+  }
+
+  export type AuditoriaPeriodoGroupByOutputType = {
+    auditoriaId: string
+    periodoId: string
+    accion: $Enums.AccionPeriodo
+    usuarioId: string
+    motivo: string | null
+    payloadJson: JsonValue | null
+    createdAt: Date
+    _count: AuditoriaPeriodoCountAggregateOutputType | null
+    _min: AuditoriaPeriodoMinAggregateOutputType | null
+    _max: AuditoriaPeriodoMaxAggregateOutputType | null
+  }
+
+  type GetAuditoriaPeriodoGroupByPayload<T extends AuditoriaPeriodoGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<AuditoriaPeriodoGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AuditoriaPeriodoGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AuditoriaPeriodoGroupByOutputType[P]>
+            : GetScalarType<T[P], AuditoriaPeriodoGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AuditoriaPeriodoSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    auditoriaId?: boolean
+    periodoId?: boolean
+    accion?: boolean
+    usuarioId?: boolean
+    motivo?: boolean
+    payloadJson?: boolean
+    createdAt?: boolean
+    periodo?: boolean | PeriodoContableDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["auditoriaPeriodo"]>
+
+  export type AuditoriaPeriodoSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    auditoriaId?: boolean
+    periodoId?: boolean
+    accion?: boolean
+    usuarioId?: boolean
+    motivo?: boolean
+    payloadJson?: boolean
+    createdAt?: boolean
+    periodo?: boolean | PeriodoContableDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["auditoriaPeriodo"]>
+
+  export type AuditoriaPeriodoSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    auditoriaId?: boolean
+    periodoId?: boolean
+    accion?: boolean
+    usuarioId?: boolean
+    motivo?: boolean
+    payloadJson?: boolean
+    createdAt?: boolean
+    periodo?: boolean | PeriodoContableDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["auditoriaPeriodo"]>
+
+  export type AuditoriaPeriodoSelectScalar = {
+    auditoriaId?: boolean
+    periodoId?: boolean
+    accion?: boolean
+    usuarioId?: boolean
+    motivo?: boolean
+    payloadJson?: boolean
+    createdAt?: boolean
+  }
+
+  export type AuditoriaPeriodoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"auditoriaId" | "periodoId" | "accion" | "usuarioId" | "motivo" | "payloadJson" | "createdAt", ExtArgs["result"]["auditoriaPeriodo"]>
+  export type AuditoriaPeriodoInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    periodo?: boolean | PeriodoContableDefaultArgs<ExtArgs>
+  }
+  export type AuditoriaPeriodoIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    periodo?: boolean | PeriodoContableDefaultArgs<ExtArgs>
+  }
+  export type AuditoriaPeriodoIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    periodo?: boolean | PeriodoContableDefaultArgs<ExtArgs>
+  }
+
+  export type $AuditoriaPeriodoPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "AuditoriaPeriodo"
+    objects: {
+      periodo: Prisma.$PeriodoContablePayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      auditoriaId: string
+      periodoId: string
+      accion: $Enums.AccionPeriodo
+      usuarioId: string
+      motivo: string | null
+      payloadJson: Prisma.JsonValue | null
+      createdAt: Date
+    }, ExtArgs["result"]["auditoriaPeriodo"]>
+    composites: {}
+  }
+
+  type AuditoriaPeriodoGetPayload<S extends boolean | null | undefined | AuditoriaPeriodoDefaultArgs> = $Result.GetResult<Prisma.$AuditoriaPeriodoPayload, S>
+
+  type AuditoriaPeriodoCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<AuditoriaPeriodoFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: AuditoriaPeriodoCountAggregateInputType | true
+    }
+
+  export interface AuditoriaPeriodoDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AuditoriaPeriodo'], meta: { name: 'AuditoriaPeriodo' } }
+    /**
+     * Find zero or one AuditoriaPeriodo that matches the filter.
+     * @param {AuditoriaPeriodoFindUniqueArgs} args - Arguments to find a AuditoriaPeriodo
+     * @example
+     * // Get one AuditoriaPeriodo
+     * const auditoriaPeriodo = await prisma.auditoriaPeriodo.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends AuditoriaPeriodoFindUniqueArgs>(args: SelectSubset<T, AuditoriaPeriodoFindUniqueArgs<ExtArgs>>): Prisma__AuditoriaPeriodoClient<$Result.GetResult<Prisma.$AuditoriaPeriodoPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one AuditoriaPeriodo that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {AuditoriaPeriodoFindUniqueOrThrowArgs} args - Arguments to find a AuditoriaPeriodo
+     * @example
+     * // Get one AuditoriaPeriodo
+     * const auditoriaPeriodo = await prisma.auditoriaPeriodo.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends AuditoriaPeriodoFindUniqueOrThrowArgs>(args: SelectSubset<T, AuditoriaPeriodoFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AuditoriaPeriodoClient<$Result.GetResult<Prisma.$AuditoriaPeriodoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AuditoriaPeriodo that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AuditoriaPeriodoFindFirstArgs} args - Arguments to find a AuditoriaPeriodo
+     * @example
+     * // Get one AuditoriaPeriodo
+     * const auditoriaPeriodo = await prisma.auditoriaPeriodo.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends AuditoriaPeriodoFindFirstArgs>(args?: SelectSubset<T, AuditoriaPeriodoFindFirstArgs<ExtArgs>>): Prisma__AuditoriaPeriodoClient<$Result.GetResult<Prisma.$AuditoriaPeriodoPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AuditoriaPeriodo that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AuditoriaPeriodoFindFirstOrThrowArgs} args - Arguments to find a AuditoriaPeriodo
+     * @example
+     * // Get one AuditoriaPeriodo
+     * const auditoriaPeriodo = await prisma.auditoriaPeriodo.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends AuditoriaPeriodoFindFirstOrThrowArgs>(args?: SelectSubset<T, AuditoriaPeriodoFindFirstOrThrowArgs<ExtArgs>>): Prisma__AuditoriaPeriodoClient<$Result.GetResult<Prisma.$AuditoriaPeriodoPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more AuditoriaPeriodos that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AuditoriaPeriodoFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AuditoriaPeriodos
+     * const auditoriaPeriodos = await prisma.auditoriaPeriodo.findMany()
+     * 
+     * // Get first 10 AuditoriaPeriodos
+     * const auditoriaPeriodos = await prisma.auditoriaPeriodo.findMany({ take: 10 })
+     * 
+     * // Only select the `auditoriaId`
+     * const auditoriaPeriodoWithAuditoriaIdOnly = await prisma.auditoriaPeriodo.findMany({ select: { auditoriaId: true } })
+     * 
+     */
+    findMany<T extends AuditoriaPeriodoFindManyArgs>(args?: SelectSubset<T, AuditoriaPeriodoFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuditoriaPeriodoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a AuditoriaPeriodo.
+     * @param {AuditoriaPeriodoCreateArgs} args - Arguments to create a AuditoriaPeriodo.
+     * @example
+     * // Create one AuditoriaPeriodo
+     * const AuditoriaPeriodo = await prisma.auditoriaPeriodo.create({
+     *   data: {
+     *     // ... data to create a AuditoriaPeriodo
+     *   }
+     * })
+     * 
+     */
+    create<T extends AuditoriaPeriodoCreateArgs>(args: SelectSubset<T, AuditoriaPeriodoCreateArgs<ExtArgs>>): Prisma__AuditoriaPeriodoClient<$Result.GetResult<Prisma.$AuditoriaPeriodoPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many AuditoriaPeriodos.
+     * @param {AuditoriaPeriodoCreateManyArgs} args - Arguments to create many AuditoriaPeriodos.
+     * @example
+     * // Create many AuditoriaPeriodos
+     * const auditoriaPeriodo = await prisma.auditoriaPeriodo.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends AuditoriaPeriodoCreateManyArgs>(args?: SelectSubset<T, AuditoriaPeriodoCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many AuditoriaPeriodos and returns the data saved in the database.
+     * @param {AuditoriaPeriodoCreateManyAndReturnArgs} args - Arguments to create many AuditoriaPeriodos.
+     * @example
+     * // Create many AuditoriaPeriodos
+     * const auditoriaPeriodo = await prisma.auditoriaPeriodo.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many AuditoriaPeriodos and only return the `auditoriaId`
+     * const auditoriaPeriodoWithAuditoriaIdOnly = await prisma.auditoriaPeriodo.createManyAndReturn({
+     *   select: { auditoriaId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends AuditoriaPeriodoCreateManyAndReturnArgs>(args?: SelectSubset<T, AuditoriaPeriodoCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuditoriaPeriodoPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a AuditoriaPeriodo.
+     * @param {AuditoriaPeriodoDeleteArgs} args - Arguments to delete one AuditoriaPeriodo.
+     * @example
+     * // Delete one AuditoriaPeriodo
+     * const AuditoriaPeriodo = await prisma.auditoriaPeriodo.delete({
+     *   where: {
+     *     // ... filter to delete one AuditoriaPeriodo
+     *   }
+     * })
+     * 
+     */
+    delete<T extends AuditoriaPeriodoDeleteArgs>(args: SelectSubset<T, AuditoriaPeriodoDeleteArgs<ExtArgs>>): Prisma__AuditoriaPeriodoClient<$Result.GetResult<Prisma.$AuditoriaPeriodoPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one AuditoriaPeriodo.
+     * @param {AuditoriaPeriodoUpdateArgs} args - Arguments to update one AuditoriaPeriodo.
+     * @example
+     * // Update one AuditoriaPeriodo
+     * const auditoriaPeriodo = await prisma.auditoriaPeriodo.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends AuditoriaPeriodoUpdateArgs>(args: SelectSubset<T, AuditoriaPeriodoUpdateArgs<ExtArgs>>): Prisma__AuditoriaPeriodoClient<$Result.GetResult<Prisma.$AuditoriaPeriodoPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more AuditoriaPeriodos.
+     * @param {AuditoriaPeriodoDeleteManyArgs} args - Arguments to filter AuditoriaPeriodos to delete.
+     * @example
+     * // Delete a few AuditoriaPeriodos
+     * const { count } = await prisma.auditoriaPeriodo.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends AuditoriaPeriodoDeleteManyArgs>(args?: SelectSubset<T, AuditoriaPeriodoDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AuditoriaPeriodos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AuditoriaPeriodoUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AuditoriaPeriodos
+     * const auditoriaPeriodo = await prisma.auditoriaPeriodo.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends AuditoriaPeriodoUpdateManyArgs>(args: SelectSubset<T, AuditoriaPeriodoUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AuditoriaPeriodos and returns the data updated in the database.
+     * @param {AuditoriaPeriodoUpdateManyAndReturnArgs} args - Arguments to update many AuditoriaPeriodos.
+     * @example
+     * // Update many AuditoriaPeriodos
+     * const auditoriaPeriodo = await prisma.auditoriaPeriodo.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more AuditoriaPeriodos and only return the `auditoriaId`
+     * const auditoriaPeriodoWithAuditoriaIdOnly = await prisma.auditoriaPeriodo.updateManyAndReturn({
+     *   select: { auditoriaId: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends AuditoriaPeriodoUpdateManyAndReturnArgs>(args: SelectSubset<T, AuditoriaPeriodoUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuditoriaPeriodoPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one AuditoriaPeriodo.
+     * @param {AuditoriaPeriodoUpsertArgs} args - Arguments to update or create a AuditoriaPeriodo.
+     * @example
+     * // Update or create a AuditoriaPeriodo
+     * const auditoriaPeriodo = await prisma.auditoriaPeriodo.upsert({
+     *   create: {
+     *     // ... data to create a AuditoriaPeriodo
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the AuditoriaPeriodo we want to update
+     *   }
+     * })
+     */
+    upsert<T extends AuditoriaPeriodoUpsertArgs>(args: SelectSubset<T, AuditoriaPeriodoUpsertArgs<ExtArgs>>): Prisma__AuditoriaPeriodoClient<$Result.GetResult<Prisma.$AuditoriaPeriodoPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of AuditoriaPeriodos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AuditoriaPeriodoCountArgs} args - Arguments to filter AuditoriaPeriodos to count.
+     * @example
+     * // Count the number of AuditoriaPeriodos
+     * const count = await prisma.auditoriaPeriodo.count({
+     *   where: {
+     *     // ... the filter for the AuditoriaPeriodos we want to count
+     *   }
+     * })
+    **/
+    count<T extends AuditoriaPeriodoCountArgs>(
+      args?: Subset<T, AuditoriaPeriodoCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AuditoriaPeriodoCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AuditoriaPeriodo.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AuditoriaPeriodoAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AuditoriaPeriodoAggregateArgs>(args: Subset<T, AuditoriaPeriodoAggregateArgs>): Prisma.PrismaPromise<GetAuditoriaPeriodoAggregateType<T>>
+
+    /**
+     * Group by AuditoriaPeriodo.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AuditoriaPeriodoGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AuditoriaPeriodoGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AuditoriaPeriodoGroupByArgs['orderBy'] }
+        : { orderBy?: AuditoriaPeriodoGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AuditoriaPeriodoGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAuditoriaPeriodoGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the AuditoriaPeriodo model
+   */
+  readonly fields: AuditoriaPeriodoFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AuditoriaPeriodo.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__AuditoriaPeriodoClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    periodo<T extends PeriodoContableDefaultArgs<ExtArgs> = {}>(args?: Subset<T, PeriodoContableDefaultArgs<ExtArgs>>): Prisma__PeriodoContableClient<$Result.GetResult<Prisma.$PeriodoContablePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the AuditoriaPeriodo model
+   */
+  interface AuditoriaPeriodoFieldRefs {
+    readonly auditoriaId: FieldRef<"AuditoriaPeriodo", 'String'>
+    readonly periodoId: FieldRef<"AuditoriaPeriodo", 'String'>
+    readonly accion: FieldRef<"AuditoriaPeriodo", 'AccionPeriodo'>
+    readonly usuarioId: FieldRef<"AuditoriaPeriodo", 'String'>
+    readonly motivo: FieldRef<"AuditoriaPeriodo", 'String'>
+    readonly payloadJson: FieldRef<"AuditoriaPeriodo", 'Json'>
+    readonly createdAt: FieldRef<"AuditoriaPeriodo", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * AuditoriaPeriodo findUnique
+   */
+  export type AuditoriaPeriodoFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditoriaPeriodo
+     */
+    select?: AuditoriaPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuditoriaPeriodo
+     */
+    omit?: AuditoriaPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditoriaPeriodoInclude<ExtArgs> | null
+    /**
+     * Filter, which AuditoriaPeriodo to fetch.
+     */
+    where: AuditoriaPeriodoWhereUniqueInput
+  }
+
+  /**
+   * AuditoriaPeriodo findUniqueOrThrow
+   */
+  export type AuditoriaPeriodoFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditoriaPeriodo
+     */
+    select?: AuditoriaPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuditoriaPeriodo
+     */
+    omit?: AuditoriaPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditoriaPeriodoInclude<ExtArgs> | null
+    /**
+     * Filter, which AuditoriaPeriodo to fetch.
+     */
+    where: AuditoriaPeriodoWhereUniqueInput
+  }
+
+  /**
+   * AuditoriaPeriodo findFirst
+   */
+  export type AuditoriaPeriodoFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditoriaPeriodo
+     */
+    select?: AuditoriaPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuditoriaPeriodo
+     */
+    omit?: AuditoriaPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditoriaPeriodoInclude<ExtArgs> | null
+    /**
+     * Filter, which AuditoriaPeriodo to fetch.
+     */
+    where?: AuditoriaPeriodoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AuditoriaPeriodos to fetch.
+     */
+    orderBy?: AuditoriaPeriodoOrderByWithRelationInput | AuditoriaPeriodoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AuditoriaPeriodos.
+     */
+    cursor?: AuditoriaPeriodoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AuditoriaPeriodos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AuditoriaPeriodos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AuditoriaPeriodos.
+     */
+    distinct?: AuditoriaPeriodoScalarFieldEnum | AuditoriaPeriodoScalarFieldEnum[]
+  }
+
+  /**
+   * AuditoriaPeriodo findFirstOrThrow
+   */
+  export type AuditoriaPeriodoFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditoriaPeriodo
+     */
+    select?: AuditoriaPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuditoriaPeriodo
+     */
+    omit?: AuditoriaPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditoriaPeriodoInclude<ExtArgs> | null
+    /**
+     * Filter, which AuditoriaPeriodo to fetch.
+     */
+    where?: AuditoriaPeriodoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AuditoriaPeriodos to fetch.
+     */
+    orderBy?: AuditoriaPeriodoOrderByWithRelationInput | AuditoriaPeriodoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AuditoriaPeriodos.
+     */
+    cursor?: AuditoriaPeriodoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AuditoriaPeriodos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AuditoriaPeriodos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AuditoriaPeriodos.
+     */
+    distinct?: AuditoriaPeriodoScalarFieldEnum | AuditoriaPeriodoScalarFieldEnum[]
+  }
+
+  /**
+   * AuditoriaPeriodo findMany
+   */
+  export type AuditoriaPeriodoFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditoriaPeriodo
+     */
+    select?: AuditoriaPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuditoriaPeriodo
+     */
+    omit?: AuditoriaPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditoriaPeriodoInclude<ExtArgs> | null
+    /**
+     * Filter, which AuditoriaPeriodos to fetch.
+     */
+    where?: AuditoriaPeriodoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AuditoriaPeriodos to fetch.
+     */
+    orderBy?: AuditoriaPeriodoOrderByWithRelationInput | AuditoriaPeriodoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AuditoriaPeriodos.
+     */
+    cursor?: AuditoriaPeriodoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AuditoriaPeriodos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AuditoriaPeriodos.
+     */
+    skip?: number
+    distinct?: AuditoriaPeriodoScalarFieldEnum | AuditoriaPeriodoScalarFieldEnum[]
+  }
+
+  /**
+   * AuditoriaPeriodo create
+   */
+  export type AuditoriaPeriodoCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditoriaPeriodo
+     */
+    select?: AuditoriaPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuditoriaPeriodo
+     */
+    omit?: AuditoriaPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditoriaPeriodoInclude<ExtArgs> | null
+    /**
+     * The data needed to create a AuditoriaPeriodo.
+     */
+    data: XOR<AuditoriaPeriodoCreateInput, AuditoriaPeriodoUncheckedCreateInput>
+  }
+
+  /**
+   * AuditoriaPeriodo createMany
+   */
+  export type AuditoriaPeriodoCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many AuditoriaPeriodos.
+     */
+    data: AuditoriaPeriodoCreateManyInput | AuditoriaPeriodoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AuditoriaPeriodo createManyAndReturn
+   */
+  export type AuditoriaPeriodoCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditoriaPeriodo
+     */
+    select?: AuditoriaPeriodoSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuditoriaPeriodo
+     */
+    omit?: AuditoriaPeriodoOmit<ExtArgs> | null
+    /**
+     * The data used to create many AuditoriaPeriodos.
+     */
+    data: AuditoriaPeriodoCreateManyInput | AuditoriaPeriodoCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditoriaPeriodoIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AuditoriaPeriodo update
+   */
+  export type AuditoriaPeriodoUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditoriaPeriodo
+     */
+    select?: AuditoriaPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuditoriaPeriodo
+     */
+    omit?: AuditoriaPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditoriaPeriodoInclude<ExtArgs> | null
+    /**
+     * The data needed to update a AuditoriaPeriodo.
+     */
+    data: XOR<AuditoriaPeriodoUpdateInput, AuditoriaPeriodoUncheckedUpdateInput>
+    /**
+     * Choose, which AuditoriaPeriodo to update.
+     */
+    where: AuditoriaPeriodoWhereUniqueInput
+  }
+
+  /**
+   * AuditoriaPeriodo updateMany
+   */
+  export type AuditoriaPeriodoUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AuditoriaPeriodos.
+     */
+    data: XOR<AuditoriaPeriodoUpdateManyMutationInput, AuditoriaPeriodoUncheckedUpdateManyInput>
+    /**
+     * Filter which AuditoriaPeriodos to update
+     */
+    where?: AuditoriaPeriodoWhereInput
+    /**
+     * Limit how many AuditoriaPeriodos to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AuditoriaPeriodo updateManyAndReturn
+   */
+  export type AuditoriaPeriodoUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditoriaPeriodo
+     */
+    select?: AuditoriaPeriodoSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuditoriaPeriodo
+     */
+    omit?: AuditoriaPeriodoOmit<ExtArgs> | null
+    /**
+     * The data used to update AuditoriaPeriodos.
+     */
+    data: XOR<AuditoriaPeriodoUpdateManyMutationInput, AuditoriaPeriodoUncheckedUpdateManyInput>
+    /**
+     * Filter which AuditoriaPeriodos to update
+     */
+    where?: AuditoriaPeriodoWhereInput
+    /**
+     * Limit how many AuditoriaPeriodos to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditoriaPeriodoIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AuditoriaPeriodo upsert
+   */
+  export type AuditoriaPeriodoUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditoriaPeriodo
+     */
+    select?: AuditoriaPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuditoriaPeriodo
+     */
+    omit?: AuditoriaPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditoriaPeriodoInclude<ExtArgs> | null
+    /**
+     * The filter to search for the AuditoriaPeriodo to update in case it exists.
+     */
+    where: AuditoriaPeriodoWhereUniqueInput
+    /**
+     * In case the AuditoriaPeriodo found by the `where` argument doesn't exist, create a new AuditoriaPeriodo with this data.
+     */
+    create: XOR<AuditoriaPeriodoCreateInput, AuditoriaPeriodoUncheckedCreateInput>
+    /**
+     * In case the AuditoriaPeriodo was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AuditoriaPeriodoUpdateInput, AuditoriaPeriodoUncheckedUpdateInput>
+  }
+
+  /**
+   * AuditoriaPeriodo delete
+   */
+  export type AuditoriaPeriodoDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditoriaPeriodo
+     */
+    select?: AuditoriaPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuditoriaPeriodo
+     */
+    omit?: AuditoriaPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditoriaPeriodoInclude<ExtArgs> | null
+    /**
+     * Filter which AuditoriaPeriodo to delete.
+     */
+    where: AuditoriaPeriodoWhereUniqueInput
+  }
+
+  /**
+   * AuditoriaPeriodo deleteMany
+   */
+  export type AuditoriaPeriodoDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AuditoriaPeriodos to delete
+     */
+    where?: AuditoriaPeriodoWhereInput
+    /**
+     * Limit how many AuditoriaPeriodos to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * AuditoriaPeriodo without action
+   */
+  export type AuditoriaPeriodoDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AuditoriaPeriodo
+     */
+    select?: AuditoriaPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AuditoriaPeriodo
+     */
+    omit?: AuditoriaPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AuditoriaPeriodoInclude<ExtArgs> | null
   }
 
 
@@ -122543,6 +128049,2423 @@ export namespace Prisma {
 
 
   /**
+   * Model EventoContable
+   */
+
+  export type AggregateEventoContable = {
+    _count: EventoContableCountAggregateOutputType | null
+    _avg: EventoContableAvgAggregateOutputType | null
+    _sum: EventoContableSumAggregateOutputType | null
+    _min: EventoContableMinAggregateOutputType | null
+    _max: EventoContableMaxAggregateOutputType | null
+  }
+
+  export type EventoContableAvgAggregateOutputType = {
+    monto: Decimal | null
+    montoConvertido: Decimal | null
+  }
+
+  export type EventoContableSumAggregateOutputType = {
+    monto: Decimal | null
+    montoConvertido: Decimal | null
+  }
+
+  export type EventoContableMinAggregateOutputType = {
+    eventoId: string | null
+    fechaOperacion: Date | null
+    fechaRegistro: Date | null
+    origenTipo: string | null
+    origenId: string | null
+    criterio: $Enums.CriterioContable | null
+    periodoDiarioId: string | null
+    periodoMensualId: string | null
+    periodoAnualId: string | null
+    moneda: string | null
+    monto: Decimal | null
+    montoConvertido: Decimal | null
+    naturaleza: $Enums.NaturalezaEvento | null
+    estado: string | null
+    descripcion: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type EventoContableMaxAggregateOutputType = {
+    eventoId: string | null
+    fechaOperacion: Date | null
+    fechaRegistro: Date | null
+    origenTipo: string | null
+    origenId: string | null
+    criterio: $Enums.CriterioContable | null
+    periodoDiarioId: string | null
+    periodoMensualId: string | null
+    periodoAnualId: string | null
+    moneda: string | null
+    monto: Decimal | null
+    montoConvertido: Decimal | null
+    naturaleza: $Enums.NaturalezaEvento | null
+    estado: string | null
+    descripcion: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type EventoContableCountAggregateOutputType = {
+    eventoId: number
+    fechaOperacion: number
+    fechaRegistro: number
+    origenTipo: number
+    origenId: number
+    criterio: number
+    periodoDiarioId: number
+    periodoMensualId: number
+    periodoAnualId: number
+    moneda: number
+    monto: number
+    montoConvertido: number
+    naturaleza: number
+    estado: number
+    descripcion: number
+    metadataJson: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type EventoContableAvgAggregateInputType = {
+    monto?: true
+    montoConvertido?: true
+  }
+
+  export type EventoContableSumAggregateInputType = {
+    monto?: true
+    montoConvertido?: true
+  }
+
+  export type EventoContableMinAggregateInputType = {
+    eventoId?: true
+    fechaOperacion?: true
+    fechaRegistro?: true
+    origenTipo?: true
+    origenId?: true
+    criterio?: true
+    periodoDiarioId?: true
+    periodoMensualId?: true
+    periodoAnualId?: true
+    moneda?: true
+    monto?: true
+    montoConvertido?: true
+    naturaleza?: true
+    estado?: true
+    descripcion?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type EventoContableMaxAggregateInputType = {
+    eventoId?: true
+    fechaOperacion?: true
+    fechaRegistro?: true
+    origenTipo?: true
+    origenId?: true
+    criterio?: true
+    periodoDiarioId?: true
+    periodoMensualId?: true
+    periodoAnualId?: true
+    moneda?: true
+    monto?: true
+    montoConvertido?: true
+    naturaleza?: true
+    estado?: true
+    descripcion?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type EventoContableCountAggregateInputType = {
+    eventoId?: true
+    fechaOperacion?: true
+    fechaRegistro?: true
+    origenTipo?: true
+    origenId?: true
+    criterio?: true
+    periodoDiarioId?: true
+    periodoMensualId?: true
+    periodoAnualId?: true
+    moneda?: true
+    monto?: true
+    montoConvertido?: true
+    naturaleza?: true
+    estado?: true
+    descripcion?: true
+    metadataJson?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type EventoContableAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which EventoContable to aggregate.
+     */
+    where?: EventoContableWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EventoContables to fetch.
+     */
+    orderBy?: EventoContableOrderByWithRelationInput | EventoContableOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: EventoContableWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EventoContables from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EventoContables.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned EventoContables
+    **/
+    _count?: true | EventoContableCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: EventoContableAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: EventoContableSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: EventoContableMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: EventoContableMaxAggregateInputType
+  }
+
+  export type GetEventoContableAggregateType<T extends EventoContableAggregateArgs> = {
+        [P in keyof T & keyof AggregateEventoContable]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateEventoContable[P]>
+      : GetScalarType<T[P], AggregateEventoContable[P]>
+  }
+
+
+
+
+  export type EventoContableGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: EventoContableWhereInput
+    orderBy?: EventoContableOrderByWithAggregationInput | EventoContableOrderByWithAggregationInput[]
+    by: EventoContableScalarFieldEnum[] | EventoContableScalarFieldEnum
+    having?: EventoContableScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: EventoContableCountAggregateInputType | true
+    _avg?: EventoContableAvgAggregateInputType
+    _sum?: EventoContableSumAggregateInputType
+    _min?: EventoContableMinAggregateInputType
+    _max?: EventoContableMaxAggregateInputType
+  }
+
+  export type EventoContableGroupByOutputType = {
+    eventoId: string
+    fechaOperacion: Date
+    fechaRegistro: Date
+    origenTipo: string
+    origenId: string
+    criterio: $Enums.CriterioContable
+    periodoDiarioId: string | null
+    periodoMensualId: string | null
+    periodoAnualId: string | null
+    moneda: string
+    monto: Decimal
+    montoConvertido: Decimal | null
+    naturaleza: $Enums.NaturalezaEvento
+    estado: string
+    descripcion: string | null
+    metadataJson: JsonValue | null
+    createdAt: Date
+    updatedAt: Date
+    _count: EventoContableCountAggregateOutputType | null
+    _avg: EventoContableAvgAggregateOutputType | null
+    _sum: EventoContableSumAggregateOutputType | null
+    _min: EventoContableMinAggregateOutputType | null
+    _max: EventoContableMaxAggregateOutputType | null
+  }
+
+  type GetEventoContableGroupByPayload<T extends EventoContableGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<EventoContableGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof EventoContableGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], EventoContableGroupByOutputType[P]>
+            : GetScalarType<T[P], EventoContableGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type EventoContableSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    eventoId?: boolean
+    fechaOperacion?: boolean
+    fechaRegistro?: boolean
+    origenTipo?: boolean
+    origenId?: boolean
+    criterio?: boolean
+    periodoDiarioId?: boolean
+    periodoMensualId?: boolean
+    periodoAnualId?: boolean
+    moneda?: boolean
+    monto?: boolean
+    montoConvertido?: boolean
+    naturaleza?: boolean
+    estado?: boolean
+    descripcion?: boolean
+    metadataJson?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    lineas?: boolean | EventoContable$lineasArgs<ExtArgs>
+    _count?: boolean | EventoContableCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["eventoContable"]>
+
+  export type EventoContableSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    eventoId?: boolean
+    fechaOperacion?: boolean
+    fechaRegistro?: boolean
+    origenTipo?: boolean
+    origenId?: boolean
+    criterio?: boolean
+    periodoDiarioId?: boolean
+    periodoMensualId?: boolean
+    periodoAnualId?: boolean
+    moneda?: boolean
+    monto?: boolean
+    montoConvertido?: boolean
+    naturaleza?: boolean
+    estado?: boolean
+    descripcion?: boolean
+    metadataJson?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["eventoContable"]>
+
+  export type EventoContableSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    eventoId?: boolean
+    fechaOperacion?: boolean
+    fechaRegistro?: boolean
+    origenTipo?: boolean
+    origenId?: boolean
+    criterio?: boolean
+    periodoDiarioId?: boolean
+    periodoMensualId?: boolean
+    periodoAnualId?: boolean
+    moneda?: boolean
+    monto?: boolean
+    montoConvertido?: boolean
+    naturaleza?: boolean
+    estado?: boolean
+    descripcion?: boolean
+    metadataJson?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["eventoContable"]>
+
+  export type EventoContableSelectScalar = {
+    eventoId?: boolean
+    fechaOperacion?: boolean
+    fechaRegistro?: boolean
+    origenTipo?: boolean
+    origenId?: boolean
+    criterio?: boolean
+    periodoDiarioId?: boolean
+    periodoMensualId?: boolean
+    periodoAnualId?: boolean
+    moneda?: boolean
+    monto?: boolean
+    montoConvertido?: boolean
+    naturaleza?: boolean
+    estado?: boolean
+    descripcion?: boolean
+    metadataJson?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type EventoContableOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"eventoId" | "fechaOperacion" | "fechaRegistro" | "origenTipo" | "origenId" | "criterio" | "periodoDiarioId" | "periodoMensualId" | "periodoAnualId" | "moneda" | "monto" | "montoConvertido" | "naturaleza" | "estado" | "descripcion" | "metadataJson" | "createdAt" | "updatedAt", ExtArgs["result"]["eventoContable"]>
+  export type EventoContableInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    lineas?: boolean | EventoContable$lineasArgs<ExtArgs>
+    _count?: boolean | EventoContableCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type EventoContableIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type EventoContableIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $EventoContablePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "EventoContable"
+    objects: {
+      lineas: Prisma.$EventoContableLineaPayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      eventoId: string
+      fechaOperacion: Date
+      fechaRegistro: Date
+      origenTipo: string
+      origenId: string
+      criterio: $Enums.CriterioContable
+      periodoDiarioId: string | null
+      periodoMensualId: string | null
+      periodoAnualId: string | null
+      moneda: string
+      monto: Prisma.Decimal
+      montoConvertido: Prisma.Decimal | null
+      naturaleza: $Enums.NaturalezaEvento
+      estado: string
+      descripcion: string | null
+      metadataJson: Prisma.JsonValue | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["eventoContable"]>
+    composites: {}
+  }
+
+  type EventoContableGetPayload<S extends boolean | null | undefined | EventoContableDefaultArgs> = $Result.GetResult<Prisma.$EventoContablePayload, S>
+
+  type EventoContableCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<EventoContableFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: EventoContableCountAggregateInputType | true
+    }
+
+  export interface EventoContableDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['EventoContable'], meta: { name: 'EventoContable' } }
+    /**
+     * Find zero or one EventoContable that matches the filter.
+     * @param {EventoContableFindUniqueArgs} args - Arguments to find a EventoContable
+     * @example
+     * // Get one EventoContable
+     * const eventoContable = await prisma.eventoContable.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends EventoContableFindUniqueArgs>(args: SelectSubset<T, EventoContableFindUniqueArgs<ExtArgs>>): Prisma__EventoContableClient<$Result.GetResult<Prisma.$EventoContablePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one EventoContable that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {EventoContableFindUniqueOrThrowArgs} args - Arguments to find a EventoContable
+     * @example
+     * // Get one EventoContable
+     * const eventoContable = await prisma.eventoContable.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends EventoContableFindUniqueOrThrowArgs>(args: SelectSubset<T, EventoContableFindUniqueOrThrowArgs<ExtArgs>>): Prisma__EventoContableClient<$Result.GetResult<Prisma.$EventoContablePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first EventoContable that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EventoContableFindFirstArgs} args - Arguments to find a EventoContable
+     * @example
+     * // Get one EventoContable
+     * const eventoContable = await prisma.eventoContable.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends EventoContableFindFirstArgs>(args?: SelectSubset<T, EventoContableFindFirstArgs<ExtArgs>>): Prisma__EventoContableClient<$Result.GetResult<Prisma.$EventoContablePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first EventoContable that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EventoContableFindFirstOrThrowArgs} args - Arguments to find a EventoContable
+     * @example
+     * // Get one EventoContable
+     * const eventoContable = await prisma.eventoContable.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends EventoContableFindFirstOrThrowArgs>(args?: SelectSubset<T, EventoContableFindFirstOrThrowArgs<ExtArgs>>): Prisma__EventoContableClient<$Result.GetResult<Prisma.$EventoContablePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more EventoContables that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EventoContableFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all EventoContables
+     * const eventoContables = await prisma.eventoContable.findMany()
+     * 
+     * // Get first 10 EventoContables
+     * const eventoContables = await prisma.eventoContable.findMany({ take: 10 })
+     * 
+     * // Only select the `eventoId`
+     * const eventoContableWithEventoIdOnly = await prisma.eventoContable.findMany({ select: { eventoId: true } })
+     * 
+     */
+    findMany<T extends EventoContableFindManyArgs>(args?: SelectSubset<T, EventoContableFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EventoContablePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a EventoContable.
+     * @param {EventoContableCreateArgs} args - Arguments to create a EventoContable.
+     * @example
+     * // Create one EventoContable
+     * const EventoContable = await prisma.eventoContable.create({
+     *   data: {
+     *     // ... data to create a EventoContable
+     *   }
+     * })
+     * 
+     */
+    create<T extends EventoContableCreateArgs>(args: SelectSubset<T, EventoContableCreateArgs<ExtArgs>>): Prisma__EventoContableClient<$Result.GetResult<Prisma.$EventoContablePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many EventoContables.
+     * @param {EventoContableCreateManyArgs} args - Arguments to create many EventoContables.
+     * @example
+     * // Create many EventoContables
+     * const eventoContable = await prisma.eventoContable.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends EventoContableCreateManyArgs>(args?: SelectSubset<T, EventoContableCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many EventoContables and returns the data saved in the database.
+     * @param {EventoContableCreateManyAndReturnArgs} args - Arguments to create many EventoContables.
+     * @example
+     * // Create many EventoContables
+     * const eventoContable = await prisma.eventoContable.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many EventoContables and only return the `eventoId`
+     * const eventoContableWithEventoIdOnly = await prisma.eventoContable.createManyAndReturn({
+     *   select: { eventoId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends EventoContableCreateManyAndReturnArgs>(args?: SelectSubset<T, EventoContableCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EventoContablePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a EventoContable.
+     * @param {EventoContableDeleteArgs} args - Arguments to delete one EventoContable.
+     * @example
+     * // Delete one EventoContable
+     * const EventoContable = await prisma.eventoContable.delete({
+     *   where: {
+     *     // ... filter to delete one EventoContable
+     *   }
+     * })
+     * 
+     */
+    delete<T extends EventoContableDeleteArgs>(args: SelectSubset<T, EventoContableDeleteArgs<ExtArgs>>): Prisma__EventoContableClient<$Result.GetResult<Prisma.$EventoContablePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one EventoContable.
+     * @param {EventoContableUpdateArgs} args - Arguments to update one EventoContable.
+     * @example
+     * // Update one EventoContable
+     * const eventoContable = await prisma.eventoContable.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends EventoContableUpdateArgs>(args: SelectSubset<T, EventoContableUpdateArgs<ExtArgs>>): Prisma__EventoContableClient<$Result.GetResult<Prisma.$EventoContablePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more EventoContables.
+     * @param {EventoContableDeleteManyArgs} args - Arguments to filter EventoContables to delete.
+     * @example
+     * // Delete a few EventoContables
+     * const { count } = await prisma.eventoContable.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends EventoContableDeleteManyArgs>(args?: SelectSubset<T, EventoContableDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more EventoContables.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EventoContableUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many EventoContables
+     * const eventoContable = await prisma.eventoContable.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends EventoContableUpdateManyArgs>(args: SelectSubset<T, EventoContableUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more EventoContables and returns the data updated in the database.
+     * @param {EventoContableUpdateManyAndReturnArgs} args - Arguments to update many EventoContables.
+     * @example
+     * // Update many EventoContables
+     * const eventoContable = await prisma.eventoContable.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more EventoContables and only return the `eventoId`
+     * const eventoContableWithEventoIdOnly = await prisma.eventoContable.updateManyAndReturn({
+     *   select: { eventoId: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends EventoContableUpdateManyAndReturnArgs>(args: SelectSubset<T, EventoContableUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EventoContablePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one EventoContable.
+     * @param {EventoContableUpsertArgs} args - Arguments to update or create a EventoContable.
+     * @example
+     * // Update or create a EventoContable
+     * const eventoContable = await prisma.eventoContable.upsert({
+     *   create: {
+     *     // ... data to create a EventoContable
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the EventoContable we want to update
+     *   }
+     * })
+     */
+    upsert<T extends EventoContableUpsertArgs>(args: SelectSubset<T, EventoContableUpsertArgs<ExtArgs>>): Prisma__EventoContableClient<$Result.GetResult<Prisma.$EventoContablePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of EventoContables.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EventoContableCountArgs} args - Arguments to filter EventoContables to count.
+     * @example
+     * // Count the number of EventoContables
+     * const count = await prisma.eventoContable.count({
+     *   where: {
+     *     // ... the filter for the EventoContables we want to count
+     *   }
+     * })
+    **/
+    count<T extends EventoContableCountArgs>(
+      args?: Subset<T, EventoContableCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], EventoContableCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a EventoContable.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EventoContableAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends EventoContableAggregateArgs>(args: Subset<T, EventoContableAggregateArgs>): Prisma.PrismaPromise<GetEventoContableAggregateType<T>>
+
+    /**
+     * Group by EventoContable.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EventoContableGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends EventoContableGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: EventoContableGroupByArgs['orderBy'] }
+        : { orderBy?: EventoContableGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, EventoContableGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetEventoContableGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the EventoContable model
+   */
+  readonly fields: EventoContableFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for EventoContable.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__EventoContableClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    lineas<T extends EventoContable$lineasArgs<ExtArgs> = {}>(args?: Subset<T, EventoContable$lineasArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EventoContableLineaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the EventoContable model
+   */
+  interface EventoContableFieldRefs {
+    readonly eventoId: FieldRef<"EventoContable", 'String'>
+    readonly fechaOperacion: FieldRef<"EventoContable", 'DateTime'>
+    readonly fechaRegistro: FieldRef<"EventoContable", 'DateTime'>
+    readonly origenTipo: FieldRef<"EventoContable", 'String'>
+    readonly origenId: FieldRef<"EventoContable", 'String'>
+    readonly criterio: FieldRef<"EventoContable", 'CriterioContable'>
+    readonly periodoDiarioId: FieldRef<"EventoContable", 'String'>
+    readonly periodoMensualId: FieldRef<"EventoContable", 'String'>
+    readonly periodoAnualId: FieldRef<"EventoContable", 'String'>
+    readonly moneda: FieldRef<"EventoContable", 'String'>
+    readonly monto: FieldRef<"EventoContable", 'Decimal'>
+    readonly montoConvertido: FieldRef<"EventoContable", 'Decimal'>
+    readonly naturaleza: FieldRef<"EventoContable", 'NaturalezaEvento'>
+    readonly estado: FieldRef<"EventoContable", 'String'>
+    readonly descripcion: FieldRef<"EventoContable", 'String'>
+    readonly metadataJson: FieldRef<"EventoContable", 'Json'>
+    readonly createdAt: FieldRef<"EventoContable", 'DateTime'>
+    readonly updatedAt: FieldRef<"EventoContable", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * EventoContable findUnique
+   */
+  export type EventoContableFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoContable
+     */
+    select?: EventoContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventoContable
+     */
+    omit?: EventoContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventoContableInclude<ExtArgs> | null
+    /**
+     * Filter, which EventoContable to fetch.
+     */
+    where: EventoContableWhereUniqueInput
+  }
+
+  /**
+   * EventoContable findUniqueOrThrow
+   */
+  export type EventoContableFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoContable
+     */
+    select?: EventoContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventoContable
+     */
+    omit?: EventoContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventoContableInclude<ExtArgs> | null
+    /**
+     * Filter, which EventoContable to fetch.
+     */
+    where: EventoContableWhereUniqueInput
+  }
+
+  /**
+   * EventoContable findFirst
+   */
+  export type EventoContableFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoContable
+     */
+    select?: EventoContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventoContable
+     */
+    omit?: EventoContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventoContableInclude<ExtArgs> | null
+    /**
+     * Filter, which EventoContable to fetch.
+     */
+    where?: EventoContableWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EventoContables to fetch.
+     */
+    orderBy?: EventoContableOrderByWithRelationInput | EventoContableOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for EventoContables.
+     */
+    cursor?: EventoContableWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EventoContables from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EventoContables.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of EventoContables.
+     */
+    distinct?: EventoContableScalarFieldEnum | EventoContableScalarFieldEnum[]
+  }
+
+  /**
+   * EventoContable findFirstOrThrow
+   */
+  export type EventoContableFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoContable
+     */
+    select?: EventoContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventoContable
+     */
+    omit?: EventoContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventoContableInclude<ExtArgs> | null
+    /**
+     * Filter, which EventoContable to fetch.
+     */
+    where?: EventoContableWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EventoContables to fetch.
+     */
+    orderBy?: EventoContableOrderByWithRelationInput | EventoContableOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for EventoContables.
+     */
+    cursor?: EventoContableWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EventoContables from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EventoContables.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of EventoContables.
+     */
+    distinct?: EventoContableScalarFieldEnum | EventoContableScalarFieldEnum[]
+  }
+
+  /**
+   * EventoContable findMany
+   */
+  export type EventoContableFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoContable
+     */
+    select?: EventoContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventoContable
+     */
+    omit?: EventoContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventoContableInclude<ExtArgs> | null
+    /**
+     * Filter, which EventoContables to fetch.
+     */
+    where?: EventoContableWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EventoContables to fetch.
+     */
+    orderBy?: EventoContableOrderByWithRelationInput | EventoContableOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing EventoContables.
+     */
+    cursor?: EventoContableWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EventoContables from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EventoContables.
+     */
+    skip?: number
+    distinct?: EventoContableScalarFieldEnum | EventoContableScalarFieldEnum[]
+  }
+
+  /**
+   * EventoContable create
+   */
+  export type EventoContableCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoContable
+     */
+    select?: EventoContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventoContable
+     */
+    omit?: EventoContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventoContableInclude<ExtArgs> | null
+    /**
+     * The data needed to create a EventoContable.
+     */
+    data: XOR<EventoContableCreateInput, EventoContableUncheckedCreateInput>
+  }
+
+  /**
+   * EventoContable createMany
+   */
+  export type EventoContableCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many EventoContables.
+     */
+    data: EventoContableCreateManyInput | EventoContableCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * EventoContable createManyAndReturn
+   */
+  export type EventoContableCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoContable
+     */
+    select?: EventoContableSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventoContable
+     */
+    omit?: EventoContableOmit<ExtArgs> | null
+    /**
+     * The data used to create many EventoContables.
+     */
+    data: EventoContableCreateManyInput | EventoContableCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * EventoContable update
+   */
+  export type EventoContableUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoContable
+     */
+    select?: EventoContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventoContable
+     */
+    omit?: EventoContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventoContableInclude<ExtArgs> | null
+    /**
+     * The data needed to update a EventoContable.
+     */
+    data: XOR<EventoContableUpdateInput, EventoContableUncheckedUpdateInput>
+    /**
+     * Choose, which EventoContable to update.
+     */
+    where: EventoContableWhereUniqueInput
+  }
+
+  /**
+   * EventoContable updateMany
+   */
+  export type EventoContableUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update EventoContables.
+     */
+    data: XOR<EventoContableUpdateManyMutationInput, EventoContableUncheckedUpdateManyInput>
+    /**
+     * Filter which EventoContables to update
+     */
+    where?: EventoContableWhereInput
+    /**
+     * Limit how many EventoContables to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * EventoContable updateManyAndReturn
+   */
+  export type EventoContableUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoContable
+     */
+    select?: EventoContableSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventoContable
+     */
+    omit?: EventoContableOmit<ExtArgs> | null
+    /**
+     * The data used to update EventoContables.
+     */
+    data: XOR<EventoContableUpdateManyMutationInput, EventoContableUncheckedUpdateManyInput>
+    /**
+     * Filter which EventoContables to update
+     */
+    where?: EventoContableWhereInput
+    /**
+     * Limit how many EventoContables to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * EventoContable upsert
+   */
+  export type EventoContableUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoContable
+     */
+    select?: EventoContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventoContable
+     */
+    omit?: EventoContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventoContableInclude<ExtArgs> | null
+    /**
+     * The filter to search for the EventoContable to update in case it exists.
+     */
+    where: EventoContableWhereUniqueInput
+    /**
+     * In case the EventoContable found by the `where` argument doesn't exist, create a new EventoContable with this data.
+     */
+    create: XOR<EventoContableCreateInput, EventoContableUncheckedCreateInput>
+    /**
+     * In case the EventoContable was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<EventoContableUpdateInput, EventoContableUncheckedUpdateInput>
+  }
+
+  /**
+   * EventoContable delete
+   */
+  export type EventoContableDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoContable
+     */
+    select?: EventoContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventoContable
+     */
+    omit?: EventoContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventoContableInclude<ExtArgs> | null
+    /**
+     * Filter which EventoContable to delete.
+     */
+    where: EventoContableWhereUniqueInput
+  }
+
+  /**
+   * EventoContable deleteMany
+   */
+  export type EventoContableDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which EventoContables to delete
+     */
+    where?: EventoContableWhereInput
+    /**
+     * Limit how many EventoContables to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * EventoContable.lineas
+   */
+  export type EventoContable$lineasArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoContableLinea
+     */
+    select?: EventoContableLineaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventoContableLinea
+     */
+    omit?: EventoContableLineaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventoContableLineaInclude<ExtArgs> | null
+    where?: EventoContableLineaWhereInput
+    orderBy?: EventoContableLineaOrderByWithRelationInput | EventoContableLineaOrderByWithRelationInput[]
+    cursor?: EventoContableLineaWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: EventoContableLineaScalarFieldEnum | EventoContableLineaScalarFieldEnum[]
+  }
+
+  /**
+   * EventoContable without action
+   */
+  export type EventoContableDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoContable
+     */
+    select?: EventoContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventoContable
+     */
+    omit?: EventoContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventoContableInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model EventoContableLinea
+   */
+
+  export type AggregateEventoContableLinea = {
+    _count: EventoContableLineaCountAggregateOutputType | null
+    _avg: EventoContableLineaAvgAggregateOutputType | null
+    _sum: EventoContableLineaSumAggregateOutputType | null
+    _min: EventoContableLineaMinAggregateOutputType | null
+    _max: EventoContableLineaMaxAggregateOutputType | null
+  }
+
+  export type EventoContableLineaAvgAggregateOutputType = {
+    debito: Decimal | null
+    credito: Decimal | null
+  }
+
+  export type EventoContableLineaSumAggregateOutputType = {
+    debito: Decimal | null
+    credito: Decimal | null
+  }
+
+  export type EventoContableLineaMinAggregateOutputType = {
+    lineaId: string | null
+    eventoId: string | null
+    cuenta: string | null
+    descripcion: string | null
+    debito: Decimal | null
+    credito: Decimal | null
+    moneda: string | null
+    createdAt: Date | null
+  }
+
+  export type EventoContableLineaMaxAggregateOutputType = {
+    lineaId: string | null
+    eventoId: string | null
+    cuenta: string | null
+    descripcion: string | null
+    debito: Decimal | null
+    credito: Decimal | null
+    moneda: string | null
+    createdAt: Date | null
+  }
+
+  export type EventoContableLineaCountAggregateOutputType = {
+    lineaId: number
+    eventoId: number
+    cuenta: number
+    descripcion: number
+    debito: number
+    credito: number
+    moneda: number
+    metadataJson: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type EventoContableLineaAvgAggregateInputType = {
+    debito?: true
+    credito?: true
+  }
+
+  export type EventoContableLineaSumAggregateInputType = {
+    debito?: true
+    credito?: true
+  }
+
+  export type EventoContableLineaMinAggregateInputType = {
+    lineaId?: true
+    eventoId?: true
+    cuenta?: true
+    descripcion?: true
+    debito?: true
+    credito?: true
+    moneda?: true
+    createdAt?: true
+  }
+
+  export type EventoContableLineaMaxAggregateInputType = {
+    lineaId?: true
+    eventoId?: true
+    cuenta?: true
+    descripcion?: true
+    debito?: true
+    credito?: true
+    moneda?: true
+    createdAt?: true
+  }
+
+  export type EventoContableLineaCountAggregateInputType = {
+    lineaId?: true
+    eventoId?: true
+    cuenta?: true
+    descripcion?: true
+    debito?: true
+    credito?: true
+    moneda?: true
+    metadataJson?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type EventoContableLineaAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which EventoContableLinea to aggregate.
+     */
+    where?: EventoContableLineaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EventoContableLineas to fetch.
+     */
+    orderBy?: EventoContableLineaOrderByWithRelationInput | EventoContableLineaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: EventoContableLineaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EventoContableLineas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EventoContableLineas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned EventoContableLineas
+    **/
+    _count?: true | EventoContableLineaCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: EventoContableLineaAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: EventoContableLineaSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: EventoContableLineaMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: EventoContableLineaMaxAggregateInputType
+  }
+
+  export type GetEventoContableLineaAggregateType<T extends EventoContableLineaAggregateArgs> = {
+        [P in keyof T & keyof AggregateEventoContableLinea]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateEventoContableLinea[P]>
+      : GetScalarType<T[P], AggregateEventoContableLinea[P]>
+  }
+
+
+
+
+  export type EventoContableLineaGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: EventoContableLineaWhereInput
+    orderBy?: EventoContableLineaOrderByWithAggregationInput | EventoContableLineaOrderByWithAggregationInput[]
+    by: EventoContableLineaScalarFieldEnum[] | EventoContableLineaScalarFieldEnum
+    having?: EventoContableLineaScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: EventoContableLineaCountAggregateInputType | true
+    _avg?: EventoContableLineaAvgAggregateInputType
+    _sum?: EventoContableLineaSumAggregateInputType
+    _min?: EventoContableLineaMinAggregateInputType
+    _max?: EventoContableLineaMaxAggregateInputType
+  }
+
+  export type EventoContableLineaGroupByOutputType = {
+    lineaId: string
+    eventoId: string
+    cuenta: string
+    descripcion: string | null
+    debito: Decimal
+    credito: Decimal
+    moneda: string
+    metadataJson: JsonValue | null
+    createdAt: Date
+    _count: EventoContableLineaCountAggregateOutputType | null
+    _avg: EventoContableLineaAvgAggregateOutputType | null
+    _sum: EventoContableLineaSumAggregateOutputType | null
+    _min: EventoContableLineaMinAggregateOutputType | null
+    _max: EventoContableLineaMaxAggregateOutputType | null
+  }
+
+  type GetEventoContableLineaGroupByPayload<T extends EventoContableLineaGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<EventoContableLineaGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof EventoContableLineaGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], EventoContableLineaGroupByOutputType[P]>
+            : GetScalarType<T[P], EventoContableLineaGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type EventoContableLineaSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    lineaId?: boolean
+    eventoId?: boolean
+    cuenta?: boolean
+    descripcion?: boolean
+    debito?: boolean
+    credito?: boolean
+    moneda?: boolean
+    metadataJson?: boolean
+    createdAt?: boolean
+    evento?: boolean | EventoContableDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["eventoContableLinea"]>
+
+  export type EventoContableLineaSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    lineaId?: boolean
+    eventoId?: boolean
+    cuenta?: boolean
+    descripcion?: boolean
+    debito?: boolean
+    credito?: boolean
+    moneda?: boolean
+    metadataJson?: boolean
+    createdAt?: boolean
+    evento?: boolean | EventoContableDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["eventoContableLinea"]>
+
+  export type EventoContableLineaSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    lineaId?: boolean
+    eventoId?: boolean
+    cuenta?: boolean
+    descripcion?: boolean
+    debito?: boolean
+    credito?: boolean
+    moneda?: boolean
+    metadataJson?: boolean
+    createdAt?: boolean
+    evento?: boolean | EventoContableDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["eventoContableLinea"]>
+
+  export type EventoContableLineaSelectScalar = {
+    lineaId?: boolean
+    eventoId?: boolean
+    cuenta?: boolean
+    descripcion?: boolean
+    debito?: boolean
+    credito?: boolean
+    moneda?: boolean
+    metadataJson?: boolean
+    createdAt?: boolean
+  }
+
+  export type EventoContableLineaOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"lineaId" | "eventoId" | "cuenta" | "descripcion" | "debito" | "credito" | "moneda" | "metadataJson" | "createdAt", ExtArgs["result"]["eventoContableLinea"]>
+  export type EventoContableLineaInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    evento?: boolean | EventoContableDefaultArgs<ExtArgs>
+  }
+  export type EventoContableLineaIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    evento?: boolean | EventoContableDefaultArgs<ExtArgs>
+  }
+  export type EventoContableLineaIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    evento?: boolean | EventoContableDefaultArgs<ExtArgs>
+  }
+
+  export type $EventoContableLineaPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "EventoContableLinea"
+    objects: {
+      evento: Prisma.$EventoContablePayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      lineaId: string
+      eventoId: string
+      cuenta: string
+      descripcion: string | null
+      debito: Prisma.Decimal
+      credito: Prisma.Decimal
+      moneda: string
+      metadataJson: Prisma.JsonValue | null
+      createdAt: Date
+    }, ExtArgs["result"]["eventoContableLinea"]>
+    composites: {}
+  }
+
+  type EventoContableLineaGetPayload<S extends boolean | null | undefined | EventoContableLineaDefaultArgs> = $Result.GetResult<Prisma.$EventoContableLineaPayload, S>
+
+  type EventoContableLineaCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<EventoContableLineaFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: EventoContableLineaCountAggregateInputType | true
+    }
+
+  export interface EventoContableLineaDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['EventoContableLinea'], meta: { name: 'EventoContableLinea' } }
+    /**
+     * Find zero or one EventoContableLinea that matches the filter.
+     * @param {EventoContableLineaFindUniqueArgs} args - Arguments to find a EventoContableLinea
+     * @example
+     * // Get one EventoContableLinea
+     * const eventoContableLinea = await prisma.eventoContableLinea.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends EventoContableLineaFindUniqueArgs>(args: SelectSubset<T, EventoContableLineaFindUniqueArgs<ExtArgs>>): Prisma__EventoContableLineaClient<$Result.GetResult<Prisma.$EventoContableLineaPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one EventoContableLinea that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {EventoContableLineaFindUniqueOrThrowArgs} args - Arguments to find a EventoContableLinea
+     * @example
+     * // Get one EventoContableLinea
+     * const eventoContableLinea = await prisma.eventoContableLinea.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends EventoContableLineaFindUniqueOrThrowArgs>(args: SelectSubset<T, EventoContableLineaFindUniqueOrThrowArgs<ExtArgs>>): Prisma__EventoContableLineaClient<$Result.GetResult<Prisma.$EventoContableLineaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first EventoContableLinea that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EventoContableLineaFindFirstArgs} args - Arguments to find a EventoContableLinea
+     * @example
+     * // Get one EventoContableLinea
+     * const eventoContableLinea = await prisma.eventoContableLinea.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends EventoContableLineaFindFirstArgs>(args?: SelectSubset<T, EventoContableLineaFindFirstArgs<ExtArgs>>): Prisma__EventoContableLineaClient<$Result.GetResult<Prisma.$EventoContableLineaPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first EventoContableLinea that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EventoContableLineaFindFirstOrThrowArgs} args - Arguments to find a EventoContableLinea
+     * @example
+     * // Get one EventoContableLinea
+     * const eventoContableLinea = await prisma.eventoContableLinea.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends EventoContableLineaFindFirstOrThrowArgs>(args?: SelectSubset<T, EventoContableLineaFindFirstOrThrowArgs<ExtArgs>>): Prisma__EventoContableLineaClient<$Result.GetResult<Prisma.$EventoContableLineaPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more EventoContableLineas that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EventoContableLineaFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all EventoContableLineas
+     * const eventoContableLineas = await prisma.eventoContableLinea.findMany()
+     * 
+     * // Get first 10 EventoContableLineas
+     * const eventoContableLineas = await prisma.eventoContableLinea.findMany({ take: 10 })
+     * 
+     * // Only select the `lineaId`
+     * const eventoContableLineaWithLineaIdOnly = await prisma.eventoContableLinea.findMany({ select: { lineaId: true } })
+     * 
+     */
+    findMany<T extends EventoContableLineaFindManyArgs>(args?: SelectSubset<T, EventoContableLineaFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EventoContableLineaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a EventoContableLinea.
+     * @param {EventoContableLineaCreateArgs} args - Arguments to create a EventoContableLinea.
+     * @example
+     * // Create one EventoContableLinea
+     * const EventoContableLinea = await prisma.eventoContableLinea.create({
+     *   data: {
+     *     // ... data to create a EventoContableLinea
+     *   }
+     * })
+     * 
+     */
+    create<T extends EventoContableLineaCreateArgs>(args: SelectSubset<T, EventoContableLineaCreateArgs<ExtArgs>>): Prisma__EventoContableLineaClient<$Result.GetResult<Prisma.$EventoContableLineaPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many EventoContableLineas.
+     * @param {EventoContableLineaCreateManyArgs} args - Arguments to create many EventoContableLineas.
+     * @example
+     * // Create many EventoContableLineas
+     * const eventoContableLinea = await prisma.eventoContableLinea.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends EventoContableLineaCreateManyArgs>(args?: SelectSubset<T, EventoContableLineaCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many EventoContableLineas and returns the data saved in the database.
+     * @param {EventoContableLineaCreateManyAndReturnArgs} args - Arguments to create many EventoContableLineas.
+     * @example
+     * // Create many EventoContableLineas
+     * const eventoContableLinea = await prisma.eventoContableLinea.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many EventoContableLineas and only return the `lineaId`
+     * const eventoContableLineaWithLineaIdOnly = await prisma.eventoContableLinea.createManyAndReturn({
+     *   select: { lineaId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends EventoContableLineaCreateManyAndReturnArgs>(args?: SelectSubset<T, EventoContableLineaCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EventoContableLineaPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a EventoContableLinea.
+     * @param {EventoContableLineaDeleteArgs} args - Arguments to delete one EventoContableLinea.
+     * @example
+     * // Delete one EventoContableLinea
+     * const EventoContableLinea = await prisma.eventoContableLinea.delete({
+     *   where: {
+     *     // ... filter to delete one EventoContableLinea
+     *   }
+     * })
+     * 
+     */
+    delete<T extends EventoContableLineaDeleteArgs>(args: SelectSubset<T, EventoContableLineaDeleteArgs<ExtArgs>>): Prisma__EventoContableLineaClient<$Result.GetResult<Prisma.$EventoContableLineaPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one EventoContableLinea.
+     * @param {EventoContableLineaUpdateArgs} args - Arguments to update one EventoContableLinea.
+     * @example
+     * // Update one EventoContableLinea
+     * const eventoContableLinea = await prisma.eventoContableLinea.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends EventoContableLineaUpdateArgs>(args: SelectSubset<T, EventoContableLineaUpdateArgs<ExtArgs>>): Prisma__EventoContableLineaClient<$Result.GetResult<Prisma.$EventoContableLineaPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more EventoContableLineas.
+     * @param {EventoContableLineaDeleteManyArgs} args - Arguments to filter EventoContableLineas to delete.
+     * @example
+     * // Delete a few EventoContableLineas
+     * const { count } = await prisma.eventoContableLinea.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends EventoContableLineaDeleteManyArgs>(args?: SelectSubset<T, EventoContableLineaDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more EventoContableLineas.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EventoContableLineaUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many EventoContableLineas
+     * const eventoContableLinea = await prisma.eventoContableLinea.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends EventoContableLineaUpdateManyArgs>(args: SelectSubset<T, EventoContableLineaUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more EventoContableLineas and returns the data updated in the database.
+     * @param {EventoContableLineaUpdateManyAndReturnArgs} args - Arguments to update many EventoContableLineas.
+     * @example
+     * // Update many EventoContableLineas
+     * const eventoContableLinea = await prisma.eventoContableLinea.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more EventoContableLineas and only return the `lineaId`
+     * const eventoContableLineaWithLineaIdOnly = await prisma.eventoContableLinea.updateManyAndReturn({
+     *   select: { lineaId: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends EventoContableLineaUpdateManyAndReturnArgs>(args: SelectSubset<T, EventoContableLineaUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EventoContableLineaPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one EventoContableLinea.
+     * @param {EventoContableLineaUpsertArgs} args - Arguments to update or create a EventoContableLinea.
+     * @example
+     * // Update or create a EventoContableLinea
+     * const eventoContableLinea = await prisma.eventoContableLinea.upsert({
+     *   create: {
+     *     // ... data to create a EventoContableLinea
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the EventoContableLinea we want to update
+     *   }
+     * })
+     */
+    upsert<T extends EventoContableLineaUpsertArgs>(args: SelectSubset<T, EventoContableLineaUpsertArgs<ExtArgs>>): Prisma__EventoContableLineaClient<$Result.GetResult<Prisma.$EventoContableLineaPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of EventoContableLineas.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EventoContableLineaCountArgs} args - Arguments to filter EventoContableLineas to count.
+     * @example
+     * // Count the number of EventoContableLineas
+     * const count = await prisma.eventoContableLinea.count({
+     *   where: {
+     *     // ... the filter for the EventoContableLineas we want to count
+     *   }
+     * })
+    **/
+    count<T extends EventoContableLineaCountArgs>(
+      args?: Subset<T, EventoContableLineaCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], EventoContableLineaCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a EventoContableLinea.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EventoContableLineaAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends EventoContableLineaAggregateArgs>(args: Subset<T, EventoContableLineaAggregateArgs>): Prisma.PrismaPromise<GetEventoContableLineaAggregateType<T>>
+
+    /**
+     * Group by EventoContableLinea.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {EventoContableLineaGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends EventoContableLineaGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: EventoContableLineaGroupByArgs['orderBy'] }
+        : { orderBy?: EventoContableLineaGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, EventoContableLineaGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetEventoContableLineaGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the EventoContableLinea model
+   */
+  readonly fields: EventoContableLineaFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for EventoContableLinea.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__EventoContableLineaClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    evento<T extends EventoContableDefaultArgs<ExtArgs> = {}>(args?: Subset<T, EventoContableDefaultArgs<ExtArgs>>): Prisma__EventoContableClient<$Result.GetResult<Prisma.$EventoContablePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the EventoContableLinea model
+   */
+  interface EventoContableLineaFieldRefs {
+    readonly lineaId: FieldRef<"EventoContableLinea", 'String'>
+    readonly eventoId: FieldRef<"EventoContableLinea", 'String'>
+    readonly cuenta: FieldRef<"EventoContableLinea", 'String'>
+    readonly descripcion: FieldRef<"EventoContableLinea", 'String'>
+    readonly debito: FieldRef<"EventoContableLinea", 'Decimal'>
+    readonly credito: FieldRef<"EventoContableLinea", 'Decimal'>
+    readonly moneda: FieldRef<"EventoContableLinea", 'String'>
+    readonly metadataJson: FieldRef<"EventoContableLinea", 'Json'>
+    readonly createdAt: FieldRef<"EventoContableLinea", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * EventoContableLinea findUnique
+   */
+  export type EventoContableLineaFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoContableLinea
+     */
+    select?: EventoContableLineaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventoContableLinea
+     */
+    omit?: EventoContableLineaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventoContableLineaInclude<ExtArgs> | null
+    /**
+     * Filter, which EventoContableLinea to fetch.
+     */
+    where: EventoContableLineaWhereUniqueInput
+  }
+
+  /**
+   * EventoContableLinea findUniqueOrThrow
+   */
+  export type EventoContableLineaFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoContableLinea
+     */
+    select?: EventoContableLineaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventoContableLinea
+     */
+    omit?: EventoContableLineaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventoContableLineaInclude<ExtArgs> | null
+    /**
+     * Filter, which EventoContableLinea to fetch.
+     */
+    where: EventoContableLineaWhereUniqueInput
+  }
+
+  /**
+   * EventoContableLinea findFirst
+   */
+  export type EventoContableLineaFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoContableLinea
+     */
+    select?: EventoContableLineaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventoContableLinea
+     */
+    omit?: EventoContableLineaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventoContableLineaInclude<ExtArgs> | null
+    /**
+     * Filter, which EventoContableLinea to fetch.
+     */
+    where?: EventoContableLineaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EventoContableLineas to fetch.
+     */
+    orderBy?: EventoContableLineaOrderByWithRelationInput | EventoContableLineaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for EventoContableLineas.
+     */
+    cursor?: EventoContableLineaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EventoContableLineas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EventoContableLineas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of EventoContableLineas.
+     */
+    distinct?: EventoContableLineaScalarFieldEnum | EventoContableLineaScalarFieldEnum[]
+  }
+
+  /**
+   * EventoContableLinea findFirstOrThrow
+   */
+  export type EventoContableLineaFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoContableLinea
+     */
+    select?: EventoContableLineaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventoContableLinea
+     */
+    omit?: EventoContableLineaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventoContableLineaInclude<ExtArgs> | null
+    /**
+     * Filter, which EventoContableLinea to fetch.
+     */
+    where?: EventoContableLineaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EventoContableLineas to fetch.
+     */
+    orderBy?: EventoContableLineaOrderByWithRelationInput | EventoContableLineaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for EventoContableLineas.
+     */
+    cursor?: EventoContableLineaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EventoContableLineas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EventoContableLineas.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of EventoContableLineas.
+     */
+    distinct?: EventoContableLineaScalarFieldEnum | EventoContableLineaScalarFieldEnum[]
+  }
+
+  /**
+   * EventoContableLinea findMany
+   */
+  export type EventoContableLineaFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoContableLinea
+     */
+    select?: EventoContableLineaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventoContableLinea
+     */
+    omit?: EventoContableLineaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventoContableLineaInclude<ExtArgs> | null
+    /**
+     * Filter, which EventoContableLineas to fetch.
+     */
+    where?: EventoContableLineaWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of EventoContableLineas to fetch.
+     */
+    orderBy?: EventoContableLineaOrderByWithRelationInput | EventoContableLineaOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing EventoContableLineas.
+     */
+    cursor?: EventoContableLineaWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` EventoContableLineas from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` EventoContableLineas.
+     */
+    skip?: number
+    distinct?: EventoContableLineaScalarFieldEnum | EventoContableLineaScalarFieldEnum[]
+  }
+
+  /**
+   * EventoContableLinea create
+   */
+  export type EventoContableLineaCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoContableLinea
+     */
+    select?: EventoContableLineaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventoContableLinea
+     */
+    omit?: EventoContableLineaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventoContableLineaInclude<ExtArgs> | null
+    /**
+     * The data needed to create a EventoContableLinea.
+     */
+    data: XOR<EventoContableLineaCreateInput, EventoContableLineaUncheckedCreateInput>
+  }
+
+  /**
+   * EventoContableLinea createMany
+   */
+  export type EventoContableLineaCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many EventoContableLineas.
+     */
+    data: EventoContableLineaCreateManyInput | EventoContableLineaCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * EventoContableLinea createManyAndReturn
+   */
+  export type EventoContableLineaCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoContableLinea
+     */
+    select?: EventoContableLineaSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventoContableLinea
+     */
+    omit?: EventoContableLineaOmit<ExtArgs> | null
+    /**
+     * The data used to create many EventoContableLineas.
+     */
+    data: EventoContableLineaCreateManyInput | EventoContableLineaCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventoContableLineaIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * EventoContableLinea update
+   */
+  export type EventoContableLineaUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoContableLinea
+     */
+    select?: EventoContableLineaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventoContableLinea
+     */
+    omit?: EventoContableLineaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventoContableLineaInclude<ExtArgs> | null
+    /**
+     * The data needed to update a EventoContableLinea.
+     */
+    data: XOR<EventoContableLineaUpdateInput, EventoContableLineaUncheckedUpdateInput>
+    /**
+     * Choose, which EventoContableLinea to update.
+     */
+    where: EventoContableLineaWhereUniqueInput
+  }
+
+  /**
+   * EventoContableLinea updateMany
+   */
+  export type EventoContableLineaUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update EventoContableLineas.
+     */
+    data: XOR<EventoContableLineaUpdateManyMutationInput, EventoContableLineaUncheckedUpdateManyInput>
+    /**
+     * Filter which EventoContableLineas to update
+     */
+    where?: EventoContableLineaWhereInput
+    /**
+     * Limit how many EventoContableLineas to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * EventoContableLinea updateManyAndReturn
+   */
+  export type EventoContableLineaUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoContableLinea
+     */
+    select?: EventoContableLineaSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventoContableLinea
+     */
+    omit?: EventoContableLineaOmit<ExtArgs> | null
+    /**
+     * The data used to update EventoContableLineas.
+     */
+    data: XOR<EventoContableLineaUpdateManyMutationInput, EventoContableLineaUncheckedUpdateManyInput>
+    /**
+     * Filter which EventoContableLineas to update
+     */
+    where?: EventoContableLineaWhereInput
+    /**
+     * Limit how many EventoContableLineas to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventoContableLineaIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * EventoContableLinea upsert
+   */
+  export type EventoContableLineaUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoContableLinea
+     */
+    select?: EventoContableLineaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventoContableLinea
+     */
+    omit?: EventoContableLineaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventoContableLineaInclude<ExtArgs> | null
+    /**
+     * The filter to search for the EventoContableLinea to update in case it exists.
+     */
+    where: EventoContableLineaWhereUniqueInput
+    /**
+     * In case the EventoContableLinea found by the `where` argument doesn't exist, create a new EventoContableLinea with this data.
+     */
+    create: XOR<EventoContableLineaCreateInput, EventoContableLineaUncheckedCreateInput>
+    /**
+     * In case the EventoContableLinea was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<EventoContableLineaUpdateInput, EventoContableLineaUncheckedUpdateInput>
+  }
+
+  /**
+   * EventoContableLinea delete
+   */
+  export type EventoContableLineaDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoContableLinea
+     */
+    select?: EventoContableLineaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventoContableLinea
+     */
+    omit?: EventoContableLineaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventoContableLineaInclude<ExtArgs> | null
+    /**
+     * Filter which EventoContableLinea to delete.
+     */
+    where: EventoContableLineaWhereUniqueInput
+  }
+
+  /**
+   * EventoContableLinea deleteMany
+   */
+  export type EventoContableLineaDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which EventoContableLineas to delete
+     */
+    where?: EventoContableLineaWhereInput
+    /**
+     * Limit how many EventoContableLineas to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * EventoContableLinea without action
+   */
+  export type EventoContableLineaDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the EventoContableLinea
+     */
+    select?: EventoContableLineaSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the EventoContableLinea
+     */
+    omit?: EventoContableLineaOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: EventoContableLineaInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -123062,6 +130985,79 @@ export namespace Prisma {
   };
 
   export type CierreContableScalarFieldEnum = (typeof CierreContableScalarFieldEnum)[keyof typeof CierreContableScalarFieldEnum]
+
+
+  export const PeriodoContableScalarFieldEnum: {
+    periodoId: 'periodoId',
+    tipo: 'tipo',
+    codigo: 'codigo',
+    fechaInicio: 'fechaInicio',
+    fechaFin: 'fechaFin',
+    estado: 'estado',
+    periodoPadreId: 'periodoPadreId',
+    aperturaAutomatica: 'aperturaAutomatica',
+    cierreAutomatico: 'cierreAutomatico',
+    abiertoPorId: 'abiertoPorId',
+    cerradoPorId: 'cerradoPorId',
+    aprobadoPorId: 'aprobadoPorId',
+    reabiertoPorId: 'reabiertoPorId',
+    fechaApertura: 'fechaApertura',
+    fechaCierre: 'fechaCierre',
+    fechaAprobacion: 'fechaAprobacion',
+    fechaReapertura: 'fechaReapertura',
+    observaciones: 'observaciones',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type PeriodoContableScalarFieldEnum = (typeof PeriodoContableScalarFieldEnum)[keyof typeof PeriodoContableScalarFieldEnum]
+
+
+  export const AperturaPeriodoScalarFieldEnum: {
+    aperturaId: 'aperturaId',
+    periodoId: 'periodoId',
+    origenPeriodoId: 'origenPeriodoId',
+    saldoCajaInicial: 'saldoCajaInicial',
+    saldoBancoInicial: 'saldoBancoInicial',
+    saldoCuentasCobrarInicial: 'saldoCuentasCobrarInicial',
+    saldoCuentasPagarInicial: 'saldoCuentasPagarInicial',
+    saldoInventarioInicial: 'saldoInventarioInicial',
+    saldoCapitalInicial: 'saldoCapitalInicial',
+    saldoResultadoAcumInicial: 'saldoResultadoAcumInicial',
+    detalleJson: 'detalleJson',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type AperturaPeriodoScalarFieldEnum = (typeof AperturaPeriodoScalarFieldEnum)[keyof typeof AperturaPeriodoScalarFieldEnum]
+
+
+  export const SnapshotPeriodoScalarFieldEnum: {
+    snapshotId: 'snapshotId',
+    periodoId: 'periodoId',
+    version: 'version',
+    baseCajaJson: 'baseCajaJson',
+    baseDevengoJson: 'baseDevengoJson',
+    inconsistenciasJson: 'inconsistenciasJson',
+    resumenJson: 'resumenJson',
+    hashIntegridad: 'hashIntegridad',
+    createdAt: 'createdAt'
+  };
+
+  export type SnapshotPeriodoScalarFieldEnum = (typeof SnapshotPeriodoScalarFieldEnum)[keyof typeof SnapshotPeriodoScalarFieldEnum]
+
+
+  export const AuditoriaPeriodoScalarFieldEnum: {
+    auditoriaId: 'auditoriaId',
+    periodoId: 'periodoId',
+    accion: 'accion',
+    usuarioId: 'usuarioId',
+    motivo: 'motivo',
+    payloadJson: 'payloadJson',
+    createdAt: 'createdAt'
+  };
+
+  export type AuditoriaPeriodoScalarFieldEnum = (typeof AuditoriaPeriodoScalarFieldEnum)[keyof typeof AuditoriaPeriodoScalarFieldEnum]
 
 
   export const GastoCompraScalarFieldEnum: {
@@ -124131,6 +132127,45 @@ export namespace Prisma {
   export type AnticipoMovimientoScalarFieldEnum = (typeof AnticipoMovimientoScalarFieldEnum)[keyof typeof AnticipoMovimientoScalarFieldEnum]
 
 
+  export const EventoContableScalarFieldEnum: {
+    eventoId: 'eventoId',
+    fechaOperacion: 'fechaOperacion',
+    fechaRegistro: 'fechaRegistro',
+    origenTipo: 'origenTipo',
+    origenId: 'origenId',
+    criterio: 'criterio',
+    periodoDiarioId: 'periodoDiarioId',
+    periodoMensualId: 'periodoMensualId',
+    periodoAnualId: 'periodoAnualId',
+    moneda: 'moneda',
+    monto: 'monto',
+    montoConvertido: 'montoConvertido',
+    naturaleza: 'naturaleza',
+    estado: 'estado',
+    descripcion: 'descripcion',
+    metadataJson: 'metadataJson',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type EventoContableScalarFieldEnum = (typeof EventoContableScalarFieldEnum)[keyof typeof EventoContableScalarFieldEnum]
+
+
+  export const EventoContableLineaScalarFieldEnum: {
+    lineaId: 'lineaId',
+    eventoId: 'eventoId',
+    cuenta: 'cuenta',
+    descripcion: 'descripcion',
+    debito: 'debito',
+    credito: 'credito',
+    moneda: 'moneda',
+    metadataJson: 'metadataJson',
+    createdAt: 'createdAt'
+  };
+
+  export type EventoContableLineaScalarFieldEnum = (typeof EventoContableLineaScalarFieldEnum)[keyof typeof EventoContableLineaScalarFieldEnum]
+
+
   export const SortOrder: {
     asc: 'asc',
     desc: 'desc'
@@ -124276,16 +132311,30 @@ export namespace Prisma {
 
 
   /**
-   * Reference to a field of type 'Float'
+   * Reference to a field of type 'TipoPeriodo'
    */
-  export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+  export type EnumTipoPeriodoFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TipoPeriodo'>
     
 
 
   /**
-   * Reference to a field of type 'Float[]'
+   * Reference to a field of type 'TipoPeriodo[]'
    */
-  export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
+  export type ListEnumTipoPeriodoFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TipoPeriodo[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'EstadoPeriodo'
+   */
+  export type EnumEstadoPeriodoFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EstadoPeriodo'>
+    
+
+
+  /**
+   * Reference to a field of type 'EstadoPeriodo[]'
+   */
+  export type ListEnumEstadoPeriodoFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EstadoPeriodo[]'>
     
 
 
@@ -124300,6 +132349,34 @@ export namespace Prisma {
    * Reference to a field of type 'QueryMode'
    */
   export type EnumQueryModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'QueryMode'>
+    
+
+
+  /**
+   * Reference to a field of type 'AccionPeriodo'
+   */
+  export type EnumAccionPeriodoFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AccionPeriodo'>
+    
+
+
+  /**
+   * Reference to a field of type 'AccionPeriodo[]'
+   */
+  export type ListEnumAccionPeriodoFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AccionPeriodo[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'Float'
+   */
+  export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>
+    
+
+
+  /**
+   * Reference to a field of type 'Float[]'
+   */
+  export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>
     
 
 
@@ -124510,6 +132587,34 @@ export namespace Prisma {
    * Reference to a field of type 'ContextoAnticipo[]'
    */
   export type ListEnumContextoAnticipoFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ContextoAnticipo[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'CriterioContable'
+   */
+  export type EnumCriterioContableFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CriterioContable'>
+    
+
+
+  /**
+   * Reference to a field of type 'CriterioContable[]'
+   */
+  export type ListEnumCriterioContableFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CriterioContable[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'NaturalezaEvento'
+   */
+  export type EnumNaturalezaEventoFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NaturalezaEvento'>
+    
+
+
+  /**
+   * Reference to a field of type 'NaturalezaEvento[]'
+   */
+  export type ListEnumNaturalezaEventoFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NaturalezaEvento[]'>
     
   /**
    * Deep Input Types
@@ -127350,6 +135455,388 @@ export namespace Prisma {
     observaciones?: StringNullableWithAggregatesFilter<"CierreContable"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"CierreContable"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"CierreContable"> | Date | string
+  }
+
+  export type PeriodoContableWhereInput = {
+    AND?: PeriodoContableWhereInput | PeriodoContableWhereInput[]
+    OR?: PeriodoContableWhereInput[]
+    NOT?: PeriodoContableWhereInput | PeriodoContableWhereInput[]
+    periodoId?: StringFilter<"PeriodoContable"> | string
+    tipo?: EnumTipoPeriodoFilter<"PeriodoContable"> | $Enums.TipoPeriodo
+    codigo?: StringFilter<"PeriodoContable"> | string
+    fechaInicio?: DateTimeFilter<"PeriodoContable"> | Date | string
+    fechaFin?: DateTimeFilter<"PeriodoContable"> | Date | string
+    estado?: EnumEstadoPeriodoFilter<"PeriodoContable"> | $Enums.EstadoPeriodo
+    periodoPadreId?: StringNullableFilter<"PeriodoContable"> | string | null
+    aperturaAutomatica?: BoolFilter<"PeriodoContable"> | boolean
+    cierreAutomatico?: BoolFilter<"PeriodoContable"> | boolean
+    abiertoPorId?: StringNullableFilter<"PeriodoContable"> | string | null
+    cerradoPorId?: StringNullableFilter<"PeriodoContable"> | string | null
+    aprobadoPorId?: StringNullableFilter<"PeriodoContable"> | string | null
+    reabiertoPorId?: StringNullableFilter<"PeriodoContable"> | string | null
+    fechaApertura?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
+    fechaCierre?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
+    fechaAprobacion?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
+    fechaReapertura?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
+    observaciones?: StringNullableFilter<"PeriodoContable"> | string | null
+    createdAt?: DateTimeFilter<"PeriodoContable"> | Date | string
+    updatedAt?: DateTimeFilter<"PeriodoContable"> | Date | string
+    periodoPadre?: XOR<PeriodoContableNullableScalarRelationFilter, PeriodoContableWhereInput> | null
+    subperiodos?: PeriodoContableListRelationFilter
+    apertura?: XOR<AperturaPeriodoNullableScalarRelationFilter, AperturaPeriodoWhereInput> | null
+    snapshots?: SnapshotPeriodoListRelationFilter
+    auditorias?: AuditoriaPeriodoListRelationFilter
+  }
+
+  export type PeriodoContableOrderByWithRelationInput = {
+    periodoId?: SortOrder
+    tipo?: SortOrder
+    codigo?: SortOrder
+    fechaInicio?: SortOrder
+    fechaFin?: SortOrder
+    estado?: SortOrder
+    periodoPadreId?: SortOrderInput | SortOrder
+    aperturaAutomatica?: SortOrder
+    cierreAutomatico?: SortOrder
+    abiertoPorId?: SortOrderInput | SortOrder
+    cerradoPorId?: SortOrderInput | SortOrder
+    aprobadoPorId?: SortOrderInput | SortOrder
+    reabiertoPorId?: SortOrderInput | SortOrder
+    fechaApertura?: SortOrderInput | SortOrder
+    fechaCierre?: SortOrderInput | SortOrder
+    fechaAprobacion?: SortOrderInput | SortOrder
+    fechaReapertura?: SortOrderInput | SortOrder
+    observaciones?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    periodoPadre?: PeriodoContableOrderByWithRelationInput
+    subperiodos?: PeriodoContableOrderByRelationAggregateInput
+    apertura?: AperturaPeriodoOrderByWithRelationInput
+    snapshots?: SnapshotPeriodoOrderByRelationAggregateInput
+    auditorias?: AuditoriaPeriodoOrderByRelationAggregateInput
+  }
+
+  export type PeriodoContableWhereUniqueInput = Prisma.AtLeast<{
+    periodoId?: string
+    codigo?: string
+    AND?: PeriodoContableWhereInput | PeriodoContableWhereInput[]
+    OR?: PeriodoContableWhereInput[]
+    NOT?: PeriodoContableWhereInput | PeriodoContableWhereInput[]
+    tipo?: EnumTipoPeriodoFilter<"PeriodoContable"> | $Enums.TipoPeriodo
+    fechaInicio?: DateTimeFilter<"PeriodoContable"> | Date | string
+    fechaFin?: DateTimeFilter<"PeriodoContable"> | Date | string
+    estado?: EnumEstadoPeriodoFilter<"PeriodoContable"> | $Enums.EstadoPeriodo
+    periodoPadreId?: StringNullableFilter<"PeriodoContable"> | string | null
+    aperturaAutomatica?: BoolFilter<"PeriodoContable"> | boolean
+    cierreAutomatico?: BoolFilter<"PeriodoContable"> | boolean
+    abiertoPorId?: StringNullableFilter<"PeriodoContable"> | string | null
+    cerradoPorId?: StringNullableFilter<"PeriodoContable"> | string | null
+    aprobadoPorId?: StringNullableFilter<"PeriodoContable"> | string | null
+    reabiertoPorId?: StringNullableFilter<"PeriodoContable"> | string | null
+    fechaApertura?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
+    fechaCierre?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
+    fechaAprobacion?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
+    fechaReapertura?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
+    observaciones?: StringNullableFilter<"PeriodoContable"> | string | null
+    createdAt?: DateTimeFilter<"PeriodoContable"> | Date | string
+    updatedAt?: DateTimeFilter<"PeriodoContable"> | Date | string
+    periodoPadre?: XOR<PeriodoContableNullableScalarRelationFilter, PeriodoContableWhereInput> | null
+    subperiodos?: PeriodoContableListRelationFilter
+    apertura?: XOR<AperturaPeriodoNullableScalarRelationFilter, AperturaPeriodoWhereInput> | null
+    snapshots?: SnapshotPeriodoListRelationFilter
+    auditorias?: AuditoriaPeriodoListRelationFilter
+  }, "periodoId" | "codigo">
+
+  export type PeriodoContableOrderByWithAggregationInput = {
+    periodoId?: SortOrder
+    tipo?: SortOrder
+    codigo?: SortOrder
+    fechaInicio?: SortOrder
+    fechaFin?: SortOrder
+    estado?: SortOrder
+    periodoPadreId?: SortOrderInput | SortOrder
+    aperturaAutomatica?: SortOrder
+    cierreAutomatico?: SortOrder
+    abiertoPorId?: SortOrderInput | SortOrder
+    cerradoPorId?: SortOrderInput | SortOrder
+    aprobadoPorId?: SortOrderInput | SortOrder
+    reabiertoPorId?: SortOrderInput | SortOrder
+    fechaApertura?: SortOrderInput | SortOrder
+    fechaCierre?: SortOrderInput | SortOrder
+    fechaAprobacion?: SortOrderInput | SortOrder
+    fechaReapertura?: SortOrderInput | SortOrder
+    observaciones?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: PeriodoContableCountOrderByAggregateInput
+    _max?: PeriodoContableMaxOrderByAggregateInput
+    _min?: PeriodoContableMinOrderByAggregateInput
+  }
+
+  export type PeriodoContableScalarWhereWithAggregatesInput = {
+    AND?: PeriodoContableScalarWhereWithAggregatesInput | PeriodoContableScalarWhereWithAggregatesInput[]
+    OR?: PeriodoContableScalarWhereWithAggregatesInput[]
+    NOT?: PeriodoContableScalarWhereWithAggregatesInput | PeriodoContableScalarWhereWithAggregatesInput[]
+    periodoId?: StringWithAggregatesFilter<"PeriodoContable"> | string
+    tipo?: EnumTipoPeriodoWithAggregatesFilter<"PeriodoContable"> | $Enums.TipoPeriodo
+    codigo?: StringWithAggregatesFilter<"PeriodoContable"> | string
+    fechaInicio?: DateTimeWithAggregatesFilter<"PeriodoContable"> | Date | string
+    fechaFin?: DateTimeWithAggregatesFilter<"PeriodoContable"> | Date | string
+    estado?: EnumEstadoPeriodoWithAggregatesFilter<"PeriodoContable"> | $Enums.EstadoPeriodo
+    periodoPadreId?: StringNullableWithAggregatesFilter<"PeriodoContable"> | string | null
+    aperturaAutomatica?: BoolWithAggregatesFilter<"PeriodoContable"> | boolean
+    cierreAutomatico?: BoolWithAggregatesFilter<"PeriodoContable"> | boolean
+    abiertoPorId?: StringNullableWithAggregatesFilter<"PeriodoContable"> | string | null
+    cerradoPorId?: StringNullableWithAggregatesFilter<"PeriodoContable"> | string | null
+    aprobadoPorId?: StringNullableWithAggregatesFilter<"PeriodoContable"> | string | null
+    reabiertoPorId?: StringNullableWithAggregatesFilter<"PeriodoContable"> | string | null
+    fechaApertura?: DateTimeNullableWithAggregatesFilter<"PeriodoContable"> | Date | string | null
+    fechaCierre?: DateTimeNullableWithAggregatesFilter<"PeriodoContable"> | Date | string | null
+    fechaAprobacion?: DateTimeNullableWithAggregatesFilter<"PeriodoContable"> | Date | string | null
+    fechaReapertura?: DateTimeNullableWithAggregatesFilter<"PeriodoContable"> | Date | string | null
+    observaciones?: StringNullableWithAggregatesFilter<"PeriodoContable"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"PeriodoContable"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"PeriodoContable"> | Date | string
+  }
+
+  export type AperturaPeriodoWhereInput = {
+    AND?: AperturaPeriodoWhereInput | AperturaPeriodoWhereInput[]
+    OR?: AperturaPeriodoWhereInput[]
+    NOT?: AperturaPeriodoWhereInput | AperturaPeriodoWhereInput[]
+    aperturaId?: StringFilter<"AperturaPeriodo"> | string
+    periodoId?: StringFilter<"AperturaPeriodo"> | string
+    origenPeriodoId?: StringNullableFilter<"AperturaPeriodo"> | string | null
+    saldoCajaInicial?: DecimalFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoBancoInicial?: DecimalFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoCuentasCobrarInicial?: DecimalFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoCuentasPagarInicial?: DecimalFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoInventarioInicial?: DecimalFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoCapitalInicial?: DecimalFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoResultadoAcumInicial?: DecimalFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    detalleJson?: JsonNullableFilter<"AperturaPeriodo">
+    createdAt?: DateTimeFilter<"AperturaPeriodo"> | Date | string
+    updatedAt?: DateTimeFilter<"AperturaPeriodo"> | Date | string
+    periodo?: XOR<PeriodoContableScalarRelationFilter, PeriodoContableWhereInput>
+  }
+
+  export type AperturaPeriodoOrderByWithRelationInput = {
+    aperturaId?: SortOrder
+    periodoId?: SortOrder
+    origenPeriodoId?: SortOrderInput | SortOrder
+    saldoCajaInicial?: SortOrder
+    saldoBancoInicial?: SortOrder
+    saldoCuentasCobrarInicial?: SortOrder
+    saldoCuentasPagarInicial?: SortOrder
+    saldoInventarioInicial?: SortOrder
+    saldoCapitalInicial?: SortOrder
+    saldoResultadoAcumInicial?: SortOrder
+    detalleJson?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    periodo?: PeriodoContableOrderByWithRelationInput
+  }
+
+  export type AperturaPeriodoWhereUniqueInput = Prisma.AtLeast<{
+    aperturaId?: string
+    periodoId?: string
+    AND?: AperturaPeriodoWhereInput | AperturaPeriodoWhereInput[]
+    OR?: AperturaPeriodoWhereInput[]
+    NOT?: AperturaPeriodoWhereInput | AperturaPeriodoWhereInput[]
+    origenPeriodoId?: StringNullableFilter<"AperturaPeriodo"> | string | null
+    saldoCajaInicial?: DecimalFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoBancoInicial?: DecimalFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoCuentasCobrarInicial?: DecimalFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoCuentasPagarInicial?: DecimalFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoInventarioInicial?: DecimalFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoCapitalInicial?: DecimalFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoResultadoAcumInicial?: DecimalFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    detalleJson?: JsonNullableFilter<"AperturaPeriodo">
+    createdAt?: DateTimeFilter<"AperturaPeriodo"> | Date | string
+    updatedAt?: DateTimeFilter<"AperturaPeriodo"> | Date | string
+    periodo?: XOR<PeriodoContableScalarRelationFilter, PeriodoContableWhereInput>
+  }, "aperturaId" | "periodoId">
+
+  export type AperturaPeriodoOrderByWithAggregationInput = {
+    aperturaId?: SortOrder
+    periodoId?: SortOrder
+    origenPeriodoId?: SortOrderInput | SortOrder
+    saldoCajaInicial?: SortOrder
+    saldoBancoInicial?: SortOrder
+    saldoCuentasCobrarInicial?: SortOrder
+    saldoCuentasPagarInicial?: SortOrder
+    saldoInventarioInicial?: SortOrder
+    saldoCapitalInicial?: SortOrder
+    saldoResultadoAcumInicial?: SortOrder
+    detalleJson?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: AperturaPeriodoCountOrderByAggregateInput
+    _avg?: AperturaPeriodoAvgOrderByAggregateInput
+    _max?: AperturaPeriodoMaxOrderByAggregateInput
+    _min?: AperturaPeriodoMinOrderByAggregateInput
+    _sum?: AperturaPeriodoSumOrderByAggregateInput
+  }
+
+  export type AperturaPeriodoScalarWhereWithAggregatesInput = {
+    AND?: AperturaPeriodoScalarWhereWithAggregatesInput | AperturaPeriodoScalarWhereWithAggregatesInput[]
+    OR?: AperturaPeriodoScalarWhereWithAggregatesInput[]
+    NOT?: AperturaPeriodoScalarWhereWithAggregatesInput | AperturaPeriodoScalarWhereWithAggregatesInput[]
+    aperturaId?: StringWithAggregatesFilter<"AperturaPeriodo"> | string
+    periodoId?: StringWithAggregatesFilter<"AperturaPeriodo"> | string
+    origenPeriodoId?: StringNullableWithAggregatesFilter<"AperturaPeriodo"> | string | null
+    saldoCajaInicial?: DecimalWithAggregatesFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoBancoInicial?: DecimalWithAggregatesFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoCuentasCobrarInicial?: DecimalWithAggregatesFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoCuentasPagarInicial?: DecimalWithAggregatesFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoInventarioInicial?: DecimalWithAggregatesFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoCapitalInicial?: DecimalWithAggregatesFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoResultadoAcumInicial?: DecimalWithAggregatesFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    detalleJson?: JsonNullableWithAggregatesFilter<"AperturaPeriodo">
+    createdAt?: DateTimeWithAggregatesFilter<"AperturaPeriodo"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"AperturaPeriodo"> | Date | string
+  }
+
+  export type SnapshotPeriodoWhereInput = {
+    AND?: SnapshotPeriodoWhereInput | SnapshotPeriodoWhereInput[]
+    OR?: SnapshotPeriodoWhereInput[]
+    NOT?: SnapshotPeriodoWhereInput | SnapshotPeriodoWhereInput[]
+    snapshotId?: StringFilter<"SnapshotPeriodo"> | string
+    periodoId?: StringFilter<"SnapshotPeriodo"> | string
+    version?: IntFilter<"SnapshotPeriodo"> | number
+    baseCajaJson?: JsonNullableFilter<"SnapshotPeriodo">
+    baseDevengoJson?: JsonNullableFilter<"SnapshotPeriodo">
+    inconsistenciasJson?: JsonNullableFilter<"SnapshotPeriodo">
+    resumenJson?: JsonNullableFilter<"SnapshotPeriodo">
+    hashIntegridad?: StringNullableFilter<"SnapshotPeriodo"> | string | null
+    createdAt?: DateTimeFilter<"SnapshotPeriodo"> | Date | string
+    periodo?: XOR<PeriodoContableScalarRelationFilter, PeriodoContableWhereInput>
+  }
+
+  export type SnapshotPeriodoOrderByWithRelationInput = {
+    snapshotId?: SortOrder
+    periodoId?: SortOrder
+    version?: SortOrder
+    baseCajaJson?: SortOrderInput | SortOrder
+    baseDevengoJson?: SortOrderInput | SortOrder
+    inconsistenciasJson?: SortOrderInput | SortOrder
+    resumenJson?: SortOrderInput | SortOrder
+    hashIntegridad?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    periodo?: PeriodoContableOrderByWithRelationInput
+  }
+
+  export type SnapshotPeriodoWhereUniqueInput = Prisma.AtLeast<{
+    snapshotId?: string
+    periodoId_version?: SnapshotPeriodoPeriodoIdVersionCompoundUniqueInput
+    AND?: SnapshotPeriodoWhereInput | SnapshotPeriodoWhereInput[]
+    OR?: SnapshotPeriodoWhereInput[]
+    NOT?: SnapshotPeriodoWhereInput | SnapshotPeriodoWhereInput[]
+    periodoId?: StringFilter<"SnapshotPeriodo"> | string
+    version?: IntFilter<"SnapshotPeriodo"> | number
+    baseCajaJson?: JsonNullableFilter<"SnapshotPeriodo">
+    baseDevengoJson?: JsonNullableFilter<"SnapshotPeriodo">
+    inconsistenciasJson?: JsonNullableFilter<"SnapshotPeriodo">
+    resumenJson?: JsonNullableFilter<"SnapshotPeriodo">
+    hashIntegridad?: StringNullableFilter<"SnapshotPeriodo"> | string | null
+    createdAt?: DateTimeFilter<"SnapshotPeriodo"> | Date | string
+    periodo?: XOR<PeriodoContableScalarRelationFilter, PeriodoContableWhereInput>
+  }, "snapshotId" | "periodoId_version">
+
+  export type SnapshotPeriodoOrderByWithAggregationInput = {
+    snapshotId?: SortOrder
+    periodoId?: SortOrder
+    version?: SortOrder
+    baseCajaJson?: SortOrderInput | SortOrder
+    baseDevengoJson?: SortOrderInput | SortOrder
+    inconsistenciasJson?: SortOrderInput | SortOrder
+    resumenJson?: SortOrderInput | SortOrder
+    hashIntegridad?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: SnapshotPeriodoCountOrderByAggregateInput
+    _avg?: SnapshotPeriodoAvgOrderByAggregateInput
+    _max?: SnapshotPeriodoMaxOrderByAggregateInput
+    _min?: SnapshotPeriodoMinOrderByAggregateInput
+    _sum?: SnapshotPeriodoSumOrderByAggregateInput
+  }
+
+  export type SnapshotPeriodoScalarWhereWithAggregatesInput = {
+    AND?: SnapshotPeriodoScalarWhereWithAggregatesInput | SnapshotPeriodoScalarWhereWithAggregatesInput[]
+    OR?: SnapshotPeriodoScalarWhereWithAggregatesInput[]
+    NOT?: SnapshotPeriodoScalarWhereWithAggregatesInput | SnapshotPeriodoScalarWhereWithAggregatesInput[]
+    snapshotId?: StringWithAggregatesFilter<"SnapshotPeriodo"> | string
+    periodoId?: StringWithAggregatesFilter<"SnapshotPeriodo"> | string
+    version?: IntWithAggregatesFilter<"SnapshotPeriodo"> | number
+    baseCajaJson?: JsonNullableWithAggregatesFilter<"SnapshotPeriodo">
+    baseDevengoJson?: JsonNullableWithAggregatesFilter<"SnapshotPeriodo">
+    inconsistenciasJson?: JsonNullableWithAggregatesFilter<"SnapshotPeriodo">
+    resumenJson?: JsonNullableWithAggregatesFilter<"SnapshotPeriodo">
+    hashIntegridad?: StringNullableWithAggregatesFilter<"SnapshotPeriodo"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"SnapshotPeriodo"> | Date | string
+  }
+
+  export type AuditoriaPeriodoWhereInput = {
+    AND?: AuditoriaPeriodoWhereInput | AuditoriaPeriodoWhereInput[]
+    OR?: AuditoriaPeriodoWhereInput[]
+    NOT?: AuditoriaPeriodoWhereInput | AuditoriaPeriodoWhereInput[]
+    auditoriaId?: StringFilter<"AuditoriaPeriodo"> | string
+    periodoId?: StringFilter<"AuditoriaPeriodo"> | string
+    accion?: EnumAccionPeriodoFilter<"AuditoriaPeriodo"> | $Enums.AccionPeriodo
+    usuarioId?: StringFilter<"AuditoriaPeriodo"> | string
+    motivo?: StringNullableFilter<"AuditoriaPeriodo"> | string | null
+    payloadJson?: JsonNullableFilter<"AuditoriaPeriodo">
+    createdAt?: DateTimeFilter<"AuditoriaPeriodo"> | Date | string
+    periodo?: XOR<PeriodoContableScalarRelationFilter, PeriodoContableWhereInput>
+  }
+
+  export type AuditoriaPeriodoOrderByWithRelationInput = {
+    auditoriaId?: SortOrder
+    periodoId?: SortOrder
+    accion?: SortOrder
+    usuarioId?: SortOrder
+    motivo?: SortOrderInput | SortOrder
+    payloadJson?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    periodo?: PeriodoContableOrderByWithRelationInput
+  }
+
+  export type AuditoriaPeriodoWhereUniqueInput = Prisma.AtLeast<{
+    auditoriaId?: string
+    AND?: AuditoriaPeriodoWhereInput | AuditoriaPeriodoWhereInput[]
+    OR?: AuditoriaPeriodoWhereInput[]
+    NOT?: AuditoriaPeriodoWhereInput | AuditoriaPeriodoWhereInput[]
+    periodoId?: StringFilter<"AuditoriaPeriodo"> | string
+    accion?: EnumAccionPeriodoFilter<"AuditoriaPeriodo"> | $Enums.AccionPeriodo
+    usuarioId?: StringFilter<"AuditoriaPeriodo"> | string
+    motivo?: StringNullableFilter<"AuditoriaPeriodo"> | string | null
+    payloadJson?: JsonNullableFilter<"AuditoriaPeriodo">
+    createdAt?: DateTimeFilter<"AuditoriaPeriodo"> | Date | string
+    periodo?: XOR<PeriodoContableScalarRelationFilter, PeriodoContableWhereInput>
+  }, "auditoriaId">
+
+  export type AuditoriaPeriodoOrderByWithAggregationInput = {
+    auditoriaId?: SortOrder
+    periodoId?: SortOrder
+    accion?: SortOrder
+    usuarioId?: SortOrder
+    motivo?: SortOrderInput | SortOrder
+    payloadJson?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: AuditoriaPeriodoCountOrderByAggregateInput
+    _max?: AuditoriaPeriodoMaxOrderByAggregateInput
+    _min?: AuditoriaPeriodoMinOrderByAggregateInput
+  }
+
+  export type AuditoriaPeriodoScalarWhereWithAggregatesInput = {
+    AND?: AuditoriaPeriodoScalarWhereWithAggregatesInput | AuditoriaPeriodoScalarWhereWithAggregatesInput[]
+    OR?: AuditoriaPeriodoScalarWhereWithAggregatesInput[]
+    NOT?: AuditoriaPeriodoScalarWhereWithAggregatesInput | AuditoriaPeriodoScalarWhereWithAggregatesInput[]
+    auditoriaId?: StringWithAggregatesFilter<"AuditoriaPeriodo"> | string
+    periodoId?: StringWithAggregatesFilter<"AuditoriaPeriodo"> | string
+    accion?: EnumAccionPeriodoWithAggregatesFilter<"AuditoriaPeriodo"> | $Enums.AccionPeriodo
+    usuarioId?: StringWithAggregatesFilter<"AuditoriaPeriodo"> | string
+    motivo?: StringNullableWithAggregatesFilter<"AuditoriaPeriodo"> | string | null
+    payloadJson?: JsonNullableWithAggregatesFilter<"AuditoriaPeriodo">
+    createdAt?: DateTimeWithAggregatesFilter<"AuditoriaPeriodo"> | Date | string
   }
 
   export type GastoCompraWhereInput = {
@@ -133106,6 +141593,205 @@ export namespace Prisma {
     createdAt?: DateTimeWithAggregatesFilter<"AnticipoMovimiento"> | Date | string
   }
 
+  export type EventoContableWhereInput = {
+    AND?: EventoContableWhereInput | EventoContableWhereInput[]
+    OR?: EventoContableWhereInput[]
+    NOT?: EventoContableWhereInput | EventoContableWhereInput[]
+    eventoId?: StringFilter<"EventoContable"> | string
+    fechaOperacion?: DateTimeFilter<"EventoContable"> | Date | string
+    fechaRegistro?: DateTimeFilter<"EventoContable"> | Date | string
+    origenTipo?: StringFilter<"EventoContable"> | string
+    origenId?: StringFilter<"EventoContable"> | string
+    criterio?: EnumCriterioContableFilter<"EventoContable"> | $Enums.CriterioContable
+    periodoDiarioId?: StringNullableFilter<"EventoContable"> | string | null
+    periodoMensualId?: StringNullableFilter<"EventoContable"> | string | null
+    periodoAnualId?: StringNullableFilter<"EventoContable"> | string | null
+    moneda?: StringFilter<"EventoContable"> | string
+    monto?: DecimalFilter<"EventoContable"> | Decimal | DecimalJsLike | number | string
+    montoConvertido?: DecimalNullableFilter<"EventoContable"> | Decimal | DecimalJsLike | number | string | null
+    naturaleza?: EnumNaturalezaEventoFilter<"EventoContable"> | $Enums.NaturalezaEvento
+    estado?: StringFilter<"EventoContable"> | string
+    descripcion?: StringNullableFilter<"EventoContable"> | string | null
+    metadataJson?: JsonNullableFilter<"EventoContable">
+    createdAt?: DateTimeFilter<"EventoContable"> | Date | string
+    updatedAt?: DateTimeFilter<"EventoContable"> | Date | string
+    lineas?: EventoContableLineaListRelationFilter
+  }
+
+  export type EventoContableOrderByWithRelationInput = {
+    eventoId?: SortOrder
+    fechaOperacion?: SortOrder
+    fechaRegistro?: SortOrder
+    origenTipo?: SortOrder
+    origenId?: SortOrder
+    criterio?: SortOrder
+    periodoDiarioId?: SortOrderInput | SortOrder
+    periodoMensualId?: SortOrderInput | SortOrder
+    periodoAnualId?: SortOrderInput | SortOrder
+    moneda?: SortOrder
+    monto?: SortOrder
+    montoConvertido?: SortOrderInput | SortOrder
+    naturaleza?: SortOrder
+    estado?: SortOrder
+    descripcion?: SortOrderInput | SortOrder
+    metadataJson?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    lineas?: EventoContableLineaOrderByRelationAggregateInput
+  }
+
+  export type EventoContableWhereUniqueInput = Prisma.AtLeast<{
+    eventoId?: string
+    AND?: EventoContableWhereInput | EventoContableWhereInput[]
+    OR?: EventoContableWhereInput[]
+    NOT?: EventoContableWhereInput | EventoContableWhereInput[]
+    fechaOperacion?: DateTimeFilter<"EventoContable"> | Date | string
+    fechaRegistro?: DateTimeFilter<"EventoContable"> | Date | string
+    origenTipo?: StringFilter<"EventoContable"> | string
+    origenId?: StringFilter<"EventoContable"> | string
+    criterio?: EnumCriterioContableFilter<"EventoContable"> | $Enums.CriterioContable
+    periodoDiarioId?: StringNullableFilter<"EventoContable"> | string | null
+    periodoMensualId?: StringNullableFilter<"EventoContable"> | string | null
+    periodoAnualId?: StringNullableFilter<"EventoContable"> | string | null
+    moneda?: StringFilter<"EventoContable"> | string
+    monto?: DecimalFilter<"EventoContable"> | Decimal | DecimalJsLike | number | string
+    montoConvertido?: DecimalNullableFilter<"EventoContable"> | Decimal | DecimalJsLike | number | string | null
+    naturaleza?: EnumNaturalezaEventoFilter<"EventoContable"> | $Enums.NaturalezaEvento
+    estado?: StringFilter<"EventoContable"> | string
+    descripcion?: StringNullableFilter<"EventoContable"> | string | null
+    metadataJson?: JsonNullableFilter<"EventoContable">
+    createdAt?: DateTimeFilter<"EventoContable"> | Date | string
+    updatedAt?: DateTimeFilter<"EventoContable"> | Date | string
+    lineas?: EventoContableLineaListRelationFilter
+  }, "eventoId">
+
+  export type EventoContableOrderByWithAggregationInput = {
+    eventoId?: SortOrder
+    fechaOperacion?: SortOrder
+    fechaRegistro?: SortOrder
+    origenTipo?: SortOrder
+    origenId?: SortOrder
+    criterio?: SortOrder
+    periodoDiarioId?: SortOrderInput | SortOrder
+    periodoMensualId?: SortOrderInput | SortOrder
+    periodoAnualId?: SortOrderInput | SortOrder
+    moneda?: SortOrder
+    monto?: SortOrder
+    montoConvertido?: SortOrderInput | SortOrder
+    naturaleza?: SortOrder
+    estado?: SortOrder
+    descripcion?: SortOrderInput | SortOrder
+    metadataJson?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: EventoContableCountOrderByAggregateInput
+    _avg?: EventoContableAvgOrderByAggregateInput
+    _max?: EventoContableMaxOrderByAggregateInput
+    _min?: EventoContableMinOrderByAggregateInput
+    _sum?: EventoContableSumOrderByAggregateInput
+  }
+
+  export type EventoContableScalarWhereWithAggregatesInput = {
+    AND?: EventoContableScalarWhereWithAggregatesInput | EventoContableScalarWhereWithAggregatesInput[]
+    OR?: EventoContableScalarWhereWithAggregatesInput[]
+    NOT?: EventoContableScalarWhereWithAggregatesInput | EventoContableScalarWhereWithAggregatesInput[]
+    eventoId?: StringWithAggregatesFilter<"EventoContable"> | string
+    fechaOperacion?: DateTimeWithAggregatesFilter<"EventoContable"> | Date | string
+    fechaRegistro?: DateTimeWithAggregatesFilter<"EventoContable"> | Date | string
+    origenTipo?: StringWithAggregatesFilter<"EventoContable"> | string
+    origenId?: StringWithAggregatesFilter<"EventoContable"> | string
+    criterio?: EnumCriterioContableWithAggregatesFilter<"EventoContable"> | $Enums.CriterioContable
+    periodoDiarioId?: StringNullableWithAggregatesFilter<"EventoContable"> | string | null
+    periodoMensualId?: StringNullableWithAggregatesFilter<"EventoContable"> | string | null
+    periodoAnualId?: StringNullableWithAggregatesFilter<"EventoContable"> | string | null
+    moneda?: StringWithAggregatesFilter<"EventoContable"> | string
+    monto?: DecimalWithAggregatesFilter<"EventoContable"> | Decimal | DecimalJsLike | number | string
+    montoConvertido?: DecimalNullableWithAggregatesFilter<"EventoContable"> | Decimal | DecimalJsLike | number | string | null
+    naturaleza?: EnumNaturalezaEventoWithAggregatesFilter<"EventoContable"> | $Enums.NaturalezaEvento
+    estado?: StringWithAggregatesFilter<"EventoContable"> | string
+    descripcion?: StringNullableWithAggregatesFilter<"EventoContable"> | string | null
+    metadataJson?: JsonNullableWithAggregatesFilter<"EventoContable">
+    createdAt?: DateTimeWithAggregatesFilter<"EventoContable"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"EventoContable"> | Date | string
+  }
+
+  export type EventoContableLineaWhereInput = {
+    AND?: EventoContableLineaWhereInput | EventoContableLineaWhereInput[]
+    OR?: EventoContableLineaWhereInput[]
+    NOT?: EventoContableLineaWhereInput | EventoContableLineaWhereInput[]
+    lineaId?: StringFilter<"EventoContableLinea"> | string
+    eventoId?: StringFilter<"EventoContableLinea"> | string
+    cuenta?: StringFilter<"EventoContableLinea"> | string
+    descripcion?: StringNullableFilter<"EventoContableLinea"> | string | null
+    debito?: DecimalFilter<"EventoContableLinea"> | Decimal | DecimalJsLike | number | string
+    credito?: DecimalFilter<"EventoContableLinea"> | Decimal | DecimalJsLike | number | string
+    moneda?: StringFilter<"EventoContableLinea"> | string
+    metadataJson?: JsonNullableFilter<"EventoContableLinea">
+    createdAt?: DateTimeFilter<"EventoContableLinea"> | Date | string
+    evento?: XOR<EventoContableScalarRelationFilter, EventoContableWhereInput>
+  }
+
+  export type EventoContableLineaOrderByWithRelationInput = {
+    lineaId?: SortOrder
+    eventoId?: SortOrder
+    cuenta?: SortOrder
+    descripcion?: SortOrderInput | SortOrder
+    debito?: SortOrder
+    credito?: SortOrder
+    moneda?: SortOrder
+    metadataJson?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    evento?: EventoContableOrderByWithRelationInput
+  }
+
+  export type EventoContableLineaWhereUniqueInput = Prisma.AtLeast<{
+    lineaId?: string
+    AND?: EventoContableLineaWhereInput | EventoContableLineaWhereInput[]
+    OR?: EventoContableLineaWhereInput[]
+    NOT?: EventoContableLineaWhereInput | EventoContableLineaWhereInput[]
+    eventoId?: StringFilter<"EventoContableLinea"> | string
+    cuenta?: StringFilter<"EventoContableLinea"> | string
+    descripcion?: StringNullableFilter<"EventoContableLinea"> | string | null
+    debito?: DecimalFilter<"EventoContableLinea"> | Decimal | DecimalJsLike | number | string
+    credito?: DecimalFilter<"EventoContableLinea"> | Decimal | DecimalJsLike | number | string
+    moneda?: StringFilter<"EventoContableLinea"> | string
+    metadataJson?: JsonNullableFilter<"EventoContableLinea">
+    createdAt?: DateTimeFilter<"EventoContableLinea"> | Date | string
+    evento?: XOR<EventoContableScalarRelationFilter, EventoContableWhereInput>
+  }, "lineaId">
+
+  export type EventoContableLineaOrderByWithAggregationInput = {
+    lineaId?: SortOrder
+    eventoId?: SortOrder
+    cuenta?: SortOrder
+    descripcion?: SortOrderInput | SortOrder
+    debito?: SortOrder
+    credito?: SortOrder
+    moneda?: SortOrder
+    metadataJson?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: EventoContableLineaCountOrderByAggregateInput
+    _avg?: EventoContableLineaAvgOrderByAggregateInput
+    _max?: EventoContableLineaMaxOrderByAggregateInput
+    _min?: EventoContableLineaMinOrderByAggregateInput
+    _sum?: EventoContableLineaSumOrderByAggregateInput
+  }
+
+  export type EventoContableLineaScalarWhereWithAggregatesInput = {
+    AND?: EventoContableLineaScalarWhereWithAggregatesInput | EventoContableLineaScalarWhereWithAggregatesInput[]
+    OR?: EventoContableLineaScalarWhereWithAggregatesInput[]
+    NOT?: EventoContableLineaScalarWhereWithAggregatesInput | EventoContableLineaScalarWhereWithAggregatesInput[]
+    lineaId?: StringWithAggregatesFilter<"EventoContableLinea"> | string
+    eventoId?: StringWithAggregatesFilter<"EventoContableLinea"> | string
+    cuenta?: StringWithAggregatesFilter<"EventoContableLinea"> | string
+    descripcion?: StringNullableWithAggregatesFilter<"EventoContableLinea"> | string | null
+    debito?: DecimalWithAggregatesFilter<"EventoContableLinea"> | Decimal | DecimalJsLike | number | string
+    credito?: DecimalWithAggregatesFilter<"EventoContableLinea"> | Decimal | DecimalJsLike | number | string
+    moneda?: StringWithAggregatesFilter<"EventoContableLinea"> | string
+    metadataJson?: JsonNullableWithAggregatesFilter<"EventoContableLinea">
+    createdAt?: DateTimeWithAggregatesFilter<"EventoContableLinea"> | Date | string
+  }
+
   export type CategoriaCreateInput = {
     catId?: string
     nombre: string
@@ -136311,6 +144997,445 @@ export namespace Prisma {
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PeriodoContableCreateInput = {
+    periodoId?: string
+    tipo: $Enums.TipoPeriodo
+    codigo: string
+    fechaInicio: Date | string
+    fechaFin: Date | string
+    estado?: $Enums.EstadoPeriodo
+    aperturaAutomatica?: boolean
+    cierreAutomatico?: boolean
+    abiertoPorId?: string | null
+    cerradoPorId?: string | null
+    aprobadoPorId?: string | null
+    reabiertoPorId?: string | null
+    fechaApertura?: Date | string | null
+    fechaCierre?: Date | string | null
+    fechaAprobacion?: Date | string | null
+    fechaReapertura?: Date | string | null
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    periodoPadre?: PeriodoContableCreateNestedOneWithoutSubperiodosInput
+    subperiodos?: PeriodoContableCreateNestedManyWithoutPeriodoPadreInput
+    apertura?: AperturaPeriodoCreateNestedOneWithoutPeriodoInput
+    snapshots?: SnapshotPeriodoCreateNestedManyWithoutPeriodoInput
+    auditorias?: AuditoriaPeriodoCreateNestedManyWithoutPeriodoInput
+  }
+
+  export type PeriodoContableUncheckedCreateInput = {
+    periodoId?: string
+    tipo: $Enums.TipoPeriodo
+    codigo: string
+    fechaInicio: Date | string
+    fechaFin: Date | string
+    estado?: $Enums.EstadoPeriodo
+    periodoPadreId?: string | null
+    aperturaAutomatica?: boolean
+    cierreAutomatico?: boolean
+    abiertoPorId?: string | null
+    cerradoPorId?: string | null
+    aprobadoPorId?: string | null
+    reabiertoPorId?: string | null
+    fechaApertura?: Date | string | null
+    fechaCierre?: Date | string | null
+    fechaAprobacion?: Date | string | null
+    fechaReapertura?: Date | string | null
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    subperiodos?: PeriodoContableUncheckedCreateNestedManyWithoutPeriodoPadreInput
+    apertura?: AperturaPeriodoUncheckedCreateNestedOneWithoutPeriodoInput
+    snapshots?: SnapshotPeriodoUncheckedCreateNestedManyWithoutPeriodoInput
+    auditorias?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutPeriodoInput
+  }
+
+  export type PeriodoContableUpdateInput = {
+    periodoId?: StringFieldUpdateOperationsInput | string
+    tipo?: EnumTipoPeriodoFieldUpdateOperationsInput | $Enums.TipoPeriodo
+    codigo?: StringFieldUpdateOperationsInput | string
+    fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaFin?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
+    aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
+    cierreAutomatico?: BoolFieldUpdateOperationsInput | boolean
+    abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    cerradoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobadoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaAprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaReapertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    periodoPadre?: PeriodoContableUpdateOneWithoutSubperiodosNestedInput
+    subperiodos?: PeriodoContableUpdateManyWithoutPeriodoPadreNestedInput
+    apertura?: AperturaPeriodoUpdateOneWithoutPeriodoNestedInput
+    snapshots?: SnapshotPeriodoUpdateManyWithoutPeriodoNestedInput
+    auditorias?: AuditoriaPeriodoUpdateManyWithoutPeriodoNestedInput
+  }
+
+  export type PeriodoContableUncheckedUpdateInput = {
+    periodoId?: StringFieldUpdateOperationsInput | string
+    tipo?: EnumTipoPeriodoFieldUpdateOperationsInput | $Enums.TipoPeriodo
+    codigo?: StringFieldUpdateOperationsInput | string
+    fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaFin?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
+    periodoPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
+    cierreAutomatico?: BoolFieldUpdateOperationsInput | boolean
+    abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    cerradoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobadoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaAprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaReapertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    subperiodos?: PeriodoContableUncheckedUpdateManyWithoutPeriodoPadreNestedInput
+    apertura?: AperturaPeriodoUncheckedUpdateOneWithoutPeriodoNestedInput
+    snapshots?: SnapshotPeriodoUncheckedUpdateManyWithoutPeriodoNestedInput
+    auditorias?: AuditoriaPeriodoUncheckedUpdateManyWithoutPeriodoNestedInput
+  }
+
+  export type PeriodoContableCreateManyInput = {
+    periodoId?: string
+    tipo: $Enums.TipoPeriodo
+    codigo: string
+    fechaInicio: Date | string
+    fechaFin: Date | string
+    estado?: $Enums.EstadoPeriodo
+    periodoPadreId?: string | null
+    aperturaAutomatica?: boolean
+    cierreAutomatico?: boolean
+    abiertoPorId?: string | null
+    cerradoPorId?: string | null
+    aprobadoPorId?: string | null
+    reabiertoPorId?: string | null
+    fechaApertura?: Date | string | null
+    fechaCierre?: Date | string | null
+    fechaAprobacion?: Date | string | null
+    fechaReapertura?: Date | string | null
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type PeriodoContableUpdateManyMutationInput = {
+    periodoId?: StringFieldUpdateOperationsInput | string
+    tipo?: EnumTipoPeriodoFieldUpdateOperationsInput | $Enums.TipoPeriodo
+    codigo?: StringFieldUpdateOperationsInput | string
+    fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaFin?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
+    aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
+    cierreAutomatico?: BoolFieldUpdateOperationsInput | boolean
+    abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    cerradoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobadoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaAprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaReapertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PeriodoContableUncheckedUpdateManyInput = {
+    periodoId?: StringFieldUpdateOperationsInput | string
+    tipo?: EnumTipoPeriodoFieldUpdateOperationsInput | $Enums.TipoPeriodo
+    codigo?: StringFieldUpdateOperationsInput | string
+    fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaFin?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
+    periodoPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
+    cierreAutomatico?: BoolFieldUpdateOperationsInput | boolean
+    abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    cerradoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobadoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaAprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaReapertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AperturaPeriodoCreateInput = {
+    aperturaId?: string
+    origenPeriodoId?: string | null
+    saldoCajaInicial?: Decimal | DecimalJsLike | number | string
+    saldoBancoInicial?: Decimal | DecimalJsLike | number | string
+    saldoCuentasCobrarInicial?: Decimal | DecimalJsLike | number | string
+    saldoCuentasPagarInicial?: Decimal | DecimalJsLike | number | string
+    saldoInventarioInicial?: Decimal | DecimalJsLike | number | string
+    saldoCapitalInicial?: Decimal | DecimalJsLike | number | string
+    saldoResultadoAcumInicial?: Decimal | DecimalJsLike | number | string
+    detalleJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    periodo: PeriodoContableCreateNestedOneWithoutAperturaInput
+  }
+
+  export type AperturaPeriodoUncheckedCreateInput = {
+    aperturaId?: string
+    periodoId: string
+    origenPeriodoId?: string | null
+    saldoCajaInicial?: Decimal | DecimalJsLike | number | string
+    saldoBancoInicial?: Decimal | DecimalJsLike | number | string
+    saldoCuentasCobrarInicial?: Decimal | DecimalJsLike | number | string
+    saldoCuentasPagarInicial?: Decimal | DecimalJsLike | number | string
+    saldoInventarioInicial?: Decimal | DecimalJsLike | number | string
+    saldoCapitalInicial?: Decimal | DecimalJsLike | number | string
+    saldoResultadoAcumInicial?: Decimal | DecimalJsLike | number | string
+    detalleJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AperturaPeriodoUpdateInput = {
+    aperturaId?: StringFieldUpdateOperationsInput | string
+    origenPeriodoId?: NullableStringFieldUpdateOperationsInput | string | null
+    saldoCajaInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoBancoInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCuentasCobrarInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCuentasPagarInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoInventarioInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCapitalInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoResultadoAcumInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    detalleJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    periodo?: PeriodoContableUpdateOneRequiredWithoutAperturaNestedInput
+  }
+
+  export type AperturaPeriodoUncheckedUpdateInput = {
+    aperturaId?: StringFieldUpdateOperationsInput | string
+    periodoId?: StringFieldUpdateOperationsInput | string
+    origenPeriodoId?: NullableStringFieldUpdateOperationsInput | string | null
+    saldoCajaInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoBancoInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCuentasCobrarInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCuentasPagarInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoInventarioInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCapitalInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoResultadoAcumInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    detalleJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AperturaPeriodoCreateManyInput = {
+    aperturaId?: string
+    periodoId: string
+    origenPeriodoId?: string | null
+    saldoCajaInicial?: Decimal | DecimalJsLike | number | string
+    saldoBancoInicial?: Decimal | DecimalJsLike | number | string
+    saldoCuentasCobrarInicial?: Decimal | DecimalJsLike | number | string
+    saldoCuentasPagarInicial?: Decimal | DecimalJsLike | number | string
+    saldoInventarioInicial?: Decimal | DecimalJsLike | number | string
+    saldoCapitalInicial?: Decimal | DecimalJsLike | number | string
+    saldoResultadoAcumInicial?: Decimal | DecimalJsLike | number | string
+    detalleJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AperturaPeriodoUpdateManyMutationInput = {
+    aperturaId?: StringFieldUpdateOperationsInput | string
+    origenPeriodoId?: NullableStringFieldUpdateOperationsInput | string | null
+    saldoCajaInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoBancoInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCuentasCobrarInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCuentasPagarInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoInventarioInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCapitalInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoResultadoAcumInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    detalleJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AperturaPeriodoUncheckedUpdateManyInput = {
+    aperturaId?: StringFieldUpdateOperationsInput | string
+    periodoId?: StringFieldUpdateOperationsInput | string
+    origenPeriodoId?: NullableStringFieldUpdateOperationsInput | string | null
+    saldoCajaInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoBancoInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCuentasCobrarInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCuentasPagarInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoInventarioInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCapitalInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoResultadoAcumInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    detalleJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SnapshotPeriodoCreateInput = {
+    snapshotId?: string
+    version?: number
+    baseCajaJson?: NullableJsonNullValueInput | InputJsonValue
+    baseDevengoJson?: NullableJsonNullValueInput | InputJsonValue
+    inconsistenciasJson?: NullableJsonNullValueInput | InputJsonValue
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: string | null
+    createdAt?: Date | string
+    periodo: PeriodoContableCreateNestedOneWithoutSnapshotsInput
+  }
+
+  export type SnapshotPeriodoUncheckedCreateInput = {
+    snapshotId?: string
+    periodoId: string
+    version?: number
+    baseCajaJson?: NullableJsonNullValueInput | InputJsonValue
+    baseDevengoJson?: NullableJsonNullValueInput | InputJsonValue
+    inconsistenciasJson?: NullableJsonNullValueInput | InputJsonValue
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: string | null
+    createdAt?: Date | string
+  }
+
+  export type SnapshotPeriodoUpdateInput = {
+    snapshotId?: StringFieldUpdateOperationsInput | string
+    version?: IntFieldUpdateOperationsInput | number
+    baseCajaJson?: NullableJsonNullValueInput | InputJsonValue
+    baseDevengoJson?: NullableJsonNullValueInput | InputJsonValue
+    inconsistenciasJson?: NullableJsonNullValueInput | InputJsonValue
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    periodo?: PeriodoContableUpdateOneRequiredWithoutSnapshotsNestedInput
+  }
+
+  export type SnapshotPeriodoUncheckedUpdateInput = {
+    snapshotId?: StringFieldUpdateOperationsInput | string
+    periodoId?: StringFieldUpdateOperationsInput | string
+    version?: IntFieldUpdateOperationsInput | number
+    baseCajaJson?: NullableJsonNullValueInput | InputJsonValue
+    baseDevengoJson?: NullableJsonNullValueInput | InputJsonValue
+    inconsistenciasJson?: NullableJsonNullValueInput | InputJsonValue
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SnapshotPeriodoCreateManyInput = {
+    snapshotId?: string
+    periodoId: string
+    version?: number
+    baseCajaJson?: NullableJsonNullValueInput | InputJsonValue
+    baseDevengoJson?: NullableJsonNullValueInput | InputJsonValue
+    inconsistenciasJson?: NullableJsonNullValueInput | InputJsonValue
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: string | null
+    createdAt?: Date | string
+  }
+
+  export type SnapshotPeriodoUpdateManyMutationInput = {
+    snapshotId?: StringFieldUpdateOperationsInput | string
+    version?: IntFieldUpdateOperationsInput | number
+    baseCajaJson?: NullableJsonNullValueInput | InputJsonValue
+    baseDevengoJson?: NullableJsonNullValueInput | InputJsonValue
+    inconsistenciasJson?: NullableJsonNullValueInput | InputJsonValue
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SnapshotPeriodoUncheckedUpdateManyInput = {
+    snapshotId?: StringFieldUpdateOperationsInput | string
+    periodoId?: StringFieldUpdateOperationsInput | string
+    version?: IntFieldUpdateOperationsInput | number
+    baseCajaJson?: NullableJsonNullValueInput | InputJsonValue
+    baseDevengoJson?: NullableJsonNullValueInput | InputJsonValue
+    inconsistenciasJson?: NullableJsonNullValueInput | InputJsonValue
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AuditoriaPeriodoCreateInput = {
+    auditoriaId?: string
+    accion: $Enums.AccionPeriodo
+    usuarioId: string
+    motivo?: string | null
+    payloadJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    periodo: PeriodoContableCreateNestedOneWithoutAuditoriasInput
+  }
+
+  export type AuditoriaPeriodoUncheckedCreateInput = {
+    auditoriaId?: string
+    periodoId: string
+    accion: $Enums.AccionPeriodo
+    usuarioId: string
+    motivo?: string | null
+    payloadJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type AuditoriaPeriodoUpdateInput = {
+    auditoriaId?: StringFieldUpdateOperationsInput | string
+    accion?: EnumAccionPeriodoFieldUpdateOperationsInput | $Enums.AccionPeriodo
+    usuarioId?: StringFieldUpdateOperationsInput | string
+    motivo?: NullableStringFieldUpdateOperationsInput | string | null
+    payloadJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    periodo?: PeriodoContableUpdateOneRequiredWithoutAuditoriasNestedInput
+  }
+
+  export type AuditoriaPeriodoUncheckedUpdateInput = {
+    auditoriaId?: StringFieldUpdateOperationsInput | string
+    periodoId?: StringFieldUpdateOperationsInput | string
+    accion?: EnumAccionPeriodoFieldUpdateOperationsInput | $Enums.AccionPeriodo
+    usuarioId?: StringFieldUpdateOperationsInput | string
+    motivo?: NullableStringFieldUpdateOperationsInput | string | null
+    payloadJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AuditoriaPeriodoCreateManyInput = {
+    auditoriaId?: string
+    periodoId: string
+    accion: $Enums.AccionPeriodo
+    usuarioId: string
+    motivo?: string | null
+    payloadJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type AuditoriaPeriodoUpdateManyMutationInput = {
+    auditoriaId?: StringFieldUpdateOperationsInput | string
+    accion?: EnumAccionPeriodoFieldUpdateOperationsInput | $Enums.AccionPeriodo
+    usuarioId?: StringFieldUpdateOperationsInput | string
+    motivo?: NullableStringFieldUpdateOperationsInput | string | null
+    payloadJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AuditoriaPeriodoUncheckedUpdateManyInput = {
+    auditoriaId?: StringFieldUpdateOperationsInput | string
+    periodoId?: StringFieldUpdateOperationsInput | string
+    accion?: EnumAccionPeriodoFieldUpdateOperationsInput | $Enums.AccionPeriodo
+    usuarioId?: StringFieldUpdateOperationsInput | string
+    motivo?: NullableStringFieldUpdateOperationsInput | string | null
+    payloadJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type GastoCompraCreateInput = {
@@ -142646,6 +151771,240 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type EventoContableCreateInput = {
+    eventoId?: string
+    fechaOperacion: Date | string
+    fechaRegistro?: Date | string
+    origenTipo: string
+    origenId: string
+    criterio: $Enums.CriterioContable
+    periodoDiarioId?: string | null
+    periodoMensualId?: string | null
+    periodoAnualId?: string | null
+    moneda?: string
+    monto: Decimal | DecimalJsLike | number | string
+    montoConvertido?: Decimal | DecimalJsLike | number | string | null
+    naturaleza: $Enums.NaturalezaEvento
+    estado?: string
+    descripcion?: string | null
+    metadataJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lineas?: EventoContableLineaCreateNestedManyWithoutEventoInput
+  }
+
+  export type EventoContableUncheckedCreateInput = {
+    eventoId?: string
+    fechaOperacion: Date | string
+    fechaRegistro?: Date | string
+    origenTipo: string
+    origenId: string
+    criterio: $Enums.CriterioContable
+    periodoDiarioId?: string | null
+    periodoMensualId?: string | null
+    periodoAnualId?: string | null
+    moneda?: string
+    monto: Decimal | DecimalJsLike | number | string
+    montoConvertido?: Decimal | DecimalJsLike | number | string | null
+    naturaleza: $Enums.NaturalezaEvento
+    estado?: string
+    descripcion?: string | null
+    metadataJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    lineas?: EventoContableLineaUncheckedCreateNestedManyWithoutEventoInput
+  }
+
+  export type EventoContableUpdateInput = {
+    eventoId?: StringFieldUpdateOperationsInput | string
+    fechaOperacion?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaRegistro?: DateTimeFieldUpdateOperationsInput | Date | string
+    origenTipo?: StringFieldUpdateOperationsInput | string
+    origenId?: StringFieldUpdateOperationsInput | string
+    criterio?: EnumCriterioContableFieldUpdateOperationsInput | $Enums.CriterioContable
+    periodoDiarioId?: NullableStringFieldUpdateOperationsInput | string | null
+    periodoMensualId?: NullableStringFieldUpdateOperationsInput | string | null
+    periodoAnualId?: NullableStringFieldUpdateOperationsInput | string | null
+    moneda?: StringFieldUpdateOperationsInput | string
+    monto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    montoConvertido?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    naturaleza?: EnumNaturalezaEventoFieldUpdateOperationsInput | $Enums.NaturalezaEvento
+    estado?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    metadataJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lineas?: EventoContableLineaUpdateManyWithoutEventoNestedInput
+  }
+
+  export type EventoContableUncheckedUpdateInput = {
+    eventoId?: StringFieldUpdateOperationsInput | string
+    fechaOperacion?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaRegistro?: DateTimeFieldUpdateOperationsInput | Date | string
+    origenTipo?: StringFieldUpdateOperationsInput | string
+    origenId?: StringFieldUpdateOperationsInput | string
+    criterio?: EnumCriterioContableFieldUpdateOperationsInput | $Enums.CriterioContable
+    periodoDiarioId?: NullableStringFieldUpdateOperationsInput | string | null
+    periodoMensualId?: NullableStringFieldUpdateOperationsInput | string | null
+    periodoAnualId?: NullableStringFieldUpdateOperationsInput | string | null
+    moneda?: StringFieldUpdateOperationsInput | string
+    monto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    montoConvertido?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    naturaleza?: EnumNaturalezaEventoFieldUpdateOperationsInput | $Enums.NaturalezaEvento
+    estado?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    metadataJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    lineas?: EventoContableLineaUncheckedUpdateManyWithoutEventoNestedInput
+  }
+
+  export type EventoContableCreateManyInput = {
+    eventoId?: string
+    fechaOperacion: Date | string
+    fechaRegistro?: Date | string
+    origenTipo: string
+    origenId: string
+    criterio: $Enums.CriterioContable
+    periodoDiarioId?: string | null
+    periodoMensualId?: string | null
+    periodoAnualId?: string | null
+    moneda?: string
+    monto: Decimal | DecimalJsLike | number | string
+    montoConvertido?: Decimal | DecimalJsLike | number | string | null
+    naturaleza: $Enums.NaturalezaEvento
+    estado?: string
+    descripcion?: string | null
+    metadataJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type EventoContableUpdateManyMutationInput = {
+    eventoId?: StringFieldUpdateOperationsInput | string
+    fechaOperacion?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaRegistro?: DateTimeFieldUpdateOperationsInput | Date | string
+    origenTipo?: StringFieldUpdateOperationsInput | string
+    origenId?: StringFieldUpdateOperationsInput | string
+    criterio?: EnumCriterioContableFieldUpdateOperationsInput | $Enums.CriterioContable
+    periodoDiarioId?: NullableStringFieldUpdateOperationsInput | string | null
+    periodoMensualId?: NullableStringFieldUpdateOperationsInput | string | null
+    periodoAnualId?: NullableStringFieldUpdateOperationsInput | string | null
+    moneda?: StringFieldUpdateOperationsInput | string
+    monto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    montoConvertido?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    naturaleza?: EnumNaturalezaEventoFieldUpdateOperationsInput | $Enums.NaturalezaEvento
+    estado?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    metadataJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EventoContableUncheckedUpdateManyInput = {
+    eventoId?: StringFieldUpdateOperationsInput | string
+    fechaOperacion?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaRegistro?: DateTimeFieldUpdateOperationsInput | Date | string
+    origenTipo?: StringFieldUpdateOperationsInput | string
+    origenId?: StringFieldUpdateOperationsInput | string
+    criterio?: EnumCriterioContableFieldUpdateOperationsInput | $Enums.CriterioContable
+    periodoDiarioId?: NullableStringFieldUpdateOperationsInput | string | null
+    periodoMensualId?: NullableStringFieldUpdateOperationsInput | string | null
+    periodoAnualId?: NullableStringFieldUpdateOperationsInput | string | null
+    moneda?: StringFieldUpdateOperationsInput | string
+    monto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    montoConvertido?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    naturaleza?: EnumNaturalezaEventoFieldUpdateOperationsInput | $Enums.NaturalezaEvento
+    estado?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    metadataJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EventoContableLineaCreateInput = {
+    lineaId?: string
+    cuenta: string
+    descripcion?: string | null
+    debito?: Decimal | DecimalJsLike | number | string
+    credito?: Decimal | DecimalJsLike | number | string
+    moneda?: string
+    metadataJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    evento: EventoContableCreateNestedOneWithoutLineasInput
+  }
+
+  export type EventoContableLineaUncheckedCreateInput = {
+    lineaId?: string
+    eventoId: string
+    cuenta: string
+    descripcion?: string | null
+    debito?: Decimal | DecimalJsLike | number | string
+    credito?: Decimal | DecimalJsLike | number | string
+    moneda?: string
+    metadataJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type EventoContableLineaUpdateInput = {
+    lineaId?: StringFieldUpdateOperationsInput | string
+    cuenta?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    debito?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    credito?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    metadataJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    evento?: EventoContableUpdateOneRequiredWithoutLineasNestedInput
+  }
+
+  export type EventoContableLineaUncheckedUpdateInput = {
+    lineaId?: StringFieldUpdateOperationsInput | string
+    eventoId?: StringFieldUpdateOperationsInput | string
+    cuenta?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    debito?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    credito?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    metadataJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EventoContableLineaCreateManyInput = {
+    lineaId?: string
+    eventoId: string
+    cuenta: string
+    descripcion?: string | null
+    debito?: Decimal | DecimalJsLike | number | string
+    credito?: Decimal | DecimalJsLike | number | string
+    moneda?: string
+    metadataJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type EventoContableLineaUpdateManyMutationInput = {
+    lineaId?: StringFieldUpdateOperationsInput | string
+    cuenta?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    debito?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    credito?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    metadataJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EventoContableLineaUncheckedUpdateManyInput = {
+    lineaId?: StringFieldUpdateOperationsInput | string
+    eventoId?: StringFieldUpdateOperationsInput | string
+    cuenta?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    debito?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    credito?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    metadataJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -145035,6 +154394,355 @@ export namespace Prisma {
     margenPerdida?: SortOrder
   }
 
+  export type EnumTipoPeriodoFilter<$PrismaModel = never> = {
+    equals?: $Enums.TipoPeriodo | EnumTipoPeriodoFieldRefInput<$PrismaModel>
+    in?: $Enums.TipoPeriodo[] | ListEnumTipoPeriodoFieldRefInput<$PrismaModel>
+    notIn?: $Enums.TipoPeriodo[] | ListEnumTipoPeriodoFieldRefInput<$PrismaModel>
+    not?: NestedEnumTipoPeriodoFilter<$PrismaModel> | $Enums.TipoPeriodo
+  }
+
+  export type EnumEstadoPeriodoFilter<$PrismaModel = never> = {
+    equals?: $Enums.EstadoPeriodo | EnumEstadoPeriodoFieldRefInput<$PrismaModel>
+    in?: $Enums.EstadoPeriodo[] | ListEnumEstadoPeriodoFieldRefInput<$PrismaModel>
+    notIn?: $Enums.EstadoPeriodo[] | ListEnumEstadoPeriodoFieldRefInput<$PrismaModel>
+    not?: NestedEnumEstadoPeriodoFilter<$PrismaModel> | $Enums.EstadoPeriodo
+  }
+
+  export type PeriodoContableNullableScalarRelationFilter = {
+    is?: PeriodoContableWhereInput | null
+    isNot?: PeriodoContableWhereInput | null
+  }
+
+  export type PeriodoContableListRelationFilter = {
+    every?: PeriodoContableWhereInput
+    some?: PeriodoContableWhereInput
+    none?: PeriodoContableWhereInput
+  }
+
+  export type AperturaPeriodoNullableScalarRelationFilter = {
+    is?: AperturaPeriodoWhereInput | null
+    isNot?: AperturaPeriodoWhereInput | null
+  }
+
+  export type SnapshotPeriodoListRelationFilter = {
+    every?: SnapshotPeriodoWhereInput
+    some?: SnapshotPeriodoWhereInput
+    none?: SnapshotPeriodoWhereInput
+  }
+
+  export type AuditoriaPeriodoListRelationFilter = {
+    every?: AuditoriaPeriodoWhereInput
+    some?: AuditoriaPeriodoWhereInput
+    none?: AuditoriaPeriodoWhereInput
+  }
+
+  export type PeriodoContableOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type SnapshotPeriodoOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type AuditoriaPeriodoOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type PeriodoContableCountOrderByAggregateInput = {
+    periodoId?: SortOrder
+    tipo?: SortOrder
+    codigo?: SortOrder
+    fechaInicio?: SortOrder
+    fechaFin?: SortOrder
+    estado?: SortOrder
+    periodoPadreId?: SortOrder
+    aperturaAutomatica?: SortOrder
+    cierreAutomatico?: SortOrder
+    abiertoPorId?: SortOrder
+    cerradoPorId?: SortOrder
+    aprobadoPorId?: SortOrder
+    reabiertoPorId?: SortOrder
+    fechaApertura?: SortOrder
+    fechaCierre?: SortOrder
+    fechaAprobacion?: SortOrder
+    fechaReapertura?: SortOrder
+    observaciones?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PeriodoContableMaxOrderByAggregateInput = {
+    periodoId?: SortOrder
+    tipo?: SortOrder
+    codigo?: SortOrder
+    fechaInicio?: SortOrder
+    fechaFin?: SortOrder
+    estado?: SortOrder
+    periodoPadreId?: SortOrder
+    aperturaAutomatica?: SortOrder
+    cierreAutomatico?: SortOrder
+    abiertoPorId?: SortOrder
+    cerradoPorId?: SortOrder
+    aprobadoPorId?: SortOrder
+    reabiertoPorId?: SortOrder
+    fechaApertura?: SortOrder
+    fechaCierre?: SortOrder
+    fechaAprobacion?: SortOrder
+    fechaReapertura?: SortOrder
+    observaciones?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type PeriodoContableMinOrderByAggregateInput = {
+    periodoId?: SortOrder
+    tipo?: SortOrder
+    codigo?: SortOrder
+    fechaInicio?: SortOrder
+    fechaFin?: SortOrder
+    estado?: SortOrder
+    periodoPadreId?: SortOrder
+    aperturaAutomatica?: SortOrder
+    cierreAutomatico?: SortOrder
+    abiertoPorId?: SortOrder
+    cerradoPorId?: SortOrder
+    aprobadoPorId?: SortOrder
+    reabiertoPorId?: SortOrder
+    fechaApertura?: SortOrder
+    fechaCierre?: SortOrder
+    fechaAprobacion?: SortOrder
+    fechaReapertura?: SortOrder
+    observaciones?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumTipoPeriodoWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.TipoPeriodo | EnumTipoPeriodoFieldRefInput<$PrismaModel>
+    in?: $Enums.TipoPeriodo[] | ListEnumTipoPeriodoFieldRefInput<$PrismaModel>
+    notIn?: $Enums.TipoPeriodo[] | ListEnumTipoPeriodoFieldRefInput<$PrismaModel>
+    not?: NestedEnumTipoPeriodoWithAggregatesFilter<$PrismaModel> | $Enums.TipoPeriodo
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumTipoPeriodoFilter<$PrismaModel>
+    _max?: NestedEnumTipoPeriodoFilter<$PrismaModel>
+  }
+
+  export type EnumEstadoPeriodoWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.EstadoPeriodo | EnumEstadoPeriodoFieldRefInput<$PrismaModel>
+    in?: $Enums.EstadoPeriodo[] | ListEnumEstadoPeriodoFieldRefInput<$PrismaModel>
+    notIn?: $Enums.EstadoPeriodo[] | ListEnumEstadoPeriodoFieldRefInput<$PrismaModel>
+    not?: NestedEnumEstadoPeriodoWithAggregatesFilter<$PrismaModel> | $Enums.EstadoPeriodo
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumEstadoPeriodoFilter<$PrismaModel>
+    _max?: NestedEnumEstadoPeriodoFilter<$PrismaModel>
+  }
+  export type JsonNullableFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type PeriodoContableScalarRelationFilter = {
+    is?: PeriodoContableWhereInput
+    isNot?: PeriodoContableWhereInput
+  }
+
+  export type AperturaPeriodoCountOrderByAggregateInput = {
+    aperturaId?: SortOrder
+    periodoId?: SortOrder
+    origenPeriodoId?: SortOrder
+    saldoCajaInicial?: SortOrder
+    saldoBancoInicial?: SortOrder
+    saldoCuentasCobrarInicial?: SortOrder
+    saldoCuentasPagarInicial?: SortOrder
+    saldoInventarioInicial?: SortOrder
+    saldoCapitalInicial?: SortOrder
+    saldoResultadoAcumInicial?: SortOrder
+    detalleJson?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AperturaPeriodoAvgOrderByAggregateInput = {
+    saldoCajaInicial?: SortOrder
+    saldoBancoInicial?: SortOrder
+    saldoCuentasCobrarInicial?: SortOrder
+    saldoCuentasPagarInicial?: SortOrder
+    saldoInventarioInicial?: SortOrder
+    saldoCapitalInicial?: SortOrder
+    saldoResultadoAcumInicial?: SortOrder
+  }
+
+  export type AperturaPeriodoMaxOrderByAggregateInput = {
+    aperturaId?: SortOrder
+    periodoId?: SortOrder
+    origenPeriodoId?: SortOrder
+    saldoCajaInicial?: SortOrder
+    saldoBancoInicial?: SortOrder
+    saldoCuentasCobrarInicial?: SortOrder
+    saldoCuentasPagarInicial?: SortOrder
+    saldoInventarioInicial?: SortOrder
+    saldoCapitalInicial?: SortOrder
+    saldoResultadoAcumInicial?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AperturaPeriodoMinOrderByAggregateInput = {
+    aperturaId?: SortOrder
+    periodoId?: SortOrder
+    origenPeriodoId?: SortOrder
+    saldoCajaInicial?: SortOrder
+    saldoBancoInicial?: SortOrder
+    saldoCuentasCobrarInicial?: SortOrder
+    saldoCuentasPagarInicial?: SortOrder
+    saldoInventarioInicial?: SortOrder
+    saldoCapitalInicial?: SortOrder
+    saldoResultadoAcumInicial?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AperturaPeriodoSumOrderByAggregateInput = {
+    saldoCajaInicial?: SortOrder
+    saldoBancoInicial?: SortOrder
+    saldoCuentasCobrarInicial?: SortOrder
+    saldoCuentasPagarInicial?: SortOrder
+    saldoInventarioInicial?: SortOrder
+    saldoCapitalInicial?: SortOrder
+    saldoResultadoAcumInicial?: SortOrder
+  }
+  export type JsonNullableWithAggregatesFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedJsonNullableFilter<$PrismaModel>
+    _max?: NestedJsonNullableFilter<$PrismaModel>
+  }
+
+  export type SnapshotPeriodoPeriodoIdVersionCompoundUniqueInput = {
+    periodoId: string
+    version: number
+  }
+
+  export type SnapshotPeriodoCountOrderByAggregateInput = {
+    snapshotId?: SortOrder
+    periodoId?: SortOrder
+    version?: SortOrder
+    baseCajaJson?: SortOrder
+    baseDevengoJson?: SortOrder
+    inconsistenciasJson?: SortOrder
+    resumenJson?: SortOrder
+    hashIntegridad?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type SnapshotPeriodoAvgOrderByAggregateInput = {
+    version?: SortOrder
+  }
+
+  export type SnapshotPeriodoMaxOrderByAggregateInput = {
+    snapshotId?: SortOrder
+    periodoId?: SortOrder
+    version?: SortOrder
+    hashIntegridad?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type SnapshotPeriodoMinOrderByAggregateInput = {
+    snapshotId?: SortOrder
+    periodoId?: SortOrder
+    version?: SortOrder
+    hashIntegridad?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type SnapshotPeriodoSumOrderByAggregateInput = {
+    version?: SortOrder
+  }
+
+  export type EnumAccionPeriodoFilter<$PrismaModel = never> = {
+    equals?: $Enums.AccionPeriodo | EnumAccionPeriodoFieldRefInput<$PrismaModel>
+    in?: $Enums.AccionPeriodo[] | ListEnumAccionPeriodoFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AccionPeriodo[] | ListEnumAccionPeriodoFieldRefInput<$PrismaModel>
+    not?: NestedEnumAccionPeriodoFilter<$PrismaModel> | $Enums.AccionPeriodo
+  }
+
+  export type AuditoriaPeriodoCountOrderByAggregateInput = {
+    auditoriaId?: SortOrder
+    periodoId?: SortOrder
+    accion?: SortOrder
+    usuarioId?: SortOrder
+    motivo?: SortOrder
+    payloadJson?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type AuditoriaPeriodoMaxOrderByAggregateInput = {
+    auditoriaId?: SortOrder
+    periodoId?: SortOrder
+    accion?: SortOrder
+    usuarioId?: SortOrder
+    motivo?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type AuditoriaPeriodoMinOrderByAggregateInput = {
+    auditoriaId?: SortOrder
+    periodoId?: SortOrder
+    accion?: SortOrder
+    usuarioId?: SortOrder
+    motivo?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type EnumAccionPeriodoWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.AccionPeriodo | EnumAccionPeriodoFieldRefInput<$PrismaModel>
+    in?: $Enums.AccionPeriodo[] | ListEnumAccionPeriodoFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AccionPeriodo[] | ListEnumAccionPeriodoFieldRefInput<$PrismaModel>
+    not?: NestedEnumAccionPeriodoWithAggregatesFilter<$PrismaModel> | $Enums.AccionPeriodo
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumAccionPeriodoFilter<$PrismaModel>
+    _max?: NestedEnumAccionPeriodoFilter<$PrismaModel>
+  }
+
   export type CompraProductoNullableScalarRelationFilter = {
     is?: CompraProductoWhereInput | null
     isNot?: CompraProductoWhereInput | null
@@ -146402,29 +156110,6 @@ export namespace Prisma {
   export type AlertHistorySumOrderByAggregateInput = {
     umbral?: SortOrder
   }
-  export type JsonNullableFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonNullableFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonNullableFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-  }
 
   export type AuditLogCountOrderByAggregateInput = {
     id?: SortOrder
@@ -146458,32 +156143,6 @@ export namespace Prisma {
     ip?: SortOrder
     userAgent?: SortOrder
     createdAt?: SortOrder
-  }
-  export type JsonNullableWithAggregatesFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonNullableWithAggregatesFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedJsonNullableFilter<$PrismaModel>
-    _max?: NestedJsonNullableFilter<$PrismaModel>
   }
 
   export type ReportHistoryCountOrderByAggregateInput = {
@@ -148982,6 +158641,170 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedEnumContextoAnticipoNullableFilter<$PrismaModel>
     _max?: NestedEnumContextoAnticipoNullableFilter<$PrismaModel>
+  }
+
+  export type EnumCriterioContableFilter<$PrismaModel = never> = {
+    equals?: $Enums.CriterioContable | EnumCriterioContableFieldRefInput<$PrismaModel>
+    in?: $Enums.CriterioContable[] | ListEnumCriterioContableFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CriterioContable[] | ListEnumCriterioContableFieldRefInput<$PrismaModel>
+    not?: NestedEnumCriterioContableFilter<$PrismaModel> | $Enums.CriterioContable
+  }
+
+  export type EnumNaturalezaEventoFilter<$PrismaModel = never> = {
+    equals?: $Enums.NaturalezaEvento | EnumNaturalezaEventoFieldRefInput<$PrismaModel>
+    in?: $Enums.NaturalezaEvento[] | ListEnumNaturalezaEventoFieldRefInput<$PrismaModel>
+    notIn?: $Enums.NaturalezaEvento[] | ListEnumNaturalezaEventoFieldRefInput<$PrismaModel>
+    not?: NestedEnumNaturalezaEventoFilter<$PrismaModel> | $Enums.NaturalezaEvento
+  }
+
+  export type EventoContableLineaListRelationFilter = {
+    every?: EventoContableLineaWhereInput
+    some?: EventoContableLineaWhereInput
+    none?: EventoContableLineaWhereInput
+  }
+
+  export type EventoContableLineaOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type EventoContableCountOrderByAggregateInput = {
+    eventoId?: SortOrder
+    fechaOperacion?: SortOrder
+    fechaRegistro?: SortOrder
+    origenTipo?: SortOrder
+    origenId?: SortOrder
+    criterio?: SortOrder
+    periodoDiarioId?: SortOrder
+    periodoMensualId?: SortOrder
+    periodoAnualId?: SortOrder
+    moneda?: SortOrder
+    monto?: SortOrder
+    montoConvertido?: SortOrder
+    naturaleza?: SortOrder
+    estado?: SortOrder
+    descripcion?: SortOrder
+    metadataJson?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EventoContableAvgOrderByAggregateInput = {
+    monto?: SortOrder
+    montoConvertido?: SortOrder
+  }
+
+  export type EventoContableMaxOrderByAggregateInput = {
+    eventoId?: SortOrder
+    fechaOperacion?: SortOrder
+    fechaRegistro?: SortOrder
+    origenTipo?: SortOrder
+    origenId?: SortOrder
+    criterio?: SortOrder
+    periodoDiarioId?: SortOrder
+    periodoMensualId?: SortOrder
+    periodoAnualId?: SortOrder
+    moneda?: SortOrder
+    monto?: SortOrder
+    montoConvertido?: SortOrder
+    naturaleza?: SortOrder
+    estado?: SortOrder
+    descripcion?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EventoContableMinOrderByAggregateInput = {
+    eventoId?: SortOrder
+    fechaOperacion?: SortOrder
+    fechaRegistro?: SortOrder
+    origenTipo?: SortOrder
+    origenId?: SortOrder
+    criterio?: SortOrder
+    periodoDiarioId?: SortOrder
+    periodoMensualId?: SortOrder
+    periodoAnualId?: SortOrder
+    moneda?: SortOrder
+    monto?: SortOrder
+    montoConvertido?: SortOrder
+    naturaleza?: SortOrder
+    estado?: SortOrder
+    descripcion?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EventoContableSumOrderByAggregateInput = {
+    monto?: SortOrder
+    montoConvertido?: SortOrder
+  }
+
+  export type EnumCriterioContableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.CriterioContable | EnumCriterioContableFieldRefInput<$PrismaModel>
+    in?: $Enums.CriterioContable[] | ListEnumCriterioContableFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CriterioContable[] | ListEnumCriterioContableFieldRefInput<$PrismaModel>
+    not?: NestedEnumCriterioContableWithAggregatesFilter<$PrismaModel> | $Enums.CriterioContable
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumCriterioContableFilter<$PrismaModel>
+    _max?: NestedEnumCriterioContableFilter<$PrismaModel>
+  }
+
+  export type EnumNaturalezaEventoWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.NaturalezaEvento | EnumNaturalezaEventoFieldRefInput<$PrismaModel>
+    in?: $Enums.NaturalezaEvento[] | ListEnumNaturalezaEventoFieldRefInput<$PrismaModel>
+    notIn?: $Enums.NaturalezaEvento[] | ListEnumNaturalezaEventoFieldRefInput<$PrismaModel>
+    not?: NestedEnumNaturalezaEventoWithAggregatesFilter<$PrismaModel> | $Enums.NaturalezaEvento
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumNaturalezaEventoFilter<$PrismaModel>
+    _max?: NestedEnumNaturalezaEventoFilter<$PrismaModel>
+  }
+
+  export type EventoContableScalarRelationFilter = {
+    is?: EventoContableWhereInput
+    isNot?: EventoContableWhereInput
+  }
+
+  export type EventoContableLineaCountOrderByAggregateInput = {
+    lineaId?: SortOrder
+    eventoId?: SortOrder
+    cuenta?: SortOrder
+    descripcion?: SortOrder
+    debito?: SortOrder
+    credito?: SortOrder
+    moneda?: SortOrder
+    metadataJson?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type EventoContableLineaAvgOrderByAggregateInput = {
+    debito?: SortOrder
+    credito?: SortOrder
+  }
+
+  export type EventoContableLineaMaxOrderByAggregateInput = {
+    lineaId?: SortOrder
+    eventoId?: SortOrder
+    cuenta?: SortOrder
+    descripcion?: SortOrder
+    debito?: SortOrder
+    credito?: SortOrder
+    moneda?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type EventoContableLineaMinOrderByAggregateInput = {
+    lineaId?: SortOrder
+    eventoId?: SortOrder
+    cuenta?: SortOrder
+    descripcion?: SortOrder
+    debito?: SortOrder
+    credito?: SortOrder
+    moneda?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type EventoContableLineaSumOrderByAggregateInput = {
+    debito?: SortOrder
+    credito?: SortOrder
   }
 
   export type CategoriaCreateNestedOneWithoutSubcategoriasInput = {
@@ -152777,6 +162600,234 @@ export namespace Prisma {
     update?: ReconciliacionGastoUpdateWithWhereUniqueWithoutPagoSalarioInput | ReconciliacionGastoUpdateWithWhereUniqueWithoutPagoSalarioInput[]
     updateMany?: ReconciliacionGastoUpdateManyWithWhereWithoutPagoSalarioInput | ReconciliacionGastoUpdateManyWithWhereWithoutPagoSalarioInput[]
     deleteMany?: ReconciliacionGastoScalarWhereInput | ReconciliacionGastoScalarWhereInput[]
+  }
+
+  export type PeriodoContableCreateNestedOneWithoutSubperiodosInput = {
+    create?: XOR<PeriodoContableCreateWithoutSubperiodosInput, PeriodoContableUncheckedCreateWithoutSubperiodosInput>
+    connectOrCreate?: PeriodoContableCreateOrConnectWithoutSubperiodosInput
+    connect?: PeriodoContableWhereUniqueInput
+  }
+
+  export type PeriodoContableCreateNestedManyWithoutPeriodoPadreInput = {
+    create?: XOR<PeriodoContableCreateWithoutPeriodoPadreInput, PeriodoContableUncheckedCreateWithoutPeriodoPadreInput> | PeriodoContableCreateWithoutPeriodoPadreInput[] | PeriodoContableUncheckedCreateWithoutPeriodoPadreInput[]
+    connectOrCreate?: PeriodoContableCreateOrConnectWithoutPeriodoPadreInput | PeriodoContableCreateOrConnectWithoutPeriodoPadreInput[]
+    createMany?: PeriodoContableCreateManyPeriodoPadreInputEnvelope
+    connect?: PeriodoContableWhereUniqueInput | PeriodoContableWhereUniqueInput[]
+  }
+
+  export type AperturaPeriodoCreateNestedOneWithoutPeriodoInput = {
+    create?: XOR<AperturaPeriodoCreateWithoutPeriodoInput, AperturaPeriodoUncheckedCreateWithoutPeriodoInput>
+    connectOrCreate?: AperturaPeriodoCreateOrConnectWithoutPeriodoInput
+    connect?: AperturaPeriodoWhereUniqueInput
+  }
+
+  export type SnapshotPeriodoCreateNestedManyWithoutPeriodoInput = {
+    create?: XOR<SnapshotPeriodoCreateWithoutPeriodoInput, SnapshotPeriodoUncheckedCreateWithoutPeriodoInput> | SnapshotPeriodoCreateWithoutPeriodoInput[] | SnapshotPeriodoUncheckedCreateWithoutPeriodoInput[]
+    connectOrCreate?: SnapshotPeriodoCreateOrConnectWithoutPeriodoInput | SnapshotPeriodoCreateOrConnectWithoutPeriodoInput[]
+    createMany?: SnapshotPeriodoCreateManyPeriodoInputEnvelope
+    connect?: SnapshotPeriodoWhereUniqueInput | SnapshotPeriodoWhereUniqueInput[]
+  }
+
+  export type AuditoriaPeriodoCreateNestedManyWithoutPeriodoInput = {
+    create?: XOR<AuditoriaPeriodoCreateWithoutPeriodoInput, AuditoriaPeriodoUncheckedCreateWithoutPeriodoInput> | AuditoriaPeriodoCreateWithoutPeriodoInput[] | AuditoriaPeriodoUncheckedCreateWithoutPeriodoInput[]
+    connectOrCreate?: AuditoriaPeriodoCreateOrConnectWithoutPeriodoInput | AuditoriaPeriodoCreateOrConnectWithoutPeriodoInput[]
+    createMany?: AuditoriaPeriodoCreateManyPeriodoInputEnvelope
+    connect?: AuditoriaPeriodoWhereUniqueInput | AuditoriaPeriodoWhereUniqueInput[]
+  }
+
+  export type PeriodoContableUncheckedCreateNestedManyWithoutPeriodoPadreInput = {
+    create?: XOR<PeriodoContableCreateWithoutPeriodoPadreInput, PeriodoContableUncheckedCreateWithoutPeriodoPadreInput> | PeriodoContableCreateWithoutPeriodoPadreInput[] | PeriodoContableUncheckedCreateWithoutPeriodoPadreInput[]
+    connectOrCreate?: PeriodoContableCreateOrConnectWithoutPeriodoPadreInput | PeriodoContableCreateOrConnectWithoutPeriodoPadreInput[]
+    createMany?: PeriodoContableCreateManyPeriodoPadreInputEnvelope
+    connect?: PeriodoContableWhereUniqueInput | PeriodoContableWhereUniqueInput[]
+  }
+
+  export type AperturaPeriodoUncheckedCreateNestedOneWithoutPeriodoInput = {
+    create?: XOR<AperturaPeriodoCreateWithoutPeriodoInput, AperturaPeriodoUncheckedCreateWithoutPeriodoInput>
+    connectOrCreate?: AperturaPeriodoCreateOrConnectWithoutPeriodoInput
+    connect?: AperturaPeriodoWhereUniqueInput
+  }
+
+  export type SnapshotPeriodoUncheckedCreateNestedManyWithoutPeriodoInput = {
+    create?: XOR<SnapshotPeriodoCreateWithoutPeriodoInput, SnapshotPeriodoUncheckedCreateWithoutPeriodoInput> | SnapshotPeriodoCreateWithoutPeriodoInput[] | SnapshotPeriodoUncheckedCreateWithoutPeriodoInput[]
+    connectOrCreate?: SnapshotPeriodoCreateOrConnectWithoutPeriodoInput | SnapshotPeriodoCreateOrConnectWithoutPeriodoInput[]
+    createMany?: SnapshotPeriodoCreateManyPeriodoInputEnvelope
+    connect?: SnapshotPeriodoWhereUniqueInput | SnapshotPeriodoWhereUniqueInput[]
+  }
+
+  export type AuditoriaPeriodoUncheckedCreateNestedManyWithoutPeriodoInput = {
+    create?: XOR<AuditoriaPeriodoCreateWithoutPeriodoInput, AuditoriaPeriodoUncheckedCreateWithoutPeriodoInput> | AuditoriaPeriodoCreateWithoutPeriodoInput[] | AuditoriaPeriodoUncheckedCreateWithoutPeriodoInput[]
+    connectOrCreate?: AuditoriaPeriodoCreateOrConnectWithoutPeriodoInput | AuditoriaPeriodoCreateOrConnectWithoutPeriodoInput[]
+    createMany?: AuditoriaPeriodoCreateManyPeriodoInputEnvelope
+    connect?: AuditoriaPeriodoWhereUniqueInput | AuditoriaPeriodoWhereUniqueInput[]
+  }
+
+  export type EnumTipoPeriodoFieldUpdateOperationsInput = {
+    set?: $Enums.TipoPeriodo
+  }
+
+  export type EnumEstadoPeriodoFieldUpdateOperationsInput = {
+    set?: $Enums.EstadoPeriodo
+  }
+
+  export type PeriodoContableUpdateOneWithoutSubperiodosNestedInput = {
+    create?: XOR<PeriodoContableCreateWithoutSubperiodosInput, PeriodoContableUncheckedCreateWithoutSubperiodosInput>
+    connectOrCreate?: PeriodoContableCreateOrConnectWithoutSubperiodosInput
+    upsert?: PeriodoContableUpsertWithoutSubperiodosInput
+    disconnect?: PeriodoContableWhereInput | boolean
+    delete?: PeriodoContableWhereInput | boolean
+    connect?: PeriodoContableWhereUniqueInput
+    update?: XOR<XOR<PeriodoContableUpdateToOneWithWhereWithoutSubperiodosInput, PeriodoContableUpdateWithoutSubperiodosInput>, PeriodoContableUncheckedUpdateWithoutSubperiodosInput>
+  }
+
+  export type PeriodoContableUpdateManyWithoutPeriodoPadreNestedInput = {
+    create?: XOR<PeriodoContableCreateWithoutPeriodoPadreInput, PeriodoContableUncheckedCreateWithoutPeriodoPadreInput> | PeriodoContableCreateWithoutPeriodoPadreInput[] | PeriodoContableUncheckedCreateWithoutPeriodoPadreInput[]
+    connectOrCreate?: PeriodoContableCreateOrConnectWithoutPeriodoPadreInput | PeriodoContableCreateOrConnectWithoutPeriodoPadreInput[]
+    upsert?: PeriodoContableUpsertWithWhereUniqueWithoutPeriodoPadreInput | PeriodoContableUpsertWithWhereUniqueWithoutPeriodoPadreInput[]
+    createMany?: PeriodoContableCreateManyPeriodoPadreInputEnvelope
+    set?: PeriodoContableWhereUniqueInput | PeriodoContableWhereUniqueInput[]
+    disconnect?: PeriodoContableWhereUniqueInput | PeriodoContableWhereUniqueInput[]
+    delete?: PeriodoContableWhereUniqueInput | PeriodoContableWhereUniqueInput[]
+    connect?: PeriodoContableWhereUniqueInput | PeriodoContableWhereUniqueInput[]
+    update?: PeriodoContableUpdateWithWhereUniqueWithoutPeriodoPadreInput | PeriodoContableUpdateWithWhereUniqueWithoutPeriodoPadreInput[]
+    updateMany?: PeriodoContableUpdateManyWithWhereWithoutPeriodoPadreInput | PeriodoContableUpdateManyWithWhereWithoutPeriodoPadreInput[]
+    deleteMany?: PeriodoContableScalarWhereInput | PeriodoContableScalarWhereInput[]
+  }
+
+  export type AperturaPeriodoUpdateOneWithoutPeriodoNestedInput = {
+    create?: XOR<AperturaPeriodoCreateWithoutPeriodoInput, AperturaPeriodoUncheckedCreateWithoutPeriodoInput>
+    connectOrCreate?: AperturaPeriodoCreateOrConnectWithoutPeriodoInput
+    upsert?: AperturaPeriodoUpsertWithoutPeriodoInput
+    disconnect?: AperturaPeriodoWhereInput | boolean
+    delete?: AperturaPeriodoWhereInput | boolean
+    connect?: AperturaPeriodoWhereUniqueInput
+    update?: XOR<XOR<AperturaPeriodoUpdateToOneWithWhereWithoutPeriodoInput, AperturaPeriodoUpdateWithoutPeriodoInput>, AperturaPeriodoUncheckedUpdateWithoutPeriodoInput>
+  }
+
+  export type SnapshotPeriodoUpdateManyWithoutPeriodoNestedInput = {
+    create?: XOR<SnapshotPeriodoCreateWithoutPeriodoInput, SnapshotPeriodoUncheckedCreateWithoutPeriodoInput> | SnapshotPeriodoCreateWithoutPeriodoInput[] | SnapshotPeriodoUncheckedCreateWithoutPeriodoInput[]
+    connectOrCreate?: SnapshotPeriodoCreateOrConnectWithoutPeriodoInput | SnapshotPeriodoCreateOrConnectWithoutPeriodoInput[]
+    upsert?: SnapshotPeriodoUpsertWithWhereUniqueWithoutPeriodoInput | SnapshotPeriodoUpsertWithWhereUniqueWithoutPeriodoInput[]
+    createMany?: SnapshotPeriodoCreateManyPeriodoInputEnvelope
+    set?: SnapshotPeriodoWhereUniqueInput | SnapshotPeriodoWhereUniqueInput[]
+    disconnect?: SnapshotPeriodoWhereUniqueInput | SnapshotPeriodoWhereUniqueInput[]
+    delete?: SnapshotPeriodoWhereUniqueInput | SnapshotPeriodoWhereUniqueInput[]
+    connect?: SnapshotPeriodoWhereUniqueInput | SnapshotPeriodoWhereUniqueInput[]
+    update?: SnapshotPeriodoUpdateWithWhereUniqueWithoutPeriodoInput | SnapshotPeriodoUpdateWithWhereUniqueWithoutPeriodoInput[]
+    updateMany?: SnapshotPeriodoUpdateManyWithWhereWithoutPeriodoInput | SnapshotPeriodoUpdateManyWithWhereWithoutPeriodoInput[]
+    deleteMany?: SnapshotPeriodoScalarWhereInput | SnapshotPeriodoScalarWhereInput[]
+  }
+
+  export type AuditoriaPeriodoUpdateManyWithoutPeriodoNestedInput = {
+    create?: XOR<AuditoriaPeriodoCreateWithoutPeriodoInput, AuditoriaPeriodoUncheckedCreateWithoutPeriodoInput> | AuditoriaPeriodoCreateWithoutPeriodoInput[] | AuditoriaPeriodoUncheckedCreateWithoutPeriodoInput[]
+    connectOrCreate?: AuditoriaPeriodoCreateOrConnectWithoutPeriodoInput | AuditoriaPeriodoCreateOrConnectWithoutPeriodoInput[]
+    upsert?: AuditoriaPeriodoUpsertWithWhereUniqueWithoutPeriodoInput | AuditoriaPeriodoUpsertWithWhereUniqueWithoutPeriodoInput[]
+    createMany?: AuditoriaPeriodoCreateManyPeriodoInputEnvelope
+    set?: AuditoriaPeriodoWhereUniqueInput | AuditoriaPeriodoWhereUniqueInput[]
+    disconnect?: AuditoriaPeriodoWhereUniqueInput | AuditoriaPeriodoWhereUniqueInput[]
+    delete?: AuditoriaPeriodoWhereUniqueInput | AuditoriaPeriodoWhereUniqueInput[]
+    connect?: AuditoriaPeriodoWhereUniqueInput | AuditoriaPeriodoWhereUniqueInput[]
+    update?: AuditoriaPeriodoUpdateWithWhereUniqueWithoutPeriodoInput | AuditoriaPeriodoUpdateWithWhereUniqueWithoutPeriodoInput[]
+    updateMany?: AuditoriaPeriodoUpdateManyWithWhereWithoutPeriodoInput | AuditoriaPeriodoUpdateManyWithWhereWithoutPeriodoInput[]
+    deleteMany?: AuditoriaPeriodoScalarWhereInput | AuditoriaPeriodoScalarWhereInput[]
+  }
+
+  export type PeriodoContableUncheckedUpdateManyWithoutPeriodoPadreNestedInput = {
+    create?: XOR<PeriodoContableCreateWithoutPeriodoPadreInput, PeriodoContableUncheckedCreateWithoutPeriodoPadreInput> | PeriodoContableCreateWithoutPeriodoPadreInput[] | PeriodoContableUncheckedCreateWithoutPeriodoPadreInput[]
+    connectOrCreate?: PeriodoContableCreateOrConnectWithoutPeriodoPadreInput | PeriodoContableCreateOrConnectWithoutPeriodoPadreInput[]
+    upsert?: PeriodoContableUpsertWithWhereUniqueWithoutPeriodoPadreInput | PeriodoContableUpsertWithWhereUniqueWithoutPeriodoPadreInput[]
+    createMany?: PeriodoContableCreateManyPeriodoPadreInputEnvelope
+    set?: PeriodoContableWhereUniqueInput | PeriodoContableWhereUniqueInput[]
+    disconnect?: PeriodoContableWhereUniqueInput | PeriodoContableWhereUniqueInput[]
+    delete?: PeriodoContableWhereUniqueInput | PeriodoContableWhereUniqueInput[]
+    connect?: PeriodoContableWhereUniqueInput | PeriodoContableWhereUniqueInput[]
+    update?: PeriodoContableUpdateWithWhereUniqueWithoutPeriodoPadreInput | PeriodoContableUpdateWithWhereUniqueWithoutPeriodoPadreInput[]
+    updateMany?: PeriodoContableUpdateManyWithWhereWithoutPeriodoPadreInput | PeriodoContableUpdateManyWithWhereWithoutPeriodoPadreInput[]
+    deleteMany?: PeriodoContableScalarWhereInput | PeriodoContableScalarWhereInput[]
+  }
+
+  export type AperturaPeriodoUncheckedUpdateOneWithoutPeriodoNestedInput = {
+    create?: XOR<AperturaPeriodoCreateWithoutPeriodoInput, AperturaPeriodoUncheckedCreateWithoutPeriodoInput>
+    connectOrCreate?: AperturaPeriodoCreateOrConnectWithoutPeriodoInput
+    upsert?: AperturaPeriodoUpsertWithoutPeriodoInput
+    disconnect?: AperturaPeriodoWhereInput | boolean
+    delete?: AperturaPeriodoWhereInput | boolean
+    connect?: AperturaPeriodoWhereUniqueInput
+    update?: XOR<XOR<AperturaPeriodoUpdateToOneWithWhereWithoutPeriodoInput, AperturaPeriodoUpdateWithoutPeriodoInput>, AperturaPeriodoUncheckedUpdateWithoutPeriodoInput>
+  }
+
+  export type SnapshotPeriodoUncheckedUpdateManyWithoutPeriodoNestedInput = {
+    create?: XOR<SnapshotPeriodoCreateWithoutPeriodoInput, SnapshotPeriodoUncheckedCreateWithoutPeriodoInput> | SnapshotPeriodoCreateWithoutPeriodoInput[] | SnapshotPeriodoUncheckedCreateWithoutPeriodoInput[]
+    connectOrCreate?: SnapshotPeriodoCreateOrConnectWithoutPeriodoInput | SnapshotPeriodoCreateOrConnectWithoutPeriodoInput[]
+    upsert?: SnapshotPeriodoUpsertWithWhereUniqueWithoutPeriodoInput | SnapshotPeriodoUpsertWithWhereUniqueWithoutPeriodoInput[]
+    createMany?: SnapshotPeriodoCreateManyPeriodoInputEnvelope
+    set?: SnapshotPeriodoWhereUniqueInput | SnapshotPeriodoWhereUniqueInput[]
+    disconnect?: SnapshotPeriodoWhereUniqueInput | SnapshotPeriodoWhereUniqueInput[]
+    delete?: SnapshotPeriodoWhereUniqueInput | SnapshotPeriodoWhereUniqueInput[]
+    connect?: SnapshotPeriodoWhereUniqueInput | SnapshotPeriodoWhereUniqueInput[]
+    update?: SnapshotPeriodoUpdateWithWhereUniqueWithoutPeriodoInput | SnapshotPeriodoUpdateWithWhereUniqueWithoutPeriodoInput[]
+    updateMany?: SnapshotPeriodoUpdateManyWithWhereWithoutPeriodoInput | SnapshotPeriodoUpdateManyWithWhereWithoutPeriodoInput[]
+    deleteMany?: SnapshotPeriodoScalarWhereInput | SnapshotPeriodoScalarWhereInput[]
+  }
+
+  export type AuditoriaPeriodoUncheckedUpdateManyWithoutPeriodoNestedInput = {
+    create?: XOR<AuditoriaPeriodoCreateWithoutPeriodoInput, AuditoriaPeriodoUncheckedCreateWithoutPeriodoInput> | AuditoriaPeriodoCreateWithoutPeriodoInput[] | AuditoriaPeriodoUncheckedCreateWithoutPeriodoInput[]
+    connectOrCreate?: AuditoriaPeriodoCreateOrConnectWithoutPeriodoInput | AuditoriaPeriodoCreateOrConnectWithoutPeriodoInput[]
+    upsert?: AuditoriaPeriodoUpsertWithWhereUniqueWithoutPeriodoInput | AuditoriaPeriodoUpsertWithWhereUniqueWithoutPeriodoInput[]
+    createMany?: AuditoriaPeriodoCreateManyPeriodoInputEnvelope
+    set?: AuditoriaPeriodoWhereUniqueInput | AuditoriaPeriodoWhereUniqueInput[]
+    disconnect?: AuditoriaPeriodoWhereUniqueInput | AuditoriaPeriodoWhereUniqueInput[]
+    delete?: AuditoriaPeriodoWhereUniqueInput | AuditoriaPeriodoWhereUniqueInput[]
+    connect?: AuditoriaPeriodoWhereUniqueInput | AuditoriaPeriodoWhereUniqueInput[]
+    update?: AuditoriaPeriodoUpdateWithWhereUniqueWithoutPeriodoInput | AuditoriaPeriodoUpdateWithWhereUniqueWithoutPeriodoInput[]
+    updateMany?: AuditoriaPeriodoUpdateManyWithWhereWithoutPeriodoInput | AuditoriaPeriodoUpdateManyWithWhereWithoutPeriodoInput[]
+    deleteMany?: AuditoriaPeriodoScalarWhereInput | AuditoriaPeriodoScalarWhereInput[]
+  }
+
+  export type PeriodoContableCreateNestedOneWithoutAperturaInput = {
+    create?: XOR<PeriodoContableCreateWithoutAperturaInput, PeriodoContableUncheckedCreateWithoutAperturaInput>
+    connectOrCreate?: PeriodoContableCreateOrConnectWithoutAperturaInput
+    connect?: PeriodoContableWhereUniqueInput
+  }
+
+  export type PeriodoContableUpdateOneRequiredWithoutAperturaNestedInput = {
+    create?: XOR<PeriodoContableCreateWithoutAperturaInput, PeriodoContableUncheckedCreateWithoutAperturaInput>
+    connectOrCreate?: PeriodoContableCreateOrConnectWithoutAperturaInput
+    upsert?: PeriodoContableUpsertWithoutAperturaInput
+    connect?: PeriodoContableWhereUniqueInput
+    update?: XOR<XOR<PeriodoContableUpdateToOneWithWhereWithoutAperturaInput, PeriodoContableUpdateWithoutAperturaInput>, PeriodoContableUncheckedUpdateWithoutAperturaInput>
+  }
+
+  export type PeriodoContableCreateNestedOneWithoutSnapshotsInput = {
+    create?: XOR<PeriodoContableCreateWithoutSnapshotsInput, PeriodoContableUncheckedCreateWithoutSnapshotsInput>
+    connectOrCreate?: PeriodoContableCreateOrConnectWithoutSnapshotsInput
+    connect?: PeriodoContableWhereUniqueInput
+  }
+
+  export type PeriodoContableUpdateOneRequiredWithoutSnapshotsNestedInput = {
+    create?: XOR<PeriodoContableCreateWithoutSnapshotsInput, PeriodoContableUncheckedCreateWithoutSnapshotsInput>
+    connectOrCreate?: PeriodoContableCreateOrConnectWithoutSnapshotsInput
+    upsert?: PeriodoContableUpsertWithoutSnapshotsInput
+    connect?: PeriodoContableWhereUniqueInput
+    update?: XOR<XOR<PeriodoContableUpdateToOneWithWhereWithoutSnapshotsInput, PeriodoContableUpdateWithoutSnapshotsInput>, PeriodoContableUncheckedUpdateWithoutSnapshotsInput>
+  }
+
+  export type PeriodoContableCreateNestedOneWithoutAuditoriasInput = {
+    create?: XOR<PeriodoContableCreateWithoutAuditoriasInput, PeriodoContableUncheckedCreateWithoutAuditoriasInput>
+    connectOrCreate?: PeriodoContableCreateOrConnectWithoutAuditoriasInput
+    connect?: PeriodoContableWhereUniqueInput
+  }
+
+  export type EnumAccionPeriodoFieldUpdateOperationsInput = {
+    set?: $Enums.AccionPeriodo
+  }
+
+  export type PeriodoContableUpdateOneRequiredWithoutAuditoriasNestedInput = {
+    create?: XOR<PeriodoContableCreateWithoutAuditoriasInput, PeriodoContableUncheckedCreateWithoutAuditoriasInput>
+    connectOrCreate?: PeriodoContableCreateOrConnectWithoutAuditoriasInput
+    upsert?: PeriodoContableUpsertWithoutAuditoriasInput
+    connect?: PeriodoContableWhereUniqueInput
+    update?: XOR<XOR<PeriodoContableUpdateToOneWithWhereWithoutAuditoriasInput, PeriodoContableUpdateWithoutAuditoriasInput>, PeriodoContableUncheckedUpdateWithoutAuditoriasInput>
   }
 
   export type CompraProductoCreateNestedOneWithoutGastoCompraInput = {
@@ -157055,6 +167106,70 @@ export namespace Prisma {
     update?: XOR<XOR<AnticipoUpdateToOneWithWhereWithoutMovimientosInput, AnticipoUpdateWithoutMovimientosInput>, AnticipoUncheckedUpdateWithoutMovimientosInput>
   }
 
+  export type EventoContableLineaCreateNestedManyWithoutEventoInput = {
+    create?: XOR<EventoContableLineaCreateWithoutEventoInput, EventoContableLineaUncheckedCreateWithoutEventoInput> | EventoContableLineaCreateWithoutEventoInput[] | EventoContableLineaUncheckedCreateWithoutEventoInput[]
+    connectOrCreate?: EventoContableLineaCreateOrConnectWithoutEventoInput | EventoContableLineaCreateOrConnectWithoutEventoInput[]
+    createMany?: EventoContableLineaCreateManyEventoInputEnvelope
+    connect?: EventoContableLineaWhereUniqueInput | EventoContableLineaWhereUniqueInput[]
+  }
+
+  export type EventoContableLineaUncheckedCreateNestedManyWithoutEventoInput = {
+    create?: XOR<EventoContableLineaCreateWithoutEventoInput, EventoContableLineaUncheckedCreateWithoutEventoInput> | EventoContableLineaCreateWithoutEventoInput[] | EventoContableLineaUncheckedCreateWithoutEventoInput[]
+    connectOrCreate?: EventoContableLineaCreateOrConnectWithoutEventoInput | EventoContableLineaCreateOrConnectWithoutEventoInput[]
+    createMany?: EventoContableLineaCreateManyEventoInputEnvelope
+    connect?: EventoContableLineaWhereUniqueInput | EventoContableLineaWhereUniqueInput[]
+  }
+
+  export type EnumCriterioContableFieldUpdateOperationsInput = {
+    set?: $Enums.CriterioContable
+  }
+
+  export type EnumNaturalezaEventoFieldUpdateOperationsInput = {
+    set?: $Enums.NaturalezaEvento
+  }
+
+  export type EventoContableLineaUpdateManyWithoutEventoNestedInput = {
+    create?: XOR<EventoContableLineaCreateWithoutEventoInput, EventoContableLineaUncheckedCreateWithoutEventoInput> | EventoContableLineaCreateWithoutEventoInput[] | EventoContableLineaUncheckedCreateWithoutEventoInput[]
+    connectOrCreate?: EventoContableLineaCreateOrConnectWithoutEventoInput | EventoContableLineaCreateOrConnectWithoutEventoInput[]
+    upsert?: EventoContableLineaUpsertWithWhereUniqueWithoutEventoInput | EventoContableLineaUpsertWithWhereUniqueWithoutEventoInput[]
+    createMany?: EventoContableLineaCreateManyEventoInputEnvelope
+    set?: EventoContableLineaWhereUniqueInput | EventoContableLineaWhereUniqueInput[]
+    disconnect?: EventoContableLineaWhereUniqueInput | EventoContableLineaWhereUniqueInput[]
+    delete?: EventoContableLineaWhereUniqueInput | EventoContableLineaWhereUniqueInput[]
+    connect?: EventoContableLineaWhereUniqueInput | EventoContableLineaWhereUniqueInput[]
+    update?: EventoContableLineaUpdateWithWhereUniqueWithoutEventoInput | EventoContableLineaUpdateWithWhereUniqueWithoutEventoInput[]
+    updateMany?: EventoContableLineaUpdateManyWithWhereWithoutEventoInput | EventoContableLineaUpdateManyWithWhereWithoutEventoInput[]
+    deleteMany?: EventoContableLineaScalarWhereInput | EventoContableLineaScalarWhereInput[]
+  }
+
+  export type EventoContableLineaUncheckedUpdateManyWithoutEventoNestedInput = {
+    create?: XOR<EventoContableLineaCreateWithoutEventoInput, EventoContableLineaUncheckedCreateWithoutEventoInput> | EventoContableLineaCreateWithoutEventoInput[] | EventoContableLineaUncheckedCreateWithoutEventoInput[]
+    connectOrCreate?: EventoContableLineaCreateOrConnectWithoutEventoInput | EventoContableLineaCreateOrConnectWithoutEventoInput[]
+    upsert?: EventoContableLineaUpsertWithWhereUniqueWithoutEventoInput | EventoContableLineaUpsertWithWhereUniqueWithoutEventoInput[]
+    createMany?: EventoContableLineaCreateManyEventoInputEnvelope
+    set?: EventoContableLineaWhereUniqueInput | EventoContableLineaWhereUniqueInput[]
+    disconnect?: EventoContableLineaWhereUniqueInput | EventoContableLineaWhereUniqueInput[]
+    delete?: EventoContableLineaWhereUniqueInput | EventoContableLineaWhereUniqueInput[]
+    connect?: EventoContableLineaWhereUniqueInput | EventoContableLineaWhereUniqueInput[]
+    update?: EventoContableLineaUpdateWithWhereUniqueWithoutEventoInput | EventoContableLineaUpdateWithWhereUniqueWithoutEventoInput[]
+    updateMany?: EventoContableLineaUpdateManyWithWhereWithoutEventoInput | EventoContableLineaUpdateManyWithWhereWithoutEventoInput[]
+    deleteMany?: EventoContableLineaScalarWhereInput | EventoContableLineaScalarWhereInput[]
+  }
+
+  export type EventoContableCreateNestedOneWithoutLineasInput = {
+    create?: XOR<EventoContableCreateWithoutLineasInput, EventoContableUncheckedCreateWithoutLineasInput>
+    connectOrCreate?: EventoContableCreateOrConnectWithoutLineasInput
+    connect?: EventoContableWhereUniqueInput
+  }
+
+  export type EventoContableUpdateOneRequiredWithoutLineasNestedInput = {
+    create?: XOR<EventoContableCreateWithoutLineasInput, EventoContableUncheckedCreateWithoutLineasInput>
+    connectOrCreate?: EventoContableCreateOrConnectWithoutLineasInput
+    upsert?: EventoContableUpsertWithoutLineasInput
+    connect?: EventoContableWhereUniqueInput
+    update?: XOR<XOR<EventoContableUpdateToOneWithWhereWithoutLineasInput, EventoContableUpdateWithoutLineasInput>, EventoContableUncheckedUpdateWithoutLineasInput>
+  }
+
   export type NestedStringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -157344,6 +167459,80 @@ export namespace Prisma {
     _max?: NestedBoolFilter<$PrismaModel>
   }
 
+  export type NestedEnumTipoPeriodoFilter<$PrismaModel = never> = {
+    equals?: $Enums.TipoPeriodo | EnumTipoPeriodoFieldRefInput<$PrismaModel>
+    in?: $Enums.TipoPeriodo[] | ListEnumTipoPeriodoFieldRefInput<$PrismaModel>
+    notIn?: $Enums.TipoPeriodo[] | ListEnumTipoPeriodoFieldRefInput<$PrismaModel>
+    not?: NestedEnumTipoPeriodoFilter<$PrismaModel> | $Enums.TipoPeriodo
+  }
+
+  export type NestedEnumEstadoPeriodoFilter<$PrismaModel = never> = {
+    equals?: $Enums.EstadoPeriodo | EnumEstadoPeriodoFieldRefInput<$PrismaModel>
+    in?: $Enums.EstadoPeriodo[] | ListEnumEstadoPeriodoFieldRefInput<$PrismaModel>
+    notIn?: $Enums.EstadoPeriodo[] | ListEnumEstadoPeriodoFieldRefInput<$PrismaModel>
+    not?: NestedEnumEstadoPeriodoFilter<$PrismaModel> | $Enums.EstadoPeriodo
+  }
+
+  export type NestedEnumTipoPeriodoWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.TipoPeriodo | EnumTipoPeriodoFieldRefInput<$PrismaModel>
+    in?: $Enums.TipoPeriodo[] | ListEnumTipoPeriodoFieldRefInput<$PrismaModel>
+    notIn?: $Enums.TipoPeriodo[] | ListEnumTipoPeriodoFieldRefInput<$PrismaModel>
+    not?: NestedEnumTipoPeriodoWithAggregatesFilter<$PrismaModel> | $Enums.TipoPeriodo
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumTipoPeriodoFilter<$PrismaModel>
+    _max?: NestedEnumTipoPeriodoFilter<$PrismaModel>
+  }
+
+  export type NestedEnumEstadoPeriodoWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.EstadoPeriodo | EnumEstadoPeriodoFieldRefInput<$PrismaModel>
+    in?: $Enums.EstadoPeriodo[] | ListEnumEstadoPeriodoFieldRefInput<$PrismaModel>
+    notIn?: $Enums.EstadoPeriodo[] | ListEnumEstadoPeriodoFieldRefInput<$PrismaModel>
+    not?: NestedEnumEstadoPeriodoWithAggregatesFilter<$PrismaModel> | $Enums.EstadoPeriodo
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumEstadoPeriodoFilter<$PrismaModel>
+    _max?: NestedEnumEstadoPeriodoFilter<$PrismaModel>
+  }
+  export type NestedJsonNullableFilter<$PrismaModel = never> =
+    | PatchUndefined<
+        Either<Required<NestedJsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<NestedJsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type NestedJsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
+
+  export type NestedEnumAccionPeriodoFilter<$PrismaModel = never> = {
+    equals?: $Enums.AccionPeriodo | EnumAccionPeriodoFieldRefInput<$PrismaModel>
+    in?: $Enums.AccionPeriodo[] | ListEnumAccionPeriodoFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AccionPeriodo[] | ListEnumAccionPeriodoFieldRefInput<$PrismaModel>
+    not?: NestedEnumAccionPeriodoFilter<$PrismaModel> | $Enums.AccionPeriodo
+  }
+
+  export type NestedEnumAccionPeriodoWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.AccionPeriodo | EnumAccionPeriodoFieldRefInput<$PrismaModel>
+    in?: $Enums.AccionPeriodo[] | ListEnumAccionPeriodoFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AccionPeriodo[] | ListEnumAccionPeriodoFieldRefInput<$PrismaModel>
+    not?: NestedEnumAccionPeriodoWithAggregatesFilter<$PrismaModel> | $Enums.AccionPeriodo
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumAccionPeriodoFilter<$PrismaModel>
+    _max?: NestedEnumAccionPeriodoFilter<$PrismaModel>
+  }
+
   export type NestedBoolNullableFilter<$PrismaModel = never> = {
     equals?: boolean | BooleanFieldRefInput<$PrismaModel> | null
     not?: NestedBoolNullableFilter<$PrismaModel> | boolean | null
@@ -157371,29 +167560,6 @@ export namespace Prisma {
     _sum?: NestedFloatFilter<$PrismaModel>
     _min?: NestedFloatFilter<$PrismaModel>
     _max?: NestedFloatFilter<$PrismaModel>
-  }
-  export type NestedJsonNullableFilter<$PrismaModel = never> =
-    | PatchUndefined<
-        Either<Required<NestedJsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>,
-        Required<NestedJsonNullableFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<NestedJsonNullableFilterBase<$PrismaModel>>, 'path'>>
-
-  export type NestedJsonNullableFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    mode?: QueryMode | EnumQueryModeFieldRefInput<$PrismaModel>
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
   }
 
   export type NestedEnumEstadoContratoFilter<$PrismaModel = never> = {
@@ -157688,6 +167854,40 @@ export namespace Prisma {
     _count?: NestedIntNullableFilter<$PrismaModel>
     _min?: NestedEnumContextoAnticipoNullableFilter<$PrismaModel>
     _max?: NestedEnumContextoAnticipoNullableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumCriterioContableFilter<$PrismaModel = never> = {
+    equals?: $Enums.CriterioContable | EnumCriterioContableFieldRefInput<$PrismaModel>
+    in?: $Enums.CriterioContable[] | ListEnumCriterioContableFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CriterioContable[] | ListEnumCriterioContableFieldRefInput<$PrismaModel>
+    not?: NestedEnumCriterioContableFilter<$PrismaModel> | $Enums.CriterioContable
+  }
+
+  export type NestedEnumNaturalezaEventoFilter<$PrismaModel = never> = {
+    equals?: $Enums.NaturalezaEvento | EnumNaturalezaEventoFieldRefInput<$PrismaModel>
+    in?: $Enums.NaturalezaEvento[] | ListEnumNaturalezaEventoFieldRefInput<$PrismaModel>
+    notIn?: $Enums.NaturalezaEvento[] | ListEnumNaturalezaEventoFieldRefInput<$PrismaModel>
+    not?: NestedEnumNaturalezaEventoFilter<$PrismaModel> | $Enums.NaturalezaEvento
+  }
+
+  export type NestedEnumCriterioContableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.CriterioContable | EnumCriterioContableFieldRefInput<$PrismaModel>
+    in?: $Enums.CriterioContable[] | ListEnumCriterioContableFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CriterioContable[] | ListEnumCriterioContableFieldRefInput<$PrismaModel>
+    not?: NestedEnumCriterioContableWithAggregatesFilter<$PrismaModel> | $Enums.CriterioContable
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumCriterioContableFilter<$PrismaModel>
+    _max?: NestedEnumCriterioContableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumNaturalezaEventoWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.NaturalezaEvento | EnumNaturalezaEventoFieldRefInput<$PrismaModel>
+    in?: $Enums.NaturalezaEvento[] | ListEnumNaturalezaEventoFieldRefInput<$PrismaModel>
+    notIn?: $Enums.NaturalezaEvento[] | ListEnumNaturalezaEventoFieldRefInput<$PrismaModel>
+    not?: NestedEnumNaturalezaEventoWithAggregatesFilter<$PrismaModel> | $Enums.NaturalezaEvento
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumNaturalezaEventoFilter<$PrismaModel>
+    _max?: NestedEnumNaturalezaEventoFilter<$PrismaModel>
   }
 
   export type CategoriaCreateWithoutSubcategoriasInput = {
@@ -167826,6 +178026,786 @@ export namespace Prisma {
     gastosDEId?: StringNullableFilter<"ReconciliacionGasto"> | string | null
     isReconciliada?: BoolNullableFilter<"ReconciliacionGasto"> | boolean | null
     pgId?: StringNullableFilter<"ReconciliacionGasto"> | string | null
+  }
+
+  export type PeriodoContableCreateWithoutSubperiodosInput = {
+    periodoId?: string
+    tipo: $Enums.TipoPeriodo
+    codigo: string
+    fechaInicio: Date | string
+    fechaFin: Date | string
+    estado?: $Enums.EstadoPeriodo
+    aperturaAutomatica?: boolean
+    cierreAutomatico?: boolean
+    abiertoPorId?: string | null
+    cerradoPorId?: string | null
+    aprobadoPorId?: string | null
+    reabiertoPorId?: string | null
+    fechaApertura?: Date | string | null
+    fechaCierre?: Date | string | null
+    fechaAprobacion?: Date | string | null
+    fechaReapertura?: Date | string | null
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    periodoPadre?: PeriodoContableCreateNestedOneWithoutSubperiodosInput
+    apertura?: AperturaPeriodoCreateNestedOneWithoutPeriodoInput
+    snapshots?: SnapshotPeriodoCreateNestedManyWithoutPeriodoInput
+    auditorias?: AuditoriaPeriodoCreateNestedManyWithoutPeriodoInput
+  }
+
+  export type PeriodoContableUncheckedCreateWithoutSubperiodosInput = {
+    periodoId?: string
+    tipo: $Enums.TipoPeriodo
+    codigo: string
+    fechaInicio: Date | string
+    fechaFin: Date | string
+    estado?: $Enums.EstadoPeriodo
+    periodoPadreId?: string | null
+    aperturaAutomatica?: boolean
+    cierreAutomatico?: boolean
+    abiertoPorId?: string | null
+    cerradoPorId?: string | null
+    aprobadoPorId?: string | null
+    reabiertoPorId?: string | null
+    fechaApertura?: Date | string | null
+    fechaCierre?: Date | string | null
+    fechaAprobacion?: Date | string | null
+    fechaReapertura?: Date | string | null
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    apertura?: AperturaPeriodoUncheckedCreateNestedOneWithoutPeriodoInput
+    snapshots?: SnapshotPeriodoUncheckedCreateNestedManyWithoutPeriodoInput
+    auditorias?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutPeriodoInput
+  }
+
+  export type PeriodoContableCreateOrConnectWithoutSubperiodosInput = {
+    where: PeriodoContableWhereUniqueInput
+    create: XOR<PeriodoContableCreateWithoutSubperiodosInput, PeriodoContableUncheckedCreateWithoutSubperiodosInput>
+  }
+
+  export type PeriodoContableCreateWithoutPeriodoPadreInput = {
+    periodoId?: string
+    tipo: $Enums.TipoPeriodo
+    codigo: string
+    fechaInicio: Date | string
+    fechaFin: Date | string
+    estado?: $Enums.EstadoPeriodo
+    aperturaAutomatica?: boolean
+    cierreAutomatico?: boolean
+    abiertoPorId?: string | null
+    cerradoPorId?: string | null
+    aprobadoPorId?: string | null
+    reabiertoPorId?: string | null
+    fechaApertura?: Date | string | null
+    fechaCierre?: Date | string | null
+    fechaAprobacion?: Date | string | null
+    fechaReapertura?: Date | string | null
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    subperiodos?: PeriodoContableCreateNestedManyWithoutPeriodoPadreInput
+    apertura?: AperturaPeriodoCreateNestedOneWithoutPeriodoInput
+    snapshots?: SnapshotPeriodoCreateNestedManyWithoutPeriodoInput
+    auditorias?: AuditoriaPeriodoCreateNestedManyWithoutPeriodoInput
+  }
+
+  export type PeriodoContableUncheckedCreateWithoutPeriodoPadreInput = {
+    periodoId?: string
+    tipo: $Enums.TipoPeriodo
+    codigo: string
+    fechaInicio: Date | string
+    fechaFin: Date | string
+    estado?: $Enums.EstadoPeriodo
+    aperturaAutomatica?: boolean
+    cierreAutomatico?: boolean
+    abiertoPorId?: string | null
+    cerradoPorId?: string | null
+    aprobadoPorId?: string | null
+    reabiertoPorId?: string | null
+    fechaApertura?: Date | string | null
+    fechaCierre?: Date | string | null
+    fechaAprobacion?: Date | string | null
+    fechaReapertura?: Date | string | null
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    subperiodos?: PeriodoContableUncheckedCreateNestedManyWithoutPeriodoPadreInput
+    apertura?: AperturaPeriodoUncheckedCreateNestedOneWithoutPeriodoInput
+    snapshots?: SnapshotPeriodoUncheckedCreateNestedManyWithoutPeriodoInput
+    auditorias?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutPeriodoInput
+  }
+
+  export type PeriodoContableCreateOrConnectWithoutPeriodoPadreInput = {
+    where: PeriodoContableWhereUniqueInput
+    create: XOR<PeriodoContableCreateWithoutPeriodoPadreInput, PeriodoContableUncheckedCreateWithoutPeriodoPadreInput>
+  }
+
+  export type PeriodoContableCreateManyPeriodoPadreInputEnvelope = {
+    data: PeriodoContableCreateManyPeriodoPadreInput | PeriodoContableCreateManyPeriodoPadreInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type AperturaPeriodoCreateWithoutPeriodoInput = {
+    aperturaId?: string
+    origenPeriodoId?: string | null
+    saldoCajaInicial?: Decimal | DecimalJsLike | number | string
+    saldoBancoInicial?: Decimal | DecimalJsLike | number | string
+    saldoCuentasCobrarInicial?: Decimal | DecimalJsLike | number | string
+    saldoCuentasPagarInicial?: Decimal | DecimalJsLike | number | string
+    saldoInventarioInicial?: Decimal | DecimalJsLike | number | string
+    saldoCapitalInicial?: Decimal | DecimalJsLike | number | string
+    saldoResultadoAcumInicial?: Decimal | DecimalJsLike | number | string
+    detalleJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AperturaPeriodoUncheckedCreateWithoutPeriodoInput = {
+    aperturaId?: string
+    origenPeriodoId?: string | null
+    saldoCajaInicial?: Decimal | DecimalJsLike | number | string
+    saldoBancoInicial?: Decimal | DecimalJsLike | number | string
+    saldoCuentasCobrarInicial?: Decimal | DecimalJsLike | number | string
+    saldoCuentasPagarInicial?: Decimal | DecimalJsLike | number | string
+    saldoInventarioInicial?: Decimal | DecimalJsLike | number | string
+    saldoCapitalInicial?: Decimal | DecimalJsLike | number | string
+    saldoResultadoAcumInicial?: Decimal | DecimalJsLike | number | string
+    detalleJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AperturaPeriodoCreateOrConnectWithoutPeriodoInput = {
+    where: AperturaPeriodoWhereUniqueInput
+    create: XOR<AperturaPeriodoCreateWithoutPeriodoInput, AperturaPeriodoUncheckedCreateWithoutPeriodoInput>
+  }
+
+  export type SnapshotPeriodoCreateWithoutPeriodoInput = {
+    snapshotId?: string
+    version?: number
+    baseCajaJson?: NullableJsonNullValueInput | InputJsonValue
+    baseDevengoJson?: NullableJsonNullValueInput | InputJsonValue
+    inconsistenciasJson?: NullableJsonNullValueInput | InputJsonValue
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: string | null
+    createdAt?: Date | string
+  }
+
+  export type SnapshotPeriodoUncheckedCreateWithoutPeriodoInput = {
+    snapshotId?: string
+    version?: number
+    baseCajaJson?: NullableJsonNullValueInput | InputJsonValue
+    baseDevengoJson?: NullableJsonNullValueInput | InputJsonValue
+    inconsistenciasJson?: NullableJsonNullValueInput | InputJsonValue
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: string | null
+    createdAt?: Date | string
+  }
+
+  export type SnapshotPeriodoCreateOrConnectWithoutPeriodoInput = {
+    where: SnapshotPeriodoWhereUniqueInput
+    create: XOR<SnapshotPeriodoCreateWithoutPeriodoInput, SnapshotPeriodoUncheckedCreateWithoutPeriodoInput>
+  }
+
+  export type SnapshotPeriodoCreateManyPeriodoInputEnvelope = {
+    data: SnapshotPeriodoCreateManyPeriodoInput | SnapshotPeriodoCreateManyPeriodoInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type AuditoriaPeriodoCreateWithoutPeriodoInput = {
+    auditoriaId?: string
+    accion: $Enums.AccionPeriodo
+    usuarioId: string
+    motivo?: string | null
+    payloadJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type AuditoriaPeriodoUncheckedCreateWithoutPeriodoInput = {
+    auditoriaId?: string
+    accion: $Enums.AccionPeriodo
+    usuarioId: string
+    motivo?: string | null
+    payloadJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type AuditoriaPeriodoCreateOrConnectWithoutPeriodoInput = {
+    where: AuditoriaPeriodoWhereUniqueInput
+    create: XOR<AuditoriaPeriodoCreateWithoutPeriodoInput, AuditoriaPeriodoUncheckedCreateWithoutPeriodoInput>
+  }
+
+  export type AuditoriaPeriodoCreateManyPeriodoInputEnvelope = {
+    data: AuditoriaPeriodoCreateManyPeriodoInput | AuditoriaPeriodoCreateManyPeriodoInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type PeriodoContableUpsertWithoutSubperiodosInput = {
+    update: XOR<PeriodoContableUpdateWithoutSubperiodosInput, PeriodoContableUncheckedUpdateWithoutSubperiodosInput>
+    create: XOR<PeriodoContableCreateWithoutSubperiodosInput, PeriodoContableUncheckedCreateWithoutSubperiodosInput>
+    where?: PeriodoContableWhereInput
+  }
+
+  export type PeriodoContableUpdateToOneWithWhereWithoutSubperiodosInput = {
+    where?: PeriodoContableWhereInput
+    data: XOR<PeriodoContableUpdateWithoutSubperiodosInput, PeriodoContableUncheckedUpdateWithoutSubperiodosInput>
+  }
+
+  export type PeriodoContableUpdateWithoutSubperiodosInput = {
+    periodoId?: StringFieldUpdateOperationsInput | string
+    tipo?: EnumTipoPeriodoFieldUpdateOperationsInput | $Enums.TipoPeriodo
+    codigo?: StringFieldUpdateOperationsInput | string
+    fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaFin?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
+    aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
+    cierreAutomatico?: BoolFieldUpdateOperationsInput | boolean
+    abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    cerradoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobadoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaAprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaReapertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    periodoPadre?: PeriodoContableUpdateOneWithoutSubperiodosNestedInput
+    apertura?: AperturaPeriodoUpdateOneWithoutPeriodoNestedInput
+    snapshots?: SnapshotPeriodoUpdateManyWithoutPeriodoNestedInput
+    auditorias?: AuditoriaPeriodoUpdateManyWithoutPeriodoNestedInput
+  }
+
+  export type PeriodoContableUncheckedUpdateWithoutSubperiodosInput = {
+    periodoId?: StringFieldUpdateOperationsInput | string
+    tipo?: EnumTipoPeriodoFieldUpdateOperationsInput | $Enums.TipoPeriodo
+    codigo?: StringFieldUpdateOperationsInput | string
+    fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaFin?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
+    periodoPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
+    cierreAutomatico?: BoolFieldUpdateOperationsInput | boolean
+    abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    cerradoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobadoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaAprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaReapertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    apertura?: AperturaPeriodoUncheckedUpdateOneWithoutPeriodoNestedInput
+    snapshots?: SnapshotPeriodoUncheckedUpdateManyWithoutPeriodoNestedInput
+    auditorias?: AuditoriaPeriodoUncheckedUpdateManyWithoutPeriodoNestedInput
+  }
+
+  export type PeriodoContableUpsertWithWhereUniqueWithoutPeriodoPadreInput = {
+    where: PeriodoContableWhereUniqueInput
+    update: XOR<PeriodoContableUpdateWithoutPeriodoPadreInput, PeriodoContableUncheckedUpdateWithoutPeriodoPadreInput>
+    create: XOR<PeriodoContableCreateWithoutPeriodoPadreInput, PeriodoContableUncheckedCreateWithoutPeriodoPadreInput>
+  }
+
+  export type PeriodoContableUpdateWithWhereUniqueWithoutPeriodoPadreInput = {
+    where: PeriodoContableWhereUniqueInput
+    data: XOR<PeriodoContableUpdateWithoutPeriodoPadreInput, PeriodoContableUncheckedUpdateWithoutPeriodoPadreInput>
+  }
+
+  export type PeriodoContableUpdateManyWithWhereWithoutPeriodoPadreInput = {
+    where: PeriodoContableScalarWhereInput
+    data: XOR<PeriodoContableUpdateManyMutationInput, PeriodoContableUncheckedUpdateManyWithoutPeriodoPadreInput>
+  }
+
+  export type PeriodoContableScalarWhereInput = {
+    AND?: PeriodoContableScalarWhereInput | PeriodoContableScalarWhereInput[]
+    OR?: PeriodoContableScalarWhereInput[]
+    NOT?: PeriodoContableScalarWhereInput | PeriodoContableScalarWhereInput[]
+    periodoId?: StringFilter<"PeriodoContable"> | string
+    tipo?: EnumTipoPeriodoFilter<"PeriodoContable"> | $Enums.TipoPeriodo
+    codigo?: StringFilter<"PeriodoContable"> | string
+    fechaInicio?: DateTimeFilter<"PeriodoContable"> | Date | string
+    fechaFin?: DateTimeFilter<"PeriodoContable"> | Date | string
+    estado?: EnumEstadoPeriodoFilter<"PeriodoContable"> | $Enums.EstadoPeriodo
+    periodoPadreId?: StringNullableFilter<"PeriodoContable"> | string | null
+    aperturaAutomatica?: BoolFilter<"PeriodoContable"> | boolean
+    cierreAutomatico?: BoolFilter<"PeriodoContable"> | boolean
+    abiertoPorId?: StringNullableFilter<"PeriodoContable"> | string | null
+    cerradoPorId?: StringNullableFilter<"PeriodoContable"> | string | null
+    aprobadoPorId?: StringNullableFilter<"PeriodoContable"> | string | null
+    reabiertoPorId?: StringNullableFilter<"PeriodoContable"> | string | null
+    fechaApertura?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
+    fechaCierre?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
+    fechaAprobacion?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
+    fechaReapertura?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
+    observaciones?: StringNullableFilter<"PeriodoContable"> | string | null
+    createdAt?: DateTimeFilter<"PeriodoContable"> | Date | string
+    updatedAt?: DateTimeFilter<"PeriodoContable"> | Date | string
+  }
+
+  export type AperturaPeriodoUpsertWithoutPeriodoInput = {
+    update: XOR<AperturaPeriodoUpdateWithoutPeriodoInput, AperturaPeriodoUncheckedUpdateWithoutPeriodoInput>
+    create: XOR<AperturaPeriodoCreateWithoutPeriodoInput, AperturaPeriodoUncheckedCreateWithoutPeriodoInput>
+    where?: AperturaPeriodoWhereInput
+  }
+
+  export type AperturaPeriodoUpdateToOneWithWhereWithoutPeriodoInput = {
+    where?: AperturaPeriodoWhereInput
+    data: XOR<AperturaPeriodoUpdateWithoutPeriodoInput, AperturaPeriodoUncheckedUpdateWithoutPeriodoInput>
+  }
+
+  export type AperturaPeriodoUpdateWithoutPeriodoInput = {
+    aperturaId?: StringFieldUpdateOperationsInput | string
+    origenPeriodoId?: NullableStringFieldUpdateOperationsInput | string | null
+    saldoCajaInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoBancoInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCuentasCobrarInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCuentasPagarInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoInventarioInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCapitalInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoResultadoAcumInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    detalleJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AperturaPeriodoUncheckedUpdateWithoutPeriodoInput = {
+    aperturaId?: StringFieldUpdateOperationsInput | string
+    origenPeriodoId?: NullableStringFieldUpdateOperationsInput | string | null
+    saldoCajaInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoBancoInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCuentasCobrarInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCuentasPagarInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoInventarioInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCapitalInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoResultadoAcumInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    detalleJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SnapshotPeriodoUpsertWithWhereUniqueWithoutPeriodoInput = {
+    where: SnapshotPeriodoWhereUniqueInput
+    update: XOR<SnapshotPeriodoUpdateWithoutPeriodoInput, SnapshotPeriodoUncheckedUpdateWithoutPeriodoInput>
+    create: XOR<SnapshotPeriodoCreateWithoutPeriodoInput, SnapshotPeriodoUncheckedCreateWithoutPeriodoInput>
+  }
+
+  export type SnapshotPeriodoUpdateWithWhereUniqueWithoutPeriodoInput = {
+    where: SnapshotPeriodoWhereUniqueInput
+    data: XOR<SnapshotPeriodoUpdateWithoutPeriodoInput, SnapshotPeriodoUncheckedUpdateWithoutPeriodoInput>
+  }
+
+  export type SnapshotPeriodoUpdateManyWithWhereWithoutPeriodoInput = {
+    where: SnapshotPeriodoScalarWhereInput
+    data: XOR<SnapshotPeriodoUpdateManyMutationInput, SnapshotPeriodoUncheckedUpdateManyWithoutPeriodoInput>
+  }
+
+  export type SnapshotPeriodoScalarWhereInput = {
+    AND?: SnapshotPeriodoScalarWhereInput | SnapshotPeriodoScalarWhereInput[]
+    OR?: SnapshotPeriodoScalarWhereInput[]
+    NOT?: SnapshotPeriodoScalarWhereInput | SnapshotPeriodoScalarWhereInput[]
+    snapshotId?: StringFilter<"SnapshotPeriodo"> | string
+    periodoId?: StringFilter<"SnapshotPeriodo"> | string
+    version?: IntFilter<"SnapshotPeriodo"> | number
+    baseCajaJson?: JsonNullableFilter<"SnapshotPeriodo">
+    baseDevengoJson?: JsonNullableFilter<"SnapshotPeriodo">
+    inconsistenciasJson?: JsonNullableFilter<"SnapshotPeriodo">
+    resumenJson?: JsonNullableFilter<"SnapshotPeriodo">
+    hashIntegridad?: StringNullableFilter<"SnapshotPeriodo"> | string | null
+    createdAt?: DateTimeFilter<"SnapshotPeriodo"> | Date | string
+  }
+
+  export type AuditoriaPeriodoUpsertWithWhereUniqueWithoutPeriodoInput = {
+    where: AuditoriaPeriodoWhereUniqueInput
+    update: XOR<AuditoriaPeriodoUpdateWithoutPeriodoInput, AuditoriaPeriodoUncheckedUpdateWithoutPeriodoInput>
+    create: XOR<AuditoriaPeriodoCreateWithoutPeriodoInput, AuditoriaPeriodoUncheckedCreateWithoutPeriodoInput>
+  }
+
+  export type AuditoriaPeriodoUpdateWithWhereUniqueWithoutPeriodoInput = {
+    where: AuditoriaPeriodoWhereUniqueInput
+    data: XOR<AuditoriaPeriodoUpdateWithoutPeriodoInput, AuditoriaPeriodoUncheckedUpdateWithoutPeriodoInput>
+  }
+
+  export type AuditoriaPeriodoUpdateManyWithWhereWithoutPeriodoInput = {
+    where: AuditoriaPeriodoScalarWhereInput
+    data: XOR<AuditoriaPeriodoUpdateManyMutationInput, AuditoriaPeriodoUncheckedUpdateManyWithoutPeriodoInput>
+  }
+
+  export type AuditoriaPeriodoScalarWhereInput = {
+    AND?: AuditoriaPeriodoScalarWhereInput | AuditoriaPeriodoScalarWhereInput[]
+    OR?: AuditoriaPeriodoScalarWhereInput[]
+    NOT?: AuditoriaPeriodoScalarWhereInput | AuditoriaPeriodoScalarWhereInput[]
+    auditoriaId?: StringFilter<"AuditoriaPeriodo"> | string
+    periodoId?: StringFilter<"AuditoriaPeriodo"> | string
+    accion?: EnumAccionPeriodoFilter<"AuditoriaPeriodo"> | $Enums.AccionPeriodo
+    usuarioId?: StringFilter<"AuditoriaPeriodo"> | string
+    motivo?: StringNullableFilter<"AuditoriaPeriodo"> | string | null
+    payloadJson?: JsonNullableFilter<"AuditoriaPeriodo">
+    createdAt?: DateTimeFilter<"AuditoriaPeriodo"> | Date | string
+  }
+
+  export type PeriodoContableCreateWithoutAperturaInput = {
+    periodoId?: string
+    tipo: $Enums.TipoPeriodo
+    codigo: string
+    fechaInicio: Date | string
+    fechaFin: Date | string
+    estado?: $Enums.EstadoPeriodo
+    aperturaAutomatica?: boolean
+    cierreAutomatico?: boolean
+    abiertoPorId?: string | null
+    cerradoPorId?: string | null
+    aprobadoPorId?: string | null
+    reabiertoPorId?: string | null
+    fechaApertura?: Date | string | null
+    fechaCierre?: Date | string | null
+    fechaAprobacion?: Date | string | null
+    fechaReapertura?: Date | string | null
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    periodoPadre?: PeriodoContableCreateNestedOneWithoutSubperiodosInput
+    subperiodos?: PeriodoContableCreateNestedManyWithoutPeriodoPadreInput
+    snapshots?: SnapshotPeriodoCreateNestedManyWithoutPeriodoInput
+    auditorias?: AuditoriaPeriodoCreateNestedManyWithoutPeriodoInput
+  }
+
+  export type PeriodoContableUncheckedCreateWithoutAperturaInput = {
+    periodoId?: string
+    tipo: $Enums.TipoPeriodo
+    codigo: string
+    fechaInicio: Date | string
+    fechaFin: Date | string
+    estado?: $Enums.EstadoPeriodo
+    periodoPadreId?: string | null
+    aperturaAutomatica?: boolean
+    cierreAutomatico?: boolean
+    abiertoPorId?: string | null
+    cerradoPorId?: string | null
+    aprobadoPorId?: string | null
+    reabiertoPorId?: string | null
+    fechaApertura?: Date | string | null
+    fechaCierre?: Date | string | null
+    fechaAprobacion?: Date | string | null
+    fechaReapertura?: Date | string | null
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    subperiodos?: PeriodoContableUncheckedCreateNestedManyWithoutPeriodoPadreInput
+    snapshots?: SnapshotPeriodoUncheckedCreateNestedManyWithoutPeriodoInput
+    auditorias?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutPeriodoInput
+  }
+
+  export type PeriodoContableCreateOrConnectWithoutAperturaInput = {
+    where: PeriodoContableWhereUniqueInput
+    create: XOR<PeriodoContableCreateWithoutAperturaInput, PeriodoContableUncheckedCreateWithoutAperturaInput>
+  }
+
+  export type PeriodoContableUpsertWithoutAperturaInput = {
+    update: XOR<PeriodoContableUpdateWithoutAperturaInput, PeriodoContableUncheckedUpdateWithoutAperturaInput>
+    create: XOR<PeriodoContableCreateWithoutAperturaInput, PeriodoContableUncheckedCreateWithoutAperturaInput>
+    where?: PeriodoContableWhereInput
+  }
+
+  export type PeriodoContableUpdateToOneWithWhereWithoutAperturaInput = {
+    where?: PeriodoContableWhereInput
+    data: XOR<PeriodoContableUpdateWithoutAperturaInput, PeriodoContableUncheckedUpdateWithoutAperturaInput>
+  }
+
+  export type PeriodoContableUpdateWithoutAperturaInput = {
+    periodoId?: StringFieldUpdateOperationsInput | string
+    tipo?: EnumTipoPeriodoFieldUpdateOperationsInput | $Enums.TipoPeriodo
+    codigo?: StringFieldUpdateOperationsInput | string
+    fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaFin?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
+    aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
+    cierreAutomatico?: BoolFieldUpdateOperationsInput | boolean
+    abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    cerradoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobadoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaAprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaReapertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    periodoPadre?: PeriodoContableUpdateOneWithoutSubperiodosNestedInput
+    subperiodos?: PeriodoContableUpdateManyWithoutPeriodoPadreNestedInput
+    snapshots?: SnapshotPeriodoUpdateManyWithoutPeriodoNestedInput
+    auditorias?: AuditoriaPeriodoUpdateManyWithoutPeriodoNestedInput
+  }
+
+  export type PeriodoContableUncheckedUpdateWithoutAperturaInput = {
+    periodoId?: StringFieldUpdateOperationsInput | string
+    tipo?: EnumTipoPeriodoFieldUpdateOperationsInput | $Enums.TipoPeriodo
+    codigo?: StringFieldUpdateOperationsInput | string
+    fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaFin?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
+    periodoPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
+    cierreAutomatico?: BoolFieldUpdateOperationsInput | boolean
+    abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    cerradoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobadoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaAprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaReapertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    subperiodos?: PeriodoContableUncheckedUpdateManyWithoutPeriodoPadreNestedInput
+    snapshots?: SnapshotPeriodoUncheckedUpdateManyWithoutPeriodoNestedInput
+    auditorias?: AuditoriaPeriodoUncheckedUpdateManyWithoutPeriodoNestedInput
+  }
+
+  export type PeriodoContableCreateWithoutSnapshotsInput = {
+    periodoId?: string
+    tipo: $Enums.TipoPeriodo
+    codigo: string
+    fechaInicio: Date | string
+    fechaFin: Date | string
+    estado?: $Enums.EstadoPeriodo
+    aperturaAutomatica?: boolean
+    cierreAutomatico?: boolean
+    abiertoPorId?: string | null
+    cerradoPorId?: string | null
+    aprobadoPorId?: string | null
+    reabiertoPorId?: string | null
+    fechaApertura?: Date | string | null
+    fechaCierre?: Date | string | null
+    fechaAprobacion?: Date | string | null
+    fechaReapertura?: Date | string | null
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    periodoPadre?: PeriodoContableCreateNestedOneWithoutSubperiodosInput
+    subperiodos?: PeriodoContableCreateNestedManyWithoutPeriodoPadreInput
+    apertura?: AperturaPeriodoCreateNestedOneWithoutPeriodoInput
+    auditorias?: AuditoriaPeriodoCreateNestedManyWithoutPeriodoInput
+  }
+
+  export type PeriodoContableUncheckedCreateWithoutSnapshotsInput = {
+    periodoId?: string
+    tipo: $Enums.TipoPeriodo
+    codigo: string
+    fechaInicio: Date | string
+    fechaFin: Date | string
+    estado?: $Enums.EstadoPeriodo
+    periodoPadreId?: string | null
+    aperturaAutomatica?: boolean
+    cierreAutomatico?: boolean
+    abiertoPorId?: string | null
+    cerradoPorId?: string | null
+    aprobadoPorId?: string | null
+    reabiertoPorId?: string | null
+    fechaApertura?: Date | string | null
+    fechaCierre?: Date | string | null
+    fechaAprobacion?: Date | string | null
+    fechaReapertura?: Date | string | null
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    subperiodos?: PeriodoContableUncheckedCreateNestedManyWithoutPeriodoPadreInput
+    apertura?: AperturaPeriodoUncheckedCreateNestedOneWithoutPeriodoInput
+    auditorias?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutPeriodoInput
+  }
+
+  export type PeriodoContableCreateOrConnectWithoutSnapshotsInput = {
+    where: PeriodoContableWhereUniqueInput
+    create: XOR<PeriodoContableCreateWithoutSnapshotsInput, PeriodoContableUncheckedCreateWithoutSnapshotsInput>
+  }
+
+  export type PeriodoContableUpsertWithoutSnapshotsInput = {
+    update: XOR<PeriodoContableUpdateWithoutSnapshotsInput, PeriodoContableUncheckedUpdateWithoutSnapshotsInput>
+    create: XOR<PeriodoContableCreateWithoutSnapshotsInput, PeriodoContableUncheckedCreateWithoutSnapshotsInput>
+    where?: PeriodoContableWhereInput
+  }
+
+  export type PeriodoContableUpdateToOneWithWhereWithoutSnapshotsInput = {
+    where?: PeriodoContableWhereInput
+    data: XOR<PeriodoContableUpdateWithoutSnapshotsInput, PeriodoContableUncheckedUpdateWithoutSnapshotsInput>
+  }
+
+  export type PeriodoContableUpdateWithoutSnapshotsInput = {
+    periodoId?: StringFieldUpdateOperationsInput | string
+    tipo?: EnumTipoPeriodoFieldUpdateOperationsInput | $Enums.TipoPeriodo
+    codigo?: StringFieldUpdateOperationsInput | string
+    fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaFin?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
+    aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
+    cierreAutomatico?: BoolFieldUpdateOperationsInput | boolean
+    abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    cerradoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobadoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaAprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaReapertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    periodoPadre?: PeriodoContableUpdateOneWithoutSubperiodosNestedInput
+    subperiodos?: PeriodoContableUpdateManyWithoutPeriodoPadreNestedInput
+    apertura?: AperturaPeriodoUpdateOneWithoutPeriodoNestedInput
+    auditorias?: AuditoriaPeriodoUpdateManyWithoutPeriodoNestedInput
+  }
+
+  export type PeriodoContableUncheckedUpdateWithoutSnapshotsInput = {
+    periodoId?: StringFieldUpdateOperationsInput | string
+    tipo?: EnumTipoPeriodoFieldUpdateOperationsInput | $Enums.TipoPeriodo
+    codigo?: StringFieldUpdateOperationsInput | string
+    fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaFin?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
+    periodoPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
+    cierreAutomatico?: BoolFieldUpdateOperationsInput | boolean
+    abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    cerradoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobadoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaAprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaReapertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    subperiodos?: PeriodoContableUncheckedUpdateManyWithoutPeriodoPadreNestedInput
+    apertura?: AperturaPeriodoUncheckedUpdateOneWithoutPeriodoNestedInput
+    auditorias?: AuditoriaPeriodoUncheckedUpdateManyWithoutPeriodoNestedInput
+  }
+
+  export type PeriodoContableCreateWithoutAuditoriasInput = {
+    periodoId?: string
+    tipo: $Enums.TipoPeriodo
+    codigo: string
+    fechaInicio: Date | string
+    fechaFin: Date | string
+    estado?: $Enums.EstadoPeriodo
+    aperturaAutomatica?: boolean
+    cierreAutomatico?: boolean
+    abiertoPorId?: string | null
+    cerradoPorId?: string | null
+    aprobadoPorId?: string | null
+    reabiertoPorId?: string | null
+    fechaApertura?: Date | string | null
+    fechaCierre?: Date | string | null
+    fechaAprobacion?: Date | string | null
+    fechaReapertura?: Date | string | null
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    periodoPadre?: PeriodoContableCreateNestedOneWithoutSubperiodosInput
+    subperiodos?: PeriodoContableCreateNestedManyWithoutPeriodoPadreInput
+    apertura?: AperturaPeriodoCreateNestedOneWithoutPeriodoInput
+    snapshots?: SnapshotPeriodoCreateNestedManyWithoutPeriodoInput
+  }
+
+  export type PeriodoContableUncheckedCreateWithoutAuditoriasInput = {
+    periodoId?: string
+    tipo: $Enums.TipoPeriodo
+    codigo: string
+    fechaInicio: Date | string
+    fechaFin: Date | string
+    estado?: $Enums.EstadoPeriodo
+    periodoPadreId?: string | null
+    aperturaAutomatica?: boolean
+    cierreAutomatico?: boolean
+    abiertoPorId?: string | null
+    cerradoPorId?: string | null
+    aprobadoPorId?: string | null
+    reabiertoPorId?: string | null
+    fechaApertura?: Date | string | null
+    fechaCierre?: Date | string | null
+    fechaAprobacion?: Date | string | null
+    fechaReapertura?: Date | string | null
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    subperiodos?: PeriodoContableUncheckedCreateNestedManyWithoutPeriodoPadreInput
+    apertura?: AperturaPeriodoUncheckedCreateNestedOneWithoutPeriodoInput
+    snapshots?: SnapshotPeriodoUncheckedCreateNestedManyWithoutPeriodoInput
+  }
+
+  export type PeriodoContableCreateOrConnectWithoutAuditoriasInput = {
+    where: PeriodoContableWhereUniqueInput
+    create: XOR<PeriodoContableCreateWithoutAuditoriasInput, PeriodoContableUncheckedCreateWithoutAuditoriasInput>
+  }
+
+  export type PeriodoContableUpsertWithoutAuditoriasInput = {
+    update: XOR<PeriodoContableUpdateWithoutAuditoriasInput, PeriodoContableUncheckedUpdateWithoutAuditoriasInput>
+    create: XOR<PeriodoContableCreateWithoutAuditoriasInput, PeriodoContableUncheckedCreateWithoutAuditoriasInput>
+    where?: PeriodoContableWhereInput
+  }
+
+  export type PeriodoContableUpdateToOneWithWhereWithoutAuditoriasInput = {
+    where?: PeriodoContableWhereInput
+    data: XOR<PeriodoContableUpdateWithoutAuditoriasInput, PeriodoContableUncheckedUpdateWithoutAuditoriasInput>
+  }
+
+  export type PeriodoContableUpdateWithoutAuditoriasInput = {
+    periodoId?: StringFieldUpdateOperationsInput | string
+    tipo?: EnumTipoPeriodoFieldUpdateOperationsInput | $Enums.TipoPeriodo
+    codigo?: StringFieldUpdateOperationsInput | string
+    fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaFin?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
+    aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
+    cierreAutomatico?: BoolFieldUpdateOperationsInput | boolean
+    abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    cerradoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobadoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaAprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaReapertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    periodoPadre?: PeriodoContableUpdateOneWithoutSubperiodosNestedInput
+    subperiodos?: PeriodoContableUpdateManyWithoutPeriodoPadreNestedInput
+    apertura?: AperturaPeriodoUpdateOneWithoutPeriodoNestedInput
+    snapshots?: SnapshotPeriodoUpdateManyWithoutPeriodoNestedInput
+  }
+
+  export type PeriodoContableUncheckedUpdateWithoutAuditoriasInput = {
+    periodoId?: StringFieldUpdateOperationsInput | string
+    tipo?: EnumTipoPeriodoFieldUpdateOperationsInput | $Enums.TipoPeriodo
+    codigo?: StringFieldUpdateOperationsInput | string
+    fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaFin?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
+    periodoPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
+    cierreAutomatico?: BoolFieldUpdateOperationsInput | boolean
+    abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    cerradoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobadoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaAprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaReapertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    subperiodos?: PeriodoContableUncheckedUpdateManyWithoutPeriodoPadreNestedInput
+    apertura?: AperturaPeriodoUncheckedUpdateOneWithoutPeriodoNestedInput
+    snapshots?: SnapshotPeriodoUncheckedUpdateManyWithoutPeriodoNestedInput
   }
 
   export type CompraProductoCreateWithoutGastoCompraInput = {
@@ -183310,6 +194290,169 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type EventoContableLineaCreateWithoutEventoInput = {
+    lineaId?: string
+    cuenta: string
+    descripcion?: string | null
+    debito?: Decimal | DecimalJsLike | number | string
+    credito?: Decimal | DecimalJsLike | number | string
+    moneda?: string
+    metadataJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type EventoContableLineaUncheckedCreateWithoutEventoInput = {
+    lineaId?: string
+    cuenta: string
+    descripcion?: string | null
+    debito?: Decimal | DecimalJsLike | number | string
+    credito?: Decimal | DecimalJsLike | number | string
+    moneda?: string
+    metadataJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type EventoContableLineaCreateOrConnectWithoutEventoInput = {
+    where: EventoContableLineaWhereUniqueInput
+    create: XOR<EventoContableLineaCreateWithoutEventoInput, EventoContableLineaUncheckedCreateWithoutEventoInput>
+  }
+
+  export type EventoContableLineaCreateManyEventoInputEnvelope = {
+    data: EventoContableLineaCreateManyEventoInput | EventoContableLineaCreateManyEventoInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type EventoContableLineaUpsertWithWhereUniqueWithoutEventoInput = {
+    where: EventoContableLineaWhereUniqueInput
+    update: XOR<EventoContableLineaUpdateWithoutEventoInput, EventoContableLineaUncheckedUpdateWithoutEventoInput>
+    create: XOR<EventoContableLineaCreateWithoutEventoInput, EventoContableLineaUncheckedCreateWithoutEventoInput>
+  }
+
+  export type EventoContableLineaUpdateWithWhereUniqueWithoutEventoInput = {
+    where: EventoContableLineaWhereUniqueInput
+    data: XOR<EventoContableLineaUpdateWithoutEventoInput, EventoContableLineaUncheckedUpdateWithoutEventoInput>
+  }
+
+  export type EventoContableLineaUpdateManyWithWhereWithoutEventoInput = {
+    where: EventoContableLineaScalarWhereInput
+    data: XOR<EventoContableLineaUpdateManyMutationInput, EventoContableLineaUncheckedUpdateManyWithoutEventoInput>
+  }
+
+  export type EventoContableLineaScalarWhereInput = {
+    AND?: EventoContableLineaScalarWhereInput | EventoContableLineaScalarWhereInput[]
+    OR?: EventoContableLineaScalarWhereInput[]
+    NOT?: EventoContableLineaScalarWhereInput | EventoContableLineaScalarWhereInput[]
+    lineaId?: StringFilter<"EventoContableLinea"> | string
+    eventoId?: StringFilter<"EventoContableLinea"> | string
+    cuenta?: StringFilter<"EventoContableLinea"> | string
+    descripcion?: StringNullableFilter<"EventoContableLinea"> | string | null
+    debito?: DecimalFilter<"EventoContableLinea"> | Decimal | DecimalJsLike | number | string
+    credito?: DecimalFilter<"EventoContableLinea"> | Decimal | DecimalJsLike | number | string
+    moneda?: StringFilter<"EventoContableLinea"> | string
+    metadataJson?: JsonNullableFilter<"EventoContableLinea">
+    createdAt?: DateTimeFilter<"EventoContableLinea"> | Date | string
+  }
+
+  export type EventoContableCreateWithoutLineasInput = {
+    eventoId?: string
+    fechaOperacion: Date | string
+    fechaRegistro?: Date | string
+    origenTipo: string
+    origenId: string
+    criterio: $Enums.CriterioContable
+    periodoDiarioId?: string | null
+    periodoMensualId?: string | null
+    periodoAnualId?: string | null
+    moneda?: string
+    monto: Decimal | DecimalJsLike | number | string
+    montoConvertido?: Decimal | DecimalJsLike | number | string | null
+    naturaleza: $Enums.NaturalezaEvento
+    estado?: string
+    descripcion?: string | null
+    metadataJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type EventoContableUncheckedCreateWithoutLineasInput = {
+    eventoId?: string
+    fechaOperacion: Date | string
+    fechaRegistro?: Date | string
+    origenTipo: string
+    origenId: string
+    criterio: $Enums.CriterioContable
+    periodoDiarioId?: string | null
+    periodoMensualId?: string | null
+    periodoAnualId?: string | null
+    moneda?: string
+    monto: Decimal | DecimalJsLike | number | string
+    montoConvertido?: Decimal | DecimalJsLike | number | string | null
+    naturaleza: $Enums.NaturalezaEvento
+    estado?: string
+    descripcion?: string | null
+    metadataJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type EventoContableCreateOrConnectWithoutLineasInput = {
+    where: EventoContableWhereUniqueInput
+    create: XOR<EventoContableCreateWithoutLineasInput, EventoContableUncheckedCreateWithoutLineasInput>
+  }
+
+  export type EventoContableUpsertWithoutLineasInput = {
+    update: XOR<EventoContableUpdateWithoutLineasInput, EventoContableUncheckedUpdateWithoutLineasInput>
+    create: XOR<EventoContableCreateWithoutLineasInput, EventoContableUncheckedCreateWithoutLineasInput>
+    where?: EventoContableWhereInput
+  }
+
+  export type EventoContableUpdateToOneWithWhereWithoutLineasInput = {
+    where?: EventoContableWhereInput
+    data: XOR<EventoContableUpdateWithoutLineasInput, EventoContableUncheckedUpdateWithoutLineasInput>
+  }
+
+  export type EventoContableUpdateWithoutLineasInput = {
+    eventoId?: StringFieldUpdateOperationsInput | string
+    fechaOperacion?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaRegistro?: DateTimeFieldUpdateOperationsInput | Date | string
+    origenTipo?: StringFieldUpdateOperationsInput | string
+    origenId?: StringFieldUpdateOperationsInput | string
+    criterio?: EnumCriterioContableFieldUpdateOperationsInput | $Enums.CriterioContable
+    periodoDiarioId?: NullableStringFieldUpdateOperationsInput | string | null
+    periodoMensualId?: NullableStringFieldUpdateOperationsInput | string | null
+    periodoAnualId?: NullableStringFieldUpdateOperationsInput | string | null
+    moneda?: StringFieldUpdateOperationsInput | string
+    monto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    montoConvertido?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    naturaleza?: EnumNaturalezaEventoFieldUpdateOperationsInput | $Enums.NaturalezaEvento
+    estado?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    metadataJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EventoContableUncheckedUpdateWithoutLineasInput = {
+    eventoId?: StringFieldUpdateOperationsInput | string
+    fechaOperacion?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaRegistro?: DateTimeFieldUpdateOperationsInput | Date | string
+    origenTipo?: StringFieldUpdateOperationsInput | string
+    origenId?: StringFieldUpdateOperationsInput | string
+    criterio?: EnumCriterioContableFieldUpdateOperationsInput | $Enums.CriterioContable
+    periodoDiarioId?: NullableStringFieldUpdateOperationsInput | string | null
+    periodoMensualId?: NullableStringFieldUpdateOperationsInput | string | null
+    periodoAnualId?: NullableStringFieldUpdateOperationsInput | string | null
+    moneda?: StringFieldUpdateOperationsInput | string
+    monto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    montoConvertido?: NullableDecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string | null
+    naturaleza?: EnumNaturalezaEventoFieldUpdateOperationsInput | $Enums.NaturalezaEvento
+    estado?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    metadataJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type CategoriaCreateManyParentInput = {
     catId?: string
     nombre: string
@@ -188556,6 +199699,182 @@ export namespace Prisma {
     isReconciliada?: NullableBoolFieldUpdateOperationsInput | boolean | null
   }
 
+  export type PeriodoContableCreateManyPeriodoPadreInput = {
+    periodoId?: string
+    tipo: $Enums.TipoPeriodo
+    codigo: string
+    fechaInicio: Date | string
+    fechaFin: Date | string
+    estado?: $Enums.EstadoPeriodo
+    aperturaAutomatica?: boolean
+    cierreAutomatico?: boolean
+    abiertoPorId?: string | null
+    cerradoPorId?: string | null
+    aprobadoPorId?: string | null
+    reabiertoPorId?: string | null
+    fechaApertura?: Date | string | null
+    fechaCierre?: Date | string | null
+    fechaAprobacion?: Date | string | null
+    fechaReapertura?: Date | string | null
+    observaciones?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type SnapshotPeriodoCreateManyPeriodoInput = {
+    snapshotId?: string
+    version?: number
+    baseCajaJson?: NullableJsonNullValueInput | InputJsonValue
+    baseDevengoJson?: NullableJsonNullValueInput | InputJsonValue
+    inconsistenciasJson?: NullableJsonNullValueInput | InputJsonValue
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: string | null
+    createdAt?: Date | string
+  }
+
+  export type AuditoriaPeriodoCreateManyPeriodoInput = {
+    auditoriaId?: string
+    accion: $Enums.AccionPeriodo
+    usuarioId: string
+    motivo?: string | null
+    payloadJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type PeriodoContableUpdateWithoutPeriodoPadreInput = {
+    periodoId?: StringFieldUpdateOperationsInput | string
+    tipo?: EnumTipoPeriodoFieldUpdateOperationsInput | $Enums.TipoPeriodo
+    codigo?: StringFieldUpdateOperationsInput | string
+    fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaFin?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
+    aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
+    cierreAutomatico?: BoolFieldUpdateOperationsInput | boolean
+    abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    cerradoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobadoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaAprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaReapertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    subperiodos?: PeriodoContableUpdateManyWithoutPeriodoPadreNestedInput
+    apertura?: AperturaPeriodoUpdateOneWithoutPeriodoNestedInput
+    snapshots?: SnapshotPeriodoUpdateManyWithoutPeriodoNestedInput
+    auditorias?: AuditoriaPeriodoUpdateManyWithoutPeriodoNestedInput
+  }
+
+  export type PeriodoContableUncheckedUpdateWithoutPeriodoPadreInput = {
+    periodoId?: StringFieldUpdateOperationsInput | string
+    tipo?: EnumTipoPeriodoFieldUpdateOperationsInput | $Enums.TipoPeriodo
+    codigo?: StringFieldUpdateOperationsInput | string
+    fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaFin?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
+    aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
+    cierreAutomatico?: BoolFieldUpdateOperationsInput | boolean
+    abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    cerradoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobadoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaAprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaReapertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    subperiodos?: PeriodoContableUncheckedUpdateManyWithoutPeriodoPadreNestedInput
+    apertura?: AperturaPeriodoUncheckedUpdateOneWithoutPeriodoNestedInput
+    snapshots?: SnapshotPeriodoUncheckedUpdateManyWithoutPeriodoNestedInput
+    auditorias?: AuditoriaPeriodoUncheckedUpdateManyWithoutPeriodoNestedInput
+  }
+
+  export type PeriodoContableUncheckedUpdateManyWithoutPeriodoPadreInput = {
+    periodoId?: StringFieldUpdateOperationsInput | string
+    tipo?: EnumTipoPeriodoFieldUpdateOperationsInput | $Enums.TipoPeriodo
+    codigo?: StringFieldUpdateOperationsInput | string
+    fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaFin?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
+    aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
+    cierreAutomatico?: BoolFieldUpdateOperationsInput | boolean
+    abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    cerradoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobadoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaAprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    fechaReapertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SnapshotPeriodoUpdateWithoutPeriodoInput = {
+    snapshotId?: StringFieldUpdateOperationsInput | string
+    version?: IntFieldUpdateOperationsInput | number
+    baseCajaJson?: NullableJsonNullValueInput | InputJsonValue
+    baseDevengoJson?: NullableJsonNullValueInput | InputJsonValue
+    inconsistenciasJson?: NullableJsonNullValueInput | InputJsonValue
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SnapshotPeriodoUncheckedUpdateWithoutPeriodoInput = {
+    snapshotId?: StringFieldUpdateOperationsInput | string
+    version?: IntFieldUpdateOperationsInput | number
+    baseCajaJson?: NullableJsonNullValueInput | InputJsonValue
+    baseDevengoJson?: NullableJsonNullValueInput | InputJsonValue
+    inconsistenciasJson?: NullableJsonNullValueInput | InputJsonValue
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SnapshotPeriodoUncheckedUpdateManyWithoutPeriodoInput = {
+    snapshotId?: StringFieldUpdateOperationsInput | string
+    version?: IntFieldUpdateOperationsInput | number
+    baseCajaJson?: NullableJsonNullValueInput | InputJsonValue
+    baseDevengoJson?: NullableJsonNullValueInput | InputJsonValue
+    inconsistenciasJson?: NullableJsonNullValueInput | InputJsonValue
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AuditoriaPeriodoUpdateWithoutPeriodoInput = {
+    auditoriaId?: StringFieldUpdateOperationsInput | string
+    accion?: EnumAccionPeriodoFieldUpdateOperationsInput | $Enums.AccionPeriodo
+    usuarioId?: StringFieldUpdateOperationsInput | string
+    motivo?: NullableStringFieldUpdateOperationsInput | string | null
+    payloadJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AuditoriaPeriodoUncheckedUpdateWithoutPeriodoInput = {
+    auditoriaId?: StringFieldUpdateOperationsInput | string
+    accion?: EnumAccionPeriodoFieldUpdateOperationsInput | $Enums.AccionPeriodo
+    usuarioId?: StringFieldUpdateOperationsInput | string
+    motivo?: NullableStringFieldUpdateOperationsInput | string | null
+    payloadJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AuditoriaPeriodoUncheckedUpdateManyWithoutPeriodoInput = {
+    auditoriaId?: StringFieldUpdateOperationsInput | string
+    accion?: EnumAccionPeriodoFieldUpdateOperationsInput | $Enums.AccionPeriodo
+    usuarioId?: StringFieldUpdateOperationsInput | string
+    motivo?: NullableStringFieldUpdateOperationsInput | string | null
+    payloadJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type ReconciliacionGastoCreateManyGastoCompraInput = {
     reconciliacionId?: string
     tipoGasto: string
@@ -191725,6 +203044,50 @@ export namespace Prisma {
     usuarioId?: StringFieldUpdateOperationsInput | string
     idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EventoContableLineaCreateManyEventoInput = {
+    lineaId?: string
+    cuenta: string
+    descripcion?: string | null
+    debito?: Decimal | DecimalJsLike | number | string
+    credito?: Decimal | DecimalJsLike | number | string
+    moneda?: string
+    metadataJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+  }
+
+  export type EventoContableLineaUpdateWithoutEventoInput = {
+    lineaId?: StringFieldUpdateOperationsInput | string
+    cuenta?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    debito?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    credito?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    metadataJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EventoContableLineaUncheckedUpdateWithoutEventoInput = {
+    lineaId?: StringFieldUpdateOperationsInput | string
+    cuenta?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    debito?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    credito?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    metadataJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type EventoContableLineaUncheckedUpdateManyWithoutEventoInput = {
+    lineaId?: StringFieldUpdateOperationsInput | string
+    cuenta?: StringFieldUpdateOperationsInput | string
+    descripcion?: NullableStringFieldUpdateOperationsInput | string | null
+    debito?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    credito?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    moneda?: StringFieldUpdateOperationsInput | string
+    metadataJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 

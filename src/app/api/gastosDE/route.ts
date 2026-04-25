@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { authenticateUser } from "@/lib/auth-middleware"
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from "@/lib/services/periodo-operacion-guard"
+import { registrarEventoContable } from "@/lib/services/evento-contable-integration"
 import { z } from "zod"
 
 const gastosDESchema = z.object({
@@ -49,6 +51,8 @@ export async function POST(request: NextRequest) {
   try {
     const authResult = await authenticateUser(request)
     if ('status' in authResult) return authResult as Response
+
+    await assertOperationAllowed(new Date(), 'GASTO_DE')
 
     const data = await request.json()
     const validation = gastosDESchema.safeParse(data)
@@ -107,8 +111,20 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    await registrarEventoContable({
+      origenTipo: 'GASTO_DE',
+      origenId: gastoServicio.gastosDEId,
+      monto: Number(gastoServicio.monto),
+      fechaOperacion: new Date(),
+      descripcion: `Gasto de explotación ${gastoServicio.gastosDEId}`,
+      usuarioId: authResult.user.userId,
+    })
+
     return NextResponse.json(gastoServicio, { status: 201 })
   } catch (error) {
+    if (isPeriodoOperacionError(error)) {
+      return NextResponse.json(serializePeriodoOperacionError(error), { status: error.status })
+    }
     console.error("Error al crear el Gasto de Explotación:", error)
     return NextResponse.json({ error: "Error al crear el Gasto de Explotación" }, { status: 500 })
   }

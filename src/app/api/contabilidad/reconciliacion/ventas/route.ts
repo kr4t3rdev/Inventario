@@ -4,6 +4,12 @@ import { z } from 'zod'
 import { Prisma } from '@/generated/prisma'
 import { authenticateUser } from "@/lib/auth-middleware"
 import { AuditLogService } from "@/lib/services/audit-log-service"
+import {
+  assertOperationAllowed,
+  isPeriodoOperacionError,
+  serializePeriodoOperacionError
+} from '@/lib/services/periodo-operacion-guard'
+import { registrarEventoContable } from '@/lib/services/evento-contable-integration'
 
 // Schema para validar la reconciliación de ventas
 const reconciliacionVentaSchema = z.object({
@@ -305,6 +311,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const validatedData = reconciliacionVentaSchema.parse(body)
+    await assertOperationAllowed(new Date(), 'RECONCILIACION_VENTA')
     const referenciaTransferenciaRaw =
       validatedData.verificacionTransferenciaId || validatedData.idTransferencia
     const referenciaTransferencia = referenciaTransferenciaRaw?.trim() || undefined
@@ -697,12 +704,30 @@ export async function POST(request: NextRequest) {
       console.error('Error registrando auditoría de reconciliación de venta:', auditError)
     }
 
+    await registrarEventoContable({
+      origenTipo: 'RECONCILIACION_VENTA',
+      origenId: result.reconciliacionVentaId,
+      monto: Number(result.monto ?? 0),
+      montoConvertido: result.montoConvertido ? Number(result.montoConvertido) : undefined,
+      moneda: result.moneda ?? 'CUP',
+      fechaOperacion: new Date(),
+      descripcion: `Reconciliación venta ${result.reconciliacionVentaId}`,
+      usuarioId: authResult.user.userId,
+    })
+
     return NextResponse.json({
       message: 'Venta reconciliada exitosamente',
       reconciliacion: result
     }, { status: 201 })
 
   } catch (error) {
+    if (isPeriodoOperacionError(error)) {
+      return NextResponse.json(
+        serializePeriodoOperacionError(error),
+        { status: error.status }
+      )
+    }
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: 'Datos de entrada inválidos', details: error.errors },

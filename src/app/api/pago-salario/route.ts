@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { authenticateUser } from '@/lib/auth-middleware'
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from '@/lib/services/periodo-operacion-guard'
+import { registrarEventoContable } from '@/lib/services/evento-contable-integration'
 
 // GET - Obtener todas las ventas de servicios
 export async function GET(request: NextRequest) {
@@ -34,6 +36,8 @@ export async function POST(request: NextRequest) {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
+
+    await assertOperationAllowed(new Date(), 'PAGO_SALARIO')
 
     const data = await request.json()
 
@@ -78,11 +82,23 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    await registrarEventoContable({
+      origenTipo: 'PAGO_SALARIO',
+      origenId: pagoSalario.pgId,
+      monto: Number(pagoSalario.salario ?? 0),
+      fechaOperacion: new Date(),
+      descripcion: `Pago salario ${pagoSalario.pgId}`,
+      usuarioId: authResultUser.user.userId,
+    })
+
     return NextResponse.json(pagoSalario, { status: 201 })
-  } catch (error) {
+} catch (error) {
+    if (isPeriodoOperacionError(error)) {
+      return NextResponse.json(serializePeriodoOperacionError(error), { status: error.status })
+    }
     console.error('Error al crear pago de salario:', error)
     return NextResponse.json(
-      { error: 'Error al crear pago de salario' },
+      { error: 'Error al crear pago de salario:' },
       { status: 500 }
     )
   }

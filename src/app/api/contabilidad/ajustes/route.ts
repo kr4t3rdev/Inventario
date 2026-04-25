@@ -3,6 +3,8 @@ import { authenticateUser } from '@/lib/auth-middleware'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 import { AuditLogService } from '@/lib/services/audit-log-service'
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from '@/lib/services/periodo-operacion-guard'
+import { registrarEventoContable } from '@/lib/services/evento-contable-integration'
 
 // Schema de validación para crear ajuste bancario
 const createAjusteSchema = z.object({
@@ -24,6 +26,8 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const validatedData = createAjusteSchema.parse(body)
+
+    await assertOperationAllowed(new Date(), 'AJUSTE_BANCARIO')
 
     // Verificar que la cuenta bancaria existe y está activa
     const cuentaBancaria = await prisma.cuentaBancaria.findUnique({
@@ -97,6 +101,16 @@ export async function POST(request: NextRequest) {
       }
     });
 
+    await registrarEventoContable({
+      origenTipo: 'AJUSTE_BANCARIO',
+      origenId: resultado.ajuste.ajusteId,
+      monto: Number(validatedData.monto),
+      moneda: validatedData.moneda,
+      fechaOperacion: new Date(),
+      descripcion: `Ajuste bancario ${validatedData.tipo} - ${validatedData.motivo}`,
+      usuarioId: user.userId,
+    })
+
     return NextResponse.json({
       success: true,
       ajuste: resultado.ajuste,
@@ -109,6 +123,9 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
+    if (isPeriodoOperacionError(error)) {
+      return NextResponse.json(serializePeriodoOperacionError(error), { status: error.status })
+    }
     console.error('Error al crear ajuste bancario:', error)
 
     if (error instanceof z.ZodError) {

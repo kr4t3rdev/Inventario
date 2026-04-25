@@ -3,6 +3,8 @@ import prisma from "@/lib/prisma";
 export type AuditEntity = 
   | "CUENTA_BANCARIA" 
   | "CIERRE_CONTABLE" 
+  | "PERIODO_CONTABLE"
+  | "APERTURA_PERIODO"
   | "RECONCILIACION" 
   | "TRANSFERENCIA" 
   | "AJUSTE_BANCARIO" 

@@ -3,6 +3,8 @@ import prisma from '@/lib/prisma'
 import { z } from 'zod'
 import { authenticateUser } from '@/lib/auth-middleware'
 import { AuditLogService } from '@/lib/services/audit-log-service'
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from '@/lib/services/periodo-operacion-guard'
+import { registrarEventoContable } from '@/lib/services/evento-contable-integration'
 
 // Schema for creating a bank transfer
 const createTransferenciaSchema = z.object({
@@ -124,6 +126,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const validatedData = createTransferenciaSchema.parse(body)
+
+    await assertOperationAllowed(new Date(), 'TRANSFERENCIA_BANCARIA')
 
     const {
       cuentaOrigenId,
@@ -300,12 +304,25 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    await registrarEventoContable({
+      origenTipo: 'TRANSFERENCIA_BANCARIA',
+      origenId: transferencia.transferenciaId,
+      monto: Number(transferencia.montoOrigen),
+      moneda: transferencia.monedaOrigen,
+      fechaOperacion: new Date(),
+      descripcion: `Transferencia bancaria ${transferencia.numeroComprobante}`,
+      usuarioId: user?.userId ?? 'system',
+    })
+
     return NextResponse.json({
       message: 'Transferencia ejecutada exitosamente',
       transferencia
     }, { status: 201 })
 
   } catch (error) {
+    if (isPeriodoOperacionError(error)) {
+      return NextResponse.json(serializePeriodoOperacionError(error), { status: error.status })
+    }
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: 'Datos inválidos', details: error.errors },

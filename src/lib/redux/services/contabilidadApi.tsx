@@ -966,6 +966,112 @@ export const contabilidadApi = apiSlice.injectEndpoints({
       }),
       providesTags: ["AuditLogs"],
     }),
+
+    // --- Períodos Contables ---
+    getPeriodos: builder.query<{ periodos: any[]; total: number }, { tipo?: string; estado?: string; fechaDesde?: string; fechaHasta?: string }>({
+      query: (params) => {
+        const searchParams = new URLSearchParams()
+        if (params?.tipo) searchParams.set('tipo', params.tipo)
+        if (params?.estado) searchParams.set('estado', params.estado)
+        if (params?.fechaDesde) searchParams.set('fechaDesde', params.fechaDesde)
+        if (params?.fechaHasta) searchParams.set('fechaHasta', params.fechaHasta)
+        const qs = searchParams.toString()
+        return `/contabilidad/periodos${qs ? `?${qs}` : ''}`
+      },
+      providesTags: ['PeriodosContables'],
+    }),
+
+    getPeriodo: builder.query<any, string>({
+      query: (id) => `/contabilidad/periodos/${id}`,
+      providesTags: (_r, _e, id) => [{ type: 'PeriodosContables', id }],
+    }),
+
+    aperturarPeriodo: builder.mutation<any, { fecha: string }>({
+      query: (body) => ({
+        url: '/contabilidad/periodos/apertura-diaria',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['PeriodosContables'],
+    }),
+
+    cerrarDiario: builder.mutation<any, { periodoId: string }>({
+      query: (body) => ({
+        url: '/contabilidad/periodos/cierre-diario',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['PeriodosContables'],
+    }),
+
+    cerrarMensual: builder.mutation<any, { periodoId: string }>({
+      query: (body) => ({
+        url: '/contabilidad/periodos/cierre-mensual',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['PeriodosContables'],
+    }),
+
+    cerrarAnual: builder.mutation<any, { periodoId: string }>({
+      query: (body) => ({
+        url: '/contabilidad/periodos/cierre-anual',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['PeriodosContables'],
+    }),
+
+    aprobarPeriodo: builder.mutation<any, { id: string; motivo?: string }>({
+      query: ({ id, ...body }) => ({
+        url: `/contabilidad/periodos/${id}/aprobar`,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['PeriodosContables'],
+    }),
+
+    reabrirPeriodo: builder.mutation<any, { id: string; motivo: string }>({
+      query: ({ id, ...body }) => ({
+        url: `/contabilidad/periodos/${id}/reabrir`,
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['PeriodosContables'],
+    }),
+
+    getPeriodoInconsistencias: builder.query<any, string>({
+      query: (id) => `/contabilidad/periodos/${id}/inconsistencias`,
+      providesTags: (_r, _e, id) => [{ type: 'PeriodosContables', id: `${id}-inconsistencias` }],
+    }),
+
+    getPeriodoSnapshot: builder.query<any, string>({
+      query: (id) => `/contabilidad/periodos/${id}/snapshot`,
+      providesTags: (_r, _e, id) => [{ type: 'PeriodosContables', id: `${id}-snapshot` }],
+    }),
+
+    getPrecierre: builder.query<any, { fecha?: string }>({
+      query: (params) => {
+        const searchParams = new URLSearchParams()
+        if (params?.fecha) searchParams.set('fecha', params.fecha)
+        const qs = searchParams.toString()
+        return `/contabilidad/periodos/precierre${qs ? `?${qs}` : ''}`
+      },
+      providesTags: ['PeriodosContables'],
+    }),
+
+    getEventosContables: builder.query<any[], { origenTipo?: string; fechaDesde?: string; fechaHasta?: string; limite?: number }>({
+      query: (params) => {
+        const searchParams = new URLSearchParams()
+        if (params?.origenTipo) searchParams.set('origenTipo', params.origenTipo)
+        if (params?.fechaDesde) searchParams.set('fechaDesde', params.fechaDesde)
+        if (params?.fechaHasta) searchParams.set('fechaHasta', params.fechaHasta)
+        if (params?.limite) searchParams.set('limite', String(params.limite))
+        const qs = searchParams.toString()
+        return `/contabilidad/eventos${qs ? `?${qs}` : ''}`
+      },
+      providesTags: ['EventosContables'],
+    }),
   }),
 })
 
@@ -986,7 +1092,9 @@ export const invalidateContabilidadCache = () => {
     { type: "CierresContables" as const, id: "LIST" },
     { type: "InyeccionesCapital" as const, id: "LIST" },
     { type: "AuditLogs" as const, id: "LIST" },
-    { type: "Anticipos" as const, id: "LIST" }
+    { type: "Anticipos" as const, id: "LIST" },
+    { type: "PeriodosContables" as const, id: "LIST" },
+    { type: "EventosContables" as const, id: "LIST" }
   ]
 }
 
@@ -1070,4 +1178,19 @@ export const {
   useCreateInyeccionCapitalMutation,
   useRegistrarPagoCapitalMutation,
   useGetAuditLogsQuery
+} = contabilidadApi
+
+export const {
+  useGetPeriodosQuery,
+  useGetPeriodoQuery,
+  useAperturarPeriodoMutation,
+  useCerrarDiarioMutation,
+  useCerrarMensualMutation,
+  useCerrarAnualMutation,
+  useAprobarPeriodoMutation,
+  useReabrirPeriodoMutation,
+  useGetPeriodoInconsistenciasQuery,
+  useGetPeriodoSnapshotQuery,
+  useGetPrecierreQuery,
+  useGetEventosContablesQuery,
 } = contabilidadApi

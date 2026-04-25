@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma"
 import { withAuthGet, withAuthPost } from "@/lib/auth-middleware"
 import { notificarTransferencia } from "@/lib/notificaciones-utils"
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service'
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from "@/lib/services/periodo-operacion-guard"
+import { registrarEventoContable } from "@/lib/services/evento-contable-integration"
 
 /**
  * @description Calcula el stock disponible para un producto en un punto de venta.
@@ -216,6 +218,8 @@ async function generarNumeroTransferencia(tx: any): Promise<string> {
 
 export const POST = withAuthPost(async (request: NextRequest, _context: any, user: any) => {
   try {
+    await assertOperationAllowed(new Date(), 'TRANSFERENCIA_INVENTARIO')
+
     const body = await request.json()
     const { productos, tipoOrigen, origenId, tipoDestino, destinoId, descripcion } = body
 
@@ -412,6 +416,19 @@ export const POST = withAuthPost(async (request: NextRequest, _context: any, use
       }
     }
 
+    for (const tx of result) {
+      if (tx && 'transferenciaId' in tx) {
+        await registrarEventoContable({
+          origenTipo: 'TRANSFERENCIA_INVENTARIO',
+          origenId: (tx as Record<string, unknown>).transferenciaId as string,
+          monto: Number((tx as Record<string, unknown>).cantidad ?? 0),
+          fechaOperacion: new Date(),
+          descripcion: `Transferencia inventario ${(tx as Record<string, unknown>).transferenciaId as string}`,
+          usuarioId: user?.userId ?? 'system',
+        });
+      }
+    }
+
     return NextResponse.json({
       message: `${result.length} transferencias creadas exitosamente`,
       transferencias: result,
@@ -419,6 +436,9 @@ export const POST = withAuthPost(async (request: NextRequest, _context: any, use
       totalUnidades: result.reduce((sum: number, t: { cantidad: number }) => sum + t.cantidad, 0),
     })
   } catch (error) {
+    if (isPeriodoOperacionError(error)) {
+      return NextResponse.json(serializePeriodoOperacionError(error), { status: error.status })
+    }
     console.log("[TRANSFERENCIAS_POST]", error)
     return NextResponse.json({
       message: "Error interno del servidor"

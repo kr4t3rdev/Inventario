@@ -15,7 +15,7 @@ const createCompraServicioSchema = z.object({
   servicioId: z.string().min(1, 'Seleccione un servicio'),
   proveedorId: z.string().optional().nullable(),
   numeroFactura: z.string().optional().nullable(),
-  costoUnitario: z.coerce.number().int().positive('El costo unitario debe ser mayor a 0'),
+  costoUnitario: z.coerce.number().positive('El costo unitario debe ser mayor a 0'),
   cantidad: z.coerce.number().int().positive('La cantidad debe ser mayor a 0'),
   formaPago: z.enum(['PAGO_PARCIAL', 'PAGO_COMPLETO', 'ANTICIPO_PAGO']),
   estado: z.enum(['PENDIENTE', 'PAGADA']),

@@ -152,8 +152,9 @@ const productoB = {
 
 describe('API /compras-productos POST', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    vi.resetAllMocks()
     mockTransaction()
+    isAnticipoWorkflowErrorMock.mockReturnValue(false)
     calcularPrecioCostoCompraMock.mockImplementation(({ stockAntes, precioCostoActual, cantidadCompra, costoUnitario }: any) => {
       if (stockAntes <= 0) return { precioCostoNuevo: costoUnitario, metodoCosto: 'PRIMERA_COMPRA' }
       const valorAnterior = stockAntes * precioCostoActual
@@ -238,6 +239,70 @@ describe('API /compras-productos POST', () => {
 
     // Verifica que se actualizó StockUbicacion 2 veces
     expect(upsertStockUbicacionMock).toHaveBeenCalledTimes(2)
+  })
+
+  it('acepta precioCosto con coma decimal', async () => {
+    const { POST } = await import('../route')
+
+    prismaMock.compraDocumento.findFirst.mockResolvedValueOnce(null)
+    prismaMock.producto.findUnique.mockResolvedValueOnce(productoA)
+    prismaMock.producto.update.mockResolvedValue({})
+    prismaMock.compraDocumento.create.mockResolvedValueOnce({
+      compraDocumentoId: 'cd-coma',
+      proveedorId: 'vendor-1',
+      total: 25,
+      estado: 'PAGADA',
+    })
+    prismaMock.compraDocumentoItem.create.mockResolvedValueOnce({
+      compraDocumentoItemId: 'ci-coma',
+      compraDocumentoId: 'cd-coma',
+      productoId: 'prod-a',
+      cantidad: 2,
+      precioUnitario: 12.5,
+      totalLinea: 25,
+    })
+    prismaMock.productoCostHistory.create.mockResolvedValue({})
+    prismaMock.gastoCompra.create.mockResolvedValueOnce({
+      gastoCompraId: 'gc-coma',
+      productoId: 'prod-a',
+      vendorId: 'vendor-1',
+      cantidad: 2,
+      precioUnitario: 12.5,
+      total: 25,
+      vendor: { nombre: 'Proveedor 1' },
+    })
+    upsertStockUbicacionMock.mockResolvedValue(undefined)
+
+    const request = makePostRequest({
+      proveedorId: 'vendor-1',
+      numeroFactura: 'F-COMA',
+      formaPago: 'PAGO_COMPLETO',
+      estado: 'PAGADA',
+      items: [
+        { productoId: 'prod-a', precioCosto: '12,5', cantidad: 2 },
+      ],
+    })
+
+    const response = await POST(request, {}, { userId: 'user-1', id: 'user-1' })
+    const data = await response.json()
+
+    expect(response.status).toBe(201)
+    expect(data.success).toBe(true)
+    expect(prismaMock.gastoCompra.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          total: 25,
+        }),
+      })
+    )
+    expect(prismaMock.compraDocumentoItem.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          precioUnitario: 12.5,
+          totalLinea: 25,
+        }),
+      })
+    )
   })
 
   it('rechaza si items está vacío', async () => {
@@ -474,7 +539,7 @@ describe('API /compras-productos POST', () => {
 
 describe('API /compras-productos GET', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    vi.resetAllMocks()
   })
 
   it('retorna cabeceras con items incluidos', async () => {
@@ -526,7 +591,7 @@ describe('API /compras-productos GET', () => {
 
 describe('API /compras-productos/[id] DELETE', () => {
   beforeEach(() => {
-    vi.clearAllMocks()
+    vi.resetAllMocks()
     mockTransaction()
   })
 

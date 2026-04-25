@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
 const executeAnticipoMock = vi.hoisted(() => vi.fn());
+const assertOperationAllowedMock = vi.hoisted(() => vi.fn());
 
 vi.mock('@/lib/auth-middleware', () => ({
   withAuthGet: (handler: any) => handler,
@@ -42,9 +43,25 @@ vi.mock('@/lib/services/anticipos-workflow', () => ({
   isAnticipoWorkflowError: () => false
 }));
 
+vi.mock('@/lib/services/periodo-operacion-guard', () => ({
+  assertOperationAllowed: assertOperationAllowedMock,
+  isPeriodoOperacionError: (error: unknown) =>
+    Boolean(
+      error &&
+        typeof error === 'object' &&
+        'code' in (error as Record<string, unknown>) &&
+        (error as Record<string, unknown>).code === 'PERIODO_BLOQUEADO'
+    ),
+  serializePeriodoOperacionError: (error: { message: string; code: string }) => ({
+    error: error.message,
+    code: error.code,
+  }),
+}));
+
 describe('Ventas API - POST rollback por fallo de facturación', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    assertOperationAllowedMock.mockResolvedValue(undefined);
   });
 
   it('debe responder 500 y no completar el flujo cuando falla factura dentro de transacción', async () => {
@@ -279,6 +296,33 @@ describe('Ventas API - POST rollback por fallo de facturación', () => {
     expect(prisma.ventaServicios.create).toHaveBeenCalledTimes(1);
 
     fetchSpy.mockRestore();
+  });
+
+  it('debe bloquear la creación cuando el período contable está cerrado', async () => {
+    const { POST } = await import('../route');
+    assertOperationAllowedMock.mockRejectedValueOnce({
+      message: 'Período cerrado',
+      status: 409,
+      code: 'PERIODO_BLOQUEADO',
+    });
+
+    const request = new NextRequest('http://localhost/api/ventas', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        productos: [{ productoId: 'prod-1', cantidad: 1 }],
+        puntoDeVentaId: 'pv-1',
+      }),
+    });
+
+    const response = await POST(request, {});
+    const data = await response.json();
+
+    expect(response.status).toBe(409);
+    expect(data).toEqual({
+      error: 'Período cerrado',
+      code: 'PERIODO_BLOQUEADO',
+    });
   });
 });
 

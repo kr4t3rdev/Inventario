@@ -566,6 +566,87 @@ model CierreContable {
   updatedAt           DateTime @updatedAt
 }
 
+model PeriodoContable {
+  periodoId          String            @id @default(cuid())
+  tipo               TipoPeriodo
+  codigo             String            @unique
+  fechaInicio        DateTime
+  fechaFin           DateTime
+  estado             EstadoPeriodo     @default(BORRADOR)
+  periodoPadreId     String?
+  aperturaAutomatica Boolean           @default(false)
+  cierreAutomatico   Boolean           @default(false)
+  abiertoPorId       String?
+  cerradoPorId       String?
+  aprobadoPorId      String?
+  reabiertoPorId     String?
+  fechaApertura      DateTime?
+  fechaCierre        DateTime?
+  fechaAprobacion    DateTime?
+  fechaReapertura    DateTime?
+  observaciones      String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  periodoPadre       PeriodoContable?  @relation("PeriodoHierarchy", fields: [periodoPadreId], references: [periodoId], onDelete: SetNull)
+  subperiodos        PeriodoContable[] @relation("PeriodoHierarchy")
+  apertura           AperturaPeriodo?
+  snapshots          SnapshotPeriodo[]
+  auditorias         AuditoriaPeriodo[]
+
+  @@index([tipo, fechaInicio, fechaFin])
+  @@index([estado])
+  @@index([periodoPadreId])
+}
+
+model AperturaPeriodo {
+  aperturaId                 String           @id @default(cuid())
+  periodoId                  String           @unique
+  origenPeriodoId            String?
+  saldoCajaInicial           Decimal          @default(0)
+  saldoBancoInicial          Decimal          @default(0)
+  saldoCuentasCobrarInicial  Decimal          @default(0)
+  saldoCuentasPagarInicial   Decimal          @default(0)
+  saldoInventarioInicial     Decimal          @default(0)
+  saldoCapitalInicial        Decimal          @default(0)
+  saldoResultadoAcumInicial  Decimal          @default(0)
+  detalleJson                Json?
+  createdAt                  DateTime         @default(now())
+  updatedAt                  DateTime         @updatedAt
+  periodo                    PeriodoContable  @relation(fields: [periodoId], references: [periodoId], onDelete: Cascade)
+
+  @@index([origenPeriodoId])
+}
+
+model SnapshotPeriodo {
+  snapshotId          String           @id @default(cuid())
+  periodoId           String
+  version             Int              @default(1)
+  baseCajaJson        Json?
+  baseDevengoJson     Json?
+  inconsistenciasJson Json?
+  resumenJson         Json?
+  hashIntegridad      String?
+  createdAt           DateTime         @default(now())
+  periodo             PeriodoContable  @relation(fields: [periodoId], references: [periodoId], onDelete: Cascade)
+
+  @@unique([periodoId, version])
+  @@index([periodoId, createdAt])
+}
+
+model AuditoriaPeriodo {
+  auditoriaId String          @id @default(cuid())
+  periodoId   String
+  accion      AccionPeriodo
+  usuarioId   String
+  motivo      String?
+  payloadJson Json?
+  createdAt   DateTime        @default(now())
+  periodo     PeriodoContable @relation(fields: [periodoId], references: [periodoId], onDelete: Cascade)
+
+  @@index([periodoId, createdAt])
+  @@index([usuarioId])
+}
+
 model GastoCompra {
   gastoCompraId    String                @id @default(cuid())
   productoId       String
@@ -1698,6 +1779,92 @@ model AnticipoMovimiento {
 enum TipoInyeccion {
   CAPITAL_SOCIAL
   DEUDA_EXTERNA
+}
+
+enum TipoPeriodo {
+  DIARIO
+  MENSUAL
+  ANUAL
+}
+
+enum EstadoPeriodo {
+  BORRADOR
+  ABIERTO
+  EN_CIERRE
+  CERRADO
+  APROBADO
+  REABIERTO
+}
+
+enum AccionPeriodo {
+  CREAR
+  ABRIR
+  CERRAR
+  APROBAR
+  REABRIR
+  BLOQUEAR_OPERACION
+  GENERAR_APERTURA
+  GENERAR_SNAPSHOT
+}
+
+enum CriterioContable {
+  CAJA
+  DEVENGO
+}
+
+enum NaturalezaEvento {
+  INGRESO
+  EGRESO
+  ACTIVO
+  PASIVO
+  PATRIMONIO
+  RESULTADO
+}
+
+model EventoContable {
+  eventoId          String            @id @default(cuid())
+  fechaOperacion    DateTime
+  fechaRegistro     DateTime          @default(now())
+  origenTipo        String
+  origenId          String
+  criterio          CriterioContable
+  periodoDiarioId   String?
+  periodoMensualId  String?
+  periodoAnualId    String?
+  moneda            String            @default("CUP")
+  monto             Decimal
+  montoConvertido   Decimal?
+  naturaleza        NaturalezaEvento
+  estado            String            @default("CONFIRMADO")
+  descripcion       String?
+  metadataJson      Json?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  lineas            EventoContableLinea[]
+
+  @@index([origenTipo, origenId])
+  @@index([fechaOperacion])
+  @@index([periodoDiarioId])
+  @@index([periodoMensualId])
+  @@index([criterio, fechaOperacion])
+  @@index([naturaleza, fechaOperacion])
+}
+
+model EventoContableLinea {
+  lineaId           String          @id @default(cuid())
+  eventoId          String
+  cuenta            String
+  descripcion       String?
+  debito            Decimal         @default(0)
+  credito           Decimal         @default(0)
+  moneda            String          @default("CUP")
+  metadataJson      Json?
+  createdAt         DateTime        @default(now())
+
+  evento            EventoContable  @relation(fields: [eventoId], references: [eventoId], onDelete: Cascade)
+
+  @@index([eventoId])
+  @@index([cuenta])
 }
 
 enum EstadoDeuda {

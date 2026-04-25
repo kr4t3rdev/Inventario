@@ -6,8 +6,17 @@ import {
   applyFacturacionCobroWorkflow,
   reconciliarVentaDirecta
 } from "@/lib/services/facturacion-ventas-workflow"
-import { applyAnticipoAllocations } from "@/lib/services/anticipos-workflow"
+import {
+  applyAnticipoAllocations,
+  isAnticipoWorkflowError
+} from "@/lib/services/anticipos-workflow"
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service'
+import {
+  assertOperationAllowed,
+  isPeriodoOperacionError,
+  serializePeriodoOperacionError
+} from '@/lib/services/periodo-operacion-guard'
+import { registrarEventoContable } from '@/lib/services/evento-contable-integration'
 
 // Function to invalidate dashboard cache after creating sales
 async function invalidateDashboardCache() {
@@ -272,6 +281,7 @@ export const GET = withAuthGet(async (request: NextRequest, context: any, user: 
 export const POST = withAuthPost(async (request: NextRequest, context: any, user: any) => {
   try {
     const body = await request.json()
+    await assertOperationAllowed(new Date(), 'VENTA')
 
     // Venta mixta con líneas de producto + servicio (fase de transición)
     if (body.lineas && Array.isArray(body.lineas)) {
@@ -288,6 +298,9 @@ export const POST = withAuthPost(async (request: NextRequest, context: any, user
     }
   } catch (error) {
     console.error("Error al crear venta:", error)
+    if (isPeriodoOperacionError(error)) {
+      return NextResponse.json(serializePeriodoOperacionError(error), { status: error.status })
+    }
     if (isAnticipoWorkflowError(error)) {
       return NextResponse.json({ error: error.message, code: error.code }, { status: error.status })
     }
@@ -888,6 +901,16 @@ async function crearVentaIndividual(body: any, user: any) {
 
   // Invalidar cache del dashboard para actualizar las ventas diarias
   await invalidateDashboardCache()
+
+  // Registrar evento contable (no-bloqueante)
+  await registrarEventoContable({
+    origenTipo: 'VENTA',
+    origenId: (venta as Record<string, unknown>).ventaId as string ?? 'unknown',
+    monto: Number((venta as Record<string, unknown>).total ?? 0),
+    fechaOperacion: new Date(),
+    descripcion: `Venta ${(venta as Record<string, unknown>).ventaId ?? ''}`,
+    usuarioId: user.userId,
+  })
 
   return NextResponse.json(venta)
 }

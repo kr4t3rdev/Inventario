@@ -542,6 +542,67 @@ exports.Prisma.CierreContableScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.PeriodoContableScalarFieldEnum = {
+  periodoId: 'periodoId',
+  tipo: 'tipo',
+  codigo: 'codigo',
+  fechaInicio: 'fechaInicio',
+  fechaFin: 'fechaFin',
+  estado: 'estado',
+  periodoPadreId: 'periodoPadreId',
+  aperturaAutomatica: 'aperturaAutomatica',
+  cierreAutomatico: 'cierreAutomatico',
+  abiertoPorId: 'abiertoPorId',
+  cerradoPorId: 'cerradoPorId',
+  aprobadoPorId: 'aprobadoPorId',
+  reabiertoPorId: 'reabiertoPorId',
+  fechaApertura: 'fechaApertura',
+  fechaCierre: 'fechaCierre',
+  fechaAprobacion: 'fechaAprobacion',
+  fechaReapertura: 'fechaReapertura',
+  observaciones: 'observaciones',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.AperturaPeriodoScalarFieldEnum = {
+  aperturaId: 'aperturaId',
+  periodoId: 'periodoId',
+  origenPeriodoId: 'origenPeriodoId',
+  saldoCajaInicial: 'saldoCajaInicial',
+  saldoBancoInicial: 'saldoBancoInicial',
+  saldoCuentasCobrarInicial: 'saldoCuentasCobrarInicial',
+  saldoCuentasPagarInicial: 'saldoCuentasPagarInicial',
+  saldoInventarioInicial: 'saldoInventarioInicial',
+  saldoCapitalInicial: 'saldoCapitalInicial',
+  saldoResultadoAcumInicial: 'saldoResultadoAcumInicial',
+  detalleJson: 'detalleJson',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.SnapshotPeriodoScalarFieldEnum = {
+  snapshotId: 'snapshotId',
+  periodoId: 'periodoId',
+  version: 'version',
+  baseCajaJson: 'baseCajaJson',
+  baseDevengoJson: 'baseDevengoJson',
+  inconsistenciasJson: 'inconsistenciasJson',
+  resumenJson: 'resumenJson',
+  hashIntegridad: 'hashIntegridad',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.AuditoriaPeriodoScalarFieldEnum = {
+  auditoriaId: 'auditoriaId',
+  periodoId: 'periodoId',
+  accion: 'accion',
+  usuarioId: 'usuarioId',
+  motivo: 'motivo',
+  payloadJson: 'payloadJson',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.GastoCompraScalarFieldEnum = {
   gastoCompraId: 'gastoCompraId',
   productoId: 'productoId',
@@ -1423,6 +1484,39 @@ exports.Prisma.AnticipoMovimientoScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.EventoContableScalarFieldEnum = {
+  eventoId: 'eventoId',
+  fechaOperacion: 'fechaOperacion',
+  fechaRegistro: 'fechaRegistro',
+  origenTipo: 'origenTipo',
+  origenId: 'origenId',
+  criterio: 'criterio',
+  periodoDiarioId: 'periodoDiarioId',
+  periodoMensualId: 'periodoMensualId',
+  periodoAnualId: 'periodoAnualId',
+  moneda: 'moneda',
+  monto: 'monto',
+  montoConvertido: 'montoConvertido',
+  naturaleza: 'naturaleza',
+  estado: 'estado',
+  descripcion: 'descripcion',
+  metadataJson: 'metadataJson',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.EventoContableLineaScalarFieldEnum = {
+  lineaId: 'lineaId',
+  eventoId: 'eventoId',
+  cuenta: 'cuenta',
+  descripcion: 'descripcion',
+  debito: 'debito',
+  credito: 'credito',
+  moneda: 'moneda',
+  metadataJson: 'metadataJson',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1461,6 +1555,32 @@ exports.EstadoDeuda = exports.$Enums.EstadoDeuda = {
   ACTIVA: 'ACTIVA',
   PAGADA: 'PAGADA',
   EN_MORA: 'EN_MORA'
+};
+
+exports.TipoPeriodo = exports.$Enums.TipoPeriodo = {
+  DIARIO: 'DIARIO',
+  MENSUAL: 'MENSUAL',
+  ANUAL: 'ANUAL'
+};
+
+exports.EstadoPeriodo = exports.$Enums.EstadoPeriodo = {
+  BORRADOR: 'BORRADOR',
+  ABIERTO: 'ABIERTO',
+  EN_CIERRE: 'EN_CIERRE',
+  CERRADO: 'CERRADO',
+  APROBADO: 'APROBADO',
+  REABIERTO: 'REABIERTO'
+};
+
+exports.AccionPeriodo = exports.$Enums.AccionPeriodo = {
+  CREAR: 'CREAR',
+  ABRIR: 'ABRIR',
+  CERRAR: 'CERRAR',
+  APROBAR: 'APROBAR',
+  REABRIR: 'REABRIR',
+  BLOQUEAR_OPERACION: 'BLOQUEAR_OPERACION',
+  GENERAR_APERTURA: 'GENERAR_APERTURA',
+  GENERAR_SNAPSHOT: 'GENERAR_SNAPSHOT'
 };
 
 exports.EstadoContrato = exports.$Enums.EstadoContrato = {
@@ -1569,6 +1689,20 @@ exports.ContextoAnticipo = exports.$Enums.ContextoAnticipo = {
   FACTURA_DIRECTA: 'FACTURA_DIRECTA'
 };
 
+exports.CriterioContable = exports.$Enums.CriterioContable = {
+  CAJA: 'CAJA',
+  DEVENGO: 'DEVENGO'
+};
+
+exports.NaturalezaEvento = exports.$Enums.NaturalezaEvento = {
+  INGRESO: 'INGRESO',
+  EGRESO: 'EGRESO',
+  ACTIVO: 'ACTIVO',
+  PASIVO: 'PASIVO',
+  PATRIMONIO: 'PATRIMONIO',
+  RESULTADO: 'RESULTADO'
+};
+
 exports.Prisma.ModelName = {
   Categoria: 'Categoria',
   Unidad: 'Unidad',
@@ -1599,6 +1733,10 @@ exports.Prisma.ModelName = {
   Empleado: 'Empleado',
   Pagosalario: 'Pagosalario',
   CierreContable: 'CierreContable',
+  PeriodoContable: 'PeriodoContable',
+  AperturaPeriodo: 'AperturaPeriodo',
+  SnapshotPeriodo: 'SnapshotPeriodo',
+  AuditoriaPeriodo: 'AuditoriaPeriodo',
   GastoCompra: 'GastoCompra',
   CompraProducto: 'CompraProducto',
   CompraDocumento: 'CompraDocumento',
@@ -1660,7 +1798,9 @@ exports.Prisma.ModelName = {
   ProductoCostHistory: 'ProductoCostHistory',
   VendorCodeSequence: 'VendorCodeSequence',
   Anticipo: 'Anticipo',
-  AnticipoMovimiento: 'AnticipoMovimiento'
+  AnticipoMovimiento: 'AnticipoMovimiento',
+  EventoContable: 'EventoContable',
+  EventoContableLinea: 'EventoContableLinea'
 };
 
 /**

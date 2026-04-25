@@ -27,6 +27,8 @@ const breadcrumbMap: Record<string, string> = {
   "/busy/contabilidad/configuracion": "Configuración",
   "/busy/contabilidad/cierres": "Cierres Contables",
   "/busy/contabilidad/logs": "Logs de Auditoría",
+  "/busy/contabilidad/periodos": "Períodos Contables",
+  "/busy/contabilidad/eventos": "Eventos Contables",
   "/busy/contabilidad/capital": "Inyeccion de Capital",
   "/busy/contabilidad/cuentas-por-cobrar": "Cuentas por Cobrar",
   "/busy/contabilidad/analisis-cuenta-cliente": "Análisis de Cuenta",
