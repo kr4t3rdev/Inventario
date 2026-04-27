@@ -19,27 +19,29 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const authResult = await authenticateUser(request);
-    if ('status' in authResult) {
-      return authResult as Response;
-    }
+      const authResult = await authenticateUser(request);
+      if ('status' in authResult) {
+        return authResult as Response;
+      }
 
-    const user = authResult.user;
-    const { id } = await params;
-    const body = await request.json().catch(() => ({}));
+      const user = authResult.user;
+      const { id } = await params;
+      const body = await request.json().catch(() => ({}));
+      const regenerarSnapshot = body?.regenerarSnapshot === true;
 
-    if (!body?.motivo || typeof body.motivo !== 'string' || body.motivo.trim().length === 0) {
-      return NextResponse.json(
-        { error: 'La reapertura requiere un motivo obligatorio.', code: 'MOTIVO_REQUERIDO' },
-        { status: 400 }
-      );
-    }
+      if (!body?.motivo || typeof body.motivo !== 'string' || body.motivo.trim().length === 0) {
+        return NextResponse.json(
+          { error: 'La reapertura requiere un motivo obligatorio.', code: 'MOTIVO_REQUERIDO' },
+          { status: 400 }
+        );
+      }
 
-    const result = await reabrirPeriodo({
-      periodoId: id,
-      usuarioId: user.userId,
-      motivo: body.motivo,
-    });
+      const result = await reabrirPeriodo({
+        periodoId: id,
+        usuarioId: user.userId,
+        motivo: body.motivo,
+        regenerarSnapshot,
+      });
 
     return NextResponse.json(
       {
@@ -48,6 +50,7 @@ export async function POST(
         estadoAnterior: result.estadoAnterior,
         estadoNuevo: result.estadoNuevo,
         auditado: result.auditado,
+        regenerarSnapshot,
       },
       { status: 200 }
     );

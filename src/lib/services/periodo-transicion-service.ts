@@ -100,6 +100,7 @@ export interface ReabrirParams {
   periodoId: string;
   usuarioId: string;
   motivo: string;
+  regenerarSnapshot?: boolean;
 }
 
 export interface TransicionResult {
@@ -355,6 +356,26 @@ export async function reabrirPeriodo(params: ReabrirParams): Promise<TransicionR
         motivo: params.motivo,
       },
     });
+
+    if (params.regenerarSnapshot) {
+      const snapshotModel = models.snapshotPeriodo as
+        | { deleteMany: (args: Record<string, unknown>) => Promise<void>; create: (args: Record<string, unknown>) => Promise<Record<string, unknown>> }
+        | undefined
+
+      if (snapshotModel?.deleteMany) {
+        await snapshotModel.deleteMany({ where: { periodoId: params.periodoId } })
+        await snapshotModel.create({
+          data: {
+            periodoId: params.periodoId,
+            version: 1,
+            baseCajaJson: {},
+            baseDevengoJson: {},
+            resumenJson: { regeneradoEnReapertura: true, reaperturaMotivo: params.motivo },
+            hashIntegridad: null,
+          },
+        } as Record<string, unknown>)
+      }
+    }
 
     return {
       periodo: updatedPeriodo,
