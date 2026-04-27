@@ -3,6 +3,8 @@ import { z } from 'zod'
 import prisma from '@/lib/prisma'
 import { withAuthGet, withAuthPost } from '@/lib/auth-middleware'
 import { createAnticipo, isAnticipoWorkflowError } from '@/lib/services/anticipos-workflow'
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from '@/lib/services/periodo-operacion-guard'
+import { registrarEventoContable } from '@/lib/services/evento-contable-integration'
 
 const CreateAnticipoSchema = z.object({
   tipo: z.enum(['PAGO', 'COBRO']),
@@ -84,6 +86,10 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
     const body = await request.json()
     const payload = CreateAnticipoSchema.parse(body)
 
+    const origenTipo = payload.tipo === 'PAGO' ? 'ANTICIPO_PAGO' : 'ANTICIPO_COBRO'
+
+    await assertOperationAllowed(new Date(), origenTipo)
+
     const anticipo = await prisma.$transaction(async (tx) => {
       return createAnticipo(tx, {
         ...payload,
@@ -92,8 +98,21 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
       })
     })
 
+    await registrarEventoContable({
+      origenTipo,
+      origenId: anticipo.anticipoId,
+      monto: Number(anticipo.montoOriginal),
+      fechaOperacion: new Date(),
+      descripcion: `Anticipo ${payload.tipo} ${anticipo.anticipoId}`,
+      moneda: payload.moneda,
+      usuarioId: user.userId,
+    })
+
     return NextResponse.json({ anticipo }, { status: 201 })
   } catch (error) {
+    if (isPeriodoOperacionError(error)) {
+      return NextResponse.json(serializePeriodoOperacionError(error), { status: error.status })
+    }
     console.error('Error al crear anticipo:', error)
 
     if (isAnticipoWorkflowError(error)) {

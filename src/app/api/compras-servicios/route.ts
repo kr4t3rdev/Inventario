@@ -5,6 +5,8 @@ import prisma from '@/lib/prisma'
 import { withAuthGet, withAuthPost } from '@/lib/auth-middleware'
 import { applyAnticipoAllocations, isAnticipoWorkflowError } from '@/lib/services/anticipos-workflow'
 import type { AnticipoAllocation } from '@/lib/services/anticipos-workflow.types'
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from '@/lib/services/periodo-operacion-guard'
+import { registrarEventoContable } from '@/lib/services/evento-contable-integration'
 
 const anticipoAllocationSchema = z.object({
   anticipoId: z.string().min(1),
@@ -62,6 +64,8 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
         { status: 403 }
       )
     }
+
+    await assertOperationAllowed(new Date(), 'COMPRA_SERVICIO')
 
     const payload = createCompraServicioSchema.parse(await request.json())
 
@@ -169,8 +173,20 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
       return { compraServicio, allocationsResult }
     })
 
+    await registrarEventoContable({
+      origenTipo: 'COMPRA_SERVICIO',
+      origenId: resultado.compraServicio.compraServicioId,
+      monto: total,
+      fechaOperacion: fechaServicio,
+      descripcion: `Compra de servicio ${resultado.compraServicio.compraServicioId}`,
+      usuarioId: user.userId || 'system',
+    })
+
     return NextResponse.json(resultado, { status: 201 })
   } catch (error) {
+    if (isPeriodoOperacionError(error)) {
+      return NextResponse.json(serializePeriodoOperacionError(error), { status: error.status })
+    }
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: 'Datos de entrada inválidos', details: error.errors },

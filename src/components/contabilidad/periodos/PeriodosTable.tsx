@@ -25,6 +25,9 @@ import {
   Filter,
   Loader2,
   AlertTriangle,
+  CheckCircle2,
+  XCircle,
+  FileWarning,
 } from 'lucide-react'
 
 const ESTADO_CONFIG: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline'; className: string }> = {
@@ -68,7 +71,7 @@ export function PeriodosTable({ onSelectPeriodo }: { onSelectPeriodo: (id: strin
     )
   }
 
-  const periodos = data?.periodos ?? []
+  const periodos = data?.items ?? data?.periodos ?? []
 
   return (
     <Card>
@@ -77,6 +80,9 @@ export function PeriodosTable({ onSelectPeriodo }: { onSelectPeriodo: (id: strin
           <CardTitle className="flex items-center gap-2">
             <CalendarDays className="h-5 w-5" />
             Períodos Contables
+            {periodos.length > 0 && (
+              <span className="text-sm font-normal text-muted-foreground">({periodos.length})</span>
+            )}
           </CardTitle>
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-muted-foreground" />
@@ -126,6 +132,10 @@ export function PeriodosTable({ onSelectPeriodo }: { onSelectPeriodo: (id: strin
                 <TableHead>Estado</TableHead>
                 <TableHead>Fecha Inicio</TableHead>
                 <TableHead>Fecha Fin</TableHead>
+                <TableHead className="text-center">Apertura</TableHead>
+                <TableHead className="text-center">Snapshot</TableHead>
+                <TableHead className="text-center">Subperíodos</TableHead>
+                <TableHead className="text-center">Blockers</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
@@ -133,10 +143,11 @@ export function PeriodosTable({ onSelectPeriodo }: { onSelectPeriodo: (id: strin
               {periodos.map((p: any) => {
                 const estadoConf = ESTADO_CONFIG[p.estado] ?? ESTADO_CONFIG.BORRADOR
                 const tipoConf = TIPO_CONFIG[p.tipo] ?? TIPO_CONFIG.DIARIO
+                const hasBlockers = Array.isArray(p.blockers) && p.blockers.length > 0
                 return (
                   <TableRow
                     key={p.periodoId}
-                    className="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                    className={`cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 ${hasBlockers ? 'border-l-2 border-l-amber-400' : ''}`}
                     onClick={() => onSelectPeriodo(p.periodoId)}
                   >
                     <TableCell className="font-mono font-medium">{p.codigo}</TableCell>
@@ -150,8 +161,45 @@ export function PeriodosTable({ onSelectPeriodo }: { onSelectPeriodo: (id: strin
                         {estadoConf.label}
                       </Badge>
                     </TableCell>
-                    <TableCell>{new Date(p.fechaInicio).toLocaleDateString('es-ES')}</TableCell>
-                    <TableCell>{new Date(p.fechaFin).toLocaleDateString('es-ES')}</TableCell>
+                    <TableCell className="text-xs">{new Date(p.fechaInicio).toLocaleDateString('es-ES')}</TableCell>
+                    <TableCell className="text-xs">{new Date(p.fechaFin).toLocaleDateString('es-ES')}</TableCell>
+                    <TableCell className="text-center">
+                      {p.tieneApertura ? (
+                        <CheckCircle2 className="h-4 w-4 text-emerald-500 mx-auto" />
+                      ) : (
+                        <XCircle className="h-4 w-4 text-slate-300 mx-auto" />
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {p.tieneSnapshot ? (
+                        <span className="text-xs text-emerald-600 font-medium">
+                          v{p.versionSnapshotActual ?? '?'}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-400">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {p.totalSubperiodos > 0 ? (
+                        <span className="text-xs">
+                          <span className="text-emerald-600 font-medium">{p.subperiodosCerrados}</span>
+                          <span className="text-muted-foreground">/</span>
+                          <span className="text-amber-600 font-medium">{p.subperiodosAbiertos}</span>
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-400">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      {hasBlockers ? (
+                        <span className="inline-flex items-center gap-1 text-xs text-amber-600 font-medium">
+                          <FileWarning className="h-3.5 w-3.5" />
+                          {p.blockers.length}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-400">—</span>
+                      )}
+                    </TableCell>
                     <TableCell className="text-right">
                       <Button
                         variant="ghost"

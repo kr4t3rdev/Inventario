@@ -4,6 +4,10 @@ import { z } from "zod";
 import type { Prisma } from "@/generated/prisma";
 import { authenticateUser } from "@/lib/auth-middleware";
 import { AuditLogService } from "@/lib/services/audit-log-service";
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from '@/lib/services/periodo-operacion-guard'
+import { registrarEventoContable } from '@/lib/services/evento-contable-integration'
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from '@/lib/services/periodo-operacion-guard'
+import { registrarEventoContable } from '@/lib/services/evento-contable-integration'
 
 const pagoDeudaSchema = z.object({
   montoPagado: z.number().positive("El monto debe ser positivo"),
@@ -21,9 +25,14 @@ export async function POST(
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
 
+    // Validar que el período permite operaciones
+    await assertOperationAllowed(new Date(), 'PAGO_DEUDA')
+
     const { id } = await params;
     const body = await request.json();
     const validatedData = pagoDeudaSchema.parse(body);
+
+    await assertOperationAllowed(new Date(), 'PAGO_DEUDA')
 
     // Verify Injection exists and is eligible for payment
     const inyeccion = await prisma.inyeccionCapital.findUnique({
@@ -95,6 +104,15 @@ export async function POST(
       return pago;
     });
 
+    await registrarEventoContable({
+      origenTipo: 'PAGO_DEUDA',
+      origenId: id,
+      monto: validatedData.montoPagado,
+      fechaOperacion: new Date(),
+      descripcion: validatedData.observaciones || `Pago de deuda ${id}`,
+      usuarioId: user.userId,
+    })
+
     // Registrar en auditoría
     await AuditLogService.log({
       accion: "CREATE",
@@ -112,6 +130,9 @@ export async function POST(
 
     return NextResponse.json({ pago: result }, { status: 201 });
   } catch (error) {
+    if (isPeriodoOperacionError(error)) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.status })
+    }
     console.error('Error al registrar pago de deuda:', error);
     
     if (error instanceof z.ZodError) {

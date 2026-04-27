@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { authenticateUser } from "@/lib/auth-middleware"
 import { AuditLogService } from '@/lib/services/audit-log-service'
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from '@/lib/services/periodo-operacion-guard'
+import { registrarEventoContable } from '@/lib/services/evento-contable-integration'
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from '@/lib/services/periodo-operacion-guard'
+import { registrarEventoContable } from '@/lib/services/evento-contable-integration'
 
 /**
  * @description Convierte un monto de pago a CUP para cálculos de saldo en CxC.
@@ -148,8 +152,13 @@ export async function POST(request: NextRequest) {
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
 
+    // Validar que el período permite operaciones
+    await assertOperationAllowed(new Date(), 'CUENTA_POR_COBRAR')
+
     const body = await request.json()
     // Validation would go here
+
+    await assertOperationAllowed(new Date(), 'CUENTA_POR_COBRAR')
 
     const cuenta = await prisma.cuentaPorCobrar.create({
       data: {
@@ -162,6 +171,25 @@ export async function POST(request: NextRequest) {
         estado: body.estado || 'PENDIENTE',
         fechaVencimiento: body.fechaVencimiento ? new Date(body.fechaVencimiento) : null
       }
+    })
+
+    // Registrar evento contable
+    await registrarEventoContable({
+      origenTipo: 'CUENTA_POR_COBRAR',
+      origenId: cuenta.id,
+      monto: body.montoDeuda,
+      fechaOperacion: new Date(),
+      descripcion: `Creación de cuenta por cobrar para cliente ${body.clienteId}`,
+      usuarioId: user.userId
+    })
+
+    await registrarEventoContable({
+      origenTipo: 'CUENTA_POR_COBRAR',
+      origenId: cuenta.id,
+      monto: body.montoDeuda,
+      fechaOperacion: new Date(),
+      descripcion: `Cuenta por cobrar - ${body.numeroFactura || cuenta.id}`,
+      usuarioId: user.userId,
     })
 
     await AuditLogService.log({
@@ -178,6 +206,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ cuenta }, { status: 201 })
   } catch (error: any) {
+    if (isPeriodoOperacionError(error)) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.status })
+    }
     console.error('Error creating account receivable:', error)
     
     // Check for Prisma Foreign Key constraint violation (P2003)

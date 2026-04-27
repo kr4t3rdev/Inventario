@@ -3,6 +3,10 @@ import { z } from 'zod'
 import prisma from '@/lib/prisma'
 import { withAuthPost } from '@/lib/auth-middleware'
 import { reverseAnticipo, isAnticipoWorkflowError } from '@/lib/services/anticipos-workflow'
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from '@/lib/services/periodo-operacion-guard'
+import { registrarEventoContable } from '@/lib/services/evento-contable-integration'
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from '@/lib/services/periodo-operacion-guard'
+import { registrarEventoContable } from '@/lib/services/evento-contable-integration'
 
 const ReverseAnticipoSchema = z.object({
   documentoDestinoId: z.string().min(1),
@@ -28,6 +32,8 @@ export const POST = withAuthPost(
       const body = await request.json()
       const payload = ReverseAnticipoSchema.parse(body)
 
+      await assertOperationAllowed(new Date(), 'REVERSION_ANTICIPO')
+
       const resultado = await prisma.$transaction(async (tx) => {
         return reverseAnticipo(tx, {
           anticipoId,
@@ -38,8 +44,31 @@ export const POST = withAuthPost(
         })
       })
 
+      await registrarEventoContable({
+        origenTipo: 'REVERSION_ANTICIPO',
+        origenId: anticipoId,
+        monto: payload.montoReverso,
+        fechaOperacion: new Date(),
+        descripcion: payload.observaciones || `Reversión de anticipo ${anticipoId}`,
+        usuarioId: user.userId,
+      })
+
+      // Registrar evento contable
+      await registrarEventoContable({
+        origenTipo: 'REVERSION_ANTICIPO',
+        origenId: anticipoId,
+        monto: payload.montoReverso,
+        fechaOperacion: new Date(),
+        descripcion: `Reversión de anticipo ${anticipoId}`,
+        usuarioId: user.userId
+      })
+
       return NextResponse.json({ result: resultado }, { status: 200 })
     } catch (error) {
+      if (isPeriodoOperacionError(error)) {
+        return NextResponse.json(serializePeriodoOperacionError(error), { status: error.status })
+      }
+
       console.error('Error al revertir anticipo:', error)
 
       if (isAnticipoWorkflowError(error)) {

@@ -4,6 +4,8 @@ import { POST } from '../route'
 import { prisma } from '../../../../../lib/prisma'
 import { authenticateUser } from '../../../../../lib/auth-middleware'
 
+const assertOperationAllowedMock = vi.hoisted(() => vi.fn())
+
 // Mock dependencies
 vi.mock('../../../../../lib/prisma', () => ({
     prisma: {
@@ -25,6 +27,16 @@ vi.mock('../../../../../lib/auth-middleware', () => ({
 
 vi.mock('../../../../../lib/restock-utils', () => ({
     executeProductInstanceCreationWorkflow: vi.fn(),
+}))
+
+vi.mock('@/lib/services/periodo-operacion-guard', () => ({
+    assertOperationAllowed: assertOperationAllowedMock,
+    isPeriodoOperacionError: vi.fn(() => false),
+    serializePeriodoOperacionError: vi.fn((e) => ({ message: e.message })),
+}))
+
+vi.mock('@/lib/services/evento-contable-integration', () => ({
+    registrarEventoContable: vi.fn(() => Promise.resolve(true)),
 }))
 
 const mockPrisma = prisma as any
@@ -54,6 +66,7 @@ describe('Restock API - Transaction Handling', () => {
         vi.clearAllMocks()
         mockAuthenticateUser.mockResolvedValue({ user: mockUser })
         mockPrisma.producto.findUnique.mockResolvedValue(mockProduct)
+        assertOperationAllowedMock.mockResolvedValue(undefined)
     })
 
     afterEach(() => {

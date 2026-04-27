@@ -30,6 +30,16 @@ vi.mock('../../../../../lib/restock-utils', () => ({
   executeProductInstanceCreationWorkflow: vi.fn()
 }))
 
+vi.mock('@/lib/services/periodo-operacion-guard', () => ({
+  assertOperationAllowed: vi.fn(() => Promise.resolve()),
+  isPeriodoOperacionError: vi.fn(() => false),
+  serializePeriodoOperacionError: vi.fn((e: Error) => ({ message: e.message })),
+}))
+
+vi.mock('@/lib/services/evento-contable-integration', () => ({
+  registrarEventoContable: vi.fn(() => Promise.resolve(true)),
+}))
+
 import { prisma } from '../../../../../lib/prisma'
 import { authenticateUser } from '../../../../../lib/auth-middleware'
 import { executeProductInstanceCreationWorkflow } from '../../../../../lib/restock-utils'

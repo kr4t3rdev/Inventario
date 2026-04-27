@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { withAuthGet, withAuthPost } from "@/lib/auth-middleware"
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from "@/lib/services/periodo-operacion-guard"
+import { registrarEventoContable } from "@/lib/services/evento-contable-integration"
 
 /**
  * @description Obtener listado de facturas con filtros y paginación
@@ -174,6 +176,8 @@ export const POST = withAuthPost(async (request: NextRequest, context: any, user
   try {
     const body = await request.json()
     
+    await assertOperationAllowed(new Date(), 'FACTURA')
+    
     // Validar campos requeridos
     const { clienteId, subtotal, impuestos, descuento, total, serieId, observaciones, tipoDocumento = 'FACTURA' } = body
     
@@ -252,8 +256,20 @@ export const POST = withAuthPost(async (request: NextRequest, context: any, user
       }
     })
 
+    await registrarEventoContable({
+      origenTipo: 'FACTURA',
+      origenId: facturaActualizada.idFactura,
+      monto: Number(total),
+      fechaOperacion: new Date(),
+      descripcion: `Factura ${facturaActualizada.numeroFactura}`,
+      usuarioId: user.userId,
+    })
+
     return NextResponse.json(facturaActualizada, { status: 201 })
   } catch (error) {
+    if (isPeriodoOperacionError(error)) {
+      return NextResponse.json(serializePeriodoOperacionError(error), { status: error.status })
+    }
     console.error("Error al crear factura:", error)
     return NextResponse.json(
       { error: "Error al crear factura" },

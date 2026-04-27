@@ -3,6 +3,10 @@ import prisma from '@/lib/prisma'
 import { authenticateUser } from '@/lib/auth-middleware'
 import { z } from 'zod'
 import { AuditLogService } from '@/lib/services/audit-log-service'
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from '@/lib/services/periodo-operacion-guard'
+import { registrarEventoContable } from '@/lib/services/evento-contable-integration'
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from '@/lib/services/periodo-operacion-guard'
+import { registrarEventoContable } from '@/lib/services/evento-contable-integration'
 
 const querySchema = z.object({
   estado: z.enum(['PENDIENTE', 'PAGADA', 'PARCIAL']).optional(),
@@ -310,7 +314,12 @@ export async function POST(request: NextRequest): Promise<Response> {
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
 
+    // Validar que el período permite operaciones
+    await assertOperationAllowed(new Date(), 'CUENTA_POR_PAGAR')
+
     const body = createSchema.parse(await request.json())
+
+    await assertOperationAllowed(new Date(), 'CUENTA_POR_PAGAR')
 
     const existing = await prisma.cuentaPorPagar.findFirst({
       where: {
@@ -395,6 +404,26 @@ export async function POST(request: NextRequest): Promise<Response> {
       }
     })
 
+    // Registrar evento contable
+    await registrarEventoContable({
+      origenTipo: 'CUENTA_POR_PAGAR',
+      origenId: cuenta.cuentaPorPagarId,
+      monto: montoDeuda,
+      fechaOperacion: new Date(),
+      descripcion: `Creación de cuenta por pagar - ${body.tipo}`,
+      usuarioId: user.userId
+    })
+
+    await registrarEventoContable({
+      origenTipo: 'CUENTA_POR_PAGAR',
+      origenId: cuenta.cuentaPorPagarId,
+      monto: montoDeuda,
+      fechaOperacion: new Date(),
+      descripcion: `Cuenta por pagar - ${body.numeroFactura}`,
+      moneda: body.moneda || 'CUP',
+      usuarioId: user.userId,
+    })
+
     await AuditLogService.log({
       accion: 'CREATE',
       entidad: 'CUENTA_POR_PAGAR',
@@ -411,6 +440,9 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     return NextResponse.json({ cuenta })
   } catch (error) {
+    if (isPeriodoOperacionError(error)) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.status })
+    }
     console.error('Error al crear cuenta por pagar:', error)
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Datos inválidos', details: error.errors }, { status: 400 })

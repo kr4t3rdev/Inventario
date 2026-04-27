@@ -5,6 +5,10 @@ import prisma from '@/lib/prisma'
 import { withAuthGet, withAuthPost } from '@/lib/auth-middleware'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 import { calcularSaldoPendienteDeuda, calcularTotalDeudaConInteres, normalizarEstadoDeudaCash } from '@/lib/utils/deuda-cash'
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from '@/lib/services/periodo-operacion-guard'
+import { registrarEventoContable } from '@/lib/services/evento-contable-integration'
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from '@/lib/services/periodo-operacion-guard'
+import { registrarEventoContable } from '@/lib/services/evento-contable-integration'
 
 const querySchema = z.object({
   estado: z.enum(['ACTIVO', 'PAGADO', 'VENCIDO', 'CANCELADO']).optional(),
@@ -137,6 +141,8 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
     const body = createSchema.parse(rawBody)
     const totalDeuda = calcularTotalDeudaConInteres(body.montoCapital, body.tasaInteres)
 
+    await assertOperationAllowed(new Date(), 'DEUDA_CASH')
+
     const proveedor = await prisma.vendor.findUnique({
       where: { vendorId: body.proveedorId },
       select: { nombre: true }
@@ -223,6 +229,16 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
       })
     })
 
+    await registrarEventoContable({
+      origenTipo: 'DEUDA_CASH',
+      origenId: deuda.id,
+      monto: body.montoCapital,
+      fechaOperacion: new Date(),
+      descripcion: `Desembolso de deuda cash para proveedor ${body.proveedorId}`,
+      moneda: body.moneda,
+      usuarioId: user.userId,
+    })
+
     await AuditLogService.log({
       accion: 'CREATE',
       entidad: 'DEUDA_CASH',
@@ -237,6 +253,9 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
 
     return NextResponse.json({ deuda }, { status: 201 })
   } catch (error) {
+    if (isPeriodoOperacionError(error)) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.status })
+    }
     if (error instanceof z.ZodError) {
       console.error('[DeudaCash POST] Zod errors:', JSON.stringify(error.errors))
       return NextResponse.json({ error: 'Parámetros inválidos', details: error.errors }, { status: 400 })

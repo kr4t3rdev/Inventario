@@ -5,6 +5,10 @@ import prisma from '@/lib/prisma'
 import { withAuthGet, withAuthPost } from '@/lib/auth-middleware'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 import { calcularSaldoPendientePrestamo, normalizarEstadoPrestamoCash } from '@/lib/utils/prestamo-cash'
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from '@/lib/services/periodo-operacion-guard'
+import { registrarEventoContable } from '@/lib/services/evento-contable-integration'
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from '@/lib/services/periodo-operacion-guard'
+import { registrarEventoContable } from '@/lib/services/evento-contable-integration'
 
 const querySchema = z.object({
   estado: z.enum(['ACTIVO', 'PAGADO', 'VENCIDO', 'CANCELADO']).optional(),
@@ -132,7 +136,12 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
       return NextResponse.json({ error: 'Módulo de préstamos cash deshabilitado' }, { status: 404 })
     }
 
+    // Validar que el período permite operaciones
+    await assertOperationAllowed(new Date(), 'PRESTAMO_CASH')
+
     const body = createSchema.parse(await request.json())
+
+    await assertOperationAllowed(new Date(), 'PRESTAMO_CASH')
 
     const cuentaOrigen = await prisma.cuentaBancaria.findUnique({
       where: { cuentaId: body.cuentaBancariaId },
@@ -218,6 +227,27 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
       })
     })
 
+    // Registrar evento contable
+    await registrarEventoContable({
+      origenTipo: 'PRESTAMO_CASH',
+      origenId: prestamo.id,
+      monto: body.montoCapital,
+      moneda: body.moneda,
+      fechaOperacion: new Date(),
+      descripcion: `Préstamo cash creado para cliente ${body.clienteId}`,
+      usuarioId: user.userId
+    })
+
+    await registrarEventoContable({
+      origenTipo: 'PRESTAMO_CASH',
+      origenId: prestamo.id,
+      monto: body.montoCapital,
+      fechaOperacion: new Date(),
+      descripcion: `Desembolso de préstamo cash para cliente ${body.clienteId}`,
+      moneda: body.moneda,
+      usuarioId: user.userId,
+    })
+
     await AuditLogService.log({
       accion: 'CREATE',
       entidad: 'PRESTAMO_CASH',
@@ -232,6 +262,9 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
 
     return NextResponse.json({ prestamo }, { status: 201 })
   } catch (error) {
+    if (isPeriodoOperacionError(error)) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.status })
+    }
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Parámetros inválidos', details: error.errors }, { status: 400 })
     }

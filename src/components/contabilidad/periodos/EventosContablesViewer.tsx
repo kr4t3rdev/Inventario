@@ -70,6 +70,30 @@ function formatCurrency(amount: number | null | undefined, moneda?: string) {
   }).format(amount / 100)
 }
 
+function getEventoKey(evento: any) {
+  return evento.eventoId ?? evento.eventoContableId ?? evento.id
+}
+
+function getLineaKey(linea: any) {
+  return linea.lineaId ?? linea.eventoContableLineaId ?? linea.id
+}
+
+function getLineaDebito(linea: any) {
+  if (linea.debito != null) return Number(linea.debito)
+  return linea.tipoLinea === 'DEBITO' ? Number(linea.monto ?? 0) : 0
+}
+
+function getLineaCredito(linea: any) {
+  if (linea.credito != null) return Number(linea.credito)
+  return linea.tipoLinea === 'CREDITO' ? Number(linea.monto ?? 0) : 0
+}
+
+function getLineaTipo(linea: any) {
+  if (getLineaDebito(linea) > 0) return 'Débito'
+  if (getLineaCredito(linea) > 0) return 'Crédito'
+  return '-'
+}
+
 /**
  * @description Visor de eventos contables del subledger con filtros y detalle de líneas
  * @returns {JSX.Element} Tabla de eventos con líneas de doble partida
@@ -196,7 +220,7 @@ export function EventosContablesViewer() {
               const origenLabel = ORIGEN_LABELS[evento.origenTipo] ?? evento.origenTipo
 
               return (
-                <AccordionItem key={evento.eventoContableId ?? evento.id} value={evento.eventoContableId ?? evento.id}>
+                <AccordionItem key={getEventoKey(evento)} value={getEventoKey(evento)}>
                   <AccordionTrigger className="hover:no-underline">
                     <div className="flex items-center gap-3 w-full text-left">
                       {evento.naturaleza === 'INGRESO' ? (
@@ -236,23 +260,28 @@ export function EventosContablesViewer() {
                             </TableRow>
                           </TableHeader>
                           <TableBody>
-                            {evento.lineas.map((linea: any) => (
-                              <TableRow key={linea.eventoContableLineaId ?? linea.id}>
+                            {evento.lineas.map((linea: any) => {
+                              const debito = getLineaDebito(linea)
+                              const credito = getLineaCredito(linea)
+
+                              return (
+                              <TableRow key={getLineaKey(linea)}>
                                 <TableCell className="font-mono text-xs">{linea.cuenta ?? '-'}</TableCell>
                                 <TableCell>
                                   <Badge variant="outline" className="text-xs">
-                                    {linea.tipoLinea === 'DEBITO' ? 'Débito' : 'Crédito'}
+                                    {getLineaTipo(linea)}
                                   </Badge>
                                 </TableCell>
                                 <TableCell className="text-right font-mono text-xs">
-                                  {linea.tipoLinea === 'DEBITO' ? formatCurrency(linea.monto, evento.moneda) : '-'}
+                                  {debito > 0 ? formatCurrency(debito, evento.moneda) : '-'}
                                 </TableCell>
                                 <TableCell className="text-right font-mono text-xs">
-                                  {linea.tipoLinea === 'CREDITO' ? formatCurrency(linea.monto, evento.moneda) : '-'}
+                                  {credito > 0 ? formatCurrency(credito, evento.moneda) : '-'}
                                 </TableCell>
                                 <TableCell className="text-xs">{linea.descripcion ?? '-'}</TableCell>
                               </TableRow>
-                            ))}
+                              )
+                            })}
                           </TableBody>
                         </Table>
                       ) : (

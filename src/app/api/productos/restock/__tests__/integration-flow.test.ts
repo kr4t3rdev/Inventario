@@ -38,6 +38,16 @@ vi.mock('../../../../../lib/restock-validation', () => ({
   },
 }))
 
+vi.mock('@/lib/services/periodo-operacion-guard', () => ({
+  assertOperationAllowed: vi.fn(() => Promise.resolve()),
+  isPeriodoOperacionError: vi.fn(() => false),
+  serializePeriodoOperacionError: vi.fn((e: Error) => ({ message: e.message })),
+}))
+
+vi.mock('@/lib/services/evento-contable-integration', () => ({
+  registrarEventoContable: vi.fn(() => Promise.resolve(true)),
+}))
+
 vi.mock('../../../../../lib/restock-errors', () => ({
   RestockErrorFactory: {
     authenticationFailed: vi.fn(),

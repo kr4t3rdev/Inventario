@@ -968,7 +968,7 @@ export const contabilidadApi = apiSlice.injectEndpoints({
     }),
 
     // --- Períodos Contables ---
-    getPeriodos: builder.query<{ periodos: any[]; total: number }, { tipo?: string; estado?: string; fechaDesde?: string; fechaHasta?: string }>({
+    getPeriodos: builder.query<{ items?: any[]; meta?: { total: number }; periodos?: any[]; total?: number }, { tipo?: string; estado?: string; fechaDesde?: string; fechaHasta?: string }>({
       query: (params) => {
         const searchParams = new URLSearchParams()
         if (params?.tipo) searchParams.set('tipo', params.tipo)
@@ -995,7 +995,7 @@ export const contabilidadApi = apiSlice.injectEndpoints({
       invalidatesTags: ['PeriodosContables'],
     }),
 
-    cerrarDiario: builder.mutation<any, { periodoId: string }>({
+    cerrarDiario: builder.mutation<any, { periodoId?: string; fecha?: string }>({
       query: (body) => ({
         url: '/contabilidad/periodos/cierre-diario',
         method: 'POST',
@@ -1004,7 +1004,7 @@ export const contabilidadApi = apiSlice.injectEndpoints({
       invalidatesTags: ['PeriodosContables'],
     }),
 
-    cerrarMensual: builder.mutation<any, { periodoId: string }>({
+    cerrarMensual: builder.mutation<any, { periodoId?: string; fecha?: string }>({
       query: (body) => ({
         url: '/contabilidad/periodos/cierre-mensual',
         method: 'POST',
@@ -1013,7 +1013,7 @@ export const contabilidadApi = apiSlice.injectEndpoints({
       invalidatesTags: ['PeriodosContables'],
     }),
 
-    cerrarAnual: builder.mutation<any, { periodoId: string }>({
+    cerrarAnual: builder.mutation<any, { periodoId?: string; fecha?: string }>({
       query: (body) => ({
         url: '/contabilidad/periodos/cierre-anual',
         method: 'POST',

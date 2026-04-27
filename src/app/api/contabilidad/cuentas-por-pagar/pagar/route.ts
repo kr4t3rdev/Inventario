@@ -7,6 +7,10 @@ import {
   isGastoWorkflowError
 } from '@/lib/services/pago-gastos-workflow'
 import { AuditLogService } from '@/lib/services/audit-log-service'
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from '@/lib/services/periodo-operacion-guard'
+import { registrarEventoContable } from '@/lib/services/evento-contable-integration'
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from '@/lib/services/periodo-operacion-guard'
+import { registrarEventoContable } from '@/lib/services/evento-contable-integration'
 
 const pagarSchema = z.object({
   numeroFactura: z.string().min(1),
@@ -29,7 +33,12 @@ export async function POST(request: NextRequest): Promise<Response> {
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
 
+    // Validar que el período permite operaciones
+    await assertOperationAllowed(new Date(), 'PAGO_CUENTA_POR_PAGAR')
+
     const body = pagarSchema.parse(await request.json())
+
+    await assertOperationAllowed(new Date(), 'PAGO_CUENTA_POR_PAGAR')
 
     const result = await prisma.$transaction(async (tx) => {
       let cuenta = await tx.cuentaPorPagar.findFirst({
@@ -190,6 +199,16 @@ export async function POST(request: NextRequest): Promise<Response> {
       return { cuenta: cuentaActualizada, pago: pagoRegistrado, reconciliaciones: workflowResult.reconciliaciones }
     })
 
+    // Registrar evento contable
+    await registrarEventoContable({
+      origenTipo: 'PAGO_CUENTA_POR_PAGAR',
+      origenId: result.cuenta.cuentaPorPagarId,
+      monto: body.monto,
+      fechaOperacion: new Date(),
+      descripcion: `Pago de cuenta por pagar - factura ${body.numeroFactura}`,
+      usuarioId: user.userId
+    })
+
     await AuditLogService.log({
       accion: 'UPDATE',
       entidad: 'CUENTA_POR_PAGAR',
@@ -204,6 +223,10 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     return NextResponse.json(result)
   } catch (error) {
+    if (isPeriodoOperacionError(error)) {
+      return NextResponse.json(serializePeriodoOperacionError(error), { status: error.status })
+    }
+
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Datos inválidos', details: error.errors }, { status: 400 })
     }

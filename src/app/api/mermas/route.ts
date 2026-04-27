@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { notificarMerma } from "../../../lib/notificaciones-utils"
+import { authenticateUser } from "@/lib/auth-middleware"
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from "@/lib/services/periodo-operacion-guard"
+import { registrarEventoContable } from "@/lib/services/evento-contable-integration"
 
 export async function GET() {
   try {
@@ -21,8 +24,14 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const authResultUser = await authenticateUser(request)
+    if ('status' in authResultUser) return authResultUser as Response
+    const user = authResultUser.user
+
     const body = await request.json()
     const { productoId, cantidad, motivo } = body
+
+    await assertOperationAllowed(new Date(), 'MERMA')
 
     // Verificar stock disponible
     const producto = await prisma.producto.findUnique({
@@ -70,12 +79,22 @@ export async function POST(request: Request) {
       await notificarMerma(merma.mermaId)
     } catch (error) {
       console.error("Error enviando notificación de merma:", error)
-      // No fallar la operación principal por un error de notificación
     }
 
+    await registrarEventoContable({
+      origenTipo: 'MERMA',
+      origenId: merma.mermaId,
+      monto: costoTotal,
+      fechaOperacion: new Date(),
+      descripcion: `Merma de producto ${productoId}: ${motivo || 'sin motivo'}`,
+      usuarioId: (user as Record<string, unknown>).userId as string || 'system',
+    })
 
     return NextResponse.json(merma, { status: 201 })
   } catch (error) {
+    if (isPeriodoOperacionError(error)) {
+      return NextResponse.json(serializePeriodoOperacionError(error), { status: error.status })
+    }
     console.error("Error al crear merma:", error)
     return NextResponse.json({ error: "Error al crear merma" }, { status: 500 })
   }

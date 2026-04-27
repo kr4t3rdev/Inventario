@@ -9,6 +9,9 @@ import {
   reconciliarVentaDirecta
 } from '@/lib/services/facturacion-ventas-workflow'
 import { applyAnticipoAllocations } from '@/lib/services/anticipos-workflow'
+import { isAnticipoWorkflowError } from '@/lib/services/anticipos-workflow'
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from '@/lib/services/periodo-operacion-guard'
+import { registrarEventoContable } from '@/lib/services/evento-contable-integration'
 
 const facturarSchema = z.object({
   puntoDeVentaId: z.string().min(1, "Punto de Venta requerido"),
@@ -203,6 +206,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: 'Solo se pueden facturar ofertas aceptadas' }, { status: 400 })
     }
 
+    await assertOperationAllowed(new Date(), 'VENTA')
+
     // Calcular total incluyendo cargo de transporte
     const cargoTransporteOferta = validatedData.cargoTransporte || 0
     const totalVentaConTransporte = Number(oferta.total) + cargoTransporteOferta
@@ -278,12 +283,24 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return venta
     })
 
+    await registrarEventoContable({
+      origenTipo: 'VENTA',
+      origenId: result.ventaId,
+      monto: Number(result.total),
+      fechaOperacion: new Date(),
+      descripcion: `Facturación de oferta ${oferta.id} → venta ${result.ventaId}`,
+      usuarioId: user.userId || user.id || 'system',
+    })
+
     return NextResponse.json({ 
       message: 'Oferta facturada exitosamente', 
       venta: result 
     }, { status: 201 })
 
   } catch (error) {
+    if (isPeriodoOperacionError(error)) {
+      return NextResponse.json(serializePeriodoOperacionError(error), { status: error.status })
+    }
     console.error('Error facturando oferta:', error)
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Validation error', details: error.errors }, { status: 400 })

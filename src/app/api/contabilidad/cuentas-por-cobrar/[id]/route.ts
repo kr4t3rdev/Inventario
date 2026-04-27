@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
 import { authenticateUser } from '@/lib/auth-middleware'
 import { AuditLogService } from '@/lib/services/audit-log-service'
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from '@/lib/services/periodo-operacion-guard'
+import { registrarEventoContable } from '@/lib/services/evento-contable-integration'
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from '@/lib/services/periodo-operacion-guard'
+import { registrarEventoContable } from '@/lib/services/evento-contable-integration'
 
 interface UpdateCuentaPorCobrarBody {
   montoPagado?: number
@@ -33,8 +37,13 @@ export async function PATCH(
       )
     }
 
+    // Validar que el período permite operaciones
+    await assertOperationAllowed(new Date(), 'CUENTA_POR_COBRAR')
+
     const body = (await request.json()) as UpdateCuentaPorCobrarBody
     const data: Record<string, unknown> = {}
+
+    await assertOperationAllowed(new Date(), 'CUENTA_POR_COBRAR')
 
     if (typeof body.montoPagado === 'number' && Number.isFinite(body.montoPagado)) {
       data.montoPagado = body.montoPagado
@@ -65,6 +74,25 @@ export async function PATCH(
       data
     })
 
+    // Registrar evento contable si cambia el estado o el monto pagado
+    if ((data.estado && anterior?.estado !== cuenta.estado) || 
+        (data.montoPagado && anterior?.montoPagado !== cuenta.montoPagado)) {
+      const montoEventoContable = typeof data.montoPagado === 'number' 
+        ? data.montoPagado 
+        : Number(cuenta.montoPagado || 0)
+      
+      if (montoEventoContable > 0) {
+        await registrarEventoContable({
+          origenTipo: 'CUENTA_POR_COBRAR',
+          origenId: id,
+          monto: montoEventoContable,
+          fechaOperacion: new Date(),
+          descripcion: `Actualización de cuenta por cobrar - estado: ${cuenta.estado}`,
+          usuarioId: user.userId
+        })
+      }
+    }
+
     const cambios: Record<string, { anterior: unknown; nuevo: unknown }> = {}
     for (const key of Object.keys(data)) {
       const prev = anterior ? (anterior as Record<string, unknown>)[key] : undefined
@@ -73,6 +101,15 @@ export async function PATCH(
         cambios[key] = { anterior: prev, nuevo: curr }
       }
     }
+
+    await registrarEventoContable({
+      origenTipo: 'CUENTA_POR_COBRAR',
+      origenId: id,
+      monto: data.montoPagado as number || 0,
+      fechaOperacion: new Date(),
+      descripcion: `Actualización de cuenta por cobrar ${id} - ${body.estado || 'actualización'}`,
+      usuarioId: user.userId,
+    })
 
     await AuditLogService.log({
       accion: 'UPDATE',
@@ -84,6 +121,9 @@ export async function PATCH(
 
     return NextResponse.json({ cuenta })
   } catch (error: any) {
+    if (isPeriodoOperacionError(error)) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.status })
+    }
     console.error('Error updating account receivable:', error)
 
     if (error.code === 'P2025') {

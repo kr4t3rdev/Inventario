@@ -2,6 +2,8 @@ import { type NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
 import { withAuthPost } from "@/lib/auth-middleware"
 import { applyFacturacionCobroWorkflow } from "@/lib/services/facturacion-ventas-workflow"
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from "@/lib/services/periodo-operacion-guard"
+import { registrarEventoContable } from "@/lib/services/evento-contable-integration"
 
 export const POST = withAuthPost(async (request: NextRequest, { params }: { params: Promise<{ id: string }> }, user: any) => {
   try {
@@ -58,6 +60,8 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
     if (orden.estado !== 'TERMINADO' && orden.estado !== 'ENTREGADO') {
       return NextResponse.json({ error: "Solo se pueden facturar órdenes terminadas o entregadas" }, { status: 400 })
     }
+
+    await assertOperationAllowed(new Date(), 'VENTA')
 
     // Determinar monedas y tasa de cambio
     const monedaOrden = (orden.moneda || 'USD').toUpperCase()
@@ -173,8 +177,20 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
       return { venta, factura }
     })
 
+    await registrarEventoContable({
+      origenTipo: 'VENTA',
+      origenId: result.venta.ventaId,
+      monto: total,
+      fechaOperacion: new Date(),
+      descripcion: `Facturación de reparación ${orden.id} → venta ${result.venta.ventaId}`,
+      usuarioId: user?.userId || user?.id || 'system',
+    })
+
     return NextResponse.json(result)
   } catch (error) {
+    if (isPeriodoOperacionError(error)) {
+      return NextResponse.json(serializePeriodoOperacionError(error), { status: error.status })
+    }
     console.error("Error al facturar orden:", error)
     return NextResponse.json({ error: "Error al procesar la facturación" }, { status: 500 })
   }

@@ -14,6 +14,26 @@ vi.mock('@/lib/auth-middleware', () => ({
   authenticateUser: vi.fn(),
 }));
 
+vi.mock('@/lib/services/periodo-operacion-guard', () => ({
+  assertOperationAllowed: vi.fn(() => Promise.resolve()),
+  isPeriodoOperacionError: vi.fn(() => false),
+  serializePeriodoOperacionError: vi.fn((e: Error) => ({ message: e.message })),
+}));
+
+vi.mock('@/lib/services/evento-contable-integration', () => ({
+  registrarEventoContable: vi.fn(() => Promise.resolve(true)),
+}));
+
+vi.mock('@/lib/services/facturacion-ventas-workflow', () => ({
+  applyFacturacionCobroWorkflow: vi.fn(),
+  reconciliarVentaDirecta: vi.fn(),
+}));
+
+vi.mock('@/lib/services/anticipos-workflow', () => ({
+  applyAnticipoAllocations: vi.fn(),
+  isAnticipoWorkflowError: vi.fn(() => false),
+}));
+
 describe('Facturar oferta API - POST rollback por fallo de facturación', () => {
   beforeEach(() => {
     vi.clearAllMocks();

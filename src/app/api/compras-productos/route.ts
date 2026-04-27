@@ -9,6 +9,8 @@ import { applyAnticipoAllocations, isAnticipoWorkflowError } from '@/lib/service
 import { FORMA_PAGO_ANTICIPO_PAGO } from '@/lib/constants/anticipos'
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service'
 import { normalizeLocaleDecimalValue } from '@/lib/locale-number'
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from '@/lib/services/periodo-operacion-guard'
+import { registrarEventoContable } from '@/lib/services/evento-contable-integration'
 
 const querySchema = z.object({
   search: z.string().optional(),
@@ -188,6 +190,8 @@ export const POST = withAuthPost(async (request: NextRequest, _context: any, use
   try {
     const body = await request.json()
     const data = createSchema.parse(body)
+
+    await assertOperationAllowed(new Date(), 'GASTO_COMPRA')
 
     // Verificar factura duplicada (solo si se proporciona número de factura)
     if (data.numeroFactura && data.numeroFactura.trim() !== '') {
@@ -433,8 +437,20 @@ export const POST = withAuthPost(async (request: NextRequest, _context: any, use
       }
     })
 
+    await registrarEventoContable({
+      origenTipo: 'GASTO_COMPRA',
+      origenId: result.compraDocumento.compraDocumentoId,
+      monto: Number(result.compraDocumento.total),
+      fechaOperacion: new Date(),
+      descripcion: `Compra de productos ${result.compraDocumento.compraDocumentoId}`,
+      usuarioId: user.userId || user.id || 'system',
+    })
+
     return NextResponse.json({ ...result, success: true }, { status: 201 })
   } catch (error) {
+    if (isPeriodoOperacionError(error)) {
+      return NextResponse.json(serializePeriodoOperacionError(error), { status: error.status })
+    }
     console.error('Error al crear compra de producto:', error)
     if (error instanceof z.ZodError) {
       return NextResponse.json({

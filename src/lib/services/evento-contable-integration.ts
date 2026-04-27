@@ -4,6 +4,7 @@ import {
   type EventoContableSeed,
   type OrigenTipo,
 } from '@/lib/services/evento-contable-service';
+import { enriquecerEventoConCuentas } from '@/lib/services/evento-contable-mapping-service';
 
 interface RegistrarEventoParams {
   origenTipo: OrigenTipo;
@@ -35,7 +36,7 @@ export async function registrarEventoContable(params: RegistrarEventoParams): Pr
       return false;
     }
 
-    const seed = generarEventoSeed({
+    const seed = generarEventoSeed(enriquecerEventoConCuentas({
       fechaOperacion: params.fechaOperacion ?? new Date(),
       origenTipo: params.origenTipo,
       origenId: params.origenId,
@@ -44,9 +45,9 @@ export async function registrarEventoContable(params: RegistrarEventoParams): Pr
       moneda: params.moneda,
       descripcion: params.descripcion,
       metadataJson: params.metadataJson,
-    } as EventoContableSeed);
+    } as EventoContableSeed));
 
-    const lineas = generarLineasDoblePartida(seed, 'RESULTADO_ACUMULADO');
+    const lineas = generarLineasDoblePartida(seed, (seed as Record<string, string>).cuentaContraria ?? 'RESULTADO_ACUMULADO');
 
     const totalDebito = lineas.reduce((s, l) => s + l.debito, 0);
     const totalCredito = lineas.reduce((s, l) => s + l.credito, 0);

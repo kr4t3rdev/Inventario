@@ -3,6 +3,10 @@ import { z } from 'zod'
 import prisma from '@/lib/prisma'
 import { withAuthPost } from '@/lib/auth-middleware'
 import { executeAnticipo, isAnticipoWorkflowError } from '@/lib/services/anticipos-workflow'
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from '@/lib/services/periodo-operacion-guard'
+import { registrarEventoContable } from '@/lib/services/evento-contable-integration'
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from '@/lib/services/periodo-operacion-guard'
+import { registrarEventoContable } from '@/lib/services/evento-contable-integration'
 
 const ExecuteAnticipoSchema = z.object({
   contexto: z.enum(['COMPRA_PRODUCTO', 'COMPRA_SERVICIO', 'FACTURA_OFERTA', 'FACTURA_DIRECTA']),
@@ -37,7 +41,7 @@ export const POST = withAuthPost(
       // Validar que el monto objetivo sea exactamente el saldo disponible
       const anticipo = await prisma.anticipo.findUnique({
         where: { anticipoId },
-        select: { saldoDisponible: true },
+        select: { saldoDisponible: true, tipo: true },
       })
 
       if (!anticipo) {
@@ -46,6 +50,13 @@ export const POST = withAuthPost(
           { status: 404 }
         )
       }
+
+      const origenTipo = anticipo.tipo === 'PAGO' ? 'ANTICIPO_PAGO' : 'ANTICIPO_COBRO'
+
+      await assertOperationAllowed(new Date(), origenTipo)
+
+      // Validar que el período permite operaciones
+      await assertOperationAllowed(new Date(), 'ANTICIPO')
 
       const saldoDisponible = Number(anticipo.saldoDisponible)
       if (Math.abs(saldoDisponible - payload.montoObjetivo) > 0.000001) {
@@ -74,8 +85,34 @@ export const POST = withAuthPost(
         })
       })
 
+      await registrarEventoContable({
+        origenTipo: origenTipo as any,
+        origenId: anticipoId,
+        monto: payload.montoObjetivo,
+        fechaOperacion: new Date(),
+        descripcion: `Ejecución de anticipo ${anticipoId} - ${payload.contexto}`,
+        moneda: payload.monedaObjetivo,
+        usuarioId: user.userId,
+      })
+
+      // Registrar evento contable
+      const origenTipo = anticipo.tipo === 'PAGO' ? 'ANTICIPO_PAGO' : 'ANTICIPO_COBRO'
+      await registrarEventoContable({
+        origenTipo: origenTipo as 'ANTICIPO_PAGO' | 'ANTICIPO_COBRO',
+        origenId: anticipoId,
+        monto: payload.montoObjetivo,
+        moneda: payload.monedaObjetivo,
+        fechaOperacion: new Date(),
+        descripcion: `Ejecución de anticipo ${origenTipo}`,
+        usuarioId: user.userId
+      })
+
       return NextResponse.json({ result: resultado }, { status: 200 })
     } catch (error) {
+      if (isPeriodoOperacionError(error)) {
+        return NextResponse.json(serializePeriodoOperacionError(error), { status: error.status })
+      }
+
       console.error('Error al ejecutar anticipo:', error)
 
       if (isAnticipoWorkflowError(error)) {

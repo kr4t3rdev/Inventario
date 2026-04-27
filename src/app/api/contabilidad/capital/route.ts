@@ -4,6 +4,10 @@ import { z } from "zod";
 import type { Prisma } from "@/generated/prisma";
 import { authenticateUser } from "@/lib/auth-middleware";
 import { AuditLogService } from "@/lib/services/audit-log-service";
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from '@/lib/services/periodo-operacion-guard'
+import { registrarEventoContable } from '@/lib/services/evento-contable-integration'
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from '@/lib/services/periodo-operacion-guard'
+import { registrarEventoContable } from '@/lib/services/evento-contable-integration'
 
 // Schema for validating capital injection
 const inyeccionCapitalSchema = z.object({
@@ -67,8 +71,13 @@ export async function POST(request: NextRequest) {
     if ('status' in authResultUser) return authResultUser as Response
     const user = authResultUser.user
 
+    // Validar que el período permite operaciones
+    await assertOperationAllowed(new Date(), 'INYECCION_CAPITAL')
+
     const body = await request.json();
     const validatedData = inyeccionCapitalSchema.parse(body);
+
+    await assertOperationAllowed(new Date(), 'INYECCION_CAPITAL')
 
     // Calculate derived fields for debt
     let montoInteres = 0;
@@ -133,6 +142,16 @@ export async function POST(request: NextRequest) {
       return inyeccion;
     });
 
+    await registrarEventoContable({
+      origenTipo: 'INYECCION_CAPITAL',
+      origenId: result.id,
+      monto: validatedData.montoRecibido,
+      fechaOperacion: new Date(),
+      descripcion: validatedData.descripcion || `Inyección ${validatedData.tipo}`,
+      moneda: validatedData.moneda,
+      usuarioId: user.userId,
+    })
+
     // Registrar en auditoría
     await AuditLogService.log({
       accion: "CREATE",
@@ -151,6 +170,9 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ inyeccion: result }, { status: 201 });
   } catch (error) {
+    if (isPeriodoOperacionError(error)) {
+      return NextResponse.json({ error: error.message, code: error.code }, { status: error.status })
+    }
     console.error('Error al registrar inyección de capital:', error);
     
     if (error instanceof z.ZodError) {

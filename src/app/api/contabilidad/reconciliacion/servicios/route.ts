@@ -4,6 +4,10 @@ import { z } from 'zod'
 import type { Prisma } from '@/generated/prisma'
 import { authenticateUser } from "@/lib/auth-middleware"
 import { AuditLogService } from "@/lib/services/audit-log-service"
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from '@/lib/services/periodo-operacion-guard'
+import { registrarEventoContable } from '@/lib/services/evento-contable-integration'
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from '@/lib/services/periodo-operacion-guard'
+import { registrarEventoContable } from '@/lib/services/evento-contable-integration'
 
 // Schema para validar la reconciliación de servicios
 const reconciliacionServicioSchema = z.object({
@@ -96,7 +100,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = reconciliacionServicioSchema.parse(body)
 
-    // Verificar que el servicio existe
+    await assertOperationAllowed(new Date(), 'RECONCILIACION_SERVICIO')
+
+     // Validar que el período permite operaciones
+     await assertOperationAllowed(new Date(), 'RECONCILIACION_SERVICIO')
+
+     // Verificar que el servicio existe
     const ventaServicio = await prisma.ventaServicios.findUnique({
       where: { ventaServicioId: validatedData.ventaServicioId }
     })
@@ -232,7 +241,28 @@ export async function POST(request: NextRequest) {
         })
       }
 
-      return reconciliacion
+       return reconciliacion
+     })
+
+     // Registrar evento contable
+     await registrarEventoContable({
+       origenTipo: 'RECONCILIACION_SERVICIO',
+       origenId: result.reconciliacionId,
+       monto: validatedData.monto,
+       montoConvertido: result.montoConvertido,
+       moneda: validatedData.moneda,
+       fechaOperacion: new Date(),
+       descripcion: `Reconciliación de servicio ${validatedData.ventaServicioId}`,
+       usuarioId: user.userId
+     })
+
+     await registrarEventoContable({
+      origenTipo: 'RECONCILIACION_SERVICIO',
+      origenId: result.reconciliacionId,
+      monto: validatedData.monto,
+      fechaOperacion: new Date(),
+      descripcion: `Reconciliación de servicio ${validatedData.ventaServicioId}`,
+      usuarioId: user.userId,
     })
 
     // Registrar en auditoría
@@ -257,18 +287,22 @@ export async function POST(request: NextRequest) {
       reconciliacion: result
     }, { status: 201 })
 
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Datos de entrada inválidos', details: error.errors },
-        { status: 400 }
-      )
-    }
+   } catch (error) {
+     if (isPeriodoOperacionError(error)) {
+       return NextResponse.json(serializePeriodoOperacionError(error), { status: error.status })
+     }
 
-    console.error('Error reconciling service:', error)
-    return NextResponse.json(
-      { error: 'Error interno del servidor', code: 'INTERNAL_ERROR' },
-      { status: 500 }
-    )
-  }
+     if (error instanceof z.ZodError) {
+       return NextResponse.json(
+         { error: 'Datos de entrada inválidos', details: error.errors },
+         { status: 400 }
+       )
+     }
+
+     console.error('Error reconciling service:', error)
+     return NextResponse.json(
+       { error: 'Error interno del servidor', code: 'INTERNAL_ERROR' },
+       { status: 500 }
+     )
+   }
 }

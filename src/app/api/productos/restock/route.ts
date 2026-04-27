@@ -12,6 +12,8 @@ import {
   type RestockSuccessResponse
 } from "../../../../lib/restock-errors"
 import { executeProductInstanceCreationWorkflow } from "../../../../lib/restock-utils"
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from "@/lib/services/periodo-operacion-guard"
+import { registrarEventoContable } from "@/lib/services/evento-contable-integration"
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,6 +24,8 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body = await request.json()
+
+    await assertOperationAllowed(new Date(), 'GASTO_COMPRA')
 
     // Comprehensive validation using the error handling system
     const validation = await RestockValidator.validateCompleteRestockOperation(
@@ -642,6 +646,15 @@ export async function POST(request: NextRequest) {
 
     const pricesChanged = (precioCosto !== undefined && precioCosto !== producto!.precioCosto) || (precioVenta !== undefined && precioVenta !== producto!.precioVenta)
 
+    await registrarEventoContable({
+      origenTipo: 'GASTO_COMPRA',
+      origenId: result.gastoCompra.gastoCompraId,
+      monto: Number(result.gastoCompra.total),
+      fechaOperacion: new Date(),
+      descripcion: `Restock de producto ${productoId}`,
+      usuarioId: (user as Record<string, unknown>).userId as string || (user as Record<string, unknown>).id as string || 'system',
+    })
+
     const successResponse: RestockSuccessResponse = {
       success: true,
       message: "Product restocked successfully",
@@ -671,6 +684,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(successResponse, { status: 200 })
 
   } catch (error) {
+    if (isPeriodoOperacionError(error)) {
+      return NextResponse.json(serializePeriodoOperacionError(error), { status: error.status })
+    }
     console.error("[RESTOCK_POST]", error)
 
     // Use the comprehensive error handling system

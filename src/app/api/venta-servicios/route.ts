@@ -4,6 +4,8 @@ import { z } from 'zod'
 import { withAuthGet, withAuthPost } from '@/lib/auth-middleware'
 import { prisma } from '@/lib/prisma'
 import { applyAnticipoAllocations, isAnticipoWorkflowError } from '@/lib/services/anticipos-workflow'
+import { assertOperationAllowed, isPeriodoOperacionError, serializePeriodoOperacionError } from '@/lib/services/periodo-operacion-guard'
+import { registrarEventoContable } from '@/lib/services/evento-contable-integration'
 
 async function invalidateDashboardCache() {
   try {
@@ -76,9 +78,11 @@ export const GET = withAuthGet(async (_request: NextRequest) => {
  * @param {NextRequest} request - Request de creación.
  * @returns {Promise<NextResponse>} Resultado de creación.
  */
-export const POST = withAuthPost(async (request: NextRequest) => {
+export const POST = withAuthPost(async (request: NextRequest, _context: unknown, user: { userId?: string }) => {
   try {
     const raw = await request.json()
+
+    await assertOperationAllowed(new Date(), 'VENTA_SERVICIO')
 
     if (Array.isArray(raw?.lineas)) {
       const payload = ventaMixtaSchema.parse(raw)
@@ -110,6 +114,17 @@ export const POST = withAuthPost(async (request: NextRequest) => {
       )
 
       await invalidateDashboardCache()
+
+      for (const vs of created) {
+        await registrarEventoContable({
+          origenTipo: 'VENTA_SERVICIO',
+          origenId: vs.ventaServicioId,
+          monto: vs.total,
+          fechaOperacion: new Date(),
+          descripcion: `Venta de servicio ${vs.ventaServicioId}`,
+          usuarioId: user.userId || 'system',
+        })
+      }
 
       return NextResponse.json(
         {
@@ -186,8 +201,24 @@ export const POST = withAuthPost(async (request: NextRequest) => {
     })
 
     await invalidateDashboardCache()
+
+    await registrarEventoContable({
+      origenTipo: 'VENTA_SERVICIO',
+      origenId: resultado.ventaServicio.ventaServicioId,
+      monto: resultado.ventaServicio.total,
+      fechaOperacion: new Date(),
+      descripcion: `Venta de servicio ${resultado.ventaServicio.ventaServicioId}`,
+      usuarioId: user.userId || 'system',
+    })
+
     return NextResponse.json(resultado, { status: 201 })
   } catch (error) {
+    if (isPeriodoOperacionError(error)) {
+      return NextResponse.json(serializePeriodoOperacionError(error), { status: error.status })
+    }
+    if (isAnticipoWorkflowError(error)) {
+      return NextResponse.json({ error: (error as Error).message }, { status: (error as Record<string, number>).status || 400 })
+    }
     console.error('Error al crear venta de servicio:', error)
     return NextResponse.json({ error: 'Error al crear venta de servicio' }, { status: 500 })
   }
