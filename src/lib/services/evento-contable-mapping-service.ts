@@ -1,4 +1,5 @@
 import { ORIGEN_TIPO, resolverCriterio, resolverNaturaleza, type EventoContableSeed, type OrigenTipo } from '@/lib/services/evento-contable-service';
+import prisma from '@/lib/prisma';
 
 export interface CuentaContableMapping {
   cuentaPrincipal: string;
@@ -6,7 +7,7 @@ export interface CuentaContableMapping {
   etiqueta: string;
 }
 
-const CUENTAS_POR_ORIGEN: Record<OrigenTipo, CuentaContableMapping> = {
+const CUENTAS_POR_ORIGEN_HARDCODE: Record<OrigenTipo, CuentaContableMapping> = {
   [ORIGEN_TIPO.VENTA]: {
     cuentaPrincipal: 'INGRESOS_POR_VENTAS',
     cuentaContraria: 'CUENTAS_POR_COBRAR',
@@ -149,13 +150,53 @@ const CUENTAS_POR_ORIGEN: Record<OrigenTipo, CuentaContableMapping> = {
   },
 };
 
+interface DB_MappingRow {
+  origenTipo: string;
+  cuentaPrincipalCodigo: string;
+  cuentaContrariaCodigo: string;
+  etiqueta: string | null;
+  cuentaPrincipal: { codigo: string; nombre: string };
+  cuentaContraria: { codigo: string; nombre: string };
+}
+
+let cacheMappings: Record<string, CuentaContableMapping> | null = null
+
+async function loadDBMappings(): Promise<Record<string, CuentaContableMapping>> {
+  try {
+    const dbRows = await (prisma as unknown as Record<string, unknown>).mappingContable?.findMany({
+      include: {
+        cuentaPrincipal: { select: { codigo: true, nombre: true } },
+        cuentaContraria: { select: { codigo: true, nombre: true } },
+      },
+    }) as DB_MappingRow[] | undefined
+
+    if (!dbRows || dbRows.length === 0) return {}
+
+    return Object.fromEntries(
+      dbRows.map((row) => [
+        row.origenTipo,
+        {
+          cuentaPrincipal: row.cuentaPrincipalCodigo,
+          cuentaContraria: row.cuentaContrariaCodigo,
+          etiqueta: row.etiqueta ?? `${row.cuentaPrincipal.nombre} ↔ ${row.cuentaContraria.nombre}`,
+        },
+      ])
+    )
+  } catch {
+    return {}
+  }
+}
+
 /**
- * @description Resuelve el mapping contable por origen para estandarizar las cuentas del subledger.
+ * @description Resuelve el mapping contable por origen, consultando primero la DB y cayendo al hardcode como fallback.
  * @param {OrigenTipo} origenTipo - Tipo de origen de la operación.
  * @returns {CuentaContableMapping} Mapping con cuenta principal y contrapartida.
  */
-export function resolverCuentaContableMapping(origenTipo: OrigenTipo): CuentaContableMapping {
-  return CUENTAS_POR_ORIGEN[origenTipo] ?? {
+export async function resolverCuentaContableMapping(origenTipo: OrigenTipo): Promise<CuentaContableMapping> {
+  if (!cacheMappings) {
+    cacheMappings = await loadDBMappings()
+  }
+  return cacheMappings[origenTipo] ?? CUENTAS_POR_ORIGEN_HARDCODE[origenTipo] ?? {
     cuentaPrincipal: 'RESULTADO_ACUMULADO',
     cuentaContraria: 'AJUSTE_CONTABLE',
     etiqueta: 'Origen desconocido',
@@ -163,16 +204,31 @@ export function resolverCuentaContableMapping(origenTipo: OrigenTipo): CuentaCon
 }
 
 /**
- * @description Enriquese una semilla de evento contable con cuentas y metadatos contables estables.
- * @param {EventoContableSeed} seed - Semilla base del evento.
- * @returns {EventoContableSeed & { cuentaPrincipal: string; cuentaContraria: string; etiquetaContable: string }} Semilla enriquecida.
+ * @description Resuelve el mapping contable por origen usando solo el hardcode (sin DB). Útil para contexto sincrónico.
+ * @param {OrigenTipo} origenTipo - Tipo de origen de la operación.
+ * @returns {CuentaContableMapping} Mapping hardcodeado.
  */
-export function enriquecerEventoConCuentas(seed: EventoContableSeed): EventoContableSeed & {
+export function resolverCuentaContableMappingHardcode(origenTipo: OrigenTipo): CuentaContableMapping {
+  return CUENTAS_POR_ORIGEN_HARDCODE[origenTipo] ?? {
+    cuentaPrincipal: 'RESULTADO_ACUMULADO',
+    cuentaContraria: 'AJUSTE_CONTABLE',
+    etiqueta: 'Origen desconocido',
+  };
+}
+
+export type EventoEnriquecido = EventoContableSeed & {
   cuentaPrincipal: string;
   cuentaContraria: string;
   etiquetaContable: string;
-} {
-  const mapping = resolverCuentaContableMapping(seed.origenTipo);
+};
+
+/**
+ * @description Enriquese una semilla de evento contable con cuentas y metadatos contables estables.
+ * @param {EventoContableSeed} seed - Semilla base del evento.
+ * @returns {Promise<EventoEnriquecido>} Semilla enriquecida.
+ */
+export async function enriquecerEventoConCuentas(seed: EventoContableSeed): Promise<EventoEnriquecido> {
+  const mapping = await resolverCuentaContableMapping(seed.origenTipo);
 
   return {
     ...seed,

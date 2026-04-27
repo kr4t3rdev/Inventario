@@ -499,6 +499,16 @@ export type EventoContable = $Result.DefaultSelection<Prisma.$EventoContablePayl
  * 
  */
 export type EventoContableLinea = $Result.DefaultSelection<Prisma.$EventoContableLineaPayload>
+/**
+ * Model CuentaContable
+ * 
+ */
+export type CuentaContable = $Result.DefaultSelection<Prisma.$CuentaContablePayload>
+/**
+ * Model MappingContable
+ * 
+ */
+export type MappingContable = $Result.DefaultSelection<Prisma.$MappingContablePayload>
 
 /**
  * Enums
@@ -726,6 +736,27 @@ export const CostChangeReason: {
 
 export type CostChangeReason = (typeof CostChangeReason)[keyof typeof CostChangeReason]
 
+
+export const NaturalezaContable: {
+  ACTIVO: 'ACTIVO',
+  PASIVO: 'PASIVO',
+  PATRIMONIO: 'PATRIMONIO',
+  INGRESO: 'INGRESO',
+  EGRESO: 'EGRESO',
+  RESULTADO: 'RESULTADO'
+};
+
+export type NaturalezaContable = (typeof NaturalezaContable)[keyof typeof NaturalezaContable]
+
+
+export const NivelCuenta: {
+  MAYOR: 'MAYOR',
+  SUBMAYOR: 'SUBMAYOR',
+  ANALITICA: 'ANALITICA'
+};
+
+export type NivelCuenta = (typeof NivelCuenta)[keyof typeof NivelCuenta]
+
 }
 
 export type TipoAnticipo = $Enums.TipoAnticipo
@@ -815,6 +846,14 @@ export const EstadoProduccion: typeof $Enums.EstadoProduccion
 export type CostChangeReason = $Enums.CostChangeReason
 
 export const CostChangeReason: typeof $Enums.CostChangeReason
+
+export type NaturalezaContable = $Enums.NaturalezaContable
+
+export const NaturalezaContable: typeof $Enums.NaturalezaContable
+
+export type NivelCuenta = $Enums.NivelCuenta
+
+export const NivelCuenta: typeof $Enums.NivelCuenta
 
 /**
  * ##  Prisma Client ʲˢ
@@ -1903,6 +1942,26 @@ export class PrismaClient<
     * ```
     */
   get eventoContableLinea(): Prisma.EventoContableLineaDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.cuentaContable`: Exposes CRUD operations for the **CuentaContable** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more CuentaContables
+    * const cuentaContables = await prisma.cuentaContable.findMany()
+    * ```
+    */
+  get cuentaContable(): Prisma.CuentaContableDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.mappingContable`: Exposes CRUD operations for the **MappingContable** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more MappingContables
+    * const mappingContables = await prisma.mappingContable.findMany()
+    * ```
+    */
+  get mappingContable(): Prisma.MappingContableDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -2440,7 +2499,9 @@ export namespace Prisma {
     Anticipo: 'Anticipo',
     AnticipoMovimiento: 'AnticipoMovimiento',
     EventoContable: 'EventoContable',
-    EventoContableLinea: 'EventoContableLinea'
+    EventoContableLinea: 'EventoContableLinea',
+    CuentaContable: 'CuentaContable',
+    MappingContable: 'MappingContable'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -2459,7 +2520,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "categoria" | "unidad" | "vendor" | "inyeccionCapital" | "pagoDeuda" | "cliente" | "miEmpresa" | "almacen" | "puntoDeVenta" | "producto" | "stockUbicacion" | "venta" | "ventaItem" | "merma" | "transferencia" | "user" | "plan" | "licencia" | "licenciaAudit" | "notification" | "userActivityLog" | "userSession" | "attendance" | "employeeWorkSchedule" | "vacationRequest" | "vacationAccrual" | "empleado" | "pagosalario" | "cierreContable" | "periodoContable" | "aperturaPeriodo" | "snapshotPeriodo" | "auditoriaPeriodo" | "gastoCompra" | "compraProducto" | "compraDocumento" | "compraDocumentoItem" | "servicios" | "ventaServicios" | "compraServicio" | "gastoConcepto" | "gastoElemento" | "gastosDE" | "moneda" | "catalogoReparacionConfig" | "tasaCambio" | "transaccionMoneda" | "cuentaBancaria" | "tipoPago" | "reconciliacionVenta" | "reconciliacionServicio" | "reconciliacionGasto" | "ajusteBancario" | "transferenciaBancaria" | "alertHistory" | "auditLog" | "reportHistory" | "scheduledReport" | "scenarioSimulation" | "contrato" | "contratoVersion" | "contratoFirma" | "contratoAprobacion" | "contratoArchivo" | "contratoAlerta" | "tipoContratoCustom" | "factura" | "serieFacturacion" | "oferta" | "ofertaItem" | "cuentaPorCobrar" | "cuentaPorPagar" | "deudaCash" | "prestamoCash" | "pagoCuentaPorPagar" | "equipoReparacion" | "piezaReparacion" | "ordenReparacion" | "ordenReparacionEquipo" | "ordenReparacionItem" | "ordenReparacionMaterial" | "defectacionCatalogo" | "configuracionSistema" | "ordenProduccion" | "ordenProduccionHistorial" | "receta" | "recetaIngrediente" | "valeSalida" | "valeSalidaItem" | "listaPrecio" | "precioProducto" | "productoCostHistory" | "vendorCodeSequence" | "anticipo" | "anticipoMovimiento" | "eventoContable" | "eventoContableLinea"
+      modelProps: "categoria" | "unidad" | "vendor" | "inyeccionCapital" | "pagoDeuda" | "cliente" | "miEmpresa" | "almacen" | "puntoDeVenta" | "producto" | "stockUbicacion" | "venta" | "ventaItem" | "merma" | "transferencia" | "user" | "plan" | "licencia" | "licenciaAudit" | "notification" | "userActivityLog" | "userSession" | "attendance" | "employeeWorkSchedule" | "vacationRequest" | "vacationAccrual" | "empleado" | "pagosalario" | "cierreContable" | "periodoContable" | "aperturaPeriodo" | "snapshotPeriodo" | "auditoriaPeriodo" | "gastoCompra" | "compraProducto" | "compraDocumento" | "compraDocumentoItem" | "servicios" | "ventaServicios" | "compraServicio" | "gastoConcepto" | "gastoElemento" | "gastosDE" | "moneda" | "catalogoReparacionConfig" | "tasaCambio" | "transaccionMoneda" | "cuentaBancaria" | "tipoPago" | "reconciliacionVenta" | "reconciliacionServicio" | "reconciliacionGasto" | "ajusteBancario" | "transferenciaBancaria" | "alertHistory" | "auditLog" | "reportHistory" | "scheduledReport" | "scenarioSimulation" | "contrato" | "contratoVersion" | "contratoFirma" | "contratoAprobacion" | "contratoArchivo" | "contratoAlerta" | "tipoContratoCustom" | "factura" | "serieFacturacion" | "oferta" | "ofertaItem" | "cuentaPorCobrar" | "cuentaPorPagar" | "deudaCash" | "prestamoCash" | "pagoCuentaPorPagar" | "equipoReparacion" | "piezaReparacion" | "ordenReparacion" | "ordenReparacionEquipo" | "ordenReparacionItem" | "ordenReparacionMaterial" | "defectacionCatalogo" | "configuracionSistema" | "ordenProduccion" | "ordenProduccionHistorial" | "receta" | "recetaIngrediente" | "valeSalida" | "valeSalidaItem" | "listaPrecio" | "precioProducto" | "productoCostHistory" | "vendorCodeSequence" | "anticipo" | "anticipoMovimiento" | "eventoContable" | "eventoContableLinea" | "cuentaContable" | "mappingContable"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -9641,6 +9702,154 @@ export namespace Prisma {
           }
         }
       }
+      CuentaContable: {
+        payload: Prisma.$CuentaContablePayload<ExtArgs>
+        fields: Prisma.CuentaContableFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.CuentaContableFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CuentaContablePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.CuentaContableFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CuentaContablePayload>
+          }
+          findFirst: {
+            args: Prisma.CuentaContableFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CuentaContablePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.CuentaContableFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CuentaContablePayload>
+          }
+          findMany: {
+            args: Prisma.CuentaContableFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CuentaContablePayload>[]
+          }
+          create: {
+            args: Prisma.CuentaContableCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CuentaContablePayload>
+          }
+          createMany: {
+            args: Prisma.CuentaContableCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.CuentaContableCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CuentaContablePayload>[]
+          }
+          delete: {
+            args: Prisma.CuentaContableDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CuentaContablePayload>
+          }
+          update: {
+            args: Prisma.CuentaContableUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CuentaContablePayload>
+          }
+          deleteMany: {
+            args: Prisma.CuentaContableDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.CuentaContableUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.CuentaContableUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CuentaContablePayload>[]
+          }
+          upsert: {
+            args: Prisma.CuentaContableUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$CuentaContablePayload>
+          }
+          aggregate: {
+            args: Prisma.CuentaContableAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateCuentaContable>
+          }
+          groupBy: {
+            args: Prisma.CuentaContableGroupByArgs<ExtArgs>
+            result: $Utils.Optional<CuentaContableGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.CuentaContableCountArgs<ExtArgs>
+            result: $Utils.Optional<CuentaContableCountAggregateOutputType> | number
+          }
+        }
+      }
+      MappingContable: {
+        payload: Prisma.$MappingContablePayload<ExtArgs>
+        fields: Prisma.MappingContableFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.MappingContableFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MappingContablePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.MappingContableFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MappingContablePayload>
+          }
+          findFirst: {
+            args: Prisma.MappingContableFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MappingContablePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.MappingContableFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MappingContablePayload>
+          }
+          findMany: {
+            args: Prisma.MappingContableFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MappingContablePayload>[]
+          }
+          create: {
+            args: Prisma.MappingContableCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MappingContablePayload>
+          }
+          createMany: {
+            args: Prisma.MappingContableCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.MappingContableCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MappingContablePayload>[]
+          }
+          delete: {
+            args: Prisma.MappingContableDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MappingContablePayload>
+          }
+          update: {
+            args: Prisma.MappingContableUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MappingContablePayload>
+          }
+          deleteMany: {
+            args: Prisma.MappingContableDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.MappingContableUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.MappingContableUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MappingContablePayload>[]
+          }
+          upsert: {
+            args: Prisma.MappingContableUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$MappingContablePayload>
+          }
+          aggregate: {
+            args: Prisma.MappingContableAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateMappingContable>
+          }
+          groupBy: {
+            args: Prisma.MappingContableGroupByArgs<ExtArgs>
+            result: $Utils.Optional<MappingContableGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.MappingContableCountArgs<ExtArgs>
+            result: $Utils.Optional<MappingContableCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -9834,6 +10043,8 @@ export namespace Prisma {
     anticipoMovimiento?: AnticipoMovimientoOmit
     eventoContable?: EventoContableOmit
     eventoContableLinea?: EventoContableLineaOmit
+    cuentaContable?: CuentaContableOmit
+    mappingContable?: MappingContableOmit
   }
 
   /* Types for Logging */
@@ -12022,6 +12233,46 @@ export namespace Prisma {
    */
   export type EventoContableCountOutputTypeCountLineasArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: EventoContableLineaWhereInput
+  }
+
+
+  /**
+   * Count Type CuentaContableCountOutputType
+   */
+
+  export type CuentaContableCountOutputType = {
+    mappingPrincipal: number
+    mappingContrario: number
+  }
+
+  export type CuentaContableCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    mappingPrincipal?: boolean | CuentaContableCountOutputTypeCountMappingPrincipalArgs
+    mappingContrario?: boolean | CuentaContableCountOutputTypeCountMappingContrarioArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * CuentaContableCountOutputType without action
+   */
+  export type CuentaContableCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaContableCountOutputType
+     */
+    select?: CuentaContableCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * CuentaContableCountOutputType without action
+   */
+  export type CuentaContableCountOutputTypeCountMappingPrincipalArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: MappingContableWhereInput
+  }
+
+  /**
+   * CuentaContableCountOutputType without action
+   */
+  export type CuentaContableCountOutputTypeCountMappingContrarioArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: MappingContableWhereInput
   }
 
 
@@ -130466,6 +130717,2222 @@ export namespace Prisma {
 
 
   /**
+   * Model CuentaContable
+   */
+
+  export type AggregateCuentaContable = {
+    _count: CuentaContableCountAggregateOutputType | null
+    _min: CuentaContableMinAggregateOutputType | null
+    _max: CuentaContableMaxAggregateOutputType | null
+  }
+
+  export type CuentaContableMinAggregateOutputType = {
+    codigo: string | null
+    nombre: string | null
+    naturaleza: $Enums.NaturalezaContable | null
+    nivel: $Enums.NivelCuenta | null
+    activa: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type CuentaContableMaxAggregateOutputType = {
+    codigo: string | null
+    nombre: string | null
+    naturaleza: $Enums.NaturalezaContable | null
+    nivel: $Enums.NivelCuenta | null
+    activa: boolean | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type CuentaContableCountAggregateOutputType = {
+    codigo: number
+    nombre: number
+    naturaleza: number
+    nivel: number
+    activa: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type CuentaContableMinAggregateInputType = {
+    codigo?: true
+    nombre?: true
+    naturaleza?: true
+    nivel?: true
+    activa?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type CuentaContableMaxAggregateInputType = {
+    codigo?: true
+    nombre?: true
+    naturaleza?: true
+    nivel?: true
+    activa?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type CuentaContableCountAggregateInputType = {
+    codigo?: true
+    nombre?: true
+    naturaleza?: true
+    nivel?: true
+    activa?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type CuentaContableAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CuentaContable to aggregate.
+     */
+    where?: CuentaContableWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CuentaContables to fetch.
+     */
+    orderBy?: CuentaContableOrderByWithRelationInput | CuentaContableOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: CuentaContableWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CuentaContables from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CuentaContables.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned CuentaContables
+    **/
+    _count?: true | CuentaContableCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: CuentaContableMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: CuentaContableMaxAggregateInputType
+  }
+
+  export type GetCuentaContableAggregateType<T extends CuentaContableAggregateArgs> = {
+        [P in keyof T & keyof AggregateCuentaContable]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateCuentaContable[P]>
+      : GetScalarType<T[P], AggregateCuentaContable[P]>
+  }
+
+
+
+
+  export type CuentaContableGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: CuentaContableWhereInput
+    orderBy?: CuentaContableOrderByWithAggregationInput | CuentaContableOrderByWithAggregationInput[]
+    by: CuentaContableScalarFieldEnum[] | CuentaContableScalarFieldEnum
+    having?: CuentaContableScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: CuentaContableCountAggregateInputType | true
+    _min?: CuentaContableMinAggregateInputType
+    _max?: CuentaContableMaxAggregateInputType
+  }
+
+  export type CuentaContableGroupByOutputType = {
+    codigo: string
+    nombre: string
+    naturaleza: $Enums.NaturalezaContable
+    nivel: $Enums.NivelCuenta
+    activa: boolean
+    createdAt: Date
+    updatedAt: Date
+    _count: CuentaContableCountAggregateOutputType | null
+    _min: CuentaContableMinAggregateOutputType | null
+    _max: CuentaContableMaxAggregateOutputType | null
+  }
+
+  type GetCuentaContableGroupByPayload<T extends CuentaContableGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<CuentaContableGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof CuentaContableGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], CuentaContableGroupByOutputType[P]>
+            : GetScalarType<T[P], CuentaContableGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type CuentaContableSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    codigo?: boolean
+    nombre?: boolean
+    naturaleza?: boolean
+    nivel?: boolean
+    activa?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    mappingPrincipal?: boolean | CuentaContable$mappingPrincipalArgs<ExtArgs>
+    mappingContrario?: boolean | CuentaContable$mappingContrarioArgs<ExtArgs>
+    _count?: boolean | CuentaContableCountOutputTypeDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["cuentaContable"]>
+
+  export type CuentaContableSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    codigo?: boolean
+    nombre?: boolean
+    naturaleza?: boolean
+    nivel?: boolean
+    activa?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["cuentaContable"]>
+
+  export type CuentaContableSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    codigo?: boolean
+    nombre?: boolean
+    naturaleza?: boolean
+    nivel?: boolean
+    activa?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }, ExtArgs["result"]["cuentaContable"]>
+
+  export type CuentaContableSelectScalar = {
+    codigo?: boolean
+    nombre?: boolean
+    naturaleza?: boolean
+    nivel?: boolean
+    activa?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type CuentaContableOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"codigo" | "nombre" | "naturaleza" | "nivel" | "activa" | "createdAt" | "updatedAt", ExtArgs["result"]["cuentaContable"]>
+  export type CuentaContableInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    mappingPrincipal?: boolean | CuentaContable$mappingPrincipalArgs<ExtArgs>
+    mappingContrario?: boolean | CuentaContable$mappingContrarioArgs<ExtArgs>
+    _count?: boolean | CuentaContableCountOutputTypeDefaultArgs<ExtArgs>
+  }
+  export type CuentaContableIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+  export type CuentaContableIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
+
+  export type $CuentaContablePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "CuentaContable"
+    objects: {
+      mappingPrincipal: Prisma.$MappingContablePayload<ExtArgs>[]
+      mappingContrario: Prisma.$MappingContablePayload<ExtArgs>[]
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      codigo: string
+      nombre: string
+      naturaleza: $Enums.NaturalezaContable
+      nivel: $Enums.NivelCuenta
+      activa: boolean
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["cuentaContable"]>
+    composites: {}
+  }
+
+  type CuentaContableGetPayload<S extends boolean | null | undefined | CuentaContableDefaultArgs> = $Result.GetResult<Prisma.$CuentaContablePayload, S>
+
+  type CuentaContableCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<CuentaContableFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: CuentaContableCountAggregateInputType | true
+    }
+
+  export interface CuentaContableDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['CuentaContable'], meta: { name: 'CuentaContable' } }
+    /**
+     * Find zero or one CuentaContable that matches the filter.
+     * @param {CuentaContableFindUniqueArgs} args - Arguments to find a CuentaContable
+     * @example
+     * // Get one CuentaContable
+     * const cuentaContable = await prisma.cuentaContable.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends CuentaContableFindUniqueArgs>(args: SelectSubset<T, CuentaContableFindUniqueArgs<ExtArgs>>): Prisma__CuentaContableClient<$Result.GetResult<Prisma.$CuentaContablePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one CuentaContable that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {CuentaContableFindUniqueOrThrowArgs} args - Arguments to find a CuentaContable
+     * @example
+     * // Get one CuentaContable
+     * const cuentaContable = await prisma.cuentaContable.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends CuentaContableFindUniqueOrThrowArgs>(args: SelectSubset<T, CuentaContableFindUniqueOrThrowArgs<ExtArgs>>): Prisma__CuentaContableClient<$Result.GetResult<Prisma.$CuentaContablePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CuentaContable that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CuentaContableFindFirstArgs} args - Arguments to find a CuentaContable
+     * @example
+     * // Get one CuentaContable
+     * const cuentaContable = await prisma.cuentaContable.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends CuentaContableFindFirstArgs>(args?: SelectSubset<T, CuentaContableFindFirstArgs<ExtArgs>>): Prisma__CuentaContableClient<$Result.GetResult<Prisma.$CuentaContablePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first CuentaContable that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CuentaContableFindFirstOrThrowArgs} args - Arguments to find a CuentaContable
+     * @example
+     * // Get one CuentaContable
+     * const cuentaContable = await prisma.cuentaContable.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends CuentaContableFindFirstOrThrowArgs>(args?: SelectSubset<T, CuentaContableFindFirstOrThrowArgs<ExtArgs>>): Prisma__CuentaContableClient<$Result.GetResult<Prisma.$CuentaContablePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more CuentaContables that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CuentaContableFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all CuentaContables
+     * const cuentaContables = await prisma.cuentaContable.findMany()
+     * 
+     * // Get first 10 CuentaContables
+     * const cuentaContables = await prisma.cuentaContable.findMany({ take: 10 })
+     * 
+     * // Only select the `codigo`
+     * const cuentaContableWithCodigoOnly = await prisma.cuentaContable.findMany({ select: { codigo: true } })
+     * 
+     */
+    findMany<T extends CuentaContableFindManyArgs>(args?: SelectSubset<T, CuentaContableFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CuentaContablePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a CuentaContable.
+     * @param {CuentaContableCreateArgs} args - Arguments to create a CuentaContable.
+     * @example
+     * // Create one CuentaContable
+     * const CuentaContable = await prisma.cuentaContable.create({
+     *   data: {
+     *     // ... data to create a CuentaContable
+     *   }
+     * })
+     * 
+     */
+    create<T extends CuentaContableCreateArgs>(args: SelectSubset<T, CuentaContableCreateArgs<ExtArgs>>): Prisma__CuentaContableClient<$Result.GetResult<Prisma.$CuentaContablePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many CuentaContables.
+     * @param {CuentaContableCreateManyArgs} args - Arguments to create many CuentaContables.
+     * @example
+     * // Create many CuentaContables
+     * const cuentaContable = await prisma.cuentaContable.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends CuentaContableCreateManyArgs>(args?: SelectSubset<T, CuentaContableCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many CuentaContables and returns the data saved in the database.
+     * @param {CuentaContableCreateManyAndReturnArgs} args - Arguments to create many CuentaContables.
+     * @example
+     * // Create many CuentaContables
+     * const cuentaContable = await prisma.cuentaContable.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many CuentaContables and only return the `codigo`
+     * const cuentaContableWithCodigoOnly = await prisma.cuentaContable.createManyAndReturn({
+     *   select: { codigo: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends CuentaContableCreateManyAndReturnArgs>(args?: SelectSubset<T, CuentaContableCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CuentaContablePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a CuentaContable.
+     * @param {CuentaContableDeleteArgs} args - Arguments to delete one CuentaContable.
+     * @example
+     * // Delete one CuentaContable
+     * const CuentaContable = await prisma.cuentaContable.delete({
+     *   where: {
+     *     // ... filter to delete one CuentaContable
+     *   }
+     * })
+     * 
+     */
+    delete<T extends CuentaContableDeleteArgs>(args: SelectSubset<T, CuentaContableDeleteArgs<ExtArgs>>): Prisma__CuentaContableClient<$Result.GetResult<Prisma.$CuentaContablePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one CuentaContable.
+     * @param {CuentaContableUpdateArgs} args - Arguments to update one CuentaContable.
+     * @example
+     * // Update one CuentaContable
+     * const cuentaContable = await prisma.cuentaContable.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends CuentaContableUpdateArgs>(args: SelectSubset<T, CuentaContableUpdateArgs<ExtArgs>>): Prisma__CuentaContableClient<$Result.GetResult<Prisma.$CuentaContablePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more CuentaContables.
+     * @param {CuentaContableDeleteManyArgs} args - Arguments to filter CuentaContables to delete.
+     * @example
+     * // Delete a few CuentaContables
+     * const { count } = await prisma.cuentaContable.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends CuentaContableDeleteManyArgs>(args?: SelectSubset<T, CuentaContableDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CuentaContables.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CuentaContableUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many CuentaContables
+     * const cuentaContable = await prisma.cuentaContable.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends CuentaContableUpdateManyArgs>(args: SelectSubset<T, CuentaContableUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more CuentaContables and returns the data updated in the database.
+     * @param {CuentaContableUpdateManyAndReturnArgs} args - Arguments to update many CuentaContables.
+     * @example
+     * // Update many CuentaContables
+     * const cuentaContable = await prisma.cuentaContable.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more CuentaContables and only return the `codigo`
+     * const cuentaContableWithCodigoOnly = await prisma.cuentaContable.updateManyAndReturn({
+     *   select: { codigo: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends CuentaContableUpdateManyAndReturnArgs>(args: SelectSubset<T, CuentaContableUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CuentaContablePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one CuentaContable.
+     * @param {CuentaContableUpsertArgs} args - Arguments to update or create a CuentaContable.
+     * @example
+     * // Update or create a CuentaContable
+     * const cuentaContable = await prisma.cuentaContable.upsert({
+     *   create: {
+     *     // ... data to create a CuentaContable
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the CuentaContable we want to update
+     *   }
+     * })
+     */
+    upsert<T extends CuentaContableUpsertArgs>(args: SelectSubset<T, CuentaContableUpsertArgs<ExtArgs>>): Prisma__CuentaContableClient<$Result.GetResult<Prisma.$CuentaContablePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of CuentaContables.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CuentaContableCountArgs} args - Arguments to filter CuentaContables to count.
+     * @example
+     * // Count the number of CuentaContables
+     * const count = await prisma.cuentaContable.count({
+     *   where: {
+     *     // ... the filter for the CuentaContables we want to count
+     *   }
+     * })
+    **/
+    count<T extends CuentaContableCountArgs>(
+      args?: Subset<T, CuentaContableCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], CuentaContableCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a CuentaContable.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CuentaContableAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends CuentaContableAggregateArgs>(args: Subset<T, CuentaContableAggregateArgs>): Prisma.PrismaPromise<GetCuentaContableAggregateType<T>>
+
+    /**
+     * Group by CuentaContable.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {CuentaContableGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends CuentaContableGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: CuentaContableGroupByArgs['orderBy'] }
+        : { orderBy?: CuentaContableGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, CuentaContableGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetCuentaContableGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the CuentaContable model
+   */
+  readonly fields: CuentaContableFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for CuentaContable.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__CuentaContableClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    mappingPrincipal<T extends CuentaContable$mappingPrincipalArgs<ExtArgs> = {}>(args?: Subset<T, CuentaContable$mappingPrincipalArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MappingContablePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    mappingContrario<T extends CuentaContable$mappingContrarioArgs<ExtArgs> = {}>(args?: Subset<T, CuentaContable$mappingContrarioArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MappingContablePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the CuentaContable model
+   */
+  interface CuentaContableFieldRefs {
+    readonly codigo: FieldRef<"CuentaContable", 'String'>
+    readonly nombre: FieldRef<"CuentaContable", 'String'>
+    readonly naturaleza: FieldRef<"CuentaContable", 'NaturalezaContable'>
+    readonly nivel: FieldRef<"CuentaContable", 'NivelCuenta'>
+    readonly activa: FieldRef<"CuentaContable", 'Boolean'>
+    readonly createdAt: FieldRef<"CuentaContable", 'DateTime'>
+    readonly updatedAt: FieldRef<"CuentaContable", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * CuentaContable findUnique
+   */
+  export type CuentaContableFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaContable
+     */
+    select?: CuentaContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CuentaContable
+     */
+    omit?: CuentaContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CuentaContableInclude<ExtArgs> | null
+    /**
+     * Filter, which CuentaContable to fetch.
+     */
+    where: CuentaContableWhereUniqueInput
+  }
+
+  /**
+   * CuentaContable findUniqueOrThrow
+   */
+  export type CuentaContableFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaContable
+     */
+    select?: CuentaContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CuentaContable
+     */
+    omit?: CuentaContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CuentaContableInclude<ExtArgs> | null
+    /**
+     * Filter, which CuentaContable to fetch.
+     */
+    where: CuentaContableWhereUniqueInput
+  }
+
+  /**
+   * CuentaContable findFirst
+   */
+  export type CuentaContableFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaContable
+     */
+    select?: CuentaContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CuentaContable
+     */
+    omit?: CuentaContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CuentaContableInclude<ExtArgs> | null
+    /**
+     * Filter, which CuentaContable to fetch.
+     */
+    where?: CuentaContableWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CuentaContables to fetch.
+     */
+    orderBy?: CuentaContableOrderByWithRelationInput | CuentaContableOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CuentaContables.
+     */
+    cursor?: CuentaContableWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CuentaContables from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CuentaContables.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CuentaContables.
+     */
+    distinct?: CuentaContableScalarFieldEnum | CuentaContableScalarFieldEnum[]
+  }
+
+  /**
+   * CuentaContable findFirstOrThrow
+   */
+  export type CuentaContableFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaContable
+     */
+    select?: CuentaContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CuentaContable
+     */
+    omit?: CuentaContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CuentaContableInclude<ExtArgs> | null
+    /**
+     * Filter, which CuentaContable to fetch.
+     */
+    where?: CuentaContableWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CuentaContables to fetch.
+     */
+    orderBy?: CuentaContableOrderByWithRelationInput | CuentaContableOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for CuentaContables.
+     */
+    cursor?: CuentaContableWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CuentaContables from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CuentaContables.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of CuentaContables.
+     */
+    distinct?: CuentaContableScalarFieldEnum | CuentaContableScalarFieldEnum[]
+  }
+
+  /**
+   * CuentaContable findMany
+   */
+  export type CuentaContableFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaContable
+     */
+    select?: CuentaContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CuentaContable
+     */
+    omit?: CuentaContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CuentaContableInclude<ExtArgs> | null
+    /**
+     * Filter, which CuentaContables to fetch.
+     */
+    where?: CuentaContableWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of CuentaContables to fetch.
+     */
+    orderBy?: CuentaContableOrderByWithRelationInput | CuentaContableOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing CuentaContables.
+     */
+    cursor?: CuentaContableWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` CuentaContables from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` CuentaContables.
+     */
+    skip?: number
+    distinct?: CuentaContableScalarFieldEnum | CuentaContableScalarFieldEnum[]
+  }
+
+  /**
+   * CuentaContable create
+   */
+  export type CuentaContableCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaContable
+     */
+    select?: CuentaContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CuentaContable
+     */
+    omit?: CuentaContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CuentaContableInclude<ExtArgs> | null
+    /**
+     * The data needed to create a CuentaContable.
+     */
+    data: XOR<CuentaContableCreateInput, CuentaContableUncheckedCreateInput>
+  }
+
+  /**
+   * CuentaContable createMany
+   */
+  export type CuentaContableCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many CuentaContables.
+     */
+    data: CuentaContableCreateManyInput | CuentaContableCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * CuentaContable createManyAndReturn
+   */
+  export type CuentaContableCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaContable
+     */
+    select?: CuentaContableSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CuentaContable
+     */
+    omit?: CuentaContableOmit<ExtArgs> | null
+    /**
+     * The data used to create many CuentaContables.
+     */
+    data: CuentaContableCreateManyInput | CuentaContableCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * CuentaContable update
+   */
+  export type CuentaContableUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaContable
+     */
+    select?: CuentaContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CuentaContable
+     */
+    omit?: CuentaContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CuentaContableInclude<ExtArgs> | null
+    /**
+     * The data needed to update a CuentaContable.
+     */
+    data: XOR<CuentaContableUpdateInput, CuentaContableUncheckedUpdateInput>
+    /**
+     * Choose, which CuentaContable to update.
+     */
+    where: CuentaContableWhereUniqueInput
+  }
+
+  /**
+   * CuentaContable updateMany
+   */
+  export type CuentaContableUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update CuentaContables.
+     */
+    data: XOR<CuentaContableUpdateManyMutationInput, CuentaContableUncheckedUpdateManyInput>
+    /**
+     * Filter which CuentaContables to update
+     */
+    where?: CuentaContableWhereInput
+    /**
+     * Limit how many CuentaContables to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * CuentaContable updateManyAndReturn
+   */
+  export type CuentaContableUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaContable
+     */
+    select?: CuentaContableSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the CuentaContable
+     */
+    omit?: CuentaContableOmit<ExtArgs> | null
+    /**
+     * The data used to update CuentaContables.
+     */
+    data: XOR<CuentaContableUpdateManyMutationInput, CuentaContableUncheckedUpdateManyInput>
+    /**
+     * Filter which CuentaContables to update
+     */
+    where?: CuentaContableWhereInput
+    /**
+     * Limit how many CuentaContables to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * CuentaContable upsert
+   */
+  export type CuentaContableUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaContable
+     */
+    select?: CuentaContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CuentaContable
+     */
+    omit?: CuentaContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CuentaContableInclude<ExtArgs> | null
+    /**
+     * The filter to search for the CuentaContable to update in case it exists.
+     */
+    where: CuentaContableWhereUniqueInput
+    /**
+     * In case the CuentaContable found by the `where` argument doesn't exist, create a new CuentaContable with this data.
+     */
+    create: XOR<CuentaContableCreateInput, CuentaContableUncheckedCreateInput>
+    /**
+     * In case the CuentaContable was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<CuentaContableUpdateInput, CuentaContableUncheckedUpdateInput>
+  }
+
+  /**
+   * CuentaContable delete
+   */
+  export type CuentaContableDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaContable
+     */
+    select?: CuentaContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CuentaContable
+     */
+    omit?: CuentaContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CuentaContableInclude<ExtArgs> | null
+    /**
+     * Filter which CuentaContable to delete.
+     */
+    where: CuentaContableWhereUniqueInput
+  }
+
+  /**
+   * CuentaContable deleteMany
+   */
+  export type CuentaContableDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which CuentaContables to delete
+     */
+    where?: CuentaContableWhereInput
+    /**
+     * Limit how many CuentaContables to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * CuentaContable.mappingPrincipal
+   */
+  export type CuentaContable$mappingPrincipalArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MappingContable
+     */
+    select?: MappingContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MappingContable
+     */
+    omit?: MappingContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MappingContableInclude<ExtArgs> | null
+    where?: MappingContableWhereInput
+    orderBy?: MappingContableOrderByWithRelationInput | MappingContableOrderByWithRelationInput[]
+    cursor?: MappingContableWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: MappingContableScalarFieldEnum | MappingContableScalarFieldEnum[]
+  }
+
+  /**
+   * CuentaContable.mappingContrario
+   */
+  export type CuentaContable$mappingContrarioArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MappingContable
+     */
+    select?: MappingContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MappingContable
+     */
+    omit?: MappingContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MappingContableInclude<ExtArgs> | null
+    where?: MappingContableWhereInput
+    orderBy?: MappingContableOrderByWithRelationInput | MappingContableOrderByWithRelationInput[]
+    cursor?: MappingContableWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: MappingContableScalarFieldEnum | MappingContableScalarFieldEnum[]
+  }
+
+  /**
+   * CuentaContable without action
+   */
+  export type CuentaContableDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the CuentaContable
+     */
+    select?: CuentaContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the CuentaContable
+     */
+    omit?: CuentaContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: CuentaContableInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model MappingContable
+   */
+
+  export type AggregateMappingContable = {
+    _count: MappingContableCountAggregateOutputType | null
+    _min: MappingContableMinAggregateOutputType | null
+    _max: MappingContableMaxAggregateOutputType | null
+  }
+
+  export type MappingContableMinAggregateOutputType = {
+    mappingId: string | null
+    origenTipo: string | null
+    cuentaPrincipalCodigo: string | null
+    cuentaContrariaCodigo: string | null
+    etiqueta: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type MappingContableMaxAggregateOutputType = {
+    mappingId: string | null
+    origenTipo: string | null
+    cuentaPrincipalCodigo: string | null
+    cuentaContrariaCodigo: string | null
+    etiqueta: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type MappingContableCountAggregateOutputType = {
+    mappingId: number
+    origenTipo: number
+    cuentaPrincipalCodigo: number
+    cuentaContrariaCodigo: number
+    etiqueta: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type MappingContableMinAggregateInputType = {
+    mappingId?: true
+    origenTipo?: true
+    cuentaPrincipalCodigo?: true
+    cuentaContrariaCodigo?: true
+    etiqueta?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type MappingContableMaxAggregateInputType = {
+    mappingId?: true
+    origenTipo?: true
+    cuentaPrincipalCodigo?: true
+    cuentaContrariaCodigo?: true
+    etiqueta?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type MappingContableCountAggregateInputType = {
+    mappingId?: true
+    origenTipo?: true
+    cuentaPrincipalCodigo?: true
+    cuentaContrariaCodigo?: true
+    etiqueta?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type MappingContableAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which MappingContable to aggregate.
+     */
+    where?: MappingContableWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MappingContables to fetch.
+     */
+    orderBy?: MappingContableOrderByWithRelationInput | MappingContableOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: MappingContableWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MappingContables from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MappingContables.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned MappingContables
+    **/
+    _count?: true | MappingContableCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: MappingContableMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: MappingContableMaxAggregateInputType
+  }
+
+  export type GetMappingContableAggregateType<T extends MappingContableAggregateArgs> = {
+        [P in keyof T & keyof AggregateMappingContable]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateMappingContable[P]>
+      : GetScalarType<T[P], AggregateMappingContable[P]>
+  }
+
+
+
+
+  export type MappingContableGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: MappingContableWhereInput
+    orderBy?: MappingContableOrderByWithAggregationInput | MappingContableOrderByWithAggregationInput[]
+    by: MappingContableScalarFieldEnum[] | MappingContableScalarFieldEnum
+    having?: MappingContableScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: MappingContableCountAggregateInputType | true
+    _min?: MappingContableMinAggregateInputType
+    _max?: MappingContableMaxAggregateInputType
+  }
+
+  export type MappingContableGroupByOutputType = {
+    mappingId: string
+    origenTipo: string
+    cuentaPrincipalCodigo: string
+    cuentaContrariaCodigo: string
+    etiqueta: string | null
+    createdAt: Date
+    updatedAt: Date
+    _count: MappingContableCountAggregateOutputType | null
+    _min: MappingContableMinAggregateOutputType | null
+    _max: MappingContableMaxAggregateOutputType | null
+  }
+
+  type GetMappingContableGroupByPayload<T extends MappingContableGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<MappingContableGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof MappingContableGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], MappingContableGroupByOutputType[P]>
+            : GetScalarType<T[P], MappingContableGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type MappingContableSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    mappingId?: boolean
+    origenTipo?: boolean
+    cuentaPrincipalCodigo?: boolean
+    cuentaContrariaCodigo?: boolean
+    etiqueta?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    cuentaPrincipal?: boolean | CuentaContableDefaultArgs<ExtArgs>
+    cuentaContraria?: boolean | CuentaContableDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["mappingContable"]>
+
+  export type MappingContableSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    mappingId?: boolean
+    origenTipo?: boolean
+    cuentaPrincipalCodigo?: boolean
+    cuentaContrariaCodigo?: boolean
+    etiqueta?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    cuentaPrincipal?: boolean | CuentaContableDefaultArgs<ExtArgs>
+    cuentaContraria?: boolean | CuentaContableDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["mappingContable"]>
+
+  export type MappingContableSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    mappingId?: boolean
+    origenTipo?: boolean
+    cuentaPrincipalCodigo?: boolean
+    cuentaContrariaCodigo?: boolean
+    etiqueta?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    cuentaPrincipal?: boolean | CuentaContableDefaultArgs<ExtArgs>
+    cuentaContraria?: boolean | CuentaContableDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["mappingContable"]>
+
+  export type MappingContableSelectScalar = {
+    mappingId?: boolean
+    origenTipo?: boolean
+    cuentaPrincipalCodigo?: boolean
+    cuentaContrariaCodigo?: boolean
+    etiqueta?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type MappingContableOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"mappingId" | "origenTipo" | "cuentaPrincipalCodigo" | "cuentaContrariaCodigo" | "etiqueta" | "createdAt" | "updatedAt", ExtArgs["result"]["mappingContable"]>
+  export type MappingContableInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    cuentaPrincipal?: boolean | CuentaContableDefaultArgs<ExtArgs>
+    cuentaContraria?: boolean | CuentaContableDefaultArgs<ExtArgs>
+  }
+  export type MappingContableIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    cuentaPrincipal?: boolean | CuentaContableDefaultArgs<ExtArgs>
+    cuentaContraria?: boolean | CuentaContableDefaultArgs<ExtArgs>
+  }
+  export type MappingContableIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    cuentaPrincipal?: boolean | CuentaContableDefaultArgs<ExtArgs>
+    cuentaContraria?: boolean | CuentaContableDefaultArgs<ExtArgs>
+  }
+
+  export type $MappingContablePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "MappingContable"
+    objects: {
+      cuentaPrincipal: Prisma.$CuentaContablePayload<ExtArgs>
+      cuentaContraria: Prisma.$CuentaContablePayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      mappingId: string
+      origenTipo: string
+      cuentaPrincipalCodigo: string
+      cuentaContrariaCodigo: string
+      etiqueta: string | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["mappingContable"]>
+    composites: {}
+  }
+
+  type MappingContableGetPayload<S extends boolean | null | undefined | MappingContableDefaultArgs> = $Result.GetResult<Prisma.$MappingContablePayload, S>
+
+  type MappingContableCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<MappingContableFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: MappingContableCountAggregateInputType | true
+    }
+
+  export interface MappingContableDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['MappingContable'], meta: { name: 'MappingContable' } }
+    /**
+     * Find zero or one MappingContable that matches the filter.
+     * @param {MappingContableFindUniqueArgs} args - Arguments to find a MappingContable
+     * @example
+     * // Get one MappingContable
+     * const mappingContable = await prisma.mappingContable.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends MappingContableFindUniqueArgs>(args: SelectSubset<T, MappingContableFindUniqueArgs<ExtArgs>>): Prisma__MappingContableClient<$Result.GetResult<Prisma.$MappingContablePayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one MappingContable that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {MappingContableFindUniqueOrThrowArgs} args - Arguments to find a MappingContable
+     * @example
+     * // Get one MappingContable
+     * const mappingContable = await prisma.mappingContable.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends MappingContableFindUniqueOrThrowArgs>(args: SelectSubset<T, MappingContableFindUniqueOrThrowArgs<ExtArgs>>): Prisma__MappingContableClient<$Result.GetResult<Prisma.$MappingContablePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first MappingContable that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MappingContableFindFirstArgs} args - Arguments to find a MappingContable
+     * @example
+     * // Get one MappingContable
+     * const mappingContable = await prisma.mappingContable.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends MappingContableFindFirstArgs>(args?: SelectSubset<T, MappingContableFindFirstArgs<ExtArgs>>): Prisma__MappingContableClient<$Result.GetResult<Prisma.$MappingContablePayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first MappingContable that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MappingContableFindFirstOrThrowArgs} args - Arguments to find a MappingContable
+     * @example
+     * // Get one MappingContable
+     * const mappingContable = await prisma.mappingContable.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends MappingContableFindFirstOrThrowArgs>(args?: SelectSubset<T, MappingContableFindFirstOrThrowArgs<ExtArgs>>): Prisma__MappingContableClient<$Result.GetResult<Prisma.$MappingContablePayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more MappingContables that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MappingContableFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all MappingContables
+     * const mappingContables = await prisma.mappingContable.findMany()
+     * 
+     * // Get first 10 MappingContables
+     * const mappingContables = await prisma.mappingContable.findMany({ take: 10 })
+     * 
+     * // Only select the `mappingId`
+     * const mappingContableWithMappingIdOnly = await prisma.mappingContable.findMany({ select: { mappingId: true } })
+     * 
+     */
+    findMany<T extends MappingContableFindManyArgs>(args?: SelectSubset<T, MappingContableFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MappingContablePayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a MappingContable.
+     * @param {MappingContableCreateArgs} args - Arguments to create a MappingContable.
+     * @example
+     * // Create one MappingContable
+     * const MappingContable = await prisma.mappingContable.create({
+     *   data: {
+     *     // ... data to create a MappingContable
+     *   }
+     * })
+     * 
+     */
+    create<T extends MappingContableCreateArgs>(args: SelectSubset<T, MappingContableCreateArgs<ExtArgs>>): Prisma__MappingContableClient<$Result.GetResult<Prisma.$MappingContablePayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many MappingContables.
+     * @param {MappingContableCreateManyArgs} args - Arguments to create many MappingContables.
+     * @example
+     * // Create many MappingContables
+     * const mappingContable = await prisma.mappingContable.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends MappingContableCreateManyArgs>(args?: SelectSubset<T, MappingContableCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many MappingContables and returns the data saved in the database.
+     * @param {MappingContableCreateManyAndReturnArgs} args - Arguments to create many MappingContables.
+     * @example
+     * // Create many MappingContables
+     * const mappingContable = await prisma.mappingContable.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many MappingContables and only return the `mappingId`
+     * const mappingContableWithMappingIdOnly = await prisma.mappingContable.createManyAndReturn({
+     *   select: { mappingId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends MappingContableCreateManyAndReturnArgs>(args?: SelectSubset<T, MappingContableCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MappingContablePayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a MappingContable.
+     * @param {MappingContableDeleteArgs} args - Arguments to delete one MappingContable.
+     * @example
+     * // Delete one MappingContable
+     * const MappingContable = await prisma.mappingContable.delete({
+     *   where: {
+     *     // ... filter to delete one MappingContable
+     *   }
+     * })
+     * 
+     */
+    delete<T extends MappingContableDeleteArgs>(args: SelectSubset<T, MappingContableDeleteArgs<ExtArgs>>): Prisma__MappingContableClient<$Result.GetResult<Prisma.$MappingContablePayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one MappingContable.
+     * @param {MappingContableUpdateArgs} args - Arguments to update one MappingContable.
+     * @example
+     * // Update one MappingContable
+     * const mappingContable = await prisma.mappingContable.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends MappingContableUpdateArgs>(args: SelectSubset<T, MappingContableUpdateArgs<ExtArgs>>): Prisma__MappingContableClient<$Result.GetResult<Prisma.$MappingContablePayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more MappingContables.
+     * @param {MappingContableDeleteManyArgs} args - Arguments to filter MappingContables to delete.
+     * @example
+     * // Delete a few MappingContables
+     * const { count } = await prisma.mappingContable.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends MappingContableDeleteManyArgs>(args?: SelectSubset<T, MappingContableDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more MappingContables.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MappingContableUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many MappingContables
+     * const mappingContable = await prisma.mappingContable.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends MappingContableUpdateManyArgs>(args: SelectSubset<T, MappingContableUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more MappingContables and returns the data updated in the database.
+     * @param {MappingContableUpdateManyAndReturnArgs} args - Arguments to update many MappingContables.
+     * @example
+     * // Update many MappingContables
+     * const mappingContable = await prisma.mappingContable.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more MappingContables and only return the `mappingId`
+     * const mappingContableWithMappingIdOnly = await prisma.mappingContable.updateManyAndReturn({
+     *   select: { mappingId: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends MappingContableUpdateManyAndReturnArgs>(args: SelectSubset<T, MappingContableUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$MappingContablePayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one MappingContable.
+     * @param {MappingContableUpsertArgs} args - Arguments to update or create a MappingContable.
+     * @example
+     * // Update or create a MappingContable
+     * const mappingContable = await prisma.mappingContable.upsert({
+     *   create: {
+     *     // ... data to create a MappingContable
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the MappingContable we want to update
+     *   }
+     * })
+     */
+    upsert<T extends MappingContableUpsertArgs>(args: SelectSubset<T, MappingContableUpsertArgs<ExtArgs>>): Prisma__MappingContableClient<$Result.GetResult<Prisma.$MappingContablePayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of MappingContables.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MappingContableCountArgs} args - Arguments to filter MappingContables to count.
+     * @example
+     * // Count the number of MappingContables
+     * const count = await prisma.mappingContable.count({
+     *   where: {
+     *     // ... the filter for the MappingContables we want to count
+     *   }
+     * })
+    **/
+    count<T extends MappingContableCountArgs>(
+      args?: Subset<T, MappingContableCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], MappingContableCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a MappingContable.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MappingContableAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends MappingContableAggregateArgs>(args: Subset<T, MappingContableAggregateArgs>): Prisma.PrismaPromise<GetMappingContableAggregateType<T>>
+
+    /**
+     * Group by MappingContable.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {MappingContableGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends MappingContableGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: MappingContableGroupByArgs['orderBy'] }
+        : { orderBy?: MappingContableGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, MappingContableGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetMappingContableGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the MappingContable model
+   */
+  readonly fields: MappingContableFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for MappingContable.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__MappingContableClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    cuentaPrincipal<T extends CuentaContableDefaultArgs<ExtArgs> = {}>(args?: Subset<T, CuentaContableDefaultArgs<ExtArgs>>): Prisma__CuentaContableClient<$Result.GetResult<Prisma.$CuentaContablePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    cuentaContraria<T extends CuentaContableDefaultArgs<ExtArgs> = {}>(args?: Subset<T, CuentaContableDefaultArgs<ExtArgs>>): Prisma__CuentaContableClient<$Result.GetResult<Prisma.$CuentaContablePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the MappingContable model
+   */
+  interface MappingContableFieldRefs {
+    readonly mappingId: FieldRef<"MappingContable", 'String'>
+    readonly origenTipo: FieldRef<"MappingContable", 'String'>
+    readonly cuentaPrincipalCodigo: FieldRef<"MappingContable", 'String'>
+    readonly cuentaContrariaCodigo: FieldRef<"MappingContable", 'String'>
+    readonly etiqueta: FieldRef<"MappingContable", 'String'>
+    readonly createdAt: FieldRef<"MappingContable", 'DateTime'>
+    readonly updatedAt: FieldRef<"MappingContable", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * MappingContable findUnique
+   */
+  export type MappingContableFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MappingContable
+     */
+    select?: MappingContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MappingContable
+     */
+    omit?: MappingContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MappingContableInclude<ExtArgs> | null
+    /**
+     * Filter, which MappingContable to fetch.
+     */
+    where: MappingContableWhereUniqueInput
+  }
+
+  /**
+   * MappingContable findUniqueOrThrow
+   */
+  export type MappingContableFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MappingContable
+     */
+    select?: MappingContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MappingContable
+     */
+    omit?: MappingContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MappingContableInclude<ExtArgs> | null
+    /**
+     * Filter, which MappingContable to fetch.
+     */
+    where: MappingContableWhereUniqueInput
+  }
+
+  /**
+   * MappingContable findFirst
+   */
+  export type MappingContableFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MappingContable
+     */
+    select?: MappingContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MappingContable
+     */
+    omit?: MappingContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MappingContableInclude<ExtArgs> | null
+    /**
+     * Filter, which MappingContable to fetch.
+     */
+    where?: MappingContableWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MappingContables to fetch.
+     */
+    orderBy?: MappingContableOrderByWithRelationInput | MappingContableOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for MappingContables.
+     */
+    cursor?: MappingContableWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MappingContables from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MappingContables.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of MappingContables.
+     */
+    distinct?: MappingContableScalarFieldEnum | MappingContableScalarFieldEnum[]
+  }
+
+  /**
+   * MappingContable findFirstOrThrow
+   */
+  export type MappingContableFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MappingContable
+     */
+    select?: MappingContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MappingContable
+     */
+    omit?: MappingContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MappingContableInclude<ExtArgs> | null
+    /**
+     * Filter, which MappingContable to fetch.
+     */
+    where?: MappingContableWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MappingContables to fetch.
+     */
+    orderBy?: MappingContableOrderByWithRelationInput | MappingContableOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for MappingContables.
+     */
+    cursor?: MappingContableWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MappingContables from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MappingContables.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of MappingContables.
+     */
+    distinct?: MappingContableScalarFieldEnum | MappingContableScalarFieldEnum[]
+  }
+
+  /**
+   * MappingContable findMany
+   */
+  export type MappingContableFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MappingContable
+     */
+    select?: MappingContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MappingContable
+     */
+    omit?: MappingContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MappingContableInclude<ExtArgs> | null
+    /**
+     * Filter, which MappingContables to fetch.
+     */
+    where?: MappingContableWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of MappingContables to fetch.
+     */
+    orderBy?: MappingContableOrderByWithRelationInput | MappingContableOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing MappingContables.
+     */
+    cursor?: MappingContableWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` MappingContables from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` MappingContables.
+     */
+    skip?: number
+    distinct?: MappingContableScalarFieldEnum | MappingContableScalarFieldEnum[]
+  }
+
+  /**
+   * MappingContable create
+   */
+  export type MappingContableCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MappingContable
+     */
+    select?: MappingContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MappingContable
+     */
+    omit?: MappingContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MappingContableInclude<ExtArgs> | null
+    /**
+     * The data needed to create a MappingContable.
+     */
+    data: XOR<MappingContableCreateInput, MappingContableUncheckedCreateInput>
+  }
+
+  /**
+   * MappingContable createMany
+   */
+  export type MappingContableCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many MappingContables.
+     */
+    data: MappingContableCreateManyInput | MappingContableCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * MappingContable createManyAndReturn
+   */
+  export type MappingContableCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MappingContable
+     */
+    select?: MappingContableSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the MappingContable
+     */
+    omit?: MappingContableOmit<ExtArgs> | null
+    /**
+     * The data used to create many MappingContables.
+     */
+    data: MappingContableCreateManyInput | MappingContableCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MappingContableIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * MappingContable update
+   */
+  export type MappingContableUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MappingContable
+     */
+    select?: MappingContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MappingContable
+     */
+    omit?: MappingContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MappingContableInclude<ExtArgs> | null
+    /**
+     * The data needed to update a MappingContable.
+     */
+    data: XOR<MappingContableUpdateInput, MappingContableUncheckedUpdateInput>
+    /**
+     * Choose, which MappingContable to update.
+     */
+    where: MappingContableWhereUniqueInput
+  }
+
+  /**
+   * MappingContable updateMany
+   */
+  export type MappingContableUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update MappingContables.
+     */
+    data: XOR<MappingContableUpdateManyMutationInput, MappingContableUncheckedUpdateManyInput>
+    /**
+     * Filter which MappingContables to update
+     */
+    where?: MappingContableWhereInput
+    /**
+     * Limit how many MappingContables to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * MappingContable updateManyAndReturn
+   */
+  export type MappingContableUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MappingContable
+     */
+    select?: MappingContableSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the MappingContable
+     */
+    omit?: MappingContableOmit<ExtArgs> | null
+    /**
+     * The data used to update MappingContables.
+     */
+    data: XOR<MappingContableUpdateManyMutationInput, MappingContableUncheckedUpdateManyInput>
+    /**
+     * Filter which MappingContables to update
+     */
+    where?: MappingContableWhereInput
+    /**
+     * Limit how many MappingContables to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MappingContableIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * MappingContable upsert
+   */
+  export type MappingContableUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MappingContable
+     */
+    select?: MappingContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MappingContable
+     */
+    omit?: MappingContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MappingContableInclude<ExtArgs> | null
+    /**
+     * The filter to search for the MappingContable to update in case it exists.
+     */
+    where: MappingContableWhereUniqueInput
+    /**
+     * In case the MappingContable found by the `where` argument doesn't exist, create a new MappingContable with this data.
+     */
+    create: XOR<MappingContableCreateInput, MappingContableUncheckedCreateInput>
+    /**
+     * In case the MappingContable was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<MappingContableUpdateInput, MappingContableUncheckedUpdateInput>
+  }
+
+  /**
+   * MappingContable delete
+   */
+  export type MappingContableDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MappingContable
+     */
+    select?: MappingContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MappingContable
+     */
+    omit?: MappingContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MappingContableInclude<ExtArgs> | null
+    /**
+     * Filter which MappingContable to delete.
+     */
+    where: MappingContableWhereUniqueInput
+  }
+
+  /**
+   * MappingContable deleteMany
+   */
+  export type MappingContableDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which MappingContables to delete
+     */
+    where?: MappingContableWhereInput
+    /**
+     * Limit how many MappingContables to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * MappingContable without action
+   */
+  export type MappingContableDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the MappingContable
+     */
+    select?: MappingContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the MappingContable
+     */
+    omit?: MappingContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: MappingContableInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -132166,6 +134633,32 @@ export namespace Prisma {
   export type EventoContableLineaScalarFieldEnum = (typeof EventoContableLineaScalarFieldEnum)[keyof typeof EventoContableLineaScalarFieldEnum]
 
 
+  export const CuentaContableScalarFieldEnum: {
+    codigo: 'codigo',
+    nombre: 'nombre',
+    naturaleza: 'naturaleza',
+    nivel: 'nivel',
+    activa: 'activa',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type CuentaContableScalarFieldEnum = (typeof CuentaContableScalarFieldEnum)[keyof typeof CuentaContableScalarFieldEnum]
+
+
+  export const MappingContableScalarFieldEnum: {
+    mappingId: 'mappingId',
+    origenTipo: 'origenTipo',
+    cuentaPrincipalCodigo: 'cuentaPrincipalCodigo',
+    cuentaContrariaCodigo: 'cuentaContrariaCodigo',
+    etiqueta: 'etiqueta',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type MappingContableScalarFieldEnum = (typeof MappingContableScalarFieldEnum)[keyof typeof MappingContableScalarFieldEnum]
+
+
   export const SortOrder: {
     asc: 'asc',
     desc: 'desc'
@@ -132615,6 +135108,34 @@ export namespace Prisma {
    * Reference to a field of type 'NaturalezaEvento[]'
    */
   export type ListEnumNaturalezaEventoFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NaturalezaEvento[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'NaturalezaContable'
+   */
+  export type EnumNaturalezaContableFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NaturalezaContable'>
+    
+
+
+  /**
+   * Reference to a field of type 'NaturalezaContable[]'
+   */
+  export type ListEnumNaturalezaContableFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NaturalezaContable[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'NivelCuenta'
+   */
+  export type EnumNivelCuentaFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NivelCuenta'>
+    
+
+
+  /**
+   * Reference to a field of type 'NivelCuenta[]'
+   */
+  export type ListEnumNivelCuentaFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'NivelCuenta[]'>
     
   /**
    * Deep Input Types
@@ -141790,6 +144311,142 @@ export namespace Prisma {
     moneda?: StringWithAggregatesFilter<"EventoContableLinea"> | string
     metadataJson?: JsonNullableWithAggregatesFilter<"EventoContableLinea">
     createdAt?: DateTimeWithAggregatesFilter<"EventoContableLinea"> | Date | string
+  }
+
+  export type CuentaContableWhereInput = {
+    AND?: CuentaContableWhereInput | CuentaContableWhereInput[]
+    OR?: CuentaContableWhereInput[]
+    NOT?: CuentaContableWhereInput | CuentaContableWhereInput[]
+    codigo?: StringFilter<"CuentaContable"> | string
+    nombre?: StringFilter<"CuentaContable"> | string
+    naturaleza?: EnumNaturalezaContableFilter<"CuentaContable"> | $Enums.NaturalezaContable
+    nivel?: EnumNivelCuentaFilter<"CuentaContable"> | $Enums.NivelCuenta
+    activa?: BoolFilter<"CuentaContable"> | boolean
+    createdAt?: DateTimeFilter<"CuentaContable"> | Date | string
+    updatedAt?: DateTimeFilter<"CuentaContable"> | Date | string
+    mappingPrincipal?: MappingContableListRelationFilter
+    mappingContrario?: MappingContableListRelationFilter
+  }
+
+  export type CuentaContableOrderByWithRelationInput = {
+    codigo?: SortOrder
+    nombre?: SortOrder
+    naturaleza?: SortOrder
+    nivel?: SortOrder
+    activa?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    mappingPrincipal?: MappingContableOrderByRelationAggregateInput
+    mappingContrario?: MappingContableOrderByRelationAggregateInput
+  }
+
+  export type CuentaContableWhereUniqueInput = Prisma.AtLeast<{
+    codigo?: string
+    AND?: CuentaContableWhereInput | CuentaContableWhereInput[]
+    OR?: CuentaContableWhereInput[]
+    NOT?: CuentaContableWhereInput | CuentaContableWhereInput[]
+    nombre?: StringFilter<"CuentaContable"> | string
+    naturaleza?: EnumNaturalezaContableFilter<"CuentaContable"> | $Enums.NaturalezaContable
+    nivel?: EnumNivelCuentaFilter<"CuentaContable"> | $Enums.NivelCuenta
+    activa?: BoolFilter<"CuentaContable"> | boolean
+    createdAt?: DateTimeFilter<"CuentaContable"> | Date | string
+    updatedAt?: DateTimeFilter<"CuentaContable"> | Date | string
+    mappingPrincipal?: MappingContableListRelationFilter
+    mappingContrario?: MappingContableListRelationFilter
+  }, "codigo">
+
+  export type CuentaContableOrderByWithAggregationInput = {
+    codigo?: SortOrder
+    nombre?: SortOrder
+    naturaleza?: SortOrder
+    nivel?: SortOrder
+    activa?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: CuentaContableCountOrderByAggregateInput
+    _max?: CuentaContableMaxOrderByAggregateInput
+    _min?: CuentaContableMinOrderByAggregateInput
+  }
+
+  export type CuentaContableScalarWhereWithAggregatesInput = {
+    AND?: CuentaContableScalarWhereWithAggregatesInput | CuentaContableScalarWhereWithAggregatesInput[]
+    OR?: CuentaContableScalarWhereWithAggregatesInput[]
+    NOT?: CuentaContableScalarWhereWithAggregatesInput | CuentaContableScalarWhereWithAggregatesInput[]
+    codigo?: StringWithAggregatesFilter<"CuentaContable"> | string
+    nombre?: StringWithAggregatesFilter<"CuentaContable"> | string
+    naturaleza?: EnumNaturalezaContableWithAggregatesFilter<"CuentaContable"> | $Enums.NaturalezaContable
+    nivel?: EnumNivelCuentaWithAggregatesFilter<"CuentaContable"> | $Enums.NivelCuenta
+    activa?: BoolWithAggregatesFilter<"CuentaContable"> | boolean
+    createdAt?: DateTimeWithAggregatesFilter<"CuentaContable"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"CuentaContable"> | Date | string
+  }
+
+  export type MappingContableWhereInput = {
+    AND?: MappingContableWhereInput | MappingContableWhereInput[]
+    OR?: MappingContableWhereInput[]
+    NOT?: MappingContableWhereInput | MappingContableWhereInput[]
+    mappingId?: StringFilter<"MappingContable"> | string
+    origenTipo?: StringFilter<"MappingContable"> | string
+    cuentaPrincipalCodigo?: StringFilter<"MappingContable"> | string
+    cuentaContrariaCodigo?: StringFilter<"MappingContable"> | string
+    etiqueta?: StringNullableFilter<"MappingContable"> | string | null
+    createdAt?: DateTimeFilter<"MappingContable"> | Date | string
+    updatedAt?: DateTimeFilter<"MappingContable"> | Date | string
+    cuentaPrincipal?: XOR<CuentaContableScalarRelationFilter, CuentaContableWhereInput>
+    cuentaContraria?: XOR<CuentaContableScalarRelationFilter, CuentaContableWhereInput>
+  }
+
+  export type MappingContableOrderByWithRelationInput = {
+    mappingId?: SortOrder
+    origenTipo?: SortOrder
+    cuentaPrincipalCodigo?: SortOrder
+    cuentaContrariaCodigo?: SortOrder
+    etiqueta?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    cuentaPrincipal?: CuentaContableOrderByWithRelationInput
+    cuentaContraria?: CuentaContableOrderByWithRelationInput
+  }
+
+  export type MappingContableWhereUniqueInput = Prisma.AtLeast<{
+    mappingId?: string
+    origenTipo?: string
+    AND?: MappingContableWhereInput | MappingContableWhereInput[]
+    OR?: MappingContableWhereInput[]
+    NOT?: MappingContableWhereInput | MappingContableWhereInput[]
+    cuentaPrincipalCodigo?: StringFilter<"MappingContable"> | string
+    cuentaContrariaCodigo?: StringFilter<"MappingContable"> | string
+    etiqueta?: StringNullableFilter<"MappingContable"> | string | null
+    createdAt?: DateTimeFilter<"MappingContable"> | Date | string
+    updatedAt?: DateTimeFilter<"MappingContable"> | Date | string
+    cuentaPrincipal?: XOR<CuentaContableScalarRelationFilter, CuentaContableWhereInput>
+    cuentaContraria?: XOR<CuentaContableScalarRelationFilter, CuentaContableWhereInput>
+  }, "mappingId" | "origenTipo">
+
+  export type MappingContableOrderByWithAggregationInput = {
+    mappingId?: SortOrder
+    origenTipo?: SortOrder
+    cuentaPrincipalCodigo?: SortOrder
+    cuentaContrariaCodigo?: SortOrder
+    etiqueta?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: MappingContableCountOrderByAggregateInput
+    _max?: MappingContableMaxOrderByAggregateInput
+    _min?: MappingContableMinOrderByAggregateInput
+  }
+
+  export type MappingContableScalarWhereWithAggregatesInput = {
+    AND?: MappingContableScalarWhereWithAggregatesInput | MappingContableScalarWhereWithAggregatesInput[]
+    OR?: MappingContableScalarWhereWithAggregatesInput[]
+    NOT?: MappingContableScalarWhereWithAggregatesInput | MappingContableScalarWhereWithAggregatesInput[]
+    mappingId?: StringWithAggregatesFilter<"MappingContable"> | string
+    origenTipo?: StringWithAggregatesFilter<"MappingContable"> | string
+    cuentaPrincipalCodigo?: StringWithAggregatesFilter<"MappingContable"> | string
+    cuentaContrariaCodigo?: StringWithAggregatesFilter<"MappingContable"> | string
+    etiqueta?: StringNullableWithAggregatesFilter<"MappingContable"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"MappingContable"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"MappingContable"> | Date | string
   }
 
   export type CategoriaCreateInput = {
@@ -152005,6 +154662,152 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type CuentaContableCreateInput = {
+    codigo: string
+    nombre: string
+    naturaleza: $Enums.NaturalezaContable
+    nivel: $Enums.NivelCuenta
+    activa?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    mappingPrincipal?: MappingContableCreateNestedManyWithoutCuentaPrincipalInput
+    mappingContrario?: MappingContableCreateNestedManyWithoutCuentaContrariaInput
+  }
+
+  export type CuentaContableUncheckedCreateInput = {
+    codigo: string
+    nombre: string
+    naturaleza: $Enums.NaturalezaContable
+    nivel: $Enums.NivelCuenta
+    activa?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    mappingPrincipal?: MappingContableUncheckedCreateNestedManyWithoutCuentaPrincipalInput
+    mappingContrario?: MappingContableUncheckedCreateNestedManyWithoutCuentaContrariaInput
+  }
+
+  export type CuentaContableUpdateInput = {
+    codigo?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    naturaleza?: EnumNaturalezaContableFieldUpdateOperationsInput | $Enums.NaturalezaContable
+    nivel?: EnumNivelCuentaFieldUpdateOperationsInput | $Enums.NivelCuenta
+    activa?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    mappingPrincipal?: MappingContableUpdateManyWithoutCuentaPrincipalNestedInput
+    mappingContrario?: MappingContableUpdateManyWithoutCuentaContrariaNestedInput
+  }
+
+  export type CuentaContableUncheckedUpdateInput = {
+    codigo?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    naturaleza?: EnumNaturalezaContableFieldUpdateOperationsInput | $Enums.NaturalezaContable
+    nivel?: EnumNivelCuentaFieldUpdateOperationsInput | $Enums.NivelCuenta
+    activa?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    mappingPrincipal?: MappingContableUncheckedUpdateManyWithoutCuentaPrincipalNestedInput
+    mappingContrario?: MappingContableUncheckedUpdateManyWithoutCuentaContrariaNestedInput
+  }
+
+  export type CuentaContableCreateManyInput = {
+    codigo: string
+    nombre: string
+    naturaleza: $Enums.NaturalezaContable
+    nivel: $Enums.NivelCuenta
+    activa?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type CuentaContableUpdateManyMutationInput = {
+    codigo?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    naturaleza?: EnumNaturalezaContableFieldUpdateOperationsInput | $Enums.NaturalezaContable
+    nivel?: EnumNivelCuentaFieldUpdateOperationsInput | $Enums.NivelCuenta
+    activa?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type CuentaContableUncheckedUpdateManyInput = {
+    codigo?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    naturaleza?: EnumNaturalezaContableFieldUpdateOperationsInput | $Enums.NaturalezaContable
+    nivel?: EnumNivelCuentaFieldUpdateOperationsInput | $Enums.NivelCuenta
+    activa?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MappingContableCreateInput = {
+    mappingId?: string
+    origenTipo: string
+    etiqueta?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    cuentaPrincipal: CuentaContableCreateNestedOneWithoutMappingPrincipalInput
+    cuentaContraria: CuentaContableCreateNestedOneWithoutMappingContrarioInput
+  }
+
+  export type MappingContableUncheckedCreateInput = {
+    mappingId?: string
+    origenTipo: string
+    cuentaPrincipalCodigo: string
+    cuentaContrariaCodigo: string
+    etiqueta?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type MappingContableUpdateInput = {
+    mappingId?: StringFieldUpdateOperationsInput | string
+    origenTipo?: StringFieldUpdateOperationsInput | string
+    etiqueta?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cuentaPrincipal?: CuentaContableUpdateOneRequiredWithoutMappingPrincipalNestedInput
+    cuentaContraria?: CuentaContableUpdateOneRequiredWithoutMappingContrarioNestedInput
+  }
+
+  export type MappingContableUncheckedUpdateInput = {
+    mappingId?: StringFieldUpdateOperationsInput | string
+    origenTipo?: StringFieldUpdateOperationsInput | string
+    cuentaPrincipalCodigo?: StringFieldUpdateOperationsInput | string
+    cuentaContrariaCodigo?: StringFieldUpdateOperationsInput | string
+    etiqueta?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MappingContableCreateManyInput = {
+    mappingId?: string
+    origenTipo: string
+    cuentaPrincipalCodigo: string
+    cuentaContrariaCodigo: string
+    etiqueta?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type MappingContableUpdateManyMutationInput = {
+    mappingId?: StringFieldUpdateOperationsInput | string
+    origenTipo?: StringFieldUpdateOperationsInput | string
+    etiqueta?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MappingContableUncheckedUpdateManyInput = {
+    mappingId?: StringFieldUpdateOperationsInput | string
+    origenTipo?: StringFieldUpdateOperationsInput | string
+    cuentaPrincipalCodigo?: StringFieldUpdateOperationsInput | string
+    cuentaContrariaCodigo?: StringFieldUpdateOperationsInput | string
+    etiqueta?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -158805,6 +161608,115 @@ export namespace Prisma {
   export type EventoContableLineaSumOrderByAggregateInput = {
     debito?: SortOrder
     credito?: SortOrder
+  }
+
+  export type EnumNaturalezaContableFilter<$PrismaModel = never> = {
+    equals?: $Enums.NaturalezaContable | EnumNaturalezaContableFieldRefInput<$PrismaModel>
+    in?: $Enums.NaturalezaContable[] | ListEnumNaturalezaContableFieldRefInput<$PrismaModel>
+    notIn?: $Enums.NaturalezaContable[] | ListEnumNaturalezaContableFieldRefInput<$PrismaModel>
+    not?: NestedEnumNaturalezaContableFilter<$PrismaModel> | $Enums.NaturalezaContable
+  }
+
+  export type EnumNivelCuentaFilter<$PrismaModel = never> = {
+    equals?: $Enums.NivelCuenta | EnumNivelCuentaFieldRefInput<$PrismaModel>
+    in?: $Enums.NivelCuenta[] | ListEnumNivelCuentaFieldRefInput<$PrismaModel>
+    notIn?: $Enums.NivelCuenta[] | ListEnumNivelCuentaFieldRefInput<$PrismaModel>
+    not?: NestedEnumNivelCuentaFilter<$PrismaModel> | $Enums.NivelCuenta
+  }
+
+  export type MappingContableListRelationFilter = {
+    every?: MappingContableWhereInput
+    some?: MappingContableWhereInput
+    none?: MappingContableWhereInput
+  }
+
+  export type MappingContableOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type CuentaContableCountOrderByAggregateInput = {
+    codigo?: SortOrder
+    nombre?: SortOrder
+    naturaleza?: SortOrder
+    nivel?: SortOrder
+    activa?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CuentaContableMaxOrderByAggregateInput = {
+    codigo?: SortOrder
+    nombre?: SortOrder
+    naturaleza?: SortOrder
+    nivel?: SortOrder
+    activa?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type CuentaContableMinOrderByAggregateInput = {
+    codigo?: SortOrder
+    nombre?: SortOrder
+    naturaleza?: SortOrder
+    nivel?: SortOrder
+    activa?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type EnumNaturalezaContableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.NaturalezaContable | EnumNaturalezaContableFieldRefInput<$PrismaModel>
+    in?: $Enums.NaturalezaContable[] | ListEnumNaturalezaContableFieldRefInput<$PrismaModel>
+    notIn?: $Enums.NaturalezaContable[] | ListEnumNaturalezaContableFieldRefInput<$PrismaModel>
+    not?: NestedEnumNaturalezaContableWithAggregatesFilter<$PrismaModel> | $Enums.NaturalezaContable
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumNaturalezaContableFilter<$PrismaModel>
+    _max?: NestedEnumNaturalezaContableFilter<$PrismaModel>
+  }
+
+  export type EnumNivelCuentaWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.NivelCuenta | EnumNivelCuentaFieldRefInput<$PrismaModel>
+    in?: $Enums.NivelCuenta[] | ListEnumNivelCuentaFieldRefInput<$PrismaModel>
+    notIn?: $Enums.NivelCuenta[] | ListEnumNivelCuentaFieldRefInput<$PrismaModel>
+    not?: NestedEnumNivelCuentaWithAggregatesFilter<$PrismaModel> | $Enums.NivelCuenta
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumNivelCuentaFilter<$PrismaModel>
+    _max?: NestedEnumNivelCuentaFilter<$PrismaModel>
+  }
+
+  export type CuentaContableScalarRelationFilter = {
+    is?: CuentaContableWhereInput
+    isNot?: CuentaContableWhereInput
+  }
+
+  export type MappingContableCountOrderByAggregateInput = {
+    mappingId?: SortOrder
+    origenTipo?: SortOrder
+    cuentaPrincipalCodigo?: SortOrder
+    cuentaContrariaCodigo?: SortOrder
+    etiqueta?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type MappingContableMaxOrderByAggregateInput = {
+    mappingId?: SortOrder
+    origenTipo?: SortOrder
+    cuentaPrincipalCodigo?: SortOrder
+    cuentaContrariaCodigo?: SortOrder
+    etiqueta?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type MappingContableMinOrderByAggregateInput = {
+    mappingId?: SortOrder
+    origenTipo?: SortOrder
+    cuentaPrincipalCodigo?: SortOrder
+    cuentaContrariaCodigo?: SortOrder
+    etiqueta?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
   }
 
   export type CategoriaCreateNestedOneWithoutSubcategoriasInput = {
@@ -167170,6 +170082,126 @@ export namespace Prisma {
     update?: XOR<XOR<EventoContableUpdateToOneWithWhereWithoutLineasInput, EventoContableUpdateWithoutLineasInput>, EventoContableUncheckedUpdateWithoutLineasInput>
   }
 
+  export type MappingContableCreateNestedManyWithoutCuentaPrincipalInput = {
+    create?: XOR<MappingContableCreateWithoutCuentaPrincipalInput, MappingContableUncheckedCreateWithoutCuentaPrincipalInput> | MappingContableCreateWithoutCuentaPrincipalInput[] | MappingContableUncheckedCreateWithoutCuentaPrincipalInput[]
+    connectOrCreate?: MappingContableCreateOrConnectWithoutCuentaPrincipalInput | MappingContableCreateOrConnectWithoutCuentaPrincipalInput[]
+    createMany?: MappingContableCreateManyCuentaPrincipalInputEnvelope
+    connect?: MappingContableWhereUniqueInput | MappingContableWhereUniqueInput[]
+  }
+
+  export type MappingContableCreateNestedManyWithoutCuentaContrariaInput = {
+    create?: XOR<MappingContableCreateWithoutCuentaContrariaInput, MappingContableUncheckedCreateWithoutCuentaContrariaInput> | MappingContableCreateWithoutCuentaContrariaInput[] | MappingContableUncheckedCreateWithoutCuentaContrariaInput[]
+    connectOrCreate?: MappingContableCreateOrConnectWithoutCuentaContrariaInput | MappingContableCreateOrConnectWithoutCuentaContrariaInput[]
+    createMany?: MappingContableCreateManyCuentaContrariaInputEnvelope
+    connect?: MappingContableWhereUniqueInput | MappingContableWhereUniqueInput[]
+  }
+
+  export type MappingContableUncheckedCreateNestedManyWithoutCuentaPrincipalInput = {
+    create?: XOR<MappingContableCreateWithoutCuentaPrincipalInput, MappingContableUncheckedCreateWithoutCuentaPrincipalInput> | MappingContableCreateWithoutCuentaPrincipalInput[] | MappingContableUncheckedCreateWithoutCuentaPrincipalInput[]
+    connectOrCreate?: MappingContableCreateOrConnectWithoutCuentaPrincipalInput | MappingContableCreateOrConnectWithoutCuentaPrincipalInput[]
+    createMany?: MappingContableCreateManyCuentaPrincipalInputEnvelope
+    connect?: MappingContableWhereUniqueInput | MappingContableWhereUniqueInput[]
+  }
+
+  export type MappingContableUncheckedCreateNestedManyWithoutCuentaContrariaInput = {
+    create?: XOR<MappingContableCreateWithoutCuentaContrariaInput, MappingContableUncheckedCreateWithoutCuentaContrariaInput> | MappingContableCreateWithoutCuentaContrariaInput[] | MappingContableUncheckedCreateWithoutCuentaContrariaInput[]
+    connectOrCreate?: MappingContableCreateOrConnectWithoutCuentaContrariaInput | MappingContableCreateOrConnectWithoutCuentaContrariaInput[]
+    createMany?: MappingContableCreateManyCuentaContrariaInputEnvelope
+    connect?: MappingContableWhereUniqueInput | MappingContableWhereUniqueInput[]
+  }
+
+  export type EnumNaturalezaContableFieldUpdateOperationsInput = {
+    set?: $Enums.NaturalezaContable
+  }
+
+  export type EnumNivelCuentaFieldUpdateOperationsInput = {
+    set?: $Enums.NivelCuenta
+  }
+
+  export type MappingContableUpdateManyWithoutCuentaPrincipalNestedInput = {
+    create?: XOR<MappingContableCreateWithoutCuentaPrincipalInput, MappingContableUncheckedCreateWithoutCuentaPrincipalInput> | MappingContableCreateWithoutCuentaPrincipalInput[] | MappingContableUncheckedCreateWithoutCuentaPrincipalInput[]
+    connectOrCreate?: MappingContableCreateOrConnectWithoutCuentaPrincipalInput | MappingContableCreateOrConnectWithoutCuentaPrincipalInput[]
+    upsert?: MappingContableUpsertWithWhereUniqueWithoutCuentaPrincipalInput | MappingContableUpsertWithWhereUniqueWithoutCuentaPrincipalInput[]
+    createMany?: MappingContableCreateManyCuentaPrincipalInputEnvelope
+    set?: MappingContableWhereUniqueInput | MappingContableWhereUniqueInput[]
+    disconnect?: MappingContableWhereUniqueInput | MappingContableWhereUniqueInput[]
+    delete?: MappingContableWhereUniqueInput | MappingContableWhereUniqueInput[]
+    connect?: MappingContableWhereUniqueInput | MappingContableWhereUniqueInput[]
+    update?: MappingContableUpdateWithWhereUniqueWithoutCuentaPrincipalInput | MappingContableUpdateWithWhereUniqueWithoutCuentaPrincipalInput[]
+    updateMany?: MappingContableUpdateManyWithWhereWithoutCuentaPrincipalInput | MappingContableUpdateManyWithWhereWithoutCuentaPrincipalInput[]
+    deleteMany?: MappingContableScalarWhereInput | MappingContableScalarWhereInput[]
+  }
+
+  export type MappingContableUpdateManyWithoutCuentaContrariaNestedInput = {
+    create?: XOR<MappingContableCreateWithoutCuentaContrariaInput, MappingContableUncheckedCreateWithoutCuentaContrariaInput> | MappingContableCreateWithoutCuentaContrariaInput[] | MappingContableUncheckedCreateWithoutCuentaContrariaInput[]
+    connectOrCreate?: MappingContableCreateOrConnectWithoutCuentaContrariaInput | MappingContableCreateOrConnectWithoutCuentaContrariaInput[]
+    upsert?: MappingContableUpsertWithWhereUniqueWithoutCuentaContrariaInput | MappingContableUpsertWithWhereUniqueWithoutCuentaContrariaInput[]
+    createMany?: MappingContableCreateManyCuentaContrariaInputEnvelope
+    set?: MappingContableWhereUniqueInput | MappingContableWhereUniqueInput[]
+    disconnect?: MappingContableWhereUniqueInput | MappingContableWhereUniqueInput[]
+    delete?: MappingContableWhereUniqueInput | MappingContableWhereUniqueInput[]
+    connect?: MappingContableWhereUniqueInput | MappingContableWhereUniqueInput[]
+    update?: MappingContableUpdateWithWhereUniqueWithoutCuentaContrariaInput | MappingContableUpdateWithWhereUniqueWithoutCuentaContrariaInput[]
+    updateMany?: MappingContableUpdateManyWithWhereWithoutCuentaContrariaInput | MappingContableUpdateManyWithWhereWithoutCuentaContrariaInput[]
+    deleteMany?: MappingContableScalarWhereInput | MappingContableScalarWhereInput[]
+  }
+
+  export type MappingContableUncheckedUpdateManyWithoutCuentaPrincipalNestedInput = {
+    create?: XOR<MappingContableCreateWithoutCuentaPrincipalInput, MappingContableUncheckedCreateWithoutCuentaPrincipalInput> | MappingContableCreateWithoutCuentaPrincipalInput[] | MappingContableUncheckedCreateWithoutCuentaPrincipalInput[]
+    connectOrCreate?: MappingContableCreateOrConnectWithoutCuentaPrincipalInput | MappingContableCreateOrConnectWithoutCuentaPrincipalInput[]
+    upsert?: MappingContableUpsertWithWhereUniqueWithoutCuentaPrincipalInput | MappingContableUpsertWithWhereUniqueWithoutCuentaPrincipalInput[]
+    createMany?: MappingContableCreateManyCuentaPrincipalInputEnvelope
+    set?: MappingContableWhereUniqueInput | MappingContableWhereUniqueInput[]
+    disconnect?: MappingContableWhereUniqueInput | MappingContableWhereUniqueInput[]
+    delete?: MappingContableWhereUniqueInput | MappingContableWhereUniqueInput[]
+    connect?: MappingContableWhereUniqueInput | MappingContableWhereUniqueInput[]
+    update?: MappingContableUpdateWithWhereUniqueWithoutCuentaPrincipalInput | MappingContableUpdateWithWhereUniqueWithoutCuentaPrincipalInput[]
+    updateMany?: MappingContableUpdateManyWithWhereWithoutCuentaPrincipalInput | MappingContableUpdateManyWithWhereWithoutCuentaPrincipalInput[]
+    deleteMany?: MappingContableScalarWhereInput | MappingContableScalarWhereInput[]
+  }
+
+  export type MappingContableUncheckedUpdateManyWithoutCuentaContrariaNestedInput = {
+    create?: XOR<MappingContableCreateWithoutCuentaContrariaInput, MappingContableUncheckedCreateWithoutCuentaContrariaInput> | MappingContableCreateWithoutCuentaContrariaInput[] | MappingContableUncheckedCreateWithoutCuentaContrariaInput[]
+    connectOrCreate?: MappingContableCreateOrConnectWithoutCuentaContrariaInput | MappingContableCreateOrConnectWithoutCuentaContrariaInput[]
+    upsert?: MappingContableUpsertWithWhereUniqueWithoutCuentaContrariaInput | MappingContableUpsertWithWhereUniqueWithoutCuentaContrariaInput[]
+    createMany?: MappingContableCreateManyCuentaContrariaInputEnvelope
+    set?: MappingContableWhereUniqueInput | MappingContableWhereUniqueInput[]
+    disconnect?: MappingContableWhereUniqueInput | MappingContableWhereUniqueInput[]
+    delete?: MappingContableWhereUniqueInput | MappingContableWhereUniqueInput[]
+    connect?: MappingContableWhereUniqueInput | MappingContableWhereUniqueInput[]
+    update?: MappingContableUpdateWithWhereUniqueWithoutCuentaContrariaInput | MappingContableUpdateWithWhereUniqueWithoutCuentaContrariaInput[]
+    updateMany?: MappingContableUpdateManyWithWhereWithoutCuentaContrariaInput | MappingContableUpdateManyWithWhereWithoutCuentaContrariaInput[]
+    deleteMany?: MappingContableScalarWhereInput | MappingContableScalarWhereInput[]
+  }
+
+  export type CuentaContableCreateNestedOneWithoutMappingPrincipalInput = {
+    create?: XOR<CuentaContableCreateWithoutMappingPrincipalInput, CuentaContableUncheckedCreateWithoutMappingPrincipalInput>
+    connectOrCreate?: CuentaContableCreateOrConnectWithoutMappingPrincipalInput
+    connect?: CuentaContableWhereUniqueInput
+  }
+
+  export type CuentaContableCreateNestedOneWithoutMappingContrarioInput = {
+    create?: XOR<CuentaContableCreateWithoutMappingContrarioInput, CuentaContableUncheckedCreateWithoutMappingContrarioInput>
+    connectOrCreate?: CuentaContableCreateOrConnectWithoutMappingContrarioInput
+    connect?: CuentaContableWhereUniqueInput
+  }
+
+  export type CuentaContableUpdateOneRequiredWithoutMappingPrincipalNestedInput = {
+    create?: XOR<CuentaContableCreateWithoutMappingPrincipalInput, CuentaContableUncheckedCreateWithoutMappingPrincipalInput>
+    connectOrCreate?: CuentaContableCreateOrConnectWithoutMappingPrincipalInput
+    upsert?: CuentaContableUpsertWithoutMappingPrincipalInput
+    connect?: CuentaContableWhereUniqueInput
+    update?: XOR<XOR<CuentaContableUpdateToOneWithWhereWithoutMappingPrincipalInput, CuentaContableUpdateWithoutMappingPrincipalInput>, CuentaContableUncheckedUpdateWithoutMappingPrincipalInput>
+  }
+
+  export type CuentaContableUpdateOneRequiredWithoutMappingContrarioNestedInput = {
+    create?: XOR<CuentaContableCreateWithoutMappingContrarioInput, CuentaContableUncheckedCreateWithoutMappingContrarioInput>
+    connectOrCreate?: CuentaContableCreateOrConnectWithoutMappingContrarioInput
+    upsert?: CuentaContableUpsertWithoutMappingContrarioInput
+    connect?: CuentaContableWhereUniqueInput
+    update?: XOR<XOR<CuentaContableUpdateToOneWithWhereWithoutMappingContrarioInput, CuentaContableUpdateWithoutMappingContrarioInput>, CuentaContableUncheckedUpdateWithoutMappingContrarioInput>
+  }
+
   export type NestedStringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -167888,6 +170920,40 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumNaturalezaEventoFilter<$PrismaModel>
     _max?: NestedEnumNaturalezaEventoFilter<$PrismaModel>
+  }
+
+  export type NestedEnumNaturalezaContableFilter<$PrismaModel = never> = {
+    equals?: $Enums.NaturalezaContable | EnumNaturalezaContableFieldRefInput<$PrismaModel>
+    in?: $Enums.NaturalezaContable[] | ListEnumNaturalezaContableFieldRefInput<$PrismaModel>
+    notIn?: $Enums.NaturalezaContable[] | ListEnumNaturalezaContableFieldRefInput<$PrismaModel>
+    not?: NestedEnumNaturalezaContableFilter<$PrismaModel> | $Enums.NaturalezaContable
+  }
+
+  export type NestedEnumNivelCuentaFilter<$PrismaModel = never> = {
+    equals?: $Enums.NivelCuenta | EnumNivelCuentaFieldRefInput<$PrismaModel>
+    in?: $Enums.NivelCuenta[] | ListEnumNivelCuentaFieldRefInput<$PrismaModel>
+    notIn?: $Enums.NivelCuenta[] | ListEnumNivelCuentaFieldRefInput<$PrismaModel>
+    not?: NestedEnumNivelCuentaFilter<$PrismaModel> | $Enums.NivelCuenta
+  }
+
+  export type NestedEnumNaturalezaContableWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.NaturalezaContable | EnumNaturalezaContableFieldRefInput<$PrismaModel>
+    in?: $Enums.NaturalezaContable[] | ListEnumNaturalezaContableFieldRefInput<$PrismaModel>
+    notIn?: $Enums.NaturalezaContable[] | ListEnumNaturalezaContableFieldRefInput<$PrismaModel>
+    not?: NestedEnumNaturalezaContableWithAggregatesFilter<$PrismaModel> | $Enums.NaturalezaContable
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumNaturalezaContableFilter<$PrismaModel>
+    _max?: NestedEnumNaturalezaContableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumNivelCuentaWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.NivelCuenta | EnumNivelCuentaFieldRefInput<$PrismaModel>
+    in?: $Enums.NivelCuenta[] | ListEnumNivelCuentaFieldRefInput<$PrismaModel>
+    notIn?: $Enums.NivelCuenta[] | ListEnumNivelCuentaFieldRefInput<$PrismaModel>
+    not?: NestedEnumNivelCuentaWithAggregatesFilter<$PrismaModel> | $Enums.NivelCuenta
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumNivelCuentaFilter<$PrismaModel>
+    _max?: NestedEnumNivelCuentaFilter<$PrismaModel>
   }
 
   export type CategoriaCreateWithoutSubcategoriasInput = {
@@ -194453,6 +197519,227 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type MappingContableCreateWithoutCuentaPrincipalInput = {
+    mappingId?: string
+    origenTipo: string
+    etiqueta?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    cuentaContraria: CuentaContableCreateNestedOneWithoutMappingContrarioInput
+  }
+
+  export type MappingContableUncheckedCreateWithoutCuentaPrincipalInput = {
+    mappingId?: string
+    origenTipo: string
+    cuentaContrariaCodigo: string
+    etiqueta?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type MappingContableCreateOrConnectWithoutCuentaPrincipalInput = {
+    where: MappingContableWhereUniqueInput
+    create: XOR<MappingContableCreateWithoutCuentaPrincipalInput, MappingContableUncheckedCreateWithoutCuentaPrincipalInput>
+  }
+
+  export type MappingContableCreateManyCuentaPrincipalInputEnvelope = {
+    data: MappingContableCreateManyCuentaPrincipalInput | MappingContableCreateManyCuentaPrincipalInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type MappingContableCreateWithoutCuentaContrariaInput = {
+    mappingId?: string
+    origenTipo: string
+    etiqueta?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    cuentaPrincipal: CuentaContableCreateNestedOneWithoutMappingPrincipalInput
+  }
+
+  export type MappingContableUncheckedCreateWithoutCuentaContrariaInput = {
+    mappingId?: string
+    origenTipo: string
+    cuentaPrincipalCodigo: string
+    etiqueta?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type MappingContableCreateOrConnectWithoutCuentaContrariaInput = {
+    where: MappingContableWhereUniqueInput
+    create: XOR<MappingContableCreateWithoutCuentaContrariaInput, MappingContableUncheckedCreateWithoutCuentaContrariaInput>
+  }
+
+  export type MappingContableCreateManyCuentaContrariaInputEnvelope = {
+    data: MappingContableCreateManyCuentaContrariaInput | MappingContableCreateManyCuentaContrariaInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type MappingContableUpsertWithWhereUniqueWithoutCuentaPrincipalInput = {
+    where: MappingContableWhereUniqueInput
+    update: XOR<MappingContableUpdateWithoutCuentaPrincipalInput, MappingContableUncheckedUpdateWithoutCuentaPrincipalInput>
+    create: XOR<MappingContableCreateWithoutCuentaPrincipalInput, MappingContableUncheckedCreateWithoutCuentaPrincipalInput>
+  }
+
+  export type MappingContableUpdateWithWhereUniqueWithoutCuentaPrincipalInput = {
+    where: MappingContableWhereUniqueInput
+    data: XOR<MappingContableUpdateWithoutCuentaPrincipalInput, MappingContableUncheckedUpdateWithoutCuentaPrincipalInput>
+  }
+
+  export type MappingContableUpdateManyWithWhereWithoutCuentaPrincipalInput = {
+    where: MappingContableScalarWhereInput
+    data: XOR<MappingContableUpdateManyMutationInput, MappingContableUncheckedUpdateManyWithoutCuentaPrincipalInput>
+  }
+
+  export type MappingContableScalarWhereInput = {
+    AND?: MappingContableScalarWhereInput | MappingContableScalarWhereInput[]
+    OR?: MappingContableScalarWhereInput[]
+    NOT?: MappingContableScalarWhereInput | MappingContableScalarWhereInput[]
+    mappingId?: StringFilter<"MappingContable"> | string
+    origenTipo?: StringFilter<"MappingContable"> | string
+    cuentaPrincipalCodigo?: StringFilter<"MappingContable"> | string
+    cuentaContrariaCodigo?: StringFilter<"MappingContable"> | string
+    etiqueta?: StringNullableFilter<"MappingContable"> | string | null
+    createdAt?: DateTimeFilter<"MappingContable"> | Date | string
+    updatedAt?: DateTimeFilter<"MappingContable"> | Date | string
+  }
+
+  export type MappingContableUpsertWithWhereUniqueWithoutCuentaContrariaInput = {
+    where: MappingContableWhereUniqueInput
+    update: XOR<MappingContableUpdateWithoutCuentaContrariaInput, MappingContableUncheckedUpdateWithoutCuentaContrariaInput>
+    create: XOR<MappingContableCreateWithoutCuentaContrariaInput, MappingContableUncheckedCreateWithoutCuentaContrariaInput>
+  }
+
+  export type MappingContableUpdateWithWhereUniqueWithoutCuentaContrariaInput = {
+    where: MappingContableWhereUniqueInput
+    data: XOR<MappingContableUpdateWithoutCuentaContrariaInput, MappingContableUncheckedUpdateWithoutCuentaContrariaInput>
+  }
+
+  export type MappingContableUpdateManyWithWhereWithoutCuentaContrariaInput = {
+    where: MappingContableScalarWhereInput
+    data: XOR<MappingContableUpdateManyMutationInput, MappingContableUncheckedUpdateManyWithoutCuentaContrariaInput>
+  }
+
+  export type CuentaContableCreateWithoutMappingPrincipalInput = {
+    codigo: string
+    nombre: string
+    naturaleza: $Enums.NaturalezaContable
+    nivel: $Enums.NivelCuenta
+    activa?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    mappingContrario?: MappingContableCreateNestedManyWithoutCuentaContrariaInput
+  }
+
+  export type CuentaContableUncheckedCreateWithoutMappingPrincipalInput = {
+    codigo: string
+    nombre: string
+    naturaleza: $Enums.NaturalezaContable
+    nivel: $Enums.NivelCuenta
+    activa?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    mappingContrario?: MappingContableUncheckedCreateNestedManyWithoutCuentaContrariaInput
+  }
+
+  export type CuentaContableCreateOrConnectWithoutMappingPrincipalInput = {
+    where: CuentaContableWhereUniqueInput
+    create: XOR<CuentaContableCreateWithoutMappingPrincipalInput, CuentaContableUncheckedCreateWithoutMappingPrincipalInput>
+  }
+
+  export type CuentaContableCreateWithoutMappingContrarioInput = {
+    codigo: string
+    nombre: string
+    naturaleza: $Enums.NaturalezaContable
+    nivel: $Enums.NivelCuenta
+    activa?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    mappingPrincipal?: MappingContableCreateNestedManyWithoutCuentaPrincipalInput
+  }
+
+  export type CuentaContableUncheckedCreateWithoutMappingContrarioInput = {
+    codigo: string
+    nombre: string
+    naturaleza: $Enums.NaturalezaContable
+    nivel: $Enums.NivelCuenta
+    activa?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    mappingPrincipal?: MappingContableUncheckedCreateNestedManyWithoutCuentaPrincipalInput
+  }
+
+  export type CuentaContableCreateOrConnectWithoutMappingContrarioInput = {
+    where: CuentaContableWhereUniqueInput
+    create: XOR<CuentaContableCreateWithoutMappingContrarioInput, CuentaContableUncheckedCreateWithoutMappingContrarioInput>
+  }
+
+  export type CuentaContableUpsertWithoutMappingPrincipalInput = {
+    update: XOR<CuentaContableUpdateWithoutMappingPrincipalInput, CuentaContableUncheckedUpdateWithoutMappingPrincipalInput>
+    create: XOR<CuentaContableCreateWithoutMappingPrincipalInput, CuentaContableUncheckedCreateWithoutMappingPrincipalInput>
+    where?: CuentaContableWhereInput
+  }
+
+  export type CuentaContableUpdateToOneWithWhereWithoutMappingPrincipalInput = {
+    where?: CuentaContableWhereInput
+    data: XOR<CuentaContableUpdateWithoutMappingPrincipalInput, CuentaContableUncheckedUpdateWithoutMappingPrincipalInput>
+  }
+
+  export type CuentaContableUpdateWithoutMappingPrincipalInput = {
+    codigo?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    naturaleza?: EnumNaturalezaContableFieldUpdateOperationsInput | $Enums.NaturalezaContable
+    nivel?: EnumNivelCuentaFieldUpdateOperationsInput | $Enums.NivelCuenta
+    activa?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    mappingContrario?: MappingContableUpdateManyWithoutCuentaContrariaNestedInput
+  }
+
+  export type CuentaContableUncheckedUpdateWithoutMappingPrincipalInput = {
+    codigo?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    naturaleza?: EnumNaturalezaContableFieldUpdateOperationsInput | $Enums.NaturalezaContable
+    nivel?: EnumNivelCuentaFieldUpdateOperationsInput | $Enums.NivelCuenta
+    activa?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    mappingContrario?: MappingContableUncheckedUpdateManyWithoutCuentaContrariaNestedInput
+  }
+
+  export type CuentaContableUpsertWithoutMappingContrarioInput = {
+    update: XOR<CuentaContableUpdateWithoutMappingContrarioInput, CuentaContableUncheckedUpdateWithoutMappingContrarioInput>
+    create: XOR<CuentaContableCreateWithoutMappingContrarioInput, CuentaContableUncheckedCreateWithoutMappingContrarioInput>
+    where?: CuentaContableWhereInput
+  }
+
+  export type CuentaContableUpdateToOneWithWhereWithoutMappingContrarioInput = {
+    where?: CuentaContableWhereInput
+    data: XOR<CuentaContableUpdateWithoutMappingContrarioInput, CuentaContableUncheckedUpdateWithoutMappingContrarioInput>
+  }
+
+  export type CuentaContableUpdateWithoutMappingContrarioInput = {
+    codigo?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    naturaleza?: EnumNaturalezaContableFieldUpdateOperationsInput | $Enums.NaturalezaContable
+    nivel?: EnumNivelCuentaFieldUpdateOperationsInput | $Enums.NivelCuenta
+    activa?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    mappingPrincipal?: MappingContableUpdateManyWithoutCuentaPrincipalNestedInput
+  }
+
+  export type CuentaContableUncheckedUpdateWithoutMappingContrarioInput = {
+    codigo?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    naturaleza?: EnumNaturalezaContableFieldUpdateOperationsInput | $Enums.NaturalezaContable
+    nivel?: EnumNivelCuentaFieldUpdateOperationsInput | $Enums.NivelCuenta
+    activa?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    mappingPrincipal?: MappingContableUncheckedUpdateManyWithoutCuentaPrincipalNestedInput
+  }
+
   export type CategoriaCreateManyParentInput = {
     catId?: string
     nombre: string
@@ -203089,6 +206376,78 @@ export namespace Prisma {
     moneda?: StringFieldUpdateOperationsInput | string
     metadataJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MappingContableCreateManyCuentaPrincipalInput = {
+    mappingId?: string
+    origenTipo: string
+    cuentaContrariaCodigo: string
+    etiqueta?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type MappingContableCreateManyCuentaContrariaInput = {
+    mappingId?: string
+    origenTipo: string
+    cuentaPrincipalCodigo: string
+    etiqueta?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type MappingContableUpdateWithoutCuentaPrincipalInput = {
+    mappingId?: StringFieldUpdateOperationsInput | string
+    origenTipo?: StringFieldUpdateOperationsInput | string
+    etiqueta?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cuentaContraria?: CuentaContableUpdateOneRequiredWithoutMappingContrarioNestedInput
+  }
+
+  export type MappingContableUncheckedUpdateWithoutCuentaPrincipalInput = {
+    mappingId?: StringFieldUpdateOperationsInput | string
+    origenTipo?: StringFieldUpdateOperationsInput | string
+    cuentaContrariaCodigo?: StringFieldUpdateOperationsInput | string
+    etiqueta?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MappingContableUncheckedUpdateManyWithoutCuentaPrincipalInput = {
+    mappingId?: StringFieldUpdateOperationsInput | string
+    origenTipo?: StringFieldUpdateOperationsInput | string
+    cuentaContrariaCodigo?: StringFieldUpdateOperationsInput | string
+    etiqueta?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MappingContableUpdateWithoutCuentaContrariaInput = {
+    mappingId?: StringFieldUpdateOperationsInput | string
+    origenTipo?: StringFieldUpdateOperationsInput | string
+    etiqueta?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    cuentaPrincipal?: CuentaContableUpdateOneRequiredWithoutMappingPrincipalNestedInput
+  }
+
+  export type MappingContableUncheckedUpdateWithoutCuentaContrariaInput = {
+    mappingId?: StringFieldUpdateOperationsInput | string
+    origenTipo?: StringFieldUpdateOperationsInput | string
+    cuentaPrincipalCodigo?: StringFieldUpdateOperationsInput | string
+    etiqueta?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type MappingContableUncheckedUpdateManyWithoutCuentaContrariaInput = {
+    mappingId?: StringFieldUpdateOperationsInput | string
+    origenTipo?: StringFieldUpdateOperationsInput | string
+    cuentaPrincipalCodigo?: StringFieldUpdateOperationsInput | string
+    etiqueta?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
 

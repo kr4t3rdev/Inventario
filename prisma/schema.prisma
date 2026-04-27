@@ -1960,3 +1960,50 @@ enum CostChangeReason {
   MANUAL_EDIT
   SYSTEM_SYNC
 }
+
+enum NaturalezaContable {
+  ACTIVO
+  PASIVO
+  PATRIMONIO
+  INGRESO
+  EGRESO
+  RESULTADO
+}
+
+enum NivelCuenta {
+  MAYOR
+  SUBMAYOR
+  ANALITICA
+}
+
+model CuentaContable {
+  codigo     String           @id
+  nombre     String
+  naturaleza NaturalezaContable
+  nivel      NivelCuenta
+  activa     Boolean          @default(true)
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+
+  mappingPrincipal MappingContable[] @relation("cuentaPrincipal")
+  mappingContrario MappingContable[] @relation("cuentaContraria")
+
+  @@index([naturaleza])
+  @@index([nivel])
+  @@index([activa])
+}
+
+model MappingContable {
+  mappingId               String        @id @default(cuid())
+  origenTipo              String        @unique
+  cuentaPrincipalCodigo   String
+  cuentaContrariaCodigo   String
+  etiqueta                String?
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+
+  cuentaPrincipal  CuentaContable @relation("cuentaPrincipal", fields: [cuentaPrincipalCodigo], references: [codigo])
+  cuentaContraria  CuentaContable @relation("cuentaContraria", fields: [cuentaContrariaCodigo], references: [codigo])
+
+  @@index([origenTipo])
+}

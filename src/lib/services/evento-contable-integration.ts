@@ -37,7 +37,7 @@ export async function registrarEventoContable(params: RegistrarEventoParams): Pr
       return false;
     }
 
-    const seed = generarEventoSeed(enriquecerEventoConCuentas({
+    const seed = generarEventoSeed(await enriquecerEventoConCuentas({
       fechaOperacion: params.fechaOperacion ?? new Date(),
       origenTipo: params.origenTipo,
       origenId: params.origenId,

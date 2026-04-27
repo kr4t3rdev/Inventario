@@ -1517,6 +1517,26 @@ exports.Prisma.EventoContableLineaScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.CuentaContableScalarFieldEnum = {
+  codigo: 'codigo',
+  nombre: 'nombre',
+  naturaleza: 'naturaleza',
+  nivel: 'nivel',
+  activa: 'activa',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.MappingContableScalarFieldEnum = {
+  mappingId: 'mappingId',
+  origenTipo: 'origenTipo',
+  cuentaPrincipalCodigo: 'cuentaPrincipalCodigo',
+  cuentaContrariaCodigo: 'cuentaContrariaCodigo',
+  etiqueta: 'etiqueta',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1703,6 +1723,21 @@ exports.NaturalezaEvento = exports.$Enums.NaturalezaEvento = {
   RESULTADO: 'RESULTADO'
 };
 
+exports.NaturalezaContable = exports.$Enums.NaturalezaContable = {
+  ACTIVO: 'ACTIVO',
+  PASIVO: 'PASIVO',
+  PATRIMONIO: 'PATRIMONIO',
+  INGRESO: 'INGRESO',
+  EGRESO: 'EGRESO',
+  RESULTADO: 'RESULTADO'
+};
+
+exports.NivelCuenta = exports.$Enums.NivelCuenta = {
+  MAYOR: 'MAYOR',
+  SUBMAYOR: 'SUBMAYOR',
+  ANALITICA: 'ANALITICA'
+};
+
 exports.Prisma.ModelName = {
   Categoria: 'Categoria',
   Unidad: 'Unidad',
@@ -1800,7 +1835,9 @@ exports.Prisma.ModelName = {
   Anticipo: 'Anticipo',
   AnticipoMovimiento: 'AnticipoMovimiento',
   EventoContable: 'EventoContable',
-  EventoContableLinea: 'EventoContableLinea'
+  EventoContableLinea: 'EventoContableLinea',
+  CuentaContable: 'CuentaContable',
+  MappingContable: 'MappingContable'
 };
 
 /**
