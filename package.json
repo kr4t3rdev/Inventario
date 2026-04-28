@@ -16,6 +16,7 @@
     "test:run": "vitest run",
     "seed:implementacion": "tsx prisma/seed/implementation-seed.ts",
     "seed:qa": "tsx prisma/seed/qa-scenarios-seed.ts",
+    "seed:catalogo": "tsx prisma/seed/catalogo-contable-seed.ts",
     "report:qa": "tsx prisma/seed/qa-report.ts",
     "testsprite": "npx -y @testsprite/testsprite-mcp",
     "sync:setup": "npx tsx scripts/setup-supabase.ts",
