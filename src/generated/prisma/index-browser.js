@@ -556,6 +556,8 @@ exports.Prisma.PeriodoContableScalarFieldEnum = {
   cerradoPorId: 'cerradoPorId',
   aprobadoPorId: 'aprobadoPorId',
   reabiertoPorId: 'reabiertoPorId',
+  segundoAprobadorId: 'segundoAprobadorId',
+  categoria: 'categoria',
   fechaApertura: 'fechaApertura',
   fechaCierre: 'fechaCierre',
   fechaAprobacion: 'fechaAprobacion',

@@ -580,6 +580,8 @@ model PeriodoContable {
   cerradoPorId       String?
   aprobadoPorId      String?
   reabiertoPorId     String?
+  segundoAprobadorId String?
+  categoria          String             @default("REGULAR")
   fechaApertura      DateTime?
   fechaCierre        DateTime?
   fechaAprobacion    DateTime?

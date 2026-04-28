@@ -48662,6 +48662,8 @@ export namespace Prisma {
     cerradoPorId: string | null
     aprobadoPorId: string | null
     reabiertoPorId: string | null
+    segundoAprobadorId: string | null
+    categoria: string | null
     fechaApertura: Date | null
     fechaCierre: Date | null
     fechaAprobacion: Date | null
@@ -48685,6 +48687,8 @@ export namespace Prisma {
     cerradoPorId: string | null
     aprobadoPorId: string | null
     reabiertoPorId: string | null
+    segundoAprobadorId: string | null
+    categoria: string | null
     fechaApertura: Date | null
     fechaCierre: Date | null
     fechaAprobacion: Date | null
@@ -48708,6 +48712,8 @@ export namespace Prisma {
     cerradoPorId: number
     aprobadoPorId: number
     reabiertoPorId: number
+    segundoAprobadorId: number
+    categoria: number
     fechaApertura: number
     fechaCierre: number
     fechaAprobacion: number
@@ -48733,6 +48739,8 @@ export namespace Prisma {
     cerradoPorId?: true
     aprobadoPorId?: true
     reabiertoPorId?: true
+    segundoAprobadorId?: true
+    categoria?: true
     fechaApertura?: true
     fechaCierre?: true
     fechaAprobacion?: true
@@ -48756,6 +48764,8 @@ export namespace Prisma {
     cerradoPorId?: true
     aprobadoPorId?: true
     reabiertoPorId?: true
+    segundoAprobadorId?: true
+    categoria?: true
     fechaApertura?: true
     fechaCierre?: true
     fechaAprobacion?: true
@@ -48779,6 +48789,8 @@ export namespace Prisma {
     cerradoPorId?: true
     aprobadoPorId?: true
     reabiertoPorId?: true
+    segundoAprobadorId?: true
+    categoria?: true
     fechaApertura?: true
     fechaCierre?: true
     fechaAprobacion?: true
@@ -48875,6 +48887,8 @@ export namespace Prisma {
     cerradoPorId: string | null
     aprobadoPorId: string | null
     reabiertoPorId: string | null
+    segundoAprobadorId: string | null
+    categoria: string
     fechaApertura: Date | null
     fechaCierre: Date | null
     fechaAprobacion: Date | null
@@ -48915,6 +48929,8 @@ export namespace Prisma {
     cerradoPorId?: boolean
     aprobadoPorId?: boolean
     reabiertoPorId?: boolean
+    segundoAprobadorId?: boolean
+    categoria?: boolean
     fechaApertura?: boolean
     fechaCierre?: boolean
     fechaAprobacion?: boolean
@@ -48944,6 +48960,8 @@ export namespace Prisma {
     cerradoPorId?: boolean
     aprobadoPorId?: boolean
     reabiertoPorId?: boolean
+    segundoAprobadorId?: boolean
+    categoria?: boolean
     fechaApertura?: boolean
     fechaCierre?: boolean
     fechaAprobacion?: boolean
@@ -48968,6 +48986,8 @@ export namespace Prisma {
     cerradoPorId?: boolean
     aprobadoPorId?: boolean
     reabiertoPorId?: boolean
+    segundoAprobadorId?: boolean
+    categoria?: boolean
     fechaApertura?: boolean
     fechaCierre?: boolean
     fechaAprobacion?: boolean
@@ -48992,6 +49012,8 @@ export namespace Prisma {
     cerradoPorId?: boolean
     aprobadoPorId?: boolean
     reabiertoPorId?: boolean
+    segundoAprobadorId?: boolean
+    categoria?: boolean
     fechaApertura?: boolean
     fechaCierre?: boolean
     fechaAprobacion?: boolean
@@ -49001,7 +49023,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type PeriodoContableOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"periodoId" | "tipo" | "codigo" | "fechaInicio" | "fechaFin" | "estado" | "periodoPadreId" | "aperturaAutomatica" | "cierreAutomatico" | "abiertoPorId" | "cerradoPorId" | "aprobadoPorId" | "reabiertoPorId" | "fechaApertura" | "fechaCierre" | "fechaAprobacion" | "fechaReapertura" | "observaciones" | "createdAt" | "updatedAt", ExtArgs["result"]["periodoContable"]>
+  export type PeriodoContableOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"periodoId" | "tipo" | "codigo" | "fechaInicio" | "fechaFin" | "estado" | "periodoPadreId" | "aperturaAutomatica" | "cierreAutomatico" | "abiertoPorId" | "cerradoPorId" | "aprobadoPorId" | "reabiertoPorId" | "segundoAprobadorId" | "categoria" | "fechaApertura" | "fechaCierre" | "fechaAprobacion" | "fechaReapertura" | "observaciones" | "createdAt" | "updatedAt", ExtArgs["result"]["periodoContable"]>
   export type PeriodoContableInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     periodoPadre?: boolean | PeriodoContable$periodoPadreArgs<ExtArgs>
     subperiodos?: boolean | PeriodoContable$subperiodosArgs<ExtArgs>
@@ -49040,6 +49062,8 @@ export namespace Prisma {
       cerradoPorId: string | null
       aprobadoPorId: string | null
       reabiertoPorId: string | null
+      segundoAprobadorId: string | null
+      categoria: string
       fechaApertura: Date | null
       fechaCierre: Date | null
       fechaAprobacion: Date | null
@@ -49488,6 +49512,8 @@ export namespace Prisma {
     readonly cerradoPorId: FieldRef<"PeriodoContable", 'String'>
     readonly aprobadoPorId: FieldRef<"PeriodoContable", 'String'>
     readonly reabiertoPorId: FieldRef<"PeriodoContable", 'String'>
+    readonly segundoAprobadorId: FieldRef<"PeriodoContable", 'String'>
+    readonly categoria: FieldRef<"PeriodoContable", 'String'>
     readonly fechaApertura: FieldRef<"PeriodoContable", 'DateTime'>
     readonly fechaCierre: FieldRef<"PeriodoContable", 'DateTime'>
     readonly fechaAprobacion: FieldRef<"PeriodoContable", 'DateTime'>
@@ -133468,6 +133494,8 @@ export namespace Prisma {
     cerradoPorId: 'cerradoPorId',
     aprobadoPorId: 'aprobadoPorId',
     reabiertoPorId: 'reabiertoPorId',
+    segundoAprobadorId: 'segundoAprobadorId',
+    categoria: 'categoria',
     fechaApertura: 'fechaApertura',
     fechaCierre: 'fechaCierre',
     fechaAprobacion: 'fechaAprobacion',
@@ -137995,6 +138023,8 @@ export namespace Prisma {
     cerradoPorId?: StringNullableFilter<"PeriodoContable"> | string | null
     aprobadoPorId?: StringNullableFilter<"PeriodoContable"> | string | null
     reabiertoPorId?: StringNullableFilter<"PeriodoContable"> | string | null
+    segundoAprobadorId?: StringNullableFilter<"PeriodoContable"> | string | null
+    categoria?: StringFilter<"PeriodoContable"> | string
     fechaApertura?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
     fechaCierre?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
     fechaAprobacion?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
@@ -138023,6 +138053,8 @@ export namespace Prisma {
     cerradoPorId?: SortOrderInput | SortOrder
     aprobadoPorId?: SortOrderInput | SortOrder
     reabiertoPorId?: SortOrderInput | SortOrder
+    segundoAprobadorId?: SortOrderInput | SortOrder
+    categoria?: SortOrder
     fechaApertura?: SortOrderInput | SortOrder
     fechaCierre?: SortOrderInput | SortOrder
     fechaAprobacion?: SortOrderInput | SortOrder
@@ -138054,6 +138086,8 @@ export namespace Prisma {
     cerradoPorId?: StringNullableFilter<"PeriodoContable"> | string | null
     aprobadoPorId?: StringNullableFilter<"PeriodoContable"> | string | null
     reabiertoPorId?: StringNullableFilter<"PeriodoContable"> | string | null
+    segundoAprobadorId?: StringNullableFilter<"PeriodoContable"> | string | null
+    categoria?: StringFilter<"PeriodoContable"> | string
     fechaApertura?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
     fechaCierre?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
     fechaAprobacion?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
@@ -138082,6 +138116,8 @@ export namespace Prisma {
     cerradoPorId?: SortOrderInput | SortOrder
     aprobadoPorId?: SortOrderInput | SortOrder
     reabiertoPorId?: SortOrderInput | SortOrder
+    segundoAprobadorId?: SortOrderInput | SortOrder
+    categoria?: SortOrder
     fechaApertura?: SortOrderInput | SortOrder
     fechaCierre?: SortOrderInput | SortOrder
     fechaAprobacion?: SortOrderInput | SortOrder
@@ -138111,6 +138147,8 @@ export namespace Prisma {
     cerradoPorId?: StringNullableWithAggregatesFilter<"PeriodoContable"> | string | null
     aprobadoPorId?: StringNullableWithAggregatesFilter<"PeriodoContable"> | string | null
     reabiertoPorId?: StringNullableWithAggregatesFilter<"PeriodoContable"> | string | null
+    segundoAprobadorId?: StringNullableWithAggregatesFilter<"PeriodoContable"> | string | null
+    categoria?: StringWithAggregatesFilter<"PeriodoContable"> | string
     fechaApertura?: DateTimeNullableWithAggregatesFilter<"PeriodoContable"> | Date | string | null
     fechaCierre?: DateTimeNullableWithAggregatesFilter<"PeriodoContable"> | Date | string | null
     fechaAprobacion?: DateTimeNullableWithAggregatesFilter<"PeriodoContable"> | Date | string | null
@@ -147669,6 +147707,8 @@ export namespace Prisma {
     cerradoPorId?: string | null
     aprobadoPorId?: string | null
     reabiertoPorId?: string | null
+    segundoAprobadorId?: string | null
+    categoria?: string
     fechaApertura?: Date | string | null
     fechaCierre?: Date | string | null
     fechaAprobacion?: Date | string | null
@@ -147697,6 +147737,8 @@ export namespace Prisma {
     cerradoPorId?: string | null
     aprobadoPorId?: string | null
     reabiertoPorId?: string | null
+    segundoAprobadorId?: string | null
+    categoria?: string
     fechaApertura?: Date | string | null
     fechaCierre?: Date | string | null
     fechaAprobacion?: Date | string | null
@@ -147723,6 +147765,8 @@ export namespace Prisma {
     cerradoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     aprobadoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    segundoAprobadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    categoria?: StringFieldUpdateOperationsInput | string
     fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fechaAprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -147751,6 +147795,8 @@ export namespace Prisma {
     cerradoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     aprobadoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    segundoAprobadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    categoria?: StringFieldUpdateOperationsInput | string
     fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fechaAprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -147778,6 +147824,8 @@ export namespace Prisma {
     cerradoPorId?: string | null
     aprobadoPorId?: string | null
     reabiertoPorId?: string | null
+    segundoAprobadorId?: string | null
+    categoria?: string
     fechaApertura?: Date | string | null
     fechaCierre?: Date | string | null
     fechaAprobacion?: Date | string | null
@@ -147800,6 +147848,8 @@ export namespace Prisma {
     cerradoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     aprobadoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    segundoAprobadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    categoria?: StringFieldUpdateOperationsInput | string
     fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fechaAprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -147823,6 +147873,8 @@ export namespace Prisma {
     cerradoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     aprobadoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    segundoAprobadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    categoria?: StringFieldUpdateOperationsInput | string
     fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fechaAprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -157265,6 +157317,8 @@ export namespace Prisma {
     cerradoPorId?: SortOrder
     aprobadoPorId?: SortOrder
     reabiertoPorId?: SortOrder
+    segundoAprobadorId?: SortOrder
+    categoria?: SortOrder
     fechaApertura?: SortOrder
     fechaCierre?: SortOrder
     fechaAprobacion?: SortOrder
@@ -157288,6 +157342,8 @@ export namespace Prisma {
     cerradoPorId?: SortOrder
     aprobadoPorId?: SortOrder
     reabiertoPorId?: SortOrder
+    segundoAprobadorId?: SortOrder
+    categoria?: SortOrder
     fechaApertura?: SortOrder
     fechaCierre?: SortOrder
     fechaAprobacion?: SortOrder
@@ -157311,6 +157367,8 @@ export namespace Prisma {
     cerradoPorId?: SortOrder
     aprobadoPorId?: SortOrder
     reabiertoPorId?: SortOrder
+    segundoAprobadorId?: SortOrder
+    categoria?: SortOrder
     fechaApertura?: SortOrder
     fechaCierre?: SortOrder
     fechaAprobacion?: SortOrder
@@ -181107,6 +181165,8 @@ export namespace Prisma {
     cerradoPorId?: string | null
     aprobadoPorId?: string | null
     reabiertoPorId?: string | null
+    segundoAprobadorId?: string | null
+    categoria?: string
     fechaApertura?: Date | string | null
     fechaCierre?: Date | string | null
     fechaAprobacion?: Date | string | null
@@ -181134,6 +181194,8 @@ export namespace Prisma {
     cerradoPorId?: string | null
     aprobadoPorId?: string | null
     reabiertoPorId?: string | null
+    segundoAprobadorId?: string | null
+    categoria?: string
     fechaApertura?: Date | string | null
     fechaCierre?: Date | string | null
     fechaAprobacion?: Date | string | null
@@ -181164,6 +181226,8 @@ export namespace Prisma {
     cerradoPorId?: string | null
     aprobadoPorId?: string | null
     reabiertoPorId?: string | null
+    segundoAprobadorId?: string | null
+    categoria?: string
     fechaApertura?: Date | string | null
     fechaCierre?: Date | string | null
     fechaAprobacion?: Date | string | null
@@ -181190,6 +181254,8 @@ export namespace Prisma {
     cerradoPorId?: string | null
     aprobadoPorId?: string | null
     reabiertoPorId?: string | null
+    segundoAprobadorId?: string | null
+    categoria?: string
     fechaApertura?: Date | string | null
     fechaCierre?: Date | string | null
     fechaAprobacion?: Date | string | null
@@ -181332,6 +181398,8 @@ export namespace Prisma {
     cerradoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     aprobadoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    segundoAprobadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    categoria?: StringFieldUpdateOperationsInput | string
     fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fechaAprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -181359,6 +181427,8 @@ export namespace Prisma {
     cerradoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     aprobadoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    segundoAprobadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    categoria?: StringFieldUpdateOperationsInput | string
     fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fechaAprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -181404,6 +181474,8 @@ export namespace Prisma {
     cerradoPorId?: StringNullableFilter<"PeriodoContable"> | string | null
     aprobadoPorId?: StringNullableFilter<"PeriodoContable"> | string | null
     reabiertoPorId?: StringNullableFilter<"PeriodoContable"> | string | null
+    segundoAprobadorId?: StringNullableFilter<"PeriodoContable"> | string | null
+    categoria?: StringFilter<"PeriodoContable"> | string
     fechaApertura?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
     fechaCierre?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
     fechaAprobacion?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
@@ -181527,6 +181599,8 @@ export namespace Prisma {
     cerradoPorId?: string | null
     aprobadoPorId?: string | null
     reabiertoPorId?: string | null
+    segundoAprobadorId?: string | null
+    categoria?: string
     fechaApertura?: Date | string | null
     fechaCierre?: Date | string | null
     fechaAprobacion?: Date | string | null
@@ -181554,6 +181628,8 @@ export namespace Prisma {
     cerradoPorId?: string | null
     aprobadoPorId?: string | null
     reabiertoPorId?: string | null
+    segundoAprobadorId?: string | null
+    categoria?: string
     fechaApertura?: Date | string | null
     fechaCierre?: Date | string | null
     fechaAprobacion?: Date | string | null
@@ -181595,6 +181671,8 @@ export namespace Prisma {
     cerradoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     aprobadoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    segundoAprobadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    categoria?: StringFieldUpdateOperationsInput | string
     fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fechaAprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -181622,6 +181700,8 @@ export namespace Prisma {
     cerradoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     aprobadoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    segundoAprobadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    categoria?: StringFieldUpdateOperationsInput | string
     fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fechaAprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -181647,6 +181727,8 @@ export namespace Prisma {
     cerradoPorId?: string | null
     aprobadoPorId?: string | null
     reabiertoPorId?: string | null
+    segundoAprobadorId?: string | null
+    categoria?: string
     fechaApertura?: Date | string | null
     fechaCierre?: Date | string | null
     fechaAprobacion?: Date | string | null
@@ -181674,6 +181756,8 @@ export namespace Prisma {
     cerradoPorId?: string | null
     aprobadoPorId?: string | null
     reabiertoPorId?: string | null
+    segundoAprobadorId?: string | null
+    categoria?: string
     fechaApertura?: Date | string | null
     fechaCierre?: Date | string | null
     fechaAprobacion?: Date | string | null
@@ -181715,6 +181799,8 @@ export namespace Prisma {
     cerradoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     aprobadoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    segundoAprobadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    categoria?: StringFieldUpdateOperationsInput | string
     fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fechaAprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -181742,6 +181828,8 @@ export namespace Prisma {
     cerradoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     aprobadoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    segundoAprobadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    categoria?: StringFieldUpdateOperationsInput | string
     fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fechaAprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -181767,6 +181855,8 @@ export namespace Prisma {
     cerradoPorId?: string | null
     aprobadoPorId?: string | null
     reabiertoPorId?: string | null
+    segundoAprobadorId?: string | null
+    categoria?: string
     fechaApertura?: Date | string | null
     fechaCierre?: Date | string | null
     fechaAprobacion?: Date | string | null
@@ -181794,6 +181884,8 @@ export namespace Prisma {
     cerradoPorId?: string | null
     aprobadoPorId?: string | null
     reabiertoPorId?: string | null
+    segundoAprobadorId?: string | null
+    categoria?: string
     fechaApertura?: Date | string | null
     fechaCierre?: Date | string | null
     fechaAprobacion?: Date | string | null
@@ -181835,6 +181927,8 @@ export namespace Prisma {
     cerradoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     aprobadoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    segundoAprobadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    categoria?: StringFieldUpdateOperationsInput | string
     fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fechaAprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -181862,6 +181956,8 @@ export namespace Prisma {
     cerradoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     aprobadoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    segundoAprobadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    categoria?: StringFieldUpdateOperationsInput | string
     fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fechaAprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -202999,6 +203095,8 @@ export namespace Prisma {
     cerradoPorId?: string | null
     aprobadoPorId?: string | null
     reabiertoPorId?: string | null
+    segundoAprobadorId?: string | null
+    categoria?: string
     fechaApertura?: Date | string | null
     fechaCierre?: Date | string | null
     fechaAprobacion?: Date | string | null
@@ -203041,6 +203139,8 @@ export namespace Prisma {
     cerradoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     aprobadoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    segundoAprobadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    categoria?: StringFieldUpdateOperationsInput | string
     fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fechaAprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -203067,6 +203167,8 @@ export namespace Prisma {
     cerradoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     aprobadoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    segundoAprobadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    categoria?: StringFieldUpdateOperationsInput | string
     fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fechaAprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -203093,6 +203195,8 @@ export namespace Prisma {
     cerradoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     aprobadoPorId?: NullableStringFieldUpdateOperationsInput | string | null
     reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    segundoAprobadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    categoria?: StringFieldUpdateOperationsInput | string
     fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fechaCierre?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     fechaAprobacion?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null

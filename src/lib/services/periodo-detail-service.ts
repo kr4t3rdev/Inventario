@@ -15,6 +15,7 @@ interface PersistedPeriodoLike {
   abiertoPorId: string | null;
   cerradoPorId: string | null;
   aprobadoPorId: string | null;
+  segundoAprobadorId: string | null;
   reabiertoPorId: string | null;
   fechaApertura: Date | null;
   fechaCierre: Date | null;
@@ -111,6 +112,7 @@ export interface PeriodoDetail {
   abiertoPorId: string | null;
   cerradoPorId: string | null;
   aprobadoPorId: string | null;
+  segundoAprobadorId: string | null;
   reabiertoPorId: string | null;
   fechaApertura: string | null;
   fechaCierre: string | null;
@@ -276,6 +278,7 @@ export async function getPeriodoDetail(periodoId: string): Promise<PeriodoDetail
     abiertoPorId: periodo.abiertoPorId,
     cerradoPorId: periodo.cerradoPorId,
     aprobadoPorId: periodo.aprobadoPorId,
+    segundoAprobadorId: periodo.segundoAprobadorId,
     reabiertoPorId: periodo.reabiertoPorId,
     fechaApertura: periodo.fechaApertura?.toISOString() ?? null,
     fechaCierre: periodo.fechaCierre?.toISOString() ?? null,

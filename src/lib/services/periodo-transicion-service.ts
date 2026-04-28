@@ -94,6 +94,7 @@ export interface AprobarParams {
   periodoId: string;
   usuarioId: string;
   motivo?: string;
+  esSegundaAprobacion?: boolean;
 }
 
 export interface ReabrirParams {
@@ -258,12 +259,30 @@ export async function aprobarPeriodo(params: AprobarParams): Promise<TransicionR
     }
 
     const estadoAnterior = periodo.estado;
+
+    // Multilevel: second approval requires different user than closer
+    if (params.esSegundaAprobacion) {
+      if (!periodo.cerradoPorId) {
+        blockers.push('No se puede hacer segunda aprobación si el período no fue cerrado por nadie.');
+        throw new AprobacionBlockerError(blockers);
+      }
+      if (periodo.cerradoPorId === params.usuarioId) {
+        blockers.push('La segunda aprobación debe ser realizada por un usuario diferente al que cerró el período.');
+        throw new AprobacionBlockerError(blockers);
+      }
+      if (periodo.aprobadoPorId === params.usuarioId) {
+        blockers.push('La segunda aprobación debe ser realizada por un usuario diferente al de la primera aprobación.');
+        throw new AprobacionBlockerError(blockers);
+      }
+    }
+
     const updatedPeriodo = await models.periodoContable.update({
       where: { periodoId: params.periodoId },
       data: {
         estado: ESTADO_PERIODO.APROBADO,
         fechaAprobacion: new Date(),
-        aprobadoPorId: params.usuarioId,
+        aprobadoPorId: params.esSegundaAprobacion ? periodo.aprobadoPorId ?? params.usuarioId : params.usuarioId,
+        segundoAprobadorId: params.esSegundaAprobacion ? params.usuarioId : null,
       },
     });
 

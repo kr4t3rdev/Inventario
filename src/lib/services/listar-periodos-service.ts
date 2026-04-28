@@ -37,6 +37,7 @@ interface PersistedPeriodoListItem {
   fechaCierre: Date | null;
   fechaAprobacion: Date | null;
   fechaReapertura: Date | null;
+  categoria?: string;
   apertura: PersistedAperturaLike | null;
   snapshots: PersistedSnapshotLike[];
   subperiodos: PersistedSubperiodoLike[];
