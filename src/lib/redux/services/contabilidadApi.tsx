@@ -1080,6 +1080,58 @@ export const contabilidadApi = apiSlice.injectEndpoints({
       },
       providesTags: (_r, _e, { periodoId }) => [{ type: 'PeriodosContables', id: `${periodoId}-eventos` }],
     }),
+
+    getReporteLibroDiario: builder.query<any, { fechaDesde?: string; fechaHasta?: string; origenTipo?: string; periodoId?: string; limite?: number }>({
+      query: (params) => {
+        const sp = new URLSearchParams()
+        if (params.fechaDesde) sp.set('fechaDesde', params.fechaDesde)
+        if (params.fechaHasta) sp.set('fechaHasta', params.fechaHasta)
+        if (params.origenTipo) sp.set('origenTipo', params.origenTipo)
+        if (params.periodoId) sp.set('periodoId', params.periodoId)
+        if (params.limite) sp.set('limite', String(params.limite))
+        const qs = sp.toString()
+        return `/contabilidad/reportes/libro-diario${qs ? `?${qs}` : ''}`
+      },
+    }),
+
+    getReporteMayor: builder.query<any, { cuenta: string; fechaDesde?: string; fechaHasta?: string; periodoId?: string }>({
+      query: (params) => {
+        const sp = new URLSearchParams()
+        sp.set('cuenta', params.cuenta)
+        if (params.fechaDesde) sp.set('fechaDesde', params.fechaDesde)
+        if (params.fechaHasta) sp.set('fechaHasta', params.fechaHasta)
+        if (params.periodoId) sp.set('periodoId', params.periodoId)
+        return `/contabilidad/reportes/mayor?${sp.toString()}`
+      },
+    }),
+
+    getReporteSumasSaldos: builder.query<any, { fechaDesde?: string; fechaHasta?: string; periodoId?: string; agruparPor?: string }>({
+      query: (params) => {
+        const sp = new URLSearchParams()
+        if (params.fechaDesde) sp.set('fechaDesde', params.fechaDesde)
+        if (params.fechaHasta) sp.set('fechaHasta', params.fechaHasta)
+        if (params.periodoId) sp.set('periodoId', params.periodoId)
+        if (params.agruparPor) sp.set('agruparPor', params.agruparPor)
+        const qs = sp.toString()
+        return `/contabilidad/reportes/sumas-saldos${qs ? `?${qs}` : ''}`
+      },
+    }),
+
+    getReporteEstadoResultados: builder.query<any, { fechaDesde?: string; fechaHasta?: string; periodoId?: string; desglosarPorCuenta?: boolean }>({
+      query: (params) => {
+        const sp = new URLSearchParams()
+        if (params.fechaDesde) sp.set('fechaDesde', params.fechaDesde)
+        if (params.fechaHasta) sp.set('fechaHasta', params.fechaHasta)
+        if (params.periodoId) sp.set('periodoId', params.periodoId)
+        if (params.desglosarPorCuenta !== false) sp.set('desglosarPorCuenta', 'true')
+        const qs = sp.toString()
+        return `/contabilidad/reportes/estado-resultados${qs ? `?${qs}` : ''}`
+      },
+    }),
+
+    getReporteConciliacionSnapshot: builder.query<any, { periodoId: string }>({
+      query: ({ periodoId }) => `/contabilidad/reportes/conciliacion-snapshot?periodoId=${periodoId}`,
+    }),
   }),
 })
 
@@ -1202,4 +1254,9 @@ export const {
   useGetPrecierreQuery,
   useGetEventosContablesQuery,
   useGetPeriodoEventosQuery,
+  useGetReporteLibroDiarioQuery,
+  useGetReporteMayorQuery,
+  useGetReporteSumasSaldosQuery,
+  useGetReporteEstadoResultadosQuery,
+  useGetReporteConciliacionSnapshotQuery,
 } = contabilidadApi

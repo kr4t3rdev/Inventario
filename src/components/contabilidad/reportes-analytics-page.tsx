@@ -2,12 +2,13 @@
 
 import { useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { BarChart3, FileText, FilterX, LineChart, TrendingUp } from 'lucide-react';
+import { BarChart3, FileText, FilterX, LineChart, BookOpen, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { AccountTransactionHistory } from '@/components/contabilidad/account-transaction-history';
 import { DateRangePicker } from '@/components/contabilidad/date-range-picker';
 import { MovimientosTable } from '@/components/contabilidad/movimientos-table';
+import { ReportesSubledger } from '@/components/contabilidad/reportes-subledger';
 import { ResumenFinanciero } from '@/components/contabilidad/resumen-financiero';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -203,7 +204,7 @@ export function ReportesAnalyticsPage() {
 
       <motion.div variants={itemVariants}>
         <Tabs value={tabActiva} onValueChange={setTabActiva} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-3 rounded-xl bg-slate-100/80 p-1 dark:bg-slate-900/70">
+          <TabsList className="grid w-full grid-cols-4 rounded-xl bg-slate-100/80 p-1 dark:bg-slate-900/70">
             <TabsTrigger value="resumen" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Resumen
@@ -215,6 +216,10 @@ export function ReportesAnalyticsPage() {
             <TabsTrigger value="cuenta" className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
               Por cuenta
+            </TabsTrigger>
+            <TabsTrigger value="subledger" className="flex items-center gap-2">
+              <BookOpen className="h-4 w-4" />
+              Subledger
             </TabsTrigger>
           </TabsList>
 
@@ -280,6 +285,16 @@ export function ReportesAnalyticsPage() {
                   </CardContent>
                 </Card>
               )}
+            </motion.div>
+          </TabsContent>
+
+          <TabsContent value="subledger" className="space-y-6">
+            <motion.div
+              initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: shouldReduceMotion ? 0 : 0.22 }}
+            >
+              <ReportesSubledger />
             </motion.div>
           </TabsContent>
         </Tabs>
