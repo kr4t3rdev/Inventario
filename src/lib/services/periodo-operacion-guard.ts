@@ -4,6 +4,8 @@ import {
   canRegisterOperations,
   ESTADO_PERIODO,
   TIPO_PERIODO,
+  PERIOD_POLICY,
+  ACTIVE_PERIOD_POLICY,
   type EstadoPeriodo,
   type TipoPeriodo,
 } from '@/lib/services/periodo-contable-service';
@@ -108,6 +110,13 @@ export async function assertOperationAllowed(
   });
 
   if (!Array.isArray(periodos) || periodos.length === 0) {
+    const mensaje = `No hay períodos contables activos para la fecha ${fecha.toISOString().split('T')[0]}. La operación ${contexto} requiere un período ABIERTO.`;
+
+    if (ACTIVE_PERIOD_POLICY === PERIOD_POLICY.STRICT) {
+      throw new PeriodoOperacionError(mensaje, 409, 'PERIODO_NO_ENCONTRADO');
+    }
+
+    console.warn(`[PeriodoGuard] PERMISSIVE — ${mensaje}`);
     return;
   }
 

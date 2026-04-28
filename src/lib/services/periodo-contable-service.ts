@@ -14,6 +14,29 @@ export const TIPO_PERIODO = {
   ANUAL: 'ANUAL',
 } as const;
 
+export const PERIOD_POLICY = {
+  /**
+   * STRICT: bloquea operaciones cuando no hay período activo para la fecha.
+   * Recomendado para producción.
+   */
+  STRICT: 'STRICT',
+  /**
+   * PERMISSIVE: permite operaciones aunque no haya período activo, pero logea warning.
+   * Útil durante desarrollo o migración.
+   */
+  PERMISSIVE: 'PERMISSIVE',
+} as const;
+
+export type PeriodPolicy = (typeof PERIOD_POLICY)[keyof typeof PERIOD_POLICY];
+
+function resolvePeriodPolicy(): PeriodPolicy {
+  const env = process.env.PERIOD_POLICY ?? 'STRICT';
+  if (env === 'PERMISSIVE') return 'PERMISSIVE';
+  return 'STRICT';
+}
+
+export const ACTIVE_PERIOD_POLICY: PeriodPolicy = resolvePeriodPolicy();
+
 export const ESTADO_PERIODO = {
   BORRADOR: 'BORRADOR',
   ABIERTO: 'ABIERTO',

@@ -50,6 +50,13 @@ export async function registrarEventoContable(params: RegistrarEventoParams): Pr
 
     const resolved = await resolvePeriodosFromFecha(seed.fechaOperacion);
 
+    if (!resolved.periodoDiarioId && !resolved.periodoMensualId && !resolved.periodoAnualId) {
+      console.warn(
+        `[EventoContable] No se resolvieron períodos para ${params.origenTipo}/${params.origenId} en fecha ${seed.fechaOperacion.toISOString().split('T')[0]}. ` +
+        `El evento se creará sin vínculo a período. Verifique que exista un período ABIERTO para la fecha.`
+      );
+    }
+
     const lineas = generarLineasDoblePartida(seed, (seed as Record<string, string>).cuentaContraria ?? 'RESULTADO_ACUMULADO');
 
     const totalDebito = lineas.reduce((s, l) => s + l.debito, 0);
