@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useGetPeriodoQuery, useGetPeriodoSnapshotQuery, useGetEventosContablesQuery, useAprobarPeriodoMutation, useReabrirPeriodoMutation } from '@/lib/redux/services/contabilidadApi'
+import { useGetPeriodoQuery, useGetPeriodoSnapshotQuery, useGetPeriodoEventosQuery, useAprobarPeriodoMutation, useReabrirPeriodoMutation } from '@/lib/redux/services/contabilidadApi'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -69,8 +69,8 @@ export function PeriodoDetail({ periodoId, onBack }: { periodoId: string; onBack
 
   const { data: periodo, isLoading, isError } = useGetPeriodoQuery(periodoId)
   const { data: snapshotData, isLoading: isLoadingSnapshot } = useGetPeriodoSnapshotQuery(periodoId, { skip: !verSnapshotCompleto })
-  const { data: eventosData } = useGetEventosContablesQuery(
-    periodo?.fechaInicio ? { fechaDesde: periodo.fechaInicio.split('T')[0], fechaHasta: periodo.fechaFin.split('T')[0], limite: 200 } : { limite: 200 },
+  const { data: eventosData } = useGetPeriodoEventosQuery(
+    { periodoId, includeSummary: true },
     { skip: !periodo }
   )
   const [aprobar, { isLoading: isAprobando }] = useAprobarPeriodoMutation()
@@ -368,6 +368,26 @@ export function PeriodoDetail({ periodoId, onBack }: { periodoId: string; onBack
         </CardHeader>
         <CardContent>
           <EventosContablesViewer eventos={Array.isArray(eventosData) ? eventosData : (eventosData as any)?.eventos ?? []} compact />
+          {(eventosData as any)?.resumen && (
+            <div className="mt-3 grid gap-3 md:grid-cols-4">
+              <div>
+                <p className="text-xs text-muted-foreground">Total Eventos</p>
+                <p className="font-semibold">{(eventosData as any).resumen.totalEventos}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Total Débitos</p>
+                <p className="font-semibold">{(eventosData as any).resumen.totalDebito?.toLocaleString?.() ?? '-'}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Total Créditos</p>
+                <p className="font-semibold">{(eventosData as any).resumen.totalCredito?.toLocaleString?.() ?? '-'}</p>
+              </div>
+              <div>
+                <p className="text-xs text-muted-foreground">Cuentas distintas</p>
+                <p className="font-semibold">{(eventosData as any).resumen.porCuenta?.length ?? '-'}</p>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

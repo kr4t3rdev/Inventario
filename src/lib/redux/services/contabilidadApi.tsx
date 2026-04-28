@@ -1072,6 +1072,14 @@ export const contabilidadApi = apiSlice.injectEndpoints({
       },
       providesTags: ['EventosContables'],
     }),
+
+    getPeriodoEventos: builder.query<{ eventos: any[]; resumen: any }, { periodoId: string; includeSummary?: boolean }>({
+      query: ({ periodoId, includeSummary }) => {
+        const qs = includeSummary !== false ? '?includeSummary=true' : ''
+        return `/contabilidad/periodos/${periodoId}/eventos${qs}`
+      },
+      providesTags: (_r, _e, { periodoId }) => [{ type: 'PeriodosContables', id: `${periodoId}-eventos` }],
+    }),
   }),
 })
 
@@ -1193,4 +1201,5 @@ export const {
   useGetPeriodoSnapshotQuery,
   useGetPrecierreQuery,
   useGetEventosContablesQuery,
+  useGetPeriodoEventosQuery,
 } = contabilidadApi
