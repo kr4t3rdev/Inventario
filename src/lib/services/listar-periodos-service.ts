@@ -13,6 +13,12 @@ interface PersistedSnapshotLike {
   createdAt: Date;
 }
 
+interface PersistedAuditoriaLike {
+  auditoriaId: string;
+  accion: string;
+  createdAt: Date;
+}
+
 interface PersistedSubperiodoLike {
   periodoId: string;
   codigo: string;
@@ -34,6 +40,7 @@ interface PersistedPeriodoListItem {
   apertura: PersistedAperturaLike | null;
   snapshots: PersistedSnapshotLike[];
   subperiodos: PersistedSubperiodoLike[];
+  auditorias: PersistedAuditoriaLike[];
 }
 
 interface PeriodoContableListModel {
@@ -68,6 +75,7 @@ export interface PeriodoListadoItem {
   subperiodosCerrados: number;
   subperiodosAbiertos: number;
   blockers: string[];
+  ultimaAuditoria: { accion: string; fecha: string } | null;
 }
 
 export interface ListPeriodosResult {
@@ -171,6 +179,7 @@ function mapPeriodo(periodo: PersistedPeriodoListItem): PeriodoListadoItem {
       subperiodo.estado === ESTADO_PERIODO.CERRADO ||
       subperiodo.estado === ESTADO_PERIODO.APROBADO
   ).length;
+  const ultimaAuditoria = (periodo.auditorias ?? [])[0] ?? null;
 
   return {
     periodoId: periodo.periodoId,
@@ -193,6 +202,9 @@ function mapPeriodo(periodo: PersistedPeriodoListItem): PeriodoListadoItem {
     subperiodosCerrados,
     subperiodosAbiertos: periodo.subperiodos.length - subperiodosCerrados,
     blockers: resolveBlockers(periodo),
+    ultimaAuditoria: ultimaAuditoria
+      ? { accion: ultimaAuditoria.accion, fecha: ultimaAuditoria.createdAt.toISOString() }
+      : null,
   };
 }
 
@@ -241,6 +253,15 @@ export async function listPeriodos(
           periodoId: true,
           codigo: true,
           estado: true,
+        },
+      },
+      auditorias: {
+        take: 1,
+        orderBy: [{ createdAt: 'desc' }],
+        select: {
+          auditoriaId: true,
+          accion: true,
+          createdAt: true,
         },
       },
     },

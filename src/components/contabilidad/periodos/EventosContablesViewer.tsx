@@ -96,26 +96,33 @@ function getLineaTipo(linea: any) {
 
 /**
  * @description Visor de eventos contables del subledger con filtros y detalle de líneas
+ * @param {Object} props - Props opcionales
+ * @param {any[]} [props.eventos] - Lista de eventos pre-cargada. Si no se provee, se obtienen vía API.
+ * @param {boolean} [props.compact] - Modo compacto sin filtros.
  * @returns {JSX.Element} Tabla de eventos con líneas de doble partida
  */
-export function EventosContablesViewer() {
+export function EventosContablesViewer({ eventos: eventosProp, compact }: { eventos?: any[]; compact?: boolean } = {}) {
   const [filtroOrigen, setFiltroOrigen] = useState<string>('all')
   const [filtroNaturaleza, setFiltroNaturaleza] = useState<string>('all')
   const [filtroEstado, setFiltroEstado] = useState<string>('all')
   const [fechaDesde, setFechaDesde] = useState('')
   const [fechaHasta, setFechaHasta] = useState('')
 
-  const { data, isLoading, isError } = useGetEventosContablesQuery({
-    origenTipo: filtroOrigen !== 'all' ? filtroOrigen : undefined,
-    fechaDesde: fechaDesde || undefined,
-    fechaHasta: fechaHasta || undefined,
-    limite: 100,
-  })
+  const { data, isLoading, isError } = useGetEventosContablesQuery(
+    compact ? { skip: true } as any : {
+      origenTipo: filtroOrigen !== 'all' ? filtroOrigen : undefined,
+      fechaDesde: fechaDesde || undefined,
+      fechaHasta: fechaHasta || undefined,
+      limite: 100,
+    }
+  )
 
   const rawData = data as any
-  const eventos: any[] = Array.isArray(rawData) ? rawData : (rawData?.eventos ?? [])
+  const eventos: any[] = eventosProp ?? (Array.isArray(rawData) ? rawData : (rawData?.eventos ?? []))
 
-  const eventosFiltrados = filtroNaturaleza !== 'all' || filtroEstado !== 'all'
+  const eventosFiltrados = compact
+    ? eventos
+    : filtroNaturaleza !== 'all' || filtroEstado !== 'all'
     ? (eventos as any[]).filter((e: any) => {
         if (filtroNaturaleza !== 'all' && e.naturaleza !== filtroNaturaleza) return false
         if (filtroEstado !== 'all' && e.estado !== filtroEstado) return false

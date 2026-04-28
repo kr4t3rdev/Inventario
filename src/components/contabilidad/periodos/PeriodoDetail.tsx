@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useGetPeriodoQuery, useGetPeriodoSnapshotQuery, useAprobarPeriodoMutation, useReabrirPeriodoMutation } from '@/lib/redux/services/contabilidadApi'
+import { useGetPeriodoQuery, useGetPeriodoSnapshotQuery, useGetEventosContablesQuery, useAprobarPeriodoMutation, useReabrirPeriodoMutation } from '@/lib/redux/services/contabilidadApi'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -11,6 +11,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import { ArrowLeft, CheckCircle, RotateCcw, AlertTriangle, FileText, ChevronDown, ChevronRight, Eye } from 'lucide-react'
+import { EventosContablesViewer } from './EventosContablesViewer'
 
 const ESTADO_CONFIG: Record<string, { label: string; className: string }> = {
   BORRADOR: { label: 'Borrador', className: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300' },
@@ -68,6 +69,10 @@ export function PeriodoDetail({ periodoId, onBack }: { periodoId: string; onBack
 
   const { data: periodo, isLoading, isError } = useGetPeriodoQuery(periodoId)
   const { data: snapshotData, isLoading: isLoadingSnapshot } = useGetPeriodoSnapshotQuery(periodoId, { skip: !verSnapshotCompleto })
+  const { data: eventosData } = useGetEventosContablesQuery(
+    periodo?.fechaInicio ? { fechaDesde: periodo.fechaInicio.split('T')[0], fechaHasta: periodo.fechaFin.split('T')[0], limite: 200 } : { limite: 200 },
+    { skip: !periodo }
+  )
   const [aprobar, { isLoading: isAprobando }] = useAprobarPeriodoMutation()
   const [reabrir, { isLoading: isReabriendo }] = useReabrirPeriodoMutation()
 
@@ -353,6 +358,18 @@ export function PeriodoDetail({ periodoId, onBack }: { periodoId: string; onBack
           </CardContent>
         </Card>
       )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">Eventos Contables del Período</CardTitle>
+          <CardDescription className="text-xs">
+            Desde {new Date(periodo.fechaInicio).toLocaleDateString('es-ES')} hasta {new Date(periodo.fechaFin).toLocaleDateString('es-ES')}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <EventosContablesViewer eventos={Array.isArray(eventosData) ? eventosData : (eventosData as any)?.eventos ?? []} compact />
+        </CardContent>
+      </Card>
 
       {periodo.auditorias && periodo.auditorias.length > 0 && (
         <Card>

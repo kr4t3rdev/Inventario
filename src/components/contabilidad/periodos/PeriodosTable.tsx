@@ -136,6 +136,7 @@ export function PeriodosTable({ onSelectPeriodo }: { onSelectPeriodo: (id: strin
                 <TableHead className="text-center">Snapshot</TableHead>
                 <TableHead className="text-center">Subperíodos</TableHead>
                 <TableHead className="text-center">Blockers</TableHead>
+                <TableHead className="text-center hidden lg:table-cell">Última Auditoría</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
@@ -195,6 +196,15 @@ export function PeriodosTable({ onSelectPeriodo }: { onSelectPeriodo: (id: strin
                         <span className="inline-flex items-center gap-1 text-xs text-amber-600 font-medium">
                           <FileWarning className="h-3.5 w-3.5" />
                           {p.blockers.length}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-400">—</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center hidden lg:table-cell">
+                      {p.ultimaAuditoria ? (
+                        <span className="text-xs text-muted-foreground" title={p.ultimaAuditoria.accion}>
+                          {new Date(p.ultimaAuditoria.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: 'short' })}
                         </span>
                       ) : (
                         <span className="text-xs text-slate-400">—</span>
