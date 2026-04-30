@@ -254,6 +254,18 @@ export function validateAndNormalizeIngredientUnit(
     };
   }
 
+  // Producto sin unidad canónica: aceptamos la unidad que el usuario elija sin normalizar.
+  if (canonicalUnit === null || canonicalUnit === undefined || canonicalUnit === '') {
+    const normalizedCantidad = ingrediente.cantidad;
+    const normalizedUnidadSimbolo = providedUnit;
+    return {
+      isValid: true,
+      normalizedCantidad,
+      normalizedUnidadSimbolo,
+      normalization: null,
+    };
+  }
+
   if (canonicalCategory !== providedCategory) {
     return {
       isValid: false,

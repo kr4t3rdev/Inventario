@@ -447,6 +447,28 @@ describe('Production Units Validator', () => {
       });
     });
 
+    it('should accept user unit for product without canonical unit', () => {
+      const result = validateAndNormalizeIngredientUnit(
+        { productoId: 'prod6', cantidad: 500, unidadSimbolo: 'g' },
+        { id: 'prod6', nombre: 'Harina Suelta', unidadSimbolo: null }
+      );
+
+      expect(result.isValid).toBe(true);
+      expect(result.normalizedUnidadSimbolo).toBe('g');
+      expect(result.normalizedCantidad).toBe(500);
+      expect(result.normalization).toBeNull();
+    });
+
+    it('should accept null unit for product without canonical unit', () => {
+      const result = validateAndNormalizeIngredientUnit(
+        { productoId: 'prod7', cantidad: 3, unidadSimbolo: null },
+        { id: 'prod7', nombre: 'Item Genérico', unidadSimbolo: null }
+      );
+
+      expect(result.isValid).toBe(true);
+      expect(result.normalizedUnidadSimbolo).toBeNull();
+    });
+
     it('should reject incompatible categories', () => {
       const result = validateAndNormalizeIngredientUnit(
         { productoId: 'prod4', cantidad: 1, unidadSimbolo: 'L' },
