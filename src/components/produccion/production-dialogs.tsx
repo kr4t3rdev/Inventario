@@ -70,7 +70,7 @@ export function ProductionDialogs({
   return (
     <>
       <Dialog open={recetaVer !== null} onOpenChange={(open) => { if (!open) onCloseView() }}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>{recetaVer?.nombre}</DialogTitle>
             <DialogDescription>Detalle completo de la receta de producción</DialogDescription>
