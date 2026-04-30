@@ -63,6 +63,8 @@ export function ProductionDialogs({
     }).format(amount)
   }
 
+  const ingredientesReceta = recetaVer?.ingredientes ?? (recetaVer as any)?.RecetaIngrediente ?? []
+
   return (
     <>
       <Dialog open={recetaVer !== null} onOpenChange={(open) => { if (!open) onCloseView() }}>
@@ -80,22 +82,22 @@ export function ProductionDialogs({
             </div>
             <div>
               <p className="text-sm font-medium mb-2">Ingredientes</p>
-              {recetaVer?.ingredientes.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Sin ingredientes definidos</p>
-              ) : (
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Producto</TableHead>
-                        <TableHead>Cantidad</TableHead>
-                        <TableHead>Desperdicio</TableHead>
-                        <TableHead className="text-right">Costo estimado</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {recetaVer?.ingredientes.map((ing) => (
-                        <TableRow key={ing.productoId}>
+              {ingredientesReceta.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Sin ingredientes definidos</p>
+                ) : (
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Producto</TableHead>
+                          <TableHead>Cantidad</TableHead>
+                          <TableHead>Desperdicio</TableHead>
+                          <TableHead className="text-right">Costo estimado</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {ingredientesReceta.map((ing: any) => (
+                          <TableRow key={ing.productoId}>
                           <TableCell>{ing.producto?.nombre}</TableCell>
                           <TableCell>{formatIngrediente(ing.cantidad, ing.unidadSimbolo, '').trim()}</TableCell>
                           <TableCell>{((ing.desperdicio ?? 0) * 100).toFixed(0)}%</TableCell>
