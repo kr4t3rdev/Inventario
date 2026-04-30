@@ -64,6 +64,8 @@ export function ProductionDialogs({
   }
 
   const ingredientesReceta = recetaVer?.ingredientes ?? (recetaVer as any)?.RecetaIngrediente ?? []
+  const productoReceta = recetaVer?.producto ?? (recetaVer as any)?.Producto ?? null
+  const getProductoIngrediente = (ing: any) => ing.producto ?? ing.Producto ?? null
 
   return (
     <>
@@ -76,7 +78,7 @@ export function ProductionDialogs({
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div><span className="font-medium">Rendimiento:</span> {recetaVer?.rendimiento} unidad(es)</div>
-              <div><span className="font-medium">Producto asociado:</span> {recetaVer?.producto?.nombre || '—'}</div>
+              <div><span className="font-medium">Producto asociado:</span> {productoReceta?.nombre || '—'}</div>
               <div><span className="font-medium">Instrucciones:</span> {recetaVer?.instrucciones || 'No especificado'}</div>
               <div><span className="font-medium">Tiempo de prep.:</span> {recetaVer?.tiempoPrep ? `${recetaVer.tiempoPrep} min` : 'No especificado'}</div>
             </div>
@@ -96,16 +98,20 @@ export function ProductionDialogs({
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {ingredientesReceta.map((ing: any) => (
+                        {ingredientesReceta.map((ing: any) => {
+                          const prod = getProductoIngrediente(ing)
+                          return (
                           <TableRow key={ing.productoId}>
-                          <TableCell>{ing.producto?.nombre}</TableCell>
+                          <TableCell>{prod?.nombre}</TableCell>
                           <TableCell>{formatIngrediente(ing.cantidad, ing.unidadSimbolo, '').trim()}</TableCell>
                           <TableCell>{((ing.desperdicio ?? 0) * 100).toFixed(0)}%</TableCell>
                           <TableCell className="text-right">
-                            {formatCurrency((ing.producto?.precioCosto ?? 0) * ing.cantidad * (1 + (ing.desperdicio ?? 0)))}
+                            {formatCurrency((prod?.precioCosto ?? 0) * ing.cantidad * (1 + (ing.desperdicio ?? 0)))}
                           </TableCell>
                         </TableRow>
-                      ))}
+                          )
+                        }
+                        )}
                     </TableBody>
                   </Table>
                 </div>
