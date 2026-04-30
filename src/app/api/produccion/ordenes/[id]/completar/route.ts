@@ -123,34 +123,37 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
         },
       });
 
-      // 4. Registrar en contabilidad (ReconciliacionGasto) si hay costo
-      if (costoMateriales > 0) {
-        const periodo = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
-        
-        await tx.reconciliacionGasto.create({
-          data: {
-            tipoGasto: 'produccion',
-            referenciaId: id,
-            cuentaId: body.cuentaId,
-            tipoPagoId: body.tipoPagoId,
-            monto: costoMateriales,
-            moneda: 'CUP',
-            descripcion: `Costo de producción - Orden: ${orden.Receta.nombre} (Cantidad: ${orden.cantidad})`,
-            periodo,
-            reconciliadoPor: userId,
-            estado: 'PENDIENTE',
-          },
-        });
-      }
-
-      return orden_updated;
+      return { orden: orden_updated, costoMateriales };
     });
 
     if (!ordenActualizada) {
       return NextResponse.json({ error: 'Orden de producción no encontrada.' }, { status: 404 });
     }
 
-    return NextResponse.json(ordenActualizada);
+    // 4. Registrar en contabilidad (ReconciliacionGasto) fuera de la transacción
+    if (ordenActualizada.costoMateriales > 0 && body.cuentaId) {
+      try {
+        const periodo = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
+        await prisma.reconciliacionGasto.create({
+          data: {
+            tipoGasto: 'produccion',
+            referenciaId: id,
+            cuentaId: body.cuentaId,
+            tipoPagoId: body.tipoPagoId || 'efectivo',
+            monto: ordenActualizada.costoMateriales,
+            moneda: 'CUP',
+            descripcion: `Costo de producción - Orden completa (Cantidad: ${ordenActualizada.orden.cantidad})`,
+            periodo,
+            reconciliadoPor: userId,
+            estado: 'PENDIENTE',
+          },
+        });
+      } catch (error) {
+        console.error('Error al crear ReconciliacionGasto (no bloqueante):', error);
+      }
+    }
+
+    return NextResponse.json(ordenActualizada.orden);
   } catch (error) {
     if (error instanceof Error) {
       if (error.message === 'La orden no está en proceso.') {
