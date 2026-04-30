@@ -9,11 +9,11 @@ import { PRODUCTION_STATES } from '@/lib/constants/production';
  * @param {object} params - Parámetros de la ruta.
  * @returns {Promise<NextResponse>} Orden cancelada.
  */
-export const POST = withAuthPost(async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+export const POST = withAuthPost(async (request: NextRequest, { params }: { params: Promise<{ id: string }> }, user) => {
   try {
     const { id } = await params;
     const body = await request.json();
-    const userId = body.userId || 'system';
+    const userId = body.userId || user?.userId || 'system';
 
     const ordenActualizada = await prisma.$transaction(async (tx) => {
       const orden = await tx.ordenProduccion.findUnique({

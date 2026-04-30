@@ -54,7 +54,7 @@ import {
   useUpdateRecetaProduccionMutation
 } from '@/lib/redux/services/produccionApi'
 import { useGetProductosQuery } from '@/lib/redux/services/productosApi'
-import { useGetGastosDEQuery } from '@/lib/redux/services/gastosDEApi'
+
 import { RecipeOutputSelector, type RecipeOutputMode } from '@/components/produccion/recipe-output-selector'
 import { ProductionDialogs } from '@/components/produccion/production-dialogs'
 import { RecipeEditorDialog } from '@/components/produccion/recipe-editor-dialog'
@@ -201,7 +201,7 @@ export default function ProduccionPage() {
   const { data: recetasTyped, isLoading: loadingRecetas } = useGetRecetasProduccionQuery(searchRecetas ? { search: searchRecetas } : undefined)
   const { data: ordenesTyped, isLoading: loadingOrdenes } = useGetOrdenesProduccionQuery(filtroEstadoOrden !== 'all' ? { estado: filtroEstadoOrden } : undefined)
   const { data: productosTyped } = useGetProductosQuery()
-  const { data: gastosDE } = useGetGastosDEQuery()
+
 
   // Mutations
   const [createReceta] = useCreateRecetaProduccionMutation()
@@ -269,7 +269,9 @@ export default function ProduccionPage() {
     )
   }
 
-  const recetasOperativas = recetasTyped?.filter((receta) => Boolean(getRecetaProducto(receta)?.id)) || []
+  const recetasList = recetasTyped?.data || []
+  const ordenesList = ordenesTyped?.data || []
+  const recetasOperativas = recetasList.filter((receta) => Boolean(getRecetaProducto(receta)?.id)) || []
 
   const newRecipePreview = buildRecipeUnitPreview(nuevoItems, productosTyped || [])
   const editRecipePreview = buildRecipeUnitPreview(editItems, productosTyped || [])
@@ -494,9 +496,10 @@ export default function ProduccionPage() {
   }
 
   // Stats
-  const ordenesPendientes = ordenesTyped?.filter((o: OrdenProduccion) => String(o.estado) === PRODUCTION_STATES.PENDIENTE).length || 0
-  const ordenesEnProceso = ordenesTyped?.filter((o: OrdenProduccion) => String(o.estado) === PRODUCTION_STATES.EN_PROCESO).length || 0
-  const ordenesCompletadas = ordenesTyped?.filter((o: OrdenProduccion) => String(o.estado) === PRODUCTION_STATES.COMPLETADA).length || 0
+  const ordenesStats = ordenesTyped?.meta?.stats
+  const ordenesPendientes = ordenesStats?.pendientes || 0
+  const ordenesEnProceso = ordenesStats?.enProceso || 0
+  const ordenesCompletadas = ordenesStats?.completadas || 0
 
   return (
     <div className="space-y-4">
@@ -516,7 +519,7 @@ export default function ProduccionPage() {
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{recetasTyped?.length || 0}</div>
+            <div className="text-2xl font-bold">{recetasTyped?.meta?.total || 0}</div>
           </CardContent>
         </Card>
         <Card>
@@ -865,12 +868,12 @@ export default function ProduccionPage() {
                       <TableRow>
                         <TableCell colSpan={7} className="text-center">Cargando...</TableCell>
                       </TableRow>
-                    ) : recetasTyped?.length === 0 ? (
+                    ) : recetasList.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={7} className="text-center">No hay recetas</TableCell>
                       </TableRow>
                     ) : (
-                      recetasTyped?.map((receta: RecetaProduccion) => (
+                      recetasList.map((receta: RecetaProduccion) => (
                         <TableRow key={receta.recetaId}>
                           <TableCell className="font-medium">{receta.nombre}</TableCell>
                           <TableCell>{receta.rendimiento}</TableCell>
@@ -983,7 +986,7 @@ export default function ProduccionPage() {
                               ))}
                             </SelectContent>
                           </Select>
-                          {recetasTyped && recetasOperativas.length !== recetasTyped.length ? (
+                          {recetasTyped && recetasOperativas.length !== recetasList.length ? (
                             <p className='text-xs text-muted-foreground'>
                               Las recetas sin producto final configurado no se pueden usar para crear órdenes.
                             </p>
@@ -1031,12 +1034,12 @@ export default function ProduccionPage() {
                       <TableRow>
                         <TableCell colSpan={6} className="text-center">Cargando...</TableCell>
                       </TableRow>
-                    ) : ordenesTyped?.length === 0 ? (
+                    ) : ordenesList.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={6} className="text-center">No hay órdenes</TableCell>
                       </TableRow>
                     ) : (
-                        ordenesTyped?.map((orden: OrdenProduccion) => (
+                        ordenesList.map((orden: OrdenProduccion) => (
                         <TableRow key={orden.ordenProduccionId}>
                           <TableCell className="font-medium">{orden.receta?.nombre}</TableCell>
                           <TableCell>{orden.cantidad}</TableCell>

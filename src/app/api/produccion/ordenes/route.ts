@@ -19,6 +19,9 @@ export const GET = withAuthGet(async (request: NextRequest) => {
   try {
     const searchParams = request.nextUrl.searchParams;
     const estado = searchParams.get('estado')?.trim();
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20', 10)));
+    const skip = (page - 1) * limit;
 
     const whereClause: any = {};
 
@@ -26,36 +29,44 @@ export const GET = withAuthGet(async (request: NextRequest) => {
       whereClause.estado = estado;
     }
 
-    const ordenes = await prisma.ordenProduccion.findMany({
-      where: whereClause,
-      include: {
-        Receta: {
-          include: {
-            Producto: {
-              select: {
-                id: true,
-                nombre: true,
+    const [ordenes, total, pendientes, enProceso, completadas] = await Promise.all([
+      prisma.ordenProduccion.findMany({
+        where: whereClause,
+        include: {
+          Receta: {
+            include: {
+              Producto: {
+                select: {
+                  id: true,
+                  nombre: true,
+                },
               },
-            },
-            RecetaIngrediente: {
-              include: {
-                Producto: {
-                  select: {
-                    id: true,
-                    nombre: true,
-                    precioCosto: true,
-                    stock: true,
+              RecetaIngrediente: {
+                include: {
+                  Producto: {
+                    select: {
+                      id: true,
+                      nombre: true,
+                      precioCosto: true,
+                      stock: true,
+                    },
                   },
                 },
               },
             },
           },
         },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+        skip,
+        take: limit,
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+      prisma.ordenProduccion.count({ where: whereClause }),
+      prisma.ordenProduccion.count({ where: { ...whereClause, estado: 'PENDIENTE' } }),
+      prisma.ordenProduccion.count({ where: { ...whereClause, estado: 'EN_PROCESO' } }),
+      prisma.ordenProduccion.count({ where: { ...whereClause, estado: 'COMPLETADA' } }),
+    ]);
 
     const ordenesNormalizadas = ordenes.map((orden) => ({
       ...orden,
@@ -71,7 +82,20 @@ export const GET = withAuthGet(async (request: NextRequest) => {
         : null,
     }));
 
-    return NextResponse.json(ordenesNormalizadas);
+    return NextResponse.json({
+      data: ordenesNormalizadas,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+        stats: {
+          pendientes,
+          enProceso,
+          completadas,
+        },
+      },
+    });
   } catch (error) {
     console.error('Error al obtener órdenes de producción:', error);
     return NextResponse.json({ error: 'Error al obtener órdenes de producción.' }, { status: 500 });

@@ -8,6 +8,7 @@ const { prismaMock, transactionClientMock } = vi.hoisted(() => {
     create: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
+    count: vi.fn(),
   }
 
   const ordenProduccion = {
@@ -15,6 +16,7 @@ const { prismaMock, transactionClientMock } = vi.hoisted(() => {
     findUnique: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
+    count: vi.fn(),
   }
 
   const valeSalida = {
@@ -88,6 +90,7 @@ import { GET as getRecetas, POST as createReceta } from '../recetas/route'
 import { GET as getOrden } from '../ordenes/[id]/route'
 import { POST as aprobarOrden } from '../ordenes/[id]/aprobar/route'
 import { POST as completarOrden } from '../ordenes/[id]/completar/route'
+import { POST as cancelarOrden } from '../ordenes/[id]/cancelar/route'
 import { GET as getVales, POST as createVale } from '../vales/route'
 
 describe('Production Module API Routes', () => {
@@ -102,13 +105,16 @@ describe('Production Module API Routes', () => {
         { recetaId: '2', nombre: 'Pastel', rendimiento: 5 },
       ]
       ;(prisma.receta.findMany as Mock).mockResolvedValue(mockRecetas)
+      ;(prisma.receta.count as Mock).mockResolvedValue(2)
 
       const request = new NextRequest('http://localhost:3000/api/produccion/recetas')
       const response = await getRecetas(request)
       const data = await response.json()
 
       expect(response.status).toBe(200)
-      expect(data).toEqual(mockRecetas)
+      expect(data.data).toEqual(mockRecetas)
+      expect(data.meta).toBeDefined()
+      expect(data.meta.total).toBe(2)
     })
 
     it('debe filtrar recetas por búsqueda', async () => {
@@ -116,6 +122,7 @@ describe('Production Module API Routes', () => {
         { recetaId: '1', nombre: 'Pan Dulce', rendimiento: 10 },
       ]
       ;(prisma.receta.findMany as Mock).mockResolvedValue(mockRecetas)
+      ;(prisma.receta.count as Mock).mockResolvedValue(1)
 
       const request = new NextRequest('http://localhost:3000/api/produccion/recetas?search=Pan')
       const response = await getRecetas(request)
@@ -383,6 +390,116 @@ describe('Production Module API Routes', () => {
 
       expect(response.status).toBe(400)
       expect(data.error).toBe('La orden no está en proceso.')
+    })
+  })
+
+  describe('POST /api/produccion/ordenes/[id]/cancelar', () => {
+    it('debe cancelar orden desde PENDIENTE sin liberar stock', async () => {
+      const mockOrden = {
+        ordenProduccionId: 'orden-1',
+        estado: 'PENDIENTE',
+        cantidad: 10,
+        Receta: {
+          RecetaIngrediente: [
+            { productoId: 'prod-1', cantidad: 2, desperdicio: null, unidadSimbolo: null },
+          ],
+        },
+      }
+      const mockUpdatedOrden = {
+        ...mockOrden,
+        estado: 'CANCELADA',
+      }
+
+      ;(transactionClientMock.ordenProduccion.findUnique as Mock).mockResolvedValue(mockOrden)
+      ;(transactionClientMock.ordenProduccion.update as Mock).mockResolvedValue(mockUpdatedOrden)
+      ;(transactionClientMock.ordenProduccionHistorial.create as Mock).mockResolvedValue({})
+
+      const request = new NextRequest('http://localhost:3000/api/produccion/ordenes/orden-1/cancelar', {
+        method: 'POST',
+        body: JSON.stringify({ userId: 'user-1', observaciones: 'Ya no se necesita' }),
+      })
+      const params = Promise.resolve({ id: 'orden-1' })
+      const response = await cancelarOrden(request, { params })
+      const data = await response.json()
+
+      expect(response.status).toBe(200)
+      expect(data.estado).toBe('CANCELADA')
+      expect(transactionClientMock.producto.update).not.toHaveBeenCalled()
+    })
+
+    it('debe cancelar orden desde EN_PROCESO y liberar stock', async () => {
+      const mockOrden = {
+        ordenProduccionId: 'orden-2',
+        estado: 'EN_PROCESO',
+        cantidad: 5,
+        Receta: {
+          RecetaIngrediente: [
+            { productoId: 'prod-1', cantidad: 3, desperdicio: null, unidadSimbolo: null },
+          ],
+        },
+      }
+      const mockUpdatedOrden = {
+        ...mockOrden,
+        estado: 'CANCELADA',
+      }
+
+      ;(transactionClientMock.ordenProduccion.findUnique as Mock).mockResolvedValue(mockOrden)
+      ;(transactionClientMock.ordenProduccion.update as Mock).mockResolvedValue(mockUpdatedOrden)
+      ;(transactionClientMock.producto.update as Mock).mockResolvedValue({})
+      ;(transactionClientMock.ordenProduccionHistorial.create as Mock).mockResolvedValue({})
+
+      const request = new NextRequest('http://localhost:3000/api/produccion/ordenes/orden-2/cancelar', {
+        method: 'POST',
+        body: JSON.stringify({ userId: 'user-1' }),
+      })
+      const params = Promise.resolve({ id: 'orden-2' })
+      const response = await cancelarOrden(request, { params })
+      const data = await response.json()
+
+      expect(response.status).toBe(200)
+      expect(data.estado).toBe('CANCELADA')
+      expect(transactionClientMock.producto.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'prod-1' },
+          data: { stock: { increment: 15 } }, // 3 * 5
+        })
+      )
+    })
+
+    it('debe rechazar si la orden ya está completada', async () => {
+      const mockOrden = {
+        ordenProduccionId: 'orden-3',
+        estado: 'COMPLETADA',
+        cantidad: 10,
+        Receta: { RecetaIngrediente: [] },
+      }
+      ;(prisma.ordenProduccion.findUnique as Mock).mockResolvedValue(mockOrden)
+
+      const request = new NextRequest('http://localhost:3000/api/produccion/ordenes/orden-3/cancelar', {
+        method: 'POST',
+        body: JSON.stringify({}),
+      })
+      const params = Promise.resolve({ id: 'orden-3' })
+      const response = await cancelarOrden(request, { params })
+      const data = await response.json()
+
+      expect(response.status).toBe(400)
+      expect(data.error).toBe('La orden ya no puede ser cancelada.')
+    })
+
+    it('debe retornar 404 si la orden no existe', async () => {
+      ;(prisma.ordenProduccion.findUnique as Mock).mockResolvedValue(null)
+
+      const request = new NextRequest('http://localhost:3000/api/produccion/ordenes/no-existe/cancelar', {
+        method: 'POST',
+        body: JSON.stringify({}),
+      })
+      const params = Promise.resolve({ id: 'no-existe' })
+      const response = await cancelarOrden(request, { params })
+      const data = await response.json()
+
+      expect(response.status).toBe(404)
+      expect(data.error).toBe('Orden de producción no encontrada.')
     })
   })
 

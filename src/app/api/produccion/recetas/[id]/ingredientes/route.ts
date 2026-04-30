@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuthPost } from '@/lib/auth-middleware';
+import { withAuthPost, withAuth } from '@/lib/auth-middleware';
 import { prisma } from '@/lib/prisma';
 import { convertToBase } from '@/lib/utils/unit-converter';
 import { calculateCostoUnitarioReceta } from '@/lib/utils/produccion';
@@ -232,5 +232,103 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
 
     console.error('Error al gestionar ingredientes de receta:', error);
     return NextResponse.json({ error: 'Error al gestionar ingredientes de receta.' }, { status: 500 });
+  }
+});
+
+/**
+ * @description Elimina un ingrediente específico de una receta y recalcula el costo unitario.
+ * @param {NextRequest} request - Request HTTP con productoId como query param.
+ * @param {object} params - Parámetros de la ruta.
+ * @returns {Promise<NextResponse>} Receta actualizada.
+ */
+export const DELETE = withAuth(async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+  try {
+    const { id: recetaId } = await params;
+    const productoId = request.nextUrl.searchParams.get('productoId');
+
+    if (!productoId) {
+      return NextResponse.json({ error: 'productoId es requerido como query param.' }, { status: 400 });
+    }
+
+    const recetaActualizada = await prisma.$transaction(async (tx) => {
+      const receta = await tx.receta.findUnique({
+        where: { recetaId },
+        include: {
+          Producto: { select: { precioCosto: true } },
+          RecetaIngrediente: {
+            include: { Producto: { select: { precioCosto: true } } },
+          },
+        },
+      });
+
+      if (!receta) {
+        return null;
+      }
+
+      const ingredienteAEliminar = receta.RecetaIngrediente.find(
+        (ing) => ing.productoId === productoId
+      );
+
+      if (!ingredienteAEliminar) {
+        throw new Error('Ingrediente no encontrado en la receta.');
+      }
+
+      await tx.recetaIngrediente.delete({
+        where: { id: ingredienteAEliminar.id },
+      });
+
+      const restantes = receta.RecetaIngrediente.filter(
+        (ing) => ing.productoId !== productoId
+      );
+
+      const precioCostoProductoFinal = receta.Producto?.precioCosto || 0;
+      const productosAgregados = restantes.map((ing) => ({
+        productoId: ing.productoId,
+        cantidad: ing.cantidad,
+        unidadSimbolo: ing.unidadSimbolo,
+        producto: { precioCosto: ing.Producto?.precioCosto || 0 },
+      }));
+      const costoUnitario = calculateCostoUnitarioReceta(
+        precioCostoProductoFinal,
+        productosAgregados,
+        receta.rendimiento || 1
+      );
+
+      return tx.receta.update({
+        where: { recetaId },
+        data: { costoUnitario },
+        include: {
+          Producto: { select: { id: true, nombre: true } },
+          RecetaIngrediente: {
+            select: {
+              id: true,
+              recetaId: true,
+              productoId: true,
+              cantidad: true,
+              unidadSimbolo: true,
+              desperdicio: true,
+              createdAt: true,
+              updatedAt: true,
+              Producto: {
+                select: { id: true, nombre: true, precioCosto: true, stock: true },
+              },
+            },
+          },
+        },
+      });
+    });
+
+    if (!recetaActualizada) {
+      return NextResponse.json({ error: 'Receta no encontrada.' }, { status: 404 });
+    }
+
+    return NextResponse.json(recetaActualizada);
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Ingrediente no encontrado en la receta.') {
+      return NextResponse.json({ error: error.message }, { status: 404 });
+    }
+
+    console.error('Error al eliminar ingrediente de receta:', error);
+    return NextResponse.json({ error: 'Error al eliminar ingrediente de receta.' }, { status: 500 });
   }
 });

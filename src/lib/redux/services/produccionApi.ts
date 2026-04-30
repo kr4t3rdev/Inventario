@@ -7,6 +7,8 @@ import {
   CreateOrdenProduccionPayload,
   ValeSalida,
   CreateValeSalidaPayload,
+  PaginatedResponse,
+  OrdenesPaginationMeta,
 } from '@/app/models/model';
 import { apiSlice } from './apiSlice';
 
@@ -20,7 +22,7 @@ export const produccionApi = apiSlice.injectEndpoints({
     /**
      * @description Obtiene recetas de producción.
      */
-    getRecetasProduccion: builder.query<RecetaProduccion[], { search?: string; productoId?: string } | void>({
+    getRecetasProduccion: builder.query<PaginatedResponse<RecetaProduccion>, { search?: string; productoId?: string; page?: number; limit?: number } | void>({
       query: (params) => {
         const queryParams = new URLSearchParams();
         if (params?.search?.trim()) {
@@ -28,6 +30,12 @@ export const produccionApi = apiSlice.injectEndpoints({
         }
         if (params?.productoId?.trim()) {
           queryParams.append('productoId', params.productoId.trim());
+        }
+        if (params?.page) {
+          queryParams.append('page', String(params.page));
+        }
+        if (params?.limit) {
+          queryParams.append('limit', String(params.limit));
         }
         const query = queryParams.toString();
         return `/produccion/recetas${query ? `?${query}` : ''}`;
@@ -90,17 +98,36 @@ export const produccionApi = apiSlice.injectEndpoints({
       invalidatesTags: ['RecetasProduccion'],
     }),
 
+    /**
+     * @description Elimina un ingrediente específico de una receta.
+     */
+    deleteIngredienteRecetaProduccion: builder.mutation<RecetaProduccion, { recetaId: string; productoId: string }>({
+      query: ({ recetaId, productoId }) => ({
+        url: `/produccion/recetas/${recetaId}/ingredientes?productoId=${productoId}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['RecetasProduccion'],
+    }),
+
     // ==================== ÓRDENES DE PRODUCCIÓN ====================
 
     /**
      * @description Obtiene órdenes de producción.
      */
-    getOrdenesProduccion: builder.query<OrdenProduccion[], { estado?: string } | void>({
+    getOrdenesProduccion: builder.query<PaginatedResponse<OrdenProduccion, OrdenesPaginationMeta>, { estado?: string; page?: number; limit?: number } | void>({
       query: (params) => {
+        const queryParams = new URLSearchParams();
         if (params?.estado) {
-          return `/produccion/ordenes?estado=${params.estado}`;
+          queryParams.append('estado', params.estado);
         }
-        return '/produccion/ordenes';
+        if (params?.page) {
+          queryParams.append('page', String(params.page));
+        }
+        if (params?.limit) {
+          queryParams.append('limit', String(params.limit));
+        }
+        const query = queryParams.toString();
+        return `/produccion/ordenes${query ? `?${query}` : ''}`;
       },
       providesTags: ['OrdenesProduccion'],
     }),
@@ -249,6 +276,7 @@ export const {
   useDeleteRecetaProduccionMutation,
   useGetRecetaProduccionQuery,
   useSetIngredientesRecetaProduccionMutation,
+  useDeleteIngredienteRecetaProduccionMutation,
 
   // Órdenes
   useGetOrdenesProduccionQuery,

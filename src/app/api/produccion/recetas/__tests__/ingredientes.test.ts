@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { NextRequest } from 'next/server'
-import { POST as setIngredientesHandler } from '../[id]/ingredientes/route'
+import { POST as setIngredientesHandler, DELETE as deleteIngredienteHandler } from '../[id]/ingredientes/route'
 import { prisma } from '@/lib/prisma'
 import { calculateCostoUnitarioReceta } from '@/lib/utils/produccion'
 
@@ -15,6 +15,7 @@ vi.mock('@/lib/prisma', () => ({
     recetaIngrediente: {
       deleteMany: vi.fn(),
       createMany: vi.fn(),
+      delete: vi.fn(),
     },
     producto: {
       findMany: vi.fn(),
@@ -26,6 +27,7 @@ vi.mock('@/lib/prisma', () => ({
 // Mock auth middleware
 vi.mock('@/lib/auth-middleware', () => ({
   withAuthPost: (handler: Function) => handler,
+  withAuth: (handler: Function) => handler,
 }))
 
 // Mock utility function
@@ -521,3 +523,88 @@ describe('POST /api/produccion/recetas/[id]/ingredientes - Agregar Ingredientes'
     expect(vi.mocked(prisma.recetaIngrediente.deleteMany)).not.toHaveBeenCalled()
   })
 })
+
+describe('DELETE /api/produccion/recetas/[id]/ingredientes - Eliminar Ingrediente', () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+    vi.mocked(prisma.$transaction).mockImplementation(async (callback) => callback(prisma as never))
+  })
+
+  it('debe eliminar un ingrediente y recalcular costoUnitario', async () => {
+    const mockReceta = {
+      ...buildRecetaBase({ recetaId: 'receta-123', rendimiento: 2, precioCostoProductoFinal: 100 }),
+      RecetaIngrediente: [
+        { id: 'ing-1', productoId: 'prod-1', cantidad: 2, unidadSimbolo: 'kg', desperdicio: 0, Producto: { precioCosto: 50 } },
+        { id: 'ing-2', productoId: 'prod-2', cantidad: 1, unidadSimbolo: 'L', desperdicio: 0.1, Producto: { precioCosto: 30 } },
+      ],
+    }
+    vi.mocked(prisma.receta.findUnique as any).mockResolvedValue(mockReceta)
+    vi.mocked(prisma.recetaIngrediente.delete as any).mockResolvedValue({})
+    vi.mocked(prisma.receta.update as any).mockResolvedValue({
+      ...mockReceta,
+      RecetaIngrediente: [
+        { productoId: 'prod-1', cantidad: 2, Producto: { precioCosto: 50 } },
+      ],
+    })
+    vi.mocked(calculateCostoUnitarioReceta as any).mockReturnValue(150)
+
+    const request = deleteRequestFor('receta-123', 'prod-2')
+    const response = await deleteIngredienteHandler(request, { params: paramsFor('receta-123') })
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(vi.mocked(prisma.recetaIngrediente.delete)).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: 'ing-2' } })
+    )
+    expect(vi.mocked(calculateCostoUnitarioReceta)).toHaveBeenCalled()
+    expect(data).toBeDefined()
+  })
+
+  it('debe retornar 400 si falta productoId', async () => {
+    const request = new NextRequest(
+      'http://localhost/api/produccion/recetas/receta-123/ingredientes',
+      { method: 'DELETE' }
+    )
+    const response = await deleteIngredienteHandler(request, { params: paramsFor('receta-123') })
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(data.error).toBe('productoId es requerido como query param.')
+  })
+
+  it('debe retornar 404 si la receta no existe', async () => {
+    vi.mocked(prisma.receta.findUnique as any).mockResolvedValue(null)
+
+    const request = deleteRequestFor('receta-no-existe', 'prod-1')
+    const response = await deleteIngredienteHandler(request, { params: paramsFor('receta-no-existe') })
+    const data = await response.json()
+
+    expect(response.status).toBe(404)
+    expect(data.error).toBe('Receta no encontrada.')
+  })
+
+  it('debe retornar 404 si el ingrediente no está en la receta', async () => {
+    const mockReceta = {
+      ...buildRecetaBase({ recetaId: 'receta-123', rendimiento: 1 }),
+      RecetaIngrediente: [
+        { id: 'ing-1', productoId: 'prod-1', cantidad: 2, Producto: { precioCosto: 50 } },
+      ],
+    }
+    vi.mocked(prisma.receta.findUnique as any).mockResolvedValue(mockReceta)
+
+    const request = deleteRequestFor('receta-123', 'prod-inexistente')
+    const response = await deleteIngredienteHandler(request, { params: paramsFor('receta-123') })
+    const data = await response.json()
+
+    expect(response.status).toBe(404)
+    expect(data.error).toBe('Ingrediente no encontrado en la receta.')
+  })
+})
+
+// Helper for DELETE requests
+function deleteRequestFor(recetaId: string, productoId: string): NextRequest {
+  return new NextRequest(
+    `http://localhost/api/produccion/recetas/${recetaId}/ingredientes?productoId=${productoId}`,
+    { method: 'DELETE' }
+  )
+}

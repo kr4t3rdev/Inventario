@@ -2168,7 +2168,6 @@ export interface OrdenProduccion {
   observaciones: string | null
   fechaProduccion: string
   costoMateriales: number | null
-  costoUnitario: number | null
   createdAt: string
   updatedAt: string
   receta?: RecetaProduccion
@@ -2219,6 +2218,26 @@ export interface CreateValeSalidaPayload {
 }
 
 // Payload para crear orden de producción
+export interface PaginationMeta {
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+}
+
+export interface OrdenesPaginationMeta extends PaginationMeta {
+  stats: {
+    pendientes: number
+    enProceso: number
+    completadas: number
+  }
+}
+
+export interface PaginatedResponse<T, M = PaginationMeta> {
+  data: T[]
+  meta: M
+}
+
 export interface CreateOrdenProduccionPayload {
   recetaId: string
   cantidad: number

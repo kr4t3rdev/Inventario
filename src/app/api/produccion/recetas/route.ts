@@ -22,6 +22,9 @@ export const GET = withAuthGet(async (request: NextRequest) => {
     const searchParams = request.nextUrl.searchParams;
     const search = searchParams.get('search')?.trim();
     const productoId = searchParams.get('productoId')?.trim();
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20', 10)));
+    const skip = (page - 1) * limit;
 
     const whereClause: any = {};
 
@@ -36,39 +39,52 @@ export const GET = withAuthGet(async (request: NextRequest) => {
       whereClause.productoId = productoId;
     }
 
-    const recetas = await prisma.receta.findMany({
-      where: whereClause,
-      include: {
-        Producto: {
-          select: {
-            id: true,
-            nombre: true,
-            precioCosto: true,
-            stock: true,
-          },
-        },
-        RecetaIngrediente: {
-          include: {
-            Producto: {
-              select: {
-                id: true,
-                nombre: true,
-                precioCosto: true,
-                stock: true,
-              },
+    const [recetas, total] = await Promise.all([
+      prisma.receta.findMany({
+        where: whereClause,
+        include: {
+          Producto: {
+            select: {
+              id: true,
+              nombre: true,
+              precioCosto: true,
+              stock: true,
             },
           },
-          orderBy: {
-            createdAt: 'asc',
+          RecetaIngrediente: {
+            include: {
+              Producto: {
+                select: {
+                  id: true,
+                  nombre: true,
+                  precioCosto: true,
+                  stock: true,
+                },
+              },
+            },
+            orderBy: {
+              createdAt: 'asc',
+            },
           },
         },
-      },
-      orderBy: {
-        createdAt: 'desc',
+        skip,
+        take: limit,
+        orderBy: {
+          createdAt: 'desc',
+        },
+      }),
+      prisma.receta.count({ where: whereClause }),
+    ]);
+
+    return NextResponse.json({
+      data: recetas,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
       },
     });
-
-    return NextResponse.json(recetas);
   } catch (error) {
     console.error('Error al obtener recetas de producción:', error);
     return NextResponse.json({ error: 'Error al obtener recetas de producción.' }, { status: 500 });
