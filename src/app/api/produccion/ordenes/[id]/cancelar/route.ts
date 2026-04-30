@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuthPost } from '@/lib/auth-middleware';
 import { prisma } from '@/lib/prisma';
 import { PRODUCTION_STATES } from '@/lib/constants/production';
+import { calcularCantidadRequeridaMaterial } from '@/lib/utils/produccion';
 
 /**
  * @description Cancela una orden de producción, liberando los materiales reservados.
@@ -38,7 +39,7 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
 
       if (estadoOrden === PRODUCTION_STATES.EN_PROCESO) {
         for (const ingrediente of orden.Receta.RecetaIngrediente) {
-          const cantidadReservada = ingrediente.cantidad * orden.cantidad;
+          const cantidadReservada = calcularCantidadRequeridaMaterial(ingrediente, orden.cantidad);
 
           await tx.producto.update({
             where: { id: ingrediente.productoId },

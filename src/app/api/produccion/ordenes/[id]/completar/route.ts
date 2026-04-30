@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuthPost } from '@/lib/auth-middleware';
 import { prisma } from '@/lib/prisma';
 import { PRODUCTION_STATES } from '@/lib/constants/production';
+import { convertToBase } from '@/lib/utils/unit-converter';
 
 /**
  * @description Completa una orden de producción, incrementando el stock del producto terminado
@@ -57,7 +58,8 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
       let costoMateriales = 0;
       for (const ingrediente of orden.Receta.RecetaIngrediente) {
         const factorDesperdicio = 1 + (ingrediente.desperdicio ?? 0);
-        const cantidadUsada = ingrediente.cantidad * factorDesperdicio * orden.cantidad;
+        const cantidadBase = convertToBase(ingrediente.cantidad, ingrediente.unidadSimbolo);
+        const cantidadUsada = cantidadBase * factorDesperdicio * orden.cantidad;
         const producto = await tx.producto.findUnique({
           where: { id: ingrediente.productoId },
         });
@@ -122,7 +124,7 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
       });
 
       // 4. Registrar en contabilidad (ReconciliacionGasto) si hay costo
-      if (costoMateriales > 0 && body.cuentaId) {
+      if (costoMateriales > 0) {
         const periodo = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
         
         await tx.reconciliacionGasto.create({
