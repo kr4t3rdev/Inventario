@@ -70,31 +70,31 @@ export function ProductionDialogs({
   return (
     <>
       <Dialog open={recetaVer !== null} onOpenChange={(open) => { if (!open) onCloseView() }}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
+        <DialogContent className="max-w-4xl max-h-[95vh] flex flex-col">
+          <DialogHeader className="shrink-0">
             <DialogTitle>{recetaVer?.nombre}</DialogTitle>
             <DialogDescription>Detalle completo de la receta de producción</DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="grid gap-4 py-4 overflow-y-auto flex-1">
+            <div className="grid grid-cols-2 gap-4 text-sm shrink-0">
               <div><span className="font-medium">Rendimiento:</span> {recetaVer?.rendimiento} unidad(es)</div>
               <div><span className="font-medium">Producto asociado:</span> {productoReceta?.nombre || '—'}</div>
               <div><span className="font-medium">Instrucciones:</span> {recetaVer?.instrucciones || 'No especificado'}</div>
               <div><span className="font-medium">Tiempo de prep.:</span> {recetaVer?.tiempoPrep ? `${recetaVer.tiempoPrep} min` : 'No especificado'}</div>
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="text-sm font-medium mb-2">Ingredientes</p>
               {ingredientesReceta.length === 0 ? (
                   <p className="text-sm text-muted-foreground">Sin ingredientes definidos</p>
                 ) : (
-                  <div className="rounded-md border">
-                    <Table>
+                  <div className="rounded-md border overflow-x-auto">
+                    <Table className="w-full table-auto">
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Producto</TableHead>
-                          <TableHead>Cantidad</TableHead>
-                          <TableHead>Desperdicio</TableHead>
-                          <TableHead className="text-right">Costo estimado</TableHead>
+                          <TableHead className="w-[35%]">Producto</TableHead>
+                          <TableHead className="w-[20%]">Cantidad</TableHead>
+                          <TableHead className="w-[15%]">Desperdicio</TableHead>
+                          <TableHead className="text-right w-[30%]">Costo estimado</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -102,10 +102,10 @@ export function ProductionDialogs({
                           const prod = getProductoIngrediente(ing)
                           return (
                           <TableRow key={ing.productoId}>
-                          <TableCell>{prod?.nombre}</TableCell>
+                          <TableCell className="truncate max-w-0">{prod?.nombre}</TableCell>
                           <TableCell>{formatIngrediente(ing.cantidad, ing.unidadSimbolo, '').trim()}</TableCell>
                           <TableCell>{((ing.desperdicio ?? 0) * 100).toFixed(0)}%</TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="text-right whitespace-nowrap">
                             {formatCurrency((prod?.precioCosto ?? 0) * ing.cantidad * (1 + (ing.desperdicio ?? 0)))}
                           </TableCell>
                         </TableRow>

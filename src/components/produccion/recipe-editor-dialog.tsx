@@ -89,7 +89,7 @@ export function RecipeEditorDialog({
 
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => { if (!nextOpen) onClose() }}>
-      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
         <DialogHeader className="shrink-0">
           <DialogTitle>Nueva Receta de Producción</DialogTitle>
           <DialogDescription>Define una receta para producir productos del inventario</DialogDescription>
