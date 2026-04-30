@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { withAuthGet, withAuth } from '@/lib/auth-middleware';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import { calculateCostoUnitarioReceta } from '@/lib/utils/produccion';
 
 const updateRecetaSchema = z.object({
   nombre: z.string().min(1).max(160).optional(),
@@ -72,9 +73,38 @@ export const PATCH = withAuth(async (request: NextRequest, { params }: { params:
     const { id } = await params;
     const payload = updateRecetaSchema.parse(await request.json());
 
+    // Si se cambia el rendimiento, recalcular costoUnitario
+    let updateData: any = { ...payload };
+    if (payload.rendimiento !== undefined) {
+      const recetaActual = await prisma.receta.findUnique({
+        where: { recetaId: id },
+        include: {
+          Producto: { select: { precioCosto: true } },
+          RecetaIngrediente: {
+            include: { Producto: { select: { precioCosto: true } } },
+          },
+        },
+      });
+
+      if (recetaActual) {
+        const precioCostoProductoFinal = recetaActual.Producto?.precioCosto || 0;
+        const productosAgregados = recetaActual.RecetaIngrediente.map((ing) => ({
+          productoId: ing.productoId,
+          cantidad: ing.cantidad,
+          unidadSimbolo: ing.unidadSimbolo,
+          producto: { precioCosto: ing.Producto?.precioCosto || 0 },
+        }));
+        updateData.costoUnitario = calculateCostoUnitarioReceta(
+          precioCostoProductoFinal,
+          productosAgregados,
+          payload.rendimiento
+        );
+      }
+    }
+
     const receta = await prisma.receta.update({
       where: { recetaId: id },
-      data: payload,
+      data: updateData,
       include: {
         Producto: {
           select: {

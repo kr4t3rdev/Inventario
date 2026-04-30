@@ -993,7 +993,7 @@ export default function ProduccionPage() {
                           ) : null}
                         </div>
                         <div className="grid gap-2">
-                          <Label htmlFor="cantidad">Cantidad a Producir</Label>
+                          <Label htmlFor="cantidad">Cantidad de Lotes</Label>
                           <Input 
                             id="cantidad" 
                             type="number"
@@ -1001,6 +1001,18 @@ export default function ProduccionPage() {
                             value={cantidadOrden}
                             onChange={(e) => setCantidadOrden(parseInt(e.target.value) || 1)}
                           />
+                          {(() => {
+                            const recetaSeleccionada = recetasOperativas.find((r: any) => r.recetaId === selectedReceta)
+                            if (recetaSeleccionada?.rendimiento && cantidadOrden > 0) {
+                              return (
+                                <p className="text-xs text-muted-foreground">
+                                  Se producirán {cantidadOrden * recetaSeleccionada.rendimiento} unidad(es) de producto final
+                                  (rendimiento: {recetaSeleccionada.rendimiento} unid/lote)
+                                </p>
+                              )
+                            }
+                            return null
+                          })()}
                         </div>
                       </div>
                       <div className="flex justify-end gap-2">
