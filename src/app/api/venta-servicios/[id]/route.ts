@@ -65,6 +65,7 @@ export async function PUT(
       where: { ventaServicioId: id },
       data: {
         cantidad: data.cantidad,
+        costo: data.costo ?? 0,
         total: data.total,
         observaciones: data.observaciones,
         clienteId: data.clienteId

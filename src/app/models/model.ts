@@ -1424,6 +1424,7 @@ export interface VentaServicio {
   }
   reconciliaciones?: ReconciliacionServicio[]
   cantidad: number
+  costo: number
   total: number
   observaciones: string | null
   cliente: {

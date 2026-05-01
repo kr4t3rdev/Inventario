@@ -623,6 +623,7 @@ exports.Prisma.VentaServiciosScalarFieldEnum = {
   ventaServicioId: 'ventaServicioId',
   servicioId: 'servicioId',
   cantidad: 'cantidad',
+  costo: 'costo',
   total: 'total',
   observaciones: 'observaciones',
   reconciliado: 'reconciliado',

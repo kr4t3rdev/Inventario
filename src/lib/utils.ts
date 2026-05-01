@@ -8,7 +8,9 @@ export function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('es', {
     style: 'currency',
     currency: 'CUP',
-    currencyDisplay: 'code',
+    currencyDisplay: 'symbol',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(amount);
 }
 
@@ -16,6 +18,8 @@ export function formatCurrencyUsd(amount: number): string {
   return new Intl.NumberFormat('es', {
     style: 'currency',
     currency: 'USD',
-    currencyDisplay: 'code',
+    currencyDisplay: 'symbol',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
   }).format(amount);
 }

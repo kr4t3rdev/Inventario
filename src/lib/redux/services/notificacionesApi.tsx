@@ -1,6 +1,5 @@
 import { apiSlice } from "./apiSlice"
 import { Notification } from "../../../app/models/model"
-import { getAuthToken } from "@/lib/token"
 
 
 export interface ResumenNotificaciones {
@@ -21,12 +20,7 @@ export interface NotificacionesResponse {
 export const notificacionesApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
     getNotificaciones: builder.query<NotificacionesResponse, void>({
-      query: () => ({
-        url: "/notificaciones",
-        headers: {
-          Authorization: getAuthToken(),
-        },
-      }),
+      query: () => '/notificaciones',
       providesTags: ["Notificaciones"],
       // Para refrescar cada 30 segundos, usa pollingInterval al llamar al hook en el componente
       
@@ -44,9 +38,6 @@ export const notificacionesApi = apiSlice.injectEndpoints({
       query: (id) => ({
         url: "/notificaciones",
         method: "POST",
-        headers: {
-          Authorization: getAuthToken(),
-        },
         body: { id, leida: true },
       }),
       invalidatesTags: ["Notificaciones"],
@@ -55,9 +46,6 @@ export const notificacionesApi = apiSlice.injectEndpoints({
       query: ({ id, ...patch }) => ({
           url: `/notificaciones/${id}`,
           method: 'PATCH',
-          headers: {
-            Authorization: getAuthToken(),
-          },
           body: patch,
       }),
       invalidatesTags: ["Notificaciones"],
@@ -66,9 +54,6 @@ export const notificacionesApi = apiSlice.injectEndpoints({
       query: (id) => ({
         url: `/notificaciones/${id}`,
         method: "DELETE",
-        headers: {
-          Authorization: getAuthToken(),
-        },
       }),
       invalidatesTags: ["Notificaciones"],
     }),

@@ -702,15 +702,6 @@ export const contabilidadApi = apiSlice.injectEndpoints({
       }),
     }),
     
-    crearTransferencia: builder.mutation<TransferenciaBancaria, CreateTransferenciaBancariaRequest>({
-      query: (transferencia) => ({
-        url: "contabilidad/transferencias",
-        method: "POST",
-        body: transferencia,
-      }),
-      invalidatesTags: ["TransferenciasBancarias", "CuentasBancarias", "ReportesContabilidad"],
-    }),
-    
     createTransferenciaBancaria: builder.mutation<TransferenciaBancaria, CreateTransferenciaBancariaRequest>({
       query: (transferencia) => ({
         url: "contabilidad/transferencias",
@@ -1037,7 +1028,6 @@ export const {
   useGetTransferenciasBancariasQuery,
   useGetTransferenciaBancariaQuery,
   useValidarTransferenciaMutation,
-  useCrearTransferenciaMutation,
   useCreateTransferenciaBancariaMutation,
   useLazyDescargarComprobanteTransferenciaQuery,
   useCreateAjusteBancarioMutation,

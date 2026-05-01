@@ -13,9 +13,11 @@ import { toast } from "sonner"
 import { CreditCard, Plus, Minus, X, ShoppingCart } from "lucide-react"
 
 interface ServicioItem {
+  cartItemId: string
   servicioId: string
   nombre: string
   precio: number
+  costo: number
   descripcion: string
   cantidad: number
 }
@@ -37,18 +39,43 @@ export default function ServiciosCart({ cart, setCart, isOpen, onOpenChange }: S
   // Calcular total del carrito
   const cartTotal = cart.reduce((total, item) => total + item.precio * item.cantidad, 0)
 
+  // Calcular costo total del carrito
+  const cartCostoTotal = cart.reduce((total, item) => total + item.costo * item.cantidad, 0)
+
   // Remover servicio del carrito
-  const removeFromCart = (servicioId: string) => {
-    setCart(cart.filter(item => item.servicioId !== servicioId))
+  const removeFromCart = (cartItemId: string) => {
+    setCart(cart.filter(item => item.cartItemId !== cartItemId))
   }
 
   // Actualizar cantidad de servicio en carrito
-  const updateQuantity = (servicioId: string, newQuantity: number) => {
+  const updateQuantity = (cartItemId: string, newQuantity: number) => {
     if (newQuantity < 1) return
     
     setCart(cart.map(item => 
-      item.servicioId === servicioId 
+      item.cartItemId === cartItemId 
         ? { ...item, cantidad: newQuantity } 
+        : item
+    ))
+  }
+
+  // Actualizar precio de servicio en carrito
+  const updatePrice = (cartItemId: string, newPrice: number) => {
+    if (newPrice < 0) return
+    
+    setCart(cart.map(item => 
+      item.cartItemId === cartItemId 
+        ? { ...item, precio: newPrice } 
+        : item
+    ))
+  }
+
+  // Actualizar costo de servicio en carrito
+  const updateCosto = (cartItemId: string, newCosto: number) => {
+    if (newCosto < 0) return
+    
+    setCart(cart.map(item => 
+      item.cartItemId === cartItemId 
+        ? { ...item, costo: newCosto } 
         : item
     ))
   }
@@ -71,10 +98,10 @@ export default function ServiciosCart({ cart, setCart, isOpen, onOpenChange }: S
         await addVentaServicio({
           servicioId: item.servicioId,
           cantidad: item.cantidad,
-          puntoDeVentaId: "default", // Usar un punto de venta por defecto o permitir seleccionar
+          costo: item.costo,
           clienteId: selectedClienteId,
           observaciones,
-          total: item.precio * item.cantidad,
+          total: item.costo * item.cantidad,
         } as any).unwrap()
       }
 
@@ -117,49 +144,73 @@ export default function ServiciosCart({ cart, setCart, isOpen, onOpenChange }: S
             <div className="space-y-4">
               {/* Lista de productos en el carrito */}
               <div className="rounded-md border">
-                <div className="grid grid-cols-12 p-4 text-sm font-medium bg-muted/50">
-                  <div className="col-span-5">Servicio</div>
+                  <div className="grid grid-cols-12 p-4 text-sm font-medium bg-muted/50">
+                  <div className="col-span-3">Servicio</div>
                   <div className="col-span-2 text-center">Precio</div>
+                  <div className="col-span-2 text-center">Costo</div>
                   <div className="col-span-2 text-center">Cantidad</div>
                   <div className="col-span-2 text-center">Subtotal</div>
                   <div className="col-span-1 text-right">Acciones</div>
                 </div>
                 <Separator />
                 {cart.map((item) => (
-                  <div key={item.servicioId} className="grid grid-cols-12 p-4 items-center">
-                    <div className="col-span-5">
+                  <div key={item.cartItemId} className="grid grid-cols-12 p-4 items-center">
+                    <div className="col-span-3">
                       <div className="font-medium">{item.nombre}</div>
                       <div className="text-sm text-muted-foreground line-clamp-1">{item.descripcion}</div>
                     </div>
-                    <div className="col-span-2 text-center">{formatCurrency(item.precio)}</div>
-                    <div className="col-span-2 flex justify-center items-center space-x-2">
-                      {/* <Button
+                    <div className="col-span-2 flex justify-center">
+                      <div className="relative w-24">
+                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                        <Input
+                          type="number"
+                          min={0}
+                          value={item.precio}
+                          onChange={(e) => updatePrice(item.cartItemId, Number(e.target.value))}
+                          className="pl-6 h-8 text-center text-sm"
+                        />
+                      </div>
+                    </div>
+                    <div className="col-span-2 flex justify-center">
+                      <div className="relative w-24">
+                        <span className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                        <Input
+                          type="number"
+                          min={0}
+                          value={item.costo}
+                          onChange={(e) => updateCosto(item.cartItemId, Number(e.target.value))}
+                          className="pl-6 h-8 text-center text-sm"
+                        />
+                      </div>
+                    </div>
+                    <div className="col-span-2 flex justify-center items-center space-x-1">
+                      <Button
                         variant="outline"
                         size="icon"
-                        className="h-8 w-8"
-                        onClick={() => updateQuantity(item.servicioId, item.cantidad - 1)}
+                        className="h-7 w-7"
+                        onClick={() => updateQuantity(item.cartItemId, item.cantidad - 1)}
                         disabled={item.cantidad <= 1}
                       >
-                        <Minus className="h-4 w-4" />
-                      </Button> */}
-                      <span className="w-8 text-center font-medium">{item.cantidad}</span>
-                      {/* <Button
+                        <Minus className="h-3 w-3" />
+                      </Button>
+                      <span className="w-6 text-center font-medium text-sm">{item.cantidad}</span>
+                      <Button
                         variant="outline"
                         size="icon"
-                        className="h-8 w-8"
-                        onClick={() => updateQuantity(item.servicioId, item.cantidad + 1)}
+                        className="h-7 w-7"
+                        onClick={() => updateQuantity(item.cartItemId, item.cantidad + 1)}
                       >
-                        <Plus className="h-4 w-4" />
-                      </Button> */}
+                        <Plus className="h-3 w-3" />
+                      </Button>
                     </div>
-                    <div className="col-span-2 text-center font-medium">
+                    <div className="col-span-2 text-center font-medium text-sm">
                       {formatCurrency(item.precio * item.cantidad)}
                     </div>
                     <div className="col-span-1 text-right">
                       <Button
                         variant="ghost"
                         size="icon"
-                        onClick={() => removeFromCart(item.servicioId)}
+                        onClick={() => removeFromCart(item.cartItemId)}
                         className="text-destructive hover:text-destructive"
                       >
                         <X className="h-4 w-4" />
@@ -203,11 +254,20 @@ export default function ServiciosCart({ cart, setCart, isOpen, onOpenChange }: S
                 <h4 className="font-medium mb-3">Resumen de la Venta</h4>
                 <div className="space-y-2">
                   {cart.map((item) => (
-                    <div key={item.servicioId} className="flex justify-between text-sm">
+                    <div key={item.cartItemId} className="flex justify-between text-sm">
                       <span>{item.nombre} x{item.cantidad}</span>
                       <span>{formatCurrency(item.precio * item.cantidad)}</span>
                     </div>
                   ))}
+                  <Separator className="my-2" />
+                  <div className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">Costo Total</span>
+                    <span>{formatCurrency(cartCostoTotal)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm font-medium">
+                    <span className="text-muted-foreground">Margen</span>
+                    <span>{formatCurrency(cartTotal - cartCostoTotal)}</span>
+                  </div>
                   <Separator className="my-2" />
                   <div className="flex justify-between font-bold text-lg">
                     <span>Total</span>

@@ -22,6 +22,7 @@ const anticipoAllocationSchema = z.object({
 const ventaServicioLegacySchema = z.object({
   servicioId: z.string().min(1),
   cantidad: z.coerce.number().int().positive(),
+  costo: z.coerce.number().int().optional().default(0),
   total: z.coerce.number().int().positive(),
   observaciones: z.string().optional().nullable(),
   clienteId: z.string().optional().nullable(),
@@ -101,6 +102,7 @@ export const POST = withAuthPost(async (request: NextRequest) => {
             data: {
               servicioId: linea.servicioId!,
               cantidad: linea.cantidad,
+              costo: 0,
               total: linea.cantidad * linea.precioUnitario,
               observaciones: linea.observaciones ?? payload.observaciones ?? null,
               clienteId: payload.clienteId ?? null,
@@ -130,6 +132,7 @@ export const POST = withAuthPost(async (request: NextRequest) => {
         data: {
           servicioId: data.servicioId,
           cantidad: data.cantidad,
+          costo: data.costo ?? 0,
           total: data.total,
           observaciones: data.observaciones ?? null,
           clienteId: data.clienteId ?? null,

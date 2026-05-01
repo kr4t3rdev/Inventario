@@ -54,7 +54,6 @@ export const apiSlice = createApi({
   reducerPath: "api",
   baseQuery: safeBaseQuery,
   tagTypes: [
-    "Products",
     "Productos",
     "Categorias",
     "Unidades",
@@ -106,7 +105,6 @@ export const apiSlice = createApi({
     'UserMetrics',
     'CuentasPorCobrar',
     'CuentasPorPagar',
-    'Proveedores',
     'Ofertas',
     'EquiposReparacion',
     'OrdenesReparacion',

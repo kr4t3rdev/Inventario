@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useFieldArray, useForm } from 'react-hook-form'
+import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { z } from 'zod'
 import { sileo } from '@/lib/sileo-shim'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -108,7 +108,7 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
 
   const formaPagoSeleccionada = form.watch('formaPago')
   const proveedorSeleccionado = form.watch('proveedorId')
-  const items = form.watch('items')
+  const items = useWatch({ control: form.control, name: 'items' }) ?? []
 
   const productosCatalogo = useMemo<Producto[]>(
     () => (Array.isArray(products) ? products : []),
@@ -523,7 +523,18 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
                                 <FormItem>
                                   <FormLabel className='text-xs'>Cantidad</FormLabel>
                                   <FormControl>
-                                    <Input type='number' min={1} {...itemField} />
+                                    <Input
+                                      type='number'
+                                      min={1}
+                                      value={itemField.value}
+                                      onChange={(e) => {
+                                        const raw = e.target.value
+                                        itemField.onChange(raw === '' ? '' : e.target.valueAsNumber)
+                                      }}
+                                      onBlur={itemField.onBlur}
+                                      ref={itemField.ref}
+                                      name={itemField.name}
+                                    />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -537,7 +548,19 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
                                 <FormItem>
                                   <FormLabel className='text-xs'>Costo unitario</FormLabel>
                                   <FormControl>
-                                    <Input type='number' step='0.01' min={0} {...itemField} />
+                                    <Input
+                                      type='number'
+                                      step='0.01'
+                                      min={0}
+                                      value={itemField.value}
+                                      onChange={(e) => {
+                                        const raw = e.target.value
+                                        itemField.onChange(raw === '' ? '' : e.target.valueAsNumber)
+                                      }}
+                                      onBlur={itemField.onBlur}
+                                      ref={itemField.ref}
+                                      name={itemField.name}
+                                    />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>

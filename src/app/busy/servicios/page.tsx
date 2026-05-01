@@ -7,7 +7,7 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useDeleteServiciosMutation, useGetServiciosQuery } from '@/lib/redux/services/serviciosApi'
 import { ColumnDef } from '@tanstack/react-table'
-import { Pencil, Plus, Trash2, ShoppingCart, Search, Wrench, Package, CheckCircle, Truck } from 'lucide-react'
+import { Pencil, Plus, Trash2, ShoppingCart, Search, Package, CheckCircle, Truck } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
@@ -30,9 +30,11 @@ interface Servicio {
 }
 
 interface ServicioItem {
+  cartItemId: string
   servicioId: string
   nombre: string
   precio: number
+  costo: number
   descripcion: string
   cantidad: number
 }
@@ -128,14 +130,7 @@ const Servicio = () => {
   )
 
   const addToCart = (servicio: Servicio) => {
-    const existingItem = cart.find(item => item.servicioId === servicio.servicioId)
-    
-    if (existingItem) {
-      toast('Este servicio ya se encuentra en el carrito')
-      return
-    }
-    
-    setCart([...cart, { ...servicio, cantidad: 1 }])
+    setCart([...cart, { ...servicio, cartItemId: crypto.randomUUID(), costo: 0, cantidad: 1 }])
     toast.success(`${servicio.nombre} agregado al carrito`)
   }
 
@@ -229,13 +224,6 @@ const Servicio = () => {
                 >
                   <Link href='/busy/servicios/new'>
                     <Plus className='mr-2 h-4 w-4' /> Nuevo Servicio
-                  </Link>
-                </Button>
-              </motion.div>
-              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                <Button asChild variant='outline'>
-                  <Link href='/busy/reparaciones'>
-                    <Wrench className='mr-2 h-4 w-4' /> Reparaciones
                   </Link>
                 </Button>
               </motion.div>

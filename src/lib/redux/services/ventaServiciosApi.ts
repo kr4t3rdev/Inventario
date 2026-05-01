@@ -11,6 +11,7 @@ interface VentaServicio {
     moneda: string;
   };
   cantidad: number;
+  costo: number;
   total: number;
   observaciones?: string;
   cliente?: {
@@ -29,6 +30,7 @@ interface CreateVentaServicioRequest {
   servicioId?: string;
   clienteId?: string;
   cantidad?: number;
+  costo?: number;
   total?: number;
   observaciones?: string;
   anticipos?: AnticipoAllocation[];
@@ -59,7 +61,7 @@ export const ventaServiciosApi = apiSlice.injectEndpoints({
     }),
     
     getVentaServicioById: builder.query<VentaServicio, string>({
-      query: (id) => `/api/venta-servicios/${id}`,
+      query: (id) => `/venta-servicios/${id}`,
       providesTags: (result, error, id) => [{ type: 'VentaServicios' as const, id }]
     }),
     

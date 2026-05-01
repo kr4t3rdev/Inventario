@@ -1,6 +1,5 @@
 import { apiSlice } from "./apiSlice";
 import { Usuario, UserActivityLog, UserSession } from "../../../app/models/model";
-import { getAuthToken } from "@/lib/token";
 
 type MonthlyData = {
     year: number;
@@ -41,12 +40,7 @@ type UpdateUserPayload = {
 export const adminApi = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
         getUser: builder.query<Usuario[], void>({
-            query: () =>({
-                    url: '/admin/users',
-                    headers: {
-                        Authorization: getAuthToken(),
-                    },
-                }),
+            query: () => '/admin/users',
             providesTags: ['Admin']
         }),
 
@@ -54,9 +48,6 @@ export const adminApi = apiSlice.injectEndpoints({
             query:(user) => ({
                 url:'/admin/users',
                 method: 'POST',
-                headers: {
-                    Authorization: getAuthToken(),
-                },
                 body: user,
             }),
 
@@ -67,9 +58,6 @@ export const adminApi = apiSlice.injectEndpoints({
             query: ({ userId, ...patch }) => ({
                 url: `/admin/users/${userId}`,
                 method: 'PUT',
-                headers: {
-                    Authorization: getAuthToken(),
-                },
                 body: patch,
             }),
             invalidatesTags: (result, error, { userId }) => [{ type: "Admin", userId }],
@@ -79,9 +67,6 @@ export const adminApi = apiSlice.injectEndpoints({
             query: (userId) => ({
                 url: `/admin/users/${userId}`,
                 method: 'DELETE',
-                headers: {
-                 Authorization: getAuthToken(),
-                },
             }),
             invalidatesTags: ['Admin'],
         }),
@@ -89,9 +74,6 @@ export const adminApi = apiSlice.injectEndpoints({
         getActivityLogs: builder.query<UserActivityLog[], { userId?: string; limit?: number }>({
             query: ({ userId, limit }) => ({
                 url: '/admin/activity-logs',
-                headers: {
-                    Authorization: getAuthToken(),
-                },
                 params: userId ? { userId, limit } : { limit },
             }),
             providesTags: ['ActivityLogs'],
@@ -100,9 +82,6 @@ export const adminApi = apiSlice.injectEndpoints({
         getSessions: builder.query<UserSession[], { userId?: string }>({
             query: ({ userId }) => ({
                 url: '/admin/sessions',
-                headers: {
-                    Authorization: getAuthToken(),
-                },
                 params: userId ? { userId } : {},
             }),
             providesTags: ['Sessions'],
@@ -112,9 +91,6 @@ export const adminApi = apiSlice.injectEndpoints({
             query: (sessionId) => ({
                 url: `/admin/sessions?sessionId=${sessionId}`,
                 method: 'DELETE',
-                headers: {
-                    Authorization: getAuthToken(),
-                },
             }),
             invalidatesTags: ['Sessions'],
         }),
@@ -123,9 +99,6 @@ export const adminApi = apiSlice.injectEndpoints({
             query: ({ userId }) => ({
                 url: '/admin/users/unlock',
                 method: 'POST',
-                headers: {
-                    Authorization: getAuthToken(),
-                },
                 body: { userId },
             }),
             invalidatesTags: ['Admin', 'ActivityLogs'],
@@ -139,9 +112,6 @@ export const adminApi = apiSlice.injectEndpoints({
         }, { userId: string }>({
             query: ({ userId }) => ({
                 url: `/admin/users/${userId}/login-history`,
-                headers: {
-                    Authorization: getAuthToken(),
-                },
             }),
             providesTags: ['LoginHistory'],
         }),
@@ -150,9 +120,6 @@ export const adminApi = apiSlice.injectEndpoints({
             query: ({ userId, reason }) => ({
                 url: '/admin/users/lock',
                 method: 'POST',
-                headers: {
-                    Authorization: getAuthToken(),
-                },
                 body: { userId, reason },
             }),
             invalidatesTags: ['Admin', 'ActivityLogs', 'LoginHistory'],
@@ -164,9 +131,6 @@ export const adminApi = apiSlice.injectEndpoints({
         }, { days?: number }>({
             query: ({ days }) => ({
                 url: `/admin/users/expiring-soon${days ? `?days=${days}` : ''}`,
-                headers: {
-                    Authorization: getAuthToken(),
-                },
             }),
             providesTags: ['ExpiringUsers'],
         }),
@@ -186,9 +150,6 @@ export const adminApi = apiSlice.injectEndpoints({
             query: ({ days }) => ({
                 url: '/admin/users/expiring-soon',
                 method: 'POST',
-                headers: {
-                    Authorization: getAuthToken(),
-                },
                 body: { days: days || 7 },
             }),
             invalidatesTags: ['Notificaciones', 'ExpiringUsers'],
@@ -206,9 +167,6 @@ export const adminApi = apiSlice.injectEndpoints({
         }, { months: number }>({
             query: ({ months }) => ({
                 url: `/admin/users/user-metrics?months=${months}`,
-                headers: {
-                    Authorization: getAuthToken(),
-                },
             }),
             providesTags: ['UserMetrics'],
         }),

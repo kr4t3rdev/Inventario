@@ -1,16 +1,10 @@
 import { apiSlice } from "./apiSlice";
 import { Usuario } from "../../../app/models/model";
-import { getAuthToken } from "@/lib/token";
 
 export const profileApi = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
         getProfile: builder.query<Usuario[], void>({
-            query: () => ({
-                url: '/profile',
-                headers: {
-                    Authorization: getAuthToken()
-                }
-            }),
+            query: () => '/profile',
             providesTags: ['Profile']
         }),
          
@@ -18,9 +12,6 @@ export const profileApi = apiSlice.injectEndpoints({
             query: ({ ...patch }) => ({
                 url: '/profile',
                 method: 'PUT',
-                headers: {
-                    Authorization: getAuthToken(),
-                },
                 body: patch,
             }),
             invalidatesTags: ['Profile'],

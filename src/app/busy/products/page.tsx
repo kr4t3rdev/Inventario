@@ -35,6 +35,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { motion, AnimatePresence } from "framer-motion"
+import { getAuthToken } from "@/lib/token"
 
 // Lazy load heavy components
 const EnhancedDataTable = dynamic(() => import("@/components/productos/enhanced-data-table").then(mod => ({ default: mod.EnhancedDataTable })), {
@@ -93,6 +94,18 @@ export default function ProductosPage() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null)
   const [showZeroStock, setShowZeroStock] = useState(false)
+  const [usaEan13, setUsaEan13] = useState(false)
+
+  useEffect(() => {
+    const token = getAuthToken()
+    fetch('/api/mi-empresa', {
+      headers: token ? { Authorization: token } : undefined,
+      cache: 'no-store',
+    })
+      .then((r) => r.json())
+      .then((data) => setUsaEan13(data?.usaCodigoEan13 ?? false))
+      .catch(() => {})
+  }, [])
 
   const { data: productos, isLoading } = useGetProductosQuery()
   const { data: almacenes } = useGetAlmacenesQuery()
@@ -229,14 +242,14 @@ export default function ProductosPage() {
       ),
     },
     {
-      accessorKey: "codigoInterno",
+      accessorKey: usaEan13 ? "codigoNegocio" : "codigoInterno",
       header: ({ column }) => (
         <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Código interno
+          {usaEan13 ? "Código EAN-13" : "Código interno"}
           <ArrowUpDown className="text-center h-4 w-4" />
         </Button>
       ),
-      cell: ({ row }) => <div className="text-center font-medium">{row.original.codigoInterno || "-"}</div>,
+      cell: ({ row }) => <div className="text-center font-medium">{usaEan13 ? (row.original.codigoNegocio || "-") : (row.original.codigoInterno || "-")}</div>,
     },
     {
       accessorKey: "descripcion",

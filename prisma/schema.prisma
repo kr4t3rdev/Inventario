@@ -683,6 +683,7 @@ model VentaServicios {
   ventaServicioId  String                   @id @default(cuid())
   servicioId       String
   cantidad         Int
+  costo            Int                      @default(0)
   total            Int
   observaciones    String?
   reconciliado     Boolean?

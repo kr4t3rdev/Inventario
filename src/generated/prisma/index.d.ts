@@ -54044,11 +54044,13 @@ export namespace Prisma {
 
   export type VentaServiciosAvgAggregateOutputType = {
     cantidad: number | null
+    costo: number | null
     total: number | null
   }
 
   export type VentaServiciosSumAggregateOutputType = {
     cantidad: number | null
+    costo: number | null
     total: number | null
   }
 
@@ -54056,6 +54058,7 @@ export namespace Prisma {
     ventaServicioId: string | null
     servicioId: string | null
     cantidad: number | null
+    costo: number | null
     total: number | null
     observaciones: string | null
     reconciliado: boolean | null
@@ -54068,6 +54071,7 @@ export namespace Prisma {
     ventaServicioId: string | null
     servicioId: string | null
     cantidad: number | null
+    costo: number | null
     total: number | null
     observaciones: string | null
     reconciliado: boolean | null
@@ -54080,6 +54084,7 @@ export namespace Prisma {
     ventaServicioId: number
     servicioId: number
     cantidad: number
+    costo: number
     total: number
     observaciones: number
     reconciliado: number
@@ -54092,11 +54097,13 @@ export namespace Prisma {
 
   export type VentaServiciosAvgAggregateInputType = {
     cantidad?: true
+    costo?: true
     total?: true
   }
 
   export type VentaServiciosSumAggregateInputType = {
     cantidad?: true
+    costo?: true
     total?: true
   }
 
@@ -54104,6 +54111,7 @@ export namespace Prisma {
     ventaServicioId?: true
     servicioId?: true
     cantidad?: true
+    costo?: true
     total?: true
     observaciones?: true
     reconciliado?: true
@@ -54116,6 +54124,7 @@ export namespace Prisma {
     ventaServicioId?: true
     servicioId?: true
     cantidad?: true
+    costo?: true
     total?: true
     observaciones?: true
     reconciliado?: true
@@ -54128,6 +54137,7 @@ export namespace Prisma {
     ventaServicioId?: true
     servicioId?: true
     cantidad?: true
+    costo?: true
     total?: true
     observaciones?: true
     reconciliado?: true
@@ -54227,6 +54237,7 @@ export namespace Prisma {
     ventaServicioId: string
     servicioId: string
     cantidad: number
+    costo: number
     total: number
     observaciones: string | null
     reconciliado: boolean | null
@@ -54258,6 +54269,7 @@ export namespace Prisma {
     ventaServicioId?: boolean
     servicioId?: boolean
     cantidad?: boolean
+    costo?: boolean
     total?: boolean
     observaciones?: boolean
     reconciliado?: boolean
@@ -54274,6 +54286,7 @@ export namespace Prisma {
     ventaServicioId?: boolean
     servicioId?: boolean
     cantidad?: boolean
+    costo?: boolean
     total?: boolean
     observaciones?: boolean
     reconciliado?: boolean
@@ -54288,6 +54301,7 @@ export namespace Prisma {
     ventaServicioId?: boolean
     servicioId?: boolean
     cantidad?: boolean
+    costo?: boolean
     total?: boolean
     observaciones?: boolean
     reconciliado?: boolean
@@ -54302,6 +54316,7 @@ export namespace Prisma {
     ventaServicioId?: boolean
     servicioId?: boolean
     cantidad?: boolean
+    costo?: boolean
     total?: boolean
     observaciones?: boolean
     reconciliado?: boolean
@@ -54310,7 +54325,7 @@ export namespace Prisma {
     updatedAt?: boolean
   }
 
-  export type VentaServiciosOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"ventaServicioId" | "servicioId" | "cantidad" | "total" | "observaciones" | "reconciliado" | "clienteId" | "createdAt" | "updatedAt", ExtArgs["result"]["ventaServicios"]>
+  export type VentaServiciosOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"ventaServicioId" | "servicioId" | "cantidad" | "costo" | "total" | "observaciones" | "reconciliado" | "clienteId" | "createdAt" | "updatedAt", ExtArgs["result"]["ventaServicios"]>
   export type VentaServiciosInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     reconciliaciones?: boolean | VentaServicios$reconciliacionesArgs<ExtArgs>
     cliente?: boolean | VentaServicios$clienteArgs<ExtArgs>
@@ -54337,6 +54352,7 @@ export namespace Prisma {
       ventaServicioId: string
       servicioId: string
       cantidad: number
+      costo: number
       total: number
       observaciones: string | null
       reconciliado: boolean | null
@@ -54772,6 +54788,7 @@ export namespace Prisma {
     readonly ventaServicioId: FieldRef<"VentaServicios", 'String'>
     readonly servicioId: FieldRef<"VentaServicios", 'String'>
     readonly cantidad: FieldRef<"VentaServicios", 'Int'>
+    readonly costo: FieldRef<"VentaServicios", 'Int'>
     readonly total: FieldRef<"VentaServicios", 'Int'>
     readonly observaciones: FieldRef<"VentaServicios", 'String'>
     readonly reconciliado: FieldRef<"VentaServicios", 'Boolean'>
@@ -123160,6 +123177,7 @@ export namespace Prisma {
     ventaServicioId: 'ventaServicioId',
     servicioId: 'servicioId',
     cantidad: 'cantidad',
+    costo: 'costo',
     total: 'total',
     observaciones: 'observaciones',
     reconciliado: 'reconciliado',
@@ -127877,6 +127895,7 @@ export namespace Prisma {
     ventaServicioId?: StringFilter<"VentaServicios"> | string
     servicioId?: StringFilter<"VentaServicios"> | string
     cantidad?: IntFilter<"VentaServicios"> | number
+    costo?: IntFilter<"VentaServicios"> | number
     total?: IntFilter<"VentaServicios"> | number
     observaciones?: StringNullableFilter<"VentaServicios"> | string | null
     reconciliado?: BoolNullableFilter<"VentaServicios"> | boolean | null
@@ -127892,6 +127911,7 @@ export namespace Prisma {
     ventaServicioId?: SortOrder
     servicioId?: SortOrder
     cantidad?: SortOrder
+    costo?: SortOrder
     total?: SortOrder
     observaciones?: SortOrderInput | SortOrder
     reconciliado?: SortOrderInput | SortOrder
@@ -127910,6 +127930,7 @@ export namespace Prisma {
     NOT?: VentaServiciosWhereInput | VentaServiciosWhereInput[]
     servicioId?: StringFilter<"VentaServicios"> | string
     cantidad?: IntFilter<"VentaServicios"> | number
+    costo?: IntFilter<"VentaServicios"> | number
     total?: IntFilter<"VentaServicios"> | number
     observaciones?: StringNullableFilter<"VentaServicios"> | string | null
     reconciliado?: BoolNullableFilter<"VentaServicios"> | boolean | null
@@ -127925,6 +127946,7 @@ export namespace Prisma {
     ventaServicioId?: SortOrder
     servicioId?: SortOrder
     cantidad?: SortOrder
+    costo?: SortOrder
     total?: SortOrder
     observaciones?: SortOrderInput | SortOrder
     reconciliado?: SortOrderInput | SortOrder
@@ -127945,6 +127967,7 @@ export namespace Prisma {
     ventaServicioId?: StringWithAggregatesFilter<"VentaServicios"> | string
     servicioId?: StringWithAggregatesFilter<"VentaServicios"> | string
     cantidad?: IntWithAggregatesFilter<"VentaServicios"> | number
+    costo?: IntWithAggregatesFilter<"VentaServicios"> | number
     total?: IntWithAggregatesFilter<"VentaServicios"> | number
     observaciones?: StringNullableWithAggregatesFilter<"VentaServicios"> | string | null
     reconciliado?: BoolNullableWithAggregatesFilter<"VentaServicios"> | boolean | null
@@ -136879,6 +136902,7 @@ export namespace Prisma {
   export type VentaServiciosCreateInput = {
     ventaServicioId?: string
     cantidad: number
+    costo?: number
     total: number
     observaciones?: string | null
     reconciliado?: boolean | null
@@ -136893,6 +136917,7 @@ export namespace Prisma {
     ventaServicioId?: string
     servicioId: string
     cantidad: number
+    costo?: number
     total: number
     observaciones?: string | null
     reconciliado?: boolean | null
@@ -136905,6 +136930,7 @@ export namespace Prisma {
   export type VentaServiciosUpdateInput = {
     ventaServicioId?: StringFieldUpdateOperationsInput | string
     cantidad?: IntFieldUpdateOperationsInput | number
+    costo?: IntFieldUpdateOperationsInput | number
     total?: IntFieldUpdateOperationsInput | number
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     reconciliado?: NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -136919,6 +136945,7 @@ export namespace Prisma {
     ventaServicioId?: StringFieldUpdateOperationsInput | string
     servicioId?: StringFieldUpdateOperationsInput | string
     cantidad?: IntFieldUpdateOperationsInput | number
+    costo?: IntFieldUpdateOperationsInput | number
     total?: IntFieldUpdateOperationsInput | number
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     reconciliado?: NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -136932,6 +136959,7 @@ export namespace Prisma {
     ventaServicioId?: string
     servicioId: string
     cantidad: number
+    costo?: number
     total: number
     observaciones?: string | null
     reconciliado?: boolean | null
@@ -136943,6 +136971,7 @@ export namespace Prisma {
   export type VentaServiciosUpdateManyMutationInput = {
     ventaServicioId?: StringFieldUpdateOperationsInput | string
     cantidad?: IntFieldUpdateOperationsInput | number
+    costo?: IntFieldUpdateOperationsInput | number
     total?: IntFieldUpdateOperationsInput | number
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     reconciliado?: NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -136954,6 +136983,7 @@ export namespace Prisma {
     ventaServicioId?: StringFieldUpdateOperationsInput | string
     servicioId?: StringFieldUpdateOperationsInput | string
     cantidad?: IntFieldUpdateOperationsInput | number
+    costo?: IntFieldUpdateOperationsInput | number
     total?: IntFieldUpdateOperationsInput | number
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     reconciliado?: NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -145377,6 +145407,7 @@ export namespace Prisma {
     ventaServicioId?: SortOrder
     servicioId?: SortOrder
     cantidad?: SortOrder
+    costo?: SortOrder
     total?: SortOrder
     observaciones?: SortOrder
     reconciliado?: SortOrder
@@ -145387,6 +145418,7 @@ export namespace Prisma {
 
   export type VentaServiciosAvgOrderByAggregateInput = {
     cantidad?: SortOrder
+    costo?: SortOrder
     total?: SortOrder
   }
 
@@ -145394,6 +145426,7 @@ export namespace Prisma {
     ventaServicioId?: SortOrder
     servicioId?: SortOrder
     cantidad?: SortOrder
+    costo?: SortOrder
     total?: SortOrder
     observaciones?: SortOrder
     reconciliado?: SortOrder
@@ -145406,6 +145439,7 @@ export namespace Prisma {
     ventaServicioId?: SortOrder
     servicioId?: SortOrder
     cantidad?: SortOrder
+    costo?: SortOrder
     total?: SortOrder
     observaciones?: SortOrder
     reconciliado?: SortOrder
@@ -145416,6 +145450,7 @@ export namespace Prisma {
 
   export type VentaServiciosSumOrderByAggregateInput = {
     cantidad?: SortOrder
+    costo?: SortOrder
     total?: SortOrder
   }
 
@@ -159802,6 +159837,7 @@ export namespace Prisma {
   export type VentaServiciosCreateWithoutClienteInput = {
     ventaServicioId?: string
     cantidad: number
+    costo?: number
     total: number
     observaciones?: string | null
     reconciliado?: boolean | null
@@ -159815,6 +159851,7 @@ export namespace Prisma {
     ventaServicioId?: string
     servicioId: string
     cantidad: number
+    costo?: number
     total: number
     observaciones?: string | null
     reconciliado?: boolean | null
@@ -160150,6 +160187,7 @@ export namespace Prisma {
     ventaServicioId?: StringFilter<"VentaServicios"> | string
     servicioId?: StringFilter<"VentaServicios"> | string
     cantidad?: IntFilter<"VentaServicios"> | number
+    costo?: IntFilter<"VentaServicios"> | number
     total?: IntFilter<"VentaServicios"> | number
     observaciones?: StringNullableFilter<"VentaServicios"> | string | null
     reconciliado?: BoolNullableFilter<"VentaServicios"> | boolean | null
@@ -169951,6 +169989,7 @@ export namespace Prisma {
   export type VentaServiciosCreateWithoutServicioInput = {
     ventaServicioId?: string
     cantidad: number
+    costo?: number
     total: number
     observaciones?: string | null
     reconciliado?: boolean | null
@@ -169963,6 +170002,7 @@ export namespace Prisma {
   export type VentaServiciosUncheckedCreateWithoutServicioInput = {
     ventaServicioId?: string
     cantidad: number
+    costo?: number
     total: number
     observaciones?: string | null
     reconciliado?: boolean | null
@@ -172836,6 +172876,7 @@ export namespace Prisma {
   export type VentaServiciosCreateWithoutReconciliacionesInput = {
     ventaServicioId?: string
     cantidad: number
+    costo?: number
     total: number
     observaciones?: string | null
     reconciliado?: boolean | null
@@ -172849,6 +172890,7 @@ export namespace Prisma {
     ventaServicioId?: string
     servicioId: string
     cantidad: number
+    costo?: number
     total: number
     observaciones?: string | null
     reconciliado?: boolean | null
@@ -172966,6 +173008,7 @@ export namespace Prisma {
   export type VentaServiciosUpdateWithoutReconciliacionesInput = {
     ventaServicioId?: StringFieldUpdateOperationsInput | string
     cantidad?: IntFieldUpdateOperationsInput | number
+    costo?: IntFieldUpdateOperationsInput | number
     total?: IntFieldUpdateOperationsInput | number
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     reconciliado?: NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -172979,6 +173022,7 @@ export namespace Prisma {
     ventaServicioId?: StringFieldUpdateOperationsInput | string
     servicioId?: StringFieldUpdateOperationsInput | string
     cantidad?: IntFieldUpdateOperationsInput | number
+    costo?: IntFieldUpdateOperationsInput | number
     total?: IntFieldUpdateOperationsInput | number
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     reconciliado?: NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -184773,6 +184817,7 @@ export namespace Prisma {
     ventaServicioId?: string
     servicioId: string
     cantidad: number
+    costo?: number
     total: number
     observaciones?: string | null
     reconciliado?: boolean | null
@@ -185263,6 +185308,7 @@ export namespace Prisma {
   export type VentaServiciosUpdateWithoutClienteInput = {
     ventaServicioId?: StringFieldUpdateOperationsInput | string
     cantidad?: IntFieldUpdateOperationsInput | number
+    costo?: IntFieldUpdateOperationsInput | number
     total?: IntFieldUpdateOperationsInput | number
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     reconciliado?: NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -185276,6 +185322,7 @@ export namespace Prisma {
     ventaServicioId?: StringFieldUpdateOperationsInput | string
     servicioId?: StringFieldUpdateOperationsInput | string
     cantidad?: IntFieldUpdateOperationsInput | number
+    costo?: IntFieldUpdateOperationsInput | number
     total?: IntFieldUpdateOperationsInput | number
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     reconciliado?: NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -185288,6 +185335,7 @@ export namespace Prisma {
     ventaServicioId?: StringFieldUpdateOperationsInput | string
     servicioId?: StringFieldUpdateOperationsInput | string
     cantidad?: IntFieldUpdateOperationsInput | number
+    costo?: IntFieldUpdateOperationsInput | number
     total?: IntFieldUpdateOperationsInput | number
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     reconciliado?: NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -188704,6 +188752,7 @@ export namespace Prisma {
   export type VentaServiciosCreateManyServicioInput = {
     ventaServicioId?: string
     cantidad: number
+    costo?: number
     total: number
     observaciones?: string | null
     reconciliado?: boolean | null
@@ -188758,6 +188807,7 @@ export namespace Prisma {
   export type VentaServiciosUpdateWithoutServicioInput = {
     ventaServicioId?: StringFieldUpdateOperationsInput | string
     cantidad?: IntFieldUpdateOperationsInput | number
+    costo?: IntFieldUpdateOperationsInput | number
     total?: IntFieldUpdateOperationsInput | number
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     reconciliado?: NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -188770,6 +188820,7 @@ export namespace Prisma {
   export type VentaServiciosUncheckedUpdateWithoutServicioInput = {
     ventaServicioId?: StringFieldUpdateOperationsInput | string
     cantidad?: IntFieldUpdateOperationsInput | number
+    costo?: IntFieldUpdateOperationsInput | number
     total?: IntFieldUpdateOperationsInput | number
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     reconciliado?: NullableBoolFieldUpdateOperationsInput | boolean | null
@@ -188782,6 +188833,7 @@ export namespace Prisma {
   export type VentaServiciosUncheckedUpdateManyWithoutServicioInput = {
     ventaServicioId?: StringFieldUpdateOperationsInput | string
     cantidad?: IntFieldUpdateOperationsInput | number
+    costo?: IntFieldUpdateOperationsInput | number
     total?: IntFieldUpdateOperationsInput | number
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     reconciliado?: NullableBoolFieldUpdateOperationsInput | boolean | null

@@ -9,7 +9,7 @@ export const ClientesApi = apiSlice.injectEndpoints({
         }),
         getCliente: builder.query<Cliente, string>({
             query: (id) => `/cliente/${id}`,
-            providesTags: (result, error, id) => [{ type: "Almacenes", id }],
+            providesTags: (result, error, id) => [{ type: "Clientes", id }],
         }),
         addCliente: builder.mutation<Cliente, Omit<Cliente, "clienteId" | "createdAt" | "updatedAt">>({
             query: (cliente) => ({
