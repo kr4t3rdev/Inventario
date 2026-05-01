@@ -3,6 +3,7 @@ import { withAuthPost } from '@/lib/auth-middleware';
 import { prisma } from '@/lib/prisma';
 import { PRODUCTION_STATES } from '@/lib/constants/production';
 import { calcularCantidadRequeridaMaterial } from '@/lib/utils/produccion';
+import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 
 /**
  * @description Cancela una orden de producción, liberando los materiales reservados.
@@ -22,7 +23,11 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
         include: {
           Receta: {
             include: {
-              RecetaIngrediente: true,
+              RecetaIngrediente: {
+                include: {
+                  Producto: { select: { id: true, almacenId: true } },
+                },
+              },
             },
           },
         },
@@ -49,6 +54,16 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
               },
             },
           });
+
+          if (ingrediente.Producto?.almacenId) {
+            await upsertStockUbicacion(tx, {
+              productoId: ingrediente.productoId,
+              tipoUbicacion: 'almacen',
+              ubicacionId: ingrediente.Producto.almacenId,
+              modo: 'increment',
+              delta: cantidadReservada,
+            });
+          }
         }
       }
 

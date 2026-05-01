@@ -161,7 +161,7 @@ export const produccionApi = apiSlice.injectEndpoints({
         method: 'POST',
         body,
       }),
-      invalidatesTags: ['OrdenesProduccion', 'Productos'],
+      invalidatesTags: ['OrdenesProduccion', 'Productos', 'StockUbicacion'],
     }),
 
     /**
@@ -173,7 +173,7 @@ export const produccionApi = apiSlice.injectEndpoints({
         method: 'POST',
         body,
       }),
-      invalidatesTags: ['OrdenesProduccion', 'Productos'],
+      invalidatesTags: ['OrdenesProduccion', 'Productos', 'StockUbicacion'],
     }),
 
     /**
@@ -185,7 +185,7 @@ export const produccionApi = apiSlice.injectEndpoints({
         method: 'POST',
         body,
       }),
-      invalidatesTags: ['OrdenesProduccion', 'Productos'],
+      invalidatesTags: ['OrdenesProduccion', 'Productos', 'StockUbicacion'],
     }),
 
     // ==================== VALES DE SALIDA ====================

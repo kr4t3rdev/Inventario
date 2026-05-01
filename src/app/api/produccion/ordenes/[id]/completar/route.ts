@@ -3,6 +3,7 @@ import { withAuthPost } from '@/lib/auth-middleware';
 import { prisma } from '@/lib/prisma';
 import { PRODUCTION_STATES } from '@/lib/constants/production';
 import { convertToBase } from '@/lib/utils/unit-converter';
+import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 
 /**
  * @description Completa una orden de producción, incrementando el stock del producto terminado
@@ -49,6 +50,7 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
 
       const productoFinal = await tx.producto.findUnique({
         where: { id: productoId },
+        select: { id: true, almacenId: true, stock: true },
       });
 
       if (!productoFinal) {
@@ -69,14 +71,24 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
       }
 
       // 1. Incrementar stock del producto final
+      const stockIncrementado = orden.cantidad * orden.Receta.rendimiento;
       await tx.producto.update({
         where: { id: productoId },
         data: {
-          stock: {
-            increment: orden.cantidad * orden.Receta.rendimiento,
-          },
+          stock: { increment: stockIncrementado },
         },
       });
+
+      // 1b. Sincronizar StockUbicacion para producto final
+      if (productoFinal.almacenId) {
+        await upsertStockUbicacion(tx, {
+          productoId,
+          tipoUbicacion: 'almacen',
+          ubicacionId: productoFinal.almacenId,
+          modo: 'increment',
+          delta: stockIncrementado,
+        });
+      }
 
       // 2. Actualizar estado de la orden con los costos
       const orden_updated = await tx.ordenProduccion.update({

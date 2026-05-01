@@ -3,6 +3,7 @@ import { withAuthPost } from '@/lib/auth-middleware';
 import { prisma } from '@/lib/prisma';
 import { PRODUCTION_STATES } from '@/lib/constants/production';
 import { calcularCantidadRequeridaMaterial, validarDisponibilidadMateriales } from '@/lib/utils/produccion';
+import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 
 /**
  * @description Aprueba una orden de producción, reservando los materiales del inventario.
@@ -40,6 +41,7 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
       for (const ingrediente of orden.Receta.RecetaIngrediente) {
         const producto = await tx.producto.findUnique({
           where: { id: ingrediente.productoId },
+          select: { id: true, nombre: true, precioCosto: true, stock: true, almacenId: true },
         });
 
         ingredientesConStock.push({
@@ -52,6 +54,7 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
                 nombre: producto.nombre,
                 precioCosto: producto.precioCosto,
                 stock: producto.stock,
+                almacenId: producto.almacenId,
               }
             : undefined,
         });
@@ -77,6 +80,16 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
             },
           },
         });
+
+        if (ingrediente.producto?.almacenId) {
+          await upsertStockUbicacion(tx, {
+            productoId: ingrediente.productoId,
+            tipoUbicacion: 'almacen',
+            ubicacionId: ingrediente.producto.almacenId,
+            modo: 'increment',
+            delta: -cantidadRequerida,
+          });
+        }
       }
 
       const ordenActualizada = await tx.ordenProduccion.update({
