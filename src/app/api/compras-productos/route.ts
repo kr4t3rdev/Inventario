@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import { prisma } from '@/lib/prisma'
-import { withAuthGet, withAuthPost } from '@/lib/auth-middleware'
+import { withAuthGet, withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware'
+import { requireTenant } from '@/lib/services/tenant-scope'
 import { calcularPrecioCostoCompra } from '@/lib/inventory-cost-utils'
 import { applyPagoGastoWorkflow } from '@/lib/services/pago-gastos-workflow'
 import { applyAnticipoAllocations, isAnticipoWorkflowError } from '@/lib/services/anticipos-workflow'
@@ -71,8 +72,9 @@ const createSchema = z.object({
  * @param {NextRequest} request - Request de Next.js
  * @returns {Promise<NextResponse>} Lista de compras de productos
  */
-export const GET = withAuthGet(async (request: NextRequest, _context: any, _user: any) => {
+export const GET = withAuthGet(async (request: NextRequest, _context: any, user: AuthenticatedUser) => {
   try {
+    const tenantId = requireTenant(user);
     const { searchParams } = new URL(request.url)
     const params = querySchema.parse({
       search: searchParams.get('search') || undefined,
@@ -88,7 +90,7 @@ export const GET = withAuthGet(async (request: NextRequest, _context: any, _user
       limit: searchParams.get('limit') || undefined,
     })
 
-    const whereClause: Record<string, any> = { deletedAt: null }
+    const whereClause: Record<string, any> = { tenantId, deletedAt: null }
 
     if (params.tipoOperacion) {
       whereClause.tipoOperacion = params.tipoOperacion

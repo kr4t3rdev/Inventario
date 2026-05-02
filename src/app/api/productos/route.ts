@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { withAuthGet, withAuthPost } from '@/lib/auth-middleware';
+import { withAuthGet, withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware';
+import { requireTenant } from '@/lib/services/tenant-scope';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import {
   FindNextAvailableSurtido,
@@ -224,14 +225,15 @@ async function ensureBusinessCodeIsUnique(
   }
 }
 
-export const GET = withAuthGet(async (request: NextRequest) => {
+export const GET = withAuthGet(async (request: NextRequest, _context: unknown, user: AuthenticatedUser) => {
   try {
+    const tenantId = requireTenant(user);
     const { searchParams } = new URL(request.url);
     const search = searchParams.get('search');
     const categoryId = searchParams.get('categoryId');
     const subcategoryId = searchParams.get('subcategoryId');
 
-    const whereClause: Record<string, unknown> = {};
+    const whereClause: Record<string, unknown> = { tenantId };
     const andConditions: Record<string, unknown>[] = [];
 
     if (search) {

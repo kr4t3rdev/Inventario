@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
-import { authenticateUser } from "@/lib/auth-middleware"
+import { authenticateUser, type AuthenticatedUser } from "@/lib/auth-middleware"
+import { requireTenant } from "@/lib/services/tenant-scope"
 import { z } from "zod"
 
 const gastosDESchema = z.object({
@@ -18,13 +19,15 @@ export async function GET(request: NextRequest) {
   try {
     const authResult = await authenticateUser(request)
     if ('status' in authResult) return authResult as Response
+    const user = authResult.user as AuthenticatedUser
+    const tenantId = requireTenant(user)
 
     const { searchParams } = new URL(request.url)
     const periodo = searchParams.get("periodo")
     const conceptoId = searchParams.get("conceptoId")
     const elementoId = searchParams.get("elementoId")
 
-    const whereClause: any = {}
+    const whereClause: any = { tenantId }
     if (periodo) whereClause.periodo = periodo
     if (conceptoId) whereClause.conceptoId = conceptoId
     if (elementoId) whereClause.elementoId = elementoId

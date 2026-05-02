@@ -1,34 +1,69 @@
 import bcrypt from 'bcryptjs';
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { withAuthGet, withAuthPost } from '@/lib/auth-middleware';
+import { withAuthGet, withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware';
 import { createUserBodySchema } from '@/lib/admin/schemas';
 import { sendNewUserNotification } from '@/lib/email';
-import { isAdminRole } from '@/lib/auth/roles';
+import { isAdminRole, platformRoleToTenantRole, isTenantAdminRole } from '@/lib/auth/roles';
+import { requireTenant, validateTenantLimit } from '@/lib/services/tenant-scope';
 import { prisma } from '@/lib/prisma';
 
-export const GET = withAuthGet(async (_request: NextRequest, _context: unknown, user: unknown) => {
+/**
+ * @description GET /api/admin/users - Lista usuarios del tenant autenticado.
+ * Filtra por membresías activas en el tenant del usuario.
+ */
+export const GET = withAuthGet(async (_request: NextRequest, _context: unknown, user: AuthenticatedUser) => {
   try {
-    const userRole = (user as { role?: string })?.role;
-    if (!isAdminRole(userRole)) {
+    const tenantId = requireTenant(user);
+
+    if (!isTenantAdminRole(user.tenantRole)) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
-    const users = await prisma.user.findMany({
+    const memberships = await prisma.tenantMembership.findMany({
+      where: { tenantId, isActive: true },
+      include: {
+        user: {
+          select: {
+            userId: true,
+            name: true,
+            email: true,
+            role: true,
+            isActive: true,
+            createdAt: true,
+            updatedAt: true,
+            expiresAt: true,
+            lastModifiedBy: true,
+          },
+        },
+      },
       orderBy: { createdAt: 'desc' },
     });
 
+    // Devolver usuarios con su tenantRole incluido
+    const users = memberships.map((m) => ({
+      ...m.user,
+      tenantRole: m.tenantRole,
+      membershipId: m.membershipId,
+    }));
+
     return NextResponse.json(users);
   } catch (error) {
-    console.error('Error obteniendo users:', error);
-    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
+    console.error('Error obteniendo users del tenant:', error);
+    const message = error instanceof Error ? error.message : 'Error interno del servidor';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 });
 
-export const POST = withAuthPost(async (request: NextRequest, _context: unknown, user: unknown) => {
+/**
+ * @description POST /api/admin/users - Crea usuario dentro del tenant autenticado.
+ * Valida límite de usuarios del plan antes de crear.
+ */
+export const POST = withAuthPost(async (request: NextRequest, _context: unknown, user: AuthenticatedUser) => {
   try {
-    const authUser = user as { role?: string; userId?: string; email?: string };
-    if (!isAdminRole(authUser.role)) {
+    const tenantId = requireTenant(user);
+
+    if (!isTenantAdminRole(user.tenantRole)) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
@@ -44,64 +79,85 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
 
     const { name, email, password, role, daysToExpire } = parseResult.data;
 
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
+    // 1. Validar límite de usuarios del plan
+    const currentCount = await prisma.tenantMembership.count({
+      where: { tenantId, isActive: true },
     });
+    await validateTenantLimit(tenantId, 'maxUsuarios', currentCount);
 
-    if (existingUser) {
-      return NextResponse.json({ error: 'El usuario ya existe' }, { status: 409 });
+    // 2. Buscar o crear usuario global
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+
+    let targetUser = existingUser;
+
+    if (!existingUser) {
+      const hashedPassword = await bcrypt.hash(password, 12);
+      const now = new Date();
+      const expiresAt = daysToExpire
+        ? new Date(now.getTime() + daysToExpire * 24 * 60 * 60 * 1000)
+        : null;
+
+      targetUser = await prisma.user.create({
+        data: {
+          name,
+          email,
+          password: hashedPassword,
+          role,
+          isActive: false,
+          activatedAt: now,
+          expiresAt,
+          lastModifiedBy: user.userId,
+          loginAttempts: 0,
+          lockedUntil: null,
+          lastFailedLogin: null,
+        },
+      });
+    } else {
+      // El usuario ya existe globalmente, verificar si ya tiene membresía en este tenant
+      const existingMembership = await prisma.tenantMembership.findUnique({
+        where: { tenantId_userId: { tenantId, userId: existingUser.userId } },
+      });
+      if (existingMembership) {
+        return NextResponse.json({ error: 'El usuario ya pertenece a esta empresa' }, { status: 409 });
+      }
     }
 
-    const hashedPassword = await bcrypt.hash(password, 12);
-    const now = new Date();
-    const expiresAt = daysToExpire
-      ? new Date(now.getTime() + daysToExpire * 24 * 60 * 60 * 1000)
-      : null;
-
-    const newUser = await prisma.user.create({
+    // 3. Crear membresía tenant para el usuario
+    const tenantRole = platformRoleToTenantRole(role as any);
+    await prisma.tenantMembership.create({
       data: {
-        name,
-        email,
-        password: hashedPassword,
-        role,
-        isActive: false,
-        activatedAt: now,
-        expiresAt,
-        lastModifiedBy: authUser.userId,
-        loginAttempts: 0,
-        lockedUntil: null,
-        lastFailedLogin: null,
-      },
-      select: {
-        userId: true,
-        name: true,
-        email: true,
-        role: true,
+        tenantId,
+        userId: targetUser!.userId,
+        tenantRole,
         isActive: true,
-        activatedAt: true,
-        expiresAt: true,
-        createdAt: true,
-        updatedAt: true,
-        lastModifiedBy: true,
       },
     });
 
+    // 4. Log de auditoría
     await prisma.userActivityLog.create({
       data: {
-        userId: newUser.userId,
-        action: 'create_user',
-        details: JSON.stringify({ role, email }),
+        userId: targetUser!.userId,
+        action: existingUser ? 'assign_tenant' : 'create_user',
+        details: JSON.stringify({ role, tenantRole, email, tenantId }),
         ipAddress: request.headers.get('x-forwarded-for') || null,
         userAgent: request.headers.get('user-agent') || null,
-        performedBy: authUser.userId,
+        performedBy: user.userId,
       },
     });
 
-    await sendNewUserNotification(newUser.name, newUser.email, newUser.role, authUser.email ?? '');
+    if (!existingUser) {
+      await sendNewUserNotification(targetUser!.name, targetUser!.email, targetUser!.role, user.email ?? '');
+    }
 
-    return NextResponse.json(newUser);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _, ...safeUser } = targetUser!;
+    return NextResponse.json({
+      ...safeUser,
+      tenantRole,
+    });
   } catch (error) {
-    console.error('Error creando usuario:', error);
-    return NextResponse.json({ error: 'Error interno del servidor' }, { status: 500 });
+    console.error('Error creando usuario en tenant:', error);
+    const message = error instanceof Error ? error.message : 'Error interno del servidor';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 });

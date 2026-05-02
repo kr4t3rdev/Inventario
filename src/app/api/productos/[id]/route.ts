@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
-import { withAuth } from "@/lib/auth-middleware"
+import { withAuth, type AuthenticatedUser } from "@/lib/auth-middleware"
+import { requireTenant } from "@/lib/services/tenant-scope"
 import {
   assertServerOwnedCodeFields,
   normalizeProveedorCodigo,
@@ -30,12 +31,12 @@ function normalizeCodigoInterno(value: unknown): string | null | undefined {
   return normalizedValue
 }
 
-export const GET = withAuth(async (_request: NextRequest, context: ProductoRouteContext, _user: any) => {
+export const GET = withAuth(async (_request: NextRequest, context: ProductoRouteContext, user: AuthenticatedUser) => {
   try {
-
+    const tenantId = requireTenant(user);
     const { id } = await context.params
     const producto = await prisma.producto.findUnique({
-      where: { id: id },
+      where: { id: id, tenantId },
       include: {
         categoria: true,
         subcategoria: true,

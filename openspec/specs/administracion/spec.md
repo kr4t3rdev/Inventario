@@ -12,20 +12,29 @@ The Administration Module provides system administrators with comprehensive tool
 
 ### Requirement: User Management - Full CRUD Operations
 
-The system MUST provide complete Create, Read, Update, and Delete operations for user accounts.
+The system MUST provide CRUD de usuarios limitado al tenant autenticado y MUST separar administración de empresa de cualquier operación global de plataforma.
 
-#### Scenario: Create New User
+#### Scenario: Listar usuarios del tenant actual
 
-- **GIVEN** an Admin user accesses the user creation form
-- **WHEN** the Admin fills in: name, email, role, initial password, and expiration date
-- **THEN** the system MUST:
-  - Validate email format (RFC 5322)
-  - Validate password strength (min 8 chars, 1 uppercase, 1 number, 1 special char)
-  - Hash the password using bcryptjs
-  - Store the user in the database with status `isActive = true`
-  - Set `createdAt` timestamp
-  - Return success with user ID and confirmation message
-- **AND** the new user MUST be able to login immediately
+- **GIVEN** un usuario con rol tenant `director` o `admin`
+- **WHEN** consulta `/api/admin/users`
+- **THEN** el sistema MUST devolver únicamente usuarios con membresía en su tenant activo
+- **AND** MUST ordenar y paginar sin incluir usuarios de otros tenants
+
+#### Scenario: Crear usuario dentro del tenant
+
+- **GIVEN** un director del tenant con cupo disponible según plan
+- **WHEN** crea un nuevo usuario desde administración
+- **THEN** el sistema MUST crear la identidad global del usuario si no existe
+- **AND** MUST asociarla al tenant actual mediante membresía con `tenantRole`
+- **AND** MUST NOT asignar acceso a otros tenants de forma implícita
+
+#### Scenario: Rechazar creación por límite de plan
+
+- **GIVEN** un tenant que alcanzó su máximo de usuarios
+- **WHEN** un admin intenta dar alta a otro usuario
+- **THEN** el sistema MUST rechazar la operación con 409 o 403 según convención del endpoint
+- **AND** MUST informar que el límite del plan fue excedido
 
 #### Scenario: Read User Details
 
@@ -38,30 +47,6 @@ The system MUST provide complete Create, Read, Update, and Delete operations for
   - Total login attempts
   - Login history (last 10 sessions)
 - **AND** provide links to edit or delete the user
-
-#### Scenario: Update User Information
-
-- **GIVEN** an Admin user is editing an existing user
-- **WHEN** the Admin modifies fields (name, email, role, expiration date)
-- **THEN** the system MUST:
-  - Validate all changes before saving
-  - Update the database record
-  - Record the change in audit log with timestamp and Admin ID
-  - Invalidate any active sessions if email changes
-  - Return success message
-- **AND** the updated user information MUST be immediately visible in the admin dashboard
-
-#### Scenario: Delete User Account
-
-- **GIVEN** an Admin user initiates deletion of a user account
-- **WHEN** the Admin confirms the deletion (two-step confirmation required)
-- **THEN** the system MUST:
-  - Set `isActive = false` (soft delete, not physical removal)
-  - Record deletion in audit log with reason
-  - Invalidate all active sessions for that user
-  - Prevent the user from logging in
-- **AND** the deleted user MUST remain in database for audit trail
-- **AND** the user record MUST be recoverable by an Admin if needed
 
 ---
 
@@ -243,32 +228,20 @@ The system MUST provide a comprehensive admin dashboard with key performance ind
 
 ### Requirement: Role and Permission System
 
-The system MUST enforce role-based access control with three predefined roles.
+The system MUST enforce tenant roles para administración empresarial y MAY mantener roles de plataforma para soporte interno.
 
-#### Scenario: Define Role Permissions
+#### Scenario: Rol tenant autorizado para gestión
 
-- **GIVEN** the system has three roles defined:
-- **WHEN** a user with a role attempts to access a resource
-- **THEN** the system MUST enforce these permissions:
+- **GIVEN** un usuario con `tenantRole` `admin`
+- **WHEN** intenta editar usuarios de su tenant
+- **THEN** el sistema MUST permitir la operación dentro de los límites del tenant
 
-**Role: Admin**
-- Access: ALL routes (`/api/*`, `/busy/*`)
-- Can: Create, read, update, delete users
-- Can: View all admin functions, export data
-- Can: Manage system configuration
-- Can: View all audit logs
+#### Scenario: Usuario sin rol tenant suficiente
 
-**Role: RegularUser**
-- Access: `/busy/ventas`, `/busy/servicios`, `/busy/reportes`, `/busy/restaurante`
-- Can: Record sales, services, reports
-- Cannot: Access admin panel
-- Cannot: View other users' activity
-- Cannot: Modify system settings
-
-**Role: Dependiente** (Employee)
-- Access: `/busy/ventas`, `/busy/servicios`, `/busy/reportes`, `/busy/restaurante`
-- Can: Same as RegularUser (sales, services, reports)
-- Cannot: Access admin or advanced features
+- **GIVEN** un usuario con `tenantRole` `dependiente` o `economico`
+- **WHEN** intenta acceder al panel o endpoints de administración de usuarios
+- **THEN** el sistema MUST responder 403
+- **AND** MUST NOT basarse solo en un rol global `admin` para autorizar acceso empresarial
 
 #### Scenario: Check Role on Protected Route
 
@@ -280,16 +253,6 @@ The system MUST enforce role-based access control with three predefined roles.
   - Reject with 403 Forbidden if not authorized
   - Log the unauthorized attempt in audit trail
   - Redirect to unauthorized page or dashboard
-
-#### Scenario: Role Change for User
-
-- **GIVEN** an Admin changes a user's role from "RegularUser" to "Admin"
-- **WHEN** the update is saved
-- **THEN** the system MUST:
-  - Update the user's role in database
-  - Invalidate all active sessions for that user (require re-login)
-  - Log the role change with timestamp and admin ID
-  - Send notification email to user (optional)
 
 ---
 

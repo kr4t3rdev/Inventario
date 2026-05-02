@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import prisma from '@/lib/prisma'
-import { withAuthGet, withAuthPost } from '@/lib/auth-middleware'
+import { withAuthGet, withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware'
+import { requireTenant } from '@/lib/services/tenant-scope'
 import { applyAnticipoAllocations, isAnticipoWorkflowError } from '@/lib/services/anticipos-workflow'
 import type { AnticipoAllocation } from '@/lib/services/anticipos-workflow.types'
 
@@ -30,9 +31,11 @@ const createCompraServicioSchema = z.object({
  * @param {NextRequest} _request - Request entrante.
  * @returns {Promise<NextResponse>} Lista de compras de servicio.
  */
-export const GET = withAuthGet(async (_request: NextRequest) => {
+export const GET = withAuthGet(async (_request: NextRequest, _ctx: any, user: AuthenticatedUser) => {
   try {
+    const tenantId = requireTenant(user);
     const comprasServicios = await prisma.compraServicio.findMany({
+      where: { tenantId },
       orderBy: { createdAt: 'desc' },
       include: {
         servicio: true,
@@ -54,8 +57,9 @@ export const GET = withAuthGet(async (_request: NextRequest) => {
  * @param {{ userId?: string; role?: string }} user - Usuario autenticado.
  * @returns {Promise<NextResponse>} Servicio recibido creado.
  */
-export const POST = withAuthPost(async (request: NextRequest, _context: unknown, user: { userId?: string; role?: string }) => {
+export const POST = withAuthPost(async (request: NextRequest, _context: unknown, user: AuthenticatedUser) => {
   try {
+    const tenantId = requireTenant(user);
     if (user.role === 'dependiente') {
       return NextResponse.json(
         { error: 'Acceso restringido', message: 'Los dependientes no pueden registrar servicios recibidos' },
@@ -99,6 +103,7 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
     const resultado = await prisma.$transaction(async (tx) => {
       const compraServicio = await tx.compraServicio.create({
         data: {
+          tenantId,
           servicioId: payload.servicioId,
           proveedorId: payload.proveedorId || null,
           numeroFactura: payload.numeroFactura || null,
@@ -151,6 +156,7 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
 
           await tx.reconciliacionGasto.create({
             data: {
+              tenantId,
               tipoGasto: 'COMPRA_SERVICIO',
               referenciaId: compraServicio.compraServicioId,
               cuentaId: anticipo?.cuentaOrigenId || cuentaDefault?.cuentaId || '',

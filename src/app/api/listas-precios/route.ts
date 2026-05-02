@@ -1,7 +1,8 @@
 
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { withAuthGet, withAuthPost } from '@/lib/auth-middleware'
+import { withAuthGet, withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware'
+import { requireTenant } from '@/lib/services/tenant-scope'
 import { z } from 'zod'
 
 const listaPrecioSchema = z.object({
@@ -10,9 +11,11 @@ const listaPrecioSchema = z.object({
   esDefault: z.boolean().optional().default(false),
 })
 
-export const GET = withAuthGet(async () => {
+export const GET = withAuthGet(async (_req: any, _ctx: any, user: AuthenticatedUser) => {
   try {
+    const tenantId = requireTenant(user);
     const listas = await prisma.listaPrecio.findMany({
+      where: { tenantId },
       orderBy: {
         createdAt: 'desc',
       },
@@ -35,21 +38,22 @@ export const GET = withAuthGet(async () => {
   }
 })
 
-export const POST = withAuthPost(async (req) => {
+export const POST = withAuthPost(async (req: any, _ctx: any, user: AuthenticatedUser) => {
   try {
+    const tenantId = requireTenant(user);
     const body = await req.json()
     const validatedData = listaPrecioSchema.parse(body)
 
     // Si se marca como default, desmarcar las otras
     if (validatedData.esDefault) {
       await prisma.listaPrecio.updateMany({
-        where: { esDefault: true },
+        where: { esDefault: true, tenantId },
         data: { esDefault: false },
       })
     }
 
     const nuevaLista = await prisma.listaPrecio.create({
-      data: validatedData,
+      data: { ...validatedData, tenantId },
     })
 
     return NextResponse.json(nuevaLista, { status: 201 })

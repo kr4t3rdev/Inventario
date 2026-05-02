@@ -1,11 +1,14 @@
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { withAuth, withAuthGet } from "@/lib/auth-middleware";
+import { withAuth, withAuthGet, type AuthenticatedUser } from "@/lib/auth-middleware";
+import { requireTenant } from "@/lib/services/tenant-scope";
 
-export const GET = withAuthGet(async (req) => {
+export const GET = withAuthGet(async (_req: any, _ctx: any, user: AuthenticatedUser) => {
   try {
+    const tenantId = requireTenant(user);
     const defectaciones = await prisma.defectacionCatalogo.findMany({
+      where: { tenantId },
       orderBy: { defecto: 'asc' }
     });
     return NextResponse.json(defectaciones);
@@ -18,8 +21,9 @@ export const GET = withAuthGet(async (req) => {
   }
 });
 
-export const POST = withAuth(async (req) => {
+export const POST = withAuth(async (req: any, _ctx: any, user: AuthenticatedUser) => {
   try {
+    const tenantId = requireTenant(user);
     const body = await req.json();
     const { defecto, costo } = body;
 
@@ -32,6 +36,7 @@ export const POST = withAuth(async (req) => {
 
     const defectacion = await prisma.defectacionCatalogo.create({
       data: {
+        tenantId,
         defecto,
         costo: Number(costo)
       }

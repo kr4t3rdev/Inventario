@@ -3,9 +3,17 @@ import { prisma } from './prisma'
 import jwt from 'jsonwebtoken'
 import { getJwtSecret } from './secrets'
 import { checkApiPermission, type UserRole } from './permissions'
+import type { TenantRole } from './auth/roles'
+
+export interface PlanLimits {
+  maxUsuarios: number
+  maxAlmacenes: number
+  maxProductos: number
+}
 
 /**
- * @description Resultado de autenticación exitosa
+ * @description Resultado de autenticación exitosa.
+ * Ahora incluye contexto de tenant cuando está disponible.
  */
 export interface AuthenticatedUser {
   userId: string
@@ -13,6 +21,63 @@ export interface AuthenticatedUser {
   email: string
   role: UserRole
   isActive: boolean
+  // Contexto de tenant (opcional — presente si el usuario tiene membresía activa)
+  tenantId?: string
+  tenantRole?: TenantRole
+  planLimits?: PlanLimits
+}
+
+/**
+ * @description Resuelve el contexto de tenant para un usuario autenticado.
+ * Busca membresía activa; si el request incluye x-tenant-id usa ese, sino el primero activo.
+ * @param {string} userId - ID del usuario autenticado.
+ * @param {string | null} headerTenantId - Tenant solicitado via header (opcional).
+ * @returns {Promise<{ tenantId: string; tenantRole: TenantRole; planLimits?: PlanLimits } | null>}
+ */
+async function resolveTenantContext(
+  userId: string,
+  headerTenantId: string | null,
+): Promise<{ tenantId: string; tenantRole: TenantRole; planLimits?: PlanLimits } | null> {
+  try {
+    const where = headerTenantId
+      ? { tenantId: headerTenantId, userId, isActive: true }
+      : { userId, isActive: true };
+
+    const membership = headerTenantId
+      ? await prisma.tenantMembership.findUnique({
+          where: { tenantId_userId: { tenantId: headerTenantId, userId } },
+        })
+      : await prisma.tenantMembership.findFirst({
+          where: { userId, isActive: true },
+          orderBy: { createdAt: 'asc' },
+        });
+
+    if (!membership || !membership.isActive) return null;
+
+    // Obtener límites del plan desde la licencia activa del tenant
+    let planLimits: PlanLimits | undefined;
+    const license = await prisma.tenantLicense.findFirst({
+      where: { tenantId: membership.tenantId, activa: true },
+      orderBy: { inicio: 'desc' },
+    });
+
+    if (license) {
+      planLimits = {
+        maxUsuarios: license.maxUsuarios,
+        maxAlmacenes: license.maxAlmacenes,
+        maxProductos: license.maxProductos,
+      };
+    }
+
+    return {
+      tenantId: membership.tenantId,
+      tenantRole: membership.tenantRole as TenantRole,
+      planLimits,
+    };
+  } catch (error) {
+    console.error('[Auth] Error resolviendo contexto tenant:', error);
+    return null;
+  }
 }
 
 /**
@@ -155,7 +220,20 @@ export async function authenticateUser(
       }
     }
 
-    return { user: user as AuthenticatedUser }
+    // 10. Resolver contexto de tenant
+    const headerTenantId = request.headers.get('x-tenant-id')
+    const tenantContext = await resolveTenantContext(user.userId, headerTenantId)
+
+    return {
+      user: {
+        ...user,
+        ...(tenantContext && {
+          tenantId: tenantContext.tenantId,
+          tenantRole: tenantContext.tenantRole,
+          planLimits: tenantContext.planLimits,
+        }),
+      } as AuthenticatedUser,
+    }
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError) {
       console.error('[Auth] JWT error:', error.message)

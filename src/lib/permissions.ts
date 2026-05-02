@@ -1,4 +1,4 @@
-import { normalizeUserRole, type AppUserRole } from '@/lib/auth/roles';
+import { normalizeUserRole, isTenantAdminRole, type AppUserRole, type TenantRole } from '@/lib/auth/roles';
 
 /**
  * Sistema de permisos basado en roles para el sistema de inventario
@@ -7,6 +7,39 @@ import { normalizeUserRole, type AppUserRole } from '@/lib/auth/roles';
 
 // Tipos de roles disponibles
 export type UserRole = AppUserRole;
+
+/**
+ * Definición de permisos por rol de tenant.
+ * director: todo dentro del tenant (usuarios, plan, licencias, config)
+ * admin: casi todo dentro del tenant
+ * economico: finanzas, reportes, licencias operativas
+ * dependiente: ventas, operación limitada
+ */
+export const TENANT_PERMISSIONS: Record<TenantRole, string[]> = {
+  director: ['*'],
+  admin: ['*'],
+  economico: [
+    '/api/reportes-financieros',
+    '/api/ventas/stats',
+    '/api/dashboard/stats',
+    '/api/contabilidad/*',
+    '/api/gastos-de-explotacion/*',
+    '/busy/reportes/*',
+  ],
+  dependiente: [
+    'GET /api/ventas',
+    'POST /api/ventas',
+    'GET /api/productos',
+    'GET /api/mi-empresa',
+    'GET /api/facturas/*',
+    '/api/restaurante/*',
+    '/busy/sales',
+    '/busy/servicios',
+    '/busy/reportes',
+    '/busy/reportes/venta-diaria',
+    '/busy/restaurante/*',
+  ],
+};
 
 // Definición de permisos por rol
 export const ROLE_PERMISSIONS: Record<UserRole, string[]> = {
@@ -164,6 +197,89 @@ export function filterMenuItems(menuItems: any[], userRole: UserRole): any[] {
  */
 export function isFrontendRouteAccessible(userRole: UserRole, frontendPath: string): boolean {
   return hasPermission(userRole, frontendPath)
+}
+
+/**
+ * Verifica si un rol de tenant tiene permiso para una operación específica.
+ * director y admin tienen acceso total (*).
+ * Los demás roles tienen acceso limitado según TENANT_PERMISSIONS.
+ *
+ * @param {TenantRole} tenantRole - Rol del usuario dentro del tenant.
+ * @param {string} path - Ruta o recurso a verificar.
+ * @param {string} [method] - Método HTTP (opcional).
+ * @returns {boolean} true si tiene permiso.
+ */
+export function hasTenantPermission(
+  tenantRole: TenantRole,
+  path: string,
+  method?: string,
+): boolean {
+  const permissions = TENANT_PERMISSIONS[tenantRole];
+  if (!permissions) return false;
+
+  // director y admin tienen acceso total
+  if (tenantRole === 'director' || tenantRole === 'admin') return true;
+
+  for (const permission of permissions) {
+    if (permission === '*') return true;
+
+    if (permission.includes('/*')) {
+      const basePath = permission.replace('/*', '');
+      if (path.startsWith(basePath)) return true;
+    }
+
+    if (method && permission.includes(' ')) {
+      const [permMethod, permPath] = permission.split(' ');
+      if (permMethod === method && path === permPath) return true;
+    }
+
+    if (path === permission || path.startsWith(permission + '/')) return true;
+  }
+
+  return false;
+}
+
+/**
+ * Middleware de verificación de permisos de tenant.
+ * Devuelve un Response 403 si no tiene permiso, null si está autorizado.
+ *
+ * @param {TenantRole | undefined} tenantRole - Rol del usuario en el tenant.
+ * @param {string} path - Ruta de la petición.
+ * @param {string} method - Método HTTP.
+ * @returns {Response | null} 403 si no autorizado, null si OK.
+ */
+export function checkTenantApiPermission(
+  tenantRole: TenantRole | undefined,
+  path: string,
+  method: string,
+): Response | null {
+  if (!tenantRole) {
+    return new Response(
+      JSON.stringify({
+        error: 'Contexto de tenant no disponible',
+        message: 'Se requiere una membresía de tenant activa para acceder a este recurso',
+      }),
+      {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
+      },
+    );
+  }
+
+  if (!hasTenantPermission(tenantRole, path, method)) {
+    return new Response(
+      JSON.stringify({
+        error: 'Permiso denegado',
+        message: `Tu rol (${tenantRole}) no tiene acceso a este recurso`,
+      }),
+      {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
+      },
+    );
+  }
+
+  return null;
 }
 
 /**

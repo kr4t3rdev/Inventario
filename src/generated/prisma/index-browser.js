@@ -123,6 +123,7 @@ exports.Prisma.TransactionIsolationLevel = makeStrictEnum({
 
 exports.Prisma.CategoriaScalarFieldEnum = {
   catId: 'catId',
+  tenantId: 'tenantId',
   nombre: 'nombre',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
@@ -142,6 +143,7 @@ exports.Prisma.UnidadScalarFieldEnum = {
 
 exports.Prisma.VendorScalarFieldEnum = {
   vendorId: 'vendorId',
+  tenantId: 'tenantId',
   nombre: 'nombre',
   contacto: 'contacto',
   createdAt: 'createdAt',
@@ -191,6 +193,7 @@ exports.Prisma.PagoDeudaScalarFieldEnum = {
 
 exports.Prisma.ClienteScalarFieldEnum = {
   clienteId: 'clienteId',
+  tenantId: 'tenantId',
   nombre: 'nombre',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt',
@@ -202,8 +205,42 @@ exports.Prisma.ClienteScalarFieldEnum = {
   telefono: 'telefono'
 };
 
+exports.Prisma.TenantScalarFieldEnum = {
+  tenantId: 'tenantId',
+  nombre: 'nombre',
+  slug: 'slug',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.TenantMembershipScalarFieldEnum = {
+  membershipId: 'membershipId',
+  tenantId: 'tenantId',
+  userId: 'userId',
+  tenantRole: 'tenantRole',
+  isActive: 'isActive',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.TenantLicenseScalarFieldEnum = {
+  tenantLicenseId: 'tenantLicenseId',
+  tenantId: 'tenantId',
+  planId: 'planId',
+  activa: 'activa',
+  inicio: 'inicio',
+  expiracion: 'expiracion',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt',
+  maxUsuarios: 'maxUsuarios',
+  maxAlmacenes: 'maxAlmacenes',
+  maxProductos: 'maxProductos',
+  features: 'features'
+};
+
 exports.Prisma.MiEmpresaScalarFieldEnum = {
   id: 'id',
+  tenantId: 'tenantId',
   nombre: 'nombre',
   propietario: 'propietario',
   direccion: 'direccion',
@@ -221,6 +258,7 @@ exports.Prisma.MiEmpresaScalarFieldEnum = {
 
 exports.Prisma.AlmacenScalarFieldEnum = {
   almacenId: 'almacenId',
+  tenantId: 'tenantId',
   nombre: 'nombre',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -228,6 +266,7 @@ exports.Prisma.AlmacenScalarFieldEnum = {
 
 exports.Prisma.PuntoDeVentaScalarFieldEnum = {
   pvId: 'pvId',
+  tenantId: 'tenantId',
   nombre: 'nombre',
   ubicacion: 'ubicacion',
   createdAt: 'createdAt',
@@ -237,6 +276,7 @@ exports.Prisma.PuntoDeVentaScalarFieldEnum = {
 
 exports.Prisma.ProductoScalarFieldEnum = {
   nombre: 'nombre',
+  tenantId: 'tenantId',
   descripcion: 'descripcion',
   precioCosto: 'precioCosto',
   precioVenta: 'precioVenta',
@@ -266,6 +306,7 @@ exports.Prisma.ProductoScalarFieldEnum = {
 
 exports.Prisma.StockUbicacionScalarFieldEnum = {
   id: 'id',
+  tenantId: 'tenantId',
   productoId: 'productoId',
   tipoUbicacion: 'tipoUbicacion',
   ubicacionId: 'ubicacionId',
@@ -278,6 +319,7 @@ exports.Prisma.StockUbicacionScalarFieldEnum = {
 
 exports.Prisma.VentaScalarFieldEnum = {
   ventaId: 'ventaId',
+  tenantId: 'tenantId',
   productoId: 'productoId',
   cantidad: 'cantidad',
   puntoDeVentaId: 'puntoDeVentaId',
@@ -307,6 +349,7 @@ exports.Prisma.VentaItemScalarFieldEnum = {
 
 exports.Prisma.MermaScalarFieldEnum = {
   mermaId: 'mermaId',
+  tenantId: 'tenantId',
   productoId: 'productoId',
   cantidad: 'cantidad',
   motivo: 'motivo',
@@ -317,6 +360,7 @@ exports.Prisma.MermaScalarFieldEnum = {
 
 exports.Prisma.TransferenciaScalarFieldEnum = {
   transferenciaId: 'transferenciaId',
+  tenantId: 'tenantId',
   productoId: 'productoId',
   cantidad: 'cantidad',
   origenId: 'origenId',
@@ -488,6 +532,7 @@ exports.Prisma.VacationAccrualScalarFieldEnum = {
 
 exports.Prisma.EmpleadoScalarFieldEnum = {
   empleadoId: 'empleadoId',
+  tenantId: 'tenantId',
   nombre: 'nombre',
   apellido: 'apellido',
   telefono: 'telefono',
@@ -504,6 +549,7 @@ exports.Prisma.EmpleadoScalarFieldEnum = {
 
 exports.Prisma.PagosalarioScalarFieldEnum = {
   pgId: 'pgId',
+  tenantId: 'tenantId',
   empleadoId: 'empleadoId',
   salario: 'salario',
   bonificaciones: 'bonificaciones',
@@ -517,6 +563,7 @@ exports.Prisma.PagosalarioScalarFieldEnum = {
 
 exports.Prisma.CierreContableScalarFieldEnum = {
   cierreId: 'cierreId',
+  tenantId: 'tenantId',
   tipo: 'tipo',
   fechaInicio: 'fechaInicio',
   fechaFin: 'fechaFin',
@@ -544,6 +591,7 @@ exports.Prisma.CierreContableScalarFieldEnum = {
 
 exports.Prisma.GastoCompraScalarFieldEnum = {
   gastoCompraId: 'gastoCompraId',
+  tenantId: 'tenantId',
   productoId: 'productoId',
   vendorId: 'vendorId',
   cantidad: 'cantidad',
@@ -560,6 +608,7 @@ exports.Prisma.GastoCompraScalarFieldEnum = {
 
 exports.Prisma.CompraProductoScalarFieldEnum = {
   compraProductoId: 'compraProductoId',
+  tenantId: 'tenantId',
   productoId: 'productoId',
   numeroFactura: 'numeroFactura',
   facturaUrl: 'facturaUrl',
@@ -582,6 +631,7 @@ exports.Prisma.CompraProductoScalarFieldEnum = {
 
 exports.Prisma.CompraDocumentoScalarFieldEnum = {
   compraDocumentoId: 'compraDocumentoId',
+  tenantId: 'tenantId',
   proveedorId: 'proveedorId',
   numeroFactura: 'numeroFactura',
   facturaUrl: 'facturaUrl',
@@ -601,6 +651,7 @@ exports.Prisma.CompraDocumentoScalarFieldEnum = {
 
 exports.Prisma.CompraDocumentoItemScalarFieldEnum = {
   compraDocumentoItemId: 'compraDocumentoItemId',
+  tenantId: 'tenantId',
   compraDocumentoId: 'compraDocumentoId',
   productoId: 'productoId',
   cantidad: 'cantidad',
@@ -612,6 +663,7 @@ exports.Prisma.CompraDocumentoItemScalarFieldEnum = {
 
 exports.Prisma.ServiciosScalarFieldEnum = {
   servicioId: 'servicioId',
+  tenantId: 'tenantId',
   nombre: 'nombre',
   precio: 'precio',
   descripcion: 'descripcion',
@@ -621,6 +673,7 @@ exports.Prisma.ServiciosScalarFieldEnum = {
 
 exports.Prisma.VentaServiciosScalarFieldEnum = {
   ventaServicioId: 'ventaServicioId',
+  tenantId: 'tenantId',
   servicioId: 'servicioId',
   cantidad: 'cantidad',
   costo: 'costo',
@@ -634,6 +687,7 @@ exports.Prisma.VentaServiciosScalarFieldEnum = {
 
 exports.Prisma.CompraServicioScalarFieldEnum = {
   compraServicioId: 'compraServicioId',
+  tenantId: 'tenantId',
   servicioId: 'servicioId',
   proveedorId: 'proveedorId',
   numeroFactura: 'numeroFactura',
@@ -670,6 +724,7 @@ exports.Prisma.GastoElementoScalarFieldEnum = {
 
 exports.Prisma.GastosDEScalarFieldEnum = {
   gastosDEId: 'gastosDEId',
+  tenantId: 'tenantId',
   tipo: 'tipo',
   conceptoId: 'conceptoId',
   elementoId: 'elementoId',
@@ -724,6 +779,7 @@ exports.Prisma.TransaccionMonedaScalarFieldEnum = {
 
 exports.Prisma.CuentaBancariaScalarFieldEnum = {
   cuentaId: 'cuentaId',
+  tenantId: 'tenantId',
   nombreBanco: 'nombreBanco',
   numeroCuenta: 'numeroCuenta',
   tipoCuenta: 'tipoCuenta',
@@ -747,6 +803,7 @@ exports.Prisma.TipoPagoScalarFieldEnum = {
 
 exports.Prisma.ReconciliacionVentaScalarFieldEnum = {
   reconciliacionId: 'reconciliacionId',
+  tenantId: 'tenantId',
   ventaId: 'ventaId',
   cuentaId: 'cuentaId',
   tipoPagoId: 'tipoPagoId',
@@ -768,6 +825,7 @@ exports.Prisma.ReconciliacionVentaScalarFieldEnum = {
 
 exports.Prisma.ReconciliacionServicioScalarFieldEnum = {
   reconciliacionId: 'reconciliacionId',
+  tenantId: 'tenantId',
   cuentaId: 'cuentaId',
   tipoPagoId: 'tipoPagoId',
   monto: 'monto',
@@ -784,6 +842,7 @@ exports.Prisma.ReconciliacionServicioScalarFieldEnum = {
 
 exports.Prisma.ReconciliacionGastoScalarFieldEnum = {
   reconciliacionId: 'reconciliacionId',
+  tenantId: 'tenantId',
   tipoGasto: 'tipoGasto',
   referenciaId: 'referenciaId',
   cuentaId: 'cuentaId',
@@ -809,6 +868,7 @@ exports.Prisma.ReconciliacionGastoScalarFieldEnum = {
 
 exports.Prisma.AjusteBancarioScalarFieldEnum = {
   ajusteId: 'ajusteId',
+  tenantId: 'tenantId',
   cuentaId: 'cuentaId',
   tipo: 'tipo',
   monto: 'monto',
@@ -824,6 +884,7 @@ exports.Prisma.AjusteBancarioScalarFieldEnum = {
 
 exports.Prisma.TransferenciaBancariaScalarFieldEnum = {
   transferenciaId: 'transferenciaId',
+  tenantId: 'tenantId',
   numeroComprobante: 'numeroComprobante',
   cuentaOrigenId: 'cuentaOrigenId',
   cuentaDestinoId: 'cuentaDestinoId',
@@ -941,6 +1002,7 @@ exports.Prisma.ScenarioSimulationScalarFieldEnum = {
 
 exports.Prisma.ContratoScalarFieldEnum = {
   contratoId: 'contratoId',
+  tenantId: 'tenantId',
   numeroContrato: 'numeroContrato',
   numeroConsecutivo: 'numeroConsecutivo',
   numeroContratoClienteProveedor: 'numeroContratoClienteProveedor',
@@ -1032,6 +1094,7 @@ exports.Prisma.TipoContratoCustomScalarFieldEnum = {
 
 exports.Prisma.FacturaScalarFieldEnum = {
   idFactura: 'idFactura',
+  tenantId: 'tenantId',
   numeroConsecutivo: 'numeroConsecutivo',
   serieId: 'serieId',
   numeroFactura: 'numeroFactura',
@@ -1060,6 +1123,7 @@ exports.Prisma.FacturaScalarFieldEnum = {
 
 exports.Prisma.SerieFacturacionScalarFieldEnum = {
   serieId: 'serieId',
+  tenantId: 'tenantId',
   prefijo: 'prefijo',
   descripcion: 'descripcion',
   consecutivo: 'consecutivo',
@@ -1071,6 +1135,7 @@ exports.Prisma.SerieFacturacionScalarFieldEnum = {
 
 exports.Prisma.OfertaScalarFieldEnum = {
   id: 'id',
+  tenantId: 'tenantId',
   numeroOferta: 'numeroOferta',
   clienteId: 'clienteId',
   fechaEmision: 'fechaEmision',
@@ -1096,6 +1161,7 @@ exports.Prisma.OfertaItemScalarFieldEnum = {
 
 exports.Prisma.CuentaPorCobrarScalarFieldEnum = {
   id: 'id',
+  tenantId: 'tenantId',
   idCC: 'idCC',
   facturaId: 'facturaId',
   numeroFactura: 'numeroFactura',
@@ -1112,6 +1178,7 @@ exports.Prisma.CuentaPorCobrarScalarFieldEnum = {
 
 exports.Prisma.CuentaPorPagarScalarFieldEnum = {
   cuentaPorPagarId: 'cuentaPorPagarId',
+  tenantId: 'tenantId',
   numeroFactura: 'numeroFactura',
   gastoCompraId: 'gastoCompraId',
   gastosDEId: 'gastosDEId',
@@ -1133,6 +1200,7 @@ exports.Prisma.CuentaPorPagarScalarFieldEnum = {
 
 exports.Prisma.DeudaCashScalarFieldEnum = {
   id: 'id',
+  tenantId: 'tenantId',
   idNumerico: 'idNumerico',
   proveedorId: 'proveedorId',
   cuentaPorPagarId: 'cuentaPorPagarId',
@@ -1152,6 +1220,7 @@ exports.Prisma.DeudaCashScalarFieldEnum = {
 
 exports.Prisma.PrestamoCashScalarFieldEnum = {
   id: 'id',
+  tenantId: 'tenantId',
   idNumerico: 'idNumerico',
   clienteId: 'clienteId',
   cuentaPorCobrarId: 'cuentaPorCobrarId',
@@ -1172,6 +1241,7 @@ exports.Prisma.PrestamoCashScalarFieldEnum = {
 
 exports.Prisma.PagoCuentaPorPagarScalarFieldEnum = {
   pagoCuentaPorPagarId: 'pagoCuentaPorPagarId',
+  tenantId: 'tenantId',
   cuentaPorPagarId: 'cuentaPorPagarId',
   monto: 'monto',
   numeroTransaccion: 'numeroTransaccion',
@@ -1184,6 +1254,7 @@ exports.Prisma.PagoCuentaPorPagarScalarFieldEnum = {
 
 exports.Prisma.EquipoReparacionScalarFieldEnum = {
   id: 'id',
+  tenantId: 'tenantId',
   nombre: 'nombre',
   descripcion: 'descripcion',
   createdAt: 'createdAt',
@@ -1192,6 +1263,7 @@ exports.Prisma.EquipoReparacionScalarFieldEnum = {
 
 exports.Prisma.PiezaReparacionScalarFieldEnum = {
   id: 'id',
+  tenantId: 'tenantId',
   nombre: 'nombre',
   equipoId: 'equipoId',
   costoPequeno: 'costoPequeno',
@@ -1203,6 +1275,7 @@ exports.Prisma.PiezaReparacionScalarFieldEnum = {
 
 exports.Prisma.OrdenReparacionScalarFieldEnum = {
   id: 'id',
+  tenantId: 'tenantId',
   numeroOrden: 'numeroOrden',
   clienteId: 'clienteId',
   equipoTipoId: 'equipoTipoId',
@@ -1233,6 +1306,7 @@ exports.Prisma.OrdenReparacionScalarFieldEnum = {
 
 exports.Prisma.OrdenReparacionEquipoScalarFieldEnum = {
   id: 'id',
+  tenantId: 'tenantId',
   ordenId: 'ordenId',
   equipoTipoId: 'equipoTipoId',
   marca: 'marca',
@@ -1248,6 +1322,7 @@ exports.Prisma.OrdenReparacionEquipoScalarFieldEnum = {
 
 exports.Prisma.OrdenReparacionItemScalarFieldEnum = {
   id: 'id',
+  tenantId: 'tenantId',
   ordenId: 'ordenId',
   piezaId: 'piezaId',
   complejidad: 'complejidad',
@@ -1260,6 +1335,7 @@ exports.Prisma.OrdenReparacionItemScalarFieldEnum = {
 
 exports.Prisma.OrdenReparacionMaterialScalarFieldEnum = {
   id: 'id',
+  tenantId: 'tenantId',
   ordenId: 'ordenId',
   productoId: 'productoId',
   cantidad: 'cantidad',
@@ -1269,6 +1345,7 @@ exports.Prisma.OrdenReparacionMaterialScalarFieldEnum = {
 
 exports.Prisma.DefectacionCatalogoScalarFieldEnum = {
   id: 'id',
+  tenantId: 'tenantId',
   defecto: 'defecto',
   costo: 'costo',
   createdAt: 'createdAt',
@@ -1284,6 +1361,7 @@ exports.Prisma.ConfiguracionSistemaScalarFieldEnum = {
 
 exports.Prisma.OrdenProduccionScalarFieldEnum = {
   ordenProduccionId: 'ordenProduccionId',
+  tenantId: 'tenantId',
   recetaId: 'recetaId',
   cantidad: 'cantidad',
   estado: 'estado',
@@ -1296,6 +1374,7 @@ exports.Prisma.OrdenProduccionScalarFieldEnum = {
 
 exports.Prisma.OrdenProduccionHistorialScalarFieldEnum = {
   ordenProduccionId: 'ordenProduccionId',
+  tenantId: 'tenantId',
   estadoAnterior: 'estadoAnterior',
   estadoNuevo: 'estadoNuevo',
   observaciones: 'observaciones',
@@ -1306,6 +1385,7 @@ exports.Prisma.OrdenProduccionHistorialScalarFieldEnum = {
 
 exports.Prisma.RecetaScalarFieldEnum = {
   recetaId: 'recetaId',
+  tenantId: 'tenantId',
   nombre: 'nombre',
   rendimiento: 'rendimiento',
   costoUnitario: 'costoUnitario',
@@ -1318,6 +1398,7 @@ exports.Prisma.RecetaScalarFieldEnum = {
 
 exports.Prisma.RecetaIngredienteScalarFieldEnum = {
   recetaId: 'recetaId',
+  tenantId: 'tenantId',
   productoId: 'productoId',
   cantidad: 'cantidad',
   desperdicio: 'desperdicio',
@@ -1329,6 +1410,7 @@ exports.Prisma.RecetaIngredienteScalarFieldEnum = {
 
 exports.Prisma.ValeSalidaScalarFieldEnum = {
   valeSalidaId: 'valeSalidaId',
+  tenantId: 'tenantId',
   concepto: 'concepto',
   observaciones: 'observaciones',
   estado: 'estado',
@@ -1338,6 +1420,7 @@ exports.Prisma.ValeSalidaScalarFieldEnum = {
 
 exports.Prisma.ValeSalidaItemScalarFieldEnum = {
   valeSalidaItemId: 'valeSalidaItemId',
+  tenantId: 'tenantId',
   valeSalidaId: 'valeSalidaId',
   productoId: 'productoId',
   cantidad: 'cantidad',
@@ -1346,6 +1429,7 @@ exports.Prisma.ValeSalidaItemScalarFieldEnum = {
 
 exports.Prisma.ListaPrecioScalarFieldEnum = {
   id: 'id',
+  tenantId: 'tenantId',
   nombre: 'nombre',
   descripcion: 'descripcion',
   esDefault: 'esDefault',
@@ -1383,6 +1467,7 @@ exports.Prisma.VendorCodeSequenceScalarFieldEnum = {
 
 exports.Prisma.AnticipoScalarFieldEnum = {
   anticipoId: 'anticipoId',
+  tenantId: 'tenantId',
   tipo: 'tipo',
   estado: 'estado',
   contratoId: 'contratoId',
@@ -1577,6 +1662,9 @@ exports.Prisma.ModelName = {
   InyeccionCapital: 'InyeccionCapital',
   PagoDeuda: 'PagoDeuda',
   Cliente: 'Cliente',
+  Tenant: 'Tenant',
+  TenantMembership: 'TenantMembership',
+  TenantLicense: 'TenantLicense',
   MiEmpresa: 'MiEmpresa',
   Almacen: 'Almacen',
   PuntoDeVenta: 'PuntoDeVenta',

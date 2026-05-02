@@ -126,6 +126,8 @@ export const apiSlice = createApi({
     // Cash Loans & Debts
     'PrestamosCash',
     'DeudasCash',
+    // Tenant management
+    'TenantLicense',
   ],
   endpoints: () => ({}),
 })

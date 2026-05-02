@@ -1,10 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { withAuthGet, withAuthPost } from "@/lib/auth-middleware"
+import { withAuthGet, withAuthPost, type AuthenticatedUser } from "@/lib/auth-middleware"
+import { requireTenant } from "@/lib/services/tenant-scope"
 
-export const GET = withAuthGet(async (request: NextRequest, context: any, user: any) => {
+export const GET = withAuthGet(async (_request: NextRequest, _context: any, user: AuthenticatedUser) => {
   try {
-    const empleados = await prisma.empleado.findMany({  
+    const tenantId = requireTenant(user);
+    const empleados = await prisma.empleado.findMany({
+      where: { tenantId },
       orderBy: { salarioBases: "desc" },
     })
 

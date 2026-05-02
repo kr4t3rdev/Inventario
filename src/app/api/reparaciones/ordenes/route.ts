@@ -1,15 +1,17 @@
 import { type NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
-import { withAuthGet, withAuthPost } from "@/lib/auth-middleware"
+import { withAuthGet, withAuthPost, type AuthenticatedUser } from "@/lib/auth-middleware"
+import { requireTenant } from "@/lib/services/tenant-scope"
 
 // GET: Listar órdenes
-export const GET = withAuthGet(async (request: NextRequest) => {
+export const GET = withAuthGet(async (request: NextRequest, _ctx: any, user: AuthenticatedUser) => {
   try {
+    const tenantId = requireTenant(user);
     const searchParams = request.nextUrl.searchParams
     const estado = searchParams.get("estado")
     const search = searchParams.get("search")
 
-    const whereClause: any = {}
+    const whereClause: any = { tenantId };
 
     if (estado && estado !== "TODOS") {
       whereClause.estado = estado
@@ -70,8 +72,9 @@ export const GET = withAuthGet(async (request: NextRequest) => {
 })
 
 // POST: Crear nueva orden (Recepción)
-export const POST = withAuthPost(async (request: NextRequest, context: any, user: any) => {
+export const POST = withAuthPost(async (request: NextRequest, context: any, user: AuthenticatedUser) => {
   try {
+    const tenantId = requireTenant(user);
     const data = await request.json()
 
     const equiposInput = Array.isArray(data.equipos) ? data.equipos : []
@@ -116,6 +119,7 @@ export const POST = withAuthPost(async (request: NextRequest, context: any, user
       // Crear la orden de reparación
       const nuevaOrden = await tx.ordenReparacion.create({
         data: {
+          tenantId,
           clienteId: data.clienteId,
           equipoTipoId: primaryEquipo.equipoTipoId,
           marca: primaryEquipo.marca,

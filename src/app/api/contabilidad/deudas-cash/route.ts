@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import prisma from '@/lib/prisma'
-import { withAuthGet, withAuthPost } from '@/lib/auth-middleware'
+import { withAuthGet, withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware'
+import { requireTenant } from '@/lib/services/tenant-scope'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 import { calcularSaldoPendienteDeuda, calcularTotalDeudaConInteres, normalizarEstadoDeudaCash } from '@/lib/utils/deuda-cash'
 
@@ -38,12 +39,13 @@ function deudasCashEnabled(): boolean {
  * @param {NextRequest} request - Request con query params: estado, proveedorId, moneda, page, limit
  * @returns {NextResponse} Lista paginada de deudas
  */
-export const GET = withAuthGet(async (request: NextRequest) => {
+export const GET = withAuthGet(async (request: NextRequest, _context: unknown, user: AuthenticatedUser) => {
   try {
     if (!deudasCashEnabled()) {
       return NextResponse.json({ error: 'Módulo de deudas cash deshabilitado' }, { status: 404 })
     }
 
+    const tenantId = requireTenant(user);
     const { searchParams } = new URL(request.url)
     const query = querySchema.parse({
       estado: searchParams.get('estado') || undefined,
@@ -56,6 +58,7 @@ export const GET = withAuthGet(async (request: NextRequest) => {
     const skip = (query.page - 1) * query.limit
 
     const where = {
+      tenantId,
       deletedAt: null,
       ...(query.estado ? { estado: query.estado } : {}),
       ...(query.proveedorId ? { proveedorId: query.proveedorId } : {}),
@@ -126,12 +129,13 @@ export const GET = withAuthGet(async (request: NextRequest) => {
  * @param {NextRequest} request - Request con body: proveedorId, montoCapital, moneda, tasaInteres?, fechaVencimiento?, observaciones?
  * @returns {NextResponse} Deuda creada con status 201
  */
-export const POST = withAuthPost(async (request: NextRequest, _context: unknown, user: { userId: string }) => {
+export const POST = withAuthPost(async (request: NextRequest, _context: unknown, user: AuthenticatedUser) => {
   try {
     if (!deudasCashEnabled()) {
       return NextResponse.json({ error: 'Módulo de deudas cash deshabilitado' }, { status: 404 })
     }
 
+    const tenantId = requireTenant(user);
     const rawBody = await request.json()
     console.log('[DeudaCash POST] body recibido:', JSON.stringify(rawBody))
     const body = createSchema.parse(rawBody)
@@ -168,6 +172,7 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
 
       const cuentaPorPagar = await tx.cuentaPorPagar.create({
         data: {
+          tenantId,
           numeroFactura: `DC-${nextNum}`,
           proveedorId: body.proveedorId,
           proveedorNombre: proveedor.nombre,
@@ -184,6 +189,7 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
 
       await tx.reconciliacionVenta.create({
         data: {
+          tenantId,
           cuentaId: body.cuentaBancariaId,
           tipoPagoId: tipoPagoDesembolso.tipoId,
           monto: body.montoCapital,
@@ -199,6 +205,7 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
 
       return tx.deudaCash.create({
         data: {
+          tenantId,
           proveedorId: body.proveedorId,
           cuentaPorPagarId: cuentaPorPagar.cuentaPorPagarId,
           montoCapital: body.montoCapital,

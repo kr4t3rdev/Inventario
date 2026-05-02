@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import prisma from '@/lib/prisma'
-import { withAuth } from '@/lib/auth-middleware'
+import { withAuth, type AuthenticatedUser } from '@/lib/auth-middleware'
+import { requireTenant } from '@/lib/services/tenant-scope'
 import { clearEan13Codes, resetProductsForEan13 } from '@/lib/ean13-reset'
 import { z } from 'zod'
 
@@ -20,10 +21,12 @@ const miEmpresaUpsertSchema = z.object({
   usaCodigoEan13: z.boolean().optional(),
 })
 
-export const GET = withAuth(async (request: NextRequest) => {
+export const GET = withAuth(async (request: NextRequest, _context: unknown, user: AuthenticatedUser) => {
   try {
+    const tenantId = requireTenant(user)
+
     const miEmpresa = await prisma.miEmpresa.findUnique({
-      where: { id: 1 },
+      where: { tenantId },
       include: {
         cuentaBancaria: {
           select: {
@@ -41,7 +44,7 @@ export const GET = withAuth(async (request: NextRequest) => {
     if (!miEmpresa) {
       return NextResponse.json(
         {
-          id: 1,
+          tenantId,
           nombre: 'Mi Empresa',
           propietario: null,
           direccion: null,
@@ -64,13 +67,15 @@ export const GET = withAuth(async (request: NextRequest) => {
     return NextResponse.json(miEmpresa, { status: 200 })
   } catch (error) {
     console.error('❌ Error al obtener Mi Empresa:', error)
-    return NextResponse.json({ error: 'Error obteniendo Mi Empresa' }, { status: 500 })
+    const message = error instanceof Error ? error.message : 'Error obteniendo Mi Empresa'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 })
 
-export const PUT = withAuth(async (request: NextRequest) => {
+export const PUT = withAuth(async (request: NextRequest, _context: unknown, user: AuthenticatedUser) => {
   try {
-    console.log('🚀 PUT /api/mi-empresa - Iniciando')
+    const tenantId = requireTenant(user)
+    console.log('🚀 PUT /api/mi-empresa - Iniciando para tenant:', tenantId)
     const body = await request.json()
     console.log('📦 Body recibido:', JSON.stringify(body, null, 2))
 
@@ -96,9 +101,9 @@ export const PUT = withAuth(async (request: NextRequest) => {
     const data = validationResult.data
     console.log('✅ Validación Zod exitosa')
 
-    // Get current state to detect EAN-13 transitions
+    // Get current state to detect EAN-13 transitions (scoped by tenant)
     const current = await prisma.miEmpresa.findUnique({
-      where: { id: 1 },
+      where: { tenantId },
     })
 
     // Detect state transitions for EAN-13
@@ -110,9 +115,7 @@ export const PUT = withAuth(async (request: NextRequest) => {
     if (isTogglingOn) {
       console.log('🔄 Transición detectada: EAN-13 OFF → ON')
       if (!body.confirmReset) {
-        console.log(
-          '⚠️ confirmReset no proporcionado, requiriendo confirmación'
-        )
+        console.log('⚠️ confirmReset no proporcionado, requiriendo confirmación')
         return NextResponse.json(
           {
             error: 'Reset confirmation required',
@@ -157,9 +160,9 @@ export const PUT = withAuth(async (request: NextRequest) => {
     console.log('💾 Ejecutando upsert a base de datos...', { updateData })
 
     const miEmpresa = await prisma.miEmpresa.upsert({
-      where: { id: 1 },
+      where: { tenantId },
       create: {
-        id: 1,
+        tenantId,
         nombre: data.nombre ?? 'Mi Empresa',
         propietario: data.propietario ?? null,
         direccion: data.direccion ?? null,

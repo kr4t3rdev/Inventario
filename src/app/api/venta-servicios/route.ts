@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
-import { withAuthGet, withAuthPost } from '@/lib/auth-middleware'
+import { withAuthGet, withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware'
+import { requireTenant } from '@/lib/services/tenant-scope'
 import { prisma } from '@/lib/prisma'
 import { applyAnticipoAllocations, isAnticipoWorkflowError } from '@/lib/services/anticipos-workflow'
 
@@ -56,9 +57,11 @@ const ventaMixtaSchema = z.object({
  * @param {NextRequest} _request - Request entrante.
  * @returns {Promise<NextResponse>} Lista de ventas de servicios.
  */
-export const GET = withAuthGet(async (_request: NextRequest) => {
+export const GET = withAuthGet(async (_request: NextRequest, _ctx: any, user: AuthenticatedUser) => {
   try {
+    const tenantId = requireTenant(user);
     const ventasServicios = await prisma.ventaServicios.findMany({
+      where: { tenantId },
       include: {
         servicio: true,
         cliente: true,
@@ -77,8 +80,9 @@ export const GET = withAuthGet(async (_request: NextRequest) => {
  * @param {NextRequest} request - Request de creación.
  * @returns {Promise<NextResponse>} Resultado de creación.
  */
-export const POST = withAuthPost(async (request: NextRequest) => {
+export const POST = withAuthPost(async (request: NextRequest, _ctx: any, user: AuthenticatedUser) => {
   try {
+    const tenantId = requireTenant(user);
     const raw = await request.json()
 
     if (Array.isArray(raw?.lineas)) {
@@ -100,6 +104,7 @@ export const POST = withAuthPost(async (request: NextRequest) => {
         lineasServicio.map((linea) =>
           prisma.ventaServicios.create({
             data: {
+              tenantId,
               servicioId: linea.servicioId!,
               cantidad: linea.cantidad,
               costo: 0,
@@ -130,6 +135,7 @@ export const POST = withAuthPost(async (request: NextRequest) => {
     const resultado = await prisma.$transaction(async (tx) => {
       const ventaServicio = await tx.ventaServicios.create({
         data: {
+          tenantId,
           servicioId: data.servicioId,
           cantidad: data.cantidad,
           costo: data.costo ?? 0,
@@ -173,6 +179,7 @@ export const POST = withAuthPost(async (request: NextRequest) => {
 
           await tx.reconciliacionServicio.create({
             data: {
+              tenantId,
               ventaServicioId: ventaServicio.ventaServicioId,
               cuentaId: anticipo?.cuentaOrigenId || cuentaDefault?.cuentaId || '',
               tipoPagoId: anticipo?.tipoPagoOrigenId || tipoPagoDefault?.tipoId || '',

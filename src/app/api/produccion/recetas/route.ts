@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuthGet, withAuthPost } from '@/lib/auth-middleware';
+import { withAuthGet, withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware';
+import { requireTenant } from '@/lib/services/tenant-scope';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import { calculateCostoUnitarioReceta } from '@/lib/utils/produccion';
@@ -17,8 +18,9 @@ const createRecetaSchema = z.object({
  * @param {NextRequest} request - Request HTTP con filtros opcionales.
  * @returns {Promise<NextResponse>} Recetas encontradas.
  */
-export const GET = withAuthGet(async (request: NextRequest) => {
+export const GET = withAuthGet(async (request: NextRequest, _ctx: any, user: AuthenticatedUser) => {
   try {
+    const tenantId = requireTenant(user);
     const searchParams = request.nextUrl.searchParams;
     const search = searchParams.get('search')?.trim();
     const productoId = searchParams.get('productoId')?.trim();
@@ -96,8 +98,9 @@ export const GET = withAuthGet(async (request: NextRequest) => {
  * @param {NextRequest} request - Request HTTP con datos de receta.
  * @returns {Promise<NextResponse>} Receta creada.
  */
-export const POST = withAuthPost(async (request: NextRequest) => {
+export const POST = withAuthPost(async (request: NextRequest, _ctx: any, user: AuthenticatedUser) => {
   try {
+    const tenantId = requireTenant(user);
     const payload = createRecetaSchema.parse(await request.json());
 
     if (!payload.productoId) {
@@ -124,6 +127,7 @@ export const POST = withAuthPost(async (request: NextRequest) => {
     const receta = await prisma.receta.create({
       data: {
         recetaId: crypto.randomUUID(),
+        tenantId,
         nombre: payload.nombre,
         rendimiento: payload.rendimiento,
         costoUnitario: costoUnitario,

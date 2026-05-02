@@ -27,7 +27,7 @@ import {
   AnimatedCard,
 } from '@/components/ui/animations';
 import { useAuth } from '@/contexts/auth-context';
-import { useGetUserMetricsQuery, useGetUserQuery } from '@/lib/redux/services/adminApi';
+import { useGetUserMetricsQuery, useGetUserQuery, useGetTenantLicenseQuery } from '@/lib/redux/services/adminApi';
 import { motion, type Variants } from 'framer-motion';
 
 const UserActivityCharts = dynamic(
@@ -103,6 +103,7 @@ export default function AdminUsersPage(): React.JSX.Element {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { data: users, isLoading, refetch: refetchUsers } = useGetUserQuery();
   const { refetch: refetchMetrics } = useGetUserMetricsQuery({ months: 6 });
+  const { data: tenantLicense } = useGetTenantLicenseQuery();
 
   const safeUsers = users ?? [];
   const activeUsers = safeUsers.filter((candidate) => candidate.isActive).length;
@@ -359,12 +360,96 @@ export default function AdminUsersPage(): React.JSX.Element {
             })}
           </motion.div>
 
+          {/* Plan Consumption Card */}
+          {tenantLicense && (
+            <motion.div
+              className="px-4 lg:px-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.5 }}
+            >
+              <Card className="rounded-xl border bg-card shadow-sm">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Shield className="h-4 w-4 text-violet-600" />
+                    Plan {tenantLicense.license?.plan?.nombre ?? 'Sin plan'}
+                    {tenantLicense.tenantRole && (
+                      <span className="ml-auto text-xs font-normal text-muted-foreground">
+                        Tu rol: {tenantLicense.tenantRole}
+                      </span>
+                    )}
+                  </CardTitle>
+                  <CardDescription>
+                    Consumo de recursos del plan
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    {[
+                      {
+                        label: 'Usuarios',
+                        current: tenantLicense.consumption.usuarios,
+                        max: tenantLicense.limits.maxUsuarios,
+                        icon: User,
+                      },
+                      {
+                        label: 'Almacenes',
+                        current: tenantLicense.consumption.almacenes,
+                        max: tenantLicense.limits.maxAlmacenes,
+                        icon: Shield,
+                      },
+                      {
+                        label: 'Productos',
+                        current: tenantLicense.consumption.productos,
+                        max: tenantLicense.limits.maxProductos,
+                        icon: Shield,
+                      },
+                    ].map((item) => {
+                      const pct = item.max > 0 ? Math.round((item.current / item.max) * 100) : 0;
+                      const Icon = item.icon;
+                      return (
+                        <div key={item.label} className="space-y-2 rounded-lg border p-3">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="flex items-center gap-1.5 text-muted-foreground">
+                              <Icon className="h-3.5 w-3.5" />
+                              {item.label}
+                            </span>
+                            <span className="font-medium">
+                              {item.current}/{item.max}
+                            </span>
+                          </div>
+                          <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                            <motion.div
+                              className={`h-full rounded-full ${
+                                pct >= 90
+                                  ? 'bg-rose-500'
+                                  : pct >= 70
+                                    ? 'bg-amber-500'
+                                    : 'bg-emerald-500'
+                              }`}
+                              initial={{ width: 0 }}
+                              animate={{ width: `${Math.min(pct, 100)}%` }}
+                              transition={{ duration: 0.8, ease: 'easeOut' }}
+                            />
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {pct}% utilizado
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+
           {/* Users Table */}
           <motion.div
             className="px-4 lg:px-6"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.5 }}
+            transition={{ delay: 0.55, duration: 0.5 }}
           >
             <Card className="rounded-xl border border bg-card shadow-sm">
               <CardHeader>

@@ -11,6 +11,7 @@ datasource db {
 
 model Categoria {
   catId                 String      @id @default(cuid())
+  tenantId              String
   nombre                String
   createdAt             DateTime    @default(now())
   updatedAt             DateTime    @updatedAt
@@ -22,9 +23,11 @@ model Categoria {
   subcategorias         Categoria[] @relation("CategoriaHierarchy")
   productos             Producto[]
   productosSubcategoria Producto[]  @relation("ProductoSubcategoria")
+  tenant                Tenant      @relation(fields: [tenantId], references: [tenantId])
 
   @@index([clasSectionId])
   @@index([clasSpecificId])
+  @@index([tenantId])
 }
 
 model Unidad {
@@ -38,6 +41,7 @@ model Unidad {
 
 model Vendor {
   vendorId         String            @id @default(cuid())
+  tenantId         String
   nombre           String
   contacto         String?
   createdAt        DateTime          @default(now())
@@ -48,7 +52,7 @@ model Vendor {
   direccion        String?
   logo             String?
   telefono         String?
-  vendorCode       String?           @unique @db.VarChar(2)
+  vendorCode       String?           @db.VarChar(2)
   compras          CompraProducto[]
   compraDocumentos CompraDocumento[]
   contratos        Contrato[]        @relation("ContratoVendor")
@@ -58,8 +62,11 @@ model Vendor {
   anticipos        Anticipo[]
   productos        Producto[]
   compraServicios  CompraServicio[]
+  tenant           Tenant            @relation(fields: [tenantId], references: [tenantId])
 
+  @@unique([tenantId, vendorCode])
   @@index([vendorCode])
+  @@index([tenantId])
 }
 
 model InyeccionCapital {
@@ -102,6 +109,7 @@ model PagoDeuda {
 
 model Cliente {
   clienteId         String            @id @default(cuid())
+  tenantId          String
   nombre            String
   createdAt         DateTime          @default(now())
   updatedAt         DateTime          @updatedAt
@@ -120,10 +128,123 @@ model Cliente {
   Venta             Venta[]
   ventasServicios   VentaServicios[]
   facturas          Factura[]
+  tenant            Tenant            @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
+}
+
+/// * Modelo base de multi-tenant. Cada empresa/organización es un Tenant.
+model Tenant {
+  tenantId  String   @id @default(cuid())
+  nombre    String
+  slug      String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  empresa                    MiEmpresa?
+  memberships                TenantMembership[]
+  licencias                  TenantLicense[]
+  categorias                 Categoria[]
+  vendors                    Vendor[]
+  clientes                   Cliente[]
+  almacenes                  Almacen[]
+  puntosDeVenta              PuntoDeVenta[]
+  productos                  Producto[]
+  ventas                     Venta[]
+  facturas                   Factura[]
+  gastosDE                   GastosDE[]
+  gastosCompra               GastoCompra[]
+  comprasProducto            CompraProducto[]
+  comprasDocumento           CompraDocumento[]
+  comprasDocumentoItem       CompraDocumentoItem[]
+  servicios                  Servicios[]
+  ventasServicios            VentaServicios[]
+  comprasServicio            CompraServicio[]
+  cuentasBancarias           CuentaBancaria[]
+  reconciliacionesVenta      ReconciliacionVenta[]
+  reconciliacionesServicio   ReconciliacionServicio[]
+  reconciliacionesGasto      ReconciliacionGasto[]
+  ajustesBancarios           AjusteBancario[]
+  transferenciasBancarias    TransferenciaBancaria[]
+  contratos                  Contrato[]
+  seriesFacturacion          SerieFacturacion[]
+  ofertas                    Oferta[]
+  cuentasPorCobrar           CuentaPorCobrar[]
+  cuentasPorPagar            CuentaPorPagar[]
+  deudasCash                 DeudaCash[]
+  prestamosCash              PrestamoCash[]
+  pagosCuentaPorPagar        PagoCuentaPorPagar[]
+  empleados                  Empleado[]
+  ordenesProduccion          OrdenProduccion[]
+  ordenesProduccionHistorial OrdenProduccionHistorial[]
+  recetas                    Receta[]
+  recetasIngredientes        RecetaIngrediente[]
+  valesSalida                ValeSalida[]
+  valesSalidaItem            ValeSalidaItem[]
+  listasPrecio               ListaPrecio[]
+  equiposReparacion          EquipoReparacion[]
+  piezasReparacion           PiezaReparacion[]
+  ordenesReparacion          OrdenReparacion[]
+  ordenesReparacionEquipo    OrdenReparacionEquipo[]
+  ordenesReparacionItem      OrdenReparacionItem[]
+  ordenesReparacionMaterial  OrdenReparacionMaterial[]
+  defectacionesCatalogo      DefectacionCatalogo[]
+  anticipos                  Anticipo[]
+  transferencias             Transferencia[]
+  mermas                     Merma[]
+  stockUbicaciones           StockUbicacion[]
+  pagosSalario               Pagosalario[]
+  cierresContables           CierreContable[]
+
+  @@index([slug])
+  @@map("tenants")
+}
+
+/// * Membresía de un usuario en un tenant. Desacopla identidad global de rol operativo.
+model TenantMembership {
+  membershipId String   @id @default(cuid())
+  tenantId     String
+  userId       String
+  tenantRole   String   @default("dependiente")
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@unique([tenantId, userId])
+  @@index([userId])
+  @@index([tenantId])
+  @@map("tenant_memberships")
+}
+
+/// * Licencia/plan activo de un tenant. Reemplaza la relación actual Licencia→User.
+model TenantLicense {
+  tenantLicenseId String   @id @default(cuid())
+  tenantId        String
+  planId          String?
+  activa          Boolean  @default(true)
+  inicio          DateTime @default(now())
+  expiracion      DateTime
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  maxUsuarios     Int      @default(1)
+  maxAlmacenes    Int      @default(1)
+  maxProductos    Int      @default(100)
+  features        Json?
+
+  tenant Tenant @relation(fields: [tenantId], references: [tenantId], onDelete: Cascade)
+  plan   Plan?  @relation(fields: [planId], references: [planId])
+
+  @@index([tenantId])
+  @@index([planId])
+  @@map("tenant_licenses")
 }
 
 model MiEmpresa {
   id                Int             @id @default(1)
+  tenantId          String?         @unique
   nombre            String          @default("Mi Empresa")
   propietario       String?
   direccion         String?
@@ -137,21 +258,27 @@ model MiEmpresa {
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
   usaCodigoEan13    Boolean         @default(false)
+  tenant            Tenant?         @relation(fields: [tenantId], references: [tenantId])
   cuentaBancaria    CuentaBancaria? @relation("MiEmpresaCuenta", fields: [cuentaBancariaId], references: [cuentaId])
 }
 
 model Almacen {
   almacenId             String          @id @default(cuid())
+  tenantId              String
   nombre                String
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
   productos             Producto[]
   transferenciasDestino Transferencia[] @relation("TransferenciasDestino")
   transferenciasOrigen  Transferencia[] @relation("TransferenciasOrigen")
+  tenant                Tenant          @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
 }
 
 model PuntoDeVenta {
   pvId                  String          @id @default(cuid())
+  tenantId              String
   nombre                String
   ubicacion             String?
   createdAt             DateTime        @default(now())
@@ -162,10 +289,14 @@ model PuntoDeVenta {
   transferenciasDestino Transferencia[] @relation("TransferenciasDestino")
   transferenciasOrigen  Transferencia[] @relation("TransferenciasOrigen")
   ventas                Venta[]
+  tenant                Tenant          @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
 }
 
 model Producto {
   nombre               String
+  tenantId             String
   descripcion          String?
   precioCosto          Int
   precioVenta          Int
@@ -183,8 +314,8 @@ model Producto {
   subcategoriaId       String?
   cantidadEnPack       Int?
   productoPadreId      String?
-  codigoInterno        String?                   @unique @db.VarChar(11)
-  codigoNegocio        String?                   @unique
+  codigoInterno        String?                   @db.VarChar(11)
+  codigoNegocio        String?
   proveedorCodigo      String?
   idSeccionCodigo      String?
   especificoCodigo     String?
@@ -206,6 +337,7 @@ model Producto {
   subcategoria         Categoria?                @relation("ProductoSubcategoria", fields: [subcategoriaId], references: [catId])
   unidad               Unidad?                   @relation(fields: [unidadId], references: [unidadId], onDelete: Cascade)
   vendor               Vendor?                   @relation(fields: [vendorId], references: [vendorId], onDelete: Cascade)
+  tenant               Tenant                    @relation(fields: [tenantId], references: [tenantId])
   costHistory          ProductoCostHistory[]
   Receta               Receta[]
   RecetaIngrediente    RecetaIngrediente[]
@@ -214,10 +346,17 @@ model Producto {
   ventas               Venta[]
   ventaItems           VentaItem[]
   stockUbicaciones     StockUbicacion[]
+
+  @@unique([tenantId, codigoInterno])
+  @@unique([tenantId, codigoNegocio])
+  @@index([tenantId])
+  @@index([tenantId, categoriaId])
+  @@index([tenantId, vendorId])
 }
 
 model StockUbicacion {
   id                 String   @id @default(cuid())
+  tenantId           String
   productoId         String
   tipoUbicacion      String // "almacen" | "punto_venta"
   ubicacionId        String // Almacen.almacenId o PuntoDeVenta.pvId
@@ -227,14 +366,17 @@ model StockUbicacion {
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
   producto           Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
+  tenant             Tenant   @relation(fields: [tenantId], references: [tenantId])
 
   @@unique([productoId, tipoUbicacion, ubicacionId])
+  @@index([tenantId])
   @@index([ubicacionId, tipoUbicacion])
   @@index([productoId])
 }
 
 model Venta {
   ventaId          String                @id @default(cuid())
+  tenantId         String
   productoId       String?
   cantidad         Int
   puntoDeVentaId   String
@@ -258,6 +400,10 @@ model Venta {
   puntoDeVenta     PuntoDeVenta          @relation(fields: [puntoDeVentaId], references: [pvId])
   factura          Factura?
   items            VentaItem[]
+  tenant           Tenant                @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
+  @@index([tenantId, createdAt])
 }
 
 model VentaItem {
@@ -277,6 +423,7 @@ model VentaItem {
 
 model Merma {
   mermaId    String   @id @default(cuid())
+  tenantId   String
   productoId String
   cantidad   Int
   motivo     String?
@@ -284,10 +431,14 @@ model Merma {
   updatedAt  DateTime @updatedAt
   costoTotal Int?
   producto   Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
+  tenant     Tenant   @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
 }
 
 model Transferencia {
   transferenciaId       String        @id @default(cuid())
+  tenantId              String
   productoId            String
   cantidad              Int
   origenId              String?
@@ -309,6 +460,9 @@ model Transferencia {
   creadoPor             User?         @relation(fields: [creadoPorId], references: [userId], onDelete: SetNull)
   puntoDeVentaDestino   PuntoDeVenta? @relation("TransferenciasDestino", fields: [puntoDeVentaDestinoId], references: [pvId])
   puntoDeVentaOrigen    PuntoDeVenta? @relation("TransferenciasOrigen", fields: [puntoDeVentaOrigenId], references: [pvId])
+  tenant                Tenant        @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
 }
 
 model User {
@@ -339,23 +493,25 @@ model User {
   notifications            Notification[]
   activityLogs             UserActivityLog[]
   sessions                 UserSession[]
+  tenantMemberships        TenantMembership[]
   anticiposCreados         Anticipo[]
   compraDocumentosEditados CompraDocumento[]    @relation("CompraDocumentoActualizado")
   transferenciasCreadas    Transferencia[]
 }
 
 model Plan {
-  planId       String     @id @default(cuid())
-  nombre       String
-  descripcion  String?
-  precio       Decimal    @default(0)
-  duracionDias Int
-  maxUsuarios  Int        @default(1)
-  maxAlmacenes Int        @default(1)
-  maxProductos Int        @default(100)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  licencias    Licencia[]
+  planId         String          @id @default(cuid())
+  nombre         String
+  descripcion    String?
+  precio         Decimal         @default(0)
+  duracionDias   Int
+  maxUsuarios    Int             @default(1)
+  maxAlmacenes   Int             @default(1)
+  maxProductos   Int             @default(100)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  licencias      Licencia[]
+  tenantLicenses TenantLicense[]
 }
 
 model Licencia {
@@ -503,6 +659,7 @@ model VacationAccrual {
 
 model Empleado {
   empleadoId            String                 @id @default(cuid())
+  tenantId              String
   nombre                String
   apellido              String
   telefono              String?
@@ -522,10 +679,14 @@ model Empleado {
   vacationAccruals      VacationAccrual[]
   vacationRequests      VacationRequest[]
   ventas                Venta[]
+  tenant                Tenant                 @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
 }
 
 model Pagosalario {
   pgId                String                @id @default(cuid())
+  tenantId            String
   empleadoId          String
   salario             Int
   bonificaciones      Int?                  @default(0)
@@ -537,10 +698,14 @@ model Pagosalario {
   updatedAt           DateTime              @updatedAt
   empleado            Empleado              @relation(fields: [empleadoId], references: [empleadoId], onDelete: Cascade)
   ReconciliacionGasto ReconciliacionGasto[]
+  tenant              Tenant                @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
 }
 
 model CierreContable {
   cierreId            String   @id @default(cuid())
+  tenantId            String
   tipo                String
   fechaInicio         DateTime
   fechaFin            DateTime
@@ -564,10 +729,14 @@ model CierreContable {
   observaciones       String?
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+  tenant              Tenant   @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
 }
 
 model GastoCompra {
   gastoCompraId    String                @id @default(cuid())
+  tenantId         String
   productoId       String
   vendorId         String
   cantidad         Int
@@ -586,10 +755,14 @@ model GastoCompra {
   producto         Producto              @relation(fields: [productoId], references: [id], onDelete: Cascade)
   vendor           Vendor                @relation(fields: [vendorId], references: [vendorId], onDelete: Cascade)
   reconciliaciones ReconciliacionGasto[]
+  tenant           Tenant                @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
 }
 
 model CompraProducto {
   compraProductoId String          @id @default(cuid())
+  tenantId         String
   productoId       String
   numeroFactura    String
   facturaUrl       String
@@ -613,7 +786,9 @@ model CompraProducto {
   anticipo         Anticipo?
   producto         Producto        @relation(fields: [productoId], references: [id], onDelete: Cascade)
   proveedor        Vendor          @relation(fields: [proveedorId], references: [vendorId], onDelete: Cascade)
+  tenant           Tenant          @relation(fields: [tenantId], references: [tenantId])
 
+  @@index([tenantId])
   @@index([estado])
   @@index([proveedorId])
   @@index([productoId])
@@ -623,6 +798,7 @@ model CompraProducto {
 /// * Cabecera de compra múltiple. Una factura/proveedor → N items.
 model CompraDocumento {
   compraDocumentoId String                @id @default(cuid())
+  tenantId          String
   proveedorId       String
   numeroFactura     String                @default("")
   facturaUrl        String                @default("")
@@ -643,7 +819,9 @@ model CompraDocumento {
   proveedor         Vendor                @relation(fields: [proveedorId], references: [vendorId], onDelete: Cascade)
   updatedBy         User?                 @relation("CompraDocumentoActualizado", fields: [updatedById], references: [userId], onDelete: SetNull)
   items             CompraDocumentoItem[]
+  tenant            Tenant                @relation(fields: [tenantId], references: [tenantId])
 
+  @@index([tenantId])
   @@index([estado])
   @@index([proveedorId])
   @@index([fechaCompra])
@@ -653,6 +831,7 @@ model CompraDocumento {
 /// * Línea de detalle de una compra múltiple.
 model CompraDocumentoItem {
   compraDocumentoItemId String          @id @default(cuid())
+  tenantId              String
   compraDocumentoId     String
   productoId            String
   cantidad              Int
@@ -662,13 +841,16 @@ model CompraDocumentoItem {
   updatedAt             DateTime        @updatedAt
   compraDocumento       CompraDocumento @relation(fields: [compraDocumentoId], references: [compraDocumentoId], onDelete: Cascade)
   producto              Producto        @relation(fields: [productoId], references: [id], onDelete: Cascade)
+  tenant                Tenant          @relation(fields: [tenantId], references: [tenantId])
 
+  @@index([tenantId])
   @@index([compraDocumentoId])
   @@index([productoId])
 }
 
 model Servicios {
   servicioId      String           @id @default(cuid())
+  tenantId        String
   nombre          String
   precio          Int
   descripcion     String
@@ -677,10 +859,14 @@ model Servicios {
   ofertaItems     OfertaItem[]
   ventasServicios VentaServicios[]
   compraServicios CompraServicio[]
+  tenant          Tenant           @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
 }
 
 model VentaServicios {
   ventaServicioId  String                   @id @default(cuid())
+  tenantId         String
   servicioId       String
   cantidad         Int
   costo            Int                      @default(0)
@@ -693,10 +879,14 @@ model VentaServicios {
   reconciliaciones ReconciliacionServicio[]
   cliente          Cliente?                 @relation(fields: [clienteId], references: [clienteId], onDelete: Cascade)
   servicio         Servicios                @relation(fields: [servicioId], references: [servicioId], onDelete: Cascade)
+  tenant           Tenant                   @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
 }
 
 model CompraServicio {
   compraServicioId String    @id @default(cuid())
+  tenantId         String
   servicioId       String
   proveedorId      String?
   numeroFactura    String?
@@ -712,7 +902,9 @@ model CompraServicio {
   updatedAt        DateTime  @updatedAt
   servicio         Servicios @relation(fields: [servicioId], references: [servicioId], onDelete: Cascade)
   proveedor        Vendor?   @relation(fields: [proveedorId], references: [vendorId], onDelete: SetNull)
+  tenant           Tenant    @relation(fields: [tenantId], references: [tenantId])
 
+  @@index([tenantId])
   @@index([servicioId])
   @@index([proveedorId])
   @@index([estado])
@@ -743,6 +935,7 @@ model GastoElemento {
 
 model GastosDE {
   gastosDEId       String                @id @default(cuid())
+  tenantId         String
   tipo             String?
   conceptoId       String?
   elementoId       String?
@@ -758,6 +951,10 @@ model GastosDE {
   elemento         GastoElemento?        @relation(fields: [elementoId], references: [elementoId])
   cuentaPorPagar   CuentaPorPagar?
   reconciliaciones ReconciliacionGasto[]
+  tenant           Tenant                @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
+  @@index([tenantId, createdAt])
 }
 
 model Moneda {
@@ -807,8 +1004,9 @@ model TransaccionMoneda {
 
 model CuentaBancaria {
   cuentaId                 String                   @id @default(cuid())
+  tenantId                 String
   nombreBanco              String
-  numeroCuenta             String                   @unique
+  numeroCuenta             String
   tipoCuenta               String
   saldo                    Float                    @default(0)
   moneda                   String                   @default("CUP")
@@ -825,6 +1023,10 @@ model CuentaBancaria {
   transferenciasDestino    TransferenciaBancaria[]  @relation("TransferenciasDestino")
   transferenciasOrigen     TransferenciaBancaria[]  @relation("TransferenciasOrigen")
   facturas                 Factura[]                @relation("FacturaCuenta")
+  tenant                   Tenant                   @relation(fields: [tenantId], references: [tenantId])
+
+  @@unique([tenantId, numeroCuenta])
+  @@index([tenantId])
 }
 
 model TipoPago {
@@ -843,6 +1045,7 @@ model TipoPago {
 
 model ReconciliacionVenta {
   reconciliacionId            String         @id @default(cuid())
+  tenantId                    String
   ventaId                     String?
   cuentaId                    String
   tipoPagoId                  String
@@ -865,10 +1068,14 @@ model ReconciliacionVenta {
   prestamoCash                PrestamoCash?  @relation(fields: [prestamoCashId], references: [id])
   tipoPago                    TipoPago       @relation(fields: [tipoPagoId], references: [tipoId])
   venta                       Venta?         @relation(fields: [ventaId], references: [ventaId])
+  tenant                      Tenant         @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
 }
 
 model ReconciliacionServicio {
   reconciliacionId    String         @id @default(cuid())
+  tenantId            String
   cuentaId            String
   tipoPagoId          String
   monto               Decimal
@@ -884,10 +1091,14 @@ model ReconciliacionServicio {
   cuentaBancaria      CuentaBancaria @relation(fields: [cuentaId], references: [cuentaId])
   tipoPago            TipoPago       @relation(fields: [tipoPagoId], references: [tipoId])
   ventasServicio      VentaServicios @relation(fields: [ventaServicioId], references: [ventaServicioId])
+  tenant              Tenant         @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
 }
 
 model ReconciliacionGasto {
   reconciliacionId    String          @id @default(cuid())
+  tenantId            String
   tipoGasto           String
   referenciaId        String
   cuentaId            String
@@ -915,10 +1126,14 @@ model ReconciliacionGasto {
   gastoDE             GastosDE?       @relation(fields: [gastosDEId], references: [gastosDEId])
   pagoSalario         Pagosalario?    @relation(fields: [pgId], references: [pgId])
   tipoPago            TipoPago        @relation(fields: [tipoPagoId], references: [tipoId])
+  tenant              Tenant          @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
 }
 
 model AjusteBancario {
   ajusteId        String         @id @default(cuid())
+  tenantId        String
   cuentaId        String
   tipo            String
   monto           Decimal
@@ -931,11 +1146,15 @@ model AjusteBancario {
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   cuentaBancaria  CuentaBancaria @relation(fields: [cuentaId], references: [cuentaId])
+  tenant          Tenant         @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
 }
 
 model TransferenciaBancaria {
   transferenciaId     String         @id @default(cuid())
-  numeroComprobante   String         @unique
+  tenantId            String
+  numeroComprobante   String
   cuentaOrigenId      String
   cuentaDestinoId     String
   montoOrigen         Decimal
@@ -953,6 +1172,10 @@ model TransferenciaBancaria {
   existe              Boolean        @default(true)
   cuentaDestino       CuentaBancaria @relation("TransferenciasDestino", fields: [cuentaDestinoId], references: [cuentaId])
   cuentaOrigen        CuentaBancaria @relation("TransferenciasOrigen", fields: [cuentaOrigenId], references: [cuentaId])
+  tenant              Tenant         @relation(fields: [tenantId], references: [tenantId])
+
+  @@unique([tenantId, numeroComprobante])
+  @@index([tenantId])
 }
 
 model AlertHistory {
@@ -1054,7 +1277,8 @@ model ScenarioSimulation {
 
 model Contrato {
   contratoId                     String               @id @default(cuid())
-  numeroContrato                 String               @unique
+  tenantId                       String
+  numeroContrato                 String
   numeroConsecutivo              Int
   numeroContratoClienteProveedor String?
   tipo                           String
@@ -1084,8 +1308,11 @@ model Contrato {
   firmas                         ContratoFirma[]
   anticipos                      Anticipo[]
   versiones                      ContratoVersion[]
+  tenant                         Tenant               @relation(fields: [tenantId], references: [tenantId])
 
-  @@unique([tipo, numeroConsecutivo])
+  @@unique([tenantId, numeroContrato])
+  @@unique([tenantId, tipo, numeroConsecutivo])
+  @@index([tenantId])
 }
 
 model ContratoVersion {
@@ -1174,9 +1401,10 @@ model TipoContratoCustom {
 
 model Factura {
   idFactura         String           @id @default(cuid())
+  tenantId          String
   numeroConsecutivo Int              @default(autoincrement())
   serieId           String
-  numeroFactura     String           @unique
+  numeroFactura     String
   tipoDocumento     TipoDocumento    @default(FACTURA)
   ventaId           String?          @unique
   clienteId         String
@@ -1204,13 +1432,17 @@ model Factura {
   serie             SerieFacturacion @relation(fields: [serieId], references: [serieId])
   anticipo          Anticipo?
   venta             Venta?           @relation(fields: [ventaId], references: [ventaId], onDelete: Cascade)
+  tenant            Tenant           @relation(fields: [tenantId], references: [tenantId])
 
+  @@unique([tenantId, numeroFactura])
+  @@index([tenantId])
   @@map("facturas")
 }
 
 model SerieFacturacion {
   serieId      String    @id @default(cuid())
-  prefijo      String    @unique
+  tenantId     String
+  prefijo      String
   descripcion  String
   consecutivo  Int       @default(1)
   activa       Boolean   @default(true)
@@ -1218,13 +1450,17 @@ model SerieFacturacion {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
   facturas     Factura[]
+  tenant       Tenant    @relation(fields: [tenantId], references: [tenantId])
 
+  @@unique([tenantId, prefijo])
+  @@index([tenantId])
   @@map("series_facturacion")
 }
 
 model Oferta {
   id               String       @id @default(cuid())
-  numeroOferta     String       @unique
+  tenantId         String
+  numeroOferta     String
   clienteId        String
   fechaEmision     DateTime     @default(now())
   fechaVencimiento DateTime?
@@ -1238,6 +1474,10 @@ model Oferta {
   cliente          Cliente      @relation(fields: [clienteId], references: [clienteId])
   items            OfertaItem[]
   venta            Venta?
+  tenant           Tenant       @relation(fields: [tenantId], references: [tenantId])
+
+  @@unique([tenantId, numeroOferta])
+  @@index([tenantId])
 }
 
 model OfertaItem {
@@ -1255,6 +1495,7 @@ model OfertaItem {
 
 model CuentaPorCobrar {
   id               String                @id @default(cuid())
+  tenantId         String
   idCC             Int                   @default(autoincrement())
   facturaId        String?               @unique
   numeroFactura    String?
@@ -1270,10 +1511,14 @@ model CuentaPorCobrar {
   cliente          Cliente               @relation(fields: [clienteId], references: [clienteId])
   factura          Factura?              @relation(fields: [facturaId], references: [idFactura])
   prestamoCash     PrestamoCash?
+  tenant           Tenant                @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
 }
 
 model CuentaPorPagar {
   cuentaPorPagarId String                @id @default(cuid())
+  tenantId         String
   numeroFactura    String
   gastoCompraId    String?               @unique
   gastosDEId       String?               @unique
@@ -1299,7 +1544,9 @@ model CuentaPorPagar {
   deudaCash        DeudaCash?
   pagos            PagoCuentaPorPagar[]
   reconciliaciones ReconciliacionGasto[]
+  tenant           Tenant                @relation(fields: [tenantId], references: [tenantId])
 
+  @@index([tenantId])
   @@index([estado])
   @@index([tipo])
   @@index([numeroFactura])
@@ -1308,6 +1555,7 @@ model CuentaPorPagar {
 
 model DeudaCash {
   id               String                @id @default(cuid())
+  tenantId         String
   idNumerico       Int                   @default(autoincrement())
   proveedorId      String
   cuentaPorPagarId String                @unique
@@ -1326,13 +1574,16 @@ model DeudaCash {
   proveedor        Vendor                @relation(fields: [proveedorId], references: [vendorId])
   cuentaPorPagar   CuentaPorPagar        @relation(fields: [cuentaPorPagarId], references: [cuentaPorPagarId])
   reconciliaciones ReconciliacionVenta[]
+  tenant           Tenant                @relation(fields: [tenantId], references: [tenantId])
 
+  @@index([tenantId])
   @@index([proveedorId])
   @@index([estado])
 }
 
 model PrestamoCash {
   id                String                @id @default(cuid())
+  tenantId          String
   idNumerico        Int                   @default(autoincrement())
   clienteId         String
   cuentaPorCobrarId String                @unique
@@ -1352,13 +1603,16 @@ model PrestamoCash {
   cliente           Cliente               @relation(fields: [clienteId], references: [clienteId])
   cuentaPorCobrar   CuentaPorCobrar       @relation(fields: [cuentaPorCobrarId], references: [id])
   reconciliaciones  ReconciliacionVenta[]
+  tenant            Tenant                @relation(fields: [tenantId], references: [tenantId])
 
+  @@index([tenantId])
   @@index([clienteId])
   @@index([estado])
 }
 
 model PagoCuentaPorPagar {
   pagoCuentaPorPagarId String         @id @default(cuid())
+  tenantId             String
   cuentaPorPagarId     String
   monto                Decimal
   numeroTransaccion    String
@@ -1368,12 +1622,15 @@ model PagoCuentaPorPagar {
   createdAt            DateTime       @default(now())
   updatedAt            DateTime       @updatedAt
   cuentaPorPagar       CuentaPorPagar @relation(fields: [cuentaPorPagarId], references: [cuentaPorPagarId], onDelete: Cascade)
+  tenant               Tenant         @relation(fields: [tenantId], references: [tenantId])
 
+  @@index([tenantId])
   @@index([cuentaPorPagarId])
 }
 
 model EquipoReparacion {
   id                     String                  @id @default(cuid())
+  tenantId               String
   nombre                 String
   descripcion            String?
   createdAt              DateTime                @default(now())
@@ -1381,10 +1638,14 @@ model EquipoReparacion {
   ordenes                OrdenReparacion[]
   ordenReparacionEquipos OrdenReparacionEquipo[]
   piezas                 PiezaReparacion[]
+  tenant                 Tenant                  @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
 }
 
 model PiezaReparacion {
   id           String                @id @default(cuid())
+  tenantId     String
   nombre       String
   equipoId     String
   costoPequeno Decimal
@@ -1394,10 +1655,14 @@ model PiezaReparacion {
   updatedAt    DateTime              @updatedAt
   items        OrdenReparacionItem[]
   equipo       EquipoReparacion      @relation(fields: [equipoId], references: [id], onDelete: Cascade)
+  tenant       Tenant                @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
 }
 
 model OrdenReparacion {
   id                 String                    @id @default(cuid())
+  tenantId           String
   numeroOrden        Int                       @default(autoincrement())
   clienteId          String
   equipoTipoId       String
@@ -1431,10 +1696,14 @@ model OrdenReparacion {
   equipos            OrdenReparacionEquipo[]
   items              OrdenReparacionItem[]
   materiales         OrdenReparacionMaterial[]
+  tenant             Tenant                    @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
 }
 
 model OrdenReparacionEquipo {
   id                String                @id @default(cuid())
+  tenantId          String
   ordenId           String
   equipoTipoId      String
   marca             String
@@ -1449,10 +1718,14 @@ model OrdenReparacionEquipo {
   equipoTipo        EquipoReparacion      @relation(fields: [equipoTipoId], references: [id])
   orden             OrdenReparacion       @relation(fields: [ordenId], references: [id], onDelete: Cascade)
   items             OrdenReparacionItem[]
+  tenant            Tenant                @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
 }
 
 model OrdenReparacionItem {
   id            String                 @id @default(cuid())
+  tenantId      String
   ordenId       String
   piezaId       String?
   complejidad   ComplejidadReparacion?
@@ -1465,10 +1738,14 @@ model OrdenReparacionItem {
   ordenEquipo   OrdenReparacionEquipo? @relation(fields: [ordenEquipoId], references: [id])
   orden         OrdenReparacion        @relation(fields: [ordenId], references: [id], onDelete: Cascade)
   pieza         PiezaReparacion?       @relation(fields: [piezaId], references: [id])
+  tenant        Tenant                 @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
 }
 
 model OrdenReparacionMaterial {
   id             String          @id @default(cuid())
+  tenantId       String
   ordenId        String
   productoId     String
   cantidad       Int
@@ -1476,15 +1753,22 @@ model OrdenReparacionMaterial {
   total          Decimal
   orden          OrdenReparacion @relation(fields: [ordenId], references: [id], onDelete: Cascade)
   producto       Producto        @relation(fields: [productoId], references: [id])
+  tenant         Tenant          @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
 }
 
 model DefectacionCatalogo {
   id        String                @id @default(cuid())
+  tenantId  String
   defecto   String
   costo     Int
   createdAt DateTime              @default(now())
   updatedAt DateTime              @updatedAt
   items     OrdenReparacionItem[]
+  tenant    Tenant                @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
 }
 
 model ConfiguracionSistema {
@@ -1496,6 +1780,7 @@ model ConfiguracionSistema {
 
 model OrdenProduccion {
   ordenProduccionId        String                     @id
+  tenantId                 String
   recetaId                 String
   cantidad                 Int
   estado                   EstadoProduccion           @default(PENDIENTE)
@@ -1506,10 +1791,14 @@ model OrdenProduccion {
   costoMateriales          Float?
   Receta                   Receta                     @relation(fields: [recetaId], references: [recetaId], onDelete: Cascade)
   OrdenProduccionHistorial OrdenProduccionHistorial[]
+  tenant                   Tenant                     @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
 }
 
 model OrdenProduccionHistorial {
   ordenProduccionId String
+  tenantId          String
   estadoAnterior    String
   estadoNuevo       String
   observaciones     String?
@@ -1517,10 +1806,14 @@ model OrdenProduccionHistorial {
   createdAt         DateTime        @default(now())
   id                String          @id @default(dbgenerated("(gen_random_uuid())::text"))
   OrdenProduccion   OrdenProduccion @relation(fields: [ordenProduccionId], references: [ordenProduccionId], onDelete: Cascade)
+  tenant            Tenant          @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
 }
 
 model Receta {
   recetaId          String              @id
+  tenantId          String
   nombre            String              @db.VarChar(160)
   rendimiento       Int                 @default(1)
   costoUnitario     Float               @default(0)
@@ -1532,10 +1825,14 @@ model Receta {
   OrdenProduccion   OrdenProduccion[]
   Producto          Producto?           @relation(fields: [productoId], references: [id])
   RecetaIngrediente RecetaIngrediente[]
+  tenant            Tenant              @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
 }
 
 model RecetaIngrediente {
   recetaId      String
+  tenantId      String
   productoId    String
   cantidad      Float
   desperdicio   Float    @default(0)
@@ -1545,30 +1842,42 @@ model RecetaIngrediente {
   unidadSimbolo String?
   Producto      Producto @relation(fields: [productoId], references: [id], onDelete: Cascade)
   Receta        Receta   @relation(fields: [recetaId], references: [recetaId], onDelete: Cascade)
+  tenant        Tenant   @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
 }
 
 model ValeSalida {
   valeSalidaId   String           @id
+  tenantId       String
   concepto       String           @db.VarChar(200)
   observaciones  String?          @db.VarChar(1000)
   estado         String           @default("COMPLETADO")
   createdAt      DateTime         @default(now())
   updatedAt      DateTime
   ValeSalidaItem ValeSalidaItem[]
+  tenant         Tenant           @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
 }
 
 model ValeSalidaItem {
   valeSalidaItemId String     @id
+  tenantId         String
   valeSalidaId     String
   productoId       String
   cantidad         Int
   createdAt        DateTime   @default(now())
   Producto         Producto   @relation(fields: [productoId], references: [id], onDelete: Cascade)
   ValeSalida       ValeSalida @relation(fields: [valeSalidaId], references: [valeSalidaId], onDelete: Cascade)
+  tenant           Tenant     @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
 }
 
 model ListaPrecio {
   id            String           @id @default(cuid())
+  tenantId      String
   nombre        String
   descripcion   String?
   esDefault     Boolean          @default(false)
@@ -1576,6 +1885,9 @@ model ListaPrecio {
   updatedAt     DateTime         @updatedAt
   precios       PrecioProducto[]
   puntosDeVenta PuntoDeVenta[]
+  tenant        Tenant           @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
 }
 
 model PrecioProducto {
@@ -1635,6 +1947,7 @@ enum ContextoAnticipo {
 
 model Anticipo {
   anticipoId        String               @id @default(cuid())
+  tenantId          String
   tipo              TipoAnticipo
   estado            EstadoAnticipo       @default(RESERVADO)
   contratoId        String
@@ -1661,7 +1974,9 @@ model Anticipo {
   compraProducto    CompraProducto?      @relation(fields: [compraProductoId], references: [compraProductoId])
   creador           User                 @relation(fields: [createdById], references: [userId])
   movimientos       AnticipoMovimiento[]
+  tenant            Tenant               @relation(fields: [tenantId], references: [tenantId])
 
+  @@index([tenantId])
   @@index([contratoId])
   @@index([proveedorId])
   @@index([clienteId])

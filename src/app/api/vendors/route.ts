@@ -1,5 +1,7 @@
 import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
+import { withAuthGet, withAuthPost, type AuthenticatedUser } from "@/lib/auth-middleware";
+import { requireTenant } from "@/lib/services/tenant-scope";
 import {
   getNextVendorCode,
   generateVendorEan13,
@@ -8,16 +10,18 @@ import {
 
 /**
  * @description Deriva el código de proveedor desde los productos ya asociados al vendor.
- * @param {Array<{ proveedorCodigo?: string | null }>} productos - Productos históricos del vendor.
+ * @param {Array<{ id: string; nombre: string }>} productos - Productos históricos del vendor.
  * @returns {string | null} Código consistente o null si no existe todavía.
  */
 function deriveProveedorCodigo(_productos: Array<{ id: string; nombre: string }>): string | null {
   return null
 }
 
-export async function GET() {
+export const GET = withAuthGet(async (_request: NextRequest, _context: unknown, user: AuthenticatedUser) => {
   try {
+    const tenantId = requireTenant(user);
     const vendors = await prisma.vendor.findMany({
+      where: { tenantId },
       include: {
         productos: {
           select: {
@@ -46,10 +50,11 @@ export async function GET() {
     console.error('Error fetching vendors:', error)
     return NextResponse.json({ error: 'Error al obtener vendors' }, { status: 500 })
   }
-}
+})
 
-export async function POST(req: NextRequest) {
+export const POST = withAuthPost(async (req: NextRequest, _context: unknown, user: AuthenticatedUser) => {
   try {
+    const tenantId = requireTenant(user);
     const body = await req.json()
     const { nombre, direccion, telefono, contacto, cuentaCUP, cuentaUSD, logo, contrato, vendorCode } = body
 
@@ -79,6 +84,7 @@ export async function POST(req: NextRequest) {
         cuentaUSD,
         logo,
         contrato,
+        tenantId,
       },
     })
 
@@ -101,5 +107,5 @@ export async function POST(req: NextRequest) {
     console.error('Error creating vendor:', error)
     return NextResponse.json({ error: 'Error al crear proveedor' }, { status: 500 })
   }
-}
+})
 

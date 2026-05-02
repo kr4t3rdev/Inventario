@@ -1,13 +1,17 @@
 import { NextResponse, NextRequest } from "next/server";
 import prisma from "@/lib/prisma";
+import { withAuthGet, withAuthPost, type AuthenticatedUser } from "@/lib/auth-middleware";
+import { requireTenant } from "@/lib/services/tenant-scope";
 import { CategoriaValidator } from "@/lib/categoria-validation";
 import { CategoriaApiErrorHandler } from "@/lib/categoria-errors";
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+export const GET = withAuthGet(async (_request: NextRequest, _context: unknown, user: AuthenticatedUser) => {
     try {
+        const tenantId = requireTenant(user);
         const categorias = await prisma.categoria.findMany({
+            where: { tenantId },
             select: {
                 catId: true,
                 nombre: true,
@@ -41,9 +45,10 @@ export async function GET() {
           { status: 500 }
         )
     }
-}
-export async function POST(req: NextRequest) {
+})
+export const POST = withAuthPost(async (req: NextRequest, _context: unknown, user: AuthenticatedUser) => {
     try {
+        const tenantId = requireTenant(user);
         const body = await req.json()
 
         // Comprehensive validation using the new validation system
@@ -61,7 +66,8 @@ export async function POST(req: NextRequest) {
                 descripcion: validatedData.descripcion,
                 parentId: validatedData.parentId,
                 clasSectionId: validatedData.clasSectionId,
-                clasSpecificId: validatedData.clasSpecificId
+                clasSpecificId: validatedData.clasSpecificId,
+                tenantId
             },
             select: {
                 catId: true,
@@ -92,4 +98,4 @@ export async function POST(req: NextRequest) {
         console.error('Error creating category:', error)
         return CategoriaApiErrorHandler.handleUnknownError(error, { operation: 'create' })
     }
-}
+})

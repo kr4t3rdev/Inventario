@@ -1,9 +1,11 @@
 import { type NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
-import { withAuthPost } from "@/lib/auth-middleware"
+import { withAuthPost, type AuthenticatedUser } from "@/lib/auth-middleware"
+import { requireTenant } from "@/lib/services/tenant-scope"
 
-export const POST = withAuthPost(async (request: NextRequest, context: any, user: any) => {
+export const POST = withAuthPost(async (request: NextRequest, _context: any, user: AuthenticatedUser) => {
   try {
+    const tenantId = requireTenant(user);
     const data = await request.json()
 
     if (user.role === 'dependiente') {
@@ -15,6 +17,7 @@ export const POST = withAuthPost(async (request: NextRequest, context: any, user
 
     const nuevaPieza = await prisma.piezaReparacion.create({
       data: {
+        tenantId,
         nombre: data.nombre,
         equipoId: data.equipoId,
         costoPequeno: data.costoPequeno,

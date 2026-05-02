@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withAuthGet, withAuthPost } from '@/lib/auth-middleware';
+import { withAuthGet, withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware';
+import { requireTenant } from '@/lib/services/tenant-scope';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 
@@ -15,15 +16,16 @@ const createOrdenSchema = z.object({
  * @param {NextRequest} request - Request HTTP con filtros opcionales.
  * @returns {Promise<NextResponse>} Órdenes encontradas.
  */
-export const GET = withAuthGet(async (request: NextRequest) => {
+export const GET = withAuthGet(async (request: NextRequest, _ctx: any, user: AuthenticatedUser) => {
   try {
+    const tenantId = requireTenant(user);
     const searchParams = request.nextUrl.searchParams;
     const estado = searchParams.get('estado')?.trim();
     const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10));
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20', 10)));
     const skip = (page - 1) * limit;
 
-    const whereClause: any = {};
+    const whereClause: any = { tenantId };
 
     if (estado) {
       whereClause.estado = estado;
@@ -107,8 +109,9 @@ export const GET = withAuthGet(async (request: NextRequest) => {
  * @param {NextRequest} request - Request HTTP con datos de la orden.
  * @returns {Promise<NextResponse>} Orden creada.
  */
-export const POST = withAuthPost(async (request: NextRequest) => {
+export const POST = withAuthPost(async (request: NextRequest, _ctx: any, user: AuthenticatedUser) => {
   try {
+    const tenantId = requireTenant(user);
     const payload = createOrdenSchema.parse(await request.json());
 
     // Verificar que la receta existe
@@ -133,6 +136,7 @@ export const POST = withAuthPost(async (request: NextRequest) => {
     const orden = await prisma.ordenProduccion.create({
       data: {
         ordenProduccionId: crypto.randomUUID(),
+        tenantId,
         recetaId: payload.recetaId,
         cantidad: payload.cantidad,
         observaciones: payload.observaciones,

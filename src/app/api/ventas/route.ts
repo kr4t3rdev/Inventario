@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
-import { withAuthGet, withAuthPost } from "@/lib/auth-middleware"
+import { withAuthGet, withAuthPost, type AuthenticatedUser } from "@/lib/auth-middleware"
+import { requireTenant } from "@/lib/services/tenant-scope"
 import { Prisma } from "@/generated/prisma"
 import {
   applyFacturacionCobroWorkflow,
@@ -194,10 +195,11 @@ async function crearFacturaParaVenta(
   return factura
 }
 
-export const GET = withAuthGet(async (request: NextRequest, context: any, user: any) => {
+export const GET = withAuthGet(async (request: NextRequest, context: any, user: AuthenticatedUser) => {
   try {
+    const tenantId = requireTenant(user);
     const ventas = await prisma.venta.findMany({
-      where: { ventaPadreId: null },
+      where: { ventaPadreId: null, tenantId },
       include: {
          producto: {
            select: {

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { withAuthGet, withAuthPost } from "@/lib/auth-middleware"
+import { withAuthGet, withAuthPost, type AuthenticatedUser } from "@/lib/auth-middleware"
+import { requireTenant } from "@/lib/services/tenant-scope"
 import { notificarTransferencia } from "@/lib/notificaciones-utils"
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service'
 
@@ -66,14 +67,11 @@ async function getStockDisponibleEnPuntoVenta(productoId: string, puntoDeVentaId
 
 
 
-export const GET = withAuthGet(async (request: NextRequest) => {
+export const GET = withAuthGet(async (request: NextRequest, _context: any, user: AuthenticatedUser) => {
   try {
-    const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '50')
-    const skip = (page - 1) * limit
-
+    const tenantId = requireTenant(user);
     const transferencias = await prisma.transferencia.findMany({
+      where: { tenantId },
       where: {
         deletedAt: null, // Excluir transferencias eliminadas (soft delete)
       },

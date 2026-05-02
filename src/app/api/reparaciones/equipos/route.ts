@@ -1,10 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
-import { withAuthGet, withAuthPost } from "@/lib/auth-middleware"
+import { withAuthGet, withAuthPost, type AuthenticatedUser } from "@/lib/auth-middleware"
+import { requireTenant } from "@/lib/services/tenant-scope"
 
-export const GET = withAuthGet(async (request: NextRequest, context: any, user: any) => {
+export const GET = withAuthGet(async (_request: NextRequest, _context: any, user: AuthenticatedUser) => {
   try {
+    const tenantId = requireTenant(user);
     const equipos = await prisma.equipoReparacion.findMany({
+      where: { tenantId },
       include: {
         piezas: true,
       },
@@ -18,8 +21,9 @@ export const GET = withAuthGet(async (request: NextRequest, context: any, user: 
   }
 })
 
-export const POST = withAuthPost(async (request: NextRequest, context: any, user: any) => {
+export const POST = withAuthPost(async (request: NextRequest, _context: any, user: AuthenticatedUser) => {
   try {
+    const tenantId = requireTenant(user);
     const data = await request.json()
 
     // Solo permitir crear a usuarios con rol de admin o regularUser (no dependientes)
@@ -32,6 +36,7 @@ export const POST = withAuthPost(async (request: NextRequest, context: any, user
 
     const nuevoEquipo = await prisma.equipoReparacion.create({
       data: {
+        tenantId,
         nombre: data.nombre,
         descripcion: data.descripcion,
       },

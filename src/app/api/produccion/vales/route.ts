@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { v4 as uuid } from 'uuid';
-import { withAuthGet, withAuthPost } from '@/lib/auth-middleware';
+import { withAuthGet, withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware';
+import { requireTenant } from '@/lib/services/tenant-scope';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 
@@ -20,13 +21,14 @@ const createValeSchema = z.object({
  * @param {NextRequest} request - Request HTTP con filtros opcionales.
  * @returns {Promise<NextResponse>} Vales encontrados.
  */
-export const GET = withAuthGet(async (request: NextRequest) => {
+export const GET = withAuthGet(async (request: NextRequest, _ctx: any, user: AuthenticatedUser) => {
   try {
+    const tenantId = requireTenant(user);
     const searchParams = request.nextUrl.searchParams;
     const concepto = searchParams.get('concepto')?.trim();
     const estado = searchParams.get('estado')?.trim();
 
-    const whereClause: any = {};
+    const whereClause: any = { tenantId };
 
     if (concepto) {
       whereClause.concepto = {
@@ -72,8 +74,9 @@ export const GET = withAuthGet(async (request: NextRequest) => {
  * @param {NextRequest} request - Request HTTP con datos del vale.
  * @returns {Promise<NextResponse>} Vale creado.
  */
-export const POST = withAuthPost(async (request: NextRequest) => {
+export const POST = withAuthPost(async (request: NextRequest, _ctx: any, user: AuthenticatedUser) => {
   try {
+    const tenantId = requireTenant(user);
     const body = await request.json();
     const payload = createValeSchema.parse(body);
     const userId = body.userId || 'system';
@@ -108,6 +111,7 @@ export const POST = withAuthPost(async (request: NextRequest) => {
         const nuevoVale = await tx.valeSalida.create({
           data: {
             valeSalidaId: `vale_${Date.now()}`,
+            tenantId,
             concepto: payload.concepto,
             observaciones: payload.observaciones,
             estado: 'COMPLETADA',
@@ -120,6 +124,7 @@ export const POST = withAuthPost(async (request: NextRequest) => {
           await tx.valeSalidaItem.create({
             data: {
               valeSalidaItemId: uuid(),
+              tenantId,
               valeSalidaId: nuevoVale.valeSalidaId,
               productoId: item.productoId,
               cantidad: item.cantidad,

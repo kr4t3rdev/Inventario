@@ -155,6 +155,31 @@ export const adminApi = apiSlice.injectEndpoints({
             invalidatesTags: ['Notificaciones', 'ExpiringUsers'],
         }),
 
+        getTenantLicense: builder.query<{
+            license: {
+                tenantLicenseId: string;
+                activa: boolean;
+                inicio: string;
+                expiracion: string;
+                plan: { planId: string; nombre: string } | null;
+            } | null;
+            limits: {
+                maxUsuarios: number;
+                maxAlmacenes: number;
+                maxProductos: number;
+            };
+            consumption: {
+                usuarios: number;
+                almacenes: number;
+                productos: number;
+            };
+            tenantId: string;
+            tenantRole: string;
+        }, void>({
+            query: () => '/admin/tenant/license',
+            providesTags: ['TenantLicense']
+        }),
+
         getUserMetrics: builder.query<{
             monthlyData: MonthlyData[];
             summary: {
@@ -187,4 +212,5 @@ export const {
     useGetExpiringSoonQuery,
     useSendExpiryNotificationsMutation,
     useGetUserMetricsQuery,
+    useGetTenantLicenseQuery,
 } = adminApi

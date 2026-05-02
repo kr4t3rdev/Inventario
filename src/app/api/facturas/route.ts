@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
-import { withAuthGet, withAuthPost } from "@/lib/auth-middleware"
+import { withAuthGet, withAuthPost, type AuthenticatedUser } from "@/lib/auth-middleware"
+import { requireTenant } from "@/lib/services/tenant-scope"
 
 /**
  * @description Obtener listado de facturas con filtros y paginación
  */
-export const GET = withAuthGet(async (request: NextRequest, context: any, user: any) => {
+export const GET = withAuthGet(async (request: NextRequest, context: any, user: AuthenticatedUser) => {
   try {
+    const tenantId = requireTenant(user);
     const { searchParams } = new URL(request.url)
     const search = searchParams.get('search')
     const estado = searchParams.get('estado')
@@ -19,7 +21,7 @@ export const GET = withAuthGet(async (request: NextRequest, context: any, user: 
     const offset = (page - 1) * limit
 
     // Construir cláusula WHERE
-    const whereClause: Record<string, any> = {}
+    const whereClause: Record<string, any> = { tenantId }
 
     // Filtro por estado
     if (estado) {

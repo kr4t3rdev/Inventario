@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import prisma from '@/lib/prisma'
-import { withAuthGet, withAuthPost } from '@/lib/auth-middleware'
+import { withAuthGet, withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware'
+import { requireTenant } from '@/lib/services/tenant-scope'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 import { calcularSaldoPendientePrestamo, normalizarEstadoPrestamoCash } from '@/lib/utils/prestamo-cash'
 
@@ -38,12 +39,9 @@ function prestamosCashEnabled(): boolean {
  * @param {NextRequest} request - Request con query params: estado, clienteId, moneda, page, limit
  * @returns {NextResponse} Lista paginada de préstamos
  */
-export const GET = withAuthGet(async (request: NextRequest) => {
+export const GET = withAuthGet(async (request: NextRequest, _context: unknown, user: AuthenticatedUser) => {
   try {
-    if (!prestamosCashEnabled()) {
-      return NextResponse.json({ error: 'Módulo de préstamos cash deshabilitado' }, { status: 404 })
-    }
-
+    const tenantId = requireTenant(user);
     const { searchParams } = new URL(request.url)
     const query = querySchema.parse({
       estado: searchParams.get('estado') || undefined,
@@ -56,6 +54,7 @@ export const GET = withAuthGet(async (request: NextRequest) => {
     const skip = (query.page - 1) * query.limit
 
     const where = {
+      tenantId,
       deletedAt: null,
       ...(query.estado ? { estado: query.estado } : {}),
       ...(query.clienteId ? { clienteId: query.clienteId } : {}),
@@ -126,8 +125,9 @@ export const GET = withAuthGet(async (request: NextRequest) => {
  * @param {NextRequest} request - Request con body: clienteId, montoCapital, moneda, tasaInteres?, fechaVencimiento?, observaciones?
  * @returns {NextResponse} Préstamo creado con status 201
  */
-export const POST = withAuthPost(async (request: NextRequest, _context: unknown, user: { userId: string }) => {
+export const POST = withAuthPost(async (request: NextRequest, _context: unknown, user: AuthenticatedUser) => {
   try {
+    const tenantId = requireTenant(user);
     if (!prestamosCashEnabled()) {
       return NextResponse.json({ error: 'Módulo de préstamos cash deshabilitado' }, { status: 404 })
     }
@@ -168,6 +168,7 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
 
       const cuentaPorCobrar = await tx.cuentaPorCobrar.create({
         data: {
+          tenantId,
           clienteId: body.clienteId,
           montoDeuda,
           montoPagado: 0,

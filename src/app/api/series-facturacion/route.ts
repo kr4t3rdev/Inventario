@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
-import { withAuthGet, withAuthPost, withAuth } from "@/lib/auth-middleware"
+import { withAuthGet, withAuthPost, withAuth, type AuthenticatedUser } from "@/lib/auth-middleware"
+import { requireTenant } from "@/lib/services/tenant-scope"
 
-export const GET = withAuthGet(async (request: NextRequest, context: any, user: any) => {
+export const GET = withAuthGet(async (_request: NextRequest, _context: any, user: AuthenticatedUser) => {
   try {
-    console.log("GET /api/series-facturacion - User:", user?.email, "Role:", user?.role)
+    const tenantId = requireTenant(user);
     const series = await prisma.serieFacturacion.findMany({
+      where: { tenantId },
       orderBy: {
         esPorDefecto: "desc",
       },
@@ -25,8 +27,9 @@ export const GET = withAuthGet(async (request: NextRequest, context: any, user: 
   }
 })
 
-export const POST = withAuthPost(async (request: NextRequest, context: any, user: any) => {
+export const POST = withAuthPost(async (request: NextRequest, _context: any, user: AuthenticatedUser) => {
   try {
+    const tenantId = requireTenant(user);
     const body = await request.json()
     const { prefijo, descripcion, activa, esPorDefecto } = body
     console.log("POST /api/series-facturacion - User:", user?.email, "Data:", { prefijo, descripcion, activa, esPorDefecto })
@@ -52,6 +55,7 @@ export const POST = withAuthPost(async (request: NextRequest, context: any, user
 
     const serie = await prisma.serieFacturacion.create({
       data: {
+        tenantId,
         prefijo,
         descripcion,
         activa: activa ?? true,

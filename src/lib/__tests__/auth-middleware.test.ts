@@ -13,6 +13,13 @@ vi.mock('../prisma', () => ({
     user: {
       findUnique: vi.fn(),
     },
+    tenantMembership: {
+      findUnique: vi.fn(),
+      findFirst: vi.fn(),
+    },
+    tenantLicense: {
+      findFirst: vi.fn(),
+    },
   },
 }))
 
@@ -254,5 +261,130 @@ describe('authenticateUser', () => {
     } else {
       throw new Error('Expected error response')
     }
+  })
+
+  describe('tenant context resolution', () => {
+    const mockToken = 'valid.tenant.jwt'
+    const mockUser = {
+      userId: 'user-1',
+      name: 'Test User',
+      email: 'test@example.com',
+      role: 'admin' as const,
+      isActive: true,
+    }
+    const mockMembership = {
+      membershipId: 'membership-1',
+      tenantId: 'tenant-1',
+      userId: 'user-1',
+      tenantRole: 'admin',
+      isActive: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    }
+
+    beforeEach(() => {
+      vi.mocked(jwt.verify).mockReturnValue({
+        userId: 'user-1',
+        email: 'test@example.com',
+      } as any)
+      vi.mocked(prisma.userSession.findUnique).mockResolvedValue({
+        isActive: true,
+        expiresAt: new Date(Date.now() + 1000000),
+        userId: 'user-1',
+      } as any)
+      vi.mocked(prisma.user.findUnique).mockResolvedValue(mockUser as any)
+    })
+
+    it('attaches tenantId and tenantRole when membership exists', async () => {
+      vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue(mockMembership as any)
+      vi.mocked(prisma.tenantLicense.findFirst).mockResolvedValue(null)
+
+      const request = new NextRequest(
+        new Request('http://localhost/api/test', {
+          headers: { authorization: `Bearer ${mockToken}` },
+        })
+      )
+
+      const result = await authenticateUser(request)
+
+      if ('status' in result) {
+        throw new Error('Expected user, got error')
+      }
+
+      expect(result.user.tenantId).toBe('tenant-1')
+      expect(result.user.tenantRole).toBe('admin')
+    })
+
+    it('resolves tenant from x-tenant-id header when provided', async () => {
+      vi.mocked(prisma.tenantMembership.findUnique).mockResolvedValue(mockMembership as any)
+      vi.mocked(prisma.tenantLicense.findFirst).mockResolvedValue(null)
+
+      const request = new NextRequest(
+        new Request('http://localhost/api/test', {
+          headers: {
+            authorization: `Bearer ${mockToken}`,
+            'x-tenant-id': 'tenant-1',
+          },
+        })
+      )
+
+      const result = await authenticateUser(request)
+
+      if ('status' in result) {
+        throw new Error('Expected user, got error')
+      }
+
+      // Should use findUnique (exact match) instead of findFirst
+      expect(prisma.tenantMembership.findUnique).toHaveBeenCalledWith({
+        where: { tenantId_userId: { tenantId: 'tenant-1', userId: 'user-1' } },
+      })
+      expect(result.user.tenantId).toBe('tenant-1')
+    })
+
+    it('does not attach tenant context when no membership exists', async () => {
+      vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue(null)
+
+      const request = new NextRequest(
+        new Request('http://localhost/api/test', {
+          headers: { authorization: `Bearer ${mockToken}` },
+        })
+      )
+
+      const result = await authenticateUser(request)
+
+      if ('status' in result) {
+        throw new Error('Expected user, got error')
+      }
+
+      expect(result.user.tenantId).toBeUndefined()
+      expect(result.user.tenantRole).toBeUndefined()
+    })
+
+    it('attaches planLimits when tenant has active license', async () => {
+      vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue(mockMembership as any)
+      vi.mocked(prisma.tenantLicense.findFirst).mockResolvedValue({
+        maxUsuarios: 10,
+        maxAlmacenes: 5,
+        maxProductos: 500,
+      } as any)
+
+      const request = new NextRequest(
+        new Request('http://localhost/api/test', {
+          headers: { authorization: `Bearer ${mockToken}` },
+        })
+      )
+
+      const result = await authenticateUser(request)
+
+      if ('status' in result) {
+        throw new Error('Expected user, got error')
+      }
+
+      expect(result.user.planLimits).toEqual({
+        maxUsuarios: 10,
+        maxAlmacenes: 5,
+        maxProductos: 500,
+      })
+    })
   })
 })

@@ -1,12 +1,27 @@
+// ── Roles de plataforma (identidad global del usuario) ──
 export const APP_USER_ROLES = ['admin', 'dependiente', 'regularUser'] as const;
-
 export type AppUserRole = (typeof APP_USER_ROLES)[number];
+
+// ── Roles de tenant (autorización operativa dentro de una empresa) ──
+export const TENANT_ROLES = ['director', 'admin', 'economico', 'dependiente'] as const;
+export type TenantRole = (typeof TENANT_ROLES)[number];
 
 const LEGACY_ROLE_MAP: Record<string, AppUserRole> = {
   ADMIN: 'admin',
   SUPERADMIN: 'admin',
   user: 'regularUser',
 };
+
+/**
+ * @description Mapea un rol de plataforma global al tenantRole por defecto.
+ * admin → admin, regularUser → dependiente, dependiente → dependiente
+ * @param {AppUserRole} platformRole - Rol de plataforma.
+ * @returns {TenantRole} Rol de tenant por defecto.
+ */
+export function platformRoleToTenantRole(platformRole: AppUserRole): TenantRole {
+  if (platformRole === 'admin') return 'admin';
+  return 'dependiente';
+}
 
 /**
  * @description Normaliza roles legados al conjunto oficial de roles de la aplicacion.
@@ -29,10 +44,31 @@ export function normalizeUserRole(role: unknown): AppUserRole | null {
 }
 
 /**
- * @description Verifica si un rol corresponde a administrador.
+ * @description Verifica si un rol de plataforma corresponde a administrador.
  * @param {unknown} role - Rol a evaluar.
  * @returns {boolean} true si el rol tiene privilegios de administrador.
  */
 export function isAdminRole(role: unknown): boolean {
   return normalizeUserRole(role) === 'admin';
+}
+
+/**
+ * @description Verifica si un rol de tenant tiene permisos de administración empresarial.
+ * director y admin son roles administrativos dentro del tenant.
+ * @param {unknown} role - Rol de tenant a evaluar.
+ * @returns {boolean} true si el rol tiene alcance administrativo.
+ */
+export function isTenantAdminRole(role: unknown): boolean {
+  if (typeof role !== 'string') return false;
+  return role === 'director' || role === 'admin';
+}
+
+/**
+ * @description Verifica si un rol de tenant tiene permisos financieros/económicos.
+ * @param {unknown} role - Rol de tenant a evaluar.
+ * @returns {boolean} true si puede acceder a módulos económico-financieros.
+ */
+export function isTenantEconomicoRole(role: unknown): boolean {
+  if (typeof role !== 'string') return false;
+  return role === 'economico' || role === 'admin' || role === 'director';
 }

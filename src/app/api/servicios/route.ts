@@ -1,7 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { z } from 'zod'
 import prisma from "@/lib/prisma"
-import { withAuthGet, withAuthPost } from "@/lib/auth-middleware"
+import { withAuthGet, withAuthPost, type AuthenticatedUser } from "@/lib/auth-middleware"
+import { requireTenant } from "@/lib/services/tenant-scope"
 
 const servicioSchema = z.object({
   nombre: z.string().min(1, 'El nombre es requerido'),
@@ -9,9 +10,11 @@ const servicioSchema = z.object({
   precio: z.coerce.number().int().positive('El precio debe ser mayor a 0'),
 })
 
-export const GET = withAuthGet(async (request: NextRequest, context: any, user: any) => {
+export const GET = withAuthGet(async (request: NextRequest, _context: any, user: AuthenticatedUser) => {
   try {
+    const tenantId = requireTenant(user);
     const Servicio = await prisma.servicios.findMany({
+      where: { tenantId },
       orderBy: { precio: "desc" },
     })
 
@@ -22,8 +25,9 @@ export const GET = withAuthGet(async (request: NextRequest, context: any, user: 
   }
 })
 
-export const POST = withAuthPost(async (request: NextRequest, context: any, user: any) => {
+export const POST = withAuthPost(async (request: NextRequest, _context: any, user: AuthenticatedUser) => {
   try {
+    const tenantId = requireTenant(user);
     const body = await request.json()
     const data = servicioSchema.parse(body)
 
@@ -37,6 +41,7 @@ export const POST = withAuthPost(async (request: NextRequest, context: any, user
 
     const servicio = await prisma.servicios.create({
       data: {
+        tenantId,
         nombre: data.nombre,
         descripcion: data.descripcion,
         precio: data.precio,

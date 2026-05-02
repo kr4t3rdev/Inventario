@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import prisma from "@/lib/prisma"
-import { withAuth } from "@/lib/auth-middleware"
+import { withAuth, type AuthenticatedUser } from "@/lib/auth-middleware"
+import { requireTenant } from "@/lib/services/tenant-scope"
 import { z } from "zod"
 import { hasUnrevertedAnticipoExecution } from "@/lib/services/anticipos-guards"
 
@@ -17,8 +18,9 @@ const UpdateFacturaSchema = z.object({
 /**
  * @description Obtener una factura específica por ID
  */
-export const GET = withAuth(async (request: NextRequest, context: any, user: any) => {
+export const GET = withAuth(async (request: NextRequest, context: any, user: AuthenticatedUser) => {
   try {
+    const tenantId = requireTenant(user);
     const { id } = await context.params
 
     const facturaInclude = {
@@ -93,13 +95,13 @@ export const GET = withAuth(async (request: NextRequest, context: any, user: any
     }
 
     let factura = await prisma.factura.findUnique({
-      where: { idFactura: id },
+      where: { idFactura: id, tenantId },
       include: facturaInclude,
     })
 
     if (!factura) {
       factura = await prisma.factura.findUnique({
-        where: { ventaId: id },
+        where: { ventaId: id, tenantId },
         include: facturaInclude,
       })
     }
