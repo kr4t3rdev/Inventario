@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from './prisma'
 import jwt from 'jsonwebtoken'
 import { getJwtSecret } from './secrets'
-import { checkApiPermission, type UserRole } from './permissions'
+import { checkApiPermission, checkTenantApiPermission, type UserRole } from './permissions'
 import type { TenantRole } from './auth/roles'
 
 export interface PlanLimits {
@@ -34,10 +34,10 @@ export interface AuthenticatedUser {
  * @param {string | null} headerTenantId - Tenant solicitado via header (opcional).
  * @returns {Promise<{ tenantId: string; tenantRole: TenantRole; planLimits?: PlanLimits } | null>}
  */
-async function resolveTenantContext(
+export async function resolveTenantContext(
   userId: string,
   headerTenantId: string | null,
-): Promise<{ tenantId: string; tenantRole: TenantRole; planLimits?: PlanLimits } | null> {
+): Promise<{ tenantId: string; tenantRole: TenantRole; planLimits?: PlanLimits; licenseExpiresAt?: Date } | null> {
   try {
     const where = headerTenantId
       ? { tenantId: headerTenantId, userId, isActive: true }
@@ -57,7 +57,11 @@ async function resolveTenantContext(
     // Obtener límites del plan desde la licencia activa del tenant
     let planLimits: PlanLimits | undefined;
     const license = await prisma.tenantLicense.findFirst({
-      where: { tenantId: membership.tenantId, activa: true },
+      where: {
+        tenantId: membership.tenantId,
+        activa: true,
+        expiracion: { gt: new Date() },
+      },
       orderBy: { inicio: 'desc' },
     });
 
@@ -73,6 +77,7 @@ async function resolveTenantContext(
       tenantId: membership.tenantId,
       tenantRole: membership.tenantRole as TenantRole,
       planLimits,
+      licenseExpiresAt: license?.expiracion,
     };
   } catch (error) {
     console.error('[Auth] Error resolviendo contexto tenant:', error);
@@ -128,6 +133,7 @@ export async function authenticateUser(
     const decoded = jwt.verify(token, getJwtSecret()) as {
       userId: string
       email: string
+      tenantId?: string
     }
 
     // 4. Buscar sesión en base de datos
@@ -208,32 +214,43 @@ export async function authenticateUser(
       data: { lastActive: new Date() },
     })
 
-    // 9. Verificar permisos si se solicita
-    if (validatePermissions) {
-      const permissionError = checkApiPermission(
-        user.role,
-        validatePermissions.path,
-        validatePermissions.method
+    // 9. Resolver contexto de tenant
+    const requestedTenantId = request.headers.get('x-tenant-id') ?? decoded.tenantId ?? null
+    const tenantContext = await resolveTenantContext(user.userId, requestedTenantId)
+
+    if (requestedTenantId && !tenantContext) {
+      return NextResponse.json(
+        {
+          error: 'Contexto de tenant inválido',
+          message:
+            'El tenant solicitado no existe, no está activo o no pertenece a tu usuario.',
+        },
+        { status: 403 }
       )
+    }
+
+    const authenticatedUser: AuthenticatedUser = {
+      ...user,
+      ...(tenantContext && {
+        tenantId: tenantContext.tenantId,
+        tenantRole: tenantContext.tenantRole,
+        planLimits: tenantContext.planLimits,
+      }),
+    } as AuthenticatedUser
+
+    // 10. Verificar permisos.
+    // Si hay contexto tenant, usa permisos tenant. Si no, permisos globales legados.
+    if (validatePermissions) {
+      const permissionError = tenantContext
+        ? checkTenantApiPermission(tenantContext.tenantRole, validatePermissions.path, validatePermissions.method)
+        : checkApiPermission(user.role, validatePermissions.path, validatePermissions.method)
+
       if (permissionError) {
         return permissionError
       }
     }
 
-    // 10. Resolver contexto de tenant
-    const headerTenantId = request.headers.get('x-tenant-id')
-    const tenantContext = await resolveTenantContext(user.userId, headerTenantId)
-
-    return {
-      user: {
-        ...user,
-        ...(tenantContext && {
-          tenantId: tenantContext.tenantId,
-          tenantRole: tenantContext.tenantRole,
-          planLimits: tenantContext.planLimits,
-        }),
-      } as AuthenticatedUser,
-    }
+    return { user: authenticatedUser }
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError) {
       console.error('[Auth] JWT error:', error.message)

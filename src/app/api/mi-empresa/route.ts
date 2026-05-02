@@ -127,14 +127,14 @@ export const PUT = withAuth(async (request: NextRequest, _context: unknown, user
         )
       }
       console.log('✅ Confirmación recibida, procediendo con reset')
-      const resetResult = await resetProductsForEan13()
+      const resetResult = await resetProductsForEan13(tenantId)
       console.log(`🗑️ Reset completado: ${resetResult.deletedProducts} productos y ${resetResult.deletedCategorias} categorías eliminadas`)
     }
 
     // Handle ON → OFF transition (no confirmation needed)
     if (isTogglingOff) {
       console.log('🔄 Transición detectada: EAN-13 ON → OFF')
-      await clearEan13Codes()
+      await clearEan13Codes(tenantId)
       console.log('🔲 Códigos EAN-13 limpiados exitosamente')
     }
 

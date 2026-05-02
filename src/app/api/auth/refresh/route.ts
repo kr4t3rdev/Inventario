@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
 import { prisma } from '@/lib/prisma'
 import { getJwtSecret, getRefreshJwtSecret } from '@/lib/secrets'
+import { resolveTenantContext } from '@/lib/auth-middleware'
 
 function parseCookies(cookieHeader: string): Record<string, string> {
   const map: Record<string, string> = {}
@@ -26,6 +27,8 @@ export async function POST(request: NextRequest) {
     const payload = jwt.verify(refreshToken, getRefreshJwtSecret()) as {
       userId: string;
       email: string;
+      tenantId?: string;
+      tenantRole?: string;
       refreshId?: number;
     }
     const { userId, email } = payload
@@ -70,12 +73,30 @@ export async function POST(request: NextRequest) {
       return res
     }
 
+    const requestedTenantId = payload.tenantId ?? null
+    const tenantContext = await resolveTenantContext(userId, requestedTenantId)
+
+    if (requestedTenantId && !tenantContext) {
+      const res = NextResponse.json({ error: 'Tenant inválido' }, { status: 403 })
+      res.cookies.set('refreshToken', '', { maxAge: 0, path: '/' })
+      return res
+    }
+
     // Issue new tokens
-    const newToken = jwt.sign({ userId, email }, getJwtSecret(), {
+    const tokenPayload: Record<string, unknown> = { userId, email }
+    if (tenantContext) {
+      tokenPayload.tenantId = tenantContext.tenantId
+      tokenPayload.tenantRole = tenantContext.tenantRole
+    }
+
+    const newToken = jwt.sign(tokenPayload, getJwtSecret(), {
       expiresIn: '15m',
     })
     const newRefreshToken = jwt.sign(
-      { userId, email, refreshId: Date.now() },
+      {
+        ...tokenPayload,
+        refreshId: Date.now(),
+      },
       getRefreshJwtSecret(),
       { expiresIn: '30d' }
     )

@@ -1,16 +1,17 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { authenticateUser } from '@/lib/auth-middleware';
+import { authenticateUser, type AuthenticatedUser } from '@/lib/auth-middleware';
 import { unlockUserBodySchema } from '@/lib/admin/schemas';
-import { isAdminRole } from '@/lib/auth/roles';
+import { isTenantAdminRole } from '@/lib/auth/roles';
 import { prisma } from '@/lib/prisma';
 
 export async function POST(request: NextRequest) {
   try {
     const authResultAuthUser1 = await authenticateUser(request);
     if ('status' in authResultAuthUser1) return authResultAuthUser1 as Response;
-    const authUser = authResultAuthUser1.user;
-    if (!isAdminRole(authUser.role)) {
+    const authUser = authResultAuthUser1.user as AuthenticatedUser;
+    const tenantId = authUser.tenantId;
+    if (!tenantId || !isTenantAdminRole(authUser.tenantRole)) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
@@ -25,6 +26,14 @@ export async function POST(request: NextRequest) {
     }
 
     const { userId } = parsed.data;
+
+    const membership = await prisma.tenantMembership.findFirst({
+      where: { tenantId, userId, isActive: true },
+    });
+
+    if (!membership) {
+      return NextResponse.json({ error: 'Usuario no encontrado en esta empresa' }, { status: 404 });
+    }
 
     const user = await prisma.user.findUnique({
       where: { userId },

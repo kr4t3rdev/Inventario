@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
 import { POST } from '../route';
+import { prisma } from '@/lib/prisma';
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
@@ -13,6 +14,13 @@ vi.mock('@/lib/prisma', () => ({
       findFirst: vi.fn(),
       deleteMany: vi.fn(),
       create: vi.fn(),
+    },
+    tenantMembership: {
+      findUnique: vi.fn(),
+      findFirst: vi.fn(),
+    },
+    tenantLicense: {
+      findFirst: vi.fn(),
     },
   },
 }));
@@ -27,6 +35,9 @@ vi.mock('jsonwebtoken', () => ({
 describe('auth refresh route', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(prisma.tenantMembership.findUnique).mockResolvedValue(null as never);
+    vi.mocked(prisma.tenantMembership.findFirst).mockResolvedValue(null as never);
+    vi.mocked(prisma.tenantLicense.findFirst).mockResolvedValue(null as never);
   });
 
   it('rechaza usuario inactivo', async () => {
@@ -98,7 +109,7 @@ describe('auth refresh route', () => {
     const jwt = (await import('jsonwebtoken')).default;
     const { prisma } = await import('@/lib/prisma');
 
-    vi.mocked(jwt.verify).mockReturnValue({ userId: 'u4', email: 'u4@test.com' } as never);
+    vi.mocked(jwt.verify).mockReturnValue({ userId: 'u4', email: 'u4@test.com', tenantId: 'tenant-1' } as never);
     vi.mocked(jwt.sign)
       .mockReturnValueOnce('new-access-token' as never)
       .mockReturnValueOnce('new-refresh-token' as never);
@@ -109,6 +120,19 @@ describe('auth refresh route', () => {
       expiresAt: null,
     } as never);
     vi.mocked(prisma.userSession.findFirst).mockResolvedValue({ id: 's1' } as never);
+    vi.mocked(prisma.tenantMembership.findUnique).mockResolvedValue({
+      membershipId: 'm1',
+      tenantId: 'tenant-1',
+      userId: 'u4',
+      tenantRole: 'director',
+      isActive: true,
+    } as never);
+    vi.mocked(prisma.tenantLicense.findFirst).mockResolvedValue({
+      expiracion: new Date(Date.now() + 1000000),
+      maxUsuarios: 10,
+      maxAlmacenes: 5,
+      maxProductos: 500,
+    } as never);
     vi.mocked(prisma.userSession.deleteMany).mockResolvedValue({ count: 1 } as never);
 
     const request = new NextRequest('http://localhost/api/auth/refresh', {
@@ -121,6 +145,12 @@ describe('auth refresh route', () => {
 
     expect(response.status).toBe(200);
     expect(data.token).toBe('new-access-token');
+    expect(vi.mocked(jwt.sign)).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({ tenantId: 'tenant-1', tenantRole: 'director' }),
+      expect.any(String),
+      expect.objectContaining({ expiresIn: '15m' })
+    );
     expect(prisma.userSession.deleteMany).toHaveBeenCalledWith({ where: { userId: 'u4' } });
     expect(prisma.userSession.create).toHaveBeenCalled();
   });

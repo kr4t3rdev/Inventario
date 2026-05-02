@@ -28,6 +28,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useDeleteUserMutation } from '@/lib/redux/services/adminApi';
 import { getAuthToken } from '@/lib/token';
+import { getTenantRoleLabel } from '@/lib/auth/roles';
 
 interface AdminUsersTableProps {
   users: Usuario[];
@@ -36,7 +37,7 @@ interface AdminUsersTableProps {
   onRefresh: () => Promise<unknown> | void;
 }
 
-type RoleFilter = 'all' | 'admin' | 'dependiente' | 'regularUser';
+type RoleFilter = 'all' | 'director' | 'admin' | 'economico' | 'dependiente' | 'regularUser';
 type StatusFilter = 'all' | 'active' | 'inactive';
 
 /**
@@ -62,7 +63,8 @@ export function AdminUsersTable({
       const matchesSearch =
         candidate.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         candidate.email.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesRole = roleFilter === 'all' || candidate.role === roleFilter;
+      const effectiveRole = candidate.tenantRole ?? candidate.role;
+      const matchesRole = roleFilter === 'all' || effectiveRole === roleFilter;
       const matchesStatus =
         statusFilter === 'all' ||
         (statusFilter === 'active' && candidate.isActive) ||
@@ -72,8 +74,20 @@ export function AdminUsersTable({
     });
   }, [roleFilter, searchTerm, statusFilter, users]);
 
-  const getRoleBadge = (role: string): React.JSX.Element => {
-    switch (role) {
+  const getRoleBadge = (role: string, tenantRole?: string | null): React.JSX.Element => {
+    const effectiveRole = tenantRole ?? role;
+
+    switch (effectiveRole) {
+      case 'director':
+        return (
+          <Badge
+            variant="outline"
+            className="border-violet-500/40 bg-violet-500/10 text-violet-700 dark:text-violet-300"
+          >
+            <Shield className="mr-1 h-3 w-3" />
+            {getTenantRoleLabel('director')}
+          </Badge>
+        );
       case 'admin':
         return (
           <Badge
@@ -81,7 +95,17 @@ export function AdminUsersTable({
             className="border-sky-500/40 bg-sky-500/10 text-sky-700 dark:text-sky-300"
           >
             <Shield className="mr-1 h-3 w-3" />
-            Admin
+            {getTenantRoleLabel('admin')}
+          </Badge>
+        );
+      case 'economico':
+        return (
+          <Badge
+            variant="outline"
+            className="border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+          >
+            <User className="mr-1 h-3 w-3" />
+            {getTenantRoleLabel('economico')}
           </Badge>
         );
       case 'dependiente':
@@ -91,7 +115,7 @@ export function AdminUsersTable({
             className="border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
           >
             <User className="mr-1 h-3 w-3" />
-            Dependiente
+            {getTenantRoleLabel('dependiente')}
           </Badge>
         );
       default:
@@ -101,7 +125,7 @@ export function AdminUsersTable({
             className="border-border/80 bg-muted/40 text-foreground"
           >
             <User className="mr-1 h-3 w-3" />
-            Usuario
+            {getTenantRoleLabel(null)}
           </Badge>
         );
     }
@@ -213,7 +237,7 @@ export function AdminUsersTable({
         initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: shouldReduceMotion ? 0 : 0.25 }}
-        className="rounded-xl border border bg-card p-3 shadow-sm"
+        className="rounded-xl border border-slate-200 bg-card p-3 shadow-sm dark:border-slate-800"
       >
         <div className="mb-3 flex items-center justify-between">
           <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
@@ -239,9 +263,11 @@ export function AdminUsersTable({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos los roles</SelectItem>
+              <SelectItem value="director">Directores</SelectItem>
               <SelectItem value="admin">Administradores</SelectItem>
+              <SelectItem value="economico">Económicos</SelectItem>
               <SelectItem value="dependiente">Dependientes</SelectItem>
-              <SelectItem value="regularUser">Usuarios</SelectItem>
+              <SelectItem value="regularUser">Usuarios legados</SelectItem>
             </SelectContent>
           </Select>
           <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as StatusFilter)}>
@@ -274,7 +300,7 @@ export function AdminUsersTable({
         initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: shouldReduceMotion ? 0 : 0.3 }}
-        className="overflow-hidden rounded-xl border border bg-card shadow-sm"
+        className="overflow-hidden rounded-xl border border-slate-200 bg-card shadow-sm dark:border-slate-800"
       >
         <Table>
           <TableHeader>
@@ -304,7 +330,7 @@ export function AdminUsersTable({
               >
                 <TableCell className="font-medium">{candidate.name}</TableCell>
                 <TableCell>{candidate.email}</TableCell>
-                <TableCell>{getRoleBadge(candidate.role)}</TableCell>
+                <TableCell>{getRoleBadge(candidate.role, candidate.tenantRole)}</TableCell>
                 <TableCell>{getStatusBadge(candidate.isActive, candidate.expiresAt)}</TableCell>
                 <TableCell>{format(new Date(candidate.createdAt), 'dd/MM/yyyy')}</TableCell>
                 <TableCell>

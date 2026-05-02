@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { authenticateUser } from "@/lib/auth-middleware"
-import { isAdminRole } from '@/lib/auth/roles';
+import { isTenantAdminRole } from '@/lib/auth/roles';
 
 /**
  * @description Obtiene el historial de login de un usuario específico para el panel de administración.
@@ -17,11 +17,20 @@ export async function GET(
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as NextResponse
     const auth_user = authResultUser.user
-    if (!isAdminRole(auth_user.role)) {
+    const tenantId = auth_user.tenantId
+    if (!tenantId || !isTenantAdminRole(auth_user.tenantRole)) {
       return NextResponse.json({ error: "No autorizado" }, { status: 403 })
     }
 
     const { id } = await context.params
+
+    const membership = await prisma.tenantMembership.findFirst({
+      where: { tenantId, userId: id, isActive: true },
+    })
+
+    if (!membership) {
+      return NextResponse.json({ error: 'Usuario no encontrado en esta empresa' }, { status: 404 })
+    }
 
     const user = await prisma.user.findUnique({
       where: { userId: id },

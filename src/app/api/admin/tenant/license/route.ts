@@ -20,11 +20,10 @@ export const GET = withAuthGet(async (_request: NextRequest, _context: unknown, 
     })
 
     // Consumo actual
-    // TODO: Agregar filtro { tenantId } a almacen/producto cuando esas tablas tengan la columna
     const [userCount, almacenCount, productoCount] = await Promise.all([
       prisma.tenantMembership.count({ where: { tenantId, isActive: true } }),
-      prisma.almacen.count(),
-      prisma.producto.count(),
+      prisma.almacen.count({ where: { tenantId } }),
+      prisma.producto.count({ where: { tenantId } }),
     ])
 
     return NextResponse.json({

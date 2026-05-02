@@ -2,7 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { authenticateUser } from '@/lib/auth-middleware';
 import { buildCsv } from '@/lib/admin/csv';
-import { isAdminRole } from '@/lib/auth/roles';
+import { isTenantAdminRole } from '@/lib/auth/roles';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
@@ -10,31 +10,39 @@ export async function GET(request: NextRequest) {
     const authResultAuthUser1 = await authenticateUser(request);
     if ('status' in authResultAuthUser1) return authResultAuthUser1 as Response;
     const authUser = authResultAuthUser1.user;
-    if (!isAdminRole(authUser.role)) {
+    const tenantId = authUser.tenantId;
+    if (!tenantId || !isTenantAdminRole(authUser.tenantRole)) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
     const { searchParams } = new URL(request.url);
     const format = searchParams.get('format') || 'csv';
 
-    const users = await prisma.user.findMany({
-      orderBy: { createdAt: 'desc' },
-      select: {
-        userId: true,
-        name: true,
-        email: true,
-        role: true,
-        isActive: true,
-        activatedAt: true,
-        expiresAt: true,
-        createdAt: true,
-        updatedAt: true,
-        lastModifiedBy: true,
-        loginAttempts: true,
-        lockedUntil: true,
-        lastFailedLogin: true,
+    const memberships = await prisma.tenantMembership.findMany({
+      where: { tenantId, isActive: true },
+      include: {
+        user: {
+          select: {
+            userId: true,
+            name: true,
+            email: true,
+            role: true,
+            isActive: true,
+            activatedAt: true,
+            expiresAt: true,
+            createdAt: true,
+            updatedAt: true,
+            lastModifiedBy: true,
+            loginAttempts: true,
+            lockedUntil: true,
+            lastFailedLogin: true,
+          },
+        },
       },
+      orderBy: { createdAt: 'desc' },
     });
+
+    const users = memberships.map((membership) => membership.user);
 
     if (format === 'csv') {
       const headers = [

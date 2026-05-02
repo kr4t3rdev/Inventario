@@ -1,4 +1,4 @@
-import { PrismaClient } from '@/generated/prisma';
+import { Prisma, PrismaClient } from '@/generated/prisma';
 
 interface UserMetricsRow {
   monthStart: Date;
@@ -50,6 +50,7 @@ interface UserMetricsResponse {
 export async function getUserMetrics(
   prismaClient: PrismaClient,
   months: number,
+  tenantId?: string,
 ): Promise<UserMetricsResponse> {
   const now = new Date();
   const startDate = new Date(now);
@@ -58,6 +59,26 @@ export async function getUserMetrics(
   startDate.setHours(0, 0, 0, 0);
 
   const endDate = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const userMembershipFilter = tenantId
+    ? Prisma.sql` AND EXISTS (
+        SELECT 1
+        FROM tenant_memberships tm
+        WHERE tm."userId" = u."userId"
+          AND tm."tenantId" = ${tenantId}
+          AND tm."isActive" = true
+      )`
+    : Prisma.sql``;
+
+  const activityMembershipFilter = tenantId
+    ? Prisma.sql` AND EXISTS (
+        SELECT 1
+        FROM tenant_memberships tm
+        WHERE tm."userId" = ual."userId"
+          AND tm."tenantId" = ${tenantId}
+          AND tm."isActive" = true
+      )`
+    : Prisma.sql``;
 
   const monthlyRows = await prismaClient.$queryRaw<UserMetricsRow[]>`
     WITH months AS (
@@ -74,6 +95,7 @@ export async function getUserMetrics(
       FROM "User"
       WHERE "createdAt" >= ${startDate}
         AND "createdAt" < (${endDate}::timestamp + interval '1 month')
+        ${userMembershipFilter}
       GROUP BY 1
     ),
     activity AS (
@@ -85,6 +107,7 @@ export async function getUserMetrics(
       FROM "UserActivityLog"
       WHERE "createdAt" >= ${startDate}
         AND "createdAt" < (${endDate}::timestamp + interval '1 month')
+        ${activityMembershipFilter}
       GROUP BY 1
     ),
     active_start AS (
@@ -96,6 +119,7 @@ export async function getUserMetrics(
         ON u."createdAt" < m."monthStart"
        AND u."isActive" = true
        AND (u."expiresAt" IS NULL OR u."expiresAt" >= m."monthStart")
+       ${userMembershipFilter}
       GROUP BY m."monthStart"
     ),
     active_end AS (
@@ -107,6 +131,7 @@ export async function getUserMetrics(
         ON u."createdAt" < (m."monthStart" + interval '1 month')
        AND u."isActive" = true
        AND (u."expiresAt" IS NULL OR u."expiresAt" >= (m."monthStart" + interval '1 month'))
+       ${userMembershipFilter}
       GROUP BY m."monthStart"
     )
     SELECT
@@ -130,24 +155,43 @@ export async function getUserMetrics(
   `;
 
   const [totalUsers, summaryActivity] = await Promise.all([
-    prismaClient.user.count(),
-    prismaClient.userActivityLog.groupBy({
-      by: ['action'],
-      where: {
-        createdAt: {
-          gte: startDate,
-          lt: new Date(endDate.getFullYear(), endDate.getMonth() + 1, 1),
-        },
-        action: { in: ['login', 'logout', 'manual_lock'] },
-      },
-      _count: {
-        action: true,
-      },
-    }),
+    tenantId
+      ? prismaClient.$queryRaw<Array<{ totalUsers: bigint }>>(Prisma.sql`
+          SELECT COUNT(*)::bigint AS "totalUsers"
+          FROM "User" u
+          WHERE EXISTS (
+            SELECT 1
+            FROM tenant_memberships tm
+            WHERE tm."userId" = u."userId"
+              AND tm."tenantId" = ${tenantId}
+              AND tm."isActive" = true
+          )
+        `)
+      : prismaClient.$queryRaw<Array<{ totalUsers: bigint }>>(Prisma.sql`
+          SELECT COUNT(*)::bigint AS "totalUsers"
+          FROM "User"
+        `),
+    prismaClient.$queryRaw<Array<{ action: string; count: bigint }>>(Prisma.sql`
+      SELECT action, COUNT(*)::bigint AS count
+      FROM "UserActivityLog" ual
+      WHERE ual."createdAt" >= ${startDate}
+        AND ual."createdAt" < (${endDate}::timestamp + interval '1 month')
+        AND ual.action IN ('login', 'logout', 'manual_lock')
+        ${tenantId
+          ? Prisma.sql`AND EXISTS (
+              SELECT 1
+              FROM tenant_memberships tm
+              WHERE tm."userId" = ual."userId"
+                AND tm."tenantId" = ${tenantId}
+                AND tm."isActive" = true
+            )`
+          : Prisma.sql``}
+      GROUP BY action
+    `),
   ]);
 
   const summaryMap = summaryActivity.reduce<Record<string, number>>((acc, current) => {
-    acc[current.action] = current._count.action;
+    acc[current.action] = Number(current.count);
     return acc;
   }, {});
 
@@ -179,7 +223,7 @@ export async function getUserMetrics(
   return {
     monthlyData,
     summary: {
-      totalUsers,
+      totalUsers: Number(totalUsers[0]?.totalUsers ?? 0),
       usersCreatedInPeriod: monthlyData.reduce((sum, row) => sum + row.usersCreated, 0),
       totalLogins: summaryMap.login ?? 0,
       totalLogouts: summaryMap.logout ?? 0,

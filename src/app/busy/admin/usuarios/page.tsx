@@ -26,6 +26,7 @@ import {
   StaggerItem,
   AnimatedCard,
 } from '@/components/ui/animations';
+import { isTenantAdminRole } from '@/lib/auth/roles';
 import { useAuth } from '@/contexts/auth-context';
 import { useGetUserMetricsQuery, useGetUserQuery, useGetTenantLicenseQuery } from '@/lib/redux/services/adminApi';
 import { motion, type Variants } from 'framer-motion';
@@ -103,105 +104,62 @@ export default function AdminUsersPage(): React.JSX.Element {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { data: users, isLoading, refetch: refetchUsers } = useGetUserQuery();
   const { refetch: refetchMetrics } = useGetUserMetricsQuery({ months: 6 });
-  const { data: tenantLicense } = useGetTenantLicenseQuery();
+  const { data: tenantLicense, isLoading: licenseLoading } = useGetTenantLicenseQuery();
 
   const safeUsers = users ?? [];
   const activeUsers = safeUsers.filter((candidate) => candidate.isActive).length;
   const inactiveUsers = safeUsers.filter((candidate) => !candidate.isActive).length;
-  const adminUsers = safeUsers.filter((candidate) => candidate.role === 'admin').length;
+  const adminUsers = safeUsers.filter((candidate) => {
+    const effectiveRole = candidate.tenantRole ?? candidate.role;
+    return effectiveRole === 'director' || effectiveRole === 'admin';
+  }).length;
   const lockedUsers = safeUsers.filter((candidate) => {
     return Boolean(candidate.lockedUntil && new Date(candidate.lockedUntil) > new Date());
   }).length;
   const expiringSoon = safeUsers.filter((candidate) => {
-    if (!candidate.expiresAt) {
-      return false;
-    }
+    if (!candidate.expiresAt) return false;
     const daysUntilExpiry = Math.ceil(
       (new Date(candidate.expiresAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24),
     );
     return daysUntilExpiry <= 7 && daysUntilExpiry > 0;
   }).length;
 
-  const statCards = useMemo<AdminStatCard[]>(
-    () => [
-      {
-        title: 'Usuarios Activos',
-        value: activeUsers,
-        description: safeUsers.length
-          ? `${Math.round((activeUsers / safeUsers.length) * 100)}% del total`
-          : '0%',
-        icon: User,
-        valueClassName: 'text-emerald-600 dark:text-emerald-400',
-      },
-      {
-        title: 'Usuarios Inactivos',
-        value: inactiveUsers,
-        description: safeUsers.length
-          ? `${Math.round((inactiveUsers / safeUsers.length) * 100)}% del total`
-          : '0%',
-        icon: User,
-        valueClassName: 'text-rose-600 dark:text-rose-400',
-      },
-      {
-        title: 'Administradores',
-        value: adminUsers,
-        description: 'Con permisos completos',
-        icon: Shield,
-        valueClassName: 'text-sky-600 dark:text-sky-400',
-      },
-      {
-        title: 'Bloqueados',
-        value: lockedUsers,
-        description: 'Por intentos fallidos',
-        icon: AlertTriangle,
-        valueClassName: 'text-violet-600 dark:text-violet-400',
-      },
-      {
-        title: 'Expiran Pronto',
-        value: expiringSoon,
-        description: 'En los próximos 7 días',
-        icon: Clock,
-        valueClassName: 'text-amber-600 dark:text-amber-400',
-      },
-    ],
-    [activeUsers, adminUsers, expiringSoon, inactiveUsers, lockedUsers, safeUsers.length],
-  );
+  const statCards = useMemo<AdminStatCard[]>(() => [
+    { title: 'Usuarios Activos', value: activeUsers, description: safeUsers.length ? `${Math.round((activeUsers / safeUsers.length) * 100)}% del total` : '0%', icon: User, valueClassName: 'text-emerald-600 dark:text-emerald-400' },
+    { title: 'Usuarios Inactivos', value: inactiveUsers, description: safeUsers.length ? `${Math.round((inactiveUsers / safeUsers.length) * 100)}% del total` : '0%', icon: User, valueClassName: 'text-rose-600 dark:text-rose-400' },
+    { title: 'Administradores', value: adminUsers, description: 'Con permisos completos', icon: Shield, valueClassName: 'text-sky-600 dark:text-sky-400' },
+    { title: 'Bloqueados', value: lockedUsers, description: 'Por intentos fallidos', icon: AlertTriangle, valueClassName: 'text-violet-600 dark:text-violet-400' },
+    { title: 'Expiran Pronto', value: expiringSoon, description: 'En los próximos 7 días', icon: Clock, valueClassName: 'text-amber-600 dark:text-amber-400' },
+  ], [activeUsers, adminUsers, expiringSoon, inactiveUsers, lockedUsers, safeUsers.length]);
 
   const handleRefresh = async (): Promise<void> => {
     setIsRefreshing(true);
-    try {
-      await Promise.all([refetchUsers(), refetchMetrics()]);
-    } catch (error) {
-      console.error('Error al refrescar datos:', error);
-    } finally {
-      setIsRefreshing(false);
-    }
+    try { await Promise.all([refetchUsers(), refetchMetrics()]); }
+    catch (error) { console.error('Error al refrescar datos:', error); }
+    finally { setIsRefreshing(false); }
   };
 
   const handleEditUser = (candidate: Usuario): void => {
-    startTransition(() => {
-      setSelectedUser(candidate);
-      setEditDialogOpen(true);
-    });
+    startTransition(() => { setSelectedUser(candidate); setEditDialogOpen(true); });
   };
 
   const handleDialogClose = (): void => {
-    setCreateDialogOpen(false);
-    setEditDialogOpen(false);
-    setSelectedUser(null);
-    refetchUsers();
+    setCreateDialogOpen(false); setEditDialogOpen(false); setSelectedUser(null); refetchUsers();
   };
 
-  if (user?.role !== 'admin') {
+  // Gate: tenantRole si hay contexto, sino rol global legado
+  if (licenseLoading) return <div className="flex min-h-screen items-center justify-center"><p>Cargando...</p></div>;
+  const isAuthorized = tenantLicense
+    ? isTenantAdminRole(tenantLicense.tenantRole)
+    : isTenantAdminRole(user?.tenantRole);
+  if (!isAuthorized) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Card className="w-full max-w-md border-border/70 bg-card/90 shadow-lg backdrop-blur-sm">
           <CardContent className="flex flex-col items-center p-7">
             <AlertTriangle className="mb-4 h-12 w-12 text-rose-500 dark:text-rose-400" />
             <h2 className="mb-2 text-xl font-semibold">Acceso Denegado</h2>
-            <p className="text-center text-muted-foreground">
-              No tienes permisos para acceder a esta página.
-            </p>
+            <p className="text-center text-muted-foreground">No tienes permisos para acceder a esta página.</p>
           </CardContent>
         </Card>
       </div>
@@ -275,7 +233,7 @@ export default function AdminUsersPage(): React.JSX.Element {
                 <Sparkles className="h-3.5 w-3.5 text-yellow-400" />
               </motion.div>
               <motion.div
-                className="absolute inset-0 rounded-xl bg-gradient-to-tr from-transparent via-white/20 to-transparent"
+                className="absolute inset-0 rounded-xl bg-linear-to-tr from-transparent via-white/20 to-transparent"
                 animate={{
                   rotate: [0, 360],
                 }}
@@ -451,7 +409,7 @@ export default function AdminUsersPage(): React.JSX.Element {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.55, duration: 0.5 }}
           >
-            <Card className="rounded-xl border border bg-card shadow-sm">
+            <Card className="rounded-xl border border-slate-200 bg-card shadow-sm dark:border-slate-800">
               <CardHeader>
                 <CardTitle>Lista de Usuarios</CardTitle>
                 <CardDescription>Gestiona todos los usuarios del sistema.</CardDescription>

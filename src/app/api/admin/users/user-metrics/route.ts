@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { authenticateUser } from '@/lib/auth-middleware';
 import { userMetricsQuerySchema } from '@/lib/admin/schemas';
 import { getUserMetrics } from '@/lib/admin/userMetrics';
-import { isAdminRole } from '@/lib/auth/roles';
+import { isTenantAdminRole } from '@/lib/auth/roles';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
@@ -11,7 +11,8 @@ export async function GET(request: NextRequest) {
     const authResultGet = await authenticateUser(request)
     if ('status' in authResultGet) return authResultGet as Response
     const authUser = authResultGet.user
-    if (!isAdminRole(authUser.role)) {
+    const tenantId = authUser.tenantId
+    if (!tenantId || !isTenantAdminRole(authUser.tenantRole)) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
@@ -27,7 +28,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const metrics = await getUserMetrics(prisma, parsedQuery.data.months);
+    const metrics = await getUserMetrics(prisma, parsedQuery.data.months, tenantId);
 
     return NextResponse.json(metrics);
   } catch (error) {

@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs"
 import jwt from "jsonwebtoken"
 import { sendFailedLoginAttemptsNotification } from "@/lib/email"
 import { getJwtSecret, getRefreshJwtSecret } from "@/lib/secrets"
+import { resolveTenantContext } from "@/lib/auth-middleware"
 const MAX_LOGIN_ATTEMPTS = 5
 const LOCK_TIME_MINUTES = 15
 
@@ -35,33 +36,6 @@ export async function POST(request: NextRequest) {
         diasRestantes,
         plan: undefined,
       }, { status: 403 })
-    }
-
-    const licenciaActiva = await prisma.licencia.findFirst({
-      where: {
-        usuarioId: user.userId,
-        activa: true,
-        expiracion: { gt: new Date() },
-      },
-      include: { plan: true },
-      orderBy: { expiracion: "desc" },
-    })
-
-    if (!licenciaActiva && user.role !== "admin") {
-      const diasRestantes = 0
-      return NextResponse.json({
-        error: "Licencia expirada o no válida",
-        licenciaExpirada: true,
-        diasRestantes,
-        plan: undefined,
-      }, { status: 403 })
-    }
-
-    if (licenciaActiva) {
-      await prisma.user.update({
-        where: { userId: user.userId },
-        data: { expiresAt: licenciaActiva.expiracion },
-      })
     }
 
     if (user.lockedUntil && new Date(user.lockedUntil) > new Date()) {
@@ -162,13 +136,60 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    const token = jwt.sign(
-      { userId: user.userId, email: user.email },
-      getJwtSecret(),
-      { expiresIn: "30d" }
-    )
+    const requestedTenantId = request.headers.get('x-tenant-id')
+    const tenantContext = await resolveTenantContext(user.userId, requestedTenantId)
+
+    if (requestedTenantId && !tenantContext) {
+      return NextResponse.json(
+        {
+          error: 'Tenant inválido',
+          message: 'El tenant solicitado no pertenece al usuario o no está activo.',
+        },
+        { status: 403 }
+      )
+    }
+
+    if (tenantContext) {
+      await prisma.user.update({
+        where: { userId: user.userId },
+        data: {
+          expiresAt: tenantContext.licenseExpiresAt ?? null,
+        },
+      })
+    } else if (user.role !== 'admin') {
+      const licenciaActiva = await prisma.licencia.findFirst({
+        where: { usuarioId: user.userId, activa: true, expiracion: { gt: new Date() } },
+        include: { plan: true },
+        orderBy: { expiracion: 'desc' },
+      })
+
+      if (!licenciaActiva) {
+        return NextResponse.json({
+          error: 'Licencia expirada o no válida',
+          licenciaExpirada: true,
+          diasRestantes: 0,
+          plan: undefined,
+        }, { status: 403 })
+      }
+
+      await prisma.user.update({
+        where: { userId: user.userId },
+        data: { expiresAt: licenciaActiva.expiracion },
+      })
+    }
+
+    const tokenPayload: Record<string, unknown> = { userId: user.userId, email: user.email }
+    if (tenantContext) {
+      tokenPayload.tenantId = tenantContext.tenantId
+      tokenPayload.tenantRole = tenantContext.tenantRole
+    }
+
+    const token = jwt.sign(tokenPayload, getJwtSecret(), { expiresIn: "30d" })
     const refreshToken = jwt.sign(
-      { userId: user.userId, email: user.email },
+      {
+        ...tokenPayload,
+        refreshId: Date.now(),
+      },
       getRefreshJwtSecret(),
       { expiresIn: "30d" }
     )
@@ -204,7 +225,13 @@ export async function POST(request: NextRequest) {
 
     const res = NextResponse.json({
       token,
-      user: userWithoutPassword,
+      user: {
+        ...userWithoutPassword,
+        ...(tenantContext && {
+          tenantId: tenantContext.tenantId,
+          tenantRole: tenantContext.tenantRole,
+        }),
+      },
     })
     // Persist refresh token in HttpOnly cookie
     res.cookies.set('refreshToken', refreshToken, {

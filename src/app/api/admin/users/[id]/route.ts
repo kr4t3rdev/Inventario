@@ -1,9 +1,9 @@
 import bcrypt from 'bcryptjs';
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { authenticateUser } from '@/lib/auth-middleware';
+import { authenticateUser, type AuthenticatedUser } from '@/lib/auth-middleware';
 import { updateUserBodySchema, userIdParamSchema } from '@/lib/admin/schemas';
-import { isAdminRole } from '@/lib/auth/roles';
+import { isTenantAdminRole } from '@/lib/auth/roles';
 import { prisma } from '@/lib/prisma';
 
 type UpdateUserData = {
@@ -29,8 +29,9 @@ export async function GET(
   try {
     const authResultAuthUser1 = await authenticateUser(request);
     if ('status' in authResultAuthUser1) return authResultAuthUser1 as NextResponse;
-    const authUser = authResultAuthUser1.user;
-    if (!isAdminRole(authUser.role)) {
+    const authUser = authResultAuthUser1.user as AuthenticatedUser;
+    const tenantId = authUser.tenantId;
+    if (!tenantId || !isTenantAdminRole(authUser.tenantRole)) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
@@ -40,6 +41,14 @@ export async function GET(
     }
 
     const { id } = paramParse.data;
+
+    // Verificar que el usuario pertenece al tenant
+    const membership = await prisma.tenantMembership.findFirst({
+      where: { userId: id, tenantId, isActive: true },
+    });
+    if (!membership) {
+      return NextResponse.json({ error: 'Usuario no encontrado en esta empresa' }, { status: 404 });
+    }
 
     const user = await prisma.user.findUnique({
       where: { userId: id },
@@ -80,8 +89,9 @@ export async function PUT(
   try {
     const authResultAuthUser2 = await authenticateUser(request);
     if ('status' in authResultAuthUser2) return authResultAuthUser2 as NextResponse;
-    const authUser = authResultAuthUser2.user;
-    if (!isAdminRole(authUser.role)) {
+    const authUser = authResultAuthUser2.user as AuthenticatedUser;
+    const tenantId = authUser.tenantId;
+    if (!tenantId || !isTenantAdminRole(authUser.tenantRole)) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
@@ -100,6 +110,13 @@ export async function PUT(
     }
 
     const { id } = paramParse.data;
+    const membership = await prisma.tenantMembership.findFirst({
+      where: { userId: id, tenantId, isActive: true },
+    });
+
+    if (!membership) {
+      return NextResponse.json({ error: 'Usuario no encontrado en esta empresa' }, { status: 404 });
+    }
     const { name, email, password, role, isActive, daysToExpire } = bodyParse.data;
 
     const existingUser = await prisma.user.findUnique({
@@ -181,8 +198,9 @@ export async function DELETE(
   try {
     const authResultAuthUser3 = await authenticateUser(request);
     if ('status' in authResultAuthUser3) return authResultAuthUser3 as NextResponse;
-    const authUser = authResultAuthUser3.user;
-    if (!isAdminRole(authUser.role)) {
+    const authUser = authResultAuthUser3.user as AuthenticatedUser;
+    const tenantId = authUser.tenantId;
+    if (!tenantId || !isTenantAdminRole(authUser.tenantRole)) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
@@ -192,6 +210,14 @@ export async function DELETE(
     }
 
     const { id } = paramParse.data;
+
+    const membership = await prisma.tenantMembership.findFirst({
+      where: { userId: id, tenantId, isActive: true },
+    });
+
+    if (!membership) {
+      return NextResponse.json({ error: 'Usuario no encontrado en esta empresa' }, { status: 404 });
+    }
 
     const userToDelete = await prisma.user.findUnique({
       where: { userId: id },

@@ -133,7 +133,7 @@ export function EditUserDialog({ open, onClose, user }: EditUserDialogProps): Re
 
   return (
     <Dialog open={open} onOpenChange={handleDialogChange}>
-      <DialogContent className="overflow-hidden border bg-background sm:max-w-[500px]">
+      <DialogContent className="overflow-hidden border bg-background sm:max-w-125">
         <div className="absolute left-0 right-0 top-0 h-1 bg-linear-to-r from-primary via-purple-500 to-primary" />
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -195,7 +195,7 @@ export function EditUserDialog({ open, onClose, user }: EditUserDialogProps): Re
 
             <div className="grid gap-4 sm:grid-cols-2">
                <div className="space-y-2">
-                 <Label htmlFor="edit-role">Rol</Label>
+                 <Label htmlFor="edit-role">Rol de plataforma</Label>
                  <Select
                    value={formData.role}
                    onValueChange={handleRoleChange}
@@ -204,11 +204,14 @@ export function EditUserDialog({ open, onClose, user }: EditUserDialogProps): Re
                      <SelectValue />
                    </SelectTrigger>
                    <SelectContent>
-                     <SelectItem value="regularUser">Usuario Regular</SelectItem>
+                     <SelectItem value="regularUser">Usuario</SelectItem>
                      <SelectItem value="dependiente">Dependiente</SelectItem>
                      <SelectItem value="admin">Administrador</SelectItem>
                    </SelectContent>
                  </Select>
+                 <p className="text-xs text-muted-foreground">
+                   El rol operativo del tenant se conserva en la membresía activa.
+                 </p>
                </div>
 
                <div className="space-y-2 rounded-lg border border-slate-200/70 bg-slate-50/70 p-3 dark:border-slate-700/70 dark:bg-slate-800/40">

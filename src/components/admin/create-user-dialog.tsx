@@ -93,7 +93,7 @@ export function CreateUserDialog({ open, onClose }: CreateUserDialogProps): Reac
 
   return (
     <Dialog open={open} onOpenChange={handleDialogChange}>
-      <DialogContent className="overflow-hidden border bg-background sm:max-w-[480px]">
+      <DialogContent className="overflow-hidden border bg-background sm:max-w-120">
         <div className="absolute left-0 right-0 top-0 h-1 bg-linear-to-r from-primary via-purple-500 to-primary" />
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
@@ -157,7 +157,7 @@ export function CreateUserDialog({ open, onClose }: CreateUserDialogProps): Reac
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="create-role">Rol</Label>
+              <Label htmlFor="create-role">Rol de plataforma</Label>
               <Select
                 value={formData.role}
                 onValueChange={(value) =>
@@ -168,11 +168,14 @@ export function CreateUserDialog({ open, onClose }: CreateUserDialogProps): Reac
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="regularUser">Usuario Regular</SelectItem>
+                  <SelectItem value="regularUser">Usuario</SelectItem>
                   <SelectItem value="dependiente">Dependiente</SelectItem>
                   <SelectItem value="admin">Administrador</SelectItem>
                 </SelectContent>
               </Select>
+              <p className="text-xs text-muted-foreground">
+                El rol operativo del tenant se asigna automáticamente según la membresía.
+              </p>
             </div>
 
             <div className="space-y-2 rounded-lg border border-slate-200/70 bg-slate-50/70 p-3 dark:border-slate-700/70 dark:bg-slate-800/40">

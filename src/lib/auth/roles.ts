@@ -72,3 +72,23 @@ export function isTenantEconomicoRole(role: unknown): boolean {
   if (typeof role !== 'string') return false;
   return role === 'economico' || role === 'admin' || role === 'director';
 }
+
+/**
+ * @description Convierte un rol de tenant a una etiqueta legible para UI.
+ * @param {TenantRole | null | undefined} role - Rol de tenant.
+ * @returns {string} Etiqueta en español para mostrar en interfaz.
+ */
+export function getTenantRoleLabel(role: TenantRole | null | undefined): string {
+  switch (role) {
+    case 'director':
+      return 'Director';
+    case 'admin':
+      return 'Administrador';
+    case 'economico':
+      return 'Económico';
+    case 'dependiente':
+      return 'Dependiente';
+    default:
+      return 'Sin rol de tenant';
+  }
+}

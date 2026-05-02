@@ -4,7 +4,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { withAuthGet, withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware';
 import { createUserBodySchema } from '@/lib/admin/schemas';
 import { sendNewUserNotification } from '@/lib/email';
-import { isAdminRole, platformRoleToTenantRole, isTenantAdminRole } from '@/lib/auth/roles';
+import { platformRoleToTenantRole, isTenantAdminRole } from '@/lib/auth/roles';
 import { requireTenant, validateTenantLimit } from '@/lib/services/tenant-scope';
 import { prisma } from '@/lib/prisma';
 

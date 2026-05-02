@@ -1,11 +1,11 @@
 import { type NextRequest, NextResponse } from 'next/server';
 
-import { authenticateUser } from '@/lib/auth-middleware';
+import { authenticateUser, type AuthenticatedUser } from '@/lib/auth-middleware';
 import {
   expiringUsersBodySchema,
   expiringUsersQuerySchema,
 } from '@/lib/admin/schemas';
-import { isAdminRole } from '@/lib/auth/roles';
+import { isTenantAdminRole } from '@/lib/auth/roles';
 import { prisma } from '@/lib/prisma';
 
 interface ExpiringUser {
@@ -20,8 +20,9 @@ export async function POST(request: NextRequest) {
   try {
     const authResultAuthUser1 = await authenticateUser(request);
     if ('status' in authResultAuthUser1) return authResultAuthUser1 as Response;
-    const authUser = authResultAuthUser1.user;
-    if (!isAdminRole(authUser.role)) {
+    const authUser = authResultAuthUser1.user as AuthenticatedUser;
+    const tenantId = authUser.tenantId;
+    if (!tenantId || !isTenantAdminRole(authUser.tenantRole)) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
@@ -38,23 +39,25 @@ export async function POST(request: NextRequest) {
     const { days } = parsedBody.data;
     const now = new Date();
 
-    const expiringSoon = await prisma.user.findMany({
-      where: {
-        expiresAt: {
-          not: null,
-        },
-        isActive: true,
-      },
+    const expiringSoon = await prisma.tenantMembership.findMany({
+      where: { tenantId, isActive: true },
       select: {
-        userId: true,
-        name: true,
-        email: true,
-        expiresAt: true,
-        role: true,
+        user: {
+          select: {
+            userId: true,
+            name: true,
+            email: true,
+            expiresAt: true,
+            role: true,
+            isActive: true,
+          },
+        },
       },
     });
 
-    const usersExpiringSoon = expiringSoon.filter((user) => {
+    const usersExpiringSoon = expiringSoon
+      .map((membership) => membership.user)
+      .filter((user) => {
       if (!user.expiresAt) {
         return false;
       }
@@ -62,10 +65,19 @@ export async function POST(request: NextRequest) {
         (new Date(user.expiresAt).getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
       );
       return daysUntilExpiry > 0 && daysUntilExpiry <= days;
-    });
+      });
 
     const admins = await prisma.user.findMany({
-      where: { role: 'admin', isActive: true },
+      where: {
+        isActive: true,
+        tenantMemberships: {
+          some: {
+            tenantId,
+            isActive: true,
+            tenantRole: { in: ['admin', 'director'] },
+          },
+        },
+      },
       select: { userId: true, name: true },
     });
 
@@ -135,8 +147,9 @@ export async function GET(request: NextRequest) {
   try {
     const authResultAuthUser2 = await authenticateUser(request);
     if ('status' in authResultAuthUser2) return authResultAuthUser2 as Response;
-    const authUser = authResultAuthUser2.user;
-    if (!isAdminRole(authUser.role)) {
+    const authUser = authResultAuthUser2.user as AuthenticatedUser;
+    const tenantId = authUser.tenantId;
+    if (!tenantId || !isTenantAdminRole(authUser.tenantRole)) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
@@ -154,28 +167,25 @@ export async function GET(request: NextRequest) {
 
     const { days } = parsedQuery.data;
     const now = new Date();
-    const expiryThreshold = new Date(now.getTime() + days * 24 * 60 * 60 * 1000);
 
-    const expiringSoon = await prisma.user.findMany({
-      where: {
-        expiresAt: {
-          not: null,
-          lte: expiryThreshold,
-        },
-        isActive: true,
-      },
+    const expiringSoon = await prisma.tenantMembership.findMany({
+      where: { tenantId, isActive: true },
       select: {
-        userId: true,
-        name: true,
-        email: true,
-        expiresAt: true,
-        role: true,
-        createdAt: true,
+        user: {
+          select: {
+            userId: true,
+            name: true,
+            email: true,
+            expiresAt: true,
+            role: true,
+            createdAt: true,
+            isActive: true,
+          },
+        },
       },
-      orderBy: { expiresAt: 'asc' },
     });
 
-    const usersWithDaysUntilExpiry = (expiringSoon as ExpiringUser[])
+    const usersWithDaysUntilExpiry = (expiringSoon.map((membership) => membership.user) as ExpiringUser[])
       .map((user) => ({
         ...user,
         daysUntilExpiry: user.expiresAt

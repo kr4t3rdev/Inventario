@@ -633,6 +633,7 @@ export interface Usuario {
   email:     string
   password:  string
   role:      string
+  tenantRole?: string | null
   isActive:  boolean
   avatar:    string
   activatedAt: string
