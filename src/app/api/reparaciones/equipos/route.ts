@@ -26,7 +26,7 @@ export const POST = withAuthPost(async (request: NextRequest, _context: any, use
     const tenantId = requireTenant(user);
     const data = await request.json()
 
-    // Solo permitir crear a usuarios con rol de admin o regularUser (no dependientes)
+    // Solo permitir crear a usuarios con rol administrativo o legado de plataforma (no dependientes).
     if (user.role === 'dependiente') {
       return NextResponse.json({
         error: 'Acceso restringido',

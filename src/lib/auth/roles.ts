@@ -1,4 +1,4 @@
-// ── Roles de plataforma (identidad global del usuario) ──
+// ── Roles de plataforma (identidad global del usuario; contrato legado incluido) ──
 export const APP_USER_ROLES = ['admin', 'dependiente', 'regularUser'] as const;
 export type AppUserRole = (typeof APP_USER_ROLES)[number];
 
@@ -9,12 +9,13 @@ export type TenantRole = (typeof TENANT_ROLES)[number];
 const LEGACY_ROLE_MAP: Record<string, AppUserRole> = {
   ADMIN: 'admin',
   SUPERADMIN: 'admin',
+  // `user` sigue entrando como alias legado del rol regular de plataforma.
   user: 'regularUser',
 };
 
 /**
  * @description Mapea un rol de plataforma global al tenantRole por defecto.
- * admin → admin, regularUser → dependiente, dependiente → dependiente
+ * `admin` se conserva como `admin`; cualquier rol no administrativo cae en `dependiente`.
  * @param {AppUserRole} platformRole - Rol de plataforma.
  * @returns {TenantRole} Rol de tenant por defecto.
  */
@@ -54,7 +55,7 @@ export function isAdminRole(role: unknown): boolean {
 
 /**
  * @description Verifica si un rol de tenant tiene permisos de administración empresarial.
- * director y admin son roles administrativos dentro del tenant.
+ * `director` y `admin` son roles administrativos dentro del tenant.
  * @param {unknown} role - Rol de tenant a evaluar.
  * @returns {boolean} true si el rol tiene alcance administrativo.
  */
@@ -65,6 +66,7 @@ export function isTenantAdminRole(role: unknown): boolean {
 
 /**
  * @description Verifica si un rol de tenant tiene permisos financieros/económicos.
+ * `director`, `admin` y `economico` acceden a módulos financieros.
  * @param {unknown} role - Rol de tenant a evaluar.
  * @returns {boolean} true si puede acceder a módulos económico-financieros.
  */

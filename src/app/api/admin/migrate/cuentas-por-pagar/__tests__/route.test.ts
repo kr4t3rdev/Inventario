@@ -2,6 +2,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
 import { GET } from '../route';
+import { normalizeUserRole } from '@/lib/auth/roles';
 
 vi.mock('@/lib/auth-middleware', () => ({
   authenticateUser: vi.fn(),
@@ -38,7 +39,7 @@ describe('admin migrate cuentas por pagar - GET', () => {
   it('deniega acceso si el rol no es administrador', async () => {
     const { authenticateUser } = await import('@/lib/auth-middleware');
 
-    vi.mocked(authenticateUser).mockResolvedValue({ user: { role: 'regularUser' } } as never);
+    vi.mocked(authenticateUser).mockResolvedValue({ user: { role: normalizeUserRole('user')! } } as never);
 
     const request = new NextRequest('http://localhost/api/admin/migrate/cuentas-por-pagar');
     const response = await GET(request);

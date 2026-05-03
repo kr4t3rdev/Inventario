@@ -31,7 +31,7 @@ export const POST = withAuthPost(async (request: NextRequest, _context: any, use
     const body = await request.json()
     const data = servicioSchema.parse(body)
 
-    // Solo permitir crear servicios a usuarios con rol de admin o regularUser
+    // Solo permitir crear servicios a usuarios con rol administrativo o legado de plataforma.
     if (user.role === 'dependiente') {
       return NextResponse.json({
         error: 'Acceso restringido',

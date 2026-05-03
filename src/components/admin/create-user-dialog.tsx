@@ -6,6 +6,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { Loader2, PlusCircle, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 
+import type { AppUserRole } from '@/lib/auth/roles';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -29,7 +30,7 @@ interface CreateUserFormState {
   name: string;
   email: string;
   password: string;
-  role: 'regularUser' | 'dependiente' | 'admin';
+  role: AppUserRole;
   daysToExpire: string;
 }
 
@@ -157,7 +158,7 @@ export function CreateUserDialog({ open, onClose }: CreateUserDialogProps): Reac
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="create-role">Rol de plataforma</Label>
+              <Label htmlFor="create-role">Tipo de usuario</Label>
               <Select
                 value={formData.role}
                 onValueChange={(value) =>
@@ -168,13 +169,13 @@ export function CreateUserDialog({ open, onClose }: CreateUserDialogProps): Reac
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="regularUser">Usuario</SelectItem>
+                  <SelectItem value="regularUser">Usuario legado</SelectItem>
                   <SelectItem value="dependiente">Dependiente</SelectItem>
                   <SelectItem value="admin">Administrador</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                El rol operativo del tenant se asigna automáticamente según la membresía.
+                El tipo operativo del tenant se asigna automáticamente según la membresía.
               </p>
             </div>
 

@@ -59,14 +59,14 @@ interface MonthlyMetrics {
   newUsersByRole: {
     admin: number;
     dependiente: number;
-    regularUser: number;
+    legacyUser: number;
   };
 }
 
 interface MonthlyMetricsWithDerived extends MonthlyMetrics {
   admin: number;
   dependiente: number;
-  regularUser: number;
+  legacyUser: number;
 }
 
 const TOOLTIP_STYLE = {
@@ -120,7 +120,7 @@ export function TemporalDashboard({ months: initialMonths = 6 }: TemporalDashboa
       ...entry,
       admin: entry.newUsersByRole?.admin || 0,
       dependiente: entry.newUsersByRole?.dependiente || 0,
-      regularUser: entry.newUsersByRole?.regularUser || 0,
+      legacyUser: entry.newUsersByRole?.legacyUser || 0,
     }));
   }, [metrics]);
 
@@ -134,7 +134,7 @@ export function TemporalDashboard({ months: initialMonths = 6 }: TemporalDashboa
     return [
       { name: 'Admin', value: latest.admin },
       { name: 'Dependiente', value: latest.dependiente },
-      { name: 'Usuario', value: latest.regularUser },
+      { name: 'Usuario legado', value: latest.legacyUser },
     ];
   }, [latest]);
 
@@ -184,13 +184,13 @@ export function TemporalDashboard({ months: initialMonths = 6 }: TemporalDashboa
           <Card className="border bg-card">
             <CardContent className="p-6">
               <Skeleton className="mb-4 h-5 w-52 animate-pulse-subtle" />
-              <Skeleton className="h-[330px] w-full animate-pulse" />
+              <Skeleton className="h-82.5 w-full animate-pulse" />
             </CardContent>
           </Card>
           <Card className="border bg-card">
             <CardContent className="p-6">
               <Skeleton className="mb-4 h-5 w-52 animate-pulse-subtle" />
-              <Skeleton className="h-[330px] w-full animate-pulse" />
+              <Skeleton className="h-82.5 w-full animate-pulse" />
             </CardContent>
           </Card>
         </div>
@@ -453,7 +453,7 @@ export function TemporalDashboard({ months: initialMonths = 6 }: TemporalDashboa
                   <CardDescription>Nuevos usuarios por rol en el último mes.</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-6">
-                  <div className="h-[300px]">
+                  <div className="h-75">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
@@ -580,7 +580,7 @@ export function TemporalDashboard({ months: initialMonths = 6 }: TemporalDashboa
                   <CardDescription>Logins vs Logouts mensuales.</CardDescription>
                 </CardHeader>
                 <CardContent className="pt-6">
-                  <div className="h-[350px]">
+                  <div className="h-87.5">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={chartData} margin={{ top: 20, right: 24, left: 8, bottom: 10 }}>
                         <CartesianGrid vertical={false} />
@@ -630,7 +630,7 @@ export function TemporalDashboard({ months: initialMonths = 6 }: TemporalDashboa
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="pt-6">
-                  <div className="h-[350px]">
+                  <div className="h-87.5">
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={chartData} margin={{ top: 20, right: 24, left: 8, bottom: 10 }}>
                         <CartesianGrid vertical={false} strokeDasharray="4 4" />
@@ -713,8 +713,8 @@ export function TemporalDashboard({ months: initialMonths = 6 }: TemporalDashboa
                         animationDuration={620}
                       />
                       <Bar
-                        dataKey="regularUser"
-                        name="Usuario"
+                        dataKey="legacyUser"
+                        name="Usuario legado"
                         fill="#6b7280"
                         radius={[8, 8, 0, 0]}
                         isAnimationActive={!shouldReduceMotion}

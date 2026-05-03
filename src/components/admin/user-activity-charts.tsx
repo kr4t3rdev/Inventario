@@ -38,14 +38,14 @@ interface MonthlyData {
   newUsersByRole: {
     admin: number;
     dependiente: number;
-    regularUser: number;
+    legacyUser: number;
   };
 }
 
 interface MonthlyDataWithRoles extends MonthlyData {
   admin: number;
   dependiente: number;
-  regularUser: number;
+  legacyUser: number;
 }
 
 const CHART_TOOLTIP_STYLE = {
@@ -81,7 +81,7 @@ export function UserActivityCharts(): React.JSX.Element {
       ...row,
       admin: row.newUsersByRole?.admin || 0,
       dependiente: row.newUsersByRole?.dependiente || 0,
-      regularUser: row.newUsersByRole?.regularUser || 0,
+      legacyUser: row.newUsersByRole?.legacyUser || 0,
     }));
   }, [metrics]);
 
@@ -348,9 +348,11 @@ export function UserActivityCharts(): React.JSX.Element {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <UserPlus className="h-4 w-4 text-sky-500 dark:text-sky-400" />
-                  Nuevos Usuarios por Rol
+                  Nuevos Usuarios por Tipo
                 </CardTitle>
-                <CardDescription>Distribución mensual de altas por rol.</CardDescription>
+                <CardDescription>
+                  Distribución mensual de altas por tipo de usuario.
+                </CardDescription>
               </CardHeader>
               <CardContent className="pt-6">
                 <div className="h-[350px]">
@@ -387,8 +389,8 @@ export function UserActivityCharts(): React.JSX.Element {
                         animationDuration={600}
                       />
                       <Bar
-                        dataKey="regularUser"
-                        name="Usuario"
+                        dataKey="legacyUser"
+                        name="Usuario legado"
                         fill="#6b7280"
                         radius={[8, 8, 0, 0]}
                         isAnimationActive={!shouldReduceMotion}

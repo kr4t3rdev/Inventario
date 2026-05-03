@@ -259,10 +259,10 @@ export function AdminUsersTable({
           </div>
           <Select value={roleFilter} onValueChange={(value) => setRoleFilter(value as RoleFilter)}>
             <SelectTrigger className="h-11 w-full border-slate-200 bg-white/60 sm:w-44 dark:border-slate-700 dark:bg-slate-800/50">
-              <SelectValue placeholder="Filtrar por rol" />
+              <SelectValue placeholder="Filtrar por tipo" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos los roles</SelectItem>
+              <SelectItem value="all">Todos los tipos</SelectItem>
               <SelectItem value="director">Directores</SelectItem>
               <SelectItem value="admin">Administradores</SelectItem>
               <SelectItem value="economico">Económicos</SelectItem>
@@ -307,7 +307,7 @@ export function AdminUsersTable({
             <TableRow className="bg-linear-to-r from-primary/10 via-purple-600/5 to-primary/10">
               <TableHead>Usuario</TableHead>
               <TableHead>Email</TableHead>
-              <TableHead>Rol</TableHead>
+              <TableHead>Tipo</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead>Fecha de Creación</TableHead>
               <TableHead>Expira</TableHead>

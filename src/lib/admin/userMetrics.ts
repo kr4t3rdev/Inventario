@@ -11,7 +11,7 @@ interface UserMetricsRow {
   blockedUsers: number;
   admin: number;
   dependiente: number;
-  regularUser: number;
+  legacyUser: number;
 }
 
 interface UserMetricsResponse {
@@ -29,7 +29,7 @@ interface UserMetricsResponse {
     newUsersByRole: {
       admin: number;
       dependiente: number;
-      regularUser: number;
+      legacyUser: number;
     };
   }>;
   summary: {
@@ -91,7 +91,7 @@ export async function getUserMetrics(
         COUNT(*)::int AS users_created,
         COUNT(*) FILTER (WHERE role = 'admin')::int AS admin,
         COUNT(*) FILTER (WHERE role = 'dependiente')::int AS dependiente,
-        COUNT(*) FILTER (WHERE role = 'regularUser')::int AS "regularUser"
+        COUNT(*) FILTER (WHERE role = 'regularUser')::int AS "legacyUser"
       FROM "User"
       WHERE "createdAt" >= ${startDate}
         AND "createdAt" < (${endDate}::timestamp + interval '1 month')
@@ -145,7 +145,7 @@ export async function getUserMetrics(
       COALESCE(a."blockedUsers", 0)::int AS "blockedUsers",
       COALESCE(uc.admin, 0)::int AS admin,
       COALESCE(uc.dependiente, 0)::int AS dependiente,
-      COALESCE(uc."regularUser", 0)::int AS "regularUser"
+      COALESCE(uc."legacyUser", 0)::int AS "legacyUser"
     FROM months m
     LEFT JOIN user_creations uc ON uc.month_start = m."monthStart"
     LEFT JOIN activity a ON a.month_start = m."monthStart"
@@ -215,7 +215,7 @@ export async function getUserMetrics(
       newUsersByRole: {
         admin: row.admin,
         dependiente: row.dependiente,
-        regularUser: row.regularUser,
+        legacyUser: row.legacyUser,
       },
     };
   });

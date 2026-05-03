@@ -34,7 +34,7 @@ describe('roles - tenant', () => {
       expect(platformRoleToTenantRole('admin')).toBe('admin');
     });
 
-    it('mapea regularUser → dependiente', () => {
+    it('mapea rol regular de plataforma → dependiente', () => {
       expect(platformRoleToTenantRole('regularUser')).toBe('dependiente');
     });
 

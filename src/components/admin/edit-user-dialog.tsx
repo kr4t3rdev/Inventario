@@ -7,6 +7,7 @@ import { Loader2, Save, UserPen } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Usuario } from '@/app/models/model';
+import type { AppUserRole } from '@/lib/auth/roles';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -32,7 +33,7 @@ interface EditUserFormState {
   name: string;
   email: string;
   password: string;
-  role: 'regularUser' | 'dependiente' | 'admin';
+  role: AppUserRole;
   isActive: boolean;
   daysToExpire: string;
 }
@@ -195,7 +196,7 @@ export function EditUserDialog({ open, onClose, user }: EditUserDialogProps): Re
 
             <div className="grid gap-4 sm:grid-cols-2">
                <div className="space-y-2">
-                 <Label htmlFor="edit-role">Rol de plataforma</Label>
+                   <Label htmlFor="edit-role">Tipo de usuario</Label>
                  <Select
                    value={formData.role}
                    onValueChange={handleRoleChange}
@@ -204,13 +205,13 @@ export function EditUserDialog({ open, onClose, user }: EditUserDialogProps): Re
                      <SelectValue />
                    </SelectTrigger>
                    <SelectContent>
-                     <SelectItem value="regularUser">Usuario</SelectItem>
+                       <SelectItem value="regularUser">Usuario legado</SelectItem>
                      <SelectItem value="dependiente">Dependiente</SelectItem>
                      <SelectItem value="admin">Administrador</SelectItem>
                    </SelectContent>
                  </Select>
                  <p className="text-xs text-muted-foreground">
-                   El rol operativo del tenant se conserva en la membresía activa.
+                     El tipo operativo del tenant se conserva en la membresía activa.
                  </p>
                </div>
 

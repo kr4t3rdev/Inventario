@@ -185,7 +185,7 @@ export function filterMenuItems(menuItems: any[], userRole: UserRole): any[] {
     )
   }
   
-  // regularUser: excluir solo administración
+  // Rol de plataforma legado: excluir solo administración.
   return menuItems.filter(item => item.title !== 'Administración')
 }
 

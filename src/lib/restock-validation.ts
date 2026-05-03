@@ -7,6 +7,7 @@ import { z } from "zod"
 import { RestockErrorFactory, RestockError, RestockErrorCode, RestockErrorSeverity } from "./restock-errors"
 import { WeightedAverageResult } from "./restock-utils"
 import { hasPermission, UserRole } from "./permissions"
+import { APP_USER_ROLES } from "@/lib/auth/roles"
 
 // Enhanced Zod schema with custom error messages
 export const RestockRequestSchema = z.object({
@@ -308,7 +309,7 @@ export class RestockValidator {
     })
 
     // Check if role is valid
-    const validRoles: UserRole[] = ['admin', 'regularUser', 'dependiente']
+    const validRoles: UserRole[] = [...APP_USER_ROLES]
     if (!normalizedRole || !validRoles.includes(normalizedRole)) {
       console.log("[RESTOCK_AUTH_DEBUG] Invalid or missing user role:", normalizedRole)
       return {
@@ -317,8 +318,8 @@ export class RestockValidator {
       }
     }
 
-    // Admins and regular users are allowed to perform restock operations
-    // We also explicitly allow 'dependiente' for restock
+    // Admins and the legacy platform role are allowed to perform restock operations.
+    // We also explicitly allow 'dependiente' for restock.
     const permissionResult = hasPermission(normalizedRole, '/api/productos/restock', 'POST')
     const isDependiente = normalizedRole === 'dependiente'
     const isAuthorized = permissionResult || isDependiente

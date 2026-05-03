@@ -1,5 +1,6 @@
 import { apiSlice } from "./apiSlice";
 import { Usuario, UserActivityLog, UserSession } from "../../../app/models/model";
+import type { AppUserRole } from "@/lib/auth/roles";
 
 type MonthlyData = {
     year: number;
@@ -15,7 +16,18 @@ type MonthlyData = {
     newUsersByRole: {
         admin: number;
         dependiente: number;
-        regularUser: number;
+        legacyUser: number;
+    };
+};
+
+type UserMetricsResponse = {
+    monthlyData: MonthlyData[];
+    summary: {
+        totalUsers: number;
+        usersCreatedInPeriod: number;
+        totalLogins: number;
+        totalLogouts: number;
+        totalBlocks: number;
     };
 };
 
@@ -23,7 +35,7 @@ type CreateUserPayload = {
     name: string;
     email: string;
     password: string;
-    role: 'admin' | 'dependiente' | 'regularUser';
+    role: AppUserRole;
     daysToExpire?: number;
 };
 
@@ -180,16 +192,7 @@ export const adminApi = apiSlice.injectEndpoints({
             providesTags: ['TenantLicense']
         }),
 
-        getUserMetrics: builder.query<{
-            monthlyData: MonthlyData[];
-            summary: {
-                totalUsers: number;
-                usersCreatedInPeriod: number;
-                totalLogins: number;
-                totalLogouts: number;
-                totalBlocks: number;
-            };
-        }, { months: number }>({
+        getUserMetrics: builder.query<UserMetricsResponse, { months: number }>({
             query: ({ months }) => ({
                 url: `/admin/users/user-metrics?months=${months}`,
             }),
