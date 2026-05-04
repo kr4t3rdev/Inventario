@@ -471,6 +471,9 @@ model User {
   email                    String               @unique
   password                 String
   role                     String               @default("regularUser")
+  onboardingType           String?
+  onboardingStatus         String               @default("pending_email_verification")
+  emailVerifiedAt          DateTime?
   createdAt                DateTime             @default(now())
   updatedAt                DateTime             @updatedAt
   activatedAt              DateTime?

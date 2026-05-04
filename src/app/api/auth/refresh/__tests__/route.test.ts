@@ -124,7 +124,7 @@ describe('auth refresh route', () => {
       membershipId: 'm1',
       tenantId: 'tenant-1',
       userId: 'u4',
-      tenantRole: 'director',
+      tenantRole: 'manager',
       isActive: true,
     } as never);
     vi.mocked(prisma.tenantLicense.findFirst).mockResolvedValue({
@@ -147,7 +147,7 @@ describe('auth refresh route', () => {
     expect(data.token).toBe('new-access-token');
     expect(vi.mocked(jwt.sign)).toHaveBeenNthCalledWith(
       1,
-      expect.objectContaining({ tenantId: 'tenant-1', tenantRole: 'director' }),
+      expect.objectContaining({ tenantId: 'tenant-1', tenantRole: 'manager' }),
       expect.any(String),
       expect.objectContaining({ expiresIn: '15m' })
     );

@@ -37,7 +37,7 @@ interface AdminUsersTableProps {
   onRefresh: () => Promise<unknown> | void;
 }
 
-type RoleFilter = 'all' | 'director' | 'admin' | 'economico' | 'dependiente' | 'regularUser';
+type RoleFilter = 'all' | 'manager' | 'admin' | 'economico' | 'dependiente' | 'regularUser';
 type StatusFilter = 'all' | 'active' | 'inactive';
 
 /**
@@ -78,14 +78,14 @@ export function AdminUsersTable({
     const effectiveRole = tenantRole ?? role;
 
     switch (effectiveRole) {
-      case 'director':
+      case 'manager':
         return (
           <Badge
             variant="outline"
             className="border-violet-500/40 bg-violet-500/10 text-violet-700 dark:text-violet-300"
           >
             <Shield className="mr-1 h-3 w-3" />
-            {getTenantRoleLabel('director')}
+            {getTenantRoleLabel('manager')}
           </Badge>
         );
       case 'admin':
@@ -263,7 +263,7 @@ export function AdminUsersTable({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos los tipos</SelectItem>
-              <SelectItem value="director">Directores</SelectItem>
+              <SelectItem value="manager">Directores</SelectItem>
               <SelectItem value="admin">Administradores</SelectItem>
               <SelectItem value="economico">Económicos</SelectItem>
               <SelectItem value="dependiente">Dependientes</SelectItem>

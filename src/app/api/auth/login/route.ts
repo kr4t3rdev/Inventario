@@ -8,6 +8,24 @@ import { resolveTenantContext } from "@/lib/auth-middleware"
 const MAX_LOGIN_ATTEMPTS = 5
 const LOCK_TIME_MINUTES = 15
 
+const ONBOARDING_MID_FLOW = new Set([
+  'pending_email_verification',
+  'selecting_user_type',
+  'selecting_tenant',
+  'awaiting_manager_approval',
+  'awaiting_global_approval',
+])
+
+/**
+ * @description Indica si el usuario está en un estado de onboarding que todavía no llegó a completado.
+ * @param {string | null} onboardingStatus
+ * @returns {boolean}
+ */
+function isMidOnboarding(onboardingStatus: string | null): boolean {
+  if (!onboardingStatus) return false
+  return ONBOARDING_MID_FLOW.has(onboardingStatus)
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { email, password } = await request.json()
@@ -18,6 +36,18 @@ export async function POST(request: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { email },
+      select: {
+        userId: true,
+        name: true,
+        email: true,
+        password: true,
+        role: true,
+        isActive: true,
+        expiresAt: true,
+        lockedUntil: true,
+        loginAttempts: true,
+        onboardingStatus: true,
+      },
     })
 
     if (!user) {
@@ -28,7 +58,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Su usuario está inactivo, por favor contacte con el administrador.' }, { status: 403 })
     }
 
-    if (user.expiresAt && new Date(user.expiresAt) < new Date() && user.role !== "admin") {
+    const midOnboarding = isMidOnboarding(user.onboardingStatus)
+
+    if (!midOnboarding && user.expiresAt && new Date(user.expiresAt) < new Date() && user.role !== "admin") {
       const diasRestantes = 0
       return NextResponse.json({
         error: "Licencia expirada o no válida",
@@ -136,52 +168,47 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    const requestedTenantId = request.headers.get('x-tenant-id')
-    const tenantContext = await resolveTenantContext(user.userId, requestedTenantId)
+    let tenantContext: Awaited<ReturnType<typeof resolveTenantContext>> = null
 
-    if (requestedTenantId && !tenantContext) {
-      return NextResponse.json(
-        {
-          error: 'Tenant inválido',
-          message: 'El tenant solicitado no pertenece al usuario o no está activo.',
-        },
-        { status: 403 }
-      )
-    }
+    if (!midOnboarding) {
+      const requestedTenantId = request.headers.get('x-tenant-id')
+      tenantContext = await resolveTenantContext(user.userId, requestedTenantId)
 
-    if (tenantContext) {
-      await prisma.user.update({
-        where: { userId: user.userId },
-        data: {
-          expiresAt: tenantContext.licenseExpiresAt ?? null,
-        },
-      })
-    } else if (user.role !== 'admin') {
-      const licenciaActiva = await prisma.licencia.findFirst({
-        where: { usuarioId: user.userId, activa: true, expiracion: { gt: new Date() } },
-        include: { plan: true },
-        orderBy: { expiracion: 'desc' },
-      })
-
-      if (!licenciaActiva) {
-        return NextResponse.json({
-          error: 'Licencia expirada o no válida',
-          licenciaExpirada: true,
-          diasRestantes: 0,
-          plan: undefined,
-        }, { status: 403 })
+      if (requestedTenantId && !tenantContext) {
+        return NextResponse.json(
+          {
+            error: 'Tenant inválido',
+            message: 'El tenant solicitado no pertenece al usuario o no está activo.',
+          },
+          { status: 403 }
+        )
       }
 
-      await prisma.user.update({
-        where: { userId: user.userId },
-        data: { expiresAt: licenciaActiva.expiracion },
-      })
+      if (tenantContext) {
+        await prisma.user.update({
+          where: { userId: user.userId },
+          data: {
+            expiresAt: tenantContext.licenseExpiresAt ?? null,
+          },
+        })
+      } else if (user.role !== 'admin') {
+        return NextResponse.json(
+          {
+            error: 'No tenés una empresa activa para iniciar sesión.',
+            message: 'Contactá al manager de tu empresa o al admin global para completar tu acceso.',
+          },
+          { status: 403 }
+        )
+      }
     }
 
     const tokenPayload: Record<string, unknown> = { userId: user.userId, email: user.email }
     if (tenantContext) {
       tokenPayload.tenantId = tenantContext.tenantId
       tokenPayload.tenantRole = tenantContext.tenantRole
+    }
+    if (midOnboarding) {
+      tokenPayload.onboardingStatus = user.onboardingStatus
     }
 
     const token = jwt.sign(tokenPayload, getJwtSecret(), { expiresIn: "30d" })

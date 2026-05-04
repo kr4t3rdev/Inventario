@@ -128,6 +128,10 @@ export const apiSlice = createApi({
     'DeudasCash',
     // Tenant management
     'TenantLicense',
+    // Global admin tags
+    'AdminTenants',
+    'AdminFinance',
+    'AdminSystem',
   ],
   endpoints: () => ({}),
 })

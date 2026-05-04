@@ -26,6 +26,11 @@ export async function proxy(request: NextRequest) {
   const publicPathsExact = [
     '/api/auth/login',
     '/api/auth/register',
+    '/api/auth/verify-email',
+    '/api/auth/onboarding/me',
+    '/api/auth/onboarding/type',
+    '/api/auth/onboarding/tenant',
+    '/api/auth/onboarding/resend-verification',
     '/api/auth/logout',
     '/api/auth/me',
     '/api/auth/refresh',

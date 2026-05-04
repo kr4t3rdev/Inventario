@@ -3,7 +3,7 @@ export const APP_USER_ROLES = ['admin', 'dependiente', 'regularUser'] as const;
 export type AppUserRole = (typeof APP_USER_ROLES)[number];
 
 // ── Roles de tenant (autorización operativa dentro de una empresa) ──
-export const TENANT_ROLES = ['director', 'admin', 'economico', 'dependiente'] as const;
+export const TENANT_ROLES = ['manager', 'director', 'admin', 'economico', 'dependiente'] as const;
 export type TenantRole = (typeof TENANT_ROLES)[number];
 
 const LEGACY_ROLE_MAP: Record<string, AppUserRole> = {
@@ -22,6 +22,27 @@ const LEGACY_ROLE_MAP: Record<string, AppUserRole> = {
 export function platformRoleToTenantRole(platformRole: AppUserRole): TenantRole {
   if (platformRole === 'admin') return 'admin';
   return 'dependiente';
+}
+
+/**
+ * @description Normaliza roles de tenant legados al esquema vigente.
+ * `director` sigue aceptándose como alias de compatibilidad pero se persiste/UI usa `manager`.
+ * @param {unknown} role - Rol de tenant recibido desde token, BD o input.
+ * @returns {TenantRole | null} Rol de tenant normalizado o null si no es válido.
+ */
+export function normalizeTenantRole(role: unknown): TenantRole | null {
+  if (typeof role !== 'string' || role.trim().length === 0) {
+    return null;
+  }
+
+  const trimmedRole = role.trim();
+  if (trimmedRole === 'director') return 'manager';
+
+  if (TENANT_ROLES.includes(trimmedRole as TenantRole)) {
+    return trimmedRole as TenantRole;
+  }
+
+  return null;
 }
 
 /**
@@ -60,8 +81,8 @@ export function isAdminRole(role: unknown): boolean {
  * @returns {boolean} true si el rol tiene alcance administrativo.
  */
 export function isTenantAdminRole(role: unknown): boolean {
-  if (typeof role !== 'string') return false;
-  return role === 'director' || role === 'admin';
+  const normalizedRole = normalizeTenantRole(role);
+  return normalizedRole === 'manager' || normalizedRole === 'admin';
 }
 
 /**
@@ -71,8 +92,8 @@ export function isTenantAdminRole(role: unknown): boolean {
  * @returns {boolean} true si puede acceder a módulos económico-financieros.
  */
 export function isTenantEconomicoRole(role: unknown): boolean {
-  if (typeof role !== 'string') return false;
-  return role === 'economico' || role === 'admin' || role === 'director';
+  const normalizedRole = normalizeTenantRole(role);
+  return normalizedRole === 'economico' || normalizedRole === 'admin' || normalizedRole === 'manager';
 }
 
 /**
@@ -82,8 +103,8 @@ export function isTenantEconomicoRole(role: unknown): boolean {
  */
 export function getTenantRoleLabel(role: TenantRole | null | undefined): string {
   switch (role) {
-    case 'director':
-      return 'Director';
+    case 'manager':
+      return 'Manager';
     case 'admin':
       return 'Administrador';
     case 'economico':

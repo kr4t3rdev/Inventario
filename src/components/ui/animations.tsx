@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence, useReducedMotion, type HTMLMotionProps, type Variants } from 'framer-motion';
-import { ReactNode } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { motionTokens } from '@/lib/design-system/tokens/motion-tokens';
 import {
@@ -12,6 +12,15 @@ import {
   tableRowVariants,
 } from '@/lib/design-system/variants/motion-variants';
 
+// Hook para evitar hydration mismatch en animaciones
+function useHasMounted() {
+  const [hasMounted, setHasMounted] = useState(false);
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
+  return hasMounted;
+}
+
 // --- Page Transition ---
 
 interface PageTransitionProps extends HTMLMotionProps<'div'> {
@@ -20,6 +29,7 @@ interface PageTransitionProps extends HTMLMotionProps<'div'> {
 
 export function PageTransition({ children, className, ...props }: PageTransitionProps) {
   const shouldReduceMotion = useReducedMotion();
+  const hasMounted = useHasMounted();
 
   const variants: Variants = {
     initial: { opacity: 0, y: shouldReduceMotion ? 0 : motionTokens.distance.medium },
@@ -29,7 +39,7 @@ export function PageTransition({ children, className, ...props }: PageTransition
 
   return (
     <motion.div
-      initial="initial"
+      initial={hasMounted ? "initial" : false}
       animate="animate"
       exit="exit"
       variants={variants}
@@ -58,6 +68,7 @@ export function StaggerContainer({
   ...props
 }: StaggerContainerProps) {
   const shouldReduceMotion = useReducedMotion();
+  const hasMounted = useHasMounted();
 
   const container: Variants = shouldReduceMotion
     ? { hidden: { opacity: 1 }, show: { opacity: 1 } }
@@ -75,7 +86,7 @@ export function StaggerContainer({
   return (
     <motion.div
       variants={container}
-      initial="hidden"
+      initial={hasMounted ? "hidden" : false}
       animate="show"
       className={className}
       {...props}
@@ -128,11 +139,12 @@ interface AnimatedCardProps extends HTMLMotionProps<'div'> {
 
 export function AnimatedCard({ children, className, hoverEffect = true, ...props }: AnimatedCardProps) {
   const shouldReduceMotion = useReducedMotion();
+  const hasMounted = useHasMounted();
 
   return (
     <motion.div
       variants={shouldReduceMotion ? undefined : cardVariants}
-      initial={shouldReduceMotion ? undefined : "hidden"}
+      initial={hasMounted ? (shouldReduceMotion ? undefined : "hidden") : false}
       animate={shouldReduceMotion ? undefined : "visible"}
       whileHover={!shouldReduceMotion && hoverEffect ? { y: -4, transition: { duration: motionTokens.duration.fast } } : undefined}
       className={className}
@@ -152,10 +164,11 @@ interface FadeInProps extends HTMLMotionProps<'div'> {
 
 export function FadeIn({ children, className, delay = 0, duration = motionTokens.duration.normal, ...props }: FadeInProps) {
   const shouldReduceMotion = useReducedMotion();
+  const hasMounted = useHasMounted();
 
   return (
     <motion.div
-      initial={shouldReduceMotion ? undefined : { opacity: 0 }}
+      initial={hasMounted ? (shouldReduceMotion ? undefined : { opacity: 0 }) : false}
       animate={{ opacity: 1 }}
       transition={{ duration: shouldReduceMotion ? 0 : duration, delay: shouldReduceMotion ? 0 : delay }}
       className={className}
@@ -175,6 +188,7 @@ interface SlideInProps extends HTMLMotionProps<'div'> {
 
 export function SlideIn({ children, className, direction = 'up', delay = 0, ...props }: SlideInProps) {
   const shouldReduceMotion = useReducedMotion();
+  const hasMounted = useHasMounted();
 
   const directions = {
     up: { y: motionTokens.distance.medium },
@@ -185,7 +199,7 @@ export function SlideIn({ children, className, direction = 'up', delay = 0, ...p
 
   return (
     <motion.div
-      initial={shouldReduceMotion ? undefined : directions[direction]}
+      initial={hasMounted ? (shouldReduceMotion ? undefined : directions[direction]) : false}
       animate={shouldReduceMotion ? undefined : { opacity: 1, x: 0, y: 0 }}
       transition={{ duration: motionTokens.duration.normal, delay: shouldReduceMotion ? 0 : delay }}
       className={className}
@@ -253,11 +267,12 @@ interface TableRowProps extends HTMLMotionProps<'tr'> {
 
 export function AnimatedTableRow({ children, className, index = 0, ...props }: TableRowProps) {
   const shouldReduceMotion = useReducedMotion();
+  const hasMounted = useHasMounted();
 
   return (
     <motion.tr
       variants={shouldReduceMotion ? undefined : tableRowVariants(index)}
-      initial={shouldReduceMotion ? undefined : "hidden"}
+      initial={hasMounted ? (shouldReduceMotion ? undefined : "hidden") : false}
       animate={shouldReduceMotion ? undefined : "visible"}
       className={className}
       {...props}

@@ -44,8 +44,8 @@ describe('roles - tenant', () => {
   });
 
   describe('isTenantAdminRole', () => {
-    it('reconoce director como admin tenant', () => {
-      expect(isTenantAdminRole('director')).toBe(true);
+    it('reconoce manager como admin tenant', () => {
+      expect(isTenantAdminRole('manager')).toBe(true);
     });
 
     it('reconoce admin como admin tenant', () => {
@@ -71,9 +71,9 @@ describe('roles - tenant', () => {
       expect(isTenantEconomicoRole('economico')).toBe(true);
     });
 
-    it('reconoce admin y director como roles con acceso económico', () => {
+    it('reconoce admin y manager como roles con acceso económico', () => {
       expect(isTenantEconomicoRole('admin')).toBe(true);
-      expect(isTenantEconomicoRole('director')).toBe(true);
+      expect(isTenantEconomicoRole('manager')).toBe(true);
     });
 
     it('rechaza dependiente', () => {

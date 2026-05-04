@@ -16,14 +16,14 @@ The system MUST provide CRUD de usuarios limitado al tenant autenticado y MUST s
 
 #### Scenario: Listar usuarios del tenant actual
 
-- **GIVEN** un usuario con rol tenant `director` o `admin`
+- **GIVEN** un usuario con rol tenant `manager` o `admin`
 - **WHEN** consulta `/api/admin/users`
 - **THEN** el sistema MUST devolver únicamente usuarios con membresía en su tenant activo
 - **AND** MUST ordenar y paginar sin incluir usuarios de otros tenants
 
 #### Scenario: Crear usuario dentro del tenant
 
-- **GIVEN** un director del tenant con cupo disponible según plan
+- **GIVEN** un manager del tenant con cupo disponible según plan
 - **WHEN** crea un nuevo usuario desde administración
 - **THEN** el sistema MUST crear la identidad global del usuario si no existe
 - **AND** MUST asociarla al tenant actual mediante membresía con `tenantRole`

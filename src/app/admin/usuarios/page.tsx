@@ -26,7 +26,6 @@ import {
   StaggerItem,
   AnimatedCard,
 } from '@/components/ui/animations';
-import { isTenantAdminRole } from '@/lib/auth/roles';
 import { useAuth } from '@/contexts/auth-context';
 import { useGetUserMetricsQuery, useGetUserQuery, useGetTenantLicenseQuery } from '@/lib/redux/services/adminApi';
 import { motion, type Variants } from 'framer-motion';
@@ -92,8 +91,9 @@ const titleVariants: Variants = {
 };
 
 /**
- * @description Página principal de administración de usuarios con métricas, tabla y paneles.
- * @returns {JSX.Element} Interfaz completa para gestión de usuarios del sistema.
+ * @description Página de gestión de usuarios dentro del Admin Panel.
+ * Administra usuarios, roles y permisos del sistema.
+ * @returns {JSX.Element} Interfaz completa para gestión de usuarios.
  */
 export default function AdminUsersPage(): React.JSX.Element {
   const { user } = useAuth();
@@ -111,7 +111,7 @@ export default function AdminUsersPage(): React.JSX.Element {
   const inactiveUsers = safeUsers.filter((candidate) => !candidate.isActive).length;
   const adminUsers = safeUsers.filter((candidate) => {
     const effectiveRole = candidate.tenantRole ?? candidate.role;
-    return effectiveRole === 'director' || effectiveRole === 'admin';
+    return effectiveRole === 'manager' || effectiveRole === 'admin';
   }).length;
   const lockedUsers = safeUsers.filter((candidate) => {
     return Boolean(candidate.lockedUntil && new Date(candidate.lockedUntil) > new Date());
@@ -147,69 +147,18 @@ export default function AdminUsersPage(): React.JSX.Element {
     setCreateDialogOpen(false); setEditDialogOpen(false); setSelectedUser(null); refetchUsers();
   };
 
-  // Gate: tenantRole si hay contexto, sino rol global legado
-  if (licenseLoading) return <div className="flex min-h-screen items-center justify-center"><p>Cargando...</p></div>;
-  const isAuthorized = tenantLicense
-    ? isTenantAdminRole(tenantLicense.tenantRole)
-    : isTenantAdminRole(user?.tenantRole);
-  if (!isAuthorized) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Card className="w-full max-w-md border-border/70 bg-card/90 shadow-lg backdrop-blur-sm">
-          <CardContent className="flex flex-col items-center p-7">
-            <AlertTriangle className="mb-4 h-12 w-12 text-rose-500 dark:text-rose-400" />
-            <h2 className="mb-2 text-xl font-semibold">Acceso Denegado</h2>
-            <p className="text-center text-muted-foreground">No tienes permisos para acceder a esta página.</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   return (
     <PageTransition className="relative min-h-screen w-full">
-      {/* Background Decor */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
         <motion.div
-          className="absolute top-0 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl dark:bg-blue-500/5 mix-blend-multiply dark:mix-blend-screen"
-          animate={{
-            scale: [1, 1.1, 1],
-            x: [0, 20, 0],
-            y: [0, -20, 0],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Infinity,
-            ease: 'easeInOut',
-          }}
+          className="absolute top-0 left-1/4 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl dark:bg-violet-500/5"
+          animate={{ scale: [1, 1.1, 1], x: [0, 20, 0], y: [0, -20, 0] }}
+          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
         />
         <motion.div
-          className="absolute top-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl dark:bg-purple-500/5 mix-blend-multiply dark:mix-blend-screen"
-          animate={{
-            scale: [1, 1.15, 1],
-            x: [0, -30, 0],
-            y: [0, 30, 0],
-          }}
-          transition={{
-            duration: 10,
-            repeat: Infinity,
-            ease: 'easeInOut',
-            delay: 1,
-          }}
-        />
-        <motion.div
-          className="absolute -bottom-8 left-1/3 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl dark:bg-violet-500/5 mix-blend-multiply dark:mix-blend-screen"
-          animate={{
-            scale: [1, 1.2, 1],
-            x: [0, 25, 0],
-            y: [0, 15, 0],
-          }}
-          transition={{
-            duration: 12,
-            repeat: Infinity,
-            ease: 'easeInOut',
-            delay: 2,
-          }}
+          className="absolute top-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl dark:bg-purple-500/5"
+          animate={{ scale: [1, 1.15, 1], x: [0, -30, 0], y: [0, 30, 0] }}
+          transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
         />
       </div>
 
@@ -234,14 +183,8 @@ export default function AdminUsersPage(): React.JSX.Element {
               </motion.div>
               <motion.div
                 className="absolute inset-0 rounded-xl bg-linear-to-tr from-transparent via-white/20 to-transparent"
-                animate={{
-                  rotate: [0, 360],
-                }}
-                transition={{
-                  duration: 4,
-                  repeat: Infinity,
-                  ease: 'linear',
-                }}
+                animate={{ rotate: [0, 360] }}
+                transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
                 style={{ mixBlendMode: 'overlay' }}
               />
             </motion.div>
@@ -296,13 +239,10 @@ export default function AdminUsersPage(): React.JSX.Element {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.5 }}
           >
-            {statCards.map((card, index) => {
+            {statCards.map((card) => {
               const Icon = card.icon;
               return (
-                <AnimatedCard
-                  key={card.title}
-                  className="rounded-xl border bg-card shadow-sm"
-                >
+                <AnimatedCard key={card.title} className="rounded-xl border bg-card shadow-sm">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 mt-4">
                     <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
                     <div className="rounded-md bg-linear-to-br from-violet-600/15 to-purple-600/15 p-2">

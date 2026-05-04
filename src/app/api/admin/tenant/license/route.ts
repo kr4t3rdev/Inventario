@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { withAuthGet, type AuthenticatedUser } from '@/lib/auth-middleware'
-import { requireTenant } from '@/lib/services/tenant-scope'
 
 /**
  * @description GET /api/admin/tenant/license
@@ -10,7 +9,18 @@ import { requireTenant } from '@/lib/services/tenant-scope'
  */
 export const GET = withAuthGet(async (_request: NextRequest, _context: unknown, user: AuthenticatedUser) => {
   try {
-    const tenantId = requireTenant(user)
+    // Admin global sin tenant: sin licencia que mostrar
+    if (!user.tenantId) {
+      return NextResponse.json({
+        license: null,
+        limits: { maxUsuarios: 0, maxAlmacenes: 0, maxProductos: 0 },
+        consumption: { usuarios: 0, almacenes: 0, productos: 0 },
+        tenantId: null,
+        tenantRole: null,
+      })
+    }
+
+    const tenantId = user.tenantId
 
     // Licencia activa más reciente
     const license = await prisma.tenantLicense.findFirst({

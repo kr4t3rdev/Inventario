@@ -1,37 +1,83 @@
-import { getRedis } from "./redis"
+const STORE = new Map<string, { count: number; resetAt: number }>()
 
-type CheckResult = { allowed: boolean; remaining: number; resetMs: number; backend: "redis" | "memory" }
+const PURGE_INTERVAL_MS = 60_000
 
-const memoryStore = new Map<string, { count: number; resetAt: number }>()
+let purgeTimer: ReturnType<typeof setInterval> | null = null
 
-export async function checkRateLimit(key: string, windowMs: number, max: number, prefix = "ratelimit"): Promise<CheckResult> {
-  const redis = getRedis()
-  const namespaced = `${prefix}:${key}`
-  const now = Date.now()
-
-  if (redis) {
-    const expireSeconds = Math.ceil(windowMs / 1000)
-    const pipe = redis.pipeline()
-    pipe.incr(namespaced)
-    pipe.expire(namespaced, expireSeconds)
-    pipe.pttl(namespaced)
-    const [[, count], [,], [, pttl]] = (await pipe.exec()) as [unknown, number][][]
-    const remaining = Math.max(0, max - Number(count ?? 0))
-    return {
-      allowed: Number(count ?? 0) <= max,
-      remaining,
-      resetMs: typeof pttl === "number" && pttl > 0 ? pttl : windowMs,
-      backend: "redis",
-    }
-  }
-
-  const bucket = memoryStore.get(namespaced)
-  if (!bucket || now > bucket.resetAt) {
-    memoryStore.set(namespaced, { count: 1, resetAt: now + windowMs })
-    return { allowed: true, remaining: max - 1, resetMs: windowMs, backend: "memory" }
-  }
-  bucket.count += 1
-  const remaining = Math.max(0, max - bucket.count)
-  return { allowed: bucket.count <= max, remaining, resetMs: bucket.resetAt - now, backend: "memory" }
+function startPurgeTimer(): void {
+  if (purgeTimer) return
+  purgeTimer = setInterval(purgeExpired, PURGE_INTERVAL_MS)
+  if (purgeTimer.unref) purgeTimer.unref()
 }
 
+function purgeExpired(): void {
+  const now = Date.now()
+  for (const [key, entry] of STORE) {
+    if (now >= entry.resetAt) STORE.delete(key)
+  }
+}
+
+interface RateLimitConfig {
+  maxRequests: number
+  windowMs: number
+}
+
+interface RateLimitResult {
+  allowed: boolean
+  remaining: number
+  resetAt: number
+}
+
+const defaults: Record<string, RateLimitConfig> = {
+  '/api/auth/register': { maxRequests: 5, windowMs: 60_000 },
+  '/api/auth/verify-email': { maxRequests: 5, windowMs: 60_000 },
+  '/api/auth/onboarding/resend-verification': { maxRequests: 3, windowMs: 300_000 },
+}
+
+const defaultConfig: RateLimitConfig = { maxRequests: 20, windowMs: 60_000 }
+
+function getConfig(path: string): RateLimitConfig {
+  for (const [prefix, config] of Object.entries(defaults)) {
+    if (path.startsWith(prefix)) return config
+  }
+  return defaultConfig
+}
+
+function buildKey(ip: string, path: string): string {
+  return `${ip}::${path}`
+}
+
+/**
+ * @description Rate limiter en memoria con sliding window.
+ * Lleva conteo de requests por IP y endpoint.
+ * @param {string} ip - Dirección IP del cliente.
+ * @param {string} path - Path del endpoint.
+ * @returns {RateLimitResult}
+ */
+export function checkRateLimit(ip: string, path: string): RateLimitResult {
+  startPurgeTimer()
+
+  const config = getConfig(path)
+  const key = buildKey(ip, path)
+  const now = Date.now()
+
+  let entry = STORE.get(key)
+
+  if (!entry || now >= entry.resetAt) {
+    entry = { count: 1, resetAt: now + config.windowMs }
+    STORE.set(key, entry)
+    return { allowed: true, remaining: config.maxRequests - 1, resetAt: entry.resetAt }
+  }
+
+  entry.count++
+
+  if (entry.count > config.maxRequests) {
+    return { allowed: false, remaining: 0, resetAt: entry.resetAt }
+  }
+
+  return { allowed: true, remaining: config.maxRequests - entry.count, resetAt: entry.resetAt }
+}
+
+export function resetRateLimit(): void {
+  STORE.clear()
+}

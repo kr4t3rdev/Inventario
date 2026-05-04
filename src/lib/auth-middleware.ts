@@ -3,7 +3,7 @@ import { prisma } from './prisma'
 import jwt from 'jsonwebtoken'
 import { getJwtSecret } from './secrets'
 import { checkApiPermission, checkTenantApiPermission, type UserRole } from './permissions'
-import type { TenantRole } from './auth/roles'
+import { normalizeTenantRole, type TenantRole } from './auth/roles'
 
 export interface PlanLimits {
   maxUsuarios: number
@@ -75,7 +75,7 @@ export async function resolveTenantContext(
 
     return {
       tenantId: membership.tenantId,
-      tenantRole: membership.tenantRole as TenantRole,
+      tenantRole: normalizeTenantRole(membership.tenantRole) ?? 'dependiente',
       planLimits,
       licenseExpiresAt: license?.expiracion,
     };

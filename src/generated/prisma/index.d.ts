@@ -36531,6 +36531,9 @@ export namespace Prisma {
     email: string | null
     password: string | null
     role: string | null
+    onboardingType: string | null
+    onboardingStatus: string | null
+    emailVerifiedAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
     activatedAt: Date | null
@@ -36549,6 +36552,9 @@ export namespace Prisma {
     email: string | null
     password: string | null
     role: string | null
+    onboardingType: string | null
+    onboardingStatus: string | null
+    emailVerifiedAt: Date | null
     createdAt: Date | null
     updatedAt: Date | null
     activatedAt: Date | null
@@ -36567,6 +36573,9 @@ export namespace Prisma {
     email: number
     password: number
     role: number
+    onboardingType: number
+    onboardingStatus: number
+    emailVerifiedAt: number
     createdAt: number
     updatedAt: number
     activatedAt: number
@@ -36595,6 +36604,9 @@ export namespace Prisma {
     email?: true
     password?: true
     role?: true
+    onboardingType?: true
+    onboardingStatus?: true
+    emailVerifiedAt?: true
     createdAt?: true
     updatedAt?: true
     activatedAt?: true
@@ -36613,6 +36625,9 @@ export namespace Prisma {
     email?: true
     password?: true
     role?: true
+    onboardingType?: true
+    onboardingStatus?: true
+    emailVerifiedAt?: true
     createdAt?: true
     updatedAt?: true
     activatedAt?: true
@@ -36631,6 +36646,9 @@ export namespace Prisma {
     email?: true
     password?: true
     role?: true
+    onboardingType?: true
+    onboardingStatus?: true
+    emailVerifiedAt?: true
     createdAt?: true
     updatedAt?: true
     activatedAt?: true
@@ -36736,6 +36754,9 @@ export namespace Prisma {
     email: string
     password: string
     role: string
+    onboardingType: string | null
+    onboardingStatus: string
+    emailVerifiedAt: Date | null
     createdAt: Date
     updatedAt: Date
     activatedAt: Date | null
@@ -36773,6 +36794,9 @@ export namespace Prisma {
     email?: boolean
     password?: boolean
     role?: boolean
+    onboardingType?: boolean
+    onboardingStatus?: boolean
+    emailVerifiedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     activatedAt?: boolean
@@ -36808,6 +36832,9 @@ export namespace Prisma {
     email?: boolean
     password?: boolean
     role?: boolean
+    onboardingType?: boolean
+    onboardingStatus?: boolean
+    emailVerifiedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     activatedAt?: boolean
@@ -36826,6 +36853,9 @@ export namespace Prisma {
     email?: boolean
     password?: boolean
     role?: boolean
+    onboardingType?: boolean
+    onboardingStatus?: boolean
+    emailVerifiedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     activatedAt?: boolean
@@ -36844,6 +36874,9 @@ export namespace Prisma {
     email?: boolean
     password?: boolean
     role?: boolean
+    onboardingType?: boolean
+    onboardingStatus?: boolean
+    emailVerifiedAt?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     activatedAt?: boolean
@@ -36856,7 +36889,7 @@ export namespace Prisma {
     loginAttempts?: boolean
   }
 
-  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"userId" | "name" | "email" | "password" | "role" | "createdAt" | "updatedAt" | "activatedAt" | "avatar" | "expiresAt" | "isActive" | "lastFailedLogin" | "lastModifiedBy" | "lockedUntil" | "loginAttempts", ExtArgs["result"]["user"]>
+  export type UserOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"userId" | "name" | "email" | "password" | "role" | "onboardingType" | "onboardingStatus" | "emailVerifiedAt" | "createdAt" | "updatedAt" | "activatedAt" | "avatar" | "expiresAt" | "isActive" | "lastFailedLogin" | "lastModifiedBy" | "lockedUntil" | "loginAttempts", ExtArgs["result"]["user"]>
   export type UserInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     contratosAprobados?: boolean | User$contratosAprobadosArgs<ExtArgs>
     contratosCreados?: boolean | User$contratosCreadosArgs<ExtArgs>
@@ -36905,6 +36938,9 @@ export namespace Prisma {
       email: string
       password: string
       role: string
+      onboardingType: string | null
+      onboardingStatus: string
+      emailVerifiedAt: Date | null
       createdAt: Date
       updatedAt: Date
       activatedAt: Date | null
@@ -37359,6 +37395,9 @@ export namespace Prisma {
     readonly email: FieldRef<"User", 'String'>
     readonly password: FieldRef<"User", 'String'>
     readonly role: FieldRef<"User", 'String'>
+    readonly onboardingType: FieldRef<"User", 'String'>
+    readonly onboardingStatus: FieldRef<"User", 'String'>
+    readonly emailVerifiedAt: FieldRef<"User", 'DateTime'>
     readonly createdAt: FieldRef<"User", 'DateTime'>
     readonly updatedAt: FieldRef<"User", 'DateTime'>
     readonly activatedAt: FieldRef<"User", 'DateTime'>
@@ -129867,6 +129906,9 @@ export namespace Prisma {
     email: 'email',
     password: 'password',
     role: 'role',
+    onboardingType: 'onboardingType',
+    onboardingStatus: 'onboardingStatus',
+    emailVerifiedAt: 'emailVerifiedAt',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt',
     activatedAt: 'activatedAt',
@@ -133581,6 +133623,9 @@ export namespace Prisma {
     email?: StringFilter<"User"> | string
     password?: StringFilter<"User"> | string
     role?: StringFilter<"User"> | string
+    onboardingType?: StringNullableFilter<"User"> | string | null
+    onboardingStatus?: StringFilter<"User"> | string
+    emailVerifiedAt?: DateTimeNullableFilter<"User"> | Date | string | null
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
     activatedAt?: DateTimeNullableFilter<"User"> | Date | string | null
@@ -133615,6 +133660,9 @@ export namespace Prisma {
     email?: SortOrder
     password?: SortOrder
     role?: SortOrder
+    onboardingType?: SortOrderInput | SortOrder
+    onboardingStatus?: SortOrder
+    emailVerifiedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     activatedAt?: SortOrderInput | SortOrder
@@ -133652,6 +133700,9 @@ export namespace Prisma {
     name?: StringFilter<"User"> | string
     password?: StringFilter<"User"> | string
     role?: StringFilter<"User"> | string
+    onboardingType?: StringNullableFilter<"User"> | string | null
+    onboardingStatus?: StringFilter<"User"> | string
+    emailVerifiedAt?: DateTimeNullableFilter<"User"> | Date | string | null
     createdAt?: DateTimeFilter<"User"> | Date | string
     updatedAt?: DateTimeFilter<"User"> | Date | string
     activatedAt?: DateTimeNullableFilter<"User"> | Date | string | null
@@ -133686,6 +133737,9 @@ export namespace Prisma {
     email?: SortOrder
     password?: SortOrder
     role?: SortOrder
+    onboardingType?: SortOrderInput | SortOrder
+    onboardingStatus?: SortOrder
+    emailVerifiedAt?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     activatedAt?: SortOrderInput | SortOrder
@@ -133712,6 +133766,9 @@ export namespace Prisma {
     email?: StringWithAggregatesFilter<"User"> | string
     password?: StringWithAggregatesFilter<"User"> | string
     role?: StringWithAggregatesFilter<"User"> | string
+    onboardingType?: StringNullableWithAggregatesFilter<"User"> | string | null
+    onboardingStatus?: StringWithAggregatesFilter<"User"> | string
+    emailVerifiedAt?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
     createdAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"User"> | Date | string
     activatedAt?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
@@ -143187,6 +143244,9 @@ export namespace Prisma {
     email: string
     password: string
     role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     activatedAt?: Date | string | null
@@ -143221,6 +143281,9 @@ export namespace Prisma {
     email: string
     password: string
     role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     activatedAt?: Date | string | null
@@ -143255,6 +143318,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -143289,6 +143355,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -143323,6 +143392,9 @@ export namespace Prisma {
     email: string
     password: string
     role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     activatedAt?: Date | string | null
@@ -143341,6 +143413,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -143359,6 +143434,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -153383,6 +153461,9 @@ export namespace Prisma {
     email?: SortOrder
     password?: SortOrder
     role?: SortOrder
+    onboardingType?: SortOrder
+    onboardingStatus?: SortOrder
+    emailVerifiedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     activatedAt?: SortOrder
@@ -153405,6 +153486,9 @@ export namespace Prisma {
     email?: SortOrder
     password?: SortOrder
     role?: SortOrder
+    onboardingType?: SortOrder
+    onboardingStatus?: SortOrder
+    emailVerifiedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     activatedAt?: SortOrder
@@ -153423,6 +153507,9 @@ export namespace Prisma {
     email?: SortOrder
     password?: SortOrder
     role?: SortOrder
+    onboardingType?: SortOrder
+    onboardingStatus?: SortOrder
+    emailVerifiedAt?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     activatedAt?: SortOrder
@@ -177382,6 +177469,9 @@ export namespace Prisma {
     email: string
     password: string
     role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     activatedAt?: Date | string | null
@@ -177415,6 +177505,9 @@ export namespace Prisma {
     email: string
     password: string
     role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     activatedAt?: Date | string | null
@@ -177597,6 +177690,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -177630,6 +177726,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -183916,6 +184015,9 @@ export namespace Prisma {
     email: string
     password: string
     role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     activatedAt?: Date | string | null
@@ -183949,6 +184051,9 @@ export namespace Prisma {
     email: string
     password: string
     role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     activatedAt?: Date | string | null
@@ -184350,6 +184455,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -184383,6 +184491,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -185796,6 +185907,9 @@ export namespace Prisma {
     email: string
     password: string
     role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     activatedAt?: Date | string | null
@@ -185829,6 +185943,9 @@ export namespace Prisma {
     email: string
     password: string
     role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     activatedAt?: Date | string | null
@@ -185947,6 +186064,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -185980,6 +186100,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -186058,6 +186181,9 @@ export namespace Prisma {
     email: string
     password: string
     role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     activatedAt?: Date | string | null
@@ -186091,6 +186217,9 @@ export namespace Prisma {
     email: string
     password: string
     role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     activatedAt?: Date | string | null
@@ -186175,6 +186304,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -186208,6 +186340,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -186241,6 +186376,9 @@ export namespace Prisma {
     email: string
     password: string
     role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     activatedAt?: Date | string | null
@@ -186274,6 +186412,9 @@ export namespace Prisma {
     email: string
     password: string
     role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     activatedAt?: Date | string | null
@@ -186323,6 +186464,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -186356,6 +186500,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -186389,6 +186536,9 @@ export namespace Prisma {
     email: string
     password: string
     role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     activatedAt?: Date | string | null
@@ -186422,6 +186572,9 @@ export namespace Prisma {
     email: string
     password: string
     role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     activatedAt?: Date | string | null
@@ -186471,6 +186624,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -186504,6 +186660,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -186537,6 +186696,9 @@ export namespace Prisma {
     email: string
     password: string
     role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     activatedAt?: Date | string | null
@@ -186570,6 +186732,9 @@ export namespace Prisma {
     email: string
     password: string
     role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     activatedAt?: Date | string | null
@@ -186619,6 +186784,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -186652,6 +186820,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -190613,6 +190784,9 @@ export namespace Prisma {
     email: string
     password: string
     role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     activatedAt?: Date | string | null
@@ -190646,6 +190820,9 @@ export namespace Prisma {
     email: string
     password: string
     role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     activatedAt?: Date | string | null
@@ -191027,6 +191204,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -191060,6 +191240,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -198325,6 +198508,9 @@ export namespace Prisma {
     email: string
     password: string
     role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     activatedAt?: Date | string | null
@@ -198358,6 +198544,9 @@ export namespace Prisma {
     email: string
     password: string
     role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     activatedAt?: Date | string | null
@@ -198445,6 +198634,9 @@ export namespace Prisma {
     email: string
     password: string
     role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     activatedAt?: Date | string | null
@@ -198478,6 +198670,9 @@ export namespace Prisma {
     email: string
     password: string
     role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     activatedAt?: Date | string | null
@@ -198921,6 +199116,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -198954,6 +199152,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -199053,6 +199254,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -199086,6 +199290,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -199516,6 +199723,9 @@ export namespace Prisma {
     email: string
     password: string
     role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     activatedAt?: Date | string | null
@@ -199549,6 +199759,9 @@ export namespace Prisma {
     email: string
     password: string
     role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     activatedAt?: Date | string | null
@@ -199685,6 +199898,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -199718,6 +199934,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -199816,6 +200035,9 @@ export namespace Prisma {
     email: string
     password: string
     role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     activatedAt?: Date | string | null
@@ -199849,6 +200071,9 @@ export namespace Prisma {
     email: string
     password: string
     role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     activatedAt?: Date | string | null
@@ -199969,6 +200194,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -200002,6 +200230,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -200035,6 +200266,9 @@ export namespace Prisma {
     email: string
     password: string
     role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     activatedAt?: Date | string | null
@@ -200068,6 +200302,9 @@ export namespace Prisma {
     email: string
     password: string
     role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     activatedAt?: Date | string | null
@@ -200182,6 +200419,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -200215,6 +200455,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -200384,6 +200627,9 @@ export namespace Prisma {
     email: string
     password: string
     role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     activatedAt?: Date | string | null
@@ -200417,6 +200663,9 @@ export namespace Prisma {
     email: string
     password: string
     role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     activatedAt?: Date | string | null
@@ -200562,6 +200811,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -200595,6 +200847,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -200795,6 +201050,9 @@ export namespace Prisma {
     email: string
     password: string
     role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     activatedAt?: Date | string | null
@@ -200828,6 +201086,9 @@ export namespace Prisma {
     email: string
     password: string
     role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     activatedAt?: Date | string | null
@@ -200877,6 +201138,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -200910,6 +201174,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -213358,6 +213625,9 @@ export namespace Prisma {
     email: string
     password: string
     role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     activatedAt?: Date | string | null
@@ -213391,6 +213661,9 @@ export namespace Prisma {
     email: string
     password: string
     role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     activatedAt?: Date | string | null
@@ -213928,6 +214201,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
@@ -213961,6 +214237,9 @@ export namespace Prisma {
     email?: StringFieldUpdateOperationsInput | string
     password?: StringFieldUpdateOperationsInput | string
     role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null

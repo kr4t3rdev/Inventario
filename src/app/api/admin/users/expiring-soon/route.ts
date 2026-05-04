@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
           some: {
             tenantId,
             isActive: true,
-            tenantRole: { in: ['admin', 'director'] },
+            tenantRole: { in: ['admin', 'manager'] },
           },
         },
       },

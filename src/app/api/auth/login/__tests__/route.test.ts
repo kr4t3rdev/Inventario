@@ -82,7 +82,7 @@ describe('auth login route', () => {
       membershipId: 'm1',
       tenantId: 'tenant-1',
       userId: 'u1',
-      tenantRole: 'director',
+      tenantRole: 'manager',
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -113,7 +113,7 @@ describe('auth login route', () => {
     expect(response.status).toBe(200)
     expect(data.token).toBe('access-token')
     expect(data.user.tenantId).toBe('tenant-1')
-    expect(data.user.tenantRole).toBe('director')
+    expect(data.user.tenantRole).toBe('manager')
     expect(prisma.user.update).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { userId: 'u1' },
@@ -122,7 +122,7 @@ describe('auth login route', () => {
     )
     expect(vi.mocked(jwt.sign)).toHaveBeenNthCalledWith(
       1,
-      expect.objectContaining({ tenantId: 'tenant-1', tenantRole: 'director' }),
+      expect.objectContaining({ tenantId: 'tenant-1', tenantRole: 'manager' }),
       'jwt-secret',
       { expiresIn: '30d' }
     )
@@ -151,5 +151,40 @@ describe('auth login route', () => {
     const response = await POST(request)
 
     expect(response.status).toBe(403)
+  })
+
+  it('rechaza login sin tenant activo aunque exista licencia legacy', async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      userId: 'u3',
+      email: 'u3@test.com',
+      password: 'hash',
+      isActive: true,
+      role: 'dependiente',
+      loginAttempts: 0,
+      lockedUntil: null,
+      lastFailedLogin: null,
+    } as never)
+    vi.mocked(bcrypt.compare).mockResolvedValue(true as never)
+    vi.mocked(prisma.licencia.findFirst).mockResolvedValue({
+      licenciaId: 'legacy-license',
+      usuarioId: 'u3',
+      planId: 'plan-1',
+      activa: true,
+      inicio: new Date(),
+      expiracion: new Date(Date.now() + 1000000),
+    } as never)
+
+    const request = new NextRequest('http://localhost/api/auth/login', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ email: 'u3@test.com', password: 'secret123' }),
+    })
+
+    const response = await POST(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(403)
+    expect(data.error).toContain('empresa activa')
+    expect(prisma.licencia.findFirst).not.toHaveBeenCalled()
   })
 })

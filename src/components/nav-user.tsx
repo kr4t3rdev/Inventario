@@ -3,7 +3,7 @@
 import { BellIcon, LogOutIcon, MoreVerticalIcon, MoonIcon, SunIcon, UserCircleIcon } from "lucide-react"
 import { useTheme } from "next-themes"
 import { useAuth } from "@/contexts/auth-context"
-
+import { Shield, LayoutDashboard } from "lucide-react"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar"
-//import { useRouter } from "next/navigation"
+import { usePathname } from "next/navigation"
 import Link from "next/link"
 import { useGetUserQuery } from "@/lib/redux/services/adminApi"
 //import Image from "next/image"
@@ -26,7 +26,7 @@ import { useGetUserQuery } from "@/lib/redux/services/adminApi"
  * @returns {JSX.Element | null} Menú de usuario o null si no hay usuario autenticado.
  */
 export function NavUser() {
-  //const router = useRouter()
+  const pathname = usePathname()
   const { isMobile } = useSidebar()
   const { setTheme, theme } = useTheme()
   const { data: users } = useGetUserQuery()
@@ -109,6 +109,20 @@ export function NavUser() {
                 {theme === "dark" ? <SunIcon /> : <MoonIcon />}
                 {theme === "dark" ? "Modo Claro" : "Modo Oscuro"}
               </DropdownMenuItem>
+              {user?.role === "admin" && (
+                <DropdownMenuItem className="cursor-pointer">
+                  <Link
+                    href={pathname.startsWith("/admin") ? "/busy/dashboard" : "/admin"}
+                    className="flex items-center gap-2 cursor-pointer w-full"
+                  >
+                    {pathname.startsWith("/admin") ? (
+                      <><LayoutDashboard className="h-4 w-4" /> Ir al Negocio</>
+                    ) : (
+                      <><Shield className="h-4 w-4" /> Panel de Control</>
+                    )}
+                  </Link>
+                </DropdownMenuItem>
+              )}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout} className="text-red-600 focus:text-red-600 cursor-pointer">

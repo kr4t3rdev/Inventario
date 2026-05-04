@@ -30,25 +30,25 @@ export function AuthLayout({ children }: AuthLayoutProps) {
   const pageVariants: Variants = {
     initial: {
       opacity: 0,
-      x: prefersReducedMotion ? 0 : -20,
-      scale: prefersReducedMotion ? 1 : 0.95,
+      x: prefersReducedMotion ? 0 : -8,
+      scale: prefersReducedMotion ? 1 : 0.98,
     },
     animate: {
       opacity: 1,
       x: 0,
       scale: 1,
       transition: {
-        duration: prefersReducedMotion ? 0.15 : 0.4,
-        ease: [0.25, 0.46, 0.45, 0.94] as const,
+        duration: prefersReducedMotion ? 0.15 : 0.5,
+        ease: [0.22, 1, 0.36, 1] as const,
       },
     },
     exit: {
       opacity: 0,
-      x: prefersReducedMotion ? 0 : 20,
-      scale: prefersReducedMotion ? 1 : 0.95,
+      x: prefersReducedMotion ? 0 : 8,
+      scale: prefersReducedMotion ? 1 : 0.98,
       transition: {
         duration: prefersReducedMotion ? 0.1 : 0.3,
-        ease: [0.25, 0.46, 0.45, 0.94] as const,
+        ease: [0.22, 1, 0.36, 1] as const,
       },
     },
   }

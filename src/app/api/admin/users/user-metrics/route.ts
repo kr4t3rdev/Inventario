@@ -12,7 +12,12 @@ export async function GET(request: NextRequest) {
     if ('status' in authResultGet) return authResultGet as Response
     const authUser = authResultGet.user
     const tenantId = authUser.tenantId
-    if (!tenantId || !isTenantAdminRole(authUser.tenantRole)) {
+    // Admin global (plataforma) puede ver métricas de todos los tenants
+    if (!tenantId && authUser.role !== 'admin') {
+      return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+    }
+    // Si tiene tenant, debe tener rol administrativo dentro del tenant
+    if (tenantId && !isTenantAdminRole(authUser.tenantRole)) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 

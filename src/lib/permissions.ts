@@ -201,7 +201,7 @@ export function isFrontendRouteAccessible(userRole: UserRole, frontendPath: stri
 
 /**
  * Verifica si un rol de tenant tiene permiso para una operación específica.
- * director y admin tienen acceso total (*).
+ * manager y admin tienen acceso total (*).
  * Los demás roles tienen acceso limitado según TENANT_PERMISSIONS.
  *
  * @param {TenantRole} tenantRole - Rol del usuario dentro del tenant.
@@ -217,8 +217,8 @@ export function hasTenantPermission(
   const permissions = TENANT_PERMISSIONS[tenantRole];
   if (!permissions) return false;
 
-  // director y admin tienen acceso total
-  if (tenantRole === 'director' || tenantRole === 'admin') return true;
+  // manager y admin tienen acceso total
+  if (tenantRole === 'manager' || tenantRole === 'admin') return true;
 
   for (const permission of permissions) {
     if (permission === '*') return true;

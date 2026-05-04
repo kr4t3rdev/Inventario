@@ -5,7 +5,7 @@ import { withAuthGet, withAuthPost, type AuthenticatedUser } from '@/lib/auth-mi
 import { createUserBodySchema } from '@/lib/admin/schemas';
 import { sendNewUserNotification } from '@/lib/email';
 import { platformRoleToTenantRole, isTenantAdminRole } from '@/lib/auth/roles';
-import { requireTenant, validateTenantLimit } from '@/lib/services/tenant-scope';
+import { validateTenantLimit } from '@/lib/services/tenant-scope';
 import { prisma } from '@/lib/prisma';
 
 /**
@@ -14,14 +14,19 @@ import { prisma } from '@/lib/prisma';
  */
 export const GET = withAuthGet(async (_request: NextRequest, _context: unknown, user: AuthenticatedUser) => {
   try {
-    const tenantId = requireTenant(user);
+    // Admin global sin tenant: sin usuarios que listar en este contexto
+    if (!user.tenantId) {
+      return NextResponse.json([]);
+    }
+
+    const tenantId = user.tenantId;
 
     if (!isTenantAdminRole(user.tenantRole)) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
     const memberships = await prisma.tenantMembership.findMany({
-      where: { tenantId, isActive: true },
+      where: { tenantId },
       include: {
         user: {
           select: {
@@ -61,7 +66,11 @@ export const GET = withAuthGet(async (_request: NextRequest, _context: unknown, 
  */
 export const POST = withAuthPost(async (request: NextRequest, _context: unknown, user: AuthenticatedUser) => {
   try {
-    const tenantId = requireTenant(user);
+    if (!user.tenantId) {
+      return NextResponse.json({ error: 'Se requiere una membresía de empresa activa para crear usuarios' }, { status: 403 });
+    }
+
+    const tenantId = user.tenantId;
 
     if (!isTenantAdminRole(user.tenantRole)) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
@@ -81,7 +90,7 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
 
     // 1. Validar límite de usuarios del plan
     const currentCount = await prisma.tenantMembership.count({
-      where: { tenantId, isActive: true },
+      where: { tenantId },
     });
     await validateTenantLimit(tenantId, 'maxUsuarios', currentCount);
 

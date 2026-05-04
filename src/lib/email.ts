@@ -7,7 +7,7 @@ const transporter = nodemailer.createTransport({
   secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
   auth: {
     user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
+    pass: process.env.SMTP_PASSWORD,
   },
 })
 
@@ -26,13 +26,9 @@ function getErrorKey(error: Error): string {
 }
 
 export async function sendEmail(to: string, subject: string, html: string) {
-  if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-    console.warn('SMTP credentials not found (SMTP_USER/SMTP_PASS). Email not sent.')
+  if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
+    console.warn('SMTP credentials not found (SMTP_USER/SMTP_PASSWORD). Email not sent.')
     return null
-  }
-
-  if (!process.env.ADMIN_EMAIL) {
-    console.warn('ADMIN_EMAIL not configured. Admin notifications disabled.')
   }
 
   try {
@@ -49,6 +45,37 @@ export async function sendEmail(to: string, subject: string, html: string) {
     console.error('Error sending email:', error)
     return null
   }
+}
+
+/**
+ * @description Envía un enlace de verificación de email con acceso al flujo de onboarding.
+ * @param {string} to - Correo del usuario.
+ * @param {string} verificationUrl - URL completa con el token temporal.
+ * @param {string} userName - Nombre del usuario.
+ * @returns {Promise<void>}
+ */
+export async function sendEmailVerificationLink(
+  to: string,
+  verificationUrl: string,
+  userName: string,
+): Promise<void> {
+  const appName = process.env.NEXT_PUBLIC_APP_NAME || 'Sistema de Inventario'
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; padding: 24px; color: #0f172a;">
+      <h2 style="margin: 0 0 16px; color: #4f46e5;">Verificá tu correo</h2>
+      <p>Hola ${userName}, gracias por registrarte en <strong>${appName}</strong>.</p>
+      <p>Hacé click en el botón de abajo para verificar tu correo y continuar con el onboarding.</p>
+      <p style="margin: 28px 0;">
+        <a href="${verificationUrl}" style="display:inline-block;background:#4f46e5;color:#fff;text-decoration:none;padding:12px 18px;border-radius:8px;">
+          Verificar correo y continuar
+        </a>
+      </p>
+      <p style="font-size: 14px; color: #64748b;">Si no fuiste vos, ignorá este mensaje.</p>
+    </div>
+  `
+
+  await sendEmail(to, `Verificá tu correo en ${appName}`, html)
 }
 
 export async function sendNewUserNotification(

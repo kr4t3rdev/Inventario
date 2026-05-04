@@ -70,7 +70,7 @@ The system MUST separar permisos de plataforma de permisos por tenant.
 
 #### Scenario: Director administra usuarios de su tenant
 
-- GIVEN un usuario con rol tenant `director`
+- GIVEN un usuario con rol tenant `manager`
 - WHEN accede a administración de usuarios de su empresa
 - THEN el sistema MUST permitir listar, crear, activar, desactivar y cambiar roles solo dentro de su tenant
 
@@ -124,7 +124,7 @@ Plans and licenses MUST apply at tenant level, not user level.
 #### Scenario: Alta de usuario respetando límite del plan
 
 - GIVEN un tenant con plan activo y cupo máximo de usuarios alcanzado
-- WHEN un director o admin intenta crear un nuevo usuario
+- WHEN un manager o admin intenta crear un nuevo usuario
 - THEN el sistema MUST rechazar la alta
 - AND MUST informar el límite consumido y permitido
 

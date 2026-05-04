@@ -102,7 +102,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const data = await response.json()
         sessionStorage.setItem("token", data.token)
         setUser(data.user)
-        router.push("busy/dashboard")
+        if (data.user?.role === "admin") {
+          router.push("/admin")
+        } else {
+          router.push("busy/dashboard")
+        }
         return true
       }
       return false
@@ -118,6 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "x-request-id": typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : '',
         },
         body: JSON.stringify({ name, email, password }),
       })

@@ -49,6 +49,69 @@ type UpdateUserPayload = {
     daysToExpire?: number;
 };
 
+export interface AdminTenant {
+    tenantId: string;
+    nombre: string;
+    slug: string | null;
+    createdAt: string;
+    updatedAt: string;
+    totalUsers: number;
+    activeUsers: number;
+    totalProductos: number;
+    totalAlmacenes: number;
+    totalVentas: number;
+    plan: string;
+    planId: string | null;
+    licenseActive: boolean;
+    licenseExpiresAt: string | null;
+    consumption: {
+        usuarios: number;
+        almacenes: number;
+        productos: number;
+    };
+}
+
+export interface AdminFinance {
+    tenantCount: number;
+    revenue: {
+        totalVentas: number;
+        totalVentasMonto: number;
+        totalVentasServicios: number;
+        totalServiciosMonto: number;
+        totalIngresos: number;
+    };
+    gastos: {
+        totalGastos: number;
+        totalMonto: number;
+    };
+    cuentasPorCobrar: {
+        total: number;
+        saldoPendiente: number;
+    };
+    cuentasPorPagar: {
+        total: number;
+        saldoPendiente: number;
+    };
+}
+
+export interface AdminSystemHealth {
+    users: {
+        total: number;
+        byRole: { role: string; count: number }[];
+    };
+    tenants: {
+        total: number;
+    };
+    sessions: {
+        active: number;
+    };
+    licenses: {
+        total: number;
+        active: number;
+        expiringSoon: number;
+    };
+}
+
 export const adminApi = apiSlice.injectEndpoints({
     endpoints: (builder) => ({
         getUser: builder.query<Usuario[], void>({
@@ -198,6 +261,22 @@ export const adminApi = apiSlice.injectEndpoints({
             }),
             providesTags: ['UserMetrics'],
         }),
+
+        // ── Global Admin Endpoints ──
+        getAdminTenants: builder.query<AdminTenant[], void>({
+            query: () => '/admin/tenants',
+            providesTags: ['AdminTenants'],
+        }),
+
+        getAdminFinance: builder.query<AdminFinance, void>({
+            query: () => '/admin/finance',
+            providesTags: ['AdminFinance'],
+        }),
+
+        getAdminSystem: builder.query<AdminSystemHealth, void>({
+            query: () => '/admin/system',
+            providesTags: ['AdminSystem'],
+        }),
     })
 })
 
@@ -216,4 +295,7 @@ export const {
     useSendExpiryNotificationsMutation,
     useGetUserMetricsQuery,
     useGetTenantLicenseQuery,
+    useGetAdminTenantsQuery,
+    useGetAdminFinanceQuery,
+    useGetAdminSystemQuery,
 } = adminApi

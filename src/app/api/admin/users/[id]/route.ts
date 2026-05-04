@@ -44,7 +44,7 @@ export async function GET(
 
     // Verificar que el usuario pertenece al tenant
     const membership = await prisma.tenantMembership.findFirst({
-      where: { userId: id, tenantId, isActive: true },
+      where: { userId: id, tenantId },
     });
     if (!membership) {
       return NextResponse.json({ error: 'Usuario no encontrado en esta empresa' }, { status: 404 });
@@ -111,7 +111,7 @@ export async function PUT(
 
     const { id } = paramParse.data;
     const membership = await prisma.tenantMembership.findFirst({
-      where: { userId: id, tenantId, isActive: true },
+      where: { userId: id, tenantId },
     });
 
     if (!membership) {
@@ -212,7 +212,7 @@ export async function DELETE(
     const { id } = paramParse.data;
 
     const membership = await prisma.tenantMembership.findFirst({
-      where: { userId: id, tenantId, isActive: true },
+      where: { userId: id, tenantId },
     });
 
     if (!membership) {

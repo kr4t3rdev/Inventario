@@ -1,0 +1,460 @@
+'use client'
+
+import {
+  Building2,
+  Users,
+  Activity,
+  Wallet,
+  AlertTriangle,
+  Shield,
+  Sparkles,
+  RefreshCw,
+  ArrowUpRight,
+  ArrowDownRight,
+  Clock,
+  UserCheck,
+  Globe,
+  Loader2,
+} from "lucide-react"
+import { motion, type Variants } from "framer-motion"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { PageTransition, StaggerContainer, StaggerItem, AnimatedCard } from "@/components/ui/animations"
+import { useGetAdminTenantsQuery, useGetAdminFinanceQuery, useGetAdminSystemQuery } from "@/lib/redux/services/adminApi"
+
+interface SystemAlert {
+  id: string
+  severity: "critical" | "warning" | "info"
+  message: string
+  time: string
+}
+
+const headerIconVariants: Variants = {
+  initial: { scale: 1, rotate: 0 },
+  hover: {
+    scale: 1.05, rotate: 5,
+    transition: { type: "spring" as const, stiffness: 400, damping: 10 },
+  },
+}
+
+const sparklesVariants: Variants = {
+  animate: {
+    rotate: 360, scale: [1, 1.2, 1],
+    transition: {
+      rotate: { duration: 18, repeat: Infinity, ease: "linear" },
+      scale: { duration: 2, repeat: Infinity, ease: "easeInOut" },
+    },
+  },
+}
+
+const titleVariants: Variants = {
+  hidden: { opacity: 0, y: -20 },
+  visible: {
+    opacity: 1, y: 0,
+    transition: { type: "spring" as const, stiffness: 100, damping: 15 },
+  },
+}
+
+const severityConfig = {
+  critical: { bg: "bg-rose-500/10 text-rose-600 dark:text-rose-400", dot: "bg-rose-500" },
+  warning: { bg: "bg-amber-500/10 text-amber-600 dark:text-amber-400", dot: "bg-amber-500" },
+  info: { bg: "bg-blue-500/10 text-blue-600 dark:text-blue-400", dot: "bg-blue-500" },
+}
+
+/**
+ * @description Admin control panel dashboard with real global system data.
+ * @returns {JSX.Element} Admin overview page with system-wide metrics.
+ */
+export default function AdminDashboardPage(): React.JSX.Element {
+  const { data: tenants, isLoading: tenantsLoading, refetch: refetchTenants } = useGetAdminTenantsQuery()
+  const { data: finance, isLoading: financeLoading, refetch: refetchFinance } = useGetAdminFinanceQuery()
+  const { data: system, isLoading: systemLoading, refetch: refetchSystem } = useGetAdminSystemQuery()
+
+  const isLoading = tenantsLoading || financeLoading || systemLoading
+  const safeTenants = tenants ?? []
+  const safeFinance = finance
+  const safeSystem = system
+
+  const kpiCards = [
+    {
+      title: "Total Tenants",
+      value: safeSystem?.tenants.total ?? safeTenants.length,
+      loading: isLoading,
+      trend: null,
+      description: "Empresas activas en la plataforma",
+      icon: Building2,
+      valueClassName: "text-violet-600 dark:text-violet-400",
+      iconBg: "from-violet-600/15 to-purple-600/15",
+    },
+    {
+      title: "Usuarios del Sistema",
+      value: safeSystem?.users.total ?? 0,
+      loading: isLoading,
+      trend: null,
+      description: "Usuarios registrados",
+      icon: Users,
+      valueClassName: "text-emerald-600 dark:text-emerald-400",
+      iconBg: "from-emerald-600/15 to-teal-600/15",
+    },
+    {
+      title: "Sesiones Activas",
+      value: safeSystem?.sessions.active ?? 0,
+      loading: isLoading,
+      trend: null,
+      description: "Usuarios con sesión abierta ahora",
+      icon: Activity,
+      valueClassName: "text-sky-600 dark:text-sky-400",
+      iconBg: "from-sky-600/15 to-blue-600/15",
+    },
+    {
+      title: "Ingresos Totales",
+      value: safeFinance ? `$${Number(safeFinance.revenue.totalIngresos).toLocaleString()}` : "-",
+      loading: financeLoading,
+      trend: null,
+      description: "Ventas + servicios consolidados",
+      icon: Wallet,
+      valueClassName: "text-emerald-600 dark:text-emerald-400",
+      iconBg: "from-emerald-600/15 to-green-600/15",
+    },
+    {
+      title: "Licencias por Vencer",
+      value: safeSystem?.licenses.expiringSoon ?? 0,
+      loading: systemLoading,
+      trend: null,
+      description: "Próximos 30 días",
+      icon: Clock,
+      valueClassName: "text-amber-600 dark:text-amber-400",
+      iconBg: "from-amber-600/15 to-orange-600/15",
+    },
+    {
+      title: "Licencias Activas",
+      value: safeSystem?.licenses.active ?? 0,
+      loading: systemLoading,
+      trend: null,
+      description: `de ${safeSystem?.licenses.total ?? 0} totales`,
+      icon: Shield,
+      valueClassName: "text-violet-600 dark:text-violet-400",
+      iconBg: "from-violet-600/15 to-purple-600/15",
+    },
+  ]
+
+  const alerts = ((): SystemAlert[] => {
+    const items: SystemAlert[] = []
+    if (system && system.licenses.expiringSoon > 0) {
+      items.push({
+        id: "expiring",
+        severity: "warning",
+        message: `${system.licenses.expiringSoon} licencias están por vencer en los próximos 30 días`,
+        time: "Ahora",
+      })
+    }
+    return items
+  })()
+
+  const handleRefresh = async () => {
+    await Promise.all([refetchTenants(), refetchFinance(), refetchSystem()])
+  }
+
+  return (
+    <PageTransition className="relative min-h-screen w-full">
+      <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
+        <motion.div
+          className="absolute top-0 left-1/4 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl dark:bg-violet-500/5"
+          animate={{ scale: [1, 1.1, 1], x: [0, 20, 0], y: [0, -20, 0] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="absolute top-0 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl dark:bg-purple-500/5"
+          animate={{ scale: [1, 1.15, 1], x: [0, -30, 0], y: [0, 30, 0] }}
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+        />
+      </div>
+
+      <StaggerContainer className="flex flex-1 flex-col">
+        <StaggerItem className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
+          {/* Header */}
+          <motion.div
+            className="flex items-center gap-3 px-4 lg:px-6"
+            variants={titleVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            <motion.div
+              className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-violet-600 to-purple-600 shadow-lg"
+              variants={headerIconVariants}
+              initial="initial"
+              whileHover="hover"
+            >
+              <Shield className="h-6 w-6 text-white" />
+              <motion.div variants={sparklesVariants} animate="animate" className="absolute -right-1 -top-1">
+                <Sparkles className="h-3.5 w-3.5 text-yellow-400" />
+              </motion.div>
+              <motion.div
+                className="absolute inset-0 rounded-xl bg-linear-to-tr from-transparent via-white/20 to-transparent"
+                animate={{ rotate: [0, 360] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                style={{ mixBlendMode: "overlay" }}
+              />
+            </motion.div>
+            <div>
+              <motion.h1
+                className="text-2xl font-bold bg-linear-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2, duration: 0.5 }}
+              >
+                Panel de Control
+              </motion.h1>
+              <motion.p
+                className="text-muted-foreground text-sm"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.3, duration: 0.5 }}
+              >
+                Visión general del sistema
+              </motion.p>
+            </div>
+
+            <motion.div
+              className="ml-auto flex flex-col gap-2 sm:flex-row"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.4, type: "spring", stiffness: 200 }}
+            >
+              <Button
+                onClick={handleRefresh}
+                variant="outline"
+                disabled={isLoading}
+                className="border-slate-200/70 bg-white/70 backdrop-blur-sm transition-all duration-200 hover:shadow-sm dark:border-slate-700/60 dark:bg-slate-900/60"
+              >
+                <RefreshCw className={`mr-2 h-4 w-4 ${isLoading ? "animate-spin" : ""}`} />
+                {isLoading ? "Cargando..." : "Actualizar"}
+              </Button>
+            </motion.div>
+          </motion.div>
+
+          {/* KPI Cards */}
+          <motion.div
+            className="grid grid-cols-1 gap-4 px-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 lg:px-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4, duration: 0.5 }}
+          >
+            {kpiCards.map((card) => {
+              const Icon = card.icon
+              return (
+                <AnimatedCard key={card.title} className="rounded-xl border bg-card/80 backdrop-blur-sm shadow-sm">
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 mt-4">
+                    <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
+                    <div className={`rounded-md bg-linear-to-br ${card.iconBg} p-2`}>
+                      <Icon className="h-4 w-4 text-violet-600 dark:text-violet-400" />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="mb-4">
+                    {card.loading ? (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">Cargando...</span>
+                      </div>
+                    ) : (
+                      <>
+                        <div className={`text-2xl font-bold ${card.valueClassName}`}>
+                          {typeof card.value === "number" ? card.value.toLocaleString() : card.value}
+                        </div>
+                        <p className="mt-1 text-xs text-muted-foreground">{card.description}</p>
+                      </>
+                    )}
+                  </CardContent>
+                </AnimatedCard>
+              )
+            })}
+          </motion.div>
+
+          {/* Two-column layout: Tenant Distribution + Alerts */}
+          <div className="grid grid-cols-1 gap-4 px-4 lg:grid-cols-2 lg:px-6">
+            {/* Users by Role */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5, duration: 0.5 }}
+            >
+              <Card className="rounded-xl border bg-card/80 backdrop-blur-sm shadow-sm h-full">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <UserCheck className="h-4 w-4 text-violet-600" />
+                    Usuarios por Rol
+                  </CardTitle>
+                  <CardDescription>Distribución global de roles</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {systemLoading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {safeSystem?.users.byRole.map((r) => {
+                        const pct = safeSystem.users.total > 0
+                          ? Math.round((r.count / safeSystem.users.total) * 100)
+                          : 0
+                        const colors: Record<string, string> = {
+                          admin: "bg-violet-500",
+                          manager: "bg-blue-500",
+                          dependiente: "bg-emerald-500",
+                          regularUser: "bg-slate-500",
+                          economico: "bg-amber-500",
+                        }
+                        return (
+                          <div key={r.role} className="flex items-center justify-between">
+                            <span className="text-sm capitalize">{r.role}</span>
+                            <div className="flex items-center gap-2">
+                              <div className="h-2 w-32 overflow-hidden rounded-full bg-muted">
+                                <div
+                                  className={`h-full rounded-full ${colors[r.role] ?? "bg-slate-500"}`}
+                                  style={{ width: `${pct}%` }}
+                                />
+                              </div>
+                              <span className="text-xs font-medium w-12 text-right">{r.count}</span>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
+
+            {/* Alerts */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.55, duration: 0.5 }}
+            >
+              <Card className="rounded-xl border bg-card/80 backdrop-blur-sm shadow-sm h-full">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <AlertTriangle className="h-4 w-4 text-amber-600" />
+                    Alertas del Sistema
+                  </CardTitle>
+                  <CardDescription>Problemas que requieren atención</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {alerts.length === 0 ? (
+                    <div className="flex flex-col items-center gap-2 py-8 text-center">
+                      <Shield className="h-8 w-8 text-emerald-500" />
+                      <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                        Sin alertas activas
+                      </p>
+                      <p className="text-xs text-muted-foreground">El sistema funciona con normalidad</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {alerts.map((alert) => {
+                        const config = severityConfig[alert.severity]
+                        return (
+                          <div key={alert.id} className={`flex items-start gap-3 rounded-lg border p-3 ${config.bg}`}>
+                            <div className={`mt-1 h-2 w-2 shrink-0 rounded-full ${config.dot}`} />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium">{alert.message}</p>
+                              <p className="text-xs text-muted-foreground">{alert.time}</p>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </motion.div>
+          </div>
+
+          {/* Tenant consumption stats */}
+          <motion.div
+            className="grid grid-cols-1 gap-4 px-4 lg:grid-cols-2 lg:px-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6, duration: 0.5 }}
+          >
+            <AnimatedCard className="rounded-xl border bg-card/80 backdrop-blur-sm shadow-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Globe className="h-4 w-4 text-violet-600" />
+                  Distribución de Tenants por Plan
+                </CardTitle>
+                <CardDescription>Planes activos por empresa</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {tenantsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {safeTenants.map((t) => (
+                      <div key={t.tenantId} className="flex items-center justify-between rounded-lg border p-2.5 text-sm">
+                        <span className="font-medium truncate flex-1">{t.nombre}</span>
+                        <span className="text-xs text-muted-foreground mx-2">{t.totalUsers} users</span>
+                        <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${t.licenseActive ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"}`}>
+                          {t.plan || "Sin plan"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </AnimatedCard>
+
+            <AnimatedCard className="rounded-xl border bg-card/80 backdrop-blur-sm shadow-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <Activity className="h-4 w-4 text-violet-600" />
+                  Resumen Financiero
+                </CardTitle>
+                <CardDescription>Métricas consolidadas de la plataforma</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {financeLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : safeFinance ? (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-lg border bg-emerald-50/50 dark:bg-emerald-950/10 p-3">
+                      <p className="text-xs text-muted-foreground">Ingresos Totales</p>
+                      <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
+                        ${Number(safeFinance.revenue.totalIngresos).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border bg-amber-50/50 dark:bg-amber-950/10 p-3">
+                      <p className="text-xs text-muted-foreground">Gastos</p>
+                      <p className="text-lg font-bold text-amber-600 dark:text-amber-400">
+                        ${Number(safeFinance.gastos.totalMonto).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border bg-rose-50/50 dark:bg-rose-950/10 p-3">
+                      <p className="text-xs text-muted-foreground">Cuentas por Cobrar</p>
+                      <p className="text-lg font-bold text-rose-600 dark:text-rose-400">
+                        ${Number(safeFinance.cuentasPorCobrar.saldoPendiente).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border bg-blue-50/50 dark:bg-blue-950/10 p-3">
+                      <p className="text-xs text-muted-foreground">Cuentas por Pagar</p>
+                      <p className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                        ${Number(safeFinance.cuentasPorPagar.saldoPendiente).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
+                    No hay datos financieros disponibles
+                  </div>
+                )}
+              </CardContent>
+            </AnimatedCard>
+          </motion.div>
+        </StaggerItem>
+      </StaggerContainer>
+    </PageTransition>
+  )
+}

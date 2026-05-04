@@ -312,15 +312,10 @@ export function AppSidebar2({
         ],
       },
       {
-        title: "Administración",
-        items: [
-          {
-            title: "Administración",
-            url: "/busy/admin/usuarios",
-            icon: Shield,
-          },
-          {
-            title: "Mi Empresa",
+          title: "Configuración",
+          items: [
+            {
+              title: "Mi Empresa",
             url: "/busy/configuracion/mi-empresa",
             icon: Building2,
           },
@@ -637,8 +632,17 @@ export function AppSidebar2({
           transition={{ duration: shouldReduceMotion ? 0 : 0.22, ease: "easeOut" as const }}
         >
           <SidebarSeparator className="mx-0.5 mt-1" />
-          <SidebarFooter className="p-3 pt-2 group-data-[collapsible=icon]:p-1">
-             <NavUser />
+          <SidebarFooter className="flex flex-col gap-2 p-3 pt-2 group-data-[collapsible=icon]:p-1">
+            {user?.role === "admin" && (
+              <Link
+                href="/admin"
+                className="flex cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-xs font-medium text-sidebar-foreground/70 transition-colors duration-200 hover:bg-sidebar-accent hover:text-sidebar-foreground group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:p-2"
+              >
+                <Shield className="h-4 w-4" />
+                <span className="group-data-[collapsible=icon]:hidden">Panel de Control</span>
+              </Link>
+            )}
+            <NavUser />
           </SidebarFooter>
         </motion.div>
         <SidebarRail className="after:opacity-70" />

@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { EyeIcon, EyeOffIcon, LogInIcon, AlertCircleIcon, Loader2Icon, SparklesIcon } from 'lucide-react'
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { AuthLayout } from '@/components/auth/auth-layout'
 
 interface LoginFormBodyProps {
@@ -44,47 +44,52 @@ function LoginFormBody({ onSubmit, loading, error }: LoginFormBodyProps): React.
         className="px-8 pb-8 space-y-5"
       >
         {/* Error Alert */}
-        {error && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Alert variant="destructive" className="border-red-300 bg-red-50/80 dark:bg-red-900/20">
-              <AlertCircleIcon className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          </motion.div>
-        )}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              key="error"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Alert variant="destructive" className="border-red-300 bg-red-50/80 dark:bg-red-900/20">
+                <AlertCircleIcon className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Email Field */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6, duration: 0.5, ease: 'easeOut' as const }}
+          transition={{ delay: 0.6, duration: 0.4, ease: [0.22, 1, 0.36, 1] as const }}
           className="space-y-2"
         >
           <Label htmlFor="email" className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Correo electrónico
           </Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="tu@email.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            disabled={loading}
-            className="h-12 bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
-          />
+          <motion.div whileFocus={{ scale: 1.02 }}>
+            <Input
+              id="email"
+              type="email"
+              placeholder="tu@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              disabled={loading}
+              className="h-12 bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all duration-200"
+            />
+          </motion.div>
         </motion.div>
 
         {/* Password Field */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.7, duration: 0.5, ease: 'easeOut' as const }}
+          transition={{ delay: 0.7, duration: 0.4, ease: [0.22, 1, 0.36, 1] as const }}
           className="space-y-2"
         >
           <div className="flex items-center justify-between">
@@ -92,7 +97,7 @@ function LoginFormBody({ onSubmit, loading, error }: LoginFormBodyProps): React.
               Contraseña
             </Label>
           </div>
-          <div className="relative">
+          <motion.div whileFocus={{ scale: 1.02 }} className="relative">
             <Input
               id="password"
               type={showPassword ? 'text' : 'password'}
@@ -113,14 +118,14 @@ function LoginFormBody({ onSubmit, loading, error }: LoginFormBodyProps): React.
             >
               {showPassword ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
             </motion.button>
-          </div>
+          </motion.div>
         </motion.div>
 
         {/* Submit Button */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8, duration: 0.5, ease: 'easeOut' as const }}
+          transition={{ delay: 0.8, duration: 0.4, ease: [0.22, 1, 0.36, 1] as const }}
         >
           <motion.div
             whileHover={{ scale: loading ? 1 : 1.02 }}
@@ -148,9 +153,9 @@ function LoginFormBody({ onSubmit, loading, error }: LoginFormBodyProps): React.
 
         {/* Divider */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.9, duration: 0.5, ease: 'easeOut' as const }}
+          transition={{ delay: 0.9, duration: 0.4, ease: [0.22, 1, 0.36, 1] as const }}
           className="relative py-2"
         >
           <div className="absolute inset-0 flex items-center">
@@ -165,9 +170,9 @@ function LoginFormBody({ onSubmit, loading, error }: LoginFormBodyProps): React.
 
         {/* Register Link */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 1.0, duration: 0.5, ease: 'easeOut' as const }}
+          transition={{ delay: 1.0, duration: 0.4, ease: [0.22, 1, 0.36, 1] as const }}
           className="text-center"
         >
           <p className="text-sm text-slate-500 dark:text-slate-400">
@@ -212,9 +217,9 @@ export default function LoginPage(): React.ReactElement {
     <AuthLayout>
       {/* Glassmorphism Card */}
       <motion.div
-        initial={{ opacity: 0, y: 30 }}
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: 'easeOut' as const }}
+        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] as const }}
         className="relative"
       >
         {/* Card Glow Effect */}
@@ -231,12 +236,12 @@ export default function LoginPage(): React.ReactElement {
           >
             {/* Logo Icon */}
             <motion.div 
-              initial={{ scale: 0, rotate: -180 }}
+              initial={{ scale: 0, rotate: -45 }}
               animate={{ scale: 1, rotate: 0 }}
               transition={{ 
                 type: 'spring',
-                stiffness: 200,
-                damping: 15,
+                stiffness: 170,
+                damping: 20,
                 delay: 0.3
               }}
               className="relative mx-auto mb-6"
@@ -249,7 +254,7 @@ export default function LoginPage(): React.ReactElement {
               <motion.div
                 animate={{ 
                   rotate: 360,
-                  scale: [1, 1.2, 1]
+                  scale: [1, 1.1, 1]
                 }}
                 transition={{ 
                   rotate: { duration: 20, repeat: Infinity, ease: 'linear' },
@@ -262,17 +267,17 @@ export default function LoginPage(): React.ReactElement {
             </motion.div>
 
             <motion.h1 
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3, duration: 0.5, ease: 'easeOut' as const }}
+              transition={{ delay: 0.3, duration: 0.4, ease: [0.22, 1, 0.36, 1] as const }}
               className="text-3xl font-bold bg-linear-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent mb-2"
             >
               Bienvenido de nuevo
             </motion.h1>
             <motion.p 
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4, duration: 0.5, ease: 'easeOut' as const }}
+              transition={{ delay: 0.4, duration: 0.4, ease: [0.22, 1, 0.36, 1] as const }}
               className="text-slate-500 dark:text-slate-400"
             >
               Ingresa tus credenciales para continuar
