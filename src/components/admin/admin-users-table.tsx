@@ -16,6 +16,10 @@ import {
   Trash2,
   User,
   XCircle,
+  CheckSquare,
+  Square,
+  Unlock,
+  Lock,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -37,7 +41,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { useDeleteUserMutation, useGetAdminTenantsQuery } from '@/lib/redux/services/adminApi';
+import { useDeleteUserMutation, useGetAdminTenantsQuery, useLockUserMutation, useUnlockUserMutation } from '@/lib/redux/services/adminApi';
 import { getAuthToken } from '@/lib/token';
 import { getTenantRoleLabel } from '@/lib/auth/roles';
 
@@ -87,10 +91,85 @@ export function AdminUsersTable({
   const [sortBy, setSortBy] = useState<SortableColumn>('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [currentPage, setCurrentPage] = useState(1);
+  const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set());
   const [deleteUser] = useDeleteUserMutation();
+  const [lockUser] = useLockUserMutation();
+  const [unlockUser] = useUnlockUserMutation();
   const { data: tenants } = useGetAdminTenantsQuery();
 
   const perPage = 25;
+
+  const isAllSelected = paginatedUsers.length > 0 && paginatedUsers.every((u) => selectedUserIds.has(u.userId));
+  const isSomeSelected = paginatedUsers.some((u) => selectedUserIds.has(u.userId));
+
+  const toggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedUserIds((prev) => {
+        const next = new Set(prev);
+        paginatedUsers.forEach((u) => next.delete(u.userId));
+        return next;
+      });
+    } else {
+      setSelectedUserIds((prev) => {
+        const next = new Set(prev);
+        paginatedUsers.forEach((u) => next.add(u.userId));
+        return next;
+      });
+    }
+  };
+
+  const toggleSelectUser = (userId: string) => {
+    setSelectedUserIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(userId)) {
+        next.delete(userId);
+      } else {
+        next.add(userId);
+      }
+      return next;
+    });
+  };
+
+  const clearSelection = () => setSelectedUserIds(new Set());
+
+  const handleBulkAction = async (action: 'activate' | 'deactivate' | 'delete' | 'lock' | 'unlock') => {
+    const count = selectedUserIds.size;
+    if (count === 0) return;
+
+    const confirmMsg = {
+      activate: `¿Activar ${count} usuario${count > 1 ? 's' : ''}?`,
+      deactivate: `¿Desactivar ${count} usuario${count > 1 ? 's' : ''}?`,
+      delete: `¿Eliminar ${count} usuario${count > 1 ? 's' : ''}? Esta acción no se puede deshacer.`,
+      lock: `¿Bloquear ${count} usuario${count > 1 ? 's' : ''}?`,
+      unlock: `¿Desbloquear ${count} usuario${count > 1 ? 's' : ''}?`,
+    };
+
+    if (!window.confirm(confirmMsg[action])) return;
+
+    try {
+      let successCount = 0;
+      for (const userId of selectedUserIds) {
+        try {
+          if (action === 'delete') {
+            await deleteUser(userId).unwrap();
+          } else if (action === 'lock') {
+            await lockUser({ userId, reason: 'Bloqueo masivo desde admin' }).unwrap();
+          } else if (action === 'unlock') {
+            await unlockUser({ userId }).unwrap();
+          }
+          successCount++;
+        } catch (err) {
+          console.error(`Error en ${action} para usuario ${userId}:`, err);
+        }
+      }
+      toast.success(`${action === 'delete' ? 'Eliminados' : action === 'lock' ? 'Bloqueados' : action === 'unlock' ? 'Desbloqueados' : action === 'activate' ? 'Activados' : 'Desactivados'} ${successCount}/${count} usuario${count > 1 ? 's' : ''}`);
+      clearSelection();
+      await onRefresh();
+    } catch (error) {
+      console.error('Error en acción masiva:', error);
+      toast.error(`Error al ${action === 'delete' ? 'eliminar' : 'procesar'} usuarios`);
+    }
+  };
 
   const isUserWithTenant = (u: Usuario | UsuarioWithTenant): u is UsuarioWithTenant =>
     'tenantName' in u;
@@ -301,6 +380,55 @@ export function AdminUsersTable({
 
   return (
     <div className="space-y-4">
+      {selectedUserIds.size > 0 && (
+        <motion.div
+          initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: shouldReduceMotion ? 0 : 0.18 }}
+          className="rounded-xl border border-primary/30 bg-primary/5 p-3 shadow-sm"
+        >
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div className="flex items-center gap-2">
+              <CheckSquare className="h-5 w-5 text-primary" />
+              <p className="text-sm font-medium text-primary">
+                {selectedUserIds.size} usuario{selectedUserIds.size > 1 ? 's' : ''} seleccionado{selectedUserIds.size > 1 ? 's' : ''}
+              </p>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Button variant="outline" size="sm" onClick={() => handleBulkAction('activate')}
+                className="h-9 border-emerald-500/40 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20">
+                <CheckCircle className="mr-1 h-3 w-3" />
+                Activar
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => handleBulkAction('deactivate')}
+                className="h-9 border-amber-500/40 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20">
+                <XCircle className="mr-1 h-3 w-3" />
+                Desactivar
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => handleBulkAction('lock')}
+                className="h-9 border-violet-500/40 bg-violet-500/10 text-violet-700 hover:bg-violet-500/20">
+                <Lock className="mr-1 h-3 w-3" />
+                Bloquear
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => handleBulkAction('unlock')}
+                className="h-9 border-sky-500/40 bg-sky-500/10 text-sky-700 hover:bg-sky-500/20">
+                <Unlock className="mr-1 h-3 w-3" />
+                Desbloquear
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => handleBulkAction('delete')}
+                className="h-9 border-rose-500/40 bg-rose-500/10 text-rose-700 hover:bg-rose-500/20">
+                <Trash2 className="mr-1 h-3 w-3" />
+                Eliminar
+              </Button>
+              <Button variant="ghost" size="sm" onClick={clearSelection}
+                className="h-9 text-muted-foreground hover:text-foreground">
+                Cancelar
+              </Button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       <motion.div
         initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -389,6 +517,21 @@ export function AdminUsersTable({
         <Table>
           <TableHeader>
             <TableRow className="bg-linear-to-r from-primary/10 via-purple-600/5 to-primary/10">
+              <TableHead className="w-12">
+                <button
+                  onClick={toggleSelectAll}
+                  className="flex items-center justify-center w-full h-full hover:opacity-80 transition-opacity"
+                  title={isAllSelected ? 'Deseleccionar todos' : 'Seleccionar todos'}
+                >
+                  {isAllSelected ? (
+                    <CheckSquare className="h-4 w-4 text-primary" />
+                  ) : isSomeSelected ? (
+                    <Square className="h-4 w-4 text-primary/60" />
+                  ) : (
+                    <Square className="h-4 w-4 opacity-40" />
+                  )}
+                </button>
+              </TableHead>
               {SORTABLE_COLUMNS.filter((c) => c.key === 'name' || c.key === 'email').map((col) => (
                 <TableHead key={col.key}>
                   <button
@@ -425,19 +568,34 @@ export function AdminUsersTable({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {(onPageChange ? filteredUsers : paginatedUsers).map((candidate, index) => (
-              <TableRow
-                key={candidate.userId}
-                className={shouldReduceMotion ? '' : 'animate-fade-in'}
-                style={
-                  shouldReduceMotion
-                    ? undefined
-                    : {
-                        animationDelay: `${Math.min(index * 45, 320)}ms`,
-                        animationFillMode: 'both',
-                      }
-                }
-              >
+            {(onPageChange ? filteredUsers : paginatedUsers).map((candidate, index) => {
+              const isSelected = selectedUserIds.has(candidate.userId);
+              return (
+                <TableRow
+                  key={candidate.userId}
+                  className={`${shouldReduceMotion ? '' : 'animate-fade-in'} ${isSelected ? 'bg-primary/5' : ''}`}
+                  style={
+                    shouldReduceMotion
+                      ? undefined
+                      : {
+                          animationDelay: `${Math.min(index * 45, 320)}ms`,
+                          animationFillMode: 'both',
+                        }
+                  }
+                >
+                  <TableCell>
+                    <button
+                      onClick={() => toggleSelectUser(candidate.userId)}
+                      className="flex items-center justify-center w-full h-full hover:opacity-80 transition-opacity"
+                      title={isSelected ? 'Deseleccionar' : 'Seleccionar'}
+                    >
+                      {isSelected ? (
+                        <CheckSquare className="h-4 w-4 text-primary" />
+                      ) : (
+                        <Square className="h-4 w-4 opacity-40" />
+                      )}
+                    </button>
+                  </TableCell>
                 <TableCell className="font-medium">{candidate.name}</TableCell>
                 <TableCell>{candidate.email}</TableCell>
                 {showTenantColumn && (
@@ -459,46 +617,47 @@ export function AdminUsersTable({
                     <span className="text-muted-foreground">Sin límite</span>
                   )}
                 </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onEditUser(candidate)}
-                      className="border-slate-200 bg-white/70 transition-all duration-200 hover:shadow-sm dark:border-slate-700 dark:bg-slate-900/60"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="border-slate-200 bg-white/70 text-rose-600 transition-all duration-200 hover:text-rose-700 dark:border-slate-700 dark:bg-slate-900/60 dark:text-rose-400 dark:hover:text-rose-300"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent className="border-slate-200/70 bg-white/90 backdrop-blur-xl dark:border-slate-700/60 dark:bg-slate-900/90">
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Eliminar Usuario</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            ¿Estás seguro de que quieres eliminar este usuario?
-                            Esta acción no se puede deshacer.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <Button onClick={() => handleDeleteUser(candidate.userId)} variant="destructive">
-                            Eliminar
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onEditUser(candidate)}
+                        className="border-slate-200 bg-white/70 transition-all duration-200 hover:shadow-sm dark:border-slate-700 dark:bg-slate-900/60"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-slate-200 bg-white/70 text-rose-600 transition-all duration-200 hover:text-rose-700 dark:border-slate-700 dark:bg-slate-900/60 dark:text-rose-400 dark:hover:text-rose-300"
+                          >
+                            <Trash2 className="h-4 w-4" />
                           </Button>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ))}
+                        </AlertDialogTrigger>
+                        <AlertDialogContent className="border-slate-200/70 bg-white/90 backdrop-blur-xl dark:border-slate-700/60 dark:bg-slate-900/90">
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Eliminar Usuario</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              ¿Estás seguro de que quieres eliminar este usuario?
+                              Esta acción no se puede deshacer.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <Button onClick={() => handleDeleteUser(candidate.userId)} variant="destructive">
+                              Eliminar
+                            </Button>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </motion.div>
