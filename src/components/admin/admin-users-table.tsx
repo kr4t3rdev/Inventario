@@ -99,6 +99,53 @@ export function AdminUsersTable({
 
   const perPage = 25;
 
+  const isUserWithTenant = (u: Usuario | UsuarioWithTenant): u is UsuarioWithTenant =>
+    'tenantName' in u;
+
+  const filteredUsers = useMemo(() => {
+    let filtered = users.filter((candidate) => {
+      const matchesSearch =
+        candidate.name.toLowerCase().includes(deferredSearch.toLowerCase()) ||
+        candidate.email.toLowerCase().includes(deferredSearch.toLowerCase());
+      const effectiveRole = candidate.tenantRole ?? candidate.role;
+      const matchesRole = roleFilter === 'all' || effectiveRole === roleFilter;
+      const matchesStatus =
+        statusFilter === 'all' ||
+        (statusFilter === 'active' && candidate.isActive) ||
+        (statusFilter === 'inactive' && !candidate.isActive);
+      const matchesTenant =
+        tenantFilter === 'all' ||
+        (isUserWithTenant(candidate) && candidate.tenantId === tenantFilter);
+
+      return matchesSearch && matchesRole && matchesStatus && matchesTenant;
+    });
+
+    filtered.sort((a, b) => {
+      let aVal: string | number = '';
+      let bVal: string | number = '';
+
+      if (sortBy === 'name') { aVal = a.name.toLowerCase(); bVal = b.name.toLowerCase(); }
+      else if (sortBy === 'email') { aVal = a.email.toLowerCase(); bVal = b.email.toLowerCase(); }
+      else if (sortBy === 'createdAt') { aVal = new Date(a.createdAt).getTime(); bVal = new Date(b.createdAt).getTime(); }
+      else if (sortBy === 'expiresAt') {
+        aVal = a.expiresAt ? new Date(a.expiresAt).getTime() : 0;
+        bVal = b.expiresAt ? new Date(b.expiresAt).getTime() : 0;
+      }
+
+      if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return filtered;
+  }, [deferredSearch, roleFilter, sortBy, sortOrder, statusFilter, tenantFilter, users]);
+
+  const totalPages = pages ?? Math.ceil(filteredUsers.length / perPage);
+  const effectivePage = onPageChange ? (page ?? 1) : currentPage;
+  const paginatedUsers = onPageChange
+    ? filteredUsers
+    : filteredUsers.slice((effectivePage - 1) * perPage, effectivePage * perPage);
+
   const isAllSelected = paginatedUsers.length > 0 && paginatedUsers.every((u) => selectedUserIds.has(u.userId));
   const isSomeSelected = paginatedUsers.some((u) => selectedUserIds.has(u.userId));
 
@@ -170,54 +217,6 @@ export function AdminUsersTable({
       toast.error(`Error al ${action === 'delete' ? 'eliminar' : 'procesar'} usuarios`);
     }
   };
-
-  const isUserWithTenant = (u: Usuario | UsuarioWithTenant): u is UsuarioWithTenant =>
-    'tenantName' in u;
-
-  const filteredUsers = useMemo(() => {
-    let filtered = users.filter((candidate) => {
-      const matchesSearch =
-        candidate.name.toLowerCase().includes(deferredSearch.toLowerCase()) ||
-        candidate.email.toLowerCase().includes(deferredSearch.toLowerCase());
-      const effectiveRole = candidate.tenantRole ?? candidate.role;
-      const matchesRole = roleFilter === 'all' || effectiveRole === roleFilter;
-      const matchesStatus =
-        statusFilter === 'all' ||
-        (statusFilter === 'active' && candidate.isActive) ||
-        (statusFilter === 'inactive' && !candidate.isActive);
-      const matchesTenant =
-        tenantFilter === 'all' ||
-        (isUserWithTenant(candidate) && candidate.tenantId === tenantFilter);
-
-      return matchesSearch && matchesRole && matchesStatus && matchesTenant;
-    });
-
-    filtered.sort((a, b) => {
-      let aVal: string | number = '';
-      let bVal: string | number = '';
-
-      if (sortBy === 'name') { aVal = a.name.toLowerCase(); bVal = b.name.toLowerCase(); }
-      else if (sortBy === 'email') { aVal = a.email.toLowerCase(); bVal = b.email.toLowerCase(); }
-      else if (sortBy === 'createdAt') { aVal = new Date(a.createdAt).getTime(); bVal = new Date(b.createdAt).getTime(); }
-      else if (sortBy === 'expiresAt') {
-        aVal = a.expiresAt ? new Date(a.expiresAt).getTime() : 0;
-        bVal = b.expiresAt ? new Date(b.expiresAt).getTime() : 0;
-      }
-
-      if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1;
-      if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;
-      return 0;
-    });
-
-    return filtered;
-  }, [deferredSearch, roleFilter, sortBy, sortOrder, statusFilter, tenantFilter, users]);
-
-  const totalPages = pages ?? Math.ceil(filteredUsers.length / perPage);
-  const effectivePage = onPageChange ? (page ?? 1) : currentPage;
-
-  const paginatedUsers = onPageChange
-    ? filteredUsers
-    : filteredUsers.slice((effectivePage - 1) * perPage, effectivePage * perPage);
 
   const handleSort = (column: SortableColumn) => {
     let newOrder: 'asc' | 'desc' = 'asc';
