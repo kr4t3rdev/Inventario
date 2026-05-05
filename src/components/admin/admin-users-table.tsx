@@ -687,9 +687,44 @@ export function AdminUsersTable({
       )}
 
       {filteredUsers.length === 0 && (
-        <div className="rounded-xl border border-dashed border-border/70 bg-muted/20 py-8 text-center text-muted-foreground dark:bg-muted/10">
-          No se encontraron usuarios que coincidan con los filtros.
-        </div>
+        <motion.div
+          initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: shouldReduceMotion ? 0 : 0.22 }}
+          className="rounded-xl border border-dashed border-border/70 bg-muted/20 py-12 text-center dark:bg-muted/10"
+        >
+          <div className="flex flex-col items-center justify-center gap-3">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-muted">
+              <User className="h-8 w-8 text-muted-foreground/60" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-lg font-medium text-foreground">
+                {deferredSearch || roleFilter !== 'all' || statusFilter !== 'all' || tenantFilter !== 'all'
+                  ? 'No se encontraron usuarios'
+                  : 'No hay usuarios registrados'}
+              </p>
+              <p className="text-sm text-muted-foreground max-w-md">
+                {deferredSearch || roleFilter !== 'all' || statusFilter !== 'all' || tenantFilter !== 'all'
+                  ? 'Intenta ajustar los filtros de búsqueda o seleccionar otros criterios.'
+                  : 'Comienza creando un nuevo usuario para gestionar permisos y accesos.'}
+              </p>
+            </div>
+            {(deferredSearch || roleFilter !== 'all' || statusFilter !== 'all' || tenantFilter !== 'all') && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSearchTerm('');
+                  setRoleFilter('all');
+                  setStatusFilter('all');
+                  setTenantFilter('all');
+                }}
+                className="mt-2"
+              >
+                Limpiar filtros
+              </Button>
+            )}
+          </div>
+        </motion.div>
       )}
     </div>
   );

@@ -17,7 +17,7 @@ import { AdminTableLoader } from "@/components/admin/animations"
 import { useGetSessionsQuery, useDeleteSessionMutation } from "@/lib/redux/services/adminApi"
 import { format } from "date-fns"
 import { toast } from "sonner"
-import { LogOut } from "lucide-react"
+import { LogOut, Shield } from "lucide-react"
 import type { UserSession } from "@/app/models/model"
 
 interface SessionWithUser extends UserSession {
@@ -136,7 +136,17 @@ export function SessionsTab() {
           </Table>
         </div>
       ) : (
-        <p className="text-center py-4 text-muted-foreground">No hay sesiones activas</p>
+        <div className="rounded-xl border border-dashed border-border/70 bg-muted/20 py-12 text-center dark:bg-muted/10">
+          <div className="flex flex-col items-center justify-center gap-3">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+              <Shield className="h-7 w-7 text-muted-foreground/60" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-foreground">No hay sesiones activas</p>
+              <p className="text-xs text-muted-foreground">Las sesiones de los usuarios aparecerán aquí cuando inicien sesión.</p>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

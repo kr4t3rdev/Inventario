@@ -17,7 +17,7 @@ import { AdminTableLoader } from "@/components/admin/animations"
 import { useGetUserQuery, useUnlockUserMutation } from "@/lib/redux/services/adminApi"
 import { format } from "date-fns"
 import { toast } from "sonner"
-import { History, Unlock } from "lucide-react"
+import { History, Unlock, Lock } from "lucide-react"
 import type { Usuario } from "@/app/models/model"
 
 interface BlockedUsersTabProps {
@@ -131,7 +131,17 @@ export function BlockedUsersTab({ onOpenHistory }: BlockedUsersTabProps) {
           </Table>
         </div>
       ) : (
-        <p className="text-center py-4 text-muted-foreground">No hay usuarios bloqueados</p>
+        <div className="rounded-xl border border-dashed border-border/70 bg-muted/20 py-12 text-center dark:bg-muted/10">
+          <div className="flex flex-col items-center justify-center gap-3">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+              <Lock className="h-7 w-7 text-muted-foreground/60" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-foreground">No hay usuarios bloqueados</p>
+              <p className="text-xs text-muted-foreground">Los usuarios bloqueados por intentos fallidos aparecerán aquí.</p>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

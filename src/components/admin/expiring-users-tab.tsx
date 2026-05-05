@@ -17,7 +17,7 @@ import { AdminTableLoader } from "@/components/admin/animations"
 import { useGetExpiringSoonQuery, useSendExpiryNotificationsMutation } from "@/lib/redux/services/adminApi"
 import { format } from "date-fns"
 import { toast } from "sonner"
-import { Bell, History } from "lucide-react"
+import { Bell, Calendar, History } from "lucide-react"
 import type { Usuario } from "@/app/models/model"
 
 interface ExpiringUsersTabProps {
@@ -149,7 +149,21 @@ export function ExpiringUsersTab({ onOpenHistory }: ExpiringUsersTabProps) {
           </Table>
         </div>
       ) : (
-        <p className="text-center py-4 text-muted-foreground">No hay usuarios que expiren en los próximos {days} días</p>
+        <div className="rounded-xl border border-dashed border-border/70 bg-muted/20 py-12 text-center dark:bg-muted/10">
+          <div className="flex flex-col items-center justify-center gap-3">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+              <Calendar className="h-7 w-7 text-muted-foreground/60" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-foreground">
+                No hay usuarios que expiren en los próximos {days} días
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Los usuarios próximos a expirar aparecerán aquí para que puedas gestionar sus notificaciones.
+              </p>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

@@ -15,6 +15,7 @@ import {
 import { AdminTableLoader } from "@/components/admin/animations"
 import { useGetActivityLogsQuery } from "@/lib/redux/services/adminApi"
 import { format } from "date-fns"
+import { Clock } from "lucide-react"
 import type { UserActivityLog } from "@/app/models/model"
 
 interface ActivityLogWithUser extends UserActivityLog {
@@ -128,7 +129,17 @@ export function ActivityLogsTab() {
           </Table>
         </div>
       ) : (
-        <p className="text-center py-4 text-muted-foreground">No hay registros de actividad</p>
+        <div className="rounded-xl border border-dashed border-border/70 bg-muted/20 py-12 text-center dark:bg-muted/10">
+          <div className="flex flex-col items-center justify-center gap-3">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-muted">
+              <Clock className="h-7 w-7 text-muted-foreground/60" />
+            </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium text-foreground">No hay registros de actividad</p>
+              <p className="text-xs text-muted-foreground">Los logs de actividad aparecerán aquí cuando los usuarios interactúen con el sistema.</p>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
