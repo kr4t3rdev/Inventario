@@ -232,4 +232,3 @@ describe('GET /api/admin/global/users', () => {
     expect(data.error).toBe('Error interno del servidor')
   })
 })
-})

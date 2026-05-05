@@ -134,6 +134,10 @@ export const apiSlice = createApi({
     'AdminSystem',
     'GlobalUsers',
     'GlobalUserMetrics',
+    // Licenses & Plans
+    'AdminLicencias',
+    'AdminLicenciaAudits',
+    'AdminPlanes',
   ],
   endpoints: () => ({}),
 })

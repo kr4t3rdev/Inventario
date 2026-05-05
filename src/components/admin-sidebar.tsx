@@ -20,6 +20,8 @@ import {
   RefreshCw,
   ArrowLeftRight,
   Sparkles,
+  Key,
+  CreditCard,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -110,6 +112,21 @@ export function AdminSidebar({
         ],
       },
       {
+        title: "Licencias",
+        items: [
+          {
+            title: "Licencias",
+            url: "/admin/licencias",
+            icon: Key,
+          },
+          {
+            title: "Planes",
+            url: "/admin/planes",
+            icon: CreditCard,
+          },
+        ],
+      },
+      {
         title: "Herramientas",
         items: [
           {
@@ -125,6 +142,7 @@ export function AdminSidebar({
   const groupToneByTitle: Record<string, string> = {
     "Panel de Control": "from-violet-500/15 via-sidebar-accent/45 to-transparent",
     Monitor: "from-amber-500/15 via-sidebar-accent/45 to-transparent",
+    Licencias: "from-emerald-500/15 via-sidebar-accent/45 to-transparent",
     Herramientas: "from-sky-500/15 via-sidebar-accent/45 to-transparent",
   }
 

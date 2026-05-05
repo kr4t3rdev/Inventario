@@ -301,6 +301,93 @@ export const adminApi = apiSlice.injectEndpoints({
             }),
             providesTags: ['GlobalUserMetrics'],
         }),
+
+        // ── Licenses ──
+        getAdminLicencias: builder.query<any, { page?: number; limit?: number; planId?: string; activa?: string; search?: string }>({
+            query: (params) => ({
+                url: '/admin/licencias',
+                params,
+            }),
+            providesTags: ['AdminLicencias'],
+        }),
+
+        createAdminLicencia: builder.mutation<any, any>({
+            query: (body) => ({
+                url: '/admin/licencias',
+                method: 'POST',
+                body,
+            }),
+            invalidatesTags: ['AdminLicencias'],
+        }),
+
+        updateAdminLicencia: builder.mutation<any, { id: string; body: any }>({
+            query: ({ id, body }) => ({
+                url: `/admin/licencias/${id}`,
+                method: 'PUT',
+                body,
+            }),
+            invalidatesTags: ['AdminLicencias'],
+        }),
+
+        deleteAdminLicencia: builder.mutation<void, string>({
+            query: (id) => ({
+                url: `/admin/licencias/${id}`,
+                method: 'DELETE',
+            }),
+            invalidatesTags: ['AdminLicencias'],
+        }),
+
+        generateAdminLicencias: builder.mutation<any, any>({
+            query: (body) => ({
+                url: '/admin/licencias/generar',
+                method: 'POST',
+                body,
+            }),
+            invalidatesTags: ['AdminLicencias'],
+        }),
+
+        getAdminLicenciaAudits: builder.query<any, { licenciaId?: string; page?: number; limit?: number }>({
+            query: (params) => ({
+                url: '/admin/licencias/auditoria',
+                params,
+            }),
+            providesTags: ['AdminLicenciaAudits'],
+        }),
+
+        // ── Plans ──
+        getAdminPlanes: builder.query<any, { page?: number; limit?: number; search?: string }>({
+            query: (params) => ({
+                url: '/admin/planes',
+                params,
+            }),
+            providesTags: ['AdminPlanes'],
+        }),
+
+        createAdminPlan: builder.mutation<any, any>({
+            query: (body) => ({
+                url: '/admin/planes',
+                method: 'POST',
+                body,
+            }),
+            invalidatesTags: ['AdminPlanes'],
+        }),
+
+        updateAdminPlan: builder.mutation<any, { id: string; body: any }>({
+            query: ({ id, body }) => ({
+                url: `/admin/planes/${id}`,
+                method: 'PUT',
+                body,
+            }),
+            invalidatesTags: ['AdminPlanes'],
+        }),
+
+        deleteAdminPlan: builder.mutation<void, string>({
+            query: (id) => ({
+                url: `/admin/planes/${id}`,
+                method: 'DELETE',
+            }),
+            invalidatesTags: ['AdminPlanes'],
+        }),
     })
 })
 
@@ -324,4 +411,14 @@ export const {
     useGetAdminSystemQuery,
     useGetGlobalUsersQuery,
     useGetGlobalUserMetricsQuery,
+    useGetAdminLicenciasQuery,
+    useCreateAdminLicenciaMutation,
+    useUpdateAdminLicenciaMutation,
+    useDeleteAdminLicenciaMutation,
+    useGenerateAdminLicenciasMutation,
+    useGetAdminLicenciaAuditsQuery,
+    useGetAdminPlanesQuery,
+    useCreateAdminPlanMutation,
+    useUpdateAdminPlanMutation,
+    useDeleteAdminPlanMutation,
 } = adminApi
