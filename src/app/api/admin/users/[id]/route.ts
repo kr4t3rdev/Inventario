@@ -3,7 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 
 import { authenticateUser, type AuthenticatedUser } from '@/lib/auth-middleware';
 import { updateUserBodySchema, userIdParamSchema } from '@/lib/admin/schemas';
-import { isTenantAdminRole } from '@/lib/auth/roles';
+import { isAdminRole, isTenantAdminRole } from '@/lib/auth/roles';
 import { prisma } from '@/lib/prisma';
 
 type UpdateUserData = {
@@ -87,11 +87,13 @@ export async function PUT(
   context: { params: Promise<{ id: string }> },
 ): Promise<NextResponse> {
   try {
-    const authResultAuthUser2 = await authenticateUser(request);
-    if ('status' in authResultAuthUser2) return authResultAuthUser2 as NextResponse;
-    const authUser = authResultAuthUser2.user as AuthenticatedUser;
-    const tenantId = authUser.tenantId;
-    if (!tenantId || !isTenantAdminRole(authUser.tenantRole)) {
+    const authResult = await authenticateUser(request);
+    if ('status' in authResult) return authResult as NextResponse;
+    const authUser = authResult.user as AuthenticatedUser;
+    const isGlobalAdmin = isAdminRole(authUser.role);
+
+    // Global admin o tenant admin pueden actualizar usuarios
+    if (!isGlobalAdmin && (!authUser.tenantId || !isTenantAdminRole(authUser.tenantRole))) {
       return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
     }
 
@@ -110,14 +112,18 @@ export async function PUT(
     }
 
     const { id } = paramParse.data;
-    const membership = await prisma.tenantMembership.findFirst({
-      where: { userId: id, tenantId },
-    });
 
-    if (!membership) {
-      return NextResponse.json({ error: 'Usuario no encontrado en esta empresa' }, { status: 404 });
+    // Si es tenant admin, verificar que el usuario pertenece a su tenant
+    if (!isGlobalAdmin) {
+      const membership = await prisma.tenantMembership.findFirst({
+        where: { userId: id, tenantId: authUser.tenantId },
+      });
+      if (!membership) {
+        return NextResponse.json({ error: 'Usuario no encontrado en esta empresa' }, { status: 404 });
+      }
     }
-    const { name, email, password, role, isActive, daysToExpire } = bodyParse.data;
+
+    const { name, email, password, role, tenantRole, isActive, daysToExpire } = bodyParse.data;
 
     const existingUser = await prisma.user.findUnique({
       where: { userId: id },
@@ -167,11 +173,19 @@ export async function PUT(
       },
     });
 
+    // Actualizar tenantRole si se proporcionó
+    if (tenantRole) {
+      await prisma.tenantMembership.updateMany({
+        where: { userId: id },
+        data: { tenantRole },
+      });
+    }
+
     await prisma.userActivityLog.create({
       data: {
         userId: id,
         action: 'update_user',
-        details: JSON.stringify({ fields: Object.keys(updateData) }),
+        details: JSON.stringify({ fields: Object.keys(updateData), tenantRole }),
         ipAddress: request.headers.get('x-forwarded-for') || null,
         userAgent: request.headers.get('user-agent') || null,
         performedBy: authUser.userId,

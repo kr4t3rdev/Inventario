@@ -86,7 +86,7 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
       );
     }
 
-    const { name, email, password, role, daysToExpire } = parseResult.data;
+    const { name, email, password, role, tenantRole, daysToExpire } = parseResult.data;
 
     // 1. Validar límite de usuarios del plan
     const currentCount = await prisma.tenantMembership.count({
@@ -132,12 +132,12 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
     }
 
     // 3. Crear membresía tenant para el usuario
-    const tenantRole = platformRoleToTenantRole(role as any);
+    const effectiveTenantRole = tenantRole ?? platformRoleToTenantRole(role as any);
     await prisma.tenantMembership.create({
       data: {
         tenantId,
         userId: targetUser!.userId,
-        tenantRole,
+        tenantRole: effectiveTenantRole,
         isActive: true,
       },
     });
@@ -147,7 +147,7 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
       data: {
         userId: targetUser!.userId,
         action: existingUser ? 'assign_tenant' : 'create_user',
-        details: JSON.stringify({ role, tenantRole, email, tenantId }),
+        details: JSON.stringify({ role, tenantRole: effectiveTenantRole, email, tenantId }),
         ipAddress: request.headers.get('x-forwarded-for') || null,
         userAgent: request.headers.get('user-agent') || null,
         performedBy: user.userId,

@@ -132,6 +132,8 @@ export const apiSlice = createApi({
     'AdminTenants',
     'AdminFinance',
     'AdminSystem',
+    'GlobalUsers',
+    'GlobalUserMetrics',
   ],
   endpoints: () => ({}),
 })

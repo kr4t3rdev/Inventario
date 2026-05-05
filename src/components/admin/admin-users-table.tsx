@@ -1,8 +1,11 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useDeferredValue, useMemo, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import {
+  ArrowDown,
+  ArrowUp,
+  ArrowUpDown,
   CheckCircle,
   Clock,
   Download,
@@ -18,6 +21,7 @@ import { format } from 'date-fns';
 import { toast } from 'sonner';
 
 import { Usuario } from '@/app/models/model';
+import type { UsuarioWithTenant } from '@/lib/types/admin';
 import { AdminTableLoader } from '@/components/admin/animations';
 import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription } from '@/components/ui/alert-dialog';
 import { AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
@@ -26,53 +30,142 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useDeleteUserMutation } from '@/lib/redux/services/adminApi';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination';
+import { useDeleteUserMutation, useGetAdminTenantsQuery } from '@/lib/redux/services/adminApi';
 import { getAuthToken } from '@/lib/token';
 import { getTenantRoleLabel } from '@/lib/auth/roles';
 
 interface AdminUsersTableProps {
-  users: Usuario[];
+  users: Usuario[] | UsuarioWithTenant[];
+  total?: number;
+  page?: number;
+  pages?: number;
+  showTenantColumn?: boolean;
   isLoading: boolean;
   onEditUser: (user: Usuario) => void;
   onRefresh: () => Promise<unknown> | void;
+  onPageChange?: (page: number) => void;
+  onSortChange?: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
 }
 
 type RoleFilter = 'all' | 'manager' | 'admin' | 'economico' | 'dependiente' | 'regularUser';
 type StatusFilter = 'all' | 'active' | 'inactive';
+type SortableColumn = 'name' | 'email' | 'createdAt' | 'expiresAt';
 
-/**
- * @description Tabla de administracion de usuarios con filtros, exportación y acciones.
- * @param {AdminUsersTableProps} props - Datos y callbacks del modulo.
- * @returns {JSX.Element} Tabla interactiva con estados de carga y animaciones.
- */
+const SORTABLE_COLUMNS: { key: SortableColumn; label: string }[] = [
+  { key: 'name', label: 'Usuario' },
+  { key: 'email', label: 'Email' },
+  { key: 'createdAt', label: 'Fecha de Creación' },
+  { key: 'expiresAt', label: 'Expira' },
+];
+
 export function AdminUsersTable({
   users,
+  total,
+  page,
+  pages,
+  showTenantColumn = true,
   isLoading,
   onEditUser,
   onRefresh,
+  onPageChange,
+  onSortChange,
 }: AdminUsersTableProps): React.JSX.Element {
   const shouldReduceMotion = useReducedMotion();
   const [searchTerm, setSearchTerm] = useState('');
+  const deferredSearch = useDeferredValue(searchTerm);
+  const [tenantFilter, setTenantFilter] = useState('all');
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [isExporting, setIsExporting] = useState(false);
+  const [sortBy, setSortBy] = useState<SortableColumn>('createdAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [currentPage, setCurrentPage] = useState(1);
   const [deleteUser] = useDeleteUserMutation();
+  const { data: tenants } = useGetAdminTenantsQuery();
+
+  const perPage = 25;
+
+  const isUserWithTenant = (u: Usuario | UsuarioWithTenant): u is UsuarioWithTenant =>
+    'tenantName' in u;
 
   const filteredUsers = useMemo(() => {
-    return users.filter((candidate) => {
+    let filtered = users.filter((candidate) => {
       const matchesSearch =
-        candidate.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        candidate.email.toLowerCase().includes(searchTerm.toLowerCase());
+        candidate.name.toLowerCase().includes(deferredSearch.toLowerCase()) ||
+        candidate.email.toLowerCase().includes(deferredSearch.toLowerCase());
       const effectiveRole = candidate.tenantRole ?? candidate.role;
       const matchesRole = roleFilter === 'all' || effectiveRole === roleFilter;
       const matchesStatus =
         statusFilter === 'all' ||
         (statusFilter === 'active' && candidate.isActive) ||
         (statusFilter === 'inactive' && !candidate.isActive);
+      const matchesTenant =
+        tenantFilter === 'all' ||
+        (isUserWithTenant(candidate) && candidate.tenantId === tenantFilter);
 
-      return matchesSearch && matchesRole && matchesStatus;
+      return matchesSearch && matchesRole && matchesStatus && matchesTenant;
     });
-  }, [roleFilter, searchTerm, statusFilter, users]);
+
+    filtered.sort((a, b) => {
+      let aVal: string | number = '';
+      let bVal: string | number = '';
+
+      if (sortBy === 'name') { aVal = a.name.toLowerCase(); bVal = b.name.toLowerCase(); }
+      else if (sortBy === 'email') { aVal = a.email.toLowerCase(); bVal = b.email.toLowerCase(); }
+      else if (sortBy === 'createdAt') { aVal = new Date(a.createdAt).getTime(); bVal = new Date(b.createdAt).getTime(); }
+      else if (sortBy === 'expiresAt') {
+        aVal = a.expiresAt ? new Date(a.expiresAt).getTime() : 0;
+        bVal = b.expiresAt ? new Date(b.expiresAt).getTime() : 0;
+      }
+
+      if (aVal < bVal) return sortOrder === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return filtered;
+  }, [deferredSearch, roleFilter, sortBy, sortOrder, statusFilter, tenantFilter, users]);
+
+  const totalPages = pages ?? Math.ceil(filteredUsers.length / perPage);
+  const effectivePage = onPageChange ? (page ?? 1) : currentPage;
+
+  const paginatedUsers = onPageChange
+    ? filteredUsers
+    : filteredUsers.slice((effectivePage - 1) * perPage, effectivePage * perPage);
+
+  const handleSort = (column: SortableColumn) => {
+    let newOrder: 'asc' | 'desc' = 'asc';
+    if (sortBy === column) {
+      newOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+    }
+    setSortBy(column);
+    setSortOrder(newOrder);
+    if (onSortChange) {
+      onSortChange(column, newOrder);
+    }
+  };
+
+  const handlePageChange = (newPage: number) => {
+    if (onPageChange) {
+      onPageChange(newPage);
+    } else {
+      setCurrentPage(newPage);
+    }
+  };
+
+  const renderSortIcon = (column: SortableColumn) => {
+    if (sortBy !== column) return <ArrowUpDown className="ml-1 h-3 w-3 inline opacity-40" />;
+    return sortOrder === 'asc'
+      ? <ArrowUp className="ml-1 h-3 w-3 inline" />
+      : <ArrowDown className="ml-1 h-3 w-3 inline" />;
+  };
 
   const getRoleBadge = (role: string, tenantRole?: string | null): React.JSX.Element => {
     const effectiveRole = tenantRole ?? role;
@@ -80,50 +173,35 @@ export function AdminUsersTable({
     switch (effectiveRole) {
       case 'manager':
         return (
-          <Badge
-            variant="outline"
-            className="border-violet-500/40 bg-violet-500/10 text-violet-700 dark:text-violet-300"
-          >
+          <Badge variant="outline" className="border-violet-500/40 bg-violet-500/10 text-violet-700">
             <Shield className="mr-1 h-3 w-3" />
             {getTenantRoleLabel('manager')}
           </Badge>
         );
       case 'admin':
         return (
-          <Badge
-            variant="outline"
-            className="border-sky-500/40 bg-sky-500/10 text-sky-700 dark:text-sky-300"
-          >
+          <Badge variant="outline" className="border-sky-500/40 bg-sky-500/10 text-sky-700">
             <Shield className="mr-1 h-3 w-3" />
             {getTenantRoleLabel('admin')}
           </Badge>
         );
       case 'economico':
         return (
-          <Badge
-            variant="outline"
-            className="border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-          >
+          <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-700">
             <User className="mr-1 h-3 w-3" />
             {getTenantRoleLabel('economico')}
           </Badge>
         );
       case 'dependiente':
         return (
-          <Badge
-            variant="outline"
-            className="border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
-          >
+          <Badge variant="outline" className="border-amber-500/40 bg-amber-500/10 text-amber-700">
             <User className="mr-1 h-3 w-3" />
             {getTenantRoleLabel('dependiente')}
           </Badge>
         );
       default:
         return (
-          <Badge
-            variant="outline"
-            className="border-border/80 bg-muted/40 text-foreground"
-          >
+          <Badge variant="outline" className="border-border/80 bg-muted/40 text-foreground">
             <User className="mr-1 h-3 w-3" />
             {getTenantRoleLabel(null)}
           </Badge>
@@ -134,7 +212,7 @@ export function AdminUsersTable({
   const getStatusBadge = (isActive: boolean, expiresAt?: string): React.JSX.Element => {
     if (!isActive) {
       return (
-        <Badge variant="destructive" className="bg-rose-600/90 dark:bg-rose-600">
+        <Badge variant="destructive" className="bg-rose-600/90">
           <XCircle className="mr-1 h-3 w-3" />
           Inactivo
         </Badge>
@@ -156,10 +234,7 @@ export function AdminUsersTable({
 
       if (daysUntilExpiry <= 7) {
         return (
-          <Badge
-            variant="outline"
-            className="border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
-          >
+          <Badge variant="outline" className="border-amber-500/40 bg-amber-500/10 text-amber-700">
             <Clock className="mr-1 h-3 w-3" />
             Expira en {daysUntilExpiry}d
           </Badge>
@@ -168,10 +243,7 @@ export function AdminUsersTable({
     }
 
     return (
-      <Badge
-        variant="outline"
-        className="border-emerald-500/40 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-      >
+      <Badge variant="outline" className="border-emerald-500/40 bg-emerald-500/10 text-emerald-700">
         <CheckCircle className="mr-1 h-3 w-3" />
         Activo
       </Badge>
@@ -193,14 +265,10 @@ export function AdminUsersTable({
     setIsExporting(true);
     try {
       const response = await fetch('/api/admin/users/export?format=csv', {
-        headers: {
-          Authorization: getAuthToken(),
-        },
+        headers: { Authorization: getAuthToken() },
       });
 
-      if (!response.ok) {
-        throw new Error('Error al exportar usuarios');
-      }
+      if (!response.ok) throw new Error('Error al exportar usuarios');
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
@@ -224,7 +292,7 @@ export function AdminUsersTable({
   if (isLoading) {
     return (
       <AdminTableLoader
-        columns={7}
+        columns={showTenantColumn ? 8 : 7}
         rows={6}
         caption="Cargando usuarios y permisos..."
       />
@@ -237,11 +305,14 @@ export function AdminUsersTable({
         initial={shouldReduceMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: shouldReduceMotion ? 0 : 0.25 }}
-        className="rounded-xl border border-slate-200 bg-card p-3 shadow-sm dark:border-slate-800"
+        className="rounded-xl border border-slate-200 bg-card p-3 shadow-sm"
       >
         <div className="mb-3 flex items-center justify-between">
-          <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
-            Resultados: {filteredUsers.length}
+          <p className="text-sm font-medium text-slate-700">
+            Resultados: {total ?? filteredUsers.length}
+            {deferredSearch !== searchTerm && (
+              <span className="ml-2 text-xs text-muted-foreground animate-pulse">Buscando...</span>
+            )}
           </p>
           <Badge variant="outline" className="bg-primary/10 text-primary">
             Gestión de usuarios
@@ -270,6 +341,19 @@ export function AdminUsersTable({
               <SelectItem value="regularUser">Usuarios legados</SelectItem>
             </SelectContent>
           </Select>
+          {showTenantColumn && tenants && (
+            <Select value={tenantFilter} onValueChange={setTenantFilter}>
+              <SelectTrigger className="h-11 w-full border-slate-200 bg-white/60 sm:w-44 dark:border-slate-700 dark:bg-slate-800/50">
+                <SelectValue placeholder="Filtrar por empresa" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas las empresas</SelectItem>
+                {tenants.map((t) => (
+                  <SelectItem key={t.tenantId} value={t.tenantId}>{t.nombre}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
           <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as StatusFilter)}>
             <SelectTrigger className="h-11 w-full border-slate-200 bg-white/60 sm:w-44 dark:border-slate-700 dark:bg-slate-800/50">
               <SelectValue placeholder="Filtrar por estado" />
@@ -300,22 +384,48 @@ export function AdminUsersTable({
         initial={shouldReduceMotion ? { opacity: 1 } : { opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: shouldReduceMotion ? 0 : 0.3 }}
-        className="overflow-hidden rounded-xl border border-slate-200 bg-card shadow-sm dark:border-slate-800"
+        className="overflow-hidden rounded-xl border border-slate-200 bg-card shadow-sm"
       >
         <Table>
           <TableHeader>
             <TableRow className="bg-linear-to-r from-primary/10 via-purple-600/5 to-primary/10">
-              <TableHead>Usuario</TableHead>
-              <TableHead>Email</TableHead>
+              {SORTABLE_COLUMNS.filter((c) => c.key === 'name' || c.key === 'email').map((col) => (
+                <TableHead key={col.key}>
+                  <button
+                    onClick={() => handleSort(col.key)}
+                    className="flex items-center gap-1 font-medium hover:text-foreground/80 transition-colors"
+                  >
+                    {col.label}
+                    {renderSortIcon(col.key)}
+                  </button>
+                </TableHead>
+              ))}
+              {showTenantColumn && <TableHead>Empresa</TableHead>}
               <TableHead>Tipo</TableHead>
               <TableHead>Estado</TableHead>
-              <TableHead>Fecha de Creación</TableHead>
-              <TableHead>Expira</TableHead>
+              <TableHead>
+                <button
+                  onClick={() => handleSort('createdAt')}
+                  className="flex items-center gap-1 font-medium hover:text-foreground/80 transition-colors"
+                >
+                  Fecha de Creación
+                  {renderSortIcon('createdAt')}
+                </button>
+              </TableHead>
+              <TableHead>
+                <button
+                  onClick={() => handleSort('expiresAt')}
+                  className="flex items-center gap-1 font-medium hover:text-foreground/80 transition-colors"
+                >
+                  Expira
+                  {renderSortIcon('expiresAt')}
+                </button>
+              </TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {filteredUsers.map((candidate, index) => (
+            {(onPageChange ? filteredUsers : paginatedUsers).map((candidate, index) => (
               <TableRow
                 key={candidate.userId}
                 className={shouldReduceMotion ? '' : 'animate-fade-in'}
@@ -330,6 +440,15 @@ export function AdminUsersTable({
               >
                 <TableCell className="font-medium">{candidate.name}</TableCell>
                 <TableCell>{candidate.email}</TableCell>
+                {showTenantColumn && (
+                  <TableCell>
+                    {isUserWithTenant(candidate) ? (
+                      <span className="text-sm">{candidate.tenantName}</span>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                )}
                 <TableCell>{getRoleBadge(candidate.role, candidate.tenantRole)}</TableCell>
                 <TableCell>{getStatusBadge(candidate.isActive, candidate.expiresAt)}</TableCell>
                 <TableCell>{format(new Date(candidate.createdAt), 'dd/MM/yyyy')}</TableCell>
@@ -370,10 +489,7 @@ export function AdminUsersTable({
                         </AlertDialogHeader>
                         <AlertDialogFooter>
                           <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                          <Button
-                            onClick={() => handleDeleteUser(candidate.userId)}
-                            variant="destructive"
-                          >
+                          <Button onClick={() => handleDeleteUser(candidate.userId)} variant="destructive">
                             Eliminar
                           </Button>
                         </AlertDialogFooter>
@@ -386,6 +502,30 @@ export function AdminUsersTable({
           </TableBody>
         </Table>
       </motion.div>
+
+      {(onPageChange ? filteredUsers.length > 0 : paginatedUsers.length > 0) && (
+        <div className="flex items-center justify-between px-1">
+          <p className="text-sm text-muted-foreground">
+            Página {effectivePage} de {totalPages}
+          </p>
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  onClick={() => handlePageChange(Math.max(1, effectivePage - 1))}
+                  className={effectivePage === 1 ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                />
+              </PaginationItem>
+              <PaginationItem>
+                <PaginationNext
+                  onClick={() => handlePageChange(Math.min(totalPages, effectivePage + 1))}
+                  className={effectivePage === totalPages ? 'pointer-events-none opacity-50' : 'cursor-pointer'}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
 
       {filteredUsers.length === 0 && (
         <div className="rounded-xl border border-dashed border-border/70 bg-muted/20 py-8 text-center text-muted-foreground dark:bg-muted/10">

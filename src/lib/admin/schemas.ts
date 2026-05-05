@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { APP_USER_ROLES } from '@/lib/auth/roles';
+import { APP_USER_ROLES, TENANT_ROLES } from '@/lib/auth/roles';
 
 const roleSchema = z.enum(APP_USER_ROLES);
 
@@ -13,6 +13,7 @@ export const createUserBodySchema = z.object({
   email: z.string().trim().email(),
   password: z.string().min(6),
   role: roleSchema.default('regularUser'),
+  tenantRole: z.enum(['manager', 'admin', 'economico', 'dependiente']).optional(),
   daysToExpire: z.number().int().positive().max(3650).optional(),
 });
 
@@ -22,6 +23,7 @@ export const updateUserBodySchema = z
     email: z.string().trim().email().optional(),
     password: z.string().min(6).optional(),
     role: roleSchema.optional(),
+    tenantRole: z.enum(['manager', 'admin', 'economico', 'dependiente']).optional(),
     isActive: z.boolean().optional(),
     daysToExpire: z.number().int().positive().max(3650).optional(),
   })
@@ -69,4 +71,18 @@ export const userMetricsQuerySchema = z.object({
 
 export const migrateCuentasPorPagarBodySchema = z.object({
   dryRun: z.boolean().optional(),
+});
+
+export const globalUsersQuerySchema = z.object({
+  tenantId: z.string().uuid().optional(),
+  search: z.string().max(100).optional(),
+  role: z.string().optional(),
+  isActive: z
+    .string()
+    .transform((val) => val === 'true')
+    .optional(),
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().positive().max(100).default(25),
+  sortBy: z.enum(['name', 'email', 'createdAt', 'expiresAt']).default('createdAt'),
+  sortOrder: z.enum(['asc', 'desc']).default('desc'),
 });

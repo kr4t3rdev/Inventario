@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import {
   AlertTriangle,
+  Building2,
   Clock,
   Plus,
   RefreshCw,
@@ -27,16 +28,11 @@ import {
   AnimatedCard,
 } from '@/components/ui/animations';
 import { useAuth } from '@/contexts/auth-context';
-import { useGetUserMetricsQuery, useGetUserQuery, useGetTenantLicenseQuery } from '@/lib/redux/services/adminApi';
+import { useGetGlobalUsersQuery, useGetGlobalUserMetricsQuery } from '@/lib/redux/services/adminApi';
 import { motion, type Variants } from 'framer-motion';
 
-const UserActivityCharts = dynamic(
-  () => import('@/components/admin/user-activity-charts').then((mod) => mod.UserActivityCharts),
-  { ssr: false },
-);
-
-const TemporalDashboard = dynamic(
-  () => import('@/components/admin/temporal-dashboard').then((mod) => mod.TemporalDashboard),
+const UserAnalyticsPanel = dynamic(
+  () => import('@/components/admin/user-analytics-panel').then((mod) => mod.UserAnalyticsPanel),
   { ssr: false },
 );
 
@@ -102,11 +98,12 @@ export default function AdminUsersPage(): React.JSX.Element {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<Usuario | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const { data: users, isLoading, refetch: refetchUsers } = useGetUserQuery();
-  const { refetch: refetchMetrics } = useGetUserMetricsQuery({ months: 6 });
-  const { data: tenantLicense, isLoading: licenseLoading } = useGetTenantLicenseQuery();
+  const { data: globalUsers, isLoading, refetch: refetchGlobalUsers } = useGetGlobalUsersQuery({ limit: 1000 });
+  const { refetch: refetchMetrics } = useGetGlobalUserMetricsQuery({ months: 6 });
 
-  const safeUsers = users ?? [];
+  const safeUsers = globalUsers?.users ?? [];
+  const total = globalUsers?.total ?? 0;
+  const uniqueTenants = new Set(safeUsers.map((u) => u.tenantId)).size;
   const activeUsers = safeUsers.filter((candidate) => candidate.isActive).length;
   const inactiveUsers = safeUsers.filter((candidate) => !candidate.isActive).length;
   const adminUsers = safeUsers.filter((candidate) => {
@@ -130,11 +127,12 @@ export default function AdminUsersPage(): React.JSX.Element {
     { title: 'Administradores', value: adminUsers, description: 'Con permisos completos', icon: Shield, valueClassName: 'text-sky-600 dark:text-sky-400' },
     { title: 'Bloqueados', value: lockedUsers, description: 'Por intentos fallidos', icon: AlertTriangle, valueClassName: 'text-violet-600 dark:text-violet-400' },
     { title: 'Expiran Pronto', value: expiringSoon, description: 'En los próximos 7 días', icon: Clock, valueClassName: 'text-amber-600 dark:text-amber-400' },
-  ], [activeUsers, adminUsers, expiringSoon, inactiveUsers, lockedUsers, safeUsers.length]);
+    { title: 'Empresas', value: uniqueTenants, description: 'Con usuarios registrados', icon: Building2, valueClassName: 'text-teal-600 dark:text-teal-400' },
+  ], [activeUsers, adminUsers, expiringSoon, inactiveUsers, lockedUsers, safeUsers.length, uniqueTenants]);
 
   const handleRefresh = async (): Promise<void> => {
     setIsRefreshing(true);
-    try { await Promise.all([refetchUsers(), refetchMetrics()]); }
+    try { await Promise.all([refetchGlobalUsers(), refetchMetrics()]); }
     catch (error) { console.error('Error al refrescar datos:', error); }
     finally { setIsRefreshing(false); }
   };
@@ -144,7 +142,7 @@ export default function AdminUsersPage(): React.JSX.Element {
   };
 
   const handleDialogClose = (): void => {
-    setCreateDialogOpen(false); setEditDialogOpen(false); setSelectedUser(null); refetchUsers();
+    setCreateDialogOpen(false); setEditDialogOpen(false); setSelectedUser(null); refetchGlobalUsers();
   };
 
   return (
@@ -234,7 +232,7 @@ export default function AdminUsersPage(): React.JSX.Element {
 
           {/* Stat Cards */}
           <motion.div
-            className="grid grid-cols-1 gap-4 px-4 md:grid-cols-2 lg:grid-cols-5 lg:px-6"
+            className="grid grid-cols-1 gap-4 px-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 lg:px-6"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4, duration: 0.5 }}
@@ -258,90 +256,6 @@ export default function AdminUsersPage(): React.JSX.Element {
             })}
           </motion.div>
 
-          {/* Plan Consumption Card */}
-          {tenantLicense && (
-            <motion.div
-              className="px-4 lg:px-6"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5, duration: 0.5 }}
-            >
-              <Card className="rounded-xl border bg-card shadow-sm">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2 text-base">
-                    <Shield className="h-4 w-4 text-violet-600" />
-                    Plan {tenantLicense.license?.plan?.nombre ?? 'Sin plan'}
-                    {tenantLicense.tenantRole && (
-                      <span className="ml-auto text-xs font-normal text-muted-foreground">
-                        Tu rol: {tenantLicense.tenantRole}
-                      </span>
-                    )}
-                  </CardTitle>
-                  <CardDescription>
-                    Consumo de recursos del plan
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                    {[
-                      {
-                        label: 'Usuarios',
-                        current: tenantLicense.consumption.usuarios,
-                        max: tenantLicense.limits.maxUsuarios,
-                        icon: User,
-                      },
-                      {
-                        label: 'Almacenes',
-                        current: tenantLicense.consumption.almacenes,
-                        max: tenantLicense.limits.maxAlmacenes,
-                        icon: Shield,
-                      },
-                      {
-                        label: 'Productos',
-                        current: tenantLicense.consumption.productos,
-                        max: tenantLicense.limits.maxProductos,
-                        icon: Shield,
-                      },
-                    ].map((item) => {
-                      const pct = item.max > 0 ? Math.round((item.current / item.max) * 100) : 0;
-                      const Icon = item.icon;
-                      return (
-                        <div key={item.label} className="space-y-2 rounded-lg border p-3">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="flex items-center gap-1.5 text-muted-foreground">
-                              <Icon className="h-3.5 w-3.5" />
-                              {item.label}
-                            </span>
-                            <span className="font-medium">
-                              {item.current}/{item.max}
-                            </span>
-                          </div>
-                          <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                            <motion.div
-                              className={`h-full rounded-full ${
-                                pct >= 90
-                                  ? 'bg-rose-500'
-                                  : pct >= 70
-                                    ? 'bg-amber-500'
-                                    : 'bg-emerald-500'
-                              }`}
-                              initial={{ width: 0 }}
-                              animate={{ width: `${Math.min(pct, 100)}%` }}
-                              transition={{ duration: 0.8, ease: 'easeOut' }}
-                            />
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            {pct}% utilizado
-                          </p>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          )}
-
           {/* Users Table */}
           <motion.div
             className="px-4 lg:px-6"
@@ -357,32 +271,24 @@ export default function AdminUsersPage(): React.JSX.Element {
               <CardContent>
                 <AdminUsersTable
                   users={safeUsers}
+                  total={total}
                   isLoading={isLoading}
+                  showTenantColumn={true}
                   onEditUser={handleEditUser}
-                  onRefresh={refetchUsers}
+                  onRefresh={refetchGlobalUsers}
                 />
               </CardContent>
             </Card>
           </motion.div>
 
-          {/* Activity Charts */}
+          {/* User Analytics */}
           <motion.div
             className="px-4 lg:px-6"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6, duration: 0.5 }}
           >
-            <UserActivityCharts />
-          </motion.div>
-
-          {/* Temporal Dashboard */}
-          <motion.div
-            className="px-4 lg:px-6"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.7, duration: 0.5 }}
-          >
-            <TemporalDashboard />
+            <UserAnalyticsPanel />
           </motion.div>
 
           {/* User Monitoring Panel */}
@@ -390,7 +296,7 @@ export default function AdminUsersPage(): React.JSX.Element {
             className="px-4 lg:px-6"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8, duration: 0.5 }}
+            transition={{ delay: 0.7, duration: 0.5 }}
           >
             <UserMonitoringPanel />
           </motion.div>

@@ -22,9 +22,15 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const parsedQuery = userMetricsQuerySchema.safeParse({
-      months: searchParams.get('months') ?? undefined,
-    });
+    const months = searchParams.get('months') ?? undefined;
+    const requestTenantId = searchParams.get('tenantId') ?? undefined;
+
+    // Global admin puede filtrar por tenant via query param
+    const effectiveTenantId = requestTenantId && authUser.role === 'admin'
+      ? requestTenantId
+      : tenantId;
+
+    const parsedQuery = userMetricsQuerySchema.safeParse({ months });
 
     if (!parsedQuery.success) {
       return NextResponse.json(
@@ -33,7 +39,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const metrics = await getUserMetrics(prisma, parsedQuery.data.months, tenantId);
+    const metrics = await getUserMetrics(prisma, parsedQuery.data.months, effectiveTenantId);
 
     return NextResponse.json(metrics);
   } catch (error) {

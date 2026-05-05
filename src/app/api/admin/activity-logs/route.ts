@@ -4,6 +4,7 @@ import { authenticateUser } from '@/lib/auth-middleware';
 import { activityLogBodySchema, activityLogQuerySchema } from '@/lib/admin/schemas';
 import { isAdminRole } from '@/lib/auth/roles';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@/generated/prisma';
 
 export async function POST(request: NextRequest) {
   try {
@@ -51,10 +52,11 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const parsed = activityLogQuerySchema.safeParse({
-      userId: searchParams.get('userId') ?? undefined,
-      limit: searchParams.get('limit') ?? undefined,
-    });
+    const userId = searchParams.get('userId') ?? undefined;
+    const limit = searchParams.get('limit') ?? undefined;
+    const tenantId = searchParams.get('tenantId') ?? undefined;
+
+    const parsed = activityLogQuerySchema.safeParse({ userId, limit });
 
     if (!parsed.success) {
       return NextResponse.json(
@@ -63,7 +65,20 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const where = parsed.data.userId ? { userId: parsed.data.userId } : {};
+    let where: Prisma.UserActivityLogWhereInput = parsed.data.userId
+      ? { userId: parsed.data.userId }
+      : {};
+
+    if (tenantId && authUser.role === 'admin') {
+      const tenantUserIds = await prisma.tenantMembership.findMany({
+        where: { tenantId, isActive: true },
+        select: { userId: true },
+      });
+      where = {
+        ...where,
+        userId: { in: tenantUserIds.map((m) => m.userId) },
+      };
+    }
 
     const logs = await prisma.userActivityLog.findMany({
       where,

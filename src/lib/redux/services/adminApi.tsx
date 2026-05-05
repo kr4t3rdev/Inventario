@@ -1,6 +1,11 @@
 import { apiSlice } from "./apiSlice";
 import { Usuario, UserActivityLog, UserSession } from "../../../app/models/model";
 import type { AppUserRole } from "@/lib/auth/roles";
+import type {
+  UsuarioWithTenant,
+  GlobalUsersResponse,
+  GlobalUsersQuery,
+} from "@/lib/types/admin";
 
 type MonthlyData = {
     year: number;
@@ -36,6 +41,7 @@ type CreateUserPayload = {
     email: string;
     password: string;
     role: AppUserRole;
+    tenantRole?: string;
     daysToExpire?: number;
 };
 
@@ -45,6 +51,7 @@ type UpdateUserPayload = {
     email?: string;
     password?: string;
     role?: string;
+    tenantRole?: string;
     isActive?: boolean;
     daysToExpire?: number;
 };
@@ -126,7 +133,7 @@ export const adminApi = apiSlice.injectEndpoints({
                 body: user,
             }),
 
-            invalidatesTags:['Admin']
+            invalidatesTags:['Admin', 'GlobalUsers']
         }),
 
         updateUser: builder.mutation<Usuario, UpdateUserPayload>({
@@ -135,7 +142,7 @@ export const adminApi = apiSlice.injectEndpoints({
                 method: 'PUT',
                 body: patch,
             }),
-            invalidatesTags: (result, error, { userId }) => [{ type: "Admin", userId }],
+            invalidatesTags: (result, error, { userId }) => [{ type: "Admin", userId }, 'GlobalUsers'],
         }),
 
         deleteUser: builder.mutation<{ success: boolean; userId: string }, string>({
@@ -143,21 +150,21 @@ export const adminApi = apiSlice.injectEndpoints({
                 url: `/admin/users/${userId}`,
                 method: 'DELETE',
             }),
-            invalidatesTags: ['Admin'],
+            invalidatesTags: ['Admin', 'GlobalUsers'],
         }),
 
-        getActivityLogs: builder.query<UserActivityLog[], { userId?: string; limit?: number }>({
-            query: ({ userId, limit }) => ({
+        getActivityLogs: builder.query<UserActivityLog[], { userId?: string; limit?: number; tenantId?: string }>({
+            query: ({ userId, limit, tenantId }) => ({
                 url: '/admin/activity-logs',
-                params: userId ? { userId, limit } : { limit },
+                params: { ...(userId ? { userId } : {}), ...(limit ? { limit } : {}), ...(tenantId ? { tenantId } : {}) },
             }),
             providesTags: ['ActivityLogs'],
         }),
 
-        getSessions: builder.query<UserSession[], { userId?: string }>({
-            query: ({ userId }) => ({
+        getSessions: builder.query<UserSession[], { userId?: string; tenantId?: string }>({
+            query: ({ userId, tenantId }) => ({
                 url: '/admin/sessions',
-                params: userId ? { userId } : {},
+                params: { ...(userId ? { userId } : {}), ...(tenantId ? { tenantId } : {}) },
             }),
             providesTags: ['Sessions'],
         }),
@@ -176,7 +183,7 @@ export const adminApi = apiSlice.injectEndpoints({
                 method: 'POST',
                 body: { userId },
             }),
-            invalidatesTags: ['Admin', 'ActivityLogs'],
+            invalidatesTags: ['Admin', 'ActivityLogs', 'GlobalUsers'],
         }),
 
         getUserLoginHistory: builder.query<{
@@ -197,7 +204,7 @@ export const adminApi = apiSlice.injectEndpoints({
                 method: 'POST',
                 body: { userId, reason },
             }),
-            invalidatesTags: ['Admin', 'ActivityLogs', 'LoginHistory'],
+            invalidatesTags: ['Admin', 'ActivityLogs', 'LoginHistory', 'GlobalUsers'],
         }),
 
         getExpiringSoon: builder.query<{
@@ -277,6 +284,23 @@ export const adminApi = apiSlice.injectEndpoints({
             query: () => '/admin/system',
             providesTags: ['AdminSystem'],
         }),
+
+        // ── Global Admin User Endpoints ──
+        getGlobalUsers: builder.query<GlobalUsersResponse, GlobalUsersQuery>({
+            query: (params) => ({
+                url: '/admin/global/users',
+                params,
+            }),
+            providesTags: ['GlobalUsers'],
+        }),
+
+        getGlobalUserMetrics: builder.query<UserMetricsResponse, { months?: number; tenantId?: string }>({
+            query: ({ months, tenantId }) => ({
+                url: '/admin/global/users/metrics',
+                params: { ...(months ? { months } : {}), ...(tenantId ? { tenantId } : {}) },
+            }),
+            providesTags: ['GlobalUserMetrics'],
+        }),
     })
 })
 
@@ -298,4 +322,6 @@ export const {
     useGetAdminTenantsQuery,
     useGetAdminFinanceQuery,
     useGetAdminSystemQuery,
+    useGetGlobalUsersQuery,
+    useGetGlobalUserMetricsQuery,
 } = adminApi

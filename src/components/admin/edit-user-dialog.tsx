@@ -22,6 +22,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { useUpdateUserMutation } from '@/lib/redux/services/adminApi';
+import { updateUserBodySchema } from '@/lib/admin/schemas';
 
 interface EditUserDialogProps {
   open: boolean;
@@ -34,6 +35,7 @@ interface EditUserFormState {
   email: string;
   password: string;
   role: AppUserRole;
+  tenantRole: string;
   isActive: boolean;
   daysToExpire: string;
 }
@@ -43,6 +45,7 @@ const INITIAL_FORM_STATE: EditUserFormState = {
   email: '',
   password: '',
   role: 'regularUser',
+  tenantRole: '',
   isActive: true,
   daysToExpire: '',
 };
@@ -56,6 +59,7 @@ export function EditUserDialog({ open, onClose, user }: EditUserDialogProps): Re
   const shouldReduceMotion = useReducedMotion();
   const [formData, setFormData] = useState<EditUserFormState>(INITIAL_FORM_STATE);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [updateUser] = useUpdateUserMutation();
 
   useEffect(() => {
@@ -68,6 +72,7 @@ export function EditUserDialog({ open, onClose, user }: EditUserDialogProps): Re
       email: user.email || '',
       password: '',
       role: (user.role as EditUserFormState['role']) || 'regularUser',
+      tenantRole: user.tenantRole || '',
       isActive: Boolean(user.isActive),
       daysToExpire: '',
     });
@@ -89,6 +94,10 @@ export function EditUserDialog({ open, onClose, user }: EditUserDialogProps): Re
     setFormData((prev) => ({ ...prev, role: value as EditUserFormState['role'] }));
   }, []);
 
+  const handleTenantRoleChange = useCallback((value: string) => {
+    setFormData((prev) => ({ ...prev, tenantRole: value }));
+  }, []);
+
   const handleIsActiveChange = useCallback((checked: boolean) => {
     setFormData((prev) => ({ ...prev, isActive: checked }));
   }, []);
@@ -99,21 +108,40 @@ export function EditUserDialog({ open, onClose, user }: EditUserDialogProps): Re
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
+    setErrors({});
+
+    const parsedDays = formData.daysToExpire
+      ? Number.parseInt(formData.daysToExpire, 10)
+      : undefined;
+
+    const payload: Record<string, unknown> = {
+      name: formData.name.trim(),
+      email: formData.email.trim(),
+      role: formData.role,
+      isActive: formData.isActive,
+    };
+    if (formData.password) payload.password = formData.password;
+    if (formData.tenantRole) payload.tenantRole = formData.tenantRole;
+    if (parsedDays && !Number.isNaN(parsedDays)) payload.daysToExpire = parsedDays;
+
+    const validation = updateUserBodySchema.safeParse(payload);
+
+    if (!validation.success) {
+      const fieldErrors: Record<string, string> = {};
+      for (const issue of validation.error.issues) {
+        const field = issue.path[0] as string;
+        fieldErrors[field] = issue.message;
+      }
+      setErrors(fieldErrors);
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const parsedDays = formData.daysToExpire
-        ? Number.parseInt(formData.daysToExpire, 10)
-        : undefined;
-
       await updateUser({
         userId: user.userId,
-        name: formData.name.trim(),
-        email: formData.email.trim(),
-        role: formData.role,
-        isActive: formData.isActive,
-        ...(formData.password ? { password: formData.password } : {}),
-        ...(parsedDays && !Number.isNaN(parsedDays) ? { daysToExpire: parsedDays } : {}),
+        ...validation.data,
       }).unwrap();
 
       toast.success('Usuario actualizado correctamente');
@@ -160,13 +188,13 @@ export function EditUserDialog({ open, onClose, user }: EditUserDialogProps): Re
           <div className="grid gap-4 py-1">
              <div className="space-y-2">
                <Label htmlFor="edit-name">Nombre</Label>
-               <Input
-                 id="edit-name"
-                 value={formData.name}
-                 onChange={handleNameChange}
-                 className="h-11 border-slate-200 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50"
-                 required
-               />
+                <Input
+                  id="edit-name"
+                  value={formData.name}
+                  onChange={handleNameChange}
+                  className={`h-11 border-slate-200 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50 ${errors.name ? 'border-rose-500' : ''}`}
+                />
+                {errors.name && <p className="text-xs text-rose-500">{errors.name}</p>}
              </div>
 
              <div className="space-y-2">
@@ -194,41 +222,62 @@ export function EditUserDialog({ open, onClose, user }: EditUserDialogProps): Re
                />
              </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-               <div className="space-y-2">
-                   <Label htmlFor="edit-role">Tipo de usuario</Label>
-                 <Select
-                   value={formData.role}
-                   onValueChange={handleRoleChange}
-                 >
-                   <SelectTrigger id="edit-role" className="h-11 border-slate-200 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50">
-                     <SelectValue />
-                   </SelectTrigger>
-                   <SelectContent>
-                       <SelectItem value="regularUser">Usuario legado</SelectItem>
-                     <SelectItem value="dependiente">Dependiente</SelectItem>
-                     <SelectItem value="admin">Administrador</SelectItem>
-                   </SelectContent>
-                 </Select>
+             <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-role">Rol de plataforma</Label>
+                  <Select
+                    value={formData.role}
+                    onValueChange={handleRoleChange}
+                  >
+                    <SelectTrigger id="edit-role" className="h-11 border-slate-200 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="admin">Administrador</SelectItem>
+                      <SelectItem value="dependiente">Dependiente</SelectItem>
+                      <SelectItem value="regularUser">Usuario legado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Identidad global del usuario en el sistema.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-tenant-role">Rol en el tenant</Label>
+                  <Select
+                    value={formData.tenantRole || ''}
+                    onValueChange={handleTenantRoleChange}
+                  >
+                    <SelectTrigger id="edit-tenant-role" className="h-11 border-slate-200 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50">
+                      <SelectValue placeholder="Sin cambio" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="manager">Manager</SelectItem>
+                      <SelectItem value="admin">Administrador</SelectItem>
+                      <SelectItem value="economico">Económico</SelectItem>
+                      <SelectItem value="dependiente">Dependiente</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Permisos operativos dentro de la empresa.
+                  </p>
+                </div>
+             </div>
+
+             <div className="flex items-center justify-between rounded-lg border border-slate-200/70 bg-slate-50/70 p-3 dark:border-slate-700/70 dark:bg-slate-800/40">
+               <div className="space-y-0.5">
+                 <Label htmlFor="edit-is-active">Usuario Activo</Label>
                  <p className="text-xs text-muted-foreground">
-                     El tipo operativo del tenant se conserva en la membresía activa.
+                   Controla acceso al sistema en tiempo real.
                  </p>
                </div>
-
-               <div className="space-y-2 rounded-lg border border-slate-200/70 bg-slate-50/70 p-3 dark:border-slate-700/70 dark:bg-slate-800/40">
-                 <Label htmlFor="edit-is-active">Usuario Activo</Label>
-                 <div className="flex items-center justify-between">
-                   <p className="text-xs text-muted-foreground">
-                     Controla acceso al sistema en tiempo real.
-                   </p>
-                   <Switch
-                     id="edit-is-active"
-                     checked={formData.isActive}
-                     onCheckedChange={handleIsActiveChange}
-                   />
-                 </div>
-               </div>
-            </div>
+               <Switch
+                 id="edit-is-active"
+                 checked={formData.isActive}
+                 onCheckedChange={handleIsActiveChange}
+               />
+             </div>
 
              <div className="space-y-2 rounded-lg border border-slate-200/70 bg-slate-50/70 p-3 dark:border-slate-700/70 dark:bg-slate-800/40">
                <Label htmlFor="edit-days">Extender días</Label>

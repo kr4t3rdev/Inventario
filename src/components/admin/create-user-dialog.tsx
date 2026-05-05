@@ -20,6 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAddUserMutation } from '@/lib/redux/services/adminApi';
+import { createUserBodySchema } from '@/lib/admin/schemas';
 
 interface CreateUserDialogProps {
   open: boolean;
@@ -31,6 +32,7 @@ interface CreateUserFormState {
   email: string;
   password: string;
   role: AppUserRole;
+  tenantRole: string;
   daysToExpire: string;
 }
 
@@ -39,6 +41,7 @@ const INITIAL_FORM_STATE: CreateUserFormState = {
   email: '',
   password: '',
   role: 'regularUser',
+  tenantRole: '',
   daysToExpire: '',
 };
 
@@ -57,23 +60,39 @@ export function CreateUserDialog({ open, onClose }: CreateUserDialogProps): Reac
     setFormData(INITIAL_FORM_STATE);
   };
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>): Promise<void> => {
     event.preventDefault();
+    setErrors({});
+
+    const parsedDays = formData.daysToExpire
+      ? Number.parseInt(formData.daysToExpire, 10)
+      : undefined;
+
+    const validation = createUserBodySchema.safeParse({
+      name: formData.name.trim(),
+      email: formData.email.trim(),
+      password: formData.password,
+      role: formData.role,
+      tenantRole: formData.tenantRole || undefined,
+      daysToExpire: Number.isNaN(parsedDays) ? undefined : parsedDays,
+    });
+
+    if (!validation.success) {
+      const fieldErrors: Record<string, string> = {};
+      for (const issue of validation.error.issues) {
+        const field = issue.path[0] as string;
+        fieldErrors[field] = issue.message;
+      }
+      setErrors(fieldErrors);
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const parsedDays = formData.daysToExpire
-        ? Number.parseInt(formData.daysToExpire, 10)
-        : undefined;
-
-      await addUser({
-        name: formData.name.trim(),
-        email: formData.email.trim(),
-        password: formData.password,
-        role: formData.role,
-        daysToExpire: Number.isNaN(parsedDays) ? undefined : parsedDays,
-      }).unwrap();
-
+      await addUser(validation.data).unwrap();
       toast.success('Usuario creado exitosamente');
       resetForm();
       onClose();
@@ -125,9 +144,9 @@ export function CreateUserDialog({ open, onClose }: CreateUserDialogProps): Reac
                 value={formData.name}
                 onChange={(event) => setFormData({ ...formData, name: event.target.value })}
                 placeholder="Nombre completo"
-                className="h-11 border-slate-200 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50"
-                required
+                className={`h-11 border-slate-200 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50 ${errors.name ? 'border-rose-500' : ''}`}
               />
+              {errors.name && <p className="text-xs text-rose-500">{errors.name}</p>}
             </div>
 
             <div className="space-y-2">
@@ -138,9 +157,9 @@ export function CreateUserDialog({ open, onClose }: CreateUserDialogProps): Reac
                 value={formData.email}
                 onChange={(event) => setFormData({ ...formData, email: event.target.value })}
                 placeholder="usuario@empresa.com"
-                className="h-11 border-slate-200 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50"
-                required
+                className={`h-11 border-slate-200 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50 ${errors.email ? 'border-rose-500' : ''}`}
               />
+              {errors.email && <p className="text-xs text-rose-500">{errors.email}</p>}
             </div>
 
             <div className="space-y-2">
@@ -151,32 +170,57 @@ export function CreateUserDialog({ open, onClose }: CreateUserDialogProps): Reac
                 value={formData.password}
                 onChange={(event) => setFormData({ ...formData, password: event.target.value })}
                 placeholder="Mínimo 6 caracteres"
-                className="h-11 border-slate-200 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50"
-                required
-                minLength={6}
+                className={`h-11 border-slate-200 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50 ${errors.password ? 'border-rose-500' : ''}`}
               />
+              {errors.password && <p className="text-xs text-rose-500">{errors.password}</p>}
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="create-role">Tipo de usuario</Label>
-              <Select
-                value={formData.role}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, role: value as CreateUserFormState['role'] })
-                }
-              >
-                <SelectTrigger id="create-role" className="h-11 border-slate-200 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="regularUser">Usuario legado</SelectItem>
-                  <SelectItem value="dependiente">Dependiente</SelectItem>
-                  <SelectItem value="admin">Administrador</SelectItem>
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                El tipo operativo del tenant se asigna automáticamente según la membresía.
-              </p>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="create-role">Rol de plataforma</Label>
+                <Select
+                  value={formData.role}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, role: value as CreateUserFormState['role'] })
+                  }
+                >
+                  <SelectTrigger id="create-role" className="h-11 border-slate-200 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="admin">Administrador</SelectItem>
+                    <SelectItem value="dependiente">Dependiente</SelectItem>
+                    <SelectItem value="regularUser">Usuario legado</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Identidad global del usuario en el sistema.
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="create-tenant-role">Rol en el tenant (opcional)</Label>
+                <Select
+                  value={formData.tenantRole}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, tenantRole: value })
+                  }
+                >
+                  <SelectTrigger id="create-tenant-role" className="h-11 border-slate-200 bg-white/60 dark:border-slate-700 dark:bg-slate-800/50">
+                    <SelectValue placeholder="Auto-asignado" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Auto-asignado</SelectItem>
+                    <SelectItem value="manager">Manager</SelectItem>
+                    <SelectItem value="admin">Administrador</SelectItem>
+                    <SelectItem value="economico">Económico</SelectItem>
+                    <SelectItem value="dependiente">Dependiente</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Si no se especifica, se asigna según el rol de plataforma.
+                </p>
+              </div>
             </div>
 
             <div className="space-y-2 rounded-lg border border-slate-200/70 bg-slate-50/70 p-3 dark:border-slate-700/70 dark:bg-slate-800/40">

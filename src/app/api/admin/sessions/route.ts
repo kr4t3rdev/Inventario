@@ -3,6 +3,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { authenticateUser } from '@/lib/auth-middleware';
 import { deleteSessionQuerySchema } from '@/lib/admin/schemas';
 import { isAdminRole } from '@/lib/auth/roles';
+import { Prisma } from '@/generated/prisma';
 import { prisma } from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
@@ -15,9 +16,21 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
+    const userId = searchParams.get('userId') ?? undefined;
+    const tenantId = searchParams.get('tenantId') ?? undefined;
 
-    const where = userId ? { userId } : {};
+    let where: Prisma.UserSessionWhereInput = userId ? { userId } : {};
+
+    if (tenantId && authUser.role === 'admin') {
+      const tenantUserIds = await prisma.tenantMembership.findMany({
+        where: { tenantId, isActive: true },
+        select: { userId: true },
+      });
+      where = {
+        ...where,
+        userId: { in: tenantUserIds.map((m) => m.userId) },
+      };
+    }
 
     const sessions = await prisma.userSession.findMany({
       where,
