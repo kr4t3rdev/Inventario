@@ -326,12 +326,12 @@ export function AppSidebar2({
           },
           {
             title: "Licencias",
-            url: "/busy/licencias",
+            url: "/admin/licencias",
             icon: Logs,
           },
           {
-            title: "Plan ",
-            url: "/busy/planes",
+            title: "Planes",
+            url: "/admin/planes",
             icon: Wrench
           },
         ],
