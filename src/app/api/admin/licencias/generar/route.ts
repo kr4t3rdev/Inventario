@@ -43,12 +43,20 @@ export const POST = withAuthPost(
       )
     }
 
-    const { planId, cantidad, duracionDias, idempotencyKey } = parsed.data
+    const { planId, usuarioId, cantidad, duracionDias, idempotencyKey } = parsed.data
 
     const plan = await prisma.plan.findUnique({ where: { planId } })
     if (!plan) {
       return NextResponse.json(
         { error: 'Plan no encontrado' },
+        { status: 404 }
+      )
+    }
+
+    const usuario = await prisma.user.findUnique({ where: { userId: usuarioId } })
+    if (!usuario) {
+      return NextResponse.json(
+        { error: 'Usuario no encontrado' },
         { status: 404 }
       )
     }
@@ -91,6 +99,7 @@ export const POST = withAuthPost(
             data: {
               clave,
               planId,
+              usuarioId,
               expiracion,
               activa: true,
             },
@@ -104,7 +113,7 @@ export const POST = withAuthPost(
         // Auditoría batch
         await tx.licenciaAudit.create({
           data: {
-            licenciaId: 'batch',
+            licenciaId: null,
             accion: 'GENERACION_BATCH',
             realizadoPor: user.userId,
             ip: request.headers.get('x-forwarded-for') || 'unknown',
@@ -114,6 +123,8 @@ export const POST = withAuthPost(
               plan: plan.nombre,
               dias,
               planId,
+              usuarioId,
+              usuario: usuario.name,
             }),
           },
         })

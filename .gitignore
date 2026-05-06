@@ -50,6 +50,9 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# python virtual env (not related to project, Turbopack breaks on its symlinks)
+/venv
+
 # env files (can opt-in for committing if needed)
 .env
 .env.local

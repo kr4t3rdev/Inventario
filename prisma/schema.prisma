@@ -536,7 +536,7 @@ model Licencia {
 }
 
 model LicenciaAudit {
-  licenciaId      String
+  licenciaId      String?
   accion          String
   detalles        String?
   realizadoPor    String?
@@ -544,7 +544,7 @@ model LicenciaAudit {
   userAgent       String?
   createdAt       DateTime @default(now())
   licenciaAuditId String   @id @default(cuid())
-  licencia        Licencia @relation(fields: [licenciaId], references: [licenciaId], onDelete: Cascade)
+  licencia        Licencia? @relation(fields: [licenciaId], references: [licenciaId], onDelete: Cascade)
   actor           User?    @relation("LicenciaAuditActor", fields: [realizadoPor], references: [userId])
 
   @@index([licenciaId])

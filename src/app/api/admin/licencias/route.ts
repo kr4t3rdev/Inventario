@@ -145,8 +145,61 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
 
       await tx.user.update({
         where: { userId: usuarioId },
-        data: { expiresAt: expiracion },
+        data: { expiresAt: expiracion, isActive: true },
       })
+
+      // Asegurar compatibilidad con el nuevo sistema de TenantLicense
+      const existingMembership = await tx.tenantMembership.findFirst({
+        where: { userId: usuarioId, isActive: true },
+      })
+
+      if (!existingMembership) {
+        // El usuario no tiene membresía activa: crear tenant, membresía y TenantLicense
+        const slugBase = (usuario.name || 'empresa')
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/(^-|-$)/g, '')
+        const slug = `${slugBase}-${Date.now().toString(36)}`
+
+        const tenant = await tx.tenant.create({
+          data: {
+            nombre: usuario.name || 'Nueva Empresa',
+            slug,
+          },
+        })
+
+        await tx.tenantMembership.create({
+          data: {
+            tenantId: tenant.tenantId,
+            userId: usuarioId,
+            tenantRole: 'manager',
+            isActive: true,
+          },
+        })
+
+        await tx.tenantLicense.create({
+          data: {
+            tenantId: tenant.tenantId,
+            planId,
+            expiracion,
+            maxUsuarios: plan.maxUsuarios,
+            maxAlmacenes: plan.maxAlmacenes,
+            maxProductos: plan.maxProductos,
+          },
+        })
+      } else {
+        // El usuario ya tiene membresía: solo crear TenantLicense para ese tenant
+        await tx.tenantLicense.create({
+          data: {
+            tenantId: existingMembership.tenantId,
+            planId,
+            expiracion,
+            maxUsuarios: plan.maxUsuarios,
+            maxAlmacenes: plan.maxAlmacenes,
+            maxProductos: plan.maxProductos,
+          },
+        })
+      }
 
       await tx.licenciaAudit.create({
         data: {

@@ -302,6 +302,15 @@ export const adminApi = apiSlice.injectEndpoints({
             providesTags: ['GlobalUserMetrics'],
         }),
 
+        approveGlobalUser: builder.mutation<any, { userId: string; body?: { tenantName?: string; planId?: string; licenseDurationDays?: number } }>({
+            query: ({ userId, body }) => ({
+                url: `/admin/global/users/${userId}/approve`,
+                method: 'POST',
+                body,
+            }),
+            invalidatesTags: ['GlobalUsers', 'GlobalUserMetrics', 'AdminLicencias'],
+        }),
+
         // ── Licenses ──
         getAdminLicencias: builder.query<any, { page?: number; limit?: number; planId?: string; activa?: string; search?: string }>({
             query: (params) => ({
@@ -411,6 +420,7 @@ export const {
     useGetAdminSystemQuery,
     useGetGlobalUsersQuery,
     useGetGlobalUserMetricsQuery,
+    useApproveGlobalUserMutation,
     useGetAdminLicenciasQuery,
     useCreateAdminLicenciaMutation,
     useUpdateAdminLicenciaMutation,

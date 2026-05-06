@@ -56,6 +56,7 @@ import {
 import {
   useGetAdminLicenciasQuery,
   useGetAdminPlanesQuery,
+  useGetGlobalUsersQuery,
   useDeleteAdminLicenciaMutation,
   useUpdateAdminLicenciaMutation,
   useGenerateAdminLicenciasMutation,
@@ -80,6 +81,7 @@ export default function AdminLicenciasPage() {
   })
 
   const { data: planesData } = useGetAdminPlanesQuery({})
+  const { data: usersData } = useGetGlobalUsersQuery({ limit: 100 })
   const [deleteLicencia] = useDeleteAdminLicenciaMutation()
   const [updateLicencia] = useUpdateAdminLicenciaMutation()
   const [generateLicencias] = useGenerateAdminLicenciasMutation()
@@ -89,6 +91,7 @@ export default function AdminLicenciasPage() {
   const pages = data?.pages || 1
 
   const planes = planesData?.planes || []
+  const users = usersData?.users || []
 
   // Métricas
   const activas = licencias.filter((l: any) => l.activa && new Date(l.expiracion) > new Date()).length
@@ -433,6 +436,7 @@ export default function AdminLicenciasPage() {
         open={generarDialogOpen}
         onClose={() => setGenerarDialogOpen(false)}
         planes={planes}
+        users={users}
         onGenerate={async (data) => {
           try {
             await generateLicencias(data).unwrap()
@@ -451,14 +455,17 @@ function GenerarLicenciasDialog({
   open,
   onClose,
   planes,
+  users,
   onGenerate,
 }: {
   open: boolean
   onClose: () => void
   planes: any[]
+  users: any[]
   onGenerate: (data: any) => void
 }) {
   const [planId, setPlanId] = useState('')
+  const [usuarioId, setUsuarioId] = useState('')
   const [cantidad, setCantidad] = useState(1)
   const [duracionDias, setDuracionDias] = useState('')
 
@@ -470,6 +477,21 @@ function GenerarLicenciasDialog({
           <DialogDescription>Genera claves de licencia automáticamente</DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <label className="text-sm font-medium">Usuario</label>
+            <Select value={usuarioId} onValueChange={setUsuarioId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar usuario" />
+              </SelectTrigger>
+              <SelectContent>
+                {users.map((user: any) => (
+                  <SelectItem key={user.userId} value={user.userId}>
+                    {user.name} ({user.email})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="grid gap-2">
             <label className="text-sm font-medium">Plan</label>
             <Select value={planId} onValueChange={setPlanId}>
@@ -511,11 +533,12 @@ function GenerarLicenciasDialog({
             onClick={() =>
               onGenerate({
                 planId,
+                usuarioId,
                 cantidad,
                 ...(duracionDias ? { duracionDias: parseInt(duracionDias) } : {}),
               })
             }
-            disabled={!planId}
+            disabled={!planId || !usuarioId}
           >
             Generar
           </Button>

@@ -17,26 +17,27 @@ export const updatePlanSchema = planSchema.partial().refine(
 
 export const licenciaSchema = z.object({
   clave: z.string().trim().min(1).optional(),
-  usuarioId: z.string().uuid('Usuario inválido'),
-  planId: z.string().uuid('Plan inválido'),
+  usuarioId: z.string().min(1, 'Usuario inválido'),
+  planId: z.string().min(1, 'Plan inválido'),
   duracionDias: z.number().int().positive().optional(),
 })
 
 export const updateLicenciaSchema = z.object({
   activa: z.boolean().optional(),
   expiracion: z.string().datetime().optional(),
-  usuarioId: z.string().uuid().optional(),
+  usuarioId: z.string().min(1).optional(),
 })
 
 export const generarLicenciasSchema = z.object({
-  planId: z.string().uuid('Plan inválido'),
+  planId: z.string().min(1, 'Plan inválido'),
+  usuarioId: z.string().min(1, 'Usuario inválido'),
   cantidad: z.number().int().min(1).max(200).default(1),
   duracionDias: z.number().int().positive().optional(),
   idempotencyKey: z.string().optional(),
 })
 
 export const licenciaQuerySchema = z.object({
-  planId: z.string().uuid().optional(),
+  planId: z.string().min(1).optional(),
   activa: z.enum(['true', 'false']).optional(),
   search: z.string().max(100).optional(),
   page: z.coerce.number().int().positive().default(1),

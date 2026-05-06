@@ -13,6 +13,7 @@ import {
   Loader2,
   Search,
   Shield,
+  ShieldCheck,
   Trash2,
   User,
   XCircle,
@@ -56,6 +57,7 @@ interface AdminUsersTableProps {
   onRefresh: () => Promise<unknown> | void;
   onPageChange?: (page: number) => void;
   onSortChange?: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
+  onApproveUser?: (user: Usuario) => void;
 }
 
 type RoleFilter = 'all' | 'manager' | 'admin' | 'economico' | 'dependiente' | 'regularUser';
@@ -80,6 +82,7 @@ export function AdminUsersTable({
   onRefresh,
   onPageChange,
   onSortChange,
+  onApproveUser,
 }: AdminUsersTableProps): React.JSX.Element {
   const shouldReduceMotion = useReducedMotion();
   const [searchTerm, setSearchTerm] = useState('');
@@ -100,7 +103,7 @@ export function AdminUsersTable({
   const perPage = 25;
 
   const isUserWithTenant = (u: Usuario | UsuarioWithTenant): u is UsuarioWithTenant =>
-    'tenantName' in u;
+    'tenantName' in u && u.tenantName !== null && u.tenantName !== undefined;
 
   const filteredUsers = useMemo(() => {
     let filtered = users.filter((candidate) => {
@@ -618,6 +621,16 @@ export function AdminUsersTable({
                 </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
+                      {onApproveUser && candidate.onboardingStatus === 'awaiting_global_approval' && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onApproveUser(candidate)}
+                          className="border-emerald-200 bg-emerald-50 text-emerald-700 transition-all duration-200 hover:shadow-sm hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-400 dark:hover:bg-emerald-900/60"
+                        >
+                          <ShieldCheck className="h-4 w-4" />
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         size="sm"
@@ -667,7 +680,7 @@ export function AdminUsersTable({
             Página {effectivePage} de {totalPages}
           </p>
           <Pagination>
-            <PaginationContent>
+            <PaginationContent className="gap-16">
               <PaginationItem>
                 <PaginationPrevious
                   onClick={() => handlePageChange(Math.max(1, effectivePage - 1))}

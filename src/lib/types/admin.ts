@@ -1,11 +1,11 @@
 import type { Usuario } from '@/app/models/model'
 
 export interface UsuarioWithTenant extends Usuario {
-  tenantId: string
+  tenantId: string | null
   tenantSlug: string | null
-  tenantName: string
-  tenantRole: string
-  membershipId: string
+  tenantName: string | null
+  tenantRole: string | null
+  membershipId: string | null
 }
 
 export interface GlobalUsersResponse {

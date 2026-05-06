@@ -1,9 +1,14 @@
-'use client';
+'use client'
 
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { Button } from '@/components/ui/button';
-import { Player } from '@remotion/player';
 import { NotFoundAnimation } from '../../remotion/not-found-animation';
+
+const Player = dynamic(
+  () => import('@remotion/player').then((mod) => mod.Player),
+  { ssr: false },
+)
 
 /**
  * @description Página 404 personalizada con animación de Remotion

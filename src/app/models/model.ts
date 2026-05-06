@@ -635,11 +635,12 @@ export interface Usuario {
   role:      string
   tenantRole?: string | null
   isActive:  boolean
-  avatar:    string
-  activatedAt: string
-  expiresAt:   string
+  avatar:    string | null
+  activatedAt: string | null
+  expiresAt:   string | null
   createdAt: string
   updatedAt: string
+  onboardingStatus?: string | null
 
   lastModifiedBy: string | null
   loginAttempts: number

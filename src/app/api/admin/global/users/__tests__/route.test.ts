@@ -9,6 +9,9 @@ vi.mock('@/lib/prisma', () => ({
       findMany: vi.fn(),
       count: vi.fn(),
     },
+    user: {
+      findMany: vi.fn(),
+    },
   },
 }))
 
@@ -49,8 +52,28 @@ describe('GET /api/admin/global/users', () => {
     vi.clearAllMocks()
   })
 
-  it('rechaza si no es admin', async () => {
-    vi.mocked(authenticateUser).mockResolvedValueOnce(mockAuth({ role: 'dependiente' }))
+  it('permite acceso a manager de tenant para su propia empresa', async () => {
+    vi.mocked(authenticateUser).mockResolvedValueOnce(mockAuth({ role: 'regularUser', tenantId: 'tenant-1', tenantRole: 'manager' }))
+    vi.mocked(prisma.tenantMembership.findMany).mockResolvedValueOnce([])
+    vi.mocked(prisma.tenantMembership.count).mockResolvedValueOnce(0)
+    vi.mocked(prisma.user.findMany).mockResolvedValueOnce([])
+
+    const request = new NextRequest('http://localhost/api/admin/global/users')
+    const response = await GET(request)
+
+    expect(response.status).toBe(200)
+    // Verifica que se filtró por el tenant del usuario
+    expect(prisma.tenantMembership.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          tenantId: 'tenant-1',
+        }),
+      }),
+    )
+  })
+
+  it('rechaza si no es admin ni manager de tenant', async () => {
+    vi.mocked(authenticateUser).mockResolvedValueOnce(mockAuth({ role: 'dependiente', tenantId: null, tenantRole: null }))
 
     const request = new NextRequest('http://localhost/api/admin/global/users')
     const response = await GET(request)
@@ -97,6 +120,7 @@ describe('GET /api/admin/global/users', () => {
     vi.mocked(authenticateUser).mockResolvedValueOnce(mockAuth())
     vi.mocked(prisma.tenantMembership.findMany).mockResolvedValueOnce(mockMemberships as any)
     vi.mocked(prisma.tenantMembership.count).mockResolvedValueOnce(2)
+    vi.mocked(prisma.user.findMany).mockResolvedValueOnce([])
 
     const request = new NextRequest('http://localhost/api/admin/global/users?page=1&limit=10')
     const response = await GET(request)
@@ -117,11 +141,67 @@ describe('GET /api/admin/global/users', () => {
     })
   })
 
+  it('incluye usuarios pendientes de aprobación global sin membresía', async () => {
+    const mockMemberships = [
+      {
+        membershipId: 'mem-1',
+        tenantId: 'tenant-1',
+        userId: 'user-1',
+        tenantRole: 'admin',
+        user: {
+          userId: 'user-1',
+          name: 'John Doe',
+          email: 'john@test.com',
+          role: 'admin',
+          isActive: true,
+          createdAt: new Date(),
+        },
+        tenant: { nombre: 'Empresa A', slug: 'empresa-a' },
+      },
+    ]
+
+    const mockPendingUsers = [
+      {
+        userId: 'user-pending-1',
+        name: 'Pending User',
+        email: 'pending@test.com',
+        role: 'regularUser',
+        isActive: false,
+        onboardingStatus: 'awaiting_global_approval',
+        onboardingType: 'company',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ]
+
+    vi.mocked(authenticateUser).mockResolvedValueOnce(mockAuth())
+    vi.mocked(prisma.tenantMembership.findMany).mockResolvedValueOnce(mockMemberships as any)
+    vi.mocked(prisma.tenantMembership.count).mockResolvedValueOnce(1)
+    vi.mocked(prisma.user.findMany).mockResolvedValueOnce(mockPendingUsers as any)
+
+    const request = new NextRequest('http://localhost/api/admin/global/users?page=1&limit=10')
+    const response = await GET(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.users).toHaveLength(2)
+    expect(data.total).toBe(2)
+
+    const pendingUser = data.users.find((u: any) => u.userId === 'user-pending-1')
+    expect(pendingUser).toBeDefined()
+    expect(pendingUser.tenantId).toBeNull()
+    expect(pendingUser.tenantName).toBeNull()
+    expect(pendingUser.tenantRole).toBeNull()
+    expect(pendingUser.membershipId).toBeNull()
+    expect(pendingUser.onboardingStatus).toBe('awaiting_global_approval')
+  })
+
   it('filtra por tenantId', async () => {
     const mockAuthResult = mockAuth()
     vi.mocked(authenticateUser).mockResolvedValueOnce(mockAuthResult)
     vi.mocked(prisma.tenantMembership.findMany).mockResolvedValueOnce([])
     vi.mocked(prisma.tenantMembership.count).mockResolvedValueOnce(0)
+    vi.mocked(prisma.user.findMany).mockResolvedValueOnce([])
 
     const request = new NextRequest('http://localhost/api/admin/global/users?tenantId=550e8400-e29b-41d4-a716-446655440000')
     const response = await GET(request)
@@ -140,6 +220,7 @@ describe('GET /api/admin/global/users', () => {
     vi.mocked(authenticateUser).mockResolvedValueOnce(mockAuth())
     vi.mocked(prisma.tenantMembership.findMany).mockResolvedValueOnce([])
     vi.mocked(prisma.tenantMembership.count).mockResolvedValueOnce(0)
+    vi.mocked(prisma.user.findMany).mockResolvedValueOnce([])
 
     const request = new NextRequest('http://localhost/api/admin/global/users?search=john')
     await GET(request)
@@ -162,6 +243,7 @@ describe('GET /api/admin/global/users', () => {
     vi.mocked(authenticateUser).mockResolvedValueOnce(mockAuth())
     vi.mocked(prisma.tenantMembership.findMany).mockResolvedValueOnce([])
     vi.mocked(prisma.tenantMembership.count).mockResolvedValueOnce(0)
+    vi.mocked(prisma.user.findMany).mockResolvedValueOnce([])
 
     const request = new NextRequest('http://localhost/api/admin/global/users?role=admin')
     await GET(request)
@@ -179,6 +261,7 @@ describe('GET /api/admin/global/users', () => {
     vi.mocked(authenticateUser).mockResolvedValueOnce(mockAuth())
     vi.mocked(prisma.tenantMembership.findMany).mockResolvedValueOnce([])
     vi.mocked(prisma.tenantMembership.count).mockResolvedValueOnce(0)
+    vi.mocked(prisma.user.findMany).mockResolvedValueOnce([])
 
     const request = new NextRequest('http://localhost/api/admin/global/users?isActive=true')
     await GET(request)
@@ -196,6 +279,7 @@ describe('GET /api/admin/global/users', () => {
     vi.mocked(authenticateUser).mockResolvedValueOnce(mockAuth())
     vi.mocked(prisma.tenantMembership.findMany).mockResolvedValueOnce([])
     vi.mocked(prisma.tenantMembership.count).mockResolvedValueOnce(0)
+    vi.mocked(prisma.user.findMany).mockResolvedValueOnce([])
 
     const request = new NextRequest('http://localhost/api/admin/global/users?sortBy=name&sortOrder=asc')
     await GET(request)
@@ -220,15 +304,17 @@ describe('GET /api/admin/global/users', () => {
     expect(data.error).toContain('inválidos')
   })
 
-  it('maneja error del servidor', async () => {
+  it('es resiliente ante error en memberships y devuelve lista vacía', async () => {
     vi.mocked(authenticateUser).mockResolvedValueOnce(mockAuth())
     vi.mocked(prisma.tenantMembership.findMany).mockRejectedValueOnce(new Error('DB error'))
+    vi.mocked(prisma.user.findMany).mockResolvedValueOnce([])
 
     const request = new NextRequest('http://localhost/api/admin/global/users')
     const response = await GET(request)
 
-    expect(response.status).toBe(500)
+    expect(response.status).toBe(200)
     const data = await response.json()
-    expect(data.error).toBe('Error interno del servidor')
+    expect(data.users).toHaveLength(0)
+    expect(data.total).toBe(0)
   })
 })

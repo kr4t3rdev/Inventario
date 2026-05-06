@@ -14,6 +14,7 @@ import {
   User,
 } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import { toast } from 'sonner';
 
 import { Usuario } from '@/app/models/model';
 import { AdminUsersTable } from '@/components/admin/admin-users-table';
@@ -22,13 +23,28 @@ import { EditUserDialog } from '@/components/admin/edit-user-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
   PageTransition,
   StaggerContainer,
   StaggerItem,
   AnimatedCard,
 } from '@/components/ui/animations';
 import { useAuth } from '@/contexts/auth-context';
-import { useGetGlobalUsersQuery, useGetGlobalUserMetricsQuery } from '@/lib/redux/services/adminApi';
+import { useApproveGlobalUserMutation, useGetAdminPlanesQuery, useGetGlobalUsersQuery, useGetGlobalUserMetricsQuery } from '@/lib/redux/services/adminApi';
 import { motion, type Variants } from 'framer-motion';
 
 const UserAnalyticsPanel = dynamic(
@@ -96,10 +112,18 @@ export default function AdminUsersPage(): React.JSX.Element {
   const [isPending, startTransition] = useTransition();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [approveDialogOpen, setApproveDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<Usuario | null>(null);
+  const [approveUser, setSelectedApproveUser] = useState<Usuario | null>(null);
+  const [selectedPlanId, setSelectedPlanId] = useState<string>('');
+  const [isApproving, setIsApproving] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const { data: globalUsers, isLoading, refetch: refetchGlobalUsers } = useGetGlobalUsersQuery({ limit: 1000 });
+  const { data: globalUsers, isLoading, refetch: refetchGlobalUsers } = useGetGlobalUsersQuery({ limit: 100 });
   const { refetch: refetchMetrics } = useGetGlobalUserMetricsQuery({ months: 6 });
+  const { data: planesData } = useGetAdminPlanesQuery({});
+  const [approveGlobalUser] = useApproveGlobalUserMutation();
+
+  const planes = planesData?.planes || [];
 
   const safeUsers = globalUsers?.users ?? [];
   const total = globalUsers?.total ?? 0;
@@ -139,6 +163,33 @@ export default function AdminUsersPage(): React.JSX.Element {
 
   const handleEditUser = (candidate: Usuario): void => {
     startTransition(() => { setSelectedUser(candidate); setEditDialogOpen(true); });
+  };
+
+  const handleApproveUser = (candidate: Usuario): void => {
+    setSelectedApproveUser(candidate);
+    setSelectedPlanId('');
+    setApproveDialogOpen(true);
+  };
+
+  const handleConfirmApprove = async (): Promise<void> => {
+    if (!approveUser) return;
+    setIsApproving(true);
+    try {
+      await approveGlobalUser({
+        userId: approveUser.userId,
+        body: selectedPlanId && selectedPlanId !== 'none' ? { planId: selectedPlanId } : undefined,
+      }).unwrap();
+      toast.success('Usuario aprobado correctamente');
+      setApproveDialogOpen(false);
+      setSelectedApproveUser(null);
+      setSelectedPlanId('');
+      refetchGlobalUsers();
+    } catch (error) {
+      console.error('Error aprobando usuario:', error);
+      toast.error('Error aprobando usuario');
+    } finally {
+      setIsApproving(false);
+    }
   };
 
   const handleDialogClose = (): void => {
@@ -275,6 +326,7 @@ export default function AdminUsersPage(): React.JSX.Element {
                   isLoading={isLoading}
                   showTenantColumn={true}
                   onEditUser={handleEditUser}
+                  onApproveUser={handleApproveUser}
                   onRefresh={refetchGlobalUsers}
                 />
               </CardContent>
@@ -307,6 +359,58 @@ export default function AdminUsersPage(): React.JSX.Element {
       {selectedUser && (
         <EditUserDialog open={editDialogOpen} onClose={handleDialogClose} user={selectedUser} />
       )}
+
+      <Dialog open={approveDialogOpen} onOpenChange={setApproveDialogOpen}>
+        <DialogContent className="border-slate-200/70 bg-white/90 backdrop-blur-xl dark:border-slate-700/60 dark:bg-slate-900/90">
+          <DialogHeader>
+            <DialogTitle>Aprobar Usuario</DialogTitle>
+            <DialogDescription>
+              Estás por aprobar a <span className="font-medium">{approveUser?.name}</span> ({approveUser?.email}).
+              Se creará su empresa y se le asignará una licencia.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Plan de licencia (opcional)</label>
+              <Select value={selectedPlanId} onValueChange={setSelectedPlanId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar plan" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Sin plan (licencia básica)</SelectItem>
+                  {planes.map((plan: any) => (
+                    <SelectItem key={plan.planId} value={plan.planId}>
+                      {plan.nombre} - ${plan.precio}/{plan.billingCycle}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setApproveDialogOpen(false);
+                setSelectedApproveUser(null);
+                setSelectedPlanId('');
+              }}
+              disabled={isApproving}
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleConfirmApprove}
+              disabled={isApproving}
+              className="bg-linear-to-r from-emerald-600 to-green-600 text-white hover:from-emerald-600/90 hover:to-green-600/90"
+            >
+              {isApproving ? 'Aprobando...' : 'Aprobar y Crear Empresa'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageTransition>
   );
 }

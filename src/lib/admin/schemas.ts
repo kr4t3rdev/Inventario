@@ -74,7 +74,7 @@ export const migrateCuentasPorPagarBodySchema = z.object({
 });
 
 export const globalUsersQuerySchema = z.object({
-  tenantId: z.string().uuid().optional(),
+  tenantId: z.string().min(1).optional(),
   search: z.string().max(100).optional(),
   role: z.string().optional(),
   isActive: z
