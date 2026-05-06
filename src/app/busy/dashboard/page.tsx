@@ -26,7 +26,7 @@ const SectionCards = dynamic(() => import("@/components/section-cards").then(mod
     >
       {[1, 2, 3, 4].map((i) => (
         <motion.div 
-          key={i}
+          key={`section-card-${i}`}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: i * 0.1 }}
@@ -87,7 +87,7 @@ const ChartAreaInteractive = dynamic(() => import("@/components/chart-area-inter
             >
               {[0, 1, 2].map((dot) => (
                 <motion.div
-                  key={dot}
+                  key={`chart-loader-${dot}`}
                   className="w-2 h-2 rounded-full bg-primary"
                   animate={{ y: [0, -5, 0] }}
                   transition={{
@@ -130,7 +130,7 @@ const TopProductsTable = dynamic(() => import("@/components/top-products-table")
             </motion.div>
           </motion.div>
           <div className="text-center space-y-1">
-            <span className="text-muted-foreground font-medium">Cargando productos...</span>
+             <span className="text-muted-foreground font-medium">Cargando productos...</span>
             <motion.div 
               className="flex justify-center gap-1"
               initial={{ opacity: 0 }}
@@ -139,7 +139,7 @@ const TopProductsTable = dynamic(() => import("@/components/top-products-table")
             >
               {[0, 1, 2].map((dot) => (
                 <motion.div
-                  key={dot}
+                  key={`products-loader-${dot}`}
                   className="w-2 h-2 rounded-full bg-primary"
                   animate={{ y: [0, -5, 0] }}
                   transition={{
@@ -182,7 +182,7 @@ const StockDistributionChart = dynamic(() => import("@/components/stock-distribu
             </motion.div>
           </motion.div>
           <div className="text-center space-y-1">
-            <span className="text-muted-foreground font-medium">Cargando distribución...</span>
+             <span className="text-muted-foreground font-medium">Cargando distribución...</span>
             <motion.div 
               className="flex justify-center gap-1"
               initial={{ opacity: 0 }}
@@ -191,7 +191,7 @@ const StockDistributionChart = dynamic(() => import("@/components/stock-distribu
             >
               {[0, 1, 2].map((dot) => (
                 <motion.div
-                  key={dot}
+                  key={`stock-loader-${dot}`}
                   className="w-2 h-2 rounded-full bg-primary"
                   animate={{ y: [0, -5, 0] }}
                   transition={{
@@ -237,7 +237,7 @@ const StockBajoTable = dynamic(() => import("@/components/stock-bajo-table").the
             </motion.div>
           </motion.div>
           <div className="text-center space-y-1">
-            <span className="text-muted-foreground font-medium">Cargando alertas...</span>
+             <span className="text-muted-foreground font-medium">Cargando alertas...</span>
             <motion.div 
               className="flex justify-center gap-1"
               initial={{ opacity: 0 }}
@@ -246,7 +246,7 @@ const StockBajoTable = dynamic(() => import("@/components/stock-bajo-table").the
             >
               {[0, 1, 2].map((dot) => (
                 <motion.div
-                  key={dot}
+                  key={`alerts-loader-${dot}`}
                   className="w-2 h-2 rounded-full bg-destructive"
                   animate={{ y: [0, -5, 0] }}
                   transition={{
@@ -289,7 +289,7 @@ const TransferenciasStats = dynamic(() => import("@/components/transferencias-st
             </motion.div>
           </motion.div>
           <div className="text-center space-y-1">
-            <span className="text-muted-foreground font-medium">Cargando transferencias...</span>
+             <span className="text-muted-foreground font-medium">Cargando transferencias...</span>
             <motion.div 
               className="flex justify-center gap-1"
               initial={{ opacity: 0 }}
@@ -298,7 +298,7 @@ const TransferenciasStats = dynamic(() => import("@/components/transferencias-st
             >
               {[0, 1, 2].map((dot) => (
                 <motion.div
-                  key={dot}
+                  key={`transfers-loader-${dot}`}
                   className="w-2 h-2 rounded-full bg-primary"
                   animate={{ y: [0, -5, 0] }}
                   transition={{
