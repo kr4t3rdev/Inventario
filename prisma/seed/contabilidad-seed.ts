@@ -122,7 +122,10 @@ export async function seedContabilidad() {
 
   for (const cuenta of cuentasBancarias) {
     await prisma.cuentaBancaria.create({
-      data: cuenta
+      data: {
+        ...cuenta,
+        tenant: { connect: { tenantId: 'demo-tenant' } }
+      }
     })
   }
 

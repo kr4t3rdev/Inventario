@@ -10,7 +10,7 @@ import { Loader2, TrendingUp, TrendingDown, DollarSign, Wallet, Building2, Landm
 import { PageTransition, StaggerContainer, StaggerItem, AnimatedCard } from "@/components/ui/animations"
 import { cn } from "@/lib/utils"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { ContabilidadBreadcrumb } from "@/components/contabilidad/contabilidad-breadcrumb"
+import { ContabilidadBreadcrumb } from "@/features/contabilidad/components/contabilidad-breadcrumb"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 

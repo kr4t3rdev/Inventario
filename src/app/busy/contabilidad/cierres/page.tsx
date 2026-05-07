@@ -1,6 +1,6 @@
 'use client'
 
-import { CierresManager } from "@/components/contabilidad/cierres/CierresManager";
+import { CierresManager } from "@/features/contabilidad/components/cierres/CierresManager";
 
 /**
  * Página principal de cierres contables

@@ -158,7 +158,7 @@ export async function handlePostReconciliacionGastos(request: NextRequest, user:
   const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     return applyPagoGastoWorkflow(tx, {
       tipoGasto: validatedData.tipoGasto, referenciaId, reconciliadoPor: user.userId, descripcion: validatedData.descripcion,
-      monto: Number(validatedData.monto), moneda: validatedData.moneda, tasaCambio: validatedData.tasaCambio, periodo: validatedData.periodo,
+      monto: Number(validatedData.monto), moneda: validatedData.moneda, tenantId: '', tasaCambio: validatedData.tasaCambio, periodo: validatedData.periodo,
       observaciones: validatedData.observaciones, estado: validatedData.estado, cuentaPorPagarId: validatedData.cuentaPorPagarId,
       numeroTransaccion: validatedData.numeroTransaccion, pgId: pgIdResolved, gastosDEId: gastosDEIdResolved, gastoCompraId: gastoCompraIdResolved,
       cuentaId: validatedData.cuentaId, tipoPagoId: validatedData.tipoPagoId, distribucion: validatedData.distribucion

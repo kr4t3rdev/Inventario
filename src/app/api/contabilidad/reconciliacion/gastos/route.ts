@@ -455,6 +455,7 @@ export async function POST(request: NextRequest) {
         descripcion: validatedData.descripcion,
         monto: Number(validatedData.monto),
         moneda: validatedData.moneda,
+        tenantId: user.tenantId ?? '',
         tasaCambio: validatedData.tasaCambio,
         periodo: validatedData.periodo,
         observaciones: validatedData.observaciones,

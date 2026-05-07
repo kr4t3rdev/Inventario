@@ -48,7 +48,7 @@ export async function createSerieFacturacionHandler(request: NextRequest, _conte
     const { prefijo, descripcion, activa, esPorDefecto } = body
     console.log("POST /api/series-facturacion - User:", user?.email, "Data:", { prefijo, descripcion, activa, esPorDefecto })
 
-    const serieExistente = await prisma.serieFacturacion.findUnique({
+    const serieExistente = await prisma.serieFacturacion.findFirst({
       where: { prefijo },
     })
 
@@ -147,7 +147,7 @@ export async function updateSerieFacturacionHandler(request: NextRequest, contex
     }
 
     if (validatedData.prefijo && validatedData.prefijo !== serieExistente.prefijo) {
-      const prefijoExistente = await prisma.serieFacturacion.findUnique({
+      const prefijoExistente = await prisma.serieFacturacion.findFirst({
         where: { prefijo: validatedData.prefijo },
       })
       if (prefijoExistente) {

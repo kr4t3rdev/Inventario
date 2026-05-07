@@ -120,7 +120,7 @@ export function ProductoSalidaForm({
     try {
       const payload = buildProductoSalidaPayload(values, {
         usaEan13,
-        proveedorCodigo: selectedVendor?.proveedorCodigo ?? null,
+        proveedorCodigo: selectedVendor?.vendorCode ?? null,
       });
 
       const response = await addProducto(payload as never).unwrap();

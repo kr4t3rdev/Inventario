@@ -128,6 +128,7 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
       await tx.ordenProduccionHistorial.create({
         data: {
           ordenProduccionId: id,
+          tenantId: orden.tenantId,
           estadoAnterior: PRODUCTION_STATES.EN_PROCESO,
           estadoNuevo: PRODUCTION_STATES.COMPLETADA,
           observaciones: `Producción completada. Costo de materiales: ${costoMateriales}. Stock incrementado: ${orden.cantidad * orden.Receta.rendimiento}`,
@@ -148,6 +149,7 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
         const periodo = `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`;
         await prisma.reconciliacionGasto.create({
           data: {
+            tenantId: ordenActualizada.orden.tenantId,
             tipoGasto: 'produccion',
             referenciaId: id,
             cuentaId: body.cuentaId,

@@ -37,7 +37,7 @@ function ReportesPageLoader() {
 
 const ReportesInventario = dynamic(
   () =>
-    import('@/components/reportes/reportes-inventario').then((mod) => ({
+    import('./reportes-inventario').then((mod) => ({
       default: mod.default,
     })),
   {

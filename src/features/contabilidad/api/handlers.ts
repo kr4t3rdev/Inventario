@@ -26,7 +26,7 @@ export async function getMovimientosReport(request: NextRequest) {
     prisma.transferenciaBancaria.findMany({ where: { ...(Object.keys(df).length ? { fechaTransferencia: df } : {}), ...(cid ? { OR: [{ cuentaOrigenId: cid }, { cuentaDestinoId: cid }] } : {}), ...(mo ? { OR: [{ monedaOrigen: mo }, { monedaDestino: mo }] } : {}) }, select: { transferenciaId: true, numeroComprobante: true, montoOrigen: true, monedaOrigen: true, montoDestino: true, monedaDestino: true, tasaCambio: true, motivo: true, descripcion: true, fechaTransferencia: true, cuentaOrigen: { select: { nombreBanco: true, numeroCuenta: true } }, cuentaDestino: { select: { nombreBanco: true, numeroCuenta: true } } }, orderBy: { fechaTransferencia: 'desc' } }),
     prisma.ajusteBancario.findMany({ where: { ...af, ...(Object.keys(df).length ? { createdAt: df } : {}), ...(mo ? { moneda: mo } : {}) }, select: { ajusteId: true, tipo: true, monto: true, moneda: true, montoConvertido: true, tasaCambio: true, descripcion: true, motivo: true, realizadoPor: true, createdAt: true, cuentaBancaria: { select: { nombreBanco: true, numeroCuenta: true } } }, orderBy: { createdAt: 'desc' } }),
     prisma.inyeccionCapital.findMany({ where: { ...af, ...(Object.keys(df).length ? { createdAt: df } : {}), ...(mo ? { moneda: mo } : {}) }, select: { id: true, tipo: true, montoRecibido: true, moneda: true, descripcion: true, socio: true, entidadPrestamista: true, createdAt: true, cuentaBancaria: { select: { nombreBanco: true, numeroCuenta: true } } }, orderBy: { createdAt: 'desc' } }),
-    prisma.pagoDeuda.findMany({ where: { ...af, ...(Object.keys(df).length ? { fechaPago: df } : {}), ...(mo ? { cuentaBancaria: { moneda } } : {}) }, select: { id: true, montoPagado: true, fechaPago: true, comprobante: true, observaciones: true, cuentaBancaria: { select: { nombreBanco: true, numeroCuenta: true, moneda: true } }, inyeccion: { select: { entidadPrestamista: true, tipo: true } } }, orderBy: { fechaPago: 'desc' } })
+    prisma.pagoDeuda.findMany({ where: { ...af, ...(Object.keys(df).length ? { fechaPago: df } : {}), ...(mo ? { cuentaBancaria: { moneda: mo } } : {}) }, select: { id: true, montoPagado: true, fechaPago: true, comprobante: true, observaciones: true, cuentaBancaria: { select: { nombreBanco: true, numeroCuenta: true, moneda: true } }, inyeccion: { select: { entidadPrestamista: true, tipo: true } } }, orderBy: { fechaPago: 'desc' } })
   ])
 
   const mvs = ([] as any[]).concat(
@@ -205,7 +205,7 @@ export async function getCierres() { return NextResponse.json(await prisma.cierr
 export async function createCierre(request: NextRequest) {
   const a = await authenticateUser(request); if ('status' in a) return a as Response; const u = a.user; const b = await request.json()
   if (!b.tipo || !b.fechaInicio || !b.fechaFin) return NextResponse.json({ error: 'Campos requeridos' }, { status: 400 })
-  const c = await crearCierreContable(b.tipo, new Date(b.fechaInicio), new Date(b.fechaFin), u.userId, b.observaciones)
+  const c = await crearCierreContable(u.tenantId ?? '', b.tipo, new Date(b.fechaInicio), new Date(b.fechaFin), u.userId, b.observaciones)
   await AuditLogService.log({ accion: 'CREATE', entidad: 'CIERRE_CONTABLE', entidadId: c.cierreId, usuarioId: u.userId, detalles: {} })
   return NextResponse.json(c, { status: 201 })
 }
@@ -361,12 +361,12 @@ export async function getCuentasHandler() {
 export async function createCuentaHandler(request: NextRequest) {
   const body = await request.json()
   const validatedData = cuentaBancariaSchema.parse(body)
-  const existing = await prisma.cuentaBancaria.findUnique({ where: { numeroCuenta: validatedData.numeroCuenta } })
+  const existing = await prisma.cuentaBancaria.findFirst({ where: { numeroCuenta: validatedData.numeroCuenta } })
   if (existing) return NextResponse.json({ error: 'Ya existe una cuenta con este número', code: 'ACCOUNT_NUMBER_EXISTS' }, { status: 400 })
   const authOpt = await authenticateUser(request)
   const user = 'status' in authOpt ? null : authOpt.user
   const nueva = await prisma.cuentaBancaria.create({
-    data: { nombreBanco: validatedData.nombreBanco, numeroCuenta: validatedData.numeroCuenta, tipoCuenta: validatedData.tipoCuenta || '', saldo: validatedData.saldo || 0, moneda: validatedData.moneda || 'CUP', isActive: validatedData.isActive ?? true },
+    data: { tenant: { connect: { tenantId: user?.tenantId ?? '' } }, nombreBanco: validatedData.nombreBanco, numeroCuenta: validatedData.numeroCuenta, tipoCuenta: validatedData.tipoCuenta || '', saldo: validatedData.saldo || 0, moneda: validatedData.moneda || 'CUP', isActive: validatedData.isActive ?? true },
   })
   if (user) await AuditLogService.log({ accion: 'CREATE', entidad: 'CUENTA_BANCARIA', entidadId: nueva.cuentaId, usuarioId: user.userId, detalles: { nombreBanco: nueva.nombreBanco, numeroCuenta: nueva.numeroCuenta } })
   return NextResponse.json({ cuenta: nueva }, { status: 201 })
@@ -474,7 +474,7 @@ interface CreateCuentaPorCobrarRequest { ventaId: string; monto: number; moneda:
 
 export async function getCuentasPorCobrarHandler(request: NextRequest) {
   const cxc = await prisma.cuentaPorCobrar.findMany({
-    include: { venta: { select: { ventaId: true, total: true, createdAt: true, cliente: { select: { nombre: true } } } }, pagos: { select: { monto: true, fechaPago: true } } },
+    include: { factura: { select: { idFactura: true, total: true, createdAt: true, venta: { select: { ventaId: true, cliente: { select: { nombre: true } } } } } } },
     orderBy: { createdAt: 'desc' }
   })
   return NextResponse.json({ cuentasPorCobrar: cxc })
@@ -483,14 +483,14 @@ export async function getCuentasPorCobrarHandler(request: NextRequest) {
 export async function createCuentaPorCobrarHandler(request: NextRequest) {
   const data: CreateCuentaPorCobrarRequest = await request.json()
   const cxc = await prisma.cuentaPorCobrar.create({
-    data: { ventaId: data.ventaId, montoOriginal: data.monto, moneda: data.moneda, saldoPendiente: data.monto, estado: 'PENDIENTE' }
+    data: { tenantId: '', clienteId: '', montoDeuda: data.monto, estado: 'PENDIENTE' }
   })
   return NextResponse.json({ cuentaPorCobrar: cxc }, { status: 201 })
 }
 
 export async function updateCuentaPorCobrarHandler(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params; const body = await request.json()
-  const updated = await prisma.cuentaPorCobrar.update({ where: { cuentaPorCobrarId: id }, data: body })
+  const updated = await prisma.cuentaPorCobrar.update({ where: { id: id }, data: body })
   return NextResponse.json({ cuentaPorCobrar: updated })
 }
 
@@ -498,7 +498,7 @@ export async function updateCuentaPorCobrarHandler(request: NextRequest, { param
 
 export async function getCuentasPorPagarHandler(request: NextRequest) {
   const cxp = await prisma.cuentaPorPagar.findMany({
-    include: { proveedor: { select: { vendorId: true, nombre: true } }, pagos: { select: { id: true, monto: true, fechaPago: true } } },
+    include: { proveedor: { select: { vendorId: true, nombre: true } }, pagos: { select: { pagoCuentaPorPagarId: true, monto: true, fechaPago: true } } },
     orderBy: { createdAt: 'desc' }
   })
   return NextResponse.json({ cuentasPorPagar: cxp })
@@ -507,7 +507,7 @@ export async function getCuentasPorPagarHandler(request: NextRequest) {
 export async function createCuentaPorPagarHandler(request: NextRequest) {
   const body = await request.json()
   const cxp = await prisma.cuentaPorPagar.create({
-    data: { proveedorId: body.proveedorId, montoOriginal: body.monto, moneda: body.moneda || 'CUP', saldoPendiente: body.monto, descripcion: body.descripcion, estado: 'PENDIENTE', fechaVencimiento: body.fechaVencimiento ? new Date(body.fechaVencimiento) : undefined }
+    data: { tenant: { connect: { tenantId: '' } }, proveedorId: body.proveedorId, montoDeuda: body.monto, moneda: body.moneda || 'CUP', saldoPendiente: body.monto, estado: 'PENDIENTE', fechaVencimiento: body.fechaVencimiento ? new Date(body.fechaVencimiento) : undefined, tipo: 'compra', numeroFactura: body.numeroFactura || '' }
   })
   return NextResponse.json({ cuentaPorPagar: cxp }, { status: 201 })
 }

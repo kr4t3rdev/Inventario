@@ -38,7 +38,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { getAuthToken } from "@/lib/token"
 
 // Lazy load heavy components
-const EnhancedDataTable = dynamic(() => import("@/components/productos/enhanced-data-table").then(mod => ({ default: mod.EnhancedDataTable })), {
+const EnhancedDataTable = dynamic(() => import("@/features/productos/components/enhanced-data-table").then(mod => ({ default: mod.EnhancedDataTable })), {
   loading: () => (
     <motion.div 
       className="h-[500px] w-full flex items-center justify-center bg-muted/30 rounded-lg border-2 border-dashed"
@@ -58,11 +58,11 @@ const EnhancedDataTable = dynamic(() => import("@/components/productos/enhanced-
   )
 })
 
-const RestockDialog = dynamic(() => import("@/components/productos/restock-dialog").then(mod => ({ default: mod.RestockDialog })), {
+const RestockDialog = dynamic(() => import("@/features/productos/components/restock-dialog").then(mod => ({ default: mod.RestockDialog })), {
   loading: () => <div className="h-8 w-8 bg-muted rounded animate-pulse" />
 })
 
-const RestockHistoryDialog = dynamic(() => import("@/components/productos/restock-history-dialog").then(mod => ({ default: mod.RestockHistoryDialog })), {
+const RestockHistoryDialog = dynamic(() => import("@/features/productos/components/restock-history-dialog").then(mod => ({ default: mod.RestockHistoryDialog })), {
   loading: () => <div className="h-8 w-8 bg-muted rounded animate-pulse" />
 })
 
@@ -70,7 +70,7 @@ const QuickOfferDialog = dynamic(() => import("@/components/ofertas/quick-offer-
   loading: () => <div className="h-8 w-8 bg-muted rounded animate-pulse" />
 })
 
-const ProductFilters = dynamic(() => import("@/components/productos/product-filters").then(mod => ({ default: mod.ProductFilters })), {
+const ProductFilters = dynamic(() => import("@/features/productos/components/product-filters").then(mod => ({ default: mod.ProductFilters })), {
   loading: () => (
     <motion.div 
       className="h-[100px] w-full bg-muted/30 rounded-lg flex items-center justify-center border-2 border-dashed"

@@ -18,7 +18,7 @@ import { DollarSign, Briefcase } from "lucide-react"
 import { v4 } from "uuid"
 import { useAddServiciosMutation, useGetServiciosQuery, useUpdateServiciosMutation } from "@/features/servicios/api/serviciosApi"
 import { useGetMonedasQuery } from "@/features/contabilidad/api/contabilidadApi"
-import { TasaCambioDialog } from "@/components/contabilidad/tasa-cambio-dialog"
+import { TasaCambioDialog } from "@/features/contabilidad/components/tasa-cambio-dialog"
 
 const servicioSchema = z.object({
   nombre: z.string({

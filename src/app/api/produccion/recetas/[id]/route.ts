@@ -81,7 +81,7 @@ export const PATCH = withAuth(async (request: NextRequest, { params }: { params:
         include: {
           Producto: { select: { precioCosto: true } },
           RecetaIngrediente: {
-            include: { Producto: { select: { precioCosto: true } } },
+            include: { Producto: { select: { id: true, nombre: true, precioCosto: true } } },
           },
         },
       });
@@ -92,7 +92,7 @@ export const PATCH = withAuth(async (request: NextRequest, { params }: { params:
           productoId: ing.productoId,
           cantidad: ing.cantidad,
           unidadSimbolo: ing.unidadSimbolo,
-          producto: { precioCosto: ing.Producto?.precioCosto || 0 },
+          producto: { id: ing.Producto?.id ?? '', nombre: ing.Producto?.nombre ?? '', precioCosto: ing.Producto?.precioCosto || 0 },
         }));
         updateData.costoUnitario = calculateCostoUnitarioReceta(
           precioCostoProductoFinal,

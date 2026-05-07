@@ -20,7 +20,7 @@ import { useGetProductosQuery } from "@/features/productos/api/productosApi"
 import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta/api/puntosDeVentaApi"
 import { useAddVentaMutation, useUpdateVentaMutation } from "@/features/ventas/api/ventasApi"
 import { useGetMonedasQuery } from "@/features/contabilidad/api/contabilidadApi"
-import { TasaCambioDialog } from "@/components/contabilidad/tasa-cambio-dialog"
+import { TasaCambioDialog } from "@/features/contabilidad/components/tasa-cambio-dialog"
 import { useDispatch } from "react-redux"
 import { apiSlice } from "@/lib/redux/services/apiSlice"
 

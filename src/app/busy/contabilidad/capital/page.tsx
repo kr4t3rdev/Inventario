@@ -1,7 +1,7 @@
 'use client'
 
-import { CapitalForm } from "@/components/contabilidad/capital/capital-form"
-import { CapitalTable } from "@/components/contabilidad/capital/capital-table"
+import { CapitalForm } from "@/features/contabilidad/components/capital/capital-form"
+import { CapitalTable } from "@/features/contabilidad/components/capital/capital-table"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useState } from "react"

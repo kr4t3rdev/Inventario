@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Separator } from '@/components/ui/separator'
 import { Skeleton } from '@/components/ui/skeleton'
 
-import { ProductPhotoUpload } from '@/components/productos/product-photo-upload'
+import { ProductPhotoUpload } from '@/features/productos/components/product-photo-upload'
 import type { Producto, Vendor } from '@/app/models/model'
 import { useGetVendorsQuery } from '@/features/vendors/api/vendorsApi'
 import { useGetProductosQuery } from '@/features/productos/api/productosApi'

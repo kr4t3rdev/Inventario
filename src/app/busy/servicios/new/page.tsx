@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { ServicioForm } from "@/components/servicios/servicios-form"
+import { ServicioForm } from "@/features/servicios/components/servicios-form"
 
 export const metadata: Metadata = {
   title: "Nuevo Servicio",

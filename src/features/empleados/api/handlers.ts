@@ -27,6 +27,7 @@ export async function getEmpleadosHandler(_request: NextRequest, _context: any, 
 
 export async function createEmpleadoHandler(request: NextRequest, context: any, user: any) {
   try {
+    const tenantId = requireTenant(user);
     const data = await request.json()
     const {
       nombre,
@@ -48,7 +49,8 @@ export async function createEmpleadoHandler(request: NextRequest, context: any, 
         salarioBases,
         fechaContratacion: fechaContratacion ? new Date(fechaContratacion) : new Date(),
         esTiempoCompleto,
-        diasVacacionesAnuales
+        diasVacacionesAnuales,
+        tenant: { connect: { tenantId } }
       },
     })
 
@@ -732,6 +734,7 @@ export async function calculateNominaHandler(request: NextRequest) {
             deducciones: Math.round(calculations.deducciones.total),
             horasExtras: Math.round(overtimeHours),
             periodo,
+            tenantId: empleado.tenantId,
             observaciones: `Devengado: ${devengadoReal.toFixed(2)}, Vacaciones (9.09%): ${calculations.vacaciones.toFixed(2)}. ` +
                            `Deducciones: 5%($${calculations.deducciones.p5.toFixed(2)}), 3%($${calculations.deducciones.p3.toFixed(2)})` +
                            (payrollConfig.aplicar12_5y1_5 ? `, 12.5%($${calculations.deducciones.p12_5.toFixed(2)}), 1.5%($${calculations.deducciones.p1_5.toFixed(2)})` : '')

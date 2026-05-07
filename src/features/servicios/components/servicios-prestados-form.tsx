@@ -18,8 +18,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useGetClientesQuery } from '@/features/clientes/api/ClienteApi'
 import { useGetServiciosQuery } from '@/features/servicios/api/serviciosApi'
 import { useAddVentaServicioMutation } from '@/features/venta-servicios/api/ventaServiciosApi'
-import { AnticipoSelector } from '@/components/contabilidad/anticipos/anticipo-selector'
-import type { AnticipoAllocation } from '@/components/contabilidad/anticipos/anticipo-selector'
+import { AnticipoSelector } from '@/features/contabilidad/components/anticipos/anticipo-selector'
+import type { AnticipoAllocation } from '@/features/contabilidad/components/anticipos/anticipo-selector'
 import { ArrowLeft, Handshake, Save, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -30,7 +30,7 @@ const schema = z.object({
   clienteId: z.string().optional(),
   cantidad: z.coerce.number().int().positive(),
   precioUnitario: z.coerce.number().int().positive(),
-  formaCobro: z.enum(['COBRO_DIRECTO', FORMA_COBRO_ANTICIPO]).default('COBRO_DIRECTO'),
+  formaCobro: z.enum(['COBRO_DIRECTO', FORMA_COBRO_ANTICIPO]),
   observaciones: z.string().optional(),
 })
 

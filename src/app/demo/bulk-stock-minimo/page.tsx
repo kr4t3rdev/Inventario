@@ -1,6 +1,6 @@
 "use client"
 
-import { BulkStockMinimoManagerSimple } from "@/components/productos/bulk-stock-minimo-manager-simple"
+import { BulkStockMinimoManagerSimple } from "@/features/productos/components/bulk-stock-minimo-manager-simple"
 import { Provider } from "react-redux"
 import { store } from "@/lib/redux/store"
 

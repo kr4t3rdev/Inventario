@@ -18,7 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { DollarSign, User } from "lucide-react"
 import { useAddEmpleadoMutation, useGetEmpleadosQuery, useUpdateEmpleadoMutation } from "@/lib/redux/services/empleadosApi"
 import { useGetMonedasQuery } from "@/features/contabilidad/api/contabilidadApi"
-import { TasaCambioDialog } from "@/components/contabilidad/tasa-cambio-dialog"
+import { TasaCambioDialog } from "@/features/contabilidad/components/tasa-cambio-dialog"
 
 const empleadoSchema = z.object({
   nombre: z.string({

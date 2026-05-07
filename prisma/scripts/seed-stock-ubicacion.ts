@@ -10,7 +10,7 @@ async function main() {
 
   // 1. Almacenes: usar Producto.stock directamente
   const productos = await prisma.producto.findMany({
-    select: { id: true, stock: true, almacenId: true },
+    select: { id: true, stock: true, almacenId: true, tenantId: true },
   });
 
   for (const producto of productos) {
@@ -34,6 +34,7 @@ async function main() {
           cantidad: producto.stock,
           cantidadReservada: 0,
           cantidadDisponible: producto.stock,
+          tenantId: producto.tenantId,
         },
       });
     }
@@ -92,6 +93,11 @@ async function main() {
     for (const [productoId, cantidad] of stockMap.entries()) {
       const cantidadFinal = Math.max(0, cantidad);
       if (cantidadFinal > 0) {
+        const productoData = await prisma.producto.findUnique({
+          where: { id: productoId },
+          select: { tenantId: true },
+        });
+        if (!productoData) continue;
         await prisma.stockUbicacion.upsert({
           where: {
             productoId_tipoUbicacion_ubicacionId: {
@@ -111,6 +117,7 @@ async function main() {
             cantidad: cantidadFinal,
             cantidadReservada: 0,
             cantidadDisponible: cantidadFinal,
+            tenantId: productoData.tenantId,
           },
         });
       }

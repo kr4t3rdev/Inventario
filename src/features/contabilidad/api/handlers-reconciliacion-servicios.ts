@@ -31,7 +31,7 @@ export async function handleGetReconciliacionServicios(request: NextRequest) {
   return NextResponse.json({ ventaServicios, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } })
 }
 
-export async function handlePostReconciliacionServicios(request: NextRequest, user: { userId: string }) {
+export async function handlePostReconciliacionServicios(request: NextRequest, user: { userId: string; tenantId?: string }) {
   const body = await request.json()
   const validatedData = reconciliacionServicioSchema.parse(body)
 
@@ -56,7 +56,7 @@ export async function handlePostReconciliacionServicios(request: NextRequest, us
 
   const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
     const reconciliacion = await tx.reconciliacionServicio.create({
-      data: { ventaServicioId: validatedData.ventaServicioId, cuentaId: validatedData.cuentaId, tipoPagoId: validatedData.tipoPagoId, monto: validatedData.monto, moneda: validatedData.moneda, tasaCambio: validatedData.tasaCambio, montoConvertido, observaciones: validatedData.observaciones, reconciliadoPor: user.userId },
+      data: { ventaServicioId: validatedData.ventaServicioId, cuentaId: validatedData.cuentaId, tipoPagoId: validatedData.tipoPagoId, monto: validatedData.monto, moneda: validatedData.moneda, tasaCambio: validatedData.tasaCambio, montoConvertido, observaciones: validatedData.observaciones, reconciliadoPor: user.userId, tenantId: ventaServicio.tenantId },
       include: { ventasServicio: true, cuentaBancaria: true, tipoPago: true }
     })
 
@@ -75,7 +75,7 @@ export async function handlePostReconciliacionServicios(request: NextRequest, us
     return reconciliacion
   })
 
-  await AuditLogService.log({ accion: "CREATE", entidad: "RECONCILIACION", entidadId: result.reconciliacionId, usuarioId: user.userId, detalles: { tipo: "SERVICIO", ventaServicioId: result.ventaServicioId, cuenta: result.cuentaBancaria.nombreBanco, monto: result.monto, moneda: result.moneda, montoConvertido: result.montoConvertido, tipoPago: result.tipoPago.nombre } })
+  await AuditLogService.log({ accion: "CREATE", entidad: "RECONCILIACION", entidadId: result.reconciliacionId, usuarioId: user.userId, detalles: { tipo: "SERVICIO", ventaServicioId: result.ventaServicioId, cuenta: validatedData.cuentaId, monto: result.monto, moneda: result.moneda, montoConvertido: result.montoConvertido, tipoPago: validatedData.tipoPagoId } })
 
   return NextResponse.json({ message: 'Servicio reconciliado exitosamente', reconciliacion: result }, { status: 201 })
 }

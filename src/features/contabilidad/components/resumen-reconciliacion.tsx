@@ -141,7 +141,7 @@ export function ResumenReconciliacion({
             Totales por Moneda
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {Object.entries(totalesPorMoneda).map(([moneda, datos]) => (
+            {Object.entries(totalesPorMoneda).map(([moneda, datos]: [string, { monto: number; cantidad: number }]) => (
               <Card key={moneda} className="border-l-4 border-l-primary">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
@@ -170,7 +170,7 @@ export function ResumenReconciliacion({
             Distribución por Cuenta Bancaria
           </h3>
           <div className="space-y-3">
-            {Object.entries(totalesPorCuenta).map(([cuentaId, datos]) => (
+            {Object.entries(totalesPorCuenta).map(([cuentaId, datos]: [string, { nombre: string; numeroCuenta: string; monto: number; cantidad: number; moneda: string }]) => (
               <Card key={cuentaId} className="border-l-4 border-l-chart-2">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
@@ -210,7 +210,7 @@ export function ResumenReconciliacion({
             Distribución por Tipo de Pago
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {Object.entries(totalesPorTipoPago).map(([tipoId, datos]) => (
+            {Object.entries(totalesPorTipoPago).map(([tipoId, datos]: [string, { nombre: string; monto: number; cantidad: number }]) => (
               <Card key={tipoId} className="border-l-4 border-l-chart-3">
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">

@@ -20,6 +20,7 @@ export interface CreateAnticipoParams {
   clienteId?: string
   monto: number
   moneda: string
+  tenantId: string
   cuentaOrigenId?: string
   tipoPagoOrigenId?: string
   referenciaExterna?: string

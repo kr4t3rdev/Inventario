@@ -19,8 +19,8 @@ import { formatCurrency } from '@/lib/utils'
 import dynamic from 'next/dynamic'
 
 const DataTable = dynamic(() => import('@/components/data-table').then(mod => ({default:mod.DataTable})))
-const ServiciosCart = dynamic(() => import('@/components/servicios').then(mod => ({default:mod.ServiciosCart})))
-const ServiciosRecibidosTable = dynamic(() => import('@/components/servicios').then(mod => mod.ServiciosRecibidosTable))
+const ServiciosCart = dynamic(() => import('@/features/servicios/components/servicios-cart').then(mod => ({default:mod.default})))
+const ServiciosRecibidosTable = dynamic(() => import('@/features/servicios/components/servicios-recibidos-table').then(mod => mod.ServiciosRecibidosTable))
 
 interface Servicio {
   servicioId: string

@@ -596,6 +596,7 @@ export const facturarOrdenReparacionHandler = withAuthPost(async (request: NextR
         observaciones: venta.observaciones,
         tipoVencimiento: tipoVencimiento === 'PLAZO_30' ? 'plazo' : tipoVencimiento === 'CONTRA_ENTREGA' ? 'contra_pago' : 'fecha',
         fechaVencimiento, cuentaBancariaId,
+        tenantId: '',
       })
       if (orden.estado !== 'ENTREGADO') {
         await tx.ordenReparacion.update({

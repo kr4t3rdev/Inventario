@@ -458,7 +458,7 @@ export async function getProductosHandler(
 export async function createProductoHandler(
   req: NextRequest,
   _context: unknown,
-  _user: AuthenticatedUser
+  user: AuthenticatedUser
 ): Promise<NextResponse> {
   try {
     const body = await req.json();
@@ -559,6 +559,7 @@ export async function createProductoHandler(
           stock,
           stockMinimo: stockMinimo ?? 0,
           fotos: fotos || [],
+          tenantId: user.tenantId ?? '',
           categoriaId,
           subcategoriaId: subcategoriaId || null,
           unidadId,
@@ -658,6 +659,7 @@ export async function createProductoHandler(
           stock,
           stockMinimo: stockMinimo ?? 0,
           fotos: fotos || [],
+          tenantId: user.tenantId ?? '',
           categoriaId: taxonomyContext.categoriaId,
           subcategoriaId: taxonomyContext.subcategoriaId,
           unidadId,
@@ -695,6 +697,7 @@ export async function createProductoHandler(
 
       await prisma.gastoCompra.create({
         data: {
+          tenantId: user.tenantId ?? '',
           productoId: resultado.producto.id,
           vendorId: vendorProviderContext.vendorId,
           cantidad: stock,

@@ -27,7 +27,7 @@ import { ProductPhotoUpload } from "./product-photo-upload"
 
 import { useRestockProductoMutation } from "@/features/productos/api/productosApi"
 import { useGetMonedasQuery, useGetCuentasBancariasQuery } from "@/features/contabilidad/api/contabilidadApi"
-import { TasaCambioDialog } from "@/components/contabilidad/tasa-cambio-dialog"
+import { TasaCambioDialog } from "@/features/contabilidad/components/tasa-cambio-dialog"
 import { RestockRequest } from "@/app/models/model"
 
 // Zod schema for restock form validation

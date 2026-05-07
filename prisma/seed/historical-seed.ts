@@ -21,7 +21,7 @@ export async function seedHistoricalData() {
     await prisma.categoria.upsert({
       where: { catId: categoria.catId },
       update: {},
-      create: categoria
+      create: { ...categoria, tenantId: 'historical-tenant' }
     })
   }
 
@@ -51,7 +51,7 @@ export async function seedHistoricalData() {
     await prisma.vendor.upsert({
       where: { vendorId: vendor.vendorId },
       update: {},
-      create: vendor
+      create: { ...vendor, tenantId: 'historical-tenant' }
     })
   }
 
@@ -65,7 +65,7 @@ export async function seedHistoricalData() {
     await prisma.almacen.upsert({
       where: { almacenId: almacen.almacenId },
       update: {},
-      create: almacen
+      create: { ...almacen, tenantId: 'historical-tenant' }
     })
   }
 
@@ -80,7 +80,7 @@ export async function seedHistoricalData() {
     await prisma.puntoDeVenta.upsert({
       where: { pvId: pv.pvId },
       update: {},
-      create: pv
+      create: { ...pv, tenantId: 'historical-tenant' }
     })
   }
 
@@ -137,7 +137,7 @@ export async function seedHistoricalData() {
     await prisma.producto.upsert({
       where: { id: producto.id },
       update: {},
-      create: producto
+      create: { ...producto, tenantId: 'historical-tenant' }
     })
   }
 
@@ -175,7 +175,7 @@ export async function seedHistoricalData() {
     await prisma.empleado.upsert({
       where: { empleadoId: empleado.empleadoId },
       update: {},
-      create: empleado
+      create: { ...empleado, tenantId: 'historical-tenant' }
     })
   }
 
@@ -210,7 +210,7 @@ export async function seedHistoricalData() {
     await prisma.venta.upsert({
       where: { ventaId: venta.ventaId },
       update: {},
-      create: venta
+      create: { ...venta, tenantId: 'historical-tenant' }
     })
   }
 
@@ -243,7 +243,7 @@ export async function seedHistoricalData() {
     await prisma.gastoCompra.upsert({
       where: { gastoCompraId: gasto.gastoCompraId },
       update: {},
-      create: gasto
+      create: { ...gasto, tenantId: 'historical-tenant' }
     })
   }
 
@@ -275,7 +275,7 @@ export async function seedHistoricalData() {
     await prisma.gastosDE.upsert({
       where: { gastosDEId: gasto.gastosDEId },
       update: {},
-      create: gasto
+      create: { ...gasto, tenantId: 'historical-tenant' }
     })
   }
 
@@ -306,7 +306,7 @@ export async function seedHistoricalData() {
     await prisma.pagosalario.upsert({
       where: { pgId: pago.pgId },
       update: {},
-      create: pago
+      create: { ...pago, tenantId: 'historical-tenant' }
     })
   }
 
@@ -336,7 +336,7 @@ export async function seedHistoricalData() {
     await prisma.merma.upsert({
       where: { mermaId: merma.mermaId },
       update: {},
-      create: merma
+      create: { ...merma, tenantId: 'historical-tenant' }
     })
   }
 
@@ -369,7 +369,7 @@ export async function seedHistoricalData() {
     await prisma.transferencia.upsert({
       where: { transferenciaId: transferencia.transferenciaId },
       update: {},
-      create: transferencia
+      create: { ...transferencia, tenantId: 'historical-tenant' }
     })
   }
 

@@ -91,7 +91,6 @@ export function AlmacenForm({ initialData }: AlmacenFormProps) {
       } else {
         await addAlmacen({
           ...data,
-          stockAlmacen: 0
         }).unwrap()
         sileo.success({ title: 'El almacén ha sido registrado exitosamente.' })
       }

@@ -46,10 +46,11 @@ export async function createMermaHandler(request: Request) {
     const [merma] = await prisma.$transaction([
       prisma.merma.create({
         data: {
-          productoId,
+          producto: { connect: { id: productoId } },
           cantidad,
           motivo,
-          costoTotal: costoTotal
+          costoTotal: costoTotal,
+          tenant: { connect: { tenantId: producto.tenantId } }
         },
         include: {
           producto: true,

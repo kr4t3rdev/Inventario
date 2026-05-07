@@ -180,6 +180,7 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
 
       await tx.reconciliacionVenta.create({
         data: {
+          tenantId,
           cuentaId: body.cuentaBancariaId,
           tipoPagoId: tipoPagoDesembolso.tipoId,
           monto: body.montoCapital,
@@ -196,6 +197,7 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
 
       return tx.prestamoCash.create({
         data: {
+          tenantId,
           clienteId: body.clienteId,
           cuentaPorCobrarId: cuentaPorCobrar.id,
           montoCapital: body.montoCapital,

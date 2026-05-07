@@ -85,7 +85,7 @@ export function TenantUsersTable({ users, isLoading, onRefresh }: TenantUsersTab
   const paginatedUsers = filteredUsers.slice((page - 1) * pageSize, page * pageSize)
 
   // Reset page when search changes
-  useMemo(() => {
+  useEffect(() => {
     const maxPage = Math.max(1, Math.ceil(filteredUsers.length / pageSize))
     if (page > maxPage) setPage(1)
   }, [filteredUsers.length, page, pageSize])

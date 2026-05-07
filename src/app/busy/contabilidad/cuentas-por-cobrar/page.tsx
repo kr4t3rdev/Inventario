@@ -2,8 +2,8 @@
 
 import { useMemo, useState, useEffect } from "react"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { ReconciliacionVentasForm } from "@/components/contabilidad/reconciliacion-ventas-form"
-import { CuentasPorCobrarTable } from "@/components/contabilidad/cuentas-por-cobrar-table"
+import { ReconciliacionVentasForm } from "@/features/contabilidad/components/reconciliacion-ventas-form"
+import { CuentasPorCobrarTable } from "@/features/contabilidad/components/cuentas-por-cobrar-table"
 import {
   useGetCuentasPorCobrarQuery
 } from "@/lib/redux/services/cuentasPorCobrarApi"

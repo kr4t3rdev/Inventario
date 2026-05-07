@@ -38,9 +38,13 @@ export async function createPagoSalarioHandler(request: NextRequest) {
     const now = new Date()
     const periodo = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
 
+    const empleado = await prisma.empleado.findUnique({ where: { empleadoId: data.empleadoId } })
+    if (!empleado) return NextResponse.json({ error: 'Empleado no encontrado' }, { status: 404 })
+
     const pagoSalario = await prisma.pagosalario.create({
       data: {
-        empleadoId: data.empleadoId,
+        empleado: { connect: { empleadoId: data.empleadoId } },
+        tenant: { connect: { tenantId: empleado.tenantId } },
         salario: data.salario,
         periodo: periodo,
         ...(data.bonificaciones !== undefined && { bonificaciones: data.bonificaciones }),

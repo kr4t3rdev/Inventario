@@ -142,6 +142,7 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
           data: ingredientes.map((ing, index) => ({
             id: crypto.randomUUID(),
             recetaId,
+            tenantId: recetaExistente.tenantId,
             productoId: ing.productoId,
             cantidad: validNormalizedIngredientes[index].normalizedCantidad,
             unidadSimbolo: validNormalizedIngredientes[index].normalizedUnidadSimbolo,
@@ -256,7 +257,7 @@ export const DELETE = withAuth(async (request: NextRequest, { params }: { params
         include: {
           Producto: { select: { precioCosto: true } },
           RecetaIngrediente: {
-            include: { Producto: { select: { precioCosto: true } } },
+            include: { Producto: { select: { id: true, nombre: true, precioCosto: true } } },
           },
         },
       });
@@ -286,7 +287,7 @@ export const DELETE = withAuth(async (request: NextRequest, { params }: { params
         productoId: ing.productoId,
         cantidad: ing.cantidad,
         unidadSimbolo: ing.unidadSimbolo,
-        producto: { precioCosto: ing.Producto?.precioCosto || 0 },
+        producto: { id: ing.Producto?.id ?? '', nombre: ing.Producto?.nombre ?? '', precioCosto: ing.Producto?.precioCosto || 0 },
       }));
       const costoUnitario = calculateCostoUnitarioReceta(
         precioCostoProductoFinal,

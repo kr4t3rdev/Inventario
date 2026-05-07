@@ -47,6 +47,7 @@ export async function POST(request: NextRequest) {
     }
 
     const cierre = await crearCierreContable(
+      user.tenantId ?? '',
       tipo,
       new Date(fechaInicio),
       new Date(fechaFin),

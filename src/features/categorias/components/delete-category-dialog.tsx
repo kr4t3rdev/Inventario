@@ -41,7 +41,7 @@ export function DeleteCategoryDialog({
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [deleteCategory] = useDeleteCategoriaMutation()
-  const { validateDeletion, isLoading: isValidating } = useCategoryValidation()
+  const { validateCategoryDeletion, isValidating } = useCategoryValidation()
   const [deletionCheck, setDeletionCheck] = useState<{
     canDelete: boolean
     reason?: string
@@ -57,16 +57,16 @@ export function DeleteCategoryDialog({
       if (!open) return
       
       try {
-        const result = validateDeletion(category.catId)
+        const result = await validateCategoryDeletion(category.catId)
         setDeletionCheck({
-          canDelete: result.isValid,
-          reason: result.error,
+          canDelete: result.canDelete,
+          reason: result.canDelete ? undefined : result.error,
           hasProducts: false,
           hasSubcategories: false,
           productCount: 0,
           subcategoryCount: 0
         })
-        setDeleteError(result.isValid ? null : result.error || null)
+        setDeleteError(result.canDelete ? null : result.error || null)
       } catch (error) {
         console.error('Error checking category deletion:', error)
         setDeleteError('Error al verificar si la categoría puede ser eliminada')
@@ -74,7 +74,7 @@ export function DeleteCategoryDialog({
     }
     
     checkDeletion()
-  }, [open, category.catId, validateDeletion])
+  }, [open, category.catId, validateCategoryDeletion])
 
   const handleDelete = async () => {
     if (!deletionCheck?.canDelete) return

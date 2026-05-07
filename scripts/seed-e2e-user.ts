@@ -42,6 +42,7 @@ async function seedProductionCatalog(): Promise<void> {
     create: {
       almacenId: E2E_FIXTURES.almacenId,
       nombre: 'Almacén E2E Producción',
+      tenant: { connect: { tenantId: 'e2e-tenant' } },
     },
   })
 
@@ -57,6 +58,7 @@ async function seedProductionCatalog(): Promise<void> {
       nombre: 'Categoría E2E Producción',
       descripcion: 'Catálogo dedicado para pruebas E2E de producción',
       parentId: null,
+      tenantId: 'e2e-tenant',
     },
   })
 
@@ -114,6 +116,7 @@ async function seedProductionCatalog(): Promise<void> {
       categoriaId: E2E_FIXTURES.categoriaId,
       almacenId: E2E_FIXTURES.almacenId,
       unidadId: E2E_FIXTURES.unidadLitroId,
+      tenantId: 'e2e-tenant',
       fotos: [],
     },
   })
@@ -146,6 +149,7 @@ async function seedProductionCatalog(): Promise<void> {
       categoriaId: E2E_FIXTURES.categoriaId,
       almacenId: E2E_FIXTURES.almacenId,
       unidadId: E2E_FIXTURES.unidadKgId,
+      tenantId: 'e2e-tenant',
       fotos: [],
     },
   })

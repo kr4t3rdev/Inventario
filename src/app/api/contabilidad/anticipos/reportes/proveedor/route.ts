@@ -10,7 +10,7 @@ export const GET = withAuthGet(async (request: NextRequest) => {
     const fechaFin = searchParams.get('fechaFin')
 
     const where = {
-      tipo: 'PAGO',
+      tipo: 'PAGO' as const,
       ...(proveedorId ? { proveedorId } : {}),
       ...(fechaInicio || fechaFin
         ? {

@@ -24,7 +24,7 @@ import {
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { PageTransition, StaggerContainer, StaggerItem, AnimatedCard } from "@/components/ui/animations"
 import { cn } from "@/lib/utils"
-import { ContabilidadBreadcrumb } from "@/components/contabilidad/contabilidad-breadcrumb"
+import { ContabilidadBreadcrumb } from "@/features/contabilidad/components/contabilidad-breadcrumb"
 
 import { useGetIngresosPorEdadesQuery } from "@/lib/redux/services/cuentasPorCobrarApi"
 import { formatCurrency } from "@/lib/utils"

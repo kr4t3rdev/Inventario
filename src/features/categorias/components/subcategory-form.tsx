@@ -18,7 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { apiSlice } from "@/lib/redux/services/apiSlice";
 import { useGetCategoriasQuery } from "@/features/categorias/api/categoriasApi";
 import { useCategoryForm } from "@/features/categorias/hooks/use-category-form";
-import { ClasificadorInfoNote } from "@/components/productos/clasificador-info-note";
+import { ClasificadorInfoNote } from "@/features/productos/components/clasificador-info-note";
 import { getAuthToken } from "@/lib/token";
 import type { Categoria } from "@/app/models/model";
 import {

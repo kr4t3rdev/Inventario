@@ -115,7 +115,7 @@ export async function handleGetReconciliacionVentas(request: NextRequest) {
   return NextResponse.json({ ventas: ventasPaginadas, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } })
 }
 
-export async function handlePostReconciliacionVentas(request: NextRequest, user: { userId: string }) {
+export async function handlePostReconciliacionVentas(request: NextRequest, user: { userId: string; tenantId?: string }) {
   const body = await request.json()
   const validatedData = reconciliacionVentaSchema.parse(body)
   const referenciaTransferenciaRaw = validatedData.verificacionTransferenciaId || validatedData.idTransferencia
@@ -190,7 +190,7 @@ export async function handlePostReconciliacionVentas(request: NextRequest, user:
         ...(validatedData.tasaCambio != null && { tasaCambio: validatedData.tasaCambio }),
         montoConvertido: montoDestino, verificacionTransferenciaId: referenciaTransferencia,
         ...(validatedData.observaciones != null && { observaciones: validatedData.observaciones }),
-        idTransferencia: referenciaTransferencia, reconciliadoPor: user.userId
+        idTransferencia: referenciaTransferencia, reconciliadoPor: user.userId, tenantId: venta.tenantId
       },
       include: { venta: { include: { producto: true, puntoDeVenta: true, empleado: true, factura: true, cliente: true } }, cuentaBancaria: true, tipoPago: true }
     })
@@ -216,7 +216,10 @@ export async function handlePostReconciliacionVentas(request: NextRequest, user:
     if (saldoRestante <= 0.01) nuevoEstado = 'PAGADA'
     else if (nuevoTotalPagado > 0) nuevoEstado = 'PARCIAL'
 
-    const ventaRec = reconciliacion.venta
+    const ventaRec = await tx.venta.findUnique({
+      where: { ventaId: validatedData.ventaId },
+      include: { factura: true }
+    })
     if (!ventaRec) throw createReconciliacionError(500, 'VENTA_NOT_FOUND', 'Venta no encontrada tras reconciliación')
 
     const facturaId = ventaRec.factura?.idFactura
@@ -233,8 +236,10 @@ export async function handlePostReconciliacionVentas(request: NextRequest, user:
           data: { montoPagado: nuevoTotalPagado, estado: nuevoEstado, idTransferencia: referenciaTransferencia || existingCxC.idTransferencia }
         })
       } else if (saldoRestante > 0.01) {
+        const cliente = await tx.cliente.findUnique({ where: { clienteId: ventaRec.clienteId } })
+        if (!cliente) throw createReconciliacionError(500, 'CLIENTE_NOT_FOUND', 'Cliente no encontrado')
         await tx.cuentaPorCobrar.create({
-          data: { clienteId: ventaRec.clienteId, facturaId, numeroFactura: ventaRec.ordenId || ventaRec.factura?.numeroFactura, montoDeuda: totalVenta, montoPagado: nuevoTotalPagado, estado: nuevoEstado, idTransferencia: referenciaTransferencia }
+          data: { clienteId: ventaRec.clienteId, tenantId: venta.tenantId ?? '', facturaId, numeroFactura: ventaRec.ordenId || ventaRec.factura?.numeroFactura, montoDeuda: totalVenta, montoPagado: nuevoTotalPagado, estado: nuevoEstado, idTransferencia: referenciaTransferencia }
         })
       }
     }
@@ -245,7 +250,7 @@ export async function handlePostReconciliacionVentas(request: NextRequest, user:
   try {
     await AuditLogService.log({
       accion: "CREATE", entidad: "RECONCILIACION", entidadId: result.reconciliacionId, usuarioId: user.userId,
-      detalles: { tipo: "VENTA", ventaId: result.ventaId, cuenta: result.cuentaBancaria.nombreBanco, monto: result.monto, moneda: result.moneda, montoConvertido: result.montoConvertido, tipoPago: result.tipoPago.nombre }
+      detalles: { tipo: "VENTA", ventaId: result.ventaId, cuenta: validatedData.cuentaId, monto: result.monto, moneda: result.moneda, montoConvertido: result.montoConvertido, tipoPago: validatedData.tipoPagoId }
     })
   } catch (e) { console.error('Error registrando auditoría de reconciliación de venta:', e) }
 

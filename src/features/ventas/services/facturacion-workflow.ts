@@ -64,6 +64,7 @@ export interface FacturacionCobroWorkflowParams {
   clienteId: string
   montoTotal: number
   usuarioId: string
+  tenantId: string
   observaciones?: string | null
   tipoVencimiento?: string | null
   fechaVencimiento?: string | null
@@ -170,6 +171,7 @@ export interface ReconciliacionDirectaParams {
   ventaId: string
   montoTotal: number
   usuarioId: string
+  tenantId: string
   observaciones?: string | null
   cuentaBancariaId?: string | null
 }
@@ -190,6 +192,7 @@ export async function reconciliarVentaDirecta(
 
   const reconciliacion = await tx.reconciliacionVenta.create({
     data: {
+      tenantId: params.tenantId,
       ventaId: params.ventaId,
       cuentaId: cuenta.cuentaId,
       tipoPagoId: tipoPago.tipoId,
@@ -240,6 +243,7 @@ export async function applyFacturacionCobroWorkflow(
 
     const reconciliacion = await tx.reconciliacionVenta.create({
       data: {
+        tenantId: params.tenantId,
         ventaId: params.ventaId,
         cuentaId: cuenta.cuentaId,
         tipoPagoId: tipoPago.tipoId,
@@ -288,6 +292,7 @@ export async function applyFacturacionCobroWorkflow(
       idTransferencia: null
     },
     create: {
+      tenantId: params.tenantId,
       facturaId: params.facturaId,
       clienteId: params.clienteId,
       montoDeuda: montoTotal,

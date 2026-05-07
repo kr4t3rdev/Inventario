@@ -226,20 +226,20 @@ export default function ProduccionPage() {
   const NO_CONVERSION_UNITS = ['unidad', 'pieza']
 
   const getRecetaIngredientes = (receta: RecetaProduccion | null | undefined) => {
-    return receta?.ingredientes ?? receta?.RecetaIngrediente ?? []
+    return receta?.ingredientes ?? (receta as any)?.RecetaIngrediente ?? []
   }
 
   const getRecetaProducto = (receta: RecetaProduccion | null | undefined) => {
-    return receta?.producto ?? receta?.Producto ?? null
+    return receta?.producto ?? (receta as any)?.Producto ?? null
   }
 
   const getIngredienteProducto = (ingrediente: RecetaProduccion['ingredientes'][number] | null | undefined) => {
-    return ingrediente?.producto ?? ingrediente?.Producto ?? null
+    return ingrediente?.producto ?? (ingrediente as any)?.Producto ?? null
   }
 
   const getInsumosTexto = (receta: RecetaProduccion | null | undefined) => {
     const nombres = getRecetaIngredientes(receta)
-      .map((ing) => getIngredienteProducto(ing)?.nombre)
+      .map((ing: { producto?: { nombre?: string } }) => ing?.producto?.nombre)
       .filter(Boolean)
 
     if (nombres.length === 0) return '-'
@@ -377,8 +377,8 @@ export default function ProduccionPage() {
       })
     } catch (error: unknown) {
       const apiError = error as ProductionApiError
-      if (apiError?.data?.materialesFaltantes?.length > 0) {
-        const faltantes = apiError.data.materialesFaltantes
+      if (apiError?.data?.materialesFaltantes && apiError.data.materialesFaltantes.length > 0) {
+        const faltantes = (apiError.data.materialesFaltantes ?? [])
           .map((m) => `${m.productoNombre}: necesita ${m.requerido}, disponible ${m.disponible}`)
           .join('\n')
         toast.error('Materiales insuficientes', {
@@ -906,7 +906,7 @@ export default function ProduccionPage() {
                                   setEditProductoId(getRecetaProducto(receta)?.id || '')
                                   setEditOutputMode(getRecetaProducto(receta)?.id ? 'existing' : 'create')
                                   setEditCreatedOutputProductName(null)
-                                  setEditItems(getRecetaIngredientes(receta).map((i) => ({
+                                  setEditItems(getRecetaIngredientes(receta).map((i: { productoId: string; cantidad: number; unidadSimbolo?: string | null; desperdicio?: number }) => ({
                                     productoId: i.productoId,
                                     cantidad: i.cantidad,
                                     unidadSimbolo: i.unidadSimbolo ?? null,
@@ -1064,7 +1064,7 @@ export default function ProduccionPage() {
                                 <Button 
                                   variant="outline" 
                                   size="sm"
-                                  onClick={() => setConfirmacion({ tipo: 'aprobar', ordenId: orden.ordenProduccionId, recetaNombre: orden.receta?.nombre, cantidad: orden.cantidad })}
+                                  onClick={() => setConfirmacion({ tipo: 'aprobar', ordenId: orden.ordenProduccionId, recetaNombre: orden.receta?.nombre ?? '', cantidad: orden.cantidad })}
                                 >
                                   Aprobar
                                 </Button>
@@ -1073,16 +1073,16 @@ export default function ProduccionPage() {
                                 <Button 
                                   variant="default" 
                                   size="sm"
-                                  onClick={() => setConfirmacion({ tipo: 'completar', ordenId: orden.ordenProduccionId, recetaNombre: orden.receta?.nombre, cantidad: orden.cantidad })}
+                                  onClick={() => setConfirmacion({ tipo: 'completar', ordenId: orden.ordenProduccionId, recetaNombre: orden.receta?.nombre ?? '', cantidad: orden.cantidad })}
                                 >
                                   Completar
                                 </Button>
                               )}
-                              {[PRODUCTION_STATES.PENDIENTE, PRODUCTION_STATES.EN_PROCESO].includes(String(orden.estado).toUpperCase() as typeof PRODUCTION_STATES[keyof typeof PRODUCTION_STATES]) && (
+                              {[PRODUCTION_STATES.PENDIENTE, PRODUCTION_STATES.EN_PROCESO].includes(String(orden.estado).toUpperCase() as any) && (
                                 <Button 
                                   variant="destructive" 
                                   size="sm"
-                                  onClick={() => setConfirmacion({ tipo: 'cancelar', ordenId: orden.ordenProduccionId, recetaNombre: orden.receta?.nombre, cantidad: orden.cantidad })}
+                                  onClick={() => setConfirmacion({ tipo: 'cancelar', ordenId: orden.ordenProduccionId, recetaNombre: orden.receta?.nombre ?? '', cantidad: orden.cantidad })}
                                 >
                                   Cancelar
                                 </Button>
@@ -1134,7 +1134,7 @@ export default function ProduccionPage() {
         selectedProducto={editProductoId}
         outputMode={editOutputMode}
         createdOutputProductName={editCreatedOutputProductName}
-        productosTyped={productosTyped}
+        productosTyped={productosTyped as any}
         busquedaProductos={busquedaProductos}
         nuevoItems={editItems}
         newRecipePreview={editRecipePreview}

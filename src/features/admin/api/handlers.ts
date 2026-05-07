@@ -166,7 +166,7 @@ export async function financeGET(_request: NextRequest, _context: unknown, user:
       cuentasPorCobrar: {
         total: cuentasPorCobrar._count,
         saldoPendiente:
-          (cuentasPorCobrar._sum.montoDeuda ?? 0) - (cuentasPorCobrar._sum.montoPagado ?? 0),
+          Number(cuentasPorCobrar._sum.montoDeuda ?? 0) - Number(cuentasPorCobrar._sum.montoPagado ?? 0),
       },
       cuentasPorPagar: {
         total: cuentasPorPagar._count,
@@ -1145,6 +1145,7 @@ export async function migrateCuentasPorPagarPOST(request: NextRequest) {
               fechaCompra: cuenta.fechaEmision || cuenta.createdAt || new Date(),
               descripcion: compraProducto.descripcion || `Compra - ${compraProducto.producto?.nombre || 'Producto'}`,
               periodo,
+              tenantId: cuenta.tenantId,
             },
           })
 
@@ -1608,7 +1609,7 @@ export async function tenantsGetById(_request: NextRequest, context: { params: P
     const tenant = await prisma.tenant.findUnique({
       where: { tenantId: id },
       include: {
-        _count: { select: { memberships: true, productos: true, almacenes: true, ventas: true, clientes: true, proveedores: true, empleados: true } },
+        _count: { select: { memberships: true, productos: true, almacenes: true, ventas: true, clientes: true, vendors: true, empleados: true } },
         licencias: {
           orderBy: { inicio: 'desc' },
           take: 1,
@@ -1644,7 +1645,7 @@ export async function tenantsGetById(_request: NextRequest, context: { params: P
         totalAlmacenes: tenant._count.almacenes,
         totalVentas: tenant._count.ventas,
         totalClientes: tenant._count.clientes,
-        totalProveedores: tenant._count.proveedores,
+        totalProveedores: tenant._count.vendors,
         totalEmpleados: tenant._count.empleados,
       },
       license: activeLicense
@@ -1659,7 +1660,7 @@ export async function tenantsGetById(_request: NextRequest, context: { params: P
             maxProductos: activeLicense.maxProductos,
           }
         : null,
-      users: tenant.memberships.map((m) => ({
+      users: tenant.memberships.map((m: { user: { userId: string; name: string | null; email: string; role: string; isActive: boolean; createdAt: Date }; tenantRole: string }) => ({
         userId: m.user.userId,
         name: m.user.name,
         email: m.user.email,

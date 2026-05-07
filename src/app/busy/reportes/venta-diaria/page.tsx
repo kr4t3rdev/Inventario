@@ -38,7 +38,7 @@ function VentaDiariaPageLoader() {
 
 const ReporteVentaDiaria = dynamic(
   () =>
-    import('@/components/reportes/reporte-venta-diaria').then((mod) => ({
+    import('@/features/reportes-financieros/components/reporte-venta-diaria').then((mod) => ({
       default: mod.ReporteVentaDiaria,
     })),
   {

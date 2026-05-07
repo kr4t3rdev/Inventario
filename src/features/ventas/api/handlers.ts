@@ -66,7 +66,7 @@ async function crearFacturaParaVenta(
     serie = await tx.serieFacturacion.findFirst({ where: { esPorDefecto: true } })
     if (!serie) {
       serie = await tx.serieFacturacion.create({
-        data: { prefijo: "SD", descripcion: "Serie por defecto para ventas", consecutivo: 1, activa: true, esPorDefecto: true },
+        data: { tenant: { connect: { tenantId: '' } }, prefijo: "SD", descripcion: "Serie por defecto para ventas", consecutivo: 1, activa: true, esPorDefecto: true },
       })
     }
   }
@@ -79,6 +79,7 @@ async function crearFacturaParaVenta(
 
   const factura = await tx.factura.create({
     data: {
+      tenantId: '',
       ventaId, clienteId, serieId: serie.serieId,
       subtotal: Number(subtotal), impuestos: Number(impuestos || 0),
       descuento: Number(descuento || 0), cargoTransporte: Number(cargoTransporte || 0),
@@ -102,7 +103,7 @@ async function crearFacturaParaVenta(
     await reconciliarVentaDirecta(tx, {
       ventaId, montoTotal: Number(total), usuarioId: creadoPor,
       observaciones: observaciones || `Cobro anticipado factura ${factura.idFactura}`,
-      cuentaBancariaId,
+      cuentaBancariaId, tenantId: '',
     })
 
     await tx.factura.update({
@@ -113,6 +114,7 @@ async function crearFacturaParaVenta(
     await applyFacturacionCobroWorkflow(tx, {
       ventaId, facturaId: factura.idFactura, clienteId, montoTotal: Number(total),
       usuarioId: creadoPor, observaciones, tipoVencimiento, fechaVencimiento, cuentaBancariaId,
+      tenantId: '',
     })
   }
 
@@ -133,6 +135,7 @@ async function crearVentaMixta(body: any, user: any) {
             total: linea.cantidad * linea.precioUnitario,
             observaciones: linea.observaciones ?? body.observaciones ?? null,
             clienteId: body.clienteId ?? null,
+            tenantId: '',
           },
         }),
       ),
@@ -158,6 +161,7 @@ async function crearVentaMixta(body: any, user: any) {
               total: linea.cantidad * linea.precioUnitario,
               observaciones: linea.observaciones ?? body.observaciones ?? null,
               clienteId: body.clienteId ?? null,
+              tenantId: '',
             },
           }),
         ),
@@ -240,10 +244,11 @@ async function crearVentaUnica(body: any, user: any) {
   const venta = await prisma.$transaction(async (tx) => {
     const ventaCreada = await tx.venta.create({
       data: {
+        tenantId: '',
         cantidad: productos.reduce((sum: number, item: any) => sum + item.cantidad, 0),
         esVentaUnica: true,
-        puntoDeVenta: { connect: { pvId: puntoDeVentaId } },
-        cliente: clienteId ? { connect: { clienteId } } : undefined,
+        puntoDeVentaId,
+        clienteId: clienteId || undefined,
         descuento: descuentoNum > 0 ? descuentoNum : undefined,
         observaciones: observaciones ?? undefined,
         total: totalVenta,
@@ -339,9 +344,10 @@ async function crearVentaIndividual(body: any, user: any) {
   const venta = await prisma.$transaction(async (tx) => {
     const ventaCreada = await tx.venta.create({
       data: {
-        producto: { connect: { id: productoId } },
-        cantidad, puntoDeVenta: { connect: { pvId: puntoDeVentaId } },
-        cliente: clienteId ? { connect: { clienteId } } : undefined,
+        tenantId: '',
+        productoId,
+        cantidad, puntoDeVentaId,
+        clienteId: clienteId || undefined,
         descuento: descuentoNum > 0 ? descuentoNum : undefined,
         observaciones: observaciones ?? undefined,
         total: totalVenta,

@@ -951,6 +951,8 @@ export async function notificarTransferenciaHandler(req: Request) {
         destinoId,
         puntoDeVentaOrigenId,
         puntoDeVentaDestinoId,
+        creadoPorId: userId,
+        tenantId: producto.tenantId,
       },
     })
 

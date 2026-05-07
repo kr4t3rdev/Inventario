@@ -87,7 +87,7 @@ async function seedQaProductos(): Promise<void> {
         almacenId: producto.almacenId,
         puntoDeVentaId: producto.puntoDeVentaId
       },
-      create: producto
+      create: { ...producto, tenantId: 'demo-tenant' }
     })
   }
 
@@ -215,7 +215,7 @@ async function seedQaCuentasPorPagar(): Promise<void> {
         tipo: cuenta.tipo,
         tipoDeuda: cuenta.tipoDeuda
       },
-      create: cuenta
+      create: { ...cuenta, tenantId: 'demo-tenant' }
     })
   }
 }
@@ -272,7 +272,7 @@ async function seedQaCuentasPorCobrar(): Promise<void> {
         fechaVencimiento: cuenta.fechaVencimiento,
         tipoCuenta: cuenta.tipoCuenta
       },
-      create: cuenta
+      create: { ...cuenta, tenantId: 'demo-tenant' }
     })
   }
 }

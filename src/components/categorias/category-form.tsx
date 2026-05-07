@@ -15,7 +15,7 @@ import { Loader2, Folder, ArrowLeft, Sparkles, Layers } from "lucide-react";
 import { useDispatch } from "react-redux";
 import { apiSlice } from "@/lib/redux/services/apiSlice";
 import { motion } from "framer-motion";
-import { ClasificadorInfoNote } from "@/components/productos/clasificador-info-note";
+import { ClasificadorInfoNote } from "@/features/productos/components/clasificador-info-note";
 import { getAuthToken } from "@/lib/token";
 import { 
   CLASClassifierData,

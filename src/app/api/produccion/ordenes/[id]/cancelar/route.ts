@@ -101,6 +101,7 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
       await tx.ordenProduccionHistorial.create({
         data: {
           ordenProduccionId: id,
+          tenantId: orden.tenantId,
           estadoAnterior: orden.estado,
           estadoNuevo: PRODUCTION_STATES.CANCELADA,
           observaciones: body.observaciones || 'Orden cancelada',

@@ -9,9 +9,9 @@ import { PageTransition, StaggerContainer, StaggerItem } from "@/components/ui/a
 import { useGetDeudasCashQuery } from "@/lib/redux/services/deudasCashApi"
 import { useGetVendorsQuery } from "@/features/vendors/api/vendorsApi"
 import { useGetCuentasBancariasQuery, useGetTiposPagoQuery } from "@/features/contabilidad/api/contabilidadApi"
-import { DeudasCashTable } from "@/components/contabilidad/deudas-cash/deudas-cash-table"
-import { DeudaCashForm } from "@/components/contabilidad/deudas-cash/deuda-cash-form"
-import { PagoDeudaModal } from "@/components/contabilidad/deudas-cash/pago-deuda-modal"
+import { DeudasCashTable } from "@/features/contabilidad/components/deudas-cash/deudas-cash-table"
+import { DeudaCashForm } from "@/features/contabilidad/components/deudas-cash/deuda-cash-form"
+import { PagoDeudaModal } from "@/features/contabilidad/components/deudas-cash/pago-deuda-modal"
 import type { DeudaCash } from "@/app/models/model"
 
 const featureEnabled = process.env.NEXT_PUBLIC_ENABLE_DEUDAS_CASH !== "false"

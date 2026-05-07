@@ -49,6 +49,8 @@ export async function createGastosDEHandler(request: NextRequest) {
   try {
     const authResult = await authenticateUser(request)
     if ('status' in authResult) return authResult as Response
+    const user = authResult.user as AuthenticatedUser
+    const tenantId = requireTenant(user)
 
     const data = await request.json()
     const validation = gastosDESchema.safeParse(data)
@@ -87,6 +89,7 @@ export async function createGastosDEHandler(request: NextRequest) {
         tipo, conceptoId: validation.data.conceptoId || null, elementoId: validation.data.elementoId || null,
         proveedor: validation.data.proveedor, monto: validation.data.monto, periodo,
         numeroFactura: validation.data.numeroFactura || null, descripcion: validation.data.descripcion,
+        tenantId,
       },
       include: { concepto: true, elemento: true },
     })

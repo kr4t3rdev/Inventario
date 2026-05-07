@@ -207,6 +207,7 @@ export async function getFacturasHandler(request: NextRequest, _context: any, us
  */
 export async function createFacturaHandler(request: NextRequest, _context: any, user: any) {
   try {
+    const tenantId = requireTenant(user);
     const body = await request.json()
     
     const { clienteId, subtotal, impuestos, descuento, total, serieId, observaciones, tipoDocumento = 'FACTURA' } = body
@@ -231,7 +232,7 @@ export async function createFacturaHandler(request: NextRequest, _context: any, 
       }
     } else {
       serie = await prisma.serieFacturacion.findFirst({
-        where: { esPorDefecto: true }
+        where: { esPorDefecto: true, tenantId }
       })
       
       if (!serie) {
@@ -241,7 +242,8 @@ export async function createFacturaHandler(request: NextRequest, _context: any, 
             descripcion: "Serie por defecto para ventas",
             consecutivo: 1,
             activa: true,
-            esPorDefecto: true
+            esPorDefecto: true,
+            tenant: { connect: { tenantId } }
           }
         })
       }
@@ -262,6 +264,7 @@ export async function createFacturaHandler(request: NextRequest, _context: any, 
         estado: 'PENDIENTE',
         creadoPor: user.userId,
         numeroFactura: `temp-${Date.now()}`,
+        tenantId,
       }
     })
 

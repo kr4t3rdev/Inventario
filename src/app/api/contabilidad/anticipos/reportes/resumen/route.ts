@@ -10,7 +10,7 @@ export const GET = withAuthGet(async (request: NextRequest) => {
     const fechaFin = searchParams.get('fechaFin')
 
     const where = {
-      ...(tipo ? { tipo } : {}),
+      ...(tipo ? { tipo: tipo as 'PAGO' | 'COBRO' } : {}),
       ...(fechaInicio || fechaFin
         ? {
             fechaReserva: {

@@ -166,6 +166,7 @@ export async function POST(request: NextRequest) {
       // Crear la reconciliación
       const reconciliacion = await tx.reconciliacionServicio.create({
         data: {
+          tenantId: ventaServicio.tenantId,
           ventaServicioId: validatedData.ventaServicioId,
           cuentaId: validatedData.cuentaId,
           tipoPagoId: validatedData.tipoPagoId,
@@ -244,11 +245,11 @@ export async function POST(request: NextRequest) {
       detalles: {
         tipo: "SERVICIO",
         ventaServicioId: result.ventaServicioId,
-        cuenta: result.cuentaBancaria.nombreBanco,
+        cuenta: cuentaBancaria.nombreBanco,
         monto: result.monto,
         moneda: result.moneda,
         montoConvertido: result.montoConvertido,
-        tipoPago: result.tipoPago.nombre
+        tipoPago: tipoPago.nombre
       }
     });
 

@@ -635,6 +635,7 @@ async function crearFacturaParaVenta(
     if (!serie) {
       serie = await tx.serieFacturacion.create({
         data: {
+          tenant: { connect: { tenantId: '' } },
           prefijo: "SD",
           descripcion: "Serie por defecto para ventas",
           consecutivo: 1,
@@ -653,6 +654,7 @@ async function crearFacturaParaVenta(
 
   const factura = await tx.factura.create({
     data: {
+      tenantId: serie.tenantId ?? '',
       ventaId,
       clienteId,
       serieId: serie.serieId,
@@ -686,7 +688,8 @@ async function crearFacturaParaVenta(
       montoTotal: Number(total),
       usuarioId: creadoPor,
       observaciones: observaciones || `Cobro anticipado factura ${factura.idFactura}`,
-      cuentaBancariaId
+      cuentaBancariaId,
+      tenantId: '',
     })
     await tx.factura.update({
       where: { idFactura: factura.idFactura },
@@ -702,7 +705,8 @@ async function crearFacturaParaVenta(
       observaciones,
       tipoVencimiento,
       fechaVencimiento,
-      cuentaBancariaId
+      cuentaBancariaId,
+      tenantId: '',
     })
   }
 
@@ -738,7 +742,7 @@ export async function getOfertasHandler(request: NextRequest): Promise<NextRespo
   }
 }
 
-export async function createOfertaHandler(request: NextRequest): Promise<NextResponse> {
+export async function createOfertaHandler(request: NextRequest): Promise<Response> {
   try {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
@@ -749,6 +753,7 @@ export async function createOfertaHandler(request: NextRequest): Promise<NextRes
     const numeroOferta = `OF-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, '0')}`
     const oferta = await prisma.oferta.create({
       data: {
+        tenantId: user.tenantId ?? '',
         numeroOferta,
         clienteId: validatedData.clienteId,
         fechaVencimiento: validatedData.fechaVencimiento ? new Date(validatedData.fechaVencimiento) : null,
@@ -804,7 +809,7 @@ export async function getOfertaByIdHandler(request: NextRequest, { params }: { p
   }
 }
 
-export async function updateOfertaHandler(request: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<NextResponse> {
+export async function updateOfertaHandler(request: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
   try {
     const { id } = await params
     const authResultUser = await authenticateUser(request)
@@ -826,7 +831,7 @@ export async function updateOfertaHandler(request: NextRequest, { params }: { pa
   }
 }
 
-export async function deleteOfertaHandler(request: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<NextResponse> {
+export async function deleteOfertaHandler(request: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
   try {
     const { id } = await params
     const authResultUser = await authenticateUser(request)
@@ -846,7 +851,7 @@ export async function deleteOfertaHandler(request: NextRequest, { params }: { pa
   }
 }
 
-export async function facturarOfertaHandler(request: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<NextResponse> {
+export async function facturarOfertaHandler(request: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
   try {
     const { id } = await params
     const authResultUser = await authenticateUser(request)

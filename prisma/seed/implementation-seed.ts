@@ -155,7 +155,7 @@ async function seedCuentasBancariasPorMoneda(): Promise<void> {
         moneda: cuenta.moneda,
         isActive: cuenta.isActive
       },
-      create: cuenta
+      create: { ...cuenta, tenantId: 'demo-tenant' }
     })
   }
 }
@@ -197,7 +197,7 @@ export async function seedImplementationData(): Promise<void> {
         descripcion: categoria.descripcion,
         parentId: categoria.parentId
       },
-      create: categoria
+      create: { ...categoria, tenantId: 'demo-tenant' }
     })
   }
 
@@ -252,7 +252,7 @@ export async function seedImplementationData(): Promise<void> {
         telefono: proveedor.telefono,
         direccion: proveedor.direccion
       },
-      create: proveedor
+      create: { ...proveedor, tenantId: 'demo-tenant' }
     })
   }
 
@@ -285,7 +285,7 @@ export async function seedImplementationData(): Promise<void> {
         telefono: cliente.telefono,
         direccion: cliente.direccion
       },
-      create: cliente
+      create: { ...cliente, tenantId: 'demo-tenant' }
     })
   }
 
@@ -300,7 +300,7 @@ export async function seedImplementationData(): Promise<void> {
       update: {
         nombre: almacen.nombre
       },
-      create: almacen
+      create: { ...almacen, tenantId: 'demo-tenant' }
     })
   }
 
@@ -327,7 +327,7 @@ export async function seedImplementationData(): Promise<void> {
         descripcion: lista.descripcion,
         esDefault: lista.esDefault
       },
-      create: lista
+      create: { ...lista, tenantId: 'demo-tenant' }
     })
   }
 
@@ -354,7 +354,7 @@ export async function seedImplementationData(): Promise<void> {
         ubicacion: puntoDeVenta.ubicacion,
         listaPrecioId: puntoDeVenta.listaPrecioId
       },
-      create: puntoDeVenta
+      create: { ...puntoDeVenta, tenantId: 'demo-tenant' }
     })
   }
 
@@ -466,7 +466,7 @@ export async function seedImplementationData(): Promise<void> {
         almacenId: producto.almacenId,
         puntoDeVentaId: producto.puntoDeVentaId
       },
-      create: producto
+      create: { ...producto, tenantId: 'demo-tenant' }
     })
   }
 

@@ -21,11 +21,43 @@ import { useGetVendorsQuery } from '@/features/vendors/api/vendorsApi';
 import { useAddProductoMutation } from '@/features/productos/api/productosApi';
 import { getAuthToken } from '@/lib/token';
 
-import {
-  buildProductoSalidaPayload,
-  normalizeCreatedProducto,
-  type ProductoSalidaFormValues,
-} from './producto-salida-form.helpers';
+interface ProductoSalidaFormValues {
+  nombre: string;
+  descripcion: string;
+  codigoInterno: string;
+  categoriaId: string;
+  subcategoriaId: string;
+  precioCosto: number;
+  precioVenta: number;
+  stock: number;
+  stockMinimo: number;
+  unidadId: string;
+  almacenId: string;
+  vendorId: string;
+}
+
+function buildProductoSalidaPayload(values: ProductoSalidaFormValues, _opts: { usaEan13: boolean; proveedorCodigo: string | null }) {
+  return {
+    nombre: values.nombre,
+    descripcion: values.descripcion,
+    codigoInterno: values.codigoInterno || undefined,
+    categoriaId: values.categoriaId,
+    subcategoriaId: values.subcategoriaId || undefined,
+    precioCosto: values.precioCosto,
+    precioVenta: values.precioVenta,
+    stock: values.stock,
+    stockMinimo: values.stockMinimo,
+    unidadId: values.unidadId,
+    almacenId: values.almacenId,
+    vendorId: values.vendorId || undefined,
+  };
+}
+
+function normalizeCreatedProducto(response: unknown): { id: string; nombre: string } {
+  const data = response as any;
+  const producto = data?.producto ?? data;
+  return { id: producto?.id ?? '', nombre: producto?.nombre ?? '' };
+}
 
 interface ProductoSalidaFormProps {
   onCancel?: () => void;
@@ -87,9 +119,9 @@ export function ProductoSalidaForm({
 
   const updateField = <K extends keyof ProductoSalidaFormValues>(
     field: K,
-    fieldValue: ProductoSalidaFormValues[K]
+    _fieldValue: ProductoSalidaFormValues[K]
   ) => {
-    setValues((current) => ({ ...current, [field]: fieldValue }));
+    setValues((current: ProductoSalidaFormValues) => ({ ...current, [field]: _fieldValue }));
   };
 
   const validate = (): boolean => {
@@ -120,7 +152,7 @@ export function ProductoSalidaForm({
     try {
       const payload = buildProductoSalidaPayload(values, {
         usaEan13,
-        proveedorCodigo: selectedVendor?.proveedorCodigo ?? null,
+        proveedorCodigo: selectedVendor?.vendorCode ?? null,
       });
 
       const response = await addProducto(payload as never).unwrap();

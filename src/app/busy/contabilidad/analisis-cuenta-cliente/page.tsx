@@ -35,7 +35,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import {
   PageTransition
 } from '@/components/ui/animations';
-import { ContabilidadBreadcrumb } from "@/components/contabilidad/contabilidad-breadcrumb"
+import { ContabilidadBreadcrumb } from "@/features/contabilidad/components/contabilidad-breadcrumb"
 
 import { useGetClientesQuery } from "@/features/clientes/api/ClienteApi"
 import { useGetCuentasPorCobrarQuery } from "@/lib/redux/services/cuentasPorCobrarApi"

@@ -2,6 +2,7 @@ import { Prisma } from '@/generated/prisma'
 import { getIdempotentResult, setIdempotentResult } from '@/lib/idempotency'
 import {
   AnticipoWorkflowError,
+  AnticipoContexto,
   CreateAnticipoParams,
   ExecuteAnticipoParams,
   ExecuteAnticipoPersistedResult,
@@ -142,6 +143,7 @@ export async function createAnticipo(
 
   const anticipo = await tx.anticipo.create({
     data: {
+      tenantId: params.tenantId,
       tipo: params.tipo,
       contratoId: params.contratoId,
       proveedorId: params.proveedorId || null,

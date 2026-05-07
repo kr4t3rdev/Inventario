@@ -53,7 +53,7 @@ export function TenantUsersPage() {
     isLoading: usersLoading,
     refetch: refetchUsers,
   } = useGetGlobalUsersQuery({
-    tenantId: user?.tenantId ?? undefined,
+    tenantId: (user as any)?.tenantId ?? undefined,
     limit: 100,
   })
 

@@ -49,12 +49,12 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
           cantidad: ingrediente.cantidad,
           unidadSimbolo: ingrediente.unidadSimbolo ?? null,
           desperdicio: ingrediente.desperdicio ?? 0,
+          almacenId: producto?.almacenId,
           producto: producto
             ? {
                 nombre: producto.nombre,
                 precioCosto: producto.precioCosto,
                 stock: producto.stock,
-                almacenId: producto.almacenId,
               }
             : undefined,
         });
@@ -81,11 +81,11 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
           },
         });
 
-        if (ingrediente.producto?.almacenId) {
+        if (ingrediente.almacenId) {
           await upsertStockUbicacion(tx, {
             productoId: ingrediente.productoId,
             tipoUbicacion: 'almacen',
-            ubicacionId: ingrediente.producto.almacenId,
+            ubicacionId: ingrediente.almacenId,
             modo: 'increment',
             delta: -cantidadRequerida,
           });
@@ -126,6 +126,7 @@ export const POST = withAuthPost(async (request: NextRequest, { params }: { para
       await tx.ordenProduccionHistorial.create({
         data: {
           ordenProduccionId: id,
+          tenantId: orden.tenantId,
           estadoAnterior: PRODUCTION_STATES.PENDIENTE,
           estadoNuevo: PRODUCTION_STATES.EN_PROCESO,
           observaciones: 'Orden aprobada - materiales reservados',

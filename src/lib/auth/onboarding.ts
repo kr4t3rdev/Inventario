@@ -32,7 +32,7 @@ export function validateCSRF(requestId: string | null): { valid: false; error: s
  * @returns {string} JWT firmado.
  */
 export function signOnboardingToken(payload: OnboardingTokenPayload, expiresIn: string = '24h'): string {
-  const options: SignOptions = { expiresIn };
+  const options: SignOptions = { expiresIn: expiresIn as SignOptions['expiresIn'] };
   return jwt.sign(payload, getJwtSecret(), options);
 }
 

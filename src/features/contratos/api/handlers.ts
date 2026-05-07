@@ -64,7 +64,7 @@ const bulkDeleteSchema = z.object({
   ids: z.array(z.string()),
 })
 
-export async function getContratosHandler(request: NextRequest): Promise<NextResponse> {
+export async function getContratosHandler(request: NextRequest): Promise<Response> {
   try {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
@@ -114,7 +114,7 @@ export async function getContratosHandler(request: NextRequest): Promise<NextRes
   }
 }
 
-export async function createContratoHandler(request: NextRequest): Promise<NextResponse> {
+export async function createContratoHandler(request: NextRequest): Promise<Response> {
   try {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
@@ -126,6 +126,7 @@ export async function createContratoHandler(request: NextRequest): Promise<NextR
     const contrato = await prisma.contrato.create({
       data: {
         ...data,
+        tenantId: user.tenantId ?? '',
         creadoPor: user.userId,
         numeroContrato,
         numeroConsecutivo,
@@ -164,7 +165,7 @@ export async function createContratoHandler(request: NextRequest): Promise<NextR
   }
 }
 
-export async function getContratoByIdHandler(req: NextRequest, context: { params: Promise<{ id: string }> }): Promise<NextResponse> {
+export async function getContratoByIdHandler(req: NextRequest, context: { params: Promise<{ id: string }> }): Promise<Response> {
   try {
     const authResultReq1 = await authenticateUser(req)
     if ('status' in authResultReq1) return authResultReq1 as Response
@@ -191,7 +192,7 @@ export async function getContratoByIdHandler(req: NextRequest, context: { params
   }
 }
 
-export async function updateContratoHandler(request: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<NextResponse> {
+export async function updateContratoHandler(request: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
   try {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
@@ -252,7 +253,7 @@ export async function updateContratoHandler(request: NextRequest, { params }: { 
   }
 }
 
-export async function deleteContratoHandler(request: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<NextResponse> {
+export async function deleteContratoHandler(request: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
   try {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
@@ -275,7 +276,7 @@ export async function deleteContratoHandler(request: NextRequest, { params }: { 
   }
 }
 
-export async function bulkUpdateContratoStatusHandler(req: NextRequest): Promise<NextResponse> {
+export async function bulkUpdateContratoStatusHandler(req: NextRequest): Promise<Response> {
   try {
     const authResultReq1 = await authenticateUser(req)
     if ('status' in authResultReq1) return authResultReq1 as Response
@@ -294,7 +295,7 @@ export async function bulkUpdateContratoStatusHandler(req: NextRequest): Promise
   }
 }
 
-export async function bulkDeleteContratosHandler(req: NextRequest): Promise<NextResponse> {
+export async function bulkDeleteContratosHandler(req: NextRequest): Promise<Response> {
   try {
     const authResultReq1 = await authenticateUser(req)
     if ('status' in authResultReq1) return authResultReq1 as Response
@@ -323,7 +324,7 @@ export async function bulkDeleteContratosHandler(req: NextRequest): Promise<Next
   }
 }
 
-export async function createContratoVersionHandler(req: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<NextResponse> {
+export async function createContratoVersionHandler(req: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
   try {
     const authResultReq1 = await authenticateUser(req)
     if ('status' in authResultReq1) return authResultReq1 as Response
@@ -387,7 +388,7 @@ function getBufferHash(buffer: Buffer): string {
   return crypto.createHash('sha256').update(buffer).digest('hex')
 }
 
-export async function checkContratoVersionDiffHandler(req: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<NextResponse> {
+export async function checkContratoVersionDiffHandler(req: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
   try {
     const authResultReq1 = await authenticateUser(req)
     if ('status' in authResultReq1) return authResultReq1 as Response
@@ -434,7 +435,7 @@ export async function checkContratoVersionDiffHandler(req: NextRequest, { params
   }
 }
 
-export async function getContratoFirmasHandler(req: NextRequest, context: { params: Promise<{ id: string }> }): Promise<NextResponse> {
+export async function getContratoFirmasHandler(req: NextRequest, context: { params: Promise<{ id: string }> }): Promise<Response> {
   try {
     const authResultReq1 = await authenticateUser(req)
     if ('status' in authResultReq1) return authResultReq1 as Response
@@ -451,7 +452,7 @@ export async function getContratoFirmasHandler(req: NextRequest, context: { para
   }
 }
 
-export async function createContratoFirmaHandler(request: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<NextResponse> {
+export async function createContratoFirmaHandler(request: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
   try {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
@@ -476,7 +477,7 @@ export async function createContratoFirmaHandler(request: NextRequest, { params 
   }
 }
 
-export async function getContratoArchivosHandler(req: NextRequest, context: { params: Promise<{ id: string }> }): Promise<NextResponse> {
+export async function getContratoArchivosHandler(req: NextRequest, context: { params: Promise<{ id: string }> }): Promise<Response> {
   try {
     const authResultReq1 = await authenticateUser(req)
     if ('status' in authResultReq1) return authResultReq1 as Response
@@ -493,7 +494,7 @@ export async function getContratoArchivosHandler(req: NextRequest, context: { pa
   }
 }
 
-export async function createContratoArchivoHandler(request: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<NextResponse> {
+export async function createContratoArchivoHandler(request: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
   try {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
@@ -518,7 +519,7 @@ export async function createContratoArchivoHandler(request: NextRequest, { param
   }
 }
 
-export async function getContratoAprobacionesHandler(req: NextRequest, context: { params: Promise<{ id: string }> }): Promise<NextResponse> {
+export async function getContratoAprobacionesHandler(req: NextRequest, context: { params: Promise<{ id: string }> }): Promise<Response> {
   try {
     const authResultReq1 = await authenticateUser(req)
     if ('status' in authResultReq1) return authResultReq1 as Response
@@ -535,7 +536,7 @@ export async function getContratoAprobacionesHandler(req: NextRequest, context: 
   }
 }
 
-export async function createContratoAprobacionHandler(request: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<NextResponse> {
+export async function createContratoAprobacionHandler(request: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
   try {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
@@ -565,7 +566,7 @@ export async function createContratoAprobacionHandler(request: NextRequest, { pa
   }
 }
 
-export async function getContratoAlertasHandler(req: NextRequest, context: { params: Promise<{ id: string }> }): Promise<NextResponse> {
+export async function getContratoAlertasHandler(req: NextRequest, context: { params: Promise<{ id: string }> }): Promise<Response> {
   try {
     const authResultReq1 = await authenticateUser(req)
     if ('status' in authResultReq1) return authResultReq1 as Response
@@ -585,7 +586,7 @@ export async function getContratoAlertasHandler(req: NextRequest, context: { par
   }
 }
 
-export async function createContratoAlertaHandler(request: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<NextResponse> {
+export async function createContratoAlertaHandler(request: NextRequest, { params }: { params: Promise<{ id: string }> }): Promise<Response> {
   try {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response

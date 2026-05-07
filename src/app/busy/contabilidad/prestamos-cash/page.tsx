@@ -9,9 +9,9 @@ import { PageTransition, StaggerContainer, StaggerItem } from "@/components/ui/a
 import { useGetPrestamosCashQuery } from "@/lib/redux/services/prestamosCashApi"
 import { useGetClientesQuery } from "@/features/clientes/api/ClienteApi"
 import { useGetCuentasBancariasQuery, useGetTiposPagoQuery } from "@/features/contabilidad/api/contabilidadApi"
-import { PrestamosCashTable } from "@/components/contabilidad/prestamos-cash/prestamos-cash-table"
-import { PrestamoCashForm } from "@/components/contabilidad/prestamos-cash/prestamo-cash-form"
-import { PagoPrestamoModal } from "@/components/contabilidad/prestamos-cash/pago-prestamo-modal"
+import { PrestamosCashTable } from "@/features/contabilidad/components/prestamos-cash/prestamos-cash-table"
+import { PrestamoCashForm } from "@/features/contabilidad/components/prestamos-cash/prestamo-cash-form"
+import { PagoPrestamoModal } from "@/features/contabilidad/components/prestamos-cash/pago-prestamo-modal"
 import type { PrestamoCash } from "@/app/models/model"
 
 const featureEnabled = process.env.NEXT_PUBLIC_ENABLE_PRESTAMOS_CASH !== "false"

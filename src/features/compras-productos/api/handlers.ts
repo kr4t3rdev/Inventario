@@ -451,6 +451,7 @@ export async function createCompraProductoHandler(request: NextRequest, _context
           descripcion: `Pago anticipado de compra múltiple ${compraDocumento.compraDocumentoId}`,
           monto: totalGeneral,
           moneda: 'CUP',
+          tenantId: user.tenantId,
           estado: 'PAGADA',
           gastoCompraId: gastoCompra.gastoCompraId,
         })

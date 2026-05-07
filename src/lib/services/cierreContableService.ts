@@ -187,6 +187,7 @@ export async function calcularEstadisticasCierre(fechaInicio: Date, fechaFin: Da
  * @returns Cierre creado
  */
 export async function crearCierreContable(
+  tenantId: string,
   tipo: string,
   fechaInicio: Date,
   fechaFin: Date,
@@ -197,6 +198,7 @@ export async function crearCierreContable(
 
   const cierre = await prisma.cierreContable.create({
     data: {
+      tenantId,
       tipo,
       fechaInicio,
       fechaFin,

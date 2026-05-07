@@ -27,6 +27,7 @@ export interface ApplyPagoGastoWorkflowParams {
   descripcion: string
   monto: number
   moneda: string
+  tenantId: string
   tasaCambio?: number
   periodo?: string
   observaciones?: string
@@ -433,6 +434,7 @@ export async function applyPagoGastoWorkflow(
 
     const reconciliacion = await tx.reconciliacionGasto.create({
       data: {
+        tenantId: params.tenantId,
         tipoGasto: params.tipoGasto,
         referenciaId: params.referenciaId,
         cuentaId: pago.cuentaId,
@@ -543,6 +545,7 @@ export async function applyPagoGastoWorkflow(
 
     const pagoRegistrado = await tx.pagoCuentaPorPagar.create({
       data: {
+        tenantId: params.tenantId,
         cuentaPorPagarId: params.cuentaPorPagarId,
         monto: montoTotal,
         numeroTransaccion: numeroTransaccion || 'N/A',

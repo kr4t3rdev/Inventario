@@ -1,24 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-
-export async function getPuntosDeVentaHandler() {
-  try {
-    const puntoDeVenta = await prisma.puntoDeVenta.findMany({
-      orderBy: { createdAt: 'desc' },
-      include: { listaPrecio: true },
-    })
-    return NextResponse.json(puntoDeVenta)
-  } catch (error) {
-    console.error("Error al obtener puntoDeVenta:", error)
-    return NextResponse.json({ error: "Error al obtener puntoDeVenta" }, { status: 500 })
-  }
-}
+import { authenticateUser, type AuthenticatedUser } from "@/lib/auth-middleware"
+import { requireTenant } from "@/lib/services/tenant-scope"
 
 export async function createPuntoDeVentaHandler(req: NextRequest) {
   try {
+    const authResult = await authenticateUser(req)
+    if ('status' in authResult) return authResult as Response
+    const user = authResult.user as AuthenticatedUser
+    const tenantId = requireTenant(user)
     const body = await req.json()
     const { nombre, ubicacion, listaPrecioId } = body
-    const puntoDeVenta = await prisma.puntoDeVenta.create({ data: { nombre, ubicacion, listaPrecioId } })
+    const puntoDeVenta = await prisma.puntoDeVenta.create({ data: { nombre, ubicacion, listaPrecioId, tenant: { connect: { tenantId } } } })
     return NextResponse.json(puntoDeVenta)
   } catch (error) {
     console.error("Error al crear punto de venta:", error)

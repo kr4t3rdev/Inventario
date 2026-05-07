@@ -136,7 +136,7 @@ export function ClasificadorInfoNote({ mode = 'sections' }: ClasificadorInfoNote
       (sp) =>
         sp.name.toLowerCase().includes(term) ||
         sp.id.includes(term) ||
-        ('sectionName' in sp && sp.sectionName.toLowerCase().includes(term))
+        ('sectionName' in sp && (sp as typeof allSpecifics[0]).sectionName.toLowerCase().includes(term))
     )
   }, [isAllSpecificsMode, allSpecifics, sectionSpecifics, specificSearch])
 

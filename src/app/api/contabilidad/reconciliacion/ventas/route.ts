@@ -311,7 +311,11 @@ export async function POST(request: NextRequest) {
 
     // Verificar que la venta existe
     const venta = await prisma.venta.findUnique({
-      where: { ventaId: validatedData.ventaId }
+      where: { ventaId: validatedData.ventaId },
+      include: {
+        factura: true,
+        cliente: true
+      }
     })
 
     if (!venta) {
@@ -513,6 +517,7 @@ export async function POST(request: NextRequest) {
       // Crear la reconciliación
       const reconciliacion = await tx.reconciliacionVenta.create({
         data: {
+          tenantId: venta.tenantId,
           ventaId: validatedData.ventaId,
           cuentaId: validatedData.cuentaId,
           tipoPagoId: validatedData.tipoPagoId,
@@ -609,7 +614,7 @@ export async function POST(request: NextRequest) {
       }
 
       // Buscar si existe CuentaPorCobrar
-      const ventaRec = reconciliacion.venta
+      const ventaRec = venta
       if (!ventaRec) {
         throw createReconciliacionError(500, 'VENTA_NOT_FOUND', 'Venta no encontrada tras reconciliación')
       }
@@ -661,6 +666,7 @@ export async function POST(request: NextRequest) {
           // Crear nueva CxC solo si hay deuda pendiente y no existe registro
           await tx.cuentaPorCobrar.create({
             data: {
+              tenantId: venta.tenantId,
               clienteId: ventaRec.clienteId,
               facturaId: facturaId,
               numeroFactura: ventaRec.ordenId || ventaRec.factura?.numeroFactura, // Usar ordenId o factura
@@ -686,11 +692,11 @@ export async function POST(request: NextRequest) {
         detalles: {
           tipo: "VENTA",
           ventaId: result.ventaId,
-          cuenta: result.cuentaBancaria.nombreBanco,
+          cuenta: cuentaBancaria.nombreBanco,
           monto: result.monto,
           moneda: result.moneda,
           montoConvertido: result.montoConvertido,
-          tipoPago: result.tipoPago.nombre
+          tipoPago: tipoPago.nombre
         }
       });
     } catch (auditError) {

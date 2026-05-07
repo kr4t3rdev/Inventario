@@ -1,6 +1,6 @@
 "use client"
 
-import { ServicioForm } from "@/components/servicios/servicios-form"
+import { ServicioForm } from "@/features/servicios/components/servicios-form"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useGetServicioQuery } from "@/features/servicios/api/serviciosApi"

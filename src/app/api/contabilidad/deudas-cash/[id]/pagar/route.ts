@@ -66,6 +66,7 @@ export const POST = withAuthPost(async (request: NextRequest, context: unknown, 
     const resultado = await prisma.$transaction(async (tx) => {
       const reconciliacion = await tx.reconciliacionVenta.create({
         data: {
+          tenantId: deuda.tenantId,
           cuentaId: body.cuentaId,
           tipoPagoId: body.tipoPagoId,
           monto: body.monto,

@@ -81,6 +81,7 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
     const anticipo = await prisma.$transaction(async (tx) => {
       return createAnticipo(tx, {
         ...payload,
+        tenantId: '',
         vigenciaHasta: payload.vigenciaHasta || undefined,
         usuarioId: user.userId,
       })
