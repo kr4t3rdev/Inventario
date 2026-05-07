@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import { ArrowLeft, Boxes, Sparkles } from 'lucide-react'
 
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
-import { BulkStockMinimoManager } from '@/components/productos/bulk-stock-minimo-manager'
+import { BulkStockMinimoManager } from '@/features/productos/components/bulk-stock-minimo-manager'
 import { Button } from '@/components/ui/button'
 
 /**

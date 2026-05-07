@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { AlertTriangle, Loader2, Info } from "lucide-react"
 import { toast } from "sonner"
-import { useExecuteAnticipoMutation } from "@/lib/redux/services/contabilidadApi"
+import { useExecuteAnticipoMutation } from "@/features/contabilidad/api/contabilidadApi"
 import { Anticipo } from "@/app/models/model"
 
 interface AnticipoEjecutarDialogProps {

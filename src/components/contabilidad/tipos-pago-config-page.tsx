@@ -48,7 +48,7 @@ import {
   useCreateTipoPagoMutation, 
   useUpdateTipoPagoMutation, 
   useDeleteTipoPagoMutation 
-} from "@/lib/redux/services/contabilidadApi"
+} from "@/features/contabilidad/api/contabilidadApi"
 import { CreateTipoPagoRequest, UpdateTipoPagoRequest, TipoPagoWithDetails } from "../../app/models/model"
 
 const surfaceCardClass = cn(

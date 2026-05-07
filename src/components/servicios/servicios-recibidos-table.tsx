@@ -9,13 +9,13 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { CompraServicio } from '@/app/models/model'
-import { useGetComprasServiciosQuery } from '@/lib/redux/services/comprasServiciosApi'
+import { useGetComprasServiciosQuery } from '@/features/compras-servicios/api/comprasServiciosApi'
 
 /**
  * @description Tabla reutilizable para mostrar servicios recibidos.
  * @returns {JSX.Element} Tabla de servicios recibidos.
  */
-export function ServiciosRecibidosTable(): JSX.Element {
+export function ServiciosRecibidosTable(): React.JSX.Element {
   const { data: servicios = [], isLoading, error } = useGetComprasServiciosQuery()
 
   const columns = useMemo<ColumnDef<CompraServicio>[]>(

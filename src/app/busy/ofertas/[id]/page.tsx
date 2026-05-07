@@ -16,9 +16,9 @@ import {
 import Link from "next/link"
 import { toast } from "sonner"
 
-import { useGetOfertaQuery, useUpdateOfertaMutation, useFacturarOfertaMutation } from "@/lib/redux/services/ofertasApi"
-import { useGetPuntosDeVentaQuery } from "@/lib/redux/services/puntosDeVentaApi"
-import { useGetAnticiposDisponiblesQuery } from "@/lib/redux/services/contabilidadApi"
+import { useGetOfertaQuery, useUpdateOfertaMutation, useFacturarOfertaMutation } from "@/features/ofertas/api/ofertasApi"
+import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta/api/puntosDeVentaApi"
+import { useGetAnticiposDisponiblesQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"

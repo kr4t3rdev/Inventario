@@ -30,15 +30,15 @@ import { sileo } from '@/lib/sileo-shim'
 import {
   useAddProductoMutation,
   useUpdateProductoMutation,
-} from '@/lib/redux/services/productosApi'
-import { useGetUnidadesQuery } from '@/lib/redux/services/unidadesApi'
-import { useGetAlmacenesQuery } from '@/lib/redux/services/almacenesApi'
-import { useGetListasPreciosQuery } from '@/lib/redux/services/listasPreciosApi'
-import { useGetVendorsQuery } from '@/lib/redux/services/vendorsApi'
+} from '@/features/productos/api/productosApi'
+import { useGetUnidadesQuery } from '@/features/unidades/api/unidadesApi'
+import { useGetAlmacenesQuery } from '@/features/almacenes/api/almacenesApi'
+import { useGetListasPreciosQuery } from '@/features/listas-precios/api/listasPreciosApi'
+import { useGetVendorsQuery } from '@/features/vendors/api/vendorsApi'
 import {
   useGetCategoriasQuery,
   useGetSubcategoriasQuery,
-} from '@/lib/redux/services/categoriasApi'
+} from '@/features/categorias/api/categoriasApi'
 import {
   buildProductBusinessCodePreview,
   DEFAULT_PARENT_PREVIEW_SURTIDO,

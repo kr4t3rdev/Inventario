@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
-import type { Prisma } from '@/generated/prisma'
+import { Prisma } from '@/generated/prisma'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 
 function normalizeMontoToCup(monto: number, moneda: string, tasaCambio?: number): number {

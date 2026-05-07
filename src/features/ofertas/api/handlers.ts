@@ -7,7 +7,7 @@ import { Prisma } from '@/generated/prisma'
 import {
   applyFacturacionCobroWorkflow,
   reconciliarVentaDirecta
-} from '@/lib/services/facturacion-ventas-workflow'
+} from '@/features/ventas/services/facturacion-workflow'
 import { applyAnticipoAllocations, isAnticipoWorkflowError } from '@/lib/services/anticipos-workflow'
 import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
 import { numeroALetras } from '@/lib/number-to-words'

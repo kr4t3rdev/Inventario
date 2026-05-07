@@ -59,29 +59,29 @@ vi.mock('sonner', () => ({
   },
 }))
 
-vi.mock('@/lib/redux/services/productosApi', () => ({
+vi.mock('@/features/productos/api/productosApi', () => ({
   useAddProductoMutation: () => [mockAddProducto],
   useUpdateProductoMutation: () => [mockUpdateProducto],
 }))
 
-vi.mock('@/lib/redux/services/unidadesApi', () => ({
+vi.mock('@/features/unidades/api/unidadesApi', () => ({
   useGetUnidadesQuery: (...args: unknown[]) => mockUseGetUnidadesQuery(...args),
 }))
 
-vi.mock('@/lib/redux/services/almacenesApi', () => ({
+vi.mock('@/features/almacenes/api/almacenesApi', () => ({
   useGetAlmacenesQuery: (...args: unknown[]) => mockUseGetAlmacenesQuery(...args),
 }))
 
-vi.mock('@/lib/redux/services/listasPreciosApi', () => ({
+vi.mock('@/features/listas-precios/api/listasPreciosApi', () => ({
   useGetListasPreciosQuery: (...args: unknown[]) => mockUseGetListasPreciosQuery(...args),
 }))
 
-vi.mock('@/lib/redux/services/categoriasApi', () => ({
+vi.mock('@/features/categorias/api/categoriasApi', () => ({
   useGetCategoriasQuery: (...args: unknown[]) => mockUseGetCategoriasQuery(...args),
   useGetSubcategoriasQuery: (...args: unknown[]) => mockUseGetSubcategoriasQuery(...args),
 }))
 
-vi.mock('@/lib/redux/services/vendorsApi', () => ({
+vi.mock('@/features/vendors/api/vendorsApi', () => ({
   useGetVendorsQuery: (...args: unknown[]) => mockUseGetVendorsQuery(...args),
 }))
 

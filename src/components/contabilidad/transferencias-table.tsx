@@ -45,7 +45,7 @@ import {
   ChevronRight
 } from "lucide-react"
 import { useAppSelector, useAppDispatch } from "@/lib/redux/hooks"
-import { contabilidadApi } from "@/lib/redux/services/contabilidadApi"
+import { contabilidadApi } from "@/features/contabilidad/api/contabilidadApi"
 import { ComprobanteTransferencia } from "./comprobante-transferencia"
 import { cn } from "@/lib/utils"
 import { AnimatedNumber } from "@/components/ui/animated-number"

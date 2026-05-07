@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { sileo } from '@/lib/sileo-shim'
 import { Skeleton } from "@/components/ui/skeleton"
-import { useAddAlmacenMutation, useGetAlmacenesQuery, useUpdateAlmacenMutation } from "@/lib/redux/services/almacenesApi"
+import { useAddAlmacenMutation, useGetAlmacenesQuery, useUpdateAlmacenMutation } from "@/features/almacenes/api/almacenesApi"
 import { motion } from "framer-motion"
 import { Warehouse, Sparkles, ArrowLeft, Loader2 } from "lucide-react"
 import Link from "next/link"

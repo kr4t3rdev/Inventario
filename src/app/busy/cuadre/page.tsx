@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-import { CuadrePageClient } from '@/components/cuadre_diario/cuadre-page-client';
+import { CuadrePageClient } from '@/features/cuadre-diario/components/cuadre-page-client';
 
 export const metadata: Metadata = {
   title: 'Cuadre Diario Financiero',

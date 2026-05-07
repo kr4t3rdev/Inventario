@@ -45,7 +45,7 @@ import { toast } from "sonner"
 import {
   useGetCuentasBancariasQuery,
   useDeleteCuentaBancariaMutation
-} from "@/lib/redux/services/contabilidadApi"
+} from "@/features/contabilidad/api/contabilidadApi"
 import type { CuentaBancaria } from "../../app/models/model"
 
 interface CuentasTableProps {

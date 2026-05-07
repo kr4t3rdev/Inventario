@@ -5,7 +5,7 @@ import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { PageTransition } from "@/components/ui/animations"
-import { useGetAdminTenantsQuery, useGetAdminSystemQuery } from "@/lib/redux/services/adminApi"
+import { useGetAdminTenantsQuery, useGetAdminSystemQuery } from "@/features/admin/services/adminApi"
 
 export default function TenantsPage() {
   const { data: tenants, isLoading, refetch } = useGetAdminTenantsQuery()

@@ -18,7 +18,7 @@ import {
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
-import { useGetUserQuery } from "@/lib/redux/services/adminApi"
+import { useGetUserQuery } from "@/features/admin/services/adminApi"
 //import Image from "next/image"
 
 /**

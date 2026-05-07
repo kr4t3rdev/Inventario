@@ -13,11 +13,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card"
 import { sileo } from '@/lib/sileo-shim'
 import { Skeleton } from "@/components/ui/skeleton"
-import { useAddPuntoDeVentaMutation, useGetPuntosDeVentaQuery, useUpdatePuntoDeVentaMutation } from "@/lib/redux/services/puntosDeVentaApi"
+import { useAddPuntoDeVentaMutation, useGetPuntosDeVentaQuery, useUpdatePuntoDeVentaMutation } from "@/features/puntos-venta/api/puntosDeVentaApi"
 import { motion } from "framer-motion"
 import { Store, MapPin, Sparkles, ArrowLeft, Loader2 } from "lucide-react"
 import Link from "next/link"
-import { useGetListasPreciosQuery } from "@/lib/redux/services/listasPreciosApi"
+import { useGetListasPreciosQuery } from "@/features/listas-precios/api/listasPreciosApi"
 
 const ptoVentaSchema = z.object({
   nombre: z.string({

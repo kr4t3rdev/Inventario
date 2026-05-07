@@ -27,7 +27,7 @@ import {
   useAddListaPrecioMutation,
   useDeleteListaPrecioMutation,
   useGetListasPreciosQuery,
-} from '@/lib/redux/services/listasPreciosApi';
+} from '@/features/listas-precios/api/listasPreciosApi';
 
 /**
  * @description Spinner animado para estados de carga

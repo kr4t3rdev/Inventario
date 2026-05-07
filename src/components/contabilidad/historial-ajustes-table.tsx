@@ -24,7 +24,7 @@ import {
   FileText,
   DollarSign
 } from 'lucide-react'
-import { useGetAjustesByCuentaQuery, useGetCuentasBancariasQuery, useGetMonedasQuery } from '@/lib/redux/services/contabilidadApi'
+import { useGetAjustesByCuentaQuery, useGetCuentasBancariasQuery, useGetMonedasQuery } from '@/features/contabilidad/api/contabilidadApi'
 import { useAppSelector } from '@/lib/redux/hooks'
 import type { AjusteBancario, CuentaBancaria } from '../../app/models/model'
 

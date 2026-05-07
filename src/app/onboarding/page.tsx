@@ -18,7 +18,7 @@ type TenantItem = { tenantId: string; nombre: string; slug: string | null }
  * @description Pantalla de onboarding post-verificación para elegir tipo de usuario y tenant.
  * @returns {JSX.Element} Flujo de onboarding básico.
  */
-export default function OnboardingPage(): React.JSX.Element {
+export default function OnboardingPage(): React.ReactNode {
   const router = useRouter()
   const [user, setUser] = useState<OnboardingUser | null>(null)
   const [tenants, setTenants] = useState<TenantItem[]>([])

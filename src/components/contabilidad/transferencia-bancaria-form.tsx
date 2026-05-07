@@ -26,7 +26,7 @@ import {
 import { ArrowRightLeft, Loader2, Info } from "lucide-react"
 import { sileo } from '@/lib/sileo-shim'
 import { useAppDispatch } from "@/lib/redux/hooks"
-import { contabilidadApi, useGetCuentasBancariasQuery } from "@/lib/redux/services/contabilidadApi"
+import { contabilidadApi, useGetCuentasBancariasQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { TasaCambioDialog } from "./tasa-cambio-dialog"
 import { ValidacionTransferenciaDialog } from "./validacion-transferencia-dialog"
 import { cn } from "@/lib/utils"

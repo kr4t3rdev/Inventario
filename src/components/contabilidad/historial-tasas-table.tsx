@@ -21,7 +21,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { CalendarIcon, Download, Filter } from "lucide-react"
-import { useGetHistorialTasasQuery, useGetMonedasQuery } from "@/lib/redux/services/contabilidadApi"
+import { useGetHistorialTasasQuery, useGetMonedasQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { format, isValid } from "date-fns"
 import { toast } from "sonner"
 

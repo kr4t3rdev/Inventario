@@ -19,10 +19,10 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 import { ProductPhotoUpload } from '@/components/productos/product-photo-upload'
 import type { Producto, Vendor } from '@/app/models/model'
-import { useGetVendorsQuery } from '@/lib/redux/services/vendorsApi'
-import { useGetProductosQuery } from '@/lib/redux/services/productosApi'
-import { useCreateCompraProductoMutation } from '@/lib/redux/services/comprasProductosApi'
-import { useGetAnticiposDisponiblesQuery } from '@/lib/redux/services/contabilidadApi'
+import { useGetVendorsQuery } from '@/features/vendors/api/vendorsApi'
+import { useGetProductosQuery } from '@/features/productos/api/productosApi'
+import { useCreateCompraProductoMutation } from '@/features/compras-productos/api/comprasProductosApi'
+import { useGetAnticiposDisponiblesQuery } from '@/features/contabilidad/api/contabilidadApi'
 import { FORMA_PAGO_ANTICIPO_PAGO } from '@/lib/constants/anticipos'
 
 const itemSchema = z.object({

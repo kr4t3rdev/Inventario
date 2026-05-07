@@ -2,8 +2,8 @@
 
 import { useState, useMemo } from "react"
 import { motion, useReducedMotion } from "framer-motion"
-import { useGetVentasQuery } from "@/lib/redux/services/ventasApi"
-import { useGetVentaServiciosQuery } from "@/lib/redux/services/ventaServiciosApi"
+import { useGetVentasQuery } from "@/features/ventas/api/ventasApi"
+import { useGetVentaServiciosQuery } from "@/features/venta-servicios/api/ventaServiciosApi"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"

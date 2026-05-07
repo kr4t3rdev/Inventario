@@ -53,12 +53,6 @@ export const GET = withAuthGet(async (_request: NextRequest) => {
             email: true,
           },
         },
-        contrato: {
-          select: {
-            contratoId: true,
-            numeroContrato: true,
-          },
-        },
       },
       orderBy: {
         createdAt: 'desc',

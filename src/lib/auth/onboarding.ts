@@ -1,4 +1,4 @@
-import jwt from 'jsonwebtoken';
+import jwt, { SignOptions } from 'jsonwebtoken';
 
 import { getJwtSecret } from '@/lib/secrets';
 
@@ -32,7 +32,8 @@ export function validateCSRF(requestId: string | null): { valid: false; error: s
  * @returns {string} JWT firmado.
  */
 export function signOnboardingToken(payload: OnboardingTokenPayload, expiresIn: string = '24h'): string {
-  return jwt.sign(payload, getJwtSecret(), { expiresIn });
+  const options: SignOptions = { expiresIn };
+  return jwt.sign(payload, getJwtSecret(), options);
 }
 
 /**

@@ -47,7 +47,7 @@ import {
   useCreateAdminPlanMutation,
   useUpdateAdminPlanMutation,
   useDeleteAdminPlanMutation,
-} from '@/lib/redux/services/adminApi'
+} from '@/features/admin/services/adminApi'
 
 export default function AdminPlanesPage() {
   const [page, setPage] = useState(1)

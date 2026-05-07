@@ -38,7 +38,7 @@ import {
   useGetVentasPendientesQuery,
 } from '@/lib/redux/contabilidad';
 import { cn } from '@/lib/utils';
-import { DeudasCashStatsWidget } from '@/components/contabilidad/deudas-cash-stats-widget';
+import { DeudasCashStatsWidget } from '@/features/contabilidad/components/deudas-cash-stats-widget';
 
 import type { Moneda } from '../../models/model';
 

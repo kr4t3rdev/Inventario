@@ -21,7 +21,7 @@ import {
   useDeleteCategoriaMutation, 
   useGetCategoriasQuery, 
   useGetCategoriaHierarchyQuery 
-} from "@/lib/redux/services/categoriasApi"
+} from "@/features/categorias/api/categoriasApi"
 import { ColumnDef } from "@tanstack/react-table"
 import { 
   ArrowUp, 

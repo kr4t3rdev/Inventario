@@ -1,7 +1,7 @@
 "use client"
 
 import { useParams } from "next/navigation"
-import { useGetTransferenciaQuery } from "@/lib/redux/services/transferenciasApi"
+import { useGetTransferenciaQuery } from "@/features/transferencias/api/transferenciasApi"
 import { TransferenciaForm } from "@/components/transferencias/transferencias-form"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"

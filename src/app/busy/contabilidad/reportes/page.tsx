@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowLeft, BarChart3, Sparkles } from 'lucide-react';
 
-import { ContabilidadBreadcrumb } from '@/components/contabilidad/contabilidad-breadcrumb';
+import { ContabilidadBreadcrumb } from '@/features/contabilidad/components/contabilidad-breadcrumb';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';

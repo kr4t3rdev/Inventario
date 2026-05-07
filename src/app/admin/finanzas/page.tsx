@@ -4,7 +4,7 @@ import { Wallet, Sparkles, Loader2, RefreshCw, TrendingUp, TrendingDown } from "
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { PageTransition } from "@/components/ui/animations"
-import { useGetAdminFinanceQuery } from "@/lib/redux/services/adminApi"
+import { useGetAdminFinanceQuery } from "@/features/admin/services/adminApi"
 
 export default function FinanzasPage() {
   const { data: finance, isLoading, refetch } = useGetAdminFinanceQuery()

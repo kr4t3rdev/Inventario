@@ -2,7 +2,7 @@
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useParams } from "next/navigation"
-import { useGetVendorQuery } from "@/lib/redux/services/vendorsApi"
+import { useGetVendorQuery } from "@/features/vendors/api/vendorsApi"
 import { VendorForm } from "@/components/vendor/vendor-form"
 import { motion } from "framer-motion"
 import { Building2, Sparkles, ArrowLeft, AlertCircle } from "lucide-react"

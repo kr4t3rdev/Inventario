@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { TransferenciaBancaria } from '@/app/models/model';
-import { useGetTransferenciasBancariasQuery } from '@/lib/redux/services/contabilidadApi';
+import { useGetTransferenciasBancariasQuery } from '@/features/contabilidad/api/contabilidadApi';
 import { cn, formatCurrency } from '@/lib/utils';
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { AnimatedNumber } from '@/components/ui/animated-number'

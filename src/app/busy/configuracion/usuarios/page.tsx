@@ -1,6 +1,6 @@
 'use client'
 
-import { TenantUsersPage } from '@/components/tenant-users/tenant-users-page'
+import { TenantUsersPage } from '@/features/admin/components/tenant-users-page'
 import { motion } from 'framer-motion'
 
 /**

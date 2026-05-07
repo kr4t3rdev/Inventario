@@ -7,7 +7,7 @@ import { VentasPendientesTable } from "@/components/contabilidad/ventas-pendient
 const mockUseGetVentasPendientesQuery = vi.fn();
 const mockUseGetCuentasPorCobrarQuery = vi.fn();
 
-vi.mock("@/lib/redux/services/contabilidadApi", () => ({
+vi.mock("@/features/contabilidad/api/contabilidadApi", () => ({
   useGetVentasPendientesQuery: (...args: unknown[]) => mockUseGetVentasPendientesQuery(...args),
 }));
 

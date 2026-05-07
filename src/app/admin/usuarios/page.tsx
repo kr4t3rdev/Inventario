@@ -44,7 +44,7 @@ import {
   AnimatedCard,
 } from '@/components/ui/animations';
 import { useAuth } from '@/contexts/auth-context';
-import { useApproveGlobalUserMutation, useGetAdminPlanesQuery, useGetGlobalUsersQuery, useGetGlobalUserMetricsQuery } from '@/lib/redux/services/adminApi';
+import { useApproveGlobalUserMutation, useGetAdminPlanesQuery, useGetGlobalUsersQuery, useGetGlobalUserMetricsQuery } from '@/features/admin/services/adminApi';
 import { motion, type Variants } from 'framer-motion';
 
 const UserAnalyticsPanel = dynamic(

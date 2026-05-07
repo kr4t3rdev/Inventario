@@ -17,7 +17,7 @@ import {
   AlertCircle,
   FileText
 } from "lucide-react"
-import { useDeleteVendorMutation, useGetVendorsQuery } from "@/lib/redux/services/vendorsApi"
+import { useDeleteVendorMutation, useGetVendorsQuery } from "@/features/vendors/api/vendorsApi"
 import Link from "next/link"
 import { toast } from "sonner"
 import { useState } from "react"

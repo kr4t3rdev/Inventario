@@ -14,7 +14,7 @@ import {
   useGetReporteAnticiposClienteQuery,
   useGetReporteAnticiposProveedorQuery,
   useGetResumenAnticiposQuery,
-} from "@/lib/redux/services/contabilidadApi"
+} from "@/features/contabilidad/api/contabilidadApi"
 import { Download, FileSpreadsheet, Users, Truck, BarChart3 } from "lucide-react"
 import { cn } from "@/lib/utils"
 

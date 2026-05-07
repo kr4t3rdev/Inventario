@@ -20,7 +20,7 @@ import { motion, type Variants } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { PageTransition, StaggerContainer, StaggerItem, AnimatedCard } from "@/components/ui/animations"
-import { useGetAdminTenantsQuery, useGetAdminFinanceQuery, useGetAdminSystemQuery } from "@/lib/redux/services/adminApi"
+import { useGetAdminTenantsQuery, useGetAdminFinanceQuery, useGetAdminSystemQuery } from "@/features/admin/services/adminApi"
 
 interface SystemAlert {
   id: string

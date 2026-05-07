@@ -383,7 +383,7 @@ export function AdminUsersTable({
                   <TableCell>{candidate.email}</TableCell>
                   {showTenantColumn && (<TableCell>{isUserWithTenant(candidate) ? <span className="text-sm">{candidate.tenantName}</span> : <span className="text-sm text-muted-foreground">—</span>}</TableCell>)}
                   <TableCell>{getRoleBadge(candidate.role, candidate.tenantRole)}</TableCell>
-                  <TableCell>{getStatusBadge(candidate.isActive, candidate.expiresAt)}</TableCell>
+                  <TableCell>{getStatusBadge(candidate.isActive, candidate.expiresAt ?? undefined)}</TableCell>
                   <TableCell>{format(new Date(candidate.createdAt), 'dd/MM/yyyy')}</TableCell>
                   <TableCell>{candidate.expiresAt ? format(new Date(candidate.expiresAt), 'dd/MM/yyyy') : <span className="text-muted-foreground">Sin límite</span>}</TableCell>
                   <TableCell className="text-right">

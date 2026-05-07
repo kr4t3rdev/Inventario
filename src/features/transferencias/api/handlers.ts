@@ -76,9 +76,14 @@ async function generarNumeroTransferencia(tx: any): Promise<string> {
 export async function getTransferenciasHandler(request: NextRequest, _context: any, user: AuthenticatedUser) {
   try {
     const tenantId = requireTenant(user);
+    const searchParams = request.nextUrl.searchParams
+    const page = parseInt(searchParams.get('page') || '1', 10)
+    const limit = parseInt(searchParams.get('limit') || '10', 10)
+    const skip = (page - 1) * limit
+
     const transferencias = await prisma.transferencia.findMany({
-      where: { tenantId },
       where: {
+        tenantId,
         deletedAt: null,
       },
       select: {

@@ -1,7 +1,7 @@
 'use client'
 
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
-import { CompraProductoForm } from '@/components/compras/compra-producto-form'
+import { CompraProductoForm } from '@/features/compras-productos/components/compra-producto-form'
 import { motion } from 'framer-motion'
 import { ShoppingCart, Sparkles, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'

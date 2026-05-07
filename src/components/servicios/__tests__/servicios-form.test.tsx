@@ -40,13 +40,13 @@ vi.mock('sonner', () => ({
   },
 }))
 
-vi.mock('@/lib/redux/services/serviciosApi', () => ({
+vi.mock('@/features/servicios/api/serviciosApi', () => ({
   useGetServiciosQuery: (...args: unknown[]) => mockUseGetServiciosQuery(...args),
   useAddServiciosMutation: () => [mockAddServicios],
   useUpdateServiciosMutation: () => [mockUpdateServicios],
 }))
 
-vi.mock('@/lib/redux/services/vendorsApi', () => ({
+vi.mock('@/features/vendors/api/vendorsApi', () => ({
   useGetVendorsQuery: (...args: unknown[]) => mockUseGetVendorsQuery(...args),
 }))
 

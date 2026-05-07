@@ -1,6 +1,6 @@
 'use client'
-import { useGetProductosQuery } from "@/lib/redux/services/productosApi";
-import { useGetPuntosDeVentaQuery } from "@/lib/redux/services/puntosDeVentaApi";
+import { useGetProductosQuery } from "@/features/productos/api/productosApi";
+import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta/api/puntosDeVentaApi";
 import { useState } from "react";
 import { Producto } from "@/app/models/model";
 import { useAddVentaMutation } from "@/features/ventas/api/ventasApi";

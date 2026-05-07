@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useGetCuentasBancariasQuery } from '@/lib/redux/services/contabilidadApi';
+import { useGetCuentasBancariasQuery } from '@/features/contabilidad/api/contabilidadApi';
 import { useGetPrestamosCashStatsQuery } from '@/lib/redux/services/prestamosCashApi';
 import { getAuthToken } from '@/lib/token';
 import { cn } from '@/lib/utils';

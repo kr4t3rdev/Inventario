@@ -6,7 +6,7 @@ import { ArrowLeft, Receipt } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ReconciliacionVentasPage } from '@/components/contabilidad/reconciliacion-ventas-page';
+import { ReconciliacionVentasPage } from '@/features/contabilidad/components/reconciliacion-ventas-page';
 import { cn } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';

@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useGetComprasProductosQuery, useDeleteCompraProductoMutation } from '@/lib/redux/services/comprasProductosApi'
+import { useGetComprasProductosQuery, useDeleteCompraProductoMutation } from '@/features/compras-productos/api/comprasProductosApi'
 import type { CompraDocumento } from '@/app/models/model'
 import {
   Dialog,

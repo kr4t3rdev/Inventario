@@ -19,7 +19,7 @@ import {
   Building2,
   DollarSign
 } from "lucide-react"
-import { useGetMonedasQuery } from "@/lib/redux/services/contabilidadApi"
+import { useGetMonedasQuery } from "@/features/contabilidad/api/contabilidadApi"
 
 interface ValidacionTransferenciaDialogProps {
   isOpen: boolean

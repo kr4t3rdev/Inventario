@@ -54,7 +54,7 @@ vi.mock('@/lib/token', () => ({
   getAuthToken: () => null,
 }))
 
-vi.mock('@/lib/redux/services/contabilidadApi', () => ({
+vi.mock('@/features/contabilidad/api/contabilidadApi', () => ({
   useGetCuentasBancariasQuery: (...args: unknown[]) => mockUseGetCuentasBancariasQuery(...args),
 }))
 

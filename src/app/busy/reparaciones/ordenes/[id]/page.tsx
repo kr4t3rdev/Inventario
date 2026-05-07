@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
 import { useGetOrdenQuery, useUpdateOrdenMutation, useFacturarOrdenMutation } from "@/lib/redux/services/ordenesReparacionApi"
-import { useGetProductosQuery } from "@/lib/redux/services/productosApi"
+import { useGetProductosQuery } from "@/features/productos/api/productosApi"
 import { useGetCuentasBancariasQuery, useGetNextSerieNumberQuery } from "@/lib/redux/services/configuracionApi"
 import { useGetDefectacionesQuery } from "@/lib/redux/services/reparacionesApi"
 import { formatCurrency, cn } from "@/lib/utils"

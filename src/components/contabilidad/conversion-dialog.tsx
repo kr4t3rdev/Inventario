@@ -32,7 +32,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { ArrowRightLeft, Calculator } from "lucide-react"
-import { useGetMonedasQuery, useConvertirMonedaMutation } from "@/lib/redux/services/contabilidadApi"
+import { useGetMonedasQuery, useConvertirMonedaMutation } from "@/features/contabilidad/api/contabilidadApi"
 import type { Moneda as MonedaModel } from "../../app/models/model"
 import { sileo } from '@/lib/sileo-shim'
 

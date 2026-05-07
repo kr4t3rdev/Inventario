@@ -60,7 +60,7 @@ import {
   useDeleteAdminLicenciaMutation,
   useUpdateAdminLicenciaMutation,
   useGenerateAdminLicenciasMutation,
-} from '@/lib/redux/services/adminApi'
+} from '@/features/admin/services/adminApi'
 
 export default function AdminLicenciasPage() {
   const [page, setPage] = useState(1)

@@ -8,7 +8,7 @@ import { CategoryHierarchyTree } from '../category-hierarchy-tree'
 // Mock the categorias API hooks
 const mockUseGetCategoriaHierarchyQuery = vi.fn()
 
-vi.mock('@/lib/redux/services/categoriasApi', () => ({
+vi.mock('@/features/categorias/api/categoriasApi', () => ({
   useGetCategoriaHierarchyQuery: () => mockUseGetCategoriaHierarchyQuery(),
 }))
 

@@ -40,7 +40,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 import type { DeudaPriorizada } from "@/types/exchange-intelligence"
-import { useRegistrarPagoCapitalMutation, useGetCuentasBancariasQuery } from "@/lib/redux/services/contabilidadApi"
+import { useRegistrarPagoCapitalMutation, useGetCuentasBancariasQuery } from "@/features/contabilidad/api/contabilidadApi"
 import {
   Select,
   SelectContent,

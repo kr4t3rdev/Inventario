@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { useDeleteUnidadMutation, useGetUnidadesQuery } from '@/lib/redux/services/unidadesApi'
+import { useDeleteUnidadMutation, useGetUnidadesQuery } from '@/features/unidades/api/unidadesApi'
 import { ColumnDef } from '@tanstack/react-table'
 import { 
   ArrowDown, 

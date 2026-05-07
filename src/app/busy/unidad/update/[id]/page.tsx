@@ -1,6 +1,6 @@
 "use client"
 
-import { useGetUnidadQuery } from "@/lib/redux/services/unidadesApi"
+import { useGetUnidadQuery } from "@/features/unidades/api/unidadesApi"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useParams } from "next/navigation"

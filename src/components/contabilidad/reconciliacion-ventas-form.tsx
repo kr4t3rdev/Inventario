@@ -45,7 +45,7 @@ import {
   useGetCuentasBancariasQuery,
   useGetTiposPagoQuery,
   useGetMonedasQuery
-} from "@/lib/redux/services/contabilidadApi"
+} from "@/features/contabilidad/api/contabilidadApi"
 import type { VentaPendiente } from "../../app/models/model"
 
 // Validation schema for individual distribution

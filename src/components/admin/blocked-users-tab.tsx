@@ -14,7 +14,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination"
 import { AdminTableLoader } from "@/components/admin/animations"
-import { useGetUserQuery, useUnlockUserMutation } from "@/lib/redux/services/adminApi"
+import { useGetUserQuery, useUnlockUserMutation } from "@/features/admin/services/adminApi"
 import { format } from "date-fns"
 import { toast } from "sonner"
 import { History, Unlock, Lock } from "lucide-react"

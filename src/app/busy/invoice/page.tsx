@@ -15,7 +15,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { useGetVentasQuery } from "@/lib/redux/services/ventasApi"
+import { useGetVentasQuery } from "@/features/ventas/api/ventasApi"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"

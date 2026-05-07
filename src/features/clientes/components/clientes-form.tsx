@@ -14,8 +14,8 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { sileo } from '@/lib/sileo-shim'
 import { Skeleton } from "@/components/ui/skeleton"
-import { useAddClienteMutation, useGetClientesQuery, useUpdateClienteMutation } from "@/lib/redux/services/ClienteApi"
-import { useGetListasPreciosQuery } from "@/lib/redux/services/listasPreciosApi"
+import { useAddClienteMutation, useGetClientesQuery, useUpdateClienteMutation } from "@/features/clientes/api/ClienteApi"
+import { useGetListasPreciosQuery } from "@/features/listas-precios/api/listasPreciosApi"
 import { ClienteLogoUpload } from "./cliente-logo-upload"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 

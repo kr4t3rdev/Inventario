@@ -3,9 +3,9 @@
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useParams } from "next/navigation"
-import { useGetAlmacenQuery } from "@/lib/redux/services/almacenesApi"
+import { useGetAlmacenQuery } from "@/features/almacenes/api/almacenesApi"
 import { AlmacenForm } from "@/components/almacen/almacen-form"
-import { useGetClienteQuery } from "@/lib/redux/services/ClienteApi"
+import { useGetClienteQuery } from "@/features/clientes/api/ClienteApi"
 import { ClienteForm } from "@/components/clientes/clientes-form"
 
 export default function EditarClientePage() {

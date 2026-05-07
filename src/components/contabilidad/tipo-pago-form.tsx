@@ -14,7 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Loader2, AlertTriangle, CheckCircle, Save, X, CreditCard, AlignLeft, Power, Building2 } from "lucide-react"
 import { sileo } from '@/lib/sileo-shim'
-import { useGetCuentasBancariasQuery } from "@/lib/redux/services/contabilidadApi"
+import { useGetCuentasBancariasQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { CreateTipoPagoRequest, UpdateTipoPagoRequest, TipoPagoWithDetails, CuentaBancaria } from "../../app/models/model"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { useDeleteCategoriaMutation } from "@/lib/redux/services/categoriasApi"
+import { useDeleteCategoriaMutation } from "@/features/categorias/api/categoriasApi"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import {
@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle, Loader2, AlertTriangle, Trash2 } from "lucide-react"
-import { useCategoryValidation } from "@/hooks/use-category-validation"
+import { useCategoryValidation } from "@/features/categorias/hooks/use-category-validation"
 import { motion, AnimatePresence } from "framer-motion"
 
 interface DeleteCategoryDialogProps {
@@ -41,7 +41,7 @@ export function DeleteCategoryDialog({
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
   const [deleteCategory] = useDeleteCategoriaMutation()
-  const { validateDeletion, isLoading: isValidating } = useCategoryValidation()
+  const { validateCategoryDeletion, isValidating } = useCategoryValidation()
   const [deletionCheck, setDeletionCheck] = useState<{
     canDelete: boolean
     reason?: string
@@ -57,7 +57,7 @@ export function DeleteCategoryDialog({
       if (!open) return
       
       try {
-        const result = validateDeletion(category.catId)
+        const result = validateCategoryDeletion(category.catId)
         setDeletionCheck({
           canDelete: result.isValid,
           reason: result.error,
@@ -74,7 +74,7 @@ export function DeleteCategoryDialog({
     }
     
     checkDeletion()
-  }, [open, category.catId, validateDeletion])
+  }, [open, category.catId, validateCategoryDeletion])
 
   const handleDelete = async () => {
     if (!deletionCheck?.canDelete) return

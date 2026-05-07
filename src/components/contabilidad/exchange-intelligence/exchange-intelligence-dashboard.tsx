@@ -29,8 +29,8 @@ import ScenarioSimulator from './scenario-simulator';
 import type { ExportDataType } from './export-dropdown';
 
 import { useGetCostImpactQuery, useGetDebtExposureQuery, useGetPaymentEfficiencyQuery, useGetKPIsQuery } from '@/lib/redux/services/exchangeIntelligenceApi';
-import { useGetCategoriasQuery } from '@/lib/redux/services/categoriasApi';
-import { useGetAlmacenesQuery } from '@/lib/redux/services/almacenesApi';
+import { useGetCategoriasQuery } from '@/features/categorias/api/categoriasApi';
+import { useGetAlmacenesQuery } from '@/features/almacenes/api/almacenesApi';
 import { selectActiveAlerts, selectCriticalAlertsCount, selectWarningAlertsCount } from '@/lib/redux/slices/exchangeIntelligenceSlice';
 import { useAppSelector } from '@/lib/redux/hooks';
 import type { KPIData } from '@/lib/types/exchange-intelligence';

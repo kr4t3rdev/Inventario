@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertTriangle, DollarSign, TrendingDown, TrendingUp } from 'lucide-react'
-import { useCreateAjusteBancarioMutation, useGetCuentasBancariasQuery, useGetMonedasQuery } from '@/lib/redux/services/contabilidadApi'
+import { useCreateAjusteBancarioMutation, useGetCuentasBancariasQuery, useGetMonedasQuery } from '@/features/contabilidad/api/contabilidadApi'
 import { useAppSelector } from '@/lib/redux/hooks'
 import { sileo } from '@/lib/sileo-shim'
 import { CuentaBancaria, Moneda } from '../../app/models/model'

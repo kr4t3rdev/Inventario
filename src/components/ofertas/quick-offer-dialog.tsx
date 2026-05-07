@@ -38,8 +38,8 @@ import { z } from "zod"
 import { Card } from "@/components/ui/card"
 
 import { Producto, Oferta } from "@/app/models/model"
-import { useGetClientesQuery } from "@/lib/redux/services/ClienteApi"
-import { useAddOfertaMutation } from "@/lib/redux/services/ofertasApi"
+import { useGetClientesQuery } from "@/features/clientes/api/ClienteApi"
+import { useAddOfertaMutation } from "@/features/ofertas/api/ofertasApi"
 import { getAuthToken } from "@/lib/token"
 import { formatCurrency } from "@/lib/utils"
 

@@ -14,11 +14,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useGetCategoriasQuery, useGetSubcategoriasQuery } from '@/lib/redux/services/categoriasApi';
-import { useGetUnidadesQuery } from '@/lib/redux/services/unidadesApi';
-import { useGetAlmacenesQuery } from '@/lib/redux/services/almacenesApi';
-import { useGetVendorsQuery } from '@/lib/redux/services/vendorsApi';
-import { useAddProductoMutation } from '@/lib/redux/services/productosApi';
+import { useGetCategoriasQuery, useGetSubcategoriasQuery } from '@/features/categorias/api/categoriasApi';
+import { useGetUnidadesQuery } from '@/features/unidades/api/unidadesApi';
+import { useGetAlmacenesQuery } from '@/features/almacenes/api/almacenesApi';
+import { useGetVendorsQuery } from '@/features/vendors/api/vendorsApi';
+import { useAddProductoMutation } from '@/features/productos/api/productosApi';
 import { getAuthToken } from '@/lib/token';
 
 import {

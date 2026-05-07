@@ -55,7 +55,7 @@ export function ProductionDialogs({
   onConfirmApprove,
   onConfirmComplete,
   onConfirmCancel,
-}: ProductionDialogsProps): JSX.Element {
+}: ProductionDialogsProps): React.JSX.Element {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-ES', {
       style: 'currency',

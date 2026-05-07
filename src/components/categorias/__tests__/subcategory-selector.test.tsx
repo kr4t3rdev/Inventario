@@ -14,7 +14,7 @@ beforeAll(() => {
 const mockUseGetCategoriasQuery = vi.fn()
 const mockUseGetSubcategoriasQuery = vi.fn()
 
-vi.mock('@/lib/redux/services/categoriasApi', () => ({
+vi.mock('@/features/categorias/api/categoriasApi', () => ({
   useGetCategoriasQuery: () => mockUseGetCategoriasQuery(),
   useGetSubcategoriasQuery: (parentId: string, options?: { skip?: boolean }) => {
     if (options?.skip) {

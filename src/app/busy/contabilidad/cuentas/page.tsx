@@ -17,7 +17,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useGetCuentasBancariasQuery, useUpdateCuentaBancariaMutation } from '@/lib/redux/services/contabilidadApi';
+import { useGetCuentasBancariasQuery, useUpdateCuentaBancariaMutation } from '@/features/contabilidad/api/contabilidadApi';
 const CuentasBancariasTable = dynamic(
   () =>
     import('@/components/contabilidad/cuentas-bancarias-table').then((mod) => ({

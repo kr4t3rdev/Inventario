@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 
-import { ReportesPageClient } from '@/components/reportes/reportes-page-client';
+import { ReportesPageClient } from '@/features/reportes-financieros/components/reportes-page-client';
 
 export const metadata: Metadata = {
   title: 'Reportes de Inventario',

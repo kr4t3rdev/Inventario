@@ -26,7 +26,7 @@ import {
   FileText,
 } from "lucide-react"
 import type { VentaServicio } from "../../app/models/model"
-import { useGetServiciosPendientesQuery } from "@/lib/redux/services/contabilidadApi"
+import { useGetServiciosPendientesQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "../ui/pagination"
 import { cn } from "@/lib/utils"
 import {

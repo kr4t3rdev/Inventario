@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { AlertTriangle, Loader2, Info } from "lucide-react"
 import { toast } from "sonner"
-import { useReverseAnticipoMutation } from "@/lib/redux/services/contabilidadApi"
+import { useReverseAnticipoMutation } from "@/features/contabilidad/api/contabilidadApi"
 import { Anticipo } from "@/app/models/model"
 
 interface AnticipoRevertirDialogProps {

@@ -19,7 +19,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useAddUserMutation } from '@/lib/redux/services/adminApi';
+import { useAddUserMutation } from '@/features/admin/services/adminApi';
 import { createUserBodySchema } from '@/lib/admin/schemas';
 
 interface CreateUserDialogProps {

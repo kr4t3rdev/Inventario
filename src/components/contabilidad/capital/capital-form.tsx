@@ -24,7 +24,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Loader2, Save, X, Building2, User } from "lucide-react"
 import { sileo } from '@/lib/sileo-shim'
 import { showErrorToast } from "../toast-notifications"
-import { useCreateInyeccionCapitalMutation, useGetCuentasBancariasQuery, useGetMonedasQuery } from "@/lib/redux/services/contabilidadApi"
+import { useCreateInyeccionCapitalMutation, useGetCuentasBancariasQuery, useGetMonedasQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { Textarea } from "@/components/ui/textarea"
 import { motion, AnimatePresence } from "framer-motion"
 

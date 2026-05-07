@@ -18,8 +18,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { sileo } from '@/lib/sileo-shim'
 import { Skeleton } from "@/components/ui/skeleton"
 
-import { useGetProductosQuery } from "@/lib/redux/services/productosApi"
-import { useAddMermaMutation, useUpdateMermaMutation } from "@/lib/redux/services/mermasApi"
+import { useGetProductosQuery } from "@/features/productos/api/productosApi"
+import { useAddMermaMutation, useUpdateMermaMutation } from "@/features/mermas/api/mermasApi"
 import { apiSlice } from "@/lib/redux/services/apiSlice"
 
 const mermaSchema = z.object({

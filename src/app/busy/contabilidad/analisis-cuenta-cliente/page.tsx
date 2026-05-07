@@ -37,7 +37,7 @@ import {
 } from '@/components/ui/animations';
 import { ContabilidadBreadcrumb } from "@/components/contabilidad/contabilidad-breadcrumb"
 
-import { useGetClientesQuery } from "@/lib/redux/services/ClienteApi"
+import { useGetClientesQuery } from "@/features/clientes/api/ClienteApi"
 import { useGetCuentasPorCobrarQuery } from "@/lib/redux/services/cuentasPorCobrarApi"
 import { useGetFacturasQuery } from "@/lib/redux/services/facturasApi"
 import { Cliente, CuentaPorCobrar } from "@/app/models/model"

@@ -1,11 +1,11 @@
 'use client'
 
-import { Activity, Sparkles, Shield, Clock, SessionIcon, Loader2, RefreshCw } from "lucide-react"
+import { Activity, Sparkles, Shield, Clock, Loader2, RefreshCw } from "lucide-react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { PageTransition } from "@/components/ui/animations"
-import { useGetAdminSystemQuery } from "@/lib/redux/services/adminApi"
+import { useGetAdminSystemQuery } from "@/features/admin/services/adminApi"
 
 export default function SistemaPage() {
   const { data: system, isLoading, refetch } = useGetAdminSystemQuery()
@@ -43,7 +43,7 @@ export default function SistemaPage() {
               <p className="text-3xl font-bold">{system?.users.total ?? 0}</p>
             )}
             <p className="text-xs text-muted-foreground mt-1">
-              {system?.users.byRole.find((r) => r.role === "admin")?._count ?? 0} admins
+              {system?.users.byRole.find((r) => r.role === "admin")?.count ?? 0} admins
             </p>
           </CardContent>
         </Card>

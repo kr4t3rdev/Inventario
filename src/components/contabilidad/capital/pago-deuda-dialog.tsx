@@ -30,7 +30,7 @@ import {
 import { Loader2, DollarSign } from "lucide-react"
 import { sileo } from '@/lib/sileo-shim'
 import { showErrorToast } from "../toast-notifications"
-import { useRegistrarPagoCapitalMutation, useGetCuentasBancariasQuery } from "@/lib/redux/services/contabilidadApi"
+import { useRegistrarPagoCapitalMutation, useGetCuentasBancariasQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { InyeccionCapital } from "@/app/models/model"
 import { useEffect } from "react"
 import { Textarea } from "@/components/ui/textarea"

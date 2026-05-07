@@ -12,7 +12,7 @@ vi.mock('@/lib/redux/services/prestamosCashApi', () => ({
   useCreatePrestamoCashMutation: () => mockUseCreatePrestamoCashMutation(),
 }))
 
-vi.mock('@/lib/redux/services/contabilidadApi', () => ({
+vi.mock('@/features/contabilidad/api/contabilidadApi', () => ({
   useGetTasasActualesQuery: () => mockUseGetTasasActualesQuery(),
 }))
 

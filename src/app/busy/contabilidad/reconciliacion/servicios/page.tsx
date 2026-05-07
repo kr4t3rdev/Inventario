@@ -6,7 +6,7 @@ import { ArrowLeft, CreditCard } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ReconciliacionServiciosPage } from '@/components/contabilidad/reconciliacion-servicios-page';
+import { ReconciliacionServiciosPage } from '@/features/contabilidad/components/reconciliacion-servicios-page';
 import { cn } from '@/lib/utils';
 
 const sectionKickerClass = cn(

@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Search, Filter, Download, ArrowUpDown, TrendingUp, TrendingDown, Wallet, Receipt, FileText, Calendar, Eye } from "lucide-react"
-import { useGetMovimientosQuery, useGetCuentasBancariasQuery } from "@/lib/redux/services/contabilidadApi"
+import { useGetMovimientosQuery, useGetCuentasBancariasQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { useGetPrestamoCashHistorialQuery } from "@/lib/redux/services/prestamosCashApi"
 import { useGetDeudaCashQuery } from "@/lib/redux/services/deudasCashApi"
 import { formatCurrencySimple, formatDate } from "@/lib/redux/utils/contabilidadUtils"

@@ -1,6 +1,6 @@
 "use client"
-import { useGetProductosQuery } from "@/lib/redux/services/productosApi"
-import { useGetCategoriasQuery } from "@/lib/redux/services/categoriasApi"
+import { useGetProductosQuery } from "@/features/productos/api/productosApi"
+import { useGetCategoriasQuery } from "@/features/categorias/api/categoriasApi"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"

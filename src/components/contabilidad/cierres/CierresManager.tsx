@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Plus } from "lucide-react";
 import { CierreForm } from "./CierreForm";
 import { CierresTable } from "./CierresTable";
-import { useGetCierresQuery, useCreateCierreMutation } from "@/lib/redux/services/contabilidadApi";
+import { useGetCierresQuery, useCreateCierreMutation } from "@/features/contabilidad/api/contabilidadApi";
 
 /**
  * Componente principal para gestión de cierres contables

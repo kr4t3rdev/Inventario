@@ -22,7 +22,7 @@ import {
 import { VentasPendientesTable } from "./ventas-pendientes-table"
 import { ReconciliacionVentasForm } from "./reconciliacion-ventas-form"
 import { ResumenReconciliacion } from "./resumen-reconciliacion"
-import { useGetVentasPendientesQuery, useGetHistorialReconciliacionVentasQuery } from "@/lib/redux/services/contabilidadApi"
+import { useGetVentasPendientesQuery, useGetHistorialReconciliacionVentasQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { useGetCuentasPorCobrarQuery } from "@/lib/redux/services/cuentasPorCobrarApi"
 import type { VentaPendiente, ReconciliacionVenta } from "../../app/models/model"
 import { cn } from "@/lib/utils"

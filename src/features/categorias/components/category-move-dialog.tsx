@@ -20,7 +20,7 @@ import {
   useGetCategoriasQuery, 
   useMoveCategoriaMutation,
   useGetCategoriaQuery 
-} from "@/lib/redux/services/categoriasApi"
+} from "@/features/categorias/api/categoriasApi"
 import type { Categoria } from "@/app/models/model"
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"

@@ -1,1 +1,1 @@
-export type { Contrato } from '@/app/models/model'
+export type { Contrato } from '@/generated/prisma'

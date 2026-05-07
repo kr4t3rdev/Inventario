@@ -8,7 +8,7 @@ import {
   useGetCuentasPorCobrarQuery
 } from "@/lib/redux/services/cuentasPorCobrarApi"
 import { useGetFacturaQuery, useGetFacturasQuery } from "@/lib/redux/services/facturasApi"
-import { useGetVentaQuery } from "@/lib/redux/services/ventasApi"
+import { useGetVentaQuery } from "@/features/ventas/api/ventasApi"
 import type { CuentaPorCobrar, VentaPendiente } from "@/app/models/model"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Loader2, AlertCircle, TrendingUp, TrendingDown, DollarSign, Receipt, ArrowLeft, CreditCard } from "lucide-react"

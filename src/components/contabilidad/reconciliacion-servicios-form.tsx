@@ -51,7 +51,7 @@ import {
   useGetCuentasBancariasQuery,
   useGetTiposPagoQuery,
   useGetMonedasQuery
-} from "@/lib/redux/services/contabilidadApi"
+} from "@/features/contabilidad/api/contabilidadApi"
 import { TasaCambioDialog } from "./tasa-cambio-dialog"
 import { VentaServicio } from "../../app/models/model"
 

@@ -7,10 +7,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Search, TrendingUp, DollarSign } from "lucide-react"
 import { useMemo, useState } from "react"
 import { format } from "date-fns"
-import { useGetVentasQuery } from "@/lib/redux/services/ventasApi"
-import { useGetMermasQuery } from "@/lib/redux/services/mermasApi"
+import { useGetVentasQuery } from "@/features/ventas/api/ventasApi"
+import { useGetMermasQuery } from "@/features/mermas/api/mermasApi"
 import { useGetGastosDEQuery } from "@/lib/redux/services/gastosDEApi"
-import { useGetVentaServiciosQuery } from "@/lib/redux/services/ventaServiciosApi"
+import { useGetVentaServiciosQuery } from "@/features/venta-servicios/api/ventaServiciosApi"
 import { useGetPagoSalariosQuery } from "@/lib/redux/services/pagoSalarioApi"
 import { flattenVentas } from "@/lib/ventas-utils"
 

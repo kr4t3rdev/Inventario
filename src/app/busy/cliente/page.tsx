@@ -4,7 +4,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Button } from "@/components/ui/button"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useDeleteClienteMutation, useGetClientesQuery } from "@/lib/redux/services/ClienteApi"
+import { useDeleteClienteMutation, useGetClientesQuery } from "@/features/clientes/api/ClienteApi"
 import { ColumnDef } from "@tanstack/react-table"
 import { ArrowUp, ArrowUpDown, Pencil, Plus, Trash2, Users, Sparkles, UserCircle } from "lucide-react"
 import Link from "next/link"

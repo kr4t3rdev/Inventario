@@ -18,7 +18,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Progress } from '@/components/ui/progress';
 import { Skeleton } from '@/components/ui/skeleton';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
-import { useGetReconciliacionStatsQuery } from '@/lib/redux/services/contabilidadApi';
+import { useGetReconciliacionStatsQuery } from '@/features/contabilidad/api/contabilidadApi';
 import { cn } from '@/lib/utils';
 
 type ToneKey = 'emerald' | 'blue' | 'amber';

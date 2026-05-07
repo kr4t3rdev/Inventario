@@ -16,9 +16,9 @@ import { Card, CardContent } from "@/components/ui/card"
 import { sileo } from '@/lib/sileo-shim'
 import { Skeleton } from "@/components/ui/skeleton"
 
-import { useGetProductosQuery } from "@/lib/redux/services/productosApi"
-import { useGetPuntosDeVentaQuery } from "@/lib/redux/services/puntosDeVentaApi"
-import { useAddVentaMutation, useUpdateVentaMutation } from "@/lib/redux/services/ventasApi"
+import { useGetProductosQuery } from "@/features/productos/api/productosApi"
+import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta/api/puntosDeVentaApi"
+import { useAddVentaMutation, useUpdateVentaMutation } from "@/features/ventas/api/ventasApi"
 import { useDispatch } from "react-redux"
 import { apiSlice } from "@/lib/redux/services/apiSlice"
 

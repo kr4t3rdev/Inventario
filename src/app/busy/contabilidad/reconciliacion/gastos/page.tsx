@@ -6,7 +6,7 @@ import { ArrowLeft, Calculator } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ReconciliacionGastosPage } from '@/components/contabilidad/reconciliacion-gastos-page';
+import { ReconciliacionGastosPage } from '@/features/contabilidad/components/reconciliacion-gastos-page';
 import { cn } from '@/lib/utils';
 
 const sectionKickerClass = cn(

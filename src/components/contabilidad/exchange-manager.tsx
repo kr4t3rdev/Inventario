@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
-import { useGetMonedasQuery, useGetTasasActualesQuery } from '@/lib/redux/services/contabilidadApi';
+import { useGetMonedasQuery, useGetTasasActualesQuery } from '@/features/contabilidad/api/contabilidadApi';
 
 import { ConversionDialog } from './conversion-dialog';
 import { HistorialTasasTable } from './historial-tasas-table';

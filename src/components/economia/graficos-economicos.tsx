@@ -5,7 +5,7 @@ import { useIsMobile } from "@/hooks/use-mobile"
 import { useGetDashboardStatsQuery } from "@/lib/redux/services/dashboardApi"
 import { useGetEmpleadosQuery } from "@/lib/redux/services/empleadosApi"
 import { useGetGastosCompraQuery, useGetGastosCompraRestockQuery } from "@/lib/redux/services/GastosCompraApi"
-import { useGetMermasQuery } from "@/lib/redux/services/mermasApi"
+import { useGetMermasQuery } from "@/features/mermas/api/mermasApi"
 import React from "react"
 import {
   XAxis,

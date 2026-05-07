@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { useGetInyeccionesCapitalQuery } from "@/lib/redux/services/contabilidadApi"
+import { useGetInyeccionesCapitalQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { InyeccionCapital } from "@/app/models/model"
 import { PagoDeudaDialog } from "./pago-deuda-dialog"
 import { Loader2, TrendingUp, TrendingDown, DollarSign, CreditCard } from "lucide-react"

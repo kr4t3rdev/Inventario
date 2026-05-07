@@ -9,7 +9,7 @@ const mockUseGetPrestamosCashStatsQuery = vi.fn()
 const mockUseGetMovimientosQuery = vi.fn()
 const mockUseGetCuentaTransactionHistoryQuery = vi.fn()
 
-vi.mock('@/lib/redux/services/contabilidadApi', () => ({
+vi.mock('@/features/contabilidad/api/contabilidadApi', () => ({
   useGetCuentasBancariasQuery: (...args: unknown[]) => mockUseGetCuentasBancariasQuery(...args),
   useGetMovimientosQuery: (...args: unknown[]) => mockUseGetMovimientosQuery(...args),
   useGetCuentaTransactionHistoryQuery: (...args: unknown[]) => mockUseGetCuentaTransactionHistoryQuery(...args),

@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { useCreateAnticipoMutation } from "@/lib/redux/services/contabilidadApi"
+import { useCreateAnticipoMutation } from "@/features/contabilidad/api/contabilidadApi"
 import { Loader2 } from "lucide-react"
 import { sileo } from "@/lib/sileo-shim"
 

@@ -20,7 +20,7 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ArrowUpDown, Pencil, Trash2Icon, Loader2 } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useGetProductosQuery } from "@/lib/redux/services/productosApi"
+import { useGetProductosQuery } from "@/features/productos/api/productosApi"
 import { Merma } from "@/app/models/model"
 
 interface MermasTableProps {

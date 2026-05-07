@@ -3,7 +3,7 @@
 import { ServicioForm } from "@/components/servicios/servicios-form"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useGetServicioQuery } from "@/lib/redux/services/serviciosApi"
+import { useGetServicioQuery } from "@/features/servicios/api/serviciosApi"
 import { useParams } from "next/navigation"
 
 export default function EditarServicioPage() {

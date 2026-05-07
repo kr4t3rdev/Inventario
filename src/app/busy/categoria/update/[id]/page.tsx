@@ -2,7 +2,7 @@
 
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useGetCategoriaQuery } from "@/lib/redux/services/categoriasApi"
+import { useGetCategoriaQuery } from "@/features/categorias/api/categoriasApi"
 import { CategoryForm } from "@/components/categorias/category-form"
 import { SubcategoryForm } from "@/components/categorias/subcategory-form"
 import { useParams } from "next/navigation"

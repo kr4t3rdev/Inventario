@@ -1,5 +1,5 @@
-// Export API hooks and endpoints
-export * from "../services/contabilidadApi"
+// Export API hooks and endpoints (re-export desde feature location)
+export * from "@/features/contabilidad/api/contabilidadApi"
 
 // Export slice actions and reducer
 export { default as contabilidadReducer } from "../slices/contabilidadSlice"

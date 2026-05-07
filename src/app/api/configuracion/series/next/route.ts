@@ -10,7 +10,7 @@ export const GET = withAuthGet(async (request: NextRequest) => {
     return NextResponse.json({ error: "Prefijo requerido" }, { status: 400 })
   }
 
-  const serie = await prisma.serieFacturacion.findUnique({
+  const serie = await prisma.serieFacturacion.findFirst({
     where: { prefijo }
   })
 

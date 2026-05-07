@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo, useCallback } from "react"
-import { useGetAnticiposDisponiblesQuery } from "@/lib/redux/services/contabilidadApi"
+import { useGetAnticiposDisponiblesQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -65,7 +65,7 @@ export function AnticipoSelector({
   moneda = "CUP",
   disabled = false,
 }: AnticipoSelectorProps) {
-  const contexto = tipo === "PAGO" ? "compra" : "factura"
+  const contexto = tipo === "PAGO" ? "compra" as const : "factura" as const
 
   const queryParams = useMemo(
     () => ({

@@ -1816,13 +1816,6 @@ export interface RegistrarPagoDeudaRequest {
   observaciones?: string
 }
 
-export interface PrestamosCashStats {
-  totalActivos: number
-  totalPagados: number
-  totalVencidos: number
-  montoTotalPrestado: { moneda: string; total: number }[]
-  montoPendienteCobro: { moneda: string; total: number }[]
-}
 
 export interface DeudasCashStats {
   totalActivas: number

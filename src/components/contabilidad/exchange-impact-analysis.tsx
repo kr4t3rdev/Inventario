@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton"
 import { Progress } from "@/components/ui/progress"
 import { TrendingUp, TrendingDown, ArrowUpDown, DollarSign, AlertTriangle, Info } from "lucide-react"
-import { useGetExchangeImpactAnalysisQuery } from "@/lib/redux/services/contabilidadApi"
+import { useGetExchangeImpactAnalysisQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { formatCurrencySimple, formatDate } from "@/lib/redux/utils/contabilidadUtils"
 import { DateRangePicker } from "./date-range-picker"
 import { ExportDialog } from "./export-dialog"

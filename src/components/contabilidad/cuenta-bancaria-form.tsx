@@ -30,7 +30,7 @@ import {
   useGetMonedasQuery,
   useGetTiposPagoQuery,
   useUpdateCuentaBancariaMutation,
-} from '@/lib/redux/services/contabilidadApi';
+} from '@/features/contabilidad/api/contabilidadApi';
 import { cn } from '@/lib/utils';
 
 import type { CuentaBancaria } from '@/app/models/model';

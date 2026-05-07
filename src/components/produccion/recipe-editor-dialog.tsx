@@ -5,7 +5,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { RecipeOutputSelector, type RecipeOutputMode } from '@/components/produccion/recipe-output-selector'
-import { Product } from '@prisma/client'
+import type { Producto } from '@/generated/prisma'
 import { MASS_UNITS, VOLUME_UNITS } from '@/lib/utils/unit-converter'
 
 type RecipeEditorItem = {
@@ -34,7 +34,7 @@ interface RecipeEditorDialogProps {
   selectedProducto: string
   outputMode: RecipeOutputMode
   createdOutputProductName: string | null
-  productosTyped: Product[] | undefined
+  productosTyped: Producto[] | undefined
   busquedaProductos: string
   nuevoItems: RecipeEditorItem[]
   newRecipePreview: RecipeUnitPreview
@@ -84,7 +84,7 @@ export function RecipeEditorDialog({
   onRemoveItem,
   onSubmit,
   onCancel,
-}: RecipeEditorDialogProps): JSX.Element {
+}: RecipeEditorDialogProps): React.JSX.Element {
   const productOptions = productosTyped?.map((product) => ({ id: product.id, nombre: product.nombre })) || []
 
   return (

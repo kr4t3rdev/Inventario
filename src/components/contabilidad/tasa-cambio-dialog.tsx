@@ -27,7 +27,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { AlertTriangle, TrendingUp } from "lucide-react"
 import { toast } from "sonner"
-import { useGetMonedasQuery, useGetTasasActualesQuery } from "@/lib/redux/services/contabilidadApi"
+import { useGetMonedasQuery, useGetTasasActualesQuery } from "@/features/contabilidad/api/contabilidadApi"
 
 const tasaConfirmacionSchema = z.object({
   tasaConfirmada: z.string()

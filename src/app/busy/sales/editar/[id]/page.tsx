@@ -1,6 +1,6 @@
 "use client"
 import { useParams, useRouter } from "next/navigation"
-import { useGetVentaQuery } from "@/lib/redux/services/ventasApi"
+import { useGetVentaQuery } from "@/features/ventas/api/ventasApi"
 import { VentaForm } from "@/components/ventas/venta-form"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"

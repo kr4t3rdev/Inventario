@@ -17,7 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { useGetUserQuery, useGetExpiringSoonQuery, useLockUserMutation, useUnlockUserMutation } from "@/lib/redux/services/adminApi"
+import { useGetUserQuery, useGetExpiringSoonQuery, useLockUserMutation, useUnlockUserMutation } from "@/features/admin/services/adminApi"
 import { toast } from "sonner"
 import { Activity, Clock, Shield, Unlock, Lock, Calendar, Sparkles } from "lucide-react"
 import { ActivityLogsTab } from "./activity-logs-tab"

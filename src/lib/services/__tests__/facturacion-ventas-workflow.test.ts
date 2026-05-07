@@ -5,7 +5,7 @@ import {
   normalizeTipoVencimiento,
   resolveFechaVencimiento,
   reconciliarVentaDirecta
-} from '@/lib/services/facturacion-ventas-workflow'
+} from '@/features/ventas/services/facturacion-workflow'
 
 /**
  * @description Crea un mock transaccional mínimo para pruebas del workflow.

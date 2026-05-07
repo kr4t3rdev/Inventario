@@ -4,7 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { CierreDetails } from "@/components/contabilidad/cierres/CierreDetails";
-import { useGetCierreQuery, useUpdateCierreMutation } from "@/lib/redux/services/contabilidadApi";
+import { useGetCierreQuery, useUpdateCierreMutation } from "@/features/contabilidad/api/contabilidadApi";
 import { useState } from "react";
 
 /**

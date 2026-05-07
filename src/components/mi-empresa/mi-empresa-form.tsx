@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { sileo } from '@/lib/sileo-shim'
 import { getAuthToken } from "@/lib/token"
-import { useGetCuentasBancariasQuery } from "@/lib/redux/services/contabilidadApi"
+import { useGetCuentasBancariasQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"

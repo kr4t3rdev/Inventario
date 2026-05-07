@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useDeleteAlmacenMutation, useGetAlmacenesQuery } from "@/lib/redux/services/almacenesApi"
+import { useDeleteAlmacenMutation, useGetAlmacenesQuery } from "@/features/almacenes/api/almacenesApi"
 import { ColumnDef } from "@tanstack/react-table"
 import { 
   ArrowUp, 

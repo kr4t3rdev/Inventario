@@ -53,11 +53,11 @@ import {
   useDeleteRecetaProduccionMutation,
   useUpdateRecetaProduccionMutation
 } from '@/lib/redux/services/produccionApi'
-import { useGetProductosQuery } from '@/lib/redux/services/productosApi'
+import { useGetProductosQuery } from '@/features/productos/api/productosApi'
 
-import { RecipeOutputSelector, type RecipeOutputMode } from '@/components/produccion/recipe-output-selector'
-import { ProductionDialogs } from '@/components/produccion/production-dialogs'
-import { RecipeEditorDialog } from '@/components/produccion/recipe-editor-dialog'
+import { RecipeOutputSelector, type RecipeOutputMode } from '@/features/produccion/components/recipe-output-selector'
+import { ProductionDialogs } from '@/features/produccion/components/production-dialogs'
+import { RecipeEditorDialog } from '@/features/produccion/components/recipe-editor-dialog'
 
 type RecipeEditorItem = {
   productoId: string

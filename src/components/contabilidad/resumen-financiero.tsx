@@ -38,7 +38,7 @@ import {
   useGetTransferenciasBancariasQuery,
   useGetVentasPendientesQuery,
   useInvalidateContabilidadCache,
-} from '@/lib/redux/services/contabilidadApi';
+} from '@/features/contabilidad/api/contabilidadApi';
 import { useGetPrestamosCashStatsQuery } from '@/lib/redux/services/prestamosCashApi';
 import { formatCurrency } from '@/lib/redux/utils/contabilidadUtils';
 import { cn } from '@/lib/utils';

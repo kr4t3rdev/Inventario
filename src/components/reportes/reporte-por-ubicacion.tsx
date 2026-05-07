@@ -2,8 +2,8 @@
 
 import { useState } from "react"
 import { useGetStockPorUbicacionQuery } from "@/lib/redux/services/stockUbicacionApi"
-import { useGetAlmacenesQuery } from "@/lib/redux/services/almacenesApi"
-import { useGetPuntosDeVentaQuery } from "@/lib/redux/services/puntosDeVentaApi"
+import { useGetAlmacenesQuery } from "@/features/almacenes/api/almacenesApi"
+import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta/api/puntosDeVentaApi"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {

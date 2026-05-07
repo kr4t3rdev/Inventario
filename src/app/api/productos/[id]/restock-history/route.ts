@@ -113,7 +113,10 @@ export async function GET(
       )
     }
 
-    const { page, limit, sortBy, sortOrder } = queryParams
+    const page = queryParams.page ?? 1
+    const limit = queryParams.limit ?? 10
+    const sortBy = queryParams.sortBy
+    const sortOrder = queryParams.sortOrder
 
     // Verify product exists
     const producto = await prisma.producto.findUnique({

@@ -35,7 +35,7 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   useGetVentasPendientesQuery
-} from "@/lib/redux/services/contabilidadApi"
+} from "@/features/contabilidad/api/contabilidadApi"
 import { useGetCuentasPorCobrarQuery } from "@/lib/redux/services/cuentasPorCobrarApi"
 import type { VentaPendiente } from "../../app/models/model"
 import { cn } from "@/lib/utils"

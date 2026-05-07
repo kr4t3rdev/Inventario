@@ -48,7 +48,7 @@ import {
   useGetCuentasBancariasQuery,
   useGetTiposPagoQuery,
   useGetMonedasQuery
-} from "@/lib/redux/services/contabilidadApi"
+} from "@/features/contabilidad/api/contabilidadApi"
 import { TasaCambioDialog } from "./tasa-cambio-dialog"
 
 interface GastoPendiente {

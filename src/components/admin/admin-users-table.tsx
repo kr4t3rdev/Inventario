@@ -42,7 +42,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
-import { useDeleteUserMutation, useGetAdminTenantsQuery, useLockUserMutation, useUnlockUserMutation } from '@/lib/redux/services/adminApi';
+import { useDeleteUserMutation, useGetAdminTenantsQuery, useLockUserMutation, useUnlockUserMutation } from '@/features/admin/services/adminApi';
 import { getAuthToken } from '@/lib/token';
 import { getTenantRoleLabel } from '@/lib/auth/roles';
 
@@ -610,7 +610,7 @@ export function AdminUsersTable({
                   </TableCell>
                 )}
                 <TableCell>{getRoleBadge(candidate.role, candidate.tenantRole)}</TableCell>
-                <TableCell>{getStatusBadge(candidate.isActive, candidate.expiresAt)}</TableCell>
+                <TableCell>{getStatusBadge(candidate.isActive, candidate.expiresAt ?? undefined)}</TableCell>
                 <TableCell>{format(new Date(candidate.createdAt), 'dd/MM/yyyy')}</TableCell>
                 <TableCell>
                   {candidate.expiresAt ? (

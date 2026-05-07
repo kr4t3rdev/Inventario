@@ -14,7 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { RestockHistory } from "./restock-history"
-import { useGetRestockHistoryQuery } from "@/lib/redux/services/productosApi"
+import { useGetRestockHistoryQuery } from "@/features/productos/api/productosApi"
 
 interface RestockHistoryDialogProps {
   productoId: string

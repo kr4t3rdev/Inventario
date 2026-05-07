@@ -25,9 +25,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 
-import { useGetProductosQuery } from "@/lib/redux/services/productosApi"
-import { useGetPuntosDeVentaQuery } from "@/lib/redux/services/puntosDeVentaApi"
-import { useGetAlmacenesQuery } from "@/lib/redux/services/almacenesApi"
+import { useGetProductosQuery } from "@/features/productos/api/productosApi"
+import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta/api/puntosDeVentaApi"
+import { useGetAlmacenesQuery } from "@/features/almacenes/api/almacenesApi"
 import { useGetStockPorUbicacionQuery } from "@/lib/redux/services/stockUbicacionApi"
 import { useDispatch } from "react-redux"
 import { apiSlice } from "@/lib/redux/services/apiSlice"

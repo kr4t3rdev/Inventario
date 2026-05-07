@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { DefectacionesEditorPanel } from '@/components/catalog/defectaciones-editor-panel'
+import { DefectacionesEditorPanel } from '@/features/configuracion/components/defectaciones-editor-panel'
 
 // Configuración de catálogo para reparaciones
 export default function CatalogoConfiguracionPage(): React.JSX.Element {

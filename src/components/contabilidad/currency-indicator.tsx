@@ -4,7 +4,7 @@ import { usePathname } from "next/navigation"
 import { DollarSign, TrendingUp } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { useGetMonedasQuery, useGetTasasActualesQuery } from "@/lib/redux/services/contabilidadApi"
+import { useGetMonedasQuery, useGetTasasActualesQuery } from "@/features/contabilidad/api/contabilidadApi"
 
 export function CurrencyIndicator() {
   const pathname = usePathname()

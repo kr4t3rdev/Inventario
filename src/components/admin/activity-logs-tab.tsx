@@ -13,7 +13,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination"
 import { AdminTableLoader } from "@/components/admin/animations"
-import { useGetActivityLogsQuery } from "@/lib/redux/services/adminApi"
+import { useGetActivityLogsQuery } from "@/features/admin/services/adminApi"
 import { format } from "date-fns"
 import { Clock } from "lucide-react"
 import type { UserActivityLog } from "@/app/models/model"

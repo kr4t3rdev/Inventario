@@ -46,7 +46,7 @@ import {
 } from "lucide-react"
 import {
   useGetGastosPendientesQuery
-} from "@/lib/redux/services/contabilidadApi"
+} from "@/features/contabilidad/api/contabilidadApi"
 import { GastoPendiente } from "../../app/models/model"
 import { cn } from "@/lib/utils"
 import {

@@ -287,11 +287,11 @@ export async function generarLicencias(request: NextRequest, _context: unknown, 
 
 export async function validarLicencia(request: NextRequest) {
   const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
-  const rl = await checkRateLimit(`validate:${ip}`, 60_000, 20, 'licencias')
+  const rl = await checkRateLimit(ip, '/api/licencias/validate')
   if (!rl.allowed) {
     rateLimitCounter.inc({ endpoint: 'validate', ip })
     const res = NextResponse.json({ error: 'Too Many Requests' }, { status: 429 })
-    res.headers.set('Retry-After', Math.ceil(rl.resetMs / 1000).toString())
+    res.headers.set('Retry-After', Math.ceil((rl.resetAt - Date.now()) / 1000).toString())
     return res
   }
 
