@@ -1,6 +1,6 @@
 import { apiSlice } from "@/lib/redux/services/apiSlice"
 
-interface Unidad {
+export interface Unidad {
   unidadId: string
   nombre: string
   simbolo: string

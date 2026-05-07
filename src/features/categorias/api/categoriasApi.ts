@@ -1,5 +1,5 @@
 import { apiSlice } from "@/lib/redux/services/apiSlice"
-import type { Categoria, CategoriaHierarchy, CreateCategoriaRequest } from "@/app/models/model"
+import type { Categoria, CategoriaHierarchy, CreateCategoriaRequest, MoveCategoriaRequest } from "@/app/models/model"
 
 export const categoriasApi = apiSlice.injectEndpoints({
   endpoints: (builder) => ({
@@ -31,7 +31,11 @@ export const categoriasApi = apiSlice.injectEndpoints({
       query: (parentId) => `/categorias/${parentId}/subcategorias`,
       providesTags: (result, error, parentId) => [{ type: "Categorias", id: parentId }],
     }),
+    moveCategoria: builder.mutation<Categoria, MoveCategoriaRequest>({
+      query: ({ catId, newParentId }) => ({ url: `/categorias/${catId}/move`, method: 'PATCH', body: { parentId: newParentId } }),
+      invalidatesTags: ['Categorias'],
+    }),
   }),
 })
 
-export const { useGetCategoriasQuery, useGetCategoriaQuery, useAddCategoriaMutation, useUpdateCategoriaMutation, useDeleteCategoriaMutation, useGetCategoriaHierarchyQuery, useGetSubcategoriasQuery } = categoriasApi
+export const { useGetCategoriasQuery, useGetCategoriaQuery, useAddCategoriaMutation, useUpdateCategoriaMutation, useDeleteCategoriaMutation, useGetCategoriaHierarchyQuery, useGetSubcategoriasQuery, useMoveCategoriaMutation } = categoriasApi

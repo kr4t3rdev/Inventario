@@ -1,1 +1,2 @@
-export type { default as Vendor } from './api/vendorsApi';
+import type { Vendor } from './api/vendorsApi';
+export type { Vendor };

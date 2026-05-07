@@ -1,6 +1,6 @@
 import { apiSlice } from "@/lib/redux/services/apiSlice"
 
-interface Vendor {
+export interface Vendor {
   vendorId: string
   nombre: string
   direccion?: string | null

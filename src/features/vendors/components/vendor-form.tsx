@@ -7,12 +7,12 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { sileo } from '@/lib/sileo-shim';
 import { z } from "zod";
-import { Card, CardContent } from "../ui/card";
-import { Skeleton } from "../ui/skeleton";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "../ui/form";
-import { Input } from "../ui/input";
-import { Button } from "../ui/button";
-import { Badge } from "../ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { VendorLogoUpload } from "./vendor-logo-upload";
 
 

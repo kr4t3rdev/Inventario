@@ -1,6 +1,6 @@
 import { apiSlice } from "@/lib/redux/services/apiSlice"
 
-interface Almacen {
+export interface Almacen {
   almacenId: string
   nombre: string
   createdAt: string
