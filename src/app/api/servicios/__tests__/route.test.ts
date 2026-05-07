@@ -11,6 +11,7 @@ const prismaMock = vi.hoisted(() => ({
 vi.mock('@/lib/auth-middleware', () => ({
   withAuthGet: (handler: any) => handler,
   withAuthPost: (handler: any) => handler,
+  withAuth: (handler: any) => handler,
 }))
 
 vi.mock('@/lib/prisma', () => ({

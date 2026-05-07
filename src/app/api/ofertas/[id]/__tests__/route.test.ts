@@ -2,17 +2,21 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { NextRequest, NextResponse } from 'next/server'
 import { DELETE } from '../route'
 
-vi.mock('@/lib/prisma', () => ({
-  default: {
-    oferta: {
-      findUnique: vi.fn(),
-      delete: vi.fn(),
-    },
+const mockPrisma = {
+  oferta: {
+    findUnique: vi.fn(),
+    delete: vi.fn(),
   },
+}
+
+vi.mock('@/lib/prisma', () => ({
+  default: mockPrisma,
+  prisma: mockPrisma,
 }))
 
 vi.mock('@/lib/auth-middleware', () => ({
   authenticateUser: vi.fn(),
+  withAuth: (handler: any) => handler,
 }))
 
 describe('Ofertas API - DELETE', () => {

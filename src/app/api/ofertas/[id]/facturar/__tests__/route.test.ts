@@ -1,17 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { NextRequest } from 'next/server';
 
-vi.mock('@/lib/prisma', () => ({
-  default: {
-    oferta: {
-      findUnique: vi.fn(),
-    },
-    $transaction: vi.fn(),
+const mockPrisma = {
+  oferta: {
+    findUnique: vi.fn(),
   },
+  $transaction: vi.fn(),
+}
+
+vi.mock('@/lib/prisma', () => ({
+  default: mockPrisma,
+  prisma: mockPrisma,
 }));
 
 vi.mock('@/lib/auth-middleware', () => ({
   authenticateUser: vi.fn(),
+  withAuth: (handler: any) => handler,
 }));
 
 describe('Facturar oferta API - POST rollback por fallo de facturación', () => {
