@@ -1,16 +1,4 @@
-import { type NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
-import { authenticateUser } from "@/lib/auth-middleware"
+import { me } from '@/features/auth/api/handlers'
 
-export async function GET(request: NextRequest) {
-  try {
-    const authResultUser = await authenticateUser(request)
-    if ('status' in authResultUser) return authResultUser as Response
-    const user = authResultUser.user
-    
-    return NextResponse.json(user)
-  } catch (error) {
-    console.error("Error verificando token:", error)
-    return NextResponse.json({ error: "Token inválido" }, { status: 401 })
-  }
-}
+export const dynamic = 'force-dynamic'
+export const GET = me

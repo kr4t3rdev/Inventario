@@ -1,0 +1,1 @@
+export { getCuadreDiarioHandler } from "./handlers"

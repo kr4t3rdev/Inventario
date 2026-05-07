@@ -9,32 +9,20 @@ vi.mock('@/lib/auth-middleware', () => ({
     handler(request, context, { userId: 'user-123' }),
 }));
 
+const prismaMock = {
+  puntoDeVenta: { findUnique: vi.fn() },
+  transferencia: { aggregate: vi.fn() },
+  ventaItem: { aggregate: vi.fn() },
+  venta: { aggregate: vi.fn(), findMany: vi.fn() },
+  producto: { findUnique: vi.fn() },
+  precioProducto: { findUnique: vi.fn() },
+  ventaServicios: { create: vi.fn() },
+  $transaction: vi.fn(),
+};
+
 vi.mock('@/lib/prisma', () => ({
-  default: {
-    puntoDeVenta: {
-      findUnique: vi.fn(),
-    },
-    transferencia: {
-      aggregate: vi.fn(),
-    },
-    ventaItem: {
-      aggregate: vi.fn(),
-    },
-    venta: {
-      aggregate: vi.fn(),
-      findMany: vi.fn(),
-    },
-    producto: {
-      findUnique: vi.fn(),
-    },
-    precioProducto: {
-      findUnique: vi.fn(),
-    },
-    ventaServicios: {
-      create: vi.fn(),
-    },
-    $transaction: vi.fn(),
-  },
+  prisma: prismaMock,
+  default: prismaMock,
 }));
 
 vi.mock('@/lib/services/anticipos-workflow', () => ({
