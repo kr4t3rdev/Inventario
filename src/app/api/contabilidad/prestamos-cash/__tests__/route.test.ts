@@ -1,14 +1,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { NextRequest } from 'next/server'
 
-vi.mock('@/lib/auth-middleware', () => ({
-  withAuthGet: (handler: any) => handler,
-  withAuthPost: (handler: any) => async (request: NextRequest, context: any) =>
-    handler(request, context, { userId: 'user-test' })
-}))
+vi.mock('@/lib/auth-middleware', () => {
+  const mockUser = { userId: 'user-test', tenantId: 'tenant-1' }
+  return {
+    withAuthGet: (handler: any) => (...args: any[]) => handler(args[0], undefined, mockUser),
+    withAuthPost: (handler: any) => async (request: NextRequest, context: any) =>
+      handler(request, context, mockUser)
+  }
+})
 
-vi.mock('@/lib/prisma', () => ({
-  default: {
+vi.mock('@/lib/prisma', () => {
+  const prisma = {
     prestamoCash: {
       findMany: vi.fn(),
       count: vi.fn(),
@@ -21,9 +24,16 @@ vi.mock('@/lib/prisma', () => ({
     cuentaPorCobrar: {
       create: vi.fn()
     },
+    tipoPago: {
+      findFirst: vi.fn()
+    },
+    reconciliacionVenta: {
+      create: vi.fn()
+    },
     $transaction: vi.fn()
   }
-}))
+  return { prisma, default: prisma }
+})
 
 vi.mock('@/lib/services/audit-log-service', () => ({
   AuditLogService: { log: vi.fn() }
