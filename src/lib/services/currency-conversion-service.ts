@@ -58,12 +58,34 @@ export class CurrencyConversionService {
    * @returns {Promise<{codigo: string}>} Moneda principal
    */
   static async getMainCurrency() {
-    const monedaPrincipal = await prisma.moneda.findFirst({
+    let monedaPrincipal = await prisma.moneda.findFirst({
       where: { esPrincipal: true }
     })
 
+    // Fallback: si no hay moneda principal, intentar usar CUP o crearla
     if (!monedaPrincipal) {
-      throw new Error('No se ha configurado una moneda principal')
+      monedaPrincipal = await prisma.moneda.findUnique({
+        where: { codigo: 'CUP' }
+      })
+
+      if (monedaPrincipal) {
+        // Actualizar CUP como principal
+        await prisma.moneda.update({
+          where: { codigo: 'CUP' },
+          data: { esPrincipal: true }
+        })
+      } else {
+        // Crear CUP como moneda principal por defecto
+        monedaPrincipal = await prisma.moneda.create({
+          data: {
+            codigo: 'CUP',
+            nombre: 'Peso Cubano',
+            simbolo: '$',
+            esPrincipal: true,
+            isActive: true
+          }
+        })
+      }
     }
 
     return monedaPrincipal

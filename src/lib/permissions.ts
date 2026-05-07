@@ -16,6 +16,7 @@ export type UserRole = AppUserRole;
  * dependiente: ventas, operación limitada
  */
 export const TENANT_PERMISSIONS: Record<TenantRole, string[]> = {
+  manager: ['*'],
   director: ['*'],
   admin: ['*'],
   economico: [

@@ -158,7 +158,10 @@ describe('POST /api/admin/global/users/[id]/approve', () => {
     expect(data.membershipId).toBe('mem-new')
     expect(prisma.moneda.upsert).toHaveBeenCalledWith({
       where: { codigo: 'CUP' },
-      update: {},
+      update: {
+        esPrincipal: true,
+        isActive: true,
+      },
       create: {
         codigo: 'CUP',
         nombre: 'Peso Cubano',
@@ -225,7 +228,10 @@ describe('POST /api/admin/global/users/[id]/approve', () => {
     expect(data.license.planId).toBe('plan-1')
     expect(prisma.moneda.upsert).toHaveBeenCalledWith({
       where: { codigo: 'CUP' },
-      update: {},
+      update: {
+        esPrincipal: true,
+        isActive: true,
+      },
       create: {
         codigo: 'CUP',
         nombre: 'Peso Cubano',

@@ -49,6 +49,7 @@ import Link from "next/link"
 
 import { useAuth } from "@/contexts/auth-context"
 import { useIsMounted } from "@/hooks/use-is-mounted"
+import { isTenantAdminRole } from '@/lib/auth/roles'
 import { cn } from "@/lib/utils"
 import { NavMain } from "./nav-main"
 import { NavUser } from "./nav-user"
@@ -314,10 +315,15 @@ export function AppSidebar2({
       {
           title: "Configuración",
           items: [
-            {
-              title: "Mi Empresa",
+          {
+            title: "Mi Empresa",
             url: "/busy/configuracion/mi-empresa",
             icon: Building2,
+          },
+          {
+            title: "Usuarios",
+            url: "/busy/configuracion/usuarios",
+            icon: Users,
           },
           {
             title: "Contratos",
@@ -539,6 +545,18 @@ export function AppSidebar2({
             return {
               ...group,
               items: group.items.filter(item => item.title !== "Logs")
+            }
+          }
+          if (group.title === "Configuración" && user?.role !== "admin") {
+            return {
+              ...group,
+              items: group.items.filter(item => {
+                // Licencias y Planes son solo para admin global
+                if (item.title === "Licencias" || item.title === "Planes") return false
+                // Usuarios solo para tenant admins o admin global
+                if (item.title === "Usuarios" && !isTenantAdminRole(user?.tenantRole)) return false
+                return true
+              }),
             }
           }
           return group

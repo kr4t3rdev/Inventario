@@ -133,6 +133,7 @@ export const apiSlice = createApi({
     'AdminFinance',
     'AdminSystem',
     'GlobalUsers',
+    'PendingMemberships',
     'GlobalUserMetrics',
     // Licenses & Plans
     'AdminLicencias',

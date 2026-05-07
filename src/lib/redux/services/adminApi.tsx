@@ -311,6 +311,30 @@ export const adminApi = apiSlice.injectEndpoints({
             invalidatesTags: ['GlobalUsers', 'GlobalUserMetrics', 'AdminLicencias'],
         }),
 
+        // ── Tenant Membership Management (Manager) ──
+        getPendingMemberships: builder.query<any[], void>({
+            query: () => '/admin/memberships/pending',
+            providesTags: ['PendingMemberships'],
+        }),
+
+        approveMembership: builder.mutation<{ success: boolean; action: string; tenantRole?: string }, { id: string; tenantRole: string }>({
+            query: ({ id, tenantRole }) => ({
+                url: `/admin/memberships/${id}`,
+                method: 'PATCH',
+                body: { action: 'approve', tenantRole },
+            }),
+            invalidatesTags: ['PendingMemberships', 'GlobalUsers', 'TenantLicense'],
+        }),
+
+        rejectMembership: builder.mutation<{ success: boolean; action: string }, string>({
+            query: (id) => ({
+                url: `/admin/memberships/${id}`,
+                method: 'PATCH',
+                body: { action: 'reject' },
+            }),
+            invalidatesTags: ['PendingMemberships', 'GlobalUsers'],
+        }),
+
         // ── Licenses ──
         getAdminLicencias: builder.query<any, { page?: number; limit?: number; planId?: string; activa?: string; search?: string }>({
             query: (params) => ({
@@ -421,6 +445,9 @@ export const {
     useGetGlobalUsersQuery,
     useGetGlobalUserMetricsQuery,
     useApproveGlobalUserMutation,
+    useGetPendingMembershipsQuery,
+    useApproveMembershipMutation,
+    useRejectMembershipMutation,
     useGetAdminLicenciasQuery,
     useCreateAdminLicenciaMutation,
     useUpdateAdminLicenciaMutation,

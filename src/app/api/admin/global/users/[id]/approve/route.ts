@@ -82,10 +82,13 @@ export async function POST(
         },
       });
 
-      // 2. Crear moneda principal por defecto (CUP) si no existe
+      // 2. Crear/actualizar moneda principal por defecto (CUP)
       await tx.moneda.upsert({
         where: { codigo: 'CUP' },
-        update: {},
+        update: {
+          esPrincipal: true,
+          isActive: true,
+        },
         create: {
           codigo: 'CUP',
           nombre: 'Peso Cubano',
