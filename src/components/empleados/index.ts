@@ -1,9 +1,0 @@
-// Enhanced Employee Attendance System Components
-export { AsistenciaForm } from './asistencia-form';
-export { EnhancedAsistenciaForm } from './enhanced-asistencia-form';
-export { WorkScheduleManager } from './work-schedule-manager';
-export { AttendanceHistoryView } from './attendance-history-view';
-export { EmpleadoForm } from './empleados-form';
-export { EnhancedEmpleadoForm } from './enhanced-empleados-form';
-export { NominaView } from './nomina-view';
-export { VacacionesForm } from './vacaciones-form';
