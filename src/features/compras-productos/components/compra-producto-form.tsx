@@ -21,7 +21,7 @@ import { ProductPhotoUpload } from '@/features/productos/components/product-phot
 import type { Producto, Vendor } from '@/app/models/model'
 import { useGetVendorsQuery } from '@/features/vendors'
 import { getProductosAction } from '@/features/productos'
-import { useCreateCompraProductoMutation } from '@/features/compras-productos'
+import { createCompraProductoAction } from '@/features/compras-productos/actions'
 import { useGetAnticiposDisponiblesQuery } from '@/features/contabilidad/api/contabilidadApi'
 import { FORMA_PAGO_ANTICIPO_PAGO } from '@/lib/constants/anticipos'
 
@@ -85,7 +85,6 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
   const [products, setProducts] = useState<any[]>([])
   const [isLoadingProducts, setIsLoadingProducts] = useState(true)
   const { data: vendors, isLoading: isLoadingVendors } = useGetVendorsQuery()
-  const [createCompraProducto] = useCreateCompraProductoMutation()
 
   useEffect(() => {
     getProductosAction().then(r => {
@@ -218,7 +217,7 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
           ? crypto.randomUUID()
           : `${Date.now()}-${Math.random()}`
 
-      const result = await createCompraProducto({
+      const result = await createCompraProductoAction({
         ...data,
         estado:
           data.formaPago === 'PAGO_COMPLETO' || data.formaPago === FORMA_PAGO_ANTICIPO_PAGO
@@ -226,34 +225,29 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
             : 'PENDIENTE',
         fechaVencimiento: data.fechaVencimiento || undefined,
         anticipoPagoId: data.formaPago === FORMA_PAGO_ANTICIPO_PAGO ? data.anticipoPagoId : undefined,
-        idempotencyKey: data.formaPago === FORMA_PAGO_ANTICIPO_PAGO ? idempotencyKey : undefined
-      }).unwrap()
+        idempotencyKey: data.formaPago === FORMA_PAGO_ANTICIPO_PAGO ? idempotencyKey : undefined,
+      })
 
-      if (result.compraDocumento?.compraDocumentoId) {
-        const itemCount = result.items?.length || 0
-        const stockTraces = (result.items || [])
-          .filter((item: any) => item.stockAntes !== undefined && item.stockDespues !== undefined)
-          .map((item: any) => {
-            const producto = item.producto?.nombre || 'N/A'
-            return ` ${producto}: ${item.stockAntes} → ${item.stockDespues}`
-          })
-          .join(',')
+      if (!result.success) {
+        sileo.error({ title: result.error?.message || 'Error al registrar la compra' })
+        return
+      }
 
-        if (data.formaPago === 'PAGO_COMPLETO') {
-          sileo.success({ title: `Compra múltiple registrada: ${itemCount} productos.${stockTraces}` })
-        } else if (data.formaPago === FORMA_PAGO_ANTICIPO_PAGO) {
-          sileo.success({ title: `Compra múltiple registrada con anticipo: ${itemCount} productos.${stockTraces}` })
-        } else {
-          sileo.success({ title: `Compra múltiple registrada: ${itemCount} productos. Se generó una cuenta por pagar.${stockTraces}` })
-        }
+      const itemCount = (result.data as any)?.items?.length || 0
+
+      if (data.formaPago === 'PAGO_COMPLETO') {
+        sileo.success({ title: `Compra múltiple registrada: ${itemCount} productos.` })
+      } else if (data.formaPago === FORMA_PAGO_ANTICIPO_PAGO) {
+        sileo.success({ title: `Compra múltiple registrada con anticipo: ${itemCount} productos.` })
+      } else {
+        sileo.success({ title: `Compra múltiple registrada: ${itemCount} productos. Se generó una cuenta por pagar.` })
       }
 
       if (onSuccess) onSuccess()
       router.push('/busy/compras-productos')
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error al registrar compra:', error)
-      const errorMessage = error?.data?.error || 'Hubo un error al registrar la compra.'
-      sileo.error({ title: errorMessage })
+      sileo.error({ title: 'Hubo un error al registrar la compra.' })
     } finally {
       setIsLoading(false)
     }

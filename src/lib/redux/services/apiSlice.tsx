@@ -81,7 +81,6 @@ export const apiSlice = createApi({
     'Clientes',
     'Servicios',
     'VentaServicios',
-    'ComprasProductos',
     // Contabilidad tags
     'CuentasBancarias',
     'ReconciliacionVentas',

@@ -15,7 +15,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useCreateCompraServicioMutation } from '@/features/compras-servicios/api/comprasServiciosApi'
+import { createCompraServicioAction } from '@/features/compras-servicios/actions'
 import { useGetServiciosQuery } from '@/features/servicios'
 import { useGetVendorsQuery } from '@/features/vendors'
 import { AnticipoSelector } from '@/features/contabilidad/components/anticipos/anticipo-selector'
@@ -50,7 +50,6 @@ export function ServiciosRecibidosForm(): ReactElement {
   const [anticipoAllocations, setAnticipoAllocations] = useState<AnticipoAllocation[]>([])
   const { data: servicios, isLoading: isLoadingServicios } = useGetServiciosQuery()
   const { data: vendors, isLoading: isLoadingVendors } = useGetVendorsQuery()
-  const [createCompraServicio] = useCreateCompraServicioMutation()
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -80,7 +79,7 @@ export function ServiciosRecibidosForm(): ReactElement {
   async function onSubmit(values: FormValues): Promise<void> {
     setIsLoading(true)
     try {
-      await createCompraServicio({
+      const result = await createCompraServicioAction({
         servicioId: values.servicioId,
         proveedorId: values.proveedorId || null,
         numeroFactura: values.numeroFactura || null,
@@ -90,7 +89,12 @@ export function ServiciosRecibidosForm(): ReactElement {
         estado: values.formaPago === 'PAGO_COMPLETO' || values.formaPago === FORMA_PAGO_ANTICIPO ? 'PAGADA' : 'PENDIENTE',
         descripcion: values.descripcion || null,
         anticipos: values.formaPago === FORMA_PAGO_ANTICIPO ? anticipoAllocations : undefined,
-      }).unwrap()
+      })
+
+      if (!result.success) {
+        sileo.error({ title: result.error?.message || 'No se pudo registrar el servicio recibido.' })
+        return
+      }
 
       sileo.success({ title: 'Servicio recibido registrado correctamente.' })
       form.reset()

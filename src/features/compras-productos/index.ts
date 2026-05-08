@@ -1,4 +1,3 @@
-// Server Actions (nuevo)
 export {
   getComprasProductosAction,
   getCompraProductoByIdAction,
@@ -7,6 +6,4 @@ export {
   deleteCompraProductoAction,
 } from './actions';
 
-// RTK Query (legacy)
-export { comprasProductosApi, useGetComprasProductosQuery, useCreateCompraProductoMutation, useGetCompraProductoByIdQuery, useUpdateCompraProductoMutation, useDeleteCompraProductoMutation } from './api/comprasProductosApi';
 export type { CompraDocumento, CompraDocumentoItem, CompraDocumentoResponse, CompraProducto } from './types';

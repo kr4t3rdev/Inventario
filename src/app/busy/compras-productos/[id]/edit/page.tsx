@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, ShoppingCart, Package } from 'lucide-react'
@@ -9,7 +9,7 @@ import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useGetCompraProductoByIdQuery, useUpdateCompraProductoMutation } from '@/features/compras-productos'
+import { getCompraProductoByIdAction, updateCompraProductoAction } from '@/features/compras-productos/actions'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
@@ -65,8 +65,9 @@ export default function EditCompraProductoPage() {
   const params = useParams()
   const id = params.id as string
 
-  const { data: compraData, isLoading: isLoadingCompra } = useGetCompraProductoByIdQuery(id)
-  const [updateCompra, { isLoading: isUpdating }] = useUpdateCompraProductoMutation()
+  const [compra, setCompra] = useState<any>(null)
+  const [isLoadingCompra, setIsLoadingCompra] = useState(true)
+  const [isUpdating, setIsUpdating] = useState(false)
 
   const form = useForm<UpdateFormData>({
     resolver: zodResolver(updateSchema),
@@ -80,25 +81,36 @@ export default function EditCompraProductoPage() {
   })
 
   useEffect(() => {
-    if (compraData?.compra) {
-      const compra = compraData.compra
-      form.reset({
-        numeroFactura: compra.numeroFactura || '',
-        facturaUrl: compra.facturaUrl || '',
-        descripcion: compra.descripcion || '',
-        formaPago: compra.formaPago as 'PAGO_PARCIAL' | 'PAGO_COMPLETO',
-        estado: compra.estado as 'PENDIENTE' | 'PAGADA',
-      })
-    }
-  }, [compraData, form])
+    getCompraProductoByIdAction(id).then(r => {
+      setIsLoadingCompra(false)
+      if (r.success) {
+        const data = r.data
+        setCompra(data)
+        form.reset({
+          numeroFactura: data.numeroFactura || '',
+          facturaUrl: data.facturaUrl || '',
+          descripcion: data.descripcion || '',
+          formaPago: data.formaPago as 'PAGO_PARCIAL' | 'PAGO_COMPLETO',
+          estado: data.estado as 'PENDIENTE' | 'PAGADA',
+        })
+      }
+    })
+  }, [id, form])
 
   const onSubmit = async (data: UpdateFormData) => {
+    setIsUpdating(true)
     try {
-      await updateCompra({ id, data }).unwrap()
-      toast.success('Compra actualizada exitosamente')
-      router.push('/busy/compras-productos')
+      const result = await updateCompraProductoAction({ compraDocumentoId: id, ...data })
+      if (result.success) {
+        toast.success('Compra actualizada exitosamente')
+        router.push('/busy/compras-productos')
+      } else {
+        toast.error(result.error?.message || 'Error al actualizar la compra')
+      }
     } catch (error) {
       toast.error('Error al actualizar la compra')
+    } finally {
+      setIsUpdating(false)
     }
   }
 
@@ -120,8 +132,6 @@ export default function EditCompraProductoPage() {
       </SidebarProvider>
     )
   }
-
-  const compra = compraData?.compra
 
   return (
     <SidebarProvider>

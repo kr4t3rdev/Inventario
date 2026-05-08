@@ -183,13 +183,6 @@ const protectedGets: string[] = [
   '/api/exchange',
   // facturas
   '/api/facturas',
-  // gastos-compra
-  '/api/gastos-compra',
-  '/api/gastos-compra/export',
-  '/api/gastos-compra/stats',
-  '/api/gastos-compra/stats/periodo',
-  '/api/gastos-compra/stats/producto',
-  '/api/gastos-compra/stats/proveedor',
   // gastosDE
   '/api/gastosDE',
   // image
@@ -502,12 +495,6 @@ describe('Endpoints con autenticación (requiere TEST_EMAIL + TEST_PASSWORD)', (
   it('GET /api/metrics → 200 con token', async () => {
     if (!authToken) return
     const res = await get('/api/metrics', authToken)
-    expect([200, 204]).toContain(res.status)
-  })
-
-  it('GET /api/gastos-compra → 200 con token', async () => {
-    if (!authToken) return
-    const res = await get('/api/gastos-compra', authToken)
     expect([200, 204]).toContain(res.status)
   })
 

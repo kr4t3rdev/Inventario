@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { ColumnDef } from '@tanstack/react-table'
 import { Trash2 } from 'lucide-react'
 
@@ -9,14 +9,26 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { CompraServicio } from '@/app/models/model'
-import { useGetComprasServiciosQuery } from '@/features/compras-servicios/api/comprasServiciosApi'
+import { getComprasServiciosAction } from '@/features/compras-servicios/actions'
 
 /**
  * @description Tabla reutilizable para mostrar servicios recibidos.
  * @returns {JSX.Element} Tabla de servicios recibidos.
  */
 export function ServiciosRecibidosTable(): React.JSX.Element {
-  const { data: servicios = [], isLoading, error } = useGetComprasServiciosQuery()
+  const [servicios, setServicios] = useState<CompraServicio[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    getComprasServiciosAction().then(r => {
+      if (r.success) setServicios(r.data ?? [])
+      setIsLoading(false)
+    }).catch(() => {
+      setError('Error al cargar los servicios recibidos')
+      setIsLoading(false)
+    })
+  }, [])
 
   const columns = useMemo<ColumnDef<CompraServicio>[]>(
     () => [
