@@ -1,10 +1,10 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { useGetVentasQuery } from "@/features/ventas"
 import { useGetMermasQuery } from "@/features/mermas/api/mermasApi"
 import { useGetTransferenciasQuery } from "@/features/transferencias/api/transferenciasApi"
-import { useGetProductosQuery } from "@/features/productos/api/productosApi"
+import { getProductosAction } from "@/features/productos"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -38,7 +38,15 @@ export function ReporteMovimientos() {
   const { data: mermas, isLoading: isLoadingMermas } = useGetMermasQuery()
   const { data: transferenciasData, isLoading: isLoadingTransferencias } = useGetTransferenciasQuery()
   const transferencias = transferenciasData?.transferencias || []
-  const { data: productos, isLoading: isLoadingProductos } = useGetProductosQuery()
+  const [productos, setProductos] = useState<any[]>([])
+  const [isLoadingProductos, setIsLoadingProductos] = useState(true)
+
+  useEffect(() => {
+    getProductosAction().then(r => {
+      if (r.success) setProductos(r.data ?? [])
+      setIsLoadingProductos(false)
+    })
+  }, [])
 
   const getProductoById = (id: string) => productos?.find((producto) => producto.id === id)
 

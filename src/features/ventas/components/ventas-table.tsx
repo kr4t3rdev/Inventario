@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import {
@@ -21,7 +21,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ArrowUpDown, Pencil, Trash2Icon, Loader2 } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatCurrency } from "@/lib/utils"
-import { useGetProductosQuery } from "@/features/productos"
+import { getProductosAction } from "@/features/productos"
 import type { Venta } from "@/app/models/model"
 
 interface VentasTableProps {
@@ -38,7 +38,13 @@ export function VentasTable({ ventas: ventasProp, isLoading, error, onDelete }: 
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
 
-  const {data:producto} = useGetProductosQuery()
+  const [productos, setProductos] = useState<any[]>([])
+
+  useEffect(() => {
+    getProductosAction().then(r => {
+      if (r.success) setProductos(r.data ?? [])
+    })
+  }, [])
 
   const columns: ColumnDef<Venta>[] = [
     {

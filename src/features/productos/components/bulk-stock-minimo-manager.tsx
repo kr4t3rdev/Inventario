@@ -14,7 +14,8 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { useGetProductosQuery, useBulkUpdateStockMinimoMutation } from '@/features/productos/api/productosApi'
+import { getProductosAction } from '@/features/productos/actions'
+import { useBulkUpdateStockMinimoMutation } from '@/features/productos/api/productosApi'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -57,8 +58,20 @@ function PulseSkeleton({ className }: { className?: string }): React.JSX.Element
  * @returns {JSX.Element} Tabla editable con selección y acciones de actualización.
  */
 export function BulkStockMinimoManager(): React.JSX.Element {
-  const { data: productos, isLoading, refetch } = useGetProductosQuery()
+  const [productos, setProductos] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
   const [bulkUpdate, { isLoading: isUpdating }] = useBulkUpdateStockMinimoMutation()
+
+  const fetchProductos = () => {
+    getProductosAction().then(r => {
+      if (r.success) setProductos(r.data ?? [])
+      setIsLoading(false)
+    })
+  }
+
+  useEffect(() => {
+    fetchProductos()
+  }, [])
 
   const [productosState, setProductosState] = useState<ProductoWithStockMinimo[]>([])
   const [searchTerm, setSearchTerm] = useState('')
@@ -292,7 +305,7 @@ export function BulkStockMinimoManager(): React.JSX.Element {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <Button variant="outline" onClick={() => refetch()} disabled={isUpdating} className="gap-2">
+              <Button variant="outline" onClick={() => fetchProductos()} disabled={isUpdating} className="gap-2">
                 <RefreshCw className={`h-4 w-4 ${isUpdating ? 'animate-spin' : ''}`} />
                 Refrescar
               </Button>

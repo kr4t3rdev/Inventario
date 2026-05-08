@@ -1,5 +1,6 @@
 "use client"
-import { useGetProductosQuery } from "@/features/productos"
+import { useMemo, useEffect, useState } from "react"
+import { getProductosAction } from "@/features/productos"
 import { useGetCategoriasQuery } from "@/features/categorias"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -17,8 +18,16 @@ const surfaceCardClass = cn(
 )
 
 export function ReportePorCategoria() {
-  const { data: productos, isLoading: isLoadingProductos } = useGetProductosQuery()
+  const [productos, setProductos] = useState<any[]>([])
+  const [isLoadingProductos, setIsLoadingProductos] = useState(true)
   const { data: categorias } = useGetCategoriasQuery()
+
+  useEffect(() => {
+    getProductosAction().then(r => {
+      if (r.success) setProductos(r.data ?? [])
+      setIsLoadingProductos(false)
+    })
+  }, [])
 
   // Agrupar productos por categoría
   const productosPorCategoria = categorias?.map((categoria) => {

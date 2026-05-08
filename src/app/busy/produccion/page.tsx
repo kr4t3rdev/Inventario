@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -53,7 +53,7 @@ import {
   useDeleteRecetaProduccionMutation,
   useUpdateRecetaProduccionMutation
 } from '@/lib/redux/services/produccionApi'
-import { useGetProductosQuery } from '@/features/productos'
+import { getProductosAction } from '@/features/productos'
 
 import { RecipeOutputSelector, type RecipeOutputMode } from '@/features/produccion/components/recipe-output-selector'
 import { ProductionDialogs } from '@/features/produccion/components/production-dialogs'
@@ -200,7 +200,15 @@ export default function ProduccionPage() {
   // Data
   const { data: recetasTyped, isLoading: loadingRecetas } = useGetRecetasProduccionQuery(searchRecetas ? { search: searchRecetas } : undefined)
   const { data: ordenesTyped, isLoading: loadingOrdenes } = useGetOrdenesProduccionQuery(filtroEstadoOrden !== 'all' ? { estado: filtroEstadoOrden } : undefined)
-  const { data: productosTyped } = useGetProductosQuery()
+  const [productosTyped, setProductosTyped] = useState<any[]>([])
+  const [loadingProductos, setLoadingProductos] = useState(true)
+
+  useEffect(() => {
+    getProductosAction().then(r => {
+      if (r.success) setProductosTyped(r.data ?? [])
+      setLoadingProductos(false)
+    })
+  }, [])
 
 
   // Mutations

@@ -20,7 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ProductPhotoUpload } from '@/features/productos/components/product-photo-upload'
 import type { Producto, Vendor } from '@/app/models/model'
 import { useGetVendorsQuery } from '@/features/vendors'
-import { useGetProductosQuery } from '@/features/productos'
+import { getProductosAction } from '@/features/productos'
 import { useCreateCompraProductoMutation } from '@/features/compras-productos'
 import { useGetAnticiposDisponiblesQuery } from '@/features/contabilidad/api/contabilidadApi'
 import { FORMA_PAGO_ANTICIPO_PAGO } from '@/lib/constants/anticipos'
@@ -82,9 +82,17 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const anticiposFeatureEnabled = process.env.NEXT_PUBLIC_ENABLE_ANTICIPOS !== 'false'
 
-  const { data: products, isLoading: isLoadingProducts } = useGetProductosQuery()
+  const [products, setProducts] = useState<any[]>([])
+  const [isLoadingProducts, setIsLoadingProducts] = useState(true)
   const { data: vendors, isLoading: isLoadingVendors } = useGetVendorsQuery()
   const [createCompraProducto] = useCreateCompraProductoMutation()
+
+  useEffect(() => {
+    getProductosAction().then(r => {
+      if (r.success) setProducts(r.data ?? [])
+      setIsLoadingProducts(false)
+    })
+  }, [])
 
   const form = useForm<CompraDocumentoFormValues>({
     resolver: zodResolver(compraDocumentoSchema),

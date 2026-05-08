@@ -1,3 +1,13 @@
+// Server Actions (nuevo)
+export {
+  getProductosAction,
+  createProductoAction,
+  updateProductoAction,
+  deleteProductoAction,
+  getStockPorUbicacionAction,
+} from './actions';
+
+// Handlers legacy (para rutas API existentes)
 export {
   getProductosHandler,
   createProductoHandler,

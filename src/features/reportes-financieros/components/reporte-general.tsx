@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useMemo } from "react"
-import { useGetProductosQuery } from "@/features/productos"
+import { useState, useMemo, useEffect } from "react"
+import { getProductosAction } from "@/features/productos"
 import { useGetCategoriasQuery } from "@/features/categorias"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -33,9 +33,17 @@ const surfaceCardClass = cn(
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#8dd1e1', '#a4de6c', '#d0ed57'];
 
 export function ReporteGeneral() {
-  const { data: productos, isLoading: isLoadingProductos } = useGetProductosQuery()
+  const [productos, setProductos] = useState<any[]>([])
+  const [isLoadingProductos, setIsLoadingProductos] = useState(true)
   const { data: categorias } = useGetCategoriasQuery()
   const [filtroCategoria, setFiltroCategoria] = useState<string>("todas")
+
+  useEffect(() => {
+    getProductosAction().then(r => {
+      if (r.success) setProductos(r.data ?? [])
+      setIsLoadingProductos(false)
+    })
+  }, [])
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -16,7 +16,7 @@ import { sileo } from '@/lib/sileo-shim'
 import { Skeleton } from "@/components/ui/skeleton"
 import { DollarSign, Calculator } from "lucide-react"
 
-import { useGetProductosQuery } from "@/features/productos"
+import { getProductosAction } from "@/features/productos"
 import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta"
 import { useAddVentaMutation, useUpdateVentaMutation } from "@/features/ventas"
 import { useGetMonedasQuery } from "@/features/contabilidad/api/contabilidadApi"
@@ -62,9 +62,17 @@ export function EnhancedVentaForm({ initialData }: EnhancedVentaFormProps) {
   const [showTasaCambioDialog, setShowTasaCambioDialog] = useState(false)
   const [pendingSubmission, setPendingSubmission] = useState<VentaFormValues | null>(null)
 
-  const { data: productos, isLoading: isLoadingProductos } = useGetProductosQuery()
+  const [productos, setProductos] = useState<any[]>([])
+  const [isLoadingProductos, setIsLoadingProductos] = useState(true)
   const { data: puntosDeVenta, isLoading: isLoadingPuntosDeVenta } = useGetPuntosDeVentaQuery()
   const { data: monedasData } = useGetMonedasQuery()
+
+  useEffect(() => {
+    getProductosAction().then(r => {
+      if (r.success) setProductos(r.data ?? [])
+      setIsLoadingProductos(false)
+    })
+  }, [])
 
   const [addVenta] = useAddVentaMutation()
   const [updateVenta] = useUpdateVentaMutation()

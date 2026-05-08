@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
 import { useGetOrdenQuery, useUpdateOrdenMutation, useFacturarOrdenMutation } from "@/lib/redux/services/ordenesReparacionApi"
-import { useGetProductosQuery } from "@/features/productos"
+import { getProductosAction } from "@/features/productos"
 import { useGetCuentasBancariasQuery, useGetNextSerieNumberQuery } from "@/lib/redux/services/configuracionApi"
 import { useGetDefectacionesQuery } from "@/lib/redux/services/reparacionesApi"
 import { formatCurrency, cn } from "@/lib/utils"
@@ -151,8 +151,14 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
   
   const [updateOrden, { isLoading: isUpdating }] = useUpdateOrdenMutation()
   const [facturarOrden, { isLoading: isFacturing }] = useFacturarOrdenMutation()
-  const { data: productos } = useGetProductosQuery() // Para materiales
+  const [productos, setProductos] = useState<any[]>([])
   const { data: cuentasBancariasData, isLoading: isLoadingCuentas, error: errorCuentas } = useGetCuentasBancariasQuery()
+
+  useEffect(() => {
+    getProductosAction().then(r => {
+      if (r.success) setProductos(r.data ?? [])
+    })
+  }, [])
 
   // Normalizar cuentas bancarias a un array, soportando respuestas de diferentes formas
   const cuentasBancarias: any[] = Array.isArray(cuentasBancariasData)

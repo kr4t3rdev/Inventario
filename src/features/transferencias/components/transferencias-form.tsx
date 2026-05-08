@@ -25,7 +25,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 
-import { useGetProductosQuery } from "@/features/productos"
+import { getProductosAction } from "@/features/productos"
 import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta"
 import { useGetAlmacenesQuery } from "@/features/almacenes"
 import { getStockPorUbicacionAction } from "@/features/productos/actions"
@@ -360,9 +360,17 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
 
   const debouncedSearch = useDebounce(productoSearch, 300)
 
-  const { data: productos, isLoading: isLoadingProductos } = useGetProductosQuery()
+  const [productos, setProductos] = useState<any[]>([])
+  const [isLoadingProductos, setIsLoadingProductos] = useState(true)
   const { data: puntosDeVenta, isLoading: isLoadingPuntosDeVenta } = useGetPuntosDeVentaQuery()
   const { data: almacenes, isLoading: isLoadingAlmacenes } = useGetAlmacenesQuery()
+
+  useEffect(() => {
+    getProductosAction().then(r => {
+      if (r.success) setProductos(r.data ?? [])
+      setIsLoadingProductos(false)
+    })
+  }, [])
 
   const form = useForm<TransferenciaFormValues>({
     resolver: zodResolver(transferenciaSchema),

@@ -1,7 +1,7 @@
 'use client'
-import { useGetProductosQuery } from "@/features/productos/api/productosApi";
+import { getProductosAction } from "@/features/productos"
 import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta/api/puntosDeVentaApi";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Producto } from "@/app/models/model";
 import { useAddVentaMutation } from "@/features/ventas";
 import { z } from "zod";
@@ -36,8 +36,16 @@ interface VentaFormProps extends Producto{
 
 export default function VentaInter() {
 
-    const { data: productos, isLoading: isLoadingProductos } = useGetProductosQuery()
+    const [productos, setProductos] = useState<any[]>([])
+    const [isLoadingProductos, setIsLoadingProductos] = useState(true)
     const { data: puntoDeVenta } = useGetPuntosDeVentaQuery()
+
+    useEffect(() => {
+      getProductosAction().then(r => {
+        if (r.success) setProductos(r.data ?? [])
+        setIsLoadingProductos(false)
+      })
+    }, [])
 
     const [ carrito, setCarrito ] = useState<VentaFormProps[]>([])
     const [ puntoVenta, setPuntoVenta ] = useState<string>('')
