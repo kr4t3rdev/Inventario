@@ -1,5 +1,5 @@
 // Server Actions (nuevo)
-export { getGastosDEAction, getGastoDEByIdAction, createGastosDEAction, updateGastosDEAction, deleteGastosDEAction } from './actions';
+export { getGastosDEAction, getGastoDEByIdAction, createGastosDEAction, updateGastosDEAction, deleteGastosDEAction, getGastoConceptosAction, getGastoConceptoByIdAction, createGastoConceptoAction, deleteGastoConceptoAction, getGastoElementosAction, createGastoElementoAction, deleteGastoElementoAction } from './actions';
 
 // RTK Query (legacy)
 export { gastosDEApi, useGetGastosDEQuery, useGetGastoDEQuery, useAddGastosDEMutation, useUpdateGastosDEMutation, useDeleteGastosDEMutation } from './api/gastosDEApi'

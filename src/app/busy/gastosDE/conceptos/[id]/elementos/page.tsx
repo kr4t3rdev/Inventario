@@ -5,13 +5,13 @@ import { Button } from "@/components/ui/button"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
-import { useDeleteGastoElementoMutation, useGetGastoConceptoQuery, useGetGastoElementosQuery } from "@/lib/redux/services/gastosConceptosApi"
+import { getGastoConceptoByIdAction, getGastoElementosAction, deleteGastoElementoAction } from "@/features/gastosDE"
 import { ColumnDef } from "@tanstack/react-table"
 import { ArrowUp, ArrowLeft, ArrowUpDown, Layers, Plus, Trash2, Pencil, Sparkles, AlertCircle } from "lucide-react"
 import dynamic from "next/dynamic"
 import Link from "next/link"
 import { useParams } from "next/navigation"
-import { useState } from "react"
+import { useEffect, useState, useTransition } from "react"
 import { toast } from "sonner"
 import { motion } from "framer-motion"
 
@@ -19,23 +19,22 @@ const GastoElementos = () => {
     const params = useParams()
     const conceptoId = params.id as string
     const [elementoToDelete, setElementoToDelete] = useState<string | null>(null)
-    const [deleteElemento] = useDeleteGastoElementoMutation()
+    const [isPending, startTransition] = useTransition()
+    const [concepto, setConcepto] = useState<any>(null)
+    const [elementos, setElementos] = useState<any[]>([])
+    const [isLoading, setIsLoading] = useState(true)
 
-    const { data: concepto, isLoading: isLoadingConcepto } = useGetGastoConceptoQuery(conceptoId, { skip: !conceptoId })
-    const { data: elementos, isLoading: isLoadingElementos } = useGetGastoElementosQuery(conceptoId, { skip: !conceptoId })
+    useEffect(() => { async function f() { setIsLoading(true); const r=await getGastoConceptoByIdAction(conceptoId); if(r.success) setConcepto(r.data!); const r2=await getGastoElementosAction(conceptoId); if(r2.success) setElementos(r2.data??[]); setIsLoading(false); } f(); }, [conceptoId])
 
     const handleDelete = async () => {
       if (!elementoToDelete) return
-      try {
-        await deleteElemento({ conceptoId, elementoId: elementoToDelete }).unwrap()
-        toast.success("El elemento ha sido eliminado exitosamente.")
-      } catch (error: any) {
-        console.error("Error al eliminar el elemento:", error)
-        const errorMsg = error?.data?.error || "Hubo un error al eliminar el elemento."
-        toast.error(errorMsg)
-      } finally {
+      startTransition(async () => {
+        const r=await deleteGastoElementoAction(elementoToDelete)
+        if(r.success) { toast.success(r.data?.message||"Eliminado"); const ref=await getGastoElementosAction(conceptoId); if(ref.success) setElementos(ref.data??[]) }
+        else toast.error(r.error?.message||"Error al eliminar")
         setElementoToDelete(null)
-      }
+      })
+    }
     }
 
     const columns: ColumnDef<unknown>[] = [
@@ -106,7 +105,7 @@ const GastoElementos = () => {
         }
     ]
 
-    if (isLoadingConcepto || isLoadingElementos) {
+    if (isLoading) {
         return (
             <SidebarProvider>
                 <SidebarInset>

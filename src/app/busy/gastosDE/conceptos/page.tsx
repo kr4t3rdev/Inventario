@@ -5,32 +5,31 @@ import { Button } from "@/components/ui/button"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
-import { useDeleteGastoConceptoMutation, useGetGastoConceptosQuery } from "@/lib/redux/services/gastosConceptosApi"
+import { getGastoConceptosAction, deleteGastoConceptoAction } from "@/features/gastosDE"
 import { ColumnDef } from "@tanstack/react-table"
 import { ArrowUp, ArrowUpDown, FolderOpen, Plus, Trash2, Pencil, Layers, Sparkles, Loader2, AlertCircle } from "lucide-react"
 import dynamic from "next/dynamic"
 import Link from "next/link"
-import { useState } from "react"
+import { useEffect, useState, useTransition } from "react"
 import { toast } from "sonner"
 import { motion } from "framer-motion"
 
 const GastoConceptos = () => {
-    const {data: conceptos, isLoading} = useGetGastoConceptosQuery()
+    const [conceptos, setConceptos] = useState<any[]>([])
+    const [isLoading, setIsLoading] = useState(true)
+    const [isPending, startTransition] = useTransition()
+    useEffect(() => { async function f() { setIsLoading(true); const r=await getGastoConceptosAction(); if(r.success) setConceptos(r.data??[]); setIsLoading(false); } f(); }, [])
     const [conceptoToDelete, setConceptoToDelete] = useState<string | null>(null)
-    const [deleteConcepto] = useDeleteGastoConceptoMutation()
 
     const handleDelete = async () => {
       if (!conceptoToDelete) return
-      try {
-        await deleteConcepto(conceptoToDelete).unwrap()
-        toast.success("El concepto ha sido eliminado exitosamente.")
-      } catch (error: any) {
-        console.error("Error al eliminar el concepto:", error)
-        const errorMsg = error?.data?.error || "Hubo un error al eliminar el concepto."
-        toast.error(errorMsg)
-      } finally {
+      startTransition(async () => {
+        const r=await deleteGastoConceptoAction(conceptoToDelete)
+        if(r.success) { toast.success(r.data?.message||"Eliminado"); const ref=await getGastoConceptosAction(); if(ref.success) setConceptos(ref.data??[]) }
+        else toast.error(r.error?.message||"Error al eliminar")
         setConceptoToDelete(null)
-      }
+      })
+    }
     }
 
     const columns: ColumnDef<unknown>[] = [
