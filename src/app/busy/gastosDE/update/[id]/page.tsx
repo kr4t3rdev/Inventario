@@ -1,16 +1,17 @@
 "use client"
 
-import { GastoDEForm } from "@/features/gastosDE"
+import { GastoDEForm, getGastoDEByIdAction } from "@/features/gastosDE"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useGetGastoDEQuery } from "@/lib/redux/services/gastosDEApi"
 import { useParams } from "next/navigation"
+import { useEffect, useState } from "react"
 
 export default function EditarGastoDEPage() {
   const params = useParams()
   const gastosDEId = params.id as string
-  const { data: gastosDE, isLoading, error } = useGetGastoDEQuery(gastosDEId)
-  //console.log('gastoSId',gastoSId);
+  const [gastoDE, setGastoDE] = useState<any | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  useEffect(() => { async function f() { setIsLoading(true); const r = await getGastoDEByIdAction(gastosDEId); if(r.success) setGastoDE(r.data!); setIsLoading(false); } f(); }, [gastosDEId])
 
   if (isLoading) {
     return (
@@ -28,7 +29,7 @@ export default function EditarGastoDEPage() {
     )
   }
 
-  if (error || !gastosDE) {
+  if (error || !gastoDE) {
     return (
       <SidebarProvider>
         <SidebarInset>
@@ -52,15 +53,15 @@ export default function EditarGastoDEPage() {
             <p className="text-muted-foreground">Modifique los datos de los Gasto de Explotación</p>
           </div>
           <GastoDEForm initialData={{
-            gastosDEId: gastosDE.gastosDEId,
-            tipo: gastosDE.tipo,
-            conceptoId: gastosDE.conceptoId,
-            elementoId: gastosDE.elementoId,
-            numeroFactura: gastosDE.numeroFactura,
-            proveedor: gastosDE.proveedor,
-            monto: gastosDE.monto,
-            descripcion: gastosDE.descripcion,
-            periodo: gastosDE.periodo,
+            gastosDEId: gastoDE.gastosDEId,
+            tipo: gastoDE.tipo,
+            conceptoId: gastoDE.conceptoId,
+            elementoId: gastoDE.elementoId,
+            numeroFactura: gastoDE.numeroFactura,
+            proveedor: gastoDE.proveedor,
+            monto: gastoDE.monto,
+            descripcion: gastoDE.descripcion,
+            periodo: gastoDE.periodo,
           }} />
         </div>
       </SidebarInset>
