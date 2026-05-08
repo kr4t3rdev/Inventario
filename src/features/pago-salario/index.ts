@@ -1,3 +1,13 @@
+// Server Actions (nuevo)
+export {
+  getPagoSalariosAction,
+  getPagoSalarioByIdAction,
+  createPagoSalarioAction,
+  updatePagoSalarioAction,
+  deletePagoSalarioAction,
+} from './actions';
+
+// RTK Query (legacy)
 export {
   pagoSalarioApi,
   useGetPagoSalariosQuery,
