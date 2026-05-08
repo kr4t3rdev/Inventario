@@ -101,9 +101,41 @@ export const stockUbicacionQuerySchema = z.object({
   includeZero: z.boolean().optional().default(true),
 });
 
+/**
+ * Schema para operación de restock de producto.
+ *
+ * Valida el payload completo que el frontend envía a restockProductoAction.
+ * Campos requeridos: productoId, cantidad.
+ * El resto son opcionales y dependen del flujo de pago.
+ */
+export const restockSchema = z.object({
+  productoId: z.string().min(1, 'El ID del producto es requerido'),
+  cantidad: z.coerce.number().int('Debe ser entero').min(1, 'Debe ser mayor a 0'),
+
+  precioCosto: z.coerce.number().int().min(0).optional(),
+  precioVenta: z.coerce.number().int().min(0).optional(),
+
+  descripcion: z.string().max(500).optional(),
+  numeroFactura: z.string().max(100).optional(),
+  facturaUrl: z.string().optional(),
+
+  formaPago: z.enum(['PAGO_PARCIAL', 'PAGO_COMPLETO']).optional(),
+  estado: z.enum(['PENDIENTE', 'PAGADA']).optional(),
+
+  moneda: z.string().optional(),
+  tasaCambio: z.coerce.number().positive().optional(),
+  montoConvertido: z.coerce.number().min(0).optional(),
+  monedaOriginal: z.string().optional(),
+  montoOriginal: z.coerce.number().min(0).optional(),
+
+  cuentaId: z.string().optional(),
+  tipoRestock: z.enum(['nueva_instancia', 'sumar_stock', 'auto']).optional(),
+});
+
 // ─── Tipos inferidos ──────────────────────────────────────
 
 export type ProductoInput = z.infer<typeof productoSchema>;
 export type ProductoUpdateInput = z.infer<typeof productoUpdateSchema>;
 export type StockUpdateInput = z.infer<typeof stockUpdateSchema>;
 export type StockUbicacionQuery = z.infer<typeof stockUbicacionQuerySchema>;
+export type RestockInput = z.infer<typeof restockSchema>;

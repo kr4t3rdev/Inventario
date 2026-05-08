@@ -7,6 +7,7 @@ export {
   getStockPorUbicacionAction,
   bulkUpdateStockMinimoAction,
   getRestockHistoryAction,
+  restockProductoAction,
 } from './actions';
 
 // Handlers legacy (para rutas API existentes)
@@ -20,12 +21,6 @@ export {
   restockProductoHandler,
   getStockUbicacionHandler,
 } from './api/handlers';
-
-export {
-  productosApi,
-  // Pendiente: flujo de pagos complejo
-  useRestockProductoMutation,
-} from './api/productosApi';
 
 export { ProductoForm } from './components/productos-form';
 export type { Producto } from './types';
