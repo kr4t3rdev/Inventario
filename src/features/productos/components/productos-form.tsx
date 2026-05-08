@@ -28,9 +28,9 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { sileo } from '@/lib/sileo-shim'
 
 import {
-  createProductoAction,
-  updateProductoAction,
-} from '@/features/productos/actions'
+  useAddProductoMutation,
+  useUpdateProductoMutation,
+} from '@/features/productos'
 import { useGetUnidadesQuery } from '@/features/unidades'
 import { useGetAlmacenesQuery } from '@/features/almacenes'
 import { useGetListasPreciosQuery } from '@/features/listas-precios/api/listasPreciosApi'
@@ -44,6 +44,7 @@ import {
   DEFAULT_PARENT_PREVIEW_SURTIDO,
   type ProductBusinessCodeResult,
 } from '@/lib/product-business-code'
+import { buildPreciosPayload } from './precios-payload'
 import { SubcategorySelector } from '@/features/categorias/components/subcategory-selector'
 import { ProductPhotoUpload } from './product-photo-upload'
 import { ClasificadorInfoNote } from './clasificador-info-note'
@@ -255,8 +256,8 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
     return initialMap
   })
 
-  const [productos, setProductos] = useState<Producto[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [addProducto] = useAddProductoMutation()
+  const [updateProducto] = useUpdateProductoMutation()
 
   const form = useForm<ProductosFormValues>({
     resolver: zodResolver(buildProductosSchema(usaEan13)),
@@ -349,31 +350,28 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
            }
          }
 
-         const productPayload = {
-          nombre: data.nombre,
-          descripcion: data.descripcion || null,
-          codigoInterno: data.codigoInterno || null,
-          proveedorCodigo: usaEan13 ? (resolvedProveedorCodigo || null) : null,
-          vendorId: data.vendorId || null,
-          precioCosto: data.precioCosto,
-          precioVenta: data.precioVenta,
-          stock: data.stock,
-          stockMinimo: data.stockMinimo ?? 0,
-          fotos: data.fotos ?? [],
-          categoriaId: data.categoriaId,
-          subcategoriaId: data.subcategoriaId || null,
-          unidadId: data.unidadId,
-          almacenId: data.almacenId,
-        }
+         const payload: any = {
+           nombre: data.nombre,
+           descripcion: data.descripcion || null,
+           codigoInterno: data.codigoInterno || null,
+           proveedorCodigo: usaEan13 ? (resolvedProveedorCodigo || null) : null,
+           vendorId: data.vendorId || null,
+           precioCosto: data.precioCosto,
+           precioVenta: data.precioVenta,
+           stock: data.stock,
+           stockMinimo: data.stockMinimo ?? 0,
+           fotos: data.fotos ?? [],
+           categoriaId: data.categoriaId,
+           subcategoriaId: data.subcategoriaId || null,
+           unidadId: data.unidadId,
+           almacenId: data.almacenId,
+           precios: buildPreciosPayload(preciosPorLista),
+         }
 
-        const updateResult = await updateProductoAction({
+        await updateProducto({
           id: initialData.id,
-          ...productPayload,
-        })
-
-        if (!updateResult.success) {
-          throw new Error(updateResult.error?.message || 'Error al actualizar')
-        }
+          ...payload,
+        }).unwrap()
         sileo.success({ title: 'El producto ha sido actualizado exitosamente.' })
       } else {
         const resolvedProveedorCodigo = selectedVendorProviderCode || watchedProveedorCodigo
@@ -389,7 +387,7 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
           }
         }
 
-        const createPayload = {
+        const payload: any = {
           nombre: data.nombre,
           descripcion: data.descripcion,
           codigoInterno: data.codigoInterno || null,
@@ -404,12 +402,10 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
           subcategoriaId: data.subcategoriaId || null,
           unidadId: data.unidadId,
           almacenId: data.almacenId,
+          precios: buildPreciosPayload(preciosPorLista),
         }
 
-        const createResult = await createProductoAction(createPayload)
-        if (!createResult.success) {
-          throw new Error(createResult.error?.message || 'Error al crear')
-        }
+        await addProducto(payload).unwrap()
         sileo.success({ title: 'El producto ha sido registrado exitosamente.' })
       }
 
@@ -417,9 +413,27 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
       router.refresh()
     } catch (error) {
       console.error('Error al guardar el producto:', error)
-      const errorMessage = error instanceof Error
-        ? error.message
-        : 'Hubo un error al guardar el producto.'
+      
+      // Extraer mensaje de error del servidor
+      let errorMessage = 'Hubo un error al guardar el producto.'
+      
+      if (error && typeof error === 'object') {
+        const err = error as any
+        
+        // Si viene del RTK Query error
+        if (err.data?.error) {
+          errorMessage = err.data.error
+        }
+        // Si es un objeto con propiedad message
+        else if (err.message) {
+          errorMessage = err.message
+        }
+        // Si es una respuesta HTTP
+        else if (err.status && err.data) {
+          errorMessage = JSON.stringify(err.data)
+        }
+      }
+      
       sileo.error({ title: errorMessage })
     } finally {
       setIsLoading(false)

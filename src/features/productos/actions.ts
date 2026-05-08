@@ -15,8 +15,8 @@ import { revalidatePath } from 'next/cache';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
 import { requireTenant } from '@/lib/services/tenant-scope';
-import { productoSchema, productoUpdateSchema } from './schemas';
-import type { ProductoInput, ProductoUpdateInput } from './schemas';
+import { productoSchema, productoUpdateSchema, stockUbicacionQuerySchema } from './schemas';
+import type { ProductoInput, ProductoUpdateInput, StockUbicacionQuery } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 // ─── Select reutilizable ──────────────────────────────────
@@ -164,3 +164,95 @@ export const deleteProductoAction = withAction(async (id: string, user: Authenti
 
   return { id, eliminado: true };
 });
+
+// ─── Select reutilizable para stock por ubicación ──────────
+
+const PRODUCTO_CON_STOCK_SELECT = {
+  id: true,
+  nombre: true,
+  descripcion: true,
+  codigoInterno: true,
+  codigoNegocio: true,
+  fotos: true,
+  precioCosto: true,
+  precioVenta: true,
+  stock: true,
+  stockMinimo: true,
+  categoriaId: true,
+  subcategoriaId: true,
+  unidadId: true,
+  vendorId: true,
+  almacenId: true,
+  categoria: { select: { catId: true, nombre: true } },
+  subcategoria: { select: { catId: true, nombre: true, parentId: true } },
+  unidad: { select: { unidadId: true, nombre: true, simbolo: true } },
+  vendor: { select: { vendorId: true, nombre: true } },
+} as const;
+
+/**
+ * @description Obtiene productos con su stock en una ubicación específica
+ *   (almacén o punto de venta).
+ *
+ * - Si includeZero es false: solo productos con stock > 0 en la ubicación.
+ * - Si includeZero es true: todos los productos de la ubicación, con stock=0
+ *   donde no haya registro en StockUbicacion.
+ *
+ * @param input - { ubicacionId, tipoUbicacion, includeZero? }
+ * @returns Producto[] con campos stockUbicacion y stockTotal agregados
+ */
+export const getStockPorUbicacionAction = withAction(
+  async (input: StockUbicacionQuery, user: AuthenticatedUser) => {
+    const { ubicacionId, tipoUbicacion, includeZero } =
+      stockUbicacionQuerySchema.parse(input);
+    const tenantId = requireTenant(user);
+
+    // ── Path 1: solo productos con stock ──
+    if (!includeZero) {
+      const registros = await prisma.stockUbicacion.findMany({
+        where: {
+          ubicacionId,
+          tipoUbicacion,
+          tenantId,
+          cantidad: { gt: 0 },
+        },
+        include: {
+          producto: { select: PRODUCTO_CON_STOCK_SELECT },
+        },
+      });
+
+      return registros.map((r) => ({
+        ...r.producto,
+        stockUbicacion: r.cantidad,
+        stockTotal: r.producto.stock,
+      }));
+    }
+
+    // ── Path 2: todos los productos con stock (incluye ceros) ──
+    // Consulta base de productos filtrados por almacén si aplica
+    const whereProductos: Record<string, unknown> = { tenantId };
+    if (tipoUbicacion === 'almacen') {
+      whereProductos.almacenId = ubicacionId;
+    }
+
+    const [productosBase, registrosStock] = await Promise.all([
+      prisma.producto.findMany({
+        where: whereProductos,
+        select: PRODUCTO_CON_STOCK_SELECT,
+      }),
+      prisma.stockUbicacion.findMany({
+        where: { ubicacionId, tipoUbicacion, tenantId },
+        select: { productoId: true, cantidad: true },
+      }),
+    ]);
+
+    const stockMap = new Map(
+      registrosStock.map((r) => [r.productoId, r.cantidad]),
+    );
+
+    return productosBase.map((p) => ({
+      ...p,
+      stockUbicacion: stockMap.get(p.id) ?? 0,
+      stockTotal: p.stock,
+    }));
+  },
+);

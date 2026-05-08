@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from "react"
-import { useGetStockPorUbicacionQuery } from "@/lib/redux/services/stockUbicacionApi"
-import { useGetAlmacenesQuery } from "@/features/almacenes"
-import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta"
+import { useState, useEffect } from "react"
+import { getStockPorUbicacionAction } from "@/features/productos/actions"
+import { getAlmacenesAction } from "@/features/almacenes"
+import { getPuntosDeVentaAction } from "@/features/puntos-venta"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -34,17 +34,35 @@ export function ReportePorUbicacion() {
   const [ubicacionId, setUbicacionId] = useState<string>("")
   const [tipoUbicacion, setTipoUbicacion] = useState<"almacen" | "punto_venta">("almacen")
 
-  const { data: almacenes } = useGetAlmacenesQuery()
-  const { data: puntosVenta } = useGetPuntosDeVentaQuery()
-  const {
-    data: productosUbicacion,
-    isLoading: isLoadingProductosUbicacion,
-    isError,
-    error,
-  } = useGetStockPorUbicacionQuery(
-    { ubicacionId, tipoUbicacion, includeZero: true },
-    { skip: !ubicacionId },
-  )
+  // ─── Server Actions state ─────────────────────────────
+  const [almacenes, setAlmacenes] = useState<Awaited<ReturnType<typeof getAlmacenesAction>>['data']>([])
+  const [puntosVenta, setPuntosVenta] = useState<Awaited<ReturnType<typeof getPuntosDeVentaAction>>['data']>([])
+  const [productosUbicacion, setProductosUbicacion] = useState<Awaited<ReturnType<typeof getStockPorUbicacionAction>>['data']>([])
+  const [isLoadingStock, setIsLoadingStock] = useState(false)
+  const [stockError, setStockError] = useState<string | null>(null)
+
+  // ─── Fetches ──────────────────────────────────────────
+  useEffect(() => {
+    getAlmacenesAction().then(r => { if (r.success) setAlmacenes(r.data ?? []) })
+  }, [])
+  useEffect(() => {
+    getPuntosDeVentaAction().then(r => { if (r.success) setPuntosVenta(r.data ?? []) })
+  }, [])
+
+  useEffect(() => {
+    if (!ubicacionId) return
+    let cancelled = false
+    setIsLoadingStock(true)
+    setStockError(null)
+    getStockPorUbicacionAction({ ubicacionId, tipoUbicacion, includeZero: true })
+      .then(r => {
+        if (cancelled) return
+        if (r.success) setProductosUbicacion(r.data ?? [])
+        else setStockError(r.error?.message ?? 'Error desconocido')
+        setIsLoadingStock(false)
+      })
+    return () => { cancelled = true }
+  }, [ubicacionId, tipoUbicacion])
 
   const handleUbicacionChange = (value: string) => {
     const [tipo, id] = value.split(":")
@@ -152,7 +170,7 @@ export function ReportePorUbicacion() {
             </div>
           </div>
         </StaggerItem>
-      ) : isError ? (
+      ) : stockError ? (
         <StaggerItem>
           <div>
             <div className="flex h-100 items-center justify-center rounded-md border border-dashed border-destructive/30 bg-destructive/10">
@@ -161,13 +179,13 @@ export function ReportePorUbicacion() {
                 <p className="text-sm">
                   No se pudo obtener el inventario de la ubicación seleccionada.
                   <br />
-                  {JSON.stringify(error)}
+                  {stockError}
                 </p>
               </div>
             </div>
           </div>
         </StaggerItem>
-      ) : isLoadingProductosUbicacion ? (
+      ) : isLoadingStock ? (
         <StaggerItem>
           <Skeleton className="h-100 w-full" />
         </StaggerItem>
@@ -208,7 +226,7 @@ export function ReportePorUbicacion() {
         </StaggerItem>
       )}
 
-      {ubicacionId && !isError && !isLoadingProductosUbicacion && (
+      {ubicacionId && !stockError && !isLoadingStock && (
         <>
           <StaggerItem>
             <AnimatedCard>

@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { sileo } from '@/lib/sileo-shim'
 import { Skeleton } from "@/components/ui/skeleton"
-import { createUnidadAction, updateUnidadAction } from "@/features/unidades"
+import { useAddUnidadMutation, useGetUnidadesQuery, useUpdateUnidadMutation } from "@/features/unidades/api/unidadesApi"
 import { motion } from "framer-motion"
 import { Scale, Sparkles, ArrowLeft, Loader2 } from "lucide-react"
 import Link from "next/link"
@@ -71,7 +71,10 @@ export function UnidadForm({ initialData }: UnidadFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
 
-  // No necesita RTK Query — usa Server Actions directas
+  const { data: unidad, isLoading: isLoadingUnidad } = useGetUnidadesQuery()
+  
+  const [ addUnidad ] = useAddUnidadMutation()
+  const [updateUnidad] = useUpdateUnidadMutation()
 
   const form = useForm<UnidadFormValues>({
     resolver: zodResolver(unidadSchema),
@@ -85,21 +88,13 @@ export function UnidadForm({ initialData }: UnidadFormProps) {
     setIsLoading(true)
     try {
       if (initialData) {
-        const result = await updateUnidadAction({
-          unidadId: initialData.unidadId,
+        await updateUnidad({
+          unidadId: initialData.unidadId,            
           ...data,
-        })
-        if (!result.success) {
-          sileo.error({ title: result.error?.message || 'Error al actualizar la unidad.' })
-          return
-        }
+        }).unwrap()
         sileo.success({ title: 'La unidad ha sido actualizada exitosamente.' })
       } else {
-        const result = await createUnidadAction(data)
-        if (!result.success) {
-          sileo.error({ title: result.error?.message || 'Error al crear la unidad.' })
-          return
-        }
+        await addUnidad(data).unwrap()
         sileo.success({ title: 'La unidad ha sido registrada exitosamente.' })
       }
       router.push("/busy/unidad")
@@ -112,7 +107,7 @@ export function UnidadForm({ initialData }: UnidadFormProps) {
     }
   }
 
-  if (isLoading) {
+  if (isLoadingUnidad) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}

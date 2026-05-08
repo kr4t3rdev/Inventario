@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useTransition } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -18,7 +18,9 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 import { useGetProductosQuery } from "@/features/productos"
 import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta"
-import { createVentaAction } from "@/features/ventas/actions"
+import { useAddVentaMutation, useUpdateVentaMutation } from "@/features/ventas"
+import { useDispatch } from "react-redux"
+import { apiSlice } from "@/lib/redux/services/apiSlice"
 
 const ventaSchema = z.object({
   productoId: z.string({
@@ -45,11 +47,14 @@ interface VentaFormProps {
 
 export function VentaForm({ initialData }: VentaFormProps) {
   const router = useRouter()
-  const [isPending, startTransition] = useTransition()
+  const dispatch = useDispatch()
   const [isLoading, setIsLoading] = useState(false)
 
   const { data: productos, isLoading: isLoadingProductos } = useGetProductosQuery()
   const { data: puntosDeVenta, isLoading: isLoadingPuntosDeVenta } = useGetPuntosDeVentaQuery()
+
+  const [addVenta] = useAddVentaMutation()
+  const [updateVenta] = useUpdateVentaMutation()
 
   const form = useForm<VentaFormValues>({
     resolver: zodResolver(ventaSchema),
@@ -64,28 +69,21 @@ export function VentaForm({ initialData }: VentaFormProps) {
     setIsLoading(true)
     try {
       if (initialData) {
-        // Update: usar API route existente (poco frecuente, migrar después)
-        const token = typeof window !== 'undefined' ? window.sessionStorage.getItem('token') : null
-        const response = await fetch(`/api/ventas/${initialData.ventaId}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json', ...(token && { Authorization: `Bearer ${token}` }) },
-          body: JSON.stringify(data),
-        })
-        if (!response.ok) throw new Error('Error al actualizar')
+        await updateVenta({
+          ventaId: initialData.ventaId,
+          ...data,
+        }).unwrap()
         sileo.success({ title: 'La venta ha sido actualizada exitosamente' })
       } else {
-        const result = await createVentaAction({
-          puntoDeVentaId: data.puntoDeVentaId,
-          items: [{ productoId: data.productoId, cantidad: data.cantidad, precioUnitario: 0 }],
-        })
-        if (!result.success) throw new Error(result.error?.message || 'Error al crear venta')
+        await addVenta({
+          ...data,
+        }).unwrap()
         sileo.success({ title: 'La venta ha sido registrada exitosamente' })
+        dispatch(apiSlice.util.invalidateTags(['Productos']))
       }
-      router.push('/busy/sales')
-      router.refresh()
     } catch (error) {
       console.error("Error al guardar la venta:", error)
-      sileo.error({ title: error instanceof Error ? error.message : 'Hubo un error al guardar la venta.' })
+      sileo.error({ title: 'Hubo un error al guardar la venta.' })
     } finally {
       setIsLoading(false)
     }

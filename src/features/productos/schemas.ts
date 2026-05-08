@@ -84,8 +84,20 @@ export const stockUpdateSchema = z.object({
   precioCosto: z.coerce.number().int().min(0).optional(),
 });
 
+/**
+ * Schema para consulta de stock por ubicación.
+ */
+export const stockUbicacionQuerySchema = z.object({
+  ubicacionId: z.string().min(1, 'El ID de ubicación es requerido'),
+  tipoUbicacion: z.enum(['almacen', 'punto_venta'], {
+    errorMap: () => ({ message: 'tipoUbicacion debe ser "almacen" o "punto_venta"' }),
+  }),
+  includeZero: z.boolean().optional().default(true),
+});
+
 // ─── Tipos inferidos ──────────────────────────────────────
 
 export type ProductoInput = z.infer<typeof productoSchema>;
 export type ProductoUpdateInput = z.infer<typeof productoUpdateSchema>;
 export type StockUpdateInput = z.infer<typeof stockUpdateSchema>;
+export type StockUbicacionQuery = z.infer<typeof stockUbicacionQuerySchema>;

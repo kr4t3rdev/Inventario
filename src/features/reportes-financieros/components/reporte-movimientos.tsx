@@ -2,9 +2,9 @@
 
 import { useMemo, useState } from "react"
 import { useGetVentasQuery } from "@/features/ventas"
-import { useGetMermasQuery } from "@/features/mermas"
-import { useGetTransferenciasQuery } from "@/features/transferencias"
-import { useGetProductosQuery } from "@/features/productos"
+import { useGetMermasQuery } from "@/features/mermas/api/mermasApi"
+import { useGetTransferenciasQuery } from "@/features/transferencias/api/transferenciasApi"
+import { useGetProductosQuery } from "@/features/productos/api/productosApi"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"

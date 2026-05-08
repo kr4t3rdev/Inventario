@@ -28,7 +28,7 @@ import { cn } from "@/lib/utils"
 import { useGetProductosQuery } from "@/features/productos"
 import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta"
 import { useGetAlmacenesQuery } from "@/features/almacenes"
-import { useGetStockPorUbicacionQuery } from "@/lib/redux/services/stockUbicacionApi"
+import { getStockPorUbicacionAction } from "@/features/productos/actions"
 import { useDispatch } from "react-redux"
 import { apiSlice } from "@/lib/redux/services/apiSlice"
 
@@ -386,12 +386,26 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
   const origenId = form.watch("origenId")
   const productosSeleccionados = form.watch("productos")
 
-  const { data: productosUbicacion, isLoading: isLoadingProductosUbicacion } = useGetStockPorUbicacionQuery(
-    origenId && tipoOrigen
-      ? { ubicacionId: origenId, tipoUbicacion: tipoOrigen }
-      : { ubicacionId: "", tipoUbicacion: "almacen" },
-    { skip: !origenId || !tipoOrigen }
-  )
+  // ─── Server Action: stock por ubicación ──────────────
+  const [productosUbicacion, setProductosUbicacion] = useState<any[] | null>(null)
+  const [isLoadingProductosUbicacion, setIsLoadingProductosUbicacion] = useState(false)
+
+  useEffect(() => {
+    if (!origenId || !tipoOrigen) {
+      setProductosUbicacion(null)
+      return
+    }
+    let cancelled = false
+    setIsLoadingProductosUbicacion(true)
+    getStockPorUbicacionAction({ ubicacionId: origenId, tipoUbicacion: tipoOrigen, includeZero: true })
+      .then(r => {
+        if (cancelled) return
+        if (r.success) setProductosUbicacion(r.data ?? [])
+        else setProductosUbicacion([])
+        setIsLoadingProductosUbicacion(false)
+      })
+    return () => { cancelled = true }
+  }, [origenId, tipoOrigen])
 
   const productosDisponiblesEnOrigen = origenId && productosUbicacion ? productosUbicacion : productos
 
@@ -464,8 +478,6 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
 
       dispatch(apiSlice.util.invalidateTags(['Transferencias']))
       dispatch(apiSlice.util.invalidateTags(['Notificaciones']))
-      dispatch(apiSlice.util.invalidateTags(['StockUbicacion']))
-      dispatch(apiSlice.util.invalidateTags(['ProductosUbicacion']))
       dispatch(apiSlice.util.invalidateTags(['Productos']))
 
       sileo.success({ title: `La transferencia de ${data.productos.length} producto(s) ha sido ${initialData ? "actualizada" : "registrada"} exitosamente.` })

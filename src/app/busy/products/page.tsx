@@ -1,7 +1,9 @@
 "use client"
 
 import dynamic from "next/dynamic"
-import { getProductosAction, deleteProductoAction } from "@/features/productos/actions"
+import { getProductosAction, deleteProductoAction, getStockPorUbicacionAction } from "@/features/productos/actions"
+import { getAlmacenesAction } from "@/features/almacenes"
+import { getPuntosDeVentaAction } from "@/features/puntos-venta"
 
 import type { ColumnDef } from "@tanstack/react-table"
 import type { Producto } from "../../models/model"
@@ -26,16 +28,12 @@ import { Badge } from "@/components/ui/badge"
 import { useState, useMemo, useEffect, useTransition } from "react"
 import { toast } from "sonner"
 import Link from "next/link"
-import { useGetStockPorUbicacionQuery } from "@/lib/redux/services/stockUbicacionApi"
-import { useGetAlmacenesQuery } from "@/features/almacenes"
-import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { motion, AnimatePresence } from "framer-motion"
-import { getAuthToken } from "@/lib/token"
 
 // Lazy load heavy components
 const EnhancedDataTable = dynamic(() => import("@/features/productos/components/enhanced-data-table").then(mod => ({ default: mod.EnhancedDataTable })), {
@@ -66,7 +64,7 @@ const RestockHistoryDialog = dynamic(() => import("@/features/productos/componen
   loading: () => <div className="h-8 w-8 bg-muted rounded animate-pulse" />
 })
 
-const QuickOfferDialog = dynamic(() => import("@/components/ofertas/quick-offer-dialog").then(mod => ({ default: mod.QuickOfferDialog })), {
+const QuickOfferDialog = dynamic(() => import("@/features/ofertas/components/quick-offer-dialog").then(mod => ({ default: mod.QuickOfferDialog })), {
   loading: () => <div className="h-8 w-8 bg-muted rounded animate-pulse" />
 })
 
@@ -82,13 +80,40 @@ const ProductFilters = dynamic(() => import("@/features/productos/components/pro
   )
 })
 
+/**
+ * Producto con campos de stock por ubicación agregados
+ * (devueltos por getStockPorUbicacionAction).
+ */
+interface ProductoConStock extends Producto {
+  stockUbicacion?: number
+  stockTotal?: number
+}
+
+/**
+ * Tipo para la ubicación seleccionada en el filtro.
+ */
+interface UbicacionSeleccionada {
+  id: string
+  tipo: "almacen" | "punto_venta"
+  nombre: string
+}
+
+/**
+ * @description Página principal de gestión de productos.
+ *
+ * Muestra una tabla con todos los productos del tenant, con filtros por
+ * categoría, subcategoría, ubicación (almacén/punto de venta) y toggle
+ * para mostrar/ocultar productos sin stock.
+ *
+ * Las acciones disponibles dependen del tipo de ubicación seleccionada:
+ * - Almacén: editar, restock, historial, oferta rápida, eliminar.
+ * - Punto de venta: solo oferta rápida.
+ *
+ * @returns {JSX.Element} Página de productos con tabla y filtros
+ */
 export default function ProductosPage() {
 
-  const [ubicacionSeleccionada, setUbicacionSeleccionada] = useState<{
-    id: string
-    tipo: "almacen" | "punto_venta"
-    nombre: string
-  } | null>(null)
+  const [ubicacionSeleccionada, setUbicacionSeleccionada] = useState<UbicacionSeleccionada | null>(null)
 
   // Category and subcategory filter states
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
@@ -96,10 +121,14 @@ export default function ProductosPage() {
   const [showZeroStock, setShowZeroStock] = useState(false)
   const [usaEan13, setUsaEan13] = useState(false)
   const [productos, setProductos] = useState<Producto[]>([])
+  const [almacenes, setAlmacenes] = useState<Awaited<ReturnType<typeof getAlmacenesAction>>['data']>([])
+  const [puntosVenta, setPuntosVenta] = useState<Awaited<ReturnType<typeof getPuntosDeVentaAction>>['data']>([])
+  const [productosConStock, setProductosConStock] = useState<ProductoConStock[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [isLoadingStock, setIsLoadingStock] = useState(false)
   const [isPending, startTransition] = useTransition()
 
-  // Server Actions: data fetching (reemplaza RTK Query)
+  // ─── Data fetching: productos base (Server Action) ──────
   useEffect(() => {
     async function fetchData() {
       setIsLoading(true)
@@ -110,8 +139,47 @@ export default function ProductosPage() {
     fetchData()
   }, [])
 
+  // ─── Data fetching: almacenes (Server Action) ────────────
+  useEffect(() => {
+    async function fetchAlmacenes() {
+      const result = await getAlmacenesAction()
+      if (result.success) setAlmacenes(result.data ?? [])
+    }
+    fetchAlmacenes()
+  }, [])
+
+  // ─── Data fetching: puntos de venta (Server Action) ──────
+  useEffect(() => {
+    async function fetchPuntosVenta() {
+      const result = await getPuntosDeVentaAction()
+      if (result.success) setPuntosVenta(result.data ?? [])
+    }
+    fetchPuntosVenta()
+  }, [])
+
+  // ─── Data fetching: stock por ubicación (Server Action) ──
+  useEffect(() => {
+    if (!ubicacionSeleccionada) return
+    let cancelled = false
+    async function fetchStock() {
+      setIsLoadingStock(true)
+      const result = await getStockPorUbicacionAction({
+        ubicacionId: ubicacionSeleccionada!.id,
+        tipoUbicacion: ubicacionSeleccionada!.tipo,
+        includeZero: true,
+      })
+      if (!cancelled) {
+        if (result.success) setProductosConStock((result.data ?? []) as ProductoConStock[])
+        setIsLoadingStock(false)
+      }
+    }
+    fetchStock()
+    return () => { cancelled = true }
+  }, [ubicacionSeleccionada])
+
   const [productToDelete, setProductToDelete] = useState<string | null>(null)
 
+  // ─── Auto-seleccionar primer almacén al cargar ──────────
   useEffect(() => {
     if (almacenes && almacenes.length > 0 && !ubicacionSeleccionada) {
       const primerAlmacen = almacenes[0]
@@ -122,20 +190,13 @@ export default function ProductosPage() {
       })
     }
   }, [almacenes, ubicacionSeleccionada])
-
-  const { data: productosConStock, isLoading: isLoadingStock } = useGetStockPorUbicacionQuery(
-    ubicacionSeleccionada
-      ? { ubicacionId: ubicacionSeleccionada.id, tipoUbicacion: ubicacionSeleccionada.tipo, includeZero: true }
-      : { ubicacionId: "", tipoUbicacion: "almacen", includeZero: true },
-    { skip: !ubicacionSeleccionada },
-  )
   
   // Apply category and subcategory filters
-  const datosAMostrar = useMemo<Producto[]>(() => {
-    let result: Producto[] = []
+  const datosAMostrar = useMemo<ProductoConStock[]>(() => {
+    let result: ProductoConStock[] = []
 
     if (ubicacionSeleccionada && productosConStock && Array.isArray(productosConStock)) {
-      result = [...productosConStock as unknown as Producto[]]
+      result = [...productosConStock]
     } else if (!ubicacionSeleccionada && productos && Array.isArray(productos)) {
       result = [...productos]
     }
@@ -159,7 +220,7 @@ export default function ProductosPage() {
     if (!showZeroStock) {
       result = result.filter((producto) => {
         const stockValue = ubicacionSeleccionada
-          ? (producto as Producto & { stockUbicacion?: number }).stockUbicacion
+          ? producto.stockUbicacion
           : producto.stock
         return (stockValue ?? 0) > 0
       })
@@ -168,17 +229,19 @@ export default function ProductosPage() {
     return result
   }, [ubicacionSeleccionada, productosConStock, productos, selectedCategory, selectedSubcategory, showZeroStock])
 
+  /** Umbral de stock mínimo por defecto (cuando no está configurado). */
+  const DEFAULT_STOCK_MINIMO = 10
+
   const stockSummary = useMemo(() => {
-    const getStockValue = (producto: Producto) => {
-      const stockByLocation = (producto as Producto & { stockUbicacion?: number }).stockUbicacion
-      return ubicacionSeleccionada ? stockByLocation ?? 0 : producto.stock ?? 0
+    const getStockValue = (producto: ProductoConStock) => {
+      return ubicacionSeleccionada ? (producto.stockUbicacion ?? 0) : (producto.stock ?? 0)
     }
 
     const total = datosAMostrar.length
     const sinStock = datosAMostrar.filter((producto) => getStockValue(producto) === 0).length
     const stockBajo = datosAMostrar.filter((producto) => {
       const stockActual = getStockValue(producto)
-      const threshold = producto.stockMinimo && producto.stockMinimo > 0 ? producto.stockMinimo : 10
+      const threshold = producto.stockMinimo && producto.stockMinimo > 0 ? producto.stockMinimo : DEFAULT_STOCK_MINIMO
       return stockActual > 0 && stockActual <= threshold
     }).length
     const stockNormal = total - sinStock - stockBajo
@@ -340,7 +403,7 @@ export default function ProductosPage() {
         const stock = Number.parseInt(row.getValue(ubicacionSeleccionada ? "stockUbicacion" : "stock"))
         const producto = row.original
         const stockMinimo = producto.stockMinimo || 0
-        const threshold = stockMinimo > 0 ? stockMinimo : 10
+        const threshold = stockMinimo > 0 ? stockMinimo : DEFAULT_STOCK_MINIMO
         
         let variant: "outline" | "secondary" | "destructive" = "outline"
         if (stock === 0) {
@@ -376,7 +439,7 @@ export default function ProductosPage() {
             {stockMinimo > 0 ? (
               <Badge variant="outline">{stockMinimo}</Badge>
             ) : (
-              <Badge variant="secondary">Por defecto (10)</Badge>
+              <Badge variant="secondary">Por defecto ({DEFAULT_STOCK_MINIMO})</Badge>
             )}
           </div>
         )
@@ -394,7 +457,7 @@ export default function ProductosPage() {
         const stock = Number.parseInt(row.getValue(ubicacionSeleccionada ? "stockUbicacion" : "stock"))
         const producto = row.original
         const stockMinimo = producto.stockMinimo || 0
-        const threshold = stockMinimo > 0 ? stockMinimo : 10
+        const threshold = stockMinimo > 0 ? stockMinimo : DEFAULT_STOCK_MINIMO
         const diferencia = stock - threshold
         
         return (
