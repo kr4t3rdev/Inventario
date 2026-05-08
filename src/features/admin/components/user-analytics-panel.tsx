@@ -32,7 +32,7 @@ import {
   YAxis,
 } from 'recharts';
 
-import { AdminCardsLoader, AdminReveal } from '@/components/admin/animations';
+import { AdminCardsLoader, AdminReveal } from '@/features/admin/components/animations';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';

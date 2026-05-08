@@ -45,7 +45,7 @@ import {
   type ProductBusinessCodeResult,
 } from '@/lib/product-business-code'
 import { buildPreciosPayload } from './precios-payload'
-import { SubcategorySelector } from '@/components/categorias/subcategory-selector'
+import { SubcategorySelector } from '@/features/categorias/components/subcategory-selector'
 import { ProductPhotoUpload } from './product-photo-upload'
 import { ClasificadorInfoNote } from './clasificador-info-note'
 import { getAuthToken } from '@/lib/token'

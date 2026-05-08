@@ -4,7 +4,7 @@ import { motion, type Variants } from 'framer-motion';
 import { Sparkles, Shield, Info, Database, ArrowDownToLine } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { MigrateCuentasPorPagarButton } from '@/components/admin/migrate-cuentas-por-pagar-button';
+import { MigrateCuentasPorPagarButton } from '@/features/admin/components/migrate-cuentas-por-pagar-button';
 import {
   PageTransition,
   StaggerContainer,

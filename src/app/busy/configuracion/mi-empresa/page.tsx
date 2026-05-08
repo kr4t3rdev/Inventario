@@ -1,6 +1,6 @@
 "use client"
 
-import { MiEmpresaForm } from "@/components/mi-empresa/mi-empresa-form"
+import { MiEmpresaForm } from "@/features/mi-empresa/components/mi-empresa-form"
 import { motion } from "framer-motion"
 
 export default function MiEmpresaConfigPage() {

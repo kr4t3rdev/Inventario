@@ -19,7 +19,7 @@ export function SiteHeader() {
         </div>
         
         {/* Currency Indicator */}
-        {/* <CurrencyIndicator /> */}
+        <CurrencyIndicator />
         
         <div className="flex items-center gap-2">
           <ThemeToggle/>

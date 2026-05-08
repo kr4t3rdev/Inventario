@@ -4,7 +4,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 import { format } from 'date-fns';
 import { Lock, Sparkles, Unlock, XCircle } from 'lucide-react';
 
-import { AdminTableLoader } from '@/components/admin/animations';
+import { AdminTableLoader } from '@/features/admin/components/animations';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';

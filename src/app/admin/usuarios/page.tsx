@@ -17,9 +17,9 @@ import dynamic from 'next/dynamic';
 import { toast } from 'sonner';
 
 import { Usuario } from '@/app/models/model';
-import { AdminUsersTable } from '@/components/admin/admin-users-table';
-import { CreateUserDialog } from '@/components/admin/create-user-dialog';
-import { EditUserDialog } from '@/components/admin/edit-user-dialog';
+import { AdminUsersTable } from '@/features/admin/components/admin-users-table';
+import { CreateUserDialog } from '@/features/admin/components/create-user-dialog';
+import { EditUserDialog } from '@/features/admin/components/edit-user-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
