@@ -13,22 +13,7 @@ export default function EditarClientePage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(false)
 
-  useEffect(() => {
-    async function fetchData() {
-      setIsLoading(true)
-      setError(false)
-      const result = await getClienteByIdAction(clienteId)
-      if (result.success) {
-        setCliente(result.data!)
-      } else {
-        setError(true)
-      }
-      setIsLoading(false)
-    }
-    fetchData()
-  }, [clienteId])
-
-  console.log(cliente);
+  useEffect(() => { async function f() { setIsLoading(true); const r=await getClienteByIdAction(clienteId); if(r.success) setCliente(r.data!); else setError(true); setIsLoading(false); } f(); }, [clienteId])
 
   if (isLoading) {
     return (

@@ -1,10 +1,10 @@
 "use client"
 
-import { PtoVentaForm } from "@/features/puntos-venta"
+import { PtoVentaForm, getPuntoDeVentaByIdAction } from "@/features/puntos-venta"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useGetPuntoDeVentaQuery } from "@/features/puntos-venta"
 import { useParams } from "next/navigation"
+import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import { Store, AlertCircle, Sparkles, ArrowLeft } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -45,7 +45,10 @@ function PulseSkeleton({ className }: { className?: string }) {
 export default function EditarPuntoVentaPage() {
   const params = useParams()
   const pvId = params.id as string
-  const { data: ptoVenta, isLoading, error } = useGetPuntoDeVentaQuery(pvId)
+  const [ptoVenta, setPtoVenta] = useState<any | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(false)
+  useEffect(() => { async function f() { setIsLoading(true); const r=await getPuntoDeVentaByIdAction(pvId); if(r.success) setPtoVenta(r.data!); else setError(true); setIsLoading(false); } f(); }, [pvId])
 
   if (isLoading) {
     return (

@@ -1,8 +1,9 @@
 'use client'
 
 import { useParams } from "next/navigation"
-import { useGetMermaQuery } from "@/features/mermas"
-import { MermaForm } from "@/features/mermas"
+import { useEffect, useState } from "react"
+import { getMermaByIdAction } from "@/features/mermas"
+import { MermaForm } from "@/features/mermas/components/merma-form"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { motion } from "framer-motion"
@@ -14,7 +15,10 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 export default function EditarMermaPage() {
   const params = useParams()
   const mermaId = params.id as string
-  const { data: merma, isLoading, error } = useGetMermaQuery(mermaId)
+  const [merma, setMerma] = useState<any | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(false)
+  useEffect(() => { async function f() { setIsLoading(true); const r=await getMermaByIdAction(mermaId); if(r.success) setMerma(r.data!); else setError(true); setIsLoading(false); } f(); }, [mermaId])
 
   if (isLoading) {
     return (

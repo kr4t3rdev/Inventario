@@ -3,14 +3,17 @@
 import { ServicioForm } from "@/features/servicios/components/servicios-form"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useGetServicioQuery } from "@/features/servicios"
+import { getServicioByIdAction } from "@/features/servicios"
 import { useParams } from "next/navigation"
+import { useEffect, useState } from "react"
 
 export default function EditarServicioPage() {
   const params = useParams()
   const servicioId = params.id as string
-  const { data: servicio, isLoading, error } = useGetServicioQuery(servicioId)
-  //console.log('gastoSId',gastoSId);
+  const [servicio, setServicio] = useState<any | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(false)
+  useEffect(() => { async function f() { setIsLoading(true); const r=await getServicioByIdAction(servicioId); if(r.success) setServicio(r.data!); else setError(true); setIsLoading(false); } f(); }, [servicioId])
 
   if (isLoading) {
     return (

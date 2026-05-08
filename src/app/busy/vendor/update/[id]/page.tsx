@@ -16,18 +16,7 @@ export default function UpdateUnidadPage() {
     const [vendor, setVendor] = useState<any | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState(false)
-
-    useEffect(() => {
-      async function fetchData() {
-        setIsLoading(true)
-        setError(false)
-        const result = await getVendorByIdAction(vendorId)
-        if (result.success) setVendor(result.data!)
-        else setError(true)
-        setIsLoading(false)
-      }
-      fetchData()
-    }, [vendorId])
+    useEffect(() => { async function f() { setIsLoading(true); const r=await getVendorByIdAction(vendorId); if(r.success) setVendor(r.data!); else setError(true); setIsLoading(false); } f(); }, [vendorId])
 
     if (isLoading) {
         return (
