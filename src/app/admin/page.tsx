@@ -73,6 +73,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
 
   useEffect(() => { setIsLoading(true); Promise.all([getAdminTenantsAction(), getAdminFinanceAction(), getAdminSystemHealthAction()]).then(([r1,r2,r3]) => { if(r1.success) setTenants(r1.data??[]); if(r2.success) setFinance(r2.data); if(r3.success) setSystem(r3.data); setIsLoading(false) }) }, [])
   const safeTenants = tenants ?? []
+  const loading = isLoading
   const safeFinance = finance
   const safeSystem = system
 
@@ -110,7 +111,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
     {
       title: "Ingresos Totales",
       value: safeFinance ? `$${Number(safeFinance.revenue.totalIngresos).toLocaleString()}` : "-",
-      loading: financeLoading,
+      loading: isLoading,
       trend: null,
       description: "Ventas + servicios consolidados",
       icon: Wallet,
@@ -120,7 +121,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
     {
       title: "Licencias por Vencer",
       value: safeSystem?.licenses.expiringSoon ?? 0,
-      loading: systemLoading,
+      loading: isLoading,
       trend: null,
       description: "Próximos 30 días",
       icon: Clock,
@@ -130,7 +131,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
     {
       title: "Licencias Activas",
       value: safeSystem?.licenses.active ?? 0,
-      loading: systemLoading,
+      loading: isLoading,
       trend: null,
       description: `de ${safeSystem?.licenses.total ?? 0} totales`,
       icon: Shield,
@@ -153,7 +154,8 @@ export default function AdminDashboardPage(): React.JSX.Element {
   })()
 
   const handleRefresh = async () => {
-    await Promise.all([refetchTenants(), refetchFinance(), refetchSystem()])
+    const [r1,r2,r3]=await Promise.all([getAdminTenantsAction(), getAdminFinanceAction(), getAdminSystemHealthAction()])
+    if(r1.success) setTenants(r1.data??[]); if(r2.success) setFinance(r2.data); if(r3.success) setSystem(r3.data)
   }
 
   return (
@@ -288,7 +290,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
                   <CardDescription>Distribución global de roles</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {systemLoading ? (
+                  {isLoading ? (
                     <div className="flex items-center justify-center py-8">
                       <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                     </div>
@@ -386,7 +388,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
                 <CardDescription>Planes activos por empresa</CardDescription>
               </CardHeader>
               <CardContent>
-                {tenantsLoading ? (
+                {isLoading ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                   </div>
@@ -415,7 +417,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
                 <CardDescription>Métricas consolidadas de la plataforma</CardDescription>
               </CardHeader>
               <CardContent>
-                {financeLoading ? (
+                {isLoading ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                   </div>
