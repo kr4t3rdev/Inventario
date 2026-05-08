@@ -53,14 +53,9 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination'
-import {
-  useGetAdminLicenciasQuery,
-  useGetAdminPlanesQuery,
-  useGetGlobalUsersQuery,
-  useDeleteAdminLicenciaMutation,
-  useUpdateAdminLicenciaMutation,
-  useGenerateAdminLicenciasMutation,
-} from '@/features/admin/services/adminApi'
+import { getLicenciasAction } from '@/features/licencias'
+import { getAdminPlanesAction, getGlobalUsersAction } from '@/features/admin'
+import { useDeleteAdminLicenciaMutation, useUpdateAdminLicenciaMutation, useGenerateAdminLicenciasMutation } from '@/features/admin/services/adminApi'
 
 export default function AdminLicenciasPage() {
   const [page, setPage] = useState(1)
@@ -72,26 +67,22 @@ export default function AdminLicenciasPage() {
   const [generarDialogOpen, setGenerarDialogOpen] = useState(false)
   const [selectedLicencias, setSelectedLicencias] = useState<Set<string>>(new Set())
 
-  const { data, isLoading } = useGetAdminLicenciasQuery({
-    page,
-    limit,
-    ...(search ? { search } : {}),
-    ...(planFilter !== 'all' ? { planId: planFilter } : {}),
-    ...(statusFilter !== 'all' ? { activa: statusFilter } : {}),
-  })
+  const [data, setData] = useState<any>(null)
+  const [planesData, setPlanesData] = useState<any[]>([])
+  const [usersData, setUsersData] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  useEffect(() => { setIsLoading(true); Promise.all([getLicenciasAction(), getAdminPlanesAction(), getGlobalUsersAction({limit:100})]).then(([r1,r2,r3]) => { if(r1.success) setData(r1.data); if(r2.success) setPlanesData(r2.data??[]); if(r3.success) setUsersData(r3.data); setIsLoading(false) }) }, [page, search, planFilter, statusFilter])
 
-  const { data: planesData } = useGetAdminPlanesQuery({})
-  const { data: usersData } = useGetGlobalUsersQuery({ limit: 100 })
   const [deleteLicencia] = useDeleteAdminLicenciaMutation()
   const [updateLicencia] = useUpdateAdminLicenciaMutation()
   const [generateLicencias] = useGenerateAdminLicenciasMutation()
 
-  const licencias = data?.licencias || []
-  const total = data?.total || 0
-  const pages = data?.pages || 1
+  const licencias = data?.licencias || data || []
+  const total = (data as any)?.total || licencias.length
+  const pages = (data as any)?.pages || 1
 
-  const planes = planesData?.planes || []
-  const users = usersData?.users || []
+  const planes = planesData || []
+  const users = (usersData as any)?.users || []
 
   // Métricas
   const activas = licencias.filter((l: any) => l.activa && new Date(l.expiracion) > new Date()).length

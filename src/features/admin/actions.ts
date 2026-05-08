@@ -113,6 +113,27 @@ export const unlockUserAction = withAction(async (input: LockUnlockInput, user: 
   return { user: updated, message: 'Usuario desbloqueado correctamente' };
 });
 
+// ─── Global Users ─────────────────────────────────────────
+
+export const getGlobalUsersAction = withAction(async (input: { limit?: number } = {}, user: AuthenticatedUser) => {
+  if (user.role !== 'admin') throw new ActionError('Acceso restringido', 'FORBIDDEN');
+  const users = await prisma.user.findMany({
+    take: input.limit || 100,
+    orderBy: { createdAt: 'desc' },
+    include: { tenants: { include: { tenant: true } } },
+  });
+  const total = await prisma.user.count();
+  return { users, total };
+});
+
+export const approveGlobalUserAction = withAction(async (input: { userId: string; planId?: string; tenantName?: string; licenseDurationDays?: number }, user: AuthenticatedUser) => {
+  if (user.role !== 'admin') throw new ActionError('Acceso restringido', 'FORBIDDEN');
+  const existing = await prisma.user.findUnique({ where: { userId: input.userId } });
+  if (!existing) throw new ActionError('Usuario no encontrado', 'NOT_FOUND');
+  await prisma.user.update({ where: { userId: input.userId }, data: { isActive: true, expiresAt: input.licenseDurationDays ? new Date(Date.now() + input.licenseDurationDays * 86400000) : null } });
+  return { success: true };
+});
+
 // ─── Admin Dashboard Data ──────────────────────────────────
 
 export const getAdminTenantsAction = withAction(async (_input: void, user: AuthenticatedUser) => {

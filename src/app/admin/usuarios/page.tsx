@@ -44,7 +44,7 @@ import {
   AnimatedCard,
 } from '@/components/ui/animations';
 import { useAuth } from '@/contexts/auth-context';
-import { useApproveGlobalUserMutation, useGetAdminPlanesQuery, useGetGlobalUsersQuery, useGetGlobalUserMetricsQuery } from '@/features/admin/services/adminApi';
+import { getGlobalUsersAction, approveGlobalUserAction, getAdminPlanesAction } from '@/features/admin'
 import { motion, type Variants } from 'framer-motion';
 
 const UserAnalyticsPanel = dynamic(
@@ -117,13 +117,14 @@ export default function AdminUsersPage(): React.JSX.Element {
   const [approveUser, setSelectedApproveUser] = useState<Usuario | null>(null);
   const [selectedPlanId, setSelectedPlanId] = useState<string>('');
   const [isApproving, setIsApproving] = useState(false);
+  const refresh = () => { getGlobalUsersAction({limit:100}).then(r => { if(r.success) setGlobalUsers(r.data) }) }
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const { data: globalUsers, isLoading, refetch: refetchGlobalUsers } = useGetGlobalUsersQuery({ limit: 100 });
-  const { refetch: refetchMetrics } = useGetGlobalUserMetricsQuery({ months: 6 });
-  const { data: planesData } = useGetAdminPlanesQuery({});
-  const [approveGlobalUser] = useApproveGlobalUserMutation();
+  const [globalUsers, setGlobalUsers] = useState<any>(null)
+  const [planesData, setPlanesData] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  useEffect(() => { setIsLoading(true); Promise.all([getGlobalUsersAction({limit:100}), getAdminPlanesAction()]).then(([r1,r2]) => { if(r1.success) setGlobalUsers(r1.data); if(r2.success) setPlanesData(r2.data); setIsLoading(false) }) }, [])
 
-  const planes = planesData?.planes || [];
+  const planes = planesData || [];
 
   const safeUsers = globalUsers?.users ?? [];
   const total = globalUsers?.total ?? 0;
@@ -156,7 +157,7 @@ export default function AdminUsersPage(): React.JSX.Element {
 
   const handleRefresh = async (): Promise<void> => {
     setIsRefreshing(true);
-    try { await Promise.all([refetchGlobalUsers(), refetchMetrics()]); }
+    try { await refresh(); }
     catch (error) { console.error('Error al refrescar datos:', error); }
     finally { setIsRefreshing(false); }
   };
@@ -174,26 +175,17 @@ export default function AdminUsersPage(): React.JSX.Element {
   const handleConfirmApprove = async (): Promise<void> => {
     if (!approveUser) return;
     setIsApproving(true);
-    try {
-      await approveGlobalUser({
-        userId: approveUser.userId,
-        body: selectedPlanId && selectedPlanId !== 'none' ? { planId: selectedPlanId } : undefined,
-      }).unwrap();
-      toast.success('Usuario aprobado correctamente');
-      setApproveDialogOpen(false);
-      setSelectedApproveUser(null);
-      setSelectedPlanId('');
-      refetchGlobalUsers();
-    } catch (error) {
-      console.error('Error aprobando usuario:', error);
-      toast.error('Error aprobando usuario');
-    } finally {
-      setIsApproving(false);
-    }
+    const r = await approveGlobalUserAction({
+      userId: approveUser.userId,
+      planId: selectedPlanId && selectedPlanId !== 'none' ? selectedPlanId : undefined,
+    })
+    if(r.success) { toast.success('Usuario aprobado correctamente'); setApproveDialogOpen(false); setSelectedApproveUser(null); setSelectedPlanId(''); getGlobalUsersAction({limit:100}).then(r2=>{if(r2.success) setGlobalUsers(r2.data)}) }
+    else toast.error(r.error?.message||'Error aprobando usuario')
+    setIsApproving(false);
   };
 
   const handleDialogClose = (): void => {
-    setCreateDialogOpen(false); setEditDialogOpen(false); setSelectedUser(null); refetchGlobalUsers();
+    setCreateDialogOpen(false); setEditDialogOpen(false); setSelectedUser(null); refresh();
   };
 
   return (
@@ -327,7 +319,7 @@ export default function AdminUsersPage(): React.JSX.Element {
                   showTenantColumn={true}
                   onEditUser={handleEditUser}
                   onApproveUser={handleApproveUser}
-                  onRefresh={refetchGlobalUsers}
+                  onRefresh={refresh}
                 />
               </CardContent>
             </Card>
