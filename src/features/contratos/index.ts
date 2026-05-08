@@ -1,23 +1,15 @@
+// Server Actions
 export {
-  getContratosHandler,
-  createContratoHandler,
-  getContratoByIdHandler,
-  updateContratoHandler,
-  deleteContratoHandler,
-  bulkUpdateContratoStatusHandler,
-  bulkDeleteContratosHandler,
-  createContratoVersionHandler,
-  checkContratoVersionDiffHandler,
-  getContratoFirmasHandler,
-  createContratoFirmaHandler,
-  getContratoArchivosHandler,
-  createContratoArchivoHandler,
-  getContratoAprobacionesHandler,
-  createContratoAprobacionHandler,
-  getContratoAlertasHandler,
-  createContratoAlertaHandler,
-} from './api/handlers'
+  getContratosAction,
+  getContratoByIdAction,
+  createContratoAction,
+  updateContratoAction,
+  deleteContratoAction,
+  bulkUpdateContratoStatusAction,
+  bulkDeleteContratosAction,
+} from './actions';
 
+// Utilidades públicas (seguir exportando)
 export {
   generarProximoConsecutivo,
   formatearNumeroContrato,
@@ -30,5 +22,6 @@ export { NewVersionDialog } from './components/new-version-dialog'
 export { AddFirmaDialog } from './components/add-firma-dialog'
 export { TiposContratosList } from './components/tipos-contratos-list'
 export { TiposContratosForm } from './components/tipos-contratos-form'
+export { ConfiguracionContratos } from './components/configuracion-contratos'
 
 export type { Contrato } from './types'

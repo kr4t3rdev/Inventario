@@ -1,4 +1,4 @@
-import { useAddVendorMutation, useGetVendorsQuery, useUpdateVendorMutation } from "@/features/vendors";
+import { createVendorAction, updateVendorAction } from "@/features/vendors";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import { Building2, Loader2, Sparkles, Copy, Check } from "lucide-react";
@@ -50,10 +50,7 @@ export function VendorForm({initialData}: VendorFormProps) {
     const [isLoading, setIsLoading] = useState(false)
     const [copiedField, setCopiedField] = useState<string | null>(null)
 
-    const { data: vendor, isLoading: isLoadingVendor} = useGetVendorsQuery()
-
-    const [addVendor] = useAddVendorMutation()
-    const [updateVendor] = useUpdateVendorMutation()
+    // Mutaciones via Server Actions
 
     const copyToClipboard = (text: string, field: string) => {
         navigator.clipboard.writeText(text)
@@ -79,13 +76,21 @@ export function VendorForm({initialData}: VendorFormProps) {
         setIsLoading(true)
         try {
             if (initialData) {
-        await updateVendor({
-            vendorId: initialData.vendorId,
+        const result = await updateVendorAction({
+          vendorId: initialData.vendorId,
           ...data,
-        }).unwrap()
+        })
+        if (!result.success) {
+          sileo.error({ title: result.error?.message || 'Error al actualizar el proveedor.' })
+          return
+        }
         sileo.success({ title: 'El proveedor ha sido actualizado exitosamente.' })
       } else {
-        await addVendor(data).unwrap()
+        const result = await createVendorAction(data)
+        if (!result.success) {
+          sileo.error({ title: result.error?.message || 'Error al crear el proveedor.' })
+          return
+        }
         sileo.success({ title: 'El proveedor ha sido registrado exitosamente.' })
       }
       router.push("/busy/vendor")

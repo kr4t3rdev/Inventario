@@ -1,7 +1,7 @@
 "use client"
 
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { AlmacenForm } from "@/components/almacen/almacen-form"
+import { AlmacenForm } from "@/features/almacenes"
 import { motion } from "framer-motion"
 import { Warehouse, Sparkles } from "lucide-react"
 

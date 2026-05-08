@@ -2,8 +2,8 @@
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useParams } from "next/navigation"
-import { useGetVendorQuery } from "@/features/vendors"
-import { VendorForm } from "@/features/vendors"
+import { useEffect, useState } from "react"
+import { VendorForm, getVendorByIdAction } from "@/features/vendors"
 import { motion } from "framer-motion"
 import { Building2, Sparkles, ArrowLeft, AlertCircle } from "lucide-react"
 import Link from "next/link"
@@ -13,7 +13,21 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 export default function UpdateUnidadPage() {
     const params = useParams()
     const vendorId = params.id as string
-    const { data:vendors, isLoading, error } = useGetVendorQuery(vendorId)
+    const [vendor, setVendor] = useState<any | null>(null)
+    const [isLoading, setIsLoading] = useState(true)
+    const [error, setError] = useState(false)
+
+    useEffect(() => {
+      async function fetchData() {
+        setIsLoading(true)
+        setError(false)
+        const result = await getVendorByIdAction(vendorId)
+        if (result.success) setVendor(result.data!)
+        else setError(true)
+        setIsLoading(false)
+      }
+      fetchData()
+    }, [vendorId])
 
     if (isLoading) {
         return (
@@ -64,7 +78,7 @@ export default function UpdateUnidadPage() {
         )
     }
 
-    if (error || !vendors) {
+    if (error || !vendor) {
         return (
             <SidebarProvider>
                 <SidebarInset>
@@ -145,10 +159,10 @@ export default function UpdateUnidadPage() {
                             animate={{ opacity: 1 }}
                             transition={{ delay: 0.2 }}
                         >
-                            Modifique los datos del proveedor: <span className="font-semibold text-foreground">{vendors.nombre}</span>
+                            Modifique los datos del proveedor: <span className="font-semibold text-foreground">{vendor.nombre}</span>
                         </motion.p>
                     </motion.div>
-                    <VendorForm initialData={vendors} />
+                    <VendorForm initialData={vendor} />
                 </div>
             </SidebarInset>
         </SidebarProvider>

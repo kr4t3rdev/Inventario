@@ -1,10 +1,10 @@
 "use client"
 
-import { useGetUnidadQuery } from "@/features/unidades"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useParams } from "next/navigation"
-import { UnidadForm } from "@/features/unidades"
+import { useEffect, useState } from "react"
+import { UnidadForm, getUnidadByIdAction } from "@/features/unidades"
 import { motion } from "framer-motion"
 import { Scale, AlertCircle, Sparkles, ArrowLeft } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -45,7 +45,24 @@ function PulseSkeleton({ className }: { className?: string }) {
 export default function UpdateUnidadPage() {
   const params = useParams()
   const unidadId = params.id as string
-  const { data: unidades, isLoading, error } = useGetUnidadQuery(unidadId)
+  const [unidad, setUnidad] = useState<any | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(false)
+
+  useEffect(() => {
+    async function fetchData() {
+      setIsLoading(true)
+      setError(false)
+      const result = await getUnidadByIdAction(unidadId)
+      if (result.success) {
+        setUnidad(result.data!)
+      } else {
+        setError(true)
+      }
+      setIsLoading(false)
+    }
+    fetchData()
+  }, [unidadId])
 
   if (isLoading) {
     return (
@@ -86,7 +103,7 @@ export default function UpdateUnidadPage() {
     )
   }
 
-  if (error || !unidades) {
+  if (error || !unidad) {
     return (
       <SidebarProvider>
         <SidebarInset>
@@ -195,7 +212,7 @@ export default function UpdateUnidadPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2, duration: 0.5 }}
           >
-            <UnidadForm initialData={unidades} />
+            <UnidadForm initialData={unidad} />
           </motion.div>
         </motion.div>
       </SidebarInset>

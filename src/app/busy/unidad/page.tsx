@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { useDeleteUnidadMutation, useGetUnidadesQuery } from '@/features/unidades'
+import { getUnidadesAction, deleteUnidadAction } from '@/features/unidades'
 import { ColumnDef } from '@tanstack/react-table'
 import { 
   ArrowDown, 
@@ -17,7 +17,7 @@ import {
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
 import dynamic from 'next/dynamic'
-import { useState } from 'react'
+import { useState, useEffect, useTransition } from 'react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { 
@@ -82,23 +82,43 @@ const DataTable = dynamic(() => import('@/components/data-table').then(mod => ({
 })
 
 export default function Unidades() {
-  
-  const { data: unidades, isLoading, error } = useGetUnidadesQuery()
+  const [unidades, setUnidades] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(false)
   const [unidadToDelete, setUnidadToDelete] = useState<string | null>(null)
+  const [isPending, startTransition] = useTransition()
 
-  const [ deleteUnidad ] = useDeleteUnidadMutation()
+  // Server Actions: data fetching
+  useEffect(() => {
+    async function fetchData() {
+      setIsLoading(true)
+      setError(false)
+      const result = await getUnidadesAction()
+      if (result.success) {
+        setUnidades(result.data ?? [])
+      } else {
+        setError(true)
+      }
+      setIsLoading(false)
+    }
+    fetchData()
+  }, [])
 
   const handleDelete = async () => {
     if (!unidadToDelete) return
-    try {
-      await deleteUnidad(unidadToDelete).unwrap()
-      toast('La unidad ha sido eliminada exitosamente.')
-    } catch (error) {
-      console.error("Error al eliminar la unidad:", error)
-      toast('Hubo un error al eliminar la unidad.')          
-    } finally {
+
+    startTransition(async () => {
+      const result = await deleteUnidadAction(unidadToDelete)
+      if (result.success) {
+        toast('La unidad ha sido eliminada exitosamente.')
+        // Refetch
+        const refresh = await getUnidadesAction()
+        if (refresh.success) setUnidades(refresh.data ?? [])
+      } else {
+        toast(result.error?.message || 'Hubo un error al eliminar la unidad.')
+      }
       setUnidadToDelete(null)
-    }
+    })
   }
 
   const columns: ColumnDef<unknown>[] = [

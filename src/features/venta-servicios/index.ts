@@ -1,11 +1,13 @@
+// Server Actions (nuevo)
 export {
-  getVentaServiciosHandler,
-  createVentaServicioHandler,
-  getVentaServicioByIdHandler,
-  updateVentaServicioHandler,
-  deleteVentaServicioHandler,
-} from './api/handlers';
+  getVentaServiciosAction,
+  getVentaServicioByIdAction,
+  createVentaServicioAction,
+  updateVentaServicioAction,
+  deleteVentaServicioAction,
+} from './actions';
 
+// RTK Query (legacy)
 export {
   ventaServiciosApi,
   useGetVentaServiciosQuery,

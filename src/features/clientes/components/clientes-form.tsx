@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { sileo } from '@/lib/sileo-shim'
 import { Skeleton } from "@/components/ui/skeleton"
-import { useAddClienteMutation, useGetClientesQuery, useUpdateClienteMutation } from "@/features/clientes"
+import { createClienteAction, updateClienteAction } from "@/features/clientes"
 import { useGetListasPreciosQuery } from "@/features/listas-precios/api/listasPreciosApi"
 import { ClienteLogoUpload } from "./cliente-logo-upload"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -64,11 +64,8 @@ export function ClienteForm({ initialData }: ClienteFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
 
-  const { data: cliente, isLoading: isLoadingClientes } = useGetClientesQuery()
   const { data: listasPrecios, isLoading: isLoadingListas } = useGetListasPreciosQuery()
-  
-  const [ addCliente ] = useAddClienteMutation()
-  const [updateCliente] = useUpdateClienteMutation()
+  // Mutaciones via Server Actions (creación/actualización)
 
   const form = useForm<ClienteFormValues>({
     resolver: zodResolver(clienteSchema),
@@ -89,27 +86,31 @@ export function ClienteForm({ initialData }: ClienteFormProps) {
 
     try {
       if (initialData) {
-        await updateCliente({
+        const result = await updateClienteAction({
           clienteId: initialData.clienteId,
           nombre: data.nombre,
           direccion: data.direccion,
           telefono: data.telefono,
           numeroCuentaCUP: data.numeroCuentaCUP,
           numeroCuentaUSD: data.numeroCuentaUSD,
-          logoUrl: data.logoUrl,
-          listaPrecioId: payloadListaPrecioId,
-        } as any).unwrap()
+        })
+        if (!result.success) {
+          sileo.error({ title: result.error?.message || 'Error al actualizar el cliente.' })
+          return
+        }
         sileo.success({ title: 'El cliente ha sido actualizado exitosamente.' })
       } else {
-        await addCliente({
+        const result = await createClienteAction({
           nombre: data.nombre,
           direccion: data.direccion,
           telefono: data.telefono,
           numeroCuentaCUP: data.numeroCuentaCUP,
           numeroCuentaUSD: data.numeroCuentaUSD,
-          logoUrl: data.logoUrl,
-          listaPrecioId: payloadListaPrecioId,
-        } as any).unwrap()
+        })
+        if (!result.success) {
+          sileo.error({ title: result.error?.message || 'Error al crear el cliente.' })
+          return
+        }
         sileo.success({ title: 'El cliente ha sido registrado exitosamente.' })
       }
       router.push("/busy/cliente")
@@ -122,7 +123,7 @@ export function ClienteForm({ initialData }: ClienteFormProps) {
     }
   }
 
-  if (isLoadingClientes) {
+  if (isLoading) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}

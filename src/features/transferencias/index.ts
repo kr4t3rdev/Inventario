@@ -1,14 +1,12 @@
+// Server Actions (nuevo)
 export {
-  getTransferenciasHandler,
-  createTransferenciaHandler,
-  getTransferenciaByIdHandler,
-  updateTransferenciaHandler,
-  deleteTransferenciaHandler,
-  enviarTransferenciaHandler,
-  confirmarTransferenciaHandler,
-  notificarTransferenciaHandler,
-} from './api/handlers';
+  getTransferenciasAction,
+  getTransferenciaByIdAction,
+  createTransferenciaAction,
+  deleteTransferenciaAction,
+} from './actions';
 
+// RTK Query (legacy)
 export {
   transferenciasApi,
   useGetTransferenciasQuery,

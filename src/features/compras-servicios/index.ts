@@ -1,11 +1,13 @@
+// Server Actions (nuevo)
 export {
-  getComprasServiciosHandler,
-  createCompraServicioHandler,
-  getCompraServicioByIdHandler,
-  updateCompraServicioHandler,
-  deleteCompraServicioHandler,
-} from './api/handlers';
+  getComprasServiciosAction,
+  getCompraServicioByIdAction,
+  createCompraServicioAction,
+  updateCompraServicioAction,
+  deleteCompraServicioAction,
+} from './actions';
 
+// RTK Query (legacy)
 export {
   comprasServiciosApi,
   useGetComprasServiciosQuery,

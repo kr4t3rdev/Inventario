@@ -3,7 +3,8 @@
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useParams } from "next/navigation"
-import { AlmacenForm, useGetAlmacenQuery } from "@/features/almacenes"
+import { useEffect, useState } from "react"
+import { AlmacenForm, getAlmacenByIdAction } from "@/features/almacenes"
 import { motion } from "framer-motion"
 import { Warehouse, AlertCircle, Sparkles, ArrowLeft } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -44,7 +45,24 @@ function PulseSkeleton({ className }: { className?: string }) {
 export default function EditarAlmacenPage() {
   const params = useParams()
   const almacenId = params.id as string
-  const { data: almacen, isLoading, error } = useGetAlmacenQuery(almacenId)
+  const [almacen, setAlmacen] = useState<any | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(false)
+
+  useEffect(() => {
+    async function fetchData() {
+      setIsLoading(true)
+      setError(false)
+      const result = await getAlmacenByIdAction(almacenId)
+      if (result.success) {
+        setAlmacen(result.data!)
+      } else {
+        setError(true)
+      }
+      setIsLoading(false)
+    }
+    fetchData()
+  }, [almacenId])
 
   if (isLoading) {
     return (

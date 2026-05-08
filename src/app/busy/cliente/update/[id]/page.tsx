@@ -3,14 +3,30 @@
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useParams } from "next/navigation"
-import { AlmacenForm, useGetAlmacenQuery } from "@/features/almacenes"
-import { useGetClienteQuery } from "@/features/clientes"
-import { ClienteForm } from "@/features/clientes"
+import { useEffect, useState } from "react"
+import { ClienteForm, getClienteByIdAction } from "@/features/clientes"
 
 export default function EditarClientePage() {
   const params = useParams()
   const clienteId = params.id as string
-  const { data: cliente, isLoading, error } = useGetClienteQuery(clienteId)
+  const [cliente, setCliente] = useState<any | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(false)
+
+  useEffect(() => {
+    async function fetchData() {
+      setIsLoading(true)
+      setError(false)
+      const result = await getClienteByIdAction(clienteId)
+      if (result.success) {
+        setCliente(result.data!)
+      } else {
+        setError(true)
+      }
+      setIsLoading(false)
+    }
+    fetchData()
+  }, [clienteId])
 
   console.log(cliente);
 

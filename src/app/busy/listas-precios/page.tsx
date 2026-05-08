@@ -1,11 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Trash2, Tag, Tags, Sparkles, AlertCircle, ListChecks } from 'lucide-react';
 import { sileo } from '@/lib/sileo-shim';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,10 +23,10 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
-  useAddListaPrecioMutation,
-  useDeleteListaPrecioMutation,
-  useGetListasPreciosQuery,
-} from '@/features/listas-precios/api/listasPreciosApi';
+  getListasPreciosAction,
+  createListaPrecioAction,
+  deleteListaPrecioAction,
+} from '@/features/listas-precios';
 
 /**
  * @description Spinner animado para estados de carga
@@ -51,12 +50,23 @@ function LoadingSpinner({ size = 32 }: { size?: number }) {
  */
 export default function ListasPreciosPage(): React.JSX.Element {
   const router = useRouter();
-  const { data: listas, isLoading } = useGetListasPreciosQuery();
-  const [addListaPrecio, { isLoading: isCreating }] = useAddListaPrecioMutation();
-  const [deleteListaPrecio] = useDeleteListaPrecioMutation();
+  const [listas, setListas] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isCreating, setIsCreating] = useState(false);
+  const [isPending, startTransition] = useTransition();
   const [nombre, setNombre] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [listaToDelete, setListaToDelete] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchData() {
+      setIsLoading(true);
+      const result = await getListasPreciosAction();
+      if (result.success) setListas(result.data ?? []);
+      setIsLoading(false);
+    }
+    fetchData();
+  }, []);
 
   const onCreate = async () => {
     if (!nombre.trim()) {
@@ -64,24 +74,37 @@ export default function ListasPreciosPage(): React.JSX.Element {
       return;
     }
 
+    setIsCreating(true);
     try {
-      await addListaPrecio({
+      const result = await createListaPrecioAction({
         nombre: nombre.trim(),
         descripcion: descripcion.trim() || undefined,
-      }).unwrap();
-      setNombre('');
-      setDescripcion('');
-      sileo.success({ title: 'Lista de precios creada' });
+      });
+      if (result.success) {
+        setNombre('');
+        setDescripcion('');
+        sileo.success({ title: 'Lista de precios creada' });
+        const refresh = await getListasPreciosAction();
+        if (refresh.success) setListas(refresh.data ?? []);
+      } else {
+        sileo.error({ title: result.error?.message || 'No se pudo crear la lista' });
+      }
     } catch (error) {
       console.error('Error creando lista de precios', error);
       sileo.error({ title: 'No se pudo crear la lista' });
+    } finally {
+      setIsCreating(false);
     }
   };
 
   const onDelete = async () => {
     if (!listaToDelete) return;
     try {
-      await deleteListaPrecio(listaToDelete).unwrap();
+      const result = await deleteListaPrecioAction(listaToDelete);
+      if (result.success) {
+        const refresh = await getListasPreciosAction();
+        if (refresh.success) setListas(refresh.data ?? []);
+      }
       sileo.success({ title: 'Lista eliminada' });
     } catch (error) {
       console.error('Error eliminando lista de precios', error);

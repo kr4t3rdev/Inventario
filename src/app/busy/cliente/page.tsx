@@ -4,33 +4,45 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Button } from "@/components/ui/button"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useDeleteClienteMutation, useGetClientesQuery } from "@/features/clientes"
+import { getClientesAction, deleteClienteAction } from "@/features/clientes"
 import { ColumnDef } from "@tanstack/react-table"
 import { ArrowUp, ArrowUpDown, Pencil, Plus, Trash2, Users, Sparkles, UserCircle } from "lucide-react"
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect, useTransition } from "react"
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
 
 const Cliente = () => {
 
-    const {data:cliente, isLoading} = useGetClientesQuery()
-
+    const [clientes, setClientes] = useState<any[]>([])
+    const [isLoading, setIsLoading] = useState(true)
     const [clienteToDelete, setClienteToDelete] = useState<string | null>(null)
-    const [ deleteCliente ] = useDeleteClienteMutation()
+    const [isPending, startTransition] = useTransition()
+
+    useEffect(() => {
+      async function fetchData() {
+        setIsLoading(true)
+        const result = await getClientesAction()
+        if (result.success) setClientes(result.data ?? [])
+        setIsLoading(false)
+      }
+      fetchData()
+    }, [])
 
     const handleDelete = async () => {
       if (!clienteToDelete) return
 
-      try {
-        await deleteCliente(clienteToDelete).unwrap()
-        toast("El cliente ha sido eliminado exitosamente.")
-      } catch (error) {
-        console.error("Error al eliminar el cliente:", error)
-        toast("Hubo un error al eliminar el cliente.")
-      } finally {
+      startTransition(async () => {
+        const result = await deleteClienteAction(clienteToDelete)
+        if (result.success) {
+          toast("El cliente ha sido eliminado exitosamente.")
+          const refresh = await getClientesAction()
+          if (refresh.success) setClientes(refresh.data ?? [])
+        } else {
+          toast(result.error?.message || "Hubo un error al eliminar el cliente.")
+        }
         setClienteToDelete(null)
-      }
+      })
     }
 
     const columns: ColumnDef<any>[] = [
@@ -237,7 +249,7 @@ const Cliente = () => {
                           >
                             <DataTable
                               columns={columns}
-                              data={cliente || []}
+                              data={clientes || []}
                               searchColumn="nombre"
                               searchPlaceholder="Buscar clientes..."
                             />

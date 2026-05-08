@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useDeleteAlmacenMutation, useGetAlmacenesQuery } from "@/features/almacenes"
+import { getAlmacenesAction, deleteAlmacenAction } from "@/features/almacenes"
 import { ColumnDef } from "@tanstack/react-table"
 import { 
   ArrowUp, 
@@ -28,7 +28,7 @@ import {
   Package
 } from "lucide-react"
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect, useTransition } from "react"
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -66,24 +66,44 @@ function PulseSkeleton({ className }: { className?: string }) {
 }
 
 const Almacen = () => {
+  const [almacenes, setAlmacenes] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<boolean>(false)
+  const [isPending, startTransition] = useTransition()
 
-  const {data:almacenes, isLoading, error} = useGetAlmacenesQuery()
+  // Server Actions: data fetching
+  useEffect(() => {
+    async function fetchData() {
+      setIsLoading(true)
+      setError(false)
+      const result = await getAlmacenesAction()
+      if (result.success) {
+        setAlmacenes(result.data ?? [])
+      } else {
+        setError(true)
+      }
+      setIsLoading(false)
+    }
+    fetchData()
+  }, [])
 
   const [almacenesToDelete, setAlmacenesToDelete] = useState<string | null>(null)
-  const [ deleteAlmacen ] = useDeleteAlmacenMutation()
 
   const handleDelete = async () => {
     if (!almacenesToDelete) return
 
-    try {
-      await deleteAlmacen(almacenesToDelete).unwrap()
-      toast("El almacén ha sido eliminado exitosamente.")
-    } catch (error) {
-      console.error("Error al eliminar el almacén:", error)
-      toast("Hubo un error al eliminar el almacén.")
-    } finally {
+    startTransition(async () => {
+      const result = await deleteAlmacenAction(almacenesToDelete)
+      if (result.success) {
+        toast("El almacén ha sido eliminado exitosamente.")
+        // Refetch
+        const refresh = await getAlmacenesAction()
+        if (refresh.success) setAlmacenes(refresh.data ?? [])
+      } else {
+        toast(result.error?.message || "Hubo un error al eliminar el almacén.")
+      }
       setAlmacenesToDelete(null)
-    }
+    })
   }
 
   const columns: ColumnDef<any>[] = [

@@ -17,10 +17,10 @@ import {
   AlertCircle,
   FileText
 } from "lucide-react"
-import { useDeleteVendorMutation, useGetVendorsQuery } from "@/features/vendors"
+import { getVendorsAction, deleteVendorAction } from "@/features/vendors"
 import Link from "next/link"
 import { toast } from "sonner"
-import { useState } from "react"
+import { useState, useEffect, useTransition } from "react"
 import { 
   AlertDialog, 
   AlertDialogAction, 
@@ -69,7 +69,7 @@ function PulseSkeleton({ className }: { className?: string }) {
 
 const Vendor = () => {
 
-  const {data:vendors, isLoading, error} = useGetVendorsQuery()
+  // Datos cargados via getVendorsAction en useEffect
   const [ vendorToDelete, setVendorToDelete ] = useState<string | null>(null)
   const [ vendorToView, setVendorToView ] = useState<any>(null)
   const [ deleteVendor ] = useDeleteVendorMutation()
@@ -369,7 +369,7 @@ const Vendor = () => {
             >
               <DataTable
                 columns={columns}
-                data={vendors || []}
+                data={vendors}
                 searchColumn="nombre"
                 searchPlaceholder="Buscar proveedor..."
               />

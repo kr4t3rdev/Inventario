@@ -1,12 +1,14 @@
+// Server Actions (nuevo)
 export {
-  getMermasHandler,
-  createMermaHandler,
-  getMermaByIdHandler,
-  updateMermaHandler,
-  deleteMermaHandler,
-  getMermaStatsHandler,
-} from './api/handlers';
+  getMermasAction,
+  getMermaByIdAction,
+  createMermaAction,
+  updateMermaAction,
+  deleteMermaAction,
+  getMermaStatsAction,
+} from './actions';
 
+// RTK Query (legacy)
 export {
   mermasApi,
   useGetMermasQuery,

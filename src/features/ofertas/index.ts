@@ -1,14 +1,14 @@
+// Server Actions (nuevo)
 export {
-  getOfertasHandler,
-  createOfertaHandler,
-  getOfertaByIdHandler,
-  updateOfertaHandler,
-  deleteOfertaHandler,
-  facturarOfertaHandler,
-  getOfertaPdfHandler,
-  getOfertaExcelHandler,
-} from './api/handlers'
+  getOfertasAction,
+  getOfertaByIdAction,
+  createOfertaAction,
+  updateOfertaAction,
+  deleteOfertaAction,
+  facturarOfertaAction,
+} from './actions'
 
+// RTK Query (legacy)
 export {
   ofertasApi,
   useGetOfertasQuery,
