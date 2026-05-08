@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState, useTransition } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import {
@@ -16,7 +16,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { useGetFacturasQuery } from "@/lib/redux/services/facturasApi"
+import { getFacturasAction } from "@/features/facturas"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -61,14 +61,17 @@ export default function FacturasPage() {
   const [limit, setLimit] = useState(50)
   const [estadoFilter, setEstadoFilter] = useState<string>("ALL")
   const [search, setSearch] = useState("")
-  const { data: response, isLoading, error } = useGetFacturasQuery({
-    page,
-    limit,
-    estado: estadoFilter === "ALL" ? undefined : estadoFilter,
-    search: search || undefined,
-  })
+  const [isPending, startTransition] = useTransition()
+  const [response, setResponse] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    setIsLoading(true)
+    getFacturasAction({ page, limit, estado: estadoFilter === "ALL" ? undefined : estadoFilter, search: search || undefined })
+      .then(r => { if (r.success) setResponse(r.data); setIsLoading(false) })
+  }, [page, limit, estadoFilter])
   
-  const facturas = response?.facturas || []
+  const facturas = response?.data || []
   const pagination = response?.pagination
   const totalsByStatus = response?.totalsByStatus || {}
 

@@ -4,27 +4,30 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Button } from "@/components/ui/button"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useDeleteGastosDEMutation, useGetGastosDEQuery } from "@/lib/redux/services/gastosDEApi"
-import { useGetVendorsQuery } from "@/features/vendors"
+import { getGastosDEAction, deleteGastosDEAction } from "@/features/gastosDE"
+import { useGetVendorsQuery } from "@/features/vendors/api/vendorsApi"
 import { ColumnDef, RowSelectionState } from "@tanstack/react-table"
 import { ArrowUp, ArrowUpDown, Pencil, Plus, Trash2, Receipt, Sparkles, Loader2, AlertCircle, Download, CheckSquare } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import dynamic from "next/dynamic"
 import Link from "next/link"
-import { useState } from "react"
+import { useEffect, useState, useTransition } from "react"
 import { toast } from "sonner"
 import { motion } from "framer-motion"
 
 const GastosDE = () => {
 
-    const {data:gastosDE, isLoading} = useGetGastosDEQuery()
+    const [gastosDE, setGastosDE] = useState<any[]>([])
+    const [isLoading, setIsLoading] = useState(true)
+    const [isPending, startTransition] = useTransition()
+
+    useEffect(() => { async function f() { setIsLoading(true); const r=await getGastosDEAction(); if(r.success) setGastosDE(r.data??[]); setIsLoading(false); } f(); }, [])
     const {data: vendors} = useGetVendorsQuery()
 
     const [gastosDEToDelete, setGastosDEToDelete] = useState<string | null>(null)
     const [gastosDEToBulkDelete, setGastosDEToBulkDelete] = useState<string[] | null>(null)
     const [filterProveedor, setFilterProveedor] = useState<string>('')
     const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
-    const [deleteGastosDE] = useDeleteGastosDEMutation()
 
     const filteredGastosDE = gastosDE?.filter((gasto: any) => {
         if (filterProveedor && gasto.proveedor !== filterProveedor) return false
@@ -36,16 +39,26 @@ const GastosDE = () => {
 
     const handleDelete = async () => {
       if (!gastosDEToDelete) return
-      try {
-        await deleteGastosDE(gastosDEToDelete).unwrap()
-        toast.success("El gasto de explotación ha sido eliminado exitosamente.")
-      } catch (error: any) {
-        console.error("Error al eliminar el gasto de explotación:", error)
-        const errorMsg = error?.data?.error || "Hubo un error al eliminar el gasto de explotación."
-        toast.error(errorMsg)
-      } finally {
+      startTransition(async () => {
+        const r=await deleteGastosDEAction(gastosDEToDelete)
+        if(r.success) { toast.success("El gasto ha sido eliminado exitosamente."); const ref=await getGastosDEAction(); if(ref.success) setGastosDE(ref.data??[]) }
+        else toast.error(r.error?.message||"Error al eliminar el gasto.")
         setGastosDEToDelete(null)
-      }
+      })
+    }
+
+    const handleBulkDelete = async () => {
+      if (!gastosDEToBulkDelete || gastosDEToBulkDelete.length === 0) return
+      startTransition(async () => {
+        let ok=0
+        for (const id of gastosDEToBulkDelete) {
+          const r=await deleteGastosDEAction(id); if(r.success) ok++
+        }
+        toast.success(`${ok} gastos eliminados`)
+        const ref=await getGastosDEAction(); if(ref.success) setGastosDE(ref.data??[])
+        setGastosDEToBulkDelete(null); setRowSelection({})
+      })
+    }
     }
 
     const handleBulkDelete = async () => {
