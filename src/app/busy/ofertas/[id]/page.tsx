@@ -16,8 +16,9 @@ import {
 import Link from "next/link"
 import { toast } from "sonner"
 
-import { useGetOfertaQuery, useUpdateOfertaMutation, useFacturarOfertaMutation } from "@/features/ofertas"
-import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta"
+import { useTransition } from "react"
+import { getOfertaByIdAction, updateOfertaAction, facturarOfertaAction } from "@/features/ofertas"
+import { getPuntosDeVentaAction } from "@/features/puntos-venta"
 import { useGetAnticiposDisponiblesQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
@@ -48,10 +49,15 @@ export default function OfertaDetailPage() {
   const router = useRouter()
   const id = params.id as string
   const anticiposFeatureEnabled = process.env.NEXT_PUBLIC_ENABLE_ANTICIPOS !== "false"
-  const { data: oferta, isLoading, error } = useGetOfertaQuery(id)
-  const [updateOferta] = useUpdateOfertaMutation()
-  const [facturarOferta, { isLoading: isFacturing }] = useFacturarOfertaMutation()
-  const { data: puntosDeVenta } = useGetPuntosDeVentaQuery()
+  const [oferta, setOferta] = useState<any | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isPending, startTransition] = useTransition()
+  const [puntosDeVenta, setPuntosDeVenta] = useState<any[]>([])
+
+  useEffect(() => {
+    (async () => { setIsLoading(true); const r=await getOfertaByIdAction(id); if(r.success) setOferta(r.data!); setIsLoading(false); })()
+    ;(async () => { const r=await getPuntosDeVentaAction(); if(r.success) setPuntosDeVenta(r.data??[]); })()
+  }, [id])
 
   const [isFacturarDialogOpen, setIsFacturarDialogOpen] = useState(false)
   const [selectedPuntoVenta, setSelectedPuntoVenta] = useState<string>("")
@@ -104,12 +110,11 @@ export default function OfertaDetailPage() {
   }, [])
 
   const handleUpdateStatus = async (estado: 'ACEPTADA' | 'RECHAZADA') => {
-    try {
-      await updateOferta({ id, estado }).unwrap()
-      toast.success(`Oferta ${estado.toLowerCase()} exitosamente`)
-    } catch (error) {
-      toast.error("Error al actualizar el estado de la oferta")
-    }
+    startTransition(async () => {
+      const r=await updateOfertaAction({ ofertaId: id, estado })
+      if(r.success) toast.success(`Oferta ${estado.toLowerCase()} exitosamente`)
+      else toast.error(r.error?.message||"Error al actualizar la oferta")
+    })
   }
 
   const handleFacturar = async () => {
@@ -117,6 +122,45 @@ export default function OfertaDetailPage() {
       toast.error("Seleccione un punto de venta")
       return
     }
+
+    startTransition(async () => {
+      let fechaVencimientoISO = null;
+      if (tipoVencimiento === 'fecha' && fechaVencimiento) {
+        fechaVencimientoISO = new Date(fechaVencimiento).toISOString();
+      } else if (tipoVencimiento === 'plazo') {
+        const fecha = new Date();
+        fecha.setDate(fecha.getDate() + 30);
+        fechaVencimientoISO = fecha.toISOString();
+      }
+
+      const r = await facturarOfertaAction({ 
+        ofertaId: id, 
+        puntoDeVentaId: selectedPuntoVenta,
+        observaciones: `Facturación automática de Oferta ${oferta?.numeroOferta}`,
+        cargoTransporte: Number(cargoTransporte),
+        serieId: selectedSerieId,
+        fechaVencimiento: fechaVencimientoISO,
+        tipoVencimiento,
+        formaPagoAnticipo: selectedAnticipoCobroId ? 'ANTICIPO_COBRO' : undefined,
+        anticipoCobroId: selectedAnticipoCobroId || undefined,
+        idempotencyKey: selectedAnticipoCobroId
+          ? (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+              ? crypto.randomUUID()
+              : `${Date.now()}-${Math.random()}`)
+          : undefined
+      })
+      
+      if(r.success) {
+        toast.success("Oferta facturada exitosamente")
+        setIsFacturarDialogOpen(false)
+        const ventaId = (r.data as any)?.venta?.ventaId
+        if (ventaId) router.push(`/busy/invoice/print?id=${ventaId}`)
+        else router.push("/busy/invoice/print")
+      } else {
+        toast.error(r.error?.message||"Error al facturar la oferta")
+      }
+    })
+  }
 
     try {
       let fechaVencimientoISO = null;
@@ -533,10 +577,10 @@ export default function OfertaDetailPage() {
                 </Button>
                 <Button 
                   onClick={handleFacturar} 
-                  disabled={isFacturing}
+                  disabled={isPending}
                   className="bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
                 >
-                  {isFacturing ? (
+                  {isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Facturando...
