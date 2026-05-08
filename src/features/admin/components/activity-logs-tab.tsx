@@ -12,7 +12,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
-import { AdminTableLoader } from "@/components/admin/animations"
+import { AdminTableLoader } from "@/features/admin/components/animations"
 import { useGetActivityLogsQuery } from "@/features/admin/services/adminApi"
 import { format } from "date-fns"
 import { Clock } from "lucide-react"

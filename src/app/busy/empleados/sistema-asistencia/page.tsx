@@ -4,9 +4,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { EnhancedAsistenciaForm } from "@/components/empleados/enhanced-asistencia-form";
-import { WorkScheduleManager } from "@/components/empleados/work-schedule-manager";
-import { AttendanceHistoryView } from "@/components/empleados/attendance-history-view";
+import { EnhancedAsistenciaForm } from "@/features/empleados";
+import { WorkScheduleManager } from "@/features/empleados";
+import { AttendanceHistoryView } from "@/features/empleados";
 import { Clock, Calendar, Settings, BarChart3 } from "lucide-react";
 
 /**

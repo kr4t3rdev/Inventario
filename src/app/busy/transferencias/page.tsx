@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { useDeleteTransferenciaMutation, useGetTransferenciasQuery } from "@/features/transferencias"
-import { TransferenciasTable } from "@/components/transferencias/transferencias-table"
+import { TransferenciasTable } from "@/features/transferencias"
 
 export default function TransferenciasPage() {
   const { data: transferenciasData, isLoading, error } = useGetTransferenciasQuery()

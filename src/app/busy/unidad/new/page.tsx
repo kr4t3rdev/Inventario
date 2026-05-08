@@ -1,7 +1,7 @@
 "use client"
 
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { UnidadForm } from "@/components/unidad/unidad-form"
+import { UnidadForm } from "@/features/unidades"
 import { motion } from "framer-motion"
 import { Scale, Sparkles } from "lucide-react"
 

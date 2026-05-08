@@ -1,7 +1,7 @@
 "use client"
 
 import dynamic from "next/dynamic"
-import { useDeleteProductoMutation, useGetProductosQuery } from "@/features/productos"
+import { getProductosAction, deleteProductoAction } from "@/features/productos/actions"
 
 import type { ColumnDef } from "@tanstack/react-table"
 import type { Producto } from "../../models/model"
@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useTransition } from "react"
 import { toast } from "sonner"
 import Link from "next/link"
 import { useGetStockPorUbicacionQuery } from "@/lib/redux/services/stockUbicacionApi"
@@ -36,7 +36,6 @@ import { Switch } from "@/components/ui/switch"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { motion, AnimatePresence } from "framer-motion"
 import { getAuthToken } from "@/lib/token"
-import { useDeleteProductoMutation, useGetProductosQuery } from "@/features/productos"
 
 // Lazy load heavy components
 const EnhancedDataTable = dynamic(() => import("@/features/productos/components/enhanced-data-table").then(mod => ({ default: mod.EnhancedDataTable })), {
@@ -96,23 +95,22 @@ export default function ProductosPage() {
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(null)
   const [showZeroStock, setShowZeroStock] = useState(false)
   const [usaEan13, setUsaEan13] = useState(false)
+  const [productos, setProductos] = useState<Producto[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isPending, startTransition] = useTransition()
 
+  // Server Actions: data fetching (reemplaza RTK Query)
   useEffect(() => {
-    const token = getAuthToken()
-    fetch('/api/mi-empresa', {
-      headers: token ? { Authorization: token } : undefined,
-      cache: 'no-store',
-    })
-      .then((r) => r.json())
-      .then((data) => setUsaEan13(data?.usaCodigoEan13 ?? false))
-      .catch(() => {})
+    async function fetchData() {
+      setIsLoading(true)
+      const result = await getProductosAction()
+      if (result.success) setProductos(result.data ?? [])
+      setIsLoading(false)
+    }
+    fetchData()
   }, [])
 
-  const { data: productos, isLoading } = useGetProductosQuery()
-  const { data: almacenes } = useGetAlmacenesQuery()
-  const { data: puntosVenta } = useGetPuntosDeVentaQuery()
   const [productToDelete, setProductToDelete] = useState<string | null>(null)
-  const [deleteProductos] = useDeleteProductoMutation()
 
   useEffect(() => {
     if (almacenes && almacenes.length > 0 && !ubicacionSeleccionada) {
@@ -188,17 +186,20 @@ export default function ProductosPage() {
     return { total, sinStock, stockBajo, stockNormal }
   }, [datosAMostrar, ubicacionSeleccionada])
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!productToDelete) return
-    try {
-      await deleteProductos(productToDelete).unwrap()
-      toast("El producto ha sido eliminado exitosamente.")
-    } catch (error) {
-      console.error("Error al eliminar el producto:", error)
-      toast("Hubo un error al eliminar el producto.")
-    } finally {
+    startTransition(async () => {
+      const result = await deleteProductoAction(productToDelete)
+      if (result.success) {
+        toast.success("El producto ha sido eliminado exitosamente.")
+        // Refetch data
+        const refresh = await getProductosAction()
+        if (refresh.success) setProductos(refresh.data ?? [])
+      } else {
+        toast.error(result.error?.message || "Hubo un error al eliminar el producto.")
+      }
       setProductToDelete(null)
-    }
+    })
   }
 
   const columns: ColumnDef<Producto>[] = [
@@ -834,8 +835,8 @@ export default function ProductosPage() {
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
-                  Eliminar Producto
+                <AlertDialogAction onClick={handleDelete} disabled={isPending} className="bg-destructive text-destructive-foreground">
+                  {isPending ? "Eliminando..." : "Eliminar Producto"}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

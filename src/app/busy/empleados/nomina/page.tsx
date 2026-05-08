@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { NominaView } from "@/components/empleados/nomina-view";
+import { NominaView } from "@/features/empleados";
 import { Banknote, Calculator, Wallet } from "lucide-react";
 
 /**

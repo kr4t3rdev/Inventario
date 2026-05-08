@@ -1,15 +1,4 @@
 export {
-  getProductosHandler,
-  createProductoHandler,
-  getProductoByIdHandler,
-  updateProductoHandler,
-  deleteProductoHandler,
-  bulkUpdateStockMinimoHandler,
-  restockProductoHandler,
-  getStockUbicacionHandler,
-} from './api/handlers';
-
-export {
   productosApi,
   useGetProductosQuery,
   useSearchProductosQuery,

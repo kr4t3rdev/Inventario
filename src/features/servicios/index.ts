@@ -1,16 +1,4 @@
 export {
-  getServiciosHandler,
-  createServicioHandler,
-  getServicioByIdHandler,
-  updateServicioHandler,
-  deleteServicioHandler,
-  facturarOrdenReparacionHandler,
-  getOrdenReparacionPdfHandler,
-  getCotizacionPdfHandler,
-  getTecnicosStatsHandler,
-} from './api/handlers'
-
-export {
   ServicioApi,
   useGetServiciosQuery,
   useGetServicioQuery,

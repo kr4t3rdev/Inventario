@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { EnhancedAsistenciaForm } from "@/components/empleados/enhanced-asistencia-form";
+import { EnhancedAsistenciaForm } from "@/features/empleados";
 import { CalendarCheck, Clock, Users } from "lucide-react";
 
 /**

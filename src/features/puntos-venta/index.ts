@@ -1,6 +1,5 @@
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
 
-export { createPuntoDeVentaHandler, getPuntoDeVentaByIdHandler, updatePuntoDeVentaHandler, deletePuntoDeVentaHandler } from './api/handlers';
 
 export async function getPuntosDeVentaHandler(request: import('next/server').NextRequest) {
   const { prisma } = await import('@/lib/prisma')

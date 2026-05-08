@@ -5,7 +5,7 @@ import { useGetOfertasQuery } from "@/features/ofertas"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, Tag, Sparkles, Loader2 } from "lucide-react"
-import { OfertasTable } from "@/components/ofertas/ofertas-table"
+import { OfertasTable } from "@/features/ofertas"
 import { motion } from "framer-motion"
 import { Skeleton } from "@/components/ui/skeleton"
 

@@ -1,4 +1,4 @@
-import SeriesFacturacionTable from "@/components/series-facturacion/series-facturacion-table"
+import SeriesFacturacionTable from "@/features/series-facturacion"
 
 /**
  * @description Página de gestión de series de facturación

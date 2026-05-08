@@ -2,8 +2,8 @@
 
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
-import { ConfiguracionContratos } from "@/components/configuracion/configuracion-contratos"
-import { TiposContratosList } from "@/components/contratos/tipos-contratos-list"
+import { ConfiguracionContratos } from "@/features/contratos"
+import { TiposContratosList } from "@/features/contratos"
 import { Button } from "@/components/ui/button"
 
 export default function ConfiguracionContratosPage() {

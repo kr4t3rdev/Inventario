@@ -11,7 +11,14 @@ export async function createPuntoDeVentaHandler(req: NextRequest) {
     const tenantId = requireTenant(user)
     const body = await req.json()
     const { nombre, ubicacion, listaPrecioId } = body
-    const puntoDeVenta = await prisma.puntoDeVenta.create({ data: { nombre, ubicacion, listaPrecioId, tenant: { connect: { tenantId } } } })
+    const puntoDeVenta = await prisma.puntoDeVenta.create({
+      data: {
+        nombre,
+        ubicacion,
+        listaPrecio: listaPrecioId ? { connect: { id: listaPrecioId } } : undefined,
+        tenant: { connect: { tenantId } },
+      },
+    })
     return NextResponse.json(puntoDeVenta)
   } catch (error) {
     console.error("Error al crear punto de venta:", error)
@@ -39,9 +46,16 @@ export async function updatePuntoDeVentaHandler(request: Request, { params }: { 
     const { id } = await params
     const body = await request.json()
     const { nombre, ubicacion, listaPrecioId } = body
+    const listaPrecioValue = listaPrecioId ?? null
     const puntoDeVenta = await prisma.puntoDeVenta.update({
       where: { pvId: id },
-      data: { nombre, ubicacion, listaPrecioId: listaPrecioId ?? null },
+      data: {
+        nombre,
+        ubicacion,
+        listaPrecio: listaPrecioValue === null
+          ? { disconnect: true }
+          : { connect: { id: listaPrecioValue } },
+      },
     })
     return NextResponse.json(puntoDeVenta)
   } catch (error) {

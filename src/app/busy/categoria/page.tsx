@@ -17,8 +17,12 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
-import { useDeleteCategoriaMutation, useGetCategoriasQuery, useGetCategoriaHierarchyQuery } from "@/features/categorias"
 import { ColumnDef } from "@tanstack/react-table"
+import {
+  getCategoriasAction,
+  getCategoriaHierarchyAction,
+  deleteCategoriaAction,
+} from "@/features/categorias/actions"
 import { 
   ArrowUp, 
   ArrowUpDown, 
@@ -33,11 +37,10 @@ import {
   Sparkles
 } from "lucide-react"
 import Link from "next/link"
-import { useState } from "react"
+import { useEffect, useState, useTransition } from "react"
 import { toast } from "sonner"
 import type { Categoria, CategoriaHierarchy } from "../../models/model"
 import { motion, AnimatePresence } from "framer-motion"
-import { useAuth } from "@/contexts/auth-context"
 
 // Loading spinner component
 function LoadingSpinner({ size = 32 }: { size?: number }) {
@@ -73,28 +76,47 @@ const DataTable = dynamic(() => import("@/components/data-table").then(mod => ({
 })
 
 const Categoria = () => {
-  const { user, loading: authLoading } = useAuth()
-  const skipQuery = authLoading || !user
+  // Server Actions: data fetching (reemplaza RTK Query)
+  const [categorias, setCategorias] = useState<Categoria[]>([])
+  const [categoriaHierarchy, setCategoriaHierarchy] = useState<CategoriaHierarchy[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isPending, startTransition] = useTransition()
 
-  const { data: categorias, isLoading } = useGetCategoriasQuery(undefined, { skip: skipQuery })
-  const { data: categoriaHierarchy, isLoading: isLoadingHierarchy } = useGetCategoriaHierarchyQuery(undefined, { skip: skipQuery })
+  useEffect(() => {
+    async function fetchData() {
+      setIsLoading(true)
+      const [catResult, hierResult] = await Promise.all([
+        getCategoriasAction(),
+        getCategoriaHierarchyAction(),
+      ])
+      if (catResult.success) setCategorias(catResult.data!)
+      if (hierResult.success) setCategoriaHierarchy(hierResult.data!)
+      setIsLoading(false)
+    }
+    fetchData()
+  }, [])
 
   const [categoriaToDelete, setCategoriaToDelete] = useState<string | null>(null)
   const [showTreeView, setShowTreeView] = useState(false)
-  const [deleteCategoria] = useDeleteCategoriaMutation()
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!categoriaToDelete) return
-
-    try {
-      await deleteCategoria(categoriaToDelete).unwrap()
-      toast("La categoría ha sido eliminada exitosamente.")
-    } catch (error) {
-      console.error("Error al eliminar la categoría:", error)
-      toast("Hubo un error al eliminar la categoría.")
-    } finally {
+    startTransition(async () => {
+      const result = await deleteCategoriaAction(categoriaToDelete)
+      if (result.success) {
+        toast.success("La categoría ha sido eliminada exitosamente.")
+        // Refetch data after delete
+        const [catResult, hierResult] = await Promise.all([
+          getCategoriasAction(),
+          getCategoriaHierarchyAction(),
+        ])
+        if (catResult.success) setCategorias(catResult.data!)
+        if (hierResult.success) setCategoriaHierarchy(hierResult.data!)
+      } else {
+        toast.error(result.error?.message || "Hubo un error al eliminar la categoría.")
+      }
       setCategoriaToDelete(null)
-    }
+    })
   }
 
   // Flat table columns for regular view
@@ -286,7 +308,7 @@ const Categoria = () => {
     return result
   }
 
-  if (isLoading || isLoadingHierarchy) {
+  if (isLoading) {
     return (
       <SidebarProvider>           
         <SidebarInset>              
@@ -481,8 +503,12 @@ const Categoria = () => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
-              Eliminar
+            <AlertDialogAction
+              onClick={handleDelete}
+              disabled={isPending}
+              className="bg-destructive text-destructive-foreground"
+            >
+              {isPending ? "Eliminando..." : "Eliminar"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

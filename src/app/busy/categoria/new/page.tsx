@@ -1,7 +1,7 @@
 "use client"
 
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { CategoryForm } from "@/components/categorias/category-form"
+import { CategoryForm } from "@/features/categorias"
 import { motion } from "framer-motion"
 import { Folder, Sparkles } from "lucide-react"
 

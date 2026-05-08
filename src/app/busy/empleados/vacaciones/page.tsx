@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { VacacionesForm } from "@/components/empleados/vacaciones-form";
+import { VacacionesForm } from "@/features/empleados";
 import { Calendar, Palmtree, Sun } from "lucide-react";
 
 /**

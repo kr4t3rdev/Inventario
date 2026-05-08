@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation"
 import { useGetMermaQuery } from "@/features/mermas"
-import { MermaForm } from "@/components/mermas/merma-form"
+import { MermaForm } from "@/features/mermas"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { motion } from "framer-motion"

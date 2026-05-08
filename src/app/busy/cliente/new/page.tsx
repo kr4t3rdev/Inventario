@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { ClienteForm } from "@/components/clientes/clientes-form"
+import { ClienteForm } from "@/features/clientes"
 
 export const metadata: Metadata = {
   title: "Nueva Cliente",

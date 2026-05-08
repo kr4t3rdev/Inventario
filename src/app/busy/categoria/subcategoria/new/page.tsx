@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft, Sparkles } from "lucide-react";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { SubcategoryForm } from "@/components/categorias/subcategory-form";
+import { SubcategoryForm } from "@/features/categorias";
 
 /**
  * @description Página para crear una nueva subcategoría CLAS en modo EAN-13.

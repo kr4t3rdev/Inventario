@@ -1,6 +1,6 @@
 "use client"
 
-import { GastoDEForm } from "@/components/gastoDE/GastoDEForm"
+import { GastoDEForm } from "@/features/gastosDE"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useGetGastoDEQuery } from "@/lib/redux/services/gastosDEApi"

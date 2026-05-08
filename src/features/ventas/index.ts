@@ -1,12 +1,3 @@
-export {
-  getVentasHandler,
-  createVentaHandler,
-  getVentaByIdHandler,
-  updateVentaHandler,
-  deleteVentaHandler,
-  getVentasStatsHandler,
-} from './api/handlers';
-
 export { ventasApi, useGetVentasQuery, useGetVentaQuery, useGetVentaStatsQuery, useAddVentaMutation, useUpdateVentaMutation, useDeleteVentaMutation } from './api/ventasApi';
 
 export { VentasTable } from './components/ventas-table';

@@ -1,7 +1,7 @@
 "use client"
 
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { PtoVentaForm } from "@/components/PtoVenta/pvtoVenta-form"
+import { PtoVentaForm } from "@/features/puntos-venta"
 import { motion } from "framer-motion"
 import { Store, Sparkles } from "lucide-react"
 

@@ -10,7 +10,7 @@ const TablaIngresos = dynamic(() => import('@/components/economia/tabla-ingresos
 const TablaGastos = dynamic(() => import('@/components/economia/tabla-gastos').then(mod => ({default:mod.TablaGastos})))
 
 import dynamic from "next/dynamic"
-//import { PresupuestoManager } from "@/components/economia/prespuesto-manager"
+import { PresupuestoManager } from "@/components/economia/presupuesto-manager"
 
 export default function EconomiaPage() {
   return (

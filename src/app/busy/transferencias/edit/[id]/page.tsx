@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation"
 import { useGetTransferenciaQuery } from "@/features/transferencias"
-import { TransferenciaForm } from "@/components/transferencias/transferencias-form"
+import { TransferenciaForm } from "@/features/transferencias"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { motion } from "framer-motion"

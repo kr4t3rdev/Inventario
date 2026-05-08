@@ -1,12 +1,4 @@
 export {
-  getPagoSalariosHandler,
-  createPagoSalarioHandler,
-  getPagoSalarioByIdHandler,
-  updatePagoSalarioHandler,
-  deletePagoSalarioHandler,
-} from './api/handlers';
-
-export {
   pagoSalarioApi,
   useGetPagoSalariosQuery,
   useGetPagoSalarioQuery,

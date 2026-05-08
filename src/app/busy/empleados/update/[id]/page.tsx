@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { EmpleadoForm } from "@/components/empleados/empleados-form"
+import { EmpleadoForm } from "@/features/empleados"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"

@@ -460,7 +460,7 @@ export function AccountTransactionHistory({
                   </div>
                   Historial de Transacciones
                 </CardTitle>
-                <ExportDialog
+                {/* <ExportDialog
                   tipoReporte="movimientos"
                   cuentaId={cuentaId}
                   onExport={handleExport}

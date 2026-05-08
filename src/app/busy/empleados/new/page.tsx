@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { EmpleadoForm } from "@/components/empleados/empleados-form"
+import { EmpleadoForm } from "@/features/empleados"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, Users, Sparkles } from "lucide-react"
 import Link from "next/link"

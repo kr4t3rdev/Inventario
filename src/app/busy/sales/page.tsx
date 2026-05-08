@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useTransition } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { PlusCircle, TrendingUp, Sparkles } from "lucide-react"
-import { VentasTable, useDeleteVentaMutation, useGetVentasQuery } from "@/features/ventas"
+import { VentasTable } from "@/features/ventas"
+import { getVentasAction, anularVentaAction } from "@/features/ventas/actions"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -19,24 +20,38 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import type { Venta } from "../../models/model"
 
 export default function VentasPage() {
-  const { data: ventas, isLoading, error } = useGetVentasQuery()
-  const [deleteVenta] = useDeleteVentaMutation()
+  const [ventas, setVentas] = useState<Venta[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isPending, startTransition] = useTransition()
+
+  useEffect(() => {
+    async function fetchData() {
+      setIsLoading(true)
+      const result = await getVentasAction()
+      if (result.success) setVentas(result.data as any ?? [])
+      setIsLoading(false)
+    }
+    fetchData()
+  }, [])
 
   const [ventaToDelete, setVentaToDelete] = useState<string | null>(null)
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!ventaToDelete) return
-
-    try {
-      await deleteVenta(ventaToDelete).unwrap()
-      toast("La venta ha sido eliminada exitosamente.")
-    } catch (error) {
-      toast("Hubo un error al eliminar la venta.")
-    } finally {
+    startTransition(async () => {
+      const result = await anularVentaAction({ ventaId: ventaToDelete })
+      if (result.success) {
+        toast.success("La venta ha sido anulada exitosamente.")
+        const refresh = await getVentasAction()
+        if (refresh.success) setVentas(refresh.data as any ?? [])
+      } else {
+        toast.error(result.error?.message || "Error al anular la venta.")
+      }
       setVentaToDelete(null)
-    }
+    })
   }
 
   if (error && !ventas) {
@@ -206,10 +221,11 @@ export default function VentasPage() {
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
                 <AlertDialogAction 
-                  onClick={handleDelete} 
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={handleDelete}
+                  disabled={isPending}
+                  className="bg-destructive text-destructive-foreground"
                 >
-                  Eliminar
+                  {isPending ? "Anulando..." : "Anular Venta"}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>

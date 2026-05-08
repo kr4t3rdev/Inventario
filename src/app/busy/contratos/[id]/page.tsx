@@ -13,7 +13,7 @@ import Link from "next/link"
 import { toast } from "sonner"
 import { getAuthToken } from "@/lib/token"
 import { FileUpload } from "@/components/file-upload"
-import { NewVersionDialog } from "@/components/contratos/new-version-dialog"
+import { NewVersionDialog } from "@/features/contratos"
 
 // Definir interfaces basadas en la respuesta de la API
 interface Usuario {

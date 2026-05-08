@@ -1,7 +1,7 @@
 'use client'
 
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { OfertaForm } from "@/components/ofertas/oferta-form"
+import { OfertaForm } from "@/features/ofertas"
 import { motion } from "framer-motion"
 import { Tag, Sparkles, ArrowLeft } from "lucide-react"
 import Link from "next/link"

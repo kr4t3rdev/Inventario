@@ -1,6 +1,6 @@
 'use client'
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { VendorForm } from "@/components/vendor/vendor-form"
+import { VendorForm } from "@/features/vendors"
 import { motion } from "framer-motion"
 import { Building2, Sparkles, ArrowLeft } from "lucide-react"
 import Link from "next/link"

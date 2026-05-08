@@ -1,6 +1,6 @@
 import type { Metadata } from "next"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { GastoDEForm } from "@/components/gastoDE/GastoDEForm"
+import { GastoDEForm } from "@/features/gastosDE"
 
 export const metadata: Metadata = {
   title: "Nuevo Gasto de Explotación",

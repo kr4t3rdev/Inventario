@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import type { ReactElement } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useDispatch } from "react-redux";
 import { motion } from "framer-motion";
 import { AlertCircle, ArrowLeft, ChevronDown, Folder, Layers, Loader2, Search, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,7 +14,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { apiSlice } from "@/lib/redux/services/apiSlice";
 import { useGetCategoriasQuery } from "@/features/categorias";
 import { useCategoryForm } from "@/features/categorias/hooks/use-category-form";
 import { ClasificadorInfoNote } from "@/features/productos/components/clasificador-info-note";
@@ -137,7 +135,6 @@ export function filterSpecifics(
  */
 export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps): ReactElement {
   const router = useRouter();
-  const dispatch = useDispatch();
   const [usaEan13, setUsaEan13] = useState<boolean | null>(null);
   const [clasClassifierData, setClasClassifierData] = useState<CLASClassifierData | null>(null);
   const [isClassifierLoading, setIsClassifierLoading] = useState(false);
@@ -171,7 +168,6 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
     onSuccess: onSuccess || (() => {
       router.push('/busy/categoria');
       router.refresh();
-      dispatch(apiSlice.util.invalidateTags(['Categorias']));
     }),
   });
 

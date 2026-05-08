@@ -1,6 +1,6 @@
 "use client"
 
-import { TransferenciaForm } from "@/components/transferencias/transferencias-form"
+import { TransferenciaForm } from "@/features/transferencias"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { motion } from "framer-motion"
 import { ArrowLeftRight, Sparkles } from "lucide-react"

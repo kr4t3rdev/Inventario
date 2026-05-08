@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
-import { GastoElementoForm } from "@/components/gastoDE/GastoElementoForm"
+import { GastoElementoForm } from "@/features/gastosDE"
 import { useGetGastoConceptoQuery } from "@/lib/redux/services/gastosConceptosApi"
 import { Skeleton } from "@/components/ui/skeleton"
 

@@ -25,8 +25,8 @@ import { ArrowUpDown, Download, FileSpreadsheet, PlusCircle, Filter, FileText, S
 import { formatCurrency } from "@/lib/utils"
 import { Factura } from "@/app/models/model"
 import { getAuthToken } from "@/lib/token"
-import { EstadoFacturaBadge } from "@/components/facturas/estado-factura-badge"
-import { ActualizarEstadoFactura } from "@/components/facturas/actualizar-estado-factura"
+import { EstadoFacturaBadge } from "@/features/facturas"
+import { ActualizarEstadoFactura } from "@/features/facturas"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
 

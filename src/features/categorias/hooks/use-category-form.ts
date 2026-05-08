@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { categoriasApi } from '@/features/categorias';
-import { useAppDispatch } from '@/lib/redux/hooks';
+import { createCategoriaAction, updateCategoriaAction } from '@/features/categorias/actions';
 import { validateCLASSection, validateCLASSpecific, CLASClassifierData } from '@/lib/clas-classifier';
 
 // Define the form schema using Zod
@@ -70,7 +69,6 @@ export function useCategoryForm({
   requireSpecificSelection = false,
 }: UseCategoryFormProps) {
   const router = useRouter();
-  const dispatch = useAppDispatch();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const [serverErrors, setServerErrors] = useState<Record<string, string[]>>({});
@@ -226,65 +224,40 @@ export function useCategoryForm({
     setIsSubmitting(true);
 
     try {
-      const token = sessionStorage.getItem('token');
-      const url = initialData
-        ? `/api/categorias/${initialData.catId}`
-        : '/api/categorias';
-      const method = initialData ? 'PATCH' : 'POST';
+      const payload = {
+        nombre: data.nombre.trim(),
+        descripcion: data.descripcion?.trim() || null,
+        parentId: parentId || null,
+        clasSectionId: normalizeSectionId(data.clasSectionId) ?? null,
+        clasSpecificId: normalizeSpecificId(data.clasSpecificId) ?? null,
+      };
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-        body: JSON.stringify({
-          nombre: data.nombre.trim(),
-          descripcion: data.descripcion?.trim() || null,
-          parentId,
-          clasSectionId: normalizeSectionId(data.clasSectionId),
-          clasSpecificId: normalizeSpecificId(data.clasSpecificId),
-        }),
-      });
+      // Server Action: create o update según corresponda
+      const result = initialData
+        ? await updateCategoriaAction({ catId: initialData.catId, ...payload })
+        : await createCategoriaAction(payload);
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        if (response.status === 400 && result.errors) {
-          // Handle validation errors from the server
-          setServerErrors(result.errors);
+      if (!result.success) {
+        // Errores de validación del servidor (Zod field errors)
+        if (result.error?.details) {
+          setServerErrors(result.error.details);
           return;
         }
-        throw new Error(result.message || 'Error al guardar la categoría');
+        throw new Error(result.error?.message || 'Error al guardar la categoría');
       }
 
-      // Show success message
+      // Success
       toast.success(
         initialData
           ? 'Categoría actualizada correctamente'
           : 'Categoría creada correctamente'
       );
 
-      await Promise.allSettled([
-        dispatch(
-          categoriasApi.endpoints.getCategorias.initiate(undefined, {
-            forceRefetch: true,
-            subscribe: false,
-          })
-        ),
-        dispatch(
-          categoriasApi.endpoints.getCategoriaHierarchy.initiate(undefined, {
-            forceRefetch: true,
-            subscribe: false,
-          })
-        ),
-      ]);
-
       // Call the success callback if provided
       if (onSuccess) {
         onSuccess();
       } else {
-        // Default behavior: navigate to categories list
+        // Default: navigate to categories list (revalidatePath handles cache)
         router.push('/busy/categoria');
         router.refresh();
       }
