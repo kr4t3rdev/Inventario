@@ -16,7 +16,7 @@ import { sileo } from '@/lib/sileo-shim'
 import { Skeleton } from "@/components/ui/skeleton"
 import { DollarSign, Briefcase } from "lucide-react"
 import { v4 } from "uuid"
-import { useAddServiciosMutation, useGetServiciosQuery, useUpdateServiciosMutation } from "@/features/servicios/api/serviciosApi"
+import { useAddServiciosMutation, useGetServiciosQuery, useUpdateServiciosMutation } from "@/features/servicios"
 import { useGetMonedasQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { TasaCambioDialog } from "@/features/contabilidad/components/tasa-cambio-dialog"
 

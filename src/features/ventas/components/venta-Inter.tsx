@@ -1,9 +1,9 @@
 'use client'
-import { useGetProductosQuery } from "@/features/productos/api/productosApi";
-import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta/api/puntosDeVentaApi";
+import { useGetProductosQuery } from "@/features/productos";
+import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta";
 import { useState } from "react";
 import { Producto } from "@/app/models/model";
-import { useAddVentaMutation } from "@/features/ventas/api/ventasApi";
+import { useAddVentaMutation } from "@/features/ventas";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";

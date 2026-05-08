@@ -13,8 +13,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { sileo } from '@/lib/sileo-shim'
 import { Skeleton } from '@/components/ui/skeleton'
 import { v4 } from 'uuid'
-import { useAddServiciosMutation, useGetServiciosQuery, useUpdateServiciosMutation } from '@/features/servicios/api/serviciosApi'
-import { useGetVendorsQuery } from '@/features/vendors/api/vendorsApi'
+import { useAddServiciosMutation, useGetServiciosQuery, useUpdateServiciosMutation } from '@/features/servicios'
+import { useGetVendorsQuery } from '@/features/vendors'
 import { ArrowLeft, Package, Save, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 

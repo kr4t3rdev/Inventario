@@ -16,7 +16,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { apiSlice } from "@/lib/redux/services/apiSlice";
-import { useGetCategoriasQuery } from "@/features/categorias/api/categoriasApi";
+import { useGetCategoriasQuery } from "@/features/categorias";
 import { useCategoryForm } from "@/features/categorias/hooks/use-category-form";
 import { ClasificadorInfoNote } from "@/features/productos/components/clasificador-info-note";
 import { getAuthToken } from "@/lib/token";

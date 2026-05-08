@@ -2,9 +2,7 @@
 
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useGetCategoriaQuery } from "@/features/categorias/api/categoriasApi"
-import { CategoryForm } from "@/components/categorias/category-form"
-import { SubcategoryForm } from "@/components/categorias/subcategory-form"
+import { CategoryForm, SubcategoryForm, useGetCategoriaQuery } from "@/features/categorias"
 import { useParams } from "next/navigation"
 import { motion } from "framer-motion"
 import { FolderEdit, AlertCircle, Sparkles } from "lucide-react"

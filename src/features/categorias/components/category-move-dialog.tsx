@@ -20,7 +20,7 @@ import {
   useGetCategoriasQuery, 
   useMoveCategoriaMutation,
   useGetCategoriaQuery 
-} from "@/features/categorias/api/categoriasApi"
+} from "@/features/categorias"
 import type { Categoria } from "@/app/models/model"
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
@@ -162,7 +162,7 @@ export function CategoryMoveDialog({ open, onClose, categoryId }: CategoryMoveDi
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px] p-0 gap-0">
+      <DialogContent style={{ maxWidth: "500px" }}>
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}

@@ -53,7 +53,7 @@ import {
   useDeleteRecetaProduccionMutation,
   useUpdateRecetaProduccionMutation
 } from '@/lib/redux/services/produccionApi'
-import { useGetProductosQuery } from '@/features/productos/api/productosApi'
+import { useGetProductosQuery } from '@/features/productos'
 
 import { RecipeOutputSelector, type RecipeOutputMode } from '@/features/produccion/components/recipe-output-selector'
 import { ProductionDialogs } from '@/features/produccion/components/production-dialogs'

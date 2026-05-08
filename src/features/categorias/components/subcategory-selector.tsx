@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useGetCategoriasQuery, useGetSubcategoriasQuery } from "@/features/categorias/api/categoriasApi"
+import { useGetCategoriasQuery, useGetSubcategoriasQuery } from "@/features/categorias"
 import type { Categoria } from "@/app/models/model"
 
 interface SubcategorySelectorProps {

@@ -21,7 +21,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ArrowUpDown, Pencil, Trash2Icon, Loader2 } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatCurrency } from "@/lib/utils"
-import { useGetProductosQuery } from "@/features/productos/api/productosApi"
+import { useGetProductosQuery } from "@/features/productos"
 import type { Venta } from "@/app/models/model"
 
 interface VentasTableProps {

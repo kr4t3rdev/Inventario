@@ -1,4 +1,4 @@
-import { useAddVendorMutation, useGetVendorsQuery, useUpdateVendorMutation } from "@/features/vendors/api/vendorsApi";
+import { useAddVendorMutation, useGetVendorsQuery, useUpdateVendorMutation } from "@/features/vendors";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import { Building2, Loader2, Sparkles, Copy, Check } from "lucide-react";

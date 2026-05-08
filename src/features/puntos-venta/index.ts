@@ -26,4 +26,5 @@ export async function getPuntosDeVentaHandler(request: import('next/server').Nex
 }
 
 export { puntosDeVentaApi, useGetPuntosDeVentaQuery, useGetPuntoDeVentaQuery, useAddPuntoDeVentaMutation, useUpdatePuntoDeVentaMutation, useDeletePuntoDeVentaMutation } from './api/puntosDeVentaApi';
+export { PtoVentaForm } from './components/pvtoVenta-form';
 export type { PuntoDeVenta } from './types';

@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { useGetOfertasQuery } from "@/features/ofertas/api/ofertasApi"
+import { useGetOfertasQuery } from "@/features/ofertas"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, Tag, Sparkles, Loader2 } from "lucide-react"

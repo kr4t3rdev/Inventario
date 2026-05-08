@@ -2,8 +2,8 @@
 
 import { useState } from "react"
 import { useGetStockPorUbicacionQuery } from "@/lib/redux/services/stockUbicacionApi"
-import { useGetAlmacenesQuery } from "@/features/almacenes/api/almacenesApi"
-import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta/api/puntosDeVentaApi"
+import { useGetAlmacenesQuery } from "@/features/almacenes"
+import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -100,7 +100,7 @@ export function ReportePorUbicacion() {
       <StaggerItem className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-4">
           <Select value={`${tipoUbicacion}:${ubicacionId}`} onValueChange={handleUbicacionChange}>
-            <SelectTrigger className="w-[300px]">
+            <SelectTrigger style={{ width: "300px" }}>
               <SelectValue placeholder="Selecciona una ubicación" />
             </SelectTrigger>
             <SelectContent>

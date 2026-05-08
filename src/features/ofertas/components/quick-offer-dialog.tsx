@@ -38,8 +38,8 @@ import { z } from "zod"
 import { Card } from "@/components/ui/card"
 
 import { Producto, Oferta } from "@/app/models/model"
-import { useGetClientesQuery } from "@/features/clientes/api/ClienteApi"
-import { useAddOfertaMutation } from "@/features/ofertas/api/ofertasApi"
+import { useGetClientesQuery } from "@/features/clientes"
+import { useAddOfertaMutation } from "@/features/ofertas"
 import { getAuthToken } from "@/lib/token"
 import { formatCurrency } from "@/lib/utils"
 
@@ -182,7 +182,7 @@ export function QuickOfferDialog({ producto, trigger }: QuickOfferDialogProps) {
           </motion.div>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-125">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}

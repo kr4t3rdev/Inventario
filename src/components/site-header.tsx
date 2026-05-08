@@ -1,9 +1,9 @@
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { ThemeToggle } from "./theme-toggle"
-import { PanelNotificaciones } from "./notificaciones/panel-notificaciones"
-import { CurrencyIndicator } from "./contabilidad/currency-indicator"
-import { ContabilidadBreadcrumb } from "./contabilidad/contabilidad-breadcrumb"
+import { PanelNotificaciones } from "@/features/notificaciones/components/panel-notificaciones"
+import { CurrencyIndicator } from "@/features/contabilidad/components/currency-indicator"
+import { ContabilidadBreadcrumb } from "@/features/contabilidad/components/contabilidad-breadcrumb"
 
 export function SiteHeader() {
   
@@ -19,7 +19,7 @@ export function SiteHeader() {
         </div>
         
         {/* Currency Indicator */}
-        <CurrencyIndicator />
+        {/* <CurrencyIndicator /> */}
         
         <div className="flex items-center gap-2">
           <ThemeToggle/>

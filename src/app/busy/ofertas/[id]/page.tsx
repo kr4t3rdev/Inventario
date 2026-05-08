@@ -16,8 +16,8 @@ import {
 import Link from "next/link"
 import { toast } from "sonner"
 
-import { useGetOfertaQuery, useUpdateOfertaMutation, useFacturarOfertaMutation } from "@/features/ofertas/api/ofertasApi"
-import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta/api/puntosDeVentaApi"
+import { useGetOfertaQuery, useUpdateOfertaMutation, useFacturarOfertaMutation } from "@/features/ofertas"
+import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta"
 import { useGetAnticiposDisponiblesQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"

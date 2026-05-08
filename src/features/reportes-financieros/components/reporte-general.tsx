@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { useGetProductosQuery } from "@/features/productos/api/productosApi"
-import { useGetCategoriasQuery } from "@/features/categorias/api/categoriasApi"
+import { useGetProductosQuery } from "@/features/productos"
+import { useGetCategoriasQuery } from "@/features/categorias"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"

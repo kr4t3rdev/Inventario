@@ -1,7 +1,7 @@
 "use client"
 
 import dynamic from "next/dynamic"
-import { useDeleteProductoMutation, useGetProductosQuery } from "@/features/productos/api/productosApi"
+import { useDeleteProductoMutation, useGetProductosQuery } from "@/features/productos"
 
 import type { ColumnDef } from "@tanstack/react-table"
 import type { Producto } from "../../models/model"
@@ -27,8 +27,8 @@ import { useState, useMemo, useEffect } from "react"
 import { toast } from "sonner"
 import Link from "next/link"
 import { useGetStockPorUbicacionQuery } from "@/lib/redux/services/stockUbicacionApi"
-import { useGetAlmacenesQuery } from "@/features/almacenes/api/almacenesApi"
-import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta/api/puntosDeVentaApi"
+import { useGetAlmacenesQuery } from "@/features/almacenes"
+import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -36,12 +36,13 @@ import { Switch } from "@/components/ui/switch"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { motion, AnimatePresence } from "framer-motion"
 import { getAuthToken } from "@/lib/token"
+import { useDeleteProductoMutation, useGetProductosQuery } from "@/features/productos"
 
 // Lazy load heavy components
 const EnhancedDataTable = dynamic(() => import("@/features/productos/components/enhanced-data-table").then(mod => ({ default: mod.EnhancedDataTable })), {
   loading: () => (
     <motion.div 
-      className="h-[500px] w-full flex items-center justify-center bg-muted/30 rounded-lg border-2 border-dashed"
+      className="h-125 w-full flex items-center justify-center bg-muted/30 rounded-lg border-2 border-dashed"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
@@ -73,7 +74,7 @@ const QuickOfferDialog = dynamic(() => import("@/components/ofertas/quick-offer-
 const ProductFilters = dynamic(() => import("@/features/productos/components/product-filters").then(mod => ({ default: mod.ProductFilters })), {
   loading: () => (
     <motion.div 
-      className="h-[100px] w-full bg-muted/30 rounded-lg flex items-center justify-center border-2 border-dashed"
+      className="h-25 w-full bg-muted/30 rounded-lg flex items-center justify-center border-2 border-dashed"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
     >
@@ -254,7 +255,7 @@ export default function ProductosPage() {
     {
       accessorKey: "descripcion",
       header: "Descripción",
-      cell: ({ row }) => <div className="truncate max-w-[200px]">{row.getValue("descripcion") || "-"}</div>,
+      cell: ({ row }) => <div className="truncate max-w-50">{row.getValue("descripcion") || "-"}</div>,
     },
     {
       accessorKey: "categoria.nombre",
@@ -576,7 +577,7 @@ export default function ProductosPage() {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
             >
-              <Skeleton className="h-[500px] w-full rounded-lg" />
+              <Skeleton className="h-125 w-full rounded-lg" />
             </motion.div>
           </div>
         </SidebarInset>
@@ -653,25 +654,25 @@ export default function ProductosPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.16, duration: 0.45 }}
           >
-            <Card className="border-dashed bg-linear-to-br from-primary/[0.06] to-transparent dark:from-primary/10">
+            <Card className="border-dashed bg-linear-to-br from-primary/6 to-transparent dark:from-primary/10">
               <CardContent className="pt-4">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Productos visibles</p>
                 <p className="mt-2 text-2xl font-semibold">{stockSummary.total}</p>
               </CardContent>
             </Card>
-            <Card className="border-dashed bg-linear-to-br from-primary/[0.06] to-transparent dark:from-primary/10">
+            <Card className="border-dashed bg-linear-to-br from-primary/6 to-transparent dark:from-primary/10">
               <CardContent className="pt-4">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Stock normal</p>
                 <p className="mt-2 text-2xl font-semibold text-emerald-500">{stockSummary.stockNormal}</p>
               </CardContent>
             </Card>
-            <Card className="border-dashed bg-linear-to-br from-primary/[0.06] to-transparent dark:from-primary/10">
+            <Card className="border-dashed bg-linear-to-br from-primary/6 to-transparent dark:from-primary/10">
               <CardContent className="pt-4">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Stock bajo</p>
                 <p className="mt-2 text-2xl font-semibold text-amber-500">{stockSummary.stockBajo}</p>
               </CardContent>
             </Card>
-            <Card className="border-dashed bg-linear-to-br from-primary/[0.06] to-transparent dark:from-primary/10">
+            <Card className="border-dashed bg-linear-to-br from-primary/6 to-transparent dark:from-primary/10">
               <CardContent className="pt-4">
                 <p className="text-xs uppercase tracking-wide text-muted-foreground">Sin stock</p>
                 <p className="mt-2 text-2xl font-semibold text-destructive">{stockSummary.sinStock}</p>
@@ -699,7 +700,7 @@ export default function ProductosPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3, duration: 0.5 }}
           >
-            <Card className="mb-4 border-dashed bg-linear-to-br from-primary/[0.05] via-background to-purple-500/[0.08] dark:from-primary/10 dark:to-purple-500/10">
+            <Card className="mb-4 border-dashed bg-linear-to-br from-primary/5 via-background to-purple-500/8 dark:from-primary/10 dark:to-purple-500/10">
               <CardHeader className="pb-3">
                 <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                   <CardTitle className="flex items-center gap-2 text-lg">
@@ -729,7 +730,7 @@ export default function ProductosPage() {
                     onValueChange={handleUbicacionChange} 
                     value={ubicacionSeleccionada ? `${ubicacionSeleccionada.tipo}:${ubicacionSeleccionada.id}` : undefined}
                   >
-                    <SelectTrigger className="w-[300px] bg-background/90 transition-all duration-200 focus-visible:ring-primary/30">
+                    <SelectTrigger className="w-75 bg-background/90 transition-all duration-200 focus-visible:ring-primary/30">
                       <SelectValue placeholder="Seleccionar ubicación" />
                     </SelectTrigger>
                     <SelectContent>
@@ -796,7 +797,7 @@ export default function ProductosPage() {
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="h-[500px] w-full flex items-center justify-center bg-muted/30 rounded-lg border-2 border-dashed"
+              className="h-125 w-full flex items-center justify-center bg-muted/30 rounded-lg border-2 border-dashed"
             >
               <div className="flex flex-col items-center gap-3">
                 <motion.div

@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react"
 import { motion, useReducedMotion } from "framer-motion"
-import { useGetVentasQuery } from "@/features/ventas/api/ventasApi"
+import { useGetVentasQuery } from "@/features/ventas"
 import { useGetVentaServiciosQuery } from "@/features/venta-servicios/api/ventaServiciosApi"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"

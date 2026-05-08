@@ -16,7 +16,7 @@ import { sileo } from '@/lib/sileo-shim'
 import { Skeleton } from "@/components/ui/skeleton"
 import { v4 } from "uuid"
 import { useAddGastosDEMutation, useGetGastosDEQuery, useUpdateGastosDEMutation } from "@/lib/redux/services/gastosDEApi"
-import { useGetVendorsQuery } from "@/features/vendors/api/vendorsApi"
+import { useGetVendorsQuery } from "@/features/vendors"
 import { useGetGastoConceptosQuery, useGetGastoElementosQuery } from "@/lib/redux/services/gastosConceptosApi"
 import { VendorCombobox } from "./VendorCombobox"
 

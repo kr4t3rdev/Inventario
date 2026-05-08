@@ -1,7 +1,7 @@
 'use client'
 
 import { useParams } from "next/navigation"
-import { useGetMermaQuery } from "@/features/mermas/api/mermasApi"
+import { useGetMermaQuery } from "@/features/mermas"
 import { MermaForm } from "@/components/mermas/merma-form"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"

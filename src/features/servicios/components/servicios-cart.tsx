@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { formatCurrency } from "@/lib/utils"
 import { useAddVentaServicioMutation } from "@/features/venta-servicios/api/ventaServiciosApi"
-import { useGetClientesQuery } from "@/features/clientes/api/ClienteApi"
+import { useGetClientesQuery } from "@/features/clientes"
 import { toast } from "sonner"
 import { CreditCard, Plus, Minus, X, ShoppingCart } from "lucide-react"
 

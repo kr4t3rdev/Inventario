@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/dialog"
 import { ProductPhotoUpload } from "./product-photo-upload"
 
-import { useRestockProductoMutation } from "@/features/productos/api/productosApi"
+import { useRestockProductoMutation } from "@/features/productos"
 import { useGetMonedasQuery, useGetCuentasBancariasQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { TasaCambioDialog } from "@/features/contabilidad/components/tasa-cambio-dialog"
 import { RestockRequest } from "@/app/models/model"

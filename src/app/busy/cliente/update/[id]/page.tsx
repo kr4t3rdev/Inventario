@@ -3,10 +3,9 @@
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useParams } from "next/navigation"
-import { useGetAlmacenQuery } from "@/features/almacenes/api/almacenesApi"
-import { AlmacenForm } from "@/components/almacen/almacen-form"
-import { useGetClienteQuery } from "@/features/clientes/api/ClienteApi"
-import { ClienteForm } from "@/components/clientes/clientes-form"
+import { AlmacenForm, useGetAlmacenQuery } from "@/features/almacenes"
+import { useGetClienteQuery } from "@/features/clientes"
+import { ClienteForm } from "@/features/clientes"
 
 export default function EditarClientePage() {
   const params = useParams()

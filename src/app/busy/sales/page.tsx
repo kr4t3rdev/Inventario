@@ -3,12 +3,11 @@
 import { useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { PlusCircle, TrendingUp, Sparkles, Loader2 } from "lucide-react"
-import { useGetVentasQuery, useDeleteVentaMutation } from "@/features/ventas/api/ventasApi"
+import { PlusCircle, TrendingUp, Sparkles } from "lucide-react"
+import { VentasTable, useDeleteVentaMutation, useGetVentasQuery } from "@/features/ventas"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-const VentasTable = dynamic(() => import('@/components/ventas/ventas-table').then(mod => ({default:mod.VentasTable})))
 import { toast } from "sonner"
 import {
   AlertDialog,
@@ -20,7 +19,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import dynamic from "next/dynamic"
 
 export default function VentasPage() {
   const { data: ventas, isLoading, error } = useGetVentasQuery()

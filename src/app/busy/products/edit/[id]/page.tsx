@@ -6,8 +6,7 @@ import { AlertCircle, Boxes, History, Package, Sparkles, TrendingUp } from 'luci
 
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useGetProductoQuery } from '@/features/productos/api/productosApi'
-import { ProductoForm } from '@/features/productos/components/productos-form'
+import { useGetProductoQuery, ProductoForm } from '@/features/productos'
 import { RestockDialog } from '@/features/productos/components/restock-dialog'
 import { RestockHistoryDialog } from '@/features/productos/components/restock-history-dialog'
 import { CostHistoryDialog } from '@/features/productos/components/cost-history-dialog'

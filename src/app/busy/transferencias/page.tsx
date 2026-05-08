@@ -17,7 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { useDeleteTransferenciaMutation, useGetTransferenciasQuery } from "@/features/transferencias/api/transferenciasApi"
+import { useDeleteTransferenciaMutation, useGetTransferenciasQuery } from "@/features/transferencias"
 import { TransferenciasTable } from "@/components/transferencias/transferencias-table"
 
 export default function TransferenciasPage() {

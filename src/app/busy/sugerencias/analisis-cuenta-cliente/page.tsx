@@ -40,7 +40,7 @@ import {
   PageTransition
 } from '@/components/ui/animations';
 
-import { useGetClientesQuery } from "@/features/clientes/api/ClienteApi"
+import { useGetClientesQuery } from "@/features/clientes"
 import { useGetCuentasPorCobrarQuery } from "@/lib/redux/services/cuentasPorCobrarApi"
 import { useGetFacturasQuery } from "@/lib/redux/services/facturasApi"
 import { Cliente, CuentaPorCobrar } from "@/app/models/model"

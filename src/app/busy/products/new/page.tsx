@@ -1,7 +1,7 @@
 "use client"
 
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { ProductoForm } from "@/features/productos/components/productos-form"
+import { ProductoForm } from "@/features/productos"
 import { motion } from "framer-motion"
 import { Boxes, Sparkles } from "lucide-react"
 

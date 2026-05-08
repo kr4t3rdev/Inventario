@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { categoriasApi } from '@/features/categorias/api/categoriasApi';
+import { categoriasApi } from '@/features/categorias';
 import { useAppDispatch } from '@/lib/redux/hooks';
 import { validateCLASSection, validateCLASSpecific, CLASClassifierData } from '@/lib/clas-classifier';
 

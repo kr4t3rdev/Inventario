@@ -30,15 +30,15 @@ import { sileo } from '@/lib/sileo-shim'
 import {
   useAddProductoMutation,
   useUpdateProductoMutation,
-} from '@/features/productos/api/productosApi'
-import { useGetUnidadesQuery } from '@/features/unidades/api/unidadesApi'
-import { useGetAlmacenesQuery } from '@/features/almacenes/api/almacenesApi'
+} from '@/features/productos'
+import { useGetUnidadesQuery } from '@/features/unidades'
+import { useGetAlmacenesQuery } from '@/features/almacenes'
 import { useGetListasPreciosQuery } from '@/features/listas-precios/api/listasPreciosApi'
-import { useGetVendorsQuery } from '@/features/vendors/api/vendorsApi'
+import { useGetVendorsQuery } from '@/features/vendors'
 import {
   useGetCategoriasQuery,
   useGetSubcategoriasQuery,
-} from '@/features/categorias/api/categoriasApi'
+} from '@/features/categorias'
 import {
   buildProductBusinessCodePreview,
   DEFAULT_PARENT_PREVIEW_SURTIDO,

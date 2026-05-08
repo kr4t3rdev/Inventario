@@ -3,7 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { useGetMermasQuery, useDeleteMermaMutation } from "@/features/mermas/api/mermasApi"
+import { useGetMermasQuery, useDeleteMermaMutation } from "@/features/mermas"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, AlertTriangle, Sparkles, Loader2 } from "lucide-react"

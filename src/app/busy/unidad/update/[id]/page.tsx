@@ -1,10 +1,10 @@
 "use client"
 
-import { useGetUnidadQuery } from "@/features/unidades/api/unidadesApi"
+import { useGetUnidadQuery } from "@/features/unidades"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useParams } from "next/navigation"
-import { UnidadForm } from "@/components/unidad/unidad-form"
+import { UnidadForm } from "@/features/unidades"
 import { motion } from "framer-motion"
 import { Scale, AlertCircle, Sparkles, ArrowLeft } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"

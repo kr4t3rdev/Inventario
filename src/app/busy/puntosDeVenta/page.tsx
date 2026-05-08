@@ -18,7 +18,7 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
 import dynamic from 'next/dynamic'
 
-import {  useDeletePuntoDeVentaMutation, useGetPuntosDeVentaQuery } from '@/features/puntos-venta/api/puntosDeVentaApi'
+import { useDeletePuntoDeVentaMutation, useGetPuntosDeVentaQuery } from '@/features/puntos-venta'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import Link from 'next/link'

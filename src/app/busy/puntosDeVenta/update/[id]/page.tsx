@@ -1,9 +1,9 @@
 "use client"
 
-import { PtoVentaForm } from "@/components/PtoVenta/pvtoVenta-form"
+import { PtoVentaForm } from "@/features/puntos-venta"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useGetPuntoDeVentaQuery } from "@/features/puntos-venta/api/puntosDeVentaApi"
+import { useGetPuntoDeVentaQuery } from "@/features/puntos-venta"
 import { useParams } from "next/navigation"
 import { motion } from "framer-motion"
 import { Store, AlertCircle, Sparkles, ArrowLeft } from "lucide-react"

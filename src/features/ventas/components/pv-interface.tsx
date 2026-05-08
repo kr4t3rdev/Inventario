@@ -14,11 +14,11 @@ import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta/api/puntosDeVentaApi"
+import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta"
 import { useGetProductosPorUbicacionQuery } from "@/lib/redux/services/productosUbicacionApi"
-import { useAddVentaMutation } from "@/features/ventas/api/ventasApi"
-import { useGetClientesQuery } from "@/features/clientes/api/ClienteApi"
-import { useGetCategoriasQuery } from "@/features/categorias/api/categoriasApi"
+import { useAddVentaMutation } from "@/features/ventas"
+import { useGetClientesQuery } from "@/features/clientes"
+import { useGetCategoriasQuery } from "@/features/categorias"
 import { useGetAnticiposDisponiblesQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
@@ -869,7 +869,8 @@ export function VentaInterface() {
                         >
                           {producto.fotos && producto.fotos.length > 0 ? (
                             <motion.div
-                              className="w-12 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-muted"
+                              className="w-12 h-12 rounded-lg overflow-hidden bg-muted"
+                              style={{ flexShrink: 0 }}
                               whileHover={{ scale: 1.05 }}
                             >
                               <img 
@@ -880,7 +881,8 @@ export function VentaInterface() {
                             </motion.div>
                           ) : (
                             <motion.div
-                              className="w-12 h-12 bg-linear-to-br from-primary/20 to-purple-600/20 rounded-lg flex items-center justify-center flex-shrink-0"
+                              className="w-12 h-12 bg-linear-to-br from-primary/20 to-purple-600/20 rounded-lg flex items-center justify-center"
+                              style={{ flexShrink: 0 }}
                               whileHover={{ scale: 1.05, rotate: 5 }}
                             >
                               <Package className="h-5 w-5 text-primary" />
@@ -901,7 +903,7 @@ export function VentaInterface() {
                             </div>
                           </div>
                           
-                          <div className="text-right flex-shrink-0">
+                          <div className="text-right" style={{ flexShrink: 0 }}>
                             <motion.p 
                               className="text-lg font-bold text-primary"
                               key={getPrecioEfectivo(producto, clienteListaPrecioId)}
@@ -977,7 +979,7 @@ export function VentaInterface() {
                               <td className="p-3">
                                 <div className="font-medium">{highlightText(producto.nombre, debouncedSearchTerm)}</div>
                                 {producto.descripcion && (
-                                  <div className="text-sm text-muted-foreground truncate max-w-[200px]">
+                                  <div className="text-sm text-muted-foreground truncate" style={{ maxWidth: "200px" }}>
                                     {producto.descripcion}
                                   </div>
                                 )}
@@ -1183,7 +1185,8 @@ export function VentaInterface() {
                     value={observaciones}
                     onChange={(e) => setObservaciones(e.target.value)}
                     placeholder="Notas de la venta, comentarios, condiciones, etc."
-                    className="transition-all duration-200 focus:scale-[1.01] min-h-[80px]"
+                    className="transition-all duration-200 focus:scale-[1.01]"
+                    style={{ minHeight: "80px" }}
                   />
                 </div>
               </motion.div>

@@ -16,9 +16,9 @@ import { sileo } from '@/lib/sileo-shim'
 import { Skeleton } from "@/components/ui/skeleton"
 import { DollarSign, Calculator } from "lucide-react"
 
-import { useGetProductosQuery } from "@/features/productos/api/productosApi"
-import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta/api/puntosDeVentaApi"
-import { useAddVentaMutation, useUpdateVentaMutation } from "@/features/ventas/api/ventasApi"
+import { useGetProductosQuery } from "@/features/productos"
+import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta"
+import { useAddVentaMutation, useUpdateVentaMutation } from "@/features/ventas"
 import { useGetMonedasQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { TasaCambioDialog } from "@/features/contabilidad/components/tasa-cambio-dialog"
 import { useDispatch } from "react-redux"

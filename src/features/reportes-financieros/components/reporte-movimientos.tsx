@@ -1,10 +1,10 @@
 "use client"
 
 import { useMemo, useState } from "react"
-import { useGetVentasQuery } from "@/features/ventas/api/ventasApi"
-import { useGetMermasQuery } from "@/features/mermas/api/mermasApi"
-import { useGetTransferenciasQuery } from "@/features/transferencias/api/transferenciasApi"
-import { useGetProductosQuery } from "@/features/productos/api/productosApi"
+import { useGetVentasQuery } from "@/features/ventas"
+import { useGetMermasQuery } from "@/features/mermas"
+import { useGetTransferenciasQuery } from "@/features/transferencias"
+import { useGetProductosQuery } from "@/features/productos"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -221,7 +221,7 @@ export function ReporteMovimientos() {
       <StaggerItem className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex flex-col gap-4 md:flex-row md:items-center">
           <Select value={tipoMovimiento} onValueChange={setTipoMovimiento}>
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-50">
               <SelectValue placeholder="Tipo de movimiento" />
             </SelectTrigger>
             <SelectContent>
@@ -232,7 +232,7 @@ export function ReporteMovimientos() {
           </Select>
 
           <Select value={productoId} onValueChange={setProductoId}>
-            <SelectTrigger className="w-[250px]">
+            <SelectTrigger className="w-62.5">
               <SelectValue placeholder="Filtrar por producto" />
             </SelectTrigger>
             <SelectContent>
@@ -279,7 +279,7 @@ export function ReporteMovimientos() {
                   : "Evolución de Transferencias"}
             </h3>
             {isLoading ? (
-              <Skeleton className="h-[300px] w-full" />
+              <Skeleton className="h-75 w-full" />
             ) : (
               <ResponsiveContainer width="100%" height={300}>
                 <LineChart data={chartData}>
@@ -304,7 +304,7 @@ export function ReporteMovimientos() {
             <div className="rounded-md border-0">
               {isLoading ? (
                 <div className="p-4">
-                  <Skeleton className="h-[300px] w-full" />
+                  <Skeleton className="h-75 w-full" />
                 </div>
               ) : tipoMovimiento === "ventas" ? (
                 <Table>

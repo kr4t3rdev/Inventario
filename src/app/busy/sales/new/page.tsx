@@ -1,6 +1,6 @@
 "use client"
 
-import { VentaInterface } from "@/components/ventas/pv-interface"
+import { VentaInterface } from "@/features/ventas"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { motion } from "framer-motion"
 import { TrendingUp, Sparkles, ArrowLeft, ShoppingBag } from "lucide-react"
