@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { 
@@ -41,7 +41,7 @@ import {
 } from '@/components/ui/animations';
 
 import { useGetClientesQuery } from "@/features/clientes"
-import { useGetCuentasPorCobrarQuery } from "@/lib/redux/services/cuentasPorCobrarApi"
+import { getCuentasPorCobrarAction } from "@/features/contabilidad"
 import { useGetFacturasQuery } from "@/lib/redux/services/facturasApi"
 import { Cliente, CuentaPorCobrar } from "@/app/models/model"
 
@@ -52,7 +52,15 @@ export default function AnalisisCuentaClientePage() {
 
   // Queries
   const { data: clientes, isLoading: isLoadingClientes } = useGetClientesQuery()
-  const { data: cuentas, isLoading: isLoadingCuentas } = useGetCuentasPorCobrarQuery()
+  const [cuentas, setCuentas] = useState<any[]>([])
+  const [isLoadingCuentas, setIsLoadingCuentas] = useState(true)
+
+  useEffect(() => {
+    getCuentasPorCobrarAction({}).then(r => {
+      if (r.success) setCuentas((r.data?.cuentas ?? []) as any)
+      setIsLoadingCuentas(false)
+    }).catch(() => setIsLoadingCuentas(false))
+  }, [])
   
   // Filter invoices by client if one is selected
   const { data: facturasData, isLoading: isLoadingFacturas } = useGetFacturasQuery(

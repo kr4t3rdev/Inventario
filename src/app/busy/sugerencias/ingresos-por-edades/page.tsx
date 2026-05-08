@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useEffect, useState } from "react"
 import { 
   Download,
   DollarSign
@@ -20,11 +20,23 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 
-import { useGetIngresosPorEdadesQuery } from "@/lib/redux/services/cuentasPorCobrarApi"
+import { getAuthToken } from "@/lib/token"
 import { formatCurrency } from "@/lib/utils"
 
 export default function IngresosPorEdadesPage() {
-  const { data, isLoading } = useGetIngresosPorEdadesQuery()
+  const [data, setData] = useState<{ reporte: any[]; facturas: any[] } | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const token = getAuthToken()
+    fetch('/api/sugerencias/ingresos-por-edades', {
+      headers: token ? { Authorization: token } : {},
+    }).then(res => res.ok ? res.json() : null).then(json => {
+      setData(json)
+      setIsLoading(false)
+    }).catch(() => setIsLoading(false))
+  }, [])
+
   const reporte = data?.reporte
   const facturas = data?.facturas
 

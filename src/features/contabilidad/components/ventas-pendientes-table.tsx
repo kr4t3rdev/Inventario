@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState, useMemo } from "react"
+import React, { useState, useMemo, useEffect } from "react"
 import { motion, useReducedMotion } from "framer-motion"
 import {
   Table,
@@ -36,7 +36,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import {
   useGetVentasPendientesQuery
 } from "@/features/contabilidad/api/contabilidadApi"
-import { useGetCuentasPorCobrarQuery } from "@/lib/redux/services/cuentasPorCobrarApi"
+import { getCuentasPorCobrarAction } from "@/features/contabilidad"
 import type { VentaPendiente } from "@/app/models/model"
 import { cn } from "@/lib/utils"
 import {
@@ -91,7 +91,15 @@ export function VentasPendientesTable({
     limit: pageSize
   })
 
-  const { data: cuentasPorCobrarData, isLoading: isLoadingCuentas } = useGetCuentasPorCobrarQuery()
+  const [cuentasPorCobrarData, setCuentasPorCobrarData] = useState<any[]>([])
+  const [isLoadingCuentas, setIsLoadingCuentas] = useState(true)
+
+  useEffect(() => {
+    getCuentasPorCobrarAction({}).then(r => {
+      if (r.success) setCuentasPorCobrarData((r.data?.cuentas ?? []) as any)
+      setIsLoadingCuentas(false)
+    }).catch(() => setIsLoadingCuentas(false))
+  }, [])
 
   const isLoading = isLoadingVentas || isLoadingCuentas
   const error = errorVentas

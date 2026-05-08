@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { motion, useReducedMotion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -23,7 +23,7 @@ import { VentasPendientesTable } from "./ventas-pendientes-table"
 import { ReconciliacionVentasForm } from "./reconciliacion-ventas-form"
 import { ResumenReconciliacion } from "./resumen-reconciliacion"
 import { useGetVentasPendientesQuery, useGetHistorialReconciliacionVentasQuery } from "@/features/contabilidad/api/contabilidadApi"
-import { useGetCuentasPorCobrarQuery } from "@/lib/redux/services/cuentasPorCobrarApi"
+import { getCuentasPorCobrarAction } from "@/features/contabilidad"
 import type { VentaPendiente, ReconciliacionVenta } from "@/app/models/model"
 import { cn } from "@/lib/utils"
 import {
@@ -78,7 +78,13 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
     fechaFin, fechaInicio, cuentaId
   })
   const ventasReconciliadas: ReconciliacionVenta[] = historial_ventas_data.reconciliaciones || []
-  const { data: cuentasPorCobrar = [] } = useGetCuentasPorCobrarQuery()
+  const [cuentasPorCobrar, setCuentasPorCobrar] = useState<any[]>([])
+
+  useEffect(() => {
+    getCuentasPorCobrarAction({}).then(r => {
+      if (r.success) setCuentasPorCobrar((r.data?.cuentas ?? []) as any[])
+    }).catch(() => {})
+  }, [])
 
   const { data: allVentasData = { pagination:{}, ventas:[]} } = useGetVentasPendientesQuery({
     fechaInicio,

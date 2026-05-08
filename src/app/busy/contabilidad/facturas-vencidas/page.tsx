@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useEffect, useState } from "react"
 import { Download, FileSpreadsheet, FileIcon as FilePdf, ArrowLeft } from "lucide-react"
 import jsPDF from "jspdf"
 import autoTable from "jspdf-autotable"
@@ -26,7 +26,7 @@ import { PageTransition, StaggerContainer, StaggerItem, AnimatedCard } from "@/c
 import { cn } from "@/lib/utils"
 import { ContabilidadBreadcrumb } from "@/features/contabilidad/components/contabilidad-breadcrumb"
 
-import { useGetIngresosPorEdadesQuery } from "@/lib/redux/services/cuentasPorCobrarApi"
+import { getAuthToken } from "@/lib/token"
 import { formatCurrency } from "@/lib/utils"
 import Link from "next/link"
 
@@ -34,7 +34,19 @@ import Link from "next/link"
 const surfaceCardClass = "bg-white/80 dark:bg-slate-900/10 backdrop-blur-xl border-slate-200/60 dark:border-slate-800/60 shadow-sm"
 
 export default function FacturasVencidasPage() {
-  const { data, isLoading } = useGetIngresosPorEdadesQuery()
+  const [data, setData] = useState<{ facturas: any[] } | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    const token = getAuthToken()
+    fetch('/api/sugerencias/ingresos-por-edades', {
+      headers: token ? { Authorization: token } : {},
+    }).then(res => res.ok ? res.json() : null).then(json => {
+      setData(json)
+      setIsLoading(false)
+    }).catch(() => setIsLoading(false))
+  }, [])
+
   const facturas = data?.facturas
 
   // Calculate totals for footer
