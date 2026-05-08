@@ -38,13 +38,6 @@ export default function TransferenciasPage() {
       setTransferenciaToDelete(null)
     })
   }
-    } catch (error) {
-      console.error("Error al eliminar la transferencia:", error)
-      toast.error("Hubo un error al eliminar la transferencia.")
-    } finally {
-      setTransferenciaToDelete(null)
-    }
-  }
 
   return (
     <SidebarProvider>
@@ -96,7 +89,6 @@ export default function TransferenciasPage() {
           <TransferenciasTable 
             transferencias={transferencias || []} 
             isLoading={isLoading} 
-            error={error}
             onDelete={setTransferenciaToDelete}
           />
 
