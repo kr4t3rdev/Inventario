@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState, useTransition } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { Package, PlusCircle } from "lucide-react"
@@ -17,24 +17,27 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { useDeleteTransferenciaMutation, useGetTransferenciasQuery } from "@/features/transferencias"
-import { TransferenciasTable } from "@/features/transferencias"
+import { getTransferenciasAction, deleteTransferenciaAction } from "@/features/transferencias"
+import { TransferenciasTable } from "@/features/transferencias/components/transferencias-table"
 
 export default function TransferenciasPage() {
-  const { data: transferenciasData, isLoading, error } = useGetTransferenciasQuery()
-  const transferencias = transferenciasData?.transferencias || []
+  const [transferencias, setTransferencias] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isPending, startTransition] = useTransition()
+
+  useEffect(() => { async function f() { setIsLoading(true); const r=await getTransferenciasAction(); if(r.success) setTransferencias(r.data?.transferencias??[]); setIsLoading(false); } f(); }, [])
+
   const [transferenciaToDelete, setTransferenciaToDelete] = useState<string | null>(null)
-  const [deleteTransferencia] = useDeleteTransferenciaMutation()
 
   const handleConfirmDelete = async () => {
     if (!transferenciaToDelete) return
-    try {
-      const result = await deleteTransferencia(transferenciaToDelete).unwrap()
-      if (result.message) {
-        toast.success(result.message)
-      } else {
-        toast.success("La transferencia ha sido eliminada exitosamente y el stock ha sido restaurado.")
-      }
+    startTransition(async () => {
+      const r=await deleteTransferenciaAction(transferenciaToDelete)
+      if(r.success) { toast("Transferencia cancelada exitosamente."); const ref=await getTransferenciasAction(); if(ref.success) setTransferencias(ref.data?.transferencias??[]) }
+      else toast(r.error?.message||"Error al cancelar")
+      setTransferenciaToDelete(null)
+    })
+  }
     } catch (error) {
       console.error("Error al eliminar la transferencia:", error)
       toast.error("Hubo un error al eliminar la transferencia.")

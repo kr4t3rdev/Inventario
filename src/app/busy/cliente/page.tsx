@@ -19,28 +19,14 @@ const Cliente = () => {
     const [clienteToDelete, setClienteToDelete] = useState<string | null>(null)
     const [isPending, startTransition] = useTransition()
 
-    useEffect(() => {
-      async function fetchData() {
-        setIsLoading(true)
-        const result = await getClientesAction()
-        if (result.success) setClientes(result.data ?? [])
-        setIsLoading(false)
-      }
-      fetchData()
-    }, [])
+    useEffect(() => { async function f() { setIsLoading(true); const r=await getClientesAction(); if(r.success) setClientes(r.data??[]); setIsLoading(false); } f(); }, [])
 
     const handleDelete = async () => {
       if (!clienteToDelete) return
-
       startTransition(async () => {
-        const result = await deleteClienteAction(clienteToDelete)
-        if (result.success) {
-          toast("El cliente ha sido eliminado exitosamente.")
-          const refresh = await getClientesAction()
-          if (refresh.success) setClientes(refresh.data ?? [])
-        } else {
-          toast(result.error?.message || "Hubo un error al eliminar el cliente.")
-        }
+        const r=await deleteClienteAction(clienteToDelete)
+        if(r.success) { toast("El cliente ha sido eliminado exitosamente."); const ref=await getClientesAction(); if(ref.success) setClientes(ref.data??[]) }
+        else toast(r.error?.message||"Hubo un error al eliminar el cliente.")
         setClienteToDelete(null)
       })
     }
@@ -249,7 +235,7 @@ const Cliente = () => {
                           >
                             <DataTable
                               columns={columns}
-                              data={clientes || []}
+                              data={clientes}
                               searchColumn="nombre"
                               searchPlaceholder="Buscar clientes..."
                             />

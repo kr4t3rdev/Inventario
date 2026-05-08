@@ -1,11 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useDeleteServiciosMutation, useGetServiciosQuery } from '@/features/servicios'
+import { getServiciosAction, deleteServicioAction } from '@/features/servicios'
 import { ColumnDef } from '@tanstack/react-table'
 import { Pencil, Plus, Trash2, ShoppingCart, Search, Package, CheckCircle, Truck } from 'lucide-react'
 import Link from 'next/link'
@@ -113,10 +113,14 @@ const ventaColumns: ColumnDef<unknown>[] = [
  * @returns {JSX.Element} Página de servicios
  */
 const Servicio = () => {
-  const { data: servicios, isLoading } = useGetServiciosQuery()
+  const [servicios, setServicios] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isPending, startTransition] = useTransition()
+
+  useEffect(() => { async function f() { setIsLoading(true); const r=await getServiciosAction(); if(r.success) setServicios(r.data??[]); setIsLoading(false); } f(); }, [])
+
   const { data: ventaServicios, isLoading: isLoadingVentas } = useGetVentaServiciosQuery()
-  const [deleteServicios] = useDeleteServiciosMutation()
-  
+
   const [servicioToDelete, setServicioToDelete] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [cart, setCart] = useState<ServicioItem[]>([])
@@ -136,13 +140,12 @@ const Servicio = () => {
 
   const handleDeleteServicio = async () => {
     if (servicioToDelete) {
-      try {
-        await deleteServicios(servicioToDelete).unwrap()
-        toast.success('Servicio eliminado exitosamente')
+      startTransition(async () => {
+        const r=await deleteServicioAction(servicioToDelete)
+        if(r.success) { toast.success('Servicio eliminado exitosamente'); const ref=await getServiciosAction(); if(ref.success) setServicios(ref.data??[]) }
+        else toast.error(r.error?.message||'Error al eliminar el servicio')
         setServicioToDelete(null)
-      } catch {
-        toast.error('Error al eliminar el servicio')
-      }
+      })
     }
   }
 

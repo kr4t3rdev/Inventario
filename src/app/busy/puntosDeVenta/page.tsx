@@ -18,8 +18,8 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
 import dynamic from 'next/dynamic'
 
-import { useDeletePuntoDeVentaMutation, useGetPuntosDeVentaQuery } from '@/features/puntos-venta'
-import { useState } from 'react'
+import { getPuntosDeVentaAction, deletePuntoDeVentaAction } from '@/features/puntos-venta'
+import { useEffect, useState, useTransition } from 'react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 import { 
@@ -84,23 +84,24 @@ const DataTable = dynamic(() => import('@/components/data-table').then(mod => ({
 })
 
 export default function PuntoDeVenta() {
+  const [pv, setPV] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isPending, startTransition] = useTransition()
 
-  const [ deletePuntoDeVenta ] = useDeletePuntoDeVentaMutation()
+  useEffect(() => { async function f() { setIsLoading(true); const r=await getPuntosDeVentaAction(); if(r.success) setPV(r.data??[]); setIsLoading(false); } f(); }, [])
+
+  const [deletePuntoDeVenta] = useState<string | null>(null) as any
   const [ puntoDeVentaToDelete, setPuntoDeVentaToDelete ] = useState<string | null>(null)
-  const { data:ptoDeVenta, isLoading, error } = useGetPuntosDeVentaQuery()
 
   const handleDeletePuntoVenta = async () => {
     if(!puntoDeVentaToDelete) return
-
-    try {
-      await deletePuntoDeVenta(puntoDeVentaToDelete).unwrap()
-      toast('El Punto de Venta ha sido eliminado correctamente.')
-    } catch (error) {
-      console.error('Error al eliminar el Punto de Venta:', error)
-      toast('Hubo un error al eliminar el Punto de Venta.')          
-    } finally {
+    startTransition(async () => {
+      const r=await deletePuntoDeVentaAction(puntoDeVentaToDelete)
+      if(r.success) { toast('El punto de venta ha sido eliminado exitosamente.'); const ref=await getPuntosDeVentaAction(); if(ref.success) setPV(ref.data??[]) }
+      else toast(r.error?.message||'Hubo un error al eliminar el punto de venta.')
       setPuntoDeVentaToDelete(null)
-    }
+    })
+  }
   }
 
   const columns: ColumnDef<unknown>[] = [
@@ -346,7 +347,7 @@ export default function PuntoDeVenta() {
             >
               <DataTable
                 columns={columns}
-                data={ptoDeVenta || []}
+                data={pv}
                 searchColumn="nombre"
                 searchPlaceholder="Buscar punto de venta..."
               />

@@ -69,21 +69,23 @@ function PulseSkeleton({ className }: { className?: string }) {
 
 const Vendor = () => {
 
-  // Datos cargados via getVendorsAction en useEffect
-  const [ vendorToDelete, setVendorToDelete ] = useState<string | null>(null)
+  const [vendors, setVendors] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [vendorToDelete, setVendorToDelete ] = useState<string | null>(null)
   const [ vendorToView, setVendorToView ] = useState<any>(null)
-  const [ deleteVendor ] = useDeleteVendorMutation()
+  const [isPending, startTransition] = useTransition()
+
+  useEffect(() => { async function f() { setIsLoading(true); const r=await getVendorsAction(); if(r.success) setVendors(r.data??[]); setIsLoading(false); } f(); }, [])
 
   const handleDelete = async () => {
     if (!vendorToDelete) return
-    try {          
-      await deleteVendor(vendorToDelete).unwrap()
-      toast('El proveedor ha sido eliminado exitosamente.')
-    } catch (error) {
-      toast('Hubo un error al eliminar el proveedor.')
-    } finally {
+    startTransition(async () => {
+      const r=await deleteVendorAction(vendorToDelete)
+      if(r.success) { toast("El proveedor ha sido eliminado exitosamente."); const ref=await getVendorsAction(); if(ref.success) setVendors(ref.data??[]) }
+      else toast(r.error?.message||"Hubo un error al eliminar el proveedor.")
       setVendorToDelete(null)
-    }
+    })
+  }
   }
 
   const columns: ColumnDef<unknown>[] = [

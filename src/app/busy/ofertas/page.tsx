@@ -1,16 +1,20 @@
 "use client"
 
 import Link from "next/link"
-import { useGetOfertasQuery } from "@/features/ofertas"
+import { useEffect, useState } from "react"
+import { getOfertasAction } from "@/features/ofertas"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, Tag, Sparkles, Loader2 } from "lucide-react"
-import { OfertasTable } from "@/features/ofertas"
+import { OfertasTable } from "@/features/ofertas/components/ofertas-table"
 import { motion } from "framer-motion"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export default function OfertasPage() {
-  const { data: ofertas, isLoading, error } = useGetOfertasQuery()
+  const [ofertas, setOfertas] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => { async function f() { setIsLoading(true); const r=await getOfertasAction(); if(r.success) setOfertas(r.data??[]); setIsLoading(false); } f(); }, [])
 
   return (
     <SidebarProvider>

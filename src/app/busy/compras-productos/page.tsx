@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { Plus, ShoppingCart, Sparkles, Loader2, Eye, Pencil, Trash2, Package } from 'lucide-react'
 import type { ColumnDef } from '@tanstack/react-table'
@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useGetComprasProductosQuery, useDeleteCompraProductoMutation } from '@/features/compras-productos'
+import { getComprasProductosAction, deleteCompraProductoAction } from '@/features/compras-productos'
 import type { CompraDocumento } from '@/app/models/model'
 import {
   Dialog,
@@ -28,11 +28,12 @@ import { toast } from 'sonner'
  * @returns {JSX.Element} Vista con tabla de compras
  */
 export default function ComprasProductosPage() {
-  const { data, isLoading } = useGetComprasProductosQuery()
-  const compras = data?.compras || []
-  const [deleteCompra] = useDeleteCompraProductoMutation()
-  
-  // Estados para los diálogos
+  const [compras, setCompras] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isPending, startTransition] = useTransition()
+
+  useEffect(() => { async function f() { setIsLoading(true); const r=await getComprasProductosAction(); if(r.success) setCompras(r.data?.compras??[]); setIsLoading(false); } f(); }, [])
+
   const [selectedCompra, setSelectedCompra] = useState<CompraDocumento | null>(null)
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
@@ -49,15 +50,13 @@ export default function ComprasProductosPage() {
 
   const confirmDelete = async () => {
     if (!selectedCompra) return
-    
-    try {
-      await deleteCompra(selectedCompra.compraDocumentoId).unwrap()
-      toast.success('Compra eliminada exitosamente')
+    startTransition(async () => {
+      const r = await deleteCompraProductoAction(selectedCompra.compraDocumentoId)
+      if (r.success) { toast.success('Compra eliminada exitosamente'); const ref=await getComprasProductosAction(); if(ref.success) setCompras(ref.data?.compras??[]) }
+      else toast.error(r.error?.message||'Error al eliminar la compra')
       setIsDeleteDialogOpen(false)
       setSelectedCompra(null)
-    } catch (error) {
-      toast.error('Error al eliminar la compra')
-    }
+    })
   }
 
   const columns = useMemo<ColumnDef<CompraDocumento>[]>(() => ([

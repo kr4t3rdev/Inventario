@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState, useTransition } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { useGetMermasQuery, useDeleteMermaMutation } from "@/features/mermas"
+import { getMermasAction, deleteMermaAction } from "@/features/mermas"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, AlertTriangle, Sparkles, Loader2 } from "lucide-react"
@@ -22,23 +22,23 @@ import {
 import dynamic from "next/dynamic"
 
 export default function MermasPage() {
-  const { data: mermas, isLoading, error } = useGetMermasQuery()
-  const [deleteMerma] = useDeleteMermaMutation()
+  const [mermas, setMermas] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isPending, startTransition] = useTransition()
+
+  useEffect(() => { async function f() { setIsLoading(true); const r=await getMermasAction(); if(r.success) setMermas(r.data??[]); setIsLoading(false); } f(); }, [])
 
   const [mermaToDelete, setMermaToDelete] = useState<string | null>(null)
 
   const handleDelete = async () => {
     if (!mermaToDelete) return
-
-    try {
-      await deleteMerma(mermaToDelete).unwrap()
-      toast("La merma ha sido eliminada exitosamente.")
-    } catch (error) {
-      console.error("Error al eliminar la merma:", error)
-      toast("Hubo un error al eliminar la merma.")
-    } finally {
+    startTransition(async () => {
+      const r=await deleteMermaAction(mermaToDelete)
+      if(r.success) { toast("Merma eliminada exitosamente."); const ref=await getMermasAction(); if(ref.success) setMermas(ref.data??[]) }
+      else toast(r.error?.message||"Error al eliminar la merma.")
       setMermaToDelete(null)
-    }
+    })
+  }
   }
 
   return (
