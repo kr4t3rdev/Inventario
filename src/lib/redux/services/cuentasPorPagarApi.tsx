@@ -61,6 +61,12 @@ export const cuentasPorPagarApi = apiSlice.injectEndpoints({
   })
 })
 
+/**
+ * @deprecated Usar Server Actions desde `@/features/contabilidad` en su lugar:
+ *   - `getCuentasPorPagarAction` → reemplaza `useGetCuentasPorPagarQuery`
+ *   - `createCuentaPorPagarAction` → reemplaza `useCreateCuentaPorPagarMutation`
+ *   - `pagarCuentaPorPagarAction` → reemplaza `usePagarCuentaPorPagarMutation`
+ */
 export const {
   useGetCuentasPorPagarQuery,
   useCreateCuentaPorPagarMutation,

@@ -1,14 +1,11 @@
 "use client"
 
-import { useMemo, useState, useEffect } from "react"
+import { useMemo, useState, useEffect, useCallback } from "react"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { ReconciliacionVentasForm } from "@/features/contabilidad/components/reconciliacion-ventas-form"
 import { CuentasPorCobrarTable } from "@/features/contabilidad/components/cuentas-por-cobrar-table"
-import {
-  useGetCuentasPorCobrarQuery
-} from "@/lib/redux/services/cuentasPorCobrarApi"
-import { useGetFacturaQuery, useGetFacturasQuery } from "@/lib/redux/services/facturasApi"
-import { useGetVentaQuery } from "@/features/ventas"
+import { getCuentasPorCobrarAction } from "@/features/contabilidad"
+import type { GetCuentasPorCobrarResult } from "@/features/contabilidad"
 import type { CuentaPorCobrar, VentaPendiente } from "@/app/models/model"
 import { Dialog, DialogContent } from "@/components/ui/dialog"
 import { Loader2, AlertCircle, TrendingUp, TrendingDown, DollarSign, Receipt, ArrowLeft, CreditCard } from "lucide-react"
@@ -16,6 +13,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { getAuthToken } from "@/lib/token"
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import { AnimatedNumber } from "@/components/ui/animated-number"
 import Link from "next/link"
@@ -29,30 +27,114 @@ const surfaceCardClass = cn(
 
 /**
  * @description Página de Cuentas por Cobrar con dashboard de métricas y tabla de gestión.
+ * Usa Server Actions para data fetching en lugar de RTK Query.
  * @returns {JSX.Element} Vista principal de cuentas por cobrar.
  */
 export default function CuentasPorCobrarPage() {
-  const { data: cuentas, isLoading, error } = useGetCuentasPorCobrarQuery()
+  const [cuentasData, setCuentasData] = useState<GetCuentasPorCobrarResult | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
+
   const [cuentaSeleccionada, setCuentaSeleccionada] = useState<CuentaPorCobrar | null>(null)
   const [showReconciliacion, setShowReconciliacion] = useState(false)
   const shouldReduceMotion = useReducedMotion()
 
-  // --- Lógica de Reconciliación ---
+  // ── Data Fetching via Server Action ────────────────────
+
+  const loadCuentas = useCallback(async () => {
+    setIsLoading(true)
+    setFetchError(null)
+    try {
+      const result = await getCuentasPorCobrarAction({})
+      if (result.success && result.data) {
+        setCuentasData(result.data)
+      } else {
+        setFetchError(result.error?.message ?? 'Error al cargar cuentas')
+      }
+    } catch (err) {
+      setFetchError('Error de conexión al cargar cuentas')
+      console.error('Error fetching CxC:', err)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    loadCuentas()
+  }, [loadCuentas])
+
+  const cuentas = useMemo(() =>
+    (cuentasData?.cuentas ?? []) as unknown as CuentaPorCobrar[],
+    [cuentasData],
+  )
+
+  // ── Lógica de Reconciliación ──────────────────────────
   const facturaId = cuentaSeleccionada?.facturaId
   const numeroFactura = cuentaSeleccionada?.numeroFactura
 
-  const { data: facturaById, isLoading: isLoadingFacturaById } = useGetFacturaQuery(facturaId ?? "", {
-    skip: !facturaId
-  })
-  const { data: facturasByNumero, isLoading: isLoadingFacturasByNumero } = useGetFacturasQuery(
-    { page: 1, limit: 1, search: numeroFactura },
-    { skip: !numeroFactura || !!facturaId }
-  )
+  const [facturaData, setFacturaData] = useState<any>(null)
+  const [isResolvingFactura, setIsResolvingFactura] = useState(false)
+  const [ventaData, setVentaData] = useState<any>(null)
+  const [isResolvingVenta, setIsResolvingVenta] = useState(false)
 
-  const factura = facturaById ?? facturasByNumero?.facturas?.[0]
-  const ventaId = factura?.ventaId
-  
-  const { data: ventaData, isLoading: isLoadingVenta } = useGetVentaQuery(ventaId ?? "", { skip: !ventaId })
+  // Resolver factura cuando cambia la cuenta seleccionada
+  useEffect(() => {
+    if (!cuentaSeleccionada || !showReconciliacion) return
+
+    let cancelled = false
+    const token = getAuthToken()
+
+    async function resolve() {
+      setIsResolvingFactura(true)
+      setFacturaData(null)
+      setVentaData(null)
+
+      try {
+        let factura: any = null
+
+        if (facturaId) {
+          const res = await fetch(`/api/facturas/${facturaId}`, {
+            headers: token ? { Authorization: token } : {},
+          })
+          if (res.ok) factura = await res.json()
+        } else if (numeroFactura) {
+          const res = await fetch(`/api/facturas?search=${encodeURIComponent(numeroFactura)}&limit=1`, {
+            headers: token ? { Authorization: token } : {},
+          })
+          if (res.ok) {
+            const data = await res.json()
+            factura = data.facturas?.[0] ?? data
+          }
+        }
+
+        if (cancelled) return
+        setFacturaData(factura)
+
+        // Resolver venta vinculada
+        const vtaId = factura?.ventaId
+        if (vtaId) {
+          setIsResolvingVenta(true)
+          const vtaRes = await fetch(`/api/ventas/${vtaId}`, {
+            headers: token ? { Authorization: token } : {},
+          })
+          if (vtaRes.ok && !cancelled) {
+            const vtaJson = await vtaRes.json()
+            setVentaData(vtaJson.venta ?? vtaJson)
+          }
+        }
+      } catch (e) {
+        console.error('Error resolving factura/venta:', e)
+      } finally {
+        if (!cancelled) {
+          setIsResolvingFactura(false)
+          setIsResolvingVenta(false)
+        }
+      }
+    }
+
+    resolve()
+    return () => { cancelled = true }
+  }, [cuentaSeleccionada, showReconciliacion, facturaId, numeroFactura])
 
   const saldoPendiente = cuentaSeleccionada
     ? (Number.isFinite(Number(cuentaSeleccionada.saldoFactura))
@@ -70,12 +152,9 @@ export default function CuentasPorCobrarPage() {
       montoTotal: saldoPendiente
     }
   }, [ventaData, cuentaSeleccionada, saldoPendiente, numeroFactura])
-  
-  const isResolvingFactura = (!!facturaId && isLoadingFacturaById) || (!!numeroFactura && !facturaId && isLoadingFacturasByNumero)
-  const isResolvingVenta = !!ventaId && isLoadingVenta
 
   const [isTimeOut, setIsTimeOut] = useState(false)
-  
+
   useEffect(() => {
     if (showReconciliacion && !ventaParaReconciliar) {
         const timer = setTimeout(() => setIsTimeOut(true), 5000)
@@ -100,7 +179,7 @@ export default function CuentasPorCobrarPage() {
     setIsTimeOut(false)
   }
 
-  // --- Procesamiento de Datos ---
+  // ── Procesamiento de Datos ────────────────────────────
   const cuentasParaMostrar = useMemo(() => {
     const list = cuentas || []
     const byKey = new Map<string, CuentaPorCobrar>()
@@ -111,7 +190,6 @@ export default function CuentasPorCobrarPage() {
       if (!existing) {
         byKey.set(key, c)
       } else {
-        // keep the one with more info if possible
         if (!existing.facturaId && c.facturaId) {
           byKey.set(key, c)
         }
@@ -120,7 +198,7 @@ export default function CuentasPorCobrarPage() {
     return Array.from(byKey.values())
   }, [cuentas])
 
-  // --- Métricas ---
+  // ── Métricas ──────────────────────────────────────────
   const metricas = useMemo(() => {
     const list = cuentasParaMostrar
     const totalPorCobrar = list.reduce((acc, c) => {
@@ -129,11 +207,11 @@ export default function CuentasPorCobrarPage() {
         : Number(c.montoDeuda) - Number(c.montoPagado)
        return acc + Math.max(0, saldo)
     }, 0)
-    
+
     const totalFacturado = list.reduce((acc, c) => acc + Number(c.montoDeuda || 0), 0)
     const totalCobrado = list.reduce((acc, c) => acc + Number(c.montoPagado || 0), 0)
     const porcentajeCobrado = totalFacturado > 0 ? (totalCobrado / totalFacturado) * 100 : 0
-    
+
     const pendientesCount = list.filter(c => c.estado !== 'PAGADA').length
     const pagadasCount = list.filter(c => c.estado === 'PAGADA').length
 
@@ -148,21 +226,19 @@ export default function CuentasPorCobrarPage() {
     }
   }, [cuentasParaMostrar])
 
-  // --- Variantes de Animación ---
+  // ── Variantes de Animación ────────────────────────────
   const containerVariants = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: {
-        staggerChildren: shouldReduceMotion ? 0 : 0.1
-      }
+      transition: { staggerChildren: shouldReduceMotion ? 0 : 0.1 }
     }
   }
 
   const itemVariants = {
     hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 20 },
-    show: { 
-      opacity: 1, 
+    show: {
+      opacity: 1,
       y: 0,
       transition: shouldReduceMotion
         ? { duration: 0 }
@@ -173,7 +249,7 @@ export default function CuentasPorCobrarPage() {
   return (
     <SidebarProvider>
       <SidebarInset className="bg-background">
-        <motion.div 
+        <motion.div
           className="container mx-auto py-6 px-4 space-y-8"
           variants={containerVariants}
           initial="hidden"
@@ -212,26 +288,20 @@ export default function CuentasPorCobrarPage() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <Card className={cn(surfaceCardClass, "border-l-4 border-l-primary shadow-sm hover:shadow-md transition-shadow")}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Total Facturado
-                  </CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Total Facturado</CardTitle>
                   <DollarSign className="h-4 w-4 text-blue-500" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-foreground">
                     <AnimatedNumber value={metricas.totalFacturado} prefix="$" />
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {metricas.totalCount} facturas de clientes
-                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">{metricas.totalCount} facturas de clientes</p>
                 </CardContent>
               </Card>
 
               <Card className={cn(surfaceCardClass, "border-l-4 border-l-chart-2 shadow-sm hover:shadow-md transition-shadow")}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Total Cobrado
-                  </CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Total Cobrado</CardTitle>
                   <TrendingUp className="h-4 w-4 text-green-500" />
                 </CardHeader>
                 <CardContent>
@@ -246,26 +316,20 @@ export default function CuentasPorCobrarPage() {
 
               <Card className={cn(surfaceCardClass, "border-l-4 border-l-destructive shadow-sm hover:shadow-md transition-shadow")}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Por Cobrar
-                  </CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Por Cobrar</CardTitle>
                   <TrendingDown className="h-4 w-4 text-red-500" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-red-600">
                     <AnimatedNumber value={metricas.totalPorCobrar} prefix="$" />
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {metricas.pendientesCount} cuentas pendientes
-                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">{metricas.pendientesCount} cuentas pendientes</p>
                 </CardContent>
               </Card>
 
               <Card className={cn(surfaceCardClass, "border-l-4 border-l-accent shadow-sm hover:shadow-md transition-shadow")}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">
-                    Estado General
-                  </CardTitle>
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Estado General</CardTitle>
                   <CreditCard className="h-4 w-4 text-amber-500" />
                 </CardHeader>
                 <CardContent>
@@ -273,19 +337,17 @@ export default function CuentasPorCobrarPage() {
                     <AnimatedNumber value={metricas.pagadasCount} isInteger />
                     <span className="text-sm font-normal text-muted-foreground"> / {metricas.totalCount}</span>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    facturas pagadas
-                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">facturas pagadas</p>
                 </CardContent>
               </Card>
             </div>
           </motion.div>
 
           <motion.div variants={itemVariants}>
-            <CuentasPorCobrarTable 
+            <CuentasPorCobrarTable
                 cuentas={cuentasParaMostrar}
                 isLoading={isLoading}
-                error={error}
+                error={fetchError}
                 onPagar={handlePagarCuenta}
             />
           </motion.div>

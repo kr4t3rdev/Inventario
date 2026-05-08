@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useCallback, useEffect } from 'react'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -12,9 +12,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import type { CuentaPorPagar, PagoCuentaPorPagar } from '@/app/models/model'
-import { useGetCuentasPorPagarQuery } from '@/lib/redux/services/cuentasPorPagarApi'
+import { getCuentasPorPagarAction } from '@/features/contabilidad'
+import type { GetCuentasPorPagarResult } from '@/features/contabilidad'
 import { ReconciliacionGastosForm } from '@/features/contabilidad/components/reconciliacion-gastos-form'
-import { useGetGastosPendientesQuery } from '@/features/contabilidad/api/contabilidadApi'
 import { formatCurrency } from '@/lib/utils'
 import Link from 'next/link'
 import React from 'react'
@@ -159,17 +159,60 @@ export default function CuentasPorPagarPage() {
   const [selectedCuenta, setSelectedCuenta] = useState<CuentaPorPagar | null>(null)
   const [openPago, setOpenPago] = useState(false)
 
-  const { data, isLoading, error, refetch } = useGetCuentasPorPagarQuery({
-    search: search || undefined,
-    estado: estado !== 'all' ? estado : undefined,
-    tipo: tipo !== 'all' ? tipo : undefined,
-    page,
-    limit
-  })
+  // ── Data Fetching via Server Action ────────────────────
+  const [dataResult, setDataResult] = useState<GetCuentasPorPagarResult | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<unknown>(null)
 
-  const cuentas = useMemo(() => data?.cuentas ?? [], [data?.cuentas])
-  const pagination = data?.pagination
-  const showError = Boolean(error) && !isLoading && !data
+  const loadData = useCallback(async (overrides?: {
+    search?: string; estado?: string; tipo?: string; page?: number; limit?: number;
+  }) => {
+    const s = overrides?.search ?? search
+    const e = overrides?.estado ?? estado
+    const t = overrides?.tipo ?? tipo
+    const p = overrides?.page ?? page
+    const l = overrides?.limit ?? limit
+
+    setIsLoading(true)
+    setFetchError(null)
+    try {
+      const result = await getCuentasPorPagarAction({
+        search: s || undefined,
+        estado: e !== 'all' ? e as 'PENDIENTE' | 'PAGADA' | 'PARCIAL' : undefined,
+        tipo: t !== 'all' ? t as 'compra' | 'servicio' : undefined,
+        page: p,
+        limit: l,
+      })
+      if (result.success && result.data) {
+        setDataResult(result.data)
+      } else {
+        setFetchError(result.error?.message ?? true)
+      }
+    } catch (err) {
+      setFetchError(err)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [search, estado, tipo, page, limit])
+
+  // Initial load
+  useEffect(() => {
+    loadData()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Reload when filters change
+  useEffect(() => {
+    if (dataResult !== null) { // skip initial (handled above)
+      loadData()
+    }
+  }, [search, estado, tipo, page, limit]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const cuentas = useMemo(() =>
+    (dataResult?.cuentas ?? []) as unknown as CuentaPorPagar[],
+    [dataResult],
+  )
+  const pagination = dataResult?.pagination
+  const showError = Boolean(fetchError) && !isLoading && !dataResult
   const showEmpty = !isLoading && !showError && cuentas.length === 0
 
   // Métricas calculadas
@@ -205,13 +248,9 @@ export default function CuentasPorPagarPage() {
 
   const handleOpenPago = (cuenta: CuentaPorPagar) => {
     if (!cuenta.cuentaPorPagarId) {
-      toast.error(
-        'Esta factura no tiene cuenta por pagar asociada. Actualice los datos antes de registrar pagos.'
-      )
+      toast.error('Esta factura no tiene cuenta por pagar asociada. Actualice los datos antes de registrar pagos.')
       return
     }
-
-    // Validar que la cuenta tenga el ID de referencia necesario
     if (cuenta.tipo === 'compra' && !cuenta.gastoCompraId) {
       toast.error('Esta compra no tiene un gasto asociado. Es posible que fue creada antes de la actualización del sistema. Por favor, contacte al administrador.')
       return
@@ -240,6 +279,7 @@ export default function CuentasPorPagarPage() {
   })
 
   const totalPages = pagination?.totalPages ?? 1
+  const totalRegistros = pagination?.total ?? 0
 
   const agingStyles: Record<string, { label: string; className: string }> = {
     '0-30': { label: '0-30 días', className: 'bg-emerald-100 text-emerald-700 border-emerald-200' },
@@ -366,292 +406,292 @@ export default function CuentasPorPagarPage() {
             {/* Filtros y tabla */}
             <StaggerItem>
               <Card className={surfaceCardClass}>
-              <CardHeader className="gap-4">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <CardTitle>Facturas por Pagar</CardTitle>
-                    <p className="text-sm text-muted-foreground">
-                      Controla facturas entrantes de compras y servicios
-                    </p>
+                <CardHeader className="gap-4">
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <CardTitle>Facturas por Pagar</CardTitle>
+                      <p className="text-sm text-muted-foreground">
+                        Controla facturas entrantes de compras y servicios
+                      </p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button variant="outline" size="sm" onClick={() => loadData()}>
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                        Actualizar
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => refetch()}>
-                      <RefreshCw className="mr-2 h-4 w-4" />
-                      Actualizar
-                    </Button>
-                  </div>
-                </div>
 
-                <div className="grid gap-3 md:grid-cols-4">
-                  <div className="flex items-center gap-2">
-                    <Search className="h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Buscar por factura o proveedor..."
-                      value={search}
-                      onChange={(event) => {
-                        setSearch(event.target.value)
+                  <div className="grid gap-3 md:grid-cols-4">
+                    <div className="flex items-center gap-2">
+                      <Search className="h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Buscar por factura o proveedor..."
+                        value={search}
+                        onChange={(event) => {
+                          setSearch(event.target.value)
+                          setPage(1)
+                        }}
+                      />
+                    </div>
+                    <Select
+                      value={tipo}
+                      onValueChange={(value) => {
+                        setTipo(value)
                         setPage(1)
                       }}
-                    />
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Tipo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos los tipos</SelectItem>
+                        <SelectItem value="compra">Compras</SelectItem>
+                        <SelectItem value="servicio">Servicios</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      value={estado}
+                      onValueChange={(value) => {
+                        setEstado(value)
+                        setPage(1)
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Estado" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Todos los estados</SelectItem>
+                        <SelectItem value="PENDIENTE">Pendiente</SelectItem>
+                        <SelectItem value="PARCIAL">Parcial</SelectItem>
+                        <SelectItem value="PAGADA">Pagada</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      value={String(limit)}
+                      onValueChange={(value) => {
+                        setLimit(Number(value))
+                        setPage(1)
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Filas" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="10">10 filas</SelectItem>
+                        <SelectItem value="20">20 filas</SelectItem>
+                        <SelectItem value="50">50 filas</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <Select
-                    value={tipo}
-                    onValueChange={(value) => {
-                      setTipo(value)
-                      setPage(1)
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Tipo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos los tipos</SelectItem>
-                      <SelectItem value="compra">Compras</SelectItem>
-                      <SelectItem value="servicio">Servicios</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select
-                    value={estado}
-                    onValueChange={(value) => {
-                      setEstado(value)
-                      setPage(1)
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Estado" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos los estados</SelectItem>
-                      <SelectItem value="PENDIENTE">Pendiente</SelectItem>
-                      <SelectItem value="PARCIAL">Parcial</SelectItem>
-                      <SelectItem value="PAGADA">Pagada</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select
-                    value={String(limit)}
-                    onValueChange={(value) => {
-                      setLimit(Number(value))
-                      setPage(1)
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Filas" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="10">10 filas</SelectItem>
-                      <SelectItem value="20">20 filas</SelectItem>
-                      <SelectItem value="50">50 filas</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardHeader>
+                </CardHeader>
 
-              <CardContent className="p-0">
-                <TooltipProvider>
-                  <div className="overflow-x-auto">
-                    <Table>
-                      <TableHeader className="bg-muted/50">
-                        <TableRow>
-                          <TableHead className="w-10"></TableHead>
-                          <TableHead className="font-semibold">Factura</TableHead>
-                          <TableHead className="font-semibold">Proveedor</TableHead>
-                          <TableHead className="font-semibold">Tipo</TableHead>
-                          <TableHead className="font-semibold">Antigüedad</TableHead>
-                          <TableHead className="font-semibold text-right">Deuda</TableHead>
-                          <TableHead className="font-semibold text-right">Pagado</TableHead>
-                          <TableHead className="font-semibold text-right">Saldo</TableHead>
-                          <TableHead className="font-semibold">Estado</TableHead>
-                          <TableHead className="font-semibold text-right">Acciones</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {isLoading && (
-                          Array.from({ length: 6 }).map((_, index) => (
-                            <TableRow key={`skeleton-${index}`}>
-                              {Array.from({ length: 10 }).map((__, cellIndex) => (
-                                <TableCell key={`skeleton-cell-${cellIndex}`}>
-                                  <Skeleton className="h-4 w-full" />
-                                </TableCell>
-                              ))}
+                <CardContent className="p-0">
+                  <TooltipProvider>
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader className="bg-muted/50">
+                          <TableRow>
+                            <TableHead className="w-10"></TableHead>
+                            <TableHead className="font-semibold">Factura</TableHead>
+                            <TableHead className="font-semibold">Proveedor</TableHead>
+                            <TableHead className="font-semibold">Tipo</TableHead>
+                            <TableHead className="font-semibold">Antigüedad</TableHead>
+                            <TableHead className="font-semibold text-right">Deuda</TableHead>
+                            <TableHead className="font-semibold text-right">Pagado</TableHead>
+                            <TableHead className="font-semibold text-right">Saldo</TableHead>
+                            <TableHead className="font-semibold">Estado</TableHead>
+                            <TableHead className="font-semibold text-right">Acciones</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {isLoading && (
+                            Array.from({ length: 6 }).map((_, index) => (
+                              <TableRow key={`skeleton-${index}`}>
+                                {Array.from({ length: 10 }).map((__, cellIndex) => (
+                                  <TableCell key={`skeleton-cell-${cellIndex}`}>
+                                    <Skeleton className="h-4 w-full" />
+                                  </TableCell>
+                                ))}
+                              </TableRow>
+                            ))
+                          )}
+
+                          {showError && (
+                            <TableRow>
+                              <TableCell colSpan={10} className="text-center py-12">
+                                <div className="flex flex-col items-center justify-center text-destructive">
+                                  <AlertCircle className="h-12 w-12 mb-4" />
+                                  <h3 className="text-lg font-semibold mb-2">Error al cargar las cuentas</h3>
+                                  <p className="text-muted-foreground">Intente nuevamente más tarde.</p>
+                                </div>
+                              </TableCell>
                             </TableRow>
-                          ))
-                        )}
+                          )}
 
-                        {showError && (
-                          <TableRow>
-                            <TableCell colSpan={10} className="text-center py-12">
-                              <div className="flex flex-col items-center justify-center text-destructive">
-                                <AlertCircle className="h-12 w-12 mb-4" />
-                                <h3 className="text-lg font-semibold mb-2">Error al cargar las cuentas</h3>
-                                <p className="text-muted-foreground">Intente nuevamente más tarde.</p>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )}
+                          {showEmpty && (
+                            <TableRow>
+                              <TableCell colSpan={10} className="text-center py-12">
+                                <div className="flex flex-col items-center justify-center text-muted-foreground">
+                                  <FileText className="h-12 w-12 mb-4 opacity-50" />
+                                  <p className="text-lg font-medium">No hay cuentas por pagar</p>
+                                  <p className="text-sm">Prueba ajustando los filtros de búsqueda</p>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          )}
 
-                        {showEmpty && (
-                          <TableRow>
-                            <TableCell colSpan={10} className="text-center py-12">
-                              <div className="flex flex-col items-center justify-center text-muted-foreground">
-                                <FileText className="h-12 w-12 mb-4 opacity-50" />
-                                <p className="text-lg font-medium">No hay cuentas por pagar</p>
-                                <p className="text-sm">Prueba ajustando los filtros de búsqueda</p>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        )}
+                          {!isLoading && (
+                            <AnimatePresence mode="popLayout">
+                              {cuentas.map((cuenta, index) => {
+                                const aging = agingStyles[cuenta.rangoAntiguedad ?? '0-30'] || agingStyles['0-30']
+                                const proveedor = cuenta.proveedorNombre || cuenta.proveedor?.nombre || 'Sin proveedor'
+                                const saldoPendiente = Number(cuenta.saldoPendiente || 0)
+                                const tienePagos = cuenta.pagos && cuenta.pagos.length > 0
+                                const isExpanded = expandedRows.has(cuenta.cuentaPorPagarId)
 
-                        {!isLoading && (
-                          <AnimatePresence mode="popLayout">
-                            {cuentas.map((cuenta, index) => {
-                              const aging = agingStyles[cuenta.rangoAntiguedad ?? '0-30'] || agingStyles['0-30']
-                              const proveedor = cuenta.proveedorNombre || cuenta.proveedor?.nombre || 'Sin proveedor'
-                              const saldoPendiente = Number(cuenta.saldoPendiente || 0)
-                              const tienePagos = cuenta.pagos && cuenta.pagos.length > 0
-                              const isExpanded = expandedRows.has(cuenta.cuentaPorPagarId)
-
-                              return (
-                                <React.Fragment key={cuenta.cuentaPorPagarId}>
-                                  <motion.tr
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    exit={{ opacity: 0, scale: 0.95 }}
-                                    transition={{ delay: index * 0.05, duration: 0.2 }}
-                                    className="transition-colors hover:bg-muted/30 border-b last:border-0"
-                                  >
-                                    <TableCell className="py-3">
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="h-8 w-8 p-0"
-                                            onClick={() => toggleExpanded(cuenta.cuentaPorPagarId)}
-                                            disabled={!tienePagos}
-                                            aria-label={isExpanded ? "Contraer detalles" : "Expandir detalles"}
-                                          >
-                                            {isExpanded ? (
-                                              <ChevronDown className="h-4 w-4" />
-                                            ) : (
-                                              <ChevronRight className={`h-4 w-4 ${tienePagos ? 'text-primary' : 'text-muted-foreground'}`} />
-                                            )}
-                                          </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          <p>{tienePagos ? (isExpanded ? 'Ver menos' : 'Ver pagos') : 'Sin pagos registrados'}</p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TableCell>
-                                    <TableCell className="py-3">
-                                      <div className="font-medium">{cuenta.numeroFactura}</div>
-                                    </TableCell>
-                                    <TableCell className="py-3">
-                                      <div className="flex items-center gap-2">
-                                        <div className="h-8 w-8 rounded-full bg-linear-to-br from-primary/20 to-primary/10 flex items-center justify-center text-xs font-bold text-primary shadow-sm">
-                                          {proveedor.charAt(0).toUpperCase()}
+                                return (
+                                  <React.Fragment key={cuenta.cuentaPorPagarId}>
+                                    <motion.tr
+                                      initial={{ opacity: 0, y: 20 }}
+                                      animate={{ opacity: 1, y: 0 }}
+                                      exit={{ opacity: 0, scale: 0.95 }}
+                                      transition={{ delay: index * 0.05, duration: 0.2 }}
+                                      className="transition-colors hover:bg-muted/30 border-b last:border-0"
+                                    >
+                                      <TableCell className="py-3">
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <Button
+                                              variant="ghost"
+                                              size="sm"
+                                              className="h-8 w-8 p-0"
+                                              onClick={() => toggleExpanded(cuenta.cuentaPorPagarId)}
+                                              disabled={!tienePagos}
+                                              aria-label={isExpanded ? "Contraer detalles" : "Expandir detalles"}
+                                            >
+                                              {isExpanded ? (
+                                                <ChevronDown className="h-4 w-4" />
+                                              ) : (
+                                                <ChevronRight className={`h-4 w-4 ${tienePagos ? 'text-primary' : 'text-muted-foreground'}`} />
+                                              )}
+                                            </Button>
+                                          </TooltipTrigger>
+                                          <TooltipContent>
+                                            <p>{tienePagos ? (isExpanded ? 'Ver menos' : 'Ver pagos') : 'Sin pagos registrados'}</p>
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TableCell>
+                                      <TableCell className="py-3">
+                                        <div className="font-medium">{cuenta.numeroFactura}</div>
+                                      </TableCell>
+                                      <TableCell className="py-3">
+                                        <div className="flex items-center gap-2">
+                                          <div className="h-8 w-8 rounded-full bg-linear-to-br from-primary/20 to-primary/10 flex items-center justify-center text-xs font-bold text-primary shadow-sm">
+                                            {proveedor.charAt(0).toUpperCase()}
+                                          </div>
+                                          <span className="font-medium">{proveedor}</span>
                                         </div>
-                                        <span className="font-medium">{proveedor}</span>
-                                      </div>
-                                    </TableCell>
-                                    <TableCell className="py-3">
-                                      <Badge variant="outline" className="capitalize">
-                                        {cuenta.tipo === 'compra' ? 'Compra' : 'Servicio'}
-                                      </Badge>
-                                    </TableCell>
-                                    <TableCell className="py-3">
-                                      <div className="flex flex-col gap-1">
-                                        <Badge className={aging.className}>{aging.label}</Badge>
-                                        <span className="text-xs text-muted-foreground">
-                                          {cuenta.diasTranscurridos ?? 0} días
-                                        </span>
-                                      </div>
-                                    </TableCell>
-                                    <TableCell className="py-3 text-right font-semibold tabular-nums">
-                                      {formatCurrency(Number(cuenta.montoDeuda || 0))}
-                                    </TableCell>
-                                    <TableCell className="py-3 text-right text-green-600 font-medium tabular-nums">
-                                      {formatCurrency(Number(cuenta.montoPagado || 0))}
-                                    </TableCell>
-                                    <TableCell className={`py-3 text-right font-bold tabular-nums ${saldoPendiente > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                                      {formatCurrency(saldoPendiente)}
-                                    </TableCell>
-                                    <TableCell className="py-3">
-                                      <EstadoBadge estado={cuenta.estado} />
-                                    </TableCell>
-                                    <TableCell className="py-3 text-right">
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <Button
-                                            size="sm"
-                                            disabled={saldoPendiente <= 0}
-                                            onClick={() => handleOpenPago(cuenta)}
-                                            className={saldoPendiente > 0 ? 'bg-primary hover:bg-primary/90 shadow-sm' : ''}
-                                          >
-                                            {saldoPendiente > 0 ? 'Pagar' : 'Pagado'}
-                                          </Button>
-                                        </TooltipTrigger>
-                                        <TooltipContent>
-                                          <p>{saldoPendiente > 0 ? 'Registrar pago' : 'Factura ya pagada'}</p>
-                                        </TooltipContent>
-                                      </Tooltip>
-                                    </TableCell>
-                                  </motion.tr>
-                                  <AnimatePresence>
-                                    {isExpanded && tienePagos && (
-                                      <motion.tr
-                                        initial={{ opacity: 0 }}
-                                        animate={{ opacity: 1 }}
-                                        exit={{ opacity: 0 }}
-                                        className="bg-muted/10"
-                                      >
-                                        <TableCell colSpan={10} className="p-0 border-b">
-                                          <PagosExpandidos pagos={cuenta.pagos || []} />
-                                        </TableCell>
-                                      </motion.tr>
-                                    )}
-                                  </AnimatePresence>
-                                </React.Fragment>
-                              )
-                            })}
-                          </AnimatePresence>
-                        )}
-                      </TableBody>
-                    </Table>
-                  </div>
-                </TooltipProvider>
-
-                {/* Paginación */}
-                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t">
-                  <div className="text-sm text-muted-foreground">
-                    Mostrando <span className="font-medium text-foreground">{cuentas.length}</span> de{" "}
-                    <span className="font-medium text-foreground">{pagination?.total || 0}</span> registros
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => setPage((prev) => Math.max(1, prev - 1))} 
-                      disabled={page <= 1}
-                      className="h-8"
-                    >
-                      Anterior
-                    </Button>
-                    <div className="text-sm text-muted-foreground px-2">
-                      Página {page} de {totalPages}
+                                      </TableCell>
+                                      <TableCell className="py-3">
+                                        <Badge variant="outline" className="capitalize">
+                                          {cuenta.tipo === 'compra' ? 'Compra' : 'Servicio'}
+                                        </Badge>
+                                      </TableCell>
+                                      <TableCell className="py-3">
+                                        <div className="flex flex-col gap-1">
+                                          <Badge className={aging.className}>{aging.label}</Badge>
+                                          <span className="text-xs text-muted-foreground">
+                                            {cuenta.diasTranscurridos ?? 0} días
+                                          </span>
+                                        </div>
+                                      </TableCell>
+                                      <TableCell className="py-3 text-right font-semibold tabular-nums">
+                                        {formatCurrency(Number(cuenta.montoDeuda || 0))}
+                                      </TableCell>
+                                      <TableCell className="py-3 text-right text-green-600 font-medium tabular-nums">
+                                        {formatCurrency(Number(cuenta.montoPagado || 0))}
+                                      </TableCell>
+                                      <TableCell className={`py-3 text-right font-bold tabular-nums ${saldoPendiente > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                                        {formatCurrency(saldoPendiente)}
+                                      </TableCell>
+                                      <TableCell className="py-3">
+                                        <EstadoBadge estado={cuenta.estado} />
+                                      </TableCell>
+                                      <TableCell className="py-3 text-right">
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <Button
+                                              size="sm"
+                                              disabled={saldoPendiente <= 0}
+                                              onClick={() => handleOpenPago(cuenta)}
+                                              className={saldoPendiente > 0 ? 'bg-primary hover:bg-primary/90 shadow-sm' : ''}
+                                            >
+                                              {saldoPendiente > 0 ? 'Pagar' : 'Pagado'}
+                                            </Button>
+                                          </TooltipTrigger>
+                                          <TooltipContent>
+                                            <p>{saldoPendiente > 0 ? 'Registrar pago' : 'Factura ya pagada'}</p>
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TableCell>
+                                    </motion.tr>
+                                    <AnimatePresence>
+                                      {isExpanded && tienePagos && (
+                                        <motion.tr
+                                          initial={{ opacity: 0 }}
+                                          animate={{ opacity: 1 }}
+                                          exit={{ opacity: 0 }}
+                                          className="bg-muted/10"
+                                        >
+                                          <TableCell colSpan={10} className="p-0 border-b">
+                                            <PagosExpandidos pagos={cuenta.pagos || []} />
+                                          </TableCell>
+                                        </motion.tr>
+                                      )}
+                                    </AnimatePresence>
+                                  </React.Fragment>
+                                )
+                              })}
+                            </AnimatePresence>
+                          )}
+                        </TableBody>
+                      </Table>
                     </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))} 
-                      disabled={page >= totalPages}
-                      className="h-8"
-                    >
-                      Siguiente
-                    </Button>
+                  </TooltipProvider>
+
+                  {/* Paginación */}
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t">
+                    <div className="text-sm text-muted-foreground">
+                      Mostrando <span className="font-medium text-foreground">{cuentas.length}</span> de{" "}
+                      <span className="font-medium text-foreground">{totalRegistros}</span> registros
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setPage((prev) => Math.max(1, prev - 1))} 
+                        disabled={page <= 1}
+                        className="h-8"
+                      >
+                        Anterior
+                      </Button>
+                      <div className="text-sm text-muted-foreground px-2">
+                        Página {page} de {totalPages}
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))} 
+                        disabled={page >= totalPages}
+                        className="h-8"
+                      >
+                        Siguiente
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
             </StaggerItem>
           </StaggerContainer>
 
@@ -667,7 +707,7 @@ export default function CuentasPorPagarPage() {
               onSuccess={() => {
                 setOpenPago(false)
                 setSelectedCuenta(null)
-                refetch()
+                loadData()
               }}
               isCuentaPorPagar={true}
               cuentaPorPagarId={selectedCuenta.cuentaPorPagarId}

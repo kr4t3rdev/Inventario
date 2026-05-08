@@ -77,6 +77,12 @@ export const cuentasPorCobrarApi = apiSlice.injectEndpoints({
   }),
 })
 
+/**
+ * @deprecated Usar Server Actions desde `@/features/contabilidad` en su lugar:
+ *   - `getCuentasPorCobrarAction` → reemplaza `useGetCuentasPorCobrarQuery`
+ *   - `createCuentaPorCobrarAction` → reemplaza `useAddCuentaPorCobrarMutation`
+ *   - `updateCuentaPorCobrarAction` → reemplaza `useUpdateCuentaPorCobrarMutation`
+ */
 export const {
   useGetCuentasPorCobrarQuery,
   useAddCuentaPorCobrarMutation,

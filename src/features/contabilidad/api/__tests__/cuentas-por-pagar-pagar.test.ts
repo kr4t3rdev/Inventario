@@ -1,15 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { NextRequest, NextResponse } from 'next/server'
-import { pagarCuentaPorPagarHandler } from '@/features/contabilidad/api/handlers'
+import { pagarCuentaPorPagarAction } from '@/features/contabilidad/actions-cuentas'
 
-vi.mock('@/lib/prisma', () => ({
-  default: {
-    $transaction: vi.fn()
-  }
+const prismaMock = vi.hoisted(() => ({
+  cuentaPorPagar: {
+    findFirst: vi.fn(),
+    findUnique: vi.fn(),
+  },
+  $transaction: vi.fn(),
 }))
 
-vi.mock('@/lib/auth-middleware', () => ({
-  authenticateUser: vi.fn()
+vi.mock('@/lib/prisma', () => ({
+  prisma: prismaMock,
+}))
+
+const getCurrentUserMock = vi.hoisted(() => vi.fn())
+vi.mock('@/lib/server-actions/get-current-user', () => ({
+  getCurrentUser: getCurrentUserMock,
 }))
 
 vi.mock('@/lib/services/pago-gastos-workflow', () => ({
@@ -22,234 +28,256 @@ vi.mock('@/lib/services/pago-gastos-workflow', () => ({
       typeof candidate.status === 'number' &&
       typeof candidate.code === 'string'
     )
-  })
+  }),
 }))
 
-describe('Cuentas por pagar API - pagar POST', () => {
+vi.mock('next/cache', () => ({
+  revalidatePath: vi.fn(),
+}))
+
+describe('Cuentas por Pagar — pagarCuentaPorPagarAction', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  it('responde 401 si no hay usuario autenticado', async () => {
-    const { authenticateUser } = await import('@/lib/auth-middleware')
-    vi.mocked(authenticateUser).mockResolvedValue(
-      NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) as any
-    )
+  it('retorna AUTH_REQUIRED cuando el usuario no está autenticado', async () => {
+    getCurrentUserMock.mockResolvedValue(null)
 
-    const request = new NextRequest('http://localhost/api/contabilidad/cuentas-por-pagar/pagar', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        numeroFactura: 'FAC-1',
-        tipo: 'compra',
-        monto: 10,
-        numeroTransaccion: 'TRX-1',
-        cuentaProveedor: '123'
-      })
+    const result = await pagarCuentaPorPagarAction({
+      numeroFactura: 'FAC-1',
+      tipo: 'compra',
+      monto: 10,
+      numeroTransaccion: 'TRX-1',
+      cuentaProveedor: '123',
     })
 
-    const response = await pagarCuentaPorPagarHandler(request)
-    expect(response.status).toBe(401)
+    expect(result.success).toBe(false)
+    expect(result.error?.code).toBe('AUTH_REQUIRED')
   })
 
-  it('responde 404 cuando factura de compra no existe para crear CxP', async () => {
-    const prisma = (await import('@/lib/prisma')).default as any
-    const { authenticateUser } = await import('@/lib/auth-middleware')
-
-    vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-1' } } as any)
-
-    prisma.$transaction.mockImplementation(async (callback: any) => {
-      const tx = {
-        cuentaPorPagar: {
-          findFirst: vi.fn().mockResolvedValue(null),
-          create: vi.fn(),
-          findUnique: vi.fn()
-        },
-        gastoCompra: {
-          findFirst: vi.fn().mockResolvedValue(null)
-        },
-        gastosDE: {
-          findFirst: vi.fn()
-        },
-        pagoCuentaPorPagar: {
-          findUnique: vi.fn()
-        }
-      }
-      return callback(tx)
+  it('retorna NOT_FOUND cuando la CxP no existe para el tenant', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      userId: 'user-1',
+      tenantId: 'tenant-1',
+      name: 'Test',
+      email: 'test@test.com',
+      role: 'ADMIN' as const,
+      isActive: true,
     })
 
-    const request = new NextRequest('http://localhost/api/contabilidad/cuentas-por-pagar/pagar', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        numeroFactura: 'FAC-404',
-        tipo: 'compra',
-        monto: 10,
-        numeroTransaccion: 'TRX-2',
-        cuentaProveedor: '123'
-      })
+    prismaMock.cuentaPorPagar.findFirst.mockResolvedValue(null)
+
+    const result = await pagarCuentaPorPagarAction({
+      numeroFactura: 'FAC-404',
+      tipo: 'compra',
+      monto: 10,
+      numeroTransaccion: 'TRX-2',
+      cuentaProveedor: '123',
     })
 
-    const response = await pagarCuentaPorPagarHandler(request)
-    const data = await response.json()
-    expect(response.status).toBe(404)
-    expect(data.error).toBe('Compra no encontrada')
+    expect(result.success).toBe(false)
+    expect(result.error?.code).toBe('NOT_FOUND')
+    expect(result.error?.message).toBe('Compra no encontrada')
   })
 
-  it('mapea errores de negocio del workflow con status/code', async () => {
-    const prisma = (await import('@/lib/prisma')).default as any
-    const { authenticateUser } = await import('@/lib/auth-middleware')
+  it('retorna CUENTA_YA_PAGADA cuando la CxP ya está en estado PAGADA', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      userId: 'user-1',
+      tenantId: 'tenant-1',
+      name: 'Test',
+      email: 'test@test.com',
+      role: 'ADMIN' as const,
+      isActive: true,
+    })
+
+    prismaMock.cuentaPorPagar.findFirst.mockResolvedValue({
+      cuentaPorPagarId: 'cxp-1',
+      gastoCompraId: 'gc-1',
+      gastosDEId: null,
+      tipo: 'compra',
+      moneda: 'CUP',
+      estado: 'PAGADA',
+      saldoPendiente: 0,
+    })
+
+    const result = await pagarCuentaPorPagarAction({
+      numeroFactura: 'FAC-1',
+      tipo: 'compra',
+      monto: 10,
+      numeroTransaccion: 'TRX-1',
+      cuentaProveedor: '123',
+    })
+
+    expect(result.success).toBe(false)
+    expect(result.error?.code).toBe('CUENTA_YA_PAGADA')
+  })
+
+  it('retorna MONTO_EXCEDE_SALDO cuando el monto supera el saldo', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      userId: 'user-1',
+      tenantId: 'tenant-1',
+      name: 'Test',
+      email: 'test@test.com',
+      role: 'ADMIN' as const,
+      isActive: true,
+    })
+
+    prismaMock.cuentaPorPagar.findFirst.mockResolvedValue({
+      cuentaPorPagarId: 'cxp-1',
+      gastoCompraId: 'gc-1',
+      gastosDEId: null,
+      tipo: 'compra',
+      moneda: 'CUP',
+      estado: 'PENDIENTE',
+      saldoPendiente: 50,
+    })
+
+    const result = await pagarCuentaPorPagarAction({
+      numeroFactura: 'FAC-1',
+      tipo: 'compra',
+      monto: 100,
+      numeroTransaccion: 'TRX-3',
+      cuentaProveedor: '123',
+    })
+
+    expect(result.success).toBe(false)
+    expect(result.error?.code).toBe('MONTO_EXCEDE_SALDO')
+  })
+
+  it('mapea errores del workflow con status/code', async () => {
     const { applyPagoGastoWorkflow } = await import('@/lib/services/pago-gastos-workflow')
 
-    vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-1' } } as any)
+    getCurrentUserMock.mockResolvedValue({
+      userId: 'user-1',
+      tenantId: 'tenant-1',
+      name: 'Test',
+      email: 'test@test.com',
+      role: 'ADMIN' as const,
+      isActive: true,
+    })
 
-    prisma.$transaction.mockImplementation(async (callback: any) => {
-      const tx = {
-        cuentaPorPagar: {
-          findFirst: vi.fn().mockResolvedValue({
-            cuentaPorPagarId: 'cxp-1',
-            numeroFactura: 'FAC-1',
-            tipo: 'compra',
-            gastoCompraId: 'gc-1',
-            gastosDEId: null,
-            moneda: 'CUP'
-          }),
-          create: vi.fn(),
-          findUnique: vi.fn()
-        },
-        gastoCompra: {
-          findFirst: vi.fn()
-        },
-        gastosDE: {
-          findFirst: vi.fn()
-        },
-        pagoCuentaPorPagar: {
-          findUnique: vi.fn()
-        }
-      }
-      return callback(tx)
+    prismaMock.cuentaPorPagar.findFirst.mockResolvedValue({
+      cuentaPorPagarId: 'cxp-1',
+      gastoCompraId: 'gc-1',
+      gastosDEId: null,
+      tipo: 'compra',
+      moneda: 'CUP',
+      estado: 'PENDIENTE',
+      saldoPendiente: 1000,
     })
 
     vi.mocked(applyPagoGastoWorkflow as any).mockRejectedValue({
-      message: 'El monto no puede exceder el saldo pendiente',
+      message: 'Saldo insuficiente en la cuenta',
       status: 400,
-      code: 'MONTO_EXCEDE_SALDO'
+      code: 'SALDO_INSUFICIENTE',
     })
 
-    const request = new NextRequest('http://localhost/api/contabilidad/cuentas-por-pagar/pagar', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        numeroFactura: 'FAC-1',
-        tipo: 'compra',
-        monto: 5000,
-        numeroTransaccion: 'TRX-3',
-        cuentaProveedor: '123'
-      })
+    prismaMock.$transaction.mockImplementation(async (callback: any) => {
+      return callback({})
     })
 
-    const response = await pagarCuentaPorPagarHandler(request)
-    const data = await response.json()
-    expect(response.status).toBe(400)
-    expect(data.code).toBe('MONTO_EXCEDE_SALDO')
+    const result = await pagarCuentaPorPagarAction({
+      numeroFactura: 'FAC-1',
+      tipo: 'compra',
+      monto: 500,
+      numeroTransaccion: 'TRX-3',
+      cuentaProveedor: '123',
+    })
+
+    expect(result.success).toBe(false)
+    expect(result.error?.code).toBe('SALDO_INSUFICIENTE')
   })
 
   it('retorna cuenta y pago cuando el workflow se aplica correctamente', async () => {
-    const prisma = (await import('@/lib/prisma')).default as any
-    const { authenticateUser } = await import('@/lib/auth-middleware')
     const { applyPagoGastoWorkflow } = await import('@/lib/services/pago-gastos-workflow')
 
-    vi.mocked(authenticateUser).mockResolvedValue({ user: { userId: 'user-9' } } as any)
+    getCurrentUserMock.mockResolvedValue({
+      userId: 'user-9',
+      tenantId: 'tenant-1',
+      name: 'Test',
+      email: 'test@test.com',
+      role: 'ADMIN' as const,
+      isActive: true,
+    })
 
-    const cuentaFindFirst = vi.fn().mockResolvedValue({
+    prismaMock.cuentaPorPagar.findFirst.mockResolvedValue({
+      cuentaPorPagarId: 'cxp-9',
+      gastoCompraId: null,
+      gastosDEId: 'gde-9',
+      tipo: 'servicio',
+      moneda: 'CUP',
+      estado: 'PENDIENTE',
+      saldoPendiente: 200,
+    })
+
+    vi.mocked(applyPagoGastoWorkflow as any).mockResolvedValue({
+      reconciliaciones: [{
+        reconciliacionId: 'rec-9',
+        cuentaId: 'cb-1',
+        monto: 100,
+        moneda: 'CUP',
+        montoConvertido: 100,
+        descripcion: 'Pago FAC-9',
+      }],
+      cuentaPorPagar: {
+        cuentaPorPagarId: 'cxp-9',
+        estado: 'PAGADA',
+        montoPagado: 100,
+        saldoPendiente: 0,
+      },
+      pagoCuentaPorPagar: {
+        pagoCuentaPorPagarId: 'pago-9',
+        numeroTransaccion: 'TRX-9',
+        monto: 100,
+      },
+    })
+
+    prismaMock.cuentaPorPagar.findUnique.mockResolvedValue({
       cuentaPorPagarId: 'cxp-9',
       numeroFactura: 'FAC-9',
       tipo: 'servicio',
       gastoCompraId: null,
       gastosDEId: 'gde-9',
-      moneda: 'CUP'
+      proveedorId: 'prov-1',
+      proveedorNombre: 'Proveedor Demo',
+      montoDeuda: 200,
+      montoPagado: 100,
+      saldoPendiente: 0,
+      moneda: 'CUP',
+      fechaEmision: new Date('2026-01-01'),
+      fechaVencimiento: null,
+      estado: 'PAGADA',
+      tipoDeuda: null,
+      proveedor: { vendorId: 'prov-1', nombre: 'Proveedor Demo', cuentaCUP: null, cuentaUSD: null },
+      pagos: [],
+      deudaCash: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      deletedAt: null,
     })
-    const cuentaFindUnique = vi.fn().mockResolvedValue({
-      cuentaPorPagarId: 'cxp-9',
+
+    prismaMock.$transaction.mockImplementation(async (callback: any) => {
+      return callback({})
+    })
+
+    const result = await pagarCuentaPorPagarAction({
       numeroFactura: 'FAC-9',
       tipo: 'servicio',
-      estado: 'PAGADA'
-    })
-    const pagoFindUnique = vi.fn().mockResolvedValue({
-      pagoCuentaPorPagarId: 'pago-9',
-      cuentaPorPagarId: 'cxp-9',
+      monto: 100,
       numeroTransaccion: 'TRX-9',
-      monto: 100
+      cuentaProveedor: '123',
     })
 
-    prisma.$transaction.mockImplementation(async (callback: any) => {
-      const tx = {
-        cuentaPorPagar: {
-          findFirst: cuentaFindFirst,
-          create: vi.fn(),
-          findUnique: cuentaFindUnique
-        },
-        gastoCompra: {
-          findFirst: vi.fn()
-        },
-        gastosDE: {
-          findFirst: vi.fn()
-        },
-        pagoCuentaPorPagar: {
-          findUnique: pagoFindUnique
-        }
-      }
-      return callback(tx)
-    })
-
-    vi.mocked(applyPagoGastoWorkflow as any).mockResolvedValue({
-      reconciliaciones: [
-        {
-          reconciliacionId: 'rec-9',
-          cuentaId: 'cb-1',
-          monto: 100,
-          moneda: 'CUP',
-          montoConvertido: 100,
-          descripcion: 'Pago FAC-9'
-        }
-      ],
-      cuentaPorPagar: {
-        cuentaPorPagarId: 'cxp-9',
-        estado: 'PAGADA',
-        montoPagado: 100,
-        saldoPendiente: 0
-      },
-      pagoCuentaPorPagar: {
-        pagoCuentaPorPagarId: 'pago-9',
-        numeroTransaccion: 'TRX-9',
-        monto: 100
-      }
-    })
-
-    const request = new NextRequest('http://localhost/api/contabilidad/cuentas-por-pagar/pagar', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        numeroFactura: 'FAC-9',
-        tipo: 'servicio',
-        monto: 100,
-        numeroTransaccion: 'TRX-9',
-        cuentaProveedor: '123'
-      })
-    })
-
-    const response = await pagarCuentaPorPagarHandler(request)
-    const data = await response.json()
-
-    expect(response.status).toBe(200)
-    expect(data.cuenta.cuentaPorPagarId).toBe('cxp-9')
-    expect(data.pago.pagoCuentaPorPagarId).toBe('pago-9')
+    expect(result.success).toBe(true)
+    expect(result.data?.cuenta.cuentaPorPagarId).toBe('cxp-9')
+    expect(result.data?.cuenta.estado).toBe('PAGADA')
+    expect(result.data?.pago.pagoCuentaPorPagarId).toBe('pago-9')
     expect(applyPagoGastoWorkflow).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
         cuentaPorPagarId: 'cxp-9',
         referenciaId: 'gde-9',
-        tipoGasto: 'gastoDE'
+        tipoGasto: 'gastoDE',
       })
     )
   })

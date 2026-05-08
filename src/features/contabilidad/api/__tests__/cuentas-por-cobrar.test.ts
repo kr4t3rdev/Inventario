@@ -1,62 +1,63 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { NextRequest, NextResponse } from 'next/server'
-import { getCuentasPorCobrarHandler } from '@/features/contabilidad/api/handlers'
+import { getCuentasPorCobrarAction } from '@/features/contabilidad/actions-cuentas'
 
 const prismaMock = vi.hoisted(() => ({
   cuentaPorCobrar: {
     findMany: vi.fn(),
+    count: vi.fn(),
   },
 }))
 
 vi.mock('@/lib/prisma', () => ({
-  default: prismaMock,
+  prisma: prismaMock,
 }))
 
-vi.mock('@/lib/auth-middleware', () => ({
-  authenticateUser: vi.fn(),
+const getCurrentUserMock = vi.hoisted(() => vi.fn())
+vi.mock('@/lib/server-actions/get-current-user', () => ({
+  getCurrentUser: getCurrentUserMock,
 }))
 
-vi.mock('@/lib/services/audit-log-service', () => ({
-  AuditLogService: vi.fn(() => ({
-    logAction: vi.fn(),
-  })),
+vi.mock('next/cache', () => ({
+  revalidatePath: vi.fn(),
 }))
 
-describe('Cuentas por Cobrar API - GET', () => {
+describe('Cuentas por Cobrar — getCuentasPorCobrarAction', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  it('debe retornar 401 cuando no hay usuario autenticado', async () => {
-    const { authenticateUser } = await import('@/lib/auth-middleware')
-    vi.mocked(authenticateUser).mockResolvedValue(
-      NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    )
+  it('retorna AUTH_REQUIRED cuando el usuario no está autenticado', async () => {
+    getCurrentUserMock.mockResolvedValue(null)
 
-    const request = new NextRequest('http://localhost/api/contabilidad/cuentas-por-cobrar')
-    const response = await getCuentasPorCobrarHandler(request)
-    const data = await response.json()
+    const result = await getCuentasPorCobrarAction({})
 
-    expect(response.status).toBe(401)
-    expect(data.error).toBe('Unauthorized')
+    expect(result.success).toBe(false)
+    expect(result.error?.code).toBe('AUTH_REQUIRED')
+    expect(prismaMock.cuentaPorCobrar.findMany).not.toHaveBeenCalled()
   })
 
-  it('debe calcular totalPagadoFactura y saldoFactura normalizando pagos multi-moneda', async () => {
-    const { authenticateUser } = await import('@/lib/auth-middleware')
-    
-    vi.mocked(authenticateUser).mockResolvedValue({
-      user: { userId: 'user-123' }
-    } as any)
-    
+  it('calcula totalPagadoFactura y saldoFactura normalizando pagos multi-moneda', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      userId: 'user-123',
+      tenantId: 'tenant-1',
+      name: 'Test',
+      email: 'test@test.com',
+      role: 'ADMIN' as const,
+      isActive: true,
+    })
+
     prismaMock.cuentaPorCobrar.findMany.mockResolvedValue([
       {
         id: 'cxc-1',
+        idCC: 1,
         facturaId: 'fac-1',
         numeroFactura: 'SD-100',
         clienteId: 'cli-1',
         montoDeuda: 1000,
         montoPagado: 0,
+        moneda: 'CUP',
         estado: 'PENDIENTE',
+        tipoCuenta: 'VENTA',
         idTransferencia: null,
         fechaVencimiento: null,
         createdAt: new Date('2026-02-14T10:00:00.000Z'),
@@ -69,67 +70,86 @@ describe('Cuentas por Cobrar API - GET', () => {
           venta: {
             total: 1000,
             reconciliaciones: [
-              {
-                monto: 2,
-                moneda: 'USD',
-                tasaCambio: 100,
-                fechaReconciliacion: new Date('2026-02-14T09:00:00.000Z'),
-              },
-              {
-                monto: 100,
-                moneda: 'CUP',
-                tasaCambio: null,
-                fechaReconciliacion: new Date('2026-02-14T09:30:00.000Z'),
-              },
+              { monto: 2, moneda: 'USD', tasaCambio: 100 },
+              { monto: 100, moneda: 'CUP', tasaCambio: null },
             ],
           },
         },
+        prestamoCash: null,
       } as any,
     ])
+    prismaMock.cuentaPorCobrar.count.mockResolvedValue(1)
 
-    const request = new NextRequest('http://localhost/api/contabilidad/cuentas-por-cobrar')
-    const response = await getCuentasPorCobrarHandler(request)
-    const data = await response.json()
+    const result = await getCuentasPorCobrarAction({})
 
-    expect(response.status).toBe(200)
-    expect(data.cuentas).toHaveLength(1)
-    expect(data.cuentas[0].totalPagadoFactura).toBe(300)
-    expect(data.cuentas[0].saldoFactura).toBe(700)
+    expect(result.success).toBe(true)
+    expect(result.data?.cuentas).toHaveLength(1)
+    expect(result.data?.cuentas[0].totalPagadoFactura).toBe(300)  // 2*100 + 100
+    expect(result.data?.cuentas[0].saldoFactura).toBe(700)        // 1000 - 300
+    expect(result.data?.cuentas[0].totalFactura).toBe(1000)
   })
 
-  it('debe calcular saldo usando montoDeuda cuando no existe factura relacionada', async () => {
-    const { authenticateUser } = await import('@/lib/auth-middleware')
-    
-    vi.mocked(authenticateUser).mockResolvedValue({
-      user: { userId: 'user-123' }
-    } as any)
-    
+  it('calcula saldo usando montoDeuda cuando no existe factura relacionada', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      userId: 'user-123',
+      tenantId: 'tenant-1',
+      name: 'Test',
+      email: 'test@test.com',
+      role: 'ADMIN' as const,
+      isActive: true,
+    })
+
     prismaMock.cuentaPorCobrar.findMany.mockResolvedValue([
       {
         id: 'cxc-2',
+        idCC: 2,
         facturaId: null,
         numeroFactura: 'MANUAL-1',
         clienteId: 'cli-2',
         montoDeuda: 800,
         montoPagado: 200,
+        moneda: 'CUP',
         estado: 'PARCIAL',
+        tipoCuenta: null,
         idTransferencia: null,
         fechaVencimiento: null,
         createdAt: new Date('2026-02-14T10:00:00.000Z'),
         updatedAt: new Date('2026-02-14T10:00:00.000Z'),
         cliente: { clienteId: 'cli-2', nombre: 'Cliente Manual' },
         factura: null,
+        prestamoCash: null,
       } as any,
     ])
+    prismaMock.cuentaPorCobrar.count.mockResolvedValue(1)
 
-    const request = new NextRequest('http://localhost/api/contabilidad/cuentas-por-cobrar')
-    const response = await getCuentasPorCobrarHandler(request)
-    const data = await response.json()
+    const result = await getCuentasPorCobrarAction({})
 
-    expect(response.status).toBe(200)
-    expect(data.cuentas).toHaveLength(1)
-    expect(data.cuentas[0].totalFactura).toBe(800)
-    expect(data.cuentas[0].totalPagadoFactura).toBe(200)
-    expect(data.cuentas[0].saldoFactura).toBe(600)
+    expect(result.success).toBe(true)
+    expect(result.data?.cuentas).toHaveLength(1)
+    expect(result.data?.cuentas[0].totalFactura).toBe(800)
+    expect(result.data?.cuentas[0].totalPagadoFactura).toBe(200)
+    expect(result.data?.cuentas[0].saldoFactura).toBe(600)
+  })
+
+  it('filtra por tenantId usando requireTenant', async () => {
+    getCurrentUserMock.mockResolvedValue({
+      userId: 'user-123',
+      tenantId: 'tenant-42',
+      name: 'Test',
+      email: 'test@test.com',
+      role: 'ADMIN' as const,
+      isActive: true,
+    })
+
+    prismaMock.cuentaPorCobrar.findMany.mockResolvedValue([])
+    prismaMock.cuentaPorCobrar.count.mockResolvedValue(0)
+
+    await getCuentasPorCobrarAction({})
+
+    expect(prismaMock.cuentaPorCobrar.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ tenantId: 'tenant-42' }),
+      })
+    )
   })
 })
