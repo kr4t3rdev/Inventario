@@ -39,7 +39,7 @@ import {
   useGetVentasPendientesQuery,
   useInvalidateContabilidadCache,
 } from '@/features/contabilidad/api/contabilidadApi';
-import { useGetPrestamosCashStatsQuery } from '@/lib/redux/services/prestamosCashApi';
+import { getPrestamosCashStatsAction } from '@/features/contabilidad/actions-prestamos-cash';
 import { formatCurrency } from '@/lib/redux/utils/contabilidadUtils';
 import { cn } from '@/lib/utils';
 
@@ -270,7 +270,11 @@ export function ResumenFinanciero({
 
   const { data: gastosData } = useGetGastosPendientesQuery({ fechaDesde: fechaFin, fechaHasta: fechaFin, tipoGasto, periodo, soloNoReconciliados, page, limit });
   const { data: gastosHistoryData } = useGetHistorialReconciliacionGastosQuery({ fechaFin, fechaInicio, cuentaId, tipoGasto });
-  const { data: prestamosStats } = useGetPrestamosCashStatsQuery();
+  const [prestamosStats, setPrestamosStats] = useState<any>(null);
+
+  useEffect(() => {
+    getPrestamosCashStatsAction().then(r => { if (r.success) setPrestamosStats(r.data) })
+  }, []);
   const { data: resumenAnticiposData } = useGetResumenAnticiposQuery({ fechaInicio, fechaFin });
 
   // --- Calculations ---

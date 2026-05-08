@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm, useWatch } from "react-hook-form"
 import { z } from "zod"
@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { useCreatePrestamoCashMutation } from "@/lib/redux/services/prestamosCashApi"
+import { createPrestamoCashAction } from "@/features/contabilidad/actions-prestamos-cash"
 import { useGetTasasActualesQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { Loader2, TrendingUp, ArrowRightLeft } from "lucide-react"
 import { sileo } from "@/lib/sileo-shim"
@@ -122,7 +122,7 @@ interface PrestamoCashFormProps {
  * @returns {JSX.Element} Formulario de préstamo cash.
  */
 export function PrestamoCashForm({ open, onOpenChange, clientes = [], cuentasBancarias = [], onSuccess }: PrestamoCashFormProps) {
-  const [createPrestamo, { isLoading }] = useCreatePrestamoCashMutation()
+  const [isLoading, setIsLoading] = useState(false)
   const { data: tasasData } = useGetTasasActualesQuery()
 
   const monedaPrincipal = tasasData?.data?.monedaPrincipal?.codigo ?? "CUP"
@@ -154,8 +154,9 @@ export function PrestamoCashForm({ open, onOpenChange, clientes = [], cuentasBan
   }, [tasaActual, form])
 
   const onSubmit = async (data: PrestamoFormValues) => {
+    setIsLoading(true)
     try {
-      await createPrestamo({
+      const result = await createPrestamoCashAction({
         clienteId: data.clienteId,
         montoCapital: data.montoCapital,
         moneda: data.moneda,
@@ -164,14 +165,21 @@ export function PrestamoCashForm({ open, onOpenChange, clientes = [], cuentasBan
         fechaVencimiento: data.fechaVencimiento || undefined,
         observaciones: data.observaciones || undefined,
         cuentaBancariaId: data.cuentaBancariaId,
-      }).unwrap()
+      })
+
+      if (!result.success) {
+        sileo.error({ title: result.error?.message || "No se pudo crear el préstamo" })
+        return
+      }
 
       sileo.success({ title: "Préstamo en efectivo creado exitosamente." })
       form.reset()
       onOpenChange(false)
       onSuccess?.()
-    } catch (error: any) {
-      sileo.error({ title: error?.data?.error || "No se pudo crear el préstamo" })
+    } catch (error) {
+      sileo.error({ title: "No se pudo crear el préstamo" })
+    } finally {
+      setIsLoading(false)
     }
   }
 

@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
-import { useCreateDeudaCashMutation } from "@/lib/redux/services/deudasCashApi"
+import { createDeudaCashAction } from "@/features/contabilidad/actions-deudas-cash"
 import { ImageIcon, Loader2, TrendingUp, Upload, X } from "lucide-react"
 import { sileo } from "@/lib/sileo-shim"
 import { getAuthToken } from "@/lib/token"
@@ -121,7 +121,7 @@ interface DeudaCashFormProps {
  * @returns {JSX.Element} Formulario de deuda cash.
  */
 export function DeudaCashForm({ open, onOpenChange, proveedores = [], cuentasBancarias = [], onSuccess }: DeudaCashFormProps) {
-  const [createDeuda, { isLoading }] = useCreateDeudaCashMutation()
+  const [isLoading, setIsLoading] = useState(false)
   const [comprobante, setComprobante] = useState<File | null>(null)
   const [comprobantePreview, setComprobantePreview] = useState<string | null>(null)
   const [uploadingImg, setUploadingImg] = useState(false)
@@ -182,7 +182,7 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], cuentasBan
         comprobanteUrl = uploadData.url
       }
 
-      await createDeuda({
+      const result = await createDeudaCashAction({
         proveedorId: data.proveedorId,
         montoCapital: data.montoCapital,
         moneda: data.moneda,
@@ -191,16 +191,21 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], cuentasBan
         observaciones: data.observaciones || undefined,
         comprobanteUrl,
         cuentaBancariaId: data.cuentaBancariaId,
-      }).unwrap()
+      })
+
+      if (!result.success) {
+        sileo.error({ title: result.error?.message || "No se pudo registrar la deuda" })
+        return
+      }
 
       sileo.success({ title: "Deuda en efectivo registrada exitosamente." })
       form.reset()
       clearComprobante()
       onOpenChange(false)
       onSuccess?.()
-    } catch (error: any) {
+    } catch (error) {
       setUploadingImg(false)
-      sileo.error({ title: error?.data?.error || "No se pudo registrar la deuda" })
+      sileo.error({ title: "No se pudo registrar la deuda" })
     }
   }
 

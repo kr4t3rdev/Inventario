@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -19,7 +19,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Loader2 } from "lucide-react"
-import { useRegistrarPagoPrestamoMutation } from "@/lib/redux/services/prestamosCashApi"
+import { registrarPagoPrestamoAction } from "@/features/contabilidad/actions-prestamos-cash"
 import type { PrestamoCash } from "@/app/models/model"
 import { calcularSaldoPendientePrestamo } from "@/lib/utils/prestamo-cash"
 
@@ -56,7 +56,7 @@ export function PagoPrestamoModal({
   tiposPago = [],
   onSuccess,
 }: PagoPrestamoModalProps) {
-  const [registrarPago, { isLoading }] = useRegistrarPagoPrestamoMutation()
+  const [isLoading, setIsLoading] = useState(false)
 
   const saldoPendiente = useMemo(() => {
     if (!prestamo?.cuentaPorCobrar) return Number(prestamo?.montoCapital ?? 0)
@@ -108,8 +108,9 @@ export function PagoPrestamoModal({
       return
     }
 
+    setIsLoading(true)
     try {
-      await registrarPago({
+      const result = await registrarPagoPrestamoAction({
         id: prestamo.id,
         monto: values.monto,
         cuentaId: values.cuentaId,
@@ -117,14 +118,20 @@ export function PagoPrestamoModal({
         moneda: values.moneda,
         tasaCambio: values.tasaCambio,
         observaciones: values.observaciones || undefined,
-      }).unwrap()
+      })
+
+      if (!result.success) {
+        sileo.error({ title: result.error?.message || "No se pudo registrar el pago" })
+        return
+      }
 
       sileo.success({ title: "Pago registrado correctamente" })
       onSuccess?.()
       onOpenChange(false)
-    } catch (error: any) {
-      const msg = error?.data?.error || "No se pudo registrar el pago"
-      sileo.error({ title: msg })
+    } catch (error) {
+      sileo.error({ title: "No se pudo registrar el pago" })
+    } finally {
+      setIsLoading(false)
     }
   }
 

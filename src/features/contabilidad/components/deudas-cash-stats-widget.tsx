@@ -1,10 +1,11 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { TrendingDown, AlertCircle, CheckCircle2, Clock } from 'lucide-react'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useGetDeudasCashStatsQuery } from '@/lib/redux/services/deudasCashApi'
+import { getDeudasCashStatsAction } from '@/features/contabilidad/actions-deudas-cash'
 
 /**
  * @description Formatea un monto con separador de miles y 2 decimales
@@ -21,7 +22,17 @@ function formatAmount(amount: number): string {
  * @returns {JSX.Element} Tarjeta con estadísticas de deudas cash
  */
 export function DeudasCashStatsWidget() {
-  const { data: stats, isLoading, error } = useGetDeudasCashStatsQuery()
+  const [stats, setStats] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<any>(null)
+
+  useEffect(() => {
+    getDeudasCashStatsAction().then(r => {
+      if (r.success) setStats(r.data)
+      else setError(r.error)
+      setIsLoading(false)
+    })
+  }, [])
 
   if (isLoading) {
     return (

@@ -1,12 +1,12 @@
 "use client"
 
-import React, { useState, Suspense } from "react"
+import React, { useState, Suspense, useEffect } from "react"
 import { Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { PageTransition, StaggerContainer, StaggerItem } from "@/components/ui/animations"
-import { useGetPrestamosCashQuery } from "@/lib/redux/services/prestamosCashApi"
+import { getPrestamosCashAction } from "@/features/contabilidad/actions-prestamos-cash"
 import { useGetClientesQuery } from "@/features/clientes"
 import { useGetCuentasBancariasQuery, useGetTiposPagoQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { PrestamosCashTable } from "@/features/contabilidad/components/prestamos-cash/prestamos-cash-table"
@@ -25,7 +25,20 @@ function PrestamosCashContent() {
   const [openPago, setOpenPago] = useState(false)
   const [prestamoSeleccionado, setPrestamoSeleccionado] = useState<PrestamoCash | null>(null)
 
-  const { data: prestamos = [], isLoading, error, refetch } = useGetPrestamosCashQuery()
+  const [prestamos, setPrestamos] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<any>(null)
+
+  const loadPrestamos = async () => {
+    setIsLoading(true)
+    const r = await getPrestamosCashAction()
+    if (r.success) setPrestamos(r.data?.prestamos ?? [])
+    else setError(r.error)
+    setIsLoading(false)
+  }
+
+  useEffect(() => { loadPrestamos() }, [])
+
   const { data: dataClientes } = useGetClientesQuery()
   const { data: dataCuentas } = useGetCuentasBancariasQuery()
   const { data: dataTiposPago } = useGetTiposPagoQuery({})
@@ -41,7 +54,7 @@ function PrestamosCashContent() {
   }
 
   const handleSuccess = () => {
-    refetch()
+    loadPrestamos()
   }
 
   if (!featureEnabled) {

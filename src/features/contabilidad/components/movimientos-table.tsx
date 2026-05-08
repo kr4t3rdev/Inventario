@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, useReducedMotion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -11,8 +11,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton"
 import { Search, Filter, Download, ArrowUpDown, TrendingUp, TrendingDown, Wallet, Receipt, FileText, Calendar, Eye } from "lucide-react"
 import { useGetMovimientosQuery, useGetCuentasBancariasQuery } from "@/features/contabilidad/api/contabilidadApi"
-import { useGetPrestamoCashHistorialQuery } from "@/lib/redux/services/prestamosCashApi"
-import { useGetDeudaCashQuery } from "@/lib/redux/services/deudasCashApi"
+import { getPrestamoCashHistorialAction } from "@/features/contabilidad/actions-prestamos-cash"
+import { getDeudaCashByIdAction } from "@/features/contabilidad/actions-deudas-cash"
 import { formatCurrencySimple, formatDate } from "@/lib/redux/utils/contabilidadUtils"
 import { DateRangePicker } from "./date-range-picker"
 import { cn } from "@/lib/utils"
@@ -79,12 +79,24 @@ export function MovimientosTable({
     cuentaId: filtros.cuentaId === 'all' ? undefined : filtros.cuentaId,
     moneda: filtros.moneda === 'all' ? undefined : filtros.moneda,
   })
-  const { data: prestamoHistorial } = useGetPrestamoCashHistorialQuery(selectedPrestamoCashId ?? '', {
-    skip: !selectedPrestamoCashId || !prestamoSheetOpen,
-  })
-  const { data: deudaHistorial } = useGetDeudaCashQuery(selectedDeudaCashId ?? '', {
-    skip: !selectedDeudaCashId || !deudaSheetOpen,
-  })
+  const [prestamoHistorial, setPrestamoHistorial] = useState<any>(null)
+  const [deudaHistorial, setDeudaHistorial] = useState<any>(null)
+
+  useEffect(() => {
+    if (selectedPrestamoCashId && prestamoSheetOpen) {
+      getPrestamoCashHistorialAction(selectedPrestamoCashId).then(r => {
+        if (r.success) setPrestamoHistorial(r.data)
+      })
+    }
+  }, [selectedPrestamoCashId, prestamoSheetOpen])
+
+  useEffect(() => {
+    if (selectedDeudaCashId && deudaSheetOpen) {
+      getDeudaCashByIdAction(selectedDeudaCashId).then(r => {
+        if (r.success) setDeudaHistorial(r.data)
+      })
+    }
+  }, [selectedDeudaCashId, deudaSheetOpen])
   const { data: cuentasData = { cuentas: [] } } = useGetCuentasBancariasQuery()
   const cuentas = cuentasData.cuentas || []
   

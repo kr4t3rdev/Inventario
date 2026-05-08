@@ -1,12 +1,12 @@
 "use client"
 
-import React, { useState, Suspense } from "react"
+import React, { useState, Suspense, useEffect } from "react"
 import { Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { PageTransition, StaggerContainer, StaggerItem } from "@/components/ui/animations"
-import { useGetDeudasCashQuery } from "@/lib/redux/services/deudasCashApi"
+import { getDeudasCashAction } from "@/features/contabilidad/actions-deudas-cash"
 import { useGetVendorsQuery } from "@/features/vendors"
 import { useGetCuentasBancariasQuery, useGetTiposPagoQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { DeudasCashTable } from "@/features/contabilidad/components/deudas-cash/deudas-cash-table"
@@ -25,7 +25,20 @@ function DeudasCashContent() {
   const [openPago, setOpenPago] = useState(false)
   const [deudaSeleccionada, setDeudaSeleccionada] = useState<DeudaCash | null>(null)
 
-  const { data: deudas = [], isLoading, error, refetch } = useGetDeudasCashQuery()
+  const [deudas, setDeudas] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<any>(null)
+
+  const loadDeudas = async () => {
+    setIsLoading(true)
+    const r = await getDeudasCashAction()
+    if (r.success) setDeudas(r.data?.deudas ?? [])
+    else setError(r.error)
+    setIsLoading(false)
+  }
+
+  useEffect(() => { loadDeudas() }, [])
+
   const { data: dataProveedores } = useGetVendorsQuery()
   const { data: dataCuentas } = useGetCuentasBancariasQuery()
   const { data: dataTiposPago } = useGetTiposPagoQuery({})
@@ -40,7 +53,7 @@ function DeudasCashContent() {
   }
 
   const handleSuccess = () => {
-    refetch()
+    loadDeudas()
   }
 
   if (!featureEnabled) {

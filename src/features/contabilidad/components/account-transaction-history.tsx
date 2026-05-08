@@ -12,7 +12,7 @@ import { TrendingUp, TrendingDown, ArrowUpDown, Calendar, DollarSign, Info, Wall
 import { useGetCuentaTransactionHistoryQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { formatCurrency, formatDate, convertCurrency } from "@/lib/redux/utils/contabilidadUtils"
 import { useGetMonedasQuery } from "@/features/contabilidad/api/contabilidadApi"
-import { useGetPrestamoCashHistorialQuery } from "@/lib/redux/services/prestamosCashApi"
+import { getPrestamoCashHistorialAction } from "@/features/contabilidad/actions-prestamos-cash"
 import { DateRangePicker } from "./date-range-picker"
 import { ExportDialog } from "@/components/contabilidad/export-dialog"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
@@ -119,9 +119,15 @@ export function AccountTransactionHistory({
     return (prestamo as any)?.prestamoCashId ?? (prestamo as any)?.detalles?.prestamoCashId ?? null
   }, [historial?.transacciones])
   const [prestamoSheetOpen, setPrestamoSheetOpen] = useState(false)
-  const { data: prestamoHistorial } = useGetPrestamoCashHistorialQuery(prestamoCashId ?? '', {
-    skip: !prestamoCashId || !prestamoSheetOpen,
-  })
+  const [prestamoHistorial, setPrestamoHistorial] = useState<any>(null)
+
+  useEffect(() => {
+    if (prestamoCashId && prestamoSheetOpen) {
+      getPrestamoCashHistorialAction(prestamoCashId).then(r => {
+        if (r.success) setPrestamoHistorial(r.data)
+      })
+    }
+  }, [prestamoCashId, prestamoSheetOpen])
   const { data: monedasData = { data: [] } } = useGetMonedasQuery()
   const monedas = monedasData.data || []
   
