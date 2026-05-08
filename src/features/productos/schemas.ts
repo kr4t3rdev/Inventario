@@ -37,6 +37,9 @@ export const productoSchema = z.object({
   puntoDeVentaId: z.string().optional().nullable(),
 
   fotos: z.array(z.string()).optional().default([]),
+  precios: z
+    .array(z.object({ listaPrecioId: z.string(), precio: z.number() }))
+    .optional(),
 });
 
 /**
@@ -73,6 +76,9 @@ export const productoUpdateSchema = z.object({
   puntoDeVentaId: z.string().optional().nullable(),
 
   fotos: z.array(z.string()).optional(),
+  precios: z
+    .array(z.object({ listaPrecioId: z.string(), precio: z.number() }))
+    .optional(),
 });
 
 /**

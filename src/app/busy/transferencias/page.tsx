@@ -17,24 +17,43 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { getTransferenciasAction, deleteTransferenciaAction } from "@/features/transferencias/actions"
+import { getTransferenciasAction, deleteTransferenciaAction } from "@/features/transferencias"
 import { TransferenciasTable } from "@/features/transferencias/components/transferencias-table"
 
 export default function TransferenciasPage() {
   const [transferencias, setTransferencias] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
 
-  useEffect(() => { async function f() { setIsLoading(true); const r=await getTransferenciasAction(); if(r.success) setTransferencias(r.data?.transferencias??[]); setIsLoading(false); } f(); }, [])
+  useEffect(() => {
+    async function fetchData() {
+      setIsLoading(true)
+      setError(null)
+      const result = await getTransferenciasAction({})
+      if (result.success) {
+        setTransferencias(result.data?.transferencias ?? [])
+      } else {
+        setError(result.error?.message ?? 'Error al cargar transferencias')
+      }
+      setIsLoading(false)
+    }
+    fetchData()
+  }, [])
 
   const [transferenciaToDelete, setTransferenciaToDelete] = useState<string | null>(null)
 
   const handleConfirmDelete = async () => {
     if (!transferenciaToDelete) return
     startTransition(async () => {
-      const r=await deleteTransferenciaAction(transferenciaToDelete)
-      if(r.success) { toast("Transferencia cancelada exitosamente."); const ref=await getTransferenciasAction(); if(ref.success) setTransferencias(ref.data?.transferencias??[]) }
-      else toast(r.error?.message||"Error al cancelar")
+      const result = await deleteTransferenciaAction(transferenciaToDelete)
+      if (result.success) {
+        toast.success('Transferencia cancelada exitosamente.')
+        const refresh = await getTransferenciasAction({})
+        if (refresh.success) setTransferencias(refresh.data?.transferencias ?? [])
+      } else {
+        toast.error(result.error?.message ?? 'Error al cancelar')
+      }
       setTransferenciaToDelete(null)
     })
   }
@@ -89,6 +108,7 @@ export default function TransferenciasPage() {
           <TransferenciasTable 
             transferencias={transferencias || []} 
             isLoading={isLoading} 
+            error={error}
             onDelete={setTransferenciaToDelete}
           />
 

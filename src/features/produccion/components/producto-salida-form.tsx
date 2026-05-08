@@ -18,7 +18,7 @@ import { useGetCategoriasQuery, useGetSubcategoriasQuery } from '@/features/cate
 import { useGetUnidadesQuery } from '@/features/unidades';
 import { useGetAlmacenesQuery } from '@/features/almacenes';
 import { useGetVendorsQuery } from '@/features/vendors';
-import { useAddProductoMutation } from '@/features/productos';
+import { createProductoAction } from '@/features/productos/actions';
 import { getAuthToken } from '@/lib/token';
 
 interface ProductoSalidaFormValues {
@@ -91,7 +91,6 @@ export function ProductoSalidaForm({
   const [values, setValues] = useState<ProductoSalidaFormValues>(INITIAL_VALUES);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [usaEan13, setUsaEan13] = useState(false);
-  const [addProducto] = useAddProductoMutation();
 
   const { data: categorias = [] } = useGetCategoriasQuery();
   const { data: subcategorias = [] } = useGetSubcategoriasQuery(values.categoriaId, {
@@ -155,8 +154,11 @@ export function ProductoSalidaForm({
         proveedorCodigo: selectedVendor?.vendorCode ?? null,
       });
 
-      const response = await addProducto(payload as never).unwrap();
-      const producto = normalizeCreatedProducto(response);
+      const result = await createProductoAction(payload as any)
+      if (!result.success) {
+        throw new Error(result.error?.message || 'Error al crear producto')
+      }
+      const producto = normalizeCreatedProducto(result.data)
 
       toast.success('Producto creado y asociado a la receta.');
       onSuccess(producto);

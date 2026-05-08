@@ -28,9 +28,9 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { sileo } from '@/lib/sileo-shim'
 
 import {
-  useAddProductoMutation,
-  useUpdateProductoMutation,
-} from '@/features/productos'
+  createProductoAction,
+  updateProductoAction,
+} from '@/features/productos/actions'
 import { useGetUnidadesQuery } from '@/features/unidades'
 import { useGetAlmacenesQuery } from '@/features/almacenes'
 import { useGetListasPreciosQuery } from '@/features/listas-precios/api/listasPreciosApi'
@@ -224,9 +224,6 @@ function PulseSkeleton({ className }: { className?: string }): React.JSX.Element
  * @returns {JSX.Element} Formulario de producto.
  */
 export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Element {
-  const router = useRouter()
-  const [isLoading, setIsLoading] = useState(false)
-  const [usaEan13, setUsaEan13] = useState(false)
   const [isPending, startTransition] = useTransition()
   const isEditing = Boolean(initialData)
   const isTaxonomyLocked = usaEan13 && isEditing
@@ -256,8 +253,8 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
     return initialMap
   })
 
-  const [addProducto] = useAddProductoMutation()
-  const [updateProducto] = useUpdateProductoMutation()
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
 
   const form = useForm<ProductosFormValues>({
     resolver: zodResolver(buildProductosSchema(usaEan13)),
@@ -368,11 +365,15 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
            precios: buildPreciosPayload(preciosPorLista),
          }
 
-        await updateProducto({
+        const result = await updateProductoAction({
           id: initialData.id,
           ...payload,
-        }).unwrap()
-        sileo.success({ title: 'El producto ha sido actualizado exitosamente.' })
+        })
+        if (result.success) {
+          sileo.success({ title: 'El producto ha sido actualizado exitosamente.' })
+        } else {
+          throw new Error(result.error?.message || 'Error al actualizar')
+        }
       } else {
         const resolvedProveedorCodigo = selectedVendorProviderCode || watchedProveedorCodigo
 
@@ -405,8 +406,12 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
           precios: buildPreciosPayload(preciosPorLista),
         }
 
-        await addProducto(payload).unwrap()
-        sileo.success({ title: 'El producto ha sido registrado exitosamente.' })
+        const result = await createProductoAction(payload)
+        if (result.success) {
+          sileo.success({ title: 'El producto ha sido registrado exitosamente.' })
+        } else {
+          throw new Error(result.error?.message || 'Error al crear')
+        }
       }
 
       router.push('/busy/products')

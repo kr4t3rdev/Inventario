@@ -21,13 +21,7 @@ export {
 
 export {
   productosApi,
-  useGetProductosQuery,
-  useSearchProductosQuery,
-  useGetProductoQuery,
-  useAddProductoMutation,
-  useUpdateProductoMutation,
-  useUpdateProductoStockMinimoMutation,
-  useDeleteProductoMutation,
+  // Mutations pendientes de migrar a Server Actions
   useRestockProductoMutation,
   useGetRestockHistoryQuery,
   useBulkUpdateStockMinimoMutation,

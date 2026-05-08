@@ -88,6 +88,16 @@ export const createProductoAction = withAction(async (input: ProductoInput, user
       puntoDeVentaId: parsed.puntoDeVentaId ?? null,
       fotos: parsed.fotos ?? [],
       tenantId,
+      ...(parsed.precios?.length
+        ? {
+            precios: {
+              create: parsed.precios.map((p) => ({
+                listaPrecioId: p.listaPrecioId,
+                precio: p.precio,
+              })),
+            },
+          }
+        : {}),
     },
     select: PRODUCTO_SELECT,
   });
@@ -114,6 +124,28 @@ export const updateProductoAction = withAction(async (input: ProductoUpdateInput
 
   if (!existing) {
     throw new ActionError('Producto no encontrado', 'NOT_FOUND');
+  }
+
+  // Upsert precios por lista antes de actualizar el producto
+  if (parsed.precios?.length) {
+    await Promise.all(
+      parsed.precios.map((p) =>
+        prisma.precioProducto.upsert({
+          where: {
+            listaPrecioId_productoId: {
+              listaPrecioId: p.listaPrecioId,
+              productoId: id,
+            },
+          },
+          update: { precio: p.precio },
+          create: {
+            listaPrecioId: p.listaPrecioId,
+            productoId: id,
+            precio: p.precio,
+          },
+        }),
+      ),
+    );
   }
 
   const producto = await prisma.producto.update({
