@@ -12,6 +12,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { z } from 'zod';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
 import { requireTenant } from '@/lib/services/tenant-scope';
@@ -286,5 +287,74 @@ export const getStockPorUbicacionAction = withAction(
       stockUbicacion: stockMap.get(p.id) ?? 0,
       stockTotal: p.stock,
     }));
+  },
+);
+
+/**
+ * Schema para bulk update de stock mínimo.
+ */
+const bulkUpdateSchema = z.object({
+  updates: z.array(z.object({
+    productoId: z.string().min(1),
+    stockMinimo: z.number().int().min(0),
+  })).min(1),
+});
+
+/**
+ * @description Actualiza masivamente el stock mínimo de múltiples productos.
+ *
+ * Cada producto se actualiza de forma independiente; si uno falla, los demás
+ * continúan. Retorna un resumen con conteo de éxitos y errores.
+ *
+ * @param input - { updates: { productoId, stockMinimo }[] }
+ * @returns { updated, errors[], results[] }
+ */
+export const bulkUpdateStockMinimoAction = withAction(
+  async (input: z.infer<typeof bulkUpdateSchema>, user: AuthenticatedUser) => {
+    const { updates } = bulkUpdateSchema.parse(input);
+    requireTenant(user);
+
+    const results: Array<{ productoId: string; success: boolean }> = [];
+    const errors: Array<{ productoId: string; error: string }> = [];
+
+    for (const update of updates) {
+      try {
+        await prisma.producto.update({
+          where: { id: update.productoId },
+          data: { stockMinimo: update.stockMinimo },
+        });
+        results.push({ productoId: update.productoId, success: true });
+      } catch {
+        errors.push({ productoId: update.productoId, error: 'Error al actualizar' });
+        results.push({ productoId: update.productoId, success: false });
+      }
+    }
+
+    revalidatePath('/busy/products');
+    return {
+      updated: results.filter((r) => r.success).length,
+      errors,
+      results,
+    };
+  },
+);
+
+/**
+ * @description Obtiene el historial de restock de un producto.
+ *
+ * @param productoId - ID del producto
+ * @returns Historial de restocks ordenado por fecha descendente
+ */
+export const getRestockHistoryAction = withAction(
+  async (productoId: string, user: AuthenticatedUser) => {
+    requireTenant(user);
+    return prisma.gastoCompra.findMany({
+      where: {
+        productoId,
+        tenantId: (user as { tenantId: string }).tenantId,
+      },
+      orderBy: { createdAt: 'desc' },
+      include: { producto: { select: { nombre: true } } },
+    });
   },
 );

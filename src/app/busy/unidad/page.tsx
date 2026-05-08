@@ -1,7 +1,7 @@
 'use client'
 
 import { Button } from '@/components/ui/button'
-import { getUnidadesAction, deleteUnidadAction } from '@/features/unidades'
+import { getUnidadesAction, deleteUnidadAction } from '@/features/unidades/actions'
 import { ColumnDef } from '@tanstack/react-table'
 import { 
   ArrowDown, 

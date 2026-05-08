@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { History } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -14,7 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { RestockHistory } from "./restock-history"
-import { useGetRestockHistoryQuery } from "@/features/productos"
+import { getRestockHistoryAction } from "@/features/productos/actions"
 
 interface RestockHistoryDialogProps {
   productoId: string
@@ -28,10 +28,19 @@ export function RestockHistoryDialog({
   trigger
 }: RestockHistoryDialogProps) {
   const [open, setOpen] = useState(false)
+  const [data, setData] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<any>(null)
 
-  const { data, isLoading, error } = useGetRestockHistoryQuery(productoId, {
-    skip: !open, // Only fetch when dialog is open
-  })
+  useEffect(() => {
+    if (!open) return
+    setIsLoading(true)
+    getRestockHistoryAction(productoId).then(r => {
+      if (r.success) setData(r.data)
+      else setError(r.error)
+      setIsLoading(false)
+    })
+  }, [open, productoId])
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

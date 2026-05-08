@@ -14,8 +14,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { getProductosAction } from '@/features/productos/actions'
-import { useBulkUpdateStockMinimoMutation } from '@/features/productos/api/productosApi'
+import { getProductosAction, bulkUpdateStockMinimoAction } from '@/features/productos/actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -60,7 +59,7 @@ function PulseSkeleton({ className }: { className?: string }): React.JSX.Element
 export function BulkStockMinimoManager(): React.JSX.Element {
   const [productos, setProductos] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [bulkUpdate, { isLoading: isUpdating }] = useBulkUpdateStockMinimoMutation()
+  const [isUpdating, setIsUpdating] = useState(false)
 
   const fetchProductos = () => {
     getProductosAction().then(r => {
@@ -168,13 +167,15 @@ export function BulkStockMinimoManager(): React.JSX.Element {
     })
 
     try {
-      const result = await bulkUpdate({ updates }).unwrap()
+      setIsUpdating(true)
+      const result = await bulkUpdateStockMinimoAction({ updates })
+      const data = result.success ? result.data! : { updated: 0, errors: [], results: [] }
 
       setUpdateProgress({
         isUpdating: false,
         total: updates.length,
-        completed: result.updated,
-        errors: result.errors.map((error) => ({
+        completed: data.updated,
+        errors: data.errors.map((error) => ({
           productoId: error.productoId,
           productoNombre:
             productosState.find((producto) => producto.id === error.productoId)?.nombre || 'Desconocido',
@@ -183,11 +184,11 @@ export function BulkStockMinimoManager(): React.JSX.Element {
       })
 
       if (result.success) {
-        toast.success(`Se actualizaron ${result.updated} productos exitosamente.`)
+        toast.success(`Se actualizaron ${data.updated} productos exitosamente.`)
 
         setProductosState((prev) =>
           prev.map((producto) => {
-            const wasUpdated = result.results.find(
+            const wasUpdated = data.results.find(
               (entry) => entry.productoId === producto.id && entry.success
             )
             if (!wasUpdated) return producto
