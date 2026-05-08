@@ -1,12 +1,14 @@
 'use client'
 
 import { useParams } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { AlertCircle, Boxes, History, Package, Sparkles, TrendingUp } from 'lucide-react'
 
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useGetProductoQuery, ProductoForm } from '@/features/productos'
+import { getProductosAction } from '@/features/productos/actions'
+import { ProductoForm } from '@/features/productos/components/productos-form'
 import { RestockDialog } from '@/features/productos/components/restock-dialog'
 import { RestockHistoryDialog } from '@/features/productos/components/restock-history-dialog'
 import { CostHistoryDialog } from '@/features/productos/components/cost-history-dialog'
@@ -22,10 +24,9 @@ import { Badge } from '@/components/ui/badge'
 export default function EditarProductosPage(): React.JSX.Element {
   const params = useParams()
   const productId = params.id as string
-
-  const { data: producto, isLoading, error } = useGetProductoQuery(productId, {
-    skip: !productId,
-  })
+  const [producto, setProducto] = useState<any | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  useEffect(() => { async function f() { setIsLoading(true); const r=await getProductosAction(); const p=r.success ? (r.data??[]).find((pr:any)=>pr.id===productId) : null; setProducto(p||null); setIsLoading(false); } f(); }, [productId])
 
   if (isLoading) {
     return (

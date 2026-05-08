@@ -6,15 +6,19 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
-import { useGetEmpleadoQuery } from "@/lib/redux/services/empleadosApi"
 import { useParams } from "next/navigation"
+import { useEffect, useState } from "react"
+import { EmpleadoForm, getEmpleadoByIdAction } from "@/features/empleados"
 import { ArrowLeft, Users, Sparkles, AlertCircle, Loader2 } from "lucide-react"
 import Link from "next/link"
 
 export default function EditarEmpleadoPage() {
   const params = useParams()
   const empleadoId = params.id as string
-  const { data: empleado, isLoading, error } = useGetEmpleadoQuery(empleadoId)
+  const [empleado, setEmpleado] = useState<any | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(false)
+  useEffect(() => { async function f() { setIsLoading(true); const r=await getEmpleadoByIdAction(empleadoId); if(r.success) setEmpleado(r.data!); else setError(true); setIsLoading(false); } f(); }, [empleadoId])
 
   if (isLoading) {
     return (

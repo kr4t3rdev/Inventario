@@ -1,8 +1,9 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
-import { useGetTransferenciaQuery } from "@/features/transferencias"
-import { TransferenciaForm } from "@/features/transferencias"
+import { getTransferenciaByIdAction } from "@/features/transferencias"
+import { TransferenciaForm } from "@/features/transferencias/components/transferencias-form"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { motion } from "framer-motion"
@@ -11,7 +12,9 @@ import { ArrowLeftRight, Sparkles } from "lucide-react"
 export default function EditarTransferenciaPage() {
   const params = useParams()
   const transferenciaId = params.id as string
-  const { data: transferencia, isLoading, error } = useGetTransferenciaQuery(transferenciaId)
+  const [transferencia, setTransferencia] = useState<any | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  useEffect(() => { async function f() { setIsLoading(true); const r=await getTransferenciaByIdAction(transferenciaId); if(r.success) setTransferencia(r.data!); setIsLoading(false); } f(); }, [transferenciaId])
 
   if (isLoading) {
     return (

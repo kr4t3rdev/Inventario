@@ -17,12 +17,8 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
+import { deleteCategoriaAction, getCategoriasAction, getCategoriaHierarchyAction } from "@/features/categorias"
 import { ColumnDef } from "@tanstack/react-table"
-import {
-  getCategoriasAction,
-  getCategoriaHierarchyAction,
-  deleteCategoriaAction,
-} from "@/features/categorias/actions"
 import { 
   ArrowUp, 
   ArrowUpDown, 
@@ -37,10 +33,11 @@ import {
   Sparkles
 } from "lucide-react"
 import Link from "next/link"
-import { useEffect, useState, useTransition } from "react"
+import { useState } from "react"
 import { toast } from "sonner"
 import type { Categoria, CategoriaHierarchy } from "../../models/model"
 import { motion, AnimatePresence } from "framer-motion"
+import { useAuth } from "@/contexts/auth-context"
 
 // Loading spinner component
 function LoadingSpinner({ size = 32 }: { size?: number }) {
@@ -76,47 +73,25 @@ const DataTable = dynamic(() => import("@/components/data-table").then(mod => ({
 })
 
 const Categoria = () => {
-  // Server Actions: data fetching (reemplaza RTK Query)
-  const [categorias, setCategorias] = useState<Categoria[]>([])
-  const [categoriaHierarchy, setCategoriaHierarchy] = useState<CategoriaHierarchy[]>([])
+  const { user, loading: authLoading } = useAuth()
+  const [categorias, setCategorias] = useState<any[]>([])
+  const [categoriaHierarchy, setCategoriaHierarchy] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isPending, startTransition] = useTransition()
 
-  useEffect(() => {
-    async function fetchData() {
-      setIsLoading(true)
-      const [catResult, hierResult] = await Promise.all([
-        getCategoriasAction(),
-        getCategoriaHierarchyAction(),
-      ])
-      if (catResult.success) setCategorias(catResult.data!)
-      if (hierResult.success) setCategoriaHierarchy(hierResult.data!)
-      setIsLoading(false)
-    }
-    fetchData()
-  }, [])
+  useEffect(() => { async function f() { setIsLoading(true); const r1=await getCategoriasAction(); const r2=await getCategoriaHierarchyAction(); if(r1.success) setCategorias(r1.data??[]); if(r2.success) setCategoriaHierarchy(r2.data??[]); setIsLoading(false); } f(); }, [])
 
-  const [categoriaToDelete, setCategoriaToDelete] = useState<string | null>(null)
-  const [showTreeView, setShowTreeView] = useState(false)
+  const handleDeleteClick = (id: string) => { setDeleteDialogOpen(true); setSelectedCategory(id) }
 
-  const handleDelete = () => {
-    if (!categoriaToDelete) return
+  const confirmDelete = () => {
+    if (!selectedCategory) return
     startTransition(async () => {
-      const result = await deleteCategoriaAction(categoriaToDelete)
-      if (result.success) {
-        toast.success("La categoría ha sido eliminada exitosamente.")
-        // Refetch data after delete
-        const [catResult, hierResult] = await Promise.all([
-          getCategoriasAction(),
-          getCategoriaHierarchyAction(),
-        ])
-        if (catResult.success) setCategorias(catResult.data!)
-        if (hierResult.success) setCategoriaHierarchy(hierResult.data!)
-      } else {
-        toast.error(result.error?.message || "Hubo un error al eliminar la categoría.")
-      }
-      setCategoriaToDelete(null)
+      const r=await deleteCategoriaAction(selectedCategory)
+      if(r.success) { toast.success("Categoría eliminada exitosamente"); const r1=await getCategoriasAction(); const r2=await getCategoriaHierarchyAction(); if(r1.success) setCategorias(r1.data??[]); if(r2.success) setCategoriaHierarchy(r2.data??[]) }
+      else toast.error(r.error?.message||"Error al eliminar")
+      setDeleteDialogOpen(false); setSelectedCategory(null)
     })
+  }
   }
 
   // Flat table columns for regular view
@@ -308,7 +283,7 @@ const Categoria = () => {
     return result
   }
 
-  if (isLoading) {
+  if (isLoading || isLoadingHierarchy) {
     return (
       <SidebarProvider>           
         <SidebarInset>              
@@ -503,12 +478,8 @@ const Categoria = () => {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              disabled={isPending}
-              className="bg-destructive text-destructive-foreground"
-            >
-              {isPending ? "Eliminando..." : "Eliminar"}
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground">
+              Eliminar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
