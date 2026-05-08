@@ -1,3 +1,7 @@
+// Server Actions (nuevo)
+export { getGastosDEAction, getGastoDEByIdAction, createGastosDEAction, updateGastosDEAction, deleteGastosDEAction } from './actions';
+
+// RTK Query (legacy)
 export { gastosDEApi, useGetGastosDEQuery, useGetGastoDEQuery, useAddGastosDEMutation, useUpdateGastosDEMutation, useDeleteGastosDEMutation } from './api/gastosDEApi'
 export { gastosConceptosApi, useGetGastoConceptosQuery, useGetGastoConceptoQuery, useAddGastoConceptoMutation, useUpdateGastoConceptoMutation, useDeleteGastoConceptoMutation, useGetGastoElementosQuery, useAddGastoElementoMutation, useUpdateGastoElementoMutation, useDeleteGastoElementoMutation } from './api/gastosConceptosApi'
 export { VendorCombobox } from './components/VendorCombobox'
