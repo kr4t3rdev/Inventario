@@ -224,6 +224,9 @@ function PulseSkeleton({ className }: { className?: string }): React.JSX.Element
  * @returns {JSX.Element} Formulario de producto.
  */
 export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Element {
+  const router = useRouter()
+  const [isLoading, setIsLoading] = useState(false)
+  const [usaEan13, setUsaEan13] = useState(false)
   const [isPending, startTransition] = useTransition()
   const isEditing = Boolean(initialData)
   const isTaxonomyLocked = usaEan13 && isEditing
@@ -252,9 +255,6 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
     })
     return initialMap
   })
-
-  const router = useRouter()
-  const [isPending, startTransition] = useTransition()
 
   const form = useForm<ProductosFormValues>({
     resolver: zodResolver(buildProductosSchema(usaEan13)),
