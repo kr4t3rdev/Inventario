@@ -2,7 +2,7 @@
 export {
   getUsersAction, createUserAction, updateUserAction, deleteUserAction,
   lockUserAction, unlockUserAction,
-  getAdminTenantsAction, getAdminSystemHealthAction,
+  getAdminTenantsAction, getAdminSystemHealthAction, getAdminFinanceAction,
   getAdminPlanesAction, createAdminPlanAction, updateAdminPlanAction, deleteAdminPlanAction,
 } from './actions';
 

@@ -139,7 +139,21 @@ export const getAdminSystemHealthAction = withAction(async (_input: void, user: 
   };
 });
 
-// ─── Planes CRUD ──────────────────────────────────────────
+export const getAdminFinanceAction = withAction(async (_input: void, user: AuthenticatedUser) => {
+  if (user.role !== 'admin') throw new ActionError('Acceso restringido', 'FORBIDDEN');
+  const tenantCount = await prisma.tenant.count();
+  const ventas = await prisma.venta.aggregate({ _count: true, _sum: { total: true } });
+  const ventasServicios = await prisma.ventaServicios.aggregate({ _count: true, _sum: { total: true } });
+  return {
+    tenantCount,
+    revenue: {
+      totalVentas: ventas._count || 0,
+      totalVentasMonto: ventas._sum.total || 0,
+      totalVentasServicios: ventasServicios._count || 0,
+      totalServiciosMonto: ventasServicios._sum.total || 0,
+    },
+  };
+});
 
 export const getAdminPlanesAction = withAction(async (_input: void, user: AuthenticatedUser) => {
   if (user.role !== 'admin') throw new ActionError('Acceso restringido', 'FORBIDDEN');

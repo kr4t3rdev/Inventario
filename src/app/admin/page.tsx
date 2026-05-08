@@ -20,7 +20,7 @@ import { motion, type Variants } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { PageTransition, StaggerContainer, StaggerItem, AnimatedCard } from "@/components/ui/animations"
-import { useGetAdminTenantsQuery, useGetAdminFinanceQuery, useGetAdminSystemQuery } from "@/features/admin/services/adminApi"
+import { getAdminTenantsAction, getAdminFinanceAction, getAdminSystemHealthAction } from "@/features/admin"
 
 interface SystemAlert {
   id: string
@@ -66,11 +66,12 @@ const severityConfig = {
  * @returns {JSX.Element} Admin overview page with system-wide metrics.
  */
 export default function AdminDashboardPage(): React.JSX.Element {
-  const { data: tenants, isLoading: tenantsLoading, refetch: refetchTenants } = useGetAdminTenantsQuery()
-  const { data: finance, isLoading: financeLoading, refetch: refetchFinance } = useGetAdminFinanceQuery()
-  const { data: system, isLoading: systemLoading, refetch: refetchSystem } = useGetAdminSystemQuery()
+  const [tenants, setTenants] = useState<any[]>([])
+  const [finance, setFinance] = useState<any>(null)
+  const [system, setSystem] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
-  const isLoading = tenantsLoading || financeLoading || systemLoading
+  useEffect(() => { setIsLoading(true); Promise.all([getAdminTenantsAction(), getAdminFinanceAction(), getAdminSystemHealthAction()]).then(([r1,r2,r3]) => { if(r1.success) setTenants(r1.data??[]); if(r2.success) setFinance(r2.data); if(r3.success) setSystem(r3.data); setIsLoading(false) }) }, [])
   const safeTenants = tenants ?? []
   const safeFinance = finance
   const safeSystem = system

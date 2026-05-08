@@ -4,10 +4,14 @@ import { Wallet, Sparkles, Loader2, RefreshCw, TrendingUp, TrendingDown } from "
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { PageTransition } from "@/components/ui/animations"
-import { useGetAdminFinanceQuery } from "@/features/admin/services/adminApi"
+import { useEffect, useState } from "react"
+import { getAdminFinanceAction } from "@/features/admin"
 
 export default function FinanzasPage() {
-  const { data: finance, isLoading, refetch } = useGetAdminFinanceQuery()
+  const [finance, setFinance] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const refetch = () => { getAdminFinanceAction().then(r => { if(r.success) setFinance(r.data) }) }
+  useEffect(() => { setIsLoading(true); getAdminFinanceAction().then(r => { if(r.success) setFinance(r.data); setIsLoading(false) }) }, [])
 
   const netIncome = finance
     ? Number(finance.revenue.totalIngresos) - Number(finance.gastos.totalMonto)

@@ -43,11 +43,11 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination'
 import {
-  useGetAdminPlanesQuery,
-  useCreateAdminPlanMutation,
-  useUpdateAdminPlanMutation,
-  useDeleteAdminPlanMutation,
-} from '@/features/admin/services/adminApi'
+  getAdminPlanesAction,
+  createAdminPlanAction,
+  updateAdminPlanAction,
+  deleteAdminPlanAction,
+} from '@/features/admin'
 
 export default function AdminPlanesPage() {
   const [page, setPage] = useState(1)
@@ -65,15 +65,11 @@ export default function AdminPlanesPage() {
     maxProductos: '100',
   })
 
-  const { data, isLoading } = useGetAdminPlanesQuery({
-    page,
-    limit,
-    ...(search ? { search } : {}),
-  })
+  const [data, setData] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isPending, startTransition] = useTransition()
 
-  const [createPlan] = useCreateAdminPlanMutation()
-  const [updatePlan] = useUpdateAdminPlanMutation()
-  const [deletePlan] = useDeleteAdminPlanMutation()
+  useEffect(() => { setIsLoading(true); getAdminPlanesAction().then(r => { if(r.success) setData({ planes: r.data, total: (r.data as any)?.length||0, pages: 1 }); setIsLoading(false) }) }, [page, search])
 
   const planes = data?.planes || []
   const total = data?.total || 0
@@ -119,15 +115,13 @@ export default function AdminPlanesPage() {
       }
 
       if (editingPlan) {
-        await updatePlan({ id: editingPlan.planId, body }).unwrap()
-        toast.success('Plan actualizado')
+        const r = await updateAdminPlanAction({ planId: editingPlan.planId, nombre: body.nombre, maxUsuarios: Number(body.maxUsuarios)||1, maxAlmacenes: Number(body.maxAlmacenes)||1, maxProductos: Number(body.maxProductos)||100 })
+        if(r.success) { toast.success('Plan actualizado'); resetForm(); getAdminPlanesAction().then(r2 => { if(r2.success) setData({ planes: r2.data, total: (r2.data as any)?.length||0, pages: 1 }) }) }
+        else toast.error(r.error?.message||'Error')
       } else {
-        await createPlan(body).unwrap()
-        toast.success('Plan creado')
-      }
-
-      setDialogOpen(false)
-      resetForm()
+        const r = await createAdminPlanAction({ nombre: body.nombre, maxUsuarios: Number(body.maxUsuarios)||1, maxAlmacenes: Number(body.maxAlmacenes)||1, maxProductos: Number(body.maxProductos)||100 })
+        if(r.success) { toast.success('Plan creado'); resetForm(); getAdminPlanesAction().then(r2 => { if(r2.success) setData({ planes: r2.data, total: (r2.data as any)?.length||0, pages: 1 }) }) }
+        else toast.error(r.error?.message||'Error')
     } catch (error: any) {
       toast.error(error.data?.error || 'Error guardando plan')
     }
@@ -136,8 +130,9 @@ export default function AdminPlanesPage() {
   async function handleDelete(planId: string) {
     if (!confirm('¿Eliminar este plan?')) return
     try {
-      await deletePlan(planId).unwrap()
-      toast.success('Plan eliminado')
+      const r=await deleteAdminPlanAction(planId)
+      if(r.success) { toast.success('Plan eliminado'); getAdminPlanesAction().then(r2 => { if(r2.success) setData({ planes: r2.data, total: (r2.data as any)?.length||0, pages: 1 }) }) }
+      else toast.error(r.error?.message||'Error')
     } catch (error: any) {
       toast.error(error.data?.error || 'Error eliminando plan')
     }

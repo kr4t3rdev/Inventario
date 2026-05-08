@@ -5,10 +5,14 @@ import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { PageTransition } from "@/components/ui/animations"
-import { useGetAdminSystemQuery } from "@/features/admin/services/adminApi"
+import { useEffect, useState } from "react"
+import { getAdminSystemHealthAction } from "@/features/admin"
 
 export default function SistemaPage() {
-  const { data: system, isLoading, refetch } = useGetAdminSystemQuery()
+  const [system, setSystem] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const refetch = () => { getAdminSystemHealthAction().then(r => { if(r.success) setSystem(r.data) }) }
+  useEffect(() => { setIsLoading(true); getAdminSystemHealthAction().then(r => { if(r.success) setSystem(r.data); setIsLoading(false) }) }, [])
 
   return (
     <PageTransition className="flex flex-1 flex-col gap-4 p-4 lg:p-6">

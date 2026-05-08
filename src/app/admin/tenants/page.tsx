@@ -5,11 +5,15 @@ import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { PageTransition } from "@/components/ui/animations"
-import { useGetAdminTenantsQuery, useGetAdminSystemQuery } from "@/features/admin/services/adminApi"
+import { useEffect, useState } from "react"
+import { getAdminTenantsAction, getAdminSystemHealthAction } from "@/features/admin"
 
 export default function TenantsPage() {
-  const { data: tenants, isLoading, refetch } = useGetAdminTenantsQuery()
-  const { data: system } = useGetAdminSystemQuery()
+  const [tenants, setTenants] = useState<any[]>([])
+  const [system, setSystem] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const refetch = () => { getAdminTenantsAction().then(r => { if(r.success) setTenants(r.data??[]) }) }
+  useEffect(() => { setIsLoading(true); getAdminTenantsAction().then(r => { if(r.success) setTenants(r.data??[]) }); getAdminSystemHealthAction().then(r => { if(r.success) setSystem(r.data) }); setIsLoading(false) }, [])
 
   const safeTenants = tenants ?? []
 
