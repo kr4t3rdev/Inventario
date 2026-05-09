@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-import { useCreateAnticipoMutation } from "@/features/contabilidad/api/contabilidadApi"
+import { createAnticipoAction } from "@/features/contabilidad/actions-anticipos"
 import { Loader2 } from "lucide-react"
 import { sileo } from "@/lib/sileo-shim"
 
@@ -84,7 +84,7 @@ export function AnticipoForm({
 }: AnticipoFormProps) {
   const router = useRouter()
 
-  const [createAnticipo, { isLoading }] = useCreateAnticipoMutation()
+  const [isLoading, setIsLoading] = useState(false)
 
   const form = useForm<AnticipoFormValues>({
     resolver: zodResolver(anticipoSchema),
@@ -116,14 +116,19 @@ export function AnticipoForm({
   const proveedorDelContrato = proveedores.find((p) => p.vendorId === contratoActual?.vendorId)
 
   const onSubmit = async (data: AnticipoFormValues) => {
+    setIsLoading(true)
     try {
-      await createAnticipo(
+      const result = await createAnticipoAction(
         buildCreateAnticipoPayload(
           data,
           proveedorDelContrato?.vendorId,
           clienteDelContrato?.clienteId,
         )
-      ).unwrap()
+      )
+
+      if (!result.success) {
+        throw new Error(result.error?.message || "No se pudo crear el anticipo")
+      }
 
       sileo.success({ title: `El anticipo de ${data.tipo === "PAGO" ? "pago" : "cobro"} ha sido creado exitosamente.` })
 
@@ -131,7 +136,9 @@ export function AnticipoForm({
       onOpenChange(false)
       onSuccess?.()
     } catch (error: any) {
-      sileo.error({ title: error?.data?.error || "No se pudo crear el anticipo"})
+      sileo.error({ title: error?.message || "No se pudo crear el anticipo"})
+    } finally {
+      setIsLoading(false)
     }
   }
 

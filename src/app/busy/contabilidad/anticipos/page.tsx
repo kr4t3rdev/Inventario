@@ -3,14 +3,13 @@
 import React, { useState, useEffect, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import { Plus } from "lucide-react"
-import { getAuthToken } from "@/lib/token"
-
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PageTransition, StaggerContainer, StaggerItem } from "@/components/ui/animations"
-import { useGetAnticiposQuery, useGetAnticipoByIdQuery, useGetCuentasBancariasQuery } from "@/features/contabilidad/api/contabilidadApi"
-import { useGetClientesQuery } from "@/features/clientes/api/ClienteApi"
+import { getAnticiposAction, getAnticipoByIdAction } from "@/features/contabilidad/actions-anticipos"
+import { getCuentasBancariasAction } from "@/features/contabilidad/actions-cuentas-bancarias"
+import { getClientesAction } from "@/features/clientes"
 import { useVendors } from '@/features/vendors/hooks/use-vendors'
 import { AnticiposTable } from "@/features/contabilidad/components/anticipos/anticipos-table"
 import { AnticipoForm } from "@/features/contabilidad/components/anticipos/anticipo-form"
@@ -46,27 +45,47 @@ function AnticiposContent() {
   const tipoFilter = searchParams.get("tipo") as "PAGO" | "COBRO" | null
   const estadoFilter = searchParams.get("estado") as "RESERVADO" | "EJECUTADO" | "ANULADO" | null
 
-  // Queries
-  const { data: dataAnticipos, isLoading: loadingAnticipos, refetch } = useGetAnticiposQuery({
-    tipo: tipoFilter || undefined,
-    estado: estadoFilter || undefined,
-  })
+  // Data fetching via Server Actions
+  const [anticipos, setAnticipos] = useState<any[]>([])
+  const [loadingAnticipos, setLoadingAnticipos] = useState(true)
+  const [anticipoDetailData, setAnticipoDetailData] = useState<any>(null)
+  const [loadingDetail, setLoadingDetail] = useState(false)
+  const [clientes, setClientes] = useState<any[]>([])
+  const [proveedores, setProveedores] = useState<any[]>([])
+  const [cuentasBancarias, setCuentasBancarias] = useState<any[]>([])
 
-  const { data: dataClientes } = useGetClientesQuery()
+  const loadAnticipos = async () => {
+    setLoadingAnticipos(true)
+    const r = await getAnticiposAction({ tipo: tipoFilter || undefined, estado: estadoFilter || undefined })
+    if (r.success) setAnticipos(r.data?.anticipos ?? [])
+    setLoadingAnticipos(false)
+  }
+
+  useEffect(() => {
+    loadAnticipos()
+    getClientesAction().then(r => { if (r.success) setClientes(r.data ?? []) })
+    getCuentasBancariasAction().then(r => { if (r.success) setCuentasBancarias(r.data?.cuentas ?? []) })
+  }, [])
+
+  useEffect(() => {
+    if (tipoFilter || estadoFilter) loadAnticipos()
+  }, [tipoFilter, estadoFilter])
+
   const { vendors: dataProveedores } = useVendors()
-  const { data: dataCuentas } = useGetCuentasBancariasQuery()
 
-  // Query para detalle completo con movimientos enriquecidos
-  const { data: anticipoDetailData, isLoading: loadingDetail } = useGetAnticipoByIdQuery(
-    anticipoDetailId || '',
-    { skip: !anticipoDetailId }
-  )
+  useEffect(() => {
+    if (dataProveedores?.length) setProveedores(dataProveedores)
+  }, [dataProveedores])
 
-  
-  const anticipos = dataAnticipos?.anticipos || []
-  const clientes = dataClientes || []
-  const proveedores = dataProveedores || []
-  const cuentasBancarias = dataCuentas?.cuentas || []
+  // Detail fetch
+  useEffect(() => {
+    if (!anticipoDetailId) return
+    setLoadingDetail(true)
+    getAnticipoByIdAction(anticipoDetailId).then(r => {
+      if (r.success) setAnticipoDetailData(r.data)
+      setLoadingDetail(false)
+    })
+  }, [anticipoDetailId])
 
   useEffect(() => {
     const fetchContratos = async () => {
@@ -110,7 +129,7 @@ function AnticiposContent() {
   }
 
   const handleSuccess = () => {
-    refetch()
+    loadAnticipos()
   }
 
   // Si el feature está deshabilitado, mostrar mensaje

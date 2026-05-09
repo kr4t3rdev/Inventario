@@ -1,3 +1,12 @@
+// Server Actions — Anticipos
+export {
+  getAnticiposAction,
+  getAnticipoByIdAction,
+  createAnticipoAction,
+  executeAnticipoAction,
+  reverseAnticipoAction,
+} from './actions-anticipos';
+
 // Server Actions — Tipos de Pago
 export { getTiposPagoAction } from './actions-tipos-pago';
 

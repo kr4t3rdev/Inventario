@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { AlertTriangle, Loader2, Info } from "lucide-react"
 import { toast } from "sonner"
-import { useExecuteAnticipoMutation } from "@/features/contabilidad/api/contabilidadApi"
+import { executeAnticipoAction } from "@/features/contabilidad/actions-anticipos"
 import { Anticipo } from "@/app/models/model"
 
 interface AnticipoEjecutarDialogProps {
@@ -29,8 +29,7 @@ export function AnticipoEjecutarDialog({
   onSuccess,
 }: AnticipoEjecutarDialogProps) {
 
-  const [executeAnticipo, { isLoading }] = useExecuteAnticipoMutation()
-  
+  const [isLoading, setIsLoading] = useState(false)
   const [monto, setMonto] = useState<number>(0)
   const [permitirParcial, setPermitirParcial] = useState<boolean>(false)
   const [mostrarConfirmacion, setMostrarConfirmacion] = useState<boolean>(false)
@@ -69,19 +68,18 @@ export function AnticipoEjecutarDialog({
   const ejecutarConfirmado = async () => {
     if (!anticipo) return
 
+    setIsLoading(true)
     try {
-      // Determinar el contexto basado en el tipo de anticipo
-      const contexto = anticipo.tipo === "PAGO" ? "COMPRA_PRODUCTO" : "FACTURA_DIRECTA"
-      
-      await executeAnticipo({
-        id: anticipo.anticipoId,
-        contexto,
+      const result = await executeAnticipoAction({
+        anticipoId: anticipo.anticipoId,
+        montoEjecutar: monto,
         documentoDestinoId: `manual-${Date.now()}`,
-        montoObjetivo: monto,
-        monedaObjetivo: anticipo.moneda,
-        idempotencyKey: `ejecutar-${anticipo.anticipoId}-${Date.now()}`,
-        permitirParcial,
-      }).unwrap()
+        observaciones: esEjecucionParcial ? `Ejecución parcial por ${monto}` : undefined,
+      })
+
+      if (!result.success) {
+        throw new Error(result.error?.message || "No se pudo ejecutar el anticipo")
+      }
 
       toast(esEjecucionParcial 
         ? `Se ejecutó parcialmente el anticipo por ${anticipo.moneda} ${monto.toLocaleString()}`
@@ -93,7 +91,9 @@ export function AnticipoEjecutarDialog({
       onOpenChange(false)
       onSuccess?.()
     } catch (error: any) {
-      toast(error?.data?.error || "No se pudo ejecutar el anticipo")
+      toast(error?.message || "No se pudo ejecutar el anticipo")
+    } finally {
+      setIsLoading(false)
     }
   }
 

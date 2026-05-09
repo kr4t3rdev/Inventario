@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { AlertTriangle, Loader2, Info } from "lucide-react"
 import { toast } from "sonner"
-import { useReverseAnticipoMutation } from "@/features/contabilidad/api/contabilidadApi"
+import { reverseAnticipoAction } from "@/features/contabilidad/actions-anticipos"
 import { Anticipo } from "@/app/models/model"
 
 interface AnticipoRevertirDialogProps {
@@ -29,8 +29,7 @@ export function AnticipoRevertirDialog({
   onSuccess,
 }: AnticipoRevertirDialogProps) {
 
-  const [reverseAnticipo, { isLoading }] = useReverseAnticipoMutation()
-  
+  const [isLoading, setIsLoading] = useState(false)
   const [montoReverso, setMontoReverso] = useState<number>(0)
   const [observaciones, setObservaciones] = useState<string>("")
   const [mostrarConfirmacion, setMostrarConfirmacion] = useState<boolean>(false)
@@ -74,13 +73,18 @@ export function AnticipoRevertirDialog({
   const revertirConfirmado = async () => {
     if (!anticipo) return
 
+    setIsLoading(true)
     try {
-      await reverseAnticipo({
-        id: anticipo.anticipoId,
-        documentoDestinoId: `revertir-${Date.now()}`,
+      const result = await reverseAnticipoAction({
+        anticipoId: anticipo.anticipoId,
         montoReverso,
-        observaciones,
-      }).unwrap()
+        documentoDestinoId: `revertir-${Date.now()}`,
+        observaciones: observaciones || undefined,
+      })
+
+      if (!result.success) {
+        throw new Error(result.error?.message || "No se pudo revertir el anticipo")
+      }
 
       toast(esReversoParcial
         ? `Se revertió parcialmente el anticipo por ${anticipo.moneda} ${montoReverso.toLocaleString()}`
@@ -92,7 +96,9 @@ export function AnticipoRevertirDialog({
       onOpenChange(false)
       onSuccess?.()
     } catch (error: any) {
-      toast(error?.data?.error || "No se pudo revertir el anticipo")
+      toast(error?.message || "No se pudo revertir el anticipo")
+    } finally {
+      setIsLoading(false)
     }
   }
 
