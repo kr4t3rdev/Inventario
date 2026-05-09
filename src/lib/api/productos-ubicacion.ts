@@ -2,7 +2,39 @@ import prisma from '@/lib/prisma'
 import type { PrecioFuente } from '@/lib/types/pricing'
 import { getAuthenticatedContext } from '@/lib/api/client'
 import { ServerActionError } from '@/lib/api/errors'
-import type { ProductoConStock } from '@/lib/redux/services/productosUbicacionApi'
+
+export interface ProductoConStock {
+  id: string
+  nombre: string
+  descripcion: string | null
+  precioCosto: number
+  precioVenta: number
+  precioVentaResuelto: number
+  precioFuente: 'LISTA' | 'BASE'
+  listaPrecioIdAplicada: string | null
+  stock: number
+  stockEnUbicacion: number
+  fotos: string[]
+  categoriaId: string
+  unidadId: string
+  vendorId: string
+  codigoBarras?: string
+  createdAt: string
+  updatedAt: string
+  categoria?: {
+    catId: string
+    nombre: string
+  }
+  unidad?: {
+    unidadId: string
+    nombre: string
+    simbolo: string
+  }
+  vendor?: {
+    vendorId: string
+    nombre: string
+  }
+}
 
 /**
  * @description Obtiene productos con stock disponible en una ubicación específica

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { getProductosPorUbicacion } from './productos-ubicacion'
-import type { ProductoConStock } from '@/lib/redux/services/productosUbicacionApi'
+import type { ProductoConStock } from '@/lib/api/productos-ubicacion'
 
 // Mocks
 vi.mock('@/lib/api/client', () => ({

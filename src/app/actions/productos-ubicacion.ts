@@ -1,8 +1,8 @@
 'use server'
 
 import { getProductosPorUbicacion as fetchProductosPorUbicacion } from '@/lib/api/productos-ubicacion'
+import type { ProductoConStock } from '@/lib/api/productos-ubicacion'
 import { handleServerActionError } from './_helpers/error-handler'
-import type { ProductoConStock } from '@/lib/redux/services/productosUbicacionApi'
 
 /**
  * @description Server Action que obtiene productos con stock disponible en una ubicación.
