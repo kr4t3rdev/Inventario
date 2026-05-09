@@ -10,10 +10,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
-import { useGetOrdenQuery, useUpdateOrdenMutation, useFacturarOrdenMutation } from "@/lib/redux/services/ordenesReparacionApi"
+import { getOrdenReparacion, updateOrdenReparacion, facturarOrdenReparacion } from "@/lib/api/reparaciones/ordenes"
 import { useGetProductosQuery } from "@/features/productos/api/productosApi"
 import { getCuentasBancariasAction, getNextSerieNumberAction } from "@/features/configuracion/actions"
-import { useGetDefectacionesQuery } from "@/lib/redux/services/reparacionesApi"
+import { getDefectaciones } from "@/lib/api/reparaciones/defectaciones"
 import { formatCurrency, cn } from "@/lib/utils"
 import { ArrowLeft, Plus, Save, Trash2, Printer, CheckCircle, FileText, CalendarIcon } from "lucide-react"
 import { toast } from "sonner"
@@ -116,10 +116,21 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
     ordId = m?.[1] ?? ''
   }
   const router = useRouter()
-  const { data: orden, isLoading, refetch } = useGetOrdenQuery(ordId)
-  // Defectaciones DB catalog
-  const { data: defectacionesCatalogData } = useGetDefectacionesQuery()
-  const defectacionesCatalog = defectacionesCatalogData ?? []
+  const [orden, setOrden] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [defectacionesCatalog, setDefectacionesCatalog] = useState<any[]>([])
+
+  const loadOrden = async () => {
+    setIsLoading(true)
+    try {
+      const data = await getOrdenReparacion(ordId)
+      setOrden(data)
+    } catch { /* ignore */ }
+    setIsLoading(false)
+  }
+
+  useEffect(() => { loadOrden() }, [ordId])
+  useEffect(() => { getDefectaciones().then(setDefectacionesCatalog).catch(() => {}) }, [])
 
   // Carga la tasa de conversión de catálogo (USD -> Moneda Nacional) al abrir la orden
   useEffect(() => {
@@ -149,8 +160,8 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
     return () => { cancelled = true }
   }, [])
   
-  const [updateOrden, { isLoading: isUpdating }] = useUpdateOrdenMutation()
-  const [facturarOrden, { isLoading: isFacturing }] = useFacturarOrdenMutation()
+  const [isUpdating, setIsUpdating] = useState(false)
+  const [isFacturing, setIsFacturing] = useState(false)
   const { data: productos } = useGetProductosQuery() // Para materiales
   const [cuentasBancariasData, setCuentasBancariasData] = useState<any>(null)
   const [isLoadingCuentas, setIsLoadingCuentas] = useState(true)
@@ -437,6 +448,7 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
 
   // Confirmar Facturación - Paso 2: Ejecutar con tasa de cambio
   const ejecutarFacturacion = async (tasaCambio: number) => {
+    setIsFacturing(true)
     try {
       let fechaVenc = facturaParams.fechaVencimiento
       let terminos = "CONTADO"
@@ -458,8 +470,7 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
       // Los montos siempre se calculan en USD (catálogo)
       // La conversión se hace en el servidor si tasaCambio > 1
 
-      await facturarOrden({
-        id: ordId,
+      await facturarOrdenReparacion(ordId, {
         tipoTarjeta: facturaParams.tipoTarjeta,
         fechaVencimiento: fechaVenc ? fechaVenc.toISOString() : undefined,
         seriePrefijo: facturaParams.seriePrefijo,
@@ -469,23 +480,25 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
         tipoVencimiento: facturaParams.fechaVencimientoOption,
         tasaCambio: tasaCambio,
         moneda: selectedCuentaMoneda
-      }).unwrap()
+      })
 
       toast.success("Orden facturada correctamente")
       setIsFacturarDialogOpen(false)
       setIsTasaDialogOpen(false)
-      refetch()
+      loadOrden()
     } catch (error) {
       console.error("Error al facturar:", error)
       toast.error("Error al facturar la orden")
+    } finally {
+      setIsFacturing(false)
     }
   }
 
   // Guardar Cambios
   const handleSave = async () => {
+    setIsUpdating(true)
     try {
-      await updateOrden({
-        id: ordId,
+      await updateOrdenReparacion(ordId, {
         estado: estado as any,
         complejidad,
         diagnosticoTecnico: diagnostico,
@@ -502,12 +515,14 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
           precioUnitario: m.precioUnitario,
           total: m.total
         }))
-      }).unwrap()
-      
+      })
+
       toast.success("Orden actualizada correctamente")
-      refetch()
+      loadOrden()
     } catch (error) {
       toast.error("Error al actualizar la orden")
+    } finally {
+      setIsUpdating(false)
     }
   }
 

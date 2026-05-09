@@ -4,9 +4,4 @@ export {
   getWandaDashboardHandler,
   invalidateWandaCacheHandler,
 } from "./api/handlers"
-
-export {
-  dashboardApi,
-  useGetDashboardStatsQuery,
-  useInvalidateDashboardMutation,
-} from "./redux/dashboardApi"
+export { getDashboardStatsAction } from "./actions"

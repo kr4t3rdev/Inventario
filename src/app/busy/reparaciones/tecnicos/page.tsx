@@ -1,6 +1,7 @@
 'use client'
 
-import { useGetTecnicosStatsQuery } from "@/lib/redux/services/ordenesReparacionApi"
+import { useEffect, useState } from "react"
+import { getTecnicosStats } from "@/lib/api/reparaciones/ordenes"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
@@ -8,7 +9,12 @@ import { formatCurrency } from "@/lib/utils"
 import { Users, TrendingUp, CheckCircle, DollarSign } from "lucide-react"
 
 export default function TecnicosDashboardPage() {
-  const { data: stats, isLoading } = useGetTecnicosStatsQuery()
+  const [stats, setStats] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    getTecnicosStats().then(setStats).finally(() => setIsLoading(false))
+  }, [])
 
   if (isLoading) {
     return <div className="container mx-auto py-8 text-center">Cargando estadísticas...</div>

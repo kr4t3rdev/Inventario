@@ -1,7 +1,7 @@
 "use client"
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { AlertTriangle, Package } from "lucide-react"
-import { useGetDashboardStatsQuery } from "@/lib/redux/services/dashboardApi"
+import { getDashboardStatsAction } from "@/features/dashboard/actions"
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -10,7 +10,17 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 
 export function StockBajoTable() {
-  const { data: dashboardStats, isLoading, error } = useGetDashboardStatsQuery()
+  const [dashboardStats, setDashboardStats] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<any>(null)
+
+  useEffect(() => {
+    getDashboardStatsAction().then(r => {
+      if (r.success) setDashboardStats(r.data)
+      else setError(r.error)
+      setIsLoading(false)
+    })
+  }, [])
 
   // Helper function to get stock status with hybrid logic
   const getStockStatus = (stockTotal: number, stockMinimo: number, umbralUsado: number) => {

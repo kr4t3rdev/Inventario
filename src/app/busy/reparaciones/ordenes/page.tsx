@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { useGetOrdenesQuery } from "@/lib/redux/services/ordenesReparacionApi"
+import { getOrdenesReparacion } from "@/lib/api/reparaciones/ordenes"
 import { Plus, Search, Wrench, FileText } from "lucide-react"
 import Link from "next/link"
 import { formatCurrency } from "@/lib/utils"
@@ -48,10 +48,16 @@ export default function OrdenesReparacionPage() {
     return () => { mounted = false }
   }, [])
   
-  const { data: ordenes, isLoading } = useGetOrdenesQuery({ 
-    estado: statusFilter,
-    search: debouncedSearch 
-  })
+  const [ordenes, setOrdenes] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    setIsLoading(true)
+    getOrdenesReparacion({ estado: statusFilter, search: debouncedSearch || undefined })
+      .then(setOrdenes)
+      .catch(() => setOrdenes([]))
+      .finally(() => setIsLoading(false))
+  }, [statusFilter, debouncedSearch])
 
   const getStatusColor = (status: EstadoOrden) => {
     switch (status) {

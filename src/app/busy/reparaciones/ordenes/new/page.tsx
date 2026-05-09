@@ -1,19 +1,9 @@
 'use client'
 
-import { useState, useRef } from "react"
-import { useRouter } from "next/navigation"
-import { motion, AnimatePresence } from "framer-motion"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
-import { useGetEquiposReparacionQuery } from "@/lib/redux/services/reparacionesApi"
-import { useGetClientesQuery } from "@/features/clientes"
-import { useCreateOrdenMutation } from "@/lib/redux/services/ordenesReparacionApi"
+import { useEffect, useState, useRef } from "react"
+import { getEquiposReparacion } from "@/lib/api/reparaciones/equipos"
+import { useGetClientesQuery } from "@/features/clientes/api/ClienteApi"
+import { addOrdenReparacion } from "@/lib/api/reparaciones/ordenes"
 import { toast } from "sonner"
 import { ArrowLeft, Save, Plus, Trash2, Wrench, Upload, X, Camera, FileText, Printer } from "lucide-react"
 import Link from "next/link"
@@ -43,11 +33,13 @@ interface ReciboData {
 
 export default function NewOrdenPage() {
   const router = useRouter()
-  const [createOrden, { isLoading: isSaving }] = useCreateOrdenMutation()
+  const [isSaving, setIsSaving] = useState(false)
   const fileInputRefs = useRef<(HTMLInputElement | null)[]>([])
   
   // Queries
-  const { data: equiposCatalog } = useGetEquiposReparacionQuery()
+  const [equiposCatalog, setEquiposCatalog] = useState<any[]>([])
+
+  useEffect(() => { getEquiposReparacion().then(setEquiposCatalog) }, [])
   const { data: clientes } = useGetClientesQuery()
   
   const [formData, setFormData] = useState({
@@ -150,8 +142,9 @@ export default function NewOrdenPage() {
     }
 
     try {
+      setIsSaving(true)
       const primary = equipos[0]
-      const result = await createOrden({
+      const result = await addOrdenReparacion({
         clienteId: formData.clienteId,
         prioridad: formData.prioridad,
         esGarantia: formData.esGarantia,
@@ -173,7 +166,7 @@ export default function NewOrdenPage() {
           problemaReportado: eq.problemaReportado,
           fotos: eq.fotos
         }))
-      }).unwrap()
+      })
 
       if (result.recibos && result.recibos.length > 0) {
         setReciboGenerado(result.recibos[0])

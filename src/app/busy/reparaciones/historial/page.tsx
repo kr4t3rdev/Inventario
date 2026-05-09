@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from "react"
-import { useGetOrdenesQuery } from "@/lib/redux/services/ordenesReparacionApi"
+import { useEffect, useState } from "react"
+import { getOrdenesReparacion } from "@/lib/api/reparaciones/ordenes"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
@@ -17,10 +17,17 @@ export default function HistorialSeriesPage() {
   const [debouncedSearch, setDebouncedSearch] = useState("")
   
   // Consultar API solo cuando haya un término de búsqueda (aunque la API soporta void, mejor no cargar todo)
-  const { data: ordenes, isLoading } = useGetOrdenesQuery(
-    debouncedSearch ? { search: debouncedSearch } : { search: "NO_SEARCH_DEFAULT" }, 
-    { skip: !debouncedSearch }
-  )
+  const [ordenes, setOrdenes] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+
+  useEffect(() => {
+    if (!debouncedSearch) { setOrdenes([]); return }
+    setIsLoading(true)
+    getOrdenesReparacion({ search: debouncedSearch })
+      .then(setOrdenes)
+      .catch(() => setOrdenes([]))
+      .finally(() => setIsLoading(false))
+  }, [debouncedSearch])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()

@@ -2,6 +2,7 @@ import prisma from '@/lib/prisma'
 import type { OrdenReparacion } from '@/app/models/model'
 import { getAuthenticatedContext } from '@/lib/api/client'
 import { ServerActionError } from '@/lib/api/errors'
+import { applyFacturacionCobroWorkflow } from '@/lib/services/facturacion-cobro-workflow'
 
 function requireTenant(ctx: { tenantId?: string }): string {
   if (!ctx.tenantId) throw new ServerActionError('OrdenesReparacion', 'UNKNOWN', 403, 'Se requiere un tenant activo')
@@ -225,8 +226,138 @@ export async function updateOrdenReparacion(
             if (invalidos.length > 0) {
               throw new Error(`Las siguientes piezas no existen en el catálogo: ${invalidos.join(', ')}`)
             }
-          }
-        }
+  }
+}
+
+export async function facturarOrdenReparacion(id: string, body: {
+  puntoDeVentaId?: string; tipoTarjeta?: string; fechaVencimiento?: string;
+  seriePrefijo?: string; cuentaBancariaId?: string; metodoPago?: string;
+  terminosPago?: string; tipoVencimiento?: string; tasaCambio?: number; moneda?: string;
+}) {
+  const ctx = await getAuthenticatedContext()
+
+  const orden = await prisma.ordenReparacion.findUnique({
+    where: { id },
+    include: { cliente: true, equipos: { include: { equipoTipo: true } } },
+  })
+  if (!orden) throw new ServerActionError('facturarOrdenReparacion', 'GET', 404, 'Orden no encontrada')
+  if (orden.ventaId) throw new ServerActionError('facturarOrdenReparacion', 'POST', 400, 'Esta orden ya ha sido facturada')
+  if (orden.estado !== 'TERMINADO' && orden.estado !== 'ENTREGADO') {
+    throw new ServerActionError('facturarOrdenReparacion', 'POST', 400, 'Solo se pueden facturar órdenes terminadas o entregadas')
+  }
+
+  let puntoDeVentaId = body.puntoDeVentaId
+  if (!puntoDeVentaId) {
+    const pv = await prisma.puntoDeVenta.findFirst()
+    if (!pv) throw new ServerActionError('facturarOrdenReparacion', 'POST', 400, 'Se requiere un Punto de Venta')
+    puntoDeVentaId = pv.pvId
+  }
+
+  let fechaVencimiento = body.fechaVencimiento
+  if (body.tipoVencimiento === 'PLAZO_30') {
+    const fecha = new Date(); fecha.setDate(fecha.getDate() + 30)
+    fechaVencimiento = fecha.toISOString()
+  }
+
+  const monedaOrden = (orden.moneda || 'USD').toUpperCase()
+  const monedaFactura = (body.moneda || 'USD').toUpperCase()
+  const tasa = body.tasaCambio || 1
+  const subtotalOrigen = orden.subtotal ? Number(orden.subtotal) : Number(orden.total)
+  const descuentoOrigen = orden.descuento ? Number(orden.descuento) : 0
+  const totalOrigen = Number(orden.total)
+  let factor = 1
+  if (monedaOrden === 'USD' && monedaFactura === 'CUP') factor = tasa
+  else if (monedaOrden === 'CUP' && monedaFactura === 'USD') factor = 1 / tasa
+  const subtotal = subtotalOrigen * factor
+  const descuento = descuentoOrigen * factor
+  const total = totalOrigen * factor
+  const prefijo = body.seriePrefijo || 'sv'
+
+  const result = await prisma.$transaction(async (tx: any) => {
+    let serie = await tx.serieFacturacion.findUnique({ where: { prefijo } })
+    if (!serie) {
+      serie = await tx.serieFacturacion.create({
+        data: { prefijo, descripcion: 'Serie para Servicios de Reparación', consecutivo: 1 },
+      })
+    }
+    const updatedSerie = await tx.serieFacturacion.update({
+      where: { serieId: serie.serieId },
+      data: { consecutivo: { increment: 1 } },
+    })
+    const numeroActual = updatedSerie.consecutivo - 1
+    const numeroFactura = `${prefijo}-${numeroActual}`
+    const equipos = orden.equipos ?? []
+    const equipoLabel = equipos.length > 1
+      ? `Orden multiple (${equipos.length} equipos)`
+      : `${orden.marca} ${orden.modelo || ''}`
+    const venta = await tx.venta.create({
+      data: {
+        clienteId: orden.clienteId, puntoDeVentaId, total, cantidad: 1,
+        observaciones: `Facturación de Orden de Reparación #${orden.numeroOrden} - ${equipoLabel}`,
+        esVentaUnica: true, ordenReparacion: { connect: { id: orden.id } },
+      },
+    })
+    const factura = await tx.factura.create({
+      data: {
+        serieId: serie.serieId, numeroConsecutivo: numeroActual, numeroFactura,
+        tipoDocumento: 'FACTURA', ventaId: venta.ventaId, clienteId: orden.clienteId,
+        subtotal, descuento, cargoTransporte: 0, total,
+        tasaCambio: monedaOrden !== monedaFactura ? tasa : null,
+        observaciones: venta.observaciones, tipoTarjeta: body.tipoTarjeta || null,
+        fechaVencimiento: fechaVencimiento ? new Date(fechaVencimiento) : null,
+        metodoPago: body.metodoPago || null, terminosPago: body.terminosPago || null,
+        cuentaBancariaId: body.cuentaBancariaId || null,
+        estado: 'PENDIENTE', creadoPor: ctx.userId || 'sistema',
+      },
+    })
+    await applyFacturacionCobroWorkflow(tx, {
+      ventaId: venta.ventaId, facturaId: factura.idFactura,
+      clienteId: orden.clienteId, montoTotal: total,
+      usuarioId: ctx.userId || 'sistema', observaciones: venta.observaciones,
+      tipoVencimiento: body.tipoVencimiento === 'PLAZO_30' ? 'plazo'
+        : body.tipoVencimiento === 'CONTRA_ENTREGA' ? 'contra_pago' : 'fecha',
+      fechaVencimiento, cuentaBancariaId: body.cuentaBancariaId,
+    })
+    if (orden.estado !== 'ENTREGADO') {
+      await tx.ordenReparacion.update({ where: { id: orden.id }, data: { estado: 'ENTREGADO' } })
+    }
+    return { venta, factura }
+  })
+  return result
+}
+
+export async function getTecnicosStats(params?: { startDate?: string; endDate?: string }) {
+  const ctx = await getAuthenticatedContext()
+  const dateFilter: any = {}
+  if (params?.startDate && params?.endDate) {
+    dateFilter.createdAt = { gte: new Date(params.startDate), lte: new Date(params.endDate) }
+  }
+  const tecnicos = await prisma.empleado.findMany({
+    where: { OR: [{ cargo: { contains: 'Técnico' } }, { ordenesAsignadas: { some: {} } }] },
+    include: {
+      ordenesAsignadas: {
+        where: dateFilter,
+        select: { id: true, estado: true, total: true, items: { select: { precio: true } } },
+      },
+    },
+  })
+  return tecnicos.map((tecnico: any) => {
+    const totalOrdenes = tecnico.ordenesAsignadas.length
+    const ordenesCompletadas = tecnico.ordenesAsignadas.filter((o: any) =>
+      o.estado === 'TERMINADO' || o.estado === 'ENTREGADO'
+    ).length
+    const totalGenerado = tecnico.ordenesAsignadas.reduce((acc: number, curr: any) => acc + Number(curr.total), 0)
+    const manoDeObraGenerada = tecnico.ordenesAsignadas.reduce((acc: number, curr: any) => {
+      return acc + curr.items.reduce((sum: number, item: any) => sum + Number(item.precio), 0)
+    }, 0)
+    return {
+      id: tecnico.empleadoId, nombre: `${tecnico.nombre} ${tecnico.apellido}`,
+      cargo: tecnico.cargo, totalOrdenes, ordenesCompletadas,
+      tasaCompletado: totalOrdenes > 0 ? (ordenesCompletadas / totalOrdenes) * 100 : 0,
+      totalGenerado, manoDeObraGenerada, comisionEstimada: manoDeObraGenerada * 0.3,
+    }
+  })
+}
 
         await tx.ordenReparacionItem.deleteMany({ where: { ordenId: id } })
         if (items.length > 0) {

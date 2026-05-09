@@ -42,17 +42,22 @@
 - [x] 5.4 Eliminar `configuracionApi.ts` y `cuadreDiarioApi.ts` (features + lib/redux)
 - [x] 5.5 Limpiar barrel y tag `CuadreDiario` (Configuracion preservado)
 
-## Tanda 6: Dashboard
+## Tanda 6: Dashboard ✅
 
-- [ ] 6.1 Evaluar handler de dashboard (1509 líneas con cache)
-- [ ] 6.2 Crear Server Action `getDashboardStatsAction`
-- [ ] 6.3 Migrar consumidor (`stock-bajo-table.tsx`)
-- [ ] 6.4 Eliminar `dashboardApi.ts`
-- [ ] 6.5 Limpiar tag (`Dashboard`)
+- [x] 6.1 Crear `getDashboardStatsAction` replicando lógica del handler (1509→~200 líneas)
+- [x] 6.2 `stock-bajo-table.tsx`: reemplazar `useGetDashboardStatsQuery` → `getDashboardStatsAction` + useEffect
+- [x] 6.3 Actualizar test `stock-bajo-table-minimum-stock.test.tsx` (async mock → mockResolvedValue)
+- [x] 6.4 Eliminar `dashboardApi.ts` (features + lib/redux)
+- [x] 6.5 Limpiar barrel (tag `Dashboard` preservado — usado por ofertasApi, ventasApi, mermasApi)
 
-## Tanda 7: Órdenes Reparación
+## Tanda 7: Órdenes Reparación ✅
 
-- [ ] 7.1 Crear feature `ordenes-reparacion` con Server Actions completas
-- [ ] 7.2 Migrar 5 páginas consumidoras
-- [ ] 7.3 Eliminar `ordenesReparacionApi.ts`
-- [ ] 7.4 Limpiar tag (`OrdenesReparacion`)
+- [x] 7.1 Implementar `facturarOrdenReparacion` y `getTecnicosStats` en `lib/api/reparaciones/ordenes.ts`
+- [x] 7.2 `ordenes/page.tsx`: migrar `useGetOrdenesQuery` → `getOrdenesReparacion` + useEffect
+- [x] 7.3 `historial/page.tsx`: migrar `useGetOrdenesQuery` → `getOrdenesReparacion` + useEffect
+- [x] 7.4 `tecnicos/page.tsx`: migrar `useGetTecnicosStatsQuery` → `getTecnicosStats` + useEffect
+- [x] 7.5 `ordenes/new/page.tsx`: migrar `useCreateOrdenMutation` → `addOrdenReparacion` + arreglar `reparacionesApi` broken import
+- [x] 7.6 `ordenes/[id]/page.tsx`: migrar 3 hooks → funciones directas + useEffect + arreglar `reparacionesApi` broken import
+- [x] 7.7 Eliminar `ordenesReparacionApi.ts` RTKQ slice
+- [x] 7.8 Limpiar tags: `OrdenesReparacion`, `EquiposReparacion`, `Defectaciones` removidos de apiSlice
+- [ ] Bonus: `reparaciones/page.tsx` — página de configuración ya rota (reparacionesApi eliminado previamente). Requiere migración separada a `lib/api/reparaciones/`.
