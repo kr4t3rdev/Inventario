@@ -1,80 +1,32 @@
-'use client'
-
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
-import { CompraProductoForm } from '@/features/compras-productos/components/compra-producto-form'
-import { motion } from 'framer-motion'
-import { ShoppingCart, Sparkles, ArrowLeft } from 'lucide-react'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-
 /**
  * @description Página para registrar compras de productos con stock inicial.
- * @returns {JSX.Element} Vista de creación de compra
+ * Server Component que delega la UI a CompraProductoForm.
+ * @returns {JSX.Element} Vista de creación de compra.
  */
+import { Suspense } from 'react'
+import { CompraProductoForm } from '@/features/compras-productos/components/compra-producto-form'
+
+function NuevaCompraFallback() {
+  return (
+    <div className="container mx-auto py-4">
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-12 h-12 bg-muted rounded-xl animate-pulse" />
+          <div className="space-y-2">
+            <div className="h-8 w-64 bg-muted rounded animate-pulse" />
+            <div className="h-4 w-80 bg-muted rounded animate-pulse" />
+          </div>
+        </div>
+      </div>
+      <div className="h-[400px] bg-muted/30 rounded-xl animate-pulse" />
+    </div>
+  )
+}
+
 export default function NuevaCompraProductoPage() {
   return (
-    <SidebarProvider>
-      <SidebarInset>
-        <div className="container mx-auto py-4">
-          <motion.div 
-            className="mb-6"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <div className="flex items-center gap-2 mb-2">
-              <motion.div
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Link href="/busy/compras-productos">
-                  <Button variant="outline" size="icon" className="h-8 w-8">
-                    <ArrowLeft className="h-4 w-4" />
-                  </Button>
-                </Link>
-              </motion.div>
-              <motion.div 
-                className="flex items-center gap-3"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 }}
-              >
-                <motion.div 
-                  className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
-                  whileHover={{ scale: 1.05, rotate: 5 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                >
-                  <ShoppingCart className="h-5 w-5 text-white" />
-                </motion.div>
-                <div className="relative">
-                  <h1 className="text-2xl font-bold bg-linear-to-r from-primary to-purple-600 bg-clip-text text-transparent">
-                    Nueva compra de producto
-                  </h1>
-                  <motion.div
-                    className="absolute -right-4 -top-1"
-                    animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-                    transition={{ 
-                      rotate: { duration: 20, repeat: Infinity, ease: "linear" },
-                      scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
-                    }}
-                  >
-                    <Sparkles className="h-4 w-4 text-yellow-500" />
-                  </motion.div>
-                </div>
-              </motion.div>
-            </div>
-            <motion.p 
-              className="text-muted-foreground ml-12"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.2 }}
-            >
-              Ingrese los datos para registrar la compra del producto
-            </motion.p>
-          </motion.div>
-          <CompraProductoForm />
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+    <Suspense fallback={<NuevaCompraFallback />}>
+      <CompraProductoForm />
+    </Suspense>
   )
 }

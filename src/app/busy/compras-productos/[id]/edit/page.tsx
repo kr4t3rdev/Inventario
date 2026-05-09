@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, ShoppingCart, Package } from 'lucide-react'
@@ -9,7 +9,7 @@ import { motion } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useGetCompraProductoByIdQuery, useUpdateCompraProductoMutation } from '@/features/compras-productos/api/comprasProductosApi'
+import { getCompraProductoByIdAction, updateCompraProductoAction } from '@/features/compras-productos/actions'
 import { toast } from 'sonner'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
@@ -65,8 +65,23 @@ export default function EditCompraProductoPage() {
   const params = useParams()
   const id = params.id as string
 
-  const { data: compraData, isLoading: isLoadingCompra } = useGetCompraProductoByIdQuery(id)
-  const [updateCompra, { isLoading: isUpdating }] = useUpdateCompraProductoMutation()
+  const [compraData, setCompraData] = useState<any>(null)
+  const [isLoadingCompra, setIsLoadingCompra] = useState(true)
+  const [isUpdating, setIsUpdating] = useState(false)
+
+  useEffect(() => {
+    async function fetchCompra() {
+      setIsLoadingCompra(true)
+      const result = await getCompraProductoByIdAction(id)
+      if (result.success) {
+        setCompraData(result.data)
+      } else {
+        toast.error(result.error?.message || 'Error al cargar la compra')
+      }
+      setIsLoadingCompra(false)
+    }
+    fetchCompra()
+  }, [id])
 
   const form = useForm<UpdateFormData>({
     resolver: zodResolver(updateSchema),
@@ -80,25 +95,28 @@ export default function EditCompraProductoPage() {
   })
 
   useEffect(() => {
-    if (compraData?.compra) {
-      const compra = compraData.compra
+    if (compraData) {
       form.reset({
-        numeroFactura: compra.numeroFactura || '',
-        facturaUrl: compra.facturaUrl || '',
-        descripcion: compra.descripcion || '',
-        formaPago: compra.formaPago as 'PAGO_PARCIAL' | 'PAGO_COMPLETO',
-        estado: compra.estado as 'PENDIENTE' | 'PAGADA',
+        numeroFactura: compraData.numeroFactura || '',
+        facturaUrl: compraData.facturaUrl || '',
+        descripcion: compraData.descripcion || '',
+        formaPago: compraData.formaPago as 'PAGO_PARCIAL' | 'PAGO_COMPLETO',
+        estado: compraData.estado as 'PENDIENTE' | 'PAGADA',
       })
     }
   }, [compraData, form])
 
   const onSubmit = async (data: UpdateFormData) => {
+    setIsUpdating(true)
     try {
-      await updateCompra({ id, data }).unwrap()
+      const actionResult = await updateCompraProductoAction({ compraDocumentoId: id, ...data })
+      if (!actionResult.success) throw new Error(actionResult.error?.message || 'Error')
       toast.success('Compra actualizada exitosamente')
       router.push('/busy/compras-productos')
     } catch (error) {
       toast.error('Error al actualizar la compra')
+    } finally {
+      setIsUpdating(false)
     }
   }
 
@@ -121,7 +139,7 @@ export default function EditCompraProductoPage() {
     )
   }
 
-  const compra = compraData?.compra
+  const compra = compraData
 
   return (
     <SidebarProvider>

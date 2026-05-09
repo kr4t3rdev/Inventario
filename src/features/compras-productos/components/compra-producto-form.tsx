@@ -21,7 +21,7 @@ import { ProductPhotoUpload } from '@/features/productos/components/product-phot
 import type { Producto, Vendor } from '@/app/models/model'
 import { useVendors } from '@/features/vendors/hooks/use-vendors'
 import { useProductos } from '@/features/productos/hooks/use-productos'
-import { useCreateCompraProductoMutation } from '@/features/compras-productos/api/comprasProductosApi'
+import { createCompraProductoAction } from '@/features/compras-productos/actions'
 import { useGetAnticiposDisponiblesQuery } from '@/features/contabilidad/api/contabilidadApi'
 import { FORMA_PAGO_ANTICIPO_PAGO } from '@/lib/constants/anticipos'
 
@@ -84,8 +84,6 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
 
   const { productos: products, isLoading: isLoadingProducts } = useProductos()
   const { vendors, isLoading: isLoadingVendors } = useVendors()
-  const [createCompraProducto] = useCreateCompraProductoMutation()
-
   const form = useForm<CompraDocumentoFormValues>({
     resolver: zodResolver(compraDocumentoSchema),
     defaultValues: {
@@ -210,8 +208,10 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
           ? crypto.randomUUID()
           : `${Date.now()}-${Math.random()}`
 
-      const result = await createCompraProducto({
+      const actionResult = await createCompraProductoAction({
         ...data,
+        numeroFactura: data.numeroFactura ?? '',
+        facturaUrl: data.facturaUrl ?? '',
         estado:
           data.formaPago === 'PAGO_COMPLETO' || data.formaPago === FORMA_PAGO_ANTICIPO_PAGO
             ? 'PAGADA'
@@ -219,7 +219,11 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
         fechaVencimiento: data.fechaVencimiento || undefined,
         anticipoPagoId: data.formaPago === FORMA_PAGO_ANTICIPO_PAGO ? data.anticipoPagoId : undefined,
         idempotencyKey: data.formaPago === FORMA_PAGO_ANTICIPO_PAGO ? idempotencyKey : undefined
-      }).unwrap()
+      })
+
+      if (!actionResult.success) throw new Error(actionResult.error?.message || 'Error')
+
+      const result = actionResult.data
 
       if (result.compraDocumento?.compraDocumentoId) {
         const itemCount = result.items?.length || 0
