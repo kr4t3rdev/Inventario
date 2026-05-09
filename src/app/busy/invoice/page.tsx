@@ -15,7 +15,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { useGetVentasQuery } from "@/features/ventas"
+import { useVentas } from "@/features/ventas/hooks/use-ventas"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -52,7 +52,7 @@ async function downloadFile(url: string, filename: string) {
 }
 
 export default function FacturasPage() {
-  const { data: ventas, isLoading, error } = useGetVentasQuery()
+  const { ventas, isLoading, error } = useVentas()
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})

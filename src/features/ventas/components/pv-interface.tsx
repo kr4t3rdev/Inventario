@@ -18,7 +18,7 @@ import { usePuntosDeVenta } from "@/features/puntos-venta/hooks/use-puntos-de-ve
 import { getProductosPorUbicacion } from "@/app/actions/productos-ubicacion"
 import type { ProductoConStock } from "@/lib/api/productos-ubicacion"
 import { ServerActionError } from "@/lib/api/errors"
-import { useAddVentaMutation } from "@/features/ventas"
+import { createVentaAction } from "@/features/ventas/actions"
 import { useGetClientesQuery } from "@/features/clientes/api/ClienteApi"
 import { useCategorias } from "@/features/categorias/hooks/use-categorias"
 import { useGetAnticiposDisponiblesQuery } from "@/features/contabilidad/api/contabilidadApi"
@@ -102,7 +102,6 @@ export function VentaInterface() {
     loadProductos()
   }, [selectedPuntoVenta])
 
-  const [addVenta] = useAddVentaMutation()
   const { data: clientes, isLoading: isLoadingClientes } = useGetClientesQuery()
   const { categorias, isLoading: isLoadingCategorias } = useCategorias()
   const { data: anticiposCobroDisponibles, isFetching: isLoadingAnticiposCobro } =
@@ -333,29 +332,30 @@ export function VentaInterface() {
     setIsProcessing(true)
 
     try {
-      const productos = cart.map((item) => ({
+      const items = cart.map((item) => ({
         productoId: item.id,
         cantidad: item.cantidad,
-        precioVenta: item.precioVenta,
+        precioUnitario: Math.round(item.precioVenta),
       }))
 
-      await addVenta({
-        productos,
+      const result = await createVentaAction({
         puntoDeVentaId: selectedPuntoVenta,
         descuento: Math.round(descuento),
         observaciones,
-      } as any).unwrap()
+        items,
+      })
+
+      if (!result.success) {
+        toast(result.error?.message || "Ha ocurrido un error al procesar la venta. Intente nuevamente.")
+        return
+      }
 
       toast(`Se ha registrado la venta por $${totalConDescuento}`)
       setCart([])
       router.refresh()
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error al procesar venta:", error)
-      if (error.data?.error === "Stock insuficiente") {
-        toast(`Solo hay ${error.data.stockDisponible} unidades disponibles del producto`)
-      } else {
-        toast("Ha ocurrido un error al procesar la venta. Intente nuevamente.")
-      }
+      toast("Ha ocurrido un error al procesar la venta. Intente nuevamente.")
     } finally {
       setIsProcessing(false)
     }
@@ -378,40 +378,26 @@ export function VentaInterface() {
 
     setIsProcessing(true)
     try {
-      let fechaVencimientoISO = null;
-      if (tipoVencimiento === 'fecha' && fechaVencimiento) {
-        fechaVencimientoISO = new Date(fechaVencimiento).toISOString();
-      } else if (tipoVencimiento === 'plazo') {
-        const fecha = new Date();
-        fecha.setDate(fecha.getDate() + 30);
-        fechaVencimientoISO = fecha.toISOString();
-      }
-
-      const productos = cart.map((item) => ({
+      const items = cart.map((item) => ({
         productoId: item.id,
         cantidad: item.cantidad,
-        precioVenta: item.precioVenta,
+        precioUnitario: Math.round(item.precioVenta),
       }))
 
-      const ventaCreada = await addVenta({
-        productos,
+      const result = await createVentaAction({
         puntoDeVentaId: selectedPuntoVenta,
         clienteId: selectedClienteId,
         descuento: Math.round(descuento),
-        impuestos: 0,
-        cargoTransporte: Number(cargoTransporte) || 0,
         observaciones,
-        ...(selectedSerieId && { serieId: selectedSerieId }),
-        fechaVencimiento: fechaVencimientoISO,
-        tipoVencimiento,
-        formaPagoAnticipo: selectedAnticipoCobroId ? 'ANTICIPO_COBRO' : undefined,
-        anticipoCobroId: anticiposFeatureEnabled ? selectedAnticipoCobroId || undefined : undefined,
-        idempotencyKey: anticiposFeatureEnabled && selectedAnticipoCobroId
-          ? (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-              ? crypto.randomUUID()
-              : `${Date.now()}-${Math.random()}`)
-          : undefined,
-      } as any).unwrap()
+        items,
+      })
+
+      if (!result.success) {
+        toast(result.error?.message || "Ha ocurrido un error al procesar la venta. Intente nuevamente.")
+        return
+      }
+
+      const ventaCreada = result.data
 
       toast(`Venta registrada y factura generada por $${cartTotal}`)
       setCart([])
@@ -426,30 +412,9 @@ export function VentaInterface() {
         router.push("/busy/invoice/print")
       }
       router.refresh()
-    } catch (error: any) {
+    } catch (error) {
       console.error("Error al procesar venta con factura:", error)
-      const errorCode = error?.data?.code
-      if (errorCode === 'CONCURRENCIA') {
-        toast.error("El anticipo fue usado por otra operación. Refresque y seleccione otro anticipo.")
-        return
-      }
-      if (errorCode === 'IDEMPOTENCIA_CONFLICTO') {
-        toast.error("Conflicto de idempotencia al ejecutar el anticipo. Reintente la operación.")
-        return
-      }
-      if (errorCode === 'TASA_INVALIDA') {
-        toast.error("No existe una tasa válida para ejecutar el anticipo en la moneda de la factura.")
-        return
-      }
-      if (errorCode === 'COBERTURA_INSUFICIENTE' || errorCode === 'EJECUCION_PARCIAL_NO_PERMITIDA') {
-        toast.error("El anticipo no cubre el total de la factura.")
-        return
-      }
-      if (error.data?.error === "Stock insuficiente") {
-        toast(`Solo hay ${error.data.stockDisponible} unidades disponibles del producto`)
-      } else {
-        toast("Ha ocurrido un error al procesar la venta. Intente nuevamente.")
-      }
+      toast("Ha ocurrido un error al procesar la venta. Intente nuevamente.")
     } finally {
       setIsProcessing(false)
     }

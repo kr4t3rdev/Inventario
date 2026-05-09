@@ -102,6 +102,43 @@ export const createVentaAction = withAction(async (input: CreateVentaInput, user
  *
  * @throws ActionError si la venta no existe
  */
+/**
+ * @description Obtiene una venta por ID del tenant autenticado.
+ *
+ * @throws ActionError si la venta no existe
+ */
+export const getVentaByIdAction = withAction(async (id: string, user: AuthenticatedUser) => {
+  const tenantId = requireTenant(user);
+  const venta = await prisma.venta.findFirst({
+    where: { ventaId: id, tenantId },
+    select: VENTA_SELECT,
+  });
+  if (!venta) throw new ActionError('Venta no encontrada', 'NOT_FOUND');
+  return venta;
+});
+
+/**
+ * @description Actualiza datos básicos de una venta (no items).
+ *
+ * @throws ActionError si la venta no existe
+ */
+export const updateVentaAction = withAction(async (input: { ventaId: string } & Partial<{ observaciones: string; descuento: number }>, user: AuthenticatedUser) => {
+  const { ventaId, ...data } = input;
+  const tenantId = requireTenant(user);
+  const existing = await prisma.venta.findFirst({
+    where: { ventaId, tenantId },
+    select: { ventaId: true },
+  });
+  if (!existing) throw new ActionError('Venta no encontrada', 'NOT_FOUND');
+  const updated = await prisma.venta.update({
+    where: { ventaId },
+    data,
+    select: VENTA_SELECT,
+  });
+  revalidatePath('/busy/sales');
+  return updated;
+});
+
 export const anularVentaAction = withAction(async (input: AnularVentaInput, user: AuthenticatedUser) => {
   const parsed = anularVentaSchema.parse(input);
   const tenantId = requireTenant(user);

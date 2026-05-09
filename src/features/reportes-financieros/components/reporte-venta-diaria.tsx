@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react"
 import { motion, useReducedMotion } from "framer-motion"
-import { useGetVentasQuery } from "@/features/ventas"
+import { useVentas } from "@/features/ventas/hooks/use-ventas"
 import { useGetVentaServiciosQuery } from "@/features/venta-servicios/api/ventaServiciosApi"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -45,7 +45,7 @@ export function ReporteVentaDiaria() {
    const [detallesDia, setDetallesDia] = useState<any[]>([])
    const [fechaDetalle, setFechaDetalle] = useState<string>('')
 
-   const { data: ventas, isLoading: isLoadingVentas } = useGetVentasQuery()
+   const { ventas, isLoading: isLoadingVentas } = useVentas()
   const { data: ventaServicios } = useGetVentaServiciosQuery()
   const ventasLineas = useMemo(() => flattenVentas(ventas), [ventas])
 

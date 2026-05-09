@@ -18,9 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 import { getProductosAction } from "@/features/productos"
 import { usePuntosDeVenta } from "@/features/puntos-venta/hooks/use-puntos-de-venta"
-import { useAddVentaMutation, useUpdateVentaMutation } from "@/features/ventas"
-import { useDispatch } from "react-redux"
-import { apiSlice } from "@/lib/redux/services/apiSlice"
+import { createVentaAction, updateVentaAction } from "@/features/ventas/actions"
 
 const ventaSchema = z.object({
   productoId: z.string({
@@ -47,7 +45,6 @@ interface VentaFormProps {
 
 export function VentaForm({ initialData }: VentaFormProps) {
   const router = useRouter()
-  const dispatch = useDispatch()
   const [isLoading, setIsLoading] = useState(false)
 
   const [productos, setProductos] = useState<any[]>([])
@@ -60,9 +57,6 @@ export function VentaForm({ initialData }: VentaFormProps) {
       setIsLoadingProductos(false)
     })
   }, [])
-
-  const [addVenta] = useAddVentaMutation()
-  const [updateVenta] = useUpdateVentaMutation()
 
   const form = useForm<VentaFormValues>({
     resolver: zodResolver(ventaSchema),
@@ -77,18 +71,29 @@ export function VentaForm({ initialData }: VentaFormProps) {
     setIsLoading(true)
     try {
       if (initialData) {
-        await updateVenta({
+        const result = await updateVentaAction({
           ventaId: initialData.ventaId,
-          ...data,
-        }).unwrap()
+        })
+        if (!result.success) {
+          throw new Error(result.error?.message || 'Error al actualizar la venta')
+        }
         sileo.success({ title: 'La venta ha sido actualizada exitosamente' })
       } else {
-        await addVenta({
-          ...data,
-        }).unwrap()
+        const producto = productos.find(p => p.id === data.productoId)
+        const result = await createVentaAction({
+          puntoDeVentaId: data.puntoDeVentaId,
+          items: [{
+            productoId: data.productoId,
+            cantidad: data.cantidad,
+            precioUnitario: Math.round(producto?.precioVenta ?? 0),
+          }],
+        })
+        if (!result.success) {
+          throw new Error(result.error?.message || 'Error al crear la venta')
+        }
         sileo.success({ title: 'La venta ha sido registrada exitosamente' })
-        dispatch(apiSlice.util.invalidateTags(['Productos']))
       }
+      router.refresh()
     } catch (error) {
       console.error("Error al guardar la venta:", error)
       sileo.error({ title: 'Hubo un error al guardar la venta.' })

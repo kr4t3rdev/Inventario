@@ -3,7 +3,7 @@ import { getProductosAction } from "@/features/productos"
 import { usePuntosDeVenta } from "@/features/puntos-venta/hooks/use-puntos-de-venta";
 import { useState, useEffect } from "react";
 import { Producto } from "@/app/models/model";
-import { useAddVentaMutation } from "@/features/ventas";
+import { createVentaAction } from "@/features/ventas/actions";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,10 +50,6 @@ export default function VentaInter() {
     const [ carrito, setCarrito ] = useState<VentaFormProps[]>([])
     const [ puntoVenta, setPuntoVenta ] = useState<string>('')
 
-    const [ addVenta ] = useAddVentaMutation()
-
-    
-
     const addToCart = ( producto: Producto) => {
         setCarrito((prevCart) => {
             const existingItem = prevCart.find((item) => item.id === producto.id)
@@ -87,32 +83,31 @@ export default function VentaInter() {
         return carrito.reduce((sum, c) => sum + c.cantidad, 0)
     }
 
-    const handleCrearVenta = () => {
+    const handleCrearVenta = async () => {
         if (carrito.length === 0 || !puntoVenta) {
             toast.error('Carrito vacío o punto de venta no seleccionado')
             return
         }
 
-        // Preparar productos para venta única
-        const productos = carrito.map(item => ({
+        const items = carrito.map(item => ({
             productoId: item.id,
-            cantidad: item.cantidad
+            cantidad: item.cantidad,
+            precioUnitario: Math.round(item.precioVenta),
         }))
 
-        addVenta({
-          productos,
-          puntoDeVentaId: puntoVenta,
-          descuento: 0,
-          observaciones: `Venta única con ${carrito.length} productos`,
-          cantidad: 0
-        }).unwrap()
-        .then(() => {
+        const result = await createVentaAction({
+            puntoDeVentaId: puntoVenta,
+            descuento: 0,
+            observaciones: `Venta única con ${carrito.length} productos`,
+            items,
+        })
+
+        if (result.success) {
             toast.success('Venta única creada correctamente')
             setCarrito([])
-        })
-        .catch((error) => {
-            toast.error('Error al crear la venta: ' + (error.data?.error || error.message))
-        })
+        } else {
+            toast.error('Error al crear la venta: ' + (result.error?.message || 'Error desconocido'))
+        }
     }
     return(
      

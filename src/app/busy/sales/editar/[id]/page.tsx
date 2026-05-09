@@ -1,7 +1,8 @@
 "use client"
+import { useState, useEffect } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { VentaForm } from "@/features/ventas"
-import { useGetVentaQuery } from "@/features/ventas"
+import { getVentaByIdAction, updateVentaAction } from "@/features/ventas/actions"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -17,7 +18,20 @@ export default function EditarVentaPage() {
   const params = useParams()
   const router = useRouter()
   const ventaId = params.id as string
-  const { data: venta, isLoading, error } = useGetVentaQuery(ventaId)
+  const [venta, setVenta] = useState<Awaited<ReturnType<typeof getVentaByIdAction>>['data'] | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<unknown>(null)
+
+  useEffect(() => {
+    getVentaByIdAction(ventaId).then((res) => {
+      if (res.success) {
+        setVenta(res.data)
+      } else {
+        setError(res.error)
+      }
+      setIsLoading(false)
+    })
+  }, [ventaId])
 
   if (isLoading) {
     return (

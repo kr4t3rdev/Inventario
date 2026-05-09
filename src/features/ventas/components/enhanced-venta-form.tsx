@@ -18,11 +18,9 @@ import { DollarSign, Calculator } from "lucide-react"
 
 import { getProductosAction } from "@/features/productos"
 import { usePuntosDeVenta } from "@/features/puntos-venta/hooks/use-puntos-de-venta"
-import { useAddVentaMutation, useUpdateVentaMutation } from "@/features/ventas"
+import { createVentaAction, updateVentaAction } from "@/features/ventas/actions"
 import { useGetMonedasQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { TasaCambioDialog } from "@/features/contabilidad/components/tasa-cambio-dialog"
-import { useDispatch } from "react-redux"
-import { apiSlice } from "@/lib/redux/services/apiSlice"
 
 const ventaSchema = z.object({
   productoId: z.string({
@@ -57,7 +55,6 @@ interface EnhancedVentaFormProps {
 
 export function EnhancedVentaForm({ initialData }: EnhancedVentaFormProps) {
   const router = useRouter()
-  const dispatch = useDispatch()
   const [isLoading, setIsLoading] = useState(false)
   const [showTasaCambioDialog, setShowTasaCambioDialog] = useState(false)
   const [pendingSubmission, setPendingSubmission] = useState<VentaFormValues | null>(null)
@@ -73,9 +70,6 @@ export function EnhancedVentaForm({ initialData }: EnhancedVentaFormProps) {
       setIsLoadingProductos(false)
     })
   }, [])
-
-  const [addVenta] = useAddVentaMutation()
-  const [updateVenta] = useUpdateVentaMutation()
 
   const monedas = ((monedasData as any)?.data as any[]) || []
   const monedasActivas = monedas.filter((m: any) => m.isActive)
@@ -114,27 +108,29 @@ export function EnhancedVentaForm({ initialData }: EnhancedVentaFormProps) {
   async function submitVenta(data: VentaFormValues, tasaCambio?: number, montoConvertido?: number) {
     setIsLoading(true)
     try {
-      const ventaData = {
-        ...data,
-        // Include exchange rate data if applicable
-        ...(tasaCambio && montoConvertido && {
-          tasaCambio,
-          montoConvertido,
-          monedaOriginal: data.moneda,
-          montoOriginal: totalVenta,
-        }),
-      }
+      const items = [{
+        productoId: data.productoId,
+        cantidad: data.cantidad,
+        precioUnitario: Math.round(data.precioVentaOriginal ?? selectedProducto?.precioVenta ?? 0),
+      }]
 
       if (initialData) {
-        await updateVenta({
+        const result = await updateVentaAction({
           ventaId: initialData.ventaId,
-          ...ventaData,
-        }).unwrap()
+        })
+        if (!result.success) {
+          throw new Error(result.error?.message || 'Error al actualizar la venta')
+        }
         sileo.success({ title: 'La venta ha sido actualizada exitosamente' })
       } else {
-        await addVenta(ventaData).unwrap()
+        const result = await createVentaAction({
+          puntoDeVentaId: data.puntoDeVentaId,
+          items,
+        })
+        if (!result.success) {
+          throw new Error(result.error?.message || 'Error al crear la venta')
+        }
         sileo.success({ title: 'La venta ha sido registrada exitosamente' })
-        dispatch(apiSlice.util.invalidateTags(['Productos']))
       }
       router.refresh()
     } catch (error) {

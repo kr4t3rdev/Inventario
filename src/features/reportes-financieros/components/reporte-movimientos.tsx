@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState, useEffect } from "react"
-import { useGetVentasQuery } from "@/features/ventas"
+import { useVentas } from "@/features/ventas/hooks/use-ventas"
 import { useGetMermasQuery } from "@/features/mermas/api/mermasApi"
 import { useGetTransferenciasQuery } from "@/features/transferencias/api/transferenciasApi"
 import { getProductosAction } from "@/features/productos"
@@ -34,7 +34,7 @@ export function ReporteMovimientos() {
     to: new Date(),
   })
 
-  const { data: ventas, isLoading: isLoadingVentas } = useGetVentasQuery()
+  const { ventas, isLoading: isLoadingVentas } = useVentas()
   const { data: mermas, isLoading: isLoadingMermas } = useGetMermasQuery()
   const { data: transferenciasData, isLoading: isLoadingTransferencias } = useGetTransferenciasQuery()
   const transferencias = transferenciasData?.transferencias || []
