@@ -109,7 +109,7 @@ export async function getDashboardStatsQuery(tenantId: string): Promise<Dashboar
       where: { tenantId },
       select: {
         id: true, nombre: true, stock: true, stockMinimo: true, precioCosto: true,
-        almacenId: true, activo: true,
+        almacenId: true,
         categoria: { select: { nombre: true } },
         unidad: { select: { simbolo: true } },
       },
@@ -144,7 +144,7 @@ export async function getDashboardStatsQuery(tenantId: string): Promise<Dashboar
 
   // Productos con stock bajo
   const productosStockBajo = productosDataRaw
-    .filter((p: any) => p.activo !== false && p.stockMinimo > 0 && p.stock <= p.stockMinimo)
+    .filter((p: any) => p.stockMinimo > 0 && p.stock <= p.stockMinimo)
     .map((p: any) => ({
       id: p.id, nombre: p.nombre, stock: p.stock, stockTotal: p.stock,
       stockMinimo: p.stockMinimo, diferencia: p.stock - p.stockMinimo,
