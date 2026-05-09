@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -8,7 +8,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { useGetEquiposReparacionQuery, useAddEquipoReparacionMutation, useDeleteEquipoReparacionMutation, useAddPiezaReparacionMutation, useDeletePiezaReparacionMutation, useUpdatePiezaReparacionMutation, useGetDefectacionesQuery, useAddDefectacionMutation, useUpdateDefectacionMutation, useDeleteDefectacionMutation } from '@/lib/redux/services/reparacionesApi'
+import { getEquiposReparacion, createEquipoReparacion, deleteEquipoReparacion } from '@/lib/api/reparaciones/equipos'
+import { createPiezaReparacion, updatePiezaReparacion, deletePiezaReparacion } from '@/lib/api/reparaciones/piezas'
+import { getDefectaciones, createDefectacion, updateDefectacion, deleteDefectacion } from '@/lib/api/reparaciones/defectaciones'
 import { Plus, Trash2, Settings, Wrench, Edit, ClipboardList, ListChecks, Cpu } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
@@ -21,21 +23,23 @@ import Link from 'next/link'
  * @returns {JSX.Element} Página de reparaciones
  */
 export default function ReparacionesConfigPage() {
-  const { data: equipos, isLoading } = useGetEquiposReparacionQuery()
-  const { data: defectaciones, isLoading: isLoadingDefectaciones } = useGetDefectacionesQuery()
+  const [equipos, setEquipos] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [defectaciones, setDefectaciones] = useState<any[]>([])
+  const [isLoadingDefectaciones, setIsLoadingDefectaciones] = useState(true)
+
+  useEffect(() => {
+    getEquiposReparacion().then(setEquipos).catch(() => {}).finally(() => setIsLoading(false))
+    getDefectaciones().then(setDefectaciones).catch(() => {}).finally(() => setIsLoadingDefectaciones(false))
+  }, [])
   
-  const [addEquipo] = useAddEquipoReparacionMutation()
-  const [deleteEquipo] = useDeleteEquipoReparacionMutation()
-  const [addPieza] = useAddPiezaReparacionMutation()
-  const [updatePieza] = useUpdatePiezaReparacionMutation()
-  const [deletePieza] = useDeletePiezaReparacionMutation()
-
-  const [addDefectacion] = useAddDefectacionMutation()
-  const [updateDefectacion] = useUpdateDefectacionMutation()
-  const [deleteDefectacion] = useDeleteDefectacionMutation()
-
   const [isAddEquipoOpen, setIsAddEquipoOpen] = useState(false)
   const [newEquipo, setNewEquipo] = useState({ nombre: '', descripcion: '' })
+
+  const loadAll = () => {
+    getEquiposReparacion().then(setEquipos).catch(() => {})
+    getDefectaciones().then(setDefectaciones).catch(() => {})
+  }
 
   const [isAddDefectacionOpen, setIsAddDefectacionOpen] = useState(false)
   const [editingDefectacionId, setEditingDefectacionId] = useState<string | null>(null)
@@ -66,17 +70,15 @@ export default function ReparacionesConfigPage() {
   const handleSaveDefectacion = async () => {
     try {
       if (editingDefectacionId) {
-        await updateDefectacion({
-            id: editingDefectacionId,
-            ...newDefectacion
-        }).unwrap()
+        await updateDefectacion(editingDefectacionId, newDefectacion)
         toast.success('Defectación actualizada')
       } else {
-        await addDefectacion(newDefectacion).unwrap()
+        await createDefectacion(newDefectacion)
         toast.success('Defectación agregada')
       }
       setIsAddDefectacionOpen(false)
       setEditingDefectacionId(null)
+      getDefectaciones().then(setDefectaciones).catch(() => {})
     } catch (error) {
       toast.error('Error al guardar defectación')
     }
@@ -85,8 +87,9 @@ export default function ReparacionesConfigPage() {
   const handleDeleteDefectacion = async (id: string) => {
     if (confirm('¿Eliminar esta defectación?')) {
       try {
-        await deleteDefectacion(id).unwrap()
+        await deleteDefectacion(id)
         toast.success('Defectación eliminada')
+        getDefectaciones().then(setDefectaciones).catch(() => {})
       } catch (error) {
         toast.error('Error al eliminar')
       }
@@ -95,10 +98,11 @@ export default function ReparacionesConfigPage() {
 
   const handleCreateEquipo = async () => {
     try {
-      await addEquipo(newEquipo).unwrap()
+      await createEquipoReparacion(newEquipo)
       toast.success('Equipo creado correctamente')
       setIsAddEquipoOpen(false)
       setNewEquipo({ nombre: '', descripcion: '' })
+      getEquiposReparacion().then(setEquipos).catch(() => {})
     } catch (error) {
       toast.error('Error al crear el equipo')
     }
@@ -107,8 +111,9 @@ export default function ReparacionesConfigPage() {
   const handleDeleteEquipo = async (id: string) => {
     if (confirm('¿Estás seguro de eliminar este equipo? Se eliminarán todas sus piezas.')) {
       try {
-        await deleteEquipo(id).unwrap()
+        await deleteEquipoReparacion(id)
         toast.success('Equipo eliminado')
+        getEquiposReparacion().then(setEquipos).catch(() => {})
       } catch (error) {
         toast.error('Error al eliminar el equipo')
       }
@@ -138,20 +143,18 @@ export default function ReparacionesConfigPage() {
     if (!selectedEquipoId) return
     try {
       if (editingPiezaId) {
-        await updatePieza({
-            id: editingPiezaId,
-            ...newPieza
-        }).unwrap()
+        await updatePiezaReparacion(editingPiezaId, newPieza)
         toast.success('Pieza actualizada correctamente')
       } else {
-        await addPieza({
+        await createPiezaReparacion({
             ...newPieza,
             equipoId: selectedEquipoId
-        }).unwrap()
+        })
         toast.success('Pieza agregada correctamente')
       }
       setIsAddPiezaOpen(false)
       setEditingPiezaId(null)
+      getEquiposReparacion().then(setEquipos).catch(() => {})
     } catch (error) {
       toast.error(editingPiezaId ? 'Error al actualizar la pieza' : 'Error al agregar la pieza')
     }
@@ -160,8 +163,9 @@ export default function ReparacionesConfigPage() {
   const handleDeletePieza = async (id: string) => {
     if (confirm('¿Eliminar esta pieza?')) {
       try {
-        await deletePieza(id).unwrap()
+        await deletePiezaReparacion(id)
         toast.success('Pieza eliminada')
+        getEquiposReparacion().then(setEquipos).catch(() => {})
       } catch (error) {
         toast.error('Error al eliminar la pieza')
       }
