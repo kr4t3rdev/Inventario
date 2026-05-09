@@ -73,7 +73,6 @@ export const apiSlice = createApi({
     'Empleados',
     'GastosCompra',
     'GastosDE',
-    'ReportesFinancieros',
     'Clientes',
     'Servicios',
     'VentaServicios',
