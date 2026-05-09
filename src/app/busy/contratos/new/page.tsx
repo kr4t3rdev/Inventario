@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { useGetClientesQuery } from "@/features/clientes/api/ClienteApi"
-import { useGetVendorsQuery } from "@/features/vendors/api/vendorsApi"
+import { useVendors } from '@/features/vendors/hooks/use-vendors'
 import { Button } from "@/components/ui/button"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
@@ -25,7 +25,7 @@ export default function NewContratoPage() {
   
   // Queries
   const { data: clientes, isLoading: isLoadingClientes } = useGetClientesQuery()
-  const { data: vendors, isLoading: isLoadingVendors } = useGetVendorsQuery()
+  const { vendors, isLoading: isLoadingVendors } = useVendors()
 
   const [formData, setFormData] = useState({
     tipo: 'COMPRA_VENTA' as string,

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getGastosDEAction, deleteGastosDEAction } from "@/features/gastosDE"
-import { useGetVendorsQuery } from "@/features/vendors/api/vendorsApi"
+import { useVendors } from "@/features/vendors/hooks/use-vendors"
 import { ColumnDef, RowSelectionState } from "@tanstack/react-table"
 import { ArrowUp, ArrowUpDown, Pencil, Plus, Trash2, Receipt, Sparkles, Loader2, AlertCircle, Download, CheckSquare } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -22,7 +22,7 @@ const GastosDE = () => {
     const [isPending, startTransition] = useTransition()
 
     useEffect(() => { async function f() { setIsLoading(true); const r=await getGastosDEAction(); if(r.success) setGastosDE(r.data??[]); setIsLoading(false); } f(); }, [])
-    const {data: vendors} = useGetVendorsQuery()
+    const { vendors } = useVendors()
 
     const [gastosDEToDelete, setGastosDEToDelete] = useState<string | null>(null)
     const [gastosDEToBulkDelete, setGastosDEToBulkDelete] = useState<string[] | null>(null)

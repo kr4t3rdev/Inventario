@@ -11,7 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { PageTransition, StaggerContainer, StaggerItem } from "@/components/ui/animations"
 import { useGetAnticiposQuery, useGetAnticipoByIdQuery, useGetCuentasBancariasQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { useGetClientesQuery } from "@/features/clientes/api/ClienteApi"
-import { useGetVendorsQuery } from "@/features/vendors/api/vendorsApi"
+import { useVendors } from '@/features/vendors/hooks/use-vendors'
 import { AnticiposTable } from "@/features/contabilidad/components/anticipos/anticipos-table"
 import { AnticipoForm } from "@/features/contabilidad/components/anticipos/anticipo-form"
 import { AnticipoDetail } from "@/features/contabilidad/components/anticipos/anticipo-detail"
@@ -53,7 +53,7 @@ function AnticiposContent() {
   })
 
   const { data: dataClientes } = useGetClientesQuery()
-  const { data: dataProveedores } = useGetVendorsQuery()
+  const { vendors: dataProveedores } = useVendors()
   const { data: dataCuentas } = useGetCuentasBancariasQuery()
 
   // Query para detalle completo con movimientos enriquecidos

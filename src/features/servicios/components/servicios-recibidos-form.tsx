@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton'
 import { useCreateCompraServicioMutation } from '@/features/compras-servicios/api/comprasServiciosApi'
 import { useGetServiciosQuery } from '@/features/servicios/api/serviciosApi'
-import { useGetVendorsQuery } from '@/features/vendors/api/vendorsApi'
+import { useVendors } from '@/features/vendors/hooks/use-vendors'
 import { AnticipoSelector } from '@/features/contabilidad/components/anticipos/anticipo-selector'
 import type { AnticipoAllocation } from '@/features/contabilidad/components/anticipos/anticipo-selector'
 import { ArrowLeft, Truck, Save, Loader2 } from 'lucide-react'
@@ -49,7 +49,7 @@ export function ServiciosRecibidosForm(): ReactElement {
   const [isLoading, setIsLoading] = useState(false)
   const [anticipoAllocations, setAnticipoAllocations] = useState<AnticipoAllocation[]>([])
   const { data: servicios, isLoading: isLoadingServicios } = useGetServiciosQuery()
-  const { data: vendors, isLoading: isLoadingVendors } = useGetVendorsQuery()
+  const { vendors, isLoading: isLoadingVendors } = useVendors()
   const [createCompraServicio] = useCreateCompraServicioMutation()
 
   const form = useForm<FormValues>({

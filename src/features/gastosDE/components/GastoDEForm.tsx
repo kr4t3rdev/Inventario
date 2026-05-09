@@ -16,7 +16,7 @@ import { sileo } from '@/lib/sileo-shim'
 import { Skeleton } from "@/components/ui/skeleton"
 import { v4 } from "uuid"
 import { createGastosDEAction, updateGastosDEAction, getGastoConceptosAction, getGastoElementosAction } from "@/features/gastosDE/actions"
-import { useGetVendorsQuery } from "@/features/vendors/api/vendorsApi"
+import { useVendors } from "@/features/vendors/hooks/use-vendors"
 import { VendorCombobox } from "./VendorCombobox"
 
 const gastosDESchema = z.object({
@@ -41,7 +41,7 @@ export function GastoDEForm({ initialData }: GastosDEFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [selectedConceptoId, setSelectedConceptoId] = useState<string>(initialData?.conceptoId || '')
   const { isLoading: isLoadingGastosDE } = { isLoading: false }
-  const { data: vendors, isLoading: isLoadingVendors } = useGetVendorsQuery()
+  const { vendors, isLoading: isLoadingVendors } = useVendors()
   const [conceptos, setConceptos] = useState<any[]>([])
   const [elementos, setElementos] = useState<any[]>([])
 

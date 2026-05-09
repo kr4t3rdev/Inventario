@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -12,12 +12,10 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent } from "@/components/ui/card"
 import { sileo } from '@/lib/sileo-shim'
-import { Skeleton } from "@/components/ui/skeleton"
-import { useAddPuntoDeVentaMutation, useGetPuntosDeVentaQuery, useUpdatePuntoDeVentaMutation } from "@/features/puntos-venta/api/puntosDeVentaApi"
+import { createPuntoDeVentaAction, updatePuntoDeVentaAction } from "@/features/puntos-venta/actions"
+import { getListasPreciosAction } from "@/features/listas-precios"
 import { motion } from "framer-motion"
 import { Store, MapPin, Sparkles, ArrowLeft, Loader2 } from "lucide-react"
-import Link from "next/link"
-import { useGetListasPreciosQuery } from "@/features/listas-precios/api/listasPreciosApi"
 
 const ptoVentaSchema = z.object({
   nombre: z.string({
@@ -41,46 +39,32 @@ interface PtoVentaFormProps {
   }
 }
 
-// Loading spinner component
-function LoadingSpinner({ size = 24 }: { size?: number }) {
-  return (
-    <motion.div
-      className="border-2 border-primary border-t-transparent rounded-full"
-      style={{ width: size, height: size }}
-      animate={{ rotate: 360 }}
-      transition={{
-        duration: 1,
-        repeat: Infinity,
-        ease: "linear"
-      }}
-    />
-  )
+interface ListaPrecioOption {
+  id: string
+  nombre: string
 }
 
-// Pulse skeleton
-function PulseSkeleton({ className }: { className?: string }) {
-  return (
-    <motion.div
-      className={`bg-muted rounded ${className}`}
-      animate={{ opacity: [0.5, 0.8, 0.5] }}
-      transition={{
-        duration: 1.5,
-        repeat: Infinity,
-        ease: "easeInOut"
-      }}
-    />
-  )
-}
-
+/**
+ * @description Formulario para crear o editar un punto de venta.
+ * Usa Server Actions (createPuntoDeVentaAction / updatePuntoDeVentaAction)
+ * en lugar de RTK Query.
+ *
+ * @param {PtoVentaFormProps} props - Datos iniciales del punto de venta (opcional).
+ * @returns {JSX.Element} Formulario de punto de venta.
+ */
 export function PtoVentaForm({ initialData }: PtoVentaFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const [listasPrecios, setListasPrecios] = useState<ListaPrecioOption[]>([])
 
-  const { data: ptoVenta, isLoading: isLoadingPtoVenta } = useGetPuntosDeVentaQuery()
-  const { data: listasPrecios } = useGetListasPreciosQuery()
-  
-  const [ addPtoVenta ] = useAddPuntoDeVentaMutation()
-  const [updatePtoVenta] = useUpdatePuntoDeVentaMutation()
+  // Fetch price lists via Server Action
+  useEffect(() => {
+    getListasPreciosAction().then(result => {
+      if (result.success) {
+        setListasPrecios(result.data ?? [])
+      }
+    })
+  }, [])
 
   const form = useForm<PtoVentaFormValues>({
     resolver: zodResolver(ptoVentaSchema) as any,
@@ -94,20 +78,30 @@ export function PtoVentaForm({ initialData }: PtoVentaFormProps) {
   async function onSubmit(data: PtoVentaFormValues) {
     setIsLoading(true)
     try {
+      const listaPrecioId = data.listaPrecioId === "default" ? null : data.listaPrecioId
+
       if (initialData) {
-        await updatePtoVenta({
+        const result = await updatePuntoDeVentaAction({
           pvId: initialData.pvId,
-          ...data,
-          stockPuntoVenta: initialData.stockPuntoVenta ?? 0,
-          listaPrecioId: data.listaPrecioId === "default" ? null : data.listaPrecioId,
-        }).unwrap()
+          nombre: data.nombre,
+          ubicacion: data.ubicacion,
+          listaPrecioId,
+        })
+
+        if (!result.success) {
+          throw new Error(result.error?.message || 'Error al actualizar el punto de venta')
+        }
         sileo.success({ title: 'El punto de venta ha sido actualizado exitosamente.' })
       } else {
-        await addPtoVenta({
-          ...data,
-          listaPrecioId: data.listaPrecioId === "default" ? null : data.listaPrecioId,
-          stockPuntoVenta: 0,
-        }).unwrap()
+        const result = await createPuntoDeVentaAction({
+          nombre: data.nombre,
+          ubicacion: data.ubicacion,
+          listaPrecioId,
+        })
+
+        if (!result.success) {
+          throw new Error(result.error?.message || 'Error al crear el punto de venta')
+        }
         sileo.success({ title: 'El punto de venta ha sido registrado exitosamente.' })
       }
       router.push("/busy/puntosDeVenta")
@@ -118,33 +112,6 @@ export function PtoVentaForm({ initialData }: PtoVentaFormProps) {
     } finally {
       setIsLoading(false)
     }
-  }
-
-  if (isLoadingPtoVenta) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <Card className="border-dashed">
-          <CardContent className="pt-6">
-            <div className="space-y-6">
-              <div className="flex items-center gap-2 mb-6">
-                <PulseSkeleton className="h-10 w-10 rounded-xl" />
-                <PulseSkeleton className="h-6 w-48" />
-              </div>
-              <PulseSkeleton className="h-10 w-full" />
-              <PulseSkeleton className="h-10 w-full" />
-              <div className="flex justify-end space-x-4">
-                <PulseSkeleton className="h-10 w-24" />
-                <PulseSkeleton className="h-10 w-32" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-    )
   }
 
   return (

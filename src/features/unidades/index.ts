@@ -7,6 +7,6 @@ export {
   deleteUnidadAction,
 } from './actions';
 
-// RTK Query (legacy)
-export type { Unidad } from './api/unidadesApi';
-export { unidadesApi, useGetUnidadesQuery, useGetUnidadQuery } from './api/unidadesApi';
+// Hooks
+export { useUnidades } from './hooks/use-unidades';
+export type { Unidad } from '@/app/models/model';

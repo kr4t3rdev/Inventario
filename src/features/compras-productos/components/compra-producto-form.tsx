@@ -19,7 +19,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 import { ProductPhotoUpload } from '@/features/productos/components/product-photo-upload'
 import type { Producto, Vendor } from '@/app/models/model'
-import { useGetVendorsQuery } from '@/features/vendors/api/vendorsApi'
+import { useVendors } from '@/features/vendors/hooks/use-vendors'
 import { useProductos } from '@/features/productos/hooks/use-productos'
 import { useCreateCompraProductoMutation } from '@/features/compras-productos/api/comprasProductosApi'
 import { useGetAnticiposDisponiblesQuery } from '@/features/contabilidad/api/contabilidadApi'
@@ -83,7 +83,7 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
   const anticiposFeatureEnabled = process.env.NEXT_PUBLIC_ENABLE_ANTICIPOS !== 'false'
 
   const { productos: products, isLoading: isLoadingProducts } = useProductos()
-  const { data: vendors, isLoading: isLoadingVendors } = useGetVendorsQuery()
+  const { vendors, isLoading: isLoadingVendors } = useVendors()
   const [createCompraProducto] = useCreateCompraProductoMutation()
 
   const form = useForm<CompraDocumentoFormValues>({

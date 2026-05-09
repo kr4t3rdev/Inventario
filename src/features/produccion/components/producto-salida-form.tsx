@@ -15,9 +15,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useCategorias } from '@/features/categorias/hooks/use-categorias';
-import { useGetUnidadesQuery } from '@/features/unidades/api/unidadesApi';
+import { useUnidades } from '@/features/unidades/hooks/use-unidades';
 import { useAlmacenes } from '@/features/almacenes/hooks/use-almacenes';
-import { useGetVendorsQuery } from '@/features/vendors/api/vendorsApi';
+import { useVendors } from '@/features/vendors/hooks/use-vendors';
 import { getAuthToken } from '@/lib/token';
 
 interface ProductoSalidaFormValues {
@@ -96,9 +96,9 @@ export function ProductoSalidaForm({
   const subcategorias = React.useMemo(() => {
     return allCategorias.filter((cat) => cat.parentId === values.categoriaId);
   }, [allCategorias, values.categoriaId]);
-  const { data: unidades = [] } = useGetUnidadesQuery();
+  const { unidades } = useUnidades();
   const { almacenes } = useAlmacenes();
-  const { data: vendors = [] } = useGetVendorsQuery();
+  const { vendors } = useVendors();
 
   useEffect(() => {
     const token = getAuthToken();

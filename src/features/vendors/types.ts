@@ -1,2 +1,2 @@
-import type { Vendor } from './api/vendorsApi';
+import type { Vendor } from '@/app/models/model';
 export type { Vendor };

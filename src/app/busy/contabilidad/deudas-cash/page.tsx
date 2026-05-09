@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { PageTransition, StaggerContainer, StaggerItem } from "@/components/ui/animations"
 import { getDeudasCashAction } from "@/features/contabilidad/actions-deudas-cash"
-import { useGetVendorsQuery } from "@/features/vendors"
+import { useVendors } from '@/features/vendors/hooks/use-vendors'
 import { useGetCuentasBancariasQuery, useGetTiposPagoQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { DeudasCashTable } from "@/features/contabilidad/components/deudas-cash/deudas-cash-table"
 import { DeudaCashForm } from "@/features/contabilidad/components/deudas-cash/deuda-cash-form"
@@ -39,7 +39,7 @@ function DeudasCashContent() {
 
   useEffect(() => { loadDeudas() }, [])
 
-  const { data: dataProveedores } = useGetVendorsQuery()
+  const { vendors: dataProveedores } = useVendors()
   const { data: dataCuentas } = useGetCuentasBancariasQuery()
   const { data: dataTiposPago } = useGetTiposPagoQuery({})
 
