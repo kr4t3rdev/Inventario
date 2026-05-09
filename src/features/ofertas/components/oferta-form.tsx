@@ -23,9 +23,9 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { sileo } from '@/lib/sileo-shim';
 import { Skeleton } from "@/components/ui/skeleton";
-import { getProductosAction } from "@/features/productos";
-import { useGetClientesQuery } from "@/features/clientes";
-import { useAddOfertaMutation } from "@/features/ofertas";
+import { useGetProductosQuery } from "@/features/productos/api/productosApi";
+import { useGetClientesQuery } from "@/features/clientes/api/ClienteApi";
+import { useAddOfertaMutation } from "@/features/ofertas/api/ofertasApi";
 import { useGetAnticiposDisponiblesQuery } from "@/features/contabilidad/api/contabilidadApi";
 import { formatCurrency } from "@/lib/utils";
 import { getAuthToken } from "@/lib/token";
@@ -89,17 +89,9 @@ export function OfertaForm() {
   const [selectedAnticipoCobroId, setSelectedAnticipoCobroId] = useState<string>("")
   const anticiposFeatureEnabled = process.env.NEXT_PUBLIC_ENABLE_ANTICIPOS !== "false"
 
-  const [productos, setProductos] = useState<any[]>([])
-  const [isLoadingProductos, setIsLoadingProductos] = useState(true)
+  const { data: productos, isLoading: isLoadingProductos } = useGetProductosQuery()
   const { data: clientes, isLoading: isLoadingClientes } = useGetClientesQuery()
   const [addOferta] = useAddOfertaMutation()
-
-  useEffect(() => {
-    getProductosAction().then(r => {
-      if (r.success) setProductos(r.data ?? [])
-      setIsLoadingProductos(false)
-    })
-  }, [])
 
   const form = useForm<OfertaFormValues>({
     resolver: zodResolver(ofertaSchema),

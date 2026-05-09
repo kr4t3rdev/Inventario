@@ -11,7 +11,8 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { sileo } from '@/lib/sileo-shim'
-import { createAlmacenAction, updateAlmacenAction } from "@/features/almacenes"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useAddAlmacenMutation, useGetAlmacenesQuery, useUpdateAlmacenMutation } from "@/features/almacenes/api/almacenesApi"
 import { motion } from "framer-motion"
 import { Warehouse, Sparkles, ArrowLeft, Loader2 } from "lucide-react"
 import Link from "next/link"
@@ -66,7 +67,10 @@ export function AlmacenForm({ initialData }: AlmacenFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
 
-  // No necesita RTK Query — usa Server Actions directas
+  const { data: almacen, isLoading: isLoadingAlmacenes } = useGetAlmacenesQuery()
+  
+  const [ addAlmacen ] = useAddAlmacenMutation()
+  const [updateAlmacen] = useUpdateAlmacenMutation()
 
   const form = useForm<AlmacenFormValues>({
     resolver: zodResolver(almacenSchema),
@@ -79,23 +83,15 @@ export function AlmacenForm({ initialData }: AlmacenFormProps) {
     setIsLoading(true)
     try {
       if (initialData) {
-        const result = await updateAlmacenAction({
-          almacenId: initialData.almacenId,
-          nombre: data.nombre,
-        })
-        if (!result.success) {
-          sileo.error({ title: result.error?.message || 'Error al actualizar el almacén.' })
-          return
-        }
+        await updateAlmacen({
+          almacenId: initialData.almacenId,            
+          ...data,
+        }).unwrap()
         sileo.success({ title: 'El almacén ha sido actualizado exitosamente.' })
       } else {
-        const result = await createAlmacenAction({
-          nombre: data.nombre,
-        })
-        if (!result.success) {
-          sileo.error({ title: result.error?.message || 'Error al crear el almacén.' })
-          return
-        }
+        await addAlmacen({
+          ...data,
+        }).unwrap()
         sileo.success({ title: 'El almacén ha sido registrado exitosamente.' })
       }
       router.push("/busy/almacen")
@@ -108,7 +104,7 @@ export function AlmacenForm({ initialData }: AlmacenFormProps) {
     }
   }
 
-  if (isLoading) {
+  if (isLoadingAlmacenes) {
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}

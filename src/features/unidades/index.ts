@@ -10,4 +10,3 @@ export {
 // RTK Query (legacy)
 export type { Unidad } from './api/unidadesApi';
 export { unidadesApi, useGetUnidadesQuery, useGetUnidadQuery, useAddUnidadMutation, useUpdateUnidadMutation, useDeleteUnidadMutation } from './api/unidadesApi';
-export { UnidadForm } from './components/unidad-form';

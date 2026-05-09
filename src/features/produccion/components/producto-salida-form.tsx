@@ -14,11 +14,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useGetCategoriasQuery, useGetSubcategoriasQuery } from '@/features/categorias';
-import { useGetUnidadesQuery } from '@/features/unidades';
-import { useGetAlmacenesQuery } from '@/features/almacenes';
-import { useGetVendorsQuery } from '@/features/vendors';
-import { createProductoAction } from '@/features/productos/actions';
+import { useGetCategoriasQuery, useGetSubcategoriasQuery } from '@/features/categorias/api/categoriasApi';
+import { useGetUnidadesQuery } from '@/features/unidades/api/unidadesApi';
+import { useGetAlmacenesQuery } from '@/features/almacenes/api/almacenesApi';
+import { useGetVendorsQuery } from '@/features/vendors/api/vendorsApi';
+import { useAddProductoMutation } from '@/features/productos/api/productosApi';
 import { getAuthToken } from '@/lib/token';
 
 interface ProductoSalidaFormValues {

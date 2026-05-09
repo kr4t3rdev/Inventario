@@ -25,10 +25,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 
-import { getProductosAction } from "@/features/productos"
+import { useGetProductosQuery } from "@/features/productos/api/productosApi"
+import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta/api/puntosDeVentaApi"
 import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta"
-import { useGetAlmacenesQuery } from "@/features/almacenes"
-import { getStockPorUbicacionAction } from "@/features/productos/actions"
+import { useGetAlmacenesQuery } from "@/features/almacenes/api/almacenesApi"
+import { useGetStockPorUbicacionQuery } from "@/lib/redux/services/stockUbicacionApi"
 import { useDispatch } from "react-redux"
 import { apiSlice } from "@/lib/redux/services/apiSlice"
 
@@ -142,7 +143,7 @@ function ProductoSelector({
           <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-87.5 p-0" align="start">
+      <PopoverContent className="w-[350px] p-0" align="start">
         <div className="flex items-center border-b px-3">
           <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
           <Input
@@ -1085,7 +1086,7 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
               <Button 
                 type="submit" 
                 disabled={isLoading || fields.length === 0}
-                className="min-w-37.5"
+                className="min-w-[150px]"
               >
                 {isLoading ? (
                   <>Guardando...</>

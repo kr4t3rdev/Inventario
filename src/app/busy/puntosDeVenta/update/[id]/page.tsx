@@ -1,6 +1,9 @@
 "use client"
 
-import { PtoVentaForm, getPuntoDeVentaByIdAction } from "@/features/puntos-venta"
+import { PtoVentaForm } from "@/components/PtoVenta/pvtoVenta-form"
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useGetPuntoDeVentaQuery } from "@/features/puntos-venta/api/puntosDeVentaApi"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useParams } from "next/navigation"

@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card"
 import { sileo } from '@/lib/sileo-shim'
 import { Skeleton } from "@/components/ui/skeleton"
-import { useAddPuntoDeVentaMutation, useGetPuntosDeVentaQuery, useUpdatePuntoDeVentaMutation } from "@/features/puntos-venta"
+import { useAddPuntoDeVentaMutation, useGetPuntosDeVentaQuery, useUpdatePuntoDeVentaMutation } from "@/features/puntos-venta/api/puntosDeVentaApi"
 import { motion } from "framer-motion"
 import { Store, MapPin, Sparkles, ArrowLeft, Loader2 } from "lucide-react"
 import Link from "next/link"

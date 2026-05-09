@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useGetCategoriasQuery } from "@/features/categorias";
+import { useGetCategoriasQuery } from "@/features/categorias/api/categoriasApi";
 import { useCategoryForm } from "@/features/categorias/hooks/use-category-form";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";

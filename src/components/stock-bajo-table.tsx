@@ -114,7 +114,7 @@ export function StockBajoTable() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {dashboardStats.productosStockBajo.map((producto) => {
+                {dashboardStats.productosStockBajo.map((producto:any) => {
                   const status = getStockStatus(producto.stockTotal, producto.stockMinimo, producto.umbralUsado)
                   
                   return (

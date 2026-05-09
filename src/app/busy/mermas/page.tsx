@@ -1,9 +1,9 @@
 "use client"
 
-import { useEffect, useState, useTransition } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
-import { getMermasAction, deleteMermaAction } from "@/features/mermas"
+import { useGetMermasQuery, useDeleteMermaMutation } from "@/features/mermas/api/mermasApi"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, AlertTriangle, Sparkles, Loader2 } from "lucide-react"

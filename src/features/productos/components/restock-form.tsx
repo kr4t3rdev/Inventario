@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/dialog"
 import { ProductPhotoUpload } from "./product-photo-upload"
 
-import { restockProductoAction } from "@/features/productos/actions"
+import { useRestockProductoMutation } from "@/features/productos/api/productosApi"
 import { useGetMonedasQuery, useGetCuentasBancariasQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { TasaCambioDialog } from "@/features/contabilidad/components/tasa-cambio-dialog"
 import { RestockRequest } from "@/app/models/model"
@@ -117,6 +117,7 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
   const [showTipoRestockDialog, setShowTipoRestockDialog] = useState(false)
   const [preciosCambiados, setPreciosCambiados] = useState(false)
 
+  const [restockProducto] = useRestockProductoMutation()
   const { data: monedasData } = useGetMonedasQuery()
   const { data: cuentasData } = useGetCuentasBancariasQuery()
   const monedas = ((monedasData as any)?.data as any[]) || []
@@ -250,11 +251,7 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
         }),
       }
 
-      const result = await restockProductoAction(restockRequest)
-
-      if (!result.success) {
-        throw result
-      }
+      await restockProducto(restockRequest).unwrap()
 
       sileo.success({ title: `Restock exitoso: ${data.cantidad} ${producto.unidad?.simbolo || "unidades"} agregadas a ${producto.nombre}` })
 
@@ -264,11 +261,9 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
     } catch (error: unknown) {
       console.error("Error al realizar restock:", error)
 
-      // Handle Server Action error format { success: false, error: { message, code } }
-      const errorObj = error as { success?: boolean; error?: { message?: string; code?: string }; data?: { error?: { message?: string }; message?: string } }
-      if (errorObj?.error?.message) {
-        sileo.error({ title: `Error: ${errorObj.error.message}` })
-      } else if (errorObj?.data?.error?.message) {
+      // Handle different types of errors
+      const errorObj = error as { data?: { error?: { message?: string }; message?: string } }
+      if (errorObj?.data?.error?.message) {
         sileo.error({ title: `Error: ${errorObj.data.error.message}` })
       } else if (errorObj?.data?.message) {
         sileo.error({ title: `Error: ${errorObj.data.message}` })

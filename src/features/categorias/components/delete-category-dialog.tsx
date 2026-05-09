@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { useDeleteCategoriaMutation } from "@/features/categorias"
+import { useDeleteCategoriaMutation } from "@/features/categorias/api/categoriasApi"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import {

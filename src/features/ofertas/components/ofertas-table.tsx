@@ -23,7 +23,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { formatCurrency } from "@/lib/utils"
 import { Oferta } from "@/app/models/model"
 import { Badge } from "@/components/ui/badge"
-import { useDeleteOfertaMutation } from "@/features/ofertas"
+import { useDeleteOfertaMutation } from "@/features/ofertas/api/ofertasApi"
 import { toast } from "sonner"
 import {
   AlertDialog,

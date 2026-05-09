@@ -1,43 +1,40 @@
 'use client'
 
 import dynamic from "next/dynamic"
-import { 
-  AlertDialog, 
-  AlertDialogAction, 
-  AlertDialogCancel, 
-  AlertDialogContent, 
-  AlertDialogDescription, 
-  AlertDialogFooter, 
-  AlertDialogHeader, 
-  AlertDialogTitle 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
 } from "@/components/ui/alert-dialog"
 import { Button } from "@/components/ui/button"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
-import { Switch } from "@/components/ui/switch"
-import { Label } from "@/components/ui/label"
 import { deleteCategoriaAction, getCategoriasAction, getCategoriaHierarchyAction } from "@/features/categorias"
 import { ColumnDef } from "@tanstack/react-table"
-import { 
-  ArrowUp, 
-  ArrowUpDown, 
-  Pencil, 
-  Plus, 
-  Trash2, 
-  TreePine, 
-  Folder, 
+import {
+  ArrowUp,
+  ArrowUpDown,
+  Pencil,
+  Plus,
+  Trash2,
+  TreePine,
+  Folder,
   FolderOpen,
   Layers,
   Grid3X3,
   Sparkles
 } from "lucide-react"
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect, useTransition } from "react"
 import { toast } from "sonner"
 import type { Categoria, CategoriaHierarchy } from "../../models/model"
 import { motion, AnimatePresence } from "framer-motion"
-import { useAuth } from "@/contexts/auth-context"
 
 // Loading spinner component
 function LoadingSpinner({ size = 32 }: { size?: number }) {
@@ -58,7 +55,7 @@ function LoadingSpinner({ size = 32 }: { size?: number }) {
 // Lazy load heavy components
 const DataTable = dynamic(() => import("@/components/data-table").then(mod => ({ default: mod.DataTable })), {
   loading: () => (
-    <motion.div 
+    <motion.div
       className="h-125 w-full flex items-center justify-center bg-muted/30 rounded-lg border-2 border-dashed"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -73,25 +70,40 @@ const DataTable = dynamic(() => import("@/components/data-table").then(mod => ({
 })
 
 const Categoria = () => {
-  const { user, loading: authLoading } = useAuth()
-  const [categorias, setCategorias] = useState<any[]>([])
-  const [categoriaHierarchy, setCategoriaHierarchy] = useState<any[]>([])
+  const [categorias, setCategorias] = useState<Categoria[]>([])
+  const [categoriaHierarchy, setCategoriaHierarchy] = useState<CategoriaHierarchy[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [isPending, startTransition] = useTransition()
+  const [showTreeView, setShowTreeView] = useState(false)
+  const [categoriaToDelete, setCategoriaToDelete] = useState<string | null>(null)
+  const [, startTransition] = useTransition()
 
-  useEffect(() => { async function f() { setIsLoading(true); const r1=await getCategoriasAction(); const r2=await getCategoriaHierarchyAction(); if(r1.success) setCategorias(r1.data??[]); if(r2.success) setCategoriaHierarchy(r2.data??[]); setIsLoading(false); } f(); }, [])
+  useEffect(() => {
+    async function fetchData() {
+      setIsLoading(true)
+      const r1 = await getCategoriasAction()
+      const r2 = await getCategoriaHierarchyAction()
+      if (r1.success) setCategorias(r1.data ?? [])
+      if (r2.success) setCategoriaHierarchy(r2.data ?? [])
+      setIsLoading(false)
+    }
+    fetchData()
+  }, [])
 
-  const handleDeleteClick = (id: string) => { setDeleteDialogOpen(true); setSelectedCategory(id) }
-
-  const confirmDelete = () => {
-    if (!selectedCategory) return
+  const handleDelete = () => {
+    if (!categoriaToDelete) return
     startTransition(async () => {
-      const r=await deleteCategoriaAction(selectedCategory)
-      if(r.success) { toast.success("Categoría eliminada exitosamente"); const r1=await getCategoriasAction(); const r2=await getCategoriaHierarchyAction(); if(r1.success) setCategorias(r1.data??[]); if(r2.success) setCategoriaHierarchy(r2.data??[]) }
-      else toast.error(r.error?.message||"Error al eliminar")
-      setDeleteDialogOpen(false); setSelectedCategory(null)
+      const r = await deleteCategoriaAction(categoriaToDelete)
+      if (r.success) {
+        toast.success("Categoría eliminada exitosamente")
+        const r1 = await getCategoriasAction()
+        const r2 = await getCategoriaHierarchyAction()
+        if (r1.success) setCategorias(r1.data ?? [])
+        if (r2.success) setCategoriaHierarchy(r2.data ?? [])
+      } else {
+        toast.error(r.error?.message || "Error al eliminar")
+      }
+      setCategoriaToDelete(null)
     })
-  }
   }
 
   // Flat table columns for regular view
@@ -198,7 +210,7 @@ const Categoria = () => {
         const categoria = row.original
         const indent = categoria.level * 20
         return (
-          <motion.div 
+          <motion.div
             className="flex items-center gap-2"
             style={{ paddingLeft: `${indent}px` }}
             initial={{ opacity: 0, x: -10 }}
@@ -269,7 +281,7 @@ const Categoria = () => {
   // Flatten hierarchy for tree view display
   const flattenHierarchy = (categories: CategoriaHierarchy[]): CategoriaHierarchy[] => {
     const result: CategoriaHierarchy[] = []
-    
+
     const flatten = (cats: CategoriaHierarchy[]) => {
       cats.forEach(cat => {
         result.push(cat)
@@ -278,17 +290,17 @@ const Categoria = () => {
         }
       })
     }
-    
+
     flatten(categories)
     return result
   }
 
-  if (isLoading || isLoadingHierarchy) {
+  if (isLoading) {
     return (
-      <SidebarProvider>           
-        <SidebarInset>              
+      <SidebarProvider>
+        <SidebarInset>
           <div className="container mx-auto py-4">
-            <motion.div 
+            <motion.div
               className="flex justify-between items-center mb-4"
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -311,7 +323,7 @@ const Categoria = () => {
         </SidebarInset>
       </SidebarProvider>
     )
-  }  
+  }
 
   const displayData = showTreeView
     ? flattenHierarchy(categoriaHierarchy || [])
@@ -321,34 +333,34 @@ const Categoria = () => {
 
   return (
     <>
-      <SidebarProvider>          
-        <SidebarInset>            
-          <motion.div 
+      <SidebarProvider>
+        <SidebarInset>
+          <motion.div
             className="container mx-auto py-4"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
           >
             {/* Header Section */}
-            <motion.div 
+            <motion.div
               className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1, duration: 0.5 }}
             >
               <div className="flex items-center gap-3">
-                <motion.div 
+                <motion.div
                   className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg relative"
                   whileHover={{ scale: 1.05, rotate: 5 }}
                   transition={{ duration: 0.2 }}
                 >
                   <Layers className="h-5 w-5 text-white" />
                   <motion.div
-                    animate={{ 
+                    animate={{
                       rotate: 360,
                       scale: [1, 1.2, 1]
                     }}
-                    transition={{ 
+                    transition={{
                       rotate: { duration: 20, repeat: Infinity, ease: "linear" },
                       scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
                     }}
@@ -366,10 +378,10 @@ const Categoria = () => {
                   </p>
                 </div>
               </div>
-              
+
               <div className='flex items-center gap-4'>
                 {/* View Toggle */}
-                <motion.div 
+                <motion.div
                   className="flex items-center gap-3 bg-muted/50 rounded-lg p-1"
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -400,38 +412,38 @@ const Categoria = () => {
                 </motion.div>
 
                 <div className="flex flex-col gap-3 sm:flex-row">
-                  <motion.div 
-                    whileHover={{ scale: 1.02 }} 
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.3 }}
                   >
-                    <Button 
-                      asChild 
+                    <Button
+                      asChild
                       className="gap-2 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
                     >
                       <Link href="/busy/categoria/new">
-                        <Plus className="h-4 w-4" /> 
+                        <Plus className="h-4 w-4" />
                         Nueva Categoría
                       </Link>
                     </Button>
                   </motion.div>
 
-                  <motion.div 
-                    whileHover={{ scale: 1.02 }} 
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.35 }}
                   >
-                    <Button 
-                      asChild 
+                    <Button
+                      asChild
                       variant="outline"
                       className="gap-2 border-primary/30 text-primary hover:bg-primary/5"
                     >
                       <Link href="/busy/categoria/subcategoria/new">
-                        <Layers className="h-4 w-4" /> 
+                        <Layers className="h-4 w-4" />
                         Nueva Subcategoría
                       </Link>
                     </Button>
@@ -466,7 +478,7 @@ const Categoria = () => {
           </motion.div>
         </SidebarInset>
       </SidebarProvider>
-      
+
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!categoriaToDelete} onOpenChange={(open) => !open && setCategoriaToDelete(null)}>
         <AlertDialogContent>
@@ -485,7 +497,7 @@ const Categoria = () => {
         </AlertDialogContent>
       </AlertDialog>
     </>
-  )  
+  )
 }
 
 export default Categoria

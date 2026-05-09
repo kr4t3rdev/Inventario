@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -18,8 +18,8 @@ import { Card, CardContent } from "@/components/ui/card"
 import { sileo } from '@/lib/sileo-shim'
 import { Skeleton } from "@/components/ui/skeleton"
 
-import { getProductosAction } from "@/features/productos"
-import { useAddMermaMutation, useUpdateMermaMutation } from "@/features/mermas"
+import { useGetProductosQuery } from "@/features/productos/api/productosApi"
+import { useAddMermaMutation, useUpdateMermaMutation } from "@/features/mermas/api/mermasApi"
 import { apiSlice } from "@/lib/redux/services/apiSlice"
 
 const mermaSchema = z.object({
@@ -49,15 +49,7 @@ export function MermaForm({ initialData }: MermaFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const dispatch = useDispatch()
-  const [productos, setProductos] = useState<any[]>([])
-  const [isLoadingProductos, setIsLoadingProductos] = useState(true)
-
-  useEffect(() => {
-    getProductosAction().then(r => {
-      if (r.success) setProductos(r.data ?? [])
-      setIsLoadingProductos(false)
-    })
-  }, [])
+  const { data: productos, isLoading: isLoadingProductos } = useGetProductosQuery()
 
   const [addMerma] = useAddMermaMutation()
   const [updateMerma] = useUpdateMermaMutation()

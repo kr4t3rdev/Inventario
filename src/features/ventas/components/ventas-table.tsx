@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import {
@@ -21,7 +21,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { ArrowUpDown, Pencil, Trash2Icon, Loader2 } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatCurrency } from "@/lib/utils"
-import { getProductosAction } from "@/features/productos"
+import { useGetProductosQuery } from "@/features/productos/api/productosApi"
 import type { Venta } from "@/app/models/model"
 
 interface VentasTableProps {

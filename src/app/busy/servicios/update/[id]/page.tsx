@@ -3,9 +3,8 @@
 import { ServicioForm } from "@/features/servicios/components/servicios-form"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
-import { getServicioByIdAction } from "@/features/servicios"
+import { useGetServicioQuery } from "@/features/servicios/api/serviciosApi"
 import { useParams } from "next/navigation"
-import { useEffect, useState } from "react"
 
 export default function EditarServicioPage() {
   const params = useParams()
