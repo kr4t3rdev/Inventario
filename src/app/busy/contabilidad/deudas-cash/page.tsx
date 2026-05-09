@@ -6,9 +6,10 @@ import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { PageTransition, StaggerContainer, StaggerItem } from "@/components/ui/animations"
+import { getCuentasBancariasAction } from "@/features/contabilidad/actions-cuentas-bancarias"
+import { getTiposPagoAction } from "@/features/contabilidad/actions-tipos-pago"
 import { getDeudasCashAction } from "@/features/contabilidad/actions-deudas-cash"
 import { useVendors } from '@/features/vendors/hooks/use-vendors'
-import { useGetCuentasBancariasQuery, useGetTiposPagoQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { DeudasCashTable } from "@/features/contabilidad/components/deudas-cash/deudas-cash-table"
 import { DeudaCashForm } from "@/features/contabilidad/components/deudas-cash/deuda-cash-form"
 import { PagoDeudaModal } from "@/features/contabilidad/components/deudas-cash/pago-deuda-modal"
@@ -40,12 +41,15 @@ function DeudasCashContent() {
   useEffect(() => { loadDeudas() }, [])
 
   const { vendors: dataProveedores } = useVendors()
-  const { data: dataCuentas } = useGetCuentasBancariasQuery()
-  const { data: dataTiposPago } = useGetTiposPagoQuery({})
+  const [cuentasBancarias, setCuentasBancarias] = useState<any[]>([])
+  const [tiposPago, setTiposPago] = useState<any[]>([])
+
+  useEffect(() => {
+    getCuentasBancariasAction().then(r => { if (r.success) setCuentasBancarias(r.data?.cuentas ?? []) })
+    getTiposPagoAction().then(r => { if (r.success) setTiposPago(r.data?.data ?? []) })
+  }, [])
 
   const proveedores = dataProveedores || []
-  const cuentasBancarias = dataCuentas?.cuentas || []
-  const tiposPago = dataTiposPago?.data || []
 
   const handlePagar = (deuda: DeudaCash) => {
     setDeudaSeleccionada(deuda)

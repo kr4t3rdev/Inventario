@@ -1,3 +1,15 @@
+// Server Actions — Tipos de Pago
+export { getTiposPagoAction } from './actions-tipos-pago';
+
+// Server Actions — Cuentas Bancarias
+export {
+  getCuentasBancariasAction,
+  getCuentaBancariaByIdAction,
+  createCuentaBancariaAction,
+  updateCuentaBancariaAction,
+  deleteCuentaBancariaAction,
+} from './actions-cuentas-bancarias';
+
 // Server Actions — Reportes & Movimientos
 export { getMovimientosReportAction } from './actions';
 

@@ -6,9 +6,10 @@ import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { PageTransition, StaggerContainer, StaggerItem } from "@/components/ui/animations"
+import { getClientesAction } from "@/features/clientes"
+import { getCuentasBancariasAction } from "@/features/contabilidad/actions-cuentas-bancarias"
+import { getTiposPagoAction } from "@/features/contabilidad/actions-tipos-pago"
 import { getPrestamosCashAction } from "@/features/contabilidad/actions-prestamos-cash"
-import { useGetClientesQuery } from "@/features/clientes"
-import { useGetCuentasBancariasQuery, useGetTiposPagoQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { PrestamosCashTable } from "@/features/contabilidad/components/prestamos-cash/prestamos-cash-table"
 import { PrestamoCashForm } from "@/features/contabilidad/components/prestamos-cash/prestamo-cash-form"
 import { PagoPrestamoModal } from "@/features/contabilidad/components/prestamos-cash/pago-prestamo-modal"
@@ -39,14 +40,15 @@ function PrestamosCashContent() {
 
   useEffect(() => { loadPrestamos() }, [])
 
-  const { data: dataClientes } = useGetClientesQuery()
-  const { data: dataCuentas } = useGetCuentasBancariasQuery()
-  const { data: dataTiposPago } = useGetTiposPagoQuery({})
+  const [clientes, setClientes] = useState<any[]>([])
+  const [cuentasBancarias, setCuentasBancarias] = useState<any[]>([])
+  const [tiposPago, setTiposPago] = useState<any[]>([])
 
-  const clientes = dataClientes || []
-  const cuentasBancarias = dataCuentas?.cuentas || []
-  //console.log('cuentasBancarias:', dataCuentas);
-  const tiposPago = dataTiposPago?.data || []
+  useEffect(() => {
+    getClientesAction().then(r => { if (r.success) setClientes(r.data ?? []) })
+    getCuentasBancariasAction().then(r => { if (r.success) setCuentasBancarias(r.data?.cuentas ?? []) })
+    getTiposPagoAction().then(r => { if (r.success) setTiposPago(r.data?.data ?? []) })
+  }, [])
 
   const handlePagar = (prestamo: PrestamoCash) => {
     setPrestamoSeleccionado(prestamo)
