@@ -28,8 +28,8 @@ vi.mock('@/generated/prisma', () => {
     },
   };
 });
-vi.mock('@/lib/prisma', () => ({
-  prisma: {
+vi.mock('@/lib/prisma', () => {
+  const tx = {
     producto: {
       findMany: vi.fn(),
       findUnique: vi.fn(),
@@ -37,9 +37,25 @@ vi.mock('@/lib/prisma', () => ({
       update: vi.fn(),
       delete: vi.fn(),
     },
-    $transaction: vi.fn(),
-  },
-}));
+    precioProducto: {
+      upsert: vi.fn(),
+    },
+    gastoCompra: {
+      findMany: vi.fn(),
+      count: vi.fn(),
+    },
+  };
+  return {
+    prisma: {
+      producto: tx.producto,
+      precioProducto: tx.precioProducto,
+      gastoCompra: tx.gastoCompra,
+      $transaction: vi.fn().mockImplementation(
+        async (callback: (tx: typeof tx) => unknown) => callback(tx),
+      ),
+    },
+  };
+});
 vi.mock('@/lib/services/stock-ubicacion-service', () => ({
   upsertStockUbicacion: vi.fn(),
 }));

@@ -20,7 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { ProductPhotoUpload } from '@/features/productos/components/product-photo-upload'
 import type { Producto, Vendor } from '@/app/models/model'
 import { useGetVendorsQuery } from '@/features/vendors/api/vendorsApi'
-import { useGetProductosQuery } from '@/features/productos/api/productosApi'
+import { useProductos } from '@/features/productos/hooks/use-productos'
 import { useCreateCompraProductoMutation } from '@/features/compras-productos/api/comprasProductosApi'
 import { useGetAnticiposDisponiblesQuery } from '@/features/contabilidad/api/contabilidadApi'
 import { FORMA_PAGO_ANTICIPO_PAGO } from '@/lib/constants/anticipos'
@@ -82,7 +82,7 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const anticiposFeatureEnabled = process.env.NEXT_PUBLIC_ENABLE_ANTICIPOS !== 'false'
 
-  const { data: products, isLoading: isLoadingProducts } = useGetProductosQuery()
+  const { productos: products, isLoading: isLoadingProducts } = useProductos()
   const { data: vendors, isLoading: isLoadingVendors } = useGetVendorsQuery()
   const [createCompraProducto] = useCreateCompraProductoMutation()
 

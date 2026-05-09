@@ -39,7 +39,6 @@ export default function MermasPage() {
       setMermaToDelete(null)
     })
   }
-  }
 
   return (
     <SidebarProvider>

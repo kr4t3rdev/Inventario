@@ -11,11 +11,9 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { sileo } from '@/lib/sileo-shim'
-import { Skeleton } from "@/components/ui/skeleton"
-import { useAddUnidadMutation, useGetUnidadesQuery, useUpdateUnidadMutation } from "@/features/unidades/api/unidadesApi"
+import { createUnidadAction, updateUnidadAction } from "@/features/unidades/actions"
 import { motion } from "framer-motion"
 import { Scale, Sparkles, ArrowLeft, Loader2 } from "lucide-react"
-import Link from "next/link"
 
 const unidadSchema = z.object({
   nombre: z.string({
@@ -36,45 +34,17 @@ interface UnidadFormProps {
   }
 }
 
-// Loading spinner component
-function LoadingSpinner({ size = 24 }: { size?: number }) {
-  return (
-    <motion.div
-      className="border-2 border-primary border-t-transparent rounded-full"
-      style={{ width: size, height: size }}
-      animate={{ rotate: 360 }}
-      transition={{
-        duration: 1,
-        repeat: Infinity,
-        ease: "linear"
-      }}
-    />
-  )
-}
-
-// Pulse skeleton
-function PulseSkeleton({ className }: { className?: string }) {
-  return (
-    <motion.div
-      className={`bg-muted rounded ${className}`}
-      animate={{ opacity: [0.5, 0.8, 0.5] }}
-      transition={{
-        duration: 1.5,
-        repeat: Infinity,
-        ease: "easeInOut"
-      }}
-    />
-  )
-}
-
+/**
+ * @description Formulario para crear o editar una unidad de medida.
+ * Usa Server Actions (createUnidadAction / updateUnidadAction)
+ * en lugar de RTK Query.
+ *
+ * @param {UnidadFormProps} props - Datos iniciales de la unidad (opcional).
+ * @returns {JSX.Element} Formulario de unidad.
+ */
 export function UnidadForm({ initialData }: UnidadFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
-
-  const { data: unidad, isLoading: isLoadingUnidad } = useGetUnidadesQuery()
-  
-  const [ addUnidad ] = useAddUnidadMutation()
-  const [updateUnidad] = useUpdateUnidadMutation()
 
   const form = useForm<UnidadFormValues>({
     resolver: zodResolver(unidadSchema),
@@ -88,13 +58,23 @@ export function UnidadForm({ initialData }: UnidadFormProps) {
     setIsLoading(true)
     try {
       if (initialData) {
-        await updateUnidad({
-          unidadId: initialData.unidadId,            
-          ...data,
-        }).unwrap()
+        const result = await updateUnidadAction({
+          unidadId: initialData.unidadId,
+          nombre: data.nombre,
+          simbolo: data.simbolo,
+        })
+        if (!result.success) {
+          throw new Error(result.error?.message || 'Error al actualizar la unidad')
+        }
         sileo.success({ title: 'La unidad ha sido actualizada exitosamente.' })
       } else {
-        await addUnidad(data).unwrap()
+        const result = await createUnidadAction({
+          nombre: data.nombre,
+          simbolo: data.simbolo,
+        })
+        if (!result.success) {
+          throw new Error(result.error?.message || 'Error al crear la unidad')
+        }
         sileo.success({ title: 'La unidad ha sido registrada exitosamente.' })
       }
       router.push("/busy/unidad")
@@ -105,33 +85,6 @@ export function UnidadForm({ initialData }: UnidadFormProps) {
     } finally {
       setIsLoading(false)
     }
-  }
-
-  if (isLoadingUnidad) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <Card className="border-dashed">
-          <CardContent className="pt-6">
-            <div className="space-y-6">
-              <div className="flex items-center gap-2 mb-6">
-                <PulseSkeleton className="h-10 w-10 rounded-xl" />
-                <PulseSkeleton className="h-6 w-48" />
-              </div>
-              <PulseSkeleton className="h-10 w-full" />
-              <PulseSkeleton className="h-10 w-full" />
-              <div className="flex justify-end space-x-4">
-                <PulseSkeleton className="h-10 w-24" />
-                <PulseSkeleton className="h-10 w-32" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-    )
   }
 
   return (

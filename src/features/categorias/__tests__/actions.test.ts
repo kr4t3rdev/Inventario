@@ -20,6 +20,7 @@ vi.mock('@/lib/prisma', () => ({
     categoria: {
       findMany: vi.fn(),
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
@@ -48,6 +49,7 @@ import { CategoriaValidator } from '@/lib/categoria-validation';
 import { CategoriaDeletionValidator } from '@/lib/categoria-errors';
 import {
   getCategoriasAction,
+  getCategoriaByIdAction,
   getCategoriaHierarchyAction,
   createCategoriaAction,
   updateCategoriaAction,
@@ -114,6 +116,35 @@ describe('Categorias Server Actions', () => {
 
       expect(result.success).toBe(true);
       expect(result.data).toEqual([]);
+    });
+  });
+
+  // ─── getCategoriaByIdAction ─────────────────────────────
+
+  describe('getCategoriaByIdAction', () => {
+    it('retorna categoría por ID', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.categoria.findFirst).mockResolvedValue(mockCategoriaRow);
+
+      const result = await getCategoriaByIdAction('cat-1');
+
+      expect(result.success).toBe(true);
+      expect(result.data!.nombre).toBe('Electrónica');
+      expect(prisma.categoria.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { catId: 'cat-1', tenantId: 'tenant-test' },
+        })
+      );
+    });
+
+    it('retorna NOT_FOUND si la categoría no existe', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(mockUser);
+      vi.mocked(prisma.categoria.findFirst).mockResolvedValue(null);
+
+      const result = await getCategoriaByIdAction('cat-noexiste');
+
+      expect(result.success).toBe(false);
+      expect(result.error!.code).toBe('NOT_FOUND');
     });
   });
 

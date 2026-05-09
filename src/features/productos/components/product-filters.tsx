@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Filter, X, Tag, Tags, Sparkles } from 'lucide-react'
 
@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { useGetCategoriasQuery, useGetSubcategoriasQuery } from '@/features/categorias/api/categoriasApi'
+import { useCategorias } from '@/features/categorias/hooks/use-categorias'
 
 interface ProductFiltersProps {
   onCategoryFilter: (categoryId: string | null) => void
@@ -28,11 +28,12 @@ export function ProductFilters({
   selectedCategory,
   selectedSubcategory,
 }: ProductFiltersProps): React.JSX.Element {
-  const { data: categorias, isLoading: isLoadingCategorias } = useGetCategoriasQuery()
-  const { data: subcategorias, isLoading: isLoadingSubcategorias } = useGetSubcategoriasQuery(
-    selectedCategory || '',
-    { skip: !selectedCategory }
-  )
+  const { categorias, isLoading: isLoadingCategorias } = useCategorias()
+  const subcategorias = useMemo(() => {
+    if (!selectedCategory) return []
+    return categorias.filter((cat) => cat.parentId === selectedCategory)
+  }, [categorias, selectedCategory])
+  const isLoadingSubcategorias = false
 
   useEffect(() => {
     if (!selectedCategory || !selectedSubcategory) return

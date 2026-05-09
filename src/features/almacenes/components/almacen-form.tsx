@@ -11,11 +11,9 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { sileo } from '@/lib/sileo-shim'
-import { Skeleton } from "@/components/ui/skeleton"
-import { useAddAlmacenMutation, useGetAlmacenesQuery, useUpdateAlmacenMutation } from "@/features/almacenes/api/almacenesApi"
+import { createAlmacenAction, updateAlmacenAction } from "@/features/almacenes/actions"
 import { motion } from "framer-motion"
 import { Warehouse, Sparkles, ArrowLeft, Loader2 } from "lucide-react"
-import Link from "next/link"
 
 const almacenSchema = z.object({
   nombre: z.string({
@@ -48,29 +46,17 @@ function LoadingSpinner({ size = 24 }: { size?: number }) {
   )
 }
 
-// Pulse skeleton
-function PulseSkeleton({ className }: { className?: string }) {
-  return (
-    <motion.div
-      className={`bg-muted rounded ${className}`}
-      animate={{ opacity: [0.5, 0.8, 0.5] }}
-      transition={{
-        duration: 1.5,
-        repeat: Infinity,
-        ease: "easeInOut"
-      }}
-    />
-  )
-}
-
+/**
+ * @description Formulario para crear o editar un almacén.
+ * Usa Server Actions (createAlmacenAction / updateAlmacenAction)
+ * en lugar de RTK Query para las operaciones de datos.
+ *
+ * @param {AlmacenFormProps} props - Datos iniciales del almacén (opcional).
+ * @returns {JSX.Element} Formulario de almacén.
+ */
 export function AlmacenForm({ initialData }: AlmacenFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
-
-  const { data: almacen, isLoading: isLoadingAlmacenes } = useGetAlmacenesQuery()
-  
-  const [ addAlmacen ] = useAddAlmacenMutation()
-  const [updateAlmacen] = useUpdateAlmacenMutation()
 
   const form = useForm<AlmacenFormValues>({
     resolver: zodResolver(almacenSchema),
@@ -83,15 +69,21 @@ export function AlmacenForm({ initialData }: AlmacenFormProps) {
     setIsLoading(true)
     try {
       if (initialData) {
-        await updateAlmacen({
-          almacenId: initialData.almacenId,            
-          ...data,
-        }).unwrap()
+        const result = await updateAlmacenAction({
+          almacenId: initialData.almacenId,
+          nombre: data.nombre,
+        })
+        if (!result.success) {
+          throw new Error(result.error?.message || 'Error al actualizar el almacén')
+        }
         sileo.success({ title: 'El almacén ha sido actualizado exitosamente.' })
       } else {
-        await addAlmacen({
-          ...data,
-        }).unwrap()
+        const result = await createAlmacenAction({
+          nombre: data.nombre,
+        })
+        if (!result.success) {
+          throw new Error(result.error?.message || 'Error al crear el almacén')
+        }
         sileo.success({ title: 'El almacén ha sido registrado exitosamente.' })
       }
       router.push("/busy/almacen")
@@ -102,32 +94,6 @@ export function AlmacenForm({ initialData }: AlmacenFormProps) {
     } finally {
       setIsLoading(false)
     }
-  }
-
-  if (isLoadingAlmacenes) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <Card className="border-dashed">
-          <CardContent className="pt-6">
-            <div className="space-y-6">
-              <div className="flex items-center gap-2 mb-6">
-                <PulseSkeleton className="h-10 w-10 rounded-xl" />
-                <PulseSkeleton className="h-6 w-48" />
-              </div>
-              <PulseSkeleton className="h-10 w-full" />
-              <div className="flex justify-end space-x-4">
-                <PulseSkeleton className="h-10 w-24" />
-                <PulseSkeleton className="h-10 w-32" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-    )
   }
 
   return (

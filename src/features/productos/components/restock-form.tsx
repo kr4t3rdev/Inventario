@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/dialog"
 import { ProductPhotoUpload } from "./product-photo-upload"
 
-import { useRestockProductoMutation } from "@/features/productos/api/productosApi"
+import { restockProductoAction } from "@/features/productos/actions"
 import { useGetMonedasQuery, useGetCuentasBancariasQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { TasaCambioDialog } from "@/features/contabilidad/components/tasa-cambio-dialog"
 import { RestockRequest } from "@/app/models/model"
@@ -117,7 +117,6 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
   const [showTipoRestockDialog, setShowTipoRestockDialog] = useState(false)
   const [preciosCambiados, setPreciosCambiados] = useState(false)
 
-  const [restockProducto] = useRestockProductoMutation()
   const { data: monedasData } = useGetMonedasQuery()
   const { data: cuentasData } = useGetCuentasBancariasQuery()
   const monedas = ((monedasData as any)?.data as any[]) || []
@@ -251,7 +250,10 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
         }),
       }
 
-      await restockProducto(restockRequest).unwrap()
+      const result = await restockProductoAction(restockRequest)
+      if (!result.success) {
+        throw new Error(result.error?.message || 'Error al realizar el restock del producto.')
+      }
 
       sileo.success({ title: `Restock exitoso: ${data.cantidad} ${producto.unidad?.simbolo || "unidades"} agregadas a ${producto.nombre}` })
 
@@ -261,15 +263,8 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
     } catch (error: unknown) {
       console.error("Error al realizar restock:", error)
 
-      // Handle different types of errors
-      const errorObj = error as { data?: { error?: { message?: string }; message?: string } }
-      if (errorObj?.data?.error?.message) {
-        sileo.error({ title: `Error: ${errorObj.data.error.message}` })
-      } else if (errorObj?.data?.message) {
-        sileo.error({ title: `Error: ${errorObj.data.message}` })
-      } else {
-        sileo.error({ title: 'Hubo un error al realizar el restock del producto.' })
-      }
+      const errorObj = error as { message?: string }
+      sileo.error({ title: `Error: ${errorObj?.message || 'Hubo un error al realizar el restock del producto.'}` })
     } finally {
       setIsLoading(false)
       setPendingSubmission(null)

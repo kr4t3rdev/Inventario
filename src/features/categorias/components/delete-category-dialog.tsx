@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { useDeleteCategoriaMutation } from "@/features/categorias/api/categoriasApi"
+import { deleteCategoriaAction } from "@/features/categorias/actions"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import {
@@ -16,8 +16,7 @@ import {
 } from "@/components/ui/dialog"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle, Loader2, AlertTriangle, Trash2 } from "lucide-react"
-import { useCategoryValidation } from "@/features/categorias/hooks/use-category-validation"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 
 interface DeleteCategoryDialogProps {
   category: {
@@ -31,6 +30,13 @@ interface DeleteCategoryDialogProps {
   onSuccess?: () => void
 }
 
+/**
+ * @description Diálogo de confirmación para eliminar una categoría.
+ * Usa deleteCategoriaAction (Server Action) en lugar de RTK Query.
+ *
+ * @param {DeleteCategoryDialogProps} props - Props del diálogo.
+ * @returns {JSX.Element} Diálogo de confirmación.
+ */
 export function DeleteCategoryDialog({
   category,
   open,
@@ -40,85 +46,30 @@ export function DeleteCategoryDialog({
   const router = useRouter()
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
-  const [deleteCategory] = useDeleteCategoriaMutation()
-  const { validateCategoryDeletion, isValidating } = useCategoryValidation()
-  const [deletionCheck, setDeletionCheck] = useState<{
-    canDelete: boolean
-    reason?: string
-    hasProducts?: boolean
-    hasSubcategories?: boolean
-    productCount?: number
-    subcategoryCount?: number
-  } | null>(null)
-
-  // Check if category can be deleted when dialog opens
-  useEffect(() => {
-    const checkDeletion = async () => {
-      if (!open) return
-      
-      try {
-        const result = await validateCategoryDeletion(category.catId)
-        setDeletionCheck({
-          canDelete: result.canDelete,
-          reason: result.canDelete ? undefined : result.error,
-          hasProducts: false,
-          hasSubcategories: false,
-          productCount: 0,
-          subcategoryCount: 0
-        })
-        setDeleteError(result.canDelete ? null : result.error || null)
-      } catch (error) {
-        console.error('Error checking category deletion:', error)
-        setDeleteError('Error al verificar si la categoría puede ser eliminada')
-      }
-    }
-    
-    checkDeletion()
-  }, [open, category.catId, validateCategoryDeletion])
 
   const handleDelete = async () => {
-    if (!deletionCheck?.canDelete) return
-    
     setIsDeleting(true)
     setDeleteError(null)
-    
+
     try {
-      await deleteCategory(category.catId).unwrap()
-      
-      toast.success(`La categoría "${category.nombre}" ha sido eliminada correctamente.`)
-      
-      // Close dialog, refresh the page, and call success callback
-      onOpenChange(false)
-      router.refresh()
-      onSuccess?.()
-      
+      const result = await deleteCategoriaAction(category.catId)
+
+      if (result.success) {
+        toast.success(`La categoría "${category.nombre}" ha sido eliminada correctamente.`)
+        onOpenChange(false)
+        router.refresh()
+        onSuccess?.()
+      } else {
+        const errorMessage = result.error?.message || "Ocurrió un error al eliminar la categoría."
+        setDeleteError(errorMessage)
+      }
     } catch (error: any) {
       console.error("Error al eliminar la categoría:", error)
-      
-      let errorMessage = "Ocurrió un error al eliminar la categoría. Por favor, intente nuevamente."
-      
-      if (error?.data?.message) {
-        errorMessage = error.data.message
-      } else if (error?.status === 400) {
-        if (error.data?.includes("subcategorías")) {
-          errorMessage = "No se puede eliminar una categoría que tiene subcategorías. Elimine primero las subcategorías."
-        } else if (error.data?.includes("productos")) {
-          errorMessage = "No se puede eliminar una categoría que contiene productos. Mueva o elimine los productos primero."
-        }
-      }
-      
-      setDeleteError(errorMessage)
+      setDeleteError("Ocurrió un error al eliminar la categoría. Por favor, intente nuevamente.")
     } finally {
       setIsDeleting(false)
     }
   }
-
-  const isLoading = isDeleting || isValidating
-  const canDelete = deletionCheck?.canDelete === true
-  const hasProducts = deletionCheck?.hasProducts || false
-  const hasSubcategories = deletionCheck?.hasSubcategories || false
-  const productCount = deletionCheck?.productCount || 0
-  const subcategoryCount = deletionCheck?.subcategoryCount || 0
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -150,90 +101,28 @@ export function DeleteCategoryDialog({
           </DialogHeader>
           
           <div className="p-6 space-y-4">
-            <AnimatePresence mode="wait">
-              {isLoading && !deleteError && (
-                <motion.div 
-                  className="flex items-center justify-center py-4"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                >
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  >
-                    <Loader2 className="h-6 w-6 text-muted-foreground" />
-                  </motion.div>
-                  <span className="ml-2 text-sm text-muted-foreground">
-                    Verificando categoría...
-                  </span>
-                </motion.div>
-              )}
+            <Alert variant="destructive" className="text-left">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>¡Atención!</AlertTitle>
+              <AlertDescription className="mt-1">
+                Esta acción no se puede deshacer. La categoría será eliminada permanentemente.
+              </AlertDescription>
+            </Alert>
 
-              {deleteError && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.95 }}
-                >
-                  <Alert variant="destructive" className="text-left">
-                    <AlertCircle className="h-4 w-4" />
-                    <AlertTitle>No se puede eliminar</AlertTitle>
-                    <AlertDescription className="mt-1">
-                      {deleteError}
-                    </AlertDescription>
-                  </Alert>
-                </motion.div>
-              )}
-
-              {!isLoading && canDelete && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
-                >
-                  <Alert variant="destructive" className="text-left">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>¡Atención!</AlertTitle>
-                    <AlertDescription className="mt-1">
-                      Esta acción no se puede deshacer. La categoría será eliminada permanentemente.
-                    </AlertDescription>
-                  </Alert>
-                </motion.div>
-              )}
-
-              {!isLoading && hasProducts && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                >
-                  <Alert variant="destructive" className="text-left">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>Productos encontrados</AlertTitle>
-                    <AlertDescription className="mt-1">
-                      Esta categoría contiene {productCount} producto(s). Al eliminarla, estos productos quedarán sin categoría.
-                    </AlertDescription>
-                  </Alert>
-                </motion.div>
-              )}
-
-              {!isLoading && hasSubcategories && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  <Alert variant="destructive" className="text-left">
-                    <AlertTriangle className="h-4 w-4" />
-                    <AlertTitle>Subcategorías encontradas</AlertTitle>
-                    <AlertDescription className="mt-1">
-                      Esta categoría tiene {subcategoryCount} subcategoría(s). Al eliminarla, todas las subcategorías también serán eliminadas.
-                    </AlertDescription>
-                  </Alert>
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {deleteError && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+              >
+                <Alert variant="destructive" className="text-left">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>No se puede eliminar</AlertTitle>
+                  <AlertDescription className="mt-1">
+                    {deleteError}
+                  </AlertDescription>
+                </Alert>
+              </motion.div>
+            )}
           </div>
           
           <DialogFooter className="p-6 pt-2">
@@ -241,7 +130,7 @@ export function DeleteCategoryDialog({
               <Button 
                 type="button"
                 variant="outline"
-                disabled={isLoading}
+                disabled={isDeleting}
               >
                 Cancelar
               </Button>
@@ -251,9 +140,9 @@ export function DeleteCategoryDialog({
               type="button"
               variant="destructive" 
               onClick={handleDelete}
-              disabled={isLoading || !canDelete}
+              disabled={isDeleting}
             >
-              {isLoading ? (
+              {isDeleting ? (
                 <>
                   <motion.div
                     animate={{ rotate: 360 }}
@@ -262,7 +151,7 @@ export function DeleteCategoryDialog({
                   >
                     <Loader2 className="h-4 w-4" />
                   </motion.div>
-                  {isDeleting ? 'Eliminando...' : 'Verificando...'}
+                  Eliminando...
                 </>
               ) : (
                 'Eliminar permanentemente'

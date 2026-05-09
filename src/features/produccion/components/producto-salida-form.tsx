@@ -14,11 +14,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useGetCategoriasQuery, useGetSubcategoriasQuery } from '@/features/categorias/api/categoriasApi';
+import { useCategorias } from '@/features/categorias/hooks/use-categorias';
 import { useGetUnidadesQuery } from '@/features/unidades/api/unidadesApi';
 import { useGetAlmacenesQuery } from '@/features/almacenes/api/almacenesApi';
 import { useGetVendorsQuery } from '@/features/vendors/api/vendorsApi';
-import { useAddProductoMutation } from '@/features/productos/api/productosApi';
 import { getAuthToken } from '@/lib/token';
 
 interface ProductoSalidaFormValues {
@@ -92,10 +91,11 @@ export function ProductoSalidaForm({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [usaEan13, setUsaEan13] = useState(false);
 
-  const { data: categorias = [] } = useGetCategoriasQuery();
-  const { data: subcategorias = [] } = useGetSubcategoriasQuery(values.categoriaId, {
-    skip: !values.categoriaId,
-  });
+  const { categorias: allCategorias } = useCategorias();
+  const categorias = allCategorias;
+  const subcategorias = React.useMemo(() => {
+    return allCategorias.filter((cat) => cat.parentId === values.categoriaId);
+  }, [allCategorias, values.categoriaId]);
   const { data: unidades = [] } = useGetUnidadesQuery();
   const { data: almacenes = [] } = useGetAlmacenesQuery();
   const { data: vendors = [] } = useGetVendorsQuery();

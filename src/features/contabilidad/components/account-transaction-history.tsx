@@ -470,7 +470,7 @@ export function AccountTransactionHistory({
                   tipoReporte="movimientos"
                   cuentaId={cuentaId}
                   onExport={handleExport}
-                />
+                /> */}
               </div>
             </CardHeader>
             <CardContent className="space-y-4">

@@ -53,7 +53,7 @@ import {
   useDeleteRecetaProduccionMutation,
   useUpdateRecetaProduccionMutation
 } from '@/lib/redux/services/produccionApi'
-import { useGetProductosQuery } from '@/features/productos/api/productosApi'
+import { useProductos } from '@/features/productos/hooks/use-productos'
 
 import { RecipeOutputSelector, type RecipeOutputMode } from '@/features/produccion/components/recipe-output-selector'
 import { ProductionDialogs } from '@/features/produccion/components/production-dialogs'
@@ -200,7 +200,7 @@ export default function ProduccionPage() {
   // Data
   const { data: recetasTyped, isLoading: loadingRecetas } = useGetRecetasProduccionQuery(searchRecetas ? { search: searchRecetas } : undefined)
   const { data: ordenesTyped, isLoading: loadingOrdenes } = useGetOrdenesProduccionQuery(filtroEstadoOrden !== 'all' ? { estado: filtroEstadoOrden } : undefined)
-  const { data: productosTyped } = useGetProductosQuery()
+  const { productos: productosTyped } = useProductos()
 
 
   // Mutations

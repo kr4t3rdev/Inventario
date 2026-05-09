@@ -1,12 +1,11 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { ChevronRight, ChevronDown, Folder, FolderOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
-import { useGetCategoriaHierarchyQuery } from "@/features/categorias/api/categoriasApi"
+import { getCategoriaHierarchyAction } from "@/features/categorias/actions"
 import type { CategoriaHierarchy } from "@/app/models/model"
 import { cn } from "@/lib/utils"
 import { motion, AnimatePresence } from "framer-motion"
@@ -223,17 +222,33 @@ function PulseSkeleton({ className }: { className?: string }) {
   )
 }
 
+/**
+ * @description Árbol jerárquico de categorías con expandir/colapsar.
+ * Usa getCategoriaHierarchyAction (Server Action) en lugar de RTK Query.
+ *
+ * @param {CategoryHierarchyTreeProps} props - Props del árbol.
+ * @returns {JSX.Element} Árbol de categorías.
+ */
 export function CategoryHierarchyTree({
   onCategorySelect,
   selectedCategoryId,
   showProductCount = true,
   className
 }: CategoryHierarchyTreeProps) {
-  const { 
-    data: hierarchy = [], 
-    isLoading, 
-    error 
-  } = useGetCategoriaHierarchyQuery()
+  const [hierarchy, setHierarchy] = useState<CategoriaHierarchy[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(false)
+
+  useEffect(() => {
+    getCategoriaHierarchyAction().then(result => {
+      if (result.success) {
+        setHierarchy(result.data ?? [])
+      } else {
+        setError(true)
+      }
+      setIsLoading(false)
+    })
+  }, [])
 
   if (isLoading) {
     return (
@@ -318,7 +333,6 @@ export function CategoryHierarchyTree({
             >
               <Folder className="h-12 w-12 mx-auto mb-3 text-muted-foreground/50" />
               <p>No hay categorías disponibles</p>
-              <p className="text-xs mt-1">Crea tu primera categoría para comenzar</p>
             </motion.div>
           </CardContent>
         </Card>
@@ -327,50 +341,36 @@ export function CategoryHierarchyTree({
   }
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-      <Card className={className}>
-        <CardHeader>
+    <Card className={className}>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.1 }}
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
           >
-            <CardTitle className="flex items-center gap-2">
-              <motion.div
-                whileHover={{ rotate: 15 }}
-                transition={{ duration: 0.2 }}
-              >
-                <Folder className="h-5 w-5 text-primary" />
-              </motion.div>
-              Jerarquía de Categorías
-            </CardTitle>
+            <Folder className="h-5 w-5 text-muted-foreground" />
           </motion.div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-1">
-            {hierarchy.map((category, index) => (
-              <motion.div
-                key={category.catId}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1, duration: 0.3 }}
-              >
-                <TreeNode
-                  category={category}
-                  level={0}
-                  onSelect={onCategorySelect}
-                  selectedId={selectedCategoryId}
-                  showProductCount={showProductCount}
-                />
-              </motion.div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
+          Jerarquía de Categorías
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        {hierarchy.map((category, index) => (
+          <motion.div
+            key={category.catId}
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.1 }}
+          >
+            <TreeNode
+              category={category}
+              level={0}
+              onSelect={onCategorySelect}
+              selectedId={selectedCategoryId}
+              showProductCount={showProductCount}
+            />
+          </motion.div>
+        ))}
+      </CardContent>
+    </Card>
   )
 }

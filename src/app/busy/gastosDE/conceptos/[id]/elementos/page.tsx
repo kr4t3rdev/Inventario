@@ -35,7 +35,6 @@ const GastoElementos = () => {
         setElementoToDelete(null)
       })
     }
-    }
 
     const columns: ColumnDef<unknown>[] = [
         {

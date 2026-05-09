@@ -20,7 +20,6 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ArrowUpDown, Pencil, Trash2Icon, Loader2 } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useGetProductosQuery } from "@/features/productos/api/productosApi"
 import { Merma } from "@/app/models/model"
 
 interface MermasTableProps {
@@ -35,8 +34,6 @@ export function MermasTable({ mermas, isLoading, error, onDelete }: MermasTableP
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
-  const {data: productos} = useGetProductosQuery()
-
   const columns: ColumnDef<Merma>[] = [
     {
       accessorKey: "mermaId",

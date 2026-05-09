@@ -1,6 +1,6 @@
 "use client"
-import { useGetProductosQuery } from "@/features/productos/api/productosApi"
-import { useGetCategoriasQuery } from "@/features/categorias/api/categoriasApi"
+import { useProductos } from '@/features/productos/hooks/use-productos'
+import { useCategorias } from "@/features/categorias/hooks/use-categorias"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -17,16 +17,8 @@ const surfaceCardClass = cn(
 )
 
 export function ReportePorCategoria() {
-  const [productos, setProductos] = useState<any[]>([])
-  const [isLoadingProductos, setIsLoadingProductos] = useState(true)
-  const { data: categorias } = useGetCategoriasQuery()
-
-  useEffect(() => {
-    getProductosAction().then(r => {
-      if (r.success) setProductos(r.data ?? [])
-      setIsLoadingProductos(false)
-    })
-  }, [])
+  const { productos, isLoading: isLoadingProductos } = useProductos()
+  const { categorias } = useCategorias()
 
   // Agrupar productos por categoría
   const productosPorCategoria = categorias?.map((categoria) => {

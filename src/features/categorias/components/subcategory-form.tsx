@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import type { ReactElement } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useDispatch } from "react-redux";
 import { motion } from "framer-motion";
 import { AlertCircle, ArrowLeft, ChevronDown, Folder, Layers, Loader2, Search, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,8 +14,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { apiSlice } from "@/lib/redux/services/apiSlice";
-import { useGetCategoriasQuery } from "@/features/categorias";
+import { getCategoriasAction } from "@/features/categorias/actions";
 import { useCategoryForm } from "@/features/categorias/hooks/use-category-form";
 import { ClasificadorInfoNote } from "@/features/productos/components/clasificador-info-note";
 import { getAuthToken } from "@/lib/token";
@@ -132,12 +130,14 @@ export function filterSpecifics(
 
 /**
  * @description Formulario dedicado para crear o editar subcategorías/específicos CLAS.
+ * Usa Server Actions (getCategoriasAction / createCategoriaAction / updateCategoriaAction)
+ * en lugar de RTK Query.
+ *
  * @param {SubcategoryFormProps} props - Props del formulario.
  * @returns {ReactElement} Formulario de subcategorías/específicos CLAS.
  */
 export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps): ReactElement {
   const router = useRouter();
-  const dispatch = useDispatch();
   const [usaEan13, setUsaEan13] = useState<boolean | null>(null);
   const [clasClassifierData, setClasClassifierData] = useState<CLASClassifierData | null>(null);
   const [isClassifierLoading, setIsClassifierLoading] = useState(false);
@@ -145,11 +145,21 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
   const [specificSearch, setSpecificSearch] = useState('');
   const [specificOpen, setSpecificOpen] = useState(false);
 
-  const {
-    data: categories = [],
-    isLoading: isLoadingCategories,
-    error: categoriesError,
-  } = useGetCategoriasQuery();
+  // Fetch categories via Server Action instead of RTK Query
+  const [categories, setCategories] = useState<Categoria[]>([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true);
+  const [categoriesError, setCategoriesError] = useState(false);
+
+  useEffect(() => {
+    getCategoriasAction().then(result => {
+      if (result.success) {
+        setCategories(result.data ?? []);
+      } else {
+        setCategoriesError(true);
+      }
+      setIsLoadingCategories(false);
+    });
+  }, []);
 
   const availableSections = useMemo(() => {
     return buildAvailableClasSections(categories, clasClassifierData);
@@ -171,7 +181,6 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
     onSuccess: onSuccess || (() => {
       router.push('/busy/categoria');
       router.refresh();
-      dispatch(apiSlice.util.invalidateTags(['Categorias']));
     }),
   });
 

@@ -1,11 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
-import { categoriasApi } from '@/features/categorias';
-import { useAppDispatch } from '@/lib/redux/hooks';
+import { createCategoriaAction, updateCategoriaAction } from '@/features/categorias/actions';
 import { validateCLASSection, validateCLASSpecific, CLASClassifierData } from '@/lib/clas-classifier';
 
 // Define the form schema using Zod
@@ -70,10 +69,7 @@ export function useCategoryForm({
   requireSpecificSelection = false,
 }: UseCategoryFormProps) {
   const router = useRouter();
-  const dispatch = useAppDispatch();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isValidating, setIsValidating] = useState(false);
-  const [serverErrors, setServerErrors] = useState<Record<string, string[]>>({});
 
   // Initialize the form
   const form = useForm<CategoryFormValues>({
@@ -88,65 +84,6 @@ export function useCategoryForm({
     mode: 'onBlur',
     reValidateMode: 'onChange',
   });
-
-  // Reset form when initialData changes
-  useEffect(() => {
-    if (initialData) {
-      form.reset({
-        nombre: initialData.nombre,
-        descripcion: initialData.descripcion || '',
-        parentId: initialData.parentId || 'none',
-        clasSectionId: initialData.clasSectionId || undefined,
-        clasSpecificId: initialData.clasSpecificId || undefined,
-      })
-    }
-  }, [initialData, form]);
-
-  // Validate category data on the server
-  const validateCategory = async (data: CategoryFormValues) => {
-    setIsValidating(true);
-    try {
-      const token = sessionStorage.getItem('token');
-      const response = await fetch('/api/categorias/validate', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-        body: JSON.stringify({
-          categoryId: initialData?.catId,
-          name: data.nombre,
-          parentId: normalizeParentId(data.parentId),
-          clasSectionId: normalizeSectionId(data.clasSectionId),
-          clasSpecificId: normalizeSpecificId(data.clasSpecificId),
-          descripcion: data.descripcion,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Error de validación');
-      }
-
-      if (!result.isValid) {
-        const message = result.error || 'Error de validación';
-        if (result.field === 'name') {
-          form.setError('nombre', { type: 'server', message });
-        }
-        toast.error(message);
-        return false;
-      }
-
-      return result.isValid;
-    } catch (error) {
-      console.error('Error validating category:', error);
-      toast.error('Error al validar la categoría. Por favor, intente nuevamente.');
-      return false;
-    } finally {
-      setIsValidating(false);
-    }
-  };
 
   // Validate category against CLAS mapping in EAN-13 mode
   const validateCLASMapping = (data: CategoryFormValues): { valid: boolean; error?: string } => {
@@ -203,8 +140,6 @@ export function useCategoryForm({
 
   // Handle form submission
   const onSubmit = async (data: CategoryFormValues) => {
-    // Clear previous errors
-    setServerErrors({})
     const parentId = normalizeParentId(data.parentId)
 
     // Validate CLAS mapping if EAN-13 is enabled
@@ -216,46 +151,33 @@ export function useCategoryForm({
         return
       }
     }
-    
-    // Validate on the server
-    const isValid = await validateCategory(data);
-    if (!isValid) {
-      return;
-    }
 
     setIsSubmitting(true);
 
     try {
-      const token = sessionStorage.getItem('token');
-      const url = initialData
-        ? `/api/categorias/${initialData.catId}`
-        : '/api/categorias';
-      const method = initialData ? 'PATCH' : 'POST';
+      let result;
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-        body: JSON.stringify({
+      if (initialData) {
+        result = await updateCategoriaAction({
+          catId: initialData.catId,
           nombre: data.nombre.trim(),
           descripcion: data.descripcion?.trim() || null,
           parentId,
           clasSectionId: normalizeSectionId(data.clasSectionId),
           clasSpecificId: normalizeSpecificId(data.clasSpecificId),
-        }),
-      });
+        });
+      } else {
+        result = await createCategoriaAction({
+          nombre: data.nombre.trim(),
+          descripcion: data.descripcion?.trim() || null,
+          parentId,
+          clasSectionId: normalizeSectionId(data.clasSectionId),
+          clasSpecificId: normalizeSpecificId(data.clasSpecificId),
+        });
+      }
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        if (response.status === 400 && result.errors) {
-          // Handle validation errors from the server
-          setServerErrors(result.errors);
-          return;
-        }
-        throw new Error(result.message || 'Error al guardar la categoría');
+      if (!result.success) {
+        throw new Error(result.error?.message || 'Error al guardar la categoría');
       }
 
       // Show success message
@@ -264,21 +186,6 @@ export function useCategoryForm({
           ? 'Categoría actualizada correctamente'
           : 'Categoría creada correctamente'
       );
-
-      await Promise.allSettled([
-        dispatch(
-          categoriasApi.endpoints.getCategorias.initiate(undefined, {
-            forceRefetch: true,
-            subscribe: false,
-          })
-        ),
-        dispatch(
-          categoriasApi.endpoints.getCategoriaHierarchy.initiate(undefined, {
-            forceRefetch: true,
-            subscribe: false,
-          })
-        ),
-      ]);
 
       // Call the success callback if provided
       if (onSuccess) {
@@ -306,19 +213,14 @@ export function useCategoryForm({
     if (error) {
       return error.message as string;
     }
-    
-    const serverError = serverErrors[fieldName];
-    if (serverError && serverError.length > 0) {
-      return serverError[0];
-    }
-    
+
     return undefined;
   };
 
   return {
     form,
     isSubmitting,
-    isValidating,
+    isValidating: false,
     onSubmit: form.handleSubmit(onSubmit),
     getFieldError,
     isDirty: form.formState.isDirty,

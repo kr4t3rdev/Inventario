@@ -25,7 +25,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 
-import { useGetProductosQuery } from "@/features/productos/api/productosApi"
 import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta/api/puntosDeVentaApi"
 import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta"
 import { useGetAlmacenesQuery } from "@/features/almacenes/api/almacenesApi"

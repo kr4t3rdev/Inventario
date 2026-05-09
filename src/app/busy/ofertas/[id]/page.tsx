@@ -161,49 +161,6 @@ export default function OfertaDetailPage() {
     })
   }
 
-    try {
-      let fechaVencimientoISO = null;
-      if (tipoVencimiento === 'fecha' && fechaVencimiento) {
-        fechaVencimientoISO = new Date(fechaVencimiento).toISOString();
-      } else if (tipoVencimiento === 'plazo') {
-        const fecha = new Date();
-        fecha.setDate(fecha.getDate() + 30);
-        fechaVencimientoISO = fecha.toISOString();
-      }
-
-      const respuesta = await facturarOferta({ 
-        id, 
-        puntoDeVentaId: selectedPuntoVenta,
-        observaciones: `Facturación automática de Oferta ${oferta?.numeroOferta}`,
-        cargoTransporte: Number(cargoTransporte),
-        serieId: selectedSerieId,
-        fechaVencimiento: fechaVencimientoISO,
-        tipoVencimiento,
-        formaPagoAnticipo: selectedAnticipoCobroId ? 'ANTICIPO_COBRO' : undefined,
-        anticipoCobroId: selectedAnticipoCobroId || undefined,
-        idempotencyKey: selectedAnticipoCobroId
-          ? (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
-              ? crypto.randomUUID()
-              : `${Date.now()}-${Math.random()}`)
-          : undefined
-      }).unwrap()
-      
-      toast.success("Oferta facturada exitosamente")
-      setIsFacturarDialogOpen(false)
-      
-      const ventaId = respuesta?.venta?.ventaId
-      if (ventaId) {
-        router.push(`/busy/invoice/print?id=${ventaId}`)
-      } else {
-        router.push("/busy/invoice/print")
-      }
-
-    } catch (error: any) {
-        console.error(error)
-      toast.error(error?.data?.error || "Error al facturar la oferta")
-    }
-  }
-
   const generatePDF = async () => {
     if (!oferta) return
     

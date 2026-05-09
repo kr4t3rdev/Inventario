@@ -86,7 +86,6 @@ const Vendor = () => {
       setVendorToDelete(null)
     })
   }
-  }
 
   const columns: ColumnDef<unknown>[] = [
     {

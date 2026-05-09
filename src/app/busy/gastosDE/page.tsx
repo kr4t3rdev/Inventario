@@ -59,30 +59,6 @@ const GastosDE = () => {
         setGastosDEToBulkDelete(null); setRowSelection({})
       })
     }
-    }
-
-    const handleBulkDelete = async () => {
-      if (!gastosDEToBulkDelete || gastosDEToBulkDelete.length === 0) return
-      let successCount = 0
-      let errorCount = 0
-      for (const id of gastosDEToBulkDelete) {
-        try {
-          await deleteGastosDE(id).unwrap()
-          successCount++
-        } catch (error: any) {
-          console.error("Error al eliminar gasto:", error)
-          errorCount++
-        }
-      }
-      if (successCount > 0) {
-        toast.success(`${successCount} gasto(s) eliminado(s) exitosamente.`)
-      }
-      if (errorCount > 0) {
-        toast.error(`${errorCount} gasto(s) no pudieron ser eliminados (pueden tener reconciliaciones).`)
-      }
-      setGastosDEToBulkDelete(null)
-      setRowSelection({})
-    }
 
     const handleExportCSV = () => {
       const dataToExport = filteredGastosDE.length === 0 ? [] : filteredGastosDE

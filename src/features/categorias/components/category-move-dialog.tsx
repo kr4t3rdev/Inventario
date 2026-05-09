@@ -16,11 +16,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { AlertTriangle, Move, Folder, ArrowRight, Loader2 } from "lucide-react"
-import { 
-  useGetCategoriasQuery, 
-  useMoveCategoriaMutation,
-  useGetCategoriaQuery 
-} from "@/features/categorias/api/categoriasApi"
+import { getCategoriasAction, updateCategoriaAction } from "@/features/categorias/actions"
 import type { Categoria } from "@/app/models/model"
 import { toast } from "sonner"
 import { motion, AnimatePresence } from "framer-motion"
@@ -47,26 +43,41 @@ function LoadingSpinner({ size = 24 }: { size?: number }) {
   )
 }
 
+/**
+ * @description Diálogo para mover una categoría a otro padre.
+ * Usa Server Actions (getCategoriasAction / updateCategoriaAction)
+ * en lugar de RTK Query.
+ *
+ * @param {CategoryMoveDialogProps} props - Props del diálogo.
+ * @returns {JSX.Element} Diálogo de mover categoría.
+ */
 export function CategoryMoveDialog({ open, onClose, categoryId }: CategoryMoveDialogProps) {
   const [selectedParentId, setSelectedParentId] = useState<string>("none")
   const [loading, setLoading] = useState(false)
 
-  // Fetch all categories
-  const { data: categories = [], isLoading: isLoadingCategories } = useGetCategoriasQuery()
-  
-  // Fetch the category being moved
-  const { data: categoryToMove, isLoading: isLoadingCategory } = useGetCategoriaQuery(categoryId || "", {
-    skip: !categoryId
-  })
+  // Fetch all categories via Server Action
+  const [categories, setCategories] = useState<Categoria[]>([])
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true)
 
-  // Move category mutation
-  const [moveCategoria] = useMoveCategoriaMutation()
+  useEffect(() => {
+    if (!open) return
+
+    getCategoriasAction().then(result => {
+      if (result.success) {
+        setCategories(result.data ?? [])
+      }
+      setIsLoadingCategories(false)
+    })
+  }, [open])
+
+  // Find the category being moved from the list
+  const categoryToMove = categories.find((cat: Categoria) => cat.catId === categoryId)
 
   // Reset form when dialog opens/closes
   useEffect(() => {
-    if (open) {
-      setSelectedParentId(categoryToMove?.parentId || "none")
-    } else {
+    if (open && categoryToMove) {
+      setSelectedParentId(categoryToMove.parentId || "none")
+    } else if (!open) {
       setSelectedParentId("none")
     }
   }, [open, categoryToMove])
@@ -83,20 +94,14 @@ export function CategoryMoveDialog({ open, onClose, categoryId }: CategoryMoveDi
       if (cat.parentId === categoryToMove.catId) return false
       
       // Only show parent categories (categories without parentId) for simplicity
-      // This prevents creating deep hierarchies
       return !cat.parentId
     })
   }
 
-  // Check if the move would affect products
-  const getProductImpact = (): { hasProducts: boolean; productCount: number } => {
-    // This would need to be implemented based on your product data structure
-    // For now, we'll simulate it
-    return { hasProducts: false, productCount: 0 }
-  }
+  const availableParents = getAvailableParents()
 
-  // Validate the move
-  const validateMove = (): { isValid: boolean; errors: string[] } => {
+  // Validate the move client-side
+  const validation = (() => {
     const errors: string[] = []
 
     if (!categoryToMove) {
@@ -104,19 +109,17 @@ export function CategoryMoveDialog({ open, onClose, categoryId }: CategoryMoveDi
       return { isValid: false, errors }
     }
 
-     // Check if trying to move to the same parent
     const currentParentId = categoryToMove.parentId || "none"
     if (selectedParentId === currentParentId) {
       errors.push("La categoría ya está en la ubicación seleccionada")
     }
 
-    // Check for circular reference (additional validation)
     if (selectedParentId === categoryToMove.catId) {
       errors.push("Una categoría no puede ser padre de sí misma")
     }
 
     return { isValid: errors.length === 0, errors }
-  }
+  })()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -126,7 +129,6 @@ export function CategoryMoveDialog({ open, onClose, categoryId }: CategoryMoveDi
       return
     }
 
-    const validation = validateMove()
     if (!validation.isValid) {
       validation.errors.forEach(error => toast.error(error))
       return
@@ -135,12 +137,16 @@ export function CategoryMoveDialog({ open, onClose, categoryId }: CategoryMoveDi
     setLoading(true)
 
     try {
-      await moveCategoria({
+      const result = await updateCategoriaAction({
         catId: categoryId,
-         newParentId: selectedParentId === "none" ? undefined : selectedParentId
-      }).unwrap()
+        parentId: selectedParentId === "none" ? null : selectedParentId,
+      })
 
-       const parentName = selectedParentId && selectedParentId !== "none"
+      if (!result.success) {
+        throw new Error(result.error?.message || "Error al mover la categoría")
+      }
+
+      const parentName = selectedParentId && selectedParentId !== "none"
         ? categories.find(c => c.catId === selectedParentId)?.nombre 
         : "categoría principal"
 
@@ -153,10 +159,6 @@ export function CategoryMoveDialog({ open, onClose, categoryId }: CategoryMoveDi
       setLoading(false)
     }
   }
-
-  const availableParents = getAvailableParents()
-  const productImpact = getProductImpact()
-  const validation = validateMove()
 
   if (!open) return null
 
@@ -190,7 +192,7 @@ export function CategoryMoveDialog({ open, onClose, categoryId }: CategoryMoveDi
           </DialogHeader>
 
           <AnimatePresence mode="wait">
-            {isLoadingCategory || isLoadingCategories ? (
+            {isLoadingCategories ? (
               <motion.div 
                 className="py-8 text-center"
                 initial={{ opacity: 0 }}
@@ -310,25 +312,6 @@ export function CategoryMoveDialog({ open, onClose, categoryId }: CategoryMoveDi
                       </SelectContent>
                     </Select>
                   </motion.div>
-
-                  {/* Product Impact Warning */}
-                  <AnimatePresence>
-                    {productImpact.hasProducts && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10, height: 0 }}
-                        animate={{ opacity: 1, y: 0, height: "auto" }}
-                        exit={{ opacity: 0, y: -10, height: 0 }}
-                      >
-                        <Alert>
-                          <AlertTriangle className="h-4 w-4" />
-                          <AlertDescription>
-                            Esta categoría tiene {productImpact.productCount} productos asignados. 
-                            Al moverla, todos los productos mantendrán su asignación a esta categoría.
-                          </AlertDescription>
-                        </Alert>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
 
                   {/* Validation Errors */}
                   <AnimatePresence>

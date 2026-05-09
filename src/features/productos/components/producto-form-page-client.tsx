@@ -22,7 +22,7 @@ interface ProductoFormPageClientProps {
   almacenes?: Pick<Almacen, 'almacenId' | 'nombre'>[]
   listasPrecios?: Array<{ id: string; nombre: string }>
   vendors?: Array<Pick<Vendor, 'vendorId' | 'nombre' | 'proveedorCodigo'>>
-  categorias?: Array<Pick<Categoria, 'catId' | 'nombre' | 'parentId'>>
+  categorias?: Array<Pick<Categoria, 'catId' | 'nombre'> & { parentId?: string | null }>
   loading?: boolean
 }
 

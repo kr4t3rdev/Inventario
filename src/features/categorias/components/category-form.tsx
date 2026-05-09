@@ -3,8 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useGetCategoriasQuery } from "@/features/categorias/api/categoriasApi";
 import { useCategoryForm } from "@/features/categorias/hooks/use-category-form";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -12,8 +10,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Folder, ArrowLeft, Sparkles, Layers } from "lucide-react";
-import { useDispatch } from "react-redux";
-import { apiSlice } from "@/lib/redux/services/apiSlice";
 import { motion } from "framer-motion";
 import { ClasificadorInfoNote } from "@/features/productos/components/clasificador-info-note";
 import { getAuthToken } from "@/lib/token";
@@ -48,25 +44,16 @@ function LoadingSpinner({ size = 24 }: { size?: number }) {
   )
 }
 
-// Pulse skeleton
-function PulseSkeleton({ className }: { className?: string }) {
-  return (
-    <motion.div
-      className={`bg-muted rounded ${className}`}
-      animate={{ opacity: [0.5, 0.8, 0.5] }}
-      transition={{
-        duration: 1.5,
-        repeat: Infinity,
-        ease: "easeInOut"
-      }}
-    />
-  )
-}
-
+/**
+ * @description Formulario para crear o editar una categoría (raíz).
+ * Usa Server Actions (createCategoriaAction / updateCategoriaAction)
+ * en lugar de RTK Query o REST API legacy.
+ *
+ * @param {CategoryFormProps} props - Datos iniciales de la categoría (opcional).
+ * @returns {JSX.Element} Formulario de categoría.
+ */
 export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
   const router = useRouter();
-  const dispatch = useDispatch();
-  const { isLoading: isLoadingCategorias } = useGetCategoriasQuery();
   const [usaEan13, setUsaEan13] = useState(false)
   const [clasClassifierData, setClasClassifierData] = useState<CLASClassifierData | null>(null)
   const [selectedSection, setSelectedSection] = useState('')
@@ -98,7 +85,6 @@ export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
     onSuccess: onSuccess || (() => {
       router.push("/busy/categoria");
       router.refresh();
-      dispatch(apiSlice.util.invalidateTags(['Categorias']))
     }),
   });
 
@@ -177,34 +163,6 @@ export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
   const isLoading = isSubmitting || isValidating;
 
   // Show loading skeleton when categories are loading
-  if (isLoadingCategorias) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <Card>
-          <CardContent className="pt-6">
-            <div className="space-y-6">
-              <div className="flex items-center gap-2 mb-6">
-                <PulseSkeleton className="h-6 w-6" />
-                <PulseSkeleton className="h-6 w-48" />
-              </div>
-              <PulseSkeleton className="h-10 w-full" />
-              <PulseSkeleton className="h-20 w-full" />
-              <PulseSkeleton className="h-10 w-full" />
-              <div className="flex justify-end space-x-4">
-                <PulseSkeleton className="h-10 w-24" />
-                <PulseSkeleton className="h-10 w-32" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-    );
-  }
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 30 }}

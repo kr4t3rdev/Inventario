@@ -30,7 +30,6 @@ const GastoConceptos = () => {
         setConceptoToDelete(null)
       })
     }
-    }
 
     const columns: ColumnDef<unknown>[] = [
         {

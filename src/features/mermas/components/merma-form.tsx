@@ -18,7 +18,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { sileo } from '@/lib/sileo-shim'
 import { Skeleton } from "@/components/ui/skeleton"
 
-import { useGetProductosQuery } from "@/features/productos/api/productosApi"
+import { useProductos } from "@/features/productos/hooks/use-productos"
 import { useAddMermaMutation, useUpdateMermaMutation } from "@/features/mermas/api/mermasApi"
 import { apiSlice } from "@/lib/redux/services/apiSlice"
 
@@ -49,7 +49,7 @@ export function MermaForm({ initialData }: MermaFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const dispatch = useDispatch()
-  const { data: productos, isLoading: isLoadingProductos } = useGetProductosQuery()
+  const { productos, isLoading: isLoadingProductos } = useProductos()
 
   const [addMerma] = useAddMermaMutation()
   const [updateMerma] = useUpdateMermaMutation()

@@ -20,7 +20,7 @@ import type { ProductoConStock } from "@/lib/api/productos-ubicacion"
 import { ServerActionError } from "@/lib/api/errors"
 import { useAddVentaMutation } from "@/features/ventas"
 import { useGetClientesQuery } from "@/features/clientes/api/ClienteApi"
-import { useGetCategoriasQuery } from "@/features/categorias/api/categoriasApi"
+import { useCategorias } from "@/features/categorias/hooks/use-categorias"
 import { useGetAnticiposDisponiblesQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
@@ -104,7 +104,7 @@ export function VentaInterface() {
 
   const [addVenta] = useAddVentaMutation()
   const { data: clientes, isLoading: isLoadingClientes } = useGetClientesQuery()
-  const { data: categorias, isLoading: isLoadingCategorias } = useGetCategoriasQuery()
+  const { categorias, isLoading: isLoadingCategorias } = useCategorias()
   const { data: anticiposCobroDisponibles, isFetching: isLoadingAnticiposCobro } =
     useGetAnticiposDisponiblesQuery(
       {

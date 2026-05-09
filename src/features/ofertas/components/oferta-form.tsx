@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { sileo } from '@/lib/sileo-shim';
 import { Skeleton } from "@/components/ui/skeleton";
-import { useGetProductosQuery } from "@/features/productos/api/productosApi";
+import { useProductos } from '@/features/productos/hooks/use-productos'
 import { useGetClientesQuery } from "@/features/clientes/api/ClienteApi";
 import { useAddOfertaMutation } from "@/features/ofertas/api/ofertasApi";
 import { useGetAnticiposDisponiblesQuery } from "@/features/contabilidad/api/contabilidadApi";
@@ -89,7 +89,7 @@ export function OfertaForm() {
   const [selectedAnticipoCobroId, setSelectedAnticipoCobroId] = useState<string>("")
   const anticiposFeatureEnabled = process.env.NEXT_PUBLIC_ENABLE_ANTICIPOS !== "false"
 
-  const { data: productos, isLoading: isLoadingProductos } = useGetProductosQuery()
+  const { productos, isLoading: isLoadingProductos } = useProductos()
   const { data: clientes, isLoading: isLoadingClientes } = useGetClientesQuery()
   const [addOferta] = useAddOfertaMutation()
 

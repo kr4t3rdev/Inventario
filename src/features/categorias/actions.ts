@@ -108,6 +108,26 @@ export const getCategoriasAction = withAction(async (_input: void, user: Authent
 /**
  * @description Obtiene la jerarquía completa de categorías con conteo de productos.
  */
+/**
+ * @description Obtiene una categoría por ID, verificando que pertenezca al tenant.
+ *
+ * @throws ActionError si la categoría no existe
+ */
+export const getCategoriaByIdAction = withAction(async (catId: string, user: AuthenticatedUser) => {
+  const tenantId = requireTenant(user);
+
+  const categoria = await prisma.categoria.findFirst({
+    where: { catId, tenantId },
+    select: CATEGORIA_SELECT,
+  });
+
+  if (!categoria) {
+    throw new ActionError('Categoría no encontrada', 'NOT_FOUND');
+  }
+
+  return categoria;
+});
+
 export const getCategoriaHierarchyAction = withAction(async (_input: void, _user: AuthenticatedUser) => {
   const categorias = await prisma.categoria.findMany({
     select: HIERARCHY_SELECT,

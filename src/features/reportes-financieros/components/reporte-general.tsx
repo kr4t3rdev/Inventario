@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { useGetProductosQuery } from "@/features/productos/api/productosApi"
-import { useGetCategoriasQuery } from "@/features/categorias/api/categoriasApi"
+import { useProductos } from '@/features/productos/hooks/use-productos'
+import { useCategorias } from "@/features/categorias/hooks/use-categorias"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -33,17 +33,9 @@ const surfaceCardClass = cn(
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d', '#ffc658', '#8dd1e1', '#a4de6c', '#d0ed57'];
 
 export function ReporteGeneral() {
-  const [productos, setProductos] = useState<any[]>([])
-  const [isLoadingProductos, setIsLoadingProductos] = useState(true)
-  const { data: categorias } = useGetCategoriasQuery()
+  const { productos, isLoading: isLoadingProductos } = useProductos()
+  const { categorias } = useCategorias()
   const [filtroCategoria, setFiltroCategoria] = useState<string>("todas")
-
-  useEffect(() => {
-    getProductosAction().then(r => {
-      if (r.success) setProductos(r.data ?? [])
-      setIsLoadingProductos(false)
-    })
-  }, [])
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
 

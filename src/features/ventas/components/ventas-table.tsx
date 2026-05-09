@@ -18,10 +18,10 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { ArrowUpDown, Pencil, Trash2Icon, Loader2 } from "lucide-react"
+import { ArrowUpDown, Pencil, Trash2Icon } from "lucide-react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatCurrency } from "@/lib/utils"
-import { useGetProductosQuery } from "@/features/productos/api/productosApi"
+import { useProductos } from "@/features/productos/hooks/use-productos"
 import type { Venta } from "@/app/models/model"
 
 interface VentasTableProps {
@@ -38,13 +38,7 @@ export function VentasTable({ ventas: ventasProp, isLoading, error, onDelete }: 
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
 
-  const [productos, setProductos] = useState<any[]>([])
-
-  useEffect(() => {
-    getProductosAction().then(r => {
-      if (r.success) setProductos(r.data ?? [])
-    })
-  }, [])
+  const { productos } = useProductos()
 
   const columns: ColumnDef<Venta>[] = [
     {

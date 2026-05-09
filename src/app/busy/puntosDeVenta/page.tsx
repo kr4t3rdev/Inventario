@@ -102,7 +102,6 @@ export default function PuntoDeVenta() {
       setPuntoDeVentaToDelete(null)
     })
   }
-  }
 
   const columns: ColumnDef<unknown>[] = [
     {

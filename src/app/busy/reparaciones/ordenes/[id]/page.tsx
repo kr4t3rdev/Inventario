@@ -11,7 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
 import { getOrdenReparacion, updateOrdenReparacion, facturarOrdenReparacion } from "@/lib/api/reparaciones/ordenes"
-import { useGetProductosQuery } from "@/features/productos/api/productosApi"
+import { useProductos } from '@/features/productos/hooks/use-productos'
 import { getCuentasBancariasAction, getNextSerieNumberAction } from "@/features/configuracion/actions"
 import { getDefectaciones } from "@/lib/api/reparaciones/defectaciones"
 import { formatCurrency, cn } from "@/lib/utils"
@@ -162,7 +162,7 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
   
   const [isUpdating, setIsUpdating] = useState(false)
   const [isFacturing, setIsFacturing] = useState(false)
-  const { data: productos } = useGetProductosQuery() // Para materiales
+  const { productos } = useProductos() // Para materiales
   const [cuentasBancariasData, setCuentasBancariasData] = useState<any>(null)
   const [isLoadingCuentas, setIsLoadingCuentas] = useState(true)
   const [errorCuentas, setErrorCuentas] = useState<any>(null)
