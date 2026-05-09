@@ -1,3 +1,6 @@
+// Server Actions — Reconciliación
+export { getReconciliacionStatsAction } from './actions-reconciliacion';
+
 // Server Actions — Anticipos
 export {
   getAnticiposAction,

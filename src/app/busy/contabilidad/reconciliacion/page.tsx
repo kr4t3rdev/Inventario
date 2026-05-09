@@ -1,122 +1,18 @@
-'use client';
-
-import Link from 'next/link';
-import { motion, useReducedMotion } from 'framer-motion';
-import {
-  AlertCircle,
-  ArrowLeft,
-  Calculator,
-  CheckCircle2,
-  CreditCard,
-  Receipt,
-  TrendingUp,
-} from 'lucide-react';
-
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { Skeleton } from '@/components/ui/skeleton';
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
-import { useGetReconciliacionStatsQuery } from '@/features/contabilidad/api/contabilidadApi';
-import { cn } from '@/lib/utils';
-
-type ToneKey = 'emerald' | 'blue' | 'amber';
-
-const accentStyles: Record<
-  ToneKey,
-  {
-    gradient: string;
-    icon: string;
-    badge: string;
-    border: string;
-  }
-> = {
-  emerald: {
-    gradient: cn(
-      'bg-linear-to-br from-emerald-500/20 via-emerald-500/10 to-transparent',
-      'dark:from-emerald-400/25 dark:via-emerald-400/10',
-    ),
-    icon: cn(
-      'bg-emerald-500/10 text-emerald-700 ring-1 ring-emerald-500/20',
-      'dark:bg-emerald-400/10 dark:text-emerald-300 dark:ring-emerald-400/30',
-    ),
-    badge: cn(
-      'bg-emerald-500/10 text-emerald-700 ring-1 ring-emerald-500/20',
-      'dark:bg-emerald-400/10 dark:text-emerald-300 dark:ring-emerald-400/30',
-    ),
-    border: 'hover:border-emerald-500/40 dark:hover:border-emerald-400/40',
-  },
-  blue: {
-    gradient: cn(
-      'bg-linear-to-br from-blue-500/20 via-blue-500/10 to-transparent',
-      'dark:from-blue-400/25 dark:via-blue-400/10',
-    ),
-    icon: cn(
-      'bg-blue-500/10 text-blue-700 ring-1 ring-blue-500/20',
-      'dark:bg-blue-400/10 dark:text-blue-300 dark:ring-blue-400/30',
-    ),
-    badge: cn(
-      'bg-blue-500/10 text-blue-700 ring-1 ring-blue-500/20',
-      'dark:bg-blue-400/10 dark:text-blue-300 dark:ring-blue-400/30',
-    ),
-    border: 'hover:border-blue-500/40 dark:hover:border-blue-400/40',
-  },
-  amber: {
-    gradient: cn(
-      'bg-linear-to-br from-amber-500/25 via-amber-500/10 to-transparent',
-      'dark:from-amber-400/25 dark:via-amber-400/10',
-    ),
-    icon: cn(
-      'bg-amber-500/10 text-amber-700 ring-1 ring-amber-500/20',
-      'dark:bg-amber-400/10 dark:text-amber-300 dark:ring-amber-400/30',
-    ),
-    badge: cn(
-      'bg-amber-500/10 text-amber-700 ring-1 ring-amber-500/20',
-      'dark:bg-amber-400/10 dark:text-amber-300 dark:ring-amber-400/30',
-    ),
-    border: 'hover:border-amber-500/40 dark:hover:border-amber-400/40',
-  },
-};
-
-const sectionKickerClass = cn(
-  'text-xs font-semibold uppercase tracking-[0.3em] text-slate-500',
-  'dark:text-slate-400',
-);
-
-const surfaceCardClass = cn(
-  'group relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm',
-  'transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg',
-  'dark:border-slate-800/60 dark:bg-slate-900/10',
-);
-
-const staticCardClass = cn(
-  'relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm',
-  'dark:border-slate-800/60 dark:bg-slate-900/10',
-);
-
-const metaBadgeClass = cn(
-  'border border-slate-200/70 bg-white/80 text-slate-700 shadow-sm',
-  'dark:border-slate-800/60 dark:bg-slate-900/10 dark:text-slate-200',
-);
-
-const outlineButtonClass = cn(
-  'border-slate-200/70 bg-white/80 text-slate-700 shadow-sm transition-all',
-  'dark:border-slate-800/60 dark:bg-slate-900/10 dark:text-slate-200',
-);
-
-const bodyTextClass = 'text-sm text-slate-600 dark:text-slate-300';
-const progressTrackClass = cn('bg-slate-200/70 dark:bg-slate-800/70');
-
 /**
  * @description Dashboard central para gestionar reconciliación de ventas, servicios y gastos.
- * @returns {JSX.Element} Vista principal de reconciliación.
+ * Server Component que obtiene datos iniciales y delega la UI a ReconciliacionHubClient.
+ *
+ * @returns {Promise<JSX.Element>} Vista principal de reconciliación.
  */
-export default function ReconciliacionHubPage(): React.JSX.Element {
-  const shouldReduceMotion = useReducedMotion();
-  const { data: statsData, isLoading, error } = useGetReconciliacionStatsQuery(undefined, {
-    pollingInterval: 30000,
-  });
+import { getReconciliacionStatsAction } from "@/features/contabilidad/actions-reconciliacion"
+import { ReconciliacionHubClient } from "@/features/contabilidad/components/reconciliacion-hub-client"
+
+export default async function ReconciliacionHubPage() {
+  const result = await getReconciliacionStatsAction()
+  const initialStats = result.success ? result.data : null
+
+  return <ReconciliacionHubClient initialStats={initialStats} />
+}
 
   const fadeIn = {
     hidden: { opacity: 0 },
