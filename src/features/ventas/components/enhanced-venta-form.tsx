@@ -17,7 +17,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { DollarSign, Calculator } from "lucide-react"
 
 import { getProductosAction } from "@/features/productos"
-import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta"
+import { usePuntosDeVenta } from "@/features/puntos-venta/hooks/use-puntos-de-venta"
 import { useAddVentaMutation, useUpdateVentaMutation } from "@/features/ventas"
 import { useGetMonedasQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { TasaCambioDialog } from "@/features/contabilidad/components/tasa-cambio-dialog"
@@ -64,7 +64,7 @@ export function EnhancedVentaForm({ initialData }: EnhancedVentaFormProps) {
 
   const [productos, setProductos] = useState<any[]>([])
   const [isLoadingProductos, setIsLoadingProductos] = useState(true)
-  const { data: puntosDeVenta, isLoading: isLoadingPuntosDeVenta } = useGetPuntosDeVentaQuery()
+  const { puntosDeVenta, isLoading: isLoadingPuntosDeVenta } = usePuntosDeVenta()
   const { data: monedasData } = useGetMonedasQuery()
 
   useEffect(() => {

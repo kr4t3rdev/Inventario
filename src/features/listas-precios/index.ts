@@ -1,4 +1,4 @@
-// Server Actions (nuevo)
+// Server Actions
 export {
   getListasPreciosAction,
   getListaPrecioByIdAction,
@@ -7,6 +7,5 @@ export {
   deleteListaPrecioAction,
 } from './actions';
 
-// RTK Query (legacy)
-export { listasPreciosApi, useGetListasPreciosQuery } from './api/listasPreciosApi';
-export type { ListaPrecio, ListaPrecioPayload } from './api/listasPreciosApi';
+// Hooks
+export { useListasPrecios } from './hooks/use-listas-precios';

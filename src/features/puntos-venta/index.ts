@@ -7,10 +7,9 @@ export {
   deletePuntoDeVentaAction,
 } from './actions';
 
-// Handlers legacy (para rutas API existentes)
+// Hooks
+export { usePuntosDeVenta } from './hooks/use-puntos-de-venta';
+// Handlers legacy
 export { createPuntoDeVentaHandler, getPuntoDeVentaByIdHandler, updatePuntoDeVentaHandler, deletePuntoDeVentaHandler } from './api/handlers';
-
-// RTK Query (legacy)
-export { puntosDeVentaApi, useGetPuntosDeVentaQuery, useGetPuntoDeVentaQuery } from './api/puntosDeVentaApi';
 export { PtoVentaForm } from './components/pvtoVenta-form';
 export type { PuntoDeVenta } from './types';

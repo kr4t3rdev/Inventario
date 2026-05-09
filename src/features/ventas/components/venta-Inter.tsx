@@ -1,6 +1,6 @@
 'use client'
 import { getProductosAction } from "@/features/productos"
-import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta/api/puntosDeVentaApi";
+import { usePuntosDeVenta } from "@/features/puntos-venta/hooks/use-puntos-de-venta";
 import { useState, useEffect } from "react";
 import { Producto } from "@/app/models/model";
 import { useAddVentaMutation } from "@/features/ventas";
@@ -38,7 +38,7 @@ export default function VentaInter() {
 
     const [productos, setProductos] = useState<any[]>([])
     const [isLoadingProductos, setIsLoadingProductos] = useState(true)
-    const { data: puntoDeVenta } = useGetPuntosDeVentaQuery()
+    const { puntosDeVenta: puntoDeVenta } = usePuntosDeVenta()
 
     useEffect(() => {
       getProductosAction().then(r => {

@@ -14,7 +14,7 @@ import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
 import { Skeleton } from "@/components/ui/skeleton"
-import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta/api/puntosDeVentaApi"
+import { usePuntosDeVenta } from "@/features/puntos-venta/hooks/use-puntos-de-venta"
 import { getProductosPorUbicacion } from "@/app/actions/productos-ubicacion"
 import type { ProductoConStock } from "@/lib/api/productos-ubicacion"
 import { ServerActionError } from "@/lib/api/errors"
@@ -73,7 +73,7 @@ export function VentaInterface() {
   const [isLoadingProductos, setIsLoadingProductos] = useState(false)
   const [isFetchingProductos, setIsFetchingProductos] = useState(false)
 
-  const { data: puntosDeVenta, isLoading: isLoadingPuntosVenta } = useGetPuntosDeVentaQuery()
+  const { puntosDeVenta, isLoading: isLoadingPuntosVenta } = usePuntosDeVenta()
 
   // Cargar productos de la ubicación seleccionada via Server Action
   useEffect(() => {

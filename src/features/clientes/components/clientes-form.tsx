@@ -15,7 +15,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { sileo } from '@/lib/sileo-shim'
 import { Skeleton } from "@/components/ui/skeleton"
 import { useAddClienteMutation, useGetClientesQuery, useUpdateClienteMutation } from "@/features/clientes/api/ClienteApi"
-import { useGetListasPreciosQuery } from "@/features/listas-precios/api/listasPreciosApi"
+import { useListasPrecios } from "@/features/listas-precios/hooks/use-listas-precios"
 import { ClienteLogoUpload } from "./cliente-logo-upload"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
@@ -65,7 +65,7 @@ export function ClienteForm({ initialData }: ClienteFormProps) {
   const [isLoading, setIsLoading] = useState(false)
 
   const { data: cliente, isLoading: isLoadingClientes } = useGetClientesQuery()
-  const { data: listasPrecios, isLoading: isLoadingListas } = useGetListasPreciosQuery()
+  const { listasPrecios, isLoading: isLoadingListas } = useListasPrecios()
   
   const [ addCliente ] = useAddClienteMutation()
   const [updateCliente] = useUpdateClienteMutation()

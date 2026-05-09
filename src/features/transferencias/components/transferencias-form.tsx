@@ -25,8 +25,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 
-import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta/api/puntosDeVentaApi"
-import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta"
+import { usePuntosDeVenta } from "@/features/puntos-venta/hooks/use-puntos-de-venta"
 import { useAlmacenes } from "@/features/almacenes/hooks/use-almacenes"
 import { useGetStockPorUbicacionQuery } from "@/lib/redux/services/stockUbicacionApi"
 import { useDispatch } from "react-redux"
@@ -362,7 +361,7 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
 
   const [productos, setProductos] = useState<any[]>([])
   const [isLoadingProductos, setIsLoadingProductos] = useState(true)
-  const { data: puntosDeVenta, isLoading: isLoadingPuntosDeVenta } = useGetPuntosDeVentaQuery()
+  const { puntosDeVenta, isLoading: isLoadingPuntosDeVenta } = usePuntosDeVenta()
   const { almacenes, isLoading: isLoadingAlmacenes } = useAlmacenes()
 
   useEffect(() => {

@@ -17,7 +17,7 @@ import Link from "next/link"
 import { toast } from "sonner"
 
 import { useGetOfertaQuery, useUpdateOfertaMutation, useFacturarOfertaMutation } from "@/features/ofertas/api/ofertasApi"
-import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta/api/puntosDeVentaApi"
+import { usePuntosDeVenta } from "@/features/puntos-venta/hooks/use-puntos-de-venta"
 import { useGetAnticiposDisponiblesQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
@@ -51,11 +51,10 @@ export default function OfertaDetailPage() {
   const [oferta, setOferta] = useState<any | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isPending, startTransition] = useTransition()
-  const [puntosDeVenta, setPuntosDeVenta] = useState<any[]>([])
+  const { puntosDeVenta } = usePuntosDeVenta()
 
   useEffect(() => {
     (async () => { setIsLoading(true); const r=await getOfertaByIdAction(id); if(r.success) setOferta(r.data!); setIsLoading(false); })()
-    ;(async () => { const r=await getPuntosDeVentaAction(); if(r.success) setPuntosDeVenta(r.data??[]); })()
   }, [id])
 
   const [isFacturarDialogOpen, setIsFacturarDialogOpen] = useState(false)

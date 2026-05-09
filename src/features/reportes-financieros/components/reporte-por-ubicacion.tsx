@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useGetStockPorUbicacionQuery } from "@/lib/redux/services/stockUbicacionApi"
 import { useAlmacenes } from "@/features/almacenes/hooks/use-almacenes"
-import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta/api/puntosDeVentaApi"
+import { usePuntosDeVenta } from "@/features/puntos-venta/hooks/use-puntos-de-venta"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import {
@@ -37,16 +37,12 @@ export function ReportePorUbicacion() {
   // ─── Hooks ────────────────────────────────────────────
   const { almacenes } = useAlmacenes()
 
+  const { puntosDeVenta: puntosVenta } = usePuntosDeVenta()
+
   // ─── Server Actions state ─────────────────────────────
-  const [puntosVenta, setPuntosVenta] = useState<Awaited<ReturnType<typeof getPuntosDeVentaAction>>['data']>([])
   const [productosUbicacion, setProductosUbicacion] = useState<Awaited<ReturnType<typeof getStockPorUbicacionAction>>['data']>([])
   const [isLoadingStock, setIsLoadingStock] = useState(false)
   const [stockError, setStockError] = useState<string | null>(null)
-
-  // ─── Fetches ──────────────────────────────────────────
-  useEffect(() => {
-    getPuntosDeVentaAction().then(r => { if (r.success) setPuntosVenta(r.data ?? []) })
-  }, [])
 
   useEffect(() => {
     if (!ubicacionId) return
