@@ -255,6 +255,17 @@ export async function login(request: NextRequest) {
         }),
       },
     })
+
+    // Set auth_token cookie so Server Components and Server Actions
+    // can read it via cookies() from next/headers.
+    res.cookies.set('auth_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 30 * 24 * 60 * 60, // 30 days
+    })
+
     res.cookies.set('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -294,11 +305,13 @@ export async function logout(request: NextRequest) {
     }
 
     const response = NextResponse.json({ message: 'Logout exitoso' })
+    response.cookies.delete('auth_token')
     response.cookies.delete('token')
     return response
   } catch (error) {
     console.error('Error en logout:', error)
     const response = NextResponse.json({ message: 'Logout exitoso' })
+    response.cookies.delete('auth_token')
     response.cookies.delete('token')
     return response
   }

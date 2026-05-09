@@ -98,9 +98,19 @@ export async function authenticateUser(
   validatePermissions?: { path: string; method: string }
 ): Promise<{ user: AuthenticatedUser } | Response> {
   const authorization = request.headers.get('authorization')
+  let token: string | null = null
 
-  // 1. Verificar presencia de Authorization header
-  if (!authorization || !authorization.startsWith('Bearer ')) {
+  // 1. Intentar desde Authorization header (principal para API routes)
+  if (authorization && authorization.startsWith('Bearer ')) {
+    token = authorization.replace('Bearer ', '').trim()
+  }
+
+  // 2. Fallback: cookie auth_token (para compatibilidad con Server Components)
+  if (!token) {
+    token = request.cookies.get('auth_token')?.value ?? null
+  }
+
+  if (!token) {
     return NextResponse.json(
       {
         error: 'Token no proporcionado',
@@ -110,8 +120,6 @@ export async function authenticateUser(
       { status: 401 }
     )
   }
-
-  const token = authorization.replace('Bearer ', '').trim()
 
   // 2. Validar formato básico del JWT (tres partes separadas por puntos)
   if (!token || typeof token !== 'string' || token.split('.').length !== 3) {
