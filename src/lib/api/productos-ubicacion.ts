@@ -1,0 +1,177 @@
+import prisma from '@/lib/prisma'
+import type { PrecioFuente } from '@/lib/types/pricing'
+import { getAuthenticatedContext } from '@/lib/api/client'
+import { ServerActionError } from '@/lib/api/errors'
+import type { ProductoConStock } from '@/lib/redux/services/productosUbicacionApi'
+
+/**
+ * @description Obtiene productos con stock disponible en una ubicación específica
+ * (punto de venta o almacén). Replica la lógica del endpoint GET /api/productos/por-ubicacion/:id
+ * pero utilizando Prisma directamente desde la Server Action.
+ *
+ * @param ubicacionId - ID del punto de venta o almacén
+ * @returns Lista de productos con stock > 0 en la ubicación
+ * @throws {ServerActionError} si la ubicación no existe o hay error de base de datos
+ */
+export async function getProductosPorUbicacion(
+  ubicacionId: string
+): Promise<ProductoConStock[]> {
+  await getAuthenticatedContext()
+
+  // Verificar si la ubicación existe y determinar el tipo
+  let isPuntoVenta = false
+  let listaPrecioId: string | null = null
+
+  const puntoVenta = await prisma.puntoDeVenta.findUnique({
+    where: { pvId: ubicacionId },
+    select: { pvId: true, listaPrecioId: true },
+  })
+
+  if (puntoVenta) {
+    isPuntoVenta = true
+    listaPrecioId = puntoVenta.listaPrecioId ?? null
+  } else {
+    const almacen = await prisma.almacen.findUnique({
+      where: { almacenId: ubicacionId },
+    })
+    if (!almacen) {
+      throw new ServerActionError(
+        'getProductosPorUbicacion',
+        'GET',
+        404,
+        'Ubicación no encontrada'
+      )
+    }
+  }
+
+  // Obtener todos los productos con sus relaciones
+  const productos = await prisma.producto.findMany({
+    select: {
+      id: true,
+      nombre: true,
+      descripcion: true,
+      precioCosto: true,
+      precioVenta: true,
+      stock: true,
+      fotos: true,
+      categoriaId: true,
+      unidadId: true,
+      vendorId: true,
+      createdAt: true,
+      updatedAt: true,
+      categoria: true,
+      unidad: true,
+      vendor: true,
+    },
+  })
+
+  // Precios por lista de precios (solo para punto de venta)
+  const preciosPorListaMap = new Map<string, number>()
+  if (isPuntoVenta && listaPrecioId && productos.length > 0) {
+    const preciosPorLista = await prisma.precioProducto.findMany({
+      where: {
+        listaPrecioId,
+        productoId: { in: productos.map((p) => p.id) },
+      },
+      select: { productoId: true, precio: true },
+    })
+
+    for (const pl of preciosPorLista) {
+      preciosPorListaMap.set(pl.productoId, Number(pl.precio))
+    }
+  }
+
+  // Calcular stock por producto en la ubicación
+  const productosConStock = await Promise.all(
+    productos.map(async (producto) => {
+      let stockEnUbicacion = 0
+
+      if (isPuntoVenta) {
+        const [transferenciasEntrada, transferenciasSalida] =
+          await Promise.all([
+            prisma.transferencia.aggregate({
+              where: {
+                productoId: producto.id,
+                puntoDeVentaDestinoId: ubicacionId,
+              },
+              _sum: { cantidad: true },
+            }),
+            prisma.transferencia.aggregate({
+              where: {
+                productoId: producto.id,
+                puntoDeVentaOrigenId: ubicacionId,
+              },
+              _sum: { cantidad: true },
+            }),
+          ])
+
+        const [ventasItems, ventasLegacy] = await Promise.all([
+          prisma.ventaItem.aggregate({
+            where: {
+              productoId: producto.id,
+              venta: { puntoDeVentaId: ubicacionId },
+            },
+            _sum: { cantidad: true },
+          }),
+          prisma.venta.aggregate({
+            where: {
+              productoId: producto.id,
+              puntoDeVentaId: ubicacionId,
+              items: { none: {} },
+            },
+            _sum: { cantidad: true },
+          }),
+        ])
+
+        stockEnUbicacion =
+          (transferenciasEntrada._sum.cantidad || 0) -
+          (transferenciasSalida._sum.cantidad || 0) -
+          ((ventasItems._sum.cantidad || 0) + (ventasLegacy._sum.cantidad || 0))
+      } else {
+        const stockBase = producto.stock
+        const [transferenciasEntrada, transferenciasSalida] =
+          await Promise.all([
+            prisma.transferencia.aggregate({
+              where: {
+                productoId: producto.id,
+                destinoId: ubicacionId,
+                puntoDeVentaOrigenId: null,
+              },
+              _sum: { cantidad: true },
+            }),
+            prisma.transferencia.aggregate({
+              where: {
+                productoId: producto.id,
+                origenId: ubicacionId,
+                puntoDeVentaDestinoId: null,
+              },
+              _sum: { cantidad: true },
+            }),
+          ])
+
+        stockEnUbicacion =
+          stockBase +
+          (transferenciasEntrada._sum.cantidad || 0) -
+          (transferenciasSalida._sum.cantidad || 0)
+      }
+
+      stockEnUbicacion = Math.max(0, stockEnUbicacion)
+
+      const precioLista = preciosPorListaMap.get(producto.id)
+      const precioVentaResuelto = precioLista ?? Number(producto.precioVenta)
+      const precioFuente: PrecioFuente =
+        precioLista !== undefined ? 'LISTA' : 'BASE'
+
+      return {
+        ...producto,
+        stockEnUbicacion,
+        precioVentaResuelto,
+        precioFuente,
+        listaPrecioIdAplicada: listaPrecioId,
+      }
+    })
+  )
+
+  // Filtrar solo productos con stock
+  return productosConStock.filter((p) => p.stockEnUbicacion > 0)
+}

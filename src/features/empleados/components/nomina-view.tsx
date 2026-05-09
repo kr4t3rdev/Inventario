@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Calculator, DollarSign, Download, Calendar, Filter, RefreshCw, TrendingUp, Users, Wallet, Pencil } from "lucide-react";
 import { toast } from "sonner";
-import { useGetPagoSalariosQuery } from "@/lib/redux/services/pagoSalarioApi";
+import { getPagoSalariosAction } from "@/features/pago-salario/actions";
 import { motion, AnimatePresence } from "framer-motion";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -193,7 +193,6 @@ export function NominaView() {
   const [loading, setLoading] = useState(false);
   const [calculating, setCalculating] = useState(false);
   const [forceRecalculate, setForceRecalculate] = useState(false);
-  const { data: empleado } = useGetPagoSalariosQuery(); // Keep existing hook usage if needed elsewhere, though not used directly in visible logic
   const [periodo, setPeriodo] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;

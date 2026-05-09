@@ -25,7 +25,7 @@ import {
   AlertCircle,
 } from "lucide-react"
 import { exportToPdf } from "@/lib/export-utils"
-import { useGetCuadreDiarioQuery } from "@/features/cuadre-diario/redux/cuadreDiarioApi"
+import { getCuadreDiarioAction } from "@/features/cuadre-diario/actions"
 import { cn } from "@/lib/utils"
 
 const METODO_PAGO_MAP: Record<string, { label: string; className: string }> = {
@@ -74,9 +74,19 @@ export function CuadreDiarioFinanciero({
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
   }, [])
 
-  const { data, isLoading, error, refetch } = useGetCuadreDiarioQuery({
-    fecha: formatoFecha(fecha),
-  })
+  const [data, setData] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<any>(null)
+
+  const loadData = useCallback(async (f: Date) => {
+    setIsLoading(true)
+    const r = await getCuadreDiarioAction(formatoFecha(f))
+    if (r.success) setData(r.data)
+    else setError(r.error)
+    setIsLoading(false)
+  }, [formatoFecha])
+
+  useEffect(() => { loadData(fecha) }, [fecha, loadData])
 
   const handleFechaChange = (date: Date | undefined) => {
     if (date) {
@@ -154,7 +164,7 @@ export function CuadreDiarioFinanciero({
               <AlertCircle className="h-5 w-5" />
               <p className="font-medium">Error al cargar el cuadre diario</p>
             </div>
-            <Button onClick={() => refetch()} variant="destructive" className="gap-2">
+            <Button onClick={() => loadData(fecha)} variant="destructive" className="gap-2">
               <RefreshCw className="h-4 w-4" />
               Reintentar
             </Button>
@@ -305,7 +315,7 @@ export function CuadreDiarioFinanciero({
           </Popover>
           <Button
             variant="outline"
-            onClick={() => refetch()}
+            onClick={() => loadData(fecha)}
             className="gap-2"
           >
             <RefreshCw className="h-4 w-4" />

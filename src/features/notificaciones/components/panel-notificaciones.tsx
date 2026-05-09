@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { Bell, AlertTriangle, Package, TrendingDown, ArrowRightLeft, ShoppingCart, X, Info, CheckCircle } from "lucide-react"
-import { useGetNotificacionesQuery, useMarcarNotificacionLeidaMutation } from "@/lib/redux/services/notificacionesApi"
+import { getNotificacionesAction, marcarNotificacionLeidaAction } from "@/features/notificaciones/actions"
 import type { Notification } from "@/app/models/model"
 import {formatDistanceToNow} from "date-fns/formatDistanceToNow"
 import { es } from "date-fns/locale"
@@ -74,8 +74,17 @@ export function PanelNotificaciones() {
     }
     return new Set()
   })
-  const { data, isLoading, error } = useGetNotificacionesQuery()
-  const [marcarLeida] = useMarcarNotificacionLeidaMutation()
+  const [data, setData] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<any>(null)
+
+  useEffect(() => {
+    getNotificacionesAction().then(r => {
+      if (r.success) setData(r.data)
+      else setError(r.error)
+      setIsLoading(false)
+    })
+  }, [])
   const shouldReduceMotion = useReducedMotion()
 
   useEffect(() => {
@@ -85,7 +94,7 @@ export function PanelNotificaciones() {
   const handleNotificacionClick = async (id: string) => {
     if (notificacionesEliminadas.has(id)) return
     try {
-      await marcarLeida(id).unwrap()
+      await marcarNotificacionLeidaAction(id)
     } catch (error) {
       console.error('Error al marcar como leída:', error)
     }

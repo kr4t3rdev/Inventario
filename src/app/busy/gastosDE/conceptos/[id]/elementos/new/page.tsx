@@ -1,15 +1,21 @@
 'use client'
 
+import { useEffect, useState } from "react"
 import { useParams } from "next/navigation"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { GastoElementoForm } from "@/features/gastosDE"
-import { useGetGastoConceptoQuery } from "@/lib/redux/services/gastosConceptosApi"
+import { getGastoConceptoByIdAction } from "@/features/gastosDE/actions"
 import { Skeleton } from "@/components/ui/skeleton"
 
 export default function NewGastoElementoPage() {
     const params = useParams()
     const conceptoId = params.id as string
-    const { data: concepto, isLoading } = useGetGastoConceptoQuery(conceptoId, { skip: !conceptoId })
+    const [concepto, setConcepto] = useState<any>(null)
+    const [isLoading, setIsLoading] = useState(true)
+
+    useEffect(() => {
+        getGastoConceptoByIdAction(conceptoId).then(r => { if (r.success) setConcepto(r.data); setIsLoading(false) })
+    }, [conceptoId])
 
     if (isLoading) {
         return (

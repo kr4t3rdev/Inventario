@@ -1,11 +1,12 @@
 'use client'
 
+import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { GastoConceptoForm } from "@/features/gastosDE"
-import { useGetGastoConceptoQuery } from "@/lib/redux/services/gastosConceptosApi"
+import { getGastoConceptoByIdAction } from "@/features/gastosDE/actions"
 import { ArrowLeft, Loader2 } from "lucide-react"
 import Link from "next/link"
 
@@ -13,7 +14,17 @@ export default function UpdateGastoConceptoPage() {
     const params = useParams()
     const router = useRouter()
     const conceptoId = params.id as string
-    const { data: concepto, isLoading, isError } = useGetGastoConceptoQuery(conceptoId)
+    const [concepto, setConcepto] = useState<any>(null)
+    const [isLoading, setIsLoading] = useState(true)
+    const [isError, setIsError] = useState(false)
+
+    useEffect(() => {
+        getGastoConceptoByIdAction(conceptoId).then(r => {
+            if (r.success) setConcepto(r.data)
+            else setIsError(true)
+            setIsLoading(false)
+        })
+    }, [conceptoId])
 
     if (isLoading) {
         return (

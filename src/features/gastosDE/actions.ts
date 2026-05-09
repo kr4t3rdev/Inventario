@@ -93,6 +93,18 @@ export const deleteGastoConceptoAction = withAction(async (id: string) => {
   revalidatePath('/busy/gastosDE/conceptos'); return { success: true };
 });
 
+export const updateGastoConceptoAction = withAction(async (input: { conceptoId: string; nombre?: string; descripcion?: string | null }) => {
+  const { conceptoId, ...data } = input;
+  const existing = await prisma.gastoConcepto.findUnique({ where: { conceptoId } });
+  if (!existing) throw new ActionError('Concepto no encontrado', 'NOT_FOUND');
+  if (data.nombre !== undefined) {
+    const dup = await prisma.gastoConcepto.findUnique({ where: { nombre: data.nombre } });
+    if (dup && dup.conceptoId !== conceptoId) throw new ActionError('Ya existe otro concepto con ese nombre', 'DUPLICATE');
+  }
+  const c = await prisma.gastoConcepto.update({ where: { conceptoId }, data });
+  revalidatePath('/busy/gastosDE/conceptos'); return c;
+});
+
 // ─── Elementos ─────────────────────────────────────────────
 
 export const getGastoElementosAction = withAction(async (conceptoId: string) => {
@@ -112,4 +124,12 @@ export const deleteGastoElementoAction = withAction(async (id: string) => {
   if (e._count.gastosDE > 0) { await prisma.gastoElemento.update({ where: { elementoId: id }, data: { isActive: false } }); return { message: 'Elemento desactivado' }; }
   await prisma.gastoElemento.delete({ where: { elementoId: id } });
   revalidatePath('/busy/gastosDE/conceptos'); return { success: true };
+});
+
+export const updateGastoElementoAction = withAction(async (input: { elementoId: string; nombre?: string; descripcion?: string | null }) => {
+  const { elementoId, ...data } = input;
+  const existing = await prisma.gastoElemento.findUnique({ where: { elementoId } });
+  if (!existing) throw new ActionError('Elemento no encontrado', 'NOT_FOUND');
+  const e = await prisma.gastoElemento.update({ where: { elementoId }, data });
+  revalidatePath('/busy/gastosDE/conceptos'); return e;
 });

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -15,9 +15,8 @@ import { Badge } from "@/components/ui/badge"
 import { sileo } from '@/lib/sileo-shim'
 import { Skeleton } from "@/components/ui/skeleton"
 import { v4 } from "uuid"
-import { useAddGastosDEMutation, useGetGastosDEQuery, useUpdateGastosDEMutation } from "@/lib/redux/services/gastosDEApi"
-import { useGetVendorsQuery } from "@/features/vendors"
-import { useGetGastoConceptosQuery, useGetGastoElementosQuery } from "@/lib/redux/services/gastosConceptosApi"
+import { createGastosDEAction, updateGastosDEAction, getGastoConceptosAction, getGastoElementosAction } from "@/features/gastosDE/actions"
+import { useGetVendorsQuery } from "@/features/vendors/api/vendorsApi"
 import { VendorCombobox } from "./VendorCombobox"
 
 const gastosDESchema = z.object({
@@ -41,12 +40,20 @@ export function GastoDEForm({ initialData }: GastosDEFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [selectedConceptoId, setSelectedConceptoId] = useState<string>(initialData?.conceptoId || '')
-  const { data: gastosDE, isLoading: isLoadingGastosDE } = useGetGastosDEQuery()
+  const { isLoading: isLoadingGastosDE } = { isLoading: false }
   const { data: vendors, isLoading: isLoadingVendors } = useGetVendorsQuery()
-  const { data: conceptos } = useGetGastoConceptosQuery({ onlyActive: true })
-  const { data: elementos } = useGetGastoElementosQuery(selectedConceptoId, { skip: !selectedConceptoId })
-  const [addGastoGastosDE] = useAddGastosDEMutation()
-  const [updateGastosDE] = useUpdateGastosDEMutation()
+  const [conceptos, setConceptos] = useState<any[]>([])
+  const [elementos, setElementos] = useState<any[]>([])
+
+  useEffect(() => {
+    getGastoConceptosAction().then(r => { if (r.success) setConceptos(r.data ?? []) })
+  }, [])
+
+  useEffect(() => {
+    if (selectedConceptoId) {
+      getGastoElementosAction(selectedConceptoId).then(r => { if (r.success) setElementos(r.data ?? []) })
+    }
+  }, [selectedConceptoId])
 
   const form = useForm<GastosDEFormValues>({
     resolver: zodResolver(gastosDESchema),
@@ -64,10 +71,18 @@ export function GastoDEForm({ initialData }: GastosDEFormProps) {
     setIsLoading(true)
     try {
       if (initialData) {
-        await updateGastosDE({ gastosDEId: initialData.gastosDEId, ...data }).unwrap()
+        const result = await updateGastosDEAction({ gastosDEId: initialData.gastosDEId, ...data })
+        if (!result.success) {
+          sileo.error({ title: result.error?.message || 'Hubo un error al guardar el gasto.' })
+          return
+        }
         sileo.success({ title: 'El gasto de explotación ha sido actualizado exitosamente.' })
       } else {
-        await addGastoGastosDE({ gastosDEId: v4(), ...data } as any).unwrap()
+        const result = await createGastosDEAction({ gastosDEId: v4(), ...data } as any)
+        if (!result.success) {
+          sileo.error({ title: result.error?.message || 'Hubo un error al guardar el gasto.' })
+          return
+        }
         sileo.success({ title: 'El gasto de explotación ha sido registrado exitosamente.' })
       }
       router.back()

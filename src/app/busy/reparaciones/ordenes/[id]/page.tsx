@@ -11,8 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
 import { useGetOrdenQuery, useUpdateOrdenMutation, useFacturarOrdenMutation } from "@/lib/redux/services/ordenesReparacionApi"
-import { getProductosAction } from "@/features/productos"
-import { useGetCuentasBancariasQuery, useGetNextSerieNumberQuery } from "@/lib/redux/services/configuracionApi"
+import { useGetProductosQuery } from "@/features/productos/api/productosApi"
+import { getCuentasBancariasAction, getNextSerieNumberAction } from "@/features/configuracion/actions"
 import { useGetDefectacionesQuery } from "@/lib/redux/services/reparacionesApi"
 import { formatCurrency, cn } from "@/lib/utils"
 import { ArrowLeft, Plus, Save, Trash2, Printer, CheckCircle, FileText, CalendarIcon } from "lucide-react"
@@ -151,12 +151,16 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
   
   const [updateOrden, { isLoading: isUpdating }] = useUpdateOrdenMutation()
   const [facturarOrden, { isLoading: isFacturing }] = useFacturarOrdenMutation()
-  const [productos, setProductos] = useState<any[]>([])
-  const { data: cuentasBancariasData, isLoading: isLoadingCuentas, error: errorCuentas } = useGetCuentasBancariasQuery()
+  const { data: productos } = useGetProductosQuery() // Para materiales
+  const [cuentasBancariasData, setCuentasBancariasData] = useState<any>(null)
+  const [isLoadingCuentas, setIsLoadingCuentas] = useState(true)
+  const [errorCuentas, setErrorCuentas] = useState<any>(null)
 
   useEffect(() => {
-    getProductosAction().then(r => {
-      if (r.success) setProductos(r.data ?? [])
+    getCuentasBancariasAction().then(r => {
+      if (r.success) setCuentasBancariasData(r.data)
+      else setErrorCuentas(r.error)
+      setIsLoadingCuentas(false)
     })
   }, [])
 
@@ -202,9 +206,13 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
     fechaVencimientoOption: "CONCRETA"
   })
 
-  const { data: nextSerie } = useGetNextSerieNumberQuery(facturaParams.seriePrefijo, {
-    skip: !isFacturarDialogOpen
-  })
+  const [nextSerie, setNextSerie] = useState<any>(null)
+
+  useEffect(() => {
+    if (isFacturarDialogOpen && facturaParams.seriePrefijo) {
+      getNextSerieNumberAction(facturaParams.seriePrefijo).then(r => { if (r.success) setNextSerie(r.data) })
+    }
+  }, [isFacturarDialogOpen, facturaParams.seriePrefijo])
 
   const ordenEquipos: OrdenEquipoTemp[] = orden?.equipos?.length
     ? (orden.equipos as OrdenEquipoTemp[]).map((equipo) => ({ ...equipo, isVirtual: false }))

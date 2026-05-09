@@ -1,10 +1,15 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Badge } from "@/components/ui/badge"
-import { useGetNotificacionesQuery } from "@/lib/redux/services/notificacionesApi"
+import { getNotificacionesAction } from "@/features/notificaciones/actions"
 
 export function BadgeNotificaciones() {
-  const { data } = useGetNotificacionesQuery()
+  const [resumen, setResumen] = useState<any>(null)
+
+  useEffect(() => {
+    getNotificacionesAction().then(r => { if (r.success) setResumen(r.data?.resumen) })
+  }, [])
   const resumen = data?.resumen
 
   if (!resumen || resumen.alta === 0) return null

@@ -1,4 +1,3 @@
-// Server Actions (nuevo)
 export {
   getPagoSalariosAction,
   getPagoSalarioByIdAction,
@@ -6,16 +5,6 @@ export {
   updatePagoSalarioAction,
   deletePagoSalarioAction,
 } from './actions';
-
-// RTK Query (legacy)
-export {
-  pagoSalarioApi,
-  useGetPagoSalariosQuery,
-  useGetPagoSalarioQuery,
-  useAddPagoSalarioMutation,
-  useUpdatePagoSalarioMutation,
-  useDeletePagoSalarioMutation,
-} from './api/pagoSalarioApi';
 
 export type { Pagosalario } from './types';
 export type { PagoSalarioCartItem, PagoSalarioState } from './api/pagoSalarioSlice';

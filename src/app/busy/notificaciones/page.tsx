@@ -15,13 +15,13 @@ import {
   ShoppingCart,
 } from "lucide-react"
 import {
-  useDeleteNotificacionMutation,
-  useGetNotificacionesQuery,
-  useUpdateNotificacionMutation,
-} from "@/lib/redux/services/notificacionesApi"
+  getNotificacionesAction,
+  updateNotificacionAction,
+  deleteNotificacionAction,
+} from "@/features/notificaciones/actions"
 import type { Notification } from "@/app/models/model"
 import { format } from "date-fns"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 
@@ -78,18 +78,23 @@ const statsVariants = {
 }
 
 export default function NotificationsPage() {
-  const { data, isLoading } = useGetNotificacionesQuery()
-  const [updateNotificacion] = useUpdateNotificacionMutation()
-  const [deleteNotificacion] = useDeleteNotificacionMutation()
+  const [data, setData] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const [eliminandoIds, setEliminandoIds] = useState<Set<string>>(new Set())
   const shouldReduceMotion = useReducedMotion()
+
+  useEffect(() => {
+    getNotificacionesAction().then(r => { if (r.success) setData(r.data); setIsLoading(false) })
+  }, [])
 
   const notificaciones = data?.notificaciones || []
   const resumen = data?.resumen || { total: 0, alta: 0, media: 0, baja: 0, noLeidas: 0 }
 
   const markAsRead = async (notificationId: string) => {
     try {
-      await updateNotificacion({ id: notificationId, isRead: true }).unwrap()
+      await updateNotificacionAction({ id: notificationId, isRead: true })
+      const ref = await getNotificacionesAction()
+      if (ref.success) setData(ref.data)
       toast("Notificación marcada como leída")
     } catch (error) {
       toast.error("No se pudo marcar la notificación como leída")
@@ -102,9 +107,11 @@ export default function NotificationsPage() {
     try {
       await Promise.all(
         unreadNotifications.map((notification: Notification) =>
-          updateNotificacion({ id: notification.id, isRead: true }).unwrap(),
+          updateNotificacionAction({ id: notification.id, isRead: true }),
         ),
       )
+      const ref = await getNotificacionesAction()
+      if (ref.success) setData(ref.data)
       toast("Todas las notificaciones marcadas como leídas")
     } catch (error) {
       toast.error("No se pudieron marcar todas las notificaciones como leídas")
@@ -115,7 +122,9 @@ export default function NotificationsPage() {
     setEliminandoIds((prev) => new Set([...prev, notificationId]))
 
     try {
-      await deleteNotificacion(notificationId).unwrap()
+      await deleteNotificacionAction(notificationId)
+      const ref = await getNotificacionesAction()
+      if (ref.success) setData(ref.data)
       toast("Notificación eliminada")
     } catch (error) {
       toast.error("No se pudo eliminar la notificación")

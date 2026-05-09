@@ -4,7 +4,6 @@ import { apiSlice } from "./services/apiSlice"
 import themeReducer from "./slices/themeSlice"
 import contabilidadReducer from "./slices/contabilidadSlice"
 import pagoSalarioReducer from "./slices/pagoSalarioSlice"
-import exchangeIntelligenceReducer from "./slices/exchangeIntelligenceSlice"
 
 export const store = configureStore({
   reducer: {
@@ -12,7 +11,6 @@ export const store = configureStore({
     theme: themeReducer,
     contabilidad: contabilidadReducer,
     pagoSalario: pagoSalarioReducer,
-    exchangeIntelligence: exchangeIntelligenceReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(apiSlice.middleware),

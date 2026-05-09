@@ -16,7 +16,7 @@ import { Badge } from "@/components/ui/badge"
 import { sileo } from '@/lib/sileo-shim'
 import { Skeleton } from "@/components/ui/skeleton"
 import { DollarSign, User } from "lucide-react"
-import { useAddEmpleadoMutation, useGetEmpleadosQuery, useUpdateEmpleadoMutation } from "@/lib/redux/services/empleadosApi"
+import { createEmpleadoAction, updateEmpleadoAction } from "@/features/empleados/actions"
 import { useGetMonedasQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { TasaCambioDialog } from "@/features/contabilidad/components/tasa-cambio-dialog"
 
@@ -65,11 +65,8 @@ export function EnhancedEmpleadoForm({ initialData }: EnhancedEmpleadoFormProps)
   const [showTasaCambioDialog, setShowTasaCambioDialog] = useState(false)
   const [pendingSubmission, setPendingSubmission] = useState<EmpleadoFormValues | null>(null)
 
-  const { isLoading: isLoadingEmpleados } = useGetEmpleadosQuery()
+  const { isLoading: isLoadingEmpleados } = { isLoading: false }
   const { data: monedasData } = useGetMonedasQuery()
-
-  const [addEmpleados] = useAddEmpleadoMutation()
-  const [updateEmpleados] = useUpdateEmpleadoMutation()
 
   const monedas = monedasData?.data || []
   const monedasActivas = monedas.filter(m => m.isActive)
@@ -118,16 +115,24 @@ export function EnhancedEmpleadoForm({ initialData }: EnhancedEmpleadoFormProps)
       }
 
       if (initialData) {
-        await updateEmpleados({
+        const result = await updateEmpleadoAction({
           empleadoId: initialData.empleadoId,
           ...empleadoData,
-        }).unwrap()
+        })
+        if (!result.success) {
+          sileo.error({ title: result.error?.message || 'Hubo un error al guardar el empleado.' })
+          return
+        }
         sileo.success({ title: 'El empleado ha sido actualizado exitosamente.' })
       } else {
-        await addEmpleados({
+        const result = await createEmpleadoAction({
           empleadoId: v4(),
           ...empleadoData
-        }).unwrap()
+        })
+        if (!result.success) {
+          sileo.error({ title: result.error?.message || 'Hubo un error al guardar el empleado.' })
+          return
+        }
         sileo.success({ title: 'El empleado ha sido registrado exitosamente.' })
       }
       router.back()

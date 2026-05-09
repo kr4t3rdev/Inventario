@@ -15,7 +15,9 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Textarea } from "@/components/ui/textarea"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta/api/puntosDeVentaApi"
-import { useGetProductosPorUbicacionQuery } from "@/lib/redux/services/productosUbicacionApi"
+import { getProductosPorUbicacion } from "@/app/actions/productos-ubicacion"
+import type { ProductoConStock } from "@/lib/redux/services/productosUbicacionApi"
+import { ServerActionError } from "@/lib/api/errors"
 import { useAddVentaMutation } from "@/features/ventas"
 import { useGetClientesQuery } from "@/features/clientes/api/ClienteApi"
 import { useGetCategoriasQuery } from "@/features/categorias/api/categoriasApi"
@@ -67,15 +69,38 @@ export function VentaInterface() {
   const [tipoVencimiento, setTipoVencimiento] = useState<"fecha" | "plazo" | "contra_pago">("contra_pago")
   const [fechaVencimiento, setFechaVencimiento] = useState<string>(new Date().toISOString().split('T')[0])
   const [selectedAnticipoCobroId, setSelectedAnticipoCobroId] = useState<string>("")
+  const [productos, setProductos] = useState<ProductoConStock[]>([])
+  const [isLoadingProductos, setIsLoadingProductos] = useState(false)
+  const [isFetchingProductos, setIsFetchingProductos] = useState(false)
 
   const { data: puntosDeVenta, isLoading: isLoadingPuntosVenta } = useGetPuntosDeVentaQuery()
-  const {
-    data: productos,
-    isLoading: isLoadingProductos,
-    isFetching: isFetchingProductos,
-  } = useGetProductosPorUbicacionQuery(selectedPuntoVenta, {
-    skip: !selectedPuntoVenta,
-  })
+
+  // Cargar productos de la ubicación seleccionada via Server Action
+  useEffect(() => {
+    if (!selectedPuntoVenta) return
+
+    const loadProductos = async () => {
+      setIsLoadingProductos(true)
+      setIsFetchingProductos(true)
+      try {
+        const data = await getProductosPorUbicacion(selectedPuntoVenta)
+        setProductos(data)
+      } catch (err) {
+        if (err instanceof ServerActionError) {
+          toast.error(err.message)
+        } else {
+          console.error('Error al cargar productos:', err)
+          toast.error('Error al cargar productos')
+        }
+        setProductos([])
+      } finally {
+        setIsLoadingProductos(false)
+        setIsFetchingProductos(false)
+      }
+    }
+
+    loadProductos()
+  }, [selectedPuntoVenta])
 
   const [addVenta] = useAddVentaMutation()
   const { data: clientes, isLoading: isLoadingClientes } = useGetClientesQuery()

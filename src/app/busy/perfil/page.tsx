@@ -3,6 +3,7 @@
 import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
+import type { Usuario } from "@/app/models/model"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -11,7 +12,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Save, Shield, User, Clock, AlertCircle, Camera, Mail, Calendar, KeyRound } from "lucide-react"
 import { useAuth } from "@/contexts/auth-context"
-import { useGetProfileQuery, useUpdateProfileMutation } from "@/lib/redux/services/profileApi"
+import { getProfile, updateProfile } from "@/app/actions/profile"
+import { ServerActionError } from "@/lib/api/errors"
 import { toast } from "sonner"
 import { getAuthToken } from "@/lib/token"
 import Loader2 from "@/components/Loaders/hoja/loader"
@@ -75,10 +77,31 @@ const avatarVariants: Variants = {
 
 export default function ProfilePage() {
   const { user } = useAuth()
-  const { data: users, isLoading } = useGetProfileQuery()
-  
-  const profile = (Array.isArray(users) ? users : []).find((u) => u.userId === user?.userId)  
-  const [updateProfile] = useUpdateProfileMutation()
+  const [profile, setProfile] = useState<Usuario | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  // Cargar perfil via Server Action
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const users = await getProfile()
+        const currentUser = (Array.isArray(users) ? users : []).find(
+          (u) => u.userId === user?.userId
+        )
+        setProfile(currentUser || null)
+      } catch (err) {
+        if (err instanceof ServerActionError) {
+          toast.error(err.message)
+        } else {
+          console.error('Error al cargar perfil:', err)
+          toast.error('Error al cargar perfil')
+        }
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    loadProfile()
+  }, [user?.userId])
 
   const [formData, setFormData] = useState({
     name: profile?.name || "",
@@ -126,11 +149,11 @@ export default function ProfilePage() {
         setFormData((prev) => ({ ...prev, avatar: data.url }))
         
         if (profile?.userId) {
-          await updateProfile({
-            userId: profile.userId,
+          const updated = await updateProfile({
             name: formData.name,
             avatar: data.url,
-          }).unwrap()
+          })
+          setProfile(updated)
         }
         
         toast.success("Foto de perfil actualizada correctamente")
@@ -197,15 +220,19 @@ export default function ProfilePage() {
     setLoading(true)
 
     try {
-      await updateProfile({
-        userId: profile?.userId,
+      const updated = await updateProfile({
         name: formData.name,
         avatar: formData.avatar,
-      }).unwrap()
+      })
+      setProfile(updated)
       toast.success("Perfil actualizado correctamente")
     } catch (error) {
-      console.error("Error:", error)
-      toast.error("Error al actualizar perfil")
+      if (error instanceof ServerActionError) {
+        toast.error(error.message)
+      } else {
+        console.error("Error:", error)
+        toast.error("Error al actualizar perfil")
+      }
     } finally {
       setLoading(false)
     }

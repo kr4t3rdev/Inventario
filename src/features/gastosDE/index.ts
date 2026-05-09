@@ -1,9 +1,4 @@
-// Server Actions (nuevo)
-export { getGastosDEAction, getGastoDEByIdAction, createGastosDEAction, updateGastosDEAction, deleteGastosDEAction, getGastoConceptosAction, getGastoConceptoByIdAction, createGastoConceptoAction, deleteGastoConceptoAction, getGastoElementosAction, createGastoElementoAction, deleteGastoElementoAction } from './actions';
-
-// RTK Query (legacy)
-export { gastosDEApi, useGetGastosDEQuery, useGetGastoDEQuery, useAddGastosDEMutation, useUpdateGastosDEMutation, useDeleteGastosDEMutation } from './api/gastosDEApi'
-export { gastosConceptosApi, useGetGastoConceptosQuery, useGetGastoConceptoQuery, useAddGastoConceptoMutation, useUpdateGastoConceptoMutation, useDeleteGastoConceptoMutation, useGetGastoElementosQuery, useAddGastoElementoMutation, useUpdateGastoElementoMutation, useDeleteGastoElementoMutation } from './api/gastosConceptosApi'
+export { getGastosDEAction, getGastoDEByIdAction, createGastosDEAction, updateGastosDEAction, deleteGastosDEAction, getGastoConceptosAction, getGastoConceptoByIdAction, createGastoConceptoAction, updateGastoConceptoAction, deleteGastoConceptoAction, getGastoElementosAction, createGastoElementoAction, updateGastoElementoAction, deleteGastoElementoAction } from './actions';
 export { VendorCombobox } from './components/VendorCombobox'
 export { GastoConceptoForm } from './components/GastoConceptoForm'
 export { GastoElementoForm } from './components/GastoElementoForm'

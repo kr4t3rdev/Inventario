@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card, CardContent } from "@/components/ui/card"
 import { sileo } from '@/lib/sileo-shim'
-import { useAddGastoConceptoMutation, useUpdateGastoConceptoMutation } from "@/lib/redux/services/gastosConceptosApi"
+import { createGastoConceptoAction, updateGastoConceptoAction } from "@/features/gastosDE/actions"
 
 const conceptoSchema = z.object({
   nombre: z.string().min(1, 'El campo Nombre no ha sido rellenado'),
@@ -31,8 +31,6 @@ export function GastoConceptoForm({ initialData }: GastoConceptoFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [isPending, startTransition] = useTransition()
-  const [addConcepto] = useAddGastoConceptoMutation()
-  const [updateConcepto] = useUpdateGastoConceptoMutation()
 
   const form = useForm<ConceptoFormValues>({
     resolver: zodResolver(conceptoSchema),
@@ -43,10 +41,12 @@ export function GastoConceptoForm({ initialData }: GastoConceptoFormProps) {
     setIsLoading(true)
     try {
       if (initialData) {
-        await updateConcepto({ conceptoId: initialData.conceptoId, ...data }).unwrap()
+        const result = await updateGastoConceptoAction({ conceptoId: initialData.conceptoId, ...data })
+        if (!result.success) { sileo.error({ title: result.error?.message || 'Error al actualizar' }); return }
         sileo.success({ title: 'El concepto ha sido actualizado exitosamente.' })
       } else {
-        await addConcepto({ ...data, isActive: true } as any).unwrap()
+        const result = await createGastoConceptoAction({ ...data, isActive: true } as any)
+        if (!result.success) { sileo.error({ title: result.error?.message || 'Error al crear' }); return }
         sileo.success({ title: 'El concepto ha sido creado exitosamente.' })
       }
       router.push("/busy/gastosDE/conceptos")

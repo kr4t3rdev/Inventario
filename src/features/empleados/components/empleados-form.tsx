@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { sileo } from '@/lib/sileo-shim'
 import { Skeleton } from "@/components/ui/skeleton"
-import { useAddEmpleadoMutation, useGetEmpleadosQuery, useUpdateEmpleadoMutation } from "@/lib/redux/services/empleadosApi"
+import { createEmpleadoAction, updateEmpleadoAction } from "@/features/empleados/actions"
 import { Users, Loader2 } from "lucide-react"
 
 const empleadoSchema = z.object({
@@ -90,11 +90,7 @@ const formFieldVariants = {
 export function EmpleadoForm({ initialData }: EmpleadoFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
-
-  const { isLoading: isLoadingEmpleados } = useGetEmpleadosQuery()
-
-  const [addEmpleados] = useAddEmpleadoMutation()
-  const [updateEmpleados] = useUpdateEmpleadoMutation()
+  const { isLoading: isLoadingEmpleados } = { isLoading: false }
 
   const form = useForm<EmpleadoFormValues>({
     resolver: zodResolver(empleadoSchema),
@@ -128,17 +124,25 @@ export function EmpleadoForm({ initialData }: EmpleadoFormProps) {
         submitData.salarioBases = initialData.salarioBases
       }
       if (initialData) {
-        await updateEmpleados({
+        const result = await updateEmpleadoAction({
           empleadoId: initialData.empleadoId,
           ...submitData,
-        }).unwrap()
+        })
+        if (!result.success) {
+          sileo.error({ title: result.error?.message || 'Hubo un error al guardar el empleado.' })
+          return
+        }
         sileo.success({ title: 'Los empleados han sido actualizados exitosamente.' })
         router.push("/busy/empleados")
       } else {
-        await addEmpleados({
+        const result = await createEmpleadoAction({
           empleadoId: v4(),
           ...submitData
-        }).unwrap()
+        })
+        if (!result.success) {
+          sileo.error({ title: result.error?.message || 'Hubo un error al guardar el empleado.' })
+          return
+        }
         sileo.success({ title: 'El empleado ha sido registrado exitosamente.' })
       }
 

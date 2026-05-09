@@ -1,11 +1,12 @@
 'use client'
 
+import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
 import { GastoElementoForm } from "@/features/gastosDE"
-import { useGetGastoConceptoQuery } from "@/lib/redux/services/gastosConceptosApi"
+import { getGastoConceptoByIdAction } from "@/features/gastosDE/actions"
 import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 
@@ -14,7 +15,12 @@ export default function UpdateGastoElementoPage() {
     const router = useRouter()
     const conceptoId = params.id as string
     const elementoId = params.elementoId as string
-    const { data: concepto, isLoading: isLoadingConcepto } = useGetGastoConceptoQuery(conceptoId, { skip: !conceptoId })
+    const [concepto, setConcepto] = useState<any>(null)
+    const [isLoadingConcepto, setIsLoadingConcepto] = useState(true)
+
+    useEffect(() => {
+        getGastoConceptoByIdAction(conceptoId).then(r => { if (r.success) setConcepto(r.data); setIsLoadingConcepto(false) })
+    }, [conceptoId])
 
     // We need to fetch elementos to find the specific one
     const elemento = concepto?.elementos?.find((e: any) => e.elementoId === elementoId)

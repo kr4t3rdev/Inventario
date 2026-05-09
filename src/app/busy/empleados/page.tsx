@@ -13,13 +13,13 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { useDeleteEmpleadoMutation, useGetEmpleadosQuery } from "@/lib/redux/services/empleadosApi"
-import { useAddPagoSalarioMutation, useGetPagoSalariosQuery } from "@/lib/redux/services/pagoSalarioApi"
+import { getEmpleadosAction, deleteEmpleadoAction } from "@/features/empleados/actions"
+import { getPagoSalariosAction, createPagoSalarioAction } from "@/features/pago-salario/actions"
 import { useAppDispatch, useAppSelector } from "@/lib/redux/hooks"
 import { openDialog, closeDialog, selectCart, selectCartTotal, selectIsDialogOpen, selectSelectedEmpleado } from "@/lib/redux/slices/pagoSalarioSlice"
 import { Pencil, Plus, Trash2, ShoppingCart, CreditCard, Users, Sparkles, Loader2 } from "lucide-react"
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { toast } from "sonner"
 import { useForm } from "react-hook-form"
 import type { Empleado } from "../../models/model"
@@ -48,18 +48,25 @@ const itemVariants = {
 }
 
 const Empleado = () => {
-  const { data: empleados, isLoading } = useGetEmpleadosQuery()
-  const { data: pagos, isLoading: isLoadingPagos } = useGetPagoSalariosQuery()
+  const [empleados, setEmpleados] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [pagos, setPagos] = useState<any[]>([])
+  const [isLoadingPagos, setIsLoadingPagos] = useState(true)
+
+  useEffect(() => {
+    getEmpleadosAction().then(r => { if (r.success) setEmpleados(r.data); setIsLoading(false) })
+    getPagoSalariosAction().then(r => { if (r.success) setPagos(r.data); setIsLoadingPagos(false) })
+  }, [])
 
   const [empleadoToDelete, setEmpleadoToDelete] = useState<string | null>(null)
-  const [deleteEmpleado] = useDeleteEmpleadoMutation()
+  const [empleadoToDelete, setEmpleadoToDelete] = useState<string | null>(null)
 
   const dispatch = useAppDispatch()
   const cart = useAppSelector(selectCart)
   const cartTotal = useAppSelector(selectCartTotal)
   const isDialogOpen = useAppSelector(selectIsDialogOpen)
   const selectedEmpleado = useAppSelector(selectSelectedEmpleado)
-  const [addPagoSalario] = useAddPagoSalarioMutation()
+
 
   const { register, handleSubmit, reset } = useForm({
     defaultValues: {
@@ -80,14 +87,19 @@ const Empleado = () => {
     if (!selectedEmpleado) return
 
     try {
-      await addPagoSalario({
+      const result = await createPagoSalarioAction({
         empleadoId: selectedEmpleado.empleadoId,
         salario: data.salario,
         bonificaciones: data.bonificaciones || 0,
         deducciones: data.deducciones || 0,
         horasExtras: data.horasExtras || 0,
         observaciones: data.observaciones || undefined,
-      }).unwrap()
+      })
+
+      if (!result.success) {
+        toast.error(result.error?.message || "Error al registrar el pago de salario")
+        return
+      }
 
       toast.success("Pago de salario registrado exitosamente")
       dispatch(closeDialog())
@@ -100,7 +112,11 @@ const Empleado = () => {
   const handleDelete = async () => {
     if (!empleadoToDelete) return
     try {
-      await deleteEmpleado(empleadoToDelete).unwrap()
+      const result = await deleteEmpleadoAction(empleadoToDelete)
+      if (!result.success) {
+        toast.error(result.error?.message || "Hubo un error al eliminar el empleado.")
+        return
+      }
       toast.success("El empleado ha sido eliminado exitosamente.")
     } catch (error) {
       toast.error("Hubo un error al eliminar el empleado.")

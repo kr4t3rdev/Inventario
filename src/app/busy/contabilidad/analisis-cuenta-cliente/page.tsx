@@ -39,7 +39,7 @@ import { ContabilidadBreadcrumb } from "@/features/contabilidad/components/conta
 
 import { useGetClientesQuery } from "@/features/clientes"
 import { getCuentasPorCobrarAction } from "@/features/contabilidad"
-import { useGetFacturasQuery } from "@/lib/redux/services/facturasApi"
+import { getFacturasAction } from "@/features/facturas/actions"
 import { Cliente, CuentaPorCobrar } from "@/app/models/model"
 import Link from "next/link"
 
@@ -61,13 +61,17 @@ export default function AnalisisCuentaClientePage() {
   }, [])
   
   // Filter invoices by client if one is selected
-  const { data: facturasData, isLoading: isLoadingFacturas } = useGetFacturasQuery(
-    { 
-      clienteId: selectedClientId, 
-      limit: 100 
-    }, 
-    { skip: !selectedClientId }
-  )
+  const [facturasData, setFacturasData] = useState<any>(null)
+  const [isLoadingFacturas, setIsLoadingFacturas] = useState(false)
+
+  useEffect(() => {
+    if (!selectedClientId) return
+    setIsLoadingFacturas(true)
+    getFacturasAction({ clienteId: selectedClientId, limit: 100 }).then(r => {
+      if (r.success) setFacturasData(r.data)
+      setIsLoadingFacturas(false)
+    }).catch(() => setIsLoadingFacturas(false))
+  }, [selectedClientId])
 
   const selectedCliente = useMemo(() => 
     clientes?.find(c => c.clienteId === selectedClientId),

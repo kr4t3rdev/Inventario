@@ -9,7 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useUpdateFacturaMutation } from "@/lib/redux/services/facturasApi"
+import { updateFacturaAction } from "@/features/facturas/actions"
 import { EstadoFacturaBadge } from "@/features/facturas/components/estado-factura-badge"
 import { Factura } from "@/app/models/model"
 import { toast } from "sonner"
@@ -25,14 +25,17 @@ import { Loader2, ChevronDown, RefreshCw } from "lucide-react"
 export function ActualizarEstadoFactura({ factura, showLabel = true }: { factura: Factura, showLabel?: boolean }) {
   const [isUpdating, setIsUpdating] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
-  const [updateFactura] = useUpdateFacturaMutation()
 
   const handleStatusChange = async (nuevoEstado: Factura['estado']) => {
     if (nuevoEstado === factura.estado) return
 
     setIsUpdating(true)
     try {
-      await updateFactura({ id: factura.idFactura, data: { estado: nuevoEstado } }).unwrap()
+      const result = await updateFacturaAction({ facturaId: factura.idFactura, estado: nuevoEstado })
+      if (!result.success) {
+        toast.error(result.error?.message || "No se pudo actualizar el estado de la factura")
+        return
+      }
       toast.success(`Factura ${factura.numeroFactura} actualizada a ${nuevoEstado.toLowerCase()}`)
     } catch (error) {
       console.error("Error al actualizar estado:", error)
