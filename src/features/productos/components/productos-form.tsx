@@ -26,31 +26,23 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Skeleton } from '@/components/ui/skeleton'
 import { sileo } from '@/lib/sileo-shim'
+import type { Almacen, Categoria, Unidad, Vendor } from '@/app/models/model'
 
 import {
   createProductoAction,
   updateProductoAction,
 } from '@/features/productos/actions'
-import { useGetUnidadesQuery } from '@/features/unidades'
-import { useGetAlmacenesQuery } from '@/features/almacenes'
-import { useGetListasPreciosQuery } from '@/features/listas-precios/api/listasPreciosApi'
-import { useGetVendorsQuery } from '@/features/vendors'
-import {
-  useGetCategoriasQuery,
-  useGetSubcategoriasQuery,
-} from '@/features/categorias'
+import { SubcategorySelector } from '@/features/categorias/components/subcategory-selector'
 import {
   buildProductBusinessCodePreview,
   DEFAULT_PARENT_PREVIEW_SURTIDO,
   type ProductBusinessCodeResult,
 } from '@/lib/product-business-code'
 import { buildPreciosPayload } from './precios-payload'
-import { SubcategorySelector } from '@/features/categorias/components/subcategory-selector'
 import { ProductPhotoUpload } from './product-photo-upload'
 import { ClasificadorInfoNote } from './clasificador-info-note'
 import { getAuthToken } from '@/lib/token'
 import { mapCategoryToSection, mapSubcategoryToSpecific } from '@/lib/category-mapping'
-import type { Vendor } from '@/app/models/model'
 
 export function buildProductosSchema(usaEan13: boolean) {
   return z.object({
@@ -172,6 +164,11 @@ function getFirstFormErrorMessage(errors: FieldErrors<ProductosFormValues>): str
 }
 
 interface ProductosFormProps {
+  unidades?: Pick<Unidad, 'unidadId' | 'nombre' | 'simbolo'>[]
+  almacenes?: Pick<Almacen, 'almacenId' | 'nombre'>[]
+  listasPrecios?: Array<{ id: string; nombre: string }>
+  vendors?: Array<Pick<Vendor, 'vendorId' | 'nombre' | 'proveedorCodigo'>>
+  categorias?: Array<Pick<Categoria, 'catId' | 'nombre' | 'parentId'>>
   initialData?: {
     id: string
     nombre: string
@@ -220,10 +217,17 @@ function PulseSkeleton({ className }: { className?: string }): React.JSX.Element
 
 /**
  * @description Formulario de creación/edición de productos con layout visual consistente.
- * @param {ProductosFormProps} props - Datos iniciales para modo edición.
+ * @param {ProductosFormProps} props - Catálogos y datos iniciales para modo edición.
  * @returns {JSX.Element} Formulario de producto.
  */
-export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Element {
+export function ProductoForm({
+  initialData,
+  unidades = [],
+  almacenes = [],
+  listasPrecios = [],
+  vendors = [],
+  categorias = [],
+}: ProductosFormProps): React.JSX.Element {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [usaEan13, setUsaEan13] = useState(false)
@@ -241,12 +245,6 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
       .then((data) => setUsaEan13(data?.usaCodigoEan13 ?? false))
       .catch(() => {})
   }, [])
-
-  const { data: unidades, isLoading: isLoadingUnidades } = useGetUnidadesQuery()
-  const { data: almacenes, isLoading: isLoadingAlmacenes } = useGetAlmacenesQuery()
-  const { data: listasPrecios } = useGetListasPreciosQuery()
-  const { data: categorias = [] } = useGetCategoriasQuery()
-  const { data: vendors = [], isLoading: isLoadingVendors } = useGetVendorsQuery()
 
   const [preciosPorLista, setPreciosPorLista] = useState<Record<string, string>>(() => {
     const initialMap: Record<string, string> = {}
@@ -281,9 +279,7 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
   const watchedProveedorCodigo = form.watch('proveedorCodigo')
   const watchedVendorId = form.watch('vendorId')
 
-  const { data: subcategorias = [] } = useGetSubcategoriasQuery(watchedCategoryId, {
-    skip: !watchedCategoryId,
-  })
+  const subcategorias = categorias.filter((categoria) => categoria.parentId === watchedCategoryId)
 
   const stockValue = Number(form.watch('stock') || 0)
   const stockMinimoValue = Number(form.watch('stockMinimo') || 0)
@@ -295,7 +291,7 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
       ? 'Stock bajo'
       : 'Stock normal'
 
-  const vendorOptions = (vendors as Array<Vendor & { proveedorCodigo?: string | null }>) ?? []
+  const vendorOptions = vendors ?? []
   const selectedVendor = vendorOptions.find((vendor) => vendor.vendorId === watchedVendorId)
   const selectedVendorProviderCode = selectedVendor?.proveedorCodigo?.trim() || ''
 
@@ -443,36 +439,6 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
     } finally {
       setIsLoading(false)
     }
-  }
-
-  if (isLoadingUnidades || isLoadingAlmacenes || isLoadingVendors) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.35 }}
-      >
-        <Card className="overflow-hidden border-dashed">
-          <CardContent className="space-y-5 pt-6">
-            <div className="flex items-center gap-3">
-              <PulseSkeleton className="h-10 w-10 rounded-xl" />
-              <PulseSkeleton className="h-6 w-60" />
-            </div>
-            <PulseSkeleton className="h-12 w-full" />
-            <PulseSkeleton className="h-12 w-full" />
-            <PulseSkeleton className="h-24 w-full" />
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <PulseSkeleton className="h-12 w-full" />
-              <PulseSkeleton className="h-12 w-full" />
-            </div>
-            <div className="flex justify-end gap-3">
-              <Skeleton className="h-10 w-28" />
-              <Skeleton className="h-10 w-40" />
-            </div>
-          </CardContent>
-        </Card>
-      </motion.div>
-    )
   }
 
   return (
@@ -810,9 +776,10 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
                     name="categoriaId"
                     render={({ field }) => (
                       <FormItem>
-                        <SubcategorySelector
-                          selectedCategoryId={field.value}
-                          selectedSubcategoryId={form.watch('subcategoriaId')}
+                          <SubcategorySelector
+                            categories={categorias}
+                            selectedCategoryId={field.value}
+                            selectedSubcategoryId={form.watch('subcategoriaId')}
                           onCategoryChange={(categoryId) => {
                             field.onChange(categoryId)
                             form.setValue('subcategoriaId', '')
@@ -1020,7 +987,7 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {unidades?.map((unidad) => (
+                            {unidades.map((unidad) => (
                               <SelectItem key={unidad.unidadId} value={unidad.unidadId}>
                                 {unidad.nombre} ({unidad.simbolo})
                               </SelectItem>
@@ -1060,7 +1027,7 @@ export function ProductoForm({ initialData }: ProductosFormProps): React.JSX.Ele
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {almacenes?.map((almacen) => (
+                            {almacenes.map((almacen) => (
                               <SelectItem key={almacen.almacenId} value={almacen.almacenId}>
                                 {almacen.nombre}
                               </SelectItem>

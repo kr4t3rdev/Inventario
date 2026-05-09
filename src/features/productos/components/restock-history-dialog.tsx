@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { History } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -14,7 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { RestockHistory } from "./restock-history"
-import { useGetRestockHistoryQuery } from "@/features/productos/api/productosApi"
+import { getRestockHistoryAction } from "@/features/productos/actions"
 
 interface RestockHistoryDialogProps {
   productoId: string
@@ -28,10 +28,33 @@ export function RestockHistoryDialog({
   trigger
 }: RestockHistoryDialogProps) {
   const [open, setOpen] = useState(false)
+  const [data, setData] = useState<any>(undefined)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<any>(undefined)
 
-  const { data, isLoading, error } = useGetRestockHistoryQuery(productoId, {
-    skip: !open, // Only fetch when dialog is open
-  })
+  // Fetch when dialog opens
+  useEffect(() => {
+    if (!open) return
+    let cancelled = false
+    setIsLoading(true)
+    setError(undefined)
+    getRestockHistoryAction({ productoId })
+      .then((result) => {
+        if (cancelled) return
+        if (result.success) {
+          setData(result.data)
+        } else {
+          setError(result.error)
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err)
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [open, productoId])
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

@@ -31,6 +31,11 @@ import type {
   RestockInput,
 } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
+import type {
+  RestockHistoryQueryInput,
+  RestockHistoryResponse,
+  RestockHistoryItem,
+} from './types';
 
 // ─── Select reutilizable ──────────────────────────────────
 
@@ -45,6 +50,9 @@ const PRODUCTO_SELECT = {
   codigoInterno: true,
   codigoNegocio: true,
   proveedorCodigo: true,
+  idSeccionCodigo: true,
+  especificoCodigo: true,
+  surtidoCodigo: true,
   categoriaId: true,
   subcategoriaId: true,
   unidadId: true,
@@ -57,9 +65,10 @@ const PRODUCTO_SELECT = {
   updatedAt: true,
   tenantId: true,
   categoria: { select: { catId: true, nombre: true } },
-  subcategoria: { select: { catId: true, nombre: true } },
-  unidad: { select: { unidadId: true, simbolo: true } },
+  subcategoria: { select: { catId: true, nombre: true, parentId: true } },
+  unidad: { select: { unidadId: true, nombre: true, simbolo: true } },
   vendor: { select: { vendorId: true, nombre: true } },
+  precios: { select: { listaPrecioId: true, precio: true } },
 } as const;
 
 // ─── Server Actions ────────────────────────────────────────
@@ -74,6 +83,24 @@ export const getProductosAction = withAction(async (_input: void, user: Authenti
     select: PRODUCTO_SELECT,
     orderBy: { createdAt: 'desc' },
   });
+});
+
+/**
+ * @description Obtiene un producto por ID dentro del tenant autenticado.
+ */
+export const getProductoByIdAction = withAction(async (id: string, user: AuthenticatedUser) => {
+  const tenantId = requireTenant(user);
+
+  const producto = await prisma.producto.findFirst({
+    where: { id, tenantId },
+    select: PRODUCTO_SELECT,
+  });
+
+  if (!producto) {
+    throw new ActionError('Producto no encontrado', 'NOT_FOUND');
+  }
+
+  return producto;
 });
 
 /**
@@ -352,22 +379,85 @@ export const bulkUpdateStockMinimoAction = withAction(
 );
 
 /**
- * @description Obtiene el historial de restock de un producto.
+ * @description Obtiene el historial de restock paginado de un producto.
  *
- * @param productoId - ID del producto
- * @returns Historial de restocks ordenado por fecha descendente
+ * @param input - { productoId, page?, limit?, sortBy?, sortOrder? }
+ * @returns Historial paginado con resumen estadístico
  */
 export const getRestockHistoryAction = withAction(
-  async (productoId: string, user: AuthenticatedUser) => {
+  async (input: RestockHistoryQueryInput, user: AuthenticatedUser): Promise<RestockHistoryResponse> => {
     requireTenant(user);
-    return prisma.gastoCompra.findMany({
-      where: {
-        productoId,
-        tenantId: (user as { tenantId: string }).tenantId,
+    const {
+      productoId,
+      page = 1,
+      limit = 15,
+      sortBy = 'fecha',
+      sortOrder = 'desc',
+    } = input;
+
+    const skip = (page - 1) * limit;
+
+    const [rawHistory, totalItems, summary] = await Promise.all([
+      prisma.gastoCompra.findMany({
+        where: { productoId, tenantId: (user as { tenantId: string }).tenantId },
+        orderBy: { [sortBy]: sortOrder },
+        skip,
+        take: limit,
+        include: {
+          producto: { select: { id: true, nombre: true, precioCosto: true, precioVenta: true } },
+          vendor: { select: { nombre: true, contacto: true } },
+        },
+      }),
+      prisma.gastoCompra.count({
+        where: { productoId, tenantId: (user as { tenantId: string }).tenantId },
+      }),
+      prisma.gastoCompra.aggregate({
+        where: { productoId, tenantId: (user as { tenantId: string }).tenantId },
+        _count: { productoId: true },
+        _sum: { cantidad: true, total: true },
+      }),
+    ]);
+
+    const history: RestockHistoryItem[] = rawHistory.map((record) => ({
+      id: record.gastoCompraId,
+      fecha: record.createdAt.toISOString(),
+      cantidad: record.cantidad,
+      precioCostoAnterior: 0,
+      precioCostoNuevo: record.precioUnitario,
+      precioVentaAnterior: record.producto?.precioVenta ?? 0,
+      precioVentaNuevo: record.producto?.precioVenta ?? 0,
+      totalCompra: record.total,
+      descripcion: record.descripcion,
+      tipoOperacion: 'restock_same_prices' as const,
+      vendor: {
+        nombre: record.vendor?.nombre ?? 'Desconocido',
+        contacto: record.vendor?.contacto ?? null,
       },
-      orderBy: { createdAt: 'desc' },
-      include: { producto: { select: { nombre: true } } },
-    });
+    }));
+
+    const totalPages = Math.ceil(totalItems / limit);
+    const totalRestocks = summary._count.productoId || 0;
+    const totalQuantityAdded = summary._sum.cantidad || 0;
+    const totalCostSpent = summary._sum.total || 0;
+
+    return {
+      history,
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalItems,
+        itemsPerPage: limit,
+        hasNextPage: page < totalPages,
+        hasPreviousPage: page > 1,
+      },
+      summary: {
+        totalRestocks,
+        totalQuantityAdded,
+        totalCostSpent,
+        averageCostPerRestock: totalRestocks > 0 ? Math.round(totalCostSpent / totalRestocks) : 0,
+        priceChanges: 0,
+      },
+    };
   },
 );
 

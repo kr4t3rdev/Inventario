@@ -1,6 +1,7 @@
 // Server Actions (nuevo)
 export {
   getProductosAction,
+  getProductoByIdAction,
   createProductoAction,
   updateProductoAction,
   deleteProductoAction,

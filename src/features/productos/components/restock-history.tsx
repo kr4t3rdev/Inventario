@@ -35,48 +35,10 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Separator } from "@/components/ui/separator"
 import { formatCurrency } from "@/lib/utils"
 
-// Interface matching the API response
-interface RestockHistoryItem {
-  id: string
-  fecha: string
-  cantidad: number
-  precioCostoAnterior: number
-  precioCostoNuevo: number
-  precioVentaAnterior: number
-  precioVentaNuevo: number
-  totalCompra: number
-  descripcion: string | null
-  tipoOperacion: 'restock_same_prices' | 'restock_new_instance' | 'restock_price_change'
-  productInstance?: {
-    id: string
-    nombre: string
-    precioCosto: number
-    precioVenta: number
-  }
-  vendor: {
-    nombre: string
-    contacto: string | null
-  }
-}
-
-interface RestockHistoryResponse {
-  history: RestockHistoryItem[]
-  pagination: {
-    currentPage: number
-    totalPages: number
-    totalItems: number
-    itemsPerPage: number
-    hasNextPage: boolean
-    hasPreviousPage: boolean
-  }
-  summary: {
-    totalRestocks: number
-    totalQuantityAdded: number
-    totalCostSpent: number
-    averageCostPerRestock: number
-    priceChanges: number
-  }
-}
+import type {
+  RestockHistoryItem,
+  RestockHistoryResponse,
+} from '@/features/productos/types'
 
 interface RestockHistoryProps {
   data: RestockHistoryResponse | undefined
