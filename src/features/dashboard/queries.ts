@@ -98,7 +98,12 @@ export async function getDashboardStatsQuery(tenantId: string): Promise<Dashboar
     }),
     prisma.transferencia.findMany({
       where: { tenantId },
-      select: { tipoTransferencia: true },
+      select: {
+        origenId: true,
+        destinoId: true,
+        puntoDeVentaOrigenId: true,
+        puntoDeVentaDestinoId: true,
+      },
     }),
     prisma.producto.findMany({
       where: { tenantId },
@@ -208,10 +213,18 @@ export async function getDashboardStatsQuery(tenantId: string): Promise<Dashboar
   }
 
   const transferenciasStats = {
-    almacenAAlmacen: transferenciasData.filter((t: any) => t.tipoTransferencia === 'ALMACEN_A_ALMACEN').length,
-    almacenAPuntoVenta: transferenciasData.filter((t: any) => t.tipoTransferencia === 'ALMACEN_A_PUNTO_VENTA').length,
-    puntoVentaAAlmacen: transferenciasData.filter((t: any) => t.tipoTransferencia === 'PUNTO_VENTA_A_ALMACEN').length,
-    puntoVentaAPuntoVenta: transferenciasData.filter((t: any) => t.tipoTransferencia === 'PUNTO_VENTA_A_PUNTO_VENTA').length,
+    almacenAAlmacen: transferenciasData.filter(
+      (t: any) => t.origenId && t.destinoId,
+    ).length,
+    almacenAPuntoVenta: transferenciasData.filter(
+      (t: any) => t.origenId && t.puntoDeVentaDestinoId,
+    ).length,
+    puntoVentaAAlmacen: transferenciasData.filter(
+      (t: any) => t.puntoDeVentaOrigenId && t.destinoId,
+    ).length,
+    puntoVentaAPuntoVenta: transferenciasData.filter(
+      (t: any) => t.puntoDeVentaOrigenId && t.puntoDeVentaDestinoId,
+    ).length,
   }
 
   const distribucionStock: { categoria: string; productos: number; stockTotal: number; valorTotal: number }[] = []
