@@ -1,4 +1,3 @@
-import { useAddVendorMutation, useGetVendorsQuery, useUpdateVendorMutation } from "@/features/vendors/api/vendorsApi";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import { Building2, Loader2, Sparkles, Copy, Check } from "lucide-react";
@@ -8,11 +7,11 @@ import { useForm } from "react-hook-form";
 import { sileo } from '@/lib/sileo-shim';
 import { z } from "zod";
 import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { createVendorAction, updateVendorAction } from "@/features/vendors/actions";
 import { VendorLogoUpload } from "./vendor-logo-upload";
 
 
@@ -45,15 +44,18 @@ interface VendorFormProps {
     }
 }
 
+/**
+ * @description Formulario para crear o editar un proveedor.
+ * Usa Server Actions (createVendorAction / updateVendorAction)
+ * en lugar de RTK Query.
+ *
+ * @param {VendorFormProps} props - Datos iniciales del proveedor (opcional).
+ * @returns {JSX.Element} Formulario de proveedor.
+ */
 export function VendorForm({initialData}: VendorFormProps) {
     const router = useRouter()
     const [isLoading, setIsLoading] = useState(false)
     const [copiedField, setCopiedField] = useState<string | null>(null)
-
-    const { data: vendor, isLoading: isLoadingVendor} = useGetVendorsQuery()
-
-    const [addVendor] = useAddVendorMutation()
-    const [updateVendor] = useUpdateVendorMutation()
 
     const copyToClipboard = (text: string, field: string) => {
         navigator.clipboard.writeText(text)
@@ -79,87 +81,45 @@ export function VendorForm({initialData}: VendorFormProps) {
         setIsLoading(true)
         try {
             if (initialData) {
-        await updateVendor({
-            vendorId: initialData.vendorId,
-          ...data,
-        }).unwrap()
-        sileo.success({ title: 'El proveedor ha sido actualizado exitosamente.' })
-      } else {
-        await addVendor(data).unwrap()
-        sileo.success({ title: 'El proveedor ha sido registrado exitosamente.' })
-      }
-      router.push("/busy/vendor")
-      router.refresh()
+                const result = await updateVendorAction({
+                    vendorId: initialData.vendorId,
+                    nombre: data.nombre,
+                    direccion: data.direccion,
+                    telefono: data.telefono,
+                    contacto: data.contacto,
+                    cuentaCUP: data.cuentaCUP,
+                    cuentaUSD: data.cuentaUSD,
+                    logo: data.logo ?? null,
+                })
+                if (!result.success) {
+                    throw new Error(result.error?.message || 'Error al actualizar el proveedor')
+                }
+                sileo.success({ title: 'El proveedor ha sido actualizado exitosamente.' })
+            } else {
+                const result = await createVendorAction({
+                    nombre: data.nombre,
+                    direccion: data.direccion,
+                    telefono: data.telefono,
+                    contacto: data.contacto,
+                    cuentaCUP: data.cuentaCUP,
+                    cuentaUSD: data.cuentaUSD,
+                    logo: data.logo ?? null,
+                })
+                if (!result.success) {
+                    throw new Error(result.error?.message || 'Error al crear el proveedor')
+                }
+                sileo.success({ title: 'El proveedor ha sido registrado exitosamente.' })
+            }
+            router.push("/busy/vendor")
+            router.refresh()
         } catch (error) {
             console.error("Error al guardar el proveedor:", error);
             sileo.error({ title: 'Hubo un error al guardar el proveedor.' })
-        }finally {
+        } finally {
             setIsLoading(false)
         }
     }
 
-    if (isLoadingVendor) {
-        return (
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-            >
-                <Card className="border-dashed">
-                    <CardContent className="pt-6">
-                        <div className="flex items-center justify-center py-8 mb-6">
-                            <motion.div
-                                className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full"
-                                animate={{ rotate: 360 }}
-                                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                            />
-                        </div>
-                        <div className="space-y-6">
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ delay: 0.1 }}
-                            >
-                                <Skeleton className="h-10 w-full" />
-                            </motion.div>
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ delay: 0.2 }}
-                            >
-                                <Skeleton className="h-10 w-full" />
-                            </motion.div>
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ delay: 0.3 }}
-                            >
-                                <Skeleton className="h-10 w-full" />
-                            </motion.div>
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ delay: 0.4 }}
-                            >
-                                <Skeleton className="h-10 w-full" />
-                            </motion.div>
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ delay: 0.5 }}
-                            >
-                                <Skeleton className="h-10 w-full" />
-                            </motion.div>
-                            <div className="flex justify-end space-x-4">
-                                <Skeleton className="h-10 w-24" />
-                                <Skeleton className="h-10 w-24" />
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
-            </motion.div>
-        )
-    }
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -442,5 +402,4 @@ export function VendorForm({initialData}: VendorFormProps) {
             </Card>
         </motion.div>
     )
-
 }

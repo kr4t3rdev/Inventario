@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useGetStockPorUbicacionQuery } from "@/lib/redux/services/stockUbicacionApi"
-import { useGetAlmacenesQuery } from "@/features/almacenes/api/almacenesApi"
+import { useAlmacenes } from "@/features/almacenes/hooks/use-almacenes"
 import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta/api/puntosDeVentaApi"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -34,17 +34,16 @@ export function ReportePorUbicacion() {
   const [ubicacionId, setUbicacionId] = useState<string>("")
   const [tipoUbicacion, setTipoUbicacion] = useState<"almacen" | "punto_venta">("almacen")
 
+  // ─── Hooks ────────────────────────────────────────────
+  const { almacenes } = useAlmacenes()
+
   // ─── Server Actions state ─────────────────────────────
-  const [almacenes, setAlmacenes] = useState<Awaited<ReturnType<typeof getAlmacenesAction>>['data']>([])
   const [puntosVenta, setPuntosVenta] = useState<Awaited<ReturnType<typeof getPuntosDeVentaAction>>['data']>([])
   const [productosUbicacion, setProductosUbicacion] = useState<Awaited<ReturnType<typeof getStockPorUbicacionAction>>['data']>([])
   const [isLoadingStock, setIsLoadingStock] = useState(false)
   const [stockError, setStockError] = useState<string | null>(null)
 
   // ─── Fetches ──────────────────────────────────────────
-  useEffect(() => {
-    getAlmacenesAction().then(r => { if (r.success) setAlmacenes(r.data ?? []) })
-  }, [])
   useEffect(() => {
     getPuntosDeVentaAction().then(r => { if (r.success) setPuntosVenta(r.data ?? []) })
   }, [])

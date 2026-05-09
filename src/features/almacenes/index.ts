@@ -1,4 +1,4 @@
-// Server Actions (nuevo)
+// Server Actions
 export {
   getAlmacenesAction,
   getAlmacenByIdAction,
@@ -7,6 +7,6 @@ export {
   deleteAlmacenAction,
 } from './actions';
 
-// RTK Query (legacy — mantener hasta migrar todos los consumidores)
-export { almacenesApi, useGetAlmacenesQuery, useGetAlmacenQuery, useAddAlmacenMutation, useUpdateAlmacenMutation, useDeleteAlmacenMutation } from './api/almacenesApi';
-export type { Almacen } from './api/almacenesApi';
+// Hooks
+export { useAlmacenes } from './hooks/use-almacenes';
+export type { Almacen } from '@/app/models/model';

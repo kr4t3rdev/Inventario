@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/select';
 import { useCategorias } from '@/features/categorias/hooks/use-categorias';
 import { useGetUnidadesQuery } from '@/features/unidades/api/unidadesApi';
-import { useGetAlmacenesQuery } from '@/features/almacenes/api/almacenesApi';
+import { useAlmacenes } from '@/features/almacenes/hooks/use-almacenes';
 import { useGetVendorsQuery } from '@/features/vendors/api/vendorsApi';
 import { getAuthToken } from '@/lib/token';
 
@@ -97,7 +97,7 @@ export function ProductoSalidaForm({
     return allCategorias.filter((cat) => cat.parentId === values.categoriaId);
   }, [allCategorias, values.categoriaId]);
   const { data: unidades = [] } = useGetUnidadesQuery();
-  const { data: almacenes = [] } = useGetAlmacenesQuery();
+  const { almacenes } = useAlmacenes();
   const { data: vendors = [] } = useGetVendorsQuery();
 
   useEffect(() => {

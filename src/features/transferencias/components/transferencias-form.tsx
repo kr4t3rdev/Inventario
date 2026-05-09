@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils"
 
 import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta/api/puntosDeVentaApi"
 import { useGetPuntosDeVentaQuery } from "@/features/puntos-venta"
-import { useGetAlmacenesQuery } from "@/features/almacenes/api/almacenesApi"
+import { useAlmacenes } from "@/features/almacenes/hooks/use-almacenes"
 import { useGetStockPorUbicacionQuery } from "@/lib/redux/services/stockUbicacionApi"
 import { useDispatch } from "react-redux"
 import { apiSlice } from "@/lib/redux/services/apiSlice"
@@ -363,7 +363,7 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
   const [productos, setProductos] = useState<any[]>([])
   const [isLoadingProductos, setIsLoadingProductos] = useState(true)
   const { data: puntosDeVenta, isLoading: isLoadingPuntosDeVenta } = useGetPuntosDeVentaQuery()
-  const { data: almacenes, isLoading: isLoadingAlmacenes } = useGetAlmacenesQuery()
+  const { almacenes, isLoading: isLoadingAlmacenes } = useAlmacenes()
 
   useEffect(() => {
     getProductosAction().then(r => {
