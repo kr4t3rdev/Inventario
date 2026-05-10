@@ -30,9 +30,10 @@ import {
 import { Loader2, DollarSign } from "lucide-react"
 import { sileo } from '@/lib/sileo-shim'
 import { showErrorToast } from "../toast-notifications"
-import { useRegistrarPagoCapitalMutation, useGetCuentasBancariasQuery } from "@/features/contabilidad/api/contabilidadApi"
+import { registrarPagoCapitalAction } from "@/features/contabilidad/actions-capital"
+import { getCuentasBancariasAction } from "@/features/contabilidad/actions-cuentas-bancarias"
 import { InyeccionCapital } from "@/app/models/model"
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Textarea } from "@/components/ui/textarea"
 
 const pagoSchema = z.object({
@@ -52,9 +53,12 @@ interface PagoDeudaDialogProps {
 }
 
 export function PagoDeudaDialog({ inyeccion, open, onOpenChange, onSuccess }: PagoDeudaDialogProps) {
-  const [registrarPago, { isLoading }] = useRegistrarPagoCapitalMutation()
-  const { data: cuentasData } = useGetCuentasBancariasQuery()
-  const cuentas = cuentasData?.cuentas || []
+  const [isLoading, setIsLoading] = useState(false)
+  const [cuentas, setCuentas] = useState<any[]>([])
+
+  useEffect(() => {
+    getCuentasBancariasAction().then(r => { if (r.success) setCuentas(r.data?.cuentas ?? []) })
+  }, [])
 
   const form = useForm<PagoFormData>({
     resolver: zodResolver(pagoSchema),
@@ -84,10 +88,14 @@ export function PagoDeudaDialog({ inyeccion, open, onOpenChange, onSuccess }: Pa
     if (!inyeccion) return
 
     try {
-      await registrarPago({
-        id: inyeccion.id,
-        ...data
-      }).unwrap()
+      const result = await registrarPagoCapitalAction({
+        inyeccionId: inyeccion.id,
+        monto: data.montoPagado,
+        cuentaBancariaId: data.cuentaId,
+        tipoPagoId: 'default',
+        observaciones: data.observaciones,
+      })
+      if (!result.success) throw new Error(result.error?.message || 'Error al registrar pago')
       
       sileo.success({ title: 'Pago registrado exitosamente' })
       onOpenChange(false)

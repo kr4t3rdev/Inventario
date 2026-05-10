@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Table,
   TableBody,
@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { useGetInyeccionesCapitalQuery } from "@/features/contabilidad/api/contabilidadApi"
+import { getInyeccionesCapitalAction } from "@/features/contabilidad/actions-capital"
 import { InyeccionCapital } from "@/app/models/model"
 import { PagoDeudaDialog } from "./pago-deuda-dialog"
 import { Loader2, TrendingUp, TrendingDown, DollarSign, CreditCard } from "lucide-react"
@@ -20,11 +20,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 
 export function CapitalTable() {
-  const { data, isLoading } = useGetInyeccionesCapitalQuery({})
+  const [isLoading, setIsLoading] = useState(true)
+  const [inyecciones, setInyecciones] = useState<any[]>([])
   const [selectedInjection, setSelectedInjection] = useState<InyeccionCapital | null>(null)
   const [isPayOpen, setIsPayOpen] = useState(false)
 
-  const inyecciones = data?.inyecciones || []
+  useEffect(() => {
+    getInyeccionesCapitalAction().then(r => {
+      if (r.success) setInyecciones(r.data?.inyecciones ?? [])
+      setIsLoading(false)
+    })
+  }, [])
 
   const handlePayClick = (injection: InyeccionCapital) => {
     setSelectedInjection(injection)

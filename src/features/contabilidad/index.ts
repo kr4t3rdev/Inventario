@@ -24,6 +24,13 @@ export {
 // Server Actions — Tipos de Pago
 export { getTiposPagoAction } from './actions-tipos-pago';
 
+// Server Actions — Capital
+export {
+  getInyeccionesCapitalAction,
+  createInyeccionCapitalAction,
+  registrarPagoCapitalAction,
+} from './actions-capital';
+
 // Server Actions — Cuentas Bancarias
 export {
   getCuentasBancariasAction,

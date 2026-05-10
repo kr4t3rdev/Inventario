@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -24,7 +25,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Loader2, Save, X, Building2, User } from "lucide-react"
 import { sileo } from '@/lib/sileo-shim'
 import { showErrorToast } from "../toast-notifications"
-import { useCreateInyeccionCapitalMutation, useGetCuentasBancariasQuery, useGetMonedasQuery } from "@/features/contabilidad/api/contabilidadApi"
+import { createInyeccionCapitalAction } from "@/features/contabilidad/actions-capital"
+import { getCuentasBancariasAction } from "@/features/contabilidad/actions-cuentas-bancarias"
 import { Textarea } from "@/components/ui/textarea"
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -68,12 +70,13 @@ interface CapitalFormProps {
 }
 
 export function CapitalForm({ onSuccess, onCancel }: CapitalFormProps) {
-  const [createInjection, { isLoading: isCreating }] = useCreateInyeccionCapitalMutation()
-  const { data: cuentasData } = useGetCuentasBancariasQuery()
-  const { data: monedasData } = useGetMonedasQuery()
-  
-  const cuentas = cuentasData?.cuentas || []
-  const monedas = monedasData?.data || []
+  const [isCreating, setIsCreating] = useState(false)
+  const [cuentas, setCuentas] = useState<any[]>([])
+  const [monedas] = useState<any[]>([{ codigo: 'CUP', nombre: 'Peso Cubano' }, { codigo: 'USD', nombre: 'Dólar' }, { codigo: 'MLC', nombre: 'MLC' }])
+
+  useEffect(() => {
+    getCuentasBancariasAction().then(r => { if (r.success) setCuentas(r.data?.cuentas ?? []) })
+  }, [])
 
   const form = useForm<CapitalFormData>({
     resolver: zodResolver(capitalSchema),
@@ -94,7 +97,8 @@ export function CapitalForm({ onSuccess, onCancel }: CapitalFormProps) {
 
   const onSubmit = async (data: CapitalFormData) => {
     try {
-      await createInjection(data).unwrap()
+      const result = await createInyeccionCapitalAction(data)
+      if (!result.success) throw new Error(result.error?.message || 'Error al crear')
       sileo.success({ title: 'Inyección de capital registrada exitosamente' })
       form.reset()
       onSuccess?.()
