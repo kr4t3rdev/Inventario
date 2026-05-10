@@ -90,16 +90,14 @@ export function ReconciliacionServiciosForm({
   const [showTasaCambioDialog, setShowTasaCambioDialog] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const { data: cuentasData } = useGetCuentasBancariasQuery()
-  const { data: tiposPagoData } = useGetTiposPagoQuery({})
-  const { data: monedasData } = useGetMonedasQuery()
-  const [reconciliarServicio] = useReconciliarServicioMutation()
+  const [isLoading, setIsLoading] = useState(false)
+  const [cuentas, setCuentas] = useState<any[]>([])
+  const [tiposPago, setTiposPago] = useState<any[]>([])
 
-
-  // Simplificar el manejo de arrays - asumir que la API devuelve arrays directamente
-  const tiposPago = ((tiposPagoData as any)?.data as any[]) || []
-  const monedas = ((monedasData as any)?.data as any[]) || []
-  const cuentas = ((cuentasData as any)?.cuentas as any[]) || []
+  useEffect(() => {
+    getCuentasBancariasAction().then(r => { if (r.success) setCuentas(r.data?.cuentas ?? []) })
+    getTiposPagoAction().then(r => { if (r.success) setTiposPago(r.data?.data ?? []) })
+  }, [])
 
   const form = useForm<ReconciliacionServicioFormData>({
     resolver: zodResolver(reconciliacionServicioSchema),
@@ -241,15 +239,15 @@ export function ReconciliacionServiciosForm({
     setIsSubmitting(true)
     try {
       for (const dist of data.distribuciones) {
-        await reconciliarServicio({
+        const result = await reconciliarServicioAction({
           ventaServicioId: servicio.ventaServicioId!,
           cuentaId: dist.cuentaId,
           tipoPagoId: dist.tipoPagoId,
           monto: dist.monto,
           moneda: dist.moneda,
-          tasaCambio: dist.tasaCambio,
           observaciones: dist.observaciones,
-        }).unwrap()
+        });
+        if (!result.success) throw new Error(result.error?.message || 'Error al reconciliar');
       }
 
       sileo.success({ title: 'Servicio reconciliado exitosamente' })

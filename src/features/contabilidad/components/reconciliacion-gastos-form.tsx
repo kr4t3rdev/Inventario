@@ -127,16 +127,14 @@ export function ReconciliacionGastosForm({
 }: ReconciliacionGastosFormProps) {
   const [showTasaCambioDialog, setShowTasaCambioDialog] = useState(false)
 
-  const { data: cuentasData = { cuentas: [] } } = useGetCuentasBancariasQuery()
-  const { data: tiposPagoData = { data: [] } } = useGetTiposPagoQuery({})
-  const { data: monedasData = { data: [] } } = useGetMonedasQuery()
-  const [reconciliarGasto, { isLoading }] = useReconciliarGastoMutation()
+  const [isLoading, setIsLoading] = useState(false)
+  const [cuentas, setCuentas] = useState<any[]>([])
+  const [tiposPago, setTiposPago] = useState<any[]>([])
 
-  // console.log('Cuentas Data:', cuentasData)
-
-  const cuentas = cuentasData.cuentas || []
-  const tiposPago = tiposPagoData.data || []
-  const monedas = monedasData.data || []
+  useEffect(() => {
+    getCuentasBancariasAction().then(r => { if (r.success) setCuentas(r.data?.cuentas ?? []) })
+    getTiposPagoAction().then(r => { if (r.success) setTiposPago(r.data?.data ?? []) })
+  }, [])
 
   const form = useForm<ReconciliacionGastoFormData>({
     resolver: zodResolver(reconciliacionGastoSchema),
@@ -399,11 +397,15 @@ export function ReconciliacionGastosForm({
         baseData.estado = 'PAGADA'
       }
 
-      const reconciliacionData = Object.fromEntries(
-        Object.entries(baseData).filter(([_, v]) => v !== undefined && v !== null)
-      ) as any
-
-      await reconciliarGasto(reconciliacionData).unwrap()
+      const result = await reconciliarGastoAction({
+        gastoId: gasto.gastoId,
+        cuentaId: baseData.cuentaId,
+        tipoPagoId: baseData.tipoPagoId,
+        monto: baseData.monto,
+        moneda: baseData.moneda,
+        descripcion: baseData.descripcion,
+      })
+      if (!result.success) throw new Error(result.error?.message || 'Error al reconciliar')
 
       sileo.success({ title: 'Gasto reconciliado exitosamente' })
 
