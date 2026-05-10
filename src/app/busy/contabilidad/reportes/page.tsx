@@ -23,14 +23,14 @@ function ReportesPageLoader() {
       <div className="space-y-2">
         <Skeleton className="h-5 w-40" />
         <Skeleton className="h-8 w-80" />
-        <Skeleton className="h-4 w-[32rem] max-w-full" />
+        <Skeleton className="h-4 w-lg max-w-full" />
       </div>
       <div className="grid gap-4 md:grid-cols-3">
         <Skeleton className="h-10 rounded-xl" />
         <Skeleton className="h-10 rounded-xl" />
         <Skeleton className="h-10 rounded-xl" />
       </div>
-      <Skeleton className="h-[640px] w-full rounded-2xl" />
+      <Skeleton className="h-160 w-full rounded-2xl" />
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import { getMonedasAction, getTasasActualesAction } from "@/features/contabilidad/actions-exchange"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { ThemeToggle } from "./theme-toggle"
@@ -5,7 +6,14 @@ import { PanelNotificaciones } from "@/features/notificaciones/components/panel-
 import { CurrencyIndicator } from "@/features/contabilidad/components/currency-indicator"
 import { ContabilidadBreadcrumb } from "@/features/contabilidad/components/contabilidad-breadcrumb"
 
-export function SiteHeader() {
+export async function SiteHeader() {
+  const [monedasResult, tasasResult] = await Promise.all([
+    getMonedasAction(),
+    getTasasActualesAction(),
+  ])
+
+  const monedas = monedasResult.success ? (monedasResult.data ?? []) : []
+  const tasas = tasasResult.success ? (tasasResult.data?.tasas ?? []) : []
   
   return (
     <div>
@@ -19,7 +27,7 @@ export function SiteHeader() {
         </div>
         
         {/* Currency Indicator */}
-        <CurrencyIndicator />
+        <CurrencyIndicator monedas={monedas} tasas={tasas} />
         
         <div className="flex items-center gap-2">
           <ThemeToggle/>

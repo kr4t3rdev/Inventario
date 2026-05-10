@@ -4,21 +4,36 @@ import { usePathname } from "next/navigation"
 import { DollarSign, TrendingUp } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { useGetMonedasQuery, useGetTasasActualesQuery } from "@/features/contabilidad/api/contabilidadApi"
 
-export function CurrencyIndicator() {
+interface Moneda {
+  codigo: string
+  simbolo?: string | null
+  esPrincipal?: boolean
+}
+
+interface TasaCambio {
+  monedaOrigenId: string
+  tasa: number | string
+  fechaVigencia: string | Date
+}
+
+interface CurrencyIndicatorProps {
+  monedas?: Moneda[]
+  tasas?: TasaCambio[]
+}
+
+/**
+ * @description Indicador compacto de moneda y tasas para el header.
+ * @param {CurrencyIndicatorProps} props - Datos precargados desde el servidor.
+ * @returns {JSX.Element | null} Badge de moneda con tasas visibles o null fuera de contabilidad.
+ */
+export function CurrencyIndicator({ monedas = [], tasas = [] }: CurrencyIndicatorProps) {
   const pathname = usePathname()
-  const { data: monedasData } = useGetMonedasQuery()
-  const { data: tasasData } = useGetTasasActualesQuery()
 
   // Only show on contabilidad pages
   if (!pathname.startsWith("/busy/contabilidad")) {
     return null
   }
-
-  // Ensure we have arrays to work with
-  const monedas = Array.isArray(monedasData) ? monedasData : []
-  const tasas = Array.isArray(tasasData) ? tasasData : []
 
   const monedaPrincipal = monedas.find(m => m.esPrincipal)
   const tasasSecundarias = tasas.filter(t => t.monedaOrigenId !== monedaPrincipal?.codigo)

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, type ReactNode } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Loader2, Tag, Sparkles, Receipt, Package } from "lucide-react"
 
@@ -37,15 +37,16 @@ import { toast } from "sonner"
 import { z } from "zod"
 import { Card } from "@/components/ui/card"
 
-import { Producto, Oferta } from "@/app/models/model"
+import { Producto } from "@/app/models/model"
 import { useClientes } from "@/features/clientes/hooks/use-clientes"
 import { createOfertaAction } from "@/features/ofertas/actions"
+import type { OfertaInput } from "@/features/ofertas/schemas"
 import { getAuthToken } from "@/lib/token"
 import { formatCurrency } from "@/lib/utils"
 
 interface QuickOfferDialogProps {
   producto: Producto
-  trigger?: React.ReactNode
+  trigger?: ReactNode
 }
 
 const formSchema = z.object({
@@ -138,7 +139,7 @@ export function QuickOfferDialog({ producto, trigger }: QuickOfferDialogProps) {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsSubmitting(true)
     try {
-      const payload = {
+      const payload: OfertaInput = {
         clienteId: values.clienteId,
         fechaVencimiento: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         observaciones: values.observaciones,
@@ -153,13 +154,20 @@ export function QuickOfferDialog({ producto, trigger }: QuickOfferDialogProps) {
         subtotal: values.cantidad * values.precioUnitario,
         impuestos: 0,
         total: values.cantidad * values.precioUnitario,
-      } as Partial<Oferta>
+      }
 
       const result = await createOfertaAction(payload)
       if (!result.success) {
-        throw new Error(result.error || "Error al crear la oferta")
+        const errorMessage =
+          typeof result.error === "string"
+            ? result.error
+            : result.error?.message || "Error al crear la oferta"
+        throw new Error(errorMessage)
       }
       const createdOferta = result.data
+      if (!createdOferta) {
+        throw new Error("No se recibió la oferta creada")
+      }
       toast.success('Oferta creada exitosamente')
       setOpen(false)
       form.reset()

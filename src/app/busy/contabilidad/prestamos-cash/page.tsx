@@ -8,6 +8,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { PageTransition, StaggerContainer, StaggerItem } from "@/components/ui/animations"
 import { getClientesAction } from "@/features/clientes"
 import { getCuentasBancariasAction } from "@/features/contabilidad/actions-cuentas-bancarias"
+import { getTasasActualesAction } from "@/features/contabilidad/actions-exchange"
 import { getTiposPagoAction } from "@/features/contabilidad/actions-tipos-pago"
 import { getPrestamosCashAction } from "@/features/contabilidad/actions-prestamos-cash"
 import { PrestamosCashTable } from "@/features/contabilidad/components/prestamos-cash/prestamos-cash-table"
@@ -32,7 +33,7 @@ function PrestamosCashContent() {
 
   const loadPrestamos = async () => {
     setIsLoading(true)
-    const r = await getPrestamosCashAction()
+    const r = await getPrestamosCashAction({})
     if (r.success) setPrestamos(r.data?.prestamos ?? [])
     else setError(r.error)
     setIsLoading(false)
@@ -43,11 +44,18 @@ function PrestamosCashContent() {
   const [clientes, setClientes] = useState<any[]>([])
   const [cuentasBancarias, setCuentasBancarias] = useState<any[]>([])
   const [tiposPago, setTiposPago] = useState<any[]>([])
+  const [tasasData, setTasasData] = useState<{ monedaPrincipal?: { codigo?: string }; tasas?: Array<{ monedaOrigenId: string; tasa: number }> }>({})
 
   useEffect(() => {
     getClientesAction().then(r => { if (r.success) setClientes(r.data ?? []) })
     getCuentasBancariasAction().then(r => { if (r.success) setCuentasBancarias(r.data?.cuentas ?? []) })
     getTiposPagoAction().then(r => { if (r.success) setTiposPago(r.data?.data ?? []) })
+    getTasasActualesAction().then(r => {
+      if (r.success) {
+        const payload = r.data?.data as unknown as { monedaPrincipal?: { codigo?: string }; tasas?: Array<{ monedaOrigenId: string; tasa: number }> } | undefined
+        setTasasData(payload ?? {})
+      }
+    })
   }, [])
 
   const handlePagar = (prestamo: PrestamoCash) => {
@@ -110,6 +118,7 @@ function PrestamosCashContent() {
           tipoCuenta: c.tipoCuenta,
           moneda: c.moneda,
         }))}
+        tasasData={tasasData}
         onSuccess={handleSuccess}
       />
 

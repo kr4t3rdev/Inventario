@@ -18,8 +18,7 @@ import {
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar"
 import { usePathname } from "next/navigation"
 import Link from "next/link"
-import { useGetUserQuery } from "@/features/admin/services/adminApi"
-//import Image from "next/image"
+import { useAdminUsers } from '@/features/admin/hooks/use-admin-users'
 
 /**
  * @description Menú de usuario en el footer del sidebar con acciones de perfil, tema y cierre de sesión.
@@ -29,7 +28,7 @@ export function NavUser() {
   const pathname = usePathname()
   const { isMobile } = useSidebar()
   const { setTheme, theme } = useTheme()
-  const { data: users } = useGetUserQuery()
+  const { users } = useAdminUsers()
   const { user } = useAuth()
   const { logout } = useAuth()
 

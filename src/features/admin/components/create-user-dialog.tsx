@@ -19,7 +19,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useAddUserMutation } from '@/features/admin/services/adminApi'
+import { createUserAction } from '@/features/admin/actions'
 import { createUserBodySchema } from '@/lib/admin/schemas';
 
 interface CreateUserDialogProps {
@@ -54,8 +54,6 @@ export function CreateUserDialog({ open, onClose }: CreateUserDialogProps): Reac
   const shouldReduceMotion = useReducedMotion();
   const [formData, setFormData] = useState<CreateUserFormState>(INITIAL_FORM_STATE);
   const [loading, setLoading] = useState(false);
-  const [addUser] = useAddUserMutation();
-
   const resetForm = (): void => {
     setFormData(INITIAL_FORM_STATE);
   };
@@ -92,7 +90,8 @@ export function CreateUserDialog({ open, onClose }: CreateUserDialogProps): Reac
     setLoading(true);
 
     try {
-      await addUser(validation.data).unwrap();
+      const r = await createUserAction(validation.data);
+      if (!r.success) throw new Error(r.error?.message ?? 'Error');
       toast.success('Usuario creado exitosamente');
       resetForm();
       onClose();

@@ -14,7 +14,8 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination"
 import { AdminTableLoader } from "@/features/admin/components/animations"
-import { useGetUserQuery, useUnlockUserMutation } from "@/features/admin/services/adminApi"
+import { useAdminUsers } from '@/features/admin/hooks/use-admin-users'
+import { unlockUserAction } from '@/features/admin/actions'
 import { format } from "date-fns"
 import { toast } from "sonner"
 import { History, Unlock, Lock } from "lucide-react"
@@ -28,8 +29,7 @@ export function BlockedUsersTab({ onOpenHistory }: BlockedUsersTabProps) {
   const shouldReduceMotion = useReducedMotion()
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(10)
-  const { data: users, isLoading, refetch } = useGetUserQuery()
-  const [unlockUser] = useUnlockUserMutation()
+  const { users, isLoading, refetch } = useAdminUsers()
 
   const blockedUsers = users?.filter((u: Usuario) => u.lockedUntil && new Date(u.lockedUntil) > new Date()) || []
   const paginatedBlocked = blockedUsers.slice((page - 1) * perPage, page * perPage)
@@ -37,7 +37,7 @@ export function BlockedUsersTab({ onOpenHistory }: BlockedUsersTabProps) {
 
   const handleUnlockUser = async (userId: string) => {
     try {
-      await unlockUser({ userId }).unwrap()
+      const r = await unlockUserAction({ userId }); if (!r.success) throw new Error(r.error?.message ?? 'Error')
       toast.success("Usuario desbloqueado correctamente")
       refetch()
     } catch (error) {

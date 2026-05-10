@@ -1,6 +1,6 @@
 'use client'
 
-import { useDeferredValue, useMemo, useState } from 'react'
+import { useDeferredValue, useEffect, useMemo, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import {
   ArrowDown, ArrowUp, ArrowUpDown, CheckCircle, Clock, Download, Edit,
@@ -23,7 +23,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import {
   Pagination, PaginationContent, PaginationItem, PaginationNext, PaginationPrevious,
 } from '@/components/ui/pagination'
-import { useDeleteUserMutation, useGetAdminTenantsQuery, useLockUserMutation, useUnlockUserMutation } from '@/features/admin/services/adminApi'
+import { useAdminUsers } from '@/features/admin/hooks/use-admin-users'
+import { deleteUserAction, lockUserAction, unlockUserAction, getAdminTenantsAction } from '@/features/admin/actions'
 import { getAuthToken } from '@/lib/token'
 import { getTenantRoleLabel } from '@/lib/auth/roles'
 
@@ -67,10 +68,13 @@ export function AdminUsersTable({
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [currentPage, setCurrentPage] = useState(1)
   const [selectedUserIds, setSelectedUserIds] = useState<Set<string>>(new Set())
-  const [deleteUser] = useDeleteUserMutation()
-  const [lockUser] = useLockUserMutation()
-  const [unlockUser] = useUnlockUserMutation()
-  const { data: tenants } = useGetAdminTenantsQuery()
+  const [tenants, setTenants] = useState<any[]>([])
+
+  useEffect(() => {
+    let cancelled = false
+    getAdminTenantsAction().then((r) => { if (!cancelled && r.success) setTenants(r.data ?? []) })
+    return () => { cancelled = true }
+  }, [])
 
   const perPage = 25
 
@@ -163,9 +167,9 @@ export function AdminUsersTable({
       let successCount = 0
       for (const userId of selectedUserIds) {
         try {
-          if (action === 'delete') { await deleteUser(userId).unwrap() }
-          else if (action === 'lock') { await lockUser({ userId, reason: 'Bloqueo masivo desde admin' }).unwrap() }
-          else if (action === 'unlock') { await unlockUser({ userId }).unwrap() }
+          if (action === 'delete') { const r = await deleteUserAction(userId); if (!r.success) throw new Error(r.error?.message ?? 'Error') }
+          else if (action === 'lock') { const r = await lockUserAction({ userId, reason: 'Bloqueo masivo desde admin' }); if (!r.success) throw new Error(r.error?.message ?? 'Error') }
+          else if (action === 'unlock') { const r = await unlockUserAction({ userId }); if (!r.success) throw new Error(r.error?.message ?? 'Error') }
           successCount++
         } catch (err) {
           console.error(`Error en ${action} para usuario ${userId}:`, err)
@@ -227,7 +231,7 @@ export function AdminUsersTable({
   }
 
   const handleDeleteUser = async (userId: string): Promise<void> => {
-    try { await deleteUser(userId).unwrap(); toast.success('Usuario eliminado correctamente'); await onRefresh() }
+    try { const r = await deleteUserAction(userId); if (!r.success) throw new Error(r.error?.message ?? 'Error'); toast.success('Usuario eliminado correctamente'); await onRefresh() }
     catch (error) { console.error('Error al eliminar usuario:', error); toast.error('Error al eliminar usuario') }
   }
 

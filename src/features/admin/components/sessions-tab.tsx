@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useReducedMotion } from 'framer-motion'
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -14,7 +14,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination"
 import { AdminTableLoader } from "@/features/admin/components/animations"
-import { useGetSessionsQuery, useDeleteSessionMutation } from "@/features/admin/services/adminApi"
+import { getSessionsAction, deleteSessionAction } from "@/features/admin/actions"
 import { format } from "date-fns"
 import { toast } from "sonner"
 import { LogOut, Shield } from "lucide-react"
@@ -33,17 +33,33 @@ export function SessionsTab() {
   const shouldReduceMotion = useReducedMotion()
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(10)
-  const { data: sessions, isLoading, refetch } = useGetSessionsQuery({})
-  const [deleteSession] = useDeleteSessionMutation()
+  const [sessions, setSessions] = useState<UserSession[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  const fetchSessions = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      const data = await getSessionsAction()
+      setSessions(data ?? [])
+    } catch {
+      setSessions([])
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchSessions()
+  }, [fetchSessions])
 
   const paginatedSessions = sessions?.slice((page - 1) * perPage, page * perPage) || []
   const totalPages = sessions ? Math.ceil(sessions.length / perPage) : 1
 
   const handleDeleteSession = async (sessionId: string) => {
     try {
-      await deleteSession(sessionId).unwrap()
+      await deleteSessionAction(sessionId)
       toast.success("Sesión cerrada correctamente")
-      refetch()
+      fetchSessions()
     } catch (error) {
       console.error("Error:", error)
       toast.error("Error al cerrar sesión")

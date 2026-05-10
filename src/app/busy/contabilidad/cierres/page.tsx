@@ -1,14 +1,19 @@
-'use client'
-
+/**
+ * @description Página principal de cierres contables.
+ * Obtiene la lista inicial desde Server Action y la entrega al manager client.
+ *
+ * @returns {Promise<JSX.Element>} Vista principal de cierres.
+ */
+import { getCierresAction } from "@/features/contabilidad/actions-cierres";
 import { CierresManager } from "@/features/contabilidad/components/cierres/CierresManager";
 
-/**
- * Página principal de cierres contables
- */
-export default function CierresPage() {
+export default async function CierresPage() {
+  const result = await getCierresAction();
+  const cierres = result.success ? (result.data ?? []) : [];
+
   return (
     <div className="container mx-auto p-6">
-      <CierresManager />
+      <CierresManager cierres={cierres} />
     </div>
   );
 }

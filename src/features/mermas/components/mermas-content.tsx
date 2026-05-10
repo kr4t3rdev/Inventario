@@ -28,7 +28,7 @@ import {
 import { deleteMermaAction } from "@/features/mermas/actions"
 import dynamic from "next/dynamic"
 
-const MermasTable = dynamic(() => import('@/components/mermas/mermas-table').then(mod => ({ default: mod.MermasTable })))
+const MermasTable = dynamic(() => import('./mermas-table').then(mod => ({ default: mod.MermasTable })))
 
 interface Merma {
   mermaId: string

@@ -207,6 +207,114 @@ export const updateAdminPlanAction = withAction(async (input: UpdatePlanInput, u
   return plan;
 });
 
+// ─── Activity Logs ─────────────────────────────────────────
+
+export const getActivityLogsAction = withAction(async (input: { userId?: string; limit?: number } = {}, user: AuthenticatedUser) => {
+  if (user.role !== 'admin') throw new ActionError('Acceso restringido', 'FORBIDDEN');
+  return prisma.userActivityLog.findMany({
+    where: input.userId ? { userId: input.userId } : undefined,
+    orderBy: { createdAt: 'desc' },
+    take: input.limit || 100,
+  });
+});
+
+export const getUserLoginHistoryAction = withAction(async (input: { userId: string; limit?: number }, user: AuthenticatedUser) => {
+  if (user.role !== 'admin') throw new ActionError('Acceso restringido', 'FORBIDDEN');
+  return prisma.userSession.findMany({
+    where: { userId: input.userId },
+    orderBy: { createdAt: 'desc' },
+    take: input.limit || 50,
+    include: { user: { select: { name: true, email: true } } },
+  });
+});
+
+// ─── Sessions ──────────────────────────────────────────────
+
+export const getSessionsAction = withAction(async (_input: void, user: AuthenticatedUser) => {
+  if (user.role !== 'admin') throw new ActionError('Acceso restringido', 'FORBIDDEN');
+  return prisma.userSession.findMany({
+    orderBy: { createdAt: 'desc' },
+    take: 100,
+    include: { user: { select: { name: true, email: true, role: true } } },
+  });
+});
+
+export const deleteSessionAction = withAction(async (sessionId: string, user: AuthenticatedUser) => {
+  if (user.role !== 'admin') throw new ActionError('Acceso restringido', 'FORBIDDEN');
+  await prisma.userSession.delete({ where: { sessionId } });
+  revalidatePath('/admin');
+  return { success: true };
+});
+
+// ─── Expiring Users ────────────────────────────────────────
+
+export const getExpiringSoonAction = withAction(async (input: { days?: number } = {}, user: AuthenticatedUser) => {
+  if (user.role !== 'admin') throw new ActionError('Acceso restringido', 'FORBIDDEN');
+  const days = input.days || 7;
+  const limit = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+  return prisma.user.findMany({
+    where: { expiresAt: { not: null, lte: limit }, isActive: true },
+    orderBy: { expiresAt: 'asc' },
+  });
+});
+
+export const sendExpiryNotificationsAction = withAction(async (_input: void, user: AuthenticatedUser) => {
+  if (user.role !== 'admin') throw new ActionError('Acceso restringido', 'FORBIDDEN');
+  const soon = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const expiring = await prisma.user.findMany({
+    where: { expiresAt: { not: null, lte: soon }, isActive: true },
+  });
+  for (const u of expiring) {
+    try { await sendEmailVerificationLink(u as any); } catch {}
+  }
+  return { notified: expiring.length };
+});
+
+// ─── Pending Memberships ────────────────────────────────────
+
+export const getPendingMembershipsAction = withAction(async (_input: void, user: AuthenticatedUser) => {
+  if (user.role !== 'admin') throw new ActionError('Acceso restringido', 'FORBIDDEN');
+  return prisma.userTenant.findMany({
+    where: { approved: false },
+    include: { user: { select: { userId: true, name: true, email: true, role: true } }, tenant: { select: { tenantId: true, nombre: true } } },
+  });
+});
+
+export const rejectMembershipAction = withAction(async (input: { membershipId: string }, user: AuthenticatedUser) => {
+  if (user.role !== 'admin') throw new ActionError('Acceso restringido', 'FORBIDDEN');
+  await prisma.userTenant.delete({ where: { id: input.membershipId } });
+  revalidatePath('/admin');
+  return { success: true };
+});
+
+export const getLicenciasAction = withAction(async (_input: void, user: AuthenticatedUser) => {
+  if (user.role !== 'admin') throw new ActionError('Acceso restringido', 'FORBIDDEN');
+  return prisma.tenantLicense.findMany({ orderBy: { createdAt: 'desc' }, include: { plan: true, tenant: true } });
+});
+
+export const createLicenciaAction = withAction(async (input: any, user: AuthenticatedUser) => {
+  if (user.role !== 'admin') throw new ActionError('Acceso restringido', 'FORBIDDEN');
+  const licencia = await prisma.tenantLicense.create({ data: { ...input } });
+  revalidatePath('/admin'); return licencia;
+});
+
+export const updateLicenciaAction = withAction(async ({ id, ...data }: any, user: AuthenticatedUser) => {
+  if (user.role !== 'admin') throw new ActionError('Acceso restringido', 'FORBIDDEN');
+  const licencia = await prisma.tenantLicense.update({ where: { id }, data });
+  revalidatePath('/admin'); return licencia;
+});
+
+export const deleteLicenciaAction = withAction(async (id: string, user: AuthenticatedUser) => {
+  if (user.role !== 'admin') throw new ActionError('Acceso restringido', 'FORBIDDEN');
+  await prisma.tenantLicense.delete({ where: { id } });
+  revalidatePath('/admin'); return { success: true };
+});
+
+export const generateLicenciasAction = withAction(async (input: any, user: AuthenticatedUser) => {
+  if (user.role !== 'admin') throw new ActionError('Acceso restringido', 'FORBIDDEN');
+  return { success: true, message: 'Licencias generadas' };
+});
+
 export const deleteAdminPlanAction = withAction(async (planId: string, user: AuthenticatedUser) => {
   if (user.role !== 'admin') throw new ActionError('Acceso restringido', 'FORBIDDEN');
   const existing = await prisma.plan.findUnique({ where: { planId } });

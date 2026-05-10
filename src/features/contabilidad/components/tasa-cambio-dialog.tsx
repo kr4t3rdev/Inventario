@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -27,7 +27,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { AlertTriangle, TrendingUp } from "lucide-react"
 import { toast } from "sonner"
-import { useGetMonedasQuery, useGetTasasActualesQuery } from "@/features/contabilidad/api/contabilidadApi"
+import { getMonedasAction, getTasasActualesAction } from "@/features/contabilidad/actions-exchange"
 
 const tasaConfirmacionSchema = z.object({
   tasaConfirmada: z.string()
@@ -62,9 +62,40 @@ export function TasaCambioDialog({
   descripcion = "Confirma o ajusta la tasa de cambio para esta transacción"
 }: TasaCambioDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [tasasActualesData, setTasasActualesData] = useState<unknown>([])
+  const [monedasData, setMonedasData] = useState<unknown>([])
 
-  const { data: tasasActualesData = [], isLoading } = useGetTasasActualesQuery()
-  const { data: monedasData = [] } = useGetMonedasQuery()
+  useEffect(() => {
+    let cancelled = false
+
+    const loadData = async () => {
+      setIsLoading(true)
+
+      const [tasasResult, monedasResult] = await Promise.all([
+        getTasasActualesAction(),
+        getMonedasAction(),
+      ])
+
+      if (cancelled) return
+
+      if (tasasResult.success) {
+        setTasasActualesData(tasasResult.data ?? [])
+      }
+
+      if (monedasResult.success) {
+        setMonedasData(monedasResult.data ?? [])
+      }
+
+      setIsLoading(false)
+    }
+
+    loadData()
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
   
   // Obtener la moneda principal desde la API
   const monedas = Array.isArray(monedasData) 

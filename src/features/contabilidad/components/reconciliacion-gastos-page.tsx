@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { motion, useReducedMotion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -22,8 +22,7 @@ import { DateRange } from "react-day-picker"
 import { format } from "date-fns"
 import { GastosPendientesTable } from "./gastos-pendientes-table"
 import { ReconciliacionGastosForm } from "./reconciliacion-gastos-form"
-import { useGetGastosPendientesQuery, contabilidadApi } from "@/features/contabilidad/api/contabilidadApi"
-import { useAppDispatch } from "@/lib/redux/hooks"
+import { getGastosPendientesAction } from "@/features/contabilidad/actions-reconciliacion"
 import { GastoPendiente } from "@/app/models/model"
 import { cn } from "@/lib/utils"
 import {
@@ -43,6 +42,11 @@ const surfaceCardClass = cn(
   'dark:border-slate-800/60 dark:bg-slate-900/10',
 )
 
+interface GastoPendienteResponse {
+  gastos: GastoPendiente[]
+  pagination: { page: number; limit: number; total: number; totalPages: number }
+}
+
 export function ReconciliacionGastosPage() {
   const shouldReduceMotion = useReducedMotion()
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined)
@@ -51,19 +55,44 @@ export function ReconciliacionGastosPage() {
   const [gastoToReconcile, setGastoToReconcile] = useState<GastoPendiente | null>(null)
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(50)
-  const dispatch = useAppDispatch()
+  const [response, setResponse] = useState<GastoPendienteResponse>({
+    gastos: [],
+    pagination: { page: 1, limit: 50, total: 0, totalPages: 0 },
+  })
+  const [isLoading, setIsLoading] = useState(true)
 
   const fechaInicio = dateRange?.from ? format(dateRange.from, 'yyyy-MM-dd') : undefined
   const fechaFin = dateRange?.to ? format(dateRange.to, 'yyyy-MM-dd') : undefined
 
-  const { data: response, isLoading, refetch } = useGetGastosPendientesQuery({
-   fechaDesde: fechaInicio,
-   fechaHasta: fechaFin,
-   soloNoReconciliados: true,
-   page: currentPage,
-   limit: pageSize
- })
- const { gastos, pagination } = response || { gastos: [], pagination: { page: 1, limit: 50, total: 0, totalPages: 0 } }
+  const loadGastos = async () => {
+    setIsLoading(true)
+
+    try {
+      const result = await getGastosPendientesAction({
+        fechaDesde: fechaInicio,
+        fechaHasta: fechaFin,
+        soloNoReconciliados: true,
+        page: currentPage,
+        limit: pageSize,
+      })
+
+      if (result.success) {
+        const payload = result.data as unknown as GastoPendienteResponse | undefined
+        setResponse(payload ?? {
+          gastos: [],
+          pagination: { page: currentPage, limit: pageSize, total: 0, totalPages: 0 },
+        })
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    loadGastos()
+  }, [fechaInicio, fechaFin, currentPage, pageSize])
+
+  const { gastos, pagination } = response
 
   const totalGastos = gastos?.length || 0
   const totalMonto = gastos?.reduce((sum: number, gasto: GastoPendiente) => sum + (gasto.monto || 0), 0) || 0
@@ -93,10 +122,7 @@ export function ReconciliacionGastosPage() {
     setSelectedGastos([])
     setShowReconciliacionForm(false)
     setGastoToReconcile(null)
-    dispatch(contabilidadApi.util.invalidateTags(['ReconciliacionGastos']))
-    setTimeout(() => {
-      refetch()
-    }, 100)
+    loadGastos()
   }
 
   const handlePageChange = (page: number) => {
@@ -165,7 +191,7 @@ export function ReconciliacionGastosPage() {
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => refetch()}
+                      onClick={() => loadGastos()}
                       disabled={isLoading}
                     >
                       <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />

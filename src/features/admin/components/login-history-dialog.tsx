@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { format } from 'date-fns';
 import { Lock, Sparkles, Unlock, XCircle } from 'lucide-react';
@@ -17,7 +18,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { useGetUserLoginHistoryQuery } from '@/features/admin/services/adminApi'
+import { getUserLoginHistoryAction } from '@/features/admin/actions'
 
 interface LoginHistoryDialogProps {
   open: boolean;
@@ -59,10 +60,24 @@ export function LoginHistoryDialog({
   onLock,
 }: LoginHistoryDialogProps): React.JSX.Element | null {
   const shouldReduceMotion = useReducedMotion();
-  const { data: history, isLoading } = useGetUserLoginHistoryQuery(
-    { userId },
-    { skip: !open },
-  );
+  const [history, setHistory] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (!open || !userId) return;
+
+    setIsLoading(true);
+    getUserLoginHistoryAction({ userId })
+      .then((data) => {
+        setHistory(data);
+      })
+      .catch(() => {
+        setHistory(null);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [open, userId]);
 
   if (isLoading) {
     return (

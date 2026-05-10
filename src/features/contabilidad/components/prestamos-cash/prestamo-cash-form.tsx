@@ -13,10 +13,14 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { createPrestamoCashAction } from "@/features/contabilidad/actions-prestamos-cash"
-import { useGetTasasActualesQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { Loader2, TrendingUp, ArrowRightLeft } from "lucide-react"
 import { sileo } from "@/lib/sileo-shim"
 import { calcularMontoTotalACobrar } from "@/lib/utils/prestamo-cash"
+
+interface TasasActualesData {
+  monedaPrincipal?: { codigo?: string }
+  tasas?: Array<{ monedaOrigenId: string; tasa: number }>
+}
 
 const prestamoSchema = z.object({
   clienteId: z.string().min(1, "Seleccione un cliente"),
@@ -113,6 +117,7 @@ interface PrestamoCashFormProps {
   onOpenChange: (open: boolean) => void
   clientes?: Array<{ clienteId: string; nombre: string }>
   cuentasBancarias?: Array<{ cuentaId: string; nombreBanco: string; tipoCuenta: string; moneda: string }>
+  tasasData?: TasasActualesData
   onSuccess?: () => void
 }
 
@@ -121,12 +126,18 @@ interface PrestamoCashFormProps {
  * @param {PrestamoCashFormProps} props - Props del componente.
  * @returns {JSX.Element} Formulario de préstamo cash.
  */
-export function PrestamoCashForm({ open, onOpenChange, clientes = [], cuentasBancarias = [], onSuccess }: PrestamoCashFormProps) {
+export function PrestamoCashForm({
+  open,
+  onOpenChange,
+  clientes = [],
+  cuentasBancarias = [],
+  tasasData,
+  onSuccess,
+}: PrestamoCashFormProps) {
   const [isLoading, setIsLoading] = useState(false)
-  const { data: tasasData } = useGetTasasActualesQuery()
 
-  const monedaPrincipal = tasasData?.data?.monedaPrincipal?.codigo ?? "CUP"
-  const tasas = tasasData?.data?.tasas ?? []
+  const monedaPrincipal = tasasData?.monedaPrincipal?.codigo ?? "CUP"
+  const tasas = tasasData?.tasas ?? []
 
   const form = useForm<PrestamoFormValues>({
     resolver: zodResolver(prestamoSchema),

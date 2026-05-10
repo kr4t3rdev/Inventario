@@ -159,7 +159,7 @@ export function GastosDEContent({ initialGastosDE, initialVendors }: GastosDECon
       cell: ({ row }) => {
         const gasto = row.original as GastoDE
         const conceptoNombre = gasto.concepto?.nombre || gasto.tipo || "Sin concepto"
-        return <div className="max-w-[180px] truncate">{conceptoNombre}</div>
+        return <div className="max-w-45 truncate">{conceptoNombre}</div>
       },
     },
     {
@@ -174,7 +174,7 @@ export function GastosDEContent({ initialGastosDE, initialVendors }: GastosDECon
       cell: ({ row }) => {
         const gasto = row.original as GastoDE
         const elementoNombre = gasto.elemento?.nombre || "—"
-        return <div className="max-w-[180px] truncate text-muted-foreground">{elementoNombre}</div>
+        return <div className="max-w-45 truncate text-muted-foreground">{elementoNombre}</div>
       },
     },
     {
@@ -205,7 +205,7 @@ export function GastosDEContent({ initialGastosDE, initialVendors }: GastosDECon
       ),
       cell: ({ row }) => {
         const factura = (row.original as GastoDE).numeroFactura
-        return <div className="max-w-[150px] truncate">{factura || "Sin factura"}</div>
+        return <div className="max-w-37.5 truncate">{factura || "Sin factura"}</div>
       },
     },
     {
@@ -250,7 +250,7 @@ export function GastosDEContent({ initialGastosDE, initialVendors }: GastosDECon
       ),
       cell: ({ row }) => {
         const date = new Date(row.getValue('createdAt'))
-        return <div className="max-w-[150px] truncate text-center">{date.toLocaleDateString()}</div>
+        return <div className="max-w-37.5 truncate text-center">{date.toLocaleDateString()}</div>
       },
     },
     {

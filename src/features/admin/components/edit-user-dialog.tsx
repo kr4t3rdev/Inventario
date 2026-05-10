@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { useUpdateUserMutation } from '@/features/admin/services/adminApi'
+import { updateUserAction } from '@/features/admin/actions'
 import { updateUserBodySchema } from '@/lib/admin/schemas';
 
 interface EditUserDialogProps {
@@ -60,8 +60,6 @@ export function EditUserDialog({ open, onClose, user }: EditUserDialogProps): Re
   const [formData, setFormData] = useState<EditUserFormState>(INITIAL_FORM_STATE);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [updateUser] = useUpdateUserMutation();
-
   useEffect(() => {
     if (!user) {
       return;
@@ -139,10 +137,11 @@ export function EditUserDialog({ open, onClose, user }: EditUserDialogProps): Re
     setLoading(true);
 
     try {
-      await updateUser({
+      const r = await updateUserAction({
         userId: user.userId,
         ...validation.data,
-      }).unwrap();
+      });
+      if (!r.success) throw new Error(r.error?.message ?? 'Error');
 
       toast.success('Usuario actualizado correctamente');
       onClose();

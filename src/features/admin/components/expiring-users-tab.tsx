@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useReducedMotion } from 'framer-motion'
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -14,7 +14,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination"
 import { AdminTableLoader } from "@/features/admin/components/animations"
-import { useGetExpiringSoonQuery, useSendExpiryNotificationsMutation } from "@/features/admin/services/adminApi"
+import { getExpiringSoonAction, sendExpiryNotificationsAction } from "@/features/admin/actions"
 import { format } from "date-fns"
 import { toast } from "sonner"
 import { Bell, Calendar, History } from "lucide-react"
@@ -29,17 +29,33 @@ export function ExpiringUsersTab({ onOpenHistory }: ExpiringUsersTabProps) {
   const [days, setDays] = useState("7")
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(10)
-  const { data: expiringUsers, isLoading, refetch } = useGetExpiringSoonQuery({ days: parseInt(days) })
-  const [sendExpiryNotifications] = useSendExpiryNotificationsMutation()
+  const [expiringUsers, setExpiringUsers] = useState<{ users: (Usuario & { daysUntilExpiry: number })[] } | undefined>(undefined)
+  const [isLoading, setIsLoading] = useState(true)
+
+  const fetchExpiring = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      const data = await getExpiringSoonAction({ days: parseInt(days) })
+      setExpiringUsers(data)
+    } catch {
+      setExpiringUsers(undefined)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [days])
+
+  useEffect(() => {
+    fetchExpiring()
+  }, [fetchExpiring])
 
   const paginatedExpiring = expiringUsers?.users.slice((page - 1) * perPage, page * perPage) || []
   const totalPages = expiringUsers ? Math.ceil(expiringUsers.users.length / perPage) : 1
 
   const handleSendNotifications = async () => {
     try {
-      const result = await sendExpiryNotifications({ days: parseInt(days) }).unwrap()
+      const result = await sendExpiryNotificationsAction({ days: parseInt(days) })
       toast.success(`Notificaciones enviadas: ${result.notificationsCreated} administradores notificados`)
-      refetch()
+      fetchExpiring()
     } catch (error) {
       console.error("Error:", error)
       toast.error("Error al enviar notificaciones")

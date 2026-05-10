@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -17,7 +17,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { useGetUserQuery, useGetExpiringSoonQuery, useLockUserMutation, useUnlockUserMutation } from "@/features/admin/services/adminApi"
+import { useAdminUsers } from '@/features/admin/hooks/use-admin-users'
+import { getExpiringSoonAction, lockUserAction, unlockUserAction } from '@/features/admin/actions'
 import { toast } from "sonner"
 import { Activity, Clock, Shield, Unlock, Lock, Calendar, Sparkles } from "lucide-react"
 import { ActivityLogsTab } from "@/features/admin/components/activity-logs-tab"
@@ -35,17 +36,21 @@ export function UserMonitoringPanel() {
   const [lockDialogOpen, setLockDialogOpen] = useState(false)
   const [lockReason, setLockReason] = useState("")
 
-  const { data: users } = useGetUserQuery()
-  const { data: expiringUsers } = useGetExpiringSoonQuery({ days: 7 })
-  const [lockUser] = useLockUserMutation()
-  const [unlockUser] = useUnlockUserMutation()
+  const { users } = useAdminUsers()
+  const [expiringUsers, setExpiringUsers] = useState<any[]>([])
+
+  useEffect(() => {
+    let cancelled = false
+    getExpiringSoonAction({ days: 7 }).then((r) => { if (!cancelled && r.success) setExpiringUsers(r.data ?? []) })
+    return () => { cancelled = true }
+  }, [])
 
   const blockedUsers = users?.filter((u: Usuario) => u.lockedUntil && new Date(u.lockedUntil) > new Date()) || []
 
   const handleLockUser = async () => {
     if (!selectedUser) return
     try {
-      await lockUser({ userId: selectedUser.userId, reason: lockReason }).unwrap()
+      const r = await lockUserAction({ userId: selectedUser.userId, reason: lockReason }); if (!r.success) throw new Error(r.error?.message ?? 'Error')
       toast.success("Usuario bloqueado correctamente")
       setLockDialogOpen(false)
       setLockReason("")
@@ -70,7 +75,7 @@ export function UserMonitoringPanel() {
     { key: "logs" as const, label: "Logs", icon: Clock },
     { key: "sessions" as const, label: "Sesiones", icon: Shield },
     { key: "blocked" as const, label: "Bloqueados", icon: Unlock, count: blockedUsers.length },
-    { key: "expiring" as const, label: "Expiran Pronto", icon: Calendar, count: expiringUsers?.users.length },
+    { key: "expiring" as const, label: "Expiran Pronto", icon: Calendar, count: expiringUsers?.length },
   ]
 
   return (
@@ -140,7 +145,7 @@ export function UserMonitoringPanel() {
           userName={selectedUser.name}
           onUnlock={async (userId) => {
             try {
-              await unlockUser({ userId }).unwrap()
+              const r = await unlockUserAction({ userId }); if (!r.success) throw new Error(r.error?.message ?? 'Error')
               toast.success("Usuario desbloqueado correctamente")
             } catch (error) {
               toast.error("Error al desbloquear usuario")

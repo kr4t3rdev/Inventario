@@ -16,6 +16,7 @@ import { vendorSchema, vendorUpdateSchema } from './schemas';
 import { getNextVendorCode, initializeVendorCodeSequence, generateVendorEan13 } from '@/lib/vendor-code-utils';
 import type { VendorInput, VendorUpdateInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
+import type { Vendor } from '@/app/models/model';
 
 const VENDOR_SELECT = {
   vendorId: true,
@@ -47,10 +48,23 @@ type VendorRow = {
   updatedAt: Date;
 };
 
-function enrichVendor(vendor: VendorRow) {
+type VendorActionItem = Vendor & {
+  vendorCode?: string | null;
+  ean13Code?: string | null;
+  proveedorCodigo?: string | null;
+};
+
+function enrichVendor(vendor: VendorRow): VendorActionItem {
   const vendorCode = vendor.vendorCode ?? undefined;
   const ean13Code = vendor.vendorCode ? generateVendorEan13(vendor.vendorCode) : null;
-  return { ...vendor, vendorCode: vendorCode ?? null, ean13Code, proveedorCodigo: vendorCode ?? null };
+  return {
+    ...vendor,
+    createdAt: vendor.createdAt.toISOString(),
+    updatedAt: vendor.updatedAt.toISOString(),
+    vendorCode: vendorCode ?? null,
+    ean13Code,
+    proveedorCodigo: vendorCode ?? null,
+  };
 }
 
 export const getVendorsAction = withAction(async (_input: void, user: AuthenticatedUser) => {

@@ -14,6 +14,7 @@ import { applyAnticipoAllocations } from '@/lib/services/anticipos-workflow';
 import { ofertaSchema, ofertaUpdateSchema, facturarOfertaSchema } from './schemas';
 import type { OfertaInput, OfertaUpdateInput, FacturarOfertaInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
+import type { Oferta } from '@/app/models/model';
 
 const OFERTA_INCLUDE = {
   cliente: true,
@@ -21,13 +22,18 @@ const OFERTA_INCLUDE = {
   creadoPor: { select: { userId: true, name: true, email: true } },
 } as const;
 
+function serializeOferta(oferta: unknown): Oferta {
+  return JSON.parse(JSON.stringify(oferta)) as Oferta;
+}
+
 export const getOfertasAction = withAction(async (_input: void, user: AuthenticatedUser) => {
   const tenantId = requireTenant(user);
-  return prisma.oferta.findMany({
+  const ofertas = await prisma.oferta.findMany({
     where: { tenantId },
     include: OFERTA_INCLUDE,
     orderBy: { createdAt: 'desc' },
   });
+  return ofertas.map(serializeOferta);
 });
 
 export const getOfertaByIdAction = withAction(async (id: string, user: AuthenticatedUser) => {
@@ -37,7 +43,7 @@ export const getOfertaByIdAction = withAction(async (id: string, user: Authentic
     include: OFERTA_INCLUDE,
   });
   if (!oferta) throw new ActionError('Oferta no encontrada', 'NOT_FOUND');
-  return oferta;
+  return serializeOferta(oferta);
 });
 
 export const createOfertaAction = withAction(async (input: OfertaInput, user: AuthenticatedUser) => {
@@ -73,7 +79,7 @@ export const createOfertaAction = withAction(async (input: OfertaInput, user: Au
   });
 
   revalidatePath('/busy/ofertas');
-  return oferta;
+  return serializeOferta(oferta);
 });
 
 export const updateOfertaAction = withAction(async (input: OfertaUpdateInput, user: AuthenticatedUser) => {
@@ -94,7 +100,7 @@ export const updateOfertaAction = withAction(async (input: OfertaUpdateInput, us
   });
 
   revalidatePath('/busy/ofertas');
-  return oferta;
+  return serializeOferta(oferta);
 });
 
 export const deleteOfertaAction = withAction(async (id: string, user: AuthenticatedUser) => {

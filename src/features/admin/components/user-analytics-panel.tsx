@@ -37,7 +37,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
-import { useGetGlobalUserMetricsQuery } from '@/features/admin/services/adminApi'
+// RTK removed — using fetch
 
 interface MonthlyData {
   year: number;
@@ -88,9 +88,20 @@ export function UserAnalyticsPanel(): React.JSX.Element {
   const [months, setMonths] = React.useState('6');
   const [selectedTab, setSelectedTab] = React.useState<MetricTab>('overview');
 
-  const { data: metrics, isLoading, error } = useGetGlobalUserMetricsQuery({
-    months: Number.parseInt(months, 10),
-  });
+  const [metrics, setMetrics] = React.useState<any>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [error, setError] = React.useState<any>(null);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+    fetch(`/api/admin/global/users/metrics?months=${Number.parseInt(months, 10)}`)
+      .then(res => res.json())
+      .then(data => { if (!cancelled) setMetrics(data); })
+      .catch(err => { if (!cancelled) setError(err); })
+      .finally(() => { if (!cancelled) setIsLoading(false); });
+    return () => { cancelled = true; };
+  }, [months]);
 
   const chartData = React.useMemo<ChartRow[]>(() => {
     const rows = (metrics?.monthlyData || []) as MonthlyData[];

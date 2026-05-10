@@ -12,6 +12,7 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';
 import { PageTransition, StaggerContainer, StaggerItem, AnimatedCard } from '@/components/ui/animations';
+import type { TransferenciaMovimientos } from './reportes-inventario';
 
 /**
  * @description Skeleton principal para la carga inicial de reportes.
@@ -23,14 +24,14 @@ function ReportesPageLoader() {
       <div className='space-y-2'>
         <Skeleton className='h-5 w-40' />
         <Skeleton className='h-8 w-80' />
-        <Skeleton className='h-4 w-[32rem] max-w-full' />
+        <Skeleton className='h-4 w-lg max-w-full' />
       </div>
       <div className='grid gap-4 md:grid-cols-3'>
         <Skeleton className='h-10 rounded-xl' />
         <Skeleton className='h-10 rounded-xl' />
         <Skeleton className='h-10 rounded-xl' />
       </div>
-      <Skeleton className='h-[640px] w-full rounded-2xl' />
+      <Skeleton className='h-160 w-full rounded-2xl' />
     </div>
   );
 }
@@ -56,16 +57,7 @@ const statusBadgeClass = cn(
 );
 
 interface ReportesPageClientProps {
-  initialTransferencias: Array<{
-    transferenciaId: string;
-    productoId: string;
-    productoNombre: string;
-    productoCodigoInterno?: string | null;
-    cantidad: number;
-    createdAt: string;
-    origenNombre?: string;
-    destinoNombre?: string;
-  }>;
+  initialTransferencias: TransferenciaMovimientos[];
 }
 
 /**
@@ -176,7 +168,9 @@ export function ReportesPageClient({ initialTransferencias }: ReportesPageClient
 
           <motion.div variants={fadeInUp} initial="hidden" animate="show">
             <div className={surfaceCardClass}>
-              <ReportesInventario initialTransferencias={initialTransferencias} />
+              <ReportesInventario
+                initialTransferencias={initialTransferencias as TransferenciaMovimientos[]}
+              />
             </div>
           </motion.div>
         </PageTransition>

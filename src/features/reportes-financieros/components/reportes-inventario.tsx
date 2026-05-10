@@ -29,9 +29,9 @@ export interface TransferenciaMovimientos {
   productoCodigoInterno?: string | null;
   cantidad: number;
   createdAt: string;
-  updatedAt: string;
-  estado: string;
-  tipoTransferencia: string;
+  updatedAt?: string;
+  estado?: string;
+  tipoTransferencia?: string;
   origenNombre?: string;
   destinoNombre?: string;
 }
@@ -48,7 +48,7 @@ function ReportesSectionLoader() {
   return (
     <div className='space-y-4 p-4'>
       <Skeleton className='h-10 w-64 rounded-lg' />
-      <Skeleton className='h-[460px] w-full rounded-xl' />
+      <Skeleton className='h-115 w-full rounded-xl' />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useReducedMotion } from 'framer-motion'
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -13,7 +13,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination"
 import { AdminTableLoader } from "@/features/admin/components/animations"
-import { useGetActivityLogsQuery } from "@/features/admin/services/adminApi"
+import { getActivityLogsAction } from "@/features/admin/actions"
 import { format } from "date-fns"
 import { Clock } from "lucide-react"
 import type { UserActivityLog } from "@/app/models/model"
@@ -53,7 +53,24 @@ export function ActivityLogsTab() {
   const [limit] = useState("50")
   const [page, setPage] = useState(1)
   const [perPage, setPerPage] = useState(10)
-  const { data: logs, isLoading } = useGetActivityLogsQuery({ limit: parseInt(limit) })
+  const [logs, setLogs] = useState<UserActivityLog[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  const fetchLogs = useCallback(async () => {
+    setIsLoading(true)
+    try {
+      const data = await getActivityLogsAction({ limit: parseInt(limit) })
+      setLogs(data ?? [])
+    } catch {
+      setLogs([])
+    } finally {
+      setIsLoading(false)
+    }
+  }, [limit])
+
+  useEffect(() => {
+    fetchLogs()
+  }, [fetchLogs])
 
   const paginatedLogs = logs?.slice((page - 1) * perPage, page * perPage) || []
   const totalPages = logs ? Math.ceil(logs.length / perPage) : 1

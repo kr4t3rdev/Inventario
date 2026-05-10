@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { ShieldCheck, Sparkles, Users, UserPlus, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
@@ -9,11 +9,11 @@ import Link from 'next/link'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuth } from '@/contexts/auth-context'
 import {
-  useGetGlobalUsersQuery,
-  useGetPendingMembershipsQuery,
-  useApproveMembershipMutation,
-  useRejectMembershipMutation,
-} from '@/features/admin/services/adminApi'
+  getGlobalUsersAction,
+  getPendingMembershipsAction,
+  approveGlobalUserAction,
+  rejectMembershipAction,
+} from '@/features/admin/actions'
 import { TenantUsersStats } from './tenant-users-stats'
 import { TenantUsersTable } from './tenant-users-table'
 import { PendingMembershipsTable } from './pending-memberships-table'
@@ -48,23 +48,42 @@ export function TenantUsersPage() {
   const [selectedMembership, setSelectedMembership] = useState<PendingMembership | null>(null)
   const [dialogOpen, setDialogOpen] = useState(false)
 
-  const {
-    data: usersData,
-    isLoading: usersLoading,
-    refetch: refetchUsers,
-  } = useGetGlobalUsersQuery({
-    tenantId: (user as any)?.tenantId ?? undefined,
-    limit: 100,
-  })
+  const [usersData, setUsersData] = useState<any | undefined>(undefined)
+  const [usersLoading, setUsersLoading] = useState(true)
+  const [pendingMemberships, setPendingMemberships] = useState<PendingMembership[]>([])
+  const [pendingLoading, setPendingLoading] = useState(true)
 
-  const {
-    data: pendingMemberships = [],
-    isLoading: pendingLoading,
-    refetch: refetchPending,
-  } = useGetPendingMembershipsQuery()
+  const fetchUsers = useCallback(async () => {
+    setUsersLoading(true)
+    try {
+      const data = await getGlobalUsersAction({
+        tenantId: (user as any)?.tenantId ?? undefined,
+        limit: 100,
+      })
+      setUsersData(data)
+    } catch {
+      setUsersData(undefined)
+    } finally {
+      setUsersLoading(false)
+    }
+  }, [user])
 
-  const [approveMembership] = useApproveMembershipMutation()
-  const [rejectMembership] = useRejectMembershipMutation()
+  const fetchPending = useCallback(async () => {
+    setPendingLoading(true)
+    try {
+      const data = await getPendingMembershipsAction()
+      setPendingMemberships(data ?? [])
+    } catch {
+      setPendingMemberships([])
+    } finally {
+      setPendingLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchUsers()
+    fetchPending()
+  }, [fetchUsers, fetchPending])
 
   const safeUsers = usersData?.users ?? []
   const activeUsers = safeUsers.filter((u) => u.isActive).length
@@ -75,9 +94,9 @@ export function TenantUsersPage() {
   const pendingCount = pendingMemberships.length
 
   const handleRefresh = useCallback(() => {
-    refetchUsers()
-    refetchPending()
-  }, [refetchUsers, refetchPending])
+    fetchUsers()
+    fetchPending()
+  }, [fetchUsers, fetchPending])
 
   const handleApproveClick = useCallback((membership: PendingMembership) => {
     setSelectedMembership(membership)
@@ -86,28 +105,28 @@ export function TenantUsersPage() {
 
   const handleReject = useCallback(async (membership: PendingMembership) => {
     try {
-      await rejectMembership(membership.membershipId).unwrap()
+      await rejectMembershipAction(membership.membershipId)
       toast.success(`Solicitud de ${membership.user.name} rechazada.`)
-      refetchPending()
-      refetchUsers()
+      fetchPending()
+      fetchUsers()
     } catch (error) {
       console.error('Error rechazando membresía:', error)
       toast.error('Error al rechazar la solicitud.')
     }
-  }, [rejectMembership, refetchPending, refetchUsers])
+  }, [fetchPending, fetchUsers])
 
   const handleConfirmApprove = useCallback(async (membershipId: string, tenantRole: string) => {
     try {
-      await approveMembership({ id: membershipId, tenantRole }).unwrap()
+      await approveGlobalUserAction({ id: membershipId, tenantRole })
       toast.success('Acceso aprobado correctamente.')
-      refetchPending()
-      refetchUsers()
+      fetchPending()
+      fetchUsers()
     } catch (error) {
       console.error('Error aprobando membresía:', error)
       toast.error('Error al aprobar el acceso.')
       throw error
     }
-  }, [approveMembership, refetchPending, refetchUsers])
+  }, [fetchPending, fetchUsers])
 
   const pendingBadge = pendingCount > 0 ? pendingCount.toString() : undefined
 

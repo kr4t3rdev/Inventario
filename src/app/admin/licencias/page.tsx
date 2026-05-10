@@ -54,8 +54,7 @@ import {
   PaginationPrevious,
 } from '@/components/ui/pagination'
 import { getLicenciasAction } from '@/features/licencias'
-import { getAdminPlanesAction, getGlobalUsersAction } from '@/features/admin'
-import { useDeleteAdminLicenciaMutation, useUpdateAdminLicenciaMutation, useGenerateAdminLicenciasMutation } from '@/features/admin/services/adminApi'
+import { getAdminPlanesAction, getGlobalUsersAction, deleteLicenciaAction, updateLicenciaAction, generateLicenciasAction } from '@/features/admin'
 
 export default function AdminLicenciasPage() {
   const [page, setPage] = useState(1)
@@ -72,10 +71,6 @@ export default function AdminLicenciasPage() {
   const [usersData, setUsersData] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   useEffect(() => { setIsLoading(true); Promise.all([getLicenciasAction(), getAdminPlanesAction(), getGlobalUsersAction({limit:100})]).then(([r1,r2,r3]) => { if(r1.success) setData(r1.data); if(r2.success) setPlanesData(r2.data??[]); if(r3.success) setUsersData(r3.data); setIsLoading(false) }) }, [page, search, planFilter, statusFilter])
-
-  const [deleteLicencia] = useDeleteAdminLicenciaMutation()
-  const [updateLicencia] = useUpdateAdminLicenciaMutation()
-  const [generateLicencias] = useGenerateAdminLicenciasMutation()
 
   const licencias = data?.licencias || data || []
   const total = (data as any)?.total || licencias.length
@@ -101,11 +96,14 @@ export default function AdminLicenciasPage() {
 
   async function handleToggleLicencia(licencia: any) {
     try {
-      await updateLicencia({
-        id: licencia.licenciaId,
-        body: { activa: !licencia.activa },
-      }).unwrap()
-      toast.success(licencia.activa ? 'Licencia revocada' : 'Licencia activada')
+      const r = await updateLicenciaAction({ id: licencia.licenciaId, activa: !licencia.activa })
+      if (r.success) {
+        toast.success(licencia.activa ? 'Licencia revocada' : 'Licencia activada')
+        const licenciasResult = await getLicenciasAction()
+        if (licenciasResult.success) setData(licenciasResult.data)
+      } else {
+        toast.error('Error actualizando licencia')
+      }
     } catch (error) {
       toast.error('Error actualizando licencia')
     }
@@ -114,8 +112,14 @@ export default function AdminLicenciasPage() {
   async function handleDeleteLicencia(id: string) {
     if (!confirm('¿Eliminar esta licencia?')) return
     try {
-      await deleteLicencia(id).unwrap()
-      toast.success('Licencia eliminada')
+      const r = await deleteLicenciaAction(id)
+      if (r.success) {
+        toast.success('Licencia eliminada')
+        const licenciasResult = await getLicenciasAction()
+        if (licenciasResult.success) setData(licenciasResult.data)
+      } else {
+        toast.error('Error eliminando licencia')
+      }
     } catch (error) {
       toast.error('Error eliminando licencia')
     }
@@ -430,9 +434,15 @@ export default function AdminLicenciasPage() {
         users={users}
         onGenerate={async (data) => {
           try {
-            await generateLicencias(data).unwrap()
-            toast.success(`${data.cantidad} licencias generadas`)
-            setGenerarDialogOpen(false)
+            const r = await generateLicenciasAction(data)
+            if (r.success) {
+              toast.success(`${data.cantidad} licencias generadas`)
+              setGenerarDialogOpen(false)
+              const licenciasResult = await getLicenciasAction()
+              if (licenciasResult.success) setData(licenciasResult.data)
+            } else {
+              toast.error('Error generando licencias')
+            }
           } catch (error) {
             toast.error('Error generando licencias')
           }
