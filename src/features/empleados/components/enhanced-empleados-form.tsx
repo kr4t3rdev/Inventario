@@ -17,7 +17,7 @@ import { sileo } from '@/lib/sileo-shim'
 import { Skeleton } from "@/components/ui/skeleton"
 import { DollarSign, User } from "lucide-react"
 import { createEmpleadoAction, updateEmpleadoAction } from "@/features/empleados/actions"
-import { useGetMonedasQuery } from "@/features/contabilidad/api/contabilidadApi"
+import { useMonedas } from "@/features/contabilidad/hooks/use-monedas"
 import { TasaCambioDialog } from "@/features/contabilidad/components/tasa-cambio-dialog"
 
 const empleadoSchema = z.object({
@@ -66,9 +66,9 @@ export function EnhancedEmpleadoForm({ initialData }: EnhancedEmpleadoFormProps)
   const [pendingSubmission, setPendingSubmission] = useState<EmpleadoFormValues | null>(null)
 
   const { isLoading: isLoadingEmpleados } = { isLoading: false }
-  const { data: monedasData } = useGetMonedasQuery()
+  const { monedas: monedasData } = useMonedas()
 
-  const monedas = monedasData?.data || []
+  const monedas = monedasData || []
   const monedasActivas = monedas.filter(m => m.isActive)
   const monedaPrincipal = monedas.find(m => m.esPrincipal)?.codigo || "CUP"
 

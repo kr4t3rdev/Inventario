@@ -22,7 +22,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useGetAnticiposDisponiblesQuery } from '@/features/contabilidad/api/contabilidadApi'
+import { getAnticiposAction } from '@/features/contabilidad/actions-anticipos'
 import { usePuntosDeVenta } from '@/features/puntos-venta/hooks/use-puntos-de-venta'
 import { facturarOfertaAction, updateOfertaAction } from '@/features/ofertas/actions'
 import { formatCurrency } from '@/lib/utils'
@@ -64,16 +64,26 @@ export function OfertaDetailContent({ initialOferta }: OfertaDetailContentProps)
 
   const anticiposFeatureEnabled = process.env.NEXT_PUBLIC_ENABLE_ANTICIPOS !== 'false'
 
-  const { data: anticiposCobroDisponibles, isFetching: isLoadingAnticiposCobro } = useGetAnticiposDisponiblesQuery(
-    {
-      contexto: 'factura',
-      clienteId: oferta?.clienteId || undefined,
-      moneda: 'CUP',
-    },
-    {
-      skip: !isFacturarDialogOpen || !oferta?.clienteId,
+  const [anticiposCobroDisponibles, setAnticiposCobroDisponibles] = useState<{ anticipos: any[] } | undefined>(undefined)
+  const [isLoadingAnticiposCobro, setIsLoadingAnticiposCobro] = useState(false)
+
+  useEffect(() => {
+    if (!isFacturarDialogOpen || !oferta?.clienteId) {
+      setAnticiposCobroDisponibles(undefined)
+      return
     }
-  )
+
+    let cancelled = false
+    setIsLoadingAnticiposCobro(true)
+    getAnticiposAction({ clienteId: oferta.clienteId, moneda: 'CUP' }).then((res) => {
+      if (!cancelled && res.success) {
+        setAnticiposCobroDisponibles(res.data)
+      }
+    }).finally(() => {
+      if (!cancelled) setIsLoadingAnticiposCobro(false)
+    })
+    return () => { cancelled = true }
+  }, [isFacturarDialogOpen, oferta?.clienteId])
 
   useEffect(() => {
     setOferta(initialOferta)

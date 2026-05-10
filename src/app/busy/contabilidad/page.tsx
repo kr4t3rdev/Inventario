@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useReducedMotion } from 'framer-motion';
 import {
   ArrowUpDown,
@@ -32,11 +32,11 @@ import {
 } from '@/components/ui/animations';
 import {
   useGetGastosPendientesQuery,
-  useGetMonedasQuery,
   useGetServiciosPendientesQuery,
-  useGetTasasActualesQuery,
   useGetVentasPendientesQuery,
 } from '@/lib/redux/contabilidad';
+import { useMonedas } from '@/features/contabilidad/hooks/use-monedas';
+import { getTasasActualesAction } from '@/features/contabilidad/actions-exchange';
 import { cn } from '@/lib/utils';
 import { DeudasCashStatsWidget } from '@/features/contabilidad/components/deudas-cash-stats-widget';
 
@@ -192,9 +192,13 @@ export default function ContabilidadDashboard(): React.JSX.Element {
   const { data: responseVentas } = useGetVentasPendientesQuery({ fechaInicio, fechaFin });
   const { data: serviciosPendientesData } = useGetServiciosPendientesQuery({ fechaDesde: fechaInicio || undefined, fechaHasta: fechaFin || undefined });
   const { data: response } = useGetGastosPendientesQuery({ fechaDesde: fechaInicio, fechaHasta: fechaFin, soloNoReconciliados: true });
-  const { data: monedasData } = useGetMonedasQuery();
+  const { monedas } = useMonedas();
 
-  const monedasPrincipal = monedasData?.data?.find((m: any) => m.esPrincipal)?.codigo || 'CUP';
+  useEffect(() => {
+    getTasasActualesAction()
+  }, [])
+
+  const monedasPrincipal = monedas.find((m: any) => m.esPrincipal)?.codigo || 'CUP';
   const ventasPendientes = responseVentas?.ventas?.filter((v: any) => !v.reconciliada) ?? [];
   const cantVentasPendientes = ventasPendientes.length;
   

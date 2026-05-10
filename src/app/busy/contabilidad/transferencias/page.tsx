@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowLeft, BadgeDollarSign, Plus, RefreshCw, ArrowRightLeft } from 'lucide-react';
 
@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { TransferenciaBancaria } from '@/app/models/model';
-import { useGetTransferenciasBancariasQuery } from '@/features/contabilidad/api/contabilidadApi';
+import { getTransferenciasBancariasAction } from '@/features/contabilidad/actions';
 import { cn, formatCurrency } from '@/lib/utils';
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { AnimatedNumber } from '@/components/ui/animated-number'
@@ -34,11 +34,21 @@ const TransferenciaBancariaForm = dynamic(() =>
 export default function TransferenciasBancariasPage(): React.JSX.Element {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const shouldReduceMotion = useReducedMotion();
+  const [transferenciasList, setTransferenciasList] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const { data: transferenciasData = { transferencias: [], pagination: { page: 1, limit: 50, total: 0, totalPages: 0 } }, refetch, isLoading } =
-    useGetTransferenciasBancariasQuery({});
+  const fetchTransferencias = useCallback(async () => {
+    setIsLoading(true)
+    const res = await getTransferenciasBancariasAction({})
+    if (res.success) {
+      setTransferenciasList(res.data.transferencias ?? [])
+    }
+    setIsLoading(false)
+  }, [])
 
-  const transferenciasList = transferenciasData.transferencias ?? [];
+  useEffect(() => {
+    fetchTransferencias()
+  }, [fetchTransferencias])
 
   const fadeIn = {
     hidden: { opacity: 0 },
@@ -74,7 +84,7 @@ export default function TransferenciasBancariasPage(): React.JSX.Element {
 
   const handleCreateSuccess = (): void => {
     setIsCreateDialogOpen(false);
-    refetch();
+    fetchTransferencias();
   };
 
   const transferenciasHoy = transferenciasList.filter((transferencia: TransferenciaBancaria) => {
@@ -242,11 +252,11 @@ export default function TransferenciasBancariasPage(): React.JSX.Element {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <TransferenciasTable
-                  transferencias={transferenciasList}
-                  isLoading={isLoading}
-                  onRefresh={() => refetch()}
-                />
+                  <TransferenciasTable
+                    transferencias={transferenciasList}
+                    isLoading={isLoading}
+                    onRefresh={() => fetchTransferencias()}
+                  />
               </CardContent>
             </Card>
           </motion.div>

@@ -19,7 +19,7 @@ import { DollarSign, Calculator } from "lucide-react"
 import { getProductosAction } from "@/features/productos"
 import { usePuntosDeVenta } from "@/features/puntos-venta/hooks/use-puntos-de-venta"
 import { createVentaAction, updateVentaAction } from "@/features/ventas/actions"
-import { useGetMonedasQuery } from "@/features/contabilidad/api/contabilidadApi"
+import { useMonedas } from "@/features/contabilidad/hooks/use-monedas"
 import { TasaCambioDialog } from "@/features/contabilidad/components/tasa-cambio-dialog"
 
 const ventaSchema = z.object({
@@ -62,16 +62,9 @@ export function EnhancedVentaForm({ initialData }: EnhancedVentaFormProps) {
   const [productos, setProductos] = useState<any[]>([])
   const [isLoadingProductos, setIsLoadingProductos] = useState(true)
   const { puntosDeVenta, isLoading: isLoadingPuntosDeVenta } = usePuntosDeVenta()
-  const { data: monedasData } = useGetMonedasQuery()
+  const { monedas: monedasData } = useMonedas()
 
-  useEffect(() => {
-    getProductosAction().then(r => {
-      if (r.success) setProductos(r.data ?? [])
-      setIsLoadingProductos(false)
-    })
-  }, [])
-
-  const monedas = ((monedasData as any)?.data as any[]) || []
+  const monedas = monedasData || []
   const monedasActivas = monedas.filter((m: any) => m.isActive)
   const monedaPrincipal = monedas.find((m: any) => m.esPrincipal)?.codigo || "CUP"
 

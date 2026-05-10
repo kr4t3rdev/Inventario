@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge"
 import { sileo } from '@/lib/sileo-shim'
 import { Skeleton } from "@/components/ui/skeleton"
 import { DollarSign, Briefcase } from "lucide-react"
-import { useGetMonedasQuery } from "@/features/contabilidad/api/contabilidadApi"
+import { useMonedas } from "@/features/contabilidad/hooks/use-monedas"
 import { TasaCambioDialog } from "@/features/contabilidad/components/tasa-cambio-dialog"
 import { createServicioAction, updateServicioAction } from "@/features/servicios/actions"
 
@@ -52,9 +52,9 @@ export function EnhancedServicioForm({ initialData }: EnhancedServicioFormProps)
   const [showTasaCambioDialog, setShowTasaCambioDialog] = useState(false)
   const [pendingSubmission, setPendingSubmission] = useState<ServicioFormValues | null>(null)
 
-  const { data: monedasData } = useGetMonedasQuery()
+  const { monedas: monedasData } = useMonedas()
 
-  const monedas = monedasData?.data || []
+  const monedas = monedasData || []
   const monedasActivas = monedas.filter(m => m.isActive)
   const monedaPrincipal = monedas.find(m => m.esPrincipal)?.codigo || "CUP"
 

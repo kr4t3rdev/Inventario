@@ -22,7 +22,7 @@ import type { Producto, Vendor } from '@/app/models/model'
 import { useVendors } from '@/features/vendors/hooks/use-vendors'
 import { useProductos } from '@/features/productos/hooks/use-productos'
 import { createCompraProductoAction } from '@/features/compras-productos/actions'
-import { useGetAnticiposDisponiblesQuery } from '@/features/contabilidad/api/contabilidadApi'
+import { getAnticiposAction } from '@/features/contabilidad/actions-anticipos'
 import { FORMA_PAGO_ANTICIPO_PAGO } from '@/lib/constants/anticipos'
 
 const itemSchema = z.object({
@@ -129,16 +129,26 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
     return map
   }, [productosCatalogo])
 
-  const { data: anticiposDisponibles, isFetching: isLoadingAnticipos } = useGetAnticiposDisponiblesQuery(
-    {
-      contexto: 'compra',
-      proveedorId: proveedorSeleccionado || undefined,
-      moneda: 'CUP'
-    },
-    {
-      skip: !anticiposFeatureEnabled || formaPagoSeleccionada !== FORMA_PAGO_ANTICIPO_PAGO || !proveedorSeleccionado
+  const [anticiposDisponibles, setAnticiposDisponibles] = useState<{ anticipos: any[] } | undefined>(undefined)
+  const [isLoadingAnticipos, setIsLoadingAnticipos] = useState(false)
+
+  useEffect(() => {
+    if (!anticiposFeatureEnabled || formaPagoSeleccionada !== FORMA_PAGO_ANTICIPO_PAGO || !proveedorSeleccionado) {
+      setAnticiposDisponibles(undefined)
+      return
     }
-  )
+
+    let cancelled = false
+    setIsLoadingAnticipos(true)
+    getAnticiposAction({ proveedorId: proveedorSeleccionado, moneda: 'CUP' }).then((res) => {
+      if (!cancelled && res.success) {
+        setAnticiposDisponibles(res.data)
+      }
+    }).finally(() => {
+      if (!cancelled) setIsLoadingAnticipos(false)
+    })
+    return () => { cancelled = true }
+  }, [anticiposFeatureEnabled, formaPagoSeleccionada, proveedorSeleccionado])
 
   // Calcular monto total estimado (con parsing robusto)
   const montoEstimadoCompra = useMemo(() => {

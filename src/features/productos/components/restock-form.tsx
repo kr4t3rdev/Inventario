@@ -26,7 +26,8 @@ import {
 import { ProductPhotoUpload } from "./product-photo-upload"
 
 import { restockProductoAction } from "@/features/productos/actions"
-import { useGetMonedasQuery, useGetCuentasBancariasQuery } from "@/features/contabilidad/api/contabilidadApi"
+import { useMonedas } from "@/features/contabilidad/hooks/use-monedas"
+import { useCuentasBancarias } from "@/features/contabilidad/hooks/use-cuentas-bancarias"
 import { TasaCambioDialog } from "@/features/contabilidad/components/tasa-cambio-dialog"
 import { RestockRequest } from "@/app/models/model"
 
@@ -117,10 +118,10 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
   const [showTipoRestockDialog, setShowTipoRestockDialog] = useState(false)
   const [preciosCambiados, setPreciosCambiados] = useState(false)
 
-  const { data: monedasData } = useGetMonedasQuery()
-  const { data: cuentasData } = useGetCuentasBancariasQuery()
-  const monedas = ((monedasData as any)?.data as any[]) || []
-  const cuentasBancarias: any[] = ((cuentasData as any)?.cuentas as any[]) || []
+  const { monedas: monedasData } = useMonedas()
+  const { cuentas: cuentasData } = useCuentasBancarias()
+  const monedas = monedasData || []
+  const cuentasBancarias: any[] = cuentasData || []
 
   const monedasActivas = monedas.filter((m: any) => m.isActive)
   const monedaPrincipal = monedas.find((m: any) => m.esPrincipal)?.codigo || "CUP"

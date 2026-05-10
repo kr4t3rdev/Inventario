@@ -21,7 +21,7 @@ import { ServerActionError } from "@/lib/api/errors"
 import { createVentaAction } from "@/features/ventas/actions"
 import { useClientes } from "@/features/clientes/hooks/use-clientes"
 import { useCategorias } from "@/features/categorias/hooks/use-categorias"
-import { useGetAnticiposDisponiblesQuery } from "@/features/contabilidad/api/contabilidadApi"
+import { getAnticiposAction } from "@/features/contabilidad/actions-anticipos"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
@@ -104,17 +104,26 @@ export function VentaInterface() {
 
   const { clientes, isLoading: isLoadingClientes } = useClientes()
   const { categorias, isLoading: isLoadingCategorias } = useCategorias()
-  const { data: anticiposCobroDisponibles, isFetching: isLoadingAnticiposCobro } =
-    useGetAnticiposDisponiblesQuery(
-      {
-        contexto: 'factura',
-        clienteId: selectedClienteId || undefined,
-        moneda: 'CUP'
-      },
-      {
-        skip: !anticiposFeatureEnabled || !isInvoiceDialogOpen || !selectedClienteId
+  const [anticiposCobroDisponibles, setAnticiposCobroDisponibles] = useState<{ anticipos: any[] } | undefined>(undefined)
+  const [isLoadingAnticiposCobro, setIsLoadingAnticiposCobro] = useState(false)
+
+  useEffect(() => {
+    if (!anticiposFeatureEnabled || !isInvoiceDialogOpen || !selectedClienteId) {
+      setAnticiposCobroDisponibles(undefined)
+      return
+    }
+
+    let cancelled = false
+    setIsLoadingAnticiposCobro(true)
+    getAnticiposAction({ clienteId: selectedClienteId, moneda: 'CUP' }).then((res) => {
+      if (!cancelled && res.success) {
+        setAnticiposCobroDisponibles(res.data)
       }
-    )
+    }).finally(() => {
+      if (!cancelled) setIsLoadingAnticiposCobro(false)
+    })
+    return () => { cancelled = true }
+  }, [anticiposFeatureEnabled, isInvoiceDialogOpen, selectedClienteId])
 
   // Generar sugerencias de búsqueda
   const handleSearchChange = (value: string) => {

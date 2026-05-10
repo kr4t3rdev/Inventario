@@ -3,6 +3,24 @@ import { withAction } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
+export const getTransferenciasBancariasAction = withAction(async (
+  params: { fechaInicio?: string; fechaFin?: string; cuentaId?: string } = {},
+  user: AuthenticatedUser
+) => {
+  const where: Record<string, any> = {};
+  if (params.fechaInicio || params.fechaFin) {
+    where.createdAt = {};
+    if (params.fechaInicio) where.createdAt.gte = new Date(params.fechaInicio);
+    if (params.fechaFin) where.createdAt.lte = new Date(params.fechaFin);
+  }
+  if (params.cuentaId) where.cuentaId = params.cuentaId;
+  const [transferencias, total] = await Promise.all([
+    prisma.transferenciaBancaria.findMany({ where, orderBy: { createdAt: 'desc' }, take: 50 }),
+    prisma.transferenciaBancaria.count({ where }),
+  ]);
+  return { transferencias, pagination: { page: 1, limit: 50, total, totalPages: Math.ceil(total / 50) } };
+});
+
 function bdf(fi: string | null, ff: string | null): Record<string, Date> { const r: Record<string, Date> = {}; if (fi) r.gte = new Date(fi); if (ff) r.lte = new Date(ff); return r; }
 
 export const getMovimientosReportAction = withAction(async (f: { busqueda?: string; fechaInicio?: string; fechaFin?: string; cuentaId?: string; tipoMovimiento?: string; moneda?: string; page?: number; limit?: number }, _user: AuthenticatedUser) => {

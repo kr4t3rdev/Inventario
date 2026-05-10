@@ -26,7 +26,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useProductos } from '@/features/productos/hooks/use-productos'
 import { useClientes } from "@/features/clientes/hooks/use-clientes";
 import { createOfertaAction } from "@/features/ofertas/actions";
-import { useGetAnticiposDisponiblesQuery } from "@/features/contabilidad/api/contabilidadApi";
+import { getAnticiposAction } from "@/features/contabilidad/actions-anticipos";
 import { formatCurrency } from "@/lib/utils";
 import { getAuthToken } from "@/lib/token";
 import type { OfertaItem, Oferta } from "@/app/models/model";
@@ -111,16 +111,26 @@ export function OfertaForm() {
   const watchedItems = useWatch({ control: form.control, name: "items" })
   const watchedImpuestos = useWatch({ control: form.control, name: "impuestos" }) || 0
   const watchedClienteId = useWatch({ control: form.control, name: "clienteId" })
-  const { data: anticiposCobroDisponibles, isFetching: isLoadingAnticiposCobro } = useGetAnticiposDisponiblesQuery(
-    {
-      contexto: 'factura',
-      clienteId: watchedClienteId || undefined,
-      moneda: 'CUP'
-    },
-    {
-      skip: !anticiposFeatureEnabled || !watchedClienteId
+  const [anticiposCobroDisponibles, setAnticiposCobroDisponibles] = useState<{ anticipos: any[] } | undefined>(undefined)
+  const [isLoadingAnticiposCobro, setIsLoadingAnticiposCobro] = useState(false)
+
+  useEffect(() => {
+    if (!anticiposFeatureEnabled || !watchedClienteId) {
+      setAnticiposCobroDisponibles(undefined)
+      return
     }
-  )
+
+    let cancelled = false
+    setIsLoadingAnticiposCobro(true)
+    getAnticiposAction({ clienteId: watchedClienteId, moneda: 'CUP' }).then((res) => {
+      if (!cancelled && res.success) {
+        setAnticiposCobroDisponibles(res.data)
+      }
+    }).finally(() => {
+      if (!cancelled) setIsLoadingAnticiposCobro(false)
+    })
+    return () => { cancelled = true }
+  }, [anticiposFeatureEnabled, watchedClienteId])
 
   useEffect(() => {
     const subtotal = watchedItems.reduce((sum, item) => sum + (item.total || 0), 0)
