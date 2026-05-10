@@ -47,12 +47,10 @@ export default function SistemaPage() {
               <p className="text-3xl font-bold">{system?.users.total ?? 0}</p>
             )}
             <p className="text-xs text-muted-foreground mt-1">
-  // @ts-expect-error
-  // @ts-expect-error
-  // @ts-expect-error
               {system?.users.byRole.find((r) => r.role === "admin")?.count ?? 0} admins
             </p>
           </CardContent>
+  // @ts-expect-error
         </Card>
 
         <Card className="rounded-xl border bg-card/80 backdrop-blur-sm shadow-sm">

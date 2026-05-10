@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
+import { useAppSelector } from "@/lib/redux/hooks"
 import { useForm, useFieldArray, useWatch } from "react-hook-form"
 
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -51,6 +52,7 @@ import { getCuentasBancariasAction } from "@/features/contabilidad/actions-cuent
 import { getTiposPagoAction } from "@/features/contabilidad/actions-tipos-pago"
 import { TasaCambioDialog } from "./tasa-cambio-dialog"
 import { VentaServicio } from "@/app/models/model"
+import { selectMonedasActivas } from "@/lib/redux/selectors/contabilidadSelectors"
 
 // Validation schema aligned with ventas (multi-distribuciones)
 const distribucionSchema = z.object({
@@ -87,6 +89,8 @@ export function ReconciliacionServiciosForm({
   onClose,
   onSuccess
 }: ReconciliacionServiciosFormProps) {
+  const monedas = useAppSelector(selectMonedasActivas) || []
+
   const [showTasaCambioDialog, setShowTasaCambioDialog] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 

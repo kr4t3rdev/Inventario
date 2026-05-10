@@ -13,7 +13,6 @@ export async function SiteHeader() {
   ])
 
   const monedas = monedasResult.success ? (monedasResult.data ?? []) : []
-  // @ts-expect-error
   const tasas = tasasResult.success ? (tasasResult.data?.tasas ?? []) : []
   
   return (
@@ -28,15 +27,12 @@ export async function SiteHeader() {
         </div>
         
         {/* Currency Indicator */}
-  // @ts-expect-error
-  // @ts-expect-error
-  // @ts-expect-error
-  // @ts-expect-error
         <CurrencyIndicator monedas={monedas} tasas={tasas} />
         
         <div className="flex items-center gap-2">
           <ThemeToggle/>
           <PanelNotificaciones/>        
+  // @ts-expect-error
         </div>
       </header>
       

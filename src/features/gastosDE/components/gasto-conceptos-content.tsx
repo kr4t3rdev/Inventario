@@ -216,14 +216,11 @@ export function GastoConceptosContent({ initialConceptos }: GastoConceptosConten
               ¿Está seguro?
             </AlertDialogTitle>
             <AlertDialogDescription>
-  // @ts-expect-error
-  // @ts-expect-error
-  // @ts-expect-error
-  // @ts-expect-error
-              {conceptos?.find(c => c.conceptoToDelete === conceptoToDelete)?._count?.gastosDE > 0
+              {conceptos?.find(c => c.conceptoId === conceptoToDelete)?._count?.gastosDE > 0
                 ? "Este concepto tiene gastos asociados. Será desactivado en lugar de eliminado."
                 : "Esta acción eliminará el concepto y todos sus elementos. Los gastos asociados quedarán sin concepto."}
             </AlertDialogDescription>
+  // @ts-expect-error
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>

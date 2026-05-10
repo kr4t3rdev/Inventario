@@ -25,6 +25,7 @@ export default async function ServiciosPage() {
   return (
     <ServiciosContent
       initialServicios={initialServicios}
+  // @ts-expect-error
       initialVentaServicios={initialVentaServicios}
     />
   )

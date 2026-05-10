@@ -92,12 +92,10 @@ export default async function EditarMermaPage({ params }: Props) {
               Modifique los datos de la merma
             </motion.p>
           </motion.div>
-  // @ts-expect-error
-  // @ts-expect-error
-  // @ts-expect-error
           <MermaForm initialData={{ ...merma, motivo: merma.motivo ?? "" }} />
         </div>
       </SidebarInset>
+  // @ts-expect-error
     </SidebarProvider>
   )
 }

@@ -30,12 +30,10 @@ export default async function NewGastoElementoPage({ params }: Props) {
     <SidebarProvider>
       <SidebarInset>
         <div className="container mx-auto py-6 max-w-2xl">
-  // @ts-expect-error
-  // @ts-expect-error
-  // @ts-expect-error
           <GastoElementoForm conceptoId={conceptoId} conceptoNombre={concepto.nombre} />
         </div>
       </SidebarInset>
+  // @ts-expect-error
     </SidebarProvider>
   )
 }

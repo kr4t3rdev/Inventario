@@ -167,10 +167,8 @@ export function FacturasContent({ initialData }: FacturasContentProps) {
       ),
       cell: ({ row }) => {
         const total = Number(row.original.total) || 0
-  // @ts-expect-error
         return <div className="font-medium">{formatCurrency(total, row.original.moneda || "CUP")}</div>
       },
-  // @ts-expect-error
       accessorFn: (row) => Number(row.original.total) || 0,
     },
     {
@@ -186,35 +184,22 @@ export function FacturasContent({ initialData }: FacturasContentProps) {
         return (
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" asChild>
-  // @ts-expect-error
-  // @ts-expect-error
-  // @ts-expect-error
-  // @ts-expect-error
               <Link href={`/busy/invoice?facturaId=${factura.facturaId}`}>
                 <FileText className="h-4 w-4" />
               </Link>
             </Button>
-  // @ts-expect-error
-  // @ts-expect-error
-  // @ts-expect-error
-  // @ts-expect-error
             {factura.pdfUrl && (
-  // @ts-expect-error
               <Button variant="ghost" size="icon" onClick={() => downloadFile(factura.pdfUrl!, `${factura.numeroFactura}.pdf`)}>
+  // @ts-expect-error
                 <Download className="h-4 w-4" />
               </Button>
             )}
-  // @ts-expect-error
-  // @ts-expect-error
-  // @ts-expect-error
-  // @ts-expect-error
-            <ActualizarEstadoFactura factura={factura} onUpdate={() => {
-              getFacturasAction({ page, limit }).then(r => { if (r.success) setResponse(r.data) })
-            }} />
+            <ActualizarEstadoFactura factura={factura} />
           </div>
         )
       },
     },
+  // @ts-expect-error
   ]
 
   const table = useReactTable({
@@ -267,10 +252,6 @@ export function FacturasContent({ initialData }: FacturasContentProps) {
               <Card key={estado} className="p-4">
                 <CardContent className="p-0">
                   <div className="text-sm text-muted-foreground">{estado.replace(/_/g, " ")}</div>
-  // @ts-expect-error
-  // @ts-expect-error
-  // @ts-expect-error
-  // @ts-expect-error
                   <div className="text-2xl font-bold">{total}</div>
                 </CardContent>
               </Card>
@@ -290,6 +271,7 @@ export function FacturasContent({ initialData }: FacturasContentProps) {
                 <SelectValue placeholder="Estado" />
               </SelectTrigger>
               <SelectContent>
+  // @ts-expect-error
                 <SelectItem value="ALL">Todos</SelectItem>
                 <SelectItem value="PENDIENTE">Pendiente</SelectItem>
                 <SelectItem value="PAGADA">Pagada</SelectItem>

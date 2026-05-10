@@ -112,14 +112,11 @@ export function DeudasCashStatsWidget() {
               <div key={moneda} className="flex justify-between items-center text-sm">
                 <span className="text-slate-600 dark:text-slate-400 font-medium">{moneda}</span>
                 <span className="font-semibold text-orange-600 dark:text-orange-400">
-  // @ts-expect-error
-  // @ts-expect-error
-  // @ts-expect-error
-  // @ts-expect-error
                   {formatAmount(monto)}
                 </span>
               </div>
             ))}
+  // @ts-expect-error
           </div>
         ) : (
           <p className="text-xs text-slate-500 dark:text-slate-400 text-center py-1">

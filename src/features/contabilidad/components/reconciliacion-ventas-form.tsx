@@ -44,6 +44,7 @@ import { reconciliarVentaAction } from "@/features/contabilidad/actions-reconcil
 import { getCuentasBancariasAction } from "@/features/contabilidad/actions-cuentas-bancarias"
 import { getTiposPagoAction } from "@/features/contabilidad/actions-tipos-pago"
 import type { VentaPendiente } from "@/app/models/model"
+import { selectMonedasActivas } from "@/lib/redux/selectors/contabilidadSelectors"
 
 // Validation schema for individual distribution
 const distribucionSchema = z.object({
@@ -92,6 +93,9 @@ export function ReconciliacionVentasForm({
   allowPartial = true,
   saldoRestante
 }: ReconciliacionVentasFormProps) {
+  // @ts-expect-error
+  const monedas = useAppSelector(selectMonedasActivas) || []
+
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [totalDistribuido, setTotalDistribuido] = useState(0)
   const [montoRestante, setMontoRestante] = useState(0)

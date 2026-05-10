@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-  // @ts-expect-error
 import { useGetStockPorUbicacionQuery } from "@/lib/redux/services/stockUbicacionApi"
 import { useAlmacenes } from "@/features/almacenes/hooks/use-almacenes"
 import { usePuntosDeVenta } from "@/features/puntos-venta/hooks/use-puntos-de-venta"
@@ -41,7 +40,6 @@ export function ReportePorUbicacion() {
   const { puntosDeVenta: puntosVenta } = usePuntosDeVenta()
 
   // ─── Server Actions state ─────────────────────────────
-  // @ts-expect-error
   const [productosUbicacion, setProductosUbicacion] = useState<Awaited<ReturnType<typeof getStockPorUbicacionAction>>['data']>([])
   const [isLoadingStock, setIsLoadingStock] = useState(false)
   const [stockError, setStockError] = useState<string | null>(null)
@@ -51,9 +49,7 @@ export function ReportePorUbicacion() {
     let cancelled = false
     setIsLoadingStock(true)
     setStockError(null)
-  // @ts-expect-error
     getStockPorUbicacionAction({ ubicacionId, tipoUbicacion, includeZero: true })
-  // @ts-expect-error
       .then(r => {
         if (cancelled) return
         if (r.success) setProductosUbicacion(r.data ?? [])
@@ -70,7 +66,6 @@ export function ReportePorUbicacion() {
   }
 
   const chartData = productosUbicacion
-  // @ts-expect-error
     ?.filter((p) => p.stockUbicacion > 0)
     .slice(0, 10)
     .map((p: any) => ({
@@ -195,11 +190,6 @@ export function ReportePorUbicacion() {
             <Card className={cn(surfaceCardClass, "border-l-4 border-l-primary")}>
               <CardContent className="p-4">
                 <div className="text-2xl font-bold">
-  // @ts-expect-error
-  // @ts-expect-error
-  // @ts-expect-error
-  // @ts-expect-error
-  // @ts-expect-error
                   {productosUbicacion?.filter((p) => p.stockUbicacion > 0).length || 0}
                 </div>
                 <p className="text-xs text-muted-foreground">Productos en ubicación</p>
@@ -210,6 +200,7 @@ export function ReportePorUbicacion() {
             <Card className={cn(surfaceCardClass, "border-l-4 border-l-chart-2")}>
               <CardContent className="p-4">
                 <div className="text-2xl font-bold">
+  // @ts-expect-error
                   {productosUbicacion?.reduce((sum: any, p: any) => sum + p.stockUbicacion, 0) || 0}
                 </div>
                 <p className="text-xs text-muted-foreground">Unidades totales</p>

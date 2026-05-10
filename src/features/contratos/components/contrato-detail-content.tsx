@@ -364,7 +364,7 @@ export function ContratoDetailContent({ initialData, contratoId }: ContratoDetai
   // @ts-expect-error
   // @ts-expect-error
   // @ts-expect-error
-                  <NewVersionDialog contratoId={contrato.contratoId} />
+                  <NewVersionDialog contratoId={contrato.contratoId} onSuccess={() => { window.location.reload() }} />
                 </CardHeader>
                 <CardContent>
                   {contrato.versiones?.length ? (
