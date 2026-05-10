@@ -40,7 +40,7 @@ const VENTA_SELECT = {
   },
   puntoDeVenta: { select: { pvId: true, nombre: true } },
   cliente: { select: { clienteId: true, nombre: true } },
-  factura: { select: { facturaId: true, numeroFactura: true } },
+  factura: { select: { idFactura: true, numeroFactura: true } },
 } as const;
 
 // ─── Server Actions ────────────────────────────────────────
