@@ -33,9 +33,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import {
-  useGetVentasPendientesQuery
-} from "@/features/contabilidad/api/contabilidadApi"
+import { getVentasPendientesAction } from "@/features/contabilidad/actions-reconciliacion"
 import { getCuentasPorCobrarAction } from "@/features/contabilidad"
 import type { VentaPendiente } from "@/app/models/model"
 import { cn } from "@/lib/utils"
@@ -84,12 +82,21 @@ export function VentasPendientesTable({
   const shouldReduceMotion = useReducedMotion()
   const [searchTerm, setSearchTerm] = useState("")
 
-  const { data: ventasData = { ventas: [], pagination: { page: 1, limit: 50, total: 0, totalPages: 0 } }, isLoading: isLoadingVentas, error: errorVentas } = useGetVentasPendientesQuery({
-    fechaInicio,
-    fechaFin,
-    page: currentPage,
-    limit: pageSize
-  })
+  const [ventasData, setVentasData] = useState<{ ventas: VentaPendiente[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>({ ventas: [], pagination: { page: 1, limit: 50, total: 0, totalPages: 0 } })
+  const [isLoadingVentas, setIsLoadingVentas] = useState(true)
+  const [errorVentas, setErrorVentas] = useState<unknown>(null)
+
+  useEffect(() => {
+    getVentasPendientesAction({
+      fechaInicio,
+      fechaFin,
+      page: currentPage,
+      limit: pageSize
+    }).then(r => {
+      if (r.success) setVentasData((r.data ?? { ventas: [], pagination: { page: 1, limit: 50, total: 0, totalPages: 0 } }) as any)
+      setIsLoadingVentas(false)
+    }).catch(e => { setErrorVentas(e); setIsLoadingVentas(false) })
+  }, [fechaInicio, fechaFin, currentPage, pageSize])
 
   const [cuentasPorCobrarData, setCuentasPorCobrarData] = useState<any[]>([])
   const [isLoadingCuentas, setIsLoadingCuentas] = useState(true)

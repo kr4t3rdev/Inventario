@@ -44,9 +44,7 @@ import {
   ShoppingCart,
   FileText,
 } from "lucide-react"
-import {
-  useGetGastosPendientesQuery
-} from "@/features/contabilidad/api/contabilidadApi"
+import { getGastosPendientesAction } from "@/features/contabilidad/actions-reconciliacion"
 import { GastoPendiente } from "@/app/models/model"
 import { cn } from "@/lib/utils"
 import {
@@ -111,10 +109,19 @@ export function GastosPendientesTable({
     setLocalCurrentPage(1)
   }, [searchTerm, periodoFiltro, fechaInicio, fechaFin])
   
-  const { data: response, isLoading, error } = useGetGastosPendientesQuery({
-    fechaDesde: fechaInicio,
-    fechaHasta: fechaFin
-  })
+  const [response, setResponse] = useState<{ gastos?: GastoPendiente[] } | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<unknown>(null)
+
+  useEffect(() => {
+    getGastosPendientesAction({
+      fechaDesde: fechaInicio,
+      fechaHasta: fechaFin
+    }).then(r => {
+      if (r.success) setResponse(r.data as any)
+      setIsLoading(false)
+    }).catch(e => { setError(e); setIsLoading(false) })
+  }, [fechaInicio, fechaFin])
 
   const gastos = gastosProp || response?.gastos
 

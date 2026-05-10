@@ -26,7 +26,7 @@ import {
   FileText,
 } from "lucide-react"
 import type { VentaServicio } from "@/app/models/model"
-import { useGetServiciosPendientesQuery } from "@/features/contabilidad/api/contabilidadApi"
+import { getServiciosPendientesAction } from "@/features/contabilidad/actions-reconciliacion"
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination"
 import { cn } from "@/lib/utils"
 import {
@@ -81,10 +81,24 @@ export function ServiciosPendientesTable({
     onPageChange?.(1)
   },[searchTerm, fechaInicio, fechaFin, onPageChange])
 
-  const { data: serviciosData = [], isLoading, error } = useGetServiciosPendientesQuery({
-    fechaDesde: fechaInicio,
-    fechaHasta: fechaFin
-  }, { skip: !!serviciosProp })
+  const [serviciosData, setServiciosData] = useState<any>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<unknown>(null)
+
+  useEffect(() => {
+    if (serviciosProp) {
+      setIsLoading(false)
+      return
+    }
+    setIsLoading(true)
+    getServiciosPendientesAction({
+      fechaDesde: fechaInicio,
+      fechaHasta: fechaFin
+    }).then(r => {
+      if (r.success) setServiciosData(r.data as any)
+      setIsLoading(false)
+    }).catch(e => { setError(e); setIsLoading(false) })
+  }, [fechaInicio, fechaFin, serviciosProp])
 
   const serviciosFlat: VentaServicio[] = serviciosProp || (Array.isArray(serviciosData) ? serviciosData : (serviciosData.ventaServicios || []))
 
