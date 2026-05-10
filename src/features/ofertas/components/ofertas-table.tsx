@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   type ColumnDef,
@@ -23,7 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { formatCurrency } from "@/lib/utils"
 import { Oferta } from "@/app/models/model"
 import { Badge } from "@/components/ui/badge"
-import { useDeleteOfertaMutation } from "@/features/ofertas/api/ofertasApi"
+import { deleteOfertaAction } from "@/features/ofertas/actions"
 import { toast } from "sonner"
 import {
   AlertDialog,
@@ -83,23 +84,32 @@ function PulseSkeleton({ className }: { className?: string }) {
 }
 
 export function OfertasTable({ ofertas, isLoading, error }: OfertasTableProps) {
+  const router = useRouter()
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
   const [ofertaToDelete, setOfertaToDelete] = useState<Oferta | null>(null)
-  const [deleteOferta, { isLoading: isDeleting }] = useDeleteOfertaMutation()
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const handleDelete = async () => {
     if (!ofertaToDelete) return
 
+    setIsDeleting(true)
     try {
-      await deleteOferta(ofertaToDelete.id).unwrap()
-      toast.success("Oferta eliminada exitosamente")
-      setOfertaToDelete(null)
+      const result = await deleteOfertaAction(ofertaToDelete.id)
+      if (result.success) {
+        toast.success("Oferta eliminada exitosamente")
+        setOfertaToDelete(null)
+        router.refresh()
+      } else {
+        toast.error(result.error || "Error al eliminar la oferta")
+      }
     } catch (error: any) {
       console.error("Error eliminando oferta:", error)
-      toast.error(error.data?.error || "Error al eliminar la oferta")
+      toast.error(error.message || "Error al eliminar la oferta")
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -247,7 +257,7 @@ export function OfertasTable({ ofertas, isLoading, error }: OfertasTableProps) {
         transition={{ duration: 0.3 }}
       >
         <div className="flex items-center py-4">
-          <PulseSkeleton className="h-10 w-[300px]" />
+          <PulseSkeleton className="h-10 w-75" />
         </div>
         <div className="rounded-md border">
           <div className="p-4 space-y-3">

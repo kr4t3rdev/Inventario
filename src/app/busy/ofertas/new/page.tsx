@@ -1,18 +1,29 @@
-'use client'
+/**
+ * @description Página para crear nueva oferta - Server Component
+ * @module app/busy/ofertas/new/page
+ */
 
+import { getClientesAction } from "@/features/clientes"
+import { OfertaForm } from "@/features/ofertas/components/oferta-form"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { OfertaForm } from "@/features/ofertas"
 import { motion } from "framer-motion"
 import { Tag, Sparkles, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
-export default function NewOfertaPage() {
+/**
+ * @description Página de nueva oferta
+ * @returns {Promise<JSX.Element>} Página de nueva oferta
+ */
+export default async function NewOfertaPage(): Promise<JSX.Element> {
+  // Obtener clientes del servidor para pasar como initial data (permite usar Server Actions)
+  const clientes = await getClientesAction()
+
   return (
     <SidebarProvider>
       <SidebarInset>
         <div className="container mx-auto py-4">
-          <motion.div 
+          <motion.div
             className="mb-6"
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -29,13 +40,13 @@ export default function NewOfertaPage() {
                   </Button>
                 </Link>
               </motion.div>
-              <motion.div 
+              <motion.div
                 className="flex items-center gap-3"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.1 }}
               >
-                <motion.div 
+                <motion.div
                   className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
                   whileHover={{ scale: 1.05, rotate: 5 }}
                   transition={{ type: "spring", stiffness: 400, damping: 10 }}
@@ -49,7 +60,7 @@ export default function NewOfertaPage() {
                   <motion.div
                     className="absolute -right-4 -top-1"
                     animate={{ rotate: 360, scale: [1, 1.2, 1] }}
-                    transition={{ 
+                    transition={{
                       rotate: { duration: 20, repeat: Infinity, ease: "linear" },
                       scale: { duration: 2, repeat: Infinity, ease: "easeInOut" }
                     }}
@@ -59,7 +70,7 @@ export default function NewOfertaPage() {
                 </div>
               </motion.div>
             </div>
-            <motion.p 
+            <motion.p
               className="text-muted-foreground ml-12"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -68,7 +79,8 @@ export default function NewOfertaPage() {
               Cree una nueva oferta para un cliente
             </motion.p>
           </motion.div>
-          <OfertaForm />
+          {/* OfertaForm es un Client Component que puede usar initialClientes o RTK Query fallback */}
+          <OfertaForm initialClientes={clientes} />
         </div>
       </SidebarInset>
     </SidebarProvider>

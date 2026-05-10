@@ -7,7 +7,7 @@
  * El formulario (MermaForm) es un Client Component.
  */
 import { getMermaByIdAction } from "@/features/mermas"
-import { MermaForm } from "@/features/mermas/components/merma-form"
+import { MermaForm } from "@/features/mermas"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { motion } from "framer-motion"

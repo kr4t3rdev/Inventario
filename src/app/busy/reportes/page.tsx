@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 
+import { getTransferenciasAction } from '@/features/transferencias';
 import { ReportesPageClient } from '@/features/reportes-financieros/components/reportes-page-client';
 
 export const metadata: Metadata = {
@@ -9,8 +10,11 @@ export const metadata: Metadata = {
 
 /**
  * @description Página principal de reportes de inventario.
- * @returns {JSX.Element} Contenedor de la vista de reportes.
+ * @returns {Promise<JSX.Element>} Contenedor de la vista de reportes.
  */
-export default function ReportesPage() {
-  return <ReportesPageClient />;
+export default async function ReportesPage() {
+  const result = await getTransferenciasAction({});
+  const initialTransferencias = result.success ? result.data?.transferencias ?? [] : [];
+
+  return <ReportesPageClient initialTransferencias={initialTransferencias} />;
 }

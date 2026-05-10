@@ -1,4 +1,4 @@
-// Server Actions (nuevo)
+// Server Actions
 export {
   getOfertasAction,
   getOfertaByIdAction,
@@ -7,17 +7,6 @@ export {
   deleteOfertaAction,
   facturarOfertaAction,
 } from './actions'
-
-// RTK Query (legacy)
-export {
-  ofertasApi,
-  useGetOfertasQuery,
-  useGetOfertaQuery,
-  useAddOfertaMutation,
-  useUpdateOfertaMutation,
-  useFacturarOfertaMutation,
-  useDeleteOfertaMutation,
-} from './api/ofertasApi'
 
 export { OfertasTable } from './components/ofertas-table'
 export { OfertaForm } from './components/oferta-form'

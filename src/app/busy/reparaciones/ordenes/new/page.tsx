@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react"
 import { getEquiposReparacion } from "@/lib/api/reparaciones/equipos"
-import { useGetClientesQuery } from "@/features/clientes/api/ClienteApi"
+import { useClientes } from "@/features/clientes/hooks/use-clientes"
 import { addOrdenReparacion } from "@/lib/api/reparaciones/ordenes"
 import { toast } from "sonner"
 import { ArrowLeft, Save, Plus, Trash2, Wrench, Upload, X, Camera, FileText, Printer } from "lucide-react"
@@ -40,7 +40,7 @@ export default function NewOrdenPage() {
   const [equiposCatalog, setEquiposCatalog] = useState<any[]>([])
 
   useEffect(() => { getEquiposReparacion().then(setEquiposCatalog) }, [])
-  const { data: clientes } = useGetClientesQuery()
+  const { clientes } = useClientes()
   
   const [formData, setFormData] = useState({
     clienteId: "",

@@ -12,8 +12,6 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { sileo } from '@/lib/sileo-shim'
 import { Skeleton } from '@/components/ui/skeleton'
-import { v4 } from 'uuid'
-import { useAddServiciosMutation, useGetServiciosQuery, useUpdateServiciosMutation } from '@/features/servicios/api/serviciosApi'
 import { useVendors } from '@/features/vendors/hooks/use-vendors'
 import type { Vendor } from '@/app/models/model'
 import { createServicioAction, updateServicioAction } from '@/features/servicios/actions'
@@ -60,12 +58,7 @@ export function ServicioForm({ initialData, initialVendors }: ServicioFormProps)
   // Si se pasan vendors por props, usar esos; sino usar el hook
   const hookVendors = useVendors()
   const vendors = initialVendors ?? hookVendors.vendors
-  const isLoadingServicios = initialVendors ? false : useGetServiciosQuery().isLoading
-
-  // Usar Server Actions si se pasaron vendors (modo Server Component)
-  const useServerActions = !!initialVendors
-  const [addServicios] = useAddServiciosMutation()
-  const [updateServicios] = useUpdateServiciosMutation()
+  const isLoadingServicios = initialVendors ? false : hookVendors.isLoading
 
   const form = useForm<ServicioFormValues>({
     resolver: zodResolver(servicioSchema),
@@ -83,38 +76,17 @@ export function ServicioForm({ initialData, initialVendors }: ServicioFormProps)
   async function onSubmit(data: ServicioFormValues) {
     setIsLoading(true)
     try {
-      if (useServerActions) {
-        // Usar Server Actions (modo Server Component)
-        if (initialData) {
-          const result = await updateServicioAction({
-            servicioId: initialData.servicioId,
-            ...data,
-          })
-          if (!result.success) throw new Error(result.error?.message)
-          sileo.success({ title: 'El servicio ha sido actualizado exitosamente.' })
-        } else {
-          const result = await createServicioAction({
-            servicioId: v4(),
-            ...data
-          })
-          if (!result.success) throw new Error(result.error?.message)
-          sileo.success({ title: 'El servicio ha sido registrado exitosamente.' })
-        }
+      if (initialData) {
+        const result = await updateServicioAction({
+          servicioId: initialData.servicioId,
+          ...data,
+        })
+        if (!result.success) throw new Error(result.error?.message)
+        sileo.success({ title: 'El servicio ha sido actualizado exitosamente.' })
       } else {
-        // Usar RTK Query (modo Client Component tradicional)
-        if (initialData) {
-          await updateServicios({
-            servicioId: initialData.servicioId,
-            ...data,
-          }).unwrap()
-          sileo.success({ title: 'El servicio ha sido actualizado exitosamente.' })
-        } else {
-          await addServicios({
-            servicioId: v4(),
-            ...data
-          }).unwrap()
-          sileo.success({ title: 'El servicio ha sido registrado exitosamente.' })
-        }
+        const result = await createServicioAction(data)
+        if (!result.success) throw new Error(result.error?.message)
+        sileo.success({ title: 'El servicio ha sido registrado exitosamente.' })
       }
       router.back()
     } catch (error) {

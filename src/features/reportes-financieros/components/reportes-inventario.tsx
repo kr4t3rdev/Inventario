@@ -22,6 +22,24 @@ const tabTriggerClass = cn(
   'data-[state=active]:border-slate-200 data-[state=active]:bg-white data-[state=active]:shadow-sm'
 );
 
+export interface TransferenciaMovimientos {
+  transferenciaId: string;
+  productoId: string;
+  productoNombre: string;
+  productoCodigoInterno?: string | null;
+  cantidad: number;
+  createdAt: string;
+  updatedAt: string;
+  estado: string;
+  tipoTransferencia: string;
+  origenNombre?: string;
+  destinoNombre?: string;
+}
+
+interface ReportesInventarioProps {
+  initialTransferencias: TransferenciaMovimientos[];
+}
+
 /**
  * @description Loader de sección para tabs de reportes.
  * @returns {JSX.Element} Skeleton base para el contenido de pestañas.
@@ -56,7 +74,7 @@ const ReporteMovimientos = dynamic(
  * @description Vista principal con pestañas para los reportes de inventario.
  * @returns {JSX.Element} Panel de reportes con transiciones y metadatos de vista.
  */
-export default function ReportesInventario() {
+export default function ReportesInventario({ initialTransferencias }: ReportesInventarioProps) {
   const [activeTab, setActiveTab] = useState('general');
   const shouldReduceMotion = useReducedMotion();
 
@@ -147,7 +165,7 @@ export default function ReportesInventario() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: shouldReduceMotion ? 0 : 0.2 }}
                 >
-                  <ReporteMovimientos />
+                  <ReporteMovimientos initialTransferencias={initialTransferencias} />
                 </motion.div>
               </TabsContent>
             </Tabs>

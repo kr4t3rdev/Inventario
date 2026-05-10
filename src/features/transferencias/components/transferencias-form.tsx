@@ -27,7 +27,8 @@ import { cn } from "@/lib/utils"
 
 import { usePuntosDeVenta } from "@/features/puntos-venta/hooks/use-puntos-de-venta"
 import { useAlmacenes } from "@/features/almacenes/hooks/use-almacenes"
-import { useGetStockPorUbicacionQuery } from "@/lib/redux/services/stockUbicacionApi"
+import { getProductosAction } from "@/features/productos"
+import { getStockPorUbicacionAction } from "@/features/productos/actions"
 import { useDispatch } from "react-redux"
 import { apiSlice } from "@/lib/redux/services/apiSlice"
 
@@ -365,10 +366,13 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
   const { almacenes, isLoading: isLoadingAlmacenes } = useAlmacenes()
 
   useEffect(() => {
-    getProductosAction().then(r => {
-      if (r.success) setProductos(r.data ?? [])
+    const loadProductos = async () => {
+      const result = await getProductosAction()
+      if (result.success) setProductos(result.data ?? [])
       setIsLoadingProductos(false)
-    })
+    }
+
+    void loadProductos()
   }, [])
 
   const form = useForm<TransferenciaFormValues>({
@@ -483,7 +487,6 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
         throw new Error(errorData.message || errorData.error || "Error al guardar la transferencia")
       }
 
-      dispatch(apiSlice.util.invalidateTags(['Transferencias']))
       dispatch(apiSlice.util.invalidateTags(['Notificaciones']))
       dispatch(apiSlice.util.invalidateTags(['Productos']))
 

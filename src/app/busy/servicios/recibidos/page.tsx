@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 
+import { getServiciosAction } from '@/features/servicios/actions'
 import { ServiciosRecibidosForm } from '@/features/servicios/components'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 
@@ -12,7 +13,10 @@ export const metadata: Metadata = {
  * @description Página para registrar servicios recibidos.
  * @returns {JSX.Element} Vista de registro de servicios recibidos.
  */
-export default function ServiciosRecibidosPage() {
+export default async function ServiciosRecibidosPage() {
+  const serviciosResult = await getServiciosAction()
+  const initialServicios = serviciosResult.success ? serviciosResult.data ?? [] : []
+
   return (
     <SidebarProvider>
       <SidebarInset>
@@ -24,7 +28,7 @@ export default function ServiciosRecibidosPage() {
             </p>
           </div>
 
-          <ServiciosRecibidosForm />
+          <ServiciosRecibidosForm initialServicios={initialServicios} />
         </div>
       </SidebarInset>
     </SidebarProvider>

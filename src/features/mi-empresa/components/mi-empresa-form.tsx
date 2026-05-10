@@ -1,12 +1,11 @@
 "use client"
 
-import React, { useEffect, useMemo, useState } from "react"
+import React, { useState } from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { sileo } from '@/lib/sileo-shim'
 import { getAuthToken } from "@/lib/token"
-import { useGetCuentasBancariasQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
@@ -27,6 +26,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import type { CuentaBancariaItem, MiEmpresaFormValues as MiEmpresaFormValuesType } from '../lib/miEmpresaUtils'
+import { normalizeMiEmpresaFormValues } from '../lib/miEmpresaUtils'
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -63,10 +64,15 @@ const miEmpresaSchema = z.object({
   usaCodigoEan13: z.boolean().optional(),
 })
 
-export type MiEmpresaFormValues = z.infer<typeof miEmpresaSchema>
+interface MiEmpresaFormProps {
+  /** Datos iniciales de la empresa (server-side) */
+  initialData?: MiEmpresaFormValuesType
+  /** Cuentas bancarias activas del tenant (server-side) */
+  cuentas?: CuentaBancariaItem[]
+}
 
+/** Tipo interno para la respuesta de la API (formato plano del empresa) */
 type MiEmpresaApiResponse = {
-  id: number
   nombre: string
   propietario: string | null
   direccion: string | null
@@ -80,35 +86,9 @@ type MiEmpresaApiResponse = {
   usaCodigoEan13: boolean
 }
 
-async function fetchMiEmpresa(): Promise<MiEmpresaApiResponse> {
+async function saveMiEmpresa(values: MiEmpresaFormValuesType): Promise<MiEmpresaApiResponse> {
   const token = getAuthToken()
-  const res = await fetch("/api/mi-empresa", {
-    headers: token ? { Authorization: token } : undefined,
-    cache: "no-store",
-  })
-  if (!res.ok) {
-    throw new Error("Error cargando Mi Empresa")
-  }
-  const body = await res.json().catch(() => null)
-  if (!body) throw new Error('Respuesta inválida de Mi Empresa')
-  return body as MiEmpresaApiResponse
-}
-
-async function saveMiEmpresa(values: MiEmpresaFormValues): Promise<MiEmpresaApiResponse> {
-  const token = getAuthToken()
-  const payload = {
-    nombre: values.nombre,
-    propietario: values.propietario?.trim() ? values.propietario.trim() : null,
-    direccion: values.direccion?.trim() ? values.direccion.trim() : null,
-    telefono: values.telefono?.trim() ? values.telefono.trim() : null,
-    email: values.email?.trim() ? values.email.trim() : null,
-    carnetIdentidad: values.carnetIdentidad?.trim() ? values.carnetIdentidad.trim() : null,
-    nit: values.nit?.trim() ? values.nit.trim() : null,
-    licenciaOperacion: values.licenciaOperacion?.trim() ? values.licenciaOperacion.trim() : null,
-    logoUrl: values.logoUrl?.trim() ? values.logoUrl.trim() : null,
-    cuentaBancariaId: values.cuentaBancariaId === "none" ? null : values.cuentaBancariaId?.trim() ? values.cuentaBancariaId.trim() : null,
-    usaCodigoEan13: values.usaCodigoEan13 ?? false,
-  }
+  const payload = normalizeMiEmpresaFormValues(values)
 
   const res = await fetch("/api/mi-empresa", {
     method: "PUT",
@@ -138,65 +118,29 @@ async function saveMiEmpresa(values: MiEmpresaFormValues): Promise<MiEmpresaApiR
   return responseData
 }
 
-export function MiEmpresaForm() {
-  const [loading, setLoading] = useState(true)
+export function MiEmpresaForm({ initialData, cuentas = [] }: MiEmpresaFormProps) {
   const [saving, setSaving] = useState(false)
   const [showEan13Confirmation, setShowEan13Confirmation] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [savedUsaEan13, setSavedUsaEan13] = useState(false)
-  const { data: cuentasData, isLoading: isLoadingCuentas } = useGetCuentasBancariasQuery()
+  const [savedUsaEan13, setSavedUsaEan13] = useState(initialData?.usaCodigoEan13 ?? false)
 
-  const cuentas = useMemo(() => {
-    const list = cuentasData?.cuentas ?? []
-    return list.filter((c) => c.isActive !== false)
-  }, [cuentasData])
+  const defaultValues = initialData ?? {
+    nombre: "Mi Empresa",
+    propietario: "",
+    direccion: "",
+    telefono: "",
+    email: "",
+    carnetIdentidad: "",
+    nit: "",
+    licenciaOperacion: "",
+    logoUrl: "",
+    cuentaBancariaId: "none",
+  }
 
-  const form = useForm<MiEmpresaFormValues>({
+  const form = useForm<MiEmpresaFormValuesType>({
     resolver: zodResolver(miEmpresaSchema),
-    defaultValues: {
-      nombre: "Mi Empresa",
-      propietario: "",
-      direccion: "",
-      telefono: "",
-      email: "",
-      carnetIdentidad: "",
-      nit: "",
-      licenciaOperacion: "",
-      logoUrl: "",
-      cuentaBancariaId: "none",
-    },
+    defaultValues,
   })
-
-  useEffect(() => {
-    let mounted = true
-    fetchMiEmpresa()
-      .then((data) => {
-        if (!mounted) return
-        setSavedUsaEan13(data.usaCodigoEan13 ?? false)
-        form.reset({
-          nombre: data.nombre ?? "Mi Empresa",
-          propietario: data.propietario ?? "",
-          direccion: data.direccion ?? "",
-          telefono: data.telefono ?? "",
-          email: data.email ?? "",
-          carnetIdentidad: data.carnetIdentidad ?? "",
-          nit: data.nit ?? "",
-          licenciaOperacion: data.licenciaOperacion ?? "",
-          logoUrl: data.logoUrl ?? "",
-          cuentaBancariaId: data.cuentaBancariaId ?? "none",
-          usaCodigoEan13: data.usaCodigoEan13 ?? false,
-        })
-      })
-      .catch(() => {
-        sileo.error({ title: 'No se pudo cargar la configuración de Mi Empresa' })
-      })
-      .finally(() => {
-        if (mounted) setLoading(false)
-      })
-    return () => {
-      mounted = false
-    }
-  }, [form])
 
   /**
    * @description Maneja el cambio del switch EAN-13. Si se desactiva, envía directamente. Si se activa, muestra diálogo.
@@ -284,7 +228,7 @@ export function MiEmpresaForm() {
     }
   }
 
-  const onSubmit = async (values: MiEmpresaFormValues) => {
+  const onSubmit = async (values: MiEmpresaFormValuesType) => {
     setSaving(true)
     try {
       const saved = await saveMiEmpresa(values)
@@ -350,7 +294,7 @@ export function MiEmpresaForm() {
                       <FormLabel>Nombre</FormLabel>
                       <FormControl>
                         <motion.div whileFocus={{ scale: 1.01 }} transition={{ type: "spring", stiffness: 400, damping: 20 }}>
-                          <Input placeholder="Mi Empresa" {...field} disabled={loading || saving} />
+                          <Input placeholder="Mi Empresa" {...field} disabled={saving} />
                         </motion.div>
                       </FormControl>
                       <FormMessage />
@@ -366,7 +310,7 @@ export function MiEmpresaForm() {
                       <FormLabel>Propietario</FormLabel>
                       <FormControl>
                         <motion.div whileFocus={{ scale: 1.01 }} transition={{ type: "spring", stiffness: 400, damping: 20 }}>
-                          <Input placeholder="Nombre del propietario" autoComplete="name" {...field} value={field.value ?? ""} disabled={loading || saving} />
+                          <Input placeholder="Nombre del propietario" autoComplete="name" {...field} value={field.value ?? ""} disabled={saving} />
                         </motion.div>
                       </FormControl>
                       <FormMessage />
@@ -382,7 +326,7 @@ export function MiEmpresaForm() {
                       <FormLabel>Carnet de Identidad</FormLabel>
                       <FormControl>
                         <motion.div whileFocus={{ scale: 1.01 }} transition={{ type: "spring", stiffness: 400, damping: 20 }}>
-                          <Input placeholder="Carnet de Identidad" {...field} disabled={loading || saving} />
+                          <Input placeholder="Carnet de Identidad" {...field} disabled={saving} />
                         </motion.div>
                       </FormControl>
                       <FormMessage />
@@ -398,7 +342,7 @@ export function MiEmpresaForm() {
                       <FormLabel>NIT</FormLabel>
                       <FormControl>
                         <motion.div whileFocus={{ scale: 1.01 }} transition={{ type: "spring", stiffness: 400, damping: 20 }}>
-                          <Input placeholder="NIT" {...field} disabled={loading || saving} />
+                          <Input placeholder="NIT" {...field} disabled={saving} />
                         </motion.div>
                       </FormControl>
                       <FormMessage />
@@ -414,7 +358,7 @@ export function MiEmpresaForm() {
                       <FormLabel>Licencia de Operación</FormLabel>
                       <FormControl>
                         <motion.div whileFocus={{ scale: 1.01 }} transition={{ type: "spring", stiffness: 400, damping: 20 }}>
-                          <Input placeholder="Licencia de Operación" {...field} disabled={loading || saving} />
+                          <Input placeholder="Licencia de Operación" {...field} disabled={saving} />
                         </motion.div>
                       </FormControl>
                       <FormMessage />
@@ -430,7 +374,7 @@ export function MiEmpresaForm() {
                       <FormLabel>Teléfono</FormLabel>
                       <FormControl>
                         <motion.div whileFocus={{ scale: 1.01 }} transition={{ type: "spring", stiffness: 400, damping: 20 }}>
-                          <Input placeholder="+53 ..." {...field} disabled={loading || saving} />
+                          <Input placeholder="+53 ..." {...field} disabled={saving} />
                         </motion.div>
                       </FormControl>
                       <FormMessage />
@@ -446,7 +390,7 @@ export function MiEmpresaForm() {
                       <FormLabel>Email</FormLabel>
                       <FormControl>
                         <motion.div whileFocus={{ scale: 1.01 }} transition={{ type: "spring", stiffness: 400, damping: 20 }}>
-                          <Input placeholder="email@empresa.com" {...field} disabled={loading || saving} />
+                          <Input placeholder="email@empresa.com" {...field} disabled={saving} />
                         </motion.div>
                       </FormControl>
                       <FormMessage />
@@ -464,7 +408,7 @@ export function MiEmpresaForm() {
                       <FormLabel>Dirección</FormLabel>
                       <FormControl>
                         <motion.div whileFocus={{ scale: 1.01 }} transition={{ type: "spring", stiffness: 400, damping: 20 }}>
-                          <Textarea placeholder="Dirección de la empresa" {...field} disabled={loading || saving} />
+                          <Textarea placeholder="Dirección de la empresa" {...field} disabled={saving} />
                         </motion.div>
                       </FormControl>
                       <FormMessage />
@@ -531,7 +475,7 @@ export function MiEmpresaForm() {
                                   sileo.dismiss(loadingToastId)
                                 }
                               }}
-                              disabled={loading || saving}
+                              disabled={saving}
                               className="cursor-pointer"
                             />
                             {field.value && (
@@ -585,7 +529,7 @@ export function MiEmpresaForm() {
                       <Select
                         value={field.value || undefined}
                         onValueChange={(v) => field.onChange(v)}
-                        disabled={loading || saving || isLoadingCuentas}
+                        disabled={saving}
                       >
                         <FormControl>
                           <motion.div whileFocus={{ scale: 1.01 }} transition={{ type: "spring", stiffness: 400, damping: 20 }}>
@@ -629,7 +573,7 @@ export function MiEmpresaForm() {
                          <Switch
                            checked={field.value ?? false}
                            onCheckedChange={handleEan13Toggle}
-                           disabled={loading || saving || isSubmitting}
+                           disabled={saving || isSubmitting}
                          />
                        </FormControl>
                     </FormItem>
@@ -650,7 +594,7 @@ export function MiEmpresaForm() {
                     type="button"
                     variant="outline"
                     onClick={() => form.reset()}
-                    disabled={loading || saving}
+                    disabled={saving}
                   >
                     Reiniciar
                   </Button>
@@ -660,7 +604,7 @@ export function MiEmpresaForm() {
                   whileTap={{ scale: 0.98 }}
                   transition={{ type: "spring", stiffness: 400, damping: 17 }}
                 >
-                  <Button type="submit" disabled={loading || saving}>
+                  <Button type="submit" disabled={saving}>
                     Guardar
                   </Button>
                 </motion.div>

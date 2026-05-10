@@ -1,26 +1,32 @@
-"use client"
-
 import { MiEmpresaForm } from "@/features/mi-empresa/components/mi-empresa-form"
-import { motion } from "framer-motion"
+import { getMiEmpresaPageData } from "@/features/mi-empresa/server/data"
+import {
+  mapMiEmpresaApiToFormValues,
+  filterActiveCuentasBancarias,
+} from "@/features/mi-empresa/lib/miEmpresaUtils"
 
-export default function MiEmpresaConfigPage() {
+/**
+ * @description Página de configuración de Mi Empresa.
+ * Server Component: obtiene los datos iniciales del servidor y los pasa
+ * al formulario cliente, eliminando la necesidad de un fetch adicional.
+ *
+ * @returns {Promise<JSX.Element>} Página de Mi Empresa
+ */
+export default async function MiEmpresaConfigPage() {
+  const { miEmpresa, cuentas } = await getMiEmpresaPageData()
+
+  const initialData = miEmpresa ? mapMiEmpresaApiToFormValues(miEmpresa) : undefined
+  const activeCuentas = filterActiveCuentasBancarias(cuentas)
+
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.4 }}
-      className="container mx-auto p-6 space-y-6"
-    >
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: "easeOut" }}
-      >
+    <div className="container mx-auto p-6 space-y-6">
+      <div>
         <h1 className="text-3xl font-bold tracking-tight">Mi Empresa</h1>
-        <p className="text-muted-foreground">Configura los datos que aparecen como beneficiario en facturas y documentos</p>
-      </motion.div>
-      <MiEmpresaForm />
-    </motion.div>
+        <p className="text-muted-foreground">
+          Configura los datos que aparecen como beneficiario en facturas y documentos
+        </p>
+      </div>
+      <MiEmpresaForm initialData={initialData} cuentas={activeCuentas} />
+    </div>
   )
 }
-

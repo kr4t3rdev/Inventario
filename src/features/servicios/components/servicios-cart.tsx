@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { formatCurrency } from "@/lib/utils"
 import { createVentaServicioAction } from "@/features/venta-servicios/actions"
-import { useGetClientesQuery } from "@/features/clientes/api/ClienteApi"
+import { useClientes } from "@/features/clientes/hooks/use-clientes"
 import { toast } from "sonner"
 import { CreditCard, Plus, Minus, X, ShoppingCart } from "lucide-react"
 
@@ -30,7 +30,7 @@ interface ServiciosCartProps {
 }
 
 export default function ServiciosCart({ cart, setCart, isOpen, onOpenChange }: ServiciosCartProps) {
-  const { data: clientes } = useGetClientesQuery()
+  const { clientes } = useClientes()
   const [selectedClienteId, setSelectedClienteId] = useState<string>("")
   const [observaciones, setObservaciones] = useState<string>("")
   const [isProcessing, setIsProcessing] = useState(false)

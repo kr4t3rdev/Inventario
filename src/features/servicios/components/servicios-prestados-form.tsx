@@ -15,13 +15,13 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useGetClientesQuery } from '@/features/clientes/api/ClienteApi'
-import { useGetServiciosQuery } from '@/features/servicios/api/serviciosApi'
+import { useClientes } from '@/features/clientes/hooks/use-clientes'
 import { createVentaServicioAction } from '@/features/venta-servicios/actions'
 import { AnticipoSelector } from '@/features/contabilidad/components/anticipos/anticipo-selector'
 import type { AnticipoAllocation } from '@/features/contabilidad/components/anticipos/anticipo-selector'
 import { ArrowLeft, Handshake, Save, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import type { Servicios } from '@/app/models/model'
 
 const FORMA_COBRO_ANTICIPO = 'ANTICIPO_COBRO' as const
 
@@ -40,14 +40,19 @@ const servicioInputClassName = 'bg-slate-50 dark:bg-slate-900/10 border-slate-20
 
 /**
  * @description Formulario para registrar servicios prestados a clientes.
+ * @param {object} props - Props del componente.
  * @returns {JSX.Element} Formulario de servicio prestado.
  */
-export function ServiciosPrestadosForm(): ReactElement {
+interface ServiciosPrestadosFormProps {
+  initialServicios?: Servicios[]
+}
+
+export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosFormProps): ReactElement {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [anticipoAllocations, setAnticipoAllocations] = useState<AnticipoAllocation[]>([])
-  const { data: servicios, isLoading: isLoadingServicios } = useGetServiciosQuery()
-  const { data: clientes, isLoading: isLoadingClientes } = useGetClientesQuery()
+  const servicios = initialServicios ?? []
+  const { clientes, isLoading: isLoadingClientes } = useClientes()
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -79,6 +84,7 @@ export function ServiciosPrestadosForm(): ReactElement {
         servicioId: values.servicioId,
         clienteId: values.clienteId || undefined,
         cantidad: values.cantidad,
+        costo: values.precioUnitario,
         total: values.cantidad * values.precioUnitario,
         observaciones: values.observaciones,
         anticipos: values.formaCobro === FORMA_COBRO_ANTICIPO ? anticipoAllocations : undefined,
@@ -97,7 +103,7 @@ export function ServiciosPrestadosForm(): ReactElement {
     }
   }
 
-  if (isLoadingServicios || isLoadingClientes) {
+  if (isLoadingClientes) {
     return (
       <div className='min-h-screen bg-linear-to-br py-8 px-4'>
         <div className='container mx-auto max-w-2xl'>
@@ -185,7 +191,7 @@ export function ServiciosPrestadosForm(): ReactElement {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {servicios?.map((servicio) => (
+                            {servicios.map((servicio) => (
                               <SelectItem key={servicio.servicioId} value={servicio.servicioId}>
                                 {servicio.nombre}
                               </SelectItem>

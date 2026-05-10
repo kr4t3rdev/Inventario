@@ -8,8 +8,9 @@
  * @param {TransferenciasContentProps} props - Props del componente
  * @returns {JSX.Element} Interfaz de gestión de Transferencias
  */
-import { useState, useTransition } from "react"
+import { useEffect, useState, useTransition } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { Package, PlusCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -27,16 +28,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { deleteTransferenciaAction } from "@/features/transferencias/actions"
 import { TransferenciasTable } from "@/features/transferencias/components/transferencias-table"
-
-interface Transferencia {
-  transferenciaId: string
-  origenId: string
-  destinoId: string
-  estado: string
-  createdAt: string
-  origen?: { nombre: string }
-  destino?: { nombre: string }
-}
+import type { Transferencia } from "@/app/models/model"
 
 interface TransferenciasContentProps {
   initialTransferencias: Transferencia[]
@@ -45,6 +37,7 @@ interface TransferenciasContentProps {
 }
 
 export function TransferenciasContent({ initialTransferencias, isLoading: initialIsLoading, error: initialError }: TransferenciasContentProps) {
+  const router = useRouter()
   const [transferencias, setTransferencias] = useState<Transferencia[]>(initialTransferencias)
   const [isLoading, setIsLoading] = useState(initialIsLoading ?? false)
   const [error, setError] = useState(initialError)
@@ -52,14 +45,17 @@ export function TransferenciasContent({ initialTransferencias, isLoading: initia
 
   const [transferenciaToDelete, setTransferenciaToDelete] = useState<string | null>(null)
 
+  useEffect(() => {
+    setTransferencias(initialTransferencias)
+  }, [initialTransferencias])
+
   const handleConfirmDelete = async () => {
     if (!transferenciaToDelete) return
     startTransition(async () => {
       const result = await deleteTransferenciaAction(transferenciaToDelete)
       if (result.success) {
         toast.success('Transferencia cancelada exitosamente.')
-        const refresh = await import('@/features/transferencias/actions').then(m => m.getTransferenciasAction({}))
-        if (refresh.success) setTransferencias(refresh.data?.transferencias ?? [])
+        router.refresh()
       } else {
         toast.error(result.error?.message ?? 'Error al cancelar')
       }

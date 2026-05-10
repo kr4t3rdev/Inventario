@@ -6,4 +6,5 @@ export { AttendanceHistoryView } from './attendance-history-view';
 export { EmpleadoForm } from './empleados-form';
 export { EnhancedEmpleadoForm } from './enhanced-empleados-form';
 export { NominaView } from './nomina-view';
+export { EmpleadosNominaContent } from './empleados-nomina-content';
 export { VacacionesForm } from './vacaciones-form';

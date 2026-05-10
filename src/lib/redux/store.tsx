@@ -3,14 +3,12 @@ import { setupListeners } from "@reduxjs/toolkit/query"
 import { apiSlice } from "./services/apiSlice"
 import themeReducer from "./slices/themeSlice"
 import contabilidadReducer from "./slices/contabilidadSlice"
-import pagoSalarioReducer from "./slices/pagoSalarioSlice"
 
 export const store = configureStore({
   reducer: {
     [apiSlice.reducerPath]: apiSlice.reducer,
     theme: themeReducer,
     contabilidad: contabilidadReducer,
-    pagoSalario: pagoSalarioReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(apiSlice.middleware),

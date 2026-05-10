@@ -14,7 +14,8 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { sileo } from '@/lib/sileo-shim'
 import { Skeleton } from "@/components/ui/skeleton"
-import { useAddClienteMutation, useGetClientesQuery, useUpdateClienteMutation } from "@/features/clientes/api/ClienteApi"
+import { useClientes } from "@/features/clientes/hooks/use-clientes"
+import { createClienteAction, updateClienteAction } from "@/features/clientes/actions"
 import { useListasPrecios } from "@/features/listas-precios/hooks/use-listas-precios"
 import { ClienteLogoUpload } from "./cliente-logo-upload"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -64,12 +65,10 @@ export function ClienteForm({ initialData }: ClienteFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
 
-  const { data: cliente, isLoading: isLoadingClientes } = useGetClientesQuery()
+  const { clientes, isLoading: isLoadingClientes } = useClientes()
   const { listasPrecios, isLoading: isLoadingListas } = useListasPrecios()
   
-  const [ addCliente ] = useAddClienteMutation()
-  const [updateCliente] = useUpdateClienteMutation()
-
+  
   const form = useForm<ClienteFormValues>({
     resolver: zodResolver(clienteSchema),
     defaultValues: {
@@ -85,31 +84,28 @@ export function ClienteForm({ initialData }: ClienteFormProps) {
 
   async function onSubmit(data: ClienteFormValues) {
     setIsLoading(true)
-    const payloadListaPrecioId = data.listaPrecioId === "none" ? null : data.listaPrecioId;
 
     try {
       if (initialData) {
-        await updateCliente({
+        const result = await updateClienteAction({
           clienteId: initialData.clienteId,
           nombre: data.nombre,
           direccion: data.direccion,
           telefono: data.telefono,
           numeroCuentaCUP: data.numeroCuentaCUP,
           numeroCuentaUSD: data.numeroCuentaUSD,
-          logoUrl: data.logoUrl,
-          listaPrecioId: payloadListaPrecioId,
-        } as any).unwrap()
+        } as any)
+        if (!result.success) throw new Error(result.error?.message ?? 'Error al actualizar')
         sileo.success({ title: 'El cliente ha sido actualizado exitosamente.' })
       } else {
-        await addCliente({
+        const result = await createClienteAction({
           nombre: data.nombre,
           direccion: data.direccion,
           telefono: data.telefono,
           numeroCuentaCUP: data.numeroCuentaCUP,
           numeroCuentaUSD: data.numeroCuentaUSD,
-          logoUrl: data.logoUrl,
-          listaPrecioId: payloadListaPrecioId,
-        } as any).unwrap()
+        } as any)
+        if (!result.success) throw new Error(result.error?.message ?? 'Error al crear')
         sileo.success({ title: 'El cliente ha sido registrado exitosamente.' })
       }
       router.push("/busy/cliente")

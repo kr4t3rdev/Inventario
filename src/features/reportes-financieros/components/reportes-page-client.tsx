@@ -55,11 +55,24 @@ const statusBadgeClass = cn(
   'dark:border-rose-900/60 dark:bg-rose-900/20 dark:text-rose-300',
 );
 
+interface ReportesPageClientProps {
+  initialTransferencias: Array<{
+    transferenciaId: string;
+    productoId: string;
+    productoNombre: string;
+    productoCodigoInterno?: string | null;
+    cantidad: number;
+    createdAt: string;
+    origenNombre?: string;
+    destinoNombre?: string;
+  }>;
+}
+
 /**
  * @description Shell de diseño para la página de reportes de inventario.
  * @returns {JSX.Element} Vista animada con header, estados y contenido.
  */
-export function ReportesPageClient() {
+export function ReportesPageClient({ initialTransferencias }: ReportesPageClientProps) {
   const shouldReduceMotion = useReducedMotion();
   const [mounted, setMounted] = useState(false);
 
@@ -163,7 +176,7 @@ export function ReportesPageClient() {
 
           <motion.div variants={fadeInUp} initial="hidden" animate="show">
             <div className={surfaceCardClass}>
-              <ReportesInventario />
+              <ReportesInventario initialTransferencias={initialTransferencias} />
             </div>
           </motion.div>
         </PageTransition>

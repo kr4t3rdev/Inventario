@@ -15,10 +15,9 @@ import { Badge } from "@/components/ui/badge"
 import { sileo } from '@/lib/sileo-shim'
 import { Skeleton } from "@/components/ui/skeleton"
 import { DollarSign, Briefcase } from "lucide-react"
-import { v4 } from "uuid"
-import { useAddServiciosMutation, useGetServiciosQuery, useUpdateServiciosMutation } from "@/features/servicios/api/serviciosApi"
 import { useGetMonedasQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { TasaCambioDialog } from "@/features/contabilidad/components/tasa-cambio-dialog"
+import { createServicioAction, updateServicioAction } from "@/features/servicios/actions"
 
 const servicioSchema = z.object({
   nombre: z.string({
@@ -53,11 +52,7 @@ export function EnhancedServicioForm({ initialData }: EnhancedServicioFormProps)
   const [showTasaCambioDialog, setShowTasaCambioDialog] = useState(false)
   const [pendingSubmission, setPendingSubmission] = useState<ServicioFormValues | null>(null)
 
-  const { data: servicios, isLoading: isLoadingServicios } = useGetServiciosQuery()
   const { data: monedasData } = useGetMonedasQuery()
-
-  const [addServicios] = useAddServiciosMutation()
-  const [updateServicios] = useUpdateServiciosMutation()
 
   const monedas = monedasData?.data || []
   const monedasActivas = monedas.filter(m => m.isActive)
@@ -103,16 +98,15 @@ export function EnhancedServicioForm({ initialData }: EnhancedServicioFormProps)
       }
 
       if (initialData) {
-        await updateServicios({
+        const result = await updateServicioAction({
           servicioId: initialData.servicioId,
           ...servicioData,
-        }).unwrap()
+        })
+        if (!result.success) throw new Error(result.error?.message)
         sileo.success({ title: 'El servicio ha sido actualizado exitosamente.' })
       } else {
-        await addServicios({
-          servicioId: v4(),
-          ...servicioData
-        }).unwrap()
+        const result = await createServicioAction(servicioData)
+        if (!result.success) throw new Error(result.error?.message)
         sileo.success({ title: 'El servicio ha sido registrado exitosamente.' })
       }
       router.back()
@@ -137,7 +131,7 @@ export function EnhancedServicioForm({ initialData }: EnhancedServicioFormProps)
     setPendingSubmission(null)
   }
 
-  if (isLoadingServicios) {
+  if (!monedasData) {
     return (
       <Card>
         <CardContent className="pt-6">

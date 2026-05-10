@@ -37,7 +37,7 @@ import {
 } from '@/components/ui/animations';
 import { ContabilidadBreadcrumb } from "@/features/contabilidad/components/contabilidad-breadcrumb"
 
-import { useGetClientesQuery } from "@/features/clientes"
+import { useClientes } from "@/features/clientes/hooks/use-clientes"
 import { getCuentasPorCobrarAction } from "@/features/contabilidad"
 import { getFacturasAction } from "@/features/facturas/actions"
 import { Cliente, CuentaPorCobrar } from "@/app/models/model"
@@ -49,7 +49,7 @@ export default function AnalisisCuentaClientePage() {
   const [searchTerm, setSearchTerm] = useState("")
 
   // Queries
-  const { data: clientes, isLoading: isLoadingClientes } = useGetClientesQuery()
+  const { clientes, isLoading: isLoadingClientes } = useClientes()
   const [cuentas, setCuentas] = useState<any[]>([])
   const [isLoadingCuentas, setIsLoadingCuentas] = useState(true)
 

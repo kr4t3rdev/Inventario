@@ -38,8 +38,8 @@ import { z } from "zod"
 import { Card } from "@/components/ui/card"
 
 import { Producto, Oferta } from "@/app/models/model"
-import { useGetClientesQuery } from "@/features/clientes/api/ClienteApi"
-import { useAddOfertaMutation } from "@/features/ofertas/api/ofertasApi"
+import { useClientes } from "@/features/clientes/hooks/use-clientes"
+import { createOfertaAction } from "@/features/ofertas/actions"
 import { getAuthToken } from "@/lib/token"
 import { formatCurrency } from "@/lib/utils"
 
@@ -81,8 +81,8 @@ function LoadingSpinner({ size = 24 }: { size?: number }) {
 
 export function QuickOfferDialog({ producto, trigger }: QuickOfferDialogProps) {
   const [open, setOpen] = useState(false)
-  const { data: clientes, isLoading: isLoadingClientes } = useGetClientesQuery()
-  const [addOferta, { isLoading: isSubmitting }] = useAddOfertaMutation()
+  const { clientes, isLoading: isLoadingClientes } = useClientes()
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -136,6 +136,7 @@ export function QuickOfferDialog({ producto, trigger }: QuickOfferDialogProps) {
   }
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    setIsSubmitting(true)
     try {
       const payload = {
         clienteId: values.clienteId,
@@ -154,7 +155,11 @@ export function QuickOfferDialog({ producto, trigger }: QuickOfferDialogProps) {
         total: values.cantidad * values.precioUnitario,
       } as Partial<Oferta>
 
-      const createdOferta = await addOferta(payload).unwrap()
+      const result = await createOfertaAction(payload)
+      if (!result.success) {
+        throw new Error(result.error || "Error al crear la oferta")
+      }
+      const createdOferta = result.data
       toast.success('Oferta creada exitosamente')
       setOpen(false)
       form.reset()
@@ -168,6 +173,8 @@ export function QuickOfferDialog({ producto, trigger }: QuickOfferDialogProps) {
     } catch (error) {
       console.error("Error creating offer:", error)
       toast.error('Error al crear la oferta')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -182,7 +189,7 @@ export function QuickOfferDialog({ producto, trigger }: QuickOfferDialogProps) {
           </motion.div>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-125">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}

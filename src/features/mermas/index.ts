@@ -10,6 +10,7 @@ export {
 
 // Client Components
 export { MermasContent } from './components/mermas-content'
+export { MermaForm } from './components/merma-form'
 
 export type { Merma, MermaStats } from './types';
 

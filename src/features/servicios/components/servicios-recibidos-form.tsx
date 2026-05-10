@@ -15,13 +15,13 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useCreateCompraServicioMutation } from '@/features/compras-servicios/api/comprasServiciosApi'
-import { useGetServiciosQuery } from '@/features/servicios/api/serviciosApi'
+import { createCompraServicioAction } from '@/features/compras-servicios/actions'
 import { useVendors } from '@/features/vendors/hooks/use-vendors'
 import { AnticipoSelector } from '@/features/contabilidad/components/anticipos/anticipo-selector'
 import type { AnticipoAllocation } from '@/features/contabilidad/components/anticipos/anticipo-selector'
 import { ArrowLeft, Truck, Save, Loader2 } from 'lucide-react'
 import Link from 'next/link'
+import type { Servicios } from '@/app/models/model'
 
 const FORMA_PAGO_ANTICIPO = 'ANTICIPO_PAGO' as const
 
@@ -42,15 +42,19 @@ const servicioInputClassName = 'bg-slate-50 dark:bg-slate-900/10 border-slate-20
 
 /**
  * @description Formulario para registrar servicios recibidos (egresos).
+ * @param {object} props - Props del componente.
  * @returns {JSX.Element} Formulario de servicio recibido.
  */
-export function ServiciosRecibidosForm(): ReactElement {
+interface ServiciosRecibidosFormProps {
+  initialServicios?: Servicios[]
+}
+
+export function ServiciosRecibidosForm({ initialServicios }: ServiciosRecibidosFormProps): ReactElement {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [anticipoAllocations, setAnticipoAllocations] = useState<AnticipoAllocation[]>([])
-  const { data: servicios, isLoading: isLoadingServicios } = useGetServiciosQuery()
+  const servicios = initialServicios ?? []
   const { vendors, isLoading: isLoadingVendors } = useVendors()
-  const [createCompraServicio] = useCreateCompraServicioMutation()
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -80,7 +84,7 @@ export function ServiciosRecibidosForm(): ReactElement {
   async function onSubmit(values: FormValues): Promise<void> {
     setIsLoading(true)
     try {
-      await createCompraServicio({
+      const result = await createCompraServicioAction({
         servicioId: values.servicioId,
         proveedorId: values.proveedorId || null,
         numeroFactura: values.numeroFactura || null,
@@ -90,7 +94,10 @@ export function ServiciosRecibidosForm(): ReactElement {
         estado: values.formaPago === 'PAGO_COMPLETO' || values.formaPago === FORMA_PAGO_ANTICIPO ? 'PAGADA' : 'PENDIENTE',
         descripcion: values.descripcion || null,
         anticipos: values.formaPago === FORMA_PAGO_ANTICIPO ? anticipoAllocations : undefined,
-      }).unwrap()
+      })
+      if (!result.success) {
+        throw new Error(result.error?.message ?? 'Error desconocido')
+      }
 
       sileo.success({ title: 'Servicio recibido registrado correctamente.' })
       form.reset()
@@ -102,7 +109,7 @@ export function ServiciosRecibidosForm(): ReactElement {
     }
   }
 
-  if (isLoadingServicios || isLoadingVendors) {
+  if (isLoadingVendors) {
     return (
       <div className='min-h-screen bg-linear-to-br py-8 px-4'>
         <div className='container mx-auto max-w-2xl'>
@@ -191,7 +198,7 @@ export function ServiciosRecibidosForm(): ReactElement {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {servicios?.map((servicio) => (
+                            {servicios.map((servicio) => (
                               <SelectItem key={servicio.servicioId} value={servicio.servicioId}>
                                 {servicio.nombre}
                               </SelectItem>

@@ -2,8 +2,7 @@
 
 import { useMemo, useState, useEffect } from "react"
 import { useVentas } from "@/features/ventas/hooks/use-ventas"
-import { useGetMermasQuery } from "@/features/mermas/api/mermasApi"
-import { useGetTransferenciasQuery } from "@/features/transferencias/api/transferenciasApi"
+import { useMermas } from "@/features/mermas/hooks/use-mermas"
 import { getProductosAction } from "@/features/productos"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -20,13 +19,18 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { StaggerContainer, StaggerItem, AnimatedCard } from "@/components/ui/animations"
 import { cn } from "@/lib/utils"
 import { getProductDisplayIdentifier } from "@/lib/product-display-utils"
+import type { TransferenciaMovimientos } from "./reportes-inventario"
+
+interface ReporteMovimientosProps {
+  initialTransferencias?: TransferenciaMovimientos[]
+}
 
 const surfaceCardClass = cn(
   "relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl",
   "dark:border-slate-800/60 dark:bg-slate-900/10",
 )
 
-export function ReporteMovimientos() {
+export function ReporteMovimientos({ initialTransferencias = [] }: ReporteMovimientosProps) {
   const [tipoMovimiento, setTipoMovimiento] = useState<string>("ventas")
   const [productoId, setProductoId] = useState<string>("todos")
   const [dateRange, setDateRange] = useState<{ from: Date; to: Date }>({
@@ -35,17 +39,19 @@ export function ReporteMovimientos() {
   })
 
   const { ventas, isLoading: isLoadingVentas } = useVentas()
-  const { data: mermas, isLoading: isLoadingMermas } = useGetMermasQuery()
-  const { data: transferenciasData, isLoading: isLoadingTransferencias } = useGetTransferenciasQuery()
-  const transferencias = transferenciasData?.transferencias || []
+  const { mermas, isLoading: isLoadingMermas } = useMermas()
+  const transferencias = initialTransferencias
   const [productos, setProductos] = useState<any[]>([])
   const [isLoadingProductos, setIsLoadingProductos] = useState(true)
 
   useEffect(() => {
-    getProductosAction().then(r => {
-      if (r.success) setProductos(r.data ?? [])
+    const loadProductos = async () => {
+      const result = await getProductosAction()
+      if (result.success) setProductos(result.data ?? [])
       setIsLoadingProductos(false)
-    })
+    }
+
+    void loadProductos()
   }, [])
 
   const getProductoById = (id: string) => productos?.find((producto) => producto.id === id)
@@ -56,7 +62,10 @@ export function ReporteMovimientos() {
     return fechaObj >= dateRange.from && fechaObj <= dateRange.to
   }
 
-  const ventasLineas = useMemo(() => flattenVentas(ventas), [ventas])
+  const ventasLineas = useMemo(
+    () => flattenVentas(ventas as unknown as Parameters<typeof flattenVentas>[0]),
+    [ventas],
+  )
 
   const ventasFiltradas = ventasLineas.filter(
     (venta) => filtrarPorFecha(venta.createdAt) && (productoId === "todos" || venta.productoId === productoId),
@@ -203,16 +212,14 @@ export function ReporteMovimientos() {
         ID: transferencia.transferenciaId,
         Producto: getProductDisplayIdentifier({
           id: transferencia.productoId,
-          nombre: getProductoById(transferencia.productoId)?.nombre || transferencia.producto?.nombre,
+          nombre: transferencia.productoNombre || getProductoById(transferencia.productoId)?.nombre,
           codigoInterno:
-            transferencia.productoCodigoInterno ||
-            getProductoById(transferencia.productoId)?.codigoInterno ||
-            transferencia.producto?.codigoInterno,
+            transferencia.productoCodigoInterno || getProductoById(transferencia.productoId)?.codigoInterno,
         }),
         Cantidad: transferencia.cantidad,
         Fecha: format(new Date(transferencia.createdAt), "dd/MM/yyyy"),
-        Origen: transferencia.origenNombre || transferencia.origen?.nombre || "N/A",
-        Destino: transferencia.destinoNombre || transferencia.destino?.nombre || "N/A",
+        Origen: transferencia.origenNombre || "N/A",
+        Destino: transferencia.destinoNombre || "N/A",
       }))
       filename = "Reporte_Transferencias"
     }
@@ -222,7 +229,7 @@ export function ReporteMovimientos() {
     }
   }
 
-  const isLoading = isLoadingVentas || isLoadingMermas || isLoadingTransferencias || isLoadingProductos
+  const isLoading = isLoadingVentas || isLoadingMermas || isLoadingProductos
 
   return (
     <StaggerContainer className="space-y-4">
@@ -418,13 +425,10 @@ export function ReporteMovimientos() {
                           <TableCell>
                             {getProductDisplayIdentifier({
                               id: transferencia.productoId,
-                              nombre:
-                                getProductoById(transferencia.productoId)?.nombre ||
-                                transferencia.producto?.nombre,
+                              nombre: transferencia.productoNombre || getProductoById(transferencia.productoId)?.nombre,
                               codigoInterno:
                                 transferencia.productoCodigoInterno ||
-                                getProductoById(transferencia.productoId)?.codigoInterno ||
-                                transferencia.producto?.codigoInterno,
+                                getProductoById(transferencia.productoId)?.codigoInterno,
                             })}
                           </TableCell>
                           <TableCell className="text-right">

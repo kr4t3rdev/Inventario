@@ -24,8 +24,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { sileo } from '@/lib/sileo-shim';
 import { Skeleton } from "@/components/ui/skeleton";
 import { useProductos } from '@/features/productos/hooks/use-productos'
-import { useGetClientesQuery } from "@/features/clientes/api/ClienteApi";
-import { useAddOfertaMutation } from "@/features/ofertas/api/ofertasApi";
+import { useClientes } from "@/features/clientes/hooks/use-clientes";
+import { createOfertaAction } from "@/features/ofertas/actions";
 import { useGetAnticiposDisponiblesQuery } from "@/features/contabilidad/api/contabilidadApi";
 import { formatCurrency } from "@/lib/utils";
 import { getAuthToken } from "@/lib/token";
@@ -90,8 +90,7 @@ export function OfertaForm() {
   const anticiposFeatureEnabled = process.env.NEXT_PUBLIC_ENABLE_ANTICIPOS !== "false"
 
   const { productos, isLoading: isLoadingProductos } = useProductos()
-  const { data: clientes, isLoading: isLoadingClientes } = useGetClientesQuery()
-  const [addOferta] = useAddOfertaMutation()
+  const { clientes, isLoading: isLoadingClientes } = useClientes()
 
   const form = useForm<OfertaFormValues>({
     resolver: zodResolver(ofertaSchema),
@@ -200,7 +199,11 @@ export function OfertaForm() {
         total: data.total
       } as Partial<Oferta>;
 
-      const createdOferta = await addOferta(payload).unwrap();
+      const result = await createOfertaAction(payload);
+      if (!result.success) {
+        throw new Error(result.error || "Error al crear la oferta")
+      }
+      const createdOferta = result.data
       await openOfertaPdf(createdOferta.id, printWindow);
       sileo.success({ title: 'Oferta creada exitosamente' });
       const nextUrl = selectedAnticipoCobroId

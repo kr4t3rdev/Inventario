@@ -1,4 +1,17 @@
+// Server Actions
+export {
+  getClientesAction,
+  getClienteByIdAction,
+  createClienteAction,
+  updateClienteAction,
+  deleteClienteAction,
+} from './actions';
+
+// API Handlers (legacy)
 export { getClientesHandler, createClienteHandler, getClienteByIdHandler, updateClienteHandler, deleteClienteHandler } from './api/handlers';
-export { clientesApi, useGetClientesQuery, useGetClienteQuery, useAddClienteMutation, useUpdateClienteMutation, useDeleteClienteMutation } from './api/ClienteApi';
+
+// Hooks
+export { useClientes } from './hooks/use-clientes';
+
 export { ClienteForm } from './components/clientes-form';
 export type { Cliente } from './types';

@@ -7,6 +7,7 @@
  * El formulario (ServicioForm) es un Client Component que recibe los datos iniciales.
  */
 import { getServicioByIdAction } from "@/features/servicios/actions"
+import { getVendorsAction } from "@/features/vendors/actions"
 import { ServicioForm } from "@/features/servicios/components/servicios-form"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { notFound } from "next/navigation"
@@ -18,13 +19,17 @@ interface Props {
 export default async function EditarServicioPage({ params }: Props) {
   const { id: servicioId } = await params
 
-  const servicioResult = await getServicioByIdAction(servicioId)
+  const [servicioResult, vendorsResult] = await Promise.all([
+    getServicioByIdAction(servicioId),
+    getVendorsAction(),
+  ])
 
   if (!servicioResult.success) {
     notFound()
   }
 
   const servicio = servicioResult.data
+  const initialVendors = vendorsResult.success ? vendorsResult.data ?? [] : []
 
   return (
     <SidebarProvider>
@@ -34,7 +39,7 @@ export default async function EditarServicioPage({ params }: Props) {
             <h1 className="text-2xl font-bold">Editar Servicios</h1>
             <p className="text-muted-foreground">Modifique los datos de los Servicios</p>
           </div>
-          <ServicioForm initialData={servicio} />
+            <ServicioForm initialData={servicio} initialVendors={initialVendors} />
         </div>
       </SidebarInset>
     </SidebarProvider>

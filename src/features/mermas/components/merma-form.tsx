@@ -19,7 +19,7 @@ import { sileo } from '@/lib/sileo-shim'
 import { Skeleton } from "@/components/ui/skeleton"
 
 import { useProductos } from "@/features/productos/hooks/use-productos"
-import { useAddMermaMutation, useUpdateMermaMutation } from "@/features/mermas/api/mermasApi"
+import { createMermaAction, updateMermaAction } from "@/features/mermas/actions"
 import { apiSlice } from "@/lib/redux/services/apiSlice"
 
 const mermaSchema = z.object({
@@ -51,8 +51,6 @@ export function MermaForm({ initialData }: MermaFormProps) {
   const dispatch = useDispatch()
   const { productos, isLoading: isLoadingProductos } = useProductos()
 
-  const [addMerma] = useAddMermaMutation()
-  const [updateMerma] = useUpdateMermaMutation()
 
   const form = useForm<MermaFormValues>({
     resolver: zodResolver(mermaSchema),
@@ -67,13 +65,15 @@ export function MermaForm({ initialData }: MermaFormProps) {
     setIsLoading(true)
     try {
       if (initialData) {
-        await updateMerma({
+        const result = await updateMermaAction({
           mermaId: initialData.mermaId,
           ...data,
-        }).unwrap()
+        })
+        if (!result.success) throw new Error(result.error)
         sileo.success({ title: 'La merma ha sido actualizada exitosamente.' })
       } else {
-        await addMerma(data).unwrap()
+        const result = await createMermaAction(data)
+        if (!result.success) throw new Error(result.error)
         sileo.success({ title: 'La merma ha sido registrada exitosamente.' })
       }
 

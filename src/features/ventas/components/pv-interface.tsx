@@ -19,7 +19,7 @@ import { getProductosPorUbicacion } from "@/app/actions/productos-ubicacion"
 import type { ProductoConStock } from "@/lib/api/productos-ubicacion"
 import { ServerActionError } from "@/lib/api/errors"
 import { createVentaAction } from "@/features/ventas/actions"
-import { useGetClientesQuery } from "@/features/clientes/api/ClienteApi"
+import { useClientes } from "@/features/clientes/hooks/use-clientes"
 import { useCategorias } from "@/features/categorias/hooks/use-categorias"
 import { useGetAnticiposDisponiblesQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
@@ -102,7 +102,7 @@ export function VentaInterface() {
     loadProductos()
   }, [selectedPuntoVenta])
 
-  const { data: clientes, isLoading: isLoadingClientes } = useGetClientesQuery()
+  const { clientes, isLoading: isLoadingClientes } = useClientes()
   const { categorias, isLoading: isLoadingCategorias } = useCategorias()
   const { data: anticiposCobroDisponibles, isFetching: isLoadingAnticiposCobro } =
     useGetAnticiposDisponiblesQuery(
