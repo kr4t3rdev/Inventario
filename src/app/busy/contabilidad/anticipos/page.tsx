@@ -10,6 +10,7 @@ import { PageTransition, StaggerContainer, StaggerItem } from "@/components/ui/a
 import { getAnticiposAction, getAnticipoByIdAction } from "@/features/contabilidad/actions-anticipos"
 import { getCuentasBancariasAction } from "@/features/contabilidad/actions-cuentas-bancarias"
 import { getClientesAction } from "@/features/clientes"
+import { getAuthToken } from '@/lib/token'
 import { useVendors } from '@/features/vendors/hooks/use-vendors'
 import { AnticiposTable } from "@/features/contabilidad/components/anticipos/anticipos-table"
 import { AnticipoForm } from "@/features/contabilidad/components/anticipos/anticipo-form"

@@ -16,7 +16,7 @@ import type { Vendor } from "@/app/models/model"
 export default async function GastosDEPage() {
   // ── Resolver datos en paralelo en el servidor ──
   const [gastosDEResult, vendorsResult] = await Promise.all([
-    getGastosDEAction(),
+    getGastosDEAction({}),
     getVendorsAction(),
   ])
 

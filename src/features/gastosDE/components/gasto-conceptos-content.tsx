@@ -52,7 +52,7 @@ export function GastoConceptosContent({ initialConceptos }: GastoConceptosConten
       const r = await deleteGastoConceptoAction(conceptoToDelete)
       if (r.success) {
         toast.success(r.data?.message || "Eliminado")
-        const ref = await import('@/features/gastosDE/actions').then(m => m.getGastoConceptosAction())
+        const ref = await import('@/features/gastosDE/actions').then(m => m.getGastoConceptosAction({}))
         if (ref.success) setConceptos(ref.data ?? [])
       } else {
         toast.error(r.error?.message || "Error al eliminar")

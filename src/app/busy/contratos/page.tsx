@@ -24,7 +24,7 @@ interface PageProps {
  * @param {PageProps} props - Props de la página
  * @returns {Promise<JSX.Element>} Página de contratos
  */
-export default async function ContratosPage(props: PageProps): Promise<JSX.Element> {
+export default async function ContratosPage(props: PageProps) {
   const searchParams = await props.searchParams
   const page = parseInt(searchParams.page || '1')
   const limit = parseInt(searchParams.limit || '10')

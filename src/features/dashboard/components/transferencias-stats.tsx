@@ -60,7 +60,7 @@ const STAT_ITEMS: StatItem[] = [
  */
 export function TransferenciasStats({
   transferenciasStats,
-}: TransferenciasStatsCardProps): JSX.Element {
+}: TransferenciasStatsCardProps) {
   return (
     <Card>
       <CardHeader>

@@ -16,7 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton"
  * @description Página principal de ofertas
  * @returns {Promise<JSX.Element>} Página de ofertas
  */
-export default async function OfertasPage(): Promise<JSX.Element> {
+export default async function OfertasPage() {
   // Obtener datos del servidor
   const result = await getOfertasAction()
   const ofertas = result.success ? result.data ?? [] : []

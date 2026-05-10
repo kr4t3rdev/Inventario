@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from "react"
-import { getOrdenesReparacion } from "@/lib/api/reparaciones/ordenes"
+import { getOrdenesReparacion } from "@/app/actions/reparaciones/ordenes"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"

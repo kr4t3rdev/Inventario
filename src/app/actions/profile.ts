@@ -32,7 +32,7 @@ export async function updateProfile(
 ): Promise<Usuario> {
   try {
     const result = await fetchUpdateProfile(data)
-    revalidateTag('Profile')
+    revalidateTag('Profile', {})
     return result
   } catch (error) {
     handleServerActionError(error, 'updateProfile')

@@ -226,7 +226,7 @@ export function TenantUsersPage() {
 
             <TabsContent value="usuarios" className="mt-4">
               <TenantUsersTable
-                users={safeUsers.map((u) => ({
+                users={safeUsers.map((u: any) => ({
                   userId: u.userId,
                   name: u.name,
                   email: u.email,

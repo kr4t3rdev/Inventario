@@ -22,17 +22,17 @@ export const getRecetasProduccionAction = withAction(
     }
 
     const [recetas, total] = await Promise.all([
-      prisma.recetaProduccion.findMany({
+      prisma.receta.findMany({
         where,
         include: {
           producto: true,
-          ingredientes: { include: { producto: true } },
+          RecetaIngrediente: { include: { Producto: true } },
         },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
         take: limit,
       }),
-      prisma.recetaProduccion.count({ where }),
+      prisma.receta.count({ where }),
     ])
 
     return {
@@ -50,11 +50,11 @@ export const getRecetasProduccionAction = withAction(
 export const getRecetaProduccionByIdAction = withAction(
   async (id: string, user: AuthenticatedUser) => {
     const tenantId = requireTenant(user)
-    const receta = await prisma.recetaProduccion.findFirst({
+    const receta = await prisma.receta.findFirst({
       where: { recetaId: id, tenantId },
       include: {
         producto: true,
-        ingredientes: { include: { producto: true } },
+        RecetaIngrediente: { include: { Producto: true } },
       },
     })
     if (!receta) throw new ActionError('Receta no encontrada', 'NOT_FOUND')
@@ -65,7 +65,7 @@ export const getRecetaProduccionByIdAction = withAction(
 export const createRecetaProduccionAction = withAction(
   async (input: { nombre: string; rendimiento?: number; instrucciones?: string | null; tiempoPrep?: number | null; productoId?: string | null }, user: AuthenticatedUser) => {
     const tenantId = requireTenant(user)
-    const receta = await prisma.recetaProduccion.create({
+    const receta = await prisma.receta.create({
       data: {
         nombre: input.nombre,
         rendimiento: input.rendimiento ?? 1,
@@ -74,7 +74,7 @@ export const createRecetaProduccionAction = withAction(
         productoId: input.productoId ?? null,
         tenantId,
       },
-      include: { producto: true, ingredientes: true },
+      include: { Producto: true, RecetaIngrediente: true },
     })
     revalidatePath('/busy/produccion')
     return receta
@@ -86,13 +86,13 @@ export const updateRecetaProduccionAction = withAction(
     const tenantId = requireTenant(user)
     const { recetaId, ...data } = input
     
-    const existing = await prisma.recetaProduccion.findFirst({ where: { recetaId, tenantId } })
+    const existing = await prisma.receta.findFirst({ where: { recetaId, tenantId } })
     if (!existing) throw new ActionError('Receta no encontrada', 'NOT_FOUND')
     
-    const receta = await prisma.recetaProduccion.update({
+    const receta = await prisma.receta.update({
       where: { recetaId },
       data,
-      include: { producto: true, ingredientes: true },
+      include: { Producto: true, RecetaIngrediente: true },
     })
     revalidatePath('/busy/produccion')
     return receta
@@ -102,30 +102,30 @@ export const updateRecetaProduccionAction = withAction(
 export const deleteRecetaProduccionAction = withAction(
   async (id: string, user: AuthenticatedUser) => {
     const tenantId = requireTenant(user)
-    const existing = await prisma.recetaProduccion.findFirst({ where: { recetaId: id, tenantId } })
+    const existing = await prisma.receta.findFirst({ where: { recetaId: id, tenantId } })
     if (!existing) throw new ActionError('Receta no encontrada', 'NOT_FOUND')
     
-    await prisma.recetaProduccion.delete({ where: { recetaId: id } })
+    await prisma.receta.delete({ where: { recetaId: id } })
     revalidatePath('/busy/produccion')
     return { id, eliminado: true }
   }
 )
 
 export const setIngredientesRecetaProduccionAction = withAction(
-  async (input: { recetaId: string; ingredientes: { productoId: string; cantidad: number; unidad: string; desperdicio: number }[] }, user: AuthenticatedUser) => {
+  async (input: { recetaId: string; RecetaIngrediente: { productoId: string; cantidad: number; unidad: string; desperdicio: number }[] }, user: AuthenticatedUser) => {
     const tenantId = requireTenant(user)
     
     // Verify recipe exists
-    const receta = await prisma.recetaProduccion.findFirst({ where: { recetaId: input.recetaId, tenantId } })
+    const receta = await prisma.receta.findFirst({ where: { recetaId: input.recetaId, tenantId } })
     if (!receta) throw new ActionError('Receta no encontrada', 'NOT_FOUND')
     
     // Delete existing ingredients
-    await prisma.recetaProduccionIngrediente.deleteMany({ where: { recetaId: input.recetaId } })
+    await prisma.recetaIngrediente.deleteMany({ where: { recetaId: input.recetaId } })
     
     // Create new ingredients
     if (input.ingredientes.length > 0) {
-      await prisma.recetaProduccionIngrediente.createMany({
-        data: input.ingredientes.map((ing) => ({
+      await prisma.recetaIngrediente.createMany({
+        data: input.ingredientes.map((ing: any) => ({
           recetaId: input.recetaId,
           productoId: ing.productoId,
           cantidad: ing.cantidad,
@@ -136,9 +136,9 @@ export const setIngredientesRecetaProduccionAction = withAction(
       })
     }
     
-    const updated = await prisma.recetaProduccion.findUnique({
+    const updated = await prisma.receta.findUnique({
       where: { recetaId: input.recetaId },
-      include: { producto: true, ingredientes: { include: { producto: true } } },
+      include: { Producto: true, RecetaIngrediente: { include: { Producto: true } } },
     })
     revalidatePath('/busy/produccion')
     return updated
@@ -161,7 +161,7 @@ export const getOrdenesProduccionAction = withAction(
       prisma.ordenProduccion.findMany({
         where,
         include: {
-          receta: { include: { producto: true, ingredientes: { include: { producto: true } } } },
+          receta: { include: { Producto: true, RecetaIngrediente: { include: { Producto: true } } } },
         },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
@@ -188,7 +188,7 @@ export const getOrdenProduccionByIdAction = withAction(
     const orden = await prisma.ordenProduccion.findFirst({
       where: { ordenProduccionId: id, tenantId },
       include: {
-        receta: { include: { producto: true, ingredientes: { include: { producto: true } } } },
+        receta: { include: { Producto: true, RecetaIngrediente: { include: { Producto: true } } } },
       },
     })
     if (!orden) throw new ActionError('Orden de producción no encontrada', 'NOT_FOUND')
@@ -201,13 +201,13 @@ export const createOrdenProduccionAction = withAction(
     const tenantId = requireTenant(user)
     
     // Verify recipe exists
-    const receta = await prisma.recetaProduccion.findFirst({ where: { recetaId: input.recetaId, tenantId } })
+    const receta = await prisma.receta.findFirst({ where: { recetaId: input.recetaId, tenantId } })
     if (!receta) throw new ActionError('Receta no encontrada', 'NOT_FOUND')
     
     // Calculate materials cost
-    const ingredientes = await prisma.recetaProduccionIngrediente.findMany({
+    const ingredientes = await prisma.recetaIngrediente.findMany({
       where: { recetaId: input.recetaId },
-      include: { producto: true },
+      include: { Producto: true },
     })
     
     const costoMateriales = ingredientes.reduce((total, ing) => {
@@ -225,7 +225,7 @@ export const createOrdenProduccionAction = withAction(
         costoMateriales,
         tenantId,
       },
-      include: { receta: { include: { producto: true, ingredientes: { include: { producto: true } } } } },
+      include: { Receta: { include: { Producto: true, RecetaIngrediente: { include: { Producto: true } } } } },
     })
     
     revalidatePath('/busy/produccion')
@@ -243,8 +243,8 @@ export const aprobarOrdenProduccionAction = withAction(
     
     const updated = await prisma.ordenProduccion.update({
       where: { ordenProduccionId: id },
-      data: { estado: 'APROBADA' },
-      include: { receta: { include: { producto: true } } },
+      data: { estado: 'EN_PROCESO' },
+      include: { Receta: { include: { Producto: true } } },
     })
     
     // Create historial entry
@@ -252,7 +252,7 @@ export const aprobarOrdenProduccionAction = withAction(
       data: {
         ordenProduccionId: id,
         estadoAnterior: 'PENDIENTE',
-        estadoNuevo: 'APROBADA',
+        estadoNuevo: 'EN_PROCESO',
         tenantId,
       },
     })
@@ -268,18 +268,18 @@ export const completarOrdenProduccionAction = withAction(
     
     const orden = await prisma.ordenProduccion.findFirst({ where: { ordenProduccionId: id, tenantId } })
     if (!orden) throw new ActionError('Orden no encontrada', 'NOT_FOUND')
-    if (orden.estado !== 'APROBADA') throw new ActionError('La orden debe estar aprobada para completar', 'VALIDATION_ERROR')
+    if (orden.estado !== 'EN_PROCESO') throw new ActionError('La orden debe estar aprobada para completar', 'VALIDATION_ERROR')
     
     const updated = await prisma.ordenProduccion.update({
       where: { ordenProduccionId: id },
       data: { estado: 'COMPLETADA' },
-      include: { receta: { include: { producto: true } } },
+      include: { Receta: { include: { Producto: true } } },
     })
     
     await prisma.ordenProduccionHistorial.create({
       data: {
         ordenProduccionId: id,
-        estadoAnterior: 'APROBADA',
+        estadoAnterior: 'EN_PROCESO',
         estadoNuevo: 'COMPLETADA',
         tenantId,
       },
@@ -301,7 +301,7 @@ export const cancelarOrdenProduccionAction = withAction(
     const updated = await prisma.ordenProduccion.update({
       where: { ordenProduccionId: id },
       data: { estado: 'CANCELADA' },
-      include: { receta: { include: { producto: true } } },
+      include: { Receta: { include: { Producto: true } } },
     })
     
     await prisma.ordenProduccionHistorial.create({

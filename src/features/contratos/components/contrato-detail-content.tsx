@@ -105,7 +105,7 @@ interface ContratoDetailContentProps {
  * @param {ContratoDetailContentProps} props - Props del componente
  * @returns {JSX.Element} Componente de detalle de contrato
  */
-export function ContratoDetailContent({ initialData, contratoId }: ContratoDetailContentProps): JSX.Element {
+export function ContratoDetailContent({ initialData, contratoId }: ContratoDetailContentProps) {
   const params = useParams()
   const router = useRouter()
   const id = params?.id as string || contratoId

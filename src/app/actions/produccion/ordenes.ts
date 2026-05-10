@@ -18,37 +18,37 @@ export async function getOrdenProduccion(ordenProduccionId: string): Promise<Ord
 export async function createOrdenProduccion(payload: CreateOrdenProduccionPayload): Promise<OrdenProduccion> {
   try {
     const result = await fetcher.createOrdenProduccion(payload)
-    revalidateTag('OrdenesProduccion')
+    revalidateTag('OrdenesProduccion', {})
     return result
-  } catch (error) { handleServerActionError(error, 'createOrdenProduccion') }
+  } catch (error) { throw handleServerActionError(error, 'createOrdenProduccion') }
 }
 
 export async function aprobarOrdenProduccion(data: { ordenProduccionId: string; userId?: string }): Promise<OrdenProduccion> {
   try {
     const result = await fetcher.aprobarOrdenProduccion(data)
-    revalidateTag('OrdenesProduccion')
-    revalidateTag('Productos')
-    revalidateTag('StockUbicacion')
+    revalidateTag('OrdenesProduccion', {})
+    revalidateTag('Productos', {})
+    revalidateTag('StockUbicacion', {})
     return result
-  } catch (error) { handleServerActionError(error, 'aprobarOrdenProduccion') }
+  } catch (error) { throw handleServerActionError(error, 'aprobarOrdenProduccion') }
 }
 
 export async function completarOrdenProduccion(data: { ordenProduccionId: string; userId?: string; cuentaId?: string; tipoPagoId?: string }): Promise<OrdenProduccion> {
   try {
     const result = await fetcher.completarOrdenProduccion(data)
-    revalidateTag('OrdenesProduccion')
-    revalidateTag('Productos')
-    revalidateTag('StockUbicacion')
+    revalidateTag('OrdenesProduccion', {})
+    revalidateTag('Productos', {})
+    revalidateTag('StockUbicacion', {})
     return result
-  } catch (error) { handleServerActionError(error, 'completarOrdenProduccion') }
+  } catch (error) { throw handleServerActionError(error, 'completarOrdenProduccion') }
 }
 
 export async function cancelarOrdenProduccion(data: { ordenProduccionId: string; userId?: string; observaciones?: string }): Promise<OrdenProduccion> {
   try {
     const result = await fetcher.cancelarOrdenProduccion(data)
-    revalidateTag('OrdenesProduccion')
-    revalidateTag('Productos')
-    revalidateTag('StockUbicacion')
+    revalidateTag('OrdenesProduccion', {})
+    revalidateTag('Productos', {})
+    revalidateTag('StockUbicacion', {})
     return result
-  } catch (error) { handleServerActionError(error, 'cancelarOrdenProduccion') }
+  } catch (error) { throw handleServerActionError(error, 'cancelarOrdenProduccion') }
 }

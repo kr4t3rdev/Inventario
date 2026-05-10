@@ -11,7 +11,7 @@ import { getGastoConceptosAction } from "@/features/gastosDE/actions"
 import { GastoConceptosContent } from "@/features/gastosDE"
 
 export default async function GastoConceptosPage() {
-  const conceptosResult = await getGastoConceptosAction()
+  const conceptosResult = await getGastoConceptosAction({})
   const initialConceptos = conceptosResult.success ? conceptosResult.data ?? [] : []
 
   return (

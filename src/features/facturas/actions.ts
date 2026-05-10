@@ -32,7 +32,7 @@ export const getFacturasAction = withAction(async (f: { search?: string; estado?
 
 export const getFacturaByIdAction = withAction(async (id: string, user: AuthenticatedUser) => {
   const tenantId = requireTenant(user);
-  const f = await prisma.factura.findFirst({ where: { facturaId: id, tenantId }, include: FACTURA_INCLUDE });
+  const f = await prisma.factura.findFirst({ where: { idFactura: id, tenantId }, include: FACTURA_INCLUDE });
   if (!f) throw new ActionError('Factura no encontrada', 'NOT_FOUND');
   return f;
 });
@@ -57,9 +57,9 @@ export const updateFacturaAction = withAction(async (input: UpdateFacturaInput, 
 
 export const deleteFacturaAction = withAction(async (id: string, user: AuthenticatedUser) => {
   const tenantId = requireTenant(user);
-  const ex = await prisma.factura.findFirst({ where: { facturaId: id, tenantId } });
+  const ex = await prisma.factura.findFirst({ where: { idFactura: id, tenantId } });
   if (!ex) throw new ActionError('Factura no encontrada', 'NOT_FOUND');
-  await prisma.factura.delete({ where: { facturaId: id } });
+  await prisma.factura.delete({ where: { idFactura: id } });
   revalidatePath('/busy/facturas');
   return { id, eliminado: true };
 });

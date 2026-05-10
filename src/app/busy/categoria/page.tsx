@@ -19,7 +19,7 @@ export default async function CategoriaPage() {
     getCategoriaHierarchyAction(),
   ])
 
-  const categorias: Categoria[] = catResult.success ? (catResult.data ?? []) : []
+  const categorias: Categoria[] = (catResult.success ? (catResult.data ?? []) : []) as unknown as Categoria[]
   const hierarchy: CategoriaHierarchy[] = hierResult.success ? (hierResult.data ?? []) : []
 
   return (

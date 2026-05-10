@@ -8,7 +8,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import { useParams } from "next/navigation"
 import { useEffect, useState } from "react"
-import { EmpleadoForm, getEmpleadoByIdAction } from "@/features/empleados"
+import { getEmpleadoByIdAction } from "@/features/empleados"
 import { ArrowLeft, Users, Sparkles, AlertCircle, Loader2 } from "lucide-react"
 import Link from "next/link"
 

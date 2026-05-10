@@ -7,6 +7,8 @@ import { PageTransition } from "@/components/ui/animations"
 import { useEffect, useState } from "react"
 import { getAdminFinanceAction } from "@/features/admin"
 
+export const dynamic = 'force-dynamic'
+
 export default function FinanzasPage() {
   const [finance, setFinance] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)

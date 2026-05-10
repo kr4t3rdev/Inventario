@@ -113,7 +113,7 @@ export default function SistemaPage() {
               </div>
             ) : (
               <div className="space-y-3">
-                {system?.users.byRole.map((r) => {
+                {system?.users.byRole.map((r: any) => {
                   const pct = system.users.total > 0
                     ? Math.round((r.count / system.users.total) * 100)
                     : 0

@@ -12,7 +12,7 @@ import prisma from '@/lib/prisma'
  * @description Página de nuevo contrato
  * @returns {Promise<JSX.Element>} Página de nuevo contrato
  */
-export default async function NewContratoPage(): Promise<JSX.Element> {
+export default async function NewContratoPage() {
   // Obtener datos del servidor
   const [clientes, vendors, tiposCustom] = await Promise.all([
     getClientesAction(),

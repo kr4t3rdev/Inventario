@@ -15,7 +15,7 @@ export function StockBajoTable() {
   const [error, setError] = useState<any>(null)
 
   useEffect(() => {
-    getDashboardStatsAction().then(r => {
+    getDashboardStatsAction({}).then(r => {
       if (r.success) setDashboardStats(r.data)
       else setError(r.error)
       setIsLoading(false)

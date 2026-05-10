@@ -66,7 +66,7 @@ interface ContratosContentProps {
  * @param {ContratosContentProps} props - Props del componente
  * @returns {JSX.Element} Componente de lista de contratos
  */
-export function ContratosContent({ initialData = [], initialMeta, configuracion }: ContratosContentProps): JSX.Element {
+export function ContratosContent({ initialData = [], initialMeta, configuracion }: ContratosContentProps) {
   const [contratos, setContratos] = useState<Contrato[]>(initialData)
   const [isLoading, setIsLoading] = useState(!initialData.length)
   const [contratoToDelete, setContratoToDelete] = useState<string | null>(null)

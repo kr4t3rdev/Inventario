@@ -36,7 +36,7 @@ interface TopProductsTableProps {
  */
 export function TopProductsTable({
   productosMasVendidos,
-}: TopProductsTableProps): JSX.Element {
+}: TopProductsTableProps) {
   if (productosMasVendidos.length === 0) {
     return (
       <Card>

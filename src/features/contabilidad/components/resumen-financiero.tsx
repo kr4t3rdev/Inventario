@@ -452,7 +452,7 @@ export function ResumenFinanciero({
       }, {})
     : {};
 
-  const saldoNetoEnPrincipal = (resumen.cuentasBancarias || []).reduce((total, cuenta) => {
+  const saldoNetoEnPrincipal = (resumen.cuentasBancarias || []).reduce((total: any, cuenta: any) => {
     const saldo = cuenta.saldo ?? 0;
     if (!cuenta.moneda || cuenta.moneda === monedaPrincipal) return total + saldo;
     

@@ -23,25 +23,25 @@ export async function getValeSalida(valeSalidaId: string): Promise<ValeSalida> {
 export async function createValeSalida(payload: CreateValeSalidaPayload & { userId?: string }): Promise<ValeSalida> {
   try {
     const result = await fetcher.createValeSalida(payload)
-    revalidateTag('ValesSalida')
-    revalidateTag('Productos')
+    revalidateTag('ValesSalida', {})
+    revalidateTag('Productos', {})
     return result
-  } catch (error) { handleServerActionError(error, 'createValeSalida') }
+  } catch (error) { throw handleServerActionError(error, 'createValeSalida') }
 }
 
 export async function updateValeSalida(valeSalidaId: string, data: { concepto?: string; observaciones?: string }): Promise<ValeSalida> {
   try {
     const result = await fetcher.updateValeSalida(valeSalidaId, data)
-    revalidateTag('ValesSalida')
+    revalidateTag('ValesSalida', {})
     return result
-  } catch (error) { handleServerActionError(error, 'updateValeSalida') }
+  } catch (error) { throw handleServerActionError(error, 'updateValeSalida') }
 }
 
 export async function anularValeSalida(valeSalidaId: string): Promise<{ success: boolean; message: string }> {
   try {
     const result = await fetcher.anularValeSalida(valeSalidaId)
-    revalidateTag('ValesSalida')
-    revalidateTag('Productos')
+    revalidateTag('ValesSalida', {})
+    revalidateTag('Productos', {})
     return result
-  } catch (error) { handleServerActionError(error, 'anularValeSalida') }
+  } catch (error) { throw handleServerActionError(error, 'anularValeSalida') }
 }

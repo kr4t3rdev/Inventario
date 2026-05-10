@@ -7,3 +7,4 @@ export {
 } from './actions';
 
 export type { SerieFacturacion } from './types';
+export { default } from './components/series-facturacion-table';

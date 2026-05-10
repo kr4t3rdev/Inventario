@@ -65,7 +65,7 @@ function getStockStatus(stockTotal: number, umbralUsado: number): StatusInfo {
  * @param {StockBajoTableProps} props - Lista de productos con stock bajo
  * @returns {JSX.Element} Card con tabla de stock bajo
  */
-export function StockBajoTable({ productosStockBajo }: StockBajoTableProps): JSX.Element {
+export function StockBajoTable({ productosStockBajo }: StockBajoTableProps) {
   return (
     <Card>
       <CardHeader>

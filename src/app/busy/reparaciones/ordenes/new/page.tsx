@@ -1,13 +1,23 @@
 'use client'
 
 import { useEffect, useState, useRef } from "react"
-import { getEquiposReparacion } from "@/lib/api/reparaciones/equipos"
-import { useClientes } from "@/features/clientes/hooks/use-clientes"
-import { addOrdenReparacion } from "@/lib/api/reparaciones/ordenes"
-import { toast } from "sonner"
-import { ArrowLeft, Save, Plus, Trash2, Wrench, Upload, X, Camera, FileText, Printer } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { motion, AnimatePresence } from "framer-motion"
 import Link from "next/link"
 import Image from "next/image"
+import { ArrowLeft, Save, Plus, Trash2, Wrench, Upload, X, Camera, FileText, Printer } from "lucide-react"
+import { toast } from "sonner"
+import { Button } from "@/components/ui/button"
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select"
+import { Checkbox } from "@/components/ui/checkbox"
+import { Textarea } from "@/components/ui/textarea"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog"
+import { getEquiposReparacion } from "@/app/actions/reparaciones/equipos"
+import { useClientes } from "@/features/clientes/hooks/use-clientes"
+import { addOrdenReparacion } from "@/app/actions/reparaciones/ordenes"
 
 interface EquipoForm {
   equipoTipoId: string
@@ -168,8 +178,8 @@ export default function NewOrdenPage() {
         }))
       })
 
-      if (result.recibos && result.recibos.length > 0) {
-        setReciboGenerado(result.recibos[0])
+      if (result.recibo) {
+        setReciboGenerado(result.recibo)
         setMostrarRecibo(true)
         toast.success("Orden creada exitosamente")
       } else {

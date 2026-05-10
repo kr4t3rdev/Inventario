@@ -25,7 +25,7 @@ export async function getEquipoReparacion(id: string): Promise<EquipoReparacion 
 export async function createEquipoReparacion(data: { nombre: string; descripcion?: string }): Promise<EquipoReparacion> {
   try {
     const result = await fetcher.createEquipoReparacion(data)
-    revalidateTag('EquiposReparacion')
+    revalidateTag('EquiposReparacion', {})
     return result
   } catch (error) {
     handleServerActionError(error, 'createEquipoReparacion')
@@ -35,7 +35,7 @@ export async function createEquipoReparacion(data: { nombre: string; descripcion
 export async function updateEquipoReparacion(id: string, data: { nombre?: string; descripcion?: string }): Promise<EquipoReparacion> {
   try {
     const result = await fetcher.updateEquipoReparacion(id, data)
-    revalidateTag('EquiposReparacion')
+    revalidateTag('EquiposReparacion', {})
     return result
   } catch (error) {
     handleServerActionError(error, 'updateEquipoReparacion')
@@ -45,7 +45,7 @@ export async function updateEquipoReparacion(id: string, data: { nombre?: string
 export async function deleteEquipoReparacion(id: string): Promise<{ success: boolean; id: string }> {
   try {
     const result = await fetcher.deleteEquipoReparacion(id)
-    revalidateTag('EquiposReparacion')
+    revalidateTag('EquiposReparacion', {})
     return result
   } catch (error) {
     handleServerActionError(error, 'deleteEquipoReparacion')

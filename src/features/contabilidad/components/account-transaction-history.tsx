@@ -573,7 +573,7 @@ export function AccountTransactionHistory({
                         </TableCell>
                       </TableRow>
                     ) : (
-                      historial?.transacciones?.map((transaccion) => (
+                      historial?.transacciones?.map((transaccion: any) => (
                           <TableRow
                           key={transaccion.transaccionId}
                           className={cn(
@@ -703,7 +703,7 @@ export function AccountTransactionHistory({
                 </p>
               </div>
               <div className="space-y-2">
-                {prestamoHistorial.historial.map((pago) => (
+                {prestamoHistorial.historial.map((pago: any) => (
                   <div key={pago.id} className="rounded-lg border p-3 text-sm">
                     <p className="font-medium">{formatDate(pago.fecha)}</p>
                     <p>{pago.tipoPago} · {pago.cuentaBancaria}</p>

@@ -44,7 +44,7 @@ interface DashboardShellProps {
  * @param {DashboardShellProps} props - Children widgets
  * @returns {JSX.Element} Layout animado del dashboard
  */
-export function DashboardShell({ children }: DashboardShellProps): JSX.Element {
+export function DashboardShell({ children }: DashboardShellProps) {
   return (
     <PageTransition className="relative min-h-screen w-full">
       {/* Background Decor */}

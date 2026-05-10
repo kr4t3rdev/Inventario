@@ -31,10 +31,10 @@ import {
   AnimatedCard
 } from '@/components/ui/animations';
 import {
-  useGetGastosPendientesQuery,
-  useGetServiciosPendientesQuery,
-  useGetVentasPendientesQuery,
-} from '@/lib/redux/contabilidad';
+  getVentasPendientesAction,
+  getServiciosPendientesAction,
+  getGastosPendientesAction,
+} from '@/features/contabilidad/actions-reconciliacion';
 import { useMonedas } from '@/features/contabilidad/hooks/use-monedas';
 import { getTasasActualesAction } from '@/features/contabilidad/actions-exchange';
 import { cn } from '@/lib/utils';
@@ -189,14 +189,26 @@ export default function ContabilidadDashboard(): React.JSX.Element {
   ] as const;
 
   // --- Data Fetching (Summary Stats) ---
-  const { data: responseVentas } = useGetVentasPendientesQuery({ fechaInicio, fechaFin });
-  const { data: serviciosPendientesData } = useGetServiciosPendientesQuery({ fechaDesde: fechaInicio || undefined, fechaHasta: fechaFin || undefined });
-  const { data: response } = useGetGastosPendientesQuery({ fechaDesde: fechaInicio, fechaHasta: fechaFin, soloNoReconciliados: true });
+  const [responseVentas, setResponseVentas] = useState<any>(null);
+  const [serviciosPendientesData, setServiciosPendientesData] = useState<any>(null);
+  const [response, setResponse] = useState<any>(null);
   const { monedas } = useMonedas();
 
   useEffect(() => {
     getTasasActualesAction()
   }, [])
+
+  useEffect(() => {
+    getVentasPendientesAction({ fechaInicio, fechaFin }).then(setResponseVentas)
+  }, [fechaInicio, fechaFin])
+
+  useEffect(() => {
+    getServiciosPendientesAction({ fechaDesde: fechaInicio || undefined, fechaHasta: fechaFin || undefined }).then(setServiciosPendientesData)
+  }, [fechaInicio, fechaFin])
+
+  useEffect(() => {
+    getGastosPendientesAction({ fechaDesde: fechaInicio, fechaHasta: fechaFin, soloNoReconciliados: true }).then(setResponse)
+  }, [fechaInicio, fechaFin])
 
   const monedasPrincipal = monedas.find((m: any) => m.esPrincipal)?.codigo || 'CUP';
   const ventasPendientes = responseVentas?.ventas?.filter((v: any) => !v.reconciliada) ?? [];
@@ -238,7 +250,7 @@ export default function ContabilidadDashboard(): React.JSX.Element {
   ] as const;
 
   return (
-    <PageTransition className="relative min-h-screen w-full  ">/5
+    <PageTransition className="relative min-h-screen w-full">
       {/* Background Decor */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden -z-10">
         <div className="absolute top-0 left-1/4 w-96 h-96  rounded-full blur-3xl mix-blend-multiply dark:mix-blend-screen animate-blob" />
@@ -406,4 +418,3 @@ export default function ContabilidadDashboard(): React.JSX.Element {
     </PageTransition>
   );
 }
-

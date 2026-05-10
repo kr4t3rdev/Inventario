@@ -77,7 +77,7 @@ const itemVariants = {
  * @param {EmpleadosNominaContentProps} props - Datos iniciales precargados por el servidor.
  * @returns {JSX.Element} Panel de empleados y nómina.
  */
-export function EmpleadosNominaContent({ initialEmpleados, initialPagos }: EmpleadosNominaContentProps): JSX.Element {
+export function EmpleadosNominaContent({ initialEmpleados, initialPagos }: EmpleadosNominaContentProps) {
   const router = useRouter()
   const [empleados, setEmpleados] = useState<Empleado[]>(initialEmpleados)
   const [pagos, setPagos] = useState<Pagosalario[]>(initialPagos)

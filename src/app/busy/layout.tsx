@@ -1,31 +1,13 @@
-'use client'
-import { SiteHeader } from "@/components/site-header"
-import {  SidebarInset,SidebarProvider} from "@/components/ui/sidebar"
-import { Toaster } from "sonner"
-//import { ThemeProvider } from "next-themes"
-//import "../globals.css"    
-import { AppSidebar2 } from "@/components/app-sidebar2"
-import { AuthProvider } from "@/contexts/auth-context"
+export const dynamic = 'force-dynamic'
 
-const Layout = ({ children }: { children: React.ReactNode }) => {
-    return (                                      
-        <main >
-          
-            <SidebarProvider>
-             <AppSidebar2 variant="floating" />
-              <SidebarInset>
-                <SiteHeader />                
-                <AuthProvider>
-                  {children} 
-                </AuthProvider>
-              </SidebarInset>
-            </SidebarProvider>
-            <Toaster />
-                  
-        </main>
-       
-    )
-}   
+import { ReactNode } from 'react'
 
-export default Layout
-
+/**
+ * @description Layout para rutas /busy - todas son dinámicas por naturaleza
+ * @param {Object} props - Props del layout
+ * @param {ReactNode} props.children - Contenido anidado
+ * @returns {JSX.Element} Layout
+ */
+export default function BusyLayout({ children }: { children: ReactNode }) {
+  return children
+}

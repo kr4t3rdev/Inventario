@@ -33,7 +33,7 @@ interface OfertaDetailContentProps {
   initialOferta: Oferta | null
 }
 
-function LoadingSpinner({ size = 24 }: { size?: number }): JSX.Element {
+function LoadingSpinner({ size = 24 }: { size?: number }) {
   return (
     <div
       className="border-2 border-primary border-t-transparent rounded-full"
@@ -47,7 +47,7 @@ function LoadingSpinner({ size = 24 }: { size?: number }): JSX.Element {
  * @param {OfertaDetailContentProps} props - Oferta inicial precargada.
  * @returns {JSX.Element} Detalle de oferta con acciones.
  */
-export function OfertaDetailContent({ initialOferta }: OfertaDetailContentProps): JSX.Element {
+export function OfertaDetailContent({ initialOferta }: OfertaDetailContentProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { puntosDeVenta } = usePuntosDeVenta()

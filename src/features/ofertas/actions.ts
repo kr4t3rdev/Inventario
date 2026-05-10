@@ -19,7 +19,6 @@ import type { Oferta } from '@/app/models/model';
 const OFERTA_INCLUDE = {
   cliente: true,
   items: { include: { producto: true, servicio: true } },
-  creadoPor: { select: { userId: true, name: true, email: true } },
 } as const;
 
 function serializeOferta(oferta: unknown): Oferta {
@@ -39,7 +38,7 @@ export const getOfertasAction = withAction(async (_input: void, user: Authentica
 export const getOfertaByIdAction = withAction(async (id: string, user: AuthenticatedUser) => {
   const tenantId = requireTenant(user);
   const oferta = await prisma.oferta.findFirst({
-    where: { ofertaId: id, tenantId },
+    where: { id, tenantId },
     include: OFERTA_INCLUDE,
   });
   if (!oferta) throw new ActionError('Oferta no encontrada', 'NOT_FOUND');
@@ -64,7 +63,6 @@ export const createOfertaAction = withAction(async (input: OfertaInput, user: Au
       impuestos: parsed.impuestos,
       total: parsed.total,
       observaciones: parsed.observaciones || null,
-      creadoPorId: user.userId,
       items: {
         create: parsed.items.map((item) => ({
           productoId: item.productoId || null,
@@ -105,10 +103,10 @@ export const updateOfertaAction = withAction(async (input: OfertaUpdateInput, us
 
 export const deleteOfertaAction = withAction(async (id: string, user: AuthenticatedUser) => {
   const tenantId = requireTenant(user);
-  const existing = await prisma.oferta.findFirst({ where: { ofertaId: id, tenantId } });
+  const existing = await prisma.oferta.findFirst({ where: { id: id, tenantId } });
   if (!existing) throw new ActionError('Oferta no encontrada', 'NOT_FOUND');
 
-  await prisma.oferta.delete({ where: { ofertaId: id } });
+  await prisma.oferta.delete({ where: { id: id } });
   revalidatePath('/busy/ofertas');
   return { id, eliminado: true };
 });
@@ -118,7 +116,7 @@ export const facturarOfertaAction = withAction(async (input: FacturarOfertaInput
   const tenantId = requireTenant(user);
 
   const oferta = await prisma.oferta.findFirst({
-    where: { ofertaId: parsed.ofertaId, tenantId },
+    where: { id: parsed.ofertaId, tenantId },
     include: { items: { include: { producto: true, servicio: true } }, cliente: true },
   });
   if (!oferta) throw new ActionError('Oferta no encontrada', 'NOT_FOUND');
@@ -130,7 +128,7 @@ export const facturarOfertaAction = withAction(async (input: FacturarOfertaInput
     const venta = await applyFacturacionCobroWorkflow(tx, {
       tenantId,
       clienteId: oferta.clienteId,
-      ofertaId: oferta.ofertaId,
+      ofertaId: oferta.id,
       items: oferta.items.map((item) => ({
         productoId: item.productoId,
         servicioId: item.servicioId,
@@ -155,13 +153,13 @@ export const facturarOfertaAction = withAction(async (input: FacturarOfertaInput
         documentoDestinoId: venta.ventaId,
         contexto: 'OFERTA_FACTURACION',
         usuarioId: user.userId,
-        observaciones: `Anticipo aplicado a facturación de oferta ${oferta.ofertaId}`,
+        observaciones: `Anticipo aplicado a facturación de oferta ${oferta.id}`,
       });
     }
 
     // Marcar oferta como facturada
     await tx.oferta.update({
-      where: { ofertaId: oferta.ofertaId },
+      where: { id: oferta.id },
       data: { estado: 'FACTURADA' },
     });
 

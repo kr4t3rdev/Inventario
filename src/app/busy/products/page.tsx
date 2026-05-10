@@ -40,7 +40,7 @@ export default async function ProductosPage() {
     // Si falla la obtención, usaEan13 queda en false
   }
 
-  const initialProductos: Producto[] = productosResult.success ? productosResult.data ?? [] : []
+  const initialProductos: Producto[] = (productosResult.success ? (productosResult.data ?? []) : []) as unknown as Producto[]
   const initialAlmacenes = almacenesResult.success ? almacenesResult.data ?? [] : []
   const initialPuntosVenta = puntosVentaResult.success ? puntosVentaResult.data ?? [] : []
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { motion, useReducedMotion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -180,7 +180,7 @@ export function CuadreDiarioFinanciero({
 
   const { resumen, ventas, gastos, resumenMetodosPago } = data
 
-  const ventasFiltradas = ventas.filter((venta) => {
+  const ventasFiltradas = ventas.filter((venta: any) => {
     const coincideBusqueda =
       venta.cliente.toLowerCase().includes(busqueda.toLowerCase()) ||
       venta.id.toLowerCase().includes(busqueda.toLowerCase())
@@ -258,13 +258,13 @@ export function CuadreDiarioFinanciero({
     .filter(
       (g) => g.tipo === "entrada" || g.tipo === "venta" || g.tipo === "servicio",
     )
-    .reduce((acc, g) => acc + g.monto, 0)
+    .reduce((acc: any, g: any) => acc + g.monto, 0)
 
   const totalSalidas = gastos
     .filter(
       (g) => g.tipo !== "entrada" && g.tipo !== "venta" && g.tipo !== "servicio",
     )
-    .reduce((acc, g) => acc + g.monto, 0)
+    .reduce((acc: any, g: any) => acc + g.monto, 0)
 
   return (
     <motion.div
@@ -530,7 +530,7 @@ export function CuadreDiarioFinanciero({
                     <p className="text-sm font-medium">Total mostrado:</p>
                     <p className="text-lg font-bold text-green-600">
                       {formatCurrency(
-                        ventasFiltradas.reduce((acc, v) => acc + v.total, 0),
+                        ventasFiltradas.reduce((acc: any, v: any) => acc + v.total, 0),
                       )}
                     </p>
                   </div>
@@ -680,7 +680,7 @@ export function CuadreDiarioFinanciero({
                     <span className="font-medium">Gran Total</span>
                     <span className="text-2xl font-bold text-green-600">
                       {formatCurrency(
-                        resumenMetodosPago.reduce((acc, m) => acc + m.total, 0),
+                        resumenMetodosPago.reduce((acc: any, m: any) => acc + m.total, 0),
                       )}
                     </span>
                   </div>

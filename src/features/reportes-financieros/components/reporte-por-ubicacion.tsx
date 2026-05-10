@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useGetStockPorUbicacionQuery } from "@/lib/redux/services/stockUbicacionApi"
 import { useAlmacenes } from "@/features/almacenes/hooks/use-almacenes"
 import { usePuntosDeVenta } from "@/features/puntos-venta/hooks/use-puntos-de-venta"
@@ -68,7 +68,7 @@ export function ReportePorUbicacion() {
   const chartData = productosUbicacion
     ?.filter((p) => p.stockUbicacion > 0)
     .slice(0, 10)
-    .map((p) => ({
+    .map((p: any) => ({
       name: getProductDisplayIdentifier(p).length > 15
         ? getProductDisplayIdentifier(p).substring(0, 15) + "..."
         : getProductDisplayIdentifier(p),
@@ -93,7 +93,7 @@ export function ReportePorUbicacion() {
   const handleExportCsv = () => {
     if (!productosUbicacion) return
 
-    const data = productosUbicacion.map((producto) => ({
+    const data = productosUbicacion.map((producto: any) => ({
       ID: producto.id,
       "Código Interno": producto.codigoInterno || "",
       Producto: getProductDisplayIdentifier(producto),
@@ -200,7 +200,7 @@ export function ReportePorUbicacion() {
             <Card className={cn(surfaceCardClass, "border-l-4 border-l-chart-2")}>
               <CardContent className="p-4">
                 <div className="text-2xl font-bold">
-                  {productosUbicacion?.reduce((sum, p) => sum + p.stockUbicacion, 0) || 0}
+                  {productosUbicacion?.reduce((sum: any, p: any) => sum + p.stockUbicacion, 0) || 0}
                 </div>
                 <p className="text-xs text-muted-foreground">Unidades totales</p>
               </CardContent>
@@ -211,7 +211,7 @@ export function ReportePorUbicacion() {
               <CardContent className="p-4">
                 <div className="text-2xl font-bold">
                   $
-                  {productosUbicacion?.reduce((sum, p) => sum + p.stockUbicacion * p.precioCosto, 0) ||
+                  {productosUbicacion?.reduce((sum: any, p: any) => sum + p.stockUbicacion * p.precioCosto, 0) ||
                     "0.00"}
                 </div>
                 <p className="text-xs text-muted-foreground">Valor del inventario</p>
@@ -273,7 +273,7 @@ export function ReportePorUbicacion() {
                             </TableCell>
                           </TableRow>
                         ) : (
-                          productosUbicacion?.map((producto) => (
+                          productosUbicacion?.map((producto: any) => (
                             <TableRow key={producto.id} className="hover:bg-muted/50 transition-colors">
                               <TableCell className="font-medium">{getProductDisplayIdentifier(producto)}</TableCell>
                               <TableCell>{(producto as any)?.categoria?.nombre ?? '-'}</TableCell>

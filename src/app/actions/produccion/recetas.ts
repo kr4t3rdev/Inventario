@@ -21,39 +21,39 @@ export async function getRecetaProduccion(recetaId: string): Promise<RecetaProdu
 export async function createRecetaProduccion(payload: CreateRecetaProduccionPayload): Promise<RecetaProduccion> {
   try {
     const result = await fetcher.createRecetaProduccion(payload)
-    revalidateTag('RecetasProduccion')
+    revalidateTag('RecetasProduccion', {})
     return result
-  } catch (error) { handleServerActionError(error, 'createRecetaProduccion') }
+  } catch (error) { throw handleServerActionError(error, 'createRecetaProduccion') }
 }
 
 export async function updateRecetaProduccion(recetaId: string, payload: Partial<CreateRecetaProduccionPayload>): Promise<RecetaProduccion> {
   try {
     const result = await fetcher.updateRecetaProduccion(recetaId, payload)
-    revalidateTag('RecetasProduccion')
+    revalidateTag('RecetasProduccion', {})
     return result
-  } catch (error) { handleServerActionError(error, 'updateRecetaProduccion') }
+  } catch (error) { throw handleServerActionError(error, 'updateRecetaProduccion') }
 }
 
 export async function deleteRecetaProduccion(recetaId: string): Promise<{ success: boolean; message: string }> {
   try {
     const result = await fetcher.deleteRecetaProduccion(recetaId)
-    revalidateTag('RecetasProduccion')
+    revalidateTag('RecetasProduccion', {})
     return result
-  } catch (error) { handleServerActionError(error, 'deleteRecetaProduccion') }
+  } catch (error) { throw handleServerActionError(error, 'deleteRecetaProduccion') }
 }
 
 export async function setIngredientesRecetaProduccion(payload: SetIngredientesPayload): Promise<SetIngredientesResponse> {
   try {
     const result = await fetcher.setIngredientesRecetaProduccion(payload)
-    revalidateTag('RecetasProduccion')
+    revalidateTag('RecetasProduccion', {})
     return result
-  } catch (error) { handleServerActionError(error, 'setIngredientesRecetaProduccion') }
+  } catch (error) { throw handleServerActionError(error, 'setIngredientesRecetaProduccion') }
 }
 
 export async function deleteIngredienteRecetaProduccion(recetaId: string, productoId: string): Promise<RecetaProduccion> {
   try {
     const result = await fetcher.deleteIngredienteRecetaProduccion(recetaId, productoId)
-    revalidateTag('RecetasProduccion')
+    revalidateTag('RecetasProduccion', {})
     return result
-  } catch (error) { handleServerActionError(error, 'deleteIngredienteRecetaProduccion') }
+  } catch (error) { throw handleServerActionError(error, 'deleteIngredienteRecetaProduccion') }
 }

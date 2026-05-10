@@ -206,7 +206,7 @@ export function LoginHistoryDialog({
                 </TableHeader>
                 <TableBody>
                   {history.failedAttempts.length > 0 ? (
-                    history.failedAttempts.map((log, index) => {
+                    history.failedAttempts.map((log: any, index: any) => {
                       const details = parseAttemptDetails(log.details);
                       return (
                         <TableRow
@@ -259,7 +259,7 @@ export function LoginHistoryDialog({
                 </TableHeader>
                 <TableBody>
                   {history.logs.length > 0 ? (
-                    history.logs.map((log, index) => (
+                    history.logs.map((log: any, index: any) => (
                       <TableRow
                         key={log.id}
                         className={shouldReduceMotion ? '' : 'animate-fade-in'}

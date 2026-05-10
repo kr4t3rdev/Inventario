@@ -16,7 +16,7 @@ interface PageProps {
  * @param {PageProps} props - Props de la página
  * @returns {Promise<JSX.Element>} Página de detalle de contrato
  */
-export default async function ContratoDetailPage(props: PageProps): Promise<JSX.Element> {
+export default async function ContratoDetailPage(props: PageProps) {
   const params = await props.params
 
   // Obtener datos del servidor

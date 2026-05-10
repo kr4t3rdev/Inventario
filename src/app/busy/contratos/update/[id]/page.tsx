@@ -19,7 +19,7 @@ interface PageProps {
  * @param {PageProps} props - Props de la página
  * @returns {Promise<JSX.Element>} Página de edición de contrato
  */
-export default async function UpdateContratoPage(props: PageProps): Promise<JSX.Element> {
+export default async function UpdateContratoPage(props: PageProps) {
   const params = await props.params
 
   // Obtener datos del servidor en paralelo

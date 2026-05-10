@@ -8,7 +8,7 @@ import type { PiezaReparacion } from '@/app/models/model'
 export async function createPiezaReparacion(data: { nombre: string; equipoId: string; costoPequeno: number; costoMediano: number; costoGrande: number }): Promise<PiezaReparacion> {
   try {
     const result = await fetcher.createPiezaReparacion(data)
-    revalidateTag('EquiposReparacion')
+    revalidateTag('EquiposReparacion', {})
     return result
   } catch (error) {
     handleServerActionError(error, 'createPiezaReparacion')
@@ -18,7 +18,7 @@ export async function createPiezaReparacion(data: { nombre: string; equipoId: st
 export async function updatePiezaReparacion(id: string, data: { nombre?: string; costoPequeno?: number; costoMediano?: number; costoGrande?: number }): Promise<PiezaReparacion> {
   try {
     const result = await fetcher.updatePiezaReparacion(id, data)
-    revalidateTag('EquiposReparacion')
+    revalidateTag('EquiposReparacion', {})
     return result
   } catch (error) {
     handleServerActionError(error, 'updatePiezaReparacion')
@@ -28,7 +28,7 @@ export async function updatePiezaReparacion(id: string, data: { nombre?: string;
 export async function deletePiezaReparacion(id: string): Promise<{ success: boolean; id: string }> {
   try {
     const result = await fetcher.deletePiezaReparacion(id)
-    revalidateTag('EquiposReparacion')
+    revalidateTag('EquiposReparacion', {})
     return result
   } catch (error) {
     handleServerActionError(error, 'deletePiezaReparacion')

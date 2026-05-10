@@ -12,6 +12,8 @@ export const metadata: Metadata = {
  * @description Página principal de reportes de inventario.
  * @returns {Promise<JSX.Element>} Contenedor de la vista de reportes.
  */
+export const dynamic = 'force-dynamic'
+
 export default async function ReportesPage() {
   const result = await getTransferenciasAction({});
   const initialTransferencias = result.success ? result.data?.transferencias ?? [] : [];

@@ -8,6 +8,7 @@ export {
 
 // Client Components
 export { TransferenciasContent } from './components/transferencias-content'
+export { TransferenciaForm } from './components/transferencias-form'
 
 export type { Transferencia, EstadoTransferencia } from './types';
 

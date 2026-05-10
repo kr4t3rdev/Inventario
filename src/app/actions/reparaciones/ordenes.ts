@@ -24,7 +24,7 @@ export async function getOrdenReparacion(id: string): Promise<OrdenReparacion> {
 export async function addOrdenReparacion(data: Partial<OrdenReparacion> & { equipos?: any[] }): Promise<any> {
   try {
     const result = await fetcher.addOrdenReparacion(data)
-    revalidateTag('OrdenesReparacion')
+    revalidateTag('OrdenesReparacion', {})
     return result
   } catch (error) {
     handleServerActionError(error, 'addOrdenReparacion')
@@ -34,7 +34,7 @@ export async function addOrdenReparacion(data: Partial<OrdenReparacion> & { equi
 export async function updateOrdenReparacion(id: string, data: any): Promise<OrdenReparacion> {
   try {
     const result = await fetcher.updateOrdenReparacion(id, data)
-    revalidateTag('OrdenesReparacion')
+    revalidateTag('OrdenesReparacion', {})
     return result
   } catch (error) {
     handleServerActionError(error, 'updateOrdenReparacion')
@@ -44,7 +44,7 @@ export async function updateOrdenReparacion(id: string, data: any): Promise<Orde
 export async function deleteOrdenReparacion(id: string): Promise<{ success: boolean; id: string }> {
   try {
     const result = await fetcher.deleteOrdenReparacion(id)
-    revalidateTag('OrdenesReparacion')
+    revalidateTag('OrdenesReparacion', {})
     return result
   } catch (error) {
     handleServerActionError(error, 'deleteOrdenReparacion')

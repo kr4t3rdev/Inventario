@@ -32,7 +32,7 @@ function DeudasCashContent() {
 
   const loadDeudas = async () => {
     setIsLoading(true)
-    const r = await getDeudasCashAction()
+    const r = await getDeudasCashAction({})
     if (r.success) setDeudas(r.data?.deudas ?? [])
     else setError(r.error)
     setIsLoading(false)

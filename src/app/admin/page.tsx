@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Building2,
   Users,
@@ -297,7 +297,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {safeSystem?.users.byRole.map((r) => {
+                      {safeSystem?.users.byRole.map((r: any) => {
                         const pct = safeSystem.users.total > 0
                           ? Math.round((r.count / safeSystem.users.total) * 100)
                           : 0

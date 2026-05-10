@@ -74,7 +74,7 @@ async function downloadFile(url: string, filename: string) {
  * @param {FacturasContentProps} props - Props del componente
  * @returns {JSX.Element} Componente de facturas
  */
-export function FacturasContent({ initialData }: FacturasContentProps): JSX.Element {
+export function FacturasContent({ initialData }: FacturasContentProps) {
   const [page, setPage] = useState(1)
   const [limit, setLimit] = useState(50)
   const [estadoFilter, setEstadoFilter] = useState<string>("ALL")

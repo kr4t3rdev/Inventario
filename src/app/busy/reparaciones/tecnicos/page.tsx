@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from "react"
-import { getTecnicosStats } from "@/lib/api/reparaciones/ordenes"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
@@ -13,7 +12,10 @@ export default function TecnicosDashboardPage() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    getTecnicosStats().then(setStats).finally(() => setIsLoading(false))
+    fetch('/api/servicios/reparaciones/tecnicos/stats', { cache: 'no-store' })
+      .then((response) => response.json())
+      .then(setStats)
+      .finally(() => setIsLoading(false))
   }, [])
 
   if (isLoading) {

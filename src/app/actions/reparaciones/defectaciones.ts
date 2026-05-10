@@ -16,7 +16,7 @@ export async function getDefectaciones(): Promise<DefectacionCatalogo[]> {
 export async function createDefectacion(data: { defecto: string; costo: number }): Promise<DefectacionCatalogo> {
   try {
     const result = await fetcher.createDefectacion(data)
-    revalidateTag('Defectaciones')
+    revalidateTag('Defectaciones', {})
     return result
   } catch (error) {
     handleServerActionError(error, 'createDefectacion')
@@ -26,7 +26,7 @@ export async function createDefectacion(data: { defecto: string; costo: number }
 export async function updateDefectacion(id: string, data: { defecto?: string; costo?: number }): Promise<DefectacionCatalogo> {
   try {
     const result = await fetcher.updateDefectacion(id, data)
-    revalidateTag('Defectaciones')
+    revalidateTag('Defectaciones', {})
     return result
   } catch (error) {
     handleServerActionError(error, 'updateDefectacion')
@@ -36,7 +36,7 @@ export async function updateDefectacion(id: string, data: { defecto?: string; co
 export async function deleteDefectacion(id: string): Promise<{ success: boolean; id: string }> {
   try {
     const result = await fetcher.deleteDefectacion(id)
-    revalidateTag('Defectaciones')
+    revalidateTag('Defectaciones', {})
     return result
   } catch (error) {
     handleServerActionError(error, 'deleteDefectacion')

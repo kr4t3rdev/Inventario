@@ -66,7 +66,7 @@ export function ContratoForm({
   initialVendors,
   initialTiposCustom,
   isUpdate = false
-}: ContratoFormProps): JSX.Element {
+}: ContratoFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [tiposCustom, setTiposCustom] = useState<TipoCustom[]>(initialTiposCustom || [])

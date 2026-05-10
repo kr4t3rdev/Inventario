@@ -51,7 +51,7 @@ export function GastoDEForm({ initialData, initialVendors }: GastosDEFormProps) 
   const [elementos, setElementos] = useState<any[]>([])
 
   useEffect(() => {
-    getGastoConceptosAction().then(r => { if (r.success) setConceptos(r.data ?? []) })
+    getGastoConceptosAction({}).then(r => { if (r.success) setConceptos(r.data ?? []) })
   }, [])
 
   useEffect(() => {

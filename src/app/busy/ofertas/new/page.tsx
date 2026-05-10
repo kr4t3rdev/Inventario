@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button"
  * @description Página de nueva oferta
  * @returns {Promise<JSX.Element>} Página de nueva oferta
  */
-export default async function NewOfertaPage(): Promise<JSX.Element> {
+export default async function NewOfertaPage() {
   // Obtener clientes del servidor para pasar como initial data (permite usar Server Actions)
   const clientes = await getClientesAction()
 

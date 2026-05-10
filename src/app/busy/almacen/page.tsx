@@ -13,9 +13,11 @@ import { getAlmacenesAction } from "@/features/almacenes"
 import { AlmacenPageClient } from "@/features/almacenes/components/almacen-page-client"
 import type { Almacen } from "@/features/almacenes"
 
+export const dynamic = 'force-dynamic'
+
 export default async function AlmacenPage() {
   const result = await getAlmacenesAction()
-  const almacenes: Almacen[] = result.success ? (result.data ?? []) : []
+  const almacenes: Almacen[] = (result.success ? (result.data ?? []) : []) as unknown as Almacen as unknown as []
 
   return (
     <AlmacenPageClient

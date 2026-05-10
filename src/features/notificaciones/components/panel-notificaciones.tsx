@@ -253,7 +253,7 @@ export function PanelNotificaciones() {
               className="space-y-2"
             >
               <AnimatePresence mode="popLayout">
-                {notificaciones.map((notificacion) => {
+                {notificaciones.map((notificacion: any) => {
                   const Icono = iconos[notificacion.type as keyof typeof iconos] || Info
                   const iconColor = coloresIcono[notificacion.type as keyof typeof coloresIcono] || "text-blue-500"
                   return (

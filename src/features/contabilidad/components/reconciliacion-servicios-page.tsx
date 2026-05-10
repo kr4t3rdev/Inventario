@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, useReducedMotion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -36,7 +36,10 @@ const ReconciliacionServiciosForm = dynamic(() => import('./reconciliacion-servi
 const ResumenReconciliacion = dynamic(() => import('./resumen-reconciliacion').then(mod => ({default:mod.ResumenReconciliacion})))
 
 import { VentaServicio } from "@/app/models/model"
-import { useGetHistorialReconciliacionServiciosQuery, useGetServiciosPendientesQuery } from "@/lib/redux/contabilidad"
+import {
+  getServiciosPendientesAction,
+  getHistorialReconciliacionServiciosAction,
+} from "@/features/contabilidad/actions-reconciliacion"
 import { cn } from "@/lib/utils"
 import {
   StaggerContainer,
@@ -65,16 +68,25 @@ export function ReconciliacionServiciosPage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [pageSize, setPageSize] = useState(50)
 
-  const {
-    data: serviciosPendientesData,
-    isLoading: loadingServicios,
-    refetch: refetchServicios
-  } = useGetServiciosPendientesQuery({
-    fechaDesde: fechaInicio || undefined,
-    fechaHasta: fechaFin || undefined,
-    page: currentPage,
-    limit: pageSize
-  })
+  const [serviciosPendientesData, setServiciosPendientesData] = useState<any>(null)
+  const [loadingServicios, setLoadingServicios] = useState(false)
+
+  const refetchServicios = () => {
+    setLoadingServicios(true)
+    getServiciosPendientesAction({
+      fechaDesde: fechaInicio || undefined,
+      fechaHasta: fechaFin || undefined,
+      page: currentPage,
+      limit: pageSize,
+    }).then((data) => {
+      setServiciosPendientesData(data)
+      setLoadingServicios(false)
+    })
+  }
+
+  useEffect(() => {
+    refetchServicios()
+  }, [fechaInicio, fechaFin, currentPage, pageSize])
 
 
   const { ventaServicios, pagination: originalPagination } = serviciosPendientesData || { ventaServicios: [], pagination: { page: 1, limit: 50, total: 0, totalPages: 0 } }
@@ -94,13 +106,19 @@ export function ReconciliacionServiciosPage() {
     totalPages: Math.ceil(serviciosList.length / pageSize)
   }
 
-  const {
-    data: historialReconciliacionData = [],
-    isLoading: loadingHistorial
-  } = useGetHistorialReconciliacionServiciosQuery({
-    fechaDesde: fechaInicio || undefined,
-    fechaHasta: fechaFin || undefined
-  })
+  const [historialReconciliacionData, setHistorialReconciliacionData] = useState<any[]>([])
+  const [loadingHistorial, setLoadingHistorial] = useState(false)
+
+  useEffect(() => {
+    setLoadingHistorial(true)
+    getHistorialReconciliacionServiciosAction({
+      fechaDesde: fechaInicio || undefined,
+      fechaHasta: fechaFin || undefined,
+    }).then((data) => {
+      setHistorialReconciliacionData(data?.reconciliaciones ?? [])
+      setLoadingHistorial(false)
+    })
+  }, [fechaInicio, fechaFin])
 
   const historialReconciliacion = Array.isArray(historialReconciliacionData) ? (historialReconciliacionData) : []
 

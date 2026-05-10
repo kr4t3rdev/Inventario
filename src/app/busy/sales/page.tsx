@@ -16,7 +16,7 @@ import { TrendingUp, PlusCircle, Sparkles } from "lucide-react"
  * @description Página principal de ventas
  * @returns {Promise<JSX.Element>} Página de ventas
  */
-export default async function VentasPage(): Promise<JSX.Element> {
+export default async function VentasPage() {
   // Obtener datos del servidor
   const result = await getVentasAction()
   const ventas = result.success ? result.data ?? [] : []

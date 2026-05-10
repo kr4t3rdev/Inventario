@@ -8,9 +8,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { getEquiposReparacion, createEquipoReparacion, deleteEquipoReparacion } from '@/lib/api/reparaciones/equipos'
-import { createPiezaReparacion, updatePiezaReparacion, deletePiezaReparacion } from '@/lib/api/reparaciones/piezas'
-import { getDefectaciones, createDefectacion, updateDefectacion, deleteDefectacion } from '@/lib/api/reparaciones/defectaciones'
+import { getEquiposReparacion, createEquipoReparacion, deleteEquipoReparacion } from '@/app/actions/reparaciones/equipos'
+import { createPiezaReparacion, updatePiezaReparacion, deletePiezaReparacion } from '@/app/actions/reparaciones/piezas'
+import { getDefectaciones, createDefectacion, updateDefectacion, deleteDefectacion } from '@/app/actions/reparaciones/defectaciones'
 import { Plus, Trash2, Settings, Wrench, Edit, ClipboardList, ListChecks, Cpu } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
@@ -367,7 +367,7 @@ export default function ReparacionesConfigPage() {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {equipo.piezas.map((pieza) => (
+                          {equipo.piezas.map((pieza: any) => (
                             <TableRow key={pieza.id}>
                               <TableCell className='font-medium'>{pieza.nombre}</TableCell>
                               <TableCell className='text-right'>{formatCurrencyUsd(pieza.costoPequeno)}</TableCell>

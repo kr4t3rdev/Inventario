@@ -44,6 +44,7 @@ const eslintConfig = defineConfig([
     'src/generated/**',
     '.kilocode/**',
     '.opencode/**',
+    '.worktrees/**',
   ]),
 ]);
 

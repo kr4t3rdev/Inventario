@@ -191,7 +191,7 @@ export default function EditCompraProductoPage() {
                         <span className="text-xs font-medium text-muted-foreground">Detalle de productos</span>
                       </div>
                       <div className="space-y-1">
-                        {compra.items.map((item) => (
+                        {compra.items.map((item: any) => (
                           <div key={item.compraDocumentoItemId} className="flex justify-between text-xs">
                             <span>{item.producto?.nombre || 'N/A'} x{item.cantidad}</span>
                             <span className="font-medium">${item.totalLinea?.toLocaleString()}</span>

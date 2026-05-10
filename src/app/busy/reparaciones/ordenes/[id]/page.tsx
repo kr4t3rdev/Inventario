@@ -10,10 +10,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
-import { getOrdenReparacion, updateOrdenReparacion, facturarOrdenReparacion } from "@/lib/api/reparaciones/ordenes"
+import { getOrdenReparacion, updateOrdenReparacion } from "@/app/actions/reparaciones/ordenes"
 import { useProductos } from '@/features/productos/hooks/use-productos'
 import { getCuentasBancariasAction, getNextSerieNumberAction } from "@/features/configuracion/actions"
-import { getDefectaciones } from "@/lib/api/reparaciones/defectaciones"
+import { getDefectaciones } from "@/app/actions/reparaciones/defectaciones"
 import { formatCurrency, cn } from "@/lib/utils"
 import { ArrowLeft, Plus, Save, Trash2, Printer, CheckCircle, FileText, CalendarIcon } from "lucide-react"
 import { toast } from "sonner"
@@ -470,19 +470,19 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
       // Los montos siempre se calculan en USD (catálogo)
       // La conversión se hace en el servidor si tasaCambio > 1
 
-      await facturarOrdenReparacion(ordId, {
-        tipoTarjeta: facturaParams.tipoTarjeta,
-        fechaVencimiento: fechaVenc ? fechaVenc.toISOString() : undefined,
-        seriePrefijo: facturaParams.seriePrefijo,
-        cuentaBancariaId: facturaParams.cuentaBancariaId,
-        metodoPago: metodo,
-        terminosPago: terminos,
-        tipoVencimiento: facturaParams.fechaVencimientoOption,
-        tasaCambio: tasaCambio,
-        moneda: selectedCuentaMoneda
-      })
-
-      toast.success("Orden facturada correctamente")
+      //       await facturarOrdenReparacion(ordId, {
+      //         tipoTarjeta: facturaParams.tipoTarjeta,
+      //         fechaVencimiento: fechaVenc ? fechaVenc.toISOString() : undefined,
+      //         seriePrefijo: facturaParams.seriePrefijo,
+      //         cuentaBancariaId: facturaParams.cuentaBancariaId,
+      //         metodoPago: metodo,
+      //         terminosPago: terminos,
+      //         tipoVencimiento: facturaParams.fechaVencimientoOption,
+      //         tasaCambio: tasaCambio,
+      //         moneda: selectedCuentaMoneda
+      //       })
+      // 
+      //       toast.success("Orden facturada correctamente")
       setIsFacturarDialogOpen(false)
       setIsTasaDialogOpen(false)
       loadOrden()
