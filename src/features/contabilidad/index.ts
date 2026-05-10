@@ -24,6 +24,15 @@ export {
 // Server Actions — Tipos de Pago
 export { getTiposPagoAction } from './actions-tipos-pago';
 
+// Server Actions — Cierres Contables
+export {
+  getCierresAction,
+  getCierreByIdAction,
+  createCierreAction,
+  updateCierreAction,
+  deleteCierreAction,
+} from './actions-cierres';
+
 // Server Actions — Capital
 export {
   getInyeccionesCapitalAction,
