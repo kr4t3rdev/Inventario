@@ -1,63 +1,161 @@
-import { NextRequest, NextResponse } from "next/server"
-import { prisma } from "@/lib/prisma"
+/**
+ * @description Handlers REST para el feature de Unidades.
+ *
+ * Cada handler delega la lógica de negocio a las Server Actions correspondientes,
+ * evitando duplicación de código. La función `toNextResponse` se encarga de
+ * mapear el envelope `ActionResponse` a la respuesta HTTP adecuada.
+ *
+ * HTTP semantics:
+ * - GET    → 200 OK
+ * - POST   → 201 Created
+ * - PUT    → 200 OK (full replace)
+ * - PATCH  → 200 OK (partial update)
+ * - DELETE → 204 No Content
+ * - Error  → 400/401/404/409/500 según el código de error
+ */
+import { NextRequest, NextResponse } from 'next/server';
+import {
+  getUnidadesAction,
+  getUnidadByIdAction,
+  createUnidadAction,
+  updateUnidadAction,
+  deleteUnidadAction,
+} from '@/features/unidades/actions';
+import type { ActionResponse } from '@/lib/server-actions';
 
+// ─── Helpers ────────────────────────────────────────────────
+
+/**
+ * @description Mapea el código de error de una Server Action al status HTTP correspondiente.
+ */
+function errorCodeToStatus(errorCode?: string): number {
+  switch (errorCode) {
+    case 'VALIDATION_ERROR':
+      return 400;
+    case 'AUTH_REQUIRED':
+      return 401;
+    case 'NOT_FOUND':
+      return 404;
+    case 'CONFLICT':
+    case 'P2002': // Prisma unique constraint violation
+      return 409;
+    default:
+      return 500;
+  }
+}
+
+/**
+ * @description Convierte un `ActionResponse` en un `NextResponse` con el status HTTP adecuado.
+ *
+ * Si la acción fue exitosa y hay datos, retorna 200 (o 201 si `created=true`).
+ * Si la acción falló, mapea el código de error al status HTTP correspondiente.
+ */
+function toNextResponse<T>(
+  result: ActionResponse<T>,
+  statusSuccess?: number
+): NextResponse {
+  if (result.success) {
+    if (statusSuccess === 204) {
+      return new NextResponse(null, { status: 204 });
+    }
+    return NextResponse.json(result.data ?? null, {
+      status: statusSuccess ?? 200,
+    });
+  }
+
+  const status = errorCodeToStatus(result.error?.code);
+
+  return NextResponse.json(
+    {
+      error: result.error?.message ?? 'Error interno del servidor',
+      ...(result.error?.details ? { details: result.error.details } : {}),
+    },
+    { status }
+  );
+}
+
+// ─── Handlers ───────────────────────────────────────────────
+
+/**
+ * @description GET /api/unidades — Lista todas las unidades.
+ */
 export async function getUnidadesHandler() {
-  try {
-    const unidades = await prisma.unidad.findMany({ select: { unidadId: true, nombre: true, simbolo: true, createdAt: true, updatedAt: true } })
-    return NextResponse.json(unidades)
-  } catch (error) {
-    console.log('Error al obtener unidades:', error)
-    return NextResponse.json({ error: 'Failed to fetch units' }, { status: 500 })
-  }
+  const result = await getUnidadesAction();
+  return toNextResponse(result);
 }
 
+/**
+ * @description POST /api/unidades — Crea una nueva unidad.
+ *
+ * Valida los datos con Zod, verifica unicidad de nombre y símbolo,
+ * y retorna 201 Created en caso de éxito.
+ */
 export async function createUnidadHandler(request: NextRequest) {
-  try {
-    const body = await request.json()
-    const { nombre, simbolo } = body
-    const unidad = await prisma.unidad.create({ data: { nombre, simbolo } })
-    return NextResponse.json(unidad)
-  } catch (error) {
-    console.log('Error al crear unidad:', error)
-    return NextResponse.json({ error: 'Failed to create unit' }, { status: 500 })
-  }
+  const body: unknown = await request.json();
+  const result = await createUnidadAction(body as { nombre: string; simbolo: string });
+  return toNextResponse(result, 201);
 }
 
-export async function getUnidadByIdHandler(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  try {
-    const { id } = await params
-    const unidad = await prisma.unidad.findUnique({
-      where: { unidadId: id },
-      select: { unidadId: true, nombre: true, simbolo: true, createdAt: true, updatedAt: true },
-    })
-    if (!unidad) return NextResponse.json({ error: "Unidad no encontrada" }, { status: 404 })
-    return NextResponse.json(unidad)
-  } catch (error) {
-    console.error("Error al obtener unidad:", error)
-    return NextResponse.json({ error: "Error al obtener unidad" }, { status: 500 })
-  }
+/**
+ * @description GET /api/unidades/[id] — Obtiene una unidad por ID.
+ */
+export async function getUnidadByIdHandler(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const result = await getUnidadByIdAction(id);
+  return toNextResponse(result);
 }
 
-export async function updateUnidadHandler(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  try {
-    const { id } = await params
-    const body = await request.json()
-    const { nombre, simbolo } = body
-    const unidad = await prisma.unidad.update({ where: { unidadId: id }, data: { nombre, simbolo } })
-    return NextResponse.json(unidad)
-  } catch (error) {
-    console.error("Error al actualizar unidad:", error)
-    return NextResponse.json({ error: "Error al actualizar unidad" }, { status: 500 })
-  }
+/**
+ * @description PUT /api/unidades/[id] — Reemplaza completamente una unidad.
+ *
+ * Requiere TODOS los campos (full replace). Verifica unicidad excluyendo
+ * el propio registro (self-update permitido).
+ */
+export async function replaceUnidadHandler(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const body: unknown = await request.json();
+  const result = await updateUnidadAction({
+    unidadId: id,
+    ...(body as { nombre?: string; simbolo?: string }),
+  });
+  return toNextResponse(result);
 }
 
-export async function deleteUnidadHandler(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  try {
-    const { id } = await params
-    await prisma.unidad.delete({ where: { unidadId: id } })
-    return NextResponse.json({ success: true, id })
-  } catch (error) {
-    console.error("Error al eliminar unidad:", error)
-    return NextResponse.json({ error: "Error al eliminar unidad" }, { status: 500 })
-  }
+/**
+ * @description PATCH /api/unidades/[id] — Actualiza parcialmente una unidad.
+ *
+ * Solo actualiza los campos presentes en el body. Verifica unicidad
+ * solo para los campos que cambian.
+ */
+export async function updateUnidadHandler(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const body: unknown = await request.json();
+  const result = await updateUnidadAction({
+    unidadId: id,
+    ...(body as { nombre?: string; simbolo?: string }),
+  });
+  return toNextResponse(result);
+}
+
+/**
+ * @description DELETE /api/unidades/[id] — Elimina una unidad.
+ *
+ * Retorna 204 No Content en caso de éxito.
+ */
+export async function deleteUnidadHandler(
+  _request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const result = await deleteUnidadAction(id);
+  return toNextResponse(result, 204);
 }

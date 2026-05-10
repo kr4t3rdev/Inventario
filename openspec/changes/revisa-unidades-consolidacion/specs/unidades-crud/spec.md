@@ -116,6 +116,103 @@ The system MUST return HTTP 204 No Content for successful DELETE operations.
 - THEN response status 204 (not 200)
 - AND response body is empty (not { success: true, id })
 
+### Requirement: Uniqueness Constraint Enforcement on POST (Create)
+
+The system MUST prevent creation of Unidades with duplicate `nombre` or `simbolo` values. These fields are globally unique.
+
+#### Scenario: POST /unidades fails with duplicate nombre
+
+- GIVEN a unidad exists with nombre "Kilogramo"
+- WHEN POST /unidades with payload { nombre: "Kilogramo", simbolo: "kg2" } is called
+- THEN the handler checks for existing nombre
+- AND returns 409 Conflict { error: "Unidad with nombre 'Kilogramo' already exists", field: "nombre" }
+- AND no Prisma.create() is executed
+
+#### Scenario: POST /unidades fails with duplicate simbolo
+
+- GIVEN a unidad exists with simbolo "kg"
+- WHEN POST /unidades with payload { nombre: "Kilogram", simbolo: "kg" } is called
+- THEN the handler checks for existing simbolo
+- AND returns 409 Conflict { error: "Unidad with simbolo 'kg' already exists", field: "simbolo" }
+- AND no Prisma.create() is executed
+
+#### Scenario: POST /unidades succeeds with unique nombre and simbolo
+
+- GIVEN no unidad exists with nombre "Metro" or simbolo "m"
+- WHEN POST /unidades with payload { nombre: "Metro", simbolo: "m" } is called
+- THEN handler validates uniqueness passes
+- AND creates unidad successfully (201)
+
+### Requirement: Uniqueness Constraint Enforcement on PUT (Full Replace)
+
+The system MUST prevent PUT operations that would result in duplicate `nombre` or `simbolo` values for OTHER records.
+
+#### Scenario: PUT /unidades/{id} fails if new nombre conflicts with another record
+
+- GIVEN unidad 1 has { nombre: "Kilogramo", simbolo: "kg" }
+- GIVEN unidad 2 has { nombre: "Gramo", simbolo: "g" }
+- WHEN PUT /unidades/2 with payload { nombre: "Kilogramo", simbolo: "m" } is called
+- THEN handler validates nombre uniqueness (excluding current record id=2)
+- AND returns 409 Conflict { error: "Unidad with nombre 'Kilogramo' already exists", field: "nombre" }
+- AND no Prisma.update() is executed
+
+#### Scenario: PUT /unidades/{id} fails if new simbolo conflicts with another record
+
+- GIVEN unidad 1 has { nombre: "Kilogramo", simbolo: "kg" }
+- GIVEN unidad 2 has { nombre: "Litro", simbolo: "l" }
+- WHEN PUT /unidades/2 with payload { nombre: "Liter", simbolo: "kg" } is called
+- THEN handler validates simbolo uniqueness (excluding current record id=2)
+- AND returns 409 Conflict { error: "Unidad with simbolo 'kg' already exists", field: "simbolo" }
+
+#### Scenario: PUT /unidades/{id} succeeds by updating to unique values
+
+- GIVEN unidad 2 has { nombre: "Litro", simbolo: "l" }
+- WHEN PUT /unidades/2 with payload { nombre: "Liter", simbolo: "lt" } is called (both unique)
+- THEN handler validates both fields are unique
+- AND replaces the record successfully (200)
+
+#### Scenario: PUT /unidades/{id} succeeds when keeping same nombre and simbolo (self-update)
+
+- GIVEN unidad 1 has { nombre: "Kilogramo", simbolo: "kg" }
+- WHEN PUT /unidades/1 with payload { nombre: "Kilogramo", simbolo: "kg" } (same values) is called
+- THEN handler correctly excludes current record from uniqueness check
+- AND allows self-update to succeed (200)
+
+### Requirement: Uniqueness Constraint Enforcement on PATCH (Partial Update)
+
+The system MUST prevent PATCH operations that would result in duplicate `nombre` or `simbolo` values for OTHER records when those fields are provided.
+
+#### Scenario: PATCH /unidades/{id} fails if new nombre would conflict
+
+- GIVEN unidad 1 has { nombre: "Kilogramo", simbolo: "kg" }
+- GIVEN unidad 2 has { nombre: "Gramo", simbolo: "g" }
+- WHEN PATCH /unidades/2 with payload { nombre: "Kilogramo" } is called
+- THEN handler validates nombre uniqueness (excluding current record)
+- AND returns 409 Conflict { error: "Unidad with nombre 'Kilogramo' already exists", field: "nombre" }
+
+#### Scenario: PATCH /unidades/{id} fails if new simbolo would conflict
+
+- GIVEN unidad 1 has { nombre: "Kilogramo", simbolo: "kg" }
+- GIVEN unidad 2 has { nombre: "Gramo", simbolo: "g" }
+- WHEN PATCH /unidades/2 with payload { simbolo: "kg" } is called
+- THEN handler validates simbolo uniqueness (excluding current record)
+- AND returns 409 Conflict { error: "Unidad with simbolo 'kg' already exists", field: "simbolo" }
+
+#### Scenario: PATCH /unidades/{id} succeeds when updating non-conflicting fields
+
+- GIVEN unidad 2 has { nombre: "Gramo", simbolo: "g" }
+- WHEN PATCH /unidades/2 with payload { nombre: "Gram" } is called (new unique nombre)
+- THEN handler validates uniqueness passes
+- AND updates the record successfully (200)
+
+#### Scenario: PATCH /unidades/{id} succeeds when omitting conflicting fields
+
+- GIVEN unidad 1 has { nombre: "Kilogramo", simbolo: "kg" }
+- GIVEN unidad 2 has { nombre: "Gramo", simbolo: "g" }
+- WHEN PATCH /unidades/2 with payload { extra_field: "value" } (neither nombre nor simbolo) is called
+- THEN handler skips uniqueness validation for omitted fields
+- AND updates non-unique fields successfully (200)
+
 ## Success Criteria
 
 - [ ] PUT method implemented on /unidades/{id} requiring all CRUD fields
@@ -129,3 +226,7 @@ The system MUST return HTTP 204 No Content for successful DELETE operations.
 - [ ] Unidad retrieved after operation and returned to client (GET returns full resource)
 - [ ] revalidatePath('/busy/unidad') called after successful mutations (CREATE/UPDATE/DELETE)
 - [ ] No breaking changes: existing consumers continue working (response shape compatible)
+- [ ] **Uniqueness enforcement**: nombre and simbolo are checked for duplicates on POST/PUT/PATCH
+- [ ] **Conflict handling**: HTTP 409 returned with `{ error, field }` identifying duplicate field
+- [ ] **Uniqueness scope**: Global (across all Unidades), excluding self on UPDATE operations
+- [ ] **Pre-Prisma check**: Uniqueness validation occurs before any Prisma operation, not relying on DB constraint exceptions

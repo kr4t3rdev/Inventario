@@ -18,8 +18,9 @@ This change consolidates the API layer with validated Server Actions, ensures RE
 - Implement PUT method for full resource replacement (REST compliance)
 - Add pagination support to GET /unidades (limit, offset, or cursor-based)
 - Add query filters: ?search=, ?orderBy=nombre|simbolo, ?order=asc|desc
+- **Add uniqueness constraints**: `nombre` and `simbolo` fields MUST be globally unique; prevent duplicate creation/update via API and Server Actions
 - Document API contract with correct HTTP semantics
-- Update error responses to use consistent HTTP status codes (400, 404, 500)
+- Update error responses to use consistent HTTP status codes (400, 404, 500, **409 for conflict**)
 - Ensure all tenant context handled correctly (Unidad is global, not tenant-scoped)
 
 ### Out of Scope
@@ -97,7 +98,11 @@ This change consolidates the API layer with validated Server Actions, ensures RE
 - [ ] GET /unidades supports search filter via ?search=
 - [ ] PUT method implemented and tested alongside PATCH
 - [ ] No breaking changes: existing UI consumers (use-unidades hook) continue to work
-- [ ] HTTP status codes align with REST standards (400, 404, 500)
+- [ ] HTTP status codes align with REST standards (400, 404, 500, **409 for conflict**)
 - [ ] All error responses include consistent error message format
 - [ ] Test coverage ≥ 80% for new/modified handlers
 - [ ] No tenant isolation regressions (Unidad remains global)
+- [ ] **Uniqueness validated**: nombre and simbolo fields cannot have duplicates
+- [ ] **Duplicate detection**: POST/PUT/PATCH returns 409 Conflict when duplicate detected
+- [ ] **Pre-Prisma validation**: Uniqueness checked before database operations
+- [ ] **Migration path**: Existing duplicate records handled (see migration note in tasks)

@@ -12,6 +12,7 @@ import { revalidatePath } from 'next/cache';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
 import { unidadSchema, unidadUpdateSchema } from './schemas';
+import { checkUnidadUniqueness } from './validators';
 import type { UnidadInput, UnidadUpdateInput } from './schemas';
 
 // ─── Select reutilizable ──────────────────────────────────
@@ -60,6 +61,12 @@ export const getUnidadByIdAction = withAction(async (unidadId: string) => {
 export const createUnidadAction = withAction(async (input: UnidadInput) => {
   const parsed = unidadSchema.parse(input);
 
+  // Verificar unicidad antes de crear
+  await checkUnidadUniqueness({
+    nombre: parsed.nombre,
+    simbolo: parsed.simbolo,
+  });
+
   const unidad = await prisma.unidad.create({
     data: {
       nombre: parsed.nombre,
@@ -83,12 +90,19 @@ export const updateUnidadAction = withAction(async (input: UnidadUpdateInput) =>
 
   const existing = await prisma.unidad.findUnique({
     where: { unidadId },
-    select: { unidadId: true },
+    select: { unidadId: true, nombre: true, simbolo: true },
   });
 
   if (!existing) {
     throw new ActionError('Unidad no encontrada', 'NOT_FOUND');
   }
+
+  // Verificar unicidad solo para campos que cambian
+  await checkUnidadUniqueness({
+    nombre: updateData.nombre !== undefined ? updateData.nombre : undefined,
+    simbolo: updateData.simbolo !== undefined ? updateData.simbolo : undefined,
+    excludeId: unidadId,
+  });
 
   const unidad = await prisma.unidad.update({
     where: { unidadId },

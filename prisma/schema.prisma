@@ -32,10 +32,10 @@ model Categoria {
 
 model Unidad {
   unidadId  String     @id @default(cuid())
-  nombre    String
+  nombre    String     @unique
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
-  simbolo   String
+  simbolo   String     @unique
   productos Producto[]
 }
 

@@ -1,0 +1,628 @@
+{
+  "change": "revisa-unidades-consolidacion",
+  "title": "Unidades API Consolidation & Hardening WITH UNIQUENESS CONSTRAINTS",
+  "total_tasks": 47,
+  "total_effort_hours": 18,
+  "timeline_days": 3,
+  "phases": [
+    {
+      "phase": 1,
+      "name": "Foundation & Schema Review",
+      "effort_hours": 1.5,
+      "tasks": [
+        {
+          "id": "1.1",
+          "description": "Audit Prisma schema: Verify `Unidad` model has no existing duplicates in `nombre` and `simbolo` fields",
+          "effort_hours": 0.5,
+          "depends_on": [],
+          "files": ["prisma/schema.prisma"],
+          "test_cases": []
+        },
+        {
+          "id": "1.2",
+          "description": "Plan Prisma unique constraints: Document strategy for adding `@unique` on `nombre` and `simbolo` fields",
+          "effort_hours": 0.5,
+          "depends_on": ["1.1"],
+          "files": ["openspec/changes/revisa-unidades-consolidacion/"],
+          "test_cases": []
+        },
+        {
+          "id": "1.3",
+          "description": "Review existing tests: Check `src/features/unidades/__tests__/actions.test.ts` for current coverage",
+          "effort_hours": 0.3,
+          "depends_on": [],
+          "files": ["src/features/unidades/__tests__/actions.test.ts"],
+          "test_cases": []
+        },
+        {
+          "id": "1.4",
+          "description": "Create validation utilities file: Establish `src/features/unidades/validators.ts` structure",
+          "effort_hours": 0.2,
+          "depends_on": [],
+          "files": ["src/features/unidades/validators.ts"],
+          "test_cases": []
+        }
+      ]
+    },
+    {
+      "phase": 2,
+      "name": "Validation Foundation & Uniqueness Detection",
+      "effort_hours": 3,
+      "tasks": [
+        {
+          "id": "2.1",
+          "description": "Export unidadSchema from `src/features/unidades/schemas.ts` with enhanced error messages",
+          "effort_hours": 0.3,
+          "depends_on": ["1.4"],
+          "files": ["src/features/unidades/schemas.ts"],
+          "test_cases": []
+        },
+        {
+          "id": "2.2",
+          "description": "Create unidadUpdateSchema as full replacement schema for PUT operations",
+          "effort_hours": 0.3,
+          "depends_on": ["2.1"],
+          "files": ["src/features/unidades/schemas.ts"],
+          "test_cases": []
+        },
+        {
+          "id": "2.3",
+          "description": "Create paginationSchema in validators.ts with limit, offset, orderBy, order",
+          "effort_hours": 0.5,
+          "depends_on": ["1.4"],
+          "files": ["src/features/unidades/validators.ts"],
+          "test_cases": []
+        },
+        {
+          "id": "2.4",
+          "description": "Create search filter schema in validators.ts with search string validation",
+          "effort_hours": 0.3,
+          "depends_on": ["1.4"],
+          "files": ["src/features/unidades/validators.ts"],
+          "test_cases": []
+        },
+        {
+          "id": "2.5",
+          "description": "Implement checkUnidadUniqueness() function for pre-Prisma duplicate detection",
+          "effort_hours": 1,
+          "depends_on": ["1.4"],
+          "files": ["src/features/unidades/validators.ts"],
+          "test_cases": [
+            {
+              "scenario": "Detect duplicate nombre",
+              "given": "Unidad with nombre 'kg' exists",
+              "when": "checkUnidadUniqueness() called with nombre='kg'",
+              "then": "Returns { conflict: true, field: 'nombre' }"
+            },
+            {
+              "scenario": "Detect duplicate simbolo",
+              "given": "Unidad with simbolo 'kg' exists",
+              "when": "checkUnidadUniqueness() called with simbolo='kg'",
+              "then": "Returns { conflict: true, field: 'simbolo' }"
+            },
+            {
+              "scenario": "No conflict detected",
+              "given": "Unidad 1 (kg/kg1) exists",
+              "when": "checkUnidadUniqueness() called with nombre='m', simbolo='m'",
+              "then": "Returns null (no conflict)"
+            },
+            {
+              "scenario": "Exclude current record",
+              "given": "Unidad 1 (id:1, kg/kg1) exists",
+              "when": "checkUnidadUniqueness(nombre='kg', excludeId='1')",
+              "then": "Returns null (self check excluded)"
+            }
+          ]
+        },
+        {
+          "id": "2.6",
+          "description": "Create buildValidationError() function for 400 responses",
+          "effort_hours": 0.3,
+          "depends_on": ["1.4"],
+          "files": ["src/features/unidades/validators.ts"],
+          "test_cases": []
+        },
+        {
+          "id": "2.7",
+          "description": "Add buildConflictError() function for 409 Conflict responses",
+          "effort_hours": 0.3,
+          "depends_on": ["1.4"],
+          "files": ["src/features/unidades/validators.ts"],
+          "test_cases": []
+        }
+      ]
+    },
+    {
+      "phase": 3,
+      "name": "API Handler Refactoring",
+      "effort_hours": 4,
+      "tasks": [
+        {
+          "id": "3.1",
+          "description": "Refactor GET /unidades handler with pagination query params",
+          "effort_hours": 0.7,
+          "depends_on": ["2.3"],
+          "files": ["src/features/unidades/api/handlers.ts"],
+          "test_cases": [
+            {
+              "scenario": "GET with limit/offset",
+              "given": "100 unidades exist",
+              "when": "GET /unidades?limit=10&offset=20",
+              "then": "Returns 10 items (21-30), envelope with { total: 100, limit: 10, offset: 20 }"
+            }
+          ]
+        },
+        {
+          "id": "3.2",
+          "description": "Add search/filter support to GET /unidades with ILIKE",
+          "effort_hours": 0.5,
+          "depends_on": ["2.4", "3.1"],
+          "files": ["src/features/unidades/api/handlers.ts"],
+          "test_cases": [
+            {
+              "scenario": "Search by nombre",
+              "given": "Unidades: Kilogramo (kg), Litro (lt)",
+              "when": "GET /unidades?search=kg",
+              "then": "Returns Kilogramo (case-insensitive match)"
+            }
+          ]
+        },
+        {
+          "id": "3.3",
+          "description": "Refactor POST /unidades handler with uniqueness check",
+          "effort_hours": 0.6,
+          "depends_on": ["2.5", "2.1"],
+          "files": ["src/features/unidades/api/handlers.ts"],
+          "test_cases": [
+            {
+              "scenario": "POST duplicate nombre",
+              "given": "Unidad with nombre 'kg' exists",
+              "when": "POST /unidades with { nombre: 'kg', simbolo: 'kg2' }",
+              "then": "Returns 409 Conflict"
+            },
+            {
+              "scenario": "POST valid unidad",
+              "given": "Valid unique payload",
+              "when": "POST /unidades with { nombre: 'metro', simbolo: 'm' }",
+              "then": "Returns 201 Created with new unidad"
+            }
+          ]
+        },
+        {
+          "id": "3.4",
+          "description": "Add PUT /unidades/{id} handler with uniqueness (excluding self)",
+          "effort_hours": 0.6,
+          "depends_on": ["2.5", "2.2"],
+          "files": ["src/features/unidades/api/handlers.ts"],
+          "test_cases": [
+            {
+              "scenario": "PUT to duplicate",
+              "given": "Unidad 1 (kg/kg1), Unidad 2 (m/m1) exist",
+              "when": "PUT /unidades/2 with { nombre: 'kg', simbolo: 'm2' }",
+              "then": "Returns 409 Conflict (nombre taken by Unidad 1)"
+            }
+          ]
+        },
+        {
+          "id": "3.5",
+          "description": "Refactor PATCH /unidades/{id} handler with partial uniqueness check",
+          "effort_hours": 0.5,
+          "depends_on": ["2.5", "2.2"],
+          "files": ["src/features/unidades/api/handlers.ts"],
+          "test_cases": [
+            {
+              "scenario": "PATCH to duplicate",
+              "given": "Unidad 1 (kg/kg1), Unidad 2 (m/m1)",
+              "when": "PATCH /unidades/2 with { nombre: 'kg' }",
+              "then": "Returns 409 Conflict"
+            }
+          ]
+        },
+        {
+          "id": "3.6",
+          "description": "Refactor DELETE /unidades/{id} handler returning 204",
+          "effort_hours": 0.4,
+          "depends_on": ["2.1"],
+          "files": ["src/features/unidades/api/handlers.ts"],
+          "test_cases": [
+            {
+              "scenario": "DELETE returns 204",
+              "given": "Unidad exists",
+              "when": "DELETE /unidades/1",
+              "then": "Returns 204 No Content (empty body)"
+            }
+          ]
+        },
+        {
+          "id": "3.7",
+          "description": "Add global error handler middleware in handlers.ts",
+          "effort_hours": 0.6,
+          "depends_on": ["2.6", "2.7"],
+          "files": ["src/features/unidades/api/handlers.ts"],
+          "test_cases": []
+        }
+      ]
+    },
+    {
+      "phase": 4,
+      "name": "Server Actions Enhancement",
+      "effort_hours": 2,
+      "tasks": [
+        {
+          "id": "4.1",
+          "description": "Update createUnidadAction() with pre-Prisma uniqueness check",
+          "effort_hours": 0.4,
+          "depends_on": ["2.5"],
+          "files": ["src/features/unidades/actions.ts"],
+          "test_cases": [
+            {
+              "scenario": "Create throws ActionError for duplicate",
+              "given": "Unidad with nombre 'kg' exists",
+              "when": "createUnidadAction({ nombre: 'kg', simbolo: 'kg2' })",
+              "then": "Throws ActionError with code 'CONFLICT'"
+            }
+          ]
+        },
+        {
+          "id": "4.2",
+          "description": "Create new createUnidadWithPUTAction() for full replacement",
+          "effort_hours": 0.3,
+          "depends_on": ["4.1"],
+          "files": ["src/features/unidades/actions.ts"],
+          "test_cases": []
+        },
+        {
+          "id": "4.3",
+          "description": "Update updateUnidadAction() with uniqueness check excluding self",
+          "effort_hours": 0.4,
+          "depends_on": ["2.5"],
+          "files": ["src/features/unidades/actions.ts"],
+          "test_cases": [
+            {
+              "scenario": "Update throws ActionError for duplicate",
+              "given": "Unidad 1 (kg/kg1), Unidad 2 (m/m1) exist",
+              "when": "updateUnidadAction({ unidadId: '2', nombre: 'kg' })",
+              "then": "Throws ActionError with code 'CONFLICT' (kg taken by Unidad 1)"
+            }
+          ]
+        },
+        {
+          "id": "4.4",
+          "description": "Add JSDoc comments to all actions",
+          "effort_hours": 0.6,
+          "depends_on": ["4.1", "4.3"],
+          "files": ["src/features/unidades/actions.ts"],
+          "test_cases": []
+        },
+        {
+          "id": "4.5",
+          "description": "Verify deleteUnidadAction() has existence check",
+          "effort_hours": 0.3,
+          "depends_on": [],
+          "files": ["src/features/unidades/actions.ts"],
+          "test_cases": []
+        }
+      ]
+    },
+    {
+      "phase": 5,
+      "name": "Route Setup & HTTP Semantics",
+      "effort_hours": 1,
+      "tasks": [
+        {
+          "id": "5.1",
+          "description": "Update src/app/api/unidades/route.ts with refactored handlers",
+          "effort_hours": 0.3,
+          "depends_on": ["3.1", "3.3"],
+          "files": ["src/app/api/unidades/route.ts"],
+          "test_cases": []
+        },
+        {
+          "id": "5.2",
+          "description": "Update src/app/api/unidades/[id]/route.ts with GET, PUT, PATCH, DELETE",
+          "effort_hours": 0.3,
+          "depends_on": ["3.4", "3.5", "3.6"],
+          "files": ["src/app/api/unidades/[id]/route.ts"],
+          "test_cases": []
+        },
+        {
+          "id": "5.3",
+          "description": "Verify HTTP status codes per spec",
+          "effort_hours": 0.2,
+          "depends_on": ["5.1", "5.2"],
+          "files": ["src/app/api/unidades/route.ts", "src/app/api/unidades/[id]/route.ts"],
+          "test_cases": [
+            {
+              "scenario": "POST returns 201",
+              "given": "Valid POST payload",
+              "when": "POST /unidades",
+              "then": "Returns 201 Created"
+            },
+            {
+              "scenario": "DELETE returns 204",
+              "given": "Valid DELETE",
+              "when": "DELETE /unidades/{id}",
+              "then": "Returns 204 No Content"
+            }
+          ]
+        },
+        {
+          "id": "5.4",
+          "description": "Add response envelope documentation in code comments",
+          "effort_hours": 0.2,
+          "depends_on": ["5.1", "5.2"],
+          "files": ["src/app/api/unidades/route.ts", "src/app/api/unidades/[id]/route.ts"],
+          "test_cases": []
+        }
+      ]
+    },
+    {
+      "phase": 6,
+      "name": "Testing & Uniqueness Scenarios",
+      "effort_hours": 5,
+      "tasks": [
+        {
+          "id": "6.1",
+          "description": "Write failing tests for pagination",
+          "effort_hours": 0.5,
+          "depends_on": ["1.3"],
+          "files": ["src/features/unidades/__tests__/actions.test.ts"],
+          "test_cases": [
+            {
+              "scenario": "GET with limit/offset returns paginated results",
+              "given": "100 unidades in database",
+              "when": "GET /unidades?limit=10&offset=20",
+              "then": "Returns exactly 10 items (21-30), envelope shows { total: 100, limit: 10, offset: 20 }"
+            },
+            {
+              "scenario": "Invalid limit returns 400",
+              "given": "Invalid limit value",
+              "when": "GET /unidades?limit=-5",
+              "then": "Returns 400 with validation error"
+            }
+          ]
+        },
+        {
+          "id": "6.2",
+          "description": "Write failing tests for search",
+          "effort_hours": 0.5,
+          "depends_on": ["1.3"],
+          "files": ["src/features/unidades/__tests__/actions.test.ts"],
+          "test_cases": [
+            {
+              "scenario": "Search case-insensitive",
+              "given": "Unidad with nombre='Kilogramo', simbolo='kg'",
+              "when": "GET /unidades?search=KG",
+              "then": "Returns Kilogramo (matches case-insensitive)"
+            }
+          ]
+        },
+        {
+          "id": "6.3",
+          "description": "Write failing tests for sorting",
+          "effort_hours": 0.4,
+          "depends_on": ["1.3"],
+          "files": ["src/features/unidades/__tests__/actions.test.ts"],
+          "test_cases": [
+            {
+              "scenario": "Sort by nombre ascending",
+              "given": "Unidades: Kilogramo, Gramo, Litro",
+              "when": "GET /unidades?orderBy=nombre&order=asc",
+              "then": "Returns [Gramo, Kilogramo, Litro]"
+            }
+          ]
+        },
+        {
+          "id": "6.4",
+          "description": "Write failing tests for POST uniqueness",
+          "effort_hours": 0.5,
+          "depends_on": ["1.3"],
+          "files": ["src/features/unidades/__tests__/actions.test.ts"],
+          "test_cases": [
+            {
+              "scenario": "POST duplicate nombre returns 409",
+              "given": "Unidad with nombre='kg' exists",
+              "when": "POST /unidades with { nombre: 'kg', simbolo: 'kg2' }",
+              "then": "Returns 409 Conflict"
+            },
+            {
+              "scenario": "POST unique unidad returns 201",
+              "given": "Valid unique payload",
+              "when": "POST /unidades with { nombre: 'metro', simbolo: 'm' }",
+              "then": "Returns 201 Created"
+            }
+          ]
+        },
+        {
+          "id": "6.5",
+          "description": "Write failing tests for PUT uniqueness",
+          "effort_hours": 0.5,
+          "depends_on": ["1.3"],
+          "files": ["src/features/unidades/__tests__/actions.test.ts"],
+          "test_cases": [
+            {
+              "scenario": "PUT duplicate excluding self returns 409",
+              "given": "Unidad 1 (kg/kg1), Unidad 2 (m/m1)",
+              "when": "PUT /unidades/2 with { nombre: 'kg', simbolo: 'm2' }",
+              "then": "Returns 409 Conflict"
+            },
+            {
+              "scenario": "PUT same record succeeds",
+              "given": "Unidad 1 (kg/kg1)",
+              "when": "PUT /unidades/1 with { nombre: 'kg', simbolo: 'kg1' }",
+              "then": "Returns 200 OK (no conflict, comparing against self)"
+            }
+          ]
+        },
+        {
+          "id": "6.6",
+          "description": "Write failing tests for PATCH uniqueness",
+          "effort_hours": 0.4,
+          "depends_on": ["1.3"],
+          "files": ["src/features/unidades/__tests__/actions.test.ts"],
+          "test_cases": [
+            {
+              "scenario": "PATCH duplicate returns 409",
+              "given": "Unidad 1 (kg/kg1), Unidad 2 (m/m1)",
+              "when": "PATCH /unidades/2 with { nombre: 'kg' }",
+              "then": "Returns 409 Conflict"
+            }
+          ]
+        },
+        {
+          "id": "6.7",
+          "description": "Make tests pass: implement handlers and actions",
+          "effort_hours": 1.5,
+          "depends_on": ["6.1", "6.2", "6.3", "6.4", "6.5", "6.6"],
+          "files": ["src/features/unidades/api/handlers.ts", "src/features/unidades/actions.ts"],
+          "test_cases": []
+        },
+        {
+          "id": "6.8",
+          "description": "Write HTTP semantics tests",
+          "effort_hours": 0.5,
+          "depends_on": ["6.7"],
+          "files": ["src/features/unidades/__tests__/actions.test.ts"],
+          "test_cases": [
+            {
+              "scenario": "POST returns 201",
+              "given": "Valid POST payload",
+              "when": "POST /unidades",
+              "then": "Status is 201 Created (not 200)"
+            },
+            {
+              "scenario": "DELETE returns 204",
+              "given": "Valid DELETE",
+              "when": "DELETE /unidades/1",
+              "then": "Status is 204 No Content with empty body"
+            }
+          ]
+        },
+        {
+          "id": "6.9",
+          "description": "Add integration test: full CRUD flow with uniqueness",
+          "effort_hours": 0.5,
+          "depends_on": ["6.7"],
+          "files": ["src/features/unidades/__tests__/actions.test.ts"],
+          "test_cases": [
+            {
+              "scenario": "Full CRUD flow",
+              "given": "Clean database",
+              "when": "Create → Read → Update with conflict → Retry update unique → Delete",
+              "then": "All operations succeed with correct status codes and uniqueness enforcement"
+            }
+          ]
+        },
+        {
+          "id": "6.10",
+          "description": "Verify no regressions: use-unidades hook continues working",
+          "effort_hours": 0.3,
+          "depends_on": ["6.9"],
+          "files": ["src/features/unidades/hooks/use-unidades.ts"],
+          "test_cases": []
+        }
+      ]
+    },
+    {
+      "phase": 7,
+      "name": "Database Schema Update",
+      "effort_hours": 1,
+      "tasks": [
+        {
+          "id": "7.1",
+          "description": "Create Prisma migration for @unique on nombre and simbolo",
+          "effort_hours": 0.3,
+          "depends_on": ["1.2"],
+          "files": ["prisma/schema.prisma", "prisma/migrations/"],
+          "test_cases": []
+        },
+        {
+          "id": "7.2",
+          "description": "Run Prisma migration: pnpm prisma migrate deploy",
+          "effort_hours": 0.3,
+          "depends_on": ["7.1"],
+          "files": [],
+          "test_cases": []
+        },
+        {
+          "id": "7.3",
+          "description": "Verify migration applied in database",
+          "effort_hours": 0.2,
+          "depends_on": ["7.2"],
+          "files": [],
+          "test_cases": [
+            {
+              "scenario": "Database constraints verified",
+              "given": "Migration applied",
+              "when": "Check database for unique indexes",
+              "then": "Unique constraints exist on Unidad.nombre and Unidad.simbolo"
+            }
+          ]
+        },
+        {
+          "id": "7.4",
+          "description": "Document migration for team",
+          "effort_hours": 0.2,
+          "depends_on": ["7.1"],
+          "files": ["openspec/changes/revisa-unidades-consolidacion/"],
+          "test_cases": []
+        }
+      ]
+    },
+    {
+      "phase": 8,
+      "name": "Documentation & Cleanup",
+      "effort_hours": 1.5,
+      "tasks": [
+        {
+          "id": "8.1",
+          "description": "Add JSDoc block to src/features/unidades/validators.ts",
+          "effort_hours": 0.3,
+          "depends_on": ["2.5"],
+          "files": ["src/features/unidades/validators.ts"],
+          "test_cases": []
+        },
+        {
+          "id": "8.2",
+          "description": "Update API documentation in route handlers",
+          "effort_hours": 0.4,
+          "depends_on": ["5.4"],
+          "files": ["src/app/api/unidades/route.ts", "src/app/api/unidades/[id]/route.ts"],
+          "test_cases": []
+        },
+        {
+          "id": "8.3",
+          "description": "Document uniqueness behavior in code comments",
+          "effort_hours": 0.2,
+          "depends_on": ["3.7"],
+          "files": ["src/features/unidades/api/handlers.ts"],
+          "test_cases": []
+        },
+        {
+          "id": "8.4",
+          "description": "Remove dead code from handlers.ts",
+          "effort_hours": 0.2,
+          "depends_on": ["3.7"],
+          "files": ["src/features/unidades/api/handlers.ts"],
+          "test_cases": []
+        },
+        {
+          "id": "8.5",
+          "description": "Verify error messages are consistent (Spanish, professional)",
+          "effort_hours": 0.2,
+          "depends_on": ["2.6", "2.7"],
+          "files": ["src/features/unidades/validators.ts", "src/features/unidades/api/handlers.ts"],
+          "test_cases": []
+        },
+        {
+          "id": "8.6",
+          "description": "Add migration guide for team",
+          "effort_hours": 0.2,
+          "depends_on": ["7.4"],
+          "files": ["openspec/changes/revisa-unidades-consolidacion/"],
+          "test_cases": []
+        }
+      ]
+    }
+  ]
+}

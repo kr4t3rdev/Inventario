@@ -63,6 +63,38 @@ The system MUST export pagination and CRUD validation schemas from a centralized
 - WHEN handlers.ts is implemented
 - THEN no Zod object definitions exist in handlers.ts itself (all imported)
 
+### Requirement: Uniqueness Constraint Validation for nombre and simbolo
+
+The system MUST validate that `nombre` and `simbolo` fields are globally unique across all Unidades records. These fields MUST NOT contain duplicates in the database.
+
+#### Scenario: POST /unidades with duplicate nombre
+
+- GIVEN a unidad already exists with nombre "Kilogramo"
+- WHEN POST /unidades with payload { nombre: "Kilogramo", simbolo: "kg2" } is called
+- THEN the handler validates uniqueness before Prisma create
+- AND returns 409 Conflict { error: "Unidad with nombre 'Kilogramo' already exists", field: "nombre" }
+
+#### Scenario: POST /unidades with duplicate simbolo
+
+- GIVEN a unidad already exists with simbolo "kg"
+- WHEN POST /unidades with payload { nombre: "Kilogram", simbolo: "kg" } is called
+- THEN the handler validates uniqueness before Prisma create
+- AND returns 409 Conflict { error: "Unidad with simbolo 'kg' already exists", field: "simbolo" }
+
+#### Scenario: POST /unidades with unique nombre and simbolo succeeds
+
+- GIVEN unique values nombre: "Metro", simbolo: "m"
+- WHEN POST /unidades with valid unique payload is called
+- THEN the handler validates both fields are unique
+- AND creates the unidad successfully (201)
+
+#### Scenario: Uniqueness check is case-sensitive for database storage but case-insensitive for detection
+
+- GIVEN a unidad exists with nombre "Kilogramo" (capital K)
+- WHEN POST /unidades with payload { nombre: "kilogramo", simbolo: "kg2" } is called
+- THEN uniqueness validation compares case-sensitively OR flags as collision based on business rules
+- AND returns 409 Conflict if considered duplicate
+
 ## MODIFIED Requirements
 
 _None—this is a new capability. Existing Server Actions remain unchanged._
@@ -75,3 +107,6 @@ _None—this is a new capability. Existing Server Actions remain unchanged._
 - [ ] No direct `request.json()` without Zod parse in handlers
 - [ ] Schemas are defined once in `schemas.ts` or `validators.ts`, not duplicated in handlers
 - [ ] Existing Server Actions continue unchanged (no integration required for this spec alone)
+- [ ] **Uniqueness validation**: nombre and simbolo are checked for duplicates before Prisma create/update
+- [ ] **Conflict response**: HTTP 409 Conflict with `{ error, field }` for duplicate detection
+- [ ] **Uniqueness check location**: Validation occurs in Zod schema OR in handler before Prisma (not relying on DB unique constraint alone)
