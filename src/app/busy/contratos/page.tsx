@@ -54,7 +54,9 @@ export default async function ContratosPage(props: PageProps) {
   return (
     <ContratosContent
   // @ts-expect-error
-      initialData={initialData.data}
+      initialData={
+      initialData.data
+      }
       initialMeta={initialData.meta}
       configuracion={configuracion}
     />

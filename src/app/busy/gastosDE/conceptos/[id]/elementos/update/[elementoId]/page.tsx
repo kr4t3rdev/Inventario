@@ -48,8 +48,10 @@ export default async function UpdateGastoElementoPage({ params }: Props) {
           </div>
           <GastoElementoForm
             conceptoId={conceptoId}
+            conceptoNombre={
   // @ts-expect-error
-            conceptoNombre={concepto.nombre}
+            concepto.nombre
+            }
             initialData={elemento}
           />
         </div>

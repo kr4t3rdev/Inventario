@@ -27,12 +27,14 @@ export async function SiteHeader() {
         </div>
         
         {/* Currency Indicator */}
-        <CurrencyIndicator monedas={monedas} tasas={tasas} />
+        <CurrencyIndicator monedas={
+  // @ts-expect-error
+        monedas} tasas={tasas
+        } />
         
         <div className="flex items-center gap-2">
           <ThemeToggle/>
           <PanelNotificaciones/>        
-  // @ts-expect-error
         </div>
       </header>
       

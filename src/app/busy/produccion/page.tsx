@@ -23,9 +23,13 @@ export default async function ProduccionPage() {
   return (
     <ProduccionContent
   // @ts-expect-error
-      initialRecetas={initialRecetas}
+      initialRecetas={
+      initialRecetas
+      }
   // @ts-expect-error
-      initialOrdenes={initialOrdenes}
+      initialOrdenes={
+      initialOrdenes
+      }
     />
   )
 }

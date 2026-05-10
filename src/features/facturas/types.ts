@@ -6,3 +6,14 @@ export type SerieFacturacion = PrismaSerieFacturacion;
 export type CuentaPorCobrar = PrismaCuentaPorCobrar;
 export type Venta = PrismaVenta;
 export type Cliente = PrismaCliente;
+
+/**
+ * @description FacturaRow extends Prisma Factura with UI-computed fields.
+ * Used for table display where row.original needs facturaId (alias for idFactura),
+ * moneda (currency code), and pdfUrl (computed download URL).
+ */
+export interface FacturaRow extends Factura {
+  facturaId: string
+  moneda?: string
+  pdfUrl?: string
+}

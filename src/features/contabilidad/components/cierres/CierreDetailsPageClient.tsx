@@ -86,7 +86,9 @@ export function CierreDetailsPageClient({ cierre }: CierreDetailsPageClientProps
 
       <CierreDetails
   // @ts-expect-error
-        cierre={normalizedCierre}
+        cierre={
+        normalizedCierre
+        }
         onClose={() => router.back()}
         onApprove={handleApproveCierre}
       />

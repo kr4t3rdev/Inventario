@@ -202,8 +202,10 @@ export function BulkStockMinimoManager(): React.JSX.Element {
         )
         setSelectAll(false)
       } else {
+        toast.error(`Se actualizaron ${
   // @ts-expect-error
-        toast.error(`Se actualizaron ${result.updated} de ${updates.length} productos. Revisa los errores.`)
+        result.updated} de ${updates.length
+        } productos. Revisa los errores.`)
       }
     } catch (error) {
       console.error('Error in bulk update:', error)

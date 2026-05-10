@@ -167,7 +167,9 @@ export const getOrdenesProduccionAction = withAction(
         where,
         include: {
   // @ts-expect-error
-          receta: { include: { Producto: true, RecetaIngrediente: { include: { Producto: true } } } },
+          receta: {
+          include: { Producto: true, RecetaIngrediente: { include: { Producto: true } } }
+          },
         },
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * limit,
@@ -195,7 +197,9 @@ export const getOrdenProduccionByIdAction = withAction(
       where: { ordenProduccionId: id, tenantId },
       include: {
   // @ts-expect-error
-        receta: { include: { Producto: true, RecetaIngrediente: { include: { Producto: true } } } },
+        receta: {
+        include: { Producto: true, RecetaIngrediente: { include: { Producto: true } } }
+        },
       },
     })
     if (!orden) throw new ActionError('Orden de producción no encontrada', 'NOT_FOUND')

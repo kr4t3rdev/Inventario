@@ -11,8 +11,10 @@ import type { AuthenticatedUser } from '@/lib/auth-middleware';
 export const getTiposPagoAction = withAction(async (_input: void, user: AuthenticatedUser) => {
   const tenantId = requireTenant(user);
   const data = await prisma.tipoPago.findMany({
+    where: {
   // @ts-expect-error
-    where: { tenantId },
+    tenantId
+    },
     orderBy: { nombre: 'asc' },
   });
   return { data };

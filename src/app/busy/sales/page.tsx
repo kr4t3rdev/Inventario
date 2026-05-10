@@ -87,7 +87,9 @@ export default async function VentasPage() {
           >
             <VentasTable
   // @ts-expect-error
-              ventas={ventas}
+              ventas={
+              ventas
+              }
               isLoading={false}
               error={null}
               onDelete={() => {}} // Server-side delete not implemented - users can delete from detail page

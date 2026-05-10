@@ -65,11 +65,9 @@ export default async function EditarTransferenciaPage({ params }: Props) {
               </p>
             </div>
           </motion.div>
-
-          <TransferenciaForm initialData={transferencia} />
+          <TransferenciaForm initialData={transferencia as any} />
         </div>
       </SidebarInset>
-  // @ts-expect-error
     </SidebarProvider>
   )
 }

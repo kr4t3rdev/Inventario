@@ -80,7 +80,7 @@ export function TasaCambioDialog({
       if (cancelled) return
 
       if (tasasResult.success) {
-        setTasasActualesData(tasasResult.data ?? [])
+        setTasasActualesData(tasasResult.data?.tasas ?? [])
       }
 
       if (monedasResult.success) {

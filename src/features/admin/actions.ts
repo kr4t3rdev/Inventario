@@ -47,8 +47,10 @@ export const createUserAction = withAction(async (input: CreateUserInput, user: 
     },
   });
 
+  try {
   // @ts-expect-error
-  try { await sendEmailVerificationLink(newUser as any); } catch {}
+  await sendEmailVerificationLink(newUser as any); } catch {
+  }
 
   revalidatePath('/admin');
   return newUser;
@@ -121,8 +123,10 @@ export const getGlobalUsersAction = withAction(async (input: { limit?: number } 
   const users = await prisma.user.findMany({
     take: input.limit || 100,
     orderBy: { createdAt: 'desc' },
+    include: {
   // @ts-expect-error
-    include: { tenants: { include: { tenant: true } } },
+    tenants: { include: { tenant: true } }
+    },
   });
   const total = await prisma.user.count();
   return { users, total };
@@ -142,8 +146,10 @@ export const getAdminTenantsAction = withAction(async (_input: void, user: Authe
   if (user.role !== 'admin') throw new ActionError('Acceso restringido', 'FORBIDDEN');
   return prisma.tenant.findMany({
     orderBy: { createdAt: 'desc' },
+    include: {
   // @ts-expect-error
-    include: { _count: { select: { users: true, productos: true, Almacen: true } } },
+    _count: { select: { users: true, productos: true, Almacen: true } }
+    },
   });
 });
 
@@ -245,8 +251,10 @@ export const getSessionsAction = withAction(async (_input: void, user: Authentic
 
 export const deleteSessionAction = withAction(async (sessionId: string, user: AuthenticatedUser) => {
   if (user.role !== 'admin') throw new ActionError('Acceso restringido', 'FORBIDDEN');
+  await prisma.userSession.delete({
   // @ts-expect-error
-  await prisma.userSession.delete({ where: { sessionId } });
+  where: { sessionId }
+  });
   revalidatePath('/admin');
   return { success: true };
 });
@@ -270,8 +278,10 @@ export const sendExpiryNotificationsAction = withAction(async (_input: void, use
     where: { expiresAt: { not: null, lte: soon }, isActive: true },
   });
   for (const u of expiring) {
+    try {
   // @ts-expect-error
-    try { await sendEmailVerificationLink(u as any); } catch {}
+    await sendEmailVerificationLink(u as any); } catch {
+    }
   }
   return { notified: expiring.length };
 });
@@ -290,7 +300,9 @@ export const getPendingMembershipsAction = withAction(async (_input: void, user:
 export const rejectMembershipAction = withAction(async (input: { membershipId: string }, user: AuthenticatedUser) => {
   if (user.role !== 'admin') throw new ActionError('Acceso restringido', 'FORBIDDEN');
   // @ts-expect-error
-  await prisma.userTenant.delete({ where: { id: input.membershipId } });
+  await prisma.userTenant.delete({
+  where: { id: input.membershipId }
+  });
   revalidatePath('/admin');
   return { success: true };
 });
@@ -308,15 +320,19 @@ export const createLicenciaAction = withAction(async (input: any, user: Authenti
 
 export const updateLicenciaAction = withAction(async ({ id, ...data }: any, user: AuthenticatedUser) => {
   if (user.role !== 'admin') throw new ActionError('Acceso restringido', 'FORBIDDEN');
+  const licencia = await prisma.tenantLicense.update({
   // @ts-expect-error
-  const licencia = await prisma.tenantLicense.update({ where: { id }, data });
+  where: { id }, data
+  });
   revalidatePath('/admin'); return licencia;
 });
 
 export const deleteLicenciaAction = withAction(async (id: string, user: AuthenticatedUser) => {
   if (user.role !== 'admin') throw new ActionError('Acceso restringido', 'FORBIDDEN');
+  await prisma.tenantLicense.delete({
   // @ts-expect-error
-  await prisma.tenantLicense.delete({ where: { id } });
+  where: { id }
+  });
   revalidatePath('/admin'); return { success: true };
 });
 

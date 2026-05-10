@@ -18,8 +18,10 @@ export const getCuentasBancariasAction = withAction(async (_input: void, _user: 
 export const getNextSerieNumberAction = withAction(async (prefijo: string, _user: AuthenticatedUser) => {
   const ultimaSerie = await prisma.serieFacturacion.findFirst({
     where: { prefijo, activa: true },
+    select: {
   // @ts-expect-error
-    select: { serieId: true, prefijo: true, ultimoNumero: true },
+    serieId: true, prefijo: true, ultimoNumero: true
+    },
   })
   // @ts-expect-error
   const nextNumber = (ultimaSerie?.ultimoNumero ?? 0) + 1

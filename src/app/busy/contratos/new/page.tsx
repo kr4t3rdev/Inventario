@@ -20,8 +20,10 @@ export default async function NewContratoPage() {
     getVendorsAction(),
     prisma.contrato.findMany({
       where: { tenantId: { not: undefined } },
+      select: {
   // @ts-expect-error
-      select: { tipoCustomId: true, nombre: true }
+      tipoCustomId: true, nombre: true
+      }
     }).catch(() => [])
   ])
 
@@ -33,10 +35,14 @@ export default async function NewContratoPage() {
     <div className="container mx-auto py-6 max-w-4xl">
       <ContratoForm
   // @ts-expect-error
-        initialClientes={clientes}
+        initialClientes={
+        clientes
+        }
         initialVendors={vendors}
   // @ts-expect-error
-        initialTiposCustom={tiposCustom}
+        initialTiposCustom={
+        tiposCustom
+        }
       />
     </div>
   )

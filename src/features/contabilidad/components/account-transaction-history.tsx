@@ -152,7 +152,7 @@ export function AccountTransactionHistory({
 
   useEffect(() => {
     getMonedasAction().then(r => {
-      if (r.success) setMonedas(r.data?.data ?? [])
+      if (r.success) setMonedas(r.data ?? [])
     })
   }, [])
   

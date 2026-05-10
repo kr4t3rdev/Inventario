@@ -72,8 +72,10 @@ export const getCompraProductoByIdAction = withAction(async (id: string, user: A
   const tenantId = requireTenant(user);
   const compra = await prisma.compraDocumento.findFirst({
     where: { compraDocumentoId: id, tenantId, deletedAt: null },
+    include: {
   // @ts-expect-error
-    include: { ...COMPRA_INCLUDE, pagoGastos: true },
+    ...COMPRA_INCLUDE, pagoGastos: true
+    },
   });
   if (!compra) throw new ActionError('Compra no encontrada', 'NOT_FOUND');
   return compra;
@@ -112,7 +114,9 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
         tipoOperacion: 'REGULAR',
         items: {
   // @ts-expect-error
-          create: items.map((i) => ({ productoId: i.producto.id, cantidad: i.cantidad, precioCosto: i.precioCosto, total: i.precioCosto * i.cantidad })),
+          create: items.map((i) => ({
+          productoId: i.producto.id, cantidad: i.cantidad, precioCosto: i.precioCosto, total: i.precioCosto * i.cantidad
+          })),
         },
       },
       include: COMPRA_INCLUDE,

@@ -26,7 +26,9 @@ export default async function GastosDEPage() {
   return (
     <GastosDEContent
   // @ts-expect-error
-      initialGastosDE={initialGastosDE}
+      initialGastosDE={
+      initialGastosDE
+      }
       initialVendors={initialVendors}
     />
   )

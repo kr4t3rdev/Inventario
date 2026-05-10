@@ -8,8 +8,10 @@ import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Download, FileText, FileSpreadsheet, Loader2 } from "lucide-react"
 import { toast } from "sonner"
+import {
+DateRangePicker
   // @ts-expect-error
-import { DateRangePicker } from "./date-range-picker"
+} from "./date-range-picker"
 
 interface ExportDialogProps {
   tipoReporte: 'movimientos' | 'resumen' | 'transferencias' | 'exchange'

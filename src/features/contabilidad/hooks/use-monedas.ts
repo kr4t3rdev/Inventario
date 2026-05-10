@@ -6,7 +6,6 @@ export function useMonedas() {
   const [isLoading, setIsLoading] = useState(true)
   useEffect(() => {
     let c = false
-  // @ts-expect-error
     getMonedasAction().then(r => { if (!c && r.success) setMonedas(r.data ?? []) }).finally(() => { if (!c) setIsLoading(false) })
     return () => { c = true }
   }, [])

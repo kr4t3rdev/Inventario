@@ -52,7 +52,7 @@ function PrestamosCashContent() {
     getTiposPagoAction().then(r => { if (r.success) setTiposPago(r.data?.data ?? []) })
     getTasasActualesAction().then(r => {
       if (r.success) {
-        const payload = r.data?.data as unknown as { monedaPrincipal?: { codigo?: string }; tasas?: Array<{ monedaOrigenId: string; tasa: number }> } | undefined
+        const payload = r.data as unknown as { monedaPrincipal?: { codigo?: string }; tasas?: Array<{ monedaOrigenId: string; tasa: number }> } | undefined
         setTasasData(payload ?? {})
       }
     })

@@ -220,10 +220,14 @@ export function OfertaForm() {
       await openOfertaPdf(createdOferta.id, printWindow);
       sileo.success({ title: 'Oferta creada exitosamente' });
       const nextUrl = selectedAnticipoCobroId
+        ? `/busy/ofertas/${
   // @ts-expect-error
-        ? `/busy/ofertas/${createdOferta.id}?anticipoCobroId=${encodeURIComponent(selectedAnticipoCobroId)}`
+        createdOferta.id}?anticipoCobroId=${encodeURIComponent(selectedAnticipoCobroId)
+        }`
+        : `/busy/ofertas/${
   // @ts-expect-error
-        : `/busy/ofertas/${createdOferta.id}`
+        createdOferta.id
+        }`
       router.push(nextUrl);
     } catch (error) {
       if (printWindow) {

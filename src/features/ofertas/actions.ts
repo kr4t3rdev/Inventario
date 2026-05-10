@@ -86,13 +86,17 @@ export const updateOfertaAction = withAction(async (input: OfertaUpdateInput, us
   const { ofertaId, ...data } = parsed;
   const tenantId = requireTenant(user);
 
+  const existing = await prisma.oferta.findFirst({
   // @ts-expect-error
-  const existing = await prisma.oferta.findFirst({ where: { ofertaId, tenantId } });
+  where: { ofertaId, tenantId }
+  });
   if (!existing) throw new ActionError('Oferta no encontrada', 'NOT_FOUND');
 
   const oferta = await prisma.oferta.update({
+    where: {
   // @ts-expect-error
-    where: { ofertaId },
+    ofertaId
+    },
     data: {
       ...(data.estado !== undefined && { estado: data.estado }),
       ...(data.observaciones !== undefined && { observaciones: data.observaciones }),
@@ -153,8 +157,10 @@ export const facturarOfertaAction = withAction(async (input: FacturarOfertaInput
 
     // Anticipo
     if (parsed.anticipoCobroId && parsed.idempotencyKey) {
+      await applyAnticipoAllocations(tx, [{
   // @ts-expect-error
-      await applyAnticipoAllocations(tx, [{ anticipoId: parsed.anticipoCobroId, montoAplicado: oferta.total }], {
+      anticipoId: parsed.anticipoCobroId, montoAplicado: oferta.total
+      }], {
   // @ts-expect-error
         documentoDestinoId: venta.ventaId,
         contexto: 'OFERTA_FACTURACION',

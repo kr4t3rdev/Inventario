@@ -27,5 +27,7 @@ export default async function ContratoDetailPage(props: PageProps) {
   }
 
   // @ts-expect-error
-  return <ContratoDetailContent initialData={contrato} contratoId={params.id} />
+  return <ContratoDetailContent initialData={
+  contrato} contratoId={params.id
+  } />
 }

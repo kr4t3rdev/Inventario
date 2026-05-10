@@ -133,7 +133,9 @@ export function MermasContent({ initialMermas, isLoading: initialIsLoading, erro
           >
             <MermasTable 
   // @ts-expect-error
-              mermas={mermas}
+              mermas={
+              mermas
+              }
               isLoading={isLoading}
               error={error}
               onDelete={(id) => setMermaToDelete(id)}

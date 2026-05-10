@@ -29,8 +29,10 @@ const pagoSchema = z.object({
 export const getInyeccionesCapitalAction = withAction(async (_input: { tipo?: string } = {}, user: AuthenticatedUser) => {
   const tenantId = requireTenant(user);
   const inyecciones = await prisma.inyeccionCapital.findMany({
+    where: {
   // @ts-expect-error
-    where: { tenantId },
+    tenantId
+    },
     orderBy: { createdAt: 'desc' },
   });
   return { inyecciones };
@@ -40,8 +42,10 @@ export const createInyeccionCapitalAction = withAction(async (input: z.infer<typ
   const parsed = createSchema.parse(input);
   const tenantId = requireTenant(user);
   const inyeccion = await prisma.inyeccionCapital.create({
+    data: {
   // @ts-expect-error
-    data: { monto: parsed.monto, moneda: parsed.moneda, tipo: parsed.tipo, descripcion: parsed.descripcion, cuentaBancariaId: parsed.cuentaBancariaId, tenantId },
+    monto: parsed.monto, moneda: parsed.moneda, tipo: parsed.tipo, descripcion: parsed.descripcion, cuentaBancariaId: parsed.cuentaBancariaId, tenantId
+    },
   });
   revalidatePath('/busy/contabilidad/capital');
   return inyeccion;
@@ -51,8 +55,10 @@ export const registrarPagoCapitalAction = withAction(async (input: z.infer<typeo
   const parsed = pagoSchema.parse(input);
   const tenantId = requireTenant(user);
   const pago = await prisma.pagoDeuda.create({
+    data: {
   // @ts-expect-error
-    data: { inyeccionId: parsed.inyeccionId, monto: parsed.monto, cuentaBancariaId: parsed.cuentaBancariaId, tipoPagoId: parsed.tipoPagoId, observaciones: parsed.observaciones, tenantId },
+    inyeccionId: parsed.inyeccionId, monto: parsed.monto, cuentaBancariaId: parsed.cuentaBancariaId, tipoPagoId: parsed.tipoPagoId, observaciones: parsed.observaciones, tenantId
+    },
   });
   revalidatePath('/busy/contabilidad/capital');
   return pago;

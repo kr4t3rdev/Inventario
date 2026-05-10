@@ -703,11 +703,7 @@ export function ProductosContent({
                           ))}
                         </>
                       )}
-  // @ts-expect-error
 
-  // @ts-expect-error
-  // @ts-expect-error
-  // @ts-expect-error
                       {puntosVenta && puntosVenta.length > 0 && (
                         <>
                           <SelectItem disabled value="puntos-venta-header" className="font-semibold">

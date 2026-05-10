@@ -146,15 +146,19 @@ export function SectionCards({ dashboardStats }: SectionCardsProps): React.JSX.E
     <motion.div
       className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4"
   // @ts-expect-error
-      variants={containerVariants}
+      variants={
+      containerVariants
+      }
       initial="hidden"
       animate="show"
     >
       {cards.map((card) => {
         const Icon = card.icon
         return (
+          <motion.div key={
   // @ts-expect-error
-          <motion.div key={card.title} variants={itemVariants} whileHover={{ y: -4, transition: { duration: 0.2 } }}>
+          card.title} variants={itemVariants} whileHover={{ y: -4, transition: { duration: 0.2 } }
+          }>
             <Card className="group relative overflow-hidden border-0 bg-card/50 shadow-sm backdrop-blur-sm transition-all duration-300 hover:shadow-md">
               <div className={cn('absolute -top-10 -right-10 h-32 w-32 rounded-full blur-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100', card.iconBg)} />
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

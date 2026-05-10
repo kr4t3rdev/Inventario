@@ -30,8 +30,10 @@ export default async function UpdateContratoPage(props: PageProps) {
     getVendorsAction(),
     prisma.contrato.findMany({
       where: { tenantId: { not: undefined } },
+      select: {
   // @ts-expect-error
-      select: { tipoCustomId: true, nombre: true }
+      tipoCustomId: true, nombre: true
+      }
     }).catch(() => [])
   ])
 
@@ -64,12 +66,18 @@ export default async function UpdateContratoPage(props: PageProps) {
     <div className="container mx-auto py-6 max-w-4xl">
       <ContratoForm
   // @ts-expect-error
-        initialData={initialData}
+        initialData={
+        initialData
+        }
   // @ts-expect-error
-        initialClientes={clientes}
+        initialClientes={
+        clientes
+        }
         initialVendors={vendors}
   // @ts-expect-error
-        initialTiposCustom={tiposCustom}
+        initialTiposCustom={
+        tiposCustom
+        }
         isUpdate
       />
     </div>

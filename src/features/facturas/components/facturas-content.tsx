@@ -23,7 +23,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { ArrowUpDown, Download, FileSpreadsheet, PlusCircle, Filter, FileText, Sparkles, Loader2 } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
-import { Factura } from "@/app/models/model"
+import type { FacturaRow } from "@/features/facturas/types"
 import { getAuthToken } from "@/lib/token"
 import { EstadoFacturaBadge } from "@/features/facturas"
 import { ActualizarEstadoFactura } from "@/features/facturas"
@@ -32,14 +32,14 @@ import { Card, CardContent } from "@/components/ui/card"
 
 interface FacturasContentProps {
   initialData?: {
-    data: Factura[]
+    data: FacturaRow[]
     pagination: {
       page: number
       limit: number
       total: number
       totalPages: number
     }
-    totalsByStatus: Record<string, number>
+    totalsByStatus?: Record<string, number>
   }
 }
 
@@ -80,18 +80,38 @@ export function FacturasContent({ initialData }: FacturasContentProps) {
   const [estadoFilter, setEstadoFilter] = useState<string>("ALL")
   const [search, setSearch] = useState("")
   const [isPending, startTransition] = useTransition()
-  const [response, setResponse] = useState<any>(initialData || null)
+  const [response, setResponse] = useState<FacturasContentProps['initialData'] | null>(initialData || null)
   const [isLoading, setIsLoading] = useState(!initialData)
+
+  function transformFactura(f: any): FacturaRow {
+    return {
+      ...f,
+      facturaId: f.idFactura ?? f.facturaId,
+      moneda: f.moneda ?? "CUP",
+      pdfUrl: f.pdfUrl ?? undefined,
+    }
+  }
 
   useEffect(() => {
     if (initialData) {
-      setResponse(initialData)
+      setResponse({
+        ...initialData,
+        data: initialData.data.map(transformFactura),
+      })
       setIsLoading(false)
       return
     }
     setIsLoading(true)
     getFacturasAction({ page, limit, estado: estadoFilter === "ALL" ? undefined : estadoFilter, search: search || undefined })
-      .then(r => { if (r.success) setResponse(r.data); setIsLoading(false) })
+      .then(r => {
+        if (r.success && r.data) {
+          setResponse({
+            ...r.data,
+            data: (r.data.data ?? []).map(transformFactura),
+          })
+        }
+        setIsLoading(false)
+      })
   }, [page, limit, estadoFilter, search, initialData])
 
   const facturas = response?.data || []
@@ -103,7 +123,7 @@ export function FacturasContent({ initialData }: FacturasContentProps) {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
 
-  const columns: ColumnDef<Factura>[] = [
+  const columns: ColumnDef<FacturaRow>[] = [
     {
       id: "numeroFactura",
       header: ({ column }) => (
@@ -167,9 +187,9 @@ export function FacturasContent({ initialData }: FacturasContentProps) {
       ),
       cell: ({ row }) => {
         const total = Number(row.original.total) || 0
-        return <div className="font-medium">{formatCurrency(total, row.original.moneda || "CUP")}</div>
+        return <div className="font-medium">{formatCurrency(total)}</div>
       },
-      accessorFn: (row) => Number(row.original.total) || 0,
+      accessorFn: (row) => Number(row.total) || 0,
     },
     {
       id: "estado",
@@ -190,7 +210,6 @@ export function FacturasContent({ initialData }: FacturasContentProps) {
             </Button>
             {factura.pdfUrl && (
               <Button variant="ghost" size="icon" onClick={() => downloadFile(factura.pdfUrl!, `${factura.numeroFactura}.pdf`)}>
-  // @ts-expect-error
                 <Download className="h-4 w-4" />
               </Button>
             )}
@@ -199,7 +218,6 @@ export function FacturasContent({ initialData }: FacturasContentProps) {
         )
       },
     },
-  // @ts-expect-error
   ]
 
   const table = useReactTable({
@@ -271,7 +289,6 @@ export function FacturasContent({ initialData }: FacturasContentProps) {
                 <SelectValue placeholder="Estado" />
               </SelectTrigger>
               <SelectContent>
-  // @ts-expect-error
                 <SelectItem value="ALL">Todos</SelectItem>
                 <SelectItem value="PENDIENTE">Pendiente</SelectItem>
                 <SelectItem value="PAGADA">Pagada</SelectItem>

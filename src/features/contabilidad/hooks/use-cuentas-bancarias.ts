@@ -6,8 +6,10 @@ export function useCuentasBancarias() {
   const [isLoading, setIsLoading] = useState(true)
   useEffect(() => {
     let c = false
+    getCuentasBancariasAction().then(r => {
   // @ts-expect-error
-    getCuentasBancariasAction().then(r => { if (!c && r.success) setCuentas(r.data?.cuentas ?? r.data ?? []) }).finally(() => { if (!c) setIsLoading(false) })
+    if (!c && r.success) setCuentas(r.data?.cuentas ?? r.data ?? []) }).finally(() => { if (!c) setIsLoading(false)
+    })
     return () => { c = true }
   }, [])
   return { cuentas, isLoading }

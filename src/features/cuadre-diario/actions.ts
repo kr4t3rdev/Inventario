@@ -53,8 +53,10 @@ export const getCuadreDiarioAction = withAction(async (fecha: string, user: Auth
       }),
       prisma.ventaServicios.findMany({
         where: { createdAt: { gte: fechaInicio, lte: fechaFin }, tenantId },
+        include: {
   // @ts-expect-error
-        include: { servicio: { select: { nombre: true } }, puntoDeVenta: { select: { nombre: true } } },
+        servicio: { select: { nombre: true } }, puntoDeVenta: { select: { nombre: true } }
+        },
       }),
       prisma.gastosDE.findMany({
         where: { createdAt: { gte: fechaInicio, lte: fechaFin }, tenantId },
@@ -71,8 +73,10 @@ export const getCuadreDiarioAction = withAction(async (fecha: string, user: Auth
         where: { createdAt: { lte: fechaFin }, tenantId },
         orderBy: { createdAt: 'desc' },
       }),
+      prisma.tipoPago.findMany({
   // @ts-expect-error
-      prisma.tipoPago.findMany({ where: { isActive: true, tenantId: null } }),
+      where: { isActive: true, tenantId: null }
+      }),
     ])
 
   // @ts-expect-error

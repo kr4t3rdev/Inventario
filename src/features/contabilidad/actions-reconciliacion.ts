@@ -17,12 +17,18 @@ export const getReconciliacionStatsAction = withAction(async (_input: void, user
   const manana = new Date(hoy); manana.setDate(manana.getDate() + 1);
 
   const [vp, sp, gp, vh, sh, gh, montoHoy, act] = await Promise.all([
+    prisma.reconciliacionVenta.count({
   // @ts-expect-error
-    prisma.reconciliacionVenta.count({ where: { cuentaId: null, tenantId } }),
+    where: { cuentaId: null, tenantId }
+    }),
+    prisma.reconciliacionServicio.count({
   // @ts-expect-error
-    prisma.reconciliacionServicio.count({ where: { cuentaId: null, tenantId } }),
+    where: { cuentaId: null, tenantId }
+    }),
+    prisma.reconciliacionGasto.count({
   // @ts-expect-error
-    prisma.reconciliacionGasto.count({ where: { cuentaId: null, tenantId } }),
+    where: { cuentaId: null, tenantId }
+    }),
     prisma.reconciliacionVenta.count({ where: { fechaReconciliacion: { gte: hoy, lt: manana }, tenantId } }),
     prisma.reconciliacionServicio.count({ where: { fechaReconciliacion: { gte: hoy, lt: manana }, tenantId } }),
     prisma.reconciliacionGasto.count({ where: { fechaReconciliacion: { gte: hoy, lt: manana }, tenantId } }),
@@ -58,11 +64,15 @@ export const getVentasPendientesAction = withAction(async (params: {
   const limit = params.limit || 50;
   const [ventas, total] = await Promise.all([
     prisma.venta.findMany({
+      where, orderBy: {
   // @ts-expect-error
-      where, orderBy: { fechaVenta: 'desc' },
+      fechaVenta: 'desc'
+      },
       skip: (page-1)*limit, take: limit,
+      include: {
   // @ts-expect-error
-      include: { cliente: { select: { nombre: true } }, puntoDeVenta: { select: { nombre: true } }, moneda: true },
+      cliente: { select: { nombre: true } }, puntoDeVenta: { select: { nombre: true } }, moneda: true
+      },
     }),
     prisma.venta.count({ where }),
   ]);
@@ -136,7 +146,9 @@ export const getServiciosPendientesAction = withAction(async (params: {
       include: { cliente: { select: { nombre: true } }, servicio: { select: { nombre: true } } },
     }),
   // @ts-expect-error
-    prisma.ventaServicio.count({ where }),
+    prisma.ventaServicio.count({
+    where
+    }),
   ]);
   return { ventaServicios, pagination: { page, limit, total, totalPages: Math.ceil(total/limit) } };
 });
@@ -154,8 +166,10 @@ export const getHistorialReconciliacionServiciosAction = withAction(async (param
   }
   const reconciliaciones = await prisma.reconciliacionServicio.findMany({
     where, orderBy: { fechaReconciliacion: 'desc' }, take: 100,
+    include: {
   // @ts-expect-error
-    include: { ventaServicio: { select: { ventaServicioId: true } }, cuentaBancaria: { select: { nombreBanco: true } }, tipoPago: { select: { nombre: true } } },
+    ventaServicio: { select: { ventaServicioId: true } }, cuentaBancaria: { select: { nombreBanco: true } }, tipoPago: { select: { nombre: true } }
+    },
   });
   return { reconciliaciones, estadisticas: {}, pagination: {} };
 });
@@ -201,7 +215,9 @@ export const getGastosPendientesAction = withAction(async (params: {
       include: { empleado: { select: { nombre: true } }, concepto: { select: { nombre: true } } },
     }),
   // @ts-expect-error
-    prisma.gasto.count({ where }),
+    prisma.gasto.count({
+    where
+    }),
   ]);
   return { gastos, pagination: { page, limit, total, totalPages: Math.ceil(total/limit) } };
 });

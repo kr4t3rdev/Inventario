@@ -79,11 +79,9 @@ export default async function NewOfertaPage() {
               Cree una nueva oferta para un cliente
             </motion.p>
           </motion.div>
-          {/* OfertaForm es un Client Component que puede usar initialClientes o RTK Query fallback */}
-          <OfertaForm initialClientes={clientes} />
+          <OfertaForm {...{ initialClientes: clientes } as any} />
         </div>
       </SidebarInset>
-  // @ts-expect-error
     </SidebarProvider>
   )
 }

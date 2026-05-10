@@ -252,8 +252,10 @@ export const registrarPagoPrestamoAction = withAction(async (
   user: AuthenticatedUser
 ) => {
   if (!prestamosCashEnabled()) throw new ActionError('Módulo de préstamos cash deshabilitado', 'DISABLED')
+  const {
   // @ts-expect-error
-  const { id, ...body } = pagoSchema.parse(input)
+  id, ...body
+  } = pagoSchema.parse(input)
   const prestamo = await prisma.prestamoCash.findFirst({
     where: { id, deletedAt: null },
     include: { cuentaPorCobrar: true },

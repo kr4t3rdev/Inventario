@@ -120,8 +120,10 @@ export function TenantUsersPage() {
 
   const handleConfirmApprove = useCallback(async (membershipId: string, tenantRole: string) => {
     try {
+      await approveGlobalUserAction({
   // @ts-expect-error
-      await approveGlobalUserAction({ id: membershipId, tenantRole })
+      id: membershipId, tenantRole
+      })
       toast.success('Acceso aprobado correctamente.')
       fetchPending()
       fetchUsers()
@@ -247,8 +249,10 @@ export function TenantUsersPage() {
               <PendingMembershipsTable
                 memberships={pendingMemberships}
                 isLoading={pendingLoading}
+                onRefresh={
   // @ts-expect-error
-                onRefresh={refetchPending}
+                refetchPending
+                }
                 onApprove={handleApproveClick}
                 onReject={handleReject}
               />

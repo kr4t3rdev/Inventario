@@ -711,9 +711,6 @@ export function ReconciliacionGastosForm({
                                         </SelectTrigger>
                                       </FormControl>
                                       <SelectContent>
-  // @ts-expect-error
-  // @ts-expect-error
-  // @ts-expect-error
                                         {monedas.filter((m: any) => m.isActive).map((moneda: any) => (
                                           <SelectItem key={moneda.codigo} value={moneda.codigo}>
                                             {moneda.codigo} - {moneda.nombre}

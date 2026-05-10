@@ -513,8 +513,10 @@ export function ResumenFinanciero({
     {
       title: "Saldo Préstamos",
       subtitle: monedaPrincipal,
+      value: Object.values(prestamosStats?.montoPendienteCobro ?? {
+      
   // @ts-expect-error
-      value: Object.values(prestamosStats?.montoPendienteCobro ?? {}).reduce((acc, value) => acc + value, 0),
+      }).reduce((acc, value) => acc + value, 0),
       icon: Calculator,
       tone: 'violet' as AccentTone,
       description: "Monto pendiente por cobrar de préstamos cash"

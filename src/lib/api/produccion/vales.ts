@@ -17,10 +17,14 @@ export async function getConceptos(): Promise<string[]> {
   // @ts-expect-error
       distinct: ['concepto'],
   // @ts-expect-error
-      orderBy: { concepto: 'asc' },
+      orderBy: {
+      concepto: 'asc'
+      },
     })
   // @ts-expect-error
-    return conceptos.map((c: { concepto: string }) => c.concepto)
+    return conceptos.map((c: {
+    concepto: string
+    }) => c.concepto)
   } catch (error) {
     throw new ServerActionError('getConceptos', 'GET', 500, error instanceof Error ? error.message : 'Error al obtener conceptos')
   }

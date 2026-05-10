@@ -54,8 +54,10 @@ export function ExpiringUsersTab({ onOpenHistory }: ExpiringUsersTabProps) {
   const handleSendNotifications = async () => {
     try {
       const result = await sendExpiryNotificationsAction()
+      toast.success(`Notificaciones enviadas: ${
   // @ts-expect-error
-      toast.success(`Notificaciones enviadas: ${result?.notificationsCreated ?? 0} administradores notificados`)
+      result?.notificationsCreated ?? 0
+      } administradores notificados`)
       fetchExpiring()
     } catch (error) {
       console.error("Error:", error)

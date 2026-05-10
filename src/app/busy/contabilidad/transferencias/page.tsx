@@ -168,7 +168,9 @@ export default function TransferenciasBancariasPage(): React.JSX.Element {
                 <TransferenciaBancariaForm
                   onSuccess={handleCreateSuccess}
   // @ts-expect-error
-                  onCancel={() => setIsCreateDialogOpen(false)}
+                  onCancel={
+                  () => setIsCreateDialogOpen(false)
+                  }
                 />
               </DialogContent>
             </Dialog>
@@ -258,7 +260,9 @@ export default function TransferenciasBancariasPage(): React.JSX.Element {
                     transferencias={transferenciasList}
                     isLoading={isLoading}
   // @ts-expect-error
-                    onRefresh={() => fetchTransferencias()}
+                    onRefresh={
+                    () => fetchTransferencias()
+                    }
                   />
               </CardContent>
             </Card>

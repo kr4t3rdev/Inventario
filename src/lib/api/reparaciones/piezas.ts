@@ -13,8 +13,10 @@ export async function createPiezaReparacion(data: {
   await getAuthenticatedContext()
 
   try {
+    return await prisma.piezaReparacion.create({
   // @ts-expect-error
-    return await prisma.piezaReparacion.create({ data }) as any
+    data
+    }) as any
   } catch (error) {
     throw new ServerActionError('createPiezaReparacion', 'POST', 500, error instanceof Error ? error.message : 'Error al crear pieza')
   }

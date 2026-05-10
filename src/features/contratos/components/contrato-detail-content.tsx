@@ -360,10 +360,6 @@ export function ContratoDetailContent({ initialData, contratoId }: ContratoDetai
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle>Historial de Versiones</CardTitle>
-  // @ts-expect-error
-  // @ts-expect-error
-  // @ts-expect-error
-  // @ts-expect-error
                   <NewVersionDialog contratoId={contrato.contratoId} onSuccess={() => { window.location.reload() }} />
                 </CardHeader>
                 <CardContent>

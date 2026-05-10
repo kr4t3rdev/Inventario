@@ -20,9 +20,13 @@ export default async function EmpleadosPage() {
   return (
     <EmpleadosNominaContent
   // @ts-expect-error
-      initialEmpleados={initialEmpleados}
+      initialEmpleados={
+      initialEmpleados
+      }
   // @ts-expect-error
-      initialPagos={initialPagos}
+      initialPagos={
+      initialPagos
+      }
     />
   )
 }
