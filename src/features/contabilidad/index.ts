@@ -24,6 +24,9 @@ export {
 // Server Actions — Tipos de Pago
 export { getTiposPagoAction } from './actions-tipos-pago';
 
+// Server Actions — Exchange
+export { getMonedasAction, getTasasActualesAction, convertMoneyAction } from './actions-exchange';
+
 // Server Actions — Cierres Contables
 export {
   getCierresAction,
