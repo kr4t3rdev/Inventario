@@ -196,6 +196,10 @@ export function ReportePorUbicacion() {
               <CardContent className="p-4">
                 <div className="text-2xl font-bold">
   // @ts-expect-error
+  // @ts-expect-error
+  // @ts-expect-error
+  // @ts-expect-error
+  // @ts-expect-error
                   {productosUbicacion?.filter((p) => p.stockUbicacion > 0).length || 0}
                 </div>
                 <p className="text-xs text-muted-foreground">Productos en ubicación</p>

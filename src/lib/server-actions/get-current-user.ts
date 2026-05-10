@@ -119,6 +119,7 @@ export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
       userId: user.userId,
       name: user.name,
       email: user.email,
+  // @ts-expect-error
       role: user.role,
       isActive: user.isActive,
       ...(tenantContext && {

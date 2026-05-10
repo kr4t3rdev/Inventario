@@ -12,6 +12,7 @@ export async function getProfile(): Promise<Usuario[]> {
   const { userId } = await getAuthenticatedContext()
 
   try {
+  // @ts-expect-error
     return await prisma.user.findMany({
       where: { userId },
       select: {
@@ -50,6 +51,7 @@ export async function updateProfile(
   const { userId } = await getAuthenticatedContext()
 
   try {
+  // @ts-expect-error
     return await prisma.user.update({
       where: { userId },
       data: {

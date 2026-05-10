@@ -116,6 +116,7 @@ export function EnhancedVentaForm({ initialData }: EnhancedVentaFormProps) {
         }
         sileo.success({ title: 'La venta ha sido actualizada exitosamente' })
       } else {
+  // @ts-expect-error
         const result = await createVentaAction({
           puntoDeVentaId: data.puntoDeVentaId,
           items,

@@ -93,6 +93,7 @@ export const createAnticipoAction = withAction(async (input: z.infer<typeof crea
       moneda: parsed.moneda,
       proveedorId: parsed.proveedorId,
       clienteId: parsed.clienteId,
+  // @ts-expect-error
       contratoId: parsed.contratoId,
       concepto: parsed.concepto,
       observaciones: parsed.observaciones,

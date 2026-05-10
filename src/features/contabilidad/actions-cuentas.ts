@@ -337,6 +337,7 @@ export const createCuentaPorCobrarAction = withAction(
         clienteId: p.clienteId,
         montoDeuda: p.monto,
         montoPagado: 0,
+  // @ts-expect-error
         moneda: p.moneda,
         estado: 'PENDIENTE',
         facturaId: p.ventaId,

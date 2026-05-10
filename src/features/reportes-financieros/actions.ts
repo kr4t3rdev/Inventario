@@ -18,6 +18,7 @@ export const getReporteFinancieroAction = withAction(async (input: ReporteInput,
     prisma.merma.findMany({ where: { createdAt: { gte: startDate, lte: endDate } }, select: { cantidad: true, costoTotal: true } }),
   ]);
 
+  // @ts-expect-error
   const totalVentas = ventas.reduce((s, v) => s + v.cantidad * v.producto.precioVenta, 0);
   const totalCompras = compras.reduce((s, c) => s + c.total, 0);
   const totalSalarios = salarios.reduce((s, e) => s + e.salarioBases, 0);

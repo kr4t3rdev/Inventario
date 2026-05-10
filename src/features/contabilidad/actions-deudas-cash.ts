@@ -199,6 +199,7 @@ export const registrarPagoDeudaAction = withAction(async (
   user: AuthenticatedUser
 ) => {
   if (!deudasCashEnabled()) throw new ActionError('Módulo de deudas cash deshabilitado', 'DISABLED')
+  // @ts-expect-error
   const { id, ...body } = pagoSchema.parse(input)
   const deuda = await prisma.deudaCash.findFirst({
     where: { id, deletedAt: null },

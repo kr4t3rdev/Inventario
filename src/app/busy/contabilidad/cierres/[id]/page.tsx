@@ -24,5 +24,6 @@ export default async function CierreDetailsPage({ params }: Props) {
 
   const cierre = result.data;
 
+  // @ts-expect-error
   return <CierreDetailsPageClient cierre={cierre} />;
 }

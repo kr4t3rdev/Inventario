@@ -4,6 +4,6 @@ export { getServiciosAction, getServicioByIdAction, createServicioAction, update
 // Client Components
 export { ServiciosCart, ServiciosPrestadosForm, ServiciosRecibidosForm, ServiciosRecibidosTable } from './components'
 export { ServiciosContent } from './components/servicios-content'
-export type { Servicio } from './types';
+export type { Servicios } from './types';
 
 // RTK Query (legacy - internal, no exportar más)

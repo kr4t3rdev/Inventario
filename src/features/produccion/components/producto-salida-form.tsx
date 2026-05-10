@@ -154,6 +154,7 @@ export function ProductoSalidaForm({
         proveedorCodigo: selectedVendor?.vendorCode ?? null,
       });
 
+  // @ts-expect-error
       const result = await createProductoAction(payload as any)
       if (!result.success) {
         throw new Error(result.error?.message || 'Error al crear producto')

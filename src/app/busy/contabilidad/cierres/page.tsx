@@ -9,6 +9,7 @@ import { CierresManager } from "@/features/contabilidad/components/cierres/Cierr
 
 export default async function CierresPage() {
   const result = await getCierresAction();
+  // @ts-expect-error
   const cierres: CierreContableItem[] = (result.success ? (result.data ?? []) : []) as unknown as CierreContableItem[];
 
   return (

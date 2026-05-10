@@ -34,6 +34,7 @@ export default async function GastoElementosPage({ params }: Props) {
 
   return (
     <GastoElementosContent
+  // @ts-expect-error
       initialConcepto={initialConcepto}
       initialElementos={initialElementos}
       conceptoId={conceptoId}

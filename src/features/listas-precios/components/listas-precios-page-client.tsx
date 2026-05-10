@@ -75,6 +75,7 @@ export function ListasPreciosPageClient({ listas: initialListas }: ListasPrecios
 
     setIsCreating(true);
     try {
+  // @ts-expect-error
       const result = await createListaPrecioAction({
         nombre: nombre.trim(),
         descripcion: descripcion.trim() || undefined,

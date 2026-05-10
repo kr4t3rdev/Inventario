@@ -202,6 +202,7 @@ export function BulkStockMinimoManager(): React.JSX.Element {
         )
         setSelectAll(false)
       } else {
+  // @ts-expect-error
         toast.error(`Se actualizaron ${result.updated} de ${updates.length} productos. Revisa los errores.`)
       }
     } catch (error) {

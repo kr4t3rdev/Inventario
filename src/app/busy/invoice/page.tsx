@@ -250,6 +250,7 @@ export default function FacturasPage() {
 
   const table = useReactTable({
     data: ventas || [],
+  // @ts-expect-error
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,

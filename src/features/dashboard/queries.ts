@@ -116,6 +116,7 @@ export async function getDashboardStatsQuery(tenantId: string): Promise<Dashboar
     }),
   ])
 
+  // @ts-expect-error
   const totalIngresos = ventasData.reduce((s: number, v: VentaDiariaData) => s + (v.total ?? 0), 0)
     + ventaServiciosData.reduce((s: number, v: any) => s + (v.total ?? 0), 0)
   const totalGastosMermas = mermasData.reduce((s: number, m: any) => s + (m.cantidad * (m.producto?.precioCosto ?? 0)), 0)

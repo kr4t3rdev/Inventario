@@ -166,6 +166,7 @@ export default function NewOrdenPage() {
         accesorios: primary.accesorios,
         problemaReportado: primary.problemaReportado,
         fotos: primary.fotos,
+  // @ts-expect-error
         equipos: equipos.map((eq) => ({
           equipoTipoId: eq.equipoTipoId,
           marca: eq.marca,

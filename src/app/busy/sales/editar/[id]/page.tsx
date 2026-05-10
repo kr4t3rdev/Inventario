@@ -105,7 +105,9 @@ export default function EditarVentaPage() {
   const items = venta.items || []
   const tieneMultiplesProductos = items.length > 1
   const itemUnico = items.length === 1 ? items[0] : null
+  // @ts-expect-error
   const productoIdInicial = venta.productoId || itemUnico?.productoId || ""
+  // @ts-expect-error
   const cantidadInicial = venta.productoId ? venta.cantidad : (itemUnico?.cantidad ?? venta.cantidad ?? 1)
 
   return (

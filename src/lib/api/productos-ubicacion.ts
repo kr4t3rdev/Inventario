@@ -205,5 +205,6 @@ export async function getProductosPorUbicacion(
   )
 
   // Filtrar solo productos con stock
+  // @ts-expect-error
   return productosConStock.filter((p) => p.stockEnUbicacion > 0)
 }

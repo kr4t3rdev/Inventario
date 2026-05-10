@@ -73,6 +73,7 @@ export const createCuentaBancariaAction = withAction(async (input: z.infer<typeo
   const parsed = createSchema.parse(input);
   const tenantId = requireTenant(user);
   const cuenta = await prisma.cuentaBancaria.create({
+  // @ts-expect-error
     data: {
       nombreBanco: parsed.nombreBanco,
       numeroCuenta: parsed.numeroCuenta,

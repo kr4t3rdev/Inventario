@@ -10,7 +10,6 @@ export function BadgeNotificaciones() {
   useEffect(() => {
     getNotificacionesAction().then(r => { if (r.success) setResumen(r.data?.resumen) })
   }, [])
-  const resumen = data?.resumen
 
   if (!resumen || resumen.alta === 0) return null
 

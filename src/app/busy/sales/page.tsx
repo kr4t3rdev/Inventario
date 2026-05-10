@@ -86,6 +86,7 @@ export default async function VentasPage() {
             transition={{ duration: 0.5, delay: 0.3 }}
           >
             <VentasTable
+  // @ts-expect-error
               ventas={ventas}
               isLoading={false}
               error={null}

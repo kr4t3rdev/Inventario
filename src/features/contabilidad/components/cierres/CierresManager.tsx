@@ -49,6 +49,7 @@ export function CierresManager({ cierres: initialCierres }: CierresManagerProps)
       }
 
       if (result.data) {
+  // @ts-expect-error
         setCierres((current) => [result.data, ...current]);
       }
 

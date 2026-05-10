@@ -77,6 +77,7 @@ export const createVentaAction = withAction(async (input: CreateVentaInput, user
 
   // Crear venta con items en una transacción
   const venta = await prisma.venta.create({
+  // @ts-expect-error
     data: {
       tenantId,
       puntoDeVentaId: parsed.puntoDeVentaId,

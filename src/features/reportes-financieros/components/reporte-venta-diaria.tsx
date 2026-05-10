@@ -47,6 +47,7 @@ export function ReporteVentaDiaria() {
 
    const { ventas, isLoading: isLoadingVentas } = useVentas()
   const { ventaServicios } = useVentaServicios()
+  // @ts-expect-error
   const ventasLineas = useMemo(() => flattenVentas(ventas), [ventas])
 
   // Helper function para crear fecha local

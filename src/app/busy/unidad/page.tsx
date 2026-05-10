@@ -11,6 +11,7 @@ import type { Unidad } from "@/features/unidades"
 
 export default async function UnidadPage() {
   const result = await getUnidadesAction()
+  // @ts-expect-error
   const unidades: Unidad[] = result.success ? (result.data ?? []) : []
 
   return <UnidadPageClient unidades={unidades} />

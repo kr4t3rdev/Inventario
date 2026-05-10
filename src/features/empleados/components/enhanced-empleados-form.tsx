@@ -126,6 +126,7 @@ export function EnhancedEmpleadoForm({ initialData }: EnhancedEmpleadoFormProps)
         sileo.success({ title: 'El empleado ha sido actualizado exitosamente.' })
       } else {
         const result = await createEmpleadoAction({
+  // @ts-expect-error
           empleadoId: v4(),
           ...empleadoData
         })

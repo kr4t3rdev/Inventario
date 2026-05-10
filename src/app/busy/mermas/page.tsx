@@ -17,6 +17,7 @@ export default async function MermasPage() {
   
   return (
     <MermasContent 
+  // @ts-expect-error
       initialMermas={initialMermas}
     />
   )

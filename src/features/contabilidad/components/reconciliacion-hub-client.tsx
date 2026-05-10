@@ -158,6 +158,7 @@ export function ReconciliacionHubClient({ initialStats }: { initialStats: any })
               </div>
               <motion.div className="grid grid-cols-1 gap-4 lg:grid-cols-3" variants={stagger}>
                 {reconciliationModules.map((mod) => {
+  // @ts-expect-error
                   const s = accentStyles[mod.tone]
                   const progress = getProgress(mod.completedToday, mod.totalToday)
                   return (

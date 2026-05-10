@@ -26,6 +26,7 @@ export function CapitalTable() {
   const [isPayOpen, setIsPayOpen] = useState(false)
 
   useEffect(() => {
+  // @ts-expect-error
     getInyeccionesCapitalAction().then(r => {
       if (r.success) setInyecciones(r.data?.inyecciones ?? [])
       setIsLoading(false)

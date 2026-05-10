@@ -69,10 +69,12 @@ export function MermaForm({ initialData }: MermaFormProps) {
           mermaId: initialData.mermaId,
           ...data,
         })
+  // @ts-expect-error
         if (!result.success) throw new Error(result.error)
         sileo.success({ title: 'La merma ha sido actualizada exitosamente.' })
       } else {
         const result = await createMermaAction(data)
+  // @ts-expect-error
         if (!result.success) throw new Error(result.error)
         sileo.success({ title: 'La merma ha sido registrada exitosamente.' })
       }

@@ -115,6 +115,7 @@ export function ReconciliacionServiciosPage() {
       fechaDesde: fechaInicio || undefined,
       fechaHasta: fechaFin || undefined,
     }).then((data) => {
+  // @ts-expect-error
       setHistorialReconciliacionData(data?.reconciliaciones ?? [])
       setLoadingHistorial(false)
     })

@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { deleteServicioAction } from '@/features/servicios/actions'
-import type { VentaServicios } from '@/features/venta-servicios/types'
+import type { VentaServicio } from '@/features/venta-servicios/types'
 import { ColumnDef } from '@tanstack/react-table'
 import { Pencil, Plus, Trash2, ShoppingCart, Search, Package, CheckCircle, Truck } from 'lucide-react'
 import Link from 'next/link'
@@ -49,7 +49,7 @@ interface ServicioItem {
 
 interface ServiciosContentProps {
   initialServicios: Servicio[]
-  initialVentaServicios: VentaServicios[]
+  initialVentaServicios: VentaServicio[]
 }
 
 export function ServiciosContent({ initialServicios, initialVentaServicios }: ServiciosContentProps) {

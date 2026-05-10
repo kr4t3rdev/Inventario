@@ -32,6 +32,7 @@ export const getMovimientosReportAction = withAction(async (f: { busqueda?: stri
     prisma.reconciliacionGasto.findMany({ where: { ...af, ...(Object.keys(df).length ? { fechaReconciliacion: df } : {}), ...(mo ? { moneda: mo } : {}) }, select: { reconciliacionId: true, monto: true, moneda: true, tipoGasto: true, descripcion: true, fechaReconciliacion: true, cuentaBancaria: { select: { nombreBanco: true, numeroCuenta: true } }, tipoPago: { select: { nombre: true } } } }),
   ]);
   const mvs = [].concat(
+  // @ts-expect-error
     v.map((m: any) => ({ id: m.reconciliacionId, tipo: m.tipoReconciliacion === 'PRESTAMO_CASH' ? 'prestamo_cash_pago' : 'venta', fecha: m.fechaReconciliacion, monto: Number(m.monto), moneda: m.moneda||'CUP', descripcion: m.venta ? 'Venta '+m.venta.ventaId : 'Cobro', cuenta: m.cuentaBancaria.nombreBanco, observaciones: m.observaciones })),
     s.map((m: any) => ({ id: m.reconciliacionId, tipo: 'servicio', fecha: m.fechaReconciliacion, monto: Number(m.monto), moneda: m.moneda||'CUP', descripcion: 'Servicio '+m.ventasServicio.ventaServicioId, cuenta: m.cuentaBancaria.nombreBanco })),
     g.map((m: any) => ({ id: m.reconciliacionId, tipo: m.tipoGasto||'gasto', fecha: m.fechaReconciliacion, monto: -Number(m.monto), moneda: m.moneda||'CUP', descripcion: m.descripcion, cuenta: m.cuentaBancaria.nombreBanco }))

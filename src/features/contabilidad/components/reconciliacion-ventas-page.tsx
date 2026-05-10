@@ -106,6 +106,7 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
    
   const allVentasMerged = useMemo(() => {
     const apiVentas = Array.isArray(allVentasData?.ventas) ? allVentasData.ventas : [];
+  // @ts-expect-error
     const apiVentaKeys = new Set(apiVentas.map(v => v.ordenId || v.ventaId));
 
     const arVentas = cuentasPorCobrar

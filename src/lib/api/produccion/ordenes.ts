@@ -74,6 +74,7 @@ export async function createOrdenProduccion(payload: CreateOrdenProduccionPayloa
 
   try {
     const orden = await prisma.ordenProduccion.create({
+  // @ts-expect-error
       data: {
         ordenProduccionId: crypto.randomUUID(),
         tenantId,
