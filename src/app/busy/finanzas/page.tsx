@@ -4,7 +4,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 //lazy loading components
-const ResumenFinanciero = dynamic(() => import('@/components/economia/resume-financiero').then(mod => ({default:mod.ResumenFinanciero})))
+const ResumeFinanciero = dynamic(() => import('@/components/economia/resume-financiero').then(mod => ({default:mod.ResumeFinanciero})))
 const GraficosEconomicos = dynamic(() => import('@/components/economia/graficos-economicos').then(mod => ({default:mod.GraficosEconomicos})))
 const TablaIngresos = dynamic(() => import('@/components/economia/tabla-ingresos').then(mod => ({default:mod.TablaIngresos})))
 const TablaGastos = dynamic(() => import('@/components/economia/tabla-gastos').then(mod => ({default:mod.TablaGastos})))
@@ -34,7 +34,7 @@ export default function EconomiaPage() {
             </TabsList>
 
             <TabsContent value="resumen" className="space-y-4">
-              <ResumenFinanciero />
+              <ResumeFinanciero />
                <GraficosEconomicos /> 
             </TabsContent>
 

@@ -6,6 +6,7 @@
 import { getClientesAction } from '@/features/clientes'
 import { getVendorsAction } from '@/features/vendors'
 import { ContratoForm } from '@/features/contratos'
+import { unwrapActionResponseWithDefault } from '@/lib/server-actions/helpers'
 import prisma from '@/lib/prisma'
 
 /**
@@ -14,14 +15,18 @@ import prisma from '@/lib/prisma'
  */
 export default async function NewContratoPage() {
   // Obtener datos del servidor
-  const [clientes, vendors, tiposCustom] = await Promise.all([
+  const [clientesResponse, vendorsResponse, tiposCustom] = await Promise.all([
     getClientesAction(),
     getVendorsAction(),
-    prisma.tipoContrato.findMany({
-      where: { activo: true },
+    prisma.contrato.findMany({
+      where: { tenantId: { not: undefined } },
       select: { tipoCustomId: true, nombre: true }
     }).catch(() => [])
   ])
+
+  // Desempaquetar ActionResponses
+  const clientes = unwrapActionResponseWithDefault(clientesResponse, [])
+  const vendors = unwrapActionResponseWithDefault(vendorsResponse, [])
 
   return (
     <div className="container mx-auto py-6 max-w-4xl">

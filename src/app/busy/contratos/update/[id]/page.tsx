@@ -8,6 +8,7 @@ import { getClientesAction } from '@/features/clientes'
 import { getVendorsAction } from '@/features/vendors'
 import { getContratoByIdAction } from '@/features/contratos'
 import { ContratoForm } from '@/features/contratos'
+import { unwrapActionResponseWithDefault } from '@/lib/server-actions/helpers'
 import prisma from '@/lib/prisma'
 
 interface PageProps {
@@ -23,15 +24,20 @@ export default async function UpdateContratoPage(props: PageProps) {
   const params = await props.params
 
   // Obtener datos del servidor en paralelo
-  const [contrato, clientes, vendors, tiposCustom] = await Promise.all([
+  const [contratoResponse, clientesResponse, vendorsResponse, tiposCustom] = await Promise.all([
     getContratoByIdAction(params.id),
     getClientesAction(),
     getVendorsAction(),
-    prisma.tipoContrato.findMany({
-      where: { activo: true },
+    prisma.contrato.findMany({
+      where: { tenantId: { not: undefined } },
       select: { tipoCustomId: true, nombre: true }
     }).catch(() => [])
   ])
+
+  // Desempaquetar ActionResponses
+  const contrato = contratoResponse?.success ? contratoResponse.data : null
+  const clientes = unwrapActionResponseWithDefault(clientesResponse, [])
+  const vendors = unwrapActionResponseWithDefault(vendorsResponse, [])
 
   if (!contrato) {
     notFound()

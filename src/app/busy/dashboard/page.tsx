@@ -50,25 +50,25 @@ export default async function DashboardPage() {
           totalBeneficio: stats.totalBeneficio,
           valorTotalInventario: stats.valorTotalInventario,
           totalProductos: stats.totalProductos,
-          ventasDiarias: stats.ventasDiarias,
+          ventasDiarias: stats.ventasDiarias as any,
         }}
       />
 
       {/* Gráficos principales */}
       <div className="grid grid-cols-1 gap-4 px-4 lg:grid-cols-2 lg:px-6">
-        <ChartAreaInteractive data={stats.datosPorMes} />
-        <TopProductsTable productosMasVendidos={stats.productosMasVendidos} />
+        <ChartAreaInteractive data={stats.datosPorMes as any} />
+        <TopProductsTable productosMasVendidos={stats.productosMasVendidos as any} />
       </div>
 
       {/* Distribución y análisis */}
       <div className="grid grid-cols-1 gap-4 px-4 lg:grid-cols-2 lg:px-6">
-        <StockDistributionChart data={stats.distribucionStock} />
+        <StockDistributionChart data={stats.distribucionStock as any} />
         <TransferenciasStats transferenciasStats={stats.transferenciasStats} />
       </div>
 
       {/* Alertas y productos críticos */}
       <div className="px-4 lg:px-6">
-        <StockBajoTable productosStockBajo={stats.productosStockBajo} />
+        <StockBajoTable productosStockBajo={stats.productosStockBajo as any} />
       </div>
     </DashboardShell>
   )

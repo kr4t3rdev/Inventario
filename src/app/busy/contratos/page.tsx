@@ -5,6 +5,7 @@
 
 import { getContratosAction } from '@/features/contratos'
 import { ContratosContent } from '@/features/contratos'
+import { unwrapActionResponseWithDefault } from '@/lib/server-actions/helpers'
 import prisma from '@/lib/prisma'
 import { authenticateUser } from '@/lib/auth-middleware'
 
@@ -39,6 +40,9 @@ export default async function ContratosPage(props: PageProps) {
     fechaFin: searchParams.fechaFin,
   })
 
+  // Desempaquetar response
+  const initialData = unwrapActionResponseWithDefault(result, { data: [], meta: { page: 1, limit: 10, total: 0, totalPages: 0 } })
+
   // Obtener configuración del sistema
   let configuracion = null
   try {
@@ -49,8 +53,8 @@ export default async function ContratosPage(props: PageProps) {
 
   return (
     <ContratosContent
-      initialData={result.data}
-      initialMeta={result.meta}
+      initialData={initialData.data}
+      initialMeta={initialData.meta}
       configuracion={configuracion}
     />
   )

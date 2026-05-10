@@ -26,7 +26,7 @@ export default async function EditarGastoDEPage({ params }: Props) {
     getVendorsAction(),
   ])
 
-  if (!gastoDEResult.success) {
+  if (!gastoDEResult.success || !gastoDEResult.data) {
     notFound()
   }
 
