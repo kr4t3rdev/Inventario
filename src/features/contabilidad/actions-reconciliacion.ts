@@ -1,71 +1,231 @@
 /**
- * @description Server Actions para Reconciliación.
+ * @description Server Actions para Reconciliación (ventas, servicios, gastos).
  */
 'use server';
 
+import { revalidatePath } from 'next/cache';
 import { withAction } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
 import { requireTenant } from '@/lib/services/tenant-scope';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
+// ─── Stats Hub ────────────────────────────────────────────
+
 export const getReconciliacionStatsAction = withAction(async (_input: void, user: AuthenticatedUser) => {
   const tenantId = requireTenant(user);
+  const hoy = new Date(); hoy.setHours(0,0,0,0);
+  const manana = new Date(hoy); manana.setDate(manana.getDate() + 1);
 
-  const hoy = new Date();
-  hoy.setHours(0, 0, 0, 0);
-  const manana = new Date(hoy);
-  manana.setDate(manana.getDate() + 1);
-
-  const [ventasPendientes, serviciosPendientes, gastosPendientes,
-    ventasHoy, serviciosHoy, gastosHoy,
-    totalReconciliadoHoy, actividadReciente] = await Promise.all([
-    // Pendientes
+  const [vp, sp, gp, vh, sh, gh, montoHoy, act] = await Promise.all([
     prisma.reconciliacionVenta.count({ where: { cuentaId: null, tenantId } }),
     prisma.reconciliacionServicio.count({ where: { cuentaId: null, tenantId } }),
-    // Gastos pendientes (no reconciliados con cuenta)
     prisma.reconciliacionGasto.count({ where: { cuentaId: null, tenantId } }),
-
-    // Completados hoy
     prisma.reconciliacionVenta.count({ where: { fechaReconciliacion: { gte: hoy, lt: manana }, tenantId } }),
     prisma.reconciliacionServicio.count({ where: { fechaReconciliacion: { gte: hoy, lt: manana }, tenantId } }),
     prisma.reconciliacionGasto.count({ where: { fechaReconciliacion: { gte: hoy, lt: manana }, tenantId } }),
-
-    // Monto reconciliado hoy
     prisma.reconciliacionVenta.aggregate({ where: { fechaReconciliacion: { gte: hoy, lt: manana }, tenantId }, _sum: { monto: true } }),
-
-    // Actividad reciente (últimas 10)
-    prisma.reconciliacionVenta.findMany({
-      where: { tenantId },
-      orderBy: { fechaReconciliacion: 'desc' },
-      take: 10,
-      select: { reconciliacionId: true, monto: true, moneda: true, fechaReconciliacion: true, observaciones: true, cuentaBancaria: { select: { nombreBanco: true } } },
-    }),
+    prisma.reconciliacionVenta.findMany({ where: { tenantId }, orderBy: { fechaReconciliacion: 'desc' }, take: 10, select: { reconciliacionId: true, monto: true, moneda: true, fechaReconciliacion: true, observaciones: true, cuentaBancaria: { select: { nombreBanco: true } } } }),
   ]);
 
-  const totalPending = ventasPendientes + serviciosPendientes + gastosPendientes;
-  const completedToday = ventasHoy + serviciosHoy + gastosHoy;
-  const totalToday = Math.max(ventasHoy + ventasPendientes, serviciosHoy + serviciosPendientes, gastosHoy + gastosPendientes, 1);
-
+  const totalHoy = Math.max(vh+vp, sh+sp, gh+gp, 1);
   return {
     modules: {
-      ventas: { pending: ventasPendientes, completedToday: ventasHoy, totalToday: ventasHoy + ventasPendientes },
-      servicios: { pending: serviciosPendientes, completedToday: serviciosHoy, totalToday: serviciosHoy + serviciosPendientes },
-      gastos: { pending: gastosPendientes, completedToday: gastosHoy, totalToday: gastosHoy + gastosPendientes },
+      ventas: { pending: vp, completedToday: vh, totalToday: vh+vp },
+      servicios: { pending: sp, completedToday: sh, totalToday: sh+sp },
+      gastos: { pending: gp, completedToday: gh, totalToday: gh+gp },
     },
-    stats: {
-      totalPending,
-      completedToday,
-      reconciledAmount: Number(totalReconciliadoHoy._sum.monto ?? 0),
-      efficiency: totalToday > 0 ? Math.round((completedToday / totalToday) * 100) : 0,
-    },
-    recentActivity: actividadReciente.map((a: any) => ({
-      id: a.reconciliacionId,
-      type: 'venta',
-      reference: a.reconciliacionId.slice(0, 8),
-      description: a.observaciones || 'Venta reconciliada',
-      accountName: a.cuentaBancaria?.nombreBanco || 'Sin cuenta',
-      amount: Number(a.monto),
-      date: a.fechaReconciliacion.toISOString(),
-    })),
+    stats: { totalPending: vp+sp+gp, completedToday: vh+sh+gh, reconciledAmount: Number(montoHoy._sum.monto??0), efficiency: Math.round(((vh+sh+gh)/totalHoy)*100) },
+    recentActivity: act.map((a:any) => ({ id: a.reconciliacionId, type: 'venta', reference: a.reconciliacionId.slice(0,8), description: a.observaciones||'Venta reconciliada', accountName: a.cuentaBancaria?.nombreBanco||'Sin cuenta', amount: Number(a.monto), date: a.fechaReconciliacion.toISOString() })),
   };
+});
+
+// ─── Ventas ────────────────────────────────────────────────
+
+export const getVentasPendientesAction = withAction(async (params: {
+  fechaInicio?: string; fechaFin?: string; page?: number; limit?: number;
+} = {}, user: AuthenticatedUser) => {
+  const tenantId = requireTenant(user);
+  const where: any = { tenantId };
+  if (params.fechaInicio || params.fechaFin) {
+    where.fechaVenta = {};
+    if (params.fechaInicio) where.fechaVenta.gte = new Date(params.fechaInicio);
+    if (params.fechaFin) where.fechaVenta.lte = new Date(params.fechaFin);
+  }
+  const page = params.page || 1;
+  const limit = params.limit || 50;
+  const [ventas, total] = await Promise.all([
+    prisma.venta.findMany({
+      where, orderBy: { fechaVenta: 'desc' },
+      skip: (page-1)*limit, take: limit,
+      include: { cliente: { select: { nombre: true } }, puntoDeVenta: { select: { nombre: true } }, moneda: true },
+    }),
+    prisma.venta.count({ where }),
+  ]);
+  return { ventas, pagination: { page, limit, total, totalPages: Math.ceil(total/limit) } };
+});
+
+export const getHistorialReconciliacionVentasAction = withAction(async (params: {
+  fechaInicio?: string; fechaFin?: string; cuentaId?: string;
+} = {}, user: AuthenticatedUser) => {
+  const tenantId = requireTenant(user);
+  const where: any = { tenantId };
+  if (params.cuentaId) where.cuentaId = params.cuentaId;
+  if (params.fechaInicio || params.fechaFin) {
+    where.fechaReconciliacion = {};
+    if (params.fechaInicio) where.fechaReconciliacion.gte = new Date(params.fechaInicio);
+    if (params.fechaFin) where.fechaReconciliacion.lte = new Date(params.fechaFin);
+  }
+  const reconciliaciones = await prisma.reconciliacionVenta.findMany({
+    where, orderBy: { fechaReconciliacion: 'desc' }, take: 100,
+    include: { venta: { select: { ventaId: true, total: true } }, cuentaBancaria: { select: { nombreBanco: true } }, tipoPago: { select: { nombre: true } } },
+  });
+  const porMoneda = await prisma.reconciliacionVenta.groupBy({ by: ['moneda'], where, _sum: { monto: true } });
+  const porTipoDePago = await prisma.reconciliacionVenta.groupBy({ by: ['tipoPagoId'], where, _sum: { monto: true } });
+  return {
+    reconciliaciones,
+    estadisticas: {
+      montoTotal: reconciliaciones.reduce((s:number, r:any) => s+Number(r.monto), 0),
+      montoConvertidoTotal: reconciliaciones.reduce((s:number, r:any) => s+Number(r.montoConvertido??0), 0),
+      porMoneda, porTipoDePago,
+    },
+    pagination: {},
+  };
+});
+
+export const reconciliarVentaAction = withAction(async (input: {
+  ventaId: string; cuentaId: string; tipoPagoId: string; monto: number; moneda?: string;
+  fechaReconciliacion?: string; observaciones?: string;
+}, user: AuthenticatedUser) => {
+  const tenantId = requireTenant(user);
+  const reconciliacion = await prisma.reconciliacionVenta.create({
+    data: {
+      ventaId: input.ventaId, cuentaId: input.cuentaId, tipoPagoId: input.tipoPagoId,
+      monto: input.monto, moneda: input.moneda||'CUP',
+      fechaReconciliacion: input.fechaReconciliacion ? new Date(input.fechaReconciliacion) : new Date(),
+      observaciones: input.observaciones, tenantId,
+    },
+  });
+  revalidatePath('/busy/contabilidad/reconciliacion');
+  return reconciliacion;
+});
+
+// ─── Servicios ─────────────────────────────────────────────
+
+export const getServiciosPendientesAction = withAction(async (params: {
+  fechaDesde?: string; fechaHasta?: string; page?: number; limit?: number;
+} = {}, user: AuthenticatedUser) => {
+  const tenantId = requireTenant(user);
+  const where: any = { tenantId };
+  if (params.fechaDesde || params.fechaHasta) {
+    where.fechaServicio = {};
+    if (params.fechaDesde) where.fechaServicio.gte = new Date(params.fechaDesde);
+    if (params.fechaHasta) where.fechaServicio.lte = new Date(params.fechaHasta);
+  }
+  const page = params.page || 1; const limit = params.limit || 50;
+  const [ventaServicios, total] = await Promise.all([
+    prisma.ventaServicio.findMany({
+      where, orderBy: { fechaServicio: 'desc' },
+      skip: (page-1)*limit, take: limit,
+      include: { cliente: { select: { nombre: true } }, servicio: { select: { nombre: true } } },
+    }),
+    prisma.ventaServicio.count({ where }),
+  ]);
+  return { ventaServicios, pagination: { page, limit, total, totalPages: Math.ceil(total/limit) } };
+});
+
+export const getHistorialReconciliacionServiciosAction = withAction(async (params: {
+  fechaDesde?: string; fechaHasta?: string; cuentaId?: string;
+} = {}, user: AuthenticatedUser) => {
+  const tenantId = requireTenant(user);
+  const where: any = { tenantId };
+  if (params.cuentaId) where.cuentaId = params.cuentaId;
+  if (params.fechaDesde || params.fechaHasta) {
+    where.fechaReconciliacion = {};
+    if (params.fechaDesde) where.fechaReconciliacion.gte = new Date(params.fechaDesde);
+    if (params.fechaHasta) where.fechaReconciliacion.lte = new Date(params.fechaHasta);
+  }
+  const reconciliaciones = await prisma.reconciliacionServicio.findMany({
+    where, orderBy: { fechaReconciliacion: 'desc' }, take: 100,
+    include: { ventaServicio: { select: { ventaServicioId: true } }, cuentaBancaria: { select: { nombreBanco: true } }, tipoPago: { select: { nombre: true } } },
+  });
+  return { reconciliaciones, estadisticas: {}, pagination: {} };
+});
+
+export const reconciliarServicioAction = withAction(async (input: {
+  ventaServicioId: string; cuentaId: string; tipoPagoId: string; monto: number; moneda?: string;
+  fechaReconciliacion?: string; observaciones?: string;
+}, user: AuthenticatedUser) => {
+  const tenantId = requireTenant(user);
+  const reconciliacion = await prisma.reconciliacionServicio.create({
+    data: {
+      ventaServicioId: input.ventaServicioId, cuentaId: input.cuentaId, tipoPagoId: input.tipoPagoId,
+      monto: input.monto, moneda: input.moneda||'CUP',
+      fechaReconciliacion: input.fechaReconciliacion ? new Date(input.fechaReconciliacion) : new Date(),
+      observaciones: input.observaciones, tenantId,
+    },
+  });
+  revalidatePath('/busy/contabilidad/reconciliacion');
+  return reconciliacion;
+});
+
+// ─── Gastos ────────────────────────────────────────────────
+
+export const getGastosPendientesAction = withAction(async (params: {
+  fechaDesde?: string; fechaHasta?: string; tipoGasto?: string; soloNoReconciliados?: boolean;
+  page?: number; limit?: number;
+} = {}, user: AuthenticatedUser) => {
+  const tenantId = requireTenant(user);
+  const where: any = { tenantId };
+  if (params.fechaDesde || params.fechaHasta) {
+    where.fechaGasto = {};
+    if (params.fechaDesde) where.fechaGasto.gte = new Date(params.fechaDesde);
+    if (params.fechaHasta) where.fechaGasto.lte = new Date(params.fechaHasta);
+  }
+  if (params.tipoGasto) where.tipoGasto = params.tipoGasto;
+  const page = params.page || 1; const limit = params.limit || 50;
+  const [gastos, total] = await Promise.all([
+    prisma.gasto.findMany({
+      where, orderBy: { fechaGasto: 'desc' },
+      skip: (page-1)*limit, take: limit,
+      include: { empleado: { select: { nombre: true } }, concepto: { select: { nombre: true } } },
+    }),
+    prisma.gasto.count({ where }),
+  ]);
+  return { gastos, pagination: { page, limit, total, totalPages: Math.ceil(total/limit) } };
+});
+
+export const getHistorialReconciliacionGastosAction = withAction(async (params: {
+  fechaInicio?: string; fechaFin?: string; cuentaId?: string; tipoGasto?: string;
+} = {}, user: AuthenticatedUser) => {
+  const tenantId = requireTenant(user);
+  const where: any = { tenantId };
+  if (params.cuentaId) where.cuentaId = params.cuentaId;
+  if (params.tipoGasto) where.tipoGasto = params.tipoGasto;
+  if (params.fechaInicio || params.fechaFin) {
+    where.fechaReconciliacion = {};
+    if (params.fechaInicio) where.fechaReconciliacion.gte = new Date(params.fechaInicio);
+    if (params.fechaFin) where.fechaReconciliacion.lte = new Date(params.fechaFin);
+  }
+  const reconciliaciones = await prisma.reconciliacionGasto.findMany({
+    where, orderBy: { fechaReconciliacion: 'desc' }, take: 100,
+    include: { cuentaBancaria: { select: { nombreBanco: true } }, tipoPago: { select: { nombre: true } } },
+  });
+  return { reconciliaciones, estadisticas: {}, pagination: {} };
+});
+
+export const reconciliarGastoAction = withAction(async (input: {
+  gastoId: string; cuentaId: string; tipoPagoId: string; monto: number; moneda?: string;
+  fechaReconciliacion?: string; descripcion?: string;
+}, user: AuthenticatedUser) => {
+  const tenantId = requireTenant(user);
+  const reconciliacion = await prisma.reconciliacionGasto.create({
+    data: {
+      gastoId: input.gastoId, cuentaId: input.cuentaId, tipoPagoId: input.tipoPagoId,
+      monto: input.monto, moneda: input.moneda||'CUP',
+      fechaReconciliacion: input.fechaReconciliacion ? new Date(input.fechaReconciliacion) : new Date(),
+      descripcion: input.descripcion, tenantId,
+    },
+  });
+  revalidatePath('/busy/contabilidad/reconciliacion');
+  return reconciliacion;
 });

@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { formatCurrency } from "@/lib/utils"
-import { useAddVentaServicioMutation } from "@/features/venta-servicios/api/ventaServiciosApi"
+import { createVentaServicioAction } from "@/features/venta-servicios/actions"
 import { useGetClientesQuery } from "@/features/clientes/api/ClienteApi"
 import { toast } from "sonner"
 import { CreditCard, Plus, Minus, X, ShoppingCart } from "lucide-react"
@@ -31,7 +31,6 @@ interface ServiciosCartProps {
 
 export default function ServiciosCart({ cart, setCart, isOpen, onOpenChange }: ServiciosCartProps) {
   const { data: clientes } = useGetClientesQuery()
-  const [addVentaServicio] = useAddVentaServicioMutation()
   const [selectedClienteId, setSelectedClienteId] = useState<string>("")
   const [observaciones, setObservaciones] = useState<string>("")
   const [isProcessing, setIsProcessing] = useState(false)
@@ -95,14 +94,17 @@ export default function ServiciosCart({ cart, setCart, isOpen, onOpenChange }: S
     setIsProcessing(true)
     try {
       for (const item of cart) {
-        await addVentaServicio({
+        const result = await createVentaServicioAction({
           servicioId: item.servicioId,
           cantidad: item.cantidad,
           costo: item.costo,
           clienteId: selectedClienteId,
           observaciones,
           total: item.costo * item.cantidad,
-        } as any).unwrap()
+        })
+        if (!result.success) {
+          throw new Error(result.error?.message ?? 'Error desconocido')
+        }
       }
 
       toast("Venta de servicios procesada exitosamente")

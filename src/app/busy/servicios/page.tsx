@@ -13,7 +13,7 @@ import { toast } from 'sonner'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { useGetVentaServiciosQuery } from '@/features/venta-servicios/api/ventaServiciosApi'
+import { useVentaServicios } from '@/features/venta-servicios/hooks/use-venta-servicios'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatCurrency } from '@/lib/utils'
 import dynamic from 'next/dynamic'
@@ -119,7 +119,7 @@ const Servicio = () => {
 
   useEffect(() => { async function f() { setIsLoading(true); const r=await getServiciosAction(); if(r.success) setServicios(r.data??[]); setIsLoading(false); } f(); }, [])
 
-  const { data: ventaServicios, isLoading: isLoadingVentas } = useGetVentaServiciosQuery()
+  const { ventaServicios, isLoading: isLoadingVentas } = useVentaServicios()
 
   const [servicioToDelete, setServicioToDelete] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')

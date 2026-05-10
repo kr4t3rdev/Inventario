@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Skeleton } from '@/components/ui/skeleton'
 import { useGetClientesQuery } from '@/features/clientes/api/ClienteApi'
 import { useGetServiciosQuery } from '@/features/servicios/api/serviciosApi'
-import { useAddVentaServicioMutation } from '@/features/venta-servicios/api/ventaServiciosApi'
+import { createVentaServicioAction } from '@/features/venta-servicios/actions'
 import { AnticipoSelector } from '@/features/contabilidad/components/anticipos/anticipo-selector'
 import type { AnticipoAllocation } from '@/features/contabilidad/components/anticipos/anticipo-selector'
 import { ArrowLeft, Handshake, Save, Loader2 } from 'lucide-react'
@@ -48,8 +48,6 @@ export function ServiciosPrestadosForm(): ReactElement {
   const [anticipoAllocations, setAnticipoAllocations] = useState<AnticipoAllocation[]>([])
   const { data: servicios, isLoading: isLoadingServicios } = useGetServiciosQuery()
   const { data: clientes, isLoading: isLoadingClientes } = useGetClientesQuery()
-  const [addVentaServicio] = useAddVentaServicioMutation()
-
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -77,14 +75,17 @@ export function ServiciosPrestadosForm(): ReactElement {
   async function onSubmit(values: FormValues): Promise<void> {
     setIsLoading(true)
     try {
-      await addVentaServicio({
+      const result = await createVentaServicioAction({
         servicioId: values.servicioId,
         clienteId: values.clienteId || undefined,
         cantidad: values.cantidad,
         total: values.cantidad * values.precioUnitario,
         observaciones: values.observaciones,
         anticipos: values.formaCobro === FORMA_COBRO_ANTICIPO ? anticipoAllocations : undefined,
-      }).unwrap()
+      })
+      if (!result.success) {
+        throw new Error(result.error?.message ?? 'Error desconocido')
+      }
 
       sileo.success({ title: 'Servicio prestado registrado correctamente.' })
       form.reset()

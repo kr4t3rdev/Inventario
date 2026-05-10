@@ -40,12 +40,9 @@ import {
   AlertCircle,
 } from "lucide-react"
 import { sileo } from '@/lib/sileo-shim'
-import {
-  useReconciliarVentaMutation,
-  useGetCuentasBancariasQuery,
-  useGetTiposPagoQuery,
-  useGetMonedasQuery
-} from "@/features/contabilidad/api/contabilidadApi"
+import { reconciliarVentaAction } from "@/features/contabilidad/actions-reconciliacion"
+import { getCuentasBancariasAction } from "@/features/contabilidad/actions-cuentas-bancarias"
+import { getTiposPagoAction } from "@/features/contabilidad/actions-tipos-pago"
 import type { VentaPendiente } from "@/app/models/model"
 
 // Validation schema for individual distribution
@@ -100,14 +97,14 @@ export function ReconciliacionVentasForm({
   const [montoRestante, setMontoRestante] = useState(0)
   const [forceUpdate, setForceUpdate] = useState(0)
 
-  const { data: cuentasData = { cuentas: [] } } = useGetCuentasBancariasQuery()
-  const { data: tiposPagoData = { data: [] } } = useGetTiposPagoQuery({})
-  const { data: monedasData = { data: [] } } = useGetMonedasQuery()
-  const [reconciliarVenta, { isLoading }] = useReconciliarVentaMutation()
+  const [isLoading, setIsLoading] = useState(false)
+  const [cuentas, setCuentas] = useState<any[]>([])
+  const [tiposPago, setTiposPago] = useState<any[]>([])
 
-  const cuentas = cuentasData.cuentas
-  const tiposPago = tiposPagoData.data
-  const monedas = monedasData.data
+  useEffect(() => {
+    getCuentasBancariasAction().then(r => { if (r.success) setCuentas(r.data?.cuentas ?? []) })
+    getTiposPagoAction().then(r => { if (r.success) setTiposPago(r.data?.data ?? []) })
+  }, [])
 
   const form = useForm<ReconciliacionVentaFormData>({
     resolver: zodResolver(reconciliacionVentaSchema), 
@@ -304,17 +301,15 @@ export function ReconciliacionVentasForm({
     try {
       // Process each distribution individually
       for (const distribucion of data.distribuciones) {
-        await reconciliarVenta({
+        const result = await reconciliarVentaAction({
           ventaId: data.ventaId,
           cuentaId: distribucion.cuentaId,
           tipoPagoId: distribucion.tipoPagoId,
           monto: distribucion.monto,
           moneda: distribucion.moneda,
-          tasaCambio: distribucion.tasaCambio,
-          verificacionTransferenciaId: distribucion.idTransferencia,
-          idTransferencia: distribucion.idTransferencia,
           observaciones: distribucion.observaciones,
         });
+        if (!result.success) throw new Error(result.error?.message || 'Error al reconciliar');
       }
 
       sileo.success({ title: 'Venta reconciliada exitosamente' })

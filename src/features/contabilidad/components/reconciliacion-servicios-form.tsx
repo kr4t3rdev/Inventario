@@ -46,12 +46,9 @@ import {
   Trash2,
 } from "lucide-react"
 import { sileo } from '@/lib/sileo-shim'
-import { 
-  useReconciliarServicioMutation,
-  useGetCuentasBancariasQuery,
-  useGetTiposPagoQuery,
-  useGetMonedasQuery
-} from "@/features/contabilidad/api/contabilidadApi"
+import { reconciliarServicioAction } from "@/features/contabilidad/actions-reconciliacion"
+import { getCuentasBancariasAction } from "@/features/contabilidad/actions-cuentas-bancarias"
+import { getTiposPagoAction } from "@/features/contabilidad/actions-tipos-pago"
 import { TasaCambioDialog } from "./tasa-cambio-dialog"
 import { VentaServicio } from "@/app/models/model"
 

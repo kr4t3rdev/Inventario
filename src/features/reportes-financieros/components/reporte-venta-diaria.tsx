@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react"
 import { motion, useReducedMotion } from "framer-motion"
 import { useVentas } from "@/features/ventas/hooks/use-ventas"
-import { useGetVentaServiciosQuery } from "@/features/venta-servicios/api/ventaServiciosApi"
+import { useVentaServicios } from "@/features/venta-servicios/hooks/use-venta-servicios"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -46,7 +46,7 @@ export function ReporteVentaDiaria() {
    const [fechaDetalle, setFechaDetalle] = useState<string>('')
 
    const { ventas, isLoading: isLoadingVentas } = useVentas()
-  const { data: ventaServicios } = useGetVentaServiciosQuery()
+  const { ventaServicios } = useVentaServicios()
   const ventasLineas = useMemo(() => flattenVentas(ventas), [ventas])
 
   // Helper function para crear fecha local
