@@ -19,4 +19,7 @@ export {
   useDeleteMermaMutation,
 } from './api/mermasApi';
 
+// Client Components
+export { MermasContent } from './components/mermas-content'
+
 export type { Merma, MermaStats } from './types';

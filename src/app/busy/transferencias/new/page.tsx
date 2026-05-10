@@ -1,5 +1,8 @@
-"use client"
-
+/**
+ * @description Página de nueva Transferencia (Server Component).
+ *
+ * El formulario (TransferenciaForm) es un Client Component.
+ */
 import { TransferenciaForm } from "@/features/transferencias"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { motion } from "framer-motion"

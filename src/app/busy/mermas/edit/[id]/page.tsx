@@ -1,7 +1,11 @@
-'use client'
-
-import { useParams } from "next/navigation"
-import { useEffect, useState } from "react"
+/**
+ * @description Página de edición de Merma (Server Component).
+ *
+ * Resuelve en el servidor:
+ * - Datos de la merma a editar
+ *
+ * El formulario (MermaForm) es un Client Component.
+ */
 import { getMermaByIdAction } from "@/features/mermas"
 import { MermaForm } from "@/features/mermas/components/merma-form"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
@@ -11,80 +15,22 @@ import { AlertTriangle, Sparkles, ArrowLeft, AlertCircle } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
+import { notFound } from "next/navigation"
 
-export default function EditarMermaPage() {
-  const params = useParams()
-  const mermaId = params.id as string
-  const [merma, setMerma] = useState<any | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState(false)
-  useEffect(() => { async function f() { setIsLoading(true); const r=await getMermaByIdAction(mermaId); if(r.success) setMerma(r.data!); else setError(true); setIsLoading(false); } f(); }, [mermaId])
+interface Props {
+  params: Promise<{ id: string }>
+}
 
-  if (isLoading) {
-    return (
-      <SidebarProvider>        
-        <SidebarInset>          
-          <div className="container mx-auto py-4">
-            <motion.div 
-              className="mb-6"
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <Skeleton className="h-8 w-8 rounded-md" />
-                <Skeleton className="h-10 w-10 rounded-xl" />
-                <Skeleton className="h-8 w-48" />
-              </div>
-              <Skeleton className="h-4 w-64 ml-12" />
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <div className="flex items-center justify-center py-8 mb-6">
-                <motion.div
-                  className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full"
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                />
-              </div>
-              <div className="space-y-4">
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-10 w-full" />
-                <Skeleton className="h-20 w-full" />
-              </div>
-            </motion.div>
-          </div>
-        </SidebarInset>
-      </SidebarProvider>
-    )
+export default async function EditarMermaPage({ params }: Props) {
+  const { id: mermaId } = await params
+
+  const result = await getMermaByIdAction(mermaId)
+
+  if (!result.success) {
+    notFound()
   }
 
-  if (error || !merma) {
-    return (
-      <SidebarProvider>        
-        <SidebarInset>          
-          <div className="container mx-auto py-4">
-            <motion.div
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-            >
-              <Alert variant="destructive" className="border-dashed">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Error</AlertTitle>
-                <AlertDescription>
-                  No se pudo cargar la merma. Por favor, intente nuevamente.
-                </AlertDescription>
-              </Alert>
-            </motion.div>
-          </div>
-        </SidebarInset>
-      </SidebarProvider>
-    )
-  }
+  const merma = result.data
 
   return (
     <SidebarProvider>      

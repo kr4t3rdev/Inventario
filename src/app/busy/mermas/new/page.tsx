@@ -1,4 +1,8 @@
-'use client'
+/**
+ * @description Página de nueva Merma (Server Component).
+ *
+ * El formulario (MermaForm) es un Client Component.
+ */
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { MermaForm } from "@/features/mermas"
 import { motion } from "framer-motion"
