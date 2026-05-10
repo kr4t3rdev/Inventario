@@ -9,7 +9,7 @@ import { CierresManager } from "@/features/contabilidad/components/cierres/Cierr
 
 export default async function CierresPage() {
   const result = await getCierresAction();
-  const cierres = result.success ? (result.data ?? []) : [];
+  const cierres: CierreContableItem[] = (result.success ? (result.data ?? []) : []) as unknown as CierreContableItem[];
 
   return (
     <div className="container mx-auto p-6">
