@@ -36,7 +36,7 @@ export function ExpiringUsersTab({ onOpenHistory }: ExpiringUsersTabProps) {
     setIsLoading(true)
     try {
       const data = await getExpiringSoonAction({ days: parseInt(days) })
-      setExpiringUsers(data)
+      setExpiringUsers((data?.success ? data.data : undefined) as unknown as { users: (Usuario & { daysUntilExpiry: number; })[]; } | undefined)
     } catch {
       setExpiringUsers(undefined)
     } finally {
@@ -53,8 +53,8 @@ export function ExpiringUsersTab({ onOpenHistory }: ExpiringUsersTabProps) {
 
   const handleSendNotifications = async () => {
     try {
-      const result = await sendExpiryNotificationsAction({ days: parseInt(days) })
-      toast.success(`Notificaciones enviadas: ${result.notificationsCreated} administradores notificados`)
+      const result = await sendExpiryNotificationsAction()
+      toast.success(`Notificaciones enviadas: ${result?.notificationsCreated ?? 0} administradores notificados`)
       fetchExpiring()
     } catch (error) {
       console.error("Error:", error)

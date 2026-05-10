@@ -72,7 +72,7 @@ export function TenantUsersPage() {
     setPendingLoading(true)
     try {
       const data = await getPendingMembershipsAction()
-      setPendingMemberships(data ?? [])
+      setPendingMemberships((data?.success ? data.data : []) ?? [])
     } catch {
       setPendingMemberships([])
     } finally {
@@ -105,7 +105,7 @@ export function TenantUsersPage() {
 
   const handleReject = useCallback(async (membership: PendingMembership) => {
     try {
-      await rejectMembershipAction(membership.membershipId)
+      await rejectMembershipAction({ membershipId: membership.membershipId })
       toast.success(`Solicitud de ${membership.user.name} rechazada.`)
       fetchPending()
       fetchUsers()

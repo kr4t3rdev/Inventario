@@ -134,7 +134,7 @@ export function ProduccionContent({ initialRecetas, initialOrdenes }: Produccion
         setNombreReceta('')
         setRendimiento(1)
         const ref = await getRecetasProduccionAction({})
-        if (ref.success) setRecetas(ref.data?.data ?? [])
+        if (ref.success) setRecetas((ref.data?.data ?? []) as unknown as RecetaProduccion[])
       }
     } catch (error) {
       toast.error('Error al crear la receta')
@@ -178,7 +178,7 @@ export function ProduccionContent({ initialRecetas, initialOrdenes }: Produccion
         setSelectedReceta('')
         setCantidadOrden(1)
         const ref = await getOrdenesProduccionAction({})
-        if (ref.success) setOrdenes(ref.data?.data ?? [])
+        if (ref.success) setOrdenes((ref.data?.data ?? []) as unknown as OrdenProduccion[])
       }
     } catch (error) {
       toast.error('Error al crear la orden')
@@ -203,7 +203,7 @@ export function ProduccionContent({ initialRecetas, initialOrdenes }: Produccion
       if (result) {
         toast.success(`Orden ${ordenToAction.action === 'aprobar' ? 'aprobada' : ordenToAction.action === 'completar' ? 'completada' : 'cancelada'}`)
         const ref = await getOrdenesProduccionAction({})
-        if (ref.success) setOrdenes(ref.data?.data ?? [])
+        if (ref.success) setOrdenes((ref.data?.data ?? []) as unknown as OrdenProduccion[])
       }
     } catch (error) {
       toast.error('Error al realizar la acción')

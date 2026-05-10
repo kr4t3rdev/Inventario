@@ -64,7 +64,7 @@ export function CategoryMoveDialog({ open, onClose, categoryId }: CategoryMoveDi
 
     getCategoriasAction().then(result => {
       if (result.success) {
-        setCategories(result.data ?? [])
+        setCategories((result.data ?? []) as unknown as Categoria[])
       }
       setIsLoadingCategories(false)
     })

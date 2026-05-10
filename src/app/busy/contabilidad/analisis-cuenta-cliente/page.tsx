@@ -54,7 +54,7 @@ export default function AnalisisCuentaClientePage() {
   const [isLoadingCuentas, setIsLoadingCuentas] = useState(true)
 
   useEffect(() => {
-    getCuentasPorCobrarAction({}).then(r => {
+    getCuentasPorCobrarAction({ page: 1, limit: 1000 }).then(r => {
       if (r.success) setCuentas((r.data?.cuentas ?? []) as any)
       setIsLoadingCuentas(false)
     }).catch(() => setIsLoadingCuentas(false))

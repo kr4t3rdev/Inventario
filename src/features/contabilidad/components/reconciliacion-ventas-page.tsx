@@ -89,7 +89,7 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
   const [cuentasPorCobrar, setCuentasPorCobrar] = useState<any[]>([])
 
   useEffect(() => {
-    getCuentasPorCobrarAction({}).then(r => {
+    getCuentasPorCobrarAction({ page: 1, limit: 1000 }).then(r => {
       if (r.success) setCuentasPorCobrar((r.data?.cuentas ?? []) as any[])
     }).catch(() => {})
   }, [])

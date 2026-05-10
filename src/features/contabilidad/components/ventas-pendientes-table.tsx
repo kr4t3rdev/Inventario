@@ -102,7 +102,7 @@ export function VentasPendientesTable({
   const [isLoadingCuentas, setIsLoadingCuentas] = useState(true)
 
   useEffect(() => {
-    getCuentasPorCobrarAction({}).then(r => {
+    getCuentasPorCobrarAction({ page: 1, limit: 1000 }).then(r => {
       if (r.success) setCuentasPorCobrarData((r.data?.cuentas ?? []) as any)
       setIsLoadingCuentas(false)
     }).catch(() => setIsLoadingCuentas(false))

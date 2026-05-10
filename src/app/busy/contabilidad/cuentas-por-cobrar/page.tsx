@@ -45,7 +45,7 @@ export default function CuentasPorCobrarPage() {
     setIsLoading(true)
     setFetchError(null)
     try {
-      const result = await getCuentasPorCobrarAction({})
+      const result = await getCuentasPorCobrarAction({ page: 1, limit: 1000 })
       if (result.success && result.data) {
         setCuentasData(result.data)
       } else {

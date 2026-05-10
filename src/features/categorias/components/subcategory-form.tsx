@@ -153,7 +153,7 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
   useEffect(() => {
     getCategoriasAction().then(result => {
       if (result.success) {
-        setCategories(result.data ?? []);
+        setCategories((result.data ?? []) as unknown as Categoria[]);
       } else {
         setCategoriesError(true);
       }

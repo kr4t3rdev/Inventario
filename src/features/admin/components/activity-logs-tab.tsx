@@ -60,7 +60,7 @@ export function ActivityLogsTab() {
     setIsLoading(true)
     try {
       const data = await getActivityLogsAction({ limit: parseInt(limit) })
-      setLogs(data ?? [])
+      setLogs(((data?.success ? data.data : []) ?? []) as unknown as UserActivityLog[])
     } catch {
       setLogs([])
     } finally {

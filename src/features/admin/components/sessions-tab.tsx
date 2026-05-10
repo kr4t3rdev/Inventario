@@ -40,7 +40,7 @@ export function SessionsTab() {
     setIsLoading(true)
     try {
       const data = await getSessionsAction()
-      setSessions(data ?? [])
+      setSessions(((data?.success ? data.data : []) ?? []) as unknown as UserSession[])
     } catch {
       setSessions([])
     } finally {

@@ -74,7 +74,7 @@ export function GastosDEContent({ initialGastosDE, initialVendors }: GastosDECon
       if (r.success) {
         toast.success("El gasto ha sido eliminado exitosamente.")
         const ref = await import('@/features/gastosDE/actions').then(m => m.getGastosDEAction({}))
-        if (ref.success) setGastosDE(ref.data ?? [])
+        if (ref.success) setGastosDE((ref.data ?? []) as unknown as GastoDE[])
       } else {
         toast.error(r.error?.message || "Error al eliminar el gasto.")
       }
@@ -92,7 +92,7 @@ export function GastosDEContent({ initialGastosDE, initialVendors }: GastosDECon
       }
       toast.success(`${ok} gastos eliminados`)
       const ref = await import('@/features/gastosDE/actions').then(m => m.getGastosDEAction({}))
-      if (ref.success) setGastosDE(ref.data ?? [])
+      if (ref.success) setGastosDE((ref.data ?? []) as unknown as GastoDE[])
       setGastosDEToBulkDelete(null)
       setRowSelection({})
     })
