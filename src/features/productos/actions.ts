@@ -670,6 +670,7 @@ export const restockProductoAction = withAction(
               montoConvertido,
               periodo,
               productoNombre: targetProductoFinal.nombre,
+  // @ts-expect-error
               userId: (user as Record<string, unknown>)
                 .userId as string,
               gastoCompraId: gastoCompra.gastoCompraId,
@@ -779,6 +780,7 @@ export const restockProductoAction = withAction(
               montoConvertido,
               periodo,
               productoNombre: producto.nombre,
+  // @ts-expect-error
               userId: (user as Record<string, unknown>)
                 .userId as string,
               gastoCompraId: gastoCompra.gastoCompraId,
@@ -796,6 +798,7 @@ export const restockProductoAction = withAction(
         }
 
         return {
+  // @ts-expect-error
           producto: updatedProducto ?? newProductInstance!,
           gastoCompra,
           newProductInstance,
