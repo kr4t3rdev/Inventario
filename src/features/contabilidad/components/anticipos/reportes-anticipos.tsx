@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Button } from "@/components/ui/button"
@@ -10,11 +10,6 @@ import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
-import {
-  useGetReporteAnticiposClienteQuery,
-  useGetReporteAnticiposProveedorQuery,
-  useGetResumenAnticiposQuery,
-} from "@/features/contabilidad/api/contabilidadApi"
 import { Download, FileSpreadsheet, Users, Truck, BarChart3 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -39,20 +34,45 @@ export function ReportesAnticipos({
   const [clienteFiltro, setClienteFiltro] = useState<string>("all")
   const [proveedorFiltro, setProveedorFiltro] = useState<string>("all")
 
-  // Queries
-  const { data: dataReporteCliente, isLoading: loadingReporteCliente } = useGetReporteAnticiposClienteQuery({
-    clienteId: clienteFiltro === "all" ? undefined : clienteFiltro,
-    fechaInicio: fechaInicio || undefined,
-    fechaFin: fechaFin || undefined,
-  })
+  // Data fetching
+  const [dataReporteCliente, setDataReporteCliente] = useState<any>(null)
+  const [loadingReporteCliente, setLoadingReporteCliente] = useState(false)
+  const [dataReporteProveedor, setDataReporteProveedor] = useState<any>(null)
+  const [loadingReporteProveedor, setLoadingReporteProveedor] = useState(false)
+  const [dataResumen, setDataResumen] = useState<any>(null)
+  const [loadingResumen, setLoadingResumen] = useState(false)
 
-  const { data: dataReporteProveedor, isLoading: loadingReporteProveedor } = useGetReporteAnticiposProveedorQuery({
-    proveedorId: proveedorFiltro === "all" ? undefined : proveedorFiltro,
-    fechaInicio: fechaInicio || undefined,
-    fechaFin: fechaFin || undefined,
-  })
+  useEffect(() => {
+    const params = new URLSearchParams()
+    if (clienteFiltro !== "all") params.set("clienteId", clienteFiltro)
+    if (fechaInicio) params.set("fechaInicio", fechaInicio)
+    if (fechaFin) params.set("fechaFin", fechaFin)
+    setLoadingReporteCliente(true)
+    fetch(`/api/contabilidad/anticipos/reportes/cliente?${params.toString()}`)
+      .then((r) => r.json())
+      .then(setDataReporteCliente)
+      .finally(() => setLoadingReporteCliente(false))
+  }, [clienteFiltro, fechaInicio, fechaFin])
 
-  const { data: dataResumen, isLoading: loadingResumen } = useGetResumenAnticiposQuery({})
+  useEffect(() => {
+    const params = new URLSearchParams()
+    if (proveedorFiltro !== "all") params.set("proveedorId", proveedorFiltro)
+    if (fechaInicio) params.set("fechaInicio", fechaInicio)
+    if (fechaFin) params.set("fechaFin", fechaFin)
+    setLoadingReporteProveedor(true)
+    fetch(`/api/contabilidad/anticipos/reportes/proveedor?${params.toString()}`)
+      .then((r) => r.json())
+      .then(setDataReporteProveedor)
+      .finally(() => setLoadingReporteProveedor(false))
+  }, [proveedorFiltro, fechaInicio, fechaFin])
+
+  useEffect(() => {
+    setLoadingResumen(true)
+    fetch("/api/contabilidad/anticipos/reportes/resumen")
+      .then((r) => r.json())
+      .then(setDataResumen)
+      .finally(() => setLoadingResumen(false))
+  }, [])
 
   const exportarCSV = (data: any[], filename: string) => {
     if (!data || data.length === 0) return

@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useMemo, useCallback } from "react"
-import { useGetAnticiposDisponiblesQuery } from "@/features/contabilidad/api/contabilidadApi"
+import { useState, useMemo, useCallback, useEffect } from "react"
+import { getAnticiposAction } from "@/features/contabilidad/actions-anticipos"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -65,24 +65,29 @@ export function AnticipoSelector({
   moneda = "CUP",
   disabled = false,
 }: AnticipoSelectorProps) {
-  const contexto = tipo === "PAGO" ? "compra" as const : "factura" as const
+  const skipQuery = !entidadId
 
-  const queryParams = useMemo(
-    () => ({
-      contexto,
+  const [anticipos, setAnticipos] = useState<any[]>([])
+  const [isLoadingAnticipos, setIsLoadingAnticipos] = useState(false)
+
+  useEffect(() => {
+    if (skipQuery) {
+      setAnticipos([])
+      return
+    }
+    let cancelled = false
+    setIsLoadingAnticipos(true)
+    getAnticiposAction({
+      tipo,
       proveedorId: tipo === "PAGO" ? entidadId : undefined,
       clienteId: tipo === "COBRO" ? entidadId : undefined,
       moneda,
-    }),
-    [contexto, tipo, entidadId, moneda]
-  )
-
-  const skipQuery = !entidadId
-
-  const { data: anticiposData, isFetching: isLoadingAnticipos } =
-    useGetAnticiposDisponiblesQuery(queryParams, { skip: skipQuery })
-
-  const anticipos = anticiposData?.anticipos || []
+    }).then((res) => {
+      if (!cancelled && res.success) setAnticipos(res.data?.anticipos || [])
+      if (!cancelled) setIsLoadingAnticipos(false)
+    })
+    return () => { cancelled = true }
+  }, [tipo, entidadId, moneda, skipQuery])
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [montos, setMontos] = useState<Record<string, number>>({})

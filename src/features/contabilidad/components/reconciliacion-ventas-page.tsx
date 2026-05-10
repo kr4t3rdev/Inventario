@@ -22,7 +22,7 @@ import {
 import { VentasPendientesTable } from "./ventas-pendientes-table"
 import { ReconciliacionVentasForm } from "./reconciliacion-ventas-form"
 import { ResumenReconciliacion } from "./resumen-reconciliacion"
-import { useGetVentasPendientesQuery, useGetHistorialReconciliacionVentasQuery } from "@/features/contabilidad/api/contabilidadApi"
+import { getVentasPendientesAction, getHistorialReconciliacionVentasAction } from "@/features/contabilidad/actions-reconciliacion"
 import { getCuentasPorCobrarAction } from "@/features/contabilidad"
 import type { VentaPendiente, ReconciliacionVenta } from "@/app/models/model"
 import { cn } from "@/lib/utils"
@@ -68,16 +68,24 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
     setFechaInicio(weekAgo.toISOString().split('T')[0])
   })
 
-  const { data: ventasData = { ventas: [], pagination: { page: 1, limit: 50, total: 0, totalPages: 0 } }, refetch } = useGetVentasPendientesQuery({
-    fechaInicio,
-    fechaFin,
-    page: currentPage,
-    limit: pageSize
-  })
-  const { data:historial_ventas_data = { estadisticas: { porMoneda:[], porTipoDePago:[], montoConvertidoTotal:Number, montoTotal:Number}, pagination:{}, reconciliaciones:[]}} = useGetHistorialReconciliacionVentasQuery({
-    fechaFin, fechaInicio, cuentaId
-  })
+  const [ventasData, setVentasData] = useState({ ventas: [], pagination: { page: 1, limit: 50, total: 0, totalPages: 0 } })
+  const [historial_ventas_data, setHistorialVentasData] = useState({ reconciliaciones: [], estadisticas: { porMoneda: [], porTipoDePago: [], montoConvertidoTotal: 0, montoTotal: 0 }, pagination: {} })
+  const [refetchTrigger, setRefetchTrigger] = useState(0)
   const ventasReconciliadas: ReconciliacionVenta[] = historial_ventas_data.reconciliaciones || []
+
+  useEffect(() => {
+    getVentasPendientesAction({ fechaInicio, fechaFin, page: currentPage, limit: pageSize }).then(r => {
+      if (r.success) setVentasData(r.data as any)
+    })
+  }, [fechaInicio, fechaFin, currentPage, pageSize, refetchTrigger])
+
+  useEffect(() => {
+    getHistorialReconciliacionVentasAction({ fechaFin, fechaInicio, cuentaId }).then(r => {
+      if (r.success) setHistorialVentasData(r.data as any)
+    })
+  }, [fechaInicio, fechaFin, cuentaId, refetchTrigger])
+
+  const refetch = () => setRefetchTrigger(prev => prev + 1)
   const [cuentasPorCobrar, setCuentasPorCobrar] = useState<any[]>([])
 
   useEffect(() => {
@@ -86,12 +94,13 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
     }).catch(() => {})
   }, [])
 
-  const { data: allVentasData = { pagination:{}, ventas:[]} } = useGetVentasPendientesQuery({
-    fechaInicio,
-    fechaFin,
-    page: 1,
-    limit: 10000
-  })
+  const [allVentasData, setAllVentasData] = useState({ pagination: {}, ventas: [] })
+
+  useEffect(() => {
+    getVentasPendientesAction({ fechaInicio, fechaFin, page: 1, limit: 10000 }).then(r => {
+      if (r.success) setAllVentasData(r.data as any)
+    })
+  }, [fechaInicio, fechaFin, refetchTrigger])
 
   const { ventas, pagination } = ventasData
    

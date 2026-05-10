@@ -25,20 +25,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
-  useGetAjustesByCuentaQuery,
-  useGetResumenAnticiposQuery,
-  useGetGastosPendientesQuery,
-  useGetHistorialReconciliacionGastosQuery,
-  useGetHistorialReconciliacionServiciosQuery,
-  useGetHistorialReconciliacionVentasQuery,
-  useGetMonedasQuery,
-  useGetResumenFinancieroQuery,
-  useGetServiciosPendientesQuery,
-  useGetTasasActualesQuery,
-  useGetTransferenciasBancariasQuery,
-  useGetVentasPendientesQuery,
-  useInvalidateContabilidadCache,
-} from '@/features/contabilidad/api/contabilidadApi';
+  getVentasPendientesAction,
+  getHistorialReconciliacionVentasAction,
+  getServiciosPendientesAction,
+  getGastosPendientesAction,
+} from '@/features/contabilidad/actions-reconciliacion';
 import { getPrestamosCashStatsAction } from '@/features/contabilidad/actions-prestamos-cash';
 import { formatCurrency } from '@/lib/redux/utils/contabilidadUtils';
 import { cn } from '@/lib/utils';
@@ -210,6 +201,7 @@ export function ResumenFinanciero({
   soloNoReconciliados,
 }: ResumenFinancieroProps): React.JSX.Element | null {
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const shouldReduceMotion = useReducedMotion();
 
   // --- Animation Variants ---
@@ -246,36 +238,101 @@ export function ResumenFinanciero({
   };
 
   // --- Data Fetching ---
-  const { data: resumen, isLoading, error, refetch } = useGetResumenFinancieroQuery({
-    fechaInicio,
-    fechaFin,
-    cuentaId,
-  });
-
-  const { data: monedasData } = useGetMonedasQuery();
-  const monedas = monedasData?.data || [];
-
-  const { data: tasasActualesData = { data: { monedaPrincipal: {} as Moneda, tasas: [] } } } =
-    useGetTasasActualesQuery();
-  const tasasActuales = tasasActualesData?.data?.tasas || [];
-
-  const invalidateCache = useInvalidateContabilidadCache();
-
-  // --- Helper Data Fetching for Metrics ---
-  const { data: historyVentas } = useGetHistorialReconciliacionVentasQuery({ fechaInicio, fechaFin, cuentaId });
-  const { data: ventasData } = useGetVentasPendientesQuery({ fechaFin, page, limit, fechaInicio });
-  
-  const { data: serviciosHistoryData } = useGetHistorialReconciliacionServiciosQuery({ fechaDesde: fechaInicio, fechaHasta: fechaFin, cuentaId });
-  const { data: serviciosData } = useGetServiciosPendientesQuery({ fechaDesde: fechaInicio, fechaHasta: fechaFin, limit, page });
-
-  const { data: gastosData } = useGetGastosPendientesQuery({ fechaDesde: fechaFin, fechaHasta: fechaFin, tipoGasto, periodo, soloNoReconciliados, page, limit });
-  const { data: gastosHistoryData } = useGetHistorialReconciliacionGastosQuery({ fechaFin, fechaInicio, cuentaId, tipoGasto });
-  const [prestamosStats, setPrestamosStats] = useState<any>(null);
+  const [resumen, setResumen] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<any>(null);
+  const [monedasData, setMonedasData] = useState<any>(null);
+  const [tasasActualesData, setTasasActualesData] = useState<any>(null);
+  const [historyVentas, setHistoryVentas] = useState<any>(null);
+  const [ventasData, setVentasData] = useState<any>(null);
+  const [serviciosHistoryData, setServiciosHistoryData] = useState<any>(null);
+  const [serviciosData, setServiciosData] = useState<any>(null);
+  const [gastosData, setGastosData] = useState<any>(null);
+  const [gastosHistoryData, setGastosHistoryData] = useState<any>(null);
+  const [resumenAnticiposData, setResumenAnticiposData] = useState<any>(null);
 
   useEffect(() => {
+    setIsLoading(true); setError(null)
+    const params = new URLSearchParams()
+    if (fechaInicio) params.set('fechaInicio', fechaInicio)
+    if (fechaFin) params.set('fechaFin', fechaFin)
+    if (cuentaId) params.set('cuentaId', cuentaId)
+    fetch(`/api/contabilidad/reportes/resumen?${params.toString()}`)
+      .then(r => r.json())
+      .then(d => { setResumen(d); setIsLoading(false) })
+      .catch(e => { setError(e); setIsLoading(false) })
+  }, [fechaInicio, fechaFin, cuentaId, refreshKey])
+
+  useEffect(() => {
+    fetch('/api/contabilidad/exchange/monedas')
+      .then(r => r.json())
+      .then(setMonedasData)
+  }, [refreshKey])
+
+  useEffect(() => {
+    fetch('/api/contabilidad/exchange/tasas')
+      .then(r => r.json())
+      .then(setTasasActualesData)
+  }, [refreshKey])
+
+  // --- Helper Data Fetching for Metrics ---
+  useEffect(() => {
+    getHistorialReconciliacionVentasAction({ fechaInicio, fechaFin, cuentaId })
+      .then(r => { if (r.success) setHistoryVentas(r.data) })
+  }, [fechaInicio, fechaFin, cuentaId, refreshKey])
+
+  useEffect(() => {
+    getVentasPendientesAction({ fechaInicio, fechaFin, page, limit })
+      .then(r => { if (r.success) setVentasData(r.data) })
+  }, [fechaInicio, fechaFin, page, limit, refreshKey])
+
+  useEffect(() => {
+    const params = new URLSearchParams()
+    if (fechaInicio) params.set('fechaDesde', fechaInicio)
+    if (fechaFin) params.set('fechaHasta', fechaFin)
+    if (cuentaId) params.set('cuentaId', cuentaId)
+    fetch(`/api/contabilidad/reconciliacion/servicios/historial?${params.toString()}`)
+      .then(r => r.json())
+      .then(setServiciosHistoryData)
+  }, [fechaInicio, fechaFin, cuentaId, refreshKey])
+
+  useEffect(() => {
+    getServiciosPendientesAction({ fechaDesde: fechaInicio, fechaHasta: fechaFin, limit, page })
+      .then(r => { if (r.success) setServiciosData(r.data) })
+  }, [fechaInicio, fechaFin, limit, page, refreshKey])
+
+  useEffect(() => {
+    getGastosPendientesAction({ fechaDesde: fechaFin, fechaHasta: fechaFin, tipoGasto, soloNoReconciliados, page, limit })
+      .then(r => { if (r.success) setGastosData(r.data) })
+  }, [fechaFin, tipoGasto, soloNoReconciliados, page, limit, refreshKey])
+
+  useEffect(() => {
+    const params = new URLSearchParams()
+    if (fechaInicio) params.set('fechaInicio', fechaInicio)
+    if (fechaFin) params.set('fechaFin', fechaFin)
+    if (cuentaId) params.set('cuentaId', cuentaId)
+    if (tipoGasto) params.set('tipoGasto', tipoGasto)
+    fetch(`/api/contabilidad/reconciliacion/gastos/historial?${params.toString()}`)
+      .then(r => r.json())
+      .then(setGastosHistoryData)
+  }, [fechaInicio, fechaFin, cuentaId, tipoGasto, refreshKey])
+
+  const [prestamosStats, setPrestamosStats] = useState<any>(null);
+  useEffect(() => {
     getPrestamosCashStatsAction().then(r => { if (r.success) setPrestamosStats(r.data) })
-  }, []);
-  const { data: resumenAnticiposData } = useGetResumenAnticiposQuery({ fechaInicio, fechaFin });
+  }, [refreshKey]);
+
+  useEffect(() => {
+    const params = new URLSearchParams()
+    if (fechaInicio) params.set('fechaInicio', fechaInicio)
+    if (fechaFin) params.set('fechaFin', fechaFin)
+    fetch(`/api/contabilidad/anticipos/reportes/resumen?${params.toString()}`)
+      .then(r => r.json())
+      .then(setResumenAnticiposData)
+  }, [fechaInicio, fechaFin, refreshKey])
+
+  const monedas = monedasData?.data || [];
+  const tasasActuales = tasasActualesData?.data?.tasas || [];
 
   // --- Calculations ---
   const ventasPend = ventasData?.ventas?.length || 0;
@@ -296,8 +353,7 @@ export function ResumenFinanciero({
   const handleRefresh = async (): Promise<void> => {
     try {
       setIsRefreshing(true);
-      invalidateCache();
-      await refetch();
+      setRefreshKey(k => k + 1);
       toast.success('Datos actualizados correctamente');
     } catch {
       toast.error('Error al actualizar los datos');
@@ -378,7 +434,7 @@ export function ResumenFinanciero({
         <p className="text-sm text-rose-700 dark:text-rose-300 mb-4">
           No pudimos obtener el resumen financiero actualizado.
         </p>
-        <Button onClick={() => refetch()} variant="outline" className="border-rose-300 hover:bg-rose-100 dark:border-rose-800 dark:hover:bg-rose-900/40">
+        <Button onClick={() => setRefreshKey(k => k + 1)} variant="outline" className="border-rose-300 hover:bg-rose-100 dark:border-rose-800 dark:hover:bg-rose-900/40">
           Intentar nuevamente
         </Button>
       </motion.div>

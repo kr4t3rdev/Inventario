@@ -9,9 +9,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { TrendingUp, TrendingDown, ArrowUpDown, Calendar, DollarSign, Info, Wallet, CreditCard, FileText, Filter, Download } from "lucide-react"
-import { useGetCuentaTransactionHistoryQuery } from "@/features/contabilidad/api/contabilidadApi"
 import { formatCurrency, formatDate, convertCurrency } from "@/lib/redux/utils/contabilidadUtils"
-import { useGetMonedasQuery } from "@/features/contabilidad/api/contabilidadApi"
+import { getMonedasAction } from "@/features/contabilidad/actions-exchange"
 import { getPrestamoCashHistorialAction } from "@/features/contabilidad/actions-prestamos-cash"
 import { DateRangePicker } from "./date-range-picker"
 import { ExportDialog } from "@/components/contabilidad/export-dialog"
@@ -110,10 +109,31 @@ export function AccountTransactionHistory({
     fetchExchangeRates()
   }, [])
 
-  const { data: historial, isLoading, error } = useGetCuentaTransactionHistoryQuery({
-    cuentaId,
-    ...filtros
-  })
+  const [historial, setHistorial] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<any>(null)
+
+  useEffect(() => {
+    setIsLoading(true)
+    setError(null)
+    const p = new URLSearchParams()
+    if (filtros.fechaInicio) p.set('fechaInicio', filtros.fechaInicio)
+    if (filtros.fechaFin) p.set('fechaFin', filtros.fechaFin)
+    if (filtros.tipoMovimiento) p.set('tipoMovimiento', filtros.tipoMovimiento)
+    p.set('page', String(filtros.page))
+    p.set('limit', String(filtros.limit))
+
+    fetch(`/api/contabilidad/cuentas/${cuentaId}/historial?${p.toString()}`)
+      .then(r => r.json())
+      .then(data => {
+        setHistorial(data)
+        setIsLoading(false)
+      })
+      .catch(err => {
+        setError(err)
+        setIsLoading(false)
+      })
+  }, [cuentaId, filtros.fechaInicio, filtros.fechaFin, filtros.tipoMovimiento, filtros.page, filtros.limit])
   const prestamoCashId = useMemo(() => {
     const prestamo = historial?.transacciones?.find((tx: any) => tx.tipoMovimiento === 'prestamo_cash')
     return (prestamo as any)?.prestamoCashId ?? (prestamo as any)?.detalles?.prestamoCashId ?? null
@@ -128,8 +148,13 @@ export function AccountTransactionHistory({
       })
     }
   }, [prestamoCashId, prestamoSheetOpen])
-  const { data: monedasData = { data: [] } } = useGetMonedasQuery()
-  const monedas = monedasData.data || []
+  const [monedas, setMonedas] = useState<any[]>([])
+
+  useEffect(() => {
+    getMonedasAction().then(r => {
+      if (r.success) setMonedas(r.data?.data ?? [])
+    })
+  }, [])
   
   const convertAmount = (amount: number, fromCurrency: string, toCurrency: string): number => {
     if (fromCurrency === toCurrency) {

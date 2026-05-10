@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Search, Filter, Download, ArrowUpDown, TrendingUp, TrendingDown, Wallet, Receipt, FileText, Calendar, Eye } from "lucide-react"
-import { useGetMovimientosQuery, useGetCuentasBancariasQuery } from "@/features/contabilidad/api/contabilidadApi"
+import { getCuentasBancariasAction } from "@/features/contabilidad/actions-cuentas-bancarias"
 import { getPrestamoCashHistorialAction } from "@/features/contabilidad/actions-prestamos-cash"
 import { getDeudaCashByIdAction } from "@/features/contabilidad/actions-deudas-cash"
 import { formatCurrencySimple, formatDate } from "@/lib/redux/utils/contabilidadUtils"
@@ -74,13 +74,45 @@ export function MovimientosTable({
     limit: 10
   })
 
-  const { data: movimientos, isLoading, error } = useGetMovimientosQuery({
-    ...filtros,
-    cuentaId: filtros.cuentaId === 'all' ? undefined : filtros.cuentaId,
-    moneda: filtros.moneda === 'all' ? undefined : filtros.moneda,
-  })
+  const [movimientos, setMovimientos] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<any>(null)
   const [prestamoHistorial, setPrestamoHistorial] = useState<any>(null)
   const [deudaHistorial, setDeudaHistorial] = useState<any>(null)
+
+  useEffect(() => {
+    setIsLoading(true)
+    setError(null)
+    const p = new URLSearchParams()
+    if (filtros.busqueda) p.set('busqueda', filtros.busqueda)
+    if (filtros.cuentaId && filtros.cuentaId !== 'all') p.set('cuentaId', filtros.cuentaId)
+    if (filtros.tipoMovimiento && filtros.tipoMovimiento !== 'all') p.set('tipoMovimiento', filtros.tipoMovimiento)
+    if (filtros.fechaInicio) p.set('fechaInicio', filtros.fechaInicio)
+    if (filtros.fechaFin) p.set('fechaFin', filtros.fechaFin)
+    if (filtros.moneda && filtros.moneda !== 'all') p.set('moneda', filtros.moneda)
+    p.set('page', String(filtros.page))
+    p.set('limit', String(filtros.limit))
+
+    fetch(`/api/contabilidad/reportes/movimientos?${p.toString()}`)
+      .then(r => r.json())
+      .then(data => {
+        setMovimientos(data)
+        setIsLoading(false)
+      })
+      .catch(err => {
+        setError(err)
+        setIsLoading(false)
+      })
+  }, [
+    filtros.busqueda,
+    filtros.cuentaId,
+    filtros.tipoMovimiento,
+    filtros.fechaInicio,
+    filtros.fechaFin,
+    filtros.moneda,
+    filtros.page,
+    filtros.limit,
+  ])
 
   useEffect(() => {
     if (selectedPrestamoCashId && prestamoSheetOpen) {
@@ -97,8 +129,13 @@ export function MovimientosTable({
       })
     }
   }, [selectedDeudaCashId, deudaSheetOpen])
-  const { data: cuentasData = { cuentas: [] } } = useGetCuentasBancariasQuery()
-  const cuentas = cuentasData.cuentas || []
+  const [cuentas, setCuentas] = useState<any[]>([])
+
+  useEffect(() => {
+    getCuentasBancariasAction().then(r => {
+      if (r.success) setCuentas(r.data?.cuentas ?? [])
+    })
+  }, [])
   
   const handleFiltroChange = (key: string, value: string) => {
     setFiltros(prev => ({
