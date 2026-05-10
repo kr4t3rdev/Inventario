@@ -1,49 +1,38 @@
-'use client'
-
-import { useEffect, useState } from "react"
-import { useParams } from "next/navigation"
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
-import { GastoElementoForm } from "@/features/gastosDE"
+/**
+ * @description Página de nuevo Elemento de Gasto (Server Component).
+ *
+ * Resuelve en el servidor:
+ * - Datos del concepto padre (para mostrar el nombre en el formulario)
+ *
+ * El formulario (GastoElementoForm) es un Client Component.
+ */
 import { getGastoConceptoByIdAction } from "@/features/gastosDE/actions"
-import { Skeleton } from "@/components/ui/skeleton"
+import { GastoElementoForm } from "@/features/gastosDE"
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+import { notFound } from "next/navigation"
 
-export default function NewGastoElementoPage() {
-    const params = useParams()
-    const conceptoId = params.id as string
-    const [concepto, setConcepto] = useState<any>(null)
-    const [isLoading, setIsLoading] = useState(true)
+interface Props {
+  params: Promise<{ id: string }>
+}
 
-    useEffect(() => {
-        getGastoConceptoByIdAction(conceptoId).then(r => { if (r.success) setConcepto(r.data); setIsLoading(false) })
-    }, [conceptoId])
+export default async function NewGastoElementoPage({ params }: Props) {
+  const { id: conceptoId } = await params
 
-    if (isLoading) {
-        return (
-            <SidebarProvider>
-                <SidebarInset>
-                    <div className="container mx-auto py-6 max-w-2xl">
-                        <Skeleton className="h-10 w-full mb-4" />
-                        <div className="space-y-4">
-                            <Skeleton className="h-10 w-full" />
-                            <Skeleton className="h-20 w-full" />
-                            <div className="flex justify-end gap-4">
-                                <Skeleton className="h-10 w-24" />
-                                <Skeleton className="h-10 w-32" />
-                            </div>
-                        </div>
-                    </div>
-                </SidebarInset>
-            </SidebarProvider>
-        )
-    }
+  const conceptoResult = await getGastoConceptoByIdAction(conceptoId)
 
-    return (
-        <SidebarProvider>
-            <SidebarInset>
-                <div className="container mx-auto py-6 max-w-2xl">
-                    <GastoElementoForm conceptoId={conceptoId} conceptoNombre={concepto?.nombre} />
-                </div>
-            </SidebarInset>
-        </SidebarProvider>
-    )
+  if (!conceptoResult.success) {
+    notFound()
+  }
+
+  const concepto = conceptoResult.data
+
+  return (
+    <SidebarProvider>
+      <SidebarInset>
+        <div className="container mx-auto py-6 max-w-2xl">
+          <GastoElementoForm conceptoId={conceptoId} conceptoNombre={concepto.nombre} />
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
+  )
 }

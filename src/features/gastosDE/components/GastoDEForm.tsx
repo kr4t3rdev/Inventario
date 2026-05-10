@@ -18,6 +18,7 @@ import { v4 } from "uuid"
 import { createGastosDEAction, updateGastosDEAction, getGastoConceptosAction, getGastoElementosAction } from "@/features/gastosDE/actions"
 import { useVendors } from "@/features/vendors/hooks/use-vendors"
 import { VendorCombobox } from "./VendorCombobox"
+import type { Vendor } from "@/app/models/model"
 
 const gastosDESchema = z.object({
   tipo: z.string().max(100, 'Máximo 100 caracteres').optional(),
@@ -34,14 +35,18 @@ type GastosDEFormValues = z.infer<typeof gastosDESchema>
 
 interface GastosDEFormProps {
   initialData?: { gastosDEId: string; tipo: string | null; conceptoId: string | null; elementoId: string | null; numeroFactura?: string | null; proveedor: string | null; monto: number; descripcion: string | null; periodo?: string }
+  initialVendors?: Vendor[]
 }
 
-export function GastoDEForm({ initialData }: GastosDEFormProps) {
+export function GastoDEForm({ initialData, initialVendors }: GastosDEFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [selectedConceptoId, setSelectedConceptoId] = useState<string>(initialData?.conceptoId || '')
   const { isLoading: isLoadingGastosDE } = { isLoading: false }
-  const { vendors, isLoading: isLoadingVendors } = useVendors()
+  // Usar vendors iniciales si se proporcionan, sino usar hook
+  const hookVendors = useVendors()
+  const vendors = initialVendors ?? hookVendors.vendors
+  const isLoadingVendors = initialVendors ? false : hookVendors.isLoading
   const [conceptos, setConceptos] = useState<any[]>([])
   const [elementos, setElementos] = useState<any[]>([])
 

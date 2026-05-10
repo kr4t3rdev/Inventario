@@ -1,48 +1,37 @@
-"use client"
-
-import { GastoDEForm, getGastoDEByIdAction } from "@/features/gastosDE"
+/**
+ * @description Página de edición de Gasto de Explotación (Server Component).
+ *
+ * Resuelve en el servidor:
+ * - Datos del gasto a editar
+ * - Lista de proveedores (vendors) para el formulario
+ *
+ * El formulario (GastoDEForm) es un Client Component que recibe los datos iniciales.
+ */
+import { getGastoDEByIdAction } from "@/features/gastosDE/actions"
+import { getVendorsAction } from "@/features/vendors/actions"
+import { GastoDEForm } from "@/features/gastosDE"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { Skeleton } from "@/components/ui/skeleton"
-import { useParams } from "next/navigation"
-import { useEffect, useState } from "react"
+import { notFound } from "next/navigation"
 
-export default function EditarGastoDEPage() {
-  const params = useParams()
-  const gastosDEId = params.id as string
-  const [gastoDE, setGastoDE] = useState<any | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  useEffect(() => { async function f() { setIsLoading(true); const r = await getGastoDEByIdAction(gastosDEId); if(r.success) setGastoDE(r.data!); setIsLoading(false); } f(); }, [gastosDEId])
+interface Props {
+  params: Promise<{ id: string }>
+}
 
-  if (isLoading) {
-    return (
-      <SidebarProvider>
-        <SidebarInset>
-          <div className="container mx-auto py-4">
-            <div className="mb-6">
-              <Skeleton className="h-8 w-64 mb-2" />
-              <Skeleton className="h-4 w-96" />
-            </div>
-            <Skeleton className="h-100 w-full" />
-          </div>
-        </SidebarInset>
-      </SidebarProvider>
-    )
+export default async function EditarGastoDEPage({ params }: Props) {
+  const { id: gastosDEId } = await params
+
+  // ── Resolver datos en paralelo en el servidor ──
+  const [gastoDEResult, vendorsResult] = await Promise.all([
+    getGastoDEByIdAction(gastosDEId),
+    getVendorsAction(),
+  ])
+
+  if (!gastoDEResult.success) {
+    notFound()
   }
 
-  if (error || !gastoDE) {
-    return (
-      <SidebarProvider>
-        <SidebarInset>
-          <div className="container mx-auto py-4">
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold">Error</h1>
-              <p className="text-muted-foreground">No se pudo cargar los gastos de explotación</p>
-            </div>
-          </div>
-        </SidebarInset>
-      </SidebarProvider>
-    )
-  }
+  const gastoDE = gastoDEResult.data
+  const initialVendors = vendorsResult.success ? vendorsResult.data ?? [] : []
 
   return (
     <SidebarProvider>
@@ -52,17 +41,20 @@ export default function EditarGastoDEPage() {
             <h1 className="text-2xl font-bold">Editar Gasto de Explotación</h1>
             <p className="text-muted-foreground">Modifique los datos de los Gasto de Explotación</p>
           </div>
-          <GastoDEForm initialData={{
-            gastosDEId: gastoDE.gastosDEId,
-            tipo: gastoDE.tipo,
-            conceptoId: gastoDE.conceptoId,
-            elementoId: gastoDE.elementoId,
-            numeroFactura: gastoDE.numeroFactura,
-            proveedor: gastoDE.proveedor,
-            monto: gastoDE.monto,
-            descripcion: gastoDE.descripcion,
-            periodo: gastoDE.periodo,
-          }} />
+          <GastoDEForm 
+            initialData={{
+              gastosDEId: gastoDE.gastosDEId,
+              tipo: gastoDE.tipo,
+              conceptoId: gastoDE.conceptoId,
+              elementoId: gastoDE.elementoId,
+              numeroFactura: gastoDE.numeroFactura,
+              proveedor: gastoDE.proveedor,
+              monto: gastoDE.monto,
+              descripcion: gastoDE.descripcion,
+              periodo: gastoDE.periodo,
+            }}
+            initialVendors={initialVendors}
+          />
         </div>
       </SidebarInset>
     </SidebarProvider>
