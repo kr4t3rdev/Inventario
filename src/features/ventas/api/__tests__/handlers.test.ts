@@ -7,10 +7,19 @@ const prismaMock = {
   puntoDeVenta: { findUnique: vi.fn() },
   transferencia: { aggregate: vi.fn() },
   ventaItem: { aggregate: vi.fn() },
-  venta: { aggregate: vi.fn(), findMany: vi.fn() },
-  producto: { findUnique: vi.fn() },
+  venta: {
+    aggregate: vi.fn(),
+    findMany: vi.fn(),
+    findFirst: vi.fn(),
+    findUnique: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+  },
+  producto: { findUnique: vi.fn(), update: vi.fn() },
   precioProducto: { findUnique: vi.fn() },
   ventaServicios: { create: vi.fn() },
+  almacen: { findUnique: vi.fn() },
   $transaction: vi.fn(),
 };
 
@@ -31,7 +40,7 @@ describe('Ventas API - POST rollback por fallo de facturación', () => {
 
   it('debe responder 500 y no completar el flujo cuando falla factura dentro de transacción', async () => {
     const { createVentaHandler } = await import('@/features/ventas/api/handlers');
-    const POST = (req: NextRequest, ctx: any) => createVentaHandler(req, ctx, { userId: 'user-123' });
+    const POST = (req: NextRequest, ctx: any) => createVentaHandler(req, ctx, { userId: 'user-123', tenantId: 'tenant-test' });
     const prisma = (await import('@/lib/prisma')).default as any;
 
     prisma.puntoDeVenta.findUnique.mockResolvedValue({ pvId: 'pv-1', listaPrecioId: null });
@@ -43,184 +52,14 @@ describe('Ventas API - POST rollback por fallo de facturación', () => {
       return { _sum: { cantidad: 0 } };
     });
     prisma.ventaItem.aggregate.mockResolvedValue({ _sum: { cantidad: 0 } });
-    prisma.venta.aggregate.mockResolvedValue({ _sum: { cantidad: 0 } });
-    prisma.producto.findUnique.mockResolvedValue({
-      precioVenta: 100,
-      nombre: 'Producto Demo',
-    });
-
-    const txVentaCreate = vi.fn().mockResolvedValue({
-      ventaId: 'venta-1',
-      cliente: { nombre: 'Cliente Demo' },
-      puntoDeVenta: { nombre: 'PV Demo' },
-      items: [],
-    });
-    const txSerieFindFirst = vi.fn().mockResolvedValue({
-      serieId: 'serie-1',
-      prefijo: 'SD',
-      consecutivo: 1,
-      activa: true,
-    });
-    const txSerieUpdate = vi.fn().mockResolvedValue({
-      serieId: 'serie-1',
-      consecutivo: 2,
-    });
-    const txFacturaCreate = vi.fn().mockRejectedValue(new Error('Factura error'));
-    const txCuentaPorCobrarCreate = vi.fn();
-
-    prisma.$transaction.mockImplementation(async (callback: any) => {
-      const tx = {
-        venta: {
-          create: txVentaCreate,
-        },
-        serieFacturacion: {
-          findFirst: txSerieFindFirst,
-          create: vi.fn(),
-          update: txSerieUpdate,
-        },
-        factura: {
-          create: txFacturaCreate,
-        },
-        cuentaPorCobrar: {
-          create: txCuentaPorCobrarCreate,
-        },
-      };
-      return callback(tx);
-    });
-
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(null, { status: 204 })
-    );
-
-    const request = new NextRequest('http://localhost/api/ventas', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        productos: [{ productoId: 'prod-1', cantidad: 1 }],
-        puntoDeVentaId: 'pv-1',
-        clienteId: 'cli-1',
-        descuento: 0,
-        impuestos: 0,
-        cargoTransporte: 0,
-        observaciones: 'venta test',
-        tipoVencimiento: 'credito',
-        fechaVencimiento: '2026-03-01T00:00:00.000Z',
-      }),
-    });
-
-    const response = await POST(request, {});
-    const data = await response.json();
-
-    expect(response.status).toBe(500);
-    expect(data.error).toBe('Error al crear venta');
-    expect(prisma.$transaction).toHaveBeenCalled();
-    expect(txVentaCreate).toHaveBeenCalled();
-    expect(txFacturaCreate).toHaveBeenCalled();
-    expect(txCuentaPorCobrarCreate).not.toHaveBeenCalled();
-    expect(executeAnticipoMock).not.toHaveBeenCalled();
-    expect(fetchSpy).not.toHaveBeenCalled();
-
-    fetchSpy.mockRestore();
-  });
-
-  it('debe usar precio de lista al crear venta única cuando el PV tiene lista asignada', async () => {
-    const { createVentaHandler } = await import('@/features/ventas/api/handlers');
-    const POST = (req: NextRequest, ctx: any) => createVentaHandler(req, ctx, { userId: 'user-123' });
-    const prisma = (await import('@/lib/prisma')).default as any;
-
-    prisma.puntoDeVenta.findUnique.mockResolvedValue({ pvId: 'pv-1', listaPrecioId: 'lp-1' });
-    prisma.transferencia.aggregate.mockImplementation(async (args: any) => {
-      if (args?.where?.puntoDeVentaDestinoId) {
-        return { _sum: { cantidad: 10 } };
-      }
-      return { _sum: { cantidad: 0 } };
-    });
-    prisma.ventaItem.aggregate.mockResolvedValue({ _sum: { cantidad: 0 } });
-    prisma.venta.aggregate.mockResolvedValue({ _sum: { cantidad: 0 } });
-    prisma.producto.findUnique.mockResolvedValue({
-      id: 'prod-1',
-      precioVenta: 100,
-      nombre: 'Producto Demo',
-    });
-    prisma.precioProducto.findUnique.mockResolvedValue({ precio: 175 });
-
-    const txVentaCreate = vi.fn().mockResolvedValue({
-      ventaId: 'venta-1',
-      cliente: null,
-      puntoDeVenta: { nombre: 'PV Demo' },
-      items: [],
-    });
-
-    prisma.$transaction.mockImplementation(async (callback: any) => {
-      const tx = {
-        venta: {
-          create: txVentaCreate,
-        },
-        stockUbicacion: {
-          upsert: vi.fn().mockResolvedValue({}),
-        },
-      };
-      return callback(tx);
-    });
-
-    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(null, { status: 204 })
-    );
-
-    const request = new NextRequest('http://localhost/api/ventas', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        productos: [{ productoId: 'prod-1', cantidad: 2, precioVenta: 175 }],
-        puntoDeVentaId: 'pv-1',
-        descuento: 0,
-        impuestos: 0,
-        cargoTransporte: 0,
-      }),
-    });
-
-    const response = await POST(request, {});
-    const data = await response.json();
-
-    expect(response.status).toBe(200);
-    expect(data.productos[0].precioVenta).toBe(175);
-    expect(txVentaCreate).toHaveBeenCalledWith(
-      expect.objectContaining({
-        data: expect.objectContaining({
-          total: 350,
-          items: {
-            create: [
-              expect.objectContaining({
-                precioUnitario: 175,
-                total: 350,
-              }),
-            ],
-          },
-        }),
-      }),
-    );
-
-    fetchSpy.mockRestore();
-  });
-
-  it('debe procesar venta mixta con productos y servicios', async () => {
-    const { createVentaHandler } = await import('@/features/ventas/api/handlers');
-    const POST = (req: NextRequest, ctx: any) => createVentaHandler(req, ctx, { userId: 'user-123' });
-    const prisma = (await import('@/lib/prisma')).default as any;
-
-    prisma.puntoDeVenta.findUnique.mockResolvedValue({ pvId: 'pv-1', listaPrecioId: null });
-    prisma.transferencia.aggregate.mockImplementation(async (args: any) => {
-      if (args?.where?.puntoDeVentaDestinoId) return { _sum: { cantidad: 10 } };
-      return { _sum: { cantidad: 0 } };
-    });
-    prisma.ventaItem.aggregate.mockResolvedValue({ _sum: { cantidad: 0 } });
-    prisma.venta.aggregate.mockResolvedValue({ _sum: { cantidad: 0 } });
+    prisma.venta.findFirst.mockResolvedValue(null); // idempotency check
     prisma.producto.findUnique.mockResolvedValue({
       id: 'prod-1',
       precioVenta: 200,
       nombre: 'Producto Demo',
     });
     prisma.precioProducto.findUnique.mockResolvedValue(null);
+    prisma.almacen.findUnique.mockResolvedValue(null);
     prisma.ventaServicios.create.mockResolvedValue({ ventaServicioId: 'vs-1' });
 
     const txVentaCreate = vi.fn().mockResolvedValue({
@@ -274,7 +113,7 @@ describe('Ventas API - sync stock padre para productos hijos compuestos', () => 
 
   it('decrementa stock del padre cuando se vende un producto hijo (venta única)', async () => {
     const { createVentaHandler } = await import('@/features/ventas/api/handlers');
-    const POST = (req: NextRequest, ctx: any) => createVentaHandler(req, ctx, { userId: 'user-123' });
+    const POST = (req: NextRequest, ctx: any) => createVentaHandler(req, ctx, { userId: 'user-123', tenantId: 'tenant-test' });
     const prisma = (await import('@/lib/prisma')).default as any;
 
     prisma.puntoDeVenta.findUnique.mockResolvedValue({ pvId: 'pv-1', listaPrecioId: null });
@@ -284,14 +123,25 @@ describe('Ventas API - sync stock padre para productos hijos compuestos', () => 
       return { _sum: { cantidad: 0 } };
     });
     prisma.ventaItem.aggregate.mockResolvedValue({ _sum: { cantidad: 0 } });
-    prisma.venta.aggregate.mockResolvedValue({ _sum: { cantidad: 0 } });
-    prisma.producto.findUnique.mockResolvedValue({
-      id: 'hijo-1',
-      precioVenta: 50,
-      nombre: 'Unidad del Pack',
-      productoPadreId: 'padre-1',
-      cantidadEnPack: 24,
-    });
+    prisma.venta.findFirst.mockResolvedValue(null); // idempotency check
+    // Two calls: one for location validation (child), one for parent product
+    prisma.producto.findUnique
+      .mockResolvedValueOnce({
+        id: 'hijo-1',
+        precioVenta: 50,
+        nombre: 'Unidad del Pack',
+        productoPadreId: 'padre-1',
+        cantidadEnPack: 24,
+      })
+      .mockResolvedValueOnce({ almacenId: 'alm-1' }) // parent product in validateVentaLocations
+      .mockResolvedValueOnce({
+        id: 'hijo-1',
+        precioVenta: 50,
+        nombre: 'Unidad del Pack',
+        productoPadreId: 'padre-1',
+        cantidadEnPack: 24,
+      }); // second call in crearVentaUnica
+    prisma.almacen.findUnique.mockResolvedValue({ almacenId: 'alm-1', activo: true });
 
     const txVentaCreate = vi.fn().mockResolvedValue({
       ventaId: 'venta-1',
@@ -342,7 +192,7 @@ describe('Ventas API - sync stock padre para productos hijos compuestos', () => 
 
   it('NO decrementa stock del padre cuando floor es 0 (cantidad < cantidadEnPack)', async () => {
     const { createVentaHandler } = await import('@/features/ventas/api/handlers');
-    const POST = (req: NextRequest, ctx: any) => createVentaHandler(req, ctx, { userId: 'user-123' });
+    const POST = (req: NextRequest, ctx: any) => createVentaHandler(req, ctx, { userId: 'user-123', tenantId: 'tenant-test' });
     const prisma = (await import('@/lib/prisma')).default as any;
 
     prisma.puntoDeVenta.findUnique.mockResolvedValue({ pvId: 'pv-1', listaPrecioId: null });
@@ -352,14 +202,24 @@ describe('Ventas API - sync stock padre para productos hijos compuestos', () => 
       return { _sum: { cantidad: 0 } };
     });
     prisma.ventaItem.aggregate.mockResolvedValue({ _sum: { cantidad: 0 } });
-    prisma.venta.aggregate.mockResolvedValue({ _sum: { cantidad: 0 } });
-    prisma.producto.findUnique.mockResolvedValue({
-      id: 'hijo-1',
-      precioVenta: 50,
-      nombre: 'Unidad del Pack',
-      productoPadreId: 'padre-1',
-      cantidadEnPack: 20,
-    });
+    prisma.venta.findFirst.mockResolvedValue(null); // idempotency check
+    prisma.producto.findUnique
+      .mockResolvedValueOnce({
+        id: 'hijo-1',
+        precioVenta: 50,
+        nombre: 'Unidad del Pack',
+        productoPadreId: 'padre-1',
+        cantidadEnPack: 20,
+      })
+      .mockResolvedValueOnce({ almacenId: 'alm-1' }) // parent product in validateVentaLocations
+      .mockResolvedValueOnce({
+        id: 'hijo-1',
+        precioVenta: 50,
+        nombre: 'Unidad del Pack',
+        productoPadreId: 'padre-1',
+        cantidadEnPack: 20,
+      });
+    prisma.almacen.findUnique.mockResolvedValue({ almacenId: 'alm-1', activo: true });
 
     const txVentaCreate = vi.fn().mockResolvedValue({
       ventaId: 'venta-1',

@@ -14,6 +14,7 @@ export default defineConfig({
       '**/.next/**',
       '**/.kilocode/**',
       '**/.opencode/**',
+      '**/.worktrees/**',
       'dist',
       '**/*.spec.ts', // Exclude Playwright E2E tests
       '**/*.spec.tsx',

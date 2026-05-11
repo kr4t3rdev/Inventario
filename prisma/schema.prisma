@@ -377,7 +377,9 @@ model StockUbicacion {
 model Venta {
   ventaId          String                @id @default(cuid())
   tenantId         String
+  /// @deprecated Use VentaItem[] items instead
   productoId       String?
+  /// @deprecated Use VentaItem[] items instead
   cantidad         Int
   puntoDeVentaId   String
   createdAt        DateTime              @default(now())
@@ -391,6 +393,7 @@ model Venta {
   esVentaUnica     Boolean               @default(false)
   ofertaId         String?               @unique
   ventaPadreId     String?
+  idempotencyKey   String?               @unique
   ordenReparacion  OrdenReparacion?      @relation("OrdenVenta")
   reconciliaciones ReconciliacionVenta[]
   cliente          Cliente?              @relation(fields: [clienteId], references: [clienteId], onDelete: Cascade)
@@ -404,6 +407,7 @@ model Venta {
 
   @@index([tenantId])
   @@index([tenantId, createdAt])
+  @@index([tenantId, idempotencyKey])
 }
 
 model VentaItem {
@@ -419,6 +423,21 @@ model VentaItem {
   venta          Venta    @relation(fields: [ventaId], references: [ventaId], onDelete: Cascade)
 
   @@map("venta_items")
+}
+
+model AuditVenta {
+  auditId    String   @id @default(cuid())
+  ventaId    String?
+  tenantId   String
+  operacion  String
+  userId     String
+  resultado  String
+  mensaje    String?
+  detalles   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+  @@map("audit_venta")
 }
 
 model Merma {

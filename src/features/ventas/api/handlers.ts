@@ -37,8 +37,75 @@ async function resolverPrecioVenta(
   return precioLista?.precio ?? precioBase
 }
 
+/**
+ * Wraps a Prisma transaction with explicit rollback logging.
+ * Logs detailed context on failure for debugging.
+ */
+async function withVentaTransaction<T>(
+  fn: (tx: Prisma.TransactionClient) => Promise<T>,
+  context: { userId: string; operation: string; tenantId?: string },
+): Promise<T> {
+  try {
+    return await prisma.$transaction(fn)
+  } catch (error) {
+    console.error('[VENTA_TX_ROLLBACK]', {
+      operation: context.operation,
+      userId: context.userId,
+      tenantId: context.tenantId,
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString(),
+    })
+    throw error
+  }
+}
+
+async function validateVentaLocations(
+  puntoDeVentaId: string,
+  productos: Array<{ productoId: string }>,
+): Promise<{ valid: true } | { valid: false; error: string }> {
+  // Validate punto de venta exists
+  const puntoDeVenta = await prisma.puntoDeVenta.findUnique({
+    where: { pvId: puntoDeVentaId },
+    select: { pvId: true },
+  })
+  if (!puntoDeVenta) {
+    return { valid: false, error: 'Punto de venta no encontrado' }
+  }
+
+  // Validate almacenes for parent products
+  for (const item of productos) {
+    const producto = await prisma.producto.findUnique({
+      where: { id: item.productoId },
+      select: { productoPadreId: true },
+    })
+    if (!producto) {
+      return { valid: false, error: `Producto ${item.productoId} no encontrado` }
+    }
+    if (producto.productoPadreId) {
+      const parent = await prisma.producto.findUnique({
+        where: { id: producto.productoPadreId },
+        select: { almacenId: true },
+      })
+      if (!parent || !parent.almacenId) {
+        return { valid: false, error: 'Almacén no disponible para producto padre' }
+      }
+      const almacen = await prisma.almacen.findUnique({
+        where: { almacenId: parent.almacenId },
+        select: { activo: true },
+      })
+      if (!almacen || !almacen.activo) {
+        return { valid: false, error: 'Almacén inactivo o no encontrado' }
+      }
+    }
+  }
+
+  return { valid: true }
+}
+
 async function crearFacturaParaVenta(
   tx: Prisma.TransactionClient,
+  tenantId: string,
   ventaId: string,
   clienteId: string,
   subtotal: number,
@@ -66,7 +133,7 @@ async function crearFacturaParaVenta(
     serie = await tx.serieFacturacion.findFirst({ where: { esPorDefecto: true } })
     if (!serie) {
       serie = await tx.serieFacturacion.create({
-        data: { tenant: { connect: { tenantId: '' } }, prefijo: "SD", descripcion: "Serie por defecto para ventas", consecutivo: 1, activa: true, esPorDefecto: true },
+        data: { tenant: { connect: { tenantId } }, prefijo: "SD", descripcion: "Serie por defecto para ventas", consecutivo: 1, activa: true, esPorDefecto: true },
       })
     }
   }
@@ -79,7 +146,7 @@ async function crearFacturaParaVenta(
 
   const factura = await tx.factura.create({
     data: {
-      tenantId: '',
+      tenantId,
       ventaId, clienteId, serieId: serie.serieId,
       subtotal: Number(subtotal), impuestos: Number(impuestos || 0),
       descuento: Number(descuento || 0), cargoTransporte: Number(cargoTransporte || 0),
@@ -103,7 +170,7 @@ async function crearFacturaParaVenta(
     await reconciliarVentaDirecta(tx, {
       ventaId, montoTotal: Number(total), usuarioId: creadoPor,
       observaciones: observaciones || `Cobro anticipado factura ${factura.idFactura}`,
-      cuentaBancariaId, tenantId: '',
+      cuentaBancariaId, tenantId,
     })
 
     await tx.factura.update({
@@ -114,7 +181,7 @@ async function crearFacturaParaVenta(
     await applyFacturacionCobroWorkflow(tx, {
       ventaId, facturaId: factura.idFactura, clienteId, montoTotal: Number(total),
       usuarioId: creadoPor, observaciones, tipoVencimiento, fechaVencimiento, cuentaBancariaId,
-      tenantId: '',
+      tenantId,
     })
   }
 
@@ -122,6 +189,7 @@ async function crearFacturaParaVenta(
 }
 
 async function crearVentaMixta(body: any, user: any) {
+  const tenantId = requireTenant(user)
   const lineas = Array.isArray(body.lineas) ? body.lineas : []
   const lineasProducto = lineas.filter((linea: any) => linea.tipoLinea === 'PRODUCTO')
   const lineasServicio = lineas.filter((linea: any) => linea.tipoLinea === 'SERVICIO')
@@ -135,7 +203,7 @@ async function crearVentaMixta(body: any, user: any) {
             total: linea.cantidad * linea.precioUnitario,
             observaciones: linea.observaciones ?? body.observaciones ?? null,
             clienteId: body.clienteId ?? null,
-            tenantId: '',
+            tenantId,
           },
         }),
       ),
@@ -161,7 +229,7 @@ async function crearVentaMixta(body: any, user: any) {
               total: linea.cantidad * linea.precioUnitario,
               observaciones: linea.observaciones ?? body.observaciones ?? null,
               clienteId: body.clienteId ?? null,
-              tenantId: '',
+              tenantId,
             },
           }),
         ),
@@ -177,6 +245,7 @@ async function crearVentaMixta(body: any, user: any) {
 }
 
 async function crearVentaUnica(body: any, user: any) {
+  const tenantId = requireTenant(user)
   const {
     productos, puntoDeVentaId, descuento, impuestos, cargoTransporte,
     observaciones, clienteId, serieId, fechaVencimiento, tipoVencimiento,
@@ -188,6 +257,12 @@ async function crearVentaUnica(body: any, user: any) {
       { error: 'formaPagoAnticipo debe ser ANTICIPO_COBRO cuando se usa anticipo' },
       { status: 400 },
     )
+  }
+
+  // Validate locations BEFORE transaction
+  const locationValidation = await validateVentaLocations(puntoDeVentaId, productos)
+  if (!locationValidation.valid) {
+    return NextResponse.json({ error: locationValidation.error }, { status: 404 })
   }
 
   const puntoDeVenta = await prisma.puntoDeVenta.findUnique({ where: { pvId: puntoDeVentaId } })
@@ -203,11 +278,11 @@ async function crearVentaUnica(body: any, user: any) {
       where: { productoId, puntoDeVentaOrigenId: puntoDeVentaId },
       _sum: { cantidad: true },
     })
-    const [ventasItems, ventasLegacy] = await Promise.all([
-      prisma.ventaItem.aggregate({ where: { productoId, venta: { puntoDeVentaId } }, _sum: { cantidad: true } }),
-      prisma.venta.aggregate({ where: { productoId, puntoDeVentaId, items: { none: {} } }, _sum: { cantidad: true } }),
-    ])
-    const ventasTotal = (ventasItems._sum.cantidad || 0) + (ventasLegacy._sum.cantidad || 0)
+    const stockVendido = await prisma.ventaItem.aggregate({
+      where: { productoId, venta: { puntoDeVentaId } },
+      _sum: { cantidad: true },
+    })
+    const ventasTotal = stockVendido._sum.cantidad || 0
     const stockDisponible = (transferenciasEntrada._sum.cantidad || 0) - (transferenciasSalida._sum.cantidad || 0) - ventasTotal
 
     if (stockDisponible < cantidad) {
@@ -241,49 +316,53 @@ async function crearVentaUnica(body: any, user: any) {
   const cargoTransporteNum = Number(cargoTransporte || 0)
   const totalVenta = subtotalVenta - descuentoNum + impuestosNum + cargoTransporteNum
 
-  const venta = await prisma.$transaction(async (tx) => {
-    const ventaCreada = await tx.venta.create({
-      data: {
-        tenantId: '',
-        cantidad: productos.reduce((sum: number, item: any) => sum + item.cantidad, 0),
-        esVentaUnica: true,
-        puntoDeVentaId,
-        clienteId: clienteId || undefined,
-        descuento: descuentoNum > 0 ? descuentoNum : undefined,
-        observaciones: observaciones ?? undefined,
-        total: totalVenta,
-        items: { create: productosConPrecio.map((item: any) => ({ productoId: item.productoId, cantidad: item.cantidad, precioUnitario: Number(item.precioVenta), total: Number(item.subtotal) })) },
-      },
-      include: {
-        puntoDeVenta: { select: { nombre: true } },
-        cliente: { select: { nombre: true } },
-        items: { include: { producto: { select: { id: true, nombre: true, precioVenta: true, unidad: { select: { simbolo: true } } } } } },
-      },
-    })
+  const venta = await withVentaTransaction(
+    async (tx) => {
+      const ventaCreada = await tx.venta.create({
+        data: {
+          tenantId,
+          idempotencyKey,
+          cantidad: productos.reduce((sum: number, item: any) => sum + item.cantidad, 0),
+          esVentaUnica: true,
+          puntoDeVentaId,
+          clienteId: clienteId || undefined,
+          descuento: descuentoNum > 0 ? descuentoNum : undefined,
+          observaciones: observaciones ?? undefined,
+          total: totalVenta,
+          items: { create: productosConPrecio.map((item: any) => ({ productoId: item.productoId, cantidad: item.cantidad, precioUnitario: Number(item.precioVenta), total: Number(item.subtotal) })) },
+        },
+        include: {
+          puntoDeVenta: { select: { nombre: true } },
+          cliente: { select: { nombre: true } },
+          items: { include: { producto: { select: { id: true, nombre: true, precioVenta: true, unidad: { select: { simbolo: true } } } } } },
+        },
+      })
 
-    if (clienteId && user?.userId) {
-      await crearFacturaParaVenta(tx, ventaCreada.ventaId, clienteId, subtotalVenta, descuentoNum, impuestosNum, cargoTransporteNum, totalVenta, observaciones || null, user.userId, serieId, fechaVencimiento, tipoVencimiento, cuentaBancariaId, anticipoCobroId, idempotencyKey)
-    }
+      if (clienteId && user?.userId) {
+        await crearFacturaParaVenta(tx, tenantId, ventaCreada.ventaId, clienteId, subtotalVenta, descuentoNum, impuestosNum, cargoTransporteNum, totalVenta, observaciones || null, user.userId, serieId, fechaVencimiento, tipoVencimiento, cuentaBancariaId, anticipoCobroId, idempotencyKey)
+      }
 
-    for (const item of productosConPrecio) {
-      await upsertStockUbicacion(tx, { productoId: item.productoId, tipoUbicacion: 'punto_venta', ubicacionId: puntoDeVentaId, modo: 'increment', delta: -item.cantidad })
-    }
+      for (const item of productosConPrecio) {
+        await upsertStockUbicacion(tx, { productoId: item.productoId, tipoUbicacion: 'punto_venta', ubicacionId: puntoDeVentaId, modo: 'increment', delta: -item.cantidad })
+      }
 
-    for (const item of productosConPrecio) {
-      if (item.productoPadreId && item.cantidadEnPack && item.cantidadEnPack > 0) {
-        const parentDecrement = Math.floor(item.cantidad / item.cantidadEnPack)
-        if (parentDecrement >= 1) {
-          await tx.producto.update({ where: { id: item.productoPadreId }, data: { stock: { decrement: parentDecrement } } })
-          const productoPadre = await tx.producto.findUnique({ where: { id: item.productoPadreId }, select: { almacenId: true } })
-          if (productoPadre) {
-            await upsertStockUbicacion(tx, { productoId: item.productoPadreId, tipoUbicacion: 'almacen', ubicacionId: productoPadre.almacenId, modo: 'increment', delta: -parentDecrement })
+      for (const item of productosConPrecio) {
+        if (item.productoPadreId && item.cantidadEnPack && item.cantidadEnPack > 0) {
+          const parentDecrement = Math.floor(item.cantidad / item.cantidadEnPack)
+          if (parentDecrement >= 1) {
+            await tx.producto.update({ where: { id: item.productoPadreId }, data: { stock: { decrement: parentDecrement } } })
+            const productoPadre = await tx.producto.findUnique({ where: { id: item.productoPadreId }, select: { almacenId: true } })
+            if (productoPadre) {
+              await upsertStockUbicacion(tx, { productoId: item.productoPadreId, tipoUbicacion: 'almacen', ubicacionId: productoPadre.almacenId, modo: 'increment', delta: -parentDecrement })
+            }
           }
         }
       }
-    }
 
-    return ventaCreada
-  })
+      return ventaCreada
+    },
+    { userId: user?.userId, operation: 'create_venta_unica', tenantId },
+  )
 
   await invalidateDashboardCache()
 
@@ -291,6 +370,7 @@ async function crearVentaUnica(body: any, user: any) {
 }
 
 async function crearVentaIndividual(body: any, user: any) {
+  const tenantId = requireTenant(user)
   const {
     productoId, cantidad, precioVenta, puntoDeVentaId, descuento, impuestos,
     cargoTransporte, observaciones, clienteId, serieId, fechaVencimiento,
@@ -299,6 +379,12 @@ async function crearVentaIndividual(body: any, user: any) {
 
   if (anticipoCobroId && formaPagoAnticipo !== 'ANTICIPO_COBRO') {
     return NextResponse.json({ error: 'formaPagoAnticipo debe ser ANTICIPO_COBRO cuando se usa anticipo' }, { status: 400 })
+  }
+
+  // Validate locations BEFORE transaction
+  const locationValidation = await validateVentaLocations(puntoDeVentaId, [{ productoId }])
+  if (!locationValidation.valid) {
+    return NextResponse.json({ error: locationValidation.error }, { status: 404 })
   }
 
   const puntoDeVenta = await prisma.puntoDeVenta.findUnique({ where: { pvId: puntoDeVentaId } })
@@ -312,11 +398,11 @@ async function crearVentaIndividual(body: any, user: any) {
     where: { productoId, puntoDeVentaOrigenId: puntoDeVentaId },
     _sum: { cantidad: true },
   })
-  const [ventasItems, ventasLegacy] = await Promise.all([
-    prisma.ventaItem.aggregate({ where: { productoId, venta: { puntoDeVentaId } }, _sum: { cantidad: true } }),
-    prisma.venta.aggregate({ where: { productoId, puntoDeVentaId, items: { none: {} } }, _sum: { cantidad: true } }),
-  ])
-  const ventasTotal = (ventasItems._sum.cantidad || 0) + (ventasLegacy._sum.cantidad || 0)
+  const stockVendido = await prisma.ventaItem.aggregate({
+    where: { productoId, venta: { puntoDeVentaId } },
+    _sum: { cantidad: true },
+  })
+  const ventasTotal = stockVendido._sum.cantidad || 0
   const stockDisponible = (transferenciasEntrada._sum.cantidad || 0) - (transferenciasSalida._sum.cantidad || 0) - ventasTotal
 
   if (stockDisponible < cantidad) {
@@ -341,44 +427,48 @@ async function crearVentaIndividual(body: any, user: any) {
   const cargoTransporteNum = Number(cargoTransporte || 0)
   const totalVenta = subtotalVenta - descuentoNum + impuestosNum + cargoTransporteNum
 
-  const venta = await prisma.$transaction(async (tx) => {
-    const ventaCreada = await tx.venta.create({
-      data: {
-        tenantId: '',
-        productoId,
-        cantidad, puntoDeVentaId,
-        clienteId: clienteId || undefined,
-        descuento: descuentoNum > 0 ? descuentoNum : undefined,
-        observaciones: observaciones ?? undefined,
-        total: totalVenta,
-        items: { create: [{ productoId, cantidad, precioUnitario: Number(precioAplicado), total: Number(subtotalVenta) }] },
-      },
-      include: {
-        producto: { select: { nombre: true, precioVenta: true } },
-        puntoDeVenta: { select: { nombre: true } },
-        items: { include: { producto: { select: { id: true, nombre: true, precioVenta: true, unidad: { select: { simbolo: true } } } } } },
-      },
-    })
+  const venta = await withVentaTransaction(
+    async (tx) => {
+      const ventaCreada = await tx.venta.create({
+        data: {
+          tenantId,
+          idempotencyKey,
+          productoId,
+          cantidad, puntoDeVentaId,
+          clienteId: clienteId || undefined,
+          descuento: descuentoNum > 0 ? descuentoNum : undefined,
+          observaciones: observaciones ?? undefined,
+          total: totalVenta,
+          items: { create: [{ productoId, cantidad, precioUnitario: Number(precioAplicado), total: Number(subtotalVenta) }] },
+        },
+        include: {
+          producto: { select: { nombre: true, precioVenta: true } },
+          puntoDeVenta: { select: { nombre: true } },
+          items: { include: { producto: { select: { id: true, nombre: true, precioVenta: true, unidad: { select: { simbolo: true } } } } } },
+        },
+      })
 
-    if (clienteId && user?.userId) {
-      await crearFacturaParaVenta(tx, ventaCreada.ventaId, clienteId, subtotalVenta, descuentoNum, impuestosNum, cargoTransporteNum, totalVenta, observaciones || null, user.userId, serieId, fechaVencimiento, tipoVencimiento, cuentaBancariaId, anticipoCobroId, idempotencyKey)
-    }
+      if (clienteId && user?.userId) {
+        await crearFacturaParaVenta(tx, tenantId, ventaCreada.ventaId, clienteId, subtotalVenta, descuentoNum, impuestosNum, cargoTransporteNum, totalVenta, observaciones || null, user.userId, serieId, fechaVencimiento, tipoVencimiento, cuentaBancariaId, anticipoCobroId, idempotencyKey)
+      }
 
-    await upsertStockUbicacion(tx, { productoId: producto.id, tipoUbicacion: 'punto_venta', ubicacionId: puntoDeVentaId, modo: 'increment', delta: -cantidad })
+      await upsertStockUbicacion(tx, { productoId: producto.id, tipoUbicacion: 'punto_venta', ubicacionId: puntoDeVentaId, modo: 'increment', delta: -cantidad })
 
-    if (producto.productoPadreId && producto.cantidadEnPack && producto.cantidadEnPack > 0) {
-      const parentDecrement = Math.floor(cantidad / producto.cantidadEnPack)
-      if (parentDecrement >= 1) {
-        await tx.producto.update({ where: { id: producto.productoPadreId }, data: { stock: { decrement: parentDecrement } } })
-        const productoPadre = await tx.producto.findUnique({ where: { id: producto.productoPadreId }, select: { almacenId: true } })
-        if (productoPadre) {
-          await upsertStockUbicacion(tx, { productoId: producto.productoPadreId, tipoUbicacion: 'almacen', ubicacionId: productoPadre.almacenId, modo: 'increment', delta: -parentDecrement })
+      if (producto.productoPadreId && producto.cantidadEnPack && producto.cantidadEnPack > 0) {
+        const parentDecrement = Math.floor(cantidad / producto.cantidadEnPack)
+        if (parentDecrement >= 1) {
+          await tx.producto.update({ where: { id: producto.productoPadreId }, data: { stock: { decrement: parentDecrement } } })
+          const productoPadre = await tx.producto.findUnique({ where: { id: producto.productoPadreId }, select: { almacenId: true } })
+          if (productoPadre) {
+            await upsertStockUbicacion(tx, { productoId: producto.productoPadreId, tipoUbicacion: 'almacen', ubicacionId: productoPadre.almacenId, modo: 'increment', delta: -parentDecrement })
+          }
         }
       }
-    }
 
-    return ventaCreada
-  })
+      return ventaCreada
+    },
+    { userId: user?.userId, operation: 'create_venta_individual', tenantId },
+  )
 
   await invalidateDashboardCache()
   return NextResponse.json(venta)
@@ -409,7 +499,33 @@ export async function getVentasHandler(request: NextRequest, context: any, user:
 
 export async function createVentaHandler(request: NextRequest, context: any, user: any) {
   try {
+    // @deprecated - venta.productoId + venta.cantidad are legacy fields
+    // Stock tracking consolidated under VentaItem[] from now on.
+    console.warn('[DEPRECATION] venta.productoId + venta.cantidad are legacy. Use venta.items[] instead. Will be removed in v2.0.0.')
+
     const body = await request.json()
+    const tenantId = requireTenant(user)
+
+    // ─── Idempotency Key: prevent duplicate sales ────────────
+    let idempotencyKey = body.idempotencyKey
+    if (idempotencyKey) {
+      const existing = await prisma.venta.findFirst({
+        where: { idempotencyKey, tenantId },
+        include: {
+          puntoDeVenta: { select: { nombre: true } },
+          cliente: { select: { nombre: true } },
+          items: { include: { producto: { select: { id: true, nombre: true } } } },
+        },
+      })
+      if (existing) {
+        console.log(`[IDEMPOTENCY] Request with existing key ${idempotencyKey}, returning venta ${existing.ventaId}`)
+        return NextResponse.json(existing, { status: 200 })
+      }
+    } else {
+      idempotencyKey = crypto.randomUUID()
+    }
+
+    body.idempotencyKey = idempotencyKey
 
     if (body.lineas && Array.isArray(body.lineas)) {
       return await crearVentaMixta(body, user)
@@ -421,10 +537,24 @@ export async function createVentaHandler(request: NextRequest, context: any, use
       return await crearVentaIndividual(body, user)
     }
   } catch (error) {
-    console.error("Error al crear venta:", error)
+    console.error("[VENTA_HANDLER_ERROR]", {
+      userId: user?.userId,
+      error: error instanceof Error ? error.message : String(error),
+    })
     if (isAnticipoWorkflowError(error)) {
       return NextResponse.json({ error: error.message, code: error.code }, { status: error.status })
     }
+
+    // Prisma known request errors
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        return NextResponse.json({ error: 'Venta duplicada o conflicto de datos' }, { status: 409 })
+      }
+      if (error.code === 'P2025') {
+        return NextResponse.json({ error: 'Registro no encontrado para actualizar' }, { status: 404 })
+      }
+    }
+
     const errorMessage = error instanceof Error ? error.message : ""
     const shouldReturnBadRequest =
       errorMessage.includes('Serie de facturación no disponible') ||
@@ -439,11 +569,17 @@ export async function createVentaHandler(request: NextRequest, context: any, use
   }
 }
 
-export async function getVentaByIdHandler(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function getVentaByIdHandler(
+  request: NextRequest,
+  context: any,
+  user: AuthenticatedUser
+) {
   try {
-    const { id } = await params
-    const venta = await prisma.venta.findUnique({
-      where: { ventaId: id },
+    const params = await context.params
+    const { id } = params
+    const tenantId = requireTenant(user)
+    const venta = await prisma.venta.findFirst({
+      where: { ventaId: id, tenantId },
       include: {
         producto: true,
         puntoDeVenta: true,
@@ -458,14 +594,20 @@ export async function getVentaByIdHandler(request: Request, { params }: { params
   }
 }
 
-export async function updateVentaHandler(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function updateVentaHandler(
+  request: NextRequest,
+  context: any,
+  user: AuthenticatedUser
+) {
   try {
-    const { id } = await params
+    const params = await context.params
+    const { id } = params
+    const tenantId = requireTenant(user)
     const body = await request.json()
     const { productoId, cantidad, fecha, puntoDeVentaId } = body
 
-    const ventaActual = await prisma.venta.findUnique({
-      where: { ventaId: id },
+    const ventaActual = await prisma.venta.findFirst({
+      where: { ventaId: id, tenantId },
       include: { items: true },
     })
     if (!ventaActual) return NextResponse.json({ error: "Venta no encontrada" }, { status: 404 })
@@ -534,10 +676,16 @@ export async function updateVentaHandler(request: Request, { params }: { params:
   }
 }
 
-export async function deleteVentaHandler(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function deleteVentaHandler(
+  request: NextRequest,
+  context: any,
+  user: AuthenticatedUser
+) {
   try {
-    const { id } = await params
-    const venta = await prisma.venta.findUnique({ where: { ventaId: id }, include: { items: true } })
+    const params = await context.params
+    const { id } = params
+    const tenantId = requireTenant(user)
+    const venta = await prisma.venta.findFirst({ where: { ventaId: id, tenantId }, include: { items: true } })
     if (!venta) return NextResponse.json({ error: "Venta no encontrada" }, { status: 404 })
 
     if (venta.items && venta.items.length > 0) {
@@ -557,17 +705,22 @@ export async function deleteVentaHandler(request: Request, { params }: { params:
   }
 }
 
-export async function getVentasStatsHandler() {
+export async function getVentasStatsHandler(
+  request: NextRequest,
+  context: any,
+  user: AuthenticatedUser
+) {
   try {
-    const totalVentas = await prisma.venta.count()
+    const tenantId = requireTenant(user)
+    const totalVentas = await prisma.venta.count({ where: { tenantId } })
     const fechaInicio = new Date()
     fechaInicio.setMonth(fechaInicio.getMonth() - 6)
 
     const ventasPorMes = await prisma.$queryRaw<{ mes: Date; total: number }[]>`
-      SELECT DATE_TRUNC('month', "fecha") as mes, SUM("cantidad") as total
+      SELECT DATE_TRUNC('month', "createdAt") as mes, SUM("cantidad") as total
       FROM "Venta"
-      WHERE "fecha" >= ${fechaInicio}
-      GROUP BY DATE_TRUNC('month', "fecha")
+      WHERE "createdAt" >= ${fechaInicio} AND "tenantId" = ${tenantId}
+      GROUP BY DATE_TRUNC('month', "createdAt")
       ORDER BY mes ASC
     `
 
