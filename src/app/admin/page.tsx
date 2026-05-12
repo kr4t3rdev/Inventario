@@ -76,7 +76,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
   const safeTenants = tenants ?? []
   const loading = isLoading
   const safeFinance = finance
-  const safeSystem = system
+  const safeSystem = system ?? { users: { total: 0, byRole: [] }, tenants: { total: 0 }, sessions: { active: 0 }, licenses: { total: 0, active: 0, expiringSoon: 0 } }
 
   const kpiCards = [
     {
@@ -297,7 +297,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {safeSystem?.users.byRole.map((r: any) => {
+                      {safeSystem.users.byRole.map((r: any) => {
                         const pct = safeSystem.users.total > 0
                           ? Math.round((r.count / safeSystem.users.total) * 100)
                           : 0
@@ -397,7 +397,7 @@ export default function AdminDashboardPage(): React.JSX.Element {
                     {safeTenants.map((t) => (
                       <div key={t.tenantId} className="flex items-center justify-between rounded-lg border p-2.5 text-sm">
                         <span className="font-medium truncate flex-1">{t.nombre}</span>
-                        <span className="text-xs text-muted-foreground mx-2">{t.totalUsers} users</span>
+                        <span className="text-xs text-muted-foreground mx-2">{t.totalUsers ?? 0} users</span>
                         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${t.licenseActive ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" : "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"}`}>
                           {t.plan || "Sin plan"}
                         </span>

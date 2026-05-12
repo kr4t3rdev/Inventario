@@ -147,8 +147,7 @@ export const getAdminTenantsAction = withAction(async (_input: void, user: Authe
   return prisma.tenant.findMany({
     orderBy: { createdAt: 'desc' },
     include: {
-  // @ts-expect-error
-    _count: { select: { users: true, productos: true, Almacen: true } }
+      _count: { select: { memberships: true, productos: true, Almacen: true } }
     },
   });
 });
@@ -161,8 +160,9 @@ export const getAdminSystemHealthAction = withAction(async (_input: void, user: 
     prisma.userSession.count(),
     prisma.tenantLicense.count(),
   ]);
+  const usersByRole = await prisma.user.groupBy({ by: ['role'], _count: true });
   return {
-    users: { total: users },
+    users: { total: users, byRole: usersByRole.map((r) => ({ role: r.role, count: r._count })) },
     tenants: { total: tenants },
     sessions: { active: sessions },
     licenses: { total: licenses },
@@ -171,9 +171,14 @@ export const getAdminSystemHealthAction = withAction(async (_input: void, user: 
 
 export const getAdminFinanceAction = withAction(async (_input: void, user: AuthenticatedUser) => {
   if (user.role !== 'admin') throw new ActionError('Acceso restringido', 'FORBIDDEN');
-  const tenantCount = await prisma.tenant.count();
-  const ventas = await prisma.venta.aggregate({ _count: true, _sum: { total: true } });
-  const ventasServicios = await prisma.ventaServicios.aggregate({ _count: true, _sum: { total: true } });
+  const [ventas, ventasServicios, gastos, cuentasPorCobrar, cuentasPorPagar, tenantCount] = await Promise.all([
+    prisma.venta.aggregate({ _count: true, _sum: { total: true } }),
+    prisma.ventaServicios.aggregate({ _count: true, _sum: { total: true } }),
+    prisma.gastosDE.aggregate({ _count: true, _sum: { monto: true } }),
+    prisma.cuentasPorCobrar.aggregate({ _count: true, _sum: { montoDeuda: true, montoPagado: true } }),
+    prisma.cuentasPorPagar.aggregate({ _count: true, _sum: { saldoPendiente: true } }),
+    prisma.tenant.count(),
+  ]);
   return {
     tenantCount,
     revenue: {
@@ -181,6 +186,16 @@ export const getAdminFinanceAction = withAction(async (_input: void, user: Authe
       totalVentasMonto: ventas._sum.total || 0,
       totalVentasServicios: ventasServicios._count || 0,
       totalServiciosMonto: ventasServicios._sum.total || 0,
+      totalIngresos: Number(ventas._sum.total || 0) + Number(ventasServicios._sum.total || 0),
+    },
+    gastos: { totalGastos: gastos._count || 0, totalMonto: gastos._sum.monto || 0 },
+    cuentasPorCobrar: {
+      total: cuentasPorCobrar._count || 0,
+      saldoPendiente: Number(cuentasPorCobrar._sum.montoDeuda || 0) - Number(cuentasPorCobrar._sum.montoPagado || 0),
+    },
+    cuentasPorPagar: {
+      total: cuentasPorPagar._count || 0,
+      saldoPendiente: cuentasPorPagar._sum.saldoPendiente || 0,
     },
   };
 });

@@ -24,7 +24,7 @@ import {
 export default async function DashboardPage() {
   const user = await getCurrentUser()
 
-  if (!user?.tenantId) {
+  if (!user) {
     return (
       <DashboardShell>
         <div className="flex flex-col items-center justify-center py-16 px-4">
@@ -32,7 +32,37 @@ export default async function DashboardPage() {
             Error al cargar el Dashboard
           </div>
           <p className="text-muted-foreground text-sm">
-            Usuario no autenticado o sin tenant asignado.
+            Usuario no autenticado.
+          </p>
+        </div>
+      </DashboardShell>
+    )
+  }
+
+  if (!user.tenantId && user.role === 'admin') {
+    return (
+      <DashboardShell>
+        <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+          <div className="text-violet-600 text-lg font-medium mb-2">
+            Dashboard global de administrador
+          </div>
+          <p className="text-muted-foreground text-sm max-w-xl">
+            Tu usuario tiene acceso global al panel de control admin. El dashboard operativo requiere una membresía de empresa, así que usá el panel admin para métricas globales.
+          </p>
+        </div>
+      </DashboardShell>
+    )
+  }
+
+  if (!user.tenantId) {
+    return (
+      <DashboardShell>
+        <div className="flex flex-col items-center justify-center py-16 px-4">
+          <div className="text-destructive text-lg font-medium mb-2">
+            Error al cargar el Dashboard
+          </div>
+          <p className="text-muted-foreground text-sm">
+            Usuario autenticado sin tenant asignado.
           </p>
         </div>
       </DashboardShell>

@@ -61,8 +61,7 @@ export async function getAdminUsersPageData(): Promise<AdminUsersPageData | null
       take: 100,
       orderBy: { createdAt: 'desc' },
       include: {
-  // @ts-expect-error
-        tenants: {
+        tenantMemberships: {
           include: { tenant: { select: { nombre: true } } },
         },
       },
@@ -81,15 +80,13 @@ export async function getAdminUsersPageData(): Promise<AdminUsersPageData | null
       name: u.name,
       email: u.email,
       role: u.role,
-  // @ts-expect-error
-      tenantRole: u.tenantRole,
+      tenantRole: u.tenantMemberships.find((m) => m.isActive)?.tenantRole ?? null,
       isActive: u.isActive,
       lockedUntil: u.lockedUntil,
       expiresAt: u.expiresAt,
       createdAt: u.createdAt,
       loginAttempts: u.loginAttempts,
-  // @ts-expect-error
-      tenants: u.tenants.map((m) => ({
+      tenants: u.tenantMemberships.map((m) => ({
         tenantId: m.tenantId,
         tenantRole: m.tenantRole,
         isActive: m.isActive,
@@ -97,13 +94,11 @@ export async function getAdminUsersPageData(): Promise<AdminUsersPageData | null
       })),
     })),
     total,
-  // @ts-expect-error
     planes: planes.map((p) => ({
       planId: p.planId,
       nombre: p.nombre,
       precio: p.precio,
-  // @ts-expect-error
-      billingCycle: p.billingCycle,
+      billingCycle: `${p.duracionDias} días`,
       maxUsuarios: p.maxUsuarios,
       maxAlmacenes: p.maxAlmacenes,
       maxProductos: p.maxProductos,

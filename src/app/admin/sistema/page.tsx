@@ -11,6 +11,7 @@ import { getAdminSystemHealthAction } from "@/features/admin"
 export default function SistemaPage() {
   const [system, setSystem] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const safeSystem = system ?? { users: { total: 0, byRole: [] }, tenants: { total: 0 }, sessions: { active: 0 }, licenses: { total: 0, active: 0, expiringSoon: 0 } }
   const refetch = () => { getAdminSystemHealthAction().then(r => { if(r.success) setSystem(r.data) }) }
   useEffect(() => { setIsLoading(true); getAdminSystemHealthAction().then(r => { if(r.success) setSystem(r.data); setIsLoading(false) }) }, [])
 
@@ -44,11 +45,10 @@ export default function SistemaPage() {
             {isLoading ? (
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             ) : (
-              <p className="text-3xl font-bold">{system?.users.total ?? 0}</p>
+              <p className="text-3xl font-bold">{safeSystem.users.total}</p>
             )}
             <p className="text-xs text-muted-foreground mt-1">
-              {// @ts-expect-error
-system?.users.byRole.find((r) => r.role === "admin")?.count ?? 0} admins
+              {safeSystem.users.byRole.find((r) => r.role === "admin")?.count ?? 0} admins
             </p>
           </CardContent>
         </Card>
@@ -61,7 +61,7 @@ system?.users.byRole.find((r) => r.role === "admin")?.count ?? 0} admins
             {isLoading ? (
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             ) : (
-              <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{system?.sessions.active ?? 0}</p>
+              <p className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{safeSystem.sessions.active}</p>
             )}
             <p className="text-xs text-muted-foreground mt-1">Usuarios conectados ahora</p>
           </CardContent>
@@ -75,9 +75,9 @@ system?.users.byRole.find((r) => r.role === "admin")?.count ?? 0} admins
             {isLoading ? (
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             ) : (
-              <p className="text-3xl font-bold text-sky-600 dark:text-sky-400">{system?.licenses.active ?? 0}</p>
+              <p className="text-3xl font-bold text-sky-600 dark:text-sky-400">{safeSystem.licenses.active}</p>
             )}
-            <p className="text-xs text-muted-foreground mt-1">de {system?.licenses.total ?? 0} totales</p>
+            <p className="text-xs text-muted-foreground mt-1">de {safeSystem.licenses.total} totales</p>
           </CardContent>
         </Card>
 
@@ -89,9 +89,9 @@ system?.users.byRole.find((r) => r.role === "admin")?.count ?? 0} admins
             {isLoading ? (
               <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             ) : (
-              <p className={`text-3xl font-bold ${(system?.licenses.expiringSoon ?? 0) > 0 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}`}>
-                {system?.licenses.expiringSoon ?? 0}
-              </p>
+                <p className={`text-3xl font-bold ${safeSystem.licenses.expiringSoon > 0 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}`}>
+                  {safeSystem.licenses.expiringSoon}
+                </p>
             )}
             <p className="text-xs text-muted-foreground mt-1">Próximos 30 días</p>
           </CardContent>
@@ -114,9 +114,9 @@ system?.users.byRole.find((r) => r.role === "admin")?.count ?? 0} admins
               </div>
             ) : (
               <div className="space-y-3">
-                {system?.users.byRole.map((r: any) => {
-                  const pct = system.users.total > 0
-                    ? Math.round((r.count / system.users.total) * 100)
+                {safeSystem.users.byRole.map((r: any) => {
+                  const pct = safeSystem.users.total > 0
+                    ? Math.round((r.count / safeSystem.users.total) * 100)
                     : 0
                   const colors: Record<string, string> = {
                     admin: "bg-violet-500",
@@ -160,9 +160,9 @@ system?.users.byRole.find((r) => r.role === "admin")?.count ?? 0} admins
             ) : (
               <div className="space-y-3">
                 {[
-                  { label: "Activas", value: system?.licenses.active ?? 0, color: "bg-emerald-500", total: system?.licenses.total ?? 0 },
-                  { label: "Por vencer (30d)", value: system?.licenses.expiringSoon ?? 0, color: "bg-amber-500", total: system?.licenses.total ?? 0 },
-                  { label: "Inactivas", value: (system?.licenses.total ?? 0) - (system?.licenses.active ?? 0), color: "bg-rose-500", total: system?.licenses.total ?? 0 },
+                  { label: "Activas", value: safeSystem.licenses.active, color: "bg-emerald-500", total: safeSystem.licenses.total },
+                  { label: "Por vencer (30d)", value: safeSystem.licenses.expiringSoon, color: "bg-amber-500", total: safeSystem.licenses.total },
+                  { label: "Inactivas", value: safeSystem.licenses.total - safeSystem.licenses.active, color: "bg-rose-500", total: safeSystem.licenses.total },
                 ].map((item) => {
                   const pct = item.total > 0 ? Math.round((item.value / item.total) * 100) : 0
                   return (
