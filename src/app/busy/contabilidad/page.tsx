@@ -332,7 +332,7 @@ export default function ContabilidadDashboard(): React.JSX.Element {
             {reconciliationModules.map((module) => {
               const styles = accentStyles[module.tone];
               return (
-                <div key={'#'}>
+                <div key={module.href}>
                   <AnimatedCard className="h-full">
                     <Card className={cn(
                       "h-full overflow-hidden transition-all duration-300 border-slate-200 dark:border-slate-800 dark:bg-slate-900/15",

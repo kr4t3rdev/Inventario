@@ -94,11 +94,6 @@ export type Venta = $Result.DefaultSelection<Prisma.$VentaPayload>
  */
 export type VentaItem = $Result.DefaultSelection<Prisma.$VentaItemPayload>
 /**
- * Model AuditVenta
- * 
- */
-export type AuditVenta = $Result.DefaultSelection<Prisma.$AuditVentaPayload>
-/**
  * Model Merma
  * 
  */
@@ -1008,16 +1003,6 @@ export class PrismaClient<
     * ```
     */
   get ventaItem(): Prisma.VentaItemDelegate<ExtArgs, ClientOptions>;
-
-  /**
-   * `prisma.auditVenta`: Exposes CRUD operations for the **AuditVenta** model.
-    * Example usage:
-    * ```ts
-    * // Fetch zero or more AuditVentas
-    * const auditVentas = await prisma.auditVenta.findMany()
-    * ```
-    */
-  get auditVenta(): Prisma.AuditVentaDelegate<ExtArgs, ClientOptions>;
 
   /**
    * `prisma.merma`: Exposes CRUD operations for the **Merma** model.
@@ -2255,7 +2240,6 @@ export namespace Prisma {
     StockUbicacion: 'StockUbicacion',
     Venta: 'Venta',
     VentaItem: 'VentaItem',
-    AuditVenta: 'AuditVenta',
     Merma: 'Merma',
     Transferencia: 'Transferencia',
     User: 'User',
@@ -2352,7 +2336,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "categoria" | "unidad" | "vendor" | "inyeccionCapital" | "pagoDeuda" | "cliente" | "tenant" | "tenantMembership" | "tenantLicense" | "miEmpresa" | "almacen" | "puntoDeVenta" | "producto" | "stockUbicacion" | "venta" | "ventaItem" | "auditVenta" | "merma" | "transferencia" | "user" | "plan" | "licencia" | "licenciaAudit" | "notification" | "userActivityLog" | "userSession" | "attendance" | "employeeWorkSchedule" | "vacationRequest" | "vacationAccrual" | "empleado" | "pagosalario" | "cierreContable" | "gastoCompra" | "compraProducto" | "compraDocumento" | "compraDocumentoItem" | "servicios" | "ventaServicios" | "compraServicio" | "gastoConcepto" | "gastoElemento" | "gastosDE" | "moneda" | "catalogoReparacionConfig" | "tasaCambio" | "transaccionMoneda" | "cuentaBancaria" | "tipoPago" | "reconciliacionVenta" | "reconciliacionServicio" | "reconciliacionGasto" | "ajusteBancario" | "transferenciaBancaria" | "alertHistory" | "auditLog" | "reportHistory" | "scheduledReport" | "scenarioSimulation" | "contrato" | "contratoVersion" | "contratoFirma" | "contratoAprobacion" | "contratoArchivo" | "contratoAlerta" | "tipoContratoCustom" | "factura" | "serieFacturacion" | "oferta" | "ofertaItem" | "cuentaPorCobrar" | "cuentaPorPagar" | "deudaCash" | "prestamoCash" | "pagoCuentaPorPagar" | "equipoReparacion" | "piezaReparacion" | "ordenReparacion" | "ordenReparacionEquipo" | "ordenReparacionItem" | "ordenReparacionMaterial" | "defectacionCatalogo" | "configuracionSistema" | "ordenProduccion" | "ordenProduccionHistorial" | "receta" | "recetaIngrediente" | "valeSalida" | "valeSalidaItem" | "listaPrecio" | "precioProducto" | "productoCostHistory" | "vendorCodeSequence" | "anticipo" | "anticipoMovimiento"
+      modelProps: "categoria" | "unidad" | "vendor" | "inyeccionCapital" | "pagoDeuda" | "cliente" | "tenant" | "tenantMembership" | "tenantLicense" | "miEmpresa" | "almacen" | "puntoDeVenta" | "producto" | "stockUbicacion" | "venta" | "ventaItem" | "merma" | "transferencia" | "user" | "plan" | "licencia" | "licenciaAudit" | "notification" | "userActivityLog" | "userSession" | "attendance" | "employeeWorkSchedule" | "vacationRequest" | "vacationAccrual" | "empleado" | "pagosalario" | "cierreContable" | "gastoCompra" | "compraProducto" | "compraDocumento" | "compraDocumentoItem" | "servicios" | "ventaServicios" | "compraServicio" | "gastoConcepto" | "gastoElemento" | "gastosDE" | "moneda" | "catalogoReparacionConfig" | "tasaCambio" | "transaccionMoneda" | "cuentaBancaria" | "tipoPago" | "reconciliacionVenta" | "reconciliacionServicio" | "reconciliacionGasto" | "ajusteBancario" | "transferenciaBancaria" | "alertHistory" | "auditLog" | "reportHistory" | "scheduledReport" | "scenarioSimulation" | "contrato" | "contratoVersion" | "contratoFirma" | "contratoAprobacion" | "contratoArchivo" | "contratoAlerta" | "tipoContratoCustom" | "factura" | "serieFacturacion" | "oferta" | "ofertaItem" | "cuentaPorCobrar" | "cuentaPorPagar" | "deudaCash" | "prestamoCash" | "pagoCuentaPorPagar" | "equipoReparacion" | "piezaReparacion" | "ordenReparacion" | "ordenReparacionEquipo" | "ordenReparacionItem" | "ordenReparacionMaterial" | "defectacionCatalogo" | "configuracionSistema" | "ordenProduccion" | "ordenProduccionHistorial" | "receta" | "recetaIngrediente" | "valeSalida" | "valeSalidaItem" | "listaPrecio" | "precioProducto" | "productoCostHistory" | "vendorCodeSequence" | "anticipo" | "anticipoMovimiento"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -3537,80 +3521,6 @@ export namespace Prisma {
           count: {
             args: Prisma.VentaItemCountArgs<ExtArgs>
             result: $Utils.Optional<VentaItemCountAggregateOutputType> | number
-          }
-        }
-      }
-      AuditVenta: {
-        payload: Prisma.$AuditVentaPayload<ExtArgs>
-        fields: Prisma.AuditVentaFieldRefs
-        operations: {
-          findUnique: {
-            args: Prisma.AuditVentaFindUniqueArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$AuditVentaPayload> | null
-          }
-          findUniqueOrThrow: {
-            args: Prisma.AuditVentaFindUniqueOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$AuditVentaPayload>
-          }
-          findFirst: {
-            args: Prisma.AuditVentaFindFirstArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$AuditVentaPayload> | null
-          }
-          findFirstOrThrow: {
-            args: Prisma.AuditVentaFindFirstOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$AuditVentaPayload>
-          }
-          findMany: {
-            args: Prisma.AuditVentaFindManyArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$AuditVentaPayload>[]
-          }
-          create: {
-            args: Prisma.AuditVentaCreateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$AuditVentaPayload>
-          }
-          createMany: {
-            args: Prisma.AuditVentaCreateManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          createManyAndReturn: {
-            args: Prisma.AuditVentaCreateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$AuditVentaPayload>[]
-          }
-          delete: {
-            args: Prisma.AuditVentaDeleteArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$AuditVentaPayload>
-          }
-          update: {
-            args: Prisma.AuditVentaUpdateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$AuditVentaPayload>
-          }
-          deleteMany: {
-            args: Prisma.AuditVentaDeleteManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          updateMany: {
-            args: Prisma.AuditVentaUpdateManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          updateManyAndReturn: {
-            args: Prisma.AuditVentaUpdateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$AuditVentaPayload>[]
-          }
-          upsert: {
-            args: Prisma.AuditVentaUpsertArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$AuditVentaPayload>
-          }
-          aggregate: {
-            args: Prisma.AuditVentaAggregateArgs<ExtArgs>
-            result: $Utils.Optional<AggregateAuditVenta>
-          }
-          groupBy: {
-            args: Prisma.AuditVentaGroupByArgs<ExtArgs>
-            result: $Utils.Optional<AuditVentaGroupByOutputType>[]
-          }
-          count: {
-            args: Prisma.AuditVentaCountArgs<ExtArgs>
-            result: $Utils.Optional<AuditVentaCountAggregateOutputType> | number
           }
         }
       }
@@ -9498,7 +9408,6 @@ export namespace Prisma {
     stockUbicacion?: StockUbicacionOmit
     venta?: VentaOmit
     ventaItem?: VentaItemOmit
-    auditVenta?: AuditVentaOmit
     merma?: MermaOmit
     transferencia?: TransferenciaOmit
     user?: UserOmit
@@ -10748,13 +10657,11 @@ export namespace Prisma {
   export type VentaCountOutputType = {
     reconciliaciones: number
     items: number
-    auditLogs: number
   }
 
   export type VentaCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     reconciliaciones?: boolean | VentaCountOutputTypeCountReconciliacionesArgs
     items?: boolean | VentaCountOutputTypeCountItemsArgs
-    auditLogs?: boolean | VentaCountOutputTypeCountAuditLogsArgs
   }
 
   // Custom InputTypes
@@ -10780,13 +10687,6 @@ export namespace Prisma {
    */
   export type VentaCountOutputTypeCountItemsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: VentaItemWhereInput
-  }
-
-  /**
-   * VentaCountOutputType without action
-   */
-  export type VentaCountOutputTypeCountAuditLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: AuditVentaWhereInput
   }
 
 
@@ -31494,7 +31394,6 @@ export namespace Prisma {
     esVentaUnica: boolean | null
     ofertaId: string | null
     ventaPadreId: string | null
-    idempotencyKey: string | null
   }
 
   export type VentaMaxAggregateOutputType = {
@@ -31514,7 +31413,6 @@ export namespace Prisma {
     esVentaUnica: boolean | null
     ofertaId: string | null
     ventaPadreId: string | null
-    idempotencyKey: string | null
   }
 
   export type VentaCountAggregateOutputType = {
@@ -31534,7 +31432,6 @@ export namespace Prisma {
     esVentaUnica: number
     ofertaId: number
     ventaPadreId: number
-    idempotencyKey: number
     _all: number
   }
 
@@ -31568,7 +31465,6 @@ export namespace Prisma {
     esVentaUnica?: true
     ofertaId?: true
     ventaPadreId?: true
-    idempotencyKey?: true
   }
 
   export type VentaMaxAggregateInputType = {
@@ -31588,7 +31484,6 @@ export namespace Prisma {
     esVentaUnica?: true
     ofertaId?: true
     ventaPadreId?: true
-    idempotencyKey?: true
   }
 
   export type VentaCountAggregateInputType = {
@@ -31608,7 +31503,6 @@ export namespace Prisma {
     esVentaUnica?: true
     ofertaId?: true
     ventaPadreId?: true
-    idempotencyKey?: true
     _all?: true
   }
 
@@ -31715,7 +31609,6 @@ export namespace Prisma {
     esVentaUnica: boolean
     ofertaId: string | null
     ventaPadreId: string | null
-    idempotencyKey: string | null
     _count: VentaCountAggregateOutputType | null
     _avg: VentaAvgAggregateOutputType | null
     _sum: VentaSumAggregateOutputType | null
@@ -31754,7 +31647,6 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: boolean
     ventaPadreId?: boolean
-    idempotencyKey?: boolean
     ordenReparacion?: boolean | Venta$ordenReparacionArgs<ExtArgs>
     reconciliaciones?: boolean | Venta$reconciliacionesArgs<ExtArgs>
     cliente?: boolean | Venta$clienteArgs<ExtArgs>
@@ -31764,7 +31656,6 @@ export namespace Prisma {
     puntoDeVenta?: boolean | PuntoDeVentaDefaultArgs<ExtArgs>
     factura?: boolean | Venta$facturaArgs<ExtArgs>
     items?: boolean | Venta$itemsArgs<ExtArgs>
-    auditLogs?: boolean | Venta$auditLogsArgs<ExtArgs>
     tenant?: boolean | TenantDefaultArgs<ExtArgs>
     _count?: boolean | VentaCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["venta"]>
@@ -31786,7 +31677,6 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: boolean
     ventaPadreId?: boolean
-    idempotencyKey?: boolean
     cliente?: boolean | Venta$clienteArgs<ExtArgs>
     empleado?: boolean | Venta$empleadoArgs<ExtArgs>
     oferta?: boolean | Venta$ofertaArgs<ExtArgs>
@@ -31812,7 +31702,6 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: boolean
     ventaPadreId?: boolean
-    idempotencyKey?: boolean
     cliente?: boolean | Venta$clienteArgs<ExtArgs>
     empleado?: boolean | Venta$empleadoArgs<ExtArgs>
     oferta?: boolean | Venta$ofertaArgs<ExtArgs>
@@ -31838,10 +31727,9 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: boolean
     ventaPadreId?: boolean
-    idempotencyKey?: boolean
   }
 
-  export type VentaOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"ventaId" | "tenantId" | "productoId" | "cantidad" | "puntoDeVentaId" | "createdAt" | "updatedAt" | "empleadoId" | "total" | "clienteId" | "ordenId" | "descuento" | "observaciones" | "esVentaUnica" | "ofertaId" | "ventaPadreId" | "idempotencyKey", ExtArgs["result"]["venta"]>
+  export type VentaOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"ventaId" | "tenantId" | "productoId" | "cantidad" | "puntoDeVentaId" | "createdAt" | "updatedAt" | "empleadoId" | "total" | "clienteId" | "ordenId" | "descuento" | "observaciones" | "esVentaUnica" | "ofertaId" | "ventaPadreId", ExtArgs["result"]["venta"]>
   export type VentaInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     ordenReparacion?: boolean | Venta$ordenReparacionArgs<ExtArgs>
     reconciliaciones?: boolean | Venta$reconciliacionesArgs<ExtArgs>
@@ -31852,7 +31740,6 @@ export namespace Prisma {
     puntoDeVenta?: boolean | PuntoDeVentaDefaultArgs<ExtArgs>
     factura?: boolean | Venta$facturaArgs<ExtArgs>
     items?: boolean | Venta$itemsArgs<ExtArgs>
-    auditLogs?: boolean | Venta$auditLogsArgs<ExtArgs>
     tenant?: boolean | TenantDefaultArgs<ExtArgs>
     _count?: boolean | VentaCountOutputTypeDefaultArgs<ExtArgs>
   }
@@ -31885,7 +31772,6 @@ export namespace Prisma {
       puntoDeVenta: Prisma.$PuntoDeVentaPayload<ExtArgs>
       factura: Prisma.$FacturaPayload<ExtArgs> | null
       items: Prisma.$VentaItemPayload<ExtArgs>[]
-      auditLogs: Prisma.$AuditVentaPayload<ExtArgs>[]
       tenant: Prisma.$TenantPayload<ExtArgs>
     }
     scalars: $Extensions.GetPayloadResult<{
@@ -31905,7 +31791,6 @@ export namespace Prisma {
       esVentaUnica: boolean
       ofertaId: string | null
       ventaPadreId: string | null
-      idempotencyKey: string | null
     }, ExtArgs["result"]["venta"]>
     composites: {}
   }
@@ -32309,7 +32194,6 @@ export namespace Prisma {
     puntoDeVenta<T extends PuntoDeVentaDefaultArgs<ExtArgs> = {}>(args?: Subset<T, PuntoDeVentaDefaultArgs<ExtArgs>>): Prisma__PuntoDeVentaClient<$Result.GetResult<Prisma.$PuntoDeVentaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     factura<T extends Venta$facturaArgs<ExtArgs> = {}>(args?: Subset<T, Venta$facturaArgs<ExtArgs>>): Prisma__FacturaClient<$Result.GetResult<Prisma.$FacturaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     items<T extends Venta$itemsArgs<ExtArgs> = {}>(args?: Subset<T, Venta$itemsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$VentaItemPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
-    auditLogs<T extends Venta$auditLogsArgs<ExtArgs> = {}>(args?: Subset<T, Venta$auditLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuditVentaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     tenant<T extends TenantDefaultArgs<ExtArgs> = {}>(args?: Subset<T, TenantDefaultArgs<ExtArgs>>): Prisma__TenantClient<$Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -32356,7 +32240,6 @@ export namespace Prisma {
     readonly esVentaUnica: FieldRef<"Venta", 'Boolean'>
     readonly ofertaId: FieldRef<"Venta", 'String'>
     readonly ventaPadreId: FieldRef<"Venta", 'String'>
-    readonly idempotencyKey: FieldRef<"Venta", 'String'>
   }
     
 
@@ -32912,30 +32795,6 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: VentaItemScalarFieldEnum | VentaItemScalarFieldEnum[]
-  }
-
-  /**
-   * Venta.auditLogs
-   */
-  export type Venta$auditLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the AuditVenta
-     */
-    select?: AuditVentaSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the AuditVenta
-     */
-    omit?: AuditVentaOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: AuditVentaInclude<ExtArgs> | null
-    where?: AuditVentaWhereInput
-    orderBy?: AuditVentaOrderByWithRelationInput | AuditVentaOrderByWithRelationInput[]
-    cursor?: AuditVentaWhereUniqueInput
-    take?: number
-    skip?: number
-    distinct?: AuditVentaScalarFieldEnum | AuditVentaScalarFieldEnum[]
   }
 
   /**
@@ -34101,1086 +33960,6 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: VentaItemInclude<ExtArgs> | null
-  }
-
-
-  /**
-   * Model AuditVenta
-   */
-
-  export type AggregateAuditVenta = {
-    _count: AuditVentaCountAggregateOutputType | null
-    _min: AuditVentaMinAggregateOutputType | null
-    _max: AuditVentaMaxAggregateOutputType | null
-  }
-
-  export type AuditVentaMinAggregateOutputType = {
-    auditVentaId: string | null
-    ventaId: string | null
-    accion: string | null
-    usuarioId: string | null
-    tenantId: string | null
-    createdAt: Date | null
-  }
-
-  export type AuditVentaMaxAggregateOutputType = {
-    auditVentaId: string | null
-    ventaId: string | null
-    accion: string | null
-    usuarioId: string | null
-    tenantId: string | null
-    createdAt: Date | null
-  }
-
-  export type AuditVentaCountAggregateOutputType = {
-    auditVentaId: number
-    ventaId: number
-    accion: number
-    usuarioId: number
-    tenantId: number
-    createdAt: number
-    metadata: number
-    _all: number
-  }
-
-
-  export type AuditVentaMinAggregateInputType = {
-    auditVentaId?: true
-    ventaId?: true
-    accion?: true
-    usuarioId?: true
-    tenantId?: true
-    createdAt?: true
-  }
-
-  export type AuditVentaMaxAggregateInputType = {
-    auditVentaId?: true
-    ventaId?: true
-    accion?: true
-    usuarioId?: true
-    tenantId?: true
-    createdAt?: true
-  }
-
-  export type AuditVentaCountAggregateInputType = {
-    auditVentaId?: true
-    ventaId?: true
-    accion?: true
-    usuarioId?: true
-    tenantId?: true
-    createdAt?: true
-    metadata?: true
-    _all?: true
-  }
-
-  export type AuditVentaAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Filter which AuditVenta to aggregate.
-     */
-    where?: AuditVentaWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of AuditVentas to fetch.
-     */
-    orderBy?: AuditVentaOrderByWithRelationInput | AuditVentaOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the start position
-     */
-    cursor?: AuditVentaWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` AuditVentas from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` AuditVentas.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Count returned AuditVentas
-    **/
-    _count?: true | AuditVentaCountAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to find the minimum value
-    **/
-    _min?: AuditVentaMinAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to find the maximum value
-    **/
-    _max?: AuditVentaMaxAggregateInputType
-  }
-
-  export type GetAuditVentaAggregateType<T extends AuditVentaAggregateArgs> = {
-        [P in keyof T & keyof AggregateAuditVenta]: P extends '_count' | 'count'
-      ? T[P] extends true
-        ? number
-        : GetScalarType<T[P], AggregateAuditVenta[P]>
-      : GetScalarType<T[P], AggregateAuditVenta[P]>
-  }
-
-
-
-
-  export type AuditVentaGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: AuditVentaWhereInput
-    orderBy?: AuditVentaOrderByWithAggregationInput | AuditVentaOrderByWithAggregationInput[]
-    by: AuditVentaScalarFieldEnum[] | AuditVentaScalarFieldEnum
-    having?: AuditVentaScalarWhereWithAggregatesInput
-    take?: number
-    skip?: number
-    _count?: AuditVentaCountAggregateInputType | true
-    _min?: AuditVentaMinAggregateInputType
-    _max?: AuditVentaMaxAggregateInputType
-  }
-
-  export type AuditVentaGroupByOutputType = {
-    auditVentaId: string
-    ventaId: string
-    accion: string
-    usuarioId: string
-    tenantId: string
-    createdAt: Date
-    metadata: JsonValue | null
-    _count: AuditVentaCountAggregateOutputType | null
-    _min: AuditVentaMinAggregateOutputType | null
-    _max: AuditVentaMaxAggregateOutputType | null
-  }
-
-  type GetAuditVentaGroupByPayload<T extends AuditVentaGroupByArgs> = Prisma.PrismaPromise<
-    Array<
-      PickEnumerable<AuditVentaGroupByOutputType, T['by']> &
-        {
-          [P in ((keyof T) & (keyof AuditVentaGroupByOutputType))]: P extends '_count'
-            ? T[P] extends boolean
-              ? number
-              : GetScalarType<T[P], AuditVentaGroupByOutputType[P]>
-            : GetScalarType<T[P], AuditVentaGroupByOutputType[P]>
-        }
-      >
-    >
-
-
-  export type AuditVentaSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    auditVentaId?: boolean
-    ventaId?: boolean
-    accion?: boolean
-    usuarioId?: boolean
-    tenantId?: boolean
-    createdAt?: boolean
-    metadata?: boolean
-    venta?: boolean | VentaDefaultArgs<ExtArgs>
-  }, ExtArgs["result"]["auditVenta"]>
-
-  export type AuditVentaSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    auditVentaId?: boolean
-    ventaId?: boolean
-    accion?: boolean
-    usuarioId?: boolean
-    tenantId?: boolean
-    createdAt?: boolean
-    metadata?: boolean
-    venta?: boolean | VentaDefaultArgs<ExtArgs>
-  }, ExtArgs["result"]["auditVenta"]>
-
-  export type AuditVentaSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    auditVentaId?: boolean
-    ventaId?: boolean
-    accion?: boolean
-    usuarioId?: boolean
-    tenantId?: boolean
-    createdAt?: boolean
-    metadata?: boolean
-    venta?: boolean | VentaDefaultArgs<ExtArgs>
-  }, ExtArgs["result"]["auditVenta"]>
-
-  export type AuditVentaSelectScalar = {
-    auditVentaId?: boolean
-    ventaId?: boolean
-    accion?: boolean
-    usuarioId?: boolean
-    tenantId?: boolean
-    createdAt?: boolean
-    metadata?: boolean
-  }
-
-  export type AuditVentaOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"auditVentaId" | "ventaId" | "accion" | "usuarioId" | "tenantId" | "createdAt" | "metadata", ExtArgs["result"]["auditVenta"]>
-  export type AuditVentaInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    venta?: boolean | VentaDefaultArgs<ExtArgs>
-  }
-  export type AuditVentaIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    venta?: boolean | VentaDefaultArgs<ExtArgs>
-  }
-  export type AuditVentaIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    venta?: boolean | VentaDefaultArgs<ExtArgs>
-  }
-
-  export type $AuditVentaPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    name: "AuditVenta"
-    objects: {
-      venta: Prisma.$VentaPayload<ExtArgs>
-    }
-    scalars: $Extensions.GetPayloadResult<{
-      auditVentaId: string
-      ventaId: string
-      accion: string
-      usuarioId: string
-      tenantId: string
-      createdAt: Date
-      metadata: Prisma.JsonValue | null
-    }, ExtArgs["result"]["auditVenta"]>
-    composites: {}
-  }
-
-  type AuditVentaGetPayload<S extends boolean | null | undefined | AuditVentaDefaultArgs> = $Result.GetResult<Prisma.$AuditVentaPayload, S>
-
-  type AuditVentaCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
-    Omit<AuditVentaFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
-      select?: AuditVentaCountAggregateInputType | true
-    }
-
-  export interface AuditVentaDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
-    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AuditVenta'], meta: { name: 'AuditVenta' } }
-    /**
-     * Find zero or one AuditVenta that matches the filter.
-     * @param {AuditVentaFindUniqueArgs} args - Arguments to find a AuditVenta
-     * @example
-     * // Get one AuditVenta
-     * const auditVenta = await prisma.auditVenta.findUnique({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findUnique<T extends AuditVentaFindUniqueArgs>(args: SelectSubset<T, AuditVentaFindUniqueArgs<ExtArgs>>): Prisma__AuditVentaClient<$Result.GetResult<Prisma.$AuditVentaPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find one AuditVenta that matches the filter or throw an error with `error.code='P2025'`
-     * if no matches were found.
-     * @param {AuditVentaFindUniqueOrThrowArgs} args - Arguments to find a AuditVenta
-     * @example
-     * // Get one AuditVenta
-     * const auditVenta = await prisma.auditVenta.findUniqueOrThrow({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findUniqueOrThrow<T extends AuditVentaFindUniqueOrThrowArgs>(args: SelectSubset<T, AuditVentaFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AuditVentaClient<$Result.GetResult<Prisma.$AuditVentaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find the first AuditVenta that matches the filter.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {AuditVentaFindFirstArgs} args - Arguments to find a AuditVenta
-     * @example
-     * // Get one AuditVenta
-     * const auditVenta = await prisma.auditVenta.findFirst({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findFirst<T extends AuditVentaFindFirstArgs>(args?: SelectSubset<T, AuditVentaFindFirstArgs<ExtArgs>>): Prisma__AuditVentaClient<$Result.GetResult<Prisma.$AuditVentaPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find the first AuditVenta that matches the filter or
-     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {AuditVentaFindFirstOrThrowArgs} args - Arguments to find a AuditVenta
-     * @example
-     * // Get one AuditVenta
-     * const auditVenta = await prisma.auditVenta.findFirstOrThrow({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findFirstOrThrow<T extends AuditVentaFindFirstOrThrowArgs>(args?: SelectSubset<T, AuditVentaFindFirstOrThrowArgs<ExtArgs>>): Prisma__AuditVentaClient<$Result.GetResult<Prisma.$AuditVentaPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Find zero or more AuditVentas that matches the filter.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {AuditVentaFindManyArgs} args - Arguments to filter and select certain fields only.
-     * @example
-     * // Get all AuditVentas
-     * const auditVentas = await prisma.auditVenta.findMany()
-     * 
-     * // Get first 10 AuditVentas
-     * const auditVentas = await prisma.auditVenta.findMany({ take: 10 })
-     * 
-     * // Only select the `auditVentaId`
-     * const auditVentaWithAuditVentaIdOnly = await prisma.auditVenta.findMany({ select: { auditVentaId: true } })
-     * 
-     */
-    findMany<T extends AuditVentaFindManyArgs>(args?: SelectSubset<T, AuditVentaFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuditVentaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
-
-    /**
-     * Create a AuditVenta.
-     * @param {AuditVentaCreateArgs} args - Arguments to create a AuditVenta.
-     * @example
-     * // Create one AuditVenta
-     * const AuditVenta = await prisma.auditVenta.create({
-     *   data: {
-     *     // ... data to create a AuditVenta
-     *   }
-     * })
-     * 
-     */
-    create<T extends AuditVentaCreateArgs>(args: SelectSubset<T, AuditVentaCreateArgs<ExtArgs>>): Prisma__AuditVentaClient<$Result.GetResult<Prisma.$AuditVentaPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Create many AuditVentas.
-     * @param {AuditVentaCreateManyArgs} args - Arguments to create many AuditVentas.
-     * @example
-     * // Create many AuditVentas
-     * const auditVenta = await prisma.auditVenta.createMany({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     *     
-     */
-    createMany<T extends AuditVentaCreateManyArgs>(args?: SelectSubset<T, AuditVentaCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Create many AuditVentas and returns the data saved in the database.
-     * @param {AuditVentaCreateManyAndReturnArgs} args - Arguments to create many AuditVentas.
-     * @example
-     * // Create many AuditVentas
-     * const auditVenta = await prisma.auditVenta.createManyAndReturn({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Create many AuditVentas and only return the `auditVentaId`
-     * const auditVentaWithAuditVentaIdOnly = await prisma.auditVenta.createManyAndReturn({
-     *   select: { auditVentaId: true },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    createManyAndReturn<T extends AuditVentaCreateManyAndReturnArgs>(args?: SelectSubset<T, AuditVentaCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuditVentaPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
-
-    /**
-     * Delete a AuditVenta.
-     * @param {AuditVentaDeleteArgs} args - Arguments to delete one AuditVenta.
-     * @example
-     * // Delete one AuditVenta
-     * const AuditVenta = await prisma.auditVenta.delete({
-     *   where: {
-     *     // ... filter to delete one AuditVenta
-     *   }
-     * })
-     * 
-     */
-    delete<T extends AuditVentaDeleteArgs>(args: SelectSubset<T, AuditVentaDeleteArgs<ExtArgs>>): Prisma__AuditVentaClient<$Result.GetResult<Prisma.$AuditVentaPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Update one AuditVenta.
-     * @param {AuditVentaUpdateArgs} args - Arguments to update one AuditVenta.
-     * @example
-     * // Update one AuditVenta
-     * const auditVenta = await prisma.auditVenta.update({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: {
-     *     // ... provide data here
-     *   }
-     * })
-     * 
-     */
-    update<T extends AuditVentaUpdateArgs>(args: SelectSubset<T, AuditVentaUpdateArgs<ExtArgs>>): Prisma__AuditVentaClient<$Result.GetResult<Prisma.$AuditVentaPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-    /**
-     * Delete zero or more AuditVentas.
-     * @param {AuditVentaDeleteManyArgs} args - Arguments to filter AuditVentas to delete.
-     * @example
-     * // Delete a few AuditVentas
-     * const { count } = await prisma.auditVenta.deleteMany({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     * 
-     */
-    deleteMany<T extends AuditVentaDeleteManyArgs>(args?: SelectSubset<T, AuditVentaDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Update zero or more AuditVentas.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {AuditVentaUpdateManyArgs} args - Arguments to update one or more rows.
-     * @example
-     * // Update many AuditVentas
-     * const auditVenta = await prisma.auditVenta.updateMany({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: {
-     *     // ... provide data here
-     *   }
-     * })
-     * 
-     */
-    updateMany<T extends AuditVentaUpdateManyArgs>(args: SelectSubset<T, AuditVentaUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Update zero or more AuditVentas and returns the data updated in the database.
-     * @param {AuditVentaUpdateManyAndReturnArgs} args - Arguments to update many AuditVentas.
-     * @example
-     * // Update many AuditVentas
-     * const auditVenta = await prisma.auditVenta.updateManyAndReturn({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Update zero or more AuditVentas and only return the `auditVentaId`
-     * const auditVentaWithAuditVentaIdOnly = await prisma.auditVenta.updateManyAndReturn({
-     *   select: { auditVentaId: true },
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    updateManyAndReturn<T extends AuditVentaUpdateManyAndReturnArgs>(args: SelectSubset<T, AuditVentaUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuditVentaPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
-
-    /**
-     * Create or update one AuditVenta.
-     * @param {AuditVentaUpsertArgs} args - Arguments to update or create a AuditVenta.
-     * @example
-     * // Update or create a AuditVenta
-     * const auditVenta = await prisma.auditVenta.upsert({
-     *   create: {
-     *     // ... data to create a AuditVenta
-     *   },
-     *   update: {
-     *     // ... in case it already exists, update
-     *   },
-     *   where: {
-     *     // ... the filter for the AuditVenta we want to update
-     *   }
-     * })
-     */
-    upsert<T extends AuditVentaUpsertArgs>(args: SelectSubset<T, AuditVentaUpsertArgs<ExtArgs>>): Prisma__AuditVentaClient<$Result.GetResult<Prisma.$AuditVentaPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
-
-
-    /**
-     * Count the number of AuditVentas.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {AuditVentaCountArgs} args - Arguments to filter AuditVentas to count.
-     * @example
-     * // Count the number of AuditVentas
-     * const count = await prisma.auditVenta.count({
-     *   where: {
-     *     // ... the filter for the AuditVentas we want to count
-     *   }
-     * })
-    **/
-    count<T extends AuditVentaCountArgs>(
-      args?: Subset<T, AuditVentaCountArgs>,
-    ): Prisma.PrismaPromise<
-      T extends $Utils.Record<'select', any>
-        ? T['select'] extends true
-          ? number
-          : GetScalarType<T['select'], AuditVentaCountAggregateOutputType>
-        : number
-    >
-
-    /**
-     * Allows you to perform aggregations operations on a AuditVenta.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {AuditVentaAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
-     * @example
-     * // Ordered by age ascending
-     * // Where email contains prisma.io
-     * // Limited to the 10 users
-     * const aggregations = await prisma.user.aggregate({
-     *   _avg: {
-     *     age: true,
-     *   },
-     *   where: {
-     *     email: {
-     *       contains: "prisma.io",
-     *     },
-     *   },
-     *   orderBy: {
-     *     age: "asc",
-     *   },
-     *   take: 10,
-     * })
-    **/
-    aggregate<T extends AuditVentaAggregateArgs>(args: Subset<T, AuditVentaAggregateArgs>): Prisma.PrismaPromise<GetAuditVentaAggregateType<T>>
-
-    /**
-     * Group by AuditVenta.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {AuditVentaGroupByArgs} args - Group by arguments.
-     * @example
-     * // Group by city, order by createdAt, get count
-     * const result = await prisma.user.groupBy({
-     *   by: ['city', 'createdAt'],
-     *   orderBy: {
-     *     createdAt: true
-     *   },
-     *   _count: {
-     *     _all: true
-     *   },
-     * })
-     * 
-    **/
-    groupBy<
-      T extends AuditVentaGroupByArgs,
-      HasSelectOrTake extends Or<
-        Extends<'skip', Keys<T>>,
-        Extends<'take', Keys<T>>
-      >,
-      OrderByArg extends True extends HasSelectOrTake
-        ? { orderBy: AuditVentaGroupByArgs['orderBy'] }
-        : { orderBy?: AuditVentaGroupByArgs['orderBy'] },
-      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
-      ByFields extends MaybeTupleToUnion<T['by']>,
-      ByValid extends Has<ByFields, OrderFields>,
-      HavingFields extends GetHavingFields<T['having']>,
-      HavingValid extends Has<ByFields, HavingFields>,
-      ByEmpty extends T['by'] extends never[] ? True : False,
-      InputErrors extends ByEmpty extends True
-      ? `Error: "by" must not be empty.`
-      : HavingValid extends False
-      ? {
-          [P in HavingFields]: P extends ByFields
-            ? never
-            : P extends string
-            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
-            : [
-                Error,
-                'Field ',
-                P,
-                ` in "having" needs to be provided in "by"`,
-              ]
-        }[HavingFields]
-      : 'take' extends Keys<T>
-      ? 'orderBy' extends Keys<T>
-        ? ByValid extends True
-          ? {}
-          : {
-              [P in OrderFields]: P extends ByFields
-                ? never
-                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-            }[OrderFields]
-        : 'Error: If you provide "take", you also need to provide "orderBy"'
-      : 'skip' extends Keys<T>
-      ? 'orderBy' extends Keys<T>
-        ? ByValid extends True
-          ? {}
-          : {
-              [P in OrderFields]: P extends ByFields
-                ? never
-                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-            }[OrderFields]
-        : 'Error: If you provide "skip", you also need to provide "orderBy"'
-      : ByValid extends True
-      ? {}
-      : {
-          [P in OrderFields]: P extends ByFields
-            ? never
-            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-        }[OrderFields]
-    >(args: SubsetIntersection<T, AuditVentaGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAuditVentaGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
-  /**
-   * Fields of the AuditVenta model
-   */
-  readonly fields: AuditVentaFieldRefs;
-  }
-
-  /**
-   * The delegate class that acts as a "Promise-like" for AuditVenta.
-   * Why is this prefixed with `Prisma__`?
-   * Because we want to prevent naming conflicts as mentioned in
-   * https://github.com/prisma/prisma-client-js/issues/707
-   */
-  export interface Prisma__AuditVentaClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
-    readonly [Symbol.toStringTag]: "PrismaPromise"
-    venta<T extends VentaDefaultArgs<ExtArgs> = {}>(args?: Subset<T, VentaDefaultArgs<ExtArgs>>): Prisma__VentaClient<$Result.GetResult<Prisma.$VentaPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
-    /**
-     * Attaches callbacks for the resolution and/or rejection of the Promise.
-     * @param onfulfilled The callback to execute when the Promise is resolved.
-     * @param onrejected The callback to execute when the Promise is rejected.
-     * @returns A Promise for the completion of which ever callback is executed.
-     */
-    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
-    /**
-     * Attaches a callback for only the rejection of the Promise.
-     * @param onrejected The callback to execute when the Promise is rejected.
-     * @returns A Promise for the completion of the callback.
-     */
-    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
-    /**
-     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
-     * resolved value cannot be modified from the callback.
-     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
-     * @returns A Promise for the completion of the callback.
-     */
-    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
-  }
-
-
-
-
-  /**
-   * Fields of the AuditVenta model
-   */
-  interface AuditVentaFieldRefs {
-    readonly auditVentaId: FieldRef<"AuditVenta", 'String'>
-    readonly ventaId: FieldRef<"AuditVenta", 'String'>
-    readonly accion: FieldRef<"AuditVenta", 'String'>
-    readonly usuarioId: FieldRef<"AuditVenta", 'String'>
-    readonly tenantId: FieldRef<"AuditVenta", 'String'>
-    readonly createdAt: FieldRef<"AuditVenta", 'DateTime'>
-    readonly metadata: FieldRef<"AuditVenta", 'Json'>
-  }
-    
-
-  // Custom InputTypes
-  /**
-   * AuditVenta findUnique
-   */
-  export type AuditVentaFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the AuditVenta
-     */
-    select?: AuditVentaSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the AuditVenta
-     */
-    omit?: AuditVentaOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: AuditVentaInclude<ExtArgs> | null
-    /**
-     * Filter, which AuditVenta to fetch.
-     */
-    where: AuditVentaWhereUniqueInput
-  }
-
-  /**
-   * AuditVenta findUniqueOrThrow
-   */
-  export type AuditVentaFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the AuditVenta
-     */
-    select?: AuditVentaSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the AuditVenta
-     */
-    omit?: AuditVentaOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: AuditVentaInclude<ExtArgs> | null
-    /**
-     * Filter, which AuditVenta to fetch.
-     */
-    where: AuditVentaWhereUniqueInput
-  }
-
-  /**
-   * AuditVenta findFirst
-   */
-  export type AuditVentaFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the AuditVenta
-     */
-    select?: AuditVentaSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the AuditVenta
-     */
-    omit?: AuditVentaOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: AuditVentaInclude<ExtArgs> | null
-    /**
-     * Filter, which AuditVenta to fetch.
-     */
-    where?: AuditVentaWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of AuditVentas to fetch.
-     */
-    orderBy?: AuditVentaOrderByWithRelationInput | AuditVentaOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for searching for AuditVentas.
-     */
-    cursor?: AuditVentaWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` AuditVentas from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` AuditVentas.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of AuditVentas.
-     */
-    distinct?: AuditVentaScalarFieldEnum | AuditVentaScalarFieldEnum[]
-  }
-
-  /**
-   * AuditVenta findFirstOrThrow
-   */
-  export type AuditVentaFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the AuditVenta
-     */
-    select?: AuditVentaSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the AuditVenta
-     */
-    omit?: AuditVentaOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: AuditVentaInclude<ExtArgs> | null
-    /**
-     * Filter, which AuditVenta to fetch.
-     */
-    where?: AuditVentaWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of AuditVentas to fetch.
-     */
-    orderBy?: AuditVentaOrderByWithRelationInput | AuditVentaOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for searching for AuditVentas.
-     */
-    cursor?: AuditVentaWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` AuditVentas from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` AuditVentas.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of AuditVentas.
-     */
-    distinct?: AuditVentaScalarFieldEnum | AuditVentaScalarFieldEnum[]
-  }
-
-  /**
-   * AuditVenta findMany
-   */
-  export type AuditVentaFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the AuditVenta
-     */
-    select?: AuditVentaSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the AuditVenta
-     */
-    omit?: AuditVentaOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: AuditVentaInclude<ExtArgs> | null
-    /**
-     * Filter, which AuditVentas to fetch.
-     */
-    where?: AuditVentaWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of AuditVentas to fetch.
-     */
-    orderBy?: AuditVentaOrderByWithRelationInput | AuditVentaOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for listing AuditVentas.
-     */
-    cursor?: AuditVentaWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` AuditVentas from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` AuditVentas.
-     */
-    skip?: number
-    distinct?: AuditVentaScalarFieldEnum | AuditVentaScalarFieldEnum[]
-  }
-
-  /**
-   * AuditVenta create
-   */
-  export type AuditVentaCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the AuditVenta
-     */
-    select?: AuditVentaSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the AuditVenta
-     */
-    omit?: AuditVentaOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: AuditVentaInclude<ExtArgs> | null
-    /**
-     * The data needed to create a AuditVenta.
-     */
-    data: XOR<AuditVentaCreateInput, AuditVentaUncheckedCreateInput>
-  }
-
-  /**
-   * AuditVenta createMany
-   */
-  export type AuditVentaCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to create many AuditVentas.
-     */
-    data: AuditVentaCreateManyInput | AuditVentaCreateManyInput[]
-    skipDuplicates?: boolean
-  }
-
-  /**
-   * AuditVenta createManyAndReturn
-   */
-  export type AuditVentaCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the AuditVenta
-     */
-    select?: AuditVentaSelectCreateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the AuditVenta
-     */
-    omit?: AuditVentaOmit<ExtArgs> | null
-    /**
-     * The data used to create many AuditVentas.
-     */
-    data: AuditVentaCreateManyInput | AuditVentaCreateManyInput[]
-    skipDuplicates?: boolean
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: AuditVentaIncludeCreateManyAndReturn<ExtArgs> | null
-  }
-
-  /**
-   * AuditVenta update
-   */
-  export type AuditVentaUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the AuditVenta
-     */
-    select?: AuditVentaSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the AuditVenta
-     */
-    omit?: AuditVentaOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: AuditVentaInclude<ExtArgs> | null
-    /**
-     * The data needed to update a AuditVenta.
-     */
-    data: XOR<AuditVentaUpdateInput, AuditVentaUncheckedUpdateInput>
-    /**
-     * Choose, which AuditVenta to update.
-     */
-    where: AuditVentaWhereUniqueInput
-  }
-
-  /**
-   * AuditVenta updateMany
-   */
-  export type AuditVentaUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to update AuditVentas.
-     */
-    data: XOR<AuditVentaUpdateManyMutationInput, AuditVentaUncheckedUpdateManyInput>
-    /**
-     * Filter which AuditVentas to update
-     */
-    where?: AuditVentaWhereInput
-    /**
-     * Limit how many AuditVentas to update.
-     */
-    limit?: number
-  }
-
-  /**
-   * AuditVenta updateManyAndReturn
-   */
-  export type AuditVentaUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the AuditVenta
-     */
-    select?: AuditVentaSelectUpdateManyAndReturn<ExtArgs> | null
-    /**
-     * Omit specific fields from the AuditVenta
-     */
-    omit?: AuditVentaOmit<ExtArgs> | null
-    /**
-     * The data used to update AuditVentas.
-     */
-    data: XOR<AuditVentaUpdateManyMutationInput, AuditVentaUncheckedUpdateManyInput>
-    /**
-     * Filter which AuditVentas to update
-     */
-    where?: AuditVentaWhereInput
-    /**
-     * Limit how many AuditVentas to update.
-     */
-    limit?: number
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: AuditVentaIncludeUpdateManyAndReturn<ExtArgs> | null
-  }
-
-  /**
-   * AuditVenta upsert
-   */
-  export type AuditVentaUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the AuditVenta
-     */
-    select?: AuditVentaSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the AuditVenta
-     */
-    omit?: AuditVentaOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: AuditVentaInclude<ExtArgs> | null
-    /**
-     * The filter to search for the AuditVenta to update in case it exists.
-     */
-    where: AuditVentaWhereUniqueInput
-    /**
-     * In case the AuditVenta found by the `where` argument doesn't exist, create a new AuditVenta with this data.
-     */
-    create: XOR<AuditVentaCreateInput, AuditVentaUncheckedCreateInput>
-    /**
-     * In case the AuditVenta was found with the provided `where` argument, update it with this data.
-     */
-    update: XOR<AuditVentaUpdateInput, AuditVentaUncheckedUpdateInput>
-  }
-
-  /**
-   * AuditVenta delete
-   */
-  export type AuditVentaDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the AuditVenta
-     */
-    select?: AuditVentaSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the AuditVenta
-     */
-    omit?: AuditVentaOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: AuditVentaInclude<ExtArgs> | null
-    /**
-     * Filter which AuditVenta to delete.
-     */
-    where: AuditVentaWhereUniqueInput
-  }
-
-  /**
-   * AuditVenta deleteMany
-   */
-  export type AuditVentaDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Filter which AuditVentas to delete
-     */
-    where?: AuditVentaWhereInput
-    /**
-     * Limit how many AuditVentas to delete.
-     */
-    limit?: number
-  }
-
-  /**
-   * AuditVenta without action
-   */
-  export type AuditVentaDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the AuditVenta
-     */
-    select?: AuditVentaSelect<ExtArgs> | null
-    /**
-     * Omit specific fields from the AuditVenta
-     */
-    omit?: AuditVentaOmit<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: AuditVentaInclude<ExtArgs> | null
   }
 
 
@@ -131096,8 +129875,7 @@ export namespace Prisma {
     observaciones: 'observaciones',
     esVentaUnica: 'esVentaUnica',
     ofertaId: 'ofertaId',
-    ventaPadreId: 'ventaPadreId',
-    idempotencyKey: 'idempotencyKey'
+    ventaPadreId: 'ventaPadreId'
   };
 
   export type VentaScalarFieldEnum = (typeof VentaScalarFieldEnum)[keyof typeof VentaScalarFieldEnum]
@@ -131115,19 +129893,6 @@ export namespace Prisma {
   };
 
   export type VentaItemScalarFieldEnum = (typeof VentaItemScalarFieldEnum)[keyof typeof VentaItemScalarFieldEnum]
-
-
-  export const AuditVentaScalarFieldEnum: {
-    auditVentaId: 'auditVentaId',
-    ventaId: 'ventaId',
-    accion: 'accion',
-    usuarioId: 'usuarioId',
-    tenantId: 'tenantId',
-    createdAt: 'createdAt',
-    metadata: 'metadata'
-  };
-
-  export type AuditVentaScalarFieldEnum = (typeof AuditVentaScalarFieldEnum)[keyof typeof AuditVentaScalarFieldEnum]
 
 
   export const MermaScalarFieldEnum: {
@@ -134478,7 +133243,6 @@ export namespace Prisma {
     esVentaUnica?: BoolFilter<"Venta"> | boolean
     ofertaId?: StringNullableFilter<"Venta"> | string | null
     ventaPadreId?: StringNullableFilter<"Venta"> | string | null
-    idempotencyKey?: StringNullableFilter<"Venta"> | string | null
     ordenReparacion?: XOR<OrdenReparacionNullableScalarRelationFilter, OrdenReparacionWhereInput> | null
     reconciliaciones?: ReconciliacionVentaListRelationFilter
     cliente?: XOR<ClienteNullableScalarRelationFilter, ClienteWhereInput> | null
@@ -134488,7 +133252,6 @@ export namespace Prisma {
     puntoDeVenta?: XOR<PuntoDeVentaScalarRelationFilter, PuntoDeVentaWhereInput>
     factura?: XOR<FacturaNullableScalarRelationFilter, FacturaWhereInput> | null
     items?: VentaItemListRelationFilter
-    auditLogs?: AuditVentaListRelationFilter
     tenant?: XOR<TenantScalarRelationFilter, TenantWhereInput>
   }
 
@@ -134509,7 +133272,6 @@ export namespace Prisma {
     esVentaUnica?: SortOrder
     ofertaId?: SortOrderInput | SortOrder
     ventaPadreId?: SortOrderInput | SortOrder
-    idempotencyKey?: SortOrderInput | SortOrder
     ordenReparacion?: OrdenReparacionOrderByWithRelationInput
     reconciliaciones?: ReconciliacionVentaOrderByRelationAggregateInput
     cliente?: ClienteOrderByWithRelationInput
@@ -134519,14 +133281,12 @@ export namespace Prisma {
     puntoDeVenta?: PuntoDeVentaOrderByWithRelationInput
     factura?: FacturaOrderByWithRelationInput
     items?: VentaItemOrderByRelationAggregateInput
-    auditLogs?: AuditVentaOrderByRelationAggregateInput
     tenant?: TenantOrderByWithRelationInput
   }
 
   export type VentaWhereUniqueInput = Prisma.AtLeast<{
     ventaId?: string
     ofertaId?: string
-    idempotencyKey?: string
     AND?: VentaWhereInput | VentaWhereInput[]
     OR?: VentaWhereInput[]
     NOT?: VentaWhereInput | VentaWhereInput[]
@@ -134553,9 +133313,8 @@ export namespace Prisma {
     puntoDeVenta?: XOR<PuntoDeVentaScalarRelationFilter, PuntoDeVentaWhereInput>
     factura?: XOR<FacturaNullableScalarRelationFilter, FacturaWhereInput> | null
     items?: VentaItemListRelationFilter
-    auditLogs?: AuditVentaListRelationFilter
     tenant?: XOR<TenantScalarRelationFilter, TenantWhereInput>
-  }, "ventaId" | "ofertaId" | "idempotencyKey">
+  }, "ventaId" | "ofertaId">
 
   export type VentaOrderByWithAggregationInput = {
     ventaId?: SortOrder
@@ -134574,7 +133333,6 @@ export namespace Prisma {
     esVentaUnica?: SortOrder
     ofertaId?: SortOrderInput | SortOrder
     ventaPadreId?: SortOrderInput | SortOrder
-    idempotencyKey?: SortOrderInput | SortOrder
     _count?: VentaCountOrderByAggregateInput
     _avg?: VentaAvgOrderByAggregateInput
     _max?: VentaMaxOrderByAggregateInput
@@ -134602,7 +133360,6 @@ export namespace Prisma {
     esVentaUnica?: BoolWithAggregatesFilter<"Venta"> | boolean
     ofertaId?: StringNullableWithAggregatesFilter<"Venta"> | string | null
     ventaPadreId?: StringNullableWithAggregatesFilter<"Venta"> | string | null
-    idempotencyKey?: StringNullableWithAggregatesFilter<"Venta"> | string | null
   }
 
   export type VentaItemWhereInput = {
@@ -134678,71 +133435,6 @@ export namespace Prisma {
     total?: IntWithAggregatesFilter<"VentaItem"> | number
     createdAt?: DateTimeWithAggregatesFilter<"VentaItem"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"VentaItem"> | Date | string
-  }
-
-  export type AuditVentaWhereInput = {
-    AND?: AuditVentaWhereInput | AuditVentaWhereInput[]
-    OR?: AuditVentaWhereInput[]
-    NOT?: AuditVentaWhereInput | AuditVentaWhereInput[]
-    auditVentaId?: StringFilter<"AuditVenta"> | string
-    ventaId?: StringFilter<"AuditVenta"> | string
-    accion?: StringFilter<"AuditVenta"> | string
-    usuarioId?: StringFilter<"AuditVenta"> | string
-    tenantId?: StringFilter<"AuditVenta"> | string
-    createdAt?: DateTimeFilter<"AuditVenta"> | Date | string
-    metadata?: JsonNullableFilter<"AuditVenta">
-    venta?: XOR<VentaScalarRelationFilter, VentaWhereInput>
-  }
-
-  export type AuditVentaOrderByWithRelationInput = {
-    auditVentaId?: SortOrder
-    ventaId?: SortOrder
-    accion?: SortOrder
-    usuarioId?: SortOrder
-    tenantId?: SortOrder
-    createdAt?: SortOrder
-    metadata?: SortOrderInput | SortOrder
-    venta?: VentaOrderByWithRelationInput
-  }
-
-  export type AuditVentaWhereUniqueInput = Prisma.AtLeast<{
-    auditVentaId?: string
-    AND?: AuditVentaWhereInput | AuditVentaWhereInput[]
-    OR?: AuditVentaWhereInput[]
-    NOT?: AuditVentaWhereInput | AuditVentaWhereInput[]
-    ventaId?: StringFilter<"AuditVenta"> | string
-    accion?: StringFilter<"AuditVenta"> | string
-    usuarioId?: StringFilter<"AuditVenta"> | string
-    tenantId?: StringFilter<"AuditVenta"> | string
-    createdAt?: DateTimeFilter<"AuditVenta"> | Date | string
-    metadata?: JsonNullableFilter<"AuditVenta">
-    venta?: XOR<VentaScalarRelationFilter, VentaWhereInput>
-  }, "auditVentaId">
-
-  export type AuditVentaOrderByWithAggregationInput = {
-    auditVentaId?: SortOrder
-    ventaId?: SortOrder
-    accion?: SortOrder
-    usuarioId?: SortOrder
-    tenantId?: SortOrder
-    createdAt?: SortOrder
-    metadata?: SortOrderInput | SortOrder
-    _count?: AuditVentaCountOrderByAggregateInput
-    _max?: AuditVentaMaxOrderByAggregateInput
-    _min?: AuditVentaMinOrderByAggregateInput
-  }
-
-  export type AuditVentaScalarWhereWithAggregatesInput = {
-    AND?: AuditVentaScalarWhereWithAggregatesInput | AuditVentaScalarWhereWithAggregatesInput[]
-    OR?: AuditVentaScalarWhereWithAggregatesInput[]
-    NOT?: AuditVentaScalarWhereWithAggregatesInput | AuditVentaScalarWhereWithAggregatesInput[]
-    auditVentaId?: StringWithAggregatesFilter<"AuditVenta"> | string
-    ventaId?: StringWithAggregatesFilter<"AuditVenta"> | string
-    accion?: StringWithAggregatesFilter<"AuditVenta"> | string
-    usuarioId?: StringWithAggregatesFilter<"AuditVenta"> | string
-    tenantId?: StringWithAggregatesFilter<"AuditVenta"> | string
-    createdAt?: DateTimeWithAggregatesFilter<"AuditVenta"> | Date | string
-    metadata?: JsonNullableWithAggregatesFilter<"AuditVenta">
   }
 
   export type MermaWhereInput = {
@@ -144169,7 +142861,6 @@ export namespace Prisma {
     observaciones?: string | null
     esVentaUnica?: boolean
     ventaPadreId?: string | null
-    idempotencyKey?: string | null
     ordenReparacion?: OrdenReparacionCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutVentaInput
     cliente?: ClienteCreateNestedOneWithoutVentaInput
@@ -144179,7 +142870,6 @@ export namespace Prisma {
     puntoDeVenta: PuntoDeVentaCreateNestedOneWithoutVentasInput
     factura?: FacturaCreateNestedOneWithoutVentaInput
     items?: VentaItemCreateNestedManyWithoutVentaInput
-    auditLogs?: AuditVentaCreateNestedManyWithoutVentaInput
     tenant: TenantCreateNestedOneWithoutVentasInput
   }
 
@@ -144200,12 +142890,10 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: string | null
     ventaPadreId?: string | null
-    idempotencyKey?: string | null
     ordenReparacion?: OrdenReparacionUncheckedCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutVentaInput
     factura?: FacturaUncheckedCreateNestedOneWithoutVentaInput
     items?: VentaItemUncheckedCreateNestedManyWithoutVentaInput
-    auditLogs?: AuditVentaUncheckedCreateNestedManyWithoutVentaInput
   }
 
   export type VentaUpdateInput = {
@@ -144219,7 +142907,6 @@ export namespace Prisma {
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
-    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
     ordenReparacion?: OrdenReparacionUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUpdateManyWithoutVentaNestedInput
     cliente?: ClienteUpdateOneWithoutVentaNestedInput
@@ -144229,7 +142916,6 @@ export namespace Prisma {
     puntoDeVenta?: PuntoDeVentaUpdateOneRequiredWithoutVentasNestedInput
     factura?: FacturaUpdateOneWithoutVentaNestedInput
     items?: VentaItemUpdateManyWithoutVentaNestedInput
-    auditLogs?: AuditVentaUpdateManyWithoutVentaNestedInput
     tenant?: TenantUpdateOneRequiredWithoutVentasNestedInput
   }
 
@@ -144250,12 +142936,10 @@ export namespace Prisma {
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ofertaId?: NullableStringFieldUpdateOperationsInput | string | null
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
-    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
     ordenReparacion?: OrdenReparacionUncheckedUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutVentaNestedInput
     factura?: FacturaUncheckedUpdateOneWithoutVentaNestedInput
     items?: VentaItemUncheckedUpdateManyWithoutVentaNestedInput
-    auditLogs?: AuditVentaUncheckedUpdateManyWithoutVentaNestedInput
   }
 
   export type VentaCreateManyInput = {
@@ -144275,7 +142959,6 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: string | null
     ventaPadreId?: string | null
-    idempotencyKey?: string | null
   }
 
   export type VentaUpdateManyMutationInput = {
@@ -144289,7 +142972,6 @@ export namespace Prisma {
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
-    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type VentaUncheckedUpdateManyInput = {
@@ -144309,7 +142991,6 @@ export namespace Prisma {
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ofertaId?: NullableStringFieldUpdateOperationsInput | string | null
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
-    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type VentaItemCreateInput = {
@@ -144385,75 +143066,6 @@ export namespace Prisma {
     total?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type AuditVentaCreateInput = {
-    auditVentaId?: string
-    accion: string
-    usuarioId?: string
-    tenantId?: string
-    createdAt?: Date | string
-    metadata?: NullableJsonNullValueInput | InputJsonValue
-    venta: VentaCreateNestedOneWithoutAuditLogsInput
-  }
-
-  export type AuditVentaUncheckedCreateInput = {
-    auditVentaId?: string
-    ventaId: string
-    accion: string
-    usuarioId?: string
-    tenantId?: string
-    createdAt?: Date | string
-    metadata?: NullableJsonNullValueInput | InputJsonValue
-  }
-
-  export type AuditVentaUpdateInput = {
-    auditVentaId?: StringFieldUpdateOperationsInput | string
-    accion?: StringFieldUpdateOperationsInput | string
-    usuarioId?: StringFieldUpdateOperationsInput | string
-    tenantId?: StringFieldUpdateOperationsInput | string
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    metadata?: NullableJsonNullValueInput | InputJsonValue
-    venta?: VentaUpdateOneRequiredWithoutAuditLogsNestedInput
-  }
-
-  export type AuditVentaUncheckedUpdateInput = {
-    auditVentaId?: StringFieldUpdateOperationsInput | string
-    ventaId?: StringFieldUpdateOperationsInput | string
-    accion?: StringFieldUpdateOperationsInput | string
-    usuarioId?: StringFieldUpdateOperationsInput | string
-    tenantId?: StringFieldUpdateOperationsInput | string
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    metadata?: NullableJsonNullValueInput | InputJsonValue
-  }
-
-  export type AuditVentaCreateManyInput = {
-    auditVentaId?: string
-    ventaId: string
-    accion: string
-    usuarioId?: string
-    tenantId?: string
-    createdAt?: Date | string
-    metadata?: NullableJsonNullValueInput | InputJsonValue
-  }
-
-  export type AuditVentaUpdateManyMutationInput = {
-    auditVentaId?: StringFieldUpdateOperationsInput | string
-    accion?: StringFieldUpdateOperationsInput | string
-    usuarioId?: StringFieldUpdateOperationsInput | string
-    tenantId?: StringFieldUpdateOperationsInput | string
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    metadata?: NullableJsonNullValueInput | InputJsonValue
-  }
-
-  export type AuditVentaUncheckedUpdateManyInput = {
-    auditVentaId?: StringFieldUpdateOperationsInput | string
-    ventaId?: StringFieldUpdateOperationsInput | string
-    accion?: StringFieldUpdateOperationsInput | string
-    usuarioId?: StringFieldUpdateOperationsInput | string
-    tenantId?: StringFieldUpdateOperationsInput | string
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    metadata?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type MermaCreateInput = {
@@ -154544,16 +153156,6 @@ export namespace Prisma {
     isNot?: FacturaWhereInput | null
   }
 
-  export type AuditVentaListRelationFilter = {
-    every?: AuditVentaWhereInput
-    some?: AuditVentaWhereInput
-    none?: AuditVentaWhereInput
-  }
-
-  export type AuditVentaOrderByRelationAggregateInput = {
-    _count?: SortOrder
-  }
-
   export type VentaCountOrderByAggregateInput = {
     ventaId?: SortOrder
     tenantId?: SortOrder
@@ -154571,7 +153173,6 @@ export namespace Prisma {
     esVentaUnica?: SortOrder
     ofertaId?: SortOrder
     ventaPadreId?: SortOrder
-    idempotencyKey?: SortOrder
   }
 
   export type VentaAvgOrderByAggregateInput = {
@@ -154597,7 +153198,6 @@ export namespace Prisma {
     esVentaUnica?: SortOrder
     ofertaId?: SortOrder
     ventaPadreId?: SortOrder
-    idempotencyKey?: SortOrder
   }
 
   export type VentaMinOrderByAggregateInput = {
@@ -154617,7 +153217,6 @@ export namespace Prisma {
     esVentaUnica?: SortOrder
     ofertaId?: SortOrder
     ventaPadreId?: SortOrder
-    idempotencyKey?: SortOrder
   }
 
   export type VentaSumOrderByAggregateInput = {
@@ -154674,34 +153273,6 @@ export namespace Prisma {
     cantidad?: SortOrder
     precioUnitario?: SortOrder
     total?: SortOrder
-  }
-
-  export type AuditVentaCountOrderByAggregateInput = {
-    auditVentaId?: SortOrder
-    ventaId?: SortOrder
-    accion?: SortOrder
-    usuarioId?: SortOrder
-    tenantId?: SortOrder
-    createdAt?: SortOrder
-    metadata?: SortOrder
-  }
-
-  export type AuditVentaMaxOrderByAggregateInput = {
-    auditVentaId?: SortOrder
-    ventaId?: SortOrder
-    accion?: SortOrder
-    usuarioId?: SortOrder
-    tenantId?: SortOrder
-    createdAt?: SortOrder
-  }
-
-  export type AuditVentaMinOrderByAggregateInput = {
-    auditVentaId?: SortOrder
-    ventaId?: SortOrder
-    accion?: SortOrder
-    usuarioId?: SortOrder
-    tenantId?: SortOrder
-    createdAt?: SortOrder
   }
 
   export type MermaCountOrderByAggregateInput = {
@@ -164396,13 +162967,6 @@ export namespace Prisma {
     connect?: VentaItemWhereUniqueInput | VentaItemWhereUniqueInput[]
   }
 
-  export type AuditVentaCreateNestedManyWithoutVentaInput = {
-    create?: XOR<AuditVentaCreateWithoutVentaInput, AuditVentaUncheckedCreateWithoutVentaInput> | AuditVentaCreateWithoutVentaInput[] | AuditVentaUncheckedCreateWithoutVentaInput[]
-    connectOrCreate?: AuditVentaCreateOrConnectWithoutVentaInput | AuditVentaCreateOrConnectWithoutVentaInput[]
-    createMany?: AuditVentaCreateManyVentaInputEnvelope
-    connect?: AuditVentaWhereUniqueInput | AuditVentaWhereUniqueInput[]
-  }
-
   export type TenantCreateNestedOneWithoutVentasInput = {
     create?: XOR<TenantCreateWithoutVentasInput, TenantUncheckedCreateWithoutVentasInput>
     connectOrCreate?: TenantCreateOrConnectWithoutVentasInput
@@ -164433,13 +162997,6 @@ export namespace Prisma {
     connectOrCreate?: VentaItemCreateOrConnectWithoutVentaInput | VentaItemCreateOrConnectWithoutVentaInput[]
     createMany?: VentaItemCreateManyVentaInputEnvelope
     connect?: VentaItemWhereUniqueInput | VentaItemWhereUniqueInput[]
-  }
-
-  export type AuditVentaUncheckedCreateNestedManyWithoutVentaInput = {
-    create?: XOR<AuditVentaCreateWithoutVentaInput, AuditVentaUncheckedCreateWithoutVentaInput> | AuditVentaCreateWithoutVentaInput[] | AuditVentaUncheckedCreateWithoutVentaInput[]
-    connectOrCreate?: AuditVentaCreateOrConnectWithoutVentaInput | AuditVentaCreateOrConnectWithoutVentaInput[]
-    createMany?: AuditVentaCreateManyVentaInputEnvelope
-    connect?: AuditVentaWhereUniqueInput | AuditVentaWhereUniqueInput[]
   }
 
   export type OrdenReparacionUpdateOneWithoutVentaNestedInput = {
@@ -164538,20 +163095,6 @@ export namespace Prisma {
     deleteMany?: VentaItemScalarWhereInput | VentaItemScalarWhereInput[]
   }
 
-  export type AuditVentaUpdateManyWithoutVentaNestedInput = {
-    create?: XOR<AuditVentaCreateWithoutVentaInput, AuditVentaUncheckedCreateWithoutVentaInput> | AuditVentaCreateWithoutVentaInput[] | AuditVentaUncheckedCreateWithoutVentaInput[]
-    connectOrCreate?: AuditVentaCreateOrConnectWithoutVentaInput | AuditVentaCreateOrConnectWithoutVentaInput[]
-    upsert?: AuditVentaUpsertWithWhereUniqueWithoutVentaInput | AuditVentaUpsertWithWhereUniqueWithoutVentaInput[]
-    createMany?: AuditVentaCreateManyVentaInputEnvelope
-    set?: AuditVentaWhereUniqueInput | AuditVentaWhereUniqueInput[]
-    disconnect?: AuditVentaWhereUniqueInput | AuditVentaWhereUniqueInput[]
-    delete?: AuditVentaWhereUniqueInput | AuditVentaWhereUniqueInput[]
-    connect?: AuditVentaWhereUniqueInput | AuditVentaWhereUniqueInput[]
-    update?: AuditVentaUpdateWithWhereUniqueWithoutVentaInput | AuditVentaUpdateWithWhereUniqueWithoutVentaInput[]
-    updateMany?: AuditVentaUpdateManyWithWhereWithoutVentaInput | AuditVentaUpdateManyWithWhereWithoutVentaInput[]
-    deleteMany?: AuditVentaScalarWhereInput | AuditVentaScalarWhereInput[]
-  }
-
   export type TenantUpdateOneRequiredWithoutVentasNestedInput = {
     create?: XOR<TenantCreateWithoutVentasInput, TenantUncheckedCreateWithoutVentasInput>
     connectOrCreate?: TenantCreateOrConnectWithoutVentasInput
@@ -164608,20 +163151,6 @@ export namespace Prisma {
     deleteMany?: VentaItemScalarWhereInput | VentaItemScalarWhereInput[]
   }
 
-  export type AuditVentaUncheckedUpdateManyWithoutVentaNestedInput = {
-    create?: XOR<AuditVentaCreateWithoutVentaInput, AuditVentaUncheckedCreateWithoutVentaInput> | AuditVentaCreateWithoutVentaInput[] | AuditVentaUncheckedCreateWithoutVentaInput[]
-    connectOrCreate?: AuditVentaCreateOrConnectWithoutVentaInput | AuditVentaCreateOrConnectWithoutVentaInput[]
-    upsert?: AuditVentaUpsertWithWhereUniqueWithoutVentaInput | AuditVentaUpsertWithWhereUniqueWithoutVentaInput[]
-    createMany?: AuditVentaCreateManyVentaInputEnvelope
-    set?: AuditVentaWhereUniqueInput | AuditVentaWhereUniqueInput[]
-    disconnect?: AuditVentaWhereUniqueInput | AuditVentaWhereUniqueInput[]
-    delete?: AuditVentaWhereUniqueInput | AuditVentaWhereUniqueInput[]
-    connect?: AuditVentaWhereUniqueInput | AuditVentaWhereUniqueInput[]
-    update?: AuditVentaUpdateWithWhereUniqueWithoutVentaInput | AuditVentaUpdateWithWhereUniqueWithoutVentaInput[]
-    updateMany?: AuditVentaUpdateManyWithWhereWithoutVentaInput | AuditVentaUpdateManyWithWhereWithoutVentaInput[]
-    deleteMany?: AuditVentaScalarWhereInput | AuditVentaScalarWhereInput[]
-  }
-
   export type ProductoCreateNestedOneWithoutVentaItemsInput = {
     create?: XOR<ProductoCreateWithoutVentaItemsInput, ProductoUncheckedCreateWithoutVentaItemsInput>
     connectOrCreate?: ProductoCreateOrConnectWithoutVentaItemsInput
@@ -164648,20 +163177,6 @@ export namespace Prisma {
     upsert?: VentaUpsertWithoutItemsInput
     connect?: VentaWhereUniqueInput
     update?: XOR<XOR<VentaUpdateToOneWithWhereWithoutItemsInput, VentaUpdateWithoutItemsInput>, VentaUncheckedUpdateWithoutItemsInput>
-  }
-
-  export type VentaCreateNestedOneWithoutAuditLogsInput = {
-    create?: XOR<VentaCreateWithoutAuditLogsInput, VentaUncheckedCreateWithoutAuditLogsInput>
-    connectOrCreate?: VentaCreateOrConnectWithoutAuditLogsInput
-    connect?: VentaWhereUniqueInput
-  }
-
-  export type VentaUpdateOneRequiredWithoutAuditLogsNestedInput = {
-    create?: XOR<VentaCreateWithoutAuditLogsInput, VentaUncheckedCreateWithoutAuditLogsInput>
-    connectOrCreate?: VentaCreateOrConnectWithoutAuditLogsInput
-    upsert?: VentaUpsertWithoutAuditLogsInput
-    connect?: VentaWhereUniqueInput
-    update?: XOR<XOR<VentaUpdateToOneWithWhereWithoutAuditLogsInput, VentaUpdateWithoutAuditLogsInput>, VentaUncheckedUpdateWithoutAuditLogsInput>
   }
 
   export type ProductoCreateNestedOneWithoutMermasInput = {
@@ -174239,7 +172754,6 @@ export namespace Prisma {
     observaciones?: string | null
     esVentaUnica?: boolean
     ventaPadreId?: string | null
-    idempotencyKey?: string | null
     ordenReparacion?: OrdenReparacionCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutVentaInput
     empleado?: EmpleadoCreateNestedOneWithoutVentasInput
@@ -174248,7 +172762,6 @@ export namespace Prisma {
     puntoDeVenta: PuntoDeVentaCreateNestedOneWithoutVentasInput
     factura?: FacturaCreateNestedOneWithoutVentaInput
     items?: VentaItemCreateNestedManyWithoutVentaInput
-    auditLogs?: AuditVentaCreateNestedManyWithoutVentaInput
     tenant: TenantCreateNestedOneWithoutVentasInput
   }
 
@@ -174268,12 +172781,10 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: string | null
     ventaPadreId?: string | null
-    idempotencyKey?: string | null
     ordenReparacion?: OrdenReparacionUncheckedCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutVentaInput
     factura?: FacturaUncheckedCreateNestedOneWithoutVentaInput
     items?: VentaItemUncheckedCreateNestedManyWithoutVentaInput
-    auditLogs?: AuditVentaUncheckedCreateNestedManyWithoutVentaInput
   }
 
   export type VentaCreateOrConnectWithoutClienteInput = {
@@ -174750,7 +173261,6 @@ export namespace Prisma {
     esVentaUnica?: BoolFilter<"Venta"> | boolean
     ofertaId?: StringNullableFilter<"Venta"> | string | null
     ventaPadreId?: StringNullableFilter<"Venta"> | string | null
-    idempotencyKey?: StringNullableFilter<"Venta"> | string | null
   }
 
   export type VentaServiciosUpsertWithWhereUniqueWithoutClienteInput = {
@@ -175399,7 +173909,6 @@ export namespace Prisma {
     observaciones?: string | null
     esVentaUnica?: boolean
     ventaPadreId?: string | null
-    idempotencyKey?: string | null
     ordenReparacion?: OrdenReparacionCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutVentaInput
     cliente?: ClienteCreateNestedOneWithoutVentaInput
@@ -175409,7 +173918,6 @@ export namespace Prisma {
     puntoDeVenta: PuntoDeVentaCreateNestedOneWithoutVentasInput
     factura?: FacturaCreateNestedOneWithoutVentaInput
     items?: VentaItemCreateNestedManyWithoutVentaInput
-    auditLogs?: AuditVentaCreateNestedManyWithoutVentaInput
   }
 
   export type VentaUncheckedCreateWithoutTenantInput = {
@@ -175428,12 +173936,10 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: string | null
     ventaPadreId?: string | null
-    idempotencyKey?: string | null
     ordenReparacion?: OrdenReparacionUncheckedCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutVentaInput
     factura?: FacturaUncheckedCreateNestedOneWithoutVentaInput
     items?: VentaItemUncheckedCreateNestedManyWithoutVentaInput
-    auditLogs?: AuditVentaUncheckedCreateNestedManyWithoutVentaInput
   }
 
   export type VentaCreateOrConnectWithoutTenantInput = {
@@ -180738,7 +179244,6 @@ export namespace Prisma {
     observaciones?: string | null
     esVentaUnica?: boolean
     ventaPadreId?: string | null
-    idempotencyKey?: string | null
     ordenReparacion?: OrdenReparacionCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutVentaInput
     cliente?: ClienteCreateNestedOneWithoutVentaInput
@@ -180747,7 +179252,6 @@ export namespace Prisma {
     producto?: ProductoCreateNestedOneWithoutVentasInput
     factura?: FacturaCreateNestedOneWithoutVentaInput
     items?: VentaItemCreateNestedManyWithoutVentaInput
-    auditLogs?: AuditVentaCreateNestedManyWithoutVentaInput
     tenant: TenantCreateNestedOneWithoutVentasInput
   }
 
@@ -180767,12 +179271,10 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: string | null
     ventaPadreId?: string | null
-    idempotencyKey?: string | null
     ordenReparacion?: OrdenReparacionUncheckedCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutVentaInput
     factura?: FacturaUncheckedCreateNestedOneWithoutVentaInput
     items?: VentaItemUncheckedCreateNestedManyWithoutVentaInput
-    auditLogs?: AuditVentaUncheckedCreateNestedManyWithoutVentaInput
   }
 
   export type VentaCreateOrConnectWithoutPuntoDeVentaInput = {
@@ -182101,7 +180603,6 @@ export namespace Prisma {
     observaciones?: string | null
     esVentaUnica?: boolean
     ventaPadreId?: string | null
-    idempotencyKey?: string | null
     ordenReparacion?: OrdenReparacionCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutVentaInput
     cliente?: ClienteCreateNestedOneWithoutVentaInput
@@ -182110,7 +180611,6 @@ export namespace Prisma {
     puntoDeVenta: PuntoDeVentaCreateNestedOneWithoutVentasInput
     factura?: FacturaCreateNestedOneWithoutVentaInput
     items?: VentaItemCreateNestedManyWithoutVentaInput
-    auditLogs?: AuditVentaCreateNestedManyWithoutVentaInput
     tenant: TenantCreateNestedOneWithoutVentasInput
   }
 
@@ -182130,12 +180630,10 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: string | null
     ventaPadreId?: string | null
-    idempotencyKey?: string | null
     ordenReparacion?: OrdenReparacionUncheckedCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutVentaInput
     factura?: FacturaUncheckedCreateNestedOneWithoutVentaInput
     items?: VentaItemUncheckedCreateNestedManyWithoutVentaInput
-    auditLogs?: AuditVentaUncheckedCreateNestedManyWithoutVentaInput
   }
 
   export type VentaCreateOrConnectWithoutProductoInput = {
@@ -183929,34 +182427,6 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
-  export type AuditVentaCreateWithoutVentaInput = {
-    auditVentaId?: string
-    accion: string
-    usuarioId?: string
-    tenantId?: string
-    createdAt?: Date | string
-    metadata?: NullableJsonNullValueInput | InputJsonValue
-  }
-
-  export type AuditVentaUncheckedCreateWithoutVentaInput = {
-    auditVentaId?: string
-    accion: string
-    usuarioId?: string
-    tenantId?: string
-    createdAt?: Date | string
-    metadata?: NullableJsonNullValueInput | InputJsonValue
-  }
-
-  export type AuditVentaCreateOrConnectWithoutVentaInput = {
-    where: AuditVentaWhereUniqueInput
-    create: XOR<AuditVentaCreateWithoutVentaInput, AuditVentaUncheckedCreateWithoutVentaInput>
-  }
-
-  export type AuditVentaCreateManyVentaInputEnvelope = {
-    data: AuditVentaCreateManyVentaInput | AuditVentaCreateManyVentaInput[]
-    skipDuplicates?: boolean
-  }
-
   export type TenantCreateWithoutVentasInput = {
     tenantId?: string
     nombre: string
@@ -184559,35 +183029,6 @@ export namespace Prisma {
     data: XOR<VentaItemUpdateManyMutationInput, VentaItemUncheckedUpdateManyWithoutVentaInput>
   }
 
-  export type AuditVentaUpsertWithWhereUniqueWithoutVentaInput = {
-    where: AuditVentaWhereUniqueInput
-    update: XOR<AuditVentaUpdateWithoutVentaInput, AuditVentaUncheckedUpdateWithoutVentaInput>
-    create: XOR<AuditVentaCreateWithoutVentaInput, AuditVentaUncheckedCreateWithoutVentaInput>
-  }
-
-  export type AuditVentaUpdateWithWhereUniqueWithoutVentaInput = {
-    where: AuditVentaWhereUniqueInput
-    data: XOR<AuditVentaUpdateWithoutVentaInput, AuditVentaUncheckedUpdateWithoutVentaInput>
-  }
-
-  export type AuditVentaUpdateManyWithWhereWithoutVentaInput = {
-    where: AuditVentaScalarWhereInput
-    data: XOR<AuditVentaUpdateManyMutationInput, AuditVentaUncheckedUpdateManyWithoutVentaInput>
-  }
-
-  export type AuditVentaScalarWhereInput = {
-    AND?: AuditVentaScalarWhereInput | AuditVentaScalarWhereInput[]
-    OR?: AuditVentaScalarWhereInput[]
-    NOT?: AuditVentaScalarWhereInput | AuditVentaScalarWhereInput[]
-    auditVentaId?: StringFilter<"AuditVenta"> | string
-    ventaId?: StringFilter<"AuditVenta"> | string
-    accion?: StringFilter<"AuditVenta"> | string
-    usuarioId?: StringFilter<"AuditVenta"> | string
-    tenantId?: StringFilter<"AuditVenta"> | string
-    createdAt?: DateTimeFilter<"AuditVenta"> | Date | string
-    metadata?: JsonNullableFilter<"AuditVenta">
-  }
-
   export type TenantUpsertWithoutVentasInput = {
     update: XOR<TenantUpdateWithoutVentasInput, TenantUncheckedUpdateWithoutVentasInput>
     create: XOR<TenantCreateWithoutVentasInput, TenantUncheckedCreateWithoutVentasInput>
@@ -184827,7 +183268,6 @@ export namespace Prisma {
     observaciones?: string | null
     esVentaUnica?: boolean
     ventaPadreId?: string | null
-    idempotencyKey?: string | null
     ordenReparacion?: OrdenReparacionCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutVentaInput
     cliente?: ClienteCreateNestedOneWithoutVentaInput
@@ -184836,7 +183276,6 @@ export namespace Prisma {
     producto?: ProductoCreateNestedOneWithoutVentasInput
     puntoDeVenta: PuntoDeVentaCreateNestedOneWithoutVentasInput
     factura?: FacturaCreateNestedOneWithoutVentaInput
-    auditLogs?: AuditVentaCreateNestedManyWithoutVentaInput
     tenant: TenantCreateNestedOneWithoutVentasInput
   }
 
@@ -184857,11 +183296,9 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: string | null
     ventaPadreId?: string | null
-    idempotencyKey?: string | null
     ordenReparacion?: OrdenReparacionUncheckedCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutVentaInput
     factura?: FacturaUncheckedCreateNestedOneWithoutVentaInput
-    auditLogs?: AuditVentaUncheckedCreateNestedManyWithoutVentaInput
   }
 
   export type VentaCreateOrConnectWithoutItemsInput = {
@@ -184992,7 +183429,6 @@ export namespace Prisma {
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
-    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
     ordenReparacion?: OrdenReparacionUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUpdateManyWithoutVentaNestedInput
     cliente?: ClienteUpdateOneWithoutVentaNestedInput
@@ -185001,7 +183437,6 @@ export namespace Prisma {
     producto?: ProductoUpdateOneWithoutVentasNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneRequiredWithoutVentasNestedInput
     factura?: FacturaUpdateOneWithoutVentaNestedInput
-    auditLogs?: AuditVentaUpdateManyWithoutVentaNestedInput
     tenant?: TenantUpdateOneRequiredWithoutVentasNestedInput
   }
 
@@ -185022,123 +183457,9 @@ export namespace Prisma {
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ofertaId?: NullableStringFieldUpdateOperationsInput | string | null
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
-    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
     ordenReparacion?: OrdenReparacionUncheckedUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutVentaNestedInput
     factura?: FacturaUncheckedUpdateOneWithoutVentaNestedInput
-    auditLogs?: AuditVentaUncheckedUpdateManyWithoutVentaNestedInput
-  }
-
-  export type VentaCreateWithoutAuditLogsInput = {
-    ventaId?: string
-    cantidad: number
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    total?: number | null
-    ordenId?: string | null
-    descuento?: number | null
-    observaciones?: string | null
-    esVentaUnica?: boolean
-    ventaPadreId?: string | null
-    idempotencyKey?: string | null
-    ordenReparacion?: OrdenReparacionCreateNestedOneWithoutVentaInput
-    reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutVentaInput
-    cliente?: ClienteCreateNestedOneWithoutVentaInput
-    empleado?: EmpleadoCreateNestedOneWithoutVentasInput
-    oferta?: OfertaCreateNestedOneWithoutVentaInput
-    producto?: ProductoCreateNestedOneWithoutVentasInput
-    puntoDeVenta: PuntoDeVentaCreateNestedOneWithoutVentasInput
-    factura?: FacturaCreateNestedOneWithoutVentaInput
-    items?: VentaItemCreateNestedManyWithoutVentaInput
-    tenant: TenantCreateNestedOneWithoutVentasInput
-  }
-
-  export type VentaUncheckedCreateWithoutAuditLogsInput = {
-    ventaId?: string
-    tenantId: string
-    productoId?: string | null
-    cantidad: number
-    puntoDeVentaId: string
-    createdAt?: Date | string
-    updatedAt?: Date | string
-    empleadoId?: string | null
-    total?: number | null
-    clienteId?: string | null
-    ordenId?: string | null
-    descuento?: number | null
-    observaciones?: string | null
-    esVentaUnica?: boolean
-    ofertaId?: string | null
-    ventaPadreId?: string | null
-    idempotencyKey?: string | null
-    ordenReparacion?: OrdenReparacionUncheckedCreateNestedOneWithoutVentaInput
-    reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutVentaInput
-    factura?: FacturaUncheckedCreateNestedOneWithoutVentaInput
-    items?: VentaItemUncheckedCreateNestedManyWithoutVentaInput
-  }
-
-  export type VentaCreateOrConnectWithoutAuditLogsInput = {
-    where: VentaWhereUniqueInput
-    create: XOR<VentaCreateWithoutAuditLogsInput, VentaUncheckedCreateWithoutAuditLogsInput>
-  }
-
-  export type VentaUpsertWithoutAuditLogsInput = {
-    update: XOR<VentaUpdateWithoutAuditLogsInput, VentaUncheckedUpdateWithoutAuditLogsInput>
-    create: XOR<VentaCreateWithoutAuditLogsInput, VentaUncheckedCreateWithoutAuditLogsInput>
-    where?: VentaWhereInput
-  }
-
-  export type VentaUpdateToOneWithWhereWithoutAuditLogsInput = {
-    where?: VentaWhereInput
-    data: XOR<VentaUpdateWithoutAuditLogsInput, VentaUncheckedUpdateWithoutAuditLogsInput>
-  }
-
-  export type VentaUpdateWithoutAuditLogsInput = {
-    ventaId?: StringFieldUpdateOperationsInput | string
-    cantidad?: IntFieldUpdateOperationsInput | number
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    total?: NullableIntFieldUpdateOperationsInput | number | null
-    ordenId?: NullableStringFieldUpdateOperationsInput | string | null
-    descuento?: NullableIntFieldUpdateOperationsInput | number | null
-    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
-    esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
-    ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
-    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
-    ordenReparacion?: OrdenReparacionUpdateOneWithoutVentaNestedInput
-    reconciliaciones?: ReconciliacionVentaUpdateManyWithoutVentaNestedInput
-    cliente?: ClienteUpdateOneWithoutVentaNestedInput
-    empleado?: EmpleadoUpdateOneWithoutVentasNestedInput
-    oferta?: OfertaUpdateOneWithoutVentaNestedInput
-    producto?: ProductoUpdateOneWithoutVentasNestedInput
-    puntoDeVenta?: PuntoDeVentaUpdateOneRequiredWithoutVentasNestedInput
-    factura?: FacturaUpdateOneWithoutVentaNestedInput
-    items?: VentaItemUpdateManyWithoutVentaNestedInput
-    tenant?: TenantUpdateOneRequiredWithoutVentasNestedInput
-  }
-
-  export type VentaUncheckedUpdateWithoutAuditLogsInput = {
-    ventaId?: StringFieldUpdateOperationsInput | string
-    tenantId?: StringFieldUpdateOperationsInput | string
-    productoId?: NullableStringFieldUpdateOperationsInput | string | null
-    cantidad?: IntFieldUpdateOperationsInput | number
-    puntoDeVentaId?: StringFieldUpdateOperationsInput | string
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    empleadoId?: NullableStringFieldUpdateOperationsInput | string | null
-    total?: NullableIntFieldUpdateOperationsInput | number | null
-    clienteId?: NullableStringFieldUpdateOperationsInput | string | null
-    ordenId?: NullableStringFieldUpdateOperationsInput | string | null
-    descuento?: NullableIntFieldUpdateOperationsInput | number | null
-    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
-    esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
-    ofertaId?: NullableStringFieldUpdateOperationsInput | string | null
-    ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
-    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
-    ordenReparacion?: OrdenReparacionUncheckedUpdateOneWithoutVentaNestedInput
-    reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutVentaNestedInput
-    factura?: FacturaUncheckedUpdateOneWithoutVentaNestedInput
-    items?: VentaItemUncheckedUpdateManyWithoutVentaNestedInput
   }
 
   export type ProductoCreateWithoutMermasInput = {
@@ -189322,7 +187643,6 @@ export namespace Prisma {
     observaciones?: string | null
     esVentaUnica?: boolean
     ventaPadreId?: string | null
-    idempotencyKey?: string | null
     ordenReparacion?: OrdenReparacionCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutVentaInput
     cliente?: ClienteCreateNestedOneWithoutVentaInput
@@ -189331,7 +187651,6 @@ export namespace Prisma {
     puntoDeVenta: PuntoDeVentaCreateNestedOneWithoutVentasInput
     factura?: FacturaCreateNestedOneWithoutVentaInput
     items?: VentaItemCreateNestedManyWithoutVentaInput
-    auditLogs?: AuditVentaCreateNestedManyWithoutVentaInput
     tenant: TenantCreateNestedOneWithoutVentasInput
   }
 
@@ -189351,12 +187670,10 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: string | null
     ventaPadreId?: string | null
-    idempotencyKey?: string | null
     ordenReparacion?: OrdenReparacionUncheckedCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutVentaInput
     factura?: FacturaUncheckedCreateNestedOneWithoutVentaInput
     items?: VentaItemUncheckedCreateNestedManyWithoutVentaInput
-    auditLogs?: AuditVentaUncheckedCreateNestedManyWithoutVentaInput
   }
 
   export type VentaCreateOrConnectWithoutEmpleadoInput = {
@@ -197578,7 +195895,6 @@ export namespace Prisma {
     observaciones?: string | null
     esVentaUnica?: boolean
     ventaPadreId?: string | null
-    idempotencyKey?: string | null
     ordenReparacion?: OrdenReparacionCreateNestedOneWithoutVentaInput
     cliente?: ClienteCreateNestedOneWithoutVentaInput
     empleado?: EmpleadoCreateNestedOneWithoutVentasInput
@@ -197587,7 +195903,6 @@ export namespace Prisma {
     puntoDeVenta: PuntoDeVentaCreateNestedOneWithoutVentasInput
     factura?: FacturaCreateNestedOneWithoutVentaInput
     items?: VentaItemCreateNestedManyWithoutVentaInput
-    auditLogs?: AuditVentaCreateNestedManyWithoutVentaInput
     tenant: TenantCreateNestedOneWithoutVentasInput
   }
 
@@ -197608,11 +195923,9 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: string | null
     ventaPadreId?: string | null
-    idempotencyKey?: string | null
     ordenReparacion?: OrdenReparacionUncheckedCreateNestedOneWithoutVentaInput
     factura?: FacturaUncheckedCreateNestedOneWithoutVentaInput
     items?: VentaItemUncheckedCreateNestedManyWithoutVentaInput
-    auditLogs?: AuditVentaUncheckedCreateNestedManyWithoutVentaInput
   }
 
   export type VentaCreateOrConnectWithoutReconciliacionesInput = {
@@ -197965,7 +196278,6 @@ export namespace Prisma {
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
-    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
     ordenReparacion?: OrdenReparacionUpdateOneWithoutVentaNestedInput
     cliente?: ClienteUpdateOneWithoutVentaNestedInput
     empleado?: EmpleadoUpdateOneWithoutVentasNestedInput
@@ -197974,7 +196286,6 @@ export namespace Prisma {
     puntoDeVenta?: PuntoDeVentaUpdateOneRequiredWithoutVentasNestedInput
     factura?: FacturaUpdateOneWithoutVentaNestedInput
     items?: VentaItemUpdateManyWithoutVentaNestedInput
-    auditLogs?: AuditVentaUpdateManyWithoutVentaNestedInput
     tenant?: TenantUpdateOneRequiredWithoutVentasNestedInput
   }
 
@@ -197995,11 +196306,9 @@ export namespace Prisma {
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ofertaId?: NullableStringFieldUpdateOperationsInput | string | null
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
-    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
     ordenReparacion?: OrdenReparacionUncheckedUpdateOneWithoutVentaNestedInput
     factura?: FacturaUncheckedUpdateOneWithoutVentaNestedInput
     items?: VentaItemUncheckedUpdateManyWithoutVentaNestedInput
-    auditLogs?: AuditVentaUncheckedUpdateManyWithoutVentaNestedInput
   }
 
   export type TenantUpsertWithoutReconciliacionesVentaInput = {
@@ -203235,7 +201544,6 @@ export namespace Prisma {
     observaciones?: string | null
     esVentaUnica?: boolean
     ventaPadreId?: string | null
-    idempotencyKey?: string | null
     ordenReparacion?: OrdenReparacionCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutVentaInput
     cliente?: ClienteCreateNestedOneWithoutVentaInput
@@ -203244,7 +201552,6 @@ export namespace Prisma {
     producto?: ProductoCreateNestedOneWithoutVentasInput
     puntoDeVenta: PuntoDeVentaCreateNestedOneWithoutVentasInput
     items?: VentaItemCreateNestedManyWithoutVentaInput
-    auditLogs?: AuditVentaCreateNestedManyWithoutVentaInput
     tenant: TenantCreateNestedOneWithoutVentasInput
   }
 
@@ -203265,11 +201572,9 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: string | null
     ventaPadreId?: string | null
-    idempotencyKey?: string | null
     ordenReparacion?: OrdenReparacionUncheckedCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutVentaInput
     items?: VentaItemUncheckedCreateNestedManyWithoutVentaInput
-    auditLogs?: AuditVentaUncheckedCreateNestedManyWithoutVentaInput
   }
 
   export type VentaCreateOrConnectWithoutFacturaInput = {
@@ -203675,7 +201980,6 @@ export namespace Prisma {
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
-    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
     ordenReparacion?: OrdenReparacionUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUpdateManyWithoutVentaNestedInput
     cliente?: ClienteUpdateOneWithoutVentaNestedInput
@@ -203684,7 +201988,6 @@ export namespace Prisma {
     producto?: ProductoUpdateOneWithoutVentasNestedInput
     puntoDeVenta?: PuntoDeVentaUpdateOneRequiredWithoutVentasNestedInput
     items?: VentaItemUpdateManyWithoutVentaNestedInput
-    auditLogs?: AuditVentaUpdateManyWithoutVentaNestedInput
     tenant?: TenantUpdateOneRequiredWithoutVentasNestedInput
   }
 
@@ -203705,11 +202008,9 @@ export namespace Prisma {
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ofertaId?: NullableStringFieldUpdateOperationsInput | string | null
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
-    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
     ordenReparacion?: OrdenReparacionUncheckedUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutVentaNestedInput
     items?: VentaItemUncheckedUpdateManyWithoutVentaNestedInput
-    auditLogs?: AuditVentaUncheckedUpdateManyWithoutVentaNestedInput
   }
 
   export type TenantUpsertWithoutFacturasInput = {
@@ -204279,7 +202580,6 @@ export namespace Prisma {
     observaciones?: string | null
     esVentaUnica?: boolean
     ventaPadreId?: string | null
-    idempotencyKey?: string | null
     ordenReparacion?: OrdenReparacionCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutVentaInput
     cliente?: ClienteCreateNestedOneWithoutVentaInput
@@ -204288,7 +202588,6 @@ export namespace Prisma {
     puntoDeVenta: PuntoDeVentaCreateNestedOneWithoutVentasInput
     factura?: FacturaCreateNestedOneWithoutVentaInput
     items?: VentaItemCreateNestedManyWithoutVentaInput
-    auditLogs?: AuditVentaCreateNestedManyWithoutVentaInput
     tenant: TenantCreateNestedOneWithoutVentasInput
   }
 
@@ -204308,12 +202607,10 @@ export namespace Prisma {
     observaciones?: string | null
     esVentaUnica?: boolean
     ventaPadreId?: string | null
-    idempotencyKey?: string | null
     ordenReparacion?: OrdenReparacionUncheckedCreateNestedOneWithoutVentaInput
     reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutVentaInput
     factura?: FacturaUncheckedCreateNestedOneWithoutVentaInput
     items?: VentaItemUncheckedCreateNestedManyWithoutVentaInput
-    auditLogs?: AuditVentaUncheckedCreateNestedManyWithoutVentaInput
   }
 
   export type VentaCreateOrConnectWithoutOfertaInput = {
@@ -204541,7 +202838,6 @@ export namespace Prisma {
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
-    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
     ordenReparacion?: OrdenReparacionUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUpdateManyWithoutVentaNestedInput
     cliente?: ClienteUpdateOneWithoutVentaNestedInput
@@ -204550,7 +202846,6 @@ export namespace Prisma {
     puntoDeVenta?: PuntoDeVentaUpdateOneRequiredWithoutVentasNestedInput
     factura?: FacturaUpdateOneWithoutVentaNestedInput
     items?: VentaItemUpdateManyWithoutVentaNestedInput
-    auditLogs?: AuditVentaUpdateManyWithoutVentaNestedInput
     tenant?: TenantUpdateOneRequiredWithoutVentasNestedInput
   }
 
@@ -204570,12 +202865,10 @@ export namespace Prisma {
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
-    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
     ordenReparacion?: OrdenReparacionUncheckedUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutVentaNestedInput
     factura?: FacturaUncheckedUpdateOneWithoutVentaNestedInput
     items?: VentaItemUncheckedUpdateManyWithoutVentaNestedInput
-    auditLogs?: AuditVentaUncheckedUpdateManyWithoutVentaNestedInput
   }
 
   export type TenantUpsertWithoutOfertasInput = {
@@ -209057,7 +207350,6 @@ export namespace Prisma {
     observaciones?: string | null
     esVentaUnica?: boolean
     ventaPadreId?: string | null
-    idempotencyKey?: string | null
     reconciliaciones?: ReconciliacionVentaCreateNestedManyWithoutVentaInput
     cliente?: ClienteCreateNestedOneWithoutVentaInput
     empleado?: EmpleadoCreateNestedOneWithoutVentasInput
@@ -209066,7 +207358,6 @@ export namespace Prisma {
     puntoDeVenta: PuntoDeVentaCreateNestedOneWithoutVentasInput
     factura?: FacturaCreateNestedOneWithoutVentaInput
     items?: VentaItemCreateNestedManyWithoutVentaInput
-    auditLogs?: AuditVentaCreateNestedManyWithoutVentaInput
     tenant: TenantCreateNestedOneWithoutVentasInput
   }
 
@@ -209087,11 +207378,9 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: string | null
     ventaPadreId?: string | null
-    idempotencyKey?: string | null
     reconciliaciones?: ReconciliacionVentaUncheckedCreateNestedManyWithoutVentaInput
     factura?: FacturaUncheckedCreateNestedOneWithoutVentaInput
     items?: VentaItemUncheckedCreateNestedManyWithoutVentaInput
-    auditLogs?: AuditVentaUncheckedCreateNestedManyWithoutVentaInput
   }
 
   export type VentaCreateOrConnectWithoutOrdenReparacionInput = {
@@ -209497,7 +207786,6 @@ export namespace Prisma {
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
-    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
     reconciliaciones?: ReconciliacionVentaUpdateManyWithoutVentaNestedInput
     cliente?: ClienteUpdateOneWithoutVentaNestedInput
     empleado?: EmpleadoUpdateOneWithoutVentasNestedInput
@@ -209506,7 +207794,6 @@ export namespace Prisma {
     puntoDeVenta?: PuntoDeVentaUpdateOneRequiredWithoutVentasNestedInput
     factura?: FacturaUpdateOneWithoutVentaNestedInput
     items?: VentaItemUpdateManyWithoutVentaNestedInput
-    auditLogs?: AuditVentaUpdateManyWithoutVentaNestedInput
     tenant?: TenantUpdateOneRequiredWithoutVentasNestedInput
   }
 
@@ -209527,11 +207814,9 @@ export namespace Prisma {
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ofertaId?: NullableStringFieldUpdateOperationsInput | string | null
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
-    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
     reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutVentaNestedInput
     factura?: FacturaUncheckedUpdateOneWithoutVentaNestedInput
     items?: VentaItemUncheckedUpdateManyWithoutVentaNestedInput
-    auditLogs?: AuditVentaUncheckedUpdateManyWithoutVentaNestedInput
   }
 
   export type OrdenReparacionEquipoUpsertWithWhereUniqueWithoutOrdenInput = {
@@ -217896,7 +216181,6 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: string | null
     ventaPadreId?: string | null
-    idempotencyKey?: string | null
   }
 
   export type VentaServiciosCreateManyClienteInput = {
@@ -218363,7 +216647,6 @@ export namespace Prisma {
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
-    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
     ordenReparacion?: OrdenReparacionUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUpdateManyWithoutVentaNestedInput
     empleado?: EmpleadoUpdateOneWithoutVentasNestedInput
@@ -218372,7 +216655,6 @@ export namespace Prisma {
     puntoDeVenta?: PuntoDeVentaUpdateOneRequiredWithoutVentasNestedInput
     factura?: FacturaUpdateOneWithoutVentaNestedInput
     items?: VentaItemUpdateManyWithoutVentaNestedInput
-    auditLogs?: AuditVentaUpdateManyWithoutVentaNestedInput
     tenant?: TenantUpdateOneRequiredWithoutVentasNestedInput
   }
 
@@ -218392,12 +216674,10 @@ export namespace Prisma {
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ofertaId?: NullableStringFieldUpdateOperationsInput | string | null
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
-    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
     ordenReparacion?: OrdenReparacionUncheckedUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutVentaNestedInput
     factura?: FacturaUncheckedUpdateOneWithoutVentaNestedInput
     items?: VentaItemUncheckedUpdateManyWithoutVentaNestedInput
-    auditLogs?: AuditVentaUncheckedUpdateManyWithoutVentaNestedInput
   }
 
   export type VentaUncheckedUpdateManyWithoutClienteInput = {
@@ -218416,7 +216696,6 @@ export namespace Prisma {
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ofertaId?: NullableStringFieldUpdateOperationsInput | string | null
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
-    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type VentaServiciosUpdateWithoutClienteInput = {
@@ -218671,7 +216950,6 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: string | null
     ventaPadreId?: string | null
-    idempotencyKey?: string | null
   }
 
   export type FacturaCreateManyTenantInput = {
@@ -219775,7 +218053,6 @@ export namespace Prisma {
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
-    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
     ordenReparacion?: OrdenReparacionUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUpdateManyWithoutVentaNestedInput
     cliente?: ClienteUpdateOneWithoutVentaNestedInput
@@ -219785,7 +218062,6 @@ export namespace Prisma {
     puntoDeVenta?: PuntoDeVentaUpdateOneRequiredWithoutVentasNestedInput
     factura?: FacturaUpdateOneWithoutVentaNestedInput
     items?: VentaItemUpdateManyWithoutVentaNestedInput
-    auditLogs?: AuditVentaUpdateManyWithoutVentaNestedInput
   }
 
   export type VentaUncheckedUpdateWithoutTenantInput = {
@@ -219804,12 +218080,10 @@ export namespace Prisma {
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ofertaId?: NullableStringFieldUpdateOperationsInput | string | null
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
-    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
     ordenReparacion?: OrdenReparacionUncheckedUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutVentaNestedInput
     factura?: FacturaUncheckedUpdateOneWithoutVentaNestedInput
     items?: VentaItemUncheckedUpdateManyWithoutVentaNestedInput
-    auditLogs?: AuditVentaUncheckedUpdateManyWithoutVentaNestedInput
   }
 
   export type VentaUncheckedUpdateManyWithoutTenantInput = {
@@ -219828,7 +218102,6 @@ export namespace Prisma {
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ofertaId?: NullableStringFieldUpdateOperationsInput | string | null
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
-    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type FacturaUpdateWithoutTenantInput = {
@@ -222387,7 +220660,6 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: string | null
     ventaPadreId?: string | null
-    idempotencyKey?: string | null
   }
 
   export type ProductoUpdateWithoutPuntoDeVentaInput = {
@@ -222634,7 +220906,6 @@ export namespace Prisma {
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
-    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
     ordenReparacion?: OrdenReparacionUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUpdateManyWithoutVentaNestedInput
     cliente?: ClienteUpdateOneWithoutVentaNestedInput
@@ -222643,7 +220914,6 @@ export namespace Prisma {
     producto?: ProductoUpdateOneWithoutVentasNestedInput
     factura?: FacturaUpdateOneWithoutVentaNestedInput
     items?: VentaItemUpdateManyWithoutVentaNestedInput
-    auditLogs?: AuditVentaUpdateManyWithoutVentaNestedInput
     tenant?: TenantUpdateOneRequiredWithoutVentasNestedInput
   }
 
@@ -222663,12 +220933,10 @@ export namespace Prisma {
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ofertaId?: NullableStringFieldUpdateOperationsInput | string | null
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
-    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
     ordenReparacion?: OrdenReparacionUncheckedUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutVentaNestedInput
     factura?: FacturaUncheckedUpdateOneWithoutVentaNestedInput
     items?: VentaItemUncheckedUpdateManyWithoutVentaNestedInput
-    auditLogs?: AuditVentaUncheckedUpdateManyWithoutVentaNestedInput
   }
 
   export type VentaUncheckedUpdateManyWithoutPuntoDeVentaInput = {
@@ -222687,7 +220955,6 @@ export namespace Prisma {
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ofertaId?: NullableStringFieldUpdateOperationsInput | string | null
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
-    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type CompraProductoCreateManyProductoInput = {
@@ -222883,7 +221150,6 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: string | null
     ventaPadreId?: string | null
-    idempotencyKey?: string | null
   }
 
   export type VentaItemCreateManyProductoInput = {
@@ -223496,7 +221762,6 @@ export namespace Prisma {
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
-    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
     ordenReparacion?: OrdenReparacionUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUpdateManyWithoutVentaNestedInput
     cliente?: ClienteUpdateOneWithoutVentaNestedInput
@@ -223505,7 +221770,6 @@ export namespace Prisma {
     puntoDeVenta?: PuntoDeVentaUpdateOneRequiredWithoutVentasNestedInput
     factura?: FacturaUpdateOneWithoutVentaNestedInput
     items?: VentaItemUpdateManyWithoutVentaNestedInput
-    auditLogs?: AuditVentaUpdateManyWithoutVentaNestedInput
     tenant?: TenantUpdateOneRequiredWithoutVentasNestedInput
   }
 
@@ -223525,12 +221789,10 @@ export namespace Prisma {
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ofertaId?: NullableStringFieldUpdateOperationsInput | string | null
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
-    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
     ordenReparacion?: OrdenReparacionUncheckedUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutVentaNestedInput
     factura?: FacturaUncheckedUpdateOneWithoutVentaNestedInput
     items?: VentaItemUncheckedUpdateManyWithoutVentaNestedInput
-    auditLogs?: AuditVentaUncheckedUpdateManyWithoutVentaNestedInput
   }
 
   export type VentaUncheckedUpdateManyWithoutProductoInput = {
@@ -223549,7 +221811,6 @@ export namespace Prisma {
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ofertaId?: NullableStringFieldUpdateOperationsInput | string | null
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
-    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type VentaItemUpdateWithoutProductoInput = {
@@ -223649,15 +221910,6 @@ export namespace Prisma {
     updatedAt?: Date | string
   }
 
-  export type AuditVentaCreateManyVentaInput = {
-    auditVentaId?: string
-    accion: string
-    usuarioId?: string
-    tenantId?: string
-    createdAt?: Date | string
-    metadata?: NullableJsonNullValueInput | InputJsonValue
-  }
-
   export type ReconciliacionVentaUpdateWithoutVentaInput = {
     reconciliacionId?: StringFieldUpdateOperationsInput | string
     monto?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
@@ -223749,33 +222001,6 @@ export namespace Prisma {
     total?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
-  }
-
-  export type AuditVentaUpdateWithoutVentaInput = {
-    auditVentaId?: StringFieldUpdateOperationsInput | string
-    accion?: StringFieldUpdateOperationsInput | string
-    usuarioId?: StringFieldUpdateOperationsInput | string
-    tenantId?: StringFieldUpdateOperationsInput | string
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    metadata?: NullableJsonNullValueInput | InputJsonValue
-  }
-
-  export type AuditVentaUncheckedUpdateWithoutVentaInput = {
-    auditVentaId?: StringFieldUpdateOperationsInput | string
-    accion?: StringFieldUpdateOperationsInput | string
-    usuarioId?: StringFieldUpdateOperationsInput | string
-    tenantId?: StringFieldUpdateOperationsInput | string
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    metadata?: NullableJsonNullValueInput | InputJsonValue
-  }
-
-  export type AuditVentaUncheckedUpdateManyWithoutVentaInput = {
-    auditVentaId?: StringFieldUpdateOperationsInput | string
-    accion?: StringFieldUpdateOperationsInput | string
-    usuarioId?: StringFieldUpdateOperationsInput | string
-    tenantId?: StringFieldUpdateOperationsInput | string
-    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
-    metadata?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type ContratoCreateManyAprobadorInput = {
@@ -224958,7 +223183,6 @@ export namespace Prisma {
     esVentaUnica?: boolean
     ofertaId?: string | null
     ventaPadreId?: string | null
-    idempotencyKey?: string | null
   }
 
   export type AttendanceUpdateWithoutEmployeeInput = {
@@ -225286,7 +223510,6 @@ export namespace Prisma {
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
-    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
     ordenReparacion?: OrdenReparacionUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUpdateManyWithoutVentaNestedInput
     cliente?: ClienteUpdateOneWithoutVentaNestedInput
@@ -225295,7 +223518,6 @@ export namespace Prisma {
     puntoDeVenta?: PuntoDeVentaUpdateOneRequiredWithoutVentasNestedInput
     factura?: FacturaUpdateOneWithoutVentaNestedInput
     items?: VentaItemUpdateManyWithoutVentaNestedInput
-    auditLogs?: AuditVentaUpdateManyWithoutVentaNestedInput
     tenant?: TenantUpdateOneRequiredWithoutVentasNestedInput
   }
 
@@ -225315,12 +223537,10 @@ export namespace Prisma {
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ofertaId?: NullableStringFieldUpdateOperationsInput | string | null
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
-    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
     ordenReparacion?: OrdenReparacionUncheckedUpdateOneWithoutVentaNestedInput
     reconciliaciones?: ReconciliacionVentaUncheckedUpdateManyWithoutVentaNestedInput
     factura?: FacturaUncheckedUpdateOneWithoutVentaNestedInput
     items?: VentaItemUncheckedUpdateManyWithoutVentaNestedInput
-    auditLogs?: AuditVentaUncheckedUpdateManyWithoutVentaNestedInput
   }
 
   export type VentaUncheckedUpdateManyWithoutEmpleadoInput = {
@@ -225339,7 +223559,6 @@ export namespace Prisma {
     esVentaUnica?: BoolFieldUpdateOperationsInput | boolean
     ofertaId?: NullableStringFieldUpdateOperationsInput | string | null
     ventaPadreId?: NullableStringFieldUpdateOperationsInput | string | null
-    idempotencyKey?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type ReconciliacionGastoCreateManyPagoSalarioInput = {

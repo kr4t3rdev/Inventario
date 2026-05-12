@@ -249,10 +249,7 @@ export function TenantUsersPage() {
               <PendingMembershipsTable
                 memberships={pendingMemberships}
                 isLoading={pendingLoading}
-                onRefresh={
-  // @ts-expect-error
-                refetchPending
-                }
+                onRefresh={handleRefresh}
                 onApprove={handleApproveClick}
                 onReject={handleReject}
               />

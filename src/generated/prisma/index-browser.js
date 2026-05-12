@@ -333,8 +333,7 @@ exports.Prisma.VentaScalarFieldEnum = {
   observaciones: 'observaciones',
   esVentaUnica: 'esVentaUnica',
   ofertaId: 'ofertaId',
-  ventaPadreId: 'ventaPadreId',
-  idempotencyKey: 'idempotencyKey'
+  ventaPadreId: 'ventaPadreId'
 };
 
 exports.Prisma.VentaItemScalarFieldEnum = {
@@ -346,16 +345,6 @@ exports.Prisma.VentaItemScalarFieldEnum = {
   total: 'total',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
-};
-
-exports.Prisma.AuditVentaScalarFieldEnum = {
-  auditVentaId: 'auditVentaId',
-  ventaId: 'ventaId',
-  accion: 'accion',
-  usuarioId: 'usuarioId',
-  tenantId: 'tenantId',
-  createdAt: 'createdAt',
-  metadata: 'metadata'
 };
 
 exports.Prisma.MermaScalarFieldEnum = {
@@ -1687,7 +1676,6 @@ exports.Prisma.ModelName = {
   StockUbicacion: 'StockUbicacion',
   Venta: 'Venta',
   VentaItem: 'VentaItem',
-  AuditVenta: 'AuditVenta',
   Merma: 'Merma',
   Transferencia: 'Transferencia',
   User: 'User',
