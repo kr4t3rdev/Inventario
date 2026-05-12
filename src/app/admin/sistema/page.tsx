@@ -8,6 +8,8 @@ import { PageTransition } from "@/components/ui/animations"
 import { useEffect, useState } from "react"
 import { getAdminSystemHealthAction } from "@/features/admin"
 
+export const dynamic = 'force-dynamic'
+
 export default function SistemaPage() {
   const [system, setSystem] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)

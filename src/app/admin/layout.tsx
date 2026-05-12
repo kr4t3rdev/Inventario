@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { SiteHeader } from "@/components/site-header"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Toaster } from "sonner"

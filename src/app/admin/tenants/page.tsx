@@ -8,6 +8,8 @@ import { PageTransition } from "@/components/ui/animations"
 import { useEffect, useState } from "react"
 import { getAdminTenantsAction, getAdminSystemHealthAction } from "@/features/admin"
 
+export const dynamic = 'force-dynamic'
+
 export default function TenantsPage() {
   const [tenants, setTenants] = useState<any[]>([])
   const [system, setSystem] = useState<any>(null)
