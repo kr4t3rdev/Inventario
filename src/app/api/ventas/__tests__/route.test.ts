@@ -30,6 +30,10 @@ vi.mock('@/lib/services/anticipos-workflow', () => ({
   isAnticipoWorkflowError: () => false
 }));
 
+vi.mock('@/lib/services/tenant-scope', () => ({
+  requireTenant: vi.fn().mockReturnValue('1'),
+}));
+
 describe('Ventas API - POST rollback por fallo de facturación', () => {
   beforeEach(() => {
     vi.clearAllMocks();

@@ -13,6 +13,30 @@ import {
 import { upsertStockUbicacion } from "@/lib/services/stock-ubicacion-service"
 import type { AuthenticatedUser } from "@/lib/auth-middleware"
 
+/**
+ * @description Valida que las ubicaciones de la venta existan antes de la transacción.
+ */
+async function validateVentaLocations(puntoDeVentaId: string): Promise<void> {
+  const puntoDeVenta = await prisma.puntoDeVenta.findUnique({
+    where: { pvId: puntoDeVentaId },
+  })
+  if (!puntoDeVenta) {
+    throw new Error("Punto de venta no encontrado")
+  }
+}
+
+/**
+ * @description Wrapper para logging y discriminación de errores Prisma en handlers de ventas.
+ */
+function handleVentaError(handlerName: string, error: unknown): NextResponse {
+  console.error(`[VENTA_TX_ROLLBACK] ${handlerName}:`, error)
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (error.code === 'P2002') return NextResponse.json({ error: 'Conflicto: El recurso ya existe' }, { status: 409 })
+    if (error.code === 'P2025') return NextResponse.json({ error: 'Recurso no encontrado' }, { status: 404 })
+  }
+  return NextResponse.json({ error: `Error al ${handlerName}` }, { status: 500 })
+}
+
 async function invalidateDashboardCache() {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
@@ -121,7 +145,7 @@ async function crearFacturaParaVenta(
   return factura
 }
 
-async function crearVentaMixta(body: any, user: any) {
+async function crearVentaMixta(body: any, user: any, tenantId?: string) {
   const lineas = Array.isArray(body.lineas) ? body.lineas : []
   const lineasProducto = lineas.filter((linea: any) => linea.tipoLinea === 'PRODUCTO')
   const lineasServicio = lineas.filter((linea: any) => linea.tipoLinea === 'SERVICIO')
@@ -135,7 +159,7 @@ async function crearVentaMixta(body: any, user: any) {
             total: linea.cantidad * linea.precioUnitario,
             observaciones: linea.observaciones ?? body.observaciones ?? null,
             clienteId: body.clienteId ?? null,
-            tenantId: '',
+            tenantId: tenantId ?? "",
           },
         }),
       ),
@@ -147,7 +171,7 @@ async function crearVentaMixta(body: any, user: any) {
   const ventaProductosResponse = await crearVentaUnica({
     ...body,
     productos: lineasProducto.map((linea: any) => ({ productoId: linea.productoId, cantidad: linea.cantidad })),
-  }, user)
+  }, user, tenantId)
 
   if (ventaProductosResponse.status >= 400) return ventaProductosResponse
 
@@ -176,7 +200,7 @@ async function crearVentaMixta(body: any, user: any) {
   }, { status: 201 })
 }
 
-async function crearVentaUnica(body: any, user: any) {
+async function crearVentaUnica(body: any, user: any, tenantId?: string) {
   const {
     productos, puntoDeVentaId, descuento, impuestos, cargoTransporte,
     observaciones, clienteId, serieId, fechaVencimiento, tipoVencimiento,
@@ -190,8 +214,27 @@ async function crearVentaUnica(body: any, user: any) {
     )
   }
 
-  const puntoDeVenta = await prisma.puntoDeVenta.findUnique({ where: { pvId: puntoDeVentaId } })
-  if (!puntoDeVenta) return NextResponse.json({ error: "Punto de venta no encontrado" }, { status: 404 })
+  // Validar ubicaciones
+  await validateVentaLocations(puntoDeVentaId)
+
+  // Verificar idempotencyKey
+  const resolvedIdempotencyKey = idempotencyKey ?? crypto.randomUUID()
+  if (idempotencyKey) {
+    const existing = await prisma.venta.findUnique({
+      where: { idempotencyKey },
+      include: {
+        puntoDeVenta: { select: { nombre: true } },
+        cliente: { select: { nombre: true } },
+        items: { include: { producto: { select: { id: true, nombre: true, precioVenta: true } } } },
+      },
+    })
+    if (existing) return NextResponse.json(existing, { status: 200 })
+  }
+
+  const puntoDeVenta = await prisma.puntoDeVenta.findUnique({
+    where: { pvId: puntoDeVentaId },
+    select: { listaPrecioId: true },
+  })
 
   for (const item of productos) {
     const { productoId, cantidad } = item
@@ -203,11 +246,12 @@ async function crearVentaUnica(body: any, user: any) {
       where: { productoId, puntoDeVentaOrigenId: puntoDeVentaId },
       _sum: { cantidad: true },
     })
-    const [ventasItems, ventasLegacy] = await Promise.all([
-      prisma.ventaItem.aggregate({ where: { productoId, venta: { puntoDeVentaId } }, _sum: { cantidad: true } }),
-      prisma.venta.aggregate({ where: { productoId, puntoDeVentaId, items: { none: {} } }, _sum: { cantidad: true } }),
-    ])
-    const ventasTotal = (ventasItems._sum.cantidad || 0) + (ventasLegacy._sum.cantidad || 0)
+    // Stock unificado: solo VentaItem (sin legacy)
+    const ventasItemsAgg = await prisma.ventaItem.aggregate({
+      where: { productoId, venta: { puntoDeVentaId } },
+      _sum: { cantidad: true },
+    })
+    const ventasTotal = (ventasItemsAgg._sum.cantidad || 0)
     const stockDisponible = (transferenciasEntrada._sum.cantidad || 0) - (transferenciasSalida._sum.cantidad || 0) - ventasTotal
 
     if (stockDisponible < cantidad) {
@@ -244,7 +288,8 @@ async function crearVentaUnica(body: any, user: any) {
   const venta = await prisma.$transaction(async (tx) => {
     const ventaCreada = await tx.venta.create({
       data: {
-        tenantId: '',
+        tenantId: tenantId ?? "",
+        idempotencyKey: resolvedIdempotencyKey,
         cantidad: productos.reduce((sum: number, item: any) => sum + item.cantidad, 0),
         esVentaUnica: true,
         puntoDeVentaId,
@@ -290,7 +335,7 @@ async function crearVentaUnica(body: any, user: any) {
   return NextResponse.json({ ...venta, productos: productosConPrecio, tipo: 'venta_unica' })
 }
 
-async function crearVentaIndividual(body: any, user: any) {
+async function crearVentaIndividual(body: any, user: any, tenantId?: string) {
   const {
     productoId, cantidad, precioVenta, puntoDeVentaId, descuento, impuestos,
     cargoTransporte, observaciones, clienteId, serieId, fechaVencimiento,
@@ -301,8 +346,27 @@ async function crearVentaIndividual(body: any, user: any) {
     return NextResponse.json({ error: 'formaPagoAnticipo debe ser ANTICIPO_COBRO cuando se usa anticipo' }, { status: 400 })
   }
 
-  const puntoDeVenta = await prisma.puntoDeVenta.findUnique({ where: { pvId: puntoDeVentaId } })
-  if (!puntoDeVenta) return NextResponse.json({ error: "Punto de venta no encontrado" }, { status: 404 })
+  await validateVentaLocations(puntoDeVentaId)
+
+  // Verificar idempotencyKey
+  const resolvedIdempotencyKey = idempotencyKey ?? crypto.randomUUID()
+  if (idempotencyKey) {
+    const existing = await prisma.venta.findUnique({
+      where: { idempotencyKey },
+      include: {
+        puntoDeVenta: { select: { nombre: true } },
+        cliente: { select: { nombre: true } },
+        producto: { select: { nombre: true, precioVenta: true } },
+        items: { include: { producto: { select: { id: true, nombre: true, precioVenta: true } } } },
+      },
+    })
+    if (existing) return NextResponse.json(existing, { status: 200 })
+  }
+
+  const puntoDeVenta = await prisma.puntoDeVenta.findUnique({
+    where: { pvId: puntoDeVentaId },
+    select: { listaPrecioId: true },
+  })
 
   const transferenciasEntrada = await prisma.transferencia.aggregate({
     where: { productoId, puntoDeVentaDestinoId: puntoDeVentaId },
@@ -312,11 +376,12 @@ async function crearVentaIndividual(body: any, user: any) {
     where: { productoId, puntoDeVentaOrigenId: puntoDeVentaId },
     _sum: { cantidad: true },
   })
-  const [ventasItems, ventasLegacy] = await Promise.all([
-    prisma.ventaItem.aggregate({ where: { productoId, venta: { puntoDeVentaId } }, _sum: { cantidad: true } }),
-    prisma.venta.aggregate({ where: { productoId, puntoDeVentaId, items: { none: {} } }, _sum: { cantidad: true } }),
-  ])
-  const ventasTotal = (ventasItems._sum.cantidad || 0) + (ventasLegacy._sum.cantidad || 0)
+  // Stock unificado: solo VentaItem (sin legacy)
+  const ventasItemsAgg = await prisma.ventaItem.aggregate({
+    where: { productoId, venta: { puntoDeVentaId } },
+    _sum: { cantidad: true },
+  })
+  const ventasTotal = (ventasItemsAgg._sum.cantidad || 0)
   const stockDisponible = (transferenciasEntrada._sum.cantidad || 0) - (transferenciasSalida._sum.cantidad || 0) - ventasTotal
 
   if (stockDisponible < cantidad) {
@@ -344,7 +409,8 @@ async function crearVentaIndividual(body: any, user: any) {
   const venta = await prisma.$transaction(async (tx) => {
     const ventaCreada = await tx.venta.create({
       data: {
-        tenantId: '',
+        tenantId: tenantId ?? "",
+        idempotencyKey: resolvedIdempotencyKey,
         productoId,
         cantidad, puntoDeVentaId,
         clienteId: clienteId || undefined,
@@ -407,21 +473,28 @@ export async function getVentasHandler(request: NextRequest, context: any, user:
   }
 }
 
-export async function createVentaHandler(request: NextRequest, context: any, user: any) {
+export async function createVentaHandler(request: NextRequest, context: any, user: AuthenticatedUser) {
   try {
+    const tenantId = requireTenant(user)
     const body = await request.json()
 
     if (body.lineas && Array.isArray(body.lineas)) {
-      return await crearVentaMixta(body, user)
+      return await crearVentaMixta(body, user, tenantId)
     }
 
     if (body.productos && Array.isArray(body.productos)) {
-      return await crearVentaUnica(body, user)
+      return await crearVentaUnica(body, user, tenantId)
     } else {
-      return await crearVentaIndividual(body, user)
+      return await crearVentaIndividual(body, user, tenantId)
     }
   } catch (error) {
-    console.error("Error al crear venta:", error)
+    console.error(`[VENTA_TX_ROLLBACK] crearVenta:`, error)
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') return NextResponse.json({ error: 'Conflicto: La venta ya existe (idempotencyKey duplicada)' }, { status: 409 })
+      if (error.code === 'P2025') return NextResponse.json({ error: 'Recurso relacionado no encontrado' }, { status: 404 })
+    }
+
     if (isAnticipoWorkflowError(error)) {
       return NextResponse.json({ error: error.message, code: error.code }, { status: error.status })
     }
@@ -432,18 +505,20 @@ export async function createVentaHandler(request: NextRequest, context: any, use
       errorMessage.includes('No hay cuentas bancarias activas') ||
       errorMessage.includes('La fecha de vencimiento es obligatoria') ||
       errorMessage.includes('Fecha de vencimiento inválida') ||
-      errorMessage.includes('El monto total de la factura debe ser mayor que cero')
+      errorMessage.includes('El monto total de la factura debe ser mayor que cero') ||
+      errorMessage.includes('Punto de venta no encontrado')
 
     if (shouldReturnBadRequest) return NextResponse.json({ error: errorMessage }, { status: 400 })
-    return NextResponse.json({ error: "Error al crear venta" }, { status: 500 })
+    return handleVentaError("crear venta", error)
   }
 }
 
-export async function getVentaByIdHandler(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function getVentaByIdHandler(request: NextRequest, context: any, user: AuthenticatedUser) {
   try {
-    const { id } = await params
+    const tenantId = requireTenant(user)
+    const { id } = await context.params
     const venta = await prisma.venta.findUnique({
-      where: { ventaId: id },
+      where: { ventaId: id, tenantId },
       include: {
         producto: true,
         puntoDeVenta: true,
@@ -453,19 +528,19 @@ export async function getVentaByIdHandler(request: Request, { params }: { params
     if (!venta) return NextResponse.json({ error: "Venta no encontrada" }, { status: 404 })
     return NextResponse.json(venta)
   } catch (error) {
-    console.error("Error al obtener venta:", error)
-    return NextResponse.json({ error: "Error al obtener venta" }, { status: 500 })
+    return handleVentaError("obtener venta", error)
   }
 }
 
-export async function updateVentaHandler(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function updateVentaHandler(request: NextRequest, context: any, user: AuthenticatedUser) {
   try {
-    const { id } = await params
+    const tenantId = requireTenant(user)
+    const { id } = await context.params
     const body = await request.json()
     const { productoId, cantidad, fecha, puntoDeVentaId } = body
 
     const ventaActual = await prisma.venta.findUnique({
-      where: { ventaId: id },
+      where: { ventaId: id, tenantId },
       include: { items: true },
     })
     if (!ventaActual) return NextResponse.json({ error: "Venta no encontrada" }, { status: 404 })
@@ -529,15 +604,15 @@ export async function updateVentaHandler(request: Request, { params }: { params:
       return NextResponse.json(venta)
     }
   } catch (error) {
-    console.error("Error al actualizar venta:", error)
-    return NextResponse.json({ error: "Error al actualizar venta" }, { status: 500 })
+    return handleVentaError("actualizar venta", error)
   }
 }
 
-export async function deleteVentaHandler(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function deleteVentaHandler(request: NextRequest, context: any, user: AuthenticatedUser) {
   try {
-    const { id } = await params
-    const venta = await prisma.venta.findUnique({ where: { ventaId: id }, include: { items: true } })
+    const tenantId = requireTenant(user)
+    const { id } = await context.params
+    const venta = await prisma.venta.findUnique({ where: { ventaId: id, tenantId }, include: { items: true } })
     if (!venta) return NextResponse.json({ error: "Venta no encontrada" }, { status: 404 })
 
     if (venta.items && venta.items.length > 0) {
@@ -545,6 +620,8 @@ export async function deleteVentaHandler(request: Request, { params }: { params:
       return NextResponse.json({ success: true, id })
     }
 
+    // DEPRECATED: legacy path for ventas without VentaItem
+    console.warn('[VENTAS_DEPRECATED] Eliminando venta legacy sin items:', id)
     await prisma.$transaction([
       prisma.venta.delete({ where: { ventaId: id } }),
       prisma.producto.update({ where: { id: venta.productoId! }, data: { stock: { increment: venta.cantidad } } }),
@@ -552,14 +629,14 @@ export async function deleteVentaHandler(request: Request, { params }: { params:
 
     return NextResponse.json({ success: true, id })
   } catch (error) {
-    console.error("Error al eliminar venta:", error)
-    return NextResponse.json({ error: "Error al eliminar venta" }, { status: 500 })
+    return handleVentaError("eliminar venta", error)
   }
 }
 
-export async function getVentasStatsHandler() {
+export async function getVentasStatsHandler(request: NextRequest, context: any, user: AuthenticatedUser) {
   try {
-    const totalVentas = await prisma.venta.count()
+    const tenantId = requireTenant(user)
+    const totalVentas = await prisma.venta.count({ where: { tenantId } })
     const fechaInicio = new Date()
     fechaInicio.setMonth(fechaInicio.getMonth() - 6)
 
@@ -567,6 +644,7 @@ export async function getVentasStatsHandler() {
       SELECT DATE_TRUNC('month', "fecha") as mes, SUM("cantidad") as total
       FROM "Venta"
       WHERE "fecha" >= ${fechaInicio}
+      AND "tenantId" = ${tenantId}
       GROUP BY DATE_TRUNC('month', "fecha")
       ORDER BY mes ASC
     `
@@ -579,7 +657,6 @@ export async function getVentasStatsHandler() {
       })),
     })
   } catch (error) {
-    console.error("Error al obtener estadísticas de ventas:", error)
-    return NextResponse.json({ error: "Error al obtener estadísticas" }, { status: 500 })
+    return handleVentaError("obtener estadísticas de ventas", error)
   }
 }
