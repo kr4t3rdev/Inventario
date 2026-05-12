@@ -159,7 +159,7 @@ describe('auth login route', () => {
       email: 'u3@test.com',
       password: 'hash',
       isActive: true,
-      role: 'dependiente',
+      role: 'regularUser',
       loginAttempts: 0,
       lockedUntil: null,
       lastFailedLogin: null,

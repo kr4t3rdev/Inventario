@@ -8,7 +8,7 @@ export const POST = withAuthPost(async (request: NextRequest, _context: any, use
     const tenantId = requireTenant(user);
     const data = await request.json()
 
-    if (user.role === 'dependiente') {
+    if (user.role !== 'admin') {
       return NextResponse.json({
         error: 'Acceso restringido',
         message: 'Los dependientes no pueden crear piezas'

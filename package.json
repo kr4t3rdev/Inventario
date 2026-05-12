@@ -76,6 +76,8 @@
     "date-fns": "^4.1.0",
     "formidable": "^3.5.4",
     "framer-motion": "^12.31.0",
+    "google-auth-library": "^10.6.2",
+    "googleapis": "^171.4.0",
     "html2canvas": "^1.4.1",
     "jsonwebtoken": "^9.0.2",
     "jspdf": "^3.0.1",

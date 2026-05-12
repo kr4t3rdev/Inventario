@@ -73,7 +73,7 @@ describe('GET /api/admin/global/users', () => {
   })
 
   it('rechaza si no es admin ni manager de tenant', async () => {
-    vi.mocked(authenticateUser).mockResolvedValueOnce(mockAuth({ role: 'dependiente', tenantId: null, tenantRole: null }))
+    vi.mocked(authenticateUser).mockResolvedValueOnce(mockAuth({ role: 'regularUser', tenantId: null, tenantRole: null }))
 
     const request = new NextRequest('http://localhost/api/admin/global/users')
     const response = await GET(request)
@@ -109,7 +109,7 @@ describe('GET /api/admin/global/users', () => {
           userId: 'user-2',
           name: 'Jane Smith',
           email: 'jane@test.com',
-          role: 'dependiente',
+          role: 'regularUser',
           isActive: true,
           createdAt: new Date(),
         },

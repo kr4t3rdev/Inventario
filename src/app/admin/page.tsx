@@ -304,7 +304,6 @@ export default function AdminDashboardPage(): React.JSX.Element {
                         const colors: Record<string, string> = {
                           admin: "bg-violet-500",
                           manager: "bg-blue-500",
-                          dependiente: "bg-emerald-500",
                           regularUser: "bg-slate-500",
                           economico: "bg-amber-500",
                         }

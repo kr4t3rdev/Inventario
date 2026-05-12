@@ -36,7 +36,7 @@ describe('API /servicios', () => {
         }),
       })
 
-      const response = await POST(request, {}, { userId: 'user-1', role: 'admin' })
+      const response = await POST(request, {}, { userId: 'user-1', role: 'admin', tenantId: 'tenant-1' })
       const data = await response.json()
 
       expect(response.status).toBe(400)
@@ -56,7 +56,7 @@ describe('API /servicios', () => {
         }),
       })
 
-      const response = await POST(request, {}, { userId: 'user-1', role: 'dependiente' })
+      const response = await POST(request, {}, { userId: 'user-1', role: 'regularUser', tenantId: 'tenant-1' })
       const data = await response.json()
 
       expect(response.status).toBe(403)
@@ -83,7 +83,7 @@ describe('API /servicios', () => {
         }),
       })
 
-      const response = await POST(request, {}, { userId: 'user-1', role: 'admin' })
+      const response = await POST(request, {}, { userId: 'user-1', role: 'admin', tenantId: 'tenant-1' })
       const data = await response.json()
 
       expect(response.status).toBe(200)
@@ -93,6 +93,7 @@ describe('API /servicios', () => {
           nombre: 'Servicio de prueba',
           descripcion: 'Descripcion de prueba',
           precio: 1000,
+          tenantId: 'tenant-1',
         },
       })
     })
@@ -107,7 +108,7 @@ describe('API /servicios', () => {
       ])
 
       const request = new NextRequest('http://localhost/api/servicios')
-      const response = await GET(request, {}, { userId: 'user-1' })
+      const response = await GET(request, {}, { userId: 'user-1', tenantId: 'tenant-1' })
       const data = await response.json()
 
       expect(response.status).toBe(200)

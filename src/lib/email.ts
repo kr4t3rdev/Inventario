@@ -106,7 +106,7 @@ export async function sendNewUserNotification(
         </tr>
         <tr style="background: #f3f4f6;">
           <td style="padding: 10px; border: 1px solid #d1d5db;"><strong>Rol:</strong></td>
-          <td style="padding: 10px; border: 1px solid #d1d5db;">${newUserRole === 'admin' ? 'Administrador' : newUserRole === 'dependiente' ? 'Dependiente' : 'Usuario'}</td>
+          <td style="padding: 10px; border: 1px solid #d1d5db;">${newUserRole === 'admin' ? 'Administrador' : 'Usuario'}</td>
         </tr>
         <tr>
           <td style="padding: 10px; border: 1px solid #d1d5db;"><strong>Registrado por:</strong></td>

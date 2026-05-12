@@ -48,7 +48,7 @@ export async function getComprasServiciosHandler(_request: NextRequest, _ctx: un
 export async function createCompraServicioHandler(request: NextRequest, _context: unknown, user: AuthenticatedUser): Promise<NextResponse> {
   try {
     const tenantId = requireTenant(user);
-    if (user.role === 'dependiente') {
+    if (user.role !== 'admin') {
       return NextResponse.json(
         { error: 'Acceso restringido', message: 'Los dependientes no pueden registrar servicios recibidos' },
         { status: 403 }

@@ -470,6 +470,7 @@ model User {
   name                 String
   email                String               @unique
   password             String
+  googleId             String?              @unique
   role                 String               @default("regularUser")
   onboardingType       String?
   onboardingStatus     String               @default("pending_email_verification")

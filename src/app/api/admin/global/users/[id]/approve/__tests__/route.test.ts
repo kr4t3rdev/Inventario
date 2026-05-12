@@ -65,7 +65,7 @@ describe('POST /api/admin/global/users/[id]/approve', () => {
   })
 
   it('rechaza si no es admin', async () => {
-    vi.mocked(authenticateUser).mockResolvedValueOnce(mockAuth({ role: 'dependiente' }))
+    vi.mocked(authenticateUser).mockResolvedValueOnce(mockAuth({ role: 'regularUser' }))
 
     const request = new NextRequest('http://localhost/api/admin/global/users/user-1/approve', {
       method: 'POST',

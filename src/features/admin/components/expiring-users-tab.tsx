@@ -143,9 +143,9 @@ export function ExpiringUsersTab({ onOpenHistory }: ExpiringUsersTabProps) {
                     </div>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={user.role === "admin" ? "default" : user.role === "dependiente" ? "secondary" : "outline"}
-                      className={user.role === "admin" ? "bg-sky-500/10 text-sky-700" : user.role === "dependiente" ? "bg-amber-500/10 text-amber-700" : ""}>
-                      {user.role === "admin" ? "Admin" : user.role === "dependiente" ? "Dependiente" : "Usuario"}
+                    <Badge variant={user.role === "admin" ? "default" : "outline"}
+                      className={user.role === "admin" ? "bg-sky-500/10 text-sky-700" : ""}>
+                      {user.role === "admin" ? "Admin" : "Usuario"}
                     </Badge>
                   </TableCell>
                   <TableCell>{format(new Date(user.expiresAt!), "dd/MM/yyyy")}</TableCell>

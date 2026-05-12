@@ -12,7 +12,7 @@ const updateEquipo = async (
     const { id } = await params
     const data = await request.json()
 
-    if (user.role === 'dependiente') {
+    if (user.role !== 'admin') {
       return NextResponse.json({
         error: 'Acceso restringido',
         message: 'Los dependientes no pueden editar equipos'
@@ -43,7 +43,7 @@ const deleteEquipo = async (
   try {
     const { id } = await params
 
-    if (user.role === 'dependiente') {
+    if (user.role !== 'admin') {
       return NextResponse.json({
         error: 'Acceso restringido',
         message: 'Los dependientes no pueden eliminar equipos'

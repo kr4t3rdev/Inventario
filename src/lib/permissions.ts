@@ -13,7 +13,6 @@ export type UserRole = AppUserRole;
  * director: todo dentro del tenant (usuarios, plan, licencias, config)
  * admin: casi todo dentro del tenant
  * economico: finanzas, reportes, licencias operativas
- * dependiente: ventas, operación limitada
  */
 export const TENANT_PERMISSIONS: Record<TenantRole, string[]> = {
   manager: ['*'],
@@ -157,8 +156,8 @@ export function checkApiPermission(
     return new Response(
       JSON.stringify({ 
         error: 'No tienes permisos para acceder a esta ruta',
-        requiredRole: 'dependiente',
-        message: 'Los dependientes solo pueden acceder a ventas, servicios y reportes'
+        requiredRole: 'admin',
+        message: 'Solo el administrador global puede acceder a esta ruta'
       }), 
       { 
         status: 403,
@@ -177,14 +176,6 @@ export function checkApiPermission(
  */
 export function filterMenuItems(menuItems: any[], userRole: UserRole): any[] {
   if (userRole === 'admin') return menuItems
-  
-  if (userRole === 'dependiente') {
-    // Solo mostrar secciones permitidas para dependientes
-    const allowedSections = ['Ventas', 'Servicios', 'Reportes']
-    return menuItems.filter(item => 
-      allowedSections.includes(item.title)
-    )
-  }
   
   // Rol de plataforma legado: excluir solo administración.
   return menuItems.filter(item => item.title !== 'Administración')
@@ -290,8 +281,6 @@ export function checkTenantApiPermission(
  */
 export function getRoleErrorMessage(userRole: UserRole): string {
   switch (userRole) {
-    case 'dependiente':
-      return 'Los dependientes solo tienen acceso a ventas, servicios y reportes'
     case 'regularUser':
       return 'No tienes permisos de administrador'
     default:

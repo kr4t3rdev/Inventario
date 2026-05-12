@@ -34,6 +34,8 @@ export async function proxy(request: NextRequest) {
     '/api/auth/logout',
     '/api/auth/me',
     '/api/auth/refresh',
+    '/api/auth/google/authorize',
+    '/api/auth/google/callback',
     '/api/health',
     '/api/licencias/validar',
   ]

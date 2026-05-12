@@ -12,7 +12,7 @@ const updatePieza = async (
     const { id } = await params
     const data = await request.json()
 
-    if (user.role === 'dependiente') {
+    if (user.role !== 'admin') {
       return NextResponse.json({
         error: 'Acceso restringido',
         message: 'Los dependientes no pueden editar piezas'
@@ -45,7 +45,7 @@ const deletePieza = async (
   try {
     const { id } = await params
 
-    if (user.role === 'dependiente') {
+    if (user.role !== 'admin') {
       return NextResponse.json({
         error: 'Acceso restringido',
         message: 'Los dependientes no pueden eliminar piezas'

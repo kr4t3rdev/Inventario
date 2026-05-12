@@ -52,15 +52,19 @@ interface MonthlyData {
   blockedUsers: number;
   newUsersByRole: {
     admin: number;
+    manager: number;
+    economico: number;
     dependiente: number;
-    legacyUser: number;
+    regularUser: number;
   };
 }
 
 interface ChartRow extends MonthlyData {
   admin: number;
+  manager: number;
+  economico: number;
   dependiente: number;
-  legacyUser: number;
+  regularUser: number;
 }
 
 type MetricTab = 'overview' | 'growth' | 'activity' | 'roles';
@@ -108,8 +112,10 @@ export function UserAnalyticsPanel(): React.JSX.Element {
     return rows.map((row) => ({
       ...row,
       admin: row.newUsersByRole?.admin || 0,
+      manager: row.newUsersByRole?.manager || 0,
+      economico: row.newUsersByRole?.economico || 0,
       dependiente: row.newUsersByRole?.dependiente || 0,
-      legacyUser: row.newUsersByRole?.legacyUser || 0,
+      regularUser: row.newUsersByRole?.regularUser || 0,
     }));
   }, [metrics]);
 
@@ -120,8 +126,9 @@ export function UserAnalyticsPanel(): React.JSX.Element {
     if (!latest) return [];
     return [
       { name: 'Admin', value: latest.admin },
-      { name: 'Dependiente', value: latest.dependiente },
-      { name: 'Usuario legado', value: latest.legacyUser },
+      { name: 'Manager', value: latest.manager },
+      { name: 'Económico', value: latest.economico },
+      { name: 'Usuario legado', value: latest.regularUser },
     ];
   }, [latest]);
 
@@ -485,8 +492,7 @@ export function UserAnalyticsPanel(): React.JSX.Element {
               <Legend verticalAlign="top" height={36} />
               <Tooltip formatter={(value: number, name: string) => `${value} ${name.toLowerCase()}`} contentStyle={TOOLTIP_STYLE} />
               <Bar dataKey="admin" name="Admin" fill="#3b82f6" radius={[8, 8, 0, 0]} isAnimationActive={!shouldReduceMotion} animationDuration={620} />
-              <Bar dataKey="dependiente" name="Dependiente" fill="#f59e0b" radius={[8, 8, 0, 0]} isAnimationActive={!shouldReduceMotion} animationDuration={620} />
-              <Bar dataKey="legacyUser" name="Usuario legado" fill="#6b7280" radius={[8, 8, 0, 0]} isAnimationActive={!shouldReduceMotion} animationDuration={620} />
+              <Bar dataKey="regularUser" name="Usuario legado" fill="#6b7280" radius={[8, 8, 0, 0]} isAnimationActive={!shouldReduceMotion} animationDuration={620} />
             </BarChart>
           </ResponsiveContainer>
         </div>

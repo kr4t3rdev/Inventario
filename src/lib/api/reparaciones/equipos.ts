@@ -11,8 +11,8 @@ function requireTenant(ctx: { tenantId?: string }): string {
 }
 
 function requireNotDependiente(role?: string) {
-  if (role === 'dependiente') {
-    throw new ServerActionError('EquiposReparacion', 'UNKNOWN', 403, 'Los dependientes no pueden realizar esta acción')
+  if (role !== 'admin') {
+    throw new ServerActionError('EquiposReparacion', 'UNKNOWN', 403, 'Solo el administrador global puede realizar esta acción')
   }
 }
 

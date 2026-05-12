@@ -520,48 +520,28 @@ export function AppSidebar2({
       return group
     }).filter(group => group.items.length > 0)
 
-    switch (user?.role) {
-      case "dependiente":
-        // Dependientes solo pueden ver Ventas, Servicios y Reportes
-        return baseGroups.filter(group =>
-          ["Acciones", "Reportes"].includes(group.title)
-        ).map(group => {
-          if (group.title === "Acciones") {
-            // En Acciones, solo mostrar Ventas y Servicios
-            return {
-              ...group,
-              items: group.items.filter(item =>
-                ["Ventas", "Facturas", "Servicios"].includes(item.title)
-              )
-            }
-          }
-          return group
-        })
-
-      default:
-        // Otros roles ven todos los grupos excepto Administración (ya filtrado)
-        return baseGroups.map(group => {
-          if (group.title === "Contabilidad" && user?.role !== "admin") {
-            return {
-              ...group,
-              items: group.items.filter(item => item.title !== "Logs")
-            }
-          }
-          if (group.title === "Configuración" && user?.role !== "admin") {
-            return {
-              ...group,
-              items: group.items.filter(item => {
-                // Licencias y Planes son solo para admin global
-                if (item.title === "Licencias" || item.title === "Planes") return false
-                // Usuarios solo para tenant admins o admin global
-                if (item.title === "Usuarios" && !isTenantAdminRole(user?.tenantRole)) return false
-                return true
-              }),
-            }
-          }
-          return group
-        })
-    }
+    // Otros roles ven todos los grupos excepto Administración (ya filtrado)
+    return baseGroups.map(group => {
+      if (group.title === "Contabilidad" && user?.role !== "admin") {
+        return {
+          ...group,
+          items: group.items.filter(item => item.title !== "Logs")
+        }
+      }
+      if (group.title === "Configuración" && user?.role !== "admin") {
+        return {
+          ...group,
+          items: group.items.filter(item => {
+            // Licencias y Planes son solo para admin global
+            if (item.title === "Licencias" || item.title === "Planes") return false
+            // Usuarios solo para tenant admins o admin global
+            if (item.title === "Usuarios" && !isTenantAdminRole(user?.tenantRole)) return false
+            return true
+          }),
+        }
+      }
+      return group
+    })
   })()
 
   return (

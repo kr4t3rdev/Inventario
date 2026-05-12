@@ -431,7 +431,7 @@ export const createServicioHandler = withAuthPost(async (request: NextRequest, _
     const tenantId = requireTenant(user)
     const body = await request.json()
     const data = servicioSchema.parse(body)
-    if (user.role === 'dependiente') {
+    if (user.role !== 'admin') {
       return NextResponse.json({
         error: 'Acceso restringido',
         message: 'Los dependientes no pueden crear servicios',

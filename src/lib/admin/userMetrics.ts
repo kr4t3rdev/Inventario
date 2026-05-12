@@ -10,8 +10,10 @@ interface UserMetricsRow {
   logouts: number;
   blockedUsers: number;
   admin: number;
+  manager: number;
+  economico: number;
   dependiente: number;
-  legacyUser: number;
+  regularUser: number;
 }
 
 interface UserMetricsResponse {
@@ -28,8 +30,10 @@ interface UserMetricsResponse {
     blockedUsers: number;
     newUsersByRole: {
       admin: number;
+      manager: number;
+      economico: number;
       dependiente: number;
-      legacyUser: number;
+      regularUser: number;
     };
   }>;
   summary: {
@@ -90,8 +94,10 @@ export async function getUserMetrics(
         date_trunc('month', "createdAt")::date AS month_start,
         COUNT(*)::int AS users_created,
         COUNT(*) FILTER (WHERE role = 'admin')::int AS admin,
+        COUNT(*) FILTER (WHERE role = 'manager')::int AS manager,
+        COUNT(*) FILTER (WHERE role = 'economico')::int AS economico,
         COUNT(*) FILTER (WHERE role = 'dependiente')::int AS dependiente,
-        COUNT(*) FILTER (WHERE role = 'regularUser')::int AS "legacyUser"
+        COUNT(*) FILTER (WHERE role = 'regularUser')::int AS "regularUser"
       FROM "User"
       WHERE "createdAt" >= ${startDate}
         AND "createdAt" < (${endDate}::timestamp + interval '1 month')
@@ -144,8 +150,10 @@ export async function getUserMetrics(
       COALESCE(a.logouts, 0)::int AS logouts,
       COALESCE(a."blockedUsers", 0)::int AS "blockedUsers",
       COALESCE(uc.admin, 0)::int AS admin,
+      COALESCE(uc.manager, 0)::int AS manager,
+      COALESCE(uc.economico, 0)::int AS economico,
       COALESCE(uc.dependiente, 0)::int AS dependiente,
-      COALESCE(uc."legacyUser", 0)::int AS "legacyUser"
+      COALESCE(uc."regularUser", 0)::int AS "regularUser"
     FROM months m
     LEFT JOIN user_creations uc ON uc.month_start = m."monthStart"
     LEFT JOIN activity a ON a.month_start = m."monthStart"
@@ -214,8 +222,10 @@ export async function getUserMetrics(
       blockedUsers: row.blockedUsers,
       newUsersByRole: {
         admin: row.admin,
+        manager: row.manager,
+        economico: row.economico,
         dependiente: row.dependiente,
-        legacyUser: row.legacyUser,
+        regularUser: row.regularUser,
       },
     };
   });
