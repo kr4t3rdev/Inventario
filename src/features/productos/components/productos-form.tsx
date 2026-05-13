@@ -563,7 +563,7 @@ export function ProductoForm({
                           />
                         </FormControl>
                         <FormDescription>
-                          Requerido. Debe contener exactamente 11 números.
+                          Opcional. Debe contener exactamente 11 números si se ingresa.
                         </FormDescription>
                         <FormMessage />
                       </FormItem>
