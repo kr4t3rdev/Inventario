@@ -117,11 +117,28 @@ export default function AdminPlanesPage() {
       }
 
       if (editingPlan) {
-        const r = await updateAdminPlanAction({ planId: editingPlan.planId, nombre: body.nombre, maxUsuarios: Number(body.maxUsuarios)||1, maxAlmacenes: Number(body.maxAlmacenes)||1, maxProductos: Number(body.maxProductos)||100 })
+        const r = await updateAdminPlanAction({
+          planId: editingPlan.planId,
+          nombre: body.nombre,
+          descripcion: body.descripcion ?? undefined,
+          precio: body.precio,
+          duracionDias: body.duracionDias,
+          maxUsuarios: Number(body.maxUsuarios) || 1,
+          maxAlmacenes: Number(body.maxAlmacenes) || 1,
+          maxProductos: Number(body.maxProductos) || 100,
+        })
         if(r.success) { toast.success('Plan actualizado'); resetForm(); getAdminPlanesAction().then(r2 => { if(r2.success) setData({ planes: r2.data, total: (r2.data as any)?.length||0, pages: 1 }) }) }
         else toast.error(r.error?.message||'Error')
       } else {
-        const r = await createAdminPlanAction({ nombre: body.nombre, maxUsuarios: Number(body.maxUsuarios)||1, maxAlmacenes: Number(body.maxAlmacenes)||1, maxProductos: Number(body.maxProductos)||100 })
+        const r = await createAdminPlanAction({
+          nombre: body.nombre,
+          descripcion: body.descripcion ?? undefined,
+          precio: body.precio,
+          duracionDias: body.duracionDias,
+          maxUsuarios: Number(body.maxUsuarios) || 1,
+          maxAlmacenes: Number(body.maxAlmacenes) || 1,
+          maxProductos: Number(body.maxProductos) || 100,
+        })
         if(r.success) { toast.success('Plan creado'); resetForm(); getAdminPlanesAction().then(r2 => { if(r2.success) setData({ planes: r2.data, total: (r2.data as any)?.length||0, pages: 1 }) }) }
         else toast.error(r.error?.message||'Error')
       }

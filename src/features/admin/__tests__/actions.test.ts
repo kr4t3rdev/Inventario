@@ -132,7 +132,13 @@ describe('Admin Server Actions', () => {
     it('crea plan', async () => {
       vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
       vi.mocked(prisma.plan.create).mockResolvedValue({ planId: 'plan-1' } as any);
-      const r = await createAdminPlanAction({ nombre: 'Plan Basic', maxUsuarios: 5, maxAlmacenes: 3, maxProductos: 100 });
+      const r = await createAdminPlanAction({
+        nombre: 'Plan Basic',
+        duracionDias: 30,
+        maxUsuarios: 5,
+        maxAlmacenes: 3,
+        maxProductos: 100,
+      });
       expect(r.success).toBe(true);
     });
   });

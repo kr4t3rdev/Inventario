@@ -209,9 +209,11 @@ export const createAdminPlanAction = withAction(async (input: CreatePlanInput, u
   if (user.role !== 'admin') throw new ActionError('Acceso restringido', 'FORBIDDEN');
   const parsed = createPlanSchema.parse(input);
   const plan = await prisma.plan.create({
-  // @ts-expect-error
     data: {
       nombre: parsed.nombre,
+      descripcion: parsed.descripcion,
+      precio: parsed.precio ?? 0,
+      duracionDias: parsed.duracionDias,
       maxUsuarios: parsed.maxUsuarios,
       maxAlmacenes: parsed.maxAlmacenes,
       maxProductos: parsed.maxProductos,
@@ -227,7 +229,13 @@ export const updateAdminPlanAction = withAction(async (input: UpdatePlanInput, u
   const { planId, ...data } = parsed;
   const existing = await prisma.plan.findUnique({ where: { planId } });
   if (!existing) throw new ActionError('Plan no encontrado', 'NOT_FOUND');
-  const plan = await prisma.plan.update({ where: { planId }, data });
+  const plan = await prisma.plan.update({
+    where: { planId },
+    data: {
+      ...data,
+      precio: data.precio ?? undefined,
+    },
+  });
   revalidatePath('/admin');
   return plan;
 });

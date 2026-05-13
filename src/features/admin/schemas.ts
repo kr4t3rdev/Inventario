@@ -57,6 +57,7 @@ export const updateLicenciaSchema = z.object({
 
 export const createPlanSchema = z.object({
   nombre: z.string().min(1),
+  duracionDias: z.number().int().min(1),
   maxUsuarios: z.number().int().min(1),
   maxAlmacenes: z.number().int().min(1),
   maxProductos: z.number().int().min(1),
@@ -67,6 +68,7 @@ export const createPlanSchema = z.object({
 export const updatePlanSchema = z.object({
   planId: z.string().min(1),
   nombre: z.string().min(1).optional(),
+  duracionDias: z.number().int().min(1).optional(),
   maxUsuarios: z.number().int().min(1).optional(),
   maxAlmacenes: z.number().int().min(1).optional(),
   maxProductos: z.number().int().min(1).optional(),
