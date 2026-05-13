@@ -123,7 +123,9 @@ export function AccountTransactionHistory({
     p.set('page', String(filtros.page))
     p.set('limit', String(filtros.limit))
 
-    fetch(`/api/contabilidad/cuentas/${cuentaId}/historial?${p.toString()}`)
+    fetch(`/api/contabilidad/cuentas/${cuentaId}/historial?${p.toString()}`, {
+      headers: { Authorization: getAuthToken() },
+    })
       .then(r => r.json())
       .then(data => {
         setHistorial(data)

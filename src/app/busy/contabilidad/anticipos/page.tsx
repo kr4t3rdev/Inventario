@@ -91,10 +91,9 @@ function AnticiposContent() {
   useEffect(() => {
     const fetchContratos = async () => {
       try {
+        const token = getAuthToken()
         const response = await fetch("/api/contratos?page=1&limit=500&tipo=ALL&estado=ALL", {
-          headers: {
-            Authorization: getAuthToken(),
-          },
+          headers: token ? { Authorization: token } : undefined,
         })
 
         if (!response.ok) {

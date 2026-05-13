@@ -3,6 +3,7 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { getAuthToken } from '@/lib/token';
 
 interface ValidationResult {
   isValid: boolean;
@@ -27,7 +28,7 @@ export function useCategoryValidation() {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            ...(token && { Authorization: `Bearer ${token}` })
+            Authorization: getAuthToken(),
           },
           body: JSON.stringify({
             categoryId: data.categoryId,
@@ -75,7 +76,9 @@ export function useCategoryValidation() {
       try {
         const token = sessionStorage.getItem('token');
         const response = await fetch(`/api/categorias/${categoryId}/can-delete`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {}
+          headers: {
+            Authorization: getAuthToken(),
+          }
         });
         const result = await response.json();
 

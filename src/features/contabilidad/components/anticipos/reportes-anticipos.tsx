@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton"
 import { Download, FileSpreadsheet, Users, Truck, BarChart3 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { getAuthToken } from '@/lib/token'
 
 interface ReportesAnticiposProps {
   clientes?: Array<{ clienteId: string; nombre: string }>
@@ -48,7 +49,9 @@ export function ReportesAnticipos({
     if (fechaInicio) params.set("fechaInicio", fechaInicio)
     if (fechaFin) params.set("fechaFin", fechaFin)
     setLoadingReporteCliente(true)
-    fetch(`/api/contabilidad/anticipos/reportes/cliente?${params.toString()}`)
+    fetch(`/api/contabilidad/anticipos/reportes/cliente?${params.toString()}`, {
+      headers: { Authorization: getAuthToken() },
+    })
       .then((r) => r.json())
       .then(setDataReporteCliente)
       .finally(() => setLoadingReporteCliente(false))
@@ -60,7 +63,9 @@ export function ReportesAnticipos({
     if (fechaInicio) params.set("fechaInicio", fechaInicio)
     if (fechaFin) params.set("fechaFin", fechaFin)
     setLoadingReporteProveedor(true)
-    fetch(`/api/contabilidad/anticipos/reportes/proveedor?${params.toString()}`)
+    fetch(`/api/contabilidad/anticipos/reportes/proveedor?${params.toString()}`, {
+      headers: { Authorization: getAuthToken() },
+    })
       .then((r) => r.json())
       .then(setDataReporteProveedor)
       .finally(() => setLoadingReporteProveedor(false))
@@ -68,7 +73,9 @@ export function ReportesAnticipos({
 
   useEffect(() => {
     setLoadingResumen(true)
-    fetch("/api/contabilidad/anticipos/reportes/resumen")
+    fetch("/api/contabilidad/anticipos/reportes/resumen", {
+      headers: { Authorization: getAuthToken() },
+    })
       .then((r) => r.json())
       .then(setDataResumen)
       .finally(() => setLoadingResumen(false))

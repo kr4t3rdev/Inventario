@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { SelectSeparator } from "@/components/ui/select"
 import { createContratoAction } from "@/features/contratos"
+import { getAuthToken } from '@/lib/token'
 
 interface Cliente {
   clienteId: string
@@ -95,13 +96,17 @@ export function ContratoForm({
   })
 
   useEffect(() => {
-    // Si no hay tiposCustom iniciales, fetch del API
-    if (!initialTiposCustom) {
-      fetch('/api/tipos-contratos?activos=true')
+      // Si no hay tiposCustom iniciales, fetch del API
+      if (!initialTiposCustom) {
+      fetch('/api/tipos-contratos?activos=true', {
+        headers: {
+          Authorization: getAuthToken(),
+        },
+      })
         .then(r => r.json())
         .then(data => setTiposCustom(data.data || []))
         .catch(() => {})
-    }
+      }
   }, [initialTiposCustom])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -128,7 +133,7 @@ export function ContratoForm({
           tipo: formData.tipo,
           fechaInicio: formData.fechaInicio,
           fechaFin: formData.fechaFin || undefined,
-  // @ts-expect-error
+  // @ts-expect-error - El tipo de monto se normaliza antes de enviar la acción.
           monto: formData.monto ? parseFloat(formData.monto) : undefined,
           moneda: formData.moneda,
           esMultiMoneda: formData.esMultiMoneda,
@@ -145,7 +150,7 @@ export function ContratoForm({
           tipo: formData.tipo,
           fechaInicio: formData.fechaInicio,
           fechaFin: formData.fechaFin || null,
-  // @ts-expect-error
+  // @ts-expect-error - El tipo de monto se normaliza antes de enviar la acción.
           monto: formData.monto ? parseFloat(formData.monto) : null,
           moneda: formData.moneda,
           esMultiMoneda: formData.esMultiMoneda,

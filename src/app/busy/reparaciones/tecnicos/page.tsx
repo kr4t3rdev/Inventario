@@ -6,13 +6,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge"
 import { formatCurrency } from "@/lib/utils"
 import { Users, TrendingUp, CheckCircle, DollarSign } from "lucide-react"
+import { getAuthToken } from '@/lib/token'
 
 export default function TecnicosDashboardPage() {
   const [stats, setStats] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/servicios/reparaciones/tecnicos/stats', { cache: 'no-store' })
+    fetch('/api/servicios/reparaciones/tecnicos/stats', {
+      cache: 'no-store',
+      headers: { Authorization: getAuthToken() },
+    })
       .then((response) => response.json())
       .then(setStats)
       .finally(() => setIsLoading(false))

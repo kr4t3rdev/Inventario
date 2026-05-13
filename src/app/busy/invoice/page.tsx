@@ -250,7 +250,7 @@ export default function FacturasPage() {
 
   const table = useReactTable({
     data: ventas || [],
-  // @ts-expect-error
+  // @ts-expect-error - TanStack Table infiere columns con un tipo más estricto que este arreglo.
     columns,
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,

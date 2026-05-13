@@ -16,6 +16,7 @@ import { getDeudaCashByIdAction } from "@/features/contabilidad/actions-deudas-c
 import { formatCurrencySimple, formatDate } from "@/lib/redux/utils/contabilidadUtils"
 import { DateRangePicker } from "./date-range-picker"
 import { cn } from "@/lib/utils"
+import { getAuthToken } from '@/lib/token'
 import {
   PageTransition,
   StaggerContainer,
@@ -93,7 +94,9 @@ export function MovimientosTable({
     p.set('page', String(filtros.page))
     p.set('limit', String(filtros.limit))
 
-    fetch(`/api/contabilidad/reportes/movimientos?${p.toString()}`)
+    fetch(`/api/contabilidad/reportes/movimientos?${p.toString()}`, {
+      headers: { Authorization: getAuthToken() },
+    })
       .then(r => r.json())
       .then(data => {
         setMovimientos(data)

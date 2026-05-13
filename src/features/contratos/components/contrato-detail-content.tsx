@@ -459,7 +459,7 @@ export function ContratoDetailContent({ initialData, contratoId }: ContratoDetai
                 </CardHeader>
                 <CardContent>
                   <FileUpload
-  // @ts-expect-error
+  // @ts-expect-error - FileUpload espera un endpoint tipado por el sistema de uploads.
                     endpoint="contratoArchivo"
                     entityId={contrato.contratoId}
                     accept={["application/pdf", "image/*", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]}

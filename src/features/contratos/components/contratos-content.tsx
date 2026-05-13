@@ -23,6 +23,7 @@ import { differenceInDays } from "date-fns"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { motion, AnimatePresence } from "framer-motion"
+import { getAuthToken } from '@/lib/token'
 
 interface Contrato {
   contratoId: string
@@ -103,7 +104,11 @@ export function ContratosContent({ initialData = [], initialMeta, configuracion 
         ...(filters.fechaFin && { fechaFin: filters.fechaFin }),
       })
 
-      const response = await fetch(`/api/contratos?${params}`)
+      const response = await fetch(`/api/contratos?${params}`, {
+        headers: {
+          Authorization: getAuthToken(),
+        },
+      })
       const result = await response.json()
 
       if (result.data) {
@@ -120,7 +125,11 @@ export function ContratosContent({ initialData = [], initialMeta, configuracion 
 
   const fetchConfiguracion = useCallback(async () => {
     try {
-      const response = await fetch('/api/configuracion/sistema/contratos')
+      const response = await fetch('/api/configuracion/sistema/contratos', {
+        headers: {
+          Authorization: getAuthToken(),
+        },
+      })
       if (response.ok) {
         const data = await response.json()
         setConfigState(data)
@@ -146,7 +155,12 @@ export function ContratosContent({ initialData = [], initialMeta, configuracion 
   const handleDelete = async () => {
     if (!contratoToDelete) return
     try {
-      const response = await fetch(`/api/contratos/${contratoToDelete}`, { method: 'DELETE' })
+      const response = await fetch(`/api/contratos/${contratoToDelete}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: getAuthToken(),
+        },
+      })
       if (response.ok) {
         toast.success('El contrato ha sido eliminado exitosamente.')
         fetchContratos(pagination.pageIndex + 1, pagination.pageSize)
@@ -170,7 +184,10 @@ export function ContratosContent({ initialData = [], initialMeta, configuracion 
     try {
       const response = await fetch('/api/contratos/bulk/delete', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: getAuthToken(),
+        },
         body: JSON.stringify({ ids: idsToDelete }),
       })
 
@@ -191,7 +208,10 @@ export function ContratosContent({ initialData = [], initialMeta, configuracion 
     try {
       const response = await fetch('/api/contratos/bulk/update-status', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: getAuthToken(),
+        },
         body: JSON.stringify({ ids: idsToUpdate, estado: newStatus }),
       })
 

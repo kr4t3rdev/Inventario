@@ -32,6 +32,7 @@ import {
 } from '@/features/contabilidad/actions-reconciliacion';
 import { getPrestamosCashStatsAction } from '@/features/contabilidad/actions-prestamos-cash';
 import { formatCurrency } from '@/lib/redux/utils/contabilidadUtils';
+import { getAuthToken } from '@/lib/token';
 import { cn } from '@/lib/utils';
 
 import type {
@@ -257,20 +258,26 @@ export function ResumenFinanciero({
     if (fechaInicio) params.set('fechaInicio', fechaInicio)
     if (fechaFin) params.set('fechaFin', fechaFin)
     if (cuentaId) params.set('cuentaId', cuentaId)
-    fetch(`/api/contabilidad/reportes/resumen?${params.toString()}`)
+    fetch(`/api/contabilidad/reportes/resumen?${params.toString()}`, {
+      headers: { Authorization: getAuthToken() },
+    })
       .then(r => r.json())
       .then(d => { setResumen(d); setIsLoading(false) })
       .catch(e => { setError(e); setIsLoading(false) })
   }, [fechaInicio, fechaFin, cuentaId, refreshKey])
 
   useEffect(() => {
-    fetch('/api/contabilidad/exchange/monedas')
+    fetch('/api/contabilidad/exchange/monedas', {
+      headers: { Authorization: getAuthToken() },
+    })
       .then(r => r.json())
       .then(setMonedasData)
   }, [refreshKey])
 
   useEffect(() => {
-    fetch('/api/contabilidad/exchange/tasas')
+    fetch('/api/contabilidad/exchange/tasas', {
+      headers: { Authorization: getAuthToken() },
+    })
       .then(r => r.json())
       .then(setTasasActualesData)
   }, [refreshKey])
@@ -291,7 +298,9 @@ export function ResumenFinanciero({
     if (fechaInicio) params.set('fechaDesde', fechaInicio)
     if (fechaFin) params.set('fechaHasta', fechaFin)
     if (cuentaId) params.set('cuentaId', cuentaId)
-    fetch(`/api/contabilidad/reconciliacion/servicios/historial?${params.toString()}`)
+    fetch(`/api/contabilidad/reconciliacion/servicios/historial?${params.toString()}`, {
+      headers: { Authorization: getAuthToken() },
+    })
       .then(r => r.json())
       .then(setServiciosHistoryData)
   }, [fechaInicio, fechaFin, cuentaId, refreshKey])
@@ -312,7 +321,9 @@ export function ResumenFinanciero({
     if (fechaFin) params.set('fechaFin', fechaFin)
     if (cuentaId) params.set('cuentaId', cuentaId)
     if (tipoGasto) params.set('tipoGasto', tipoGasto)
-    fetch(`/api/contabilidad/reconciliacion/gastos/historial?${params.toString()}`)
+    fetch(`/api/contabilidad/reconciliacion/gastos/historial?${params.toString()}`, {
+      headers: { Authorization: getAuthToken() },
+    })
       .then(r => r.json())
       .then(setGastosHistoryData)
   }, [fechaInicio, fechaFin, cuentaId, tipoGasto, refreshKey])
@@ -326,7 +337,9 @@ export function ResumenFinanciero({
     const params = new URLSearchParams()
     if (fechaInicio) params.set('fechaInicio', fechaInicio)
     if (fechaFin) params.set('fechaFin', fechaFin)
-    fetch(`/api/contabilidad/anticipos/reportes/resumen?${params.toString()}`)
+    fetch(`/api/contabilidad/anticipos/reportes/resumen?${params.toString()}`, {
+      headers: { Authorization: getAuthToken() },
+    })
       .then(r => r.json())
       .then(setResumenAnticiposData)
   }, [fechaInicio, fechaFin, refreshKey])
@@ -338,7 +351,7 @@ export function ResumenFinanciero({
   const ventasPend = ventasData?.ventas?.length || 0;
   const ventasCompleted = historyVentas?.reconciliaciones?.length || 0;
 
-  // @ts-expect-error
+  // @ts-expect-error - La API expone esta colección con un tipo más amplio que el inferido.
   const serviciosList = (serviciosData?.ventaServicios || []).filter((servicio) => {
     if (!servicio.reconciliaciones || servicio.reconciliaciones.length === 0) return true;
     const totalReconciliado = servicio.reconciliaciones.reduce((sum: number, rec: { montoConvertido?: number }) => sum + (rec.montoConvertido || 0), 0);
@@ -472,14 +485,14 @@ export function ResumenFinanciero({
     return total; // No conversion found
   }, 0);
 
-  // @ts-expect-error
+  // @ts-expect-error - El resumen por moneda puede venir con forma parcial desde la API.
   const resumenPrincipal = resumen.resumenPorMoneda?.find((m) => m.moneda === monedaPrincipal);
   const ingresosTotales = resumenPrincipal?.totalIngresos ?? 0;
   const egresosTotales = resumenPrincipal?.totalEgresos ?? 0;
   const totalAnticipos = calculateAnticiposTotal(
     Object.entries(resumenAnticiposData?.resumen?.porMoneda || {}).map(([moneda, value]) => ({
       moneda,
-  // @ts-expect-error
+  // @ts-expect-error - El resumen por moneda puede venir con forma parcial desde la API.
       total: value?.total || 0,
     }))
   );
@@ -515,7 +528,7 @@ export function ResumenFinanciero({
       subtitle: monedaPrincipal,
       value: Object.values(prestamosStats?.montoPendienteCobro ?? {
       
-  // @ts-expect-error
+  // @ts-expect-error - El objeto de préstamos se reduce desde datos dinámicos del API.
       }).reduce((acc, value) => acc + value, 0),
       icon: Calculator,
       tone: 'violet' as AccentTone,

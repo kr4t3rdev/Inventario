@@ -18,7 +18,7 @@ export default function CatalogoConfiguracionPage(): React.JSX.Element {
       try {
         const token = sessionStorage.getItem('token')
         const res = await fetch('/api/reparaciones/catalogo/config', {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         })
         if (res.ok) {
           const data = await res.json()
@@ -40,9 +40,7 @@ export default function CatalogoConfiguracionPage(): React.JSX.Element {
       try {
         const token = sessionStorage.getItem('token')
         const res = await fetch(`/api/exchange?from=${currencyCode}&to=CUP`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
         })
         if (res.status === 401) {
           throw new Error('Sesión expirada')
@@ -94,9 +92,7 @@ export default function CatalogoConfiguracionPage(): React.JSX.Element {
               try {
                 const token = sessionStorage.getItem('token')
                 const res = await fetch(`/api/exchange?from=${currencyCode}&to=CUP`, {
-                  headers: {
-                    Authorization: `Bearer ${token}`,
-                  },
+                  headers: token ? { Authorization: `Bearer ${token}` } : undefined,
                 })
                 if (res.status === 401) {
                   throw new Error('Sesión expirada')
