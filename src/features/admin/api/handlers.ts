@@ -39,6 +39,7 @@ import { getIdempotentResult, setIdempotentResult } from '@/lib/idempotency'
 import { licenseCreationCounter } from '@/lib/metrics'
 import { sendNewUserNotification } from '@/lib/email'
 import { validateTenantLimit } from '@/lib/services/tenant-scope'
+import type { AdminFinanceMeta, AdminFinanceReport } from '@/features/admin/types'
 
 // ────────────────────────────
 // ACTIVITY LOGS
@@ -134,26 +135,81 @@ export async function activityLogsGET(request: NextRequest) {
 // FINANCE
 // ────────────────────────────
 
-export async function financeGET(_request: NextRequest, _context: unknown, user: AuthenticatedUser) {
+export async function financeGET(request: NextRequest, _context: unknown, user: AuthenticatedUser) {
   try {
     if (user.role !== 'admin') {
       return NextResponse.json({ error: 'Solo administradores globales' }, { status: 403 })
     }
 
+    const { searchParams } = new URL(request.url)
+    const parsedMeta = parseFinanceMeta(searchParams)
+
+    if ('status' in parsedMeta) {
+      return parsedMeta
+    }
+
+    const meta = parsedMeta
+
+    const financeWhere = buildFinanceWhere(meta)
+
     const [ventas, ventasServicios, gastos, cuentasPorCobrar, cuentasPorPagar, tenantCount] =
       await Promise.all([
-        prisma.venta.aggregate({ _sum: { total: true }, _count: true }),
-        prisma.ventaServicios.aggregate({ _sum: { total: true }, _count: true }),
-        prisma.gastosDE.aggregate({ _sum: { monto: true }, _count: true }),
+        prisma.venta.aggregate({ where: financeWhere, _sum: { total: true }, _count: true }),
+        prisma.ventaServicios.aggregate({ where: financeWhere, _sum: { total: true }, _count: true }),
+        prisma.gastosDE.aggregate({ where: financeWhere, _sum: { monto: true }, _count: true }),
         prisma.cuentaPorCobrar.aggregate({
+          where: financeWhere,
           _sum: { montoDeuda: true, montoPagado: true },
           _count: true,
         }),
-        prisma.cuentaPorPagar.aggregate({ _sum: { saldoPendiente: true }, _count: true }),
+        prisma.cuentaPorPagar.aggregate({ where: financeWhere, _sum: { saldoPendiente: true }, _count: true }),
         prisma.tenant.count(),
       ])
 
-    return NextResponse.json({
+    const summary = {
+      ingresosTotales: (ventas._sum.total ?? 0) + (ventasServicios._sum.total ?? 0),
+      gastosTotales: gastos._sum.monto ?? 0,
+      resultadoNeto:
+        (ventas._sum.total ?? 0) + (ventasServicios._sum.total ?? 0) - (gastos._sum.monto ?? 0),
+      tenantsActivos: tenantCount,
+    }
+
+    const trend = [
+      {
+        period: meta.groupBy,
+        ingresos: summary.ingresosTotales,
+        gastos: summary.gastosTotales,
+        resultadoNeto: summary.resultadoNeto,
+      },
+    ]
+
+    const breakdown = {
+      bySource: [
+        { label: 'Productos', amount: ventas._sum.total ?? 0, count: ventas._count },
+        { label: 'Servicios', amount: ventasServicios._sum.total ?? 0, count: ventasServicios._count },
+        { label: 'Gastos', amount: gastos._sum.monto ?? 0, count: gastos._count },
+      ],
+      byTenant: meta.tenantId
+        ? [{ label: meta.tenantId, amount: summary.ingresosTotales, count: tenantCount }]
+        : [{ label: 'Global', amount: summary.ingresosTotales, count: tenantCount }],
+    }
+
+    const response: AdminFinanceReport = {
+      meta,
+      summary,
+      accounts: {
+        porCobrar: {
+          total: cuentasPorCobrar._count,
+          saldoPendiente:
+            Number(cuentasPorCobrar._sum.montoDeuda ?? 0) - Number(cuentasPorCobrar._sum.montoPagado ?? 0),
+        },
+        porPagar: {
+          total: cuentasPorPagar._count,
+          saldoPendiente: cuentasPorPagar._sum.saldoPendiente ?? 0,
+        },
+      },
+      trend,
+      breakdown,
       tenantCount,
       revenue: {
         totalVentas: ventas._count,
@@ -172,12 +228,62 @@ export async function financeGET(_request: NextRequest, _context: unknown, user:
         total: cuentasPorPagar._count,
         saldoPendiente: cuentasPorPagar._sum.saldoPendiente ?? 0,
       },
-    })
+    }
+
+    return NextResponse.json(response)
   } catch (error) {
     console.error('[Admin/Finance] Error:', error)
     const message = error instanceof Error ? error.message : 'Error interno del servidor'
     return NextResponse.json({ error: message }, { status: 500 })
   }
+}
+
+function parseFinanceMeta(searchParams: URLSearchParams): AdminFinanceMeta | Response {
+  const from = searchParams.get('from')
+  const to = searchParams.get('to')
+  const tenantId = searchParams.get('tenantId')
+  const groupBy = searchParams.get('groupBy') ?? 'month'
+
+  if (groupBy !== 'day' && groupBy !== 'week' && groupBy !== 'month') {
+    return NextResponse.json({ error: 'Parámetros inválidos' }, { status: 400 })
+  }
+
+  if (from !== null && !isValidDate(from)) {
+    return NextResponse.json({ error: 'Parámetros inválidos' }, { status: 400 })
+  }
+
+  if (to !== null && !isValidDate(to)) {
+    return NextResponse.json({ error: 'Parámetros inválidos' }, { status: 400 })
+  }
+
+  if (from !== null && to !== null && new Date(from) > new Date(to)) {
+    return NextResponse.json({ error: 'Parámetros inválidos' }, { status: 400 })
+  }
+
+  return {
+    from: from && isValidDate(from) ? from : null,
+    to: to && isValidDate(to) ? to : null,
+    tenantId: tenantId || null,
+    groupBy,
+  }
+}
+
+function buildFinanceWhere(meta: AdminFinanceMeta): Record<string, unknown> {
+  return {
+    ...(meta.tenantId ? { tenantId: meta.tenantId } : {}),
+    ...(meta.from || meta.to
+      ? {
+          createdAt: {
+            ...(meta.from ? { gte: new Date(meta.from) } : {}),
+            ...(meta.to ? { lte: new Date(meta.to) } : {}),
+          },
+        }
+      : {}),
+  }
+}
+
+function isValidDate(value: string): boolean {
+  return !Number.isNaN(Date.parse(value))
 }
 
 // ────────────────────────────

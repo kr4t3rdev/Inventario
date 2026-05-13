@@ -12,6 +12,47 @@ export interface AdminFinance {
   cuentasPorPagar: { total: number; saldoPendiente: number }
 }
 
+export interface AdminFinanceMeta {
+  from: string | null
+  to: string | null
+  tenantId: string | null
+  groupBy: 'day' | 'week' | 'month'
+}
+
+export interface AdminFinanceSummary {
+  ingresosTotales: number
+  gastosTotales: number
+  resultadoNeto: number
+  tenantsActivos: number
+}
+
+export interface AdminFinanceTrendPoint {
+  period: string
+  ingresos: number
+  gastos: number
+  resultadoNeto: number
+}
+
+export interface AdminFinanceBreakdownEntry {
+  label: string
+  amount: number
+  count: number
+}
+
+export interface AdminFinanceReport extends AdminFinance {
+  meta: AdminFinanceMeta
+  summary: AdminFinanceSummary
+  accounts: {
+    porCobrar: AdminFinance['cuentasPorCobrar']
+    porPagar: AdminFinance['cuentasPorPagar']
+  }
+  trend: AdminFinanceTrendPoint[]
+  breakdown: {
+    bySource: AdminFinanceBreakdownEntry[]
+    byTenant: AdminFinanceBreakdownEntry[]
+  }
+}
+
 export interface AdminSystemHealth {
   users: { total: number; byRole: { role: string; count: number }[] }
   tenants: { total: number }
