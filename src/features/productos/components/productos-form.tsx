@@ -56,9 +56,10 @@ export function buildProductosSchema(usaEan13: boolean) {
       .optional()
       .or(z.literal('')),
     codigoInterno: z
-      .string({ required_error: 'El código interno es requerido' })
-      .min(1, 'El código interno es requerido')
-      .regex(/^[0-9]{11}$/, 'El código interno debe contener exactamente 11 números'),
+      .string()
+      .regex(/^[0-9]{11}$/, 'El código interno debe contener exactamente 11 números')
+      .optional()
+      .or(z.literal('')),
     proveedorCodigo: z.string().optional(),
     vendorId: z.string().optional(),
     categoriaId: z

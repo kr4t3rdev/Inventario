@@ -271,7 +271,26 @@ export function ProductosContent({
           <ArrowUpDown className="text-center h-4 w-4" />
         </Button>
       ),
-      cell: ({ row }) => <div className="text-center font-medium">{usaEan13 ? (row.original.codigoNegocio || "-") : (row.original.codigoInterno || "-")}</div>,
+      cell: ({ row }) => {
+        if (usaEan13) {
+          const producto = row.original
+          const seccion = producto.idSeccionCodigo
+          const especifico = producto.especificoCodigo
+          const surtido = producto.surtidoCodigo
+          return (
+            <div className="text-center">
+              {seccion || especifico || surtido ? (
+                <div className="font-mono text-xs tracking-wider">
+                  {seccion ?? "--"}-{especifico ?? "----"}-{surtido ?? "----"}
+                </div>
+              ) : (
+                <div className="font-medium">{producto.codigoNegocio || "-"}</div>
+              )}
+            </div>
+          )
+        }
+        return <div className="text-center font-medium">{row.original.codigoInterno || "-"}</div>
+      },
     },
     {
       accessorKey: "descripcion",
