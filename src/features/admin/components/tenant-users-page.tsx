@@ -8,10 +8,10 @@ import Link from 'next/link'
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useAuth } from '@/contexts/auth-context'
+import { getAuthToken } from '@/lib/token'
 import {
   getGlobalUsersAction,
   getPendingMembershipsAction,
-  approveGlobalUserAction,
   rejectMembershipAction,
 } from '@/features/admin/actions'
 import { TenantUsersStats } from './tenant-users-stats'
@@ -120,17 +120,24 @@ export function TenantUsersPage() {
 
   const handleConfirmApprove = useCallback(async (membershipId: string, tenantRole: string) => {
     try {
-      await approveGlobalUserAction({
-  // @ts-expect-error
-      id: membershipId, tenantRole
+      const response = await fetch(`/api/admin/memberships/${membershipId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: getAuthToken(),
+        },
+        body: JSON.stringify({ action: 'approve', tenantRole }),
       })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) {
+        throw new Error(payload?.error || 'Error aprobando acceso')
+      }
       toast.success('Acceso aprobado correctamente.')
       fetchPending()
       fetchUsers()
     } catch (error) {
       console.error('Error aprobando membresía:', error)
       toast.error('Error al aprobar el acceso.')
-      throw error
     }
   }, [fetchPending, fetchUsers])
 

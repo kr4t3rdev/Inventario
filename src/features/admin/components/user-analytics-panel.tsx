@@ -37,6 +37,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
+import { getAuthToken } from '@/lib/token';
 // RTK removed — using fetch
 
 interface MonthlyData {
@@ -99,7 +100,11 @@ export function UserAnalyticsPanel(): React.JSX.Element {
   React.useEffect(() => {
     let cancelled = false;
     setIsLoading(true);
-    fetch(`/api/admin/global/users/metrics?months=${Number.parseInt(months, 10)}`)
+    fetch(`/api/admin/global/users/metrics?months=${Number.parseInt(months, 10)}`, {
+      headers: {
+        Authorization: getAuthToken(),
+      },
+    })
       .then(res => res.json())
       .then(data => { if (!cancelled) setMetrics(data); })
       .catch(err => { if (!cancelled) setError(err); })

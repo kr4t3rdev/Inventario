@@ -18,6 +18,8 @@ export interface AdminUsersPageData {
     name: string
     email: string
     role: string
+    onboardingStatus: string | null
+    onboardingType: string | null
     tenantRole: string | null
     isActive: boolean
     lockedUntil: Date | null
@@ -80,6 +82,8 @@ export async function getAdminUsersPageData(): Promise<AdminUsersPageData | null
       name: u.name,
       email: u.email,
       role: u.role,
+      onboardingStatus: u.onboardingStatus,
+      onboardingType: u.onboardingType,
       tenantRole: u.tenantMemberships.find((m) => m.isActive)?.tenantRole ?? null,
       isActive: u.isActive,
       lockedUntil: u.lockedUntil,

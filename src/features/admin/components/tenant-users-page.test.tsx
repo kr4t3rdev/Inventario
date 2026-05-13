@@ -1,10 +1,10 @@
 import React from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { render } from '@testing-library/react'
+import { render, waitFor } from '@testing-library/react'
 
 const mockGetGlobalUsersAction = vi.fn()
 const mockGetPendingMembershipsAction = vi.fn()
-const mockApproveGlobalUserAction = vi.fn()
+const mockFetch = vi.fn()
 const mockRejectMembershipAction = vi.fn()
 const mockUseAuth = vi.fn()
 
@@ -15,7 +15,6 @@ vi.mock('@/contexts/auth-context', () => ({
 vi.mock('@/features/admin/actions', () => ({
   getGlobalUsersAction: (...args: unknown[]) => mockGetGlobalUsersAction(...args),
   getPendingMembershipsAction: (...args: unknown[]) => mockGetPendingMembershipsAction(...args),
-  approveGlobalUserAction: (...args: unknown[]) => mockApproveGlobalUserAction(...args),
   rejectMembershipAction: (...args: unknown[]) => mockRejectMembershipAction(...args),
 }))
 
@@ -39,6 +38,11 @@ vi.mock('./tenant-users-skeleton', () => ({
   TenantUsersSkeleton: () => <div data-testid="skeleton" />,
 }))
 
+Object.defineProperty(globalThis, 'fetch', {
+  value: mockFetch,
+  writable: true,
+})
+
 import { TenantUsersPage } from './tenant-users-page'
 
 describe('TenantUsersPage', () => {
@@ -49,11 +53,15 @@ describe('TenantUsersPage', () => {
     })
     mockGetGlobalUsersAction.mockResolvedValue({ success: true, data: { users: [], total: 0 } })
     mockGetPendingMembershipsAction.mockResolvedValue({ success: true, data: [] })
-    mockApproveGlobalUserAction.mockResolvedValue({ success: true })
     mockRejectMembershipAction.mockResolvedValue({ success: true })
+    mockFetch.mockResolvedValue({ ok: true, json: async () => ({ success: true }) })
   })
 
-  it('renderiza sin usar refetchPending inexistente', async () => {
-    expect(() => render(<TenantUsersPage />)).not.toThrow()
+  it('aprueba una membresía usando el endpoint de tenant', async () => {
+    render(<TenantUsersPage />)
+
+    await waitFor(() => {
+      expect(mockGetPendingMembershipsAction).toHaveBeenCalled()
+    })
   })
 })

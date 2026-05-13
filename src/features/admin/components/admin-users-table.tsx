@@ -392,7 +392,7 @@ export function AdminUsersTable({
                   <TableCell>{candidate.expiresAt ? format(new Date(candidate.expiresAt), 'dd/MM/yyyy') : <span className="text-muted-foreground">Sin límite</span>}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
-                      {onApproveUser && candidate.onboardingStatus === 'awaiting_global_approval' && (
+                      {onApproveUser && candidate.onboardingType === 'company' && candidate.onboardingStatus === 'awaiting_global_approval' && (
                         <Button variant="outline" size="sm" onClick={() => onApproveUser(candidate)} className="border-emerald-200 bg-emerald-50 text-emerald-700 transition-all duration-200 hover:shadow-sm hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-400 dark:hover:bg-emerald-900/60"><ShieldCheck className="h-4 w-4" /></Button>
                       )}
                       <Button variant="outline" size="sm" onClick={() => onEditUser(candidate)} className="border-slate-200 bg-white/70 transition-all duration-200 hover:shadow-sm dark:border-slate-700 dark:bg-slate-900/60"><Edit className="h-4 w-4" /></Button>

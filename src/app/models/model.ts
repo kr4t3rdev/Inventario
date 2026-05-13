@@ -641,6 +641,7 @@ export interface Usuario {
   createdAt: string
   updatedAt: string
   onboardingStatus?: string | null
+  onboardingType?: string | null
 
   lastModifiedBy: string | null
   loginAttempts: number

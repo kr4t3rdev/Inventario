@@ -13,7 +13,9 @@ vi.mock('@/lib/prisma', () => ({
       findMany: vi.fn(), findUnique: vi.fn(), create: vi.fn(),
       update: vi.fn(), delete: vi.fn(), count: vi.fn(),
     },
-    tenant: { findMany: vi.fn(), count: vi.fn() },
+    tenant: { findMany: vi.fn(), count: vi.fn(), findUnique: vi.fn(), create: vi.fn() },
+    tenantMembership: { create: vi.fn() },
+    moneda: { upsert: vi.fn() },
     plan: { findMany: vi.fn(), findUnique: vi.fn(), create: vi.fn(), update: vi.fn(), delete: vi.fn() },
     userSession: { count: vi.fn() },
     tenantLicense: { count: vi.fn() },
@@ -26,7 +28,7 @@ import {
   getUsersAction, createUserAction, updateUserAction, deleteUserAction,
   lockUserAction, unlockUserAction,
   getAdminTenantsAction, getAdminSystemHealthAction,
-  getAdminPlanesAction, createAdminPlanAction,
+  getAdminPlanesAction, createAdminPlanAction, approveGlobalUserAction,
 } from '@/features/admin/actions';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
@@ -140,6 +142,30 @@ describe('Admin Server Actions', () => {
         maxProductos: 100,
       });
       expect(r.success).toBe(true);
+    });
+  });
+
+  describe('approveGlobalUserAction', () => {
+    it('crea tenant y membresía para usuario company', async () => {
+      vi.mocked(getCurrentUser).mockResolvedValue(adminUser);
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
+        userId: 'user-company',
+        name: 'Empresa Demo',
+        email: 'empresa@test.com',
+        onboardingStatus: 'awaiting_global_approval',
+        onboardingType: 'company',
+      } as any);
+      vi.mocked(prisma.tenant.findUnique).mockResolvedValue(null);
+      vi.mocked(prisma.tenant.create).mockResolvedValue({ tenantId: 'tenant-1', nombre: 'Empresa Demo', slug: 'empresa-demo' } as any);
+      vi.mocked(prisma.tenantMembership.create).mockResolvedValue({ membershipId: 'membership-1' } as any);
+      vi.mocked(prisma.user.update).mockResolvedValue({ userId: 'user-company' } as any);
+      vi.mocked(prisma.moneda.upsert).mockResolvedValue({} as any);
+
+      const r = await approveGlobalUserAction({ userId: 'user-company', tenantName: 'Empresa Demo' });
+
+      expect(r.success).toBe(true);
+      expect(prisma.tenant.create).toHaveBeenCalled();
+      expect(prisma.tenantMembership.create).toHaveBeenCalled();
     });
   });
 });

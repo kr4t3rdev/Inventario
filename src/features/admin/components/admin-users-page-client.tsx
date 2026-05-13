@@ -44,9 +44,10 @@ import {
   AnimatedCard,
 } from "@/components/ui/animations"
 import { useAuth } from "@/contexts/auth-context"
-import { getGlobalUsersAction, approveGlobalUserAction, getAdminPlanesAction } from "@/features/admin"
+import { getGlobalUsersAction, getAdminPlanesAction } from "@/features/admin"
 import { motion, type Variants } from "framer-motion"
 import type { AdminUsersPageData } from "../server/data"
+import { getAuthToken } from "@/lib/token"
 
 const UserAnalyticsPanel = dynamic(
   () => import("@/components/admin/user-analytics-panel").then((mod) => mod.UserAnalyticsPanel),
@@ -238,18 +239,26 @@ export function AdminUsersPageClient({ initialData }: { initialData: AdminUsersP
   const handleConfirmApprove = async (): Promise<void> => {
     if (!approveUser) return
     setIsApproving(true)
-    const r = await approveGlobalUserAction({
-      userId: approveUser.userId,
-      planId: selectedPlanId && selectedPlanId !== "none" ? selectedPlanId : undefined,
-    })
-    if (r.success) {
+    try {
+      const response = await fetch(`/api/admin/global/users/${approveUser.userId}/approve`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: getAuthToken(),
+        },
+        body: JSON.stringify({
+          planId: selectedPlanId && selectedPlanId !== "none" ? selectedPlanId : undefined,
+        }),
+      })
+      const payload = await response.json()
+      if (!response.ok) throw new Error(payload?.error || "Error aprobando usuario")
       toast.success("Usuario aprobado correctamente")
       setApproveDialogOpen(false)
       setSelectedApproveUser(null)
       setSelectedPlanId("")
       refresh()
-    } else {
-      toast.error(r.error?.message || "Error aprobando usuario")
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Error aprobando usuario")
     }
     setIsApproving(false)
   }
