@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { NextRequest } from 'next/server'
 
-import { prisma } from '@/lib/prisma'
-
-const authenticateUser = vi.fn()
+const { authenticateUser } = vi.hoisted(() => ({
+  authenticateUser: vi.fn(),
+}))
 
 vi.mock('@/lib/prisma', () => ({
   prisma: {
@@ -27,6 +27,7 @@ vi.mock('@/lib/auth-middleware', () => ({
     },
 }))
 
+import { prisma } from '@/lib/prisma'
 import { GET } from '../route'
 
 function mockAdminUser(role: string = 'admin') {
@@ -70,6 +71,16 @@ describe('GET /api/admin/finance', () => {
 
     expect(response.status).toBe(200)
     expect(data).toMatchObject({
+      meta: {
+        from: null,
+        to: null,
+        tenantId: null,
+        groupBy: 'month',
+      },
+      summary: expect.any(Object),
+      accounts: expect.any(Object),
+      trend: expect.any(Array),
+      breakdown: expect.any(Object),
       tenantCount: 7,
       revenue: {
         totalVentas: 2,
@@ -82,6 +93,105 @@ describe('GET /api/admin/finance', () => {
       cuentasPorCobrar: { total: 4, saldoPendiente: 800 },
       cuentasPorPagar: { total: 5, saldoPendiente: 900 },
     })
+  })
+
+  it('expone los filtros válidos en meta', async () => {
+    vi.mocked(authenticateUser).mockResolvedValueOnce(mockAdminUser())
+    vi.mocked(prisma.venta.aggregate).mockResolvedValueOnce({ _count: 0, _sum: { total: 0 } } as never)
+    vi.mocked(prisma.ventaServicios.aggregate).mockResolvedValueOnce({ _count: 0, _sum: { total: 0 } } as never)
+    vi.mocked(prisma.gastosDE.aggregate).mockResolvedValueOnce({ _count: 0, _sum: { monto: 0 } } as never)
+    vi.mocked(prisma.cuentaPorCobrar.aggregate).mockResolvedValueOnce({
+      _count: 0,
+      _sum: { montoDeuda: 0, montoPagado: 0 },
+    } as never)
+    vi.mocked(prisma.cuentaPorPagar.aggregate).mockResolvedValueOnce({
+      _count: 0,
+      _sum: { saldoPendiente: 0 },
+    } as never)
+    vi.mocked(prisma.tenant.count).mockResolvedValueOnce(0)
+
+    const request = new NextRequest(
+      'http://localhost/api/admin/finance?from=2026-05-01&to=2026-05-13&tenantId=tenant-1&groupBy=week',
+    )
+    const response = await GET(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(200)
+    expect(data.meta).toMatchObject({
+      from: '2026-05-01',
+      to: '2026-05-13',
+      tenantId: 'tenant-1',
+      groupBy: 'week',
+    })
+    expect(data.summary).toBeDefined()
+    expect(data.trend).toBeInstanceOf(Array)
+    expect(data.breakdown).toBeDefined()
+  })
+
+  it('aplica tenantId y rango de fechas a los agregados', async () => {
+    vi.mocked(authenticateUser).mockResolvedValueOnce(mockAdminUser())
+    vi.mocked(prisma.venta.aggregate).mockResolvedValueOnce({ _count: 0, _sum: { total: 0 } } as never)
+    vi.mocked(prisma.ventaServicios.aggregate).mockResolvedValueOnce({ _count: 0, _sum: { total: 0 } } as never)
+    vi.mocked(prisma.gastosDE.aggregate).mockResolvedValueOnce({ _count: 0, _sum: { monto: 0 } } as never)
+    vi.mocked(prisma.cuentaPorCobrar.aggregate).mockResolvedValueOnce({
+      _count: 0,
+      _sum: { montoDeuda: 0, montoPagado: 0 },
+    } as never)
+    vi.mocked(prisma.cuentaPorPagar.aggregate).mockResolvedValueOnce({
+      _count: 0,
+      _sum: { saldoPendiente: 0 },
+    } as never)
+    vi.mocked(prisma.tenant.count).mockResolvedValueOnce(0)
+
+    const request = new NextRequest(
+      'http://localhost/api/admin/finance?from=2026-05-01&to=2026-05-13&tenantId=tenant-1&groupBy=week',
+    )
+
+    const response = await GET(request)
+
+    expect(response.status).toBe(200)
+    expect(prisma.venta.aggregate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          tenantId: 'tenant-1',
+          createdAt: expect.objectContaining({
+            gte: expect.any(Date),
+            lte: expect.any(Date),
+          }),
+        }),
+      }),
+    )
+    expect(prisma.gastosDE.aggregate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          tenantId: 'tenant-1',
+        }),
+      }),
+    )
+  })
+
+  it('rechaza valores inválidos de query', async () => {
+    vi.mocked(authenticateUser).mockResolvedValueOnce(mockAdminUser())
+
+    const request = new NextRequest('http://localhost/api/admin/finance?groupBy=year')
+    const response = await GET(request)
+    const data = await response.json()
+
+    expect(response.status).toBe(400)
+    expect(data.error).toBe('Parámetros inválidos')
+  })
+
+  it('rechaza fechas inválidas y rangos invertidos', async () => {
+    vi.mocked(authenticateUser).mockResolvedValueOnce(mockAdminUser())
+
+    const invalidFrom = await GET(new NextRequest('http://localhost/api/admin/finance?from=not-a-date'))
+    expect(invalidFrom.status).toBe(400)
+
+    vi.mocked(authenticateUser).mockResolvedValueOnce(mockAdminUser())
+    const invalidRange = await GET(
+      new NextRequest('http://localhost/api/admin/finance?from=2026-05-13&to=2026-05-01'),
+    )
+    expect(invalidRange.status).toBe(400)
   })
 
   it('rechaza a usuarios que no son admin global', async () => {

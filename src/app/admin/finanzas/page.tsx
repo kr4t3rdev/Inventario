@@ -1,19 +1,42 @@
 'use client'
 
-import { Wallet, Sparkles, Loader2, RefreshCw, TrendingUp, TrendingDown } from "lucide-react"
+import { useCallback, useEffect, useState } from 'react'
+import { Loader2, RefreshCw, TrendingDown, TrendingUp, Wallet } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { PageTransition } from "@/components/ui/animations"
-import { useEffect, useState } from "react"
-import { getAdminFinanceAction } from "@/features/admin"
+import type { AdminFinance } from '@/features/admin'
+import { fetchAdminFinance } from './lib/fetch-admin-finance'
 
 export const dynamic = 'force-dynamic'
 
+/**
+ * @description Panel global de finanzas para administradores.
+ * @returns {JSX.Element} Vista del panel de finanzas global.
+ */
 export default function FinanzasPage() {
-  const [finance, setFinance] = useState<any>(null)
+  const [finance, setFinance] = useState<AdminFinance | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const refetch = () => { getAdminFinanceAction().then(r => { if(r.success) setFinance(r.data) }) }
-  useEffect(() => { setIsLoading(true); getAdminFinanceAction().then(r => { if(r.success) setFinance(r.data); setIsLoading(false) }) }, [])
+  const [error, setError] = useState<string | null>(null)
+
+  const loadFinance = useCallback(async () => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const data = await fetchAdminFinance()
+      setFinance(data)
+    } catch (loadError) {
+      setFinance(null)
+      setError(loadError instanceof Error ? loadError.message : 'No se pudo cargar la información financiera')
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    void loadFinance()
+  }, [loadFinance])
 
   const netIncome = finance
     ? Number(finance.revenue.totalIngresos) - Number(finance.gastos.totalMonto)
@@ -30,7 +53,7 @@ export default function FinanzasPage() {
           <p className="text-muted-foreground text-sm">Consolidación financiera de la plataforma</p>
         </div>
         <Button
-          onClick={refetch}
+          onClick={() => { void loadFinance() }}
           variant="outline"
           disabled={isLoading}
           className="border-slate-200/70 bg-white/70 backdrop-blur-sm dark:border-slate-700/60 dark:bg-slate-900/60"
@@ -43,6 +66,10 @@ export default function FinanzasPage() {
       {isLoading ? (
         <div className="flex items-center justify-center py-20">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      ) : error ? (
+        <div className="flex items-center justify-center py-20">
+          <p className="text-muted-foreground">{error}</p>
         </div>
       ) : finance ? (
         <>
