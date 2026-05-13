@@ -7,12 +7,11 @@ import { toast } from "sonner"
 import { useClientes } from "@/features/clientes/hooks/use-clientes"
 import { useVendors } from '@/features/vendors/hooks/use-vendors'
 import { Button } from "@/components/ui/button"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { motion, AnimatePresence } from "framer-motion"
 import { FileText, Sparkles, ArrowLeft, Loader2, Receipt, Building2, UserCircle, Calendar } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { SelectSeparator } from "@/components/ui/select"
@@ -237,35 +236,37 @@ export function ContratoForm({
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <RadioGroup
+              <Select
                 value={formData.tipo}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, tipo: value }))}
-                className="flex flex-wrap gap-4"
               >
-                {tiposCustom.length > 0 ? (
-                  tiposCustom.map((tipo) => (
-                    <div key={tipo.tipoCustomId} className="flex items-center space-x-2">
-                      <RadioGroupItem value={tipo.tipoCustomId} id={tipo.tipoCustomId} />
-                      <Label htmlFor={tipo.tipoCustomId}>{tipo.nombre}</Label>
-                    </div>
-                  ))
-                ) : (
-                  <>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="COMPRA_VENTA" id="COMPRA_VENTA" />
-                      <Label htmlFor="COMPRA_VENTA">Compra Venta</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="SERVICIO" id="SERVICIO" />
-                      <Label htmlFor="SERVICIO">Servicio</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="PROVEEDOR" id="PROVEEDOR" />
-                      <Label htmlFor="PROVEEDOR">Proveedor</Label>
-                    </div>
-                  </>
-                )}
-              </RadioGroup>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona el tipo de contrato..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectLabel>Tipos del Sistema</SelectLabel>
+                    <SelectItem value="COMPRA_VENTA">Compra Venta</SelectItem>
+                    <SelectItem value="SERVICIO">Servicio</SelectItem>
+                    <SelectItem value="PROVEEDOR">Proveedor</SelectItem>
+                    <SelectItem value="ARRENDAMIENTO">Arrendamiento</SelectItem>
+                    <SelectItem value="OTRO">Otro</SelectItem>
+                  </SelectGroup>
+                  {tiposCustom.length > 0 && (
+                    <>
+                      <SelectSeparator />
+                      <SelectGroup>
+                        <SelectLabel>Tipos Personalizados</SelectLabel>
+                        {tiposCustom.map((tipo) => (
+                          <SelectItem key={tipo.tipoCustomId} value={tipo.tipoCustomId}>
+                            {tipo.nombre}
+                          </SelectItem>
+                        ))}
+                      </SelectGroup>
+                    </>
+                  )}
+                </SelectContent>
+              </Select>
             </CardContent>
           </Card>
 

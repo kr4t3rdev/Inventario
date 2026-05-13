@@ -1,6 +1,18 @@
 import React from 'react'
 import { vi } from 'vitest'
 
+// Polyfill para Pointer Events que no soporta JSDOM (necesario para Radix UI Select)
+if (typeof window !== 'undefined') {
+  if (!Element.prototype.hasPointerCapture) {
+    Element.prototype.hasPointerCapture = vi.fn(() => false)
+    Element.prototype.setPointerCapture = vi.fn()
+    Element.prototype.releasePointerCapture = vi.fn()
+  }
+  if (!Element.prototype.scrollIntoView) {
+    Element.prototype.scrollIntoView = vi.fn()
+  }
+}
+
 // Mock de ResizeObserver para JSDOM
 global.ResizeObserver = vi.fn().mockImplementation(() => ({
   observe: vi.fn(),
