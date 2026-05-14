@@ -1,19 +1,20 @@
-'use client'
+"use client"
 
-import { useState, useEffect } from 'react'
-import { useForm } from 'react-hook-form'
-import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+import { useState } from "react"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { z } from "zod"
+import { motion, useReducedMotion } from "framer-motion"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from "@/components/ui/select"
 import {
   Form,
   FormControl,
@@ -21,357 +22,413 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Loader2, ArrowRightLeft, Building2, FileText } from 'lucide-react'
-import { getCuentasBancariasAction } from '@/features/contabilidad/actions-cuentas-bancarias'
+} from "@/components/ui/form"
+import { ArrowRightLeft, Loader2, Info } from "lucide-react"
+import { sileo } from '@/lib/sileo-shim'
+import { useAppDispatch } from "@/lib/redux/hooks"
+import { contabilidadApi, useGetCuentasBancariasQuery } from "@/features/contabilidad/api/contabilidadApi"
+import { TasaCambioDialog } from "./tasa-cambio-dialog"
+import { ValidacionTransferenciaDialog } from "./validacion-transferencia-dialog"
+import { cn } from "@/lib/utils"
+import type { CuentaBancaria } from "../../app/models/model"
 
-/** @description Esquema de validación para formulario de transferencia bancaria */
-const transferenciaSchema = z.object({
-  cuentaOrigenId: z.string().min(1, 'Seleccione la cuenta origen'),
-  cuentaDestinoId: z.string().min(1, 'Seleccione la cuenta destino'),
-  montoOrigen: z.number({ invalid_type_error: 'Ingrese un monto válido' })
-    .positive('El monto debe ser positivo'),
-  motivo: z.string().min(1, 'El motivo es requerido'),
+const transferenciaBancariaSchema = z.object({
+  cuentaOrigenId: z.string().min(1, "Debe seleccionar una cuenta origen"),
+  cuentaDestinoId: z.string().min(1, "Debe seleccionar una cuenta destino"),
+  monto: z.string().min(1, "El monto es requerido").refine(
+    (val) => !isNaN(Number(val)) && Number(val) > 0,
+    "El monto debe ser un número positivo"
+  ),
+  motivo: z.string().min(1, "El motivo es requerido"),
   descripcion: z.string().optional(),
-  tasaCambio: z.number({ invalid_type_error: 'Ingrese una tasa válida' })
-    .positive('La tasa debe ser positiva')
-    .optional()
-}).refine((data) => data.cuentaOrigenId !== data.cuentaDestinoId, {
-  message: 'La cuenta origen y destino deben ser diferentes',
-  path: ['cuentaDestinoId'],
 })
 
-type TransferenciaFormData = z.infer<typeof transferenciaSchema>
-
-interface CuentaOption {
-  cuentaId: string
-  nombreBanco: string
-  numeroCuenta: string
-  moneda: string
-  saldo: number
-}
+type TransferenciaBancariaFormData = z.infer<typeof transferenciaBancariaSchema>
 
 interface TransferenciaBancariaFormProps {
-  /** @description Callback al completar la transferencia exitosamente */
   onSuccess?: () => void
-  /** @description Callback al cancelar el formulario */
   onCancel?: () => void
 }
 
-/**
- * @description Formulario para crear una transferencia bancaria entre cuentas.
- * Valida saldo, monedas distintas, y ejecuta la transferencia vía API.
- * @param {TransferenciaBancariaFormProps} props - Props del componente
- * @returns {JSX.Element} Formulario de transferencia bancaria
- */
+const surfaceCardClass = cn(
+  'w-full border-slate-200/60 bg-white/80 shadow-sm backdrop-blur-xl',
+  'dark:border-slate-800/60 dark:bg-slate-900/10',
+);
+
+const labelClass = cn(
+  'text-sm font-medium text-slate-700',
+  'dark:text-slate-200',
+);
+
+const inputClass = cn(
+  'bg-white/50 text-slate-900 placeholder:text-slate-400 transition-all duration-300',
+  'border-slate-200/60 focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/40',
+  'dark:bg-slate-900/10 dark:text-slate-100 dark:border-slate-800/60 dark:focus:bg-slate-950',
+);
+
+const outlineButtonClass = cn(
+  'border-slate-200/70 bg-white/50 text-slate-700 shadow-sm transition-all duration-300',
+  'hover:bg-white hover:border-blue-500/40 hover:text-blue-600 hover:shadow-md',
+  'dark:border-slate-800/60 dark:bg-slate-900/10 dark:text-slate-200',
+  'dark:hover:bg-slate-900/10 dark:hover:border-blue-400/40 dark:hover:text-blue-400',
+);
+
 export function TransferenciaBancariaForm({ onSuccess, onCancel }: TransferenciaBancariaFormProps) {
-  const [isCreating, setIsCreating] = useState(false)
-  const [cuentas, setCuentas] = useState<CuentaOption[]>([])
-  const [isLoadingCuentas, setIsLoadingCuentas] = useState(true)
+  const dispatch = useAppDispatch()
+  const { data: cuentasBancariasData = []  } = useGetCuentasBancariasQuery() 
+  const [showTasaDialog, setShowTasaDialog] = useState(false)
+  const [showValidacionDialog, setShowValidacionDialog] = useState(false)
+  const [validacionData, setValidacionData] = useState<any>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  useEffect(() => {
-    getCuentasBancariasAction().then((r: any) => {
-      if (r.success) {
-        setCuentas(r.data?.cuentas ?? [])
-      }
-      setIsLoadingCuentas(false)
-    })
-  }, [])
+  const shouldReduceMotion = useReducedMotion()
 
-  const form = useForm<TransferenciaFormData>({
-    resolver: zodResolver(transferenciaSchema),
+  const fadeInUp = {
+    hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 12 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: shouldReduceMotion ? 0 : 0.3,
+        ease: 'easeOut' as const,
+      },
+    },
+  };
+
+  const stagger = {
+    hidden: {},
+    show: {
+      transition: {
+        staggerChildren: shouldReduceMotion ? 0 : 0.06,
+      },
+    },
+  };
+
+  const form = useForm<TransferenciaBancariaFormData>({
+    resolver: zodResolver(transferenciaBancariaSchema),
     defaultValues: {
-      cuentaOrigenId: '',
-      cuentaDestinoId: '',
-      montoOrigen: 0,
-      motivo: '',
-      descripcion: '',
+      cuentaOrigenId: "",
+      cuentaDestinoId: "",
+      monto: "",
+      motivo: "",
+      descripcion: "",
     },
   })
+  
+  const cuentasBancarias: CuentaBancaria[] = (cuentasBancariasData as any)?.cuentas || (cuentasBancariasData as CuentaBancaria[]) || []
 
-  const cuentaOrigenId = form.watch('cuentaOrigenId')
-  const cuentaDestinoId = form.watch('cuentaDestinoId')
+  const cuentaOrigen = cuentasBancarias.find(c => c.cuentaId === form.watch("cuentaOrigenId"))
+  const cuentaDestino = cuentasBancarias.find(c => c.cuentaId === form.watch("cuentaDestinoId"))
+  const monto = Number(form.watch("monto") || 0)
 
-  const cuentaOrigen = cuentas.find((c) => c.cuentaId === cuentaOrigenId)
-  const cuentaDestino = cuentas.find((c) => c.cuentaId === cuentaDestinoId)
-  const monedasDistintas = cuentaOrigen && cuentaDestino && cuentaOrigen.moneda !== cuentaDestino.moneda
+  // Verificar si las monedas son diferentes
+  const requiereConversion = cuentaOrigen && cuentaDestino && 
+    cuentaOrigen.moneda !== cuentaDestino.moneda
 
-  const onSubmit = async (data: TransferenciaFormData) => {
+  const handleValidarTransferencia = async (data: TransferenciaBancariaFormData) => {
     try {
-      setIsCreating(true)
-
-      const payload: Record<string, unknown> = {
+      const validacionRequest = {
         cuentaOrigenId: data.cuentaOrigenId,
         cuentaDestinoId: data.cuentaDestinoId,
-        montoOrigen: data.montoOrigen,
+        monto: Number(data.monto),
         motivo: data.motivo,
-        descripcion: data.descripcion || undefined,
+        descripcion: data.descripcion,
       }
 
-      if (data.tasaCambio && data.tasaCambio > 0) {
-        payload.tasaCambio = data.tasaCambio
-      }
+      const response = await dispatch(
+        contabilidadApi.endpoints.validarTransferencia.initiate(validacionRequest)
+      ).unwrap()
 
-      const response = await fetch('/api/contabilidad/transferencias', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+      setValidacionData({
+        ...validacionRequest,
+        ...response,
+        cuentaOrigen,
+        cuentaDestino,
       })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Error al crear la transferencia')
+      if (requiereConversion) {
+        setShowTasaDialog(true)
+      } else {
+        setShowValidacionDialog(true)
       }
-
-      onSuccess?.()
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Error inesperado'
-      console.error('Error creating transferencia:', message)
-    } finally {
-      setIsCreating(false)
+    } catch (error: any) {
+      sileo.error({ title: error?.data?.error || 'Error al validar la transferencia' })
     }
   }
 
-  const resetForm = (): void => {
-    form.reset()
-    onCancel?.()
+  const handleConfirmarTasa = (tasaCambio: number) => {
+    setShowTasaDialog(false)
+    setValidacionData((prev: any) => ({ ...prev, tasaCambio }))
+    setShowValidacionDialog(true)
   }
 
-  if (isLoadingCuentas) {
-    return (
-      <div className="flex items-center justify-center p-12" role="status">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    )
+  const handleConfirmarTransferencia = async () => {
+    setIsSubmitting(true)
+    try {
+      // Map to API expected payload
+      const payload = {
+        cuentaOrigenId: validacionData.cuentaOrigenId,
+        cuentaDestinoId: validacionData.cuentaDestinoId,
+        montoOrigen: Number(validacionData.monto),
+        motivo: validacionData.motivo,
+        descripcion: validacionData.descripcion,
+        ...(validacionData.tasaCambio ? { tasaCambio: Number(validacionData.tasaCambio) } : {}),
+        monedaPrincipal: validacionData.monedaPrincipal
+      }
+
+      await dispatch(
+        contabilidadApi.endpoints.crearTransferencia.initiate(payload as any)
+      ).unwrap()
+
+      sileo.success({ title: 'Transferencia realizada exitosamente' })
+      form.reset()
+      setShowValidacionDialog(false)
+      setValidacionData(null)
+      onSuccess?.()
+    } catch (error: any) {
+      sileo.error({ title: error?.data?.error || error?.message || 'Error al realizar la transferencia' })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
+
+  const cuentasDisponibles = cuentasBancarias.filter(cuenta => cuenta.isActive)
 
   return (
-    <Card className="border-0 shadow-none">
-      <CardHeader className="px-0 pt-0">
-        <CardTitle className="flex items-center gap-2 text-lg">
-          <ArrowRightLeft className="h-5 w-5 text-primary" />
-          Nueva Transferencia
-        </CardTitle>
-        <CardDescription>
-          Complete los datos para realizar una transferencia entre cuentas bancarias.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="px-0 pb-0">
+    <>
+      <motion.div variants={fadeInUp} initial="hidden" animate="show">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Cuenta Origen */}
-            <FormField
-              control={form.control}
-              name="cuentaOrigenId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Cuenta Origen</FormLabel>
-                  <Select
-                    value={field.value}
-                    onValueChange={(value) => {
-                      field.onChange(value)
-                      if (cuentaDestinoId === value) {
-                        form.setValue('cuentaDestinoId', '')
-                      }
-                    }}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccione cuenta origen" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {cuentas.map((cuenta) => (
-                        <SelectItem key={cuenta.cuentaId} value={cuenta.cuentaId}>
-                          {cuenta.nombreBanco} - {cuenta.numeroCuenta} ({cuenta.moneda}) &mdash; Saldo:{' '}
-                          {Number(cuenta.saldo).toLocaleString('es-CU', {
-                            minimumFractionDigits: 2,
-                          })}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {cuentaOrigen && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      <Building2 className="inline h-3 w-3 mr-1" />
-                      Saldo disponible: {Number(cuentaOrigen.saldo).toLocaleString('es-CU', {
-                        minimumFractionDigits: 2,
-                      })}{' '}
-                      {cuentaOrigen.moneda}
-                    </p>
+          <motion.form 
+            onSubmit={form.handleSubmit(handleValidarTransferencia, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} 
+            className="space-y-6"
+            variants={stagger}
+            initial="hidden"
+            animate="show"
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <motion.div variants={fadeInUp}>
+                <FormField
+                  control={form.control}
+                  name="cuentaOrigenId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className={labelClass}>Cuenta Origen</FormLabel>
+                      <Select onValueChange={(value) => field.onChange(value)} value={(field.value)}>
+                        <FormControl>
+                          <SelectTrigger className={inputClass}>
+                            <SelectValue placeholder="Seleccionar cuenta origen" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {cuentasDisponibles
+                            ?.filter(cuenta => cuenta.cuentaId !== form.watch("cuentaDestinoId"))
+                            ?.map((cuenta) => (
+                            <SelectItem key={cuenta.cuentaId} value={cuenta.cuentaId}>
+                              <div className="flex flex-col">
+                                <span>{cuenta.nombreBanco} - {cuenta.numeroCuenta}</span>
+                                <span className="text-xs text-muted-foreground">
+                                  Saldo: {cuenta.saldo} {cuenta.moneda}
+                                </span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                />
+              </motion.div>
 
-            {/* Cuenta Destino */}
-            <FormField
-              control={form.control}
-              name="cuentaDestinoId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Cuenta Destino</FormLabel>
-                  <Select value={field.value} onValueChange={field.onChange}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccione cuenta destino" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {cuentas
-                        .filter((c) => c.cuentaId !== cuentaOrigenId)
-                        .map((cuenta) => (
-                          <SelectItem key={cuenta.cuentaId} value={cuenta.cuentaId}>
-                            {cuenta.nombreBanco} - {cuenta.numeroCuenta} ({cuenta.moneda})
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                  {cuentaDestino && (
-                    <p className="text-xs text-muted-foreground mt-1">
-                      <Building2 className="inline h-3 w-3 mr-1" />
-                      {cuentaDestino.nombreBanco} &mdash; Moneda: {cuentaDestino.moneda}
-                    </p>
+              <motion.div variants={fadeInUp}>
+                <FormField
+                  control={form.control}
+                  name="cuentaDestinoId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className={labelClass}>Cuenta Destino</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger className={inputClass}>
+                            <SelectValue placeholder="Seleccionar cuenta destino" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {cuentasDisponibles
+                            ?.filter(cuenta => cuenta.cuentaId !== form.watch("cuentaOrigenId"))
+                            ?.map((cuenta) => (
+                            <SelectItem key={cuenta.cuentaId} value={cuenta.cuentaId}>
+                              {cuenta.nombreBanco} - {cuenta.numeroCuenta} ({cuenta.moneda})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
                   )}
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                />
+              </motion.div>
+            </div>
 
-            {/* Monedas distintas - mostrar advertencia */}
-            {monedasDistintas && (
-              <div className="rounded-md bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 p-3 text-sm text-amber-800 dark:text-amber-300">
-                Las cuentas tienen monedas diferentes ({cuentaOrigen.moneda} &rarr;{' '}
-                {cuentaDestino.moneda}). Debe ingresar la tasa de cambio.
-              </div>
-            )}
-
-            {/* Monto + Tasa de Cambio */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <motion.div variants={fadeInUp}>
               <FormField
                 control={form.control}
-                name="montoOrigen"
+                name="monto"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>
-                      Monto{cuentaOrigen ? ` (${cuentaOrigen.moneda})` : ''}
+                    <FormLabel className={labelClass}>
+                      Monto {cuentaOrigen && `(${cuentaOrigen.moneda})`}
                     </FormLabel>
                     <FormControl>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">
+                          $
+                        </span>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="0.00"
+                          {...field}
+                          className={cn(inputClass, "pl-7")}
+                        />
+                      </div>
+                    </FormControl>
+                    {cuentaOrigen && monto > 0 && (
+                      <motion.div 
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-sm text-muted-foreground flex items-center gap-2 mt-1"
+                      >
+                        <Info className="h-3 w-3" />
+                        <span>Saldo disponible: {cuentaOrigen.saldo} {cuentaOrigen.moneda}</span>
+                        {monto > Number(cuentaOrigen.saldo) && (
+                          <span className="text-red-500 font-medium ml-2 flex items-center gap-1">
+                            ⚠️ Saldo insuficiente
+                          </span>
+                        )}
+                      </motion.div>
+                    )}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </motion.div>
+
+            {requiereConversion && (
+              <motion.div 
+                variants={fadeInUp}
+                className="p-4 bg-yellow-50/50 border border-yellow-200/60 rounded-lg dark:bg-yellow-900/10 dark:border-yellow-700/30"
+              >
+                <div className="flex items-center gap-2 text-yellow-700 dark:text-yellow-500">
+                  <ArrowRightLeft className="h-4 w-4" />
+                  <span className="font-medium">Conversión de moneda requerida</span>
+                </div>
+                <p className="text-sm text-yellow-600/90 dark:text-yellow-500/80 mt-1">
+                  Esta transferencia requiere conversión de {cuentaOrigen?.moneda} a {cuentaDestino?.moneda}.
+                  Se solicitará la tasa de cambio antes de proceder.
+                </p>
+              </motion.div>
+            )}
+
+            <motion.div variants={fadeInUp}>
+              <FormField
+                control={form.control}
+                name="motivo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className={labelClass}>Motivo</FormLabel>
+                    <FormControl>
                       <Input
-                        type="number"
-                        step="0.01"
-                        min="0.01"
-                        placeholder="0.00"
-                        value={field.value || ''}
-                        onChange={(e) => {
-                          const val = e.target.value
-                          field.onChange(val === '' ? '' : Number(val))
-                        }}
+                        placeholder="Ej: Reposición de caja chica, Pago a proveedores..."
+                        {...field}
+                        className={inputClass}
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+            </motion.div>
 
-              {monedasDistintas && (
-                <FormField
-                  control={form.control}
-                  name="tasaCambio"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>
-                        Tasa de Cambio ({cuentaOrigen.moneda} &rarr; {cuentaDestino.moneda})
-                      </FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.0001"
-                          min="0.0001"
-                          placeholder="1.0000"
-                          value={field.value ?? ''}
-                          onChange={(e) => {
-                            const val = e.target.value
-                            field.onChange(val === '' ? undefined : Number(val))
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
-            </div>
+            <motion.div variants={fadeInUp}>
+              <FormField
+                control={form.control}
+                name="descripcion"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className={labelClass}>Descripción (Opcional)</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Detalles adicionales sobre la transferencia..."
+                        rows={3}
+                        {...field}
+                        className={inputClass}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </motion.div>
 
-            {/* Motivo */}
-            <FormField
-              control={form.control}
-              name="motivo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Motivo</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ej: Pago a proveedor, Transferencia entre cuentas" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Descripción */}
-            <FormField
-              control={form.control}
-              name="descripcion"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-1">
-                    <FileText className="h-3.5 w-3.5 text-muted-foreground" />
-                    Descripci&oacute;n <span className="text-xs text-muted-foreground font-normal">(opcional)</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Detalles adicionales de la transferencia"
-                      className="resize-none"
-                      rows={3}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Botones de acción */}
-            <div className="flex items-center justify-end gap-3 pt-2">
+            <motion.div variants={fadeInUp} className="flex justify-end gap-3 pt-2">
               {onCancel && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={resetForm}
-                  disabled={isCreating}
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={onCancel}
+                  className={outlineButtonClass}
                 >
                   Cancelar
                 </Button>
               )}
-              <Button type="submit" disabled={isCreating}>
-                {isCreating ? (
+              <Button 
+                type="submit" 
+                disabled={!form.formState.isValid || monto > Number(cuentaOrigen?.saldo || 0) || isSubmitting}
+                className="bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-slate-200 transition-all shadow-md hover:shadow-lg"
+              >
+                {isSubmitting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Procesando...
+                    Validando...
                   </>
                 ) : (
                   <>
                     <ArrowRightLeft className="mr-2 h-4 w-4" />
-                    Realizar Transferencia
+                    Validar Transferencia
                   </>
                 )}
               </Button>
-            </div>
-          </form>
+            </motion.div>
+          </motion.form>
         </Form>
-      </CardContent>
-    </Card>
+      </motion.div>
+
+      {/* Diálogo de confirmación de tasa de cambio */}
+      {showTasaDialog && cuentaOrigen && cuentaDestino && (
+        <TasaCambioDialog
+          isOpen={showTasaDialog}
+          onClose={() => setShowTasaDialog(false)}
+          monedaOrigen={cuentaOrigen.moneda}
+          monedaDestino={cuentaDestino.moneda}
+          monto={monto}
+          onConfirm={handleConfirmarTasa}
+        />
+      )}
+
+      {/* Diálogo de validación de transferencia */}
+      {showValidacionDialog && validacionData && (
+        <ValidacionTransferenciaDialog
+          isOpen={showValidacionDialog}
+          onClose={() => {
+            setShowValidacionDialog(false)
+            setValidacionData(null)
+          }}
+          data={validacionData}
+          onConfirm={handleConfirmarTransferencia}
+          isLoading={isSubmitting}
+        />
+      )}
+    </>
   )
 }

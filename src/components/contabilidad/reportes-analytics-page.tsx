@@ -1,264 +1,289 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Skeleton } from '@/components/ui/skeleton'
-import {
-  BarChart3,
-  Building2,
-  ArrowRightLeft,
-  AlertTriangle,
-  PiggyBank,
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  AlertCircle,
-} from 'lucide-react'
-import { cn, formatCurrency } from '@/lib/utils'
+import { useState } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { BarChart3, FileText, FilterX, LineChart, TrendingUp } from 'lucide-react';
+import { toast } from 'sonner';
 
-interface ResumenPorMoneda {
-  moneda: string
-  saldoActual: number
-  totalIngresos: number
-  totalEgresos: number
-  flujoNeto: number
-  desglose: {
-    ingresos: {
-      ventas: number
-      servicios: number
-      ajustes: number
-      inyecciones: Array<{ tipo: string; montoRecibido: number; moneda: string }>
-    }
-    egresos: {
-      gastos: number
-      ajustes: number
-      pagosDeuda: number
-      prestamosCash: number
-    }
-  }
+import { AccountTransactionHistory } from '@/components/contabilidad/account-transaction-history';
+import { DateRangePicker } from '@/components/contabilidad/date-range-picker';
+import { MovimientosTable } from '@/components/contabilidad/movimientos-table';
+import { ResumenFinanciero } from '@/components/contabilidad/resumen-financiero';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useGetCuentasBancariasQuery } from '@/features/contabilidad/api/contabilidadApi';
+import { useGetPrestamosCashStatsQuery } from '@/lib/redux/services/prestamosCashApi';
+import { getAuthToken } from '@/lib/token';
+import { cn } from '@/lib/utils';
+
+interface FiltrosGlobales {
+  fechaInicio: string;
+  fechaFin: string;
+  cuentaId: string;
 }
 
-interface Estadisticas {
-  totalCuentas: number
-  totalReconciliaciones: number
-  totalTransferencias: number
-  totalAjustes: number
-  totalInyecciones: number
-  periodo: {
-    fechaInicio: string
-    fechaFin: string
-  }
-}
-
-interface ResumenResponse {
-  resumenPorMoneda: ResumenPorMoneda[]
-  cuentasBancarias: Array<{
-    cuentaId: string
-    nombreBanco: string
-    numeroCuenta: string
-    saldo: number
-    moneda: string | null
-    tipoCuenta: string
-  }>
-  estadisticas: Estadisticas
-}
+const surfaceCardClass = cn(
+  'relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl',
+  'dark:border-slate-800/60 dark:bg-slate-900/10',
+);
 
 /**
- * @description Página de reportes y analytics contables.
- * Muestra resumen financiero con indicadores por moneda y estadísticas generales.
- * @returns {JSX.Element} Dashboard de reportes financieros
+ * @description Dashboard de reportes contables con filtros globales y vistas por pestañas.
+ * @returns {JSX.Element} Contenido analítico de reportes financieros.
  */
 export function ReportesAnalyticsPage() {
-  const [data, setData] = useState<ResumenResponse | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const shouldReduceMotion = useReducedMotion();
+  const [tabActiva, setTabActiva] = useState('resumen');
+  const [filtrosGlobales, setFiltrosGlobales] = useState<FiltrosGlobales>({
+    fechaInicio: '',
+    fechaFin: '',
+    cuentaId: '',
+  });
 
-  useEffect(() => {
-    const fetchResumen = async () => {
-      try {
-        const response = await fetch('/api/contabilidad/reportes/resumen')
-        if (!response.ok) throw new Error('Error al cargar el resumen financiero')
-        const json = await response.json()
-        setData(json)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Error desconocido')
-      } finally {
-        setIsLoading(false)
+  const { data: cuentasData = { cuentas: [] } } = useGetCuentasBancariasQuery();
+  const cuentas = cuentasData.cuentas ?? [];
+  const cuentaSeleccionada = cuentas.find((cuenta) => cuenta.cuentaId === filtrosGlobales.cuentaId);
+  const { data: prestamosStats } = useGetPrestamosCashStatsQuery();
+  const saldoPendientePrestamos = Object.values(prestamosStats?.montoPendienteCobro ?? {}).reduce(
+    (acc, value) => acc + value,
+    0,
+  );
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: shouldReduceMotion ? 0 : 0.07,
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 12 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: shouldReduceMotion ? 0 : 0.3,
+        ease: 'easeOut' as const,
+      },
+    },
+  };
+
+  /**
+   * @description Actualiza un filtro global de reportes.
+   * @param {keyof FiltrosGlobales} key - Campo de filtro a actualizar.
+   * @param {string} value - Nuevo valor del filtro.
+   * @returns {void} Sin retorno.
+   */
+  const handleFiltroGlobalChange = (key: keyof FiltrosGlobales, value: string): void => {
+    setFiltrosGlobales((prev) => ({ ...prev, [key]: value }));
+  };
+
+  /**
+   * @description Aplica un rango de fecha global para todas las pestañas.
+   * @param {string} fechaInicio - Fecha inicial.
+   * @param {string} fechaFin - Fecha final.
+   * @returns {void} Sin retorno.
+   */
+  const handleDateRangeChange = (fechaInicio: string, fechaFin: string): void => {
+    setFiltrosGlobales((prev) => ({ ...prev, fechaInicio, fechaFin }));
+  };
+
+  /**
+   * @description Exporta movimientos filtrados en formato CSV o PDF.
+   * @param {'csv' | 'pdf'} tipo - Formato de exportación.
+   * @returns {Promise<void>} Promesa de ejecución de descarga.
+   */
+  const handleExportMovimientos = async (tipo: 'csv' | 'pdf'): Promise<void> => {
+    try {
+      const params = new URLSearchParams({
+        formato: tipo,
+        ...(filtrosGlobales.fechaInicio && { fechaInicio: filtrosGlobales.fechaInicio }),
+        ...(filtrosGlobales.fechaFin && { fechaFin: filtrosGlobales.fechaFin }),
+        ...(filtrosGlobales.cuentaId && { cuentaId: filtrosGlobales.cuentaId }),
+      });
+
+      const token = getAuthToken();
+      const response = await fetch(`/api/contabilidad/reportes/movimientos?${params}`, {
+        headers: token ? { Authorization: token } : {},
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al exportar movimientos');
       }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `movimientos-${new Date().toISOString().split('T')[0]}.${tipo}`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(anchor);
+
+      toast.success(`Movimientos exportados en formato ${tipo.toUpperCase()}`);
+    } catch (error) {
+      console.error('Error al exportar movimientos:', error);
+      toast.error('No se pudo exportar el reporte. Intente nuevamente.');
     }
-
-    fetchResumen()
-  }, [])
-
-  if (isLoading) {
-    return (
-      <div className="space-y-6 p-6" role="status" aria-label="Cargando reportes">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-24" />
-          ))}
-        </div>
-        <Skeleton className="h-64" />
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="flex flex-col items-center justify-center p-12 text-center">
-        <AlertCircle className="h-12 w-12 text-destructive mb-4" />
-        <h2 className="text-lg font-semibold">Error al cargar reportes</h2>
-        <p className="text-muted-foreground">{error}</p>
-      </div>
-    )
-  }
-
-  if (!data) return null
-
-  const { resumenPorMoneda, estadisticas } = data
+  };
 
   return (
-    <div className="space-y-6 p-6">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-l-4 border-l-blue-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Cuentas</CardTitle>
-            <Building2 className="h-4 w-4 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{estadisticas.totalCuentas}</div>
-            <p className="text-xs text-muted-foreground">Cuentas bancarias activas</p>
-          </CardContent>
-        </Card>
+    <motion.div className="space-y-6 p-6" variants={containerVariants} initial="hidden" animate="show">
+      <motion.div variants={itemVariants} className={cn(surfaceCardClass, 'flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between')}>
+        <div className="space-y-1">
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Explorador de Reportes
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Use filtros globales para mantener consistencia entre resumen, movimientos y detalle por cuenta.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Badge variant="outline">Tab activa: {tabActiva}</Badge>
+          <Badge variant="outline">{cuentas.length} cuentas disponibles</Badge>
+          <Badge variant="outline">Préstamos pendientes: {saldoPendientePrestamos.toFixed(2)}</Badge>
+        </div>
+      </motion.div>
 
-        <Card className="border-l-4 border-l-emerald-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Reconciliaciones</CardTitle>
-            <BarChart3 className="h-4 w-4 text-emerald-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{estadisticas.totalReconciliaciones}</div>
-            <p className="text-xs text-muted-foreground">Ventas, servicios y gastos</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-amber-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Transferencias</CardTitle>
-            <ArrowRightLeft className="h-4 w-4 text-amber-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{estadisticas.totalTransferencias}</div>
-            <p className="text-xs text-muted-foreground">Entre cuentas bancarias</p>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-purple-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ajustes</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-purple-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{estadisticas.totalAjustes}</div>
-            <p className="text-xs text-muted-foreground">Correcciones bancarias</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Resumen por Moneda */}
-      {resumenPorMoneda.length > 0 && (
-        <Card>
+      <motion.div variants={itemVariants}>
+        <Card className={surfaceCardClass}>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5 text-primary" />
-              Resumen Financiero por Moneda
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <LineChart className="h-5 w-5 text-blue-600 dark:text-blue-300" />
+              Filtros globales
             </CardTitle>
-            <CardDescription>
-              Ingresos, egresos y flujo neto desglosados por tipo de moneda.
-            </CardDescription>
+            <CardDescription>Se aplican automáticamente en todas las pestañas.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {resumenPorMoneda.map((resumen) => (
-                <div
-                  key={resumen.moneda}
-                  className="rounded-lg border p-4 transition-colors hover:bg-muted/50"
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <Badge variant="outline" className="text-sm px-3 py-1">
-                      {resumen.moneda}
-                    </Badge>
-                    <span
-                      className={cn(
-                        'text-sm font-medium',
-                        resumen.flujoNeto >= 0 ? 'text-emerald-600' : 'text-red-600'
-                      )}
-                    >
-                      {resumen.flujoNeto >= 0 ? (
-                        <TrendingUp className="inline h-4 w-4 mr-1" />
-                      ) : (
-                        <TrendingDown className="inline h-4 w-4 mr-1" />
-                      )}
-                      Flujo neto:{' '}
-                      {formatCurrency(Math.abs(resumen.flujoNeto), resumen.moneda)}
-                    </span>
-                  </div>
+            <div className="grid gap-4 md:grid-cols-3">
+              <DateRangePicker
+                fechaInicio={filtrosGlobales.fechaInicio}
+                fechaFin={filtrosGlobales.fechaFin}
+                onChange={handleDateRangeChange}
+              />
 
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">Saldo Actual</p>
-                      <p className="text-lg font-semibold">
-                        {formatCurrency(resumen.saldoActual, resumen.moneda)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">
-                        <TrendingUp className="inline h-3 w-3 mr-0.5 text-emerald-500" />
-                        Ingresos
-                      </p>
-                      <p className="text-lg font-semibold text-emerald-600">
-                        {formatCurrency(resumen.totalIngresos, resumen.moneda)}
-                      </p>
-                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground mt-0.5">
-                        <span>Ventas: {formatCurrency(resumen.desglose.ingresos.ventas, resumen.moneda)}</span>
-                        <span>Servicios: {formatCurrency(resumen.desglose.ingresos.servicios, resumen.moneda)}</span>
-                      </div>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">
-                        <TrendingDown className="inline h-3 w-3 mr-0.5 text-red-500" />
-                        Egresos
-                      </p>
-                      <p className="text-lg font-semibold text-red-600">
-                        {formatCurrency(resumen.totalEgresos, resumen.moneda)}
-                      </p>
-                      <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground mt-0.5">
-                        <span>Gastos: {formatCurrency(resumen.desglose.egresos.gastos, resumen.moneda)}</span>
-                        <span>Ajustes: {formatCurrency(resumen.desglose.egresos.ajustes, resumen.moneda)}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
+              <Select
+                value={filtrosGlobales.cuentaId || 'all'}
+                onValueChange={(value) =>
+                  handleFiltroGlobalChange('cuentaId', value === 'all' ? '' : value)
+                }
+              >
+                <SelectTrigger aria-label="Filtrar reportes por cuenta bancaria">
+                  <SelectValue placeholder="Todas las cuentas" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas las cuentas</SelectItem>
+                  {cuentas.map((cuenta) => (
+                    <SelectItem key={cuenta.cuentaId} value={cuenta.cuentaId}>
+                      {cuenta.nombreBanco} - {cuenta.numeroCuenta} ({cuenta.moneda})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Button
+                variant="outline"
+                onClick={() => setFiltrosGlobales({ fechaInicio: '', fechaFin: '', cuentaId: '' })}
+              >
+                <FilterX className="mr-2 h-4 w-4" />
+                Limpiar filtros
+              </Button>
             </div>
           </CardContent>
         </Card>
-      )}
+      </motion.div>
 
-      {/* Empty State */}
-      {resumenPorMoneda.length === 0 && (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center p-12 text-center">
-            <PiggyBank className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold">Sin datos financieros</h3>
-            <p className="text-sm text-muted-foreground">
-              No hay movimientos registrados en el per&iacute;odo seleccionado.
-            </p>
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  )
+      <motion.div variants={itemVariants}>
+        <Tabs value={tabActiva} onValueChange={setTabActiva} className="space-y-4">
+          <TabsList className="grid w-full grid-cols-3 rounded-xl bg-slate-100/80 p-1 dark:bg-slate-900/70">
+            <TabsTrigger value="resumen" className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Resumen
+            </TabsTrigger>
+            <TabsTrigger value="movimientos" className="flex items-center gap-2">
+              <TrendingUp className="h-4 w-4" />
+              Movimientos
+            </TabsTrigger>
+            <TabsTrigger value="cuenta" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Por cuenta
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="resumen" className="space-y-6">
+            <motion.div
+              initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: shouldReduceMotion ? 0 : 0.22 }}
+            >
+              <ResumenFinanciero
+                fechaInicio={filtrosGlobales.fechaInicio}
+                fechaFin={filtrosGlobales.fechaFin}
+                cuentaId={filtrosGlobales.cuentaId}
+                periodo="mes"
+                page={1}
+                limit={10}
+              />
+            </motion.div>
+          </TabsContent>
+
+          <TabsContent value="movimientos" className="space-y-6">
+            <motion.div
+              initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: shouldReduceMotion ? 0 : 0.22 }}
+            >
+              <MovimientosTable
+                cuentaId={filtrosGlobales.cuentaId}
+                fechaInicio={filtrosGlobales.fechaInicio}
+                fechaFin={filtrosGlobales.fechaFin}
+                onExport={handleExportMovimientos}
+              />
+            </motion.div>
+          </TabsContent>
+
+          <TabsContent value="cuenta" className="space-y-6">
+            <motion.div
+              initial={{ opacity: 0, y: shouldReduceMotion ? 0 : 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: shouldReduceMotion ? 0 : 0.22 }}
+            >
+              {cuentaSeleccionada ? (
+                <AccountTransactionHistory
+                  cuentaId={cuentaSeleccionada.cuentaId}
+                  nombreCuenta={cuentaSeleccionada.nombreBanco}
+                  numeroCuenta={cuentaSeleccionada.numeroCuenta}
+                  monedaCuenta={cuentaSeleccionada.moneda}
+                />
+              ) : (
+                <Card className={cn(surfaceCardClass, 'border-dashed')}>
+                  <CardContent className="pt-6">
+                    <div className="space-y-3 py-5 text-center">
+                      <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
+                      <div>
+                        <h3 className="text-lg font-medium text-slate-900 dark:text-slate-100">
+                          Seleccione una cuenta
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          Use el filtro global para cargar su historial detallado.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </motion.div>
+          </TabsContent>
+        </Tabs>
+      </motion.div>
+    </motion.div>
+  );
 }

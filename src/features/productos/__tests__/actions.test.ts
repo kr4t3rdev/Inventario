@@ -43,6 +43,10 @@ vi.mock('@/lib/prisma', () => {
     gastoCompra: {
       findMany: vi.fn(),
       count: vi.fn(),
+      create: vi.fn(),
+    },
+    categoria: {
+      findUnique: vi.fn(),
     },
   };
   return {
@@ -50,6 +54,10 @@ vi.mock('@/lib/prisma', () => {
       producto: tx.producto,
       precioProducto: tx.precioProducto,
       gastoCompra: tx.gastoCompra,
+      categoria: tx.categoria,
+      miEmpresa: {
+        findFirst: vi.fn().mockResolvedValue({ usaCodigoEan13: false }),
+      },
       $transaction: vi.fn().mockImplementation(
         async (callback: (tx: typeof tx) => unknown) => callback(tx),
       ),

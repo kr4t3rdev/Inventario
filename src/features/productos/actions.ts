@@ -37,6 +37,17 @@ import type {
   RestockHistoryItem,
 } from './types';
 
+// ─── EAN-13: shared utilities ─────────────────────────────
+import {
+  resolveTaxonomySegments,
+  generateProductCodeWithRetry,
+  normalizeProveedorCodigo,
+} from '@/lib/product-business-code';
+import {
+  FindNextAvailableSurtido,
+  ValidateAssembledCode,
+} from '@/lib/ean13-utils';
+
 // ─── Select reutilizable ──────────────────────────────────
 
 const PRODUCTO_SELECT = {
@@ -105,11 +116,190 @@ export const getProductoByIdAction = withAction(async (id: string, user: Authent
 
 /**
  * @description Crea un nuevo producto con validación Zod.
+ * Cuando la empresa usa EAN-13, genera el código de negocio completo
+ * (sección, específico, surtido, dígito de control) de forma automática.
  */
 export const createProductoAction = withAction(async (input: ProductoInput, user: AuthenticatedUser) => {
   const parsed = productoSchema.parse(input);
   const tenantId = requireTenant(user);
 
+  // ── Detectar si la empresa usa EAN-13 ──
+  const miEmpresa = await prisma.miEmpresa.findFirst({
+    select: { usaCodigoEan13: true },
+  });
+  const usaCodigoEan13 = miEmpresa?.usaCodigoEan13 ?? false;
+
+  if (usaCodigoEan13) {
+    // ── Resolver proveedor ──
+    let proveedorCodigo: string;
+    let resolvedVendorId: string | null = parsed.vendorId ?? null;
+
+    if (parsed.vendorId) {
+      const vendor = await prisma.vendor.findUnique({
+        where: { vendorId: parsed.vendorId },
+        select: {
+          vendorId: true,
+          vendorCode: true,
+        },
+      });
+
+      if (!vendor) {
+        throw new ActionError('El proveedor seleccionado no existe', 'VALIDATION_ERROR');
+      }
+
+      if (vendor.vendorCode) {
+        proveedorCodigo = normalizeProveedorCodigo(vendor.vendorCode);
+      } else if (parsed.proveedorCodigo) {
+        proveedorCodigo = normalizeProveedorCodigo(parsed.proveedorCodigo);
+      } else {
+        throw new ActionError(
+          'El proveedor seleccionado no tiene código configurado para generar el EAN-13',
+          'VALIDATION_ERROR',
+        );
+      }
+    } else {
+      if (!parsed.proveedorCodigo) {
+        throw new ActionError(
+          'Debe ingresar el código de proveedor (2 dígitos) para generar el EAN-13',
+          'VALIDATION_ERROR',
+        );
+      }
+      proveedorCodigo = normalizeProveedorCodigo(parsed.proveedorCodigo);
+      resolvedVendorId = null;
+    }
+
+    // ── Validar categoría/subcategoría ──
+    if (!parsed.categoriaId) {
+      throw new ActionError('La categoría es requerida para generar el código de negocio', 'VALIDATION_ERROR');
+    }
+    if (!parsed.subcategoriaId) {
+      throw new ActionError('La subcategoría es requerida para generar el código de negocio', 'VALIDATION_ERROR');
+    }
+
+    const [categoria, subcategoria] = await Promise.all([
+      prisma.categoria.findUnique({
+        where: { catId: parsed.categoriaId },
+        select: { catId: true, nombre: true },
+      }),
+      prisma.categoria.findUnique({
+        where: { catId: parsed.subcategoriaId },
+        select: { catId: true, nombre: true, parentId: true },
+      }),
+    ]);
+
+    if (!categoria) {
+      throw new ActionError('La categoría seleccionada no existe', 'VALIDATION_ERROR');
+    }
+    if (!subcategoria) {
+      throw new ActionError('La subcategoría seleccionada no existe', 'VALIDATION_ERROR');
+    }
+    if (subcategoria.parentId !== parsed.categoriaId) {
+      throw new ActionError('La subcategoría debe pertenecer a la categoría seleccionada', 'VALIDATION_ERROR');
+    }
+
+    const resolvedSegments = resolveTaxonomySegments(
+      categoria.nombre,
+      subcategoria.nombre
+    );
+
+    // ── Generar código EAN-13 en transacción ──
+    const resultado = await prisma.$transaction(async (tx) => {
+      const surtido = await FindNextAvailableSurtido(
+        tx,
+        resolvedSegments.idSeccionCodigo,
+        resolvedSegments.especificoCodigo
+      );
+
+      const generatedCode = await generateProductCodeWithRetry(
+        tx,
+        {
+          proveedorCodigo,
+          idSeccionCodigo: resolvedSegments.idSeccionCodigo,
+          especificoCodigo: resolvedSegments.especificoCodigo,
+          surtidoCodigo: surtido,
+        },
+        3
+      );
+
+      if (!ValidateAssembledCode(generatedCode.codigoNegocio)) {
+        throw new ActionError('El código EAN-13 generado no pasó validación', 'VALIDATION_ERROR');
+      }
+
+      const producto = await tx.producto.create({
+        data: {
+          nombre: parsed.nombre,
+          descripcion: parsed.descripcion ?? null,
+          precioCosto: parsed.precioCosto,
+          precioVenta: parsed.precioVenta,
+          stock: parsed.stock,
+          stockMinimo: parsed.stockMinimo ?? 0,
+          codigoInterno: parsed.codigoInterno ?? null,
+          // EAN-13 fields
+          codigoNegocio: generatedCode.codigoNegocio,
+          proveedorCodigo: generatedCode.proveedorCodigo,
+          idSeccionCodigo: generatedCode.idSeccionCodigo,
+          especificoCodigo: generatedCode.especificoCodigo,
+          surtidoCodigo: generatedCode.surtidoCodigo,
+          dcCodigo: generatedCode.dcCodigo,
+          categoriaId: parsed.categoriaId,
+          subcategoriaId: parsed.subcategoriaId ?? null,
+          unidadId: parsed.unidadId ?? null,
+          vendorId: resolvedVendorId,
+          almacenId: parsed.almacenId,
+          puntoDeVentaId: parsed.puntoDeVentaId ?? null,
+          fotos: parsed.fotos ?? [],
+          tenantId,
+          ...(parsed.precios?.length
+            ? {
+                precios: {
+                  create: parsed.precios.map((p) => ({
+                    listaPrecioId: p.listaPrecioId,
+                    precio: p.precio,
+                  })),
+                },
+              }
+            : {}),
+        },
+        select: PRODUCTO_SELECT,
+      });
+
+      if (parsed.stock > 0) {
+        await upsertStockUbicacion(tx, {
+          productoId: producto.id,
+          tipoUbicacion: 'almacen',
+          ubicacionId: parsed.almacenId,
+          modo: 'set',
+          valor: parsed.stock,
+        });
+      }
+
+      return { producto, generatedCode };
+    });
+
+    // ── GastoCompra para stock inicial ──
+    if (parsed.stock > 0 && resolvedVendorId) {
+      const now = new Date();
+      const periodo = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      await prisma.gastoCompra.create({
+        data: {
+          tenantId,
+          productoId: resultado.producto.id,
+          vendorId: resolvedVendorId,
+          cantidad: parsed.stock,
+          precioUnitario: parsed.precioCosto,
+          total: parsed.stock * parsed.precioCosto,
+          fechaCompra: now,
+          descripcion: `Compra inicial - ${parsed.nombre}`,
+          periodo,
+        },
+      });
+    }
+
+    revalidatePath('/busy/products');
+    return resultado.producto;
+  }
+
+  // ── Sin EAN-13: create simple ──
   const producto = await prisma.producto.create({
     data: {
       nombre: parsed.nombre,
@@ -141,6 +331,16 @@ export const createProductoAction = withAction(async (input: ProductoInput, user
     },
     select: PRODUCTO_SELECT,
   });
+
+  if (parsed.stock > 0) {
+    await upsertStockUbicacion(prisma, {
+      productoId: producto.id,
+      tipoUbicacion: 'almacen',
+      ubicacionId: parsed.almacenId,
+      modo: 'set',
+      valor: parsed.stock,
+    });
+  }
 
   revalidatePath('/busy/products');
   return producto;
@@ -245,6 +445,11 @@ const PRODUCTO_CON_STOCK_SELECT = {
   descripcion: true,
   codigoInterno: true,
   codigoNegocio: true,
+  proveedorCodigo: true,
+  idSeccionCodigo: true,
+  especificoCodigo: true,
+  surtidoCodigo: true,
+  dcCodigo: true,
   fotos: true,
   precioCosto: true,
   precioVenta: true,

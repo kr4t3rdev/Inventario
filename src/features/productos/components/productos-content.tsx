@@ -272,24 +272,15 @@ export function ProductosContent({
         </Button>
       ),
       cell: ({ row }) => {
+        const p = row.original
+        const codigo = p.codigoNegocio || p.codigoInterno
         if (usaEan13) {
-          const producto = row.original
-          const seccion = producto.idSeccionCodigo
-          const especifico = producto.especificoCodigo
-          const surtido = producto.surtidoCodigo
-          return (
-            <div className="text-center">
-              {seccion || especifico || surtido ? (
-                <div className="font-mono text-xs tracking-wider">
-                  {seccion ?? "--"}-{especifico ?? "----"}-{surtido ?? "----"}
-                </div>
-              ) : (
-                <div className="font-medium">{producto.codigoNegocio || "-"}</div>
-              )}
-            </div>
-          )
+          const segmentos = [p.idSeccionCodigo, p.especificoCodigo, p.surtidoCodigo].filter(Boolean)
+          if (segmentos.length >= 2) {
+            return <div className="font-mono text-xs tracking-wider text-center">{segmentos.join("-")}</div>
+          }
         }
-        return <div className="text-center font-medium">{row.original.codigoInterno || "-"}</div>
+        return <div className="text-center font-medium">{codigo || "-"}</div>
       },
     },
     {

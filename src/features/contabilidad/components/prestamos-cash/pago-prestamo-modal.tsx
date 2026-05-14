@@ -22,6 +22,7 @@ import { Loader2 } from "lucide-react"
 import { registrarPagoPrestamoAction } from "@/features/contabilidad/actions-prestamos-cash"
 import type { PrestamoCash } from "@/app/models/model"
 import { calcularSaldoPendientePrestamo } from "@/lib/utils/prestamo-cash"
+import { toast } from "sonner"
 
 const pagoSchema = z.object({
   monto: z.coerce.number().positive("El monto debe ser mayor que 0"),
@@ -104,7 +105,7 @@ export function PagoPrestamoModal({
     if (!prestamo) return
 
     if (values.monto > saldoPendiente) {
-      sileo.error({ title: "El monto no puede exceder el saldo pendiente" })
+      toast.error({ title: "El monto no puede exceder el saldo pendiente" })
       return
     }
 
