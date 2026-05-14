@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
+import { useAppSelector } from "@/lib/redux/hooks"
 import { useForm, useFieldArray, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -39,7 +40,7 @@ import {
   Trash2,
   AlertCircle,
 } from "lucide-react"
-import { sileo } from '@/lib/sileo-shim'
+import { toast } from "sonner"
 import { reconciliarVentaAction } from "@/features/contabilidad/actions-reconciliacion"
 import { getCuentasBancariasAction } from "@/features/contabilidad/actions-cuentas-bancarias"
 import { getTiposPagoAction } from "@/features/contabilidad/actions-tipos-pago"
@@ -93,7 +94,6 @@ export function ReconciliacionVentasForm({
   allowPartial = true,
   saldoRestante
 }: ReconciliacionVentasFormProps) {
-  // @ts-expect-error
   const monedas = useAppSelector(selectMonedasActivas) || []
 
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -316,7 +316,7 @@ export function ReconciliacionVentasForm({
         if (!result.success) throw new Error(result.error?.message || 'Error al reconciliar');
       }
 
-      sileo.success({ title: 'Venta reconciliada exitosamente' })
+      toast.success('Venta reconciliada exitosamente')
       onSuccess?.()
       onClose()
     } catch (error: any) {
@@ -410,7 +410,7 @@ export function ReconciliacionVentasForm({
           {/* Panel derecho - Formulario de Distribuciones */}
           <div className="flex-1 flex flex-col overflow-hidden">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="h-full flex flex-col">
+              <form onSubmit={form.handleSubmit(onSubmit, () => { toast.error('Completá los campos requeridos antes de continuar.') })} className="h-full flex flex-col">
                 {/* Header de Distribuciones */}
                 <div className="flex items-center justify-between pb-2 mb-2 border-b">
                   <h3 className="font-semibold text-lg">Distribución de Pagos</h3>

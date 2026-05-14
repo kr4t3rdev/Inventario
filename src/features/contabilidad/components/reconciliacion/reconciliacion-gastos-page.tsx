@@ -20,7 +20,7 @@ import {
 } from "lucide-react"
 import { DateRange } from "react-day-picker"
 import { format } from "date-fns"
-import { GastosPendientesTable } from "./gastos-pendientes-table"
+import { GastosPendientesTable } from "../gastos-pendientes-table"
 import { ReconciliacionGastosForm } from "./reconciliacion-gastos-form"
 import { getGastosPendientesAction } from "@/features/contabilidad/actions-reconciliacion"
 import { GastoPendiente } from "@/app/models/model"

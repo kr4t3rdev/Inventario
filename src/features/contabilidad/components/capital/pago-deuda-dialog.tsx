@@ -28,7 +28,7 @@ import {
     SelectValue,
   } from "@/components/ui/select"
 import { Loader2, DollarSign } from "lucide-react"
-import { sileo } from '@/lib/sileo-shim'
+import { toast } from 'sonner'
 import { showErrorToast } from "../toast-notifications"
 import { registrarPagoCapitalAction } from "@/features/contabilidad/actions-capital"
 import { getCuentasBancariasAction } from "@/features/contabilidad/actions-cuentas-bancarias"
@@ -97,7 +97,7 @@ export function PagoDeudaDialog({ inyeccion, open, onOpenChange, onSuccess }: Pa
       })
       if (!result.success) throw new Error(result.error?.message || 'Error al registrar pago')
       
-      sileo.success({ title: 'Pago registrado exitosamente' })
+      toast.success('Pago registrado exitosamente')
       onOpenChange(false)
       onSuccess?.()
     } catch (error: any) {
@@ -118,7 +118,7 @@ export function PagoDeudaDialog({ inyeccion, open, onOpenChange, onSuccess }: Pa
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit, () => { toast.error('Completá los campos requeridos antes de continuar.') })} className="space-y-4">
             <FormField
               control={form.control}
               name="montoPagado"

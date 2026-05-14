@@ -4,7 +4,7 @@
  *
  * @returns {JSX.Element} Vista de reconciliación de servicios.
  */
-import { ReconciliacionServiciosPage } from "@/features/contabilidad/components/reconciliacion-servicios-page"
+import { ReconciliacionServiciosPage } from "@/features/contabilidad/components/reconciliacion/reconciliacion-servicios-page"
 
 export default function ServiciosReconciliacionPage() {
   return <ReconciliacionServiciosPage />

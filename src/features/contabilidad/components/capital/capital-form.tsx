@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/form"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Loader2, Save, X, Building2, User } from "lucide-react"
-import { sileo } from '@/lib/sileo-shim'
+import { toast } from 'sonner'
 import { showErrorToast } from "../toast-notifications"
 import { createInyeccionCapitalAction } from "@/features/contabilidad/actions-capital"
 import { getCuentasBancariasAction } from "@/features/contabilidad/actions-cuentas-bancarias"
@@ -100,7 +100,7 @@ export function CapitalForm({ onSuccess, onCancel }: CapitalFormProps) {
   // @ts-expect-error
       const result = await createInyeccionCapitalAction(data)
       if (!result.success) throw new Error(result.error?.message || 'Error al crear')
-      sileo.success({ title: 'Inyección de capital registrada exitosamente' })
+      toast.success('Inyección de capital registrada exitosamente')
       form.reset()
       onSuccess?.()
     } catch (error: any) {
@@ -126,7 +126,7 @@ export function CapitalForm({ onSuccess, onCancel }: CapitalFormProps) {
         </CardHeader>
         <CardContent>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit, () => { toast.error('Completá los campos requeridos antes de continuar.') })} className="space-y-6">
               
               <FormField
                 control={form.control}

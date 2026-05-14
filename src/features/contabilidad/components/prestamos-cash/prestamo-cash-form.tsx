@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { createPrestamoCashAction } from "@/features/contabilidad/actions-prestamos-cash"
 import { Loader2, TrendingUp, ArrowRightLeft } from "lucide-react"
-import { sileo } from "@/lib/sileo-shim"
+import { toast } from "sonner"
 import { calcularMontoTotalACobrar } from "@/lib/utils/prestamo-cash"
 
 interface TasasActualesData {
@@ -179,16 +179,16 @@ export function PrestamoCashForm({
       })
 
       if (!result.success) {
-        sileo.error({ title: result.error?.message || "No se pudo crear el préstamo" })
+        toast.error(result.error?.message || "No se pudo crear el préstamo")
         return
       }
 
-      sileo.success({ title: "Préstamo en efectivo creado exitosamente." })
+      toast.success("Préstamo en efectivo creado exitosamente.")
       form.reset()
       onOpenChange(false)
       onSuccess?.()
     } catch (error) {
-      sileo.error({ title: "No se pudo crear el préstamo" })
+      toast.error("No se pudo crear el préstamo")
     } finally {
       setIsLoading(false)
     }
@@ -210,7 +210,7 @@ export function PrestamoCashForm({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-4 overflow-y-auto flex-1 pr-1">
+          <form onSubmit={form.handleSubmit(onSubmit, () => { toast.error('Completá los campos requeridos antes de continuar.') })} className="space-y-4 overflow-y-auto flex-1 pr-1">
             <FormField
               control={form.control}
               name="cuentaBancariaId"

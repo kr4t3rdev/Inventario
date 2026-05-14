@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect, useCallback } from "react"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { ReconciliacionVentasForm } from "@/features/contabilidad/components/reconciliacion-ventas-form"
+import { ReconciliacionVentasForm } from "@/features/contabilidad/components/reconciliacion/reconciliacion-ventas-form"
 import { CuentasPorCobrarTable } from "@/features/contabilidad/components/cuentas-por-cobrar-table"
 import { getCuentasPorCobrarAction } from "@/features/contabilidad"
 import type { GetCuentasPorCobrarResult } from "@/features/contabilidad"

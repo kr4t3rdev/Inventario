@@ -19,7 +19,7 @@ import {
   TrendingUp,
   FileText,
 } from "lucide-react"
-import { VentasPendientesTable } from "./ventas-pendientes-table"
+import { VentasPendientesTable } from "../ventas-pendientes-table"
 import { ReconciliacionVentasForm } from "./reconciliacion-ventas-form"
 import { ResumenReconciliacion } from "./resumen-reconciliacion"
 import { getVentasPendientesAction, getHistorialReconciliacionVentasAction } from "@/features/contabilidad/actions-reconciliacion"

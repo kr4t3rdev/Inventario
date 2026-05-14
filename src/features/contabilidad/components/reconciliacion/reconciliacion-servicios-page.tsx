@@ -18,7 +18,7 @@ import {
 } from "lucide-react"
 import dynamic from "next/dynamic"
 
-const ServiciosPendientesTable = dynamic(() => import("./servicios-pendientes-table").then(mod => ({default: mod.ServiciosPendientesTable})), {
+const ServiciosPendientesTable = dynamic(() => import("../servicios-pendientes-table").then(mod => ({default: mod.ServiciosPendientesTable})), {
   loading: () => (
     <div className="h-[300px] w-full flex items-center justify-center bg-muted/30 rounded-xl border-2 border-dashed">
       <div className="flex flex-col items-center gap-3">

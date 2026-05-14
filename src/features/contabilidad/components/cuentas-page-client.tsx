@@ -19,7 +19,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { sileo } from '@/lib/sileo-shim';
+import { toast } from 'sonner';
 import { cn, formatCurrency } from '@/lib/utils';
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { motion } from "framer-motion"
@@ -60,15 +60,15 @@ export function CuentasPageClient({ cuentas: initialCuentas }: CuentasPageClient
     try {
       const result = await createCuentaBancariaAction(form);
       if (result.success) {
-        sileo.success({ title: 'Cuenta creada exitosamente' });
+        toast.success('Cuenta creada exitosamente');
         setIsCreateOpen(false);
         resetForm();
         router.refresh();
       } else {
-        sileo.error({ title: result.error?.message || 'Error al crear la cuenta' });
+        toast.error(result.error?.message || 'Error al crear la cuenta');
       }
     } catch (error) {
-      sileo.error({ title: 'Error al crear la cuenta' });
+      toast.error('Error al crear la cuenta');
     } finally {
       setIsSaving(false);
     }
@@ -80,15 +80,15 @@ export function CuentasPageClient({ cuentas: initialCuentas }: CuentasPageClient
     try {
       const result = await updateCuentaBancariaAction({ cuentaId: editing.cuentaId, ...editForm });
       if (result.success) {
-        sileo.success({ title: 'Cuenta actualizada exitosamente' });
+        toast.success('Cuenta actualizada exitosamente');
         setEditing(null);
         setEditForm({});
         router.refresh();
       } else {
-        sileo.error({ title: result.error?.message || 'Error al actualizar' });
+        toast.error(result.error?.message || 'Error al actualizar');
       }
     } catch (error) {
-      sileo.error({ title: 'Error al actualizar la cuenta' });
+      toast.error('Error al actualizar la cuenta');
     } finally {
       setIsSaving(false);
     }
@@ -104,10 +104,10 @@ export function CuentasPageClient({ cuentas: initialCuentas }: CuentasPageClient
       moneda: cuenta.moneda,
     });
     if (result.success) {
-      sileo.success({ title: `Cuenta ${cuenta.isActive ? 'desactivada' : 'activada'} exitosamente` });
+      toast.success(`Cuenta ${cuenta.isActive ? 'desactivada' : 'activada'} exitosamente`);
       router.refresh();
     } else {
-      sileo.error({ title: 'Error al actualizar el estado' });
+      toast.error('Error al actualizar el estado');
     }
   };
 

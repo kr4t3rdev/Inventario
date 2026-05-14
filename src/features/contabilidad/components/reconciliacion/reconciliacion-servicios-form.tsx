@@ -1,8 +1,9 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect } from "react"
 import { useAppSelector } from "@/lib/redux/hooks"
 import { useForm, useFieldArray, useWatch } from "react-hook-form"
+
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
 import { Button } from "@/components/ui/button"
@@ -32,55 +33,28 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import {
-  Loader2,
-  Save,
-  X,
-  Receipt,
+import { 
+  Loader2, 
+  Save, 
+  X, 
+  Wrench,
   DollarSign,
+  Calendar,
+  Building,
   Building2,
   CreditCard,
   Plus,
   Trash2,
 } from "lucide-react"
-import { sileo } from '@/lib/sileo-shim'
-import { reconciliarGastoAction } from "@/features/contabilidad/actions-reconciliacion"
+import { toast } from "sonner"
+import { reconciliarServicioAction } from "@/features/contabilidad/actions-reconciliacion"
 import { getCuentasBancariasAction } from "@/features/contabilidad/actions-cuentas-bancarias"
 import { getTiposPagoAction } from "@/features/contabilidad/actions-tipos-pago"
-import { TasaCambioDialog } from "./tasa-cambio-dialog"
+import { TasaCambioDialog } from "../tasa-cambio-dialog"
+import { VentaServicio } from "@/app/models/model"
 import { selectMonedasActivas } from "@/lib/redux/selectors/contabilidadSelectors"
 
-interface GastoPendiente {
-  tipo: 'salario' | 'gastoDE' | 'compra'
-  referenciaId: string
-  descripcion: string
-  monto: number
-  periodo?: string
-  detalles: {
-    empleado?: {
-      nombre: string
-      apellido: string
-      cargo: string
-    }
-    salarioBases?: number
-    bonificaciones?: number
-    deducciones?: number
-    horasExtras?: number
-    tipo?: string
-    proveedor?: string
-    descripcionOriginal?: string
-    isPagado?: string
-    producto?: string
-    vendor?: string
-    cantidad?: number
-    precioUnitario?: number
-    fechaCompra?: string
-  }
-  createdAt: string
-  updatedAt: string
-}
-
-// Validation schema aligned with servicios (multi-distribuciones)
+// Validation schema aligned with ventas (multi-distribuciones)
 const distribucionSchema = z.object({
   cuentaId: z.string().min(1, "Seleccione una cuenta bancaria"),
   tipoPagoId: z.string().min(1, "Seleccione un tipo de pago"),
@@ -88,48 +62,37 @@ const distribucionSchema = z.object({
   moneda: z.string().min(1, "Seleccione una moneda"),
   tasaCambio: z.number().positive().optional(),
   observaciones: z.string().optional(),
-  numeroTransaccion: z.string().min(1, "El número de transacción es requerido"),
 })
-
-const reconciliacionGastoSchema = z.object({
-    referenciaId: z.string().min(1, 'ID de referencia es requerido'),
-    distribuciones: z.array(distribucionSchema).min(1, "Debe agregar al menos una distribución"),
-})
-
-type ReconciliacionGastoFormData = z.infer<typeof reconciliacionGastoSchema>
-
-interface ReconciliacionGastosFormProps {
-  gasto: GastoPendiente
-  open: boolean
-  onClose: () => void
-  onSuccess?: () => void
-  isCuentaPorPagar?: boolean
-  cuentaPorPagarId?: string
-}
-
 const MONEDA_SIMBOLOS: Record<string, string> = {
   CUP: "CUP",
   USD: "$",
   EUR: "€",
 }
 
-const TIPO_GASTO_LABELS: Record<string, { label: string; icon: any; color: string }> = {
-  salario: { label: "Salario", icon: Receipt, color: "bg-blue-100 text-blue-800" },
-  gastoDE: { label: "Gasto DE", icon: Building2, color: "bg-orange-100 text-orange-800" },
-  compra: { label: "Compra", icon: Receipt, color: "bg-green-100 text-green-800" }
+const reconciliacionServicioSchema = z.object({
+    ventaServicioId: z.string().min(1, 'ID de venta de servicio es requerido'),
+    distribuciones: z.array(distribucionSchema).min(1, "Debe agregar al menos una distribución"),
+})
+
+type ReconciliacionServicioFormData = z.infer<typeof reconciliacionServicioSchema>
+
+interface ReconciliacionServiciosFormProps {
+  servicio: VentaServicio
+  open: boolean
+  onClose: () => void
+  onSuccess?: () => void
 }
 
-export function ReconciliacionGastosForm({
-  gasto,
+export function ReconciliacionServiciosForm({
+  servicio,
   open,
   onClose,
-  onSuccess,
-  isCuentaPorPagar = false,
-  cuentaPorPagarId
-}: ReconciliacionGastosFormProps) {
+  onSuccess
+}: ReconciliacionServiciosFormProps) {
   const monedas = useAppSelector(selectMonedasActivas) || []
 
   const [showTasaCambioDialog, setShowTasaCambioDialog] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const [isLoading, setIsLoading] = useState(false)
   const [cuentas, setCuentas] = useState<any[]>([])
@@ -140,19 +103,18 @@ export function ReconciliacionGastosForm({
     getTiposPagoAction().then(r => { if (r.success) setTiposPago(r.data?.data ?? []) })
   }, [])
 
-  const form = useForm<ReconciliacionGastoFormData>({
-    resolver: zodResolver(reconciliacionGastoSchema),
+  const form = useForm<ReconciliacionServicioFormData>({
+    resolver: zodResolver(reconciliacionServicioSchema),
     defaultValues: {
-      referenciaId: gasto?.referenciaId || "",
+      ventaServicioId: servicio?.ventaServicioId || "",
       distribuciones: [
         {
           cuentaId: "",
           tipoPagoId: "",
-          monto: gasto?.monto || 0,
-          moneda: "CUP",
+          monto: servicio?.total || 0,
+          moneda: servicio?.servicio.moneda || "CUP",
           tasaCambio: undefined,
           observaciones: "",
-          numeroTransaccion: "",
         },
       ],
     },
@@ -163,28 +125,26 @@ export function ReconciliacionGastosForm({
     name: "distribuciones"
   })
 
+
+
   // Reset form when dialog opens
   useEffect(() => {
-    if (open && gasto && gasto.referenciaId) {
+    if (open && servicio && servicio.ventaServicioId) {
       form.reset({
-        referenciaId: gasto.referenciaId,
+        ventaServicioId: servicio.ventaServicioId,
         distribuciones: [
           {
             cuentaId: "",
             tipoPagoId: "",
-            monto: gasto.monto,
-            moneda: "CUP",
+            monto: servicio.total,
+            moneda: servicio.servicio.moneda || "CUP",
             tasaCambio: undefined,
             observaciones: "",
-            numeroTransaccion: "",
           },
         ],
       })
     }
-  }, [open, form, gasto])
-
-  // For cuentas por pagar: monto is fixed and cannot be changed
-  const montoFijo = isCuentaPorPagar ? (gasto?.monto ?? 0) : undefined
+  }, [open, form, servicio])
 
   // Watch distribuciones for calculations
   const watchedDistribuciones = useWatch({ control: form.control, name: "distribuciones", defaultValue: [] })
@@ -196,11 +156,24 @@ export function ReconciliacionGastosForm({
     return sum + monto
   }, 0)
 
-  const montoRestante = (gasto?.monto ?? 0) - totalDistribuido
+  const montoRestante = (servicio?.total ?? 0) - totalDistribuido
 
-  const formatCurrency = (amount: number | string, currency: string = "CUP") => {
-    const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount
+  // Don't render if servicio is not provided
+  if (!servicio) {
+    return null
+  }
+
+
+  const formatCurrency = (amount: number | string | null | undefined, currency: string = "CUP") => {
     const symbol = MONEDA_SIMBOLOS[currency] || currency
+    if (amount == null) {
+      return `${symbol} 0.00`
+    }
+    const raw = typeof amount === "string" ? amount.replace(",", ".") : String(amount)
+    const numAmount = parseFloat(raw)
+    if (isNaN(numAmount)) {
+      return `${symbol} 0.00`
+    }
     return `${symbol} ${numAmount.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
@@ -214,92 +187,9 @@ export function ReconciliacionGastosForm({
     })
   }
 
-  const calcularMontoConvertido = (
-    monto: number,
-    monedaOrigen: string,
-    monedaDestino: string,
-    tasaCambio?: number
-  ) => {
-    if (monedaOrigen === monedaDestino) return monto
-    if (!tasaCambio) return monto
-    return monto * tasaCambio
-  }
-
-  const getGastoDetails = (gasto: GastoPendiente) => {
-    switch (gasto.tipo) {
-      case 'salario':
-        return {
-          primary: `${gasto.detalles.empleado?.nombre} ${gasto.detalles.empleado?.apellido}`,
-          secondary: gasto.detalles.empleado?.cargo,
-          breakdown: [
-            { label: "Salario Base", value: gasto.detalles.salarioBases || 0 },
-            { label: "Bonificaciones", value: gasto.detalles.bonificaciones || 0 },
-            { label: "Horas Extras", value: gasto.detalles.horasExtras || 0 },
-            { label: "Deducciones", value: -(gasto.detalles.deducciones || 0) }
-          ]
-        }
-      case 'gastoDE':
-        return {
-          primary: gasto.detalles.proveedor,
-          secondary: gasto.detalles.tipo,
-          breakdown: [
-            { label: "Monto Total", value: gasto.monto }
-          ]
-        }
-      case 'compra':
-        return {
-          primary: gasto.detalles.producto,
-          secondary: gasto.detalles.vendor,
-          breakdown: [
-            { label: "Cantidad", value: gasto.detalles.cantidad || 0 },
-            { label: "Precio Unitario", value: gasto.detalles.precioUnitario || 0 },
-            { label: "Total", value: gasto.monto }
-          ]
-        }
-      default:
-        return {
-          primary: gasto.descripcion,
-          secondary: '',
-          breakdown: []
-        }
-    }
-  }
-
-  const agregarDistribucion = () => {
-    const restante = gasto ? ((gasto.monto ?? 0) - totalDistribuido) : 0
-    append({
-      cuentaId: "",
-      tipoPagoId: "",
-      monto: Math.max(0, restante),
-      moneda: "CUP",
-      tasaCambio: undefined,
-      observaciones: "",
-      numeroTransaccion: "",
-    })
-  }
-
-  /**
-   * @description Calcula el monto convertido cuando la moneda de origen difiere de la moneda destino.
-   * @param {number} monto - Monto en moneda de origen.
-   * @param {string} moneda_origen - Código de moneda de origen.
-   * @param {string} moneda_destino - Código de moneda destino.
-   * @param {number | undefined} tasa_cambio - Tasa de cambio a aplicar.
-   * @returns {number} Monto convertido a la moneda destino.
-   */
-  const calcular_monto_convertido = (
-    monto: number,
-    moneda_origen: string,
-    moneda_destino: string,
-    tasa_cambio?: number
-  ): number => {
-    if (moneda_origen === moneda_destino) return monto
-    if (!tasa_cambio) return monto
-    return monto * tasa_cambio
-  }
-
   const handleTasaCambioConfirm = async (tasa: number) => {
     setShowTasaCambioDialog(false)
-    // Set tasaCambio on the first distribución that needs it
+    // Set tasaCambio on the first distribución that needs it (basic flow)
     const distribuciones = [...(form.getValues("distribuciones") || [])]
     for (let i = 0; i < distribuciones.length; i++) {
       if (!distribuciones[i]?.tasaCambio) {
@@ -312,33 +202,22 @@ export function ReconciliacionGastosForm({
     await onSubmit(form.getValues())
   }
 
-  const onSubmit = async (data: ReconciliacionGastoFormData) => {
-    // Validar que el total distribuido no exceda el precio del gasto
-    const totalDistribuido = data.distribuciones.reduce((sum, dist) => sum + (dist.monto || 0), 0)
-    const precioGasto = gasto.monto || 0
+  const onSubmit = async (data: ReconciliacionServicioFormData) => {
+    
 
-    // Para cuentas por pagar, permitir pagos parciales (no debe exceder el saldo)
-    // Para otros casos, el total debe ser exactamente igual al gasto
-    if (isCuentaPorPagar) {
-      if (totalDistribuido > precioGasto + 0.01) {
-        sileo.error({ title: `El monto total distribuido (${totalDistribuido.toFixed(2)}) no puede exceder el saldo pendiente (${precioGasto.toFixed(2)})` })
-        return
-      }
-      if (totalDistribuido <= 0) {
-        sileo.error({ title: 'El monto a pagar debe ser mayor a 0' })
-        return
-      }
-    } else {
-      if (Math.abs(totalDistribuido - precioGasto) > 0.01) {
-        sileo.error({ title: `El monto total distribuido (${totalDistribuido.toFixed(2)}) debe ser igual al precio del gasto (${precioGasto.toFixed(2)})` })
-        return
-      }
+    // Validar que el total distribuido no exceda el precio del servicio
+    const totalDistribuido = data.distribuciones.reduce((sum, dist) => sum + (dist.monto || 0), 0)
+    const precioServicio = servicio.total || 0
+
+    if (Math.abs(totalDistribuido - precioServicio) > 0.01) {
+      toast.error(`El monto total distribuido (${totalDistribuido.toFixed(2)}) debe ser igual al precio del servicio (${precioServicio.toFixed(2)})`)
+      return
     }
 
     // Validar que no haya montos negativos
     const montoNegativo = data.distribuciones.find(dist => (dist.monto || 0) <= 0)
     if (montoNegativo) {
-      sileo.error({ title: 'Todos los montos deben ser positivos' })
+      toast.error('Todos los montos deben ser positivos')
       return
     }
 
@@ -346,7 +225,7 @@ export function ReconciliacionGastosForm({
      for (const dist of data.distribuciones) {
        const cuenta = cuentas.find((c: any) => c.cuentaId === dist.cuentaId)
        if (cuenta && dist.moneda !== cuenta.moneda && !dist.tasaCambio) {
-         sileo.error({ title: `La distribución en ${dist.moneda} requiere tasa de cambio para la cuenta en ${cuenta.moneda}` })
+         toast.error(`La distribución en ${dist.moneda} requiere tasa de cambio para la cuenta en ${cuenta.moneda}`)
          return
        }
      }
@@ -361,164 +240,109 @@ export function ReconciliacionGastosForm({
       return
     }
 
+    setIsSubmitting(true)
     try {
-      const descripcionFinal = gasto.descripcion?.trim() || `Gasto ${gasto.tipo}`
-      
-      // Para cuentas por pagar, usar el monto distribuido (pago parcial)
-      // Para otros gastos, usar el monto total del gasto
-      const montoPago = isCuentaPorPagar ? totalDistribuido : precioGasto
-
-      const baseData: any = {
-        tipoGasto: gasto.tipo,
-        referenciaId: gasto.referenciaId,
-        tipoPagoId: data.distribuciones[0].tipoPagoId, // Usar el tipoPagoId de la primera distribución
-        monto: montoPago,
-        moneda: data.distribuciones[0].moneda, // Usar la moneda de la primera distribución
-        descripcion: descripcionFinal,
-        observaciones: data.distribuciones[0].observaciones, // Usar observaciones de la primera
-        tasaCambio: data.distribuciones[0].tasaCambio, // Usar tasaCambio de la primera
-        numeroTransaccion: data.distribuciones[0].numeroTransaccion, // Usar numeroTransaccion de la primera
-        periodo: gasto.periodo,
-        distribucion: data.distribuciones.map(dist => ({
+      for (const dist of data.distribuciones) {
+        const result = await reconciliarServicioAction({
+          ventaServicioId: servicio.ventaServicioId!,
           cuentaId: dist.cuentaId,
+          tipoPagoId: dist.tipoPagoId,
           monto: dist.monto,
-          porcentaje: Math.round((dist.monto / precioGasto) * 100 * 100) / 100 // Calcular porcentaje
-        }))
+          moneda: dist.moneda,
+          observaciones: dist.observaciones,
+        });
+        if (!result.success) throw new Error(result.error?.message || 'Error al reconciliar');
       }
 
-      // Agregar campos específicos según el tipo de gasto
-      if (gasto.tipo === 'salario') {
-        baseData.pgId = gasto.referenciaId
-      } else if (gasto.tipo === 'gastoDE') {
-        baseData.gastosDEId = gasto.referenciaId
-      } else if (gasto.tipo === 'compra') {
-        baseData.gastoCompraId = gasto.referenciaId
-      }
+      toast.success('Servicio reconciliado exitosamente')
 
-      // Si es cuenta por pagar, agregar el ID y el estado
-      if (isCuentaPorPagar && cuentaPorPagarId) {
-        baseData.cuentaPorPagarId = cuentaPorPagarId
-        baseData.estado = 'PAGADA'
-      }
-
-      const result = await reconciliarGastoAction({
-  // @ts-expect-error
-        gastoId: gasto.gastoId,
-        cuentaId: baseData.cuentaId,
-        tipoPagoId: baseData.tipoPagoId,
-        monto: baseData.monto,
-        moneda: baseData.moneda,
-        descripcion: baseData.descripcion,
-      })
-      if (!result.success) throw new Error(result.error?.message || 'Error al reconciliar')
-
-      sileo.success({ title: 'Gasto reconciliado exitosamente' })
-
-      // Force refresh of gastos pendientes data
+      // Force refresh of servicios pendientes data
       setTimeout(() => {
         onSuccess?.()
       }, 500)
 
       onClose()
-    } catch (error: any) {
-      console.error('[ReconciliarGasto] Error en onSubmit →', error)
-      const details = Array.isArray(error?.data?.details) ? error.data.details : undefined
-      const detailsMsg = details ? ` | Detalles: ${details.map((d: unknown) => ((d as any)?.message || JSON.stringify(d))).join('; ')}` : ''
-      const errorMessage = (error?.data?.message || error?.data?.error || error?.message || "Error al reconciliar el gasto") + detailsMsg
-      sileo.error({ title: errorMessage })
+    } catch (error) {
+      const errorMessage = (error as { data?: { error?: string } })?.data?.error || "Error al reconciliar el servicio"
+      toast.error(errorMessage)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
-
-
-
-  // Don't render if gasto is not provided
-  if (!gasto) {
-    return null
+  const agregarDistribucion = () => {
+    const restante = servicio ? ((servicio.total ?? 0) - totalDistribuido) : 0
+    append({
+      cuentaId: "",
+      tipoPagoId: "",
+      monto: Math.max(0, restante),
+      moneda: "CUP",
+      tasaCambio: undefined,
+      observaciones: "",
+    })
   }
 
-  const gastoDetails = getGastoDetails(gasto)
-  const tipoConfig = TIPO_GASTO_LABELS[gasto.tipo]
-  const Icon = tipoConfig?.icon || Receipt
-
-  
+  //Calcular monto convertido
+  const calcularMontoConvertido = (monto: number, monedaOrigen: string, monedaDestino: string, tasaCambio?: number) => {
+    if (monedaOrigen === monedaDestino) return monto
+    if (!tasaCambio) return monto
+    return monto * tasaCambio
+  }
 
   return (
     <>
       <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="max-w-[98vw] w-full lg:max-w-[1600px] max-h-[92vh] overflow-y-auto">
+        <DialogContent className="max-w-[98vw] w-full lg:max-w-[1400px] max-h-[92vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Receipt className="h-5 w-5" />
-              {isCuentaPorPagar ? 'Registrar Pago a Cuenta por Pagar' : 'Reconciliar Gasto'}
+              <Wrench className="h-5 w-5" />
+              Reconciliar Servicio
             </DialogTitle>
             <DialogDescription>
-              {isCuentaPorPagar 
-                ? 'Ingrese el monto a pagar. Puede realizar un pago parcial o total del saldo pendiente.' 
-                : 'Complete los datos para reconciliar este gasto con una o más cuentas bancarias.'}
+              Complete los datos para reconciliar este servicio con una o más cuentas bancarias.
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Gasto Details */}
+
+            {/* Servicio Details */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Icon className="h-5 w-5" />
-                  Detalles del Gasto
-                  <Badge className={tipoConfig?.color || "bg-gray-100 text-gray-800"}>
-                    {tipoConfig?.label || gasto.tipo}
-                  </Badge>
-                </CardTitle>
+                <CardTitle className="text-lg">Detalles del Servicio</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4 text-sm">
+
+                  <div>
+                    <span className="text-muted-foreground">ID:</span>
+                    <p className="font-mono">{servicio.ventaServicioId?.slice(-8) || 'N/A'}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Fecha Servicio:</span>
+                    <p className="flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {formatDate(servicio.createdAt || servicio.createdAt)}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Cliente:</span>
+                    <p className="flex items-center gap-1">
+                      <Building className="h-3 w-3" />
+                      {servicio.cliente.clienteId || "N/A"}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Precio:</span>
+                    <p className="flex items-center gap-1 font-semibold">
+                      <DollarSign className="h-3 w-3" />
+                      {formatCurrency(servicio.total, servicio.servicio.moneda)}
+                    </p>
+                  </div>
                   <div className="col-span-2">
                     <span className="text-muted-foreground">Descripción:</span>
-                    <p className="font-medium">{gastoDetails.primary}</p>
-                    {gastoDetails.secondary && (
-                      <p className="text-xs text-muted-foreground">{gastoDetails.secondary}</p>
-                    )}
+                    <p className="text-sm">{servicio.servicio.descripcion}</p>
                   </div>
-                   <div>
-                     <span className="text-muted-foreground">ID:</span>
-                     <p className="font-mono text-xs">{gasto.referenciaId.slice(-8)}</p>
-                   </div>
-                   <div>
-                     <span className="text-muted-foreground">Período:</span>
-                     <p>{gasto.periodo || "N/A"}</p>
-                   </div>
-                   <div className="col-span-2">
-                     <span className="text-muted-foreground">Monto Total:</span>
-                     <p className="flex items-center gap-1 font-semibold text-lg">
-                       <DollarSign className="h-4 w-4" />
-                       {formatCurrency(gasto.monto)}
-                     </p>
-                   </div>
                 </div>
-
-                {gastoDetails.breakdown.length > 0 && (
-                  <>
-                    <Separator />
-                    <div>
-                      <h4 className="font-medium text-sm mb-2">Desglose:</h4>
-                      <div className="space-y-1">
-                        {gastoDetails.breakdown.map((item, index) => (
-                          <div key={index} className="flex justify-between text-xs">
-                            <span className="text-muted-foreground">{item.label}:</span>
-                            <span className={item.value < 0 ? "text-red-600" : ""}>
-                              {typeof item.value === 'number' && item.label !== "Cantidad"
-                                ? formatCurrency(Math.abs(item.value))
-                                : item.value
-                              }
-                            </span>
-                          </div>
-
-                        ))}
-                      </div>
-                    </div>
-                  </>
-                )}
 
 
               </CardContent>
@@ -527,37 +351,26 @@ export function ReconciliacionGastosForm({
             {/* Reconciliation Form */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Datos de Reconciliación</CardTitle>
+                <CardTitle className="text-lg">Distribución de Pagos</CardTitle>
               </CardHeader>
               <CardContent>
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="h-full flex flex-col gap-4">
-                     {/* Totales */}
-                     <div className="grid grid-cols-2 gap-4">
-                       <div className="bg-muted/50 rounded-lg p-3">
-                         <div className="text-xs text-muted-foreground">Total a Pagar</div>
-                         <div className="text-lg font-semibold">{formatCurrency(totalDistribuido)}</div>
-                       </div>
-                       <div className="bg-muted/50 rounded-lg p-3">
-                         <div className={`text-xs ${!isCuentaPorPagar && montoRestante !== 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
-                           {isCuentaPorPagar ? 'Saldo después del pago' : 'Monto Restante'}
-                         </div>
-                         <div className={`text-lg font-bold ${!isCuentaPorPagar && montoRestante !== 0 ? 'text-red-600' : isCuentaPorPagar && montoRestante > 0 ? 'text-amber-600' : 'text-green-600'}`}>
-                           {formatCurrency(isCuentaPorPagar ? (gasto?.monto || 0) - totalDistribuido : montoRestante)}
-                         </div>
-                       </div>
-                     </div>
+                  <form onSubmit={form.handleSubmit(onSubmit, () => { toast.error('Completá los campos requeridos antes de continuar.') })} className="h-full flex flex-col gap-4">
+                    {/* Totales */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="bg-muted/50 rounded-lg p-3">
+                        <div className="text-xs text-muted-foreground">Total Distribuido</div>
+                        <div className="text-lg font-semibold">{formatCurrency(totalDistribuido, servicio.servicio.moneda || 'CUP')}</div>
+                      </div>
+                      <div className="bg-muted/50 rounded-lg p-3">
+                        <div className={`text-xs ${montoRestante !== 0 ? 'text-red-600' : 'text-muted-foreground'}`}>Monto Restante</div>
+                        <div className={`text-lg font-bold ${montoRestante !== 0 ? 'text-red-600' : 'text-green-600'}`}>{formatCurrency(montoRestante, servicio.servicio.moneda || 'CUP')}</div>
+                      </div>
+                    </div>
 
                     <div className="flex items-center justify-between pb-2 border-b">
                       <h4 className="font-semibold">Pagos</h4>
-                      <Button 
-                        type="button" 
-                        size="sm" 
-                        onClick={agregarDistribucion} 
-                        className="h-8"
-                        disabled={isCuentaPorPagar}
-                        title={isCuentaPorPagar ? "Para cuentas por pagar solo se permite un pago" : "Agregar otro pago"}
-                      >
+                      <Button type="button" size="sm" onClick={agregarDistribucion} className="h-8">
                         <Plus className="mr-2 h-4 w-4" /> Agregar Pago
                       </Button>
                     </div>
@@ -572,19 +385,15 @@ export function ReconciliacionGastosForm({
                           .slice(0, index)
                           .map((d: any) => d?.cuentaId)
                           .filter(Boolean)
-
                         const cuentasDisponibles = cuentas.filter((c: any) =>
                           !cuentasSeleccionadasAnteriores.includes(c.cuentaId)
                         )
-
-                        const montoConvertido = cuenta
-                          ? calcularMontoConvertido(
-                              dist.monto || 0,
-                              dist.moneda || 'CUP',
-                              cuenta.moneda,
-                              dist.tasaCambio
-                            )
-                          : 0
+                        const montoConvertido = cuenta ? calcularMontoConvertido(
+                          watchedDistribuciones[index].monto || 0,
+                          watchedDistribuciones[index].moneda || 'CUP',
+                          cuenta.moneda,
+                          watchedDistribuciones[index].tasaCambio
+                        ) : 0
 
                         return (
                           <div key={field.id} className={`border rounded-lg p-3 `}>
@@ -653,43 +462,31 @@ export function ReconciliacionGastosForm({
                                 )}
                               />
 
-                               {/* Monto */}
+                              {/* Monto */}
                               <FormField
                                 control={form.control}
                                 name={`distribuciones.${index}.monto`}
                                 render={({ field }) => (
                                   <FormItem>
-                                    <FormLabel className="text-sm">
-                                      {isCuentaPorPagar ? "Monto a Pagar" : "Monto"}
-                                    </FormLabel>
+                                    <FormLabel className="text-sm">Monto</FormLabel>
                                     <FormControl>
                                       <Input
                                         type="number"
                                         step="0.01"
                                         min="0"
-                                        max={gasto?.monto}
                                         {...field}
                                         onChange={(e) => {
                                           const value = e.target.value
+                                          // Limitar a 2 decimales máximo
                                           const regex = /^\d*\.?\d{0,2}$/
                                           if (regex.test(value) || value === '') {
                                             const newValue = value === '' ? 0 : parseFloat(value) || 0
-                                            // Para cuentas por pagar, validar que no exceda el saldo pendiente
-                                            if (isCuentaPorPagar && newValue > (gasto?.monto || 0)) {
-                                              sileo.error({ title: `El monto no puede exceder el saldo pendiente de ${formatCurrency(gasto?.monto || 0)}` })
-                                              return
-                                            }
                                             field.onChange(newValue)
                                           }
                                         }}
                                         className={`h-9 ${field.value > 0 ? 'border-blue-300 bg-blue-50' : ''}`}
                                       />
                                     </FormControl>
-                                    {isCuentaPorPagar && (
-                                      <p className="text-xs text-muted-foreground mt-1">
-                                        Saldo pendiente: {formatCurrency(gasto?.monto || 0)}
-                                      </p>
-                                    )}
                                     <FormMessage />
                                   </FormItem>
                                 )}
@@ -734,14 +531,15 @@ export function ReconciliacionGastosForm({
                                       <FormControl>
                                         <Input
                                           type="number"
-                                          step="0.000000001"
+                                          step="0.000001"
                                           min="0"
-                                          placeholder="0.000000000"
+                                          placeholder="0.000000"
                                           className="h-9"
                                           {...field}
                                           onChange={(e) => {
                                             const value = e.target.value
-                                            const regex = /^\d*\.?\d{0,9}$/
+                                            // Limitar a 6 decimales máximo
+                                            const regex = /^\d*\.?\d{0,6}$/
                                             if (regex.test(value) || value === '') {
                                               const newValue = value === '' ? undefined : parseFloat(value) || undefined
                                               field.onChange(newValue)
@@ -760,7 +558,7 @@ export function ReconciliacionGastosForm({
                                 control={form.control}
                                 name={`distribuciones.${index}.observaciones`}
                                 render={({ field }) => (
-                                  <FormItem>
+                                  <FormItem className={cuenta && watchedDistribuciones[index]?.moneda !== cuenta.moneda ? "" : "lg:col-span-2"}>
                                     <FormLabel className="text-sm">Observaciones</FormLabel>
                                     <FormControl>
                                       <Input placeholder="Observaciones para este pago..." className="h-9" {...field} />
@@ -769,38 +567,19 @@ export function ReconciliacionGastosForm({
                                   </FormItem>
                                 )}
                               />
-
-                              {/* Número de Transacción */}
-                              <FormField
-                                control={form.control}
-                                name={`distribuciones.${index}.numeroTransaccion`}
-                                render={({ field }) => (
-                                  <FormItem className="lg:col-span-2">
-                                    <FormLabel className="text-sm">N° Transacción</FormLabel>
-                                    <FormControl>
-                                      <Input 
-                                        placeholder="Ej: TRX-001234" 
-                                        className="h-9 font-mono" 
-                                        {...field} 
-                                      />
-                                    </FormControl>
-                                    <FormMessage />
-                                  </FormItem>
-                                )}
-                              />
                             </div>
-                                {/* Conversión */}
-                            {(cuenta && watchedDistribuciones[index]?.moneda !== cuenta.moneda && watchedDistribuciones[index]?.tasaCambio) && (
-                              <div className="border border-green-200 rounded-lg p-2 mt-2">
-                                <div className="flex items-center justify-between gap-2 flex-wrap">
+                                {/* Información de conversión y estado - más compacta */}
+                            {(cuenta && watchedDistribuciones[index].moneda !== cuenta.moneda && watchedDistribuciones[index].tasaCambio) && (
+                              <div className=" border border-green-200 rounded-lg p-2 mt-2">
+                                <div className=" flex items-center justify-center">
                                   <div className="flex items-center gap-2">
-                                    <span className="text-xs font-medium">Conversión:</span>
-                                    <span className="text-xs">
-                                      {formatCurrency(dist.monto || 0, dist.moneda || 'CUP')} → {formatCurrency(montoConvertido, cuenta.moneda)}
+                                    <span className="text-xs font-medium text-white-800">💱 Conversión:</span>
+                                    <span className="text-xs text-white-700">
+                                      {formatCurrency(watchedDistribuciones[index].monto || 0, watchedDistribuciones[index].moneda)} → {formatCurrency(montoConvertido, cuenta.moneda)}
                                     </span>
                                   </div>
-                                  <span className="text-xs text-muted-foreground">
-                                    Tasa: 1 {dist.moneda || 'CUP'} = {dist.tasaCambio} {cuenta.moneda}
+                                  <span className="text-xs text-white-600">
+                                    Tasa: 1 {watchedDistribuciones[index].moneda} = {watchedDistribuciones[index].tasaCambio} {cuenta.moneda}
                                   </span>
                                 </div>
                               </div>
@@ -819,24 +598,21 @@ export function ReconciliacionGastosForm({
                       })}
                     </div>
 
-                   {/* Actions */}
-                   <div className="flex justify-end gap-2 pt-2 border-t">
-                     <Button type="button" variant="outline" onClick={onClose} disabled={isLoading} size="sm">
-                       <X className="h-4 w-4 mr-2" />Cancelar
-                     </Button>
-                     <Button 
-                       type="submit" 
-                       disabled={isLoading || (!isCuentaPorPagar && Math.abs(montoRestante) > 0.01)} 
-                       size="sm"
-                     >
-                       {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                       {isCuentaPorPagar ? 'Registrar Pago' : 'Reconciliar'}
-                     </Button>
-                   </div>
+                    {/* Actions */}
+                    <div className="flex justify-end gap-2 pt-2 border-t">
+                      <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting} size="sm">
+                        <X className="h-4 w-4 mr-2" />Cancelar
+                      </Button>
+                      <Button type="submit" disabled={isSubmitting || Math.abs(montoRestante) > 0.01} size="sm">
+                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                        Reconciliar
+                      </Button>
+                    </div>
                   </form>
                 </Form>
               </CardContent>
             </Card>
+
           </div>
         </DialogContent>
       </Dialog>
@@ -856,8 +632,8 @@ export function ReconciliacionGastosForm({
             monedaDestino={monedaDestino}
             monto={montoOriginal}
             onConfirm={handleTasaCambioConfirm}
-            titulo="Confirmar Tasa de Cambio para Gasto"
-            descripcion={`Gasto ${gasto.referenciaId?.slice(-8) || 'N/A'} - ${formatCurrency(montoOriginal, monedaOrigen)}`}
+            titulo="Confirmar Tasa de Cambio para Servicio"
+            descripcion={`Servicio ${servicio.ventaServicioId?.slice(-8) || 'N/A'} - ${formatCurrency(montoOriginal, monedaOrigen)}`}
           />
         )
       })()}

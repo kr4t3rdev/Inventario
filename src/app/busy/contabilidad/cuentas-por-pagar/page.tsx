@@ -14,7 +14,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import type { CuentaPorPagar, PagoCuentaPorPagar } from '@/app/models/model'
 import { getCuentasPorPagarAction } from '@/features/contabilidad'
 import type { GetCuentasPorPagarResult } from '@/features/contabilidad'
-import { ReconciliacionGastosForm } from '@/features/contabilidad/components/reconciliacion-gastos-form'
+import { ReconciliacionGastosForm } from '@/features/contabilidad/components/reconciliacion/reconciliacion-gastos-form'
 import { formatCurrency } from '@/lib/utils'
 import Link from 'next/link'
 import React from 'react'

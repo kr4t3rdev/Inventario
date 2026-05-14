@@ -5,7 +5,7 @@
  * @returns {Promise<JSX.Element>} Vista principal de reconciliación.
  */
 import { getReconciliacionStatsAction } from "@/features/contabilidad/actions-reconciliacion"
-import { ReconciliacionHubClient } from "@/features/contabilidad/components/reconciliacion-hub-client"
+import { ReconciliacionHubClient } from "@/features/contabilidad/components/reconciliacion/reconciliacion-hub-client"
 
 export default async function ReconciliacionHubPage() {
   const result = await getReconciliacionStatsAction()

@@ -14,7 +14,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { createDeudaCashAction } from "@/features/contabilidad/actions-deudas-cash"
 import { ImageIcon, Loader2, TrendingUp, Upload, X } from "lucide-react"
-import { sileo } from "@/lib/sileo-shim"
+import { toast } from "sonner"
 import { getAuthToken } from "@/lib/token"
 import { calcularTotalDeudaConInteres } from "@/lib/utils/deuda-cash"
 
@@ -131,11 +131,11 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], cuentasBan
     const file = e.target.files?.[0]
     if (!file) return
     if (!file.type.startsWith('image/')) {
-      sileo.error({ title: 'Solo se aceptan imágenes (JPG, PNG, WEBP)' })
+      toast.error('Solo se aceptan imágenes (JPG, PNG, WEBP)')
       return
     }
     if (file.size > 5 * 1024 * 1024) {
-      sileo.error({ title: 'La imagen no puede superar 5 MB' })
+      toast.error('La imagen no puede superar 5 MB')
       return
     }
     setComprobante(file)
@@ -175,7 +175,7 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], cuentasBan
         })
         setUploadingImg(false)
         if (!uploadRes.ok) {
-          sileo.error({ title: 'No se pudo subir el comprobante. Intentá de nuevo.' })
+          toast.error('No se pudo subir el comprobante. Intentá de nuevo.')
           return
         }
         const uploadData = await uploadRes.json()
@@ -194,18 +194,18 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], cuentasBan
       })
 
       if (!result.success) {
-        sileo.error({ title: result.error?.message || "No se pudo registrar la deuda" })
+        toast.error(result.error?.message || "No se pudo registrar la deuda")
         return
       }
 
-      sileo.success({ title: "Deuda en efectivo registrada exitosamente." })
+      toast.success("Deuda en efectivo registrada exitosamente.")
       form.reset()
       clearComprobante()
       onOpenChange(false)
       onSuccess?.()
     } catch (error) {
       setUploadingImg(false)
-      sileo.error({ title: "No se pudo registrar la deuda" })
+      toast.error("No se pudo registrar la deuda")
     }
   }
 
@@ -226,7 +226,7 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], cuentasBan
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-4 overflow-y-auto flex-1 pr-1">
+          <form onSubmit={form.handleSubmit(onSubmit, () => { toast.error('Completá los campos requeridos antes de continuar.') })} className="space-y-4 overflow-y-auto flex-1 pr-1">
             {Number(montoCapital) > 0 && (
               <div className="rounded-lg border bg-muted/40 p-4 text-sm space-y-1">
                 <div className="flex justify-between">

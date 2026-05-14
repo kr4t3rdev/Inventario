@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { sileo } from "@/lib/sileo-shim"
+import { toast } from "sonner"
 import {
   Dialog,
   DialogContent,
@@ -92,7 +92,7 @@ export function PagoDeudaModal({
     if (!deuda) return
 
     if (values.monto > saldoPendiente) {
-      sileo.error({ title: "El monto no puede exceder el saldo pendiente" })
+      toast.error("El monto no puede exceder el saldo pendiente")
       return
     }
 
@@ -109,15 +109,15 @@ export function PagoDeudaModal({
       })
 
       if (!result.success) {
-        sileo.error({ title: result.error?.message || "No se pudo registrar el pago" })
+        toast.error(result.error?.message || "No se pudo registrar el pago")
         return
       }
 
-      sileo.success({ title: "Pago registrado correctamente" })
+      toast.success("Pago registrado correctamente")
       onSuccess?.()
       onOpenChange(false)
     } catch (error) {
-      sileo.error({ title: "No se pudo registrar el pago" })
+      toast.error("No se pudo registrar el pago")
     } finally {
       setIsLoading(false)
     }
@@ -136,7 +136,7 @@ export function PagoDeudaModal({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-4">
+          <form onSubmit={form.handleSubmit(handleSubmit, () => { toast.error('Completá los campos requeridos antes de continuar.') })} className="space-y-4">
             <FormField
               control={form.control}
               name="monto"

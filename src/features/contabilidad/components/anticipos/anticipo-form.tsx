@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { createAnticipoAction } from "@/features/contabilidad/actions-anticipos"
 import { Loader2 } from "lucide-react"
-import { sileo } from "@/lib/sileo-shim"
+import { toast } from "sonner"
 
 const anticipoSchema = z.object({
   tipo: z.enum(["PAGO", "COBRO"], { required_error: "Seleccione el tipo de anticipo" }),
@@ -130,13 +130,13 @@ export function AnticipoForm({
         throw new Error(result.error?.message || "No se pudo crear el anticipo")
       }
 
-      sileo.success({ title: `El anticipo de ${data.tipo === "PAGO" ? "pago" : "cobro"} ha sido creado exitosamente.` })
+      toast.success(`El anticipo de ${data.tipo === "PAGO" ? "pago" : "cobro"} ha sido creado exitosamente.`)
 
       form.reset()
       onOpenChange(false)
       onSuccess?.()
     } catch (error: any) {
-      sileo.error({ title: error?.message || "No se pudo crear el anticipo"})
+      toast.error(error?.message || "No se pudo crear el anticipo")
     } finally {
       setIsLoading(false)
     }
@@ -158,7 +158,7 @@ export function AnticipoForm({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit, () => { toast.error('Completá los campos requeridos antes de continuar.') })} className="space-y-4">
             {/* Tipo de Anticipo */}
             <FormField
               control={form.control}
