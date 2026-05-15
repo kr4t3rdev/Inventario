@@ -11,17 +11,6 @@ export {
   restockProductoAction,
 } from './actions';
 
-// Handlers legacy (para rutas API existentes)
-export {
-  getProductosHandler,
-  createProductoHandler,
-  getProductoByIdHandler,
-  updateProductoHandler,
-  deleteProductoHandler,
-  bulkUpdateStockMinimoHandler,
-  restockProductoHandler,
-  getStockUbicacionHandler,
-} from './api/handlers';
-
+// Components
 export { ProductoForm } from './components/productos-form';
 export type { Producto } from './types';

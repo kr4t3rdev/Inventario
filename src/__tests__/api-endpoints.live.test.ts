@@ -237,7 +237,6 @@ const protectedPosts: Array<{ path: string; body: unknown }> = [
   { path: '/api/empleados', body: {} },
   { path: '/api/mermas', body: {} },
   { path: '/api/notificaciones', body: {} },
-  { path: '/api/productos', body: {} },
   { path: '/api/restaurante/comandas', body: {} },
   { path: '/api/restaurante/mesas', body: {} },
   { path: '/api/restaurante/recetas', body: {} },
@@ -275,14 +274,6 @@ describe('Protección 401 – POST sin token', () => {
 // ─── 3. Endpoints autenticados (solo si hay token disponible) ─────────────────
 
 describe('Endpoints con autenticación (requiere TEST_EMAIL + TEST_PASSWORD)', () => {
-  it('GET /api/productos → 200 con token', async () => {
-    if (!authToken) {
-      console.log('[skip] Sin token de autenticación — define TEST_EMAIL y TEST_PASSWORD')
-      return
-    }
-    const res = await get('/api/productos', authToken)
-    expect([200, 204]).toContain(res.status)
-  })
 
   it('GET /api/empleados → 200 con token', async () => {
     if (!authToken) return
