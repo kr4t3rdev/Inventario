@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect, useCallback } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowRightLeft, Plus, RefreshCw, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
-import { useGetMonedasQuery, useGetTasasActualesQuery } from '@/features/contabilidad/api/contabilidadApi';
+import { getMonedasAction, getTasasActualesAction } from '@/features/contabilidad/actions-exchange';
 
 import { ConversionDialog } from './conversion-dialog';
 import { HistorialTasasTable } from './historial-tasas-table';
@@ -38,39 +38,32 @@ export function ExchangeManager() {
   const [showConversionDialog, setShowConversionDialog] = useState(false);
   const [editingMoneda, setEditingMoneda] = useState<any>(null);
 
-  const {
-    data: monedasData = [],
-    isLoading: loadingMonedas,
-    refetch: refetchMonedas,
-  } = useGetMonedasQuery();
-  const {
-    data: tasasActualesData = [],
-    isLoading: loadingTasas,
-    refetch: refetchTasas,
-  } = useGetTasasActualesQuery();
+  const [monedasData, setMonedasData] = useState<any[]>([]);
+  const [tasasActualesData, setTasasActualesData] = useState<any>(null);
+  const [loadingMonedas, setLoadingMonedas] = useState(true);
+  const [loadingTasas, setLoadingTasas] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  const monedas = useMemo(() => {
-    if (Array.isArray(monedasData)) return monedasData;
-    if (Array.isArray((monedasData as any)?.data)) return (monedasData as any).data;
-    return Object.values((monedasData as Record<string, unknown>) ?? {});
-  }, [monedasData]) as any[];
+  const fetchData = useCallback(async () => {
+    setLoadingMonedas(true); setLoadingTasas(true);
+    const [m, t] = await Promise.all([
+      getMonedasAction(),
+      getTasasActualesAction(),
+    ]);
+    if (m.success) setMonedasData(m.data ?? []);
+    if (t.success) setTasasActualesData(t.data);
+    setLoadingMonedas(false); setLoadingTasas(false);
+  }, []);
+
+  useEffect(() => { fetchData(); }, [fetchData, refreshKey]);
+
+  const monedas = useMemo(() => Array.isArray(monedasData) ? monedasData : [], [monedasData]) as any[];
 
   const tasasActualesList = useMemo(() => {
-    const normalized = Array.isArray(tasasActualesData)
-      ? tasasActualesData
-      : Array.isArray((tasasActualesData as any)?.data)
-        ? (tasasActualesData as any).data
-        : Object.values((tasasActualesData as Record<string, unknown>) ?? {});
-
-    return normalized
-      .flatMap((item: any) => {
-        if (!item) return [];
-        if (Array.isArray(item)) return item;
-        if (Array.isArray(item?.tasas)) return item.tasas;
-        if (item?.tasas) return [item.tasas];
-        return [item];
-      })
-      .filter(Boolean);
+    if (!tasasActualesData) return [];
+    if (Array.isArray(tasasActualesData.tasas)) return tasasActualesData.tasas;
+    if (Array.isArray(tasasActualesData)) return tasasActualesData;
+    return [];
   }, [tasasActualesData]) as any[];
 
   const monedaPrincipal = monedas.find((moneda) => moneda?.esPrincipal);
@@ -104,7 +97,7 @@ export function ExchangeManager() {
    */
   const handleRefresh = async (): Promise<void> => {
     try {
-      await Promise.all([refetchMonedas(), refetchTasas()]);
+      setRefreshKey(k => k + 1);
       toast.success('Datos actualizados correctamente');
     } catch (error) {
       console.error('Error al actualizar exchange:', error);
@@ -372,7 +365,7 @@ export function ExchangeManager() {
           onClose={handleCloseMonedaForm}
           onSuccess={() => {
             handleCloseMonedaForm();
-            refetchMonedas();
+            setRefreshKey(k => k + 1);
           }}
         />
       )}
@@ -382,7 +375,7 @@ export function ExchangeManager() {
           onClose={() => setShowTasaForm(false)}
           onSuccess={() => {
             setShowTasaForm(false);
-            refetchTasas();
+            setRefreshKey(k => k + 1);
           }}
         />
       )}

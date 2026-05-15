@@ -10,7 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Badge } from "@/components/ui/badge"
 import { Trash2, Edit, Plus, ArrowLeftRight } from "lucide-react"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Currency } from "../../app/models/model"
+import { Currency } from "@/app/models/model"
 
 export default function CurrencyConverter() {
   const [currencies, setCurrencies] = useState<Currency[]>([

@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -12,10 +12,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { AlertTriangle, DollarSign, TrendingDown, TrendingUp } from 'lucide-react'
-import { useCreateAjusteBancarioMutation, useGetCuentasBancariasQuery, useGetMonedasQuery } from '@/features/contabilidad/api/contabilidadApi'
-import { useAppSelector } from '@/lib/redux/hooks'
 import { sileo } from '@/lib/sileo-shim'
-import { CuentaBancaria, Moneda } from '../../app/models/model'
+import { getCuentasBancariasAction } from '@/features/contabilidad/actions-cuentas-bancarias'
+import { getMonedasAction } from '@/features/contabilidad/actions-exchange'
+import { createAjusteBancarioAction } from '@/features/contabilidad/actions-ajustes-bancarios'
+import { CuentaBancaria, Moneda } from '@/app/models/model'
 
 const ajusteBancarioSchema = z.object({
   cuentaId: z.string().min(1, 'Debe seleccionar una cuenta bancaria'),
@@ -44,14 +45,24 @@ interface AjusteBancarioFormProps {
 export function AjusteBancarioForm({ onSuccess, onCancel }: AjusteBancarioFormProps) {
     const [showWarning, setShowWarning] = useState(false)
     const [warningMessage, setWarningMessage] = useState('')
+    const [cuentasBancarias, setCuentasBancarias] = useState<any[]>([])
+    const [monedas, setMonedas] = useState<Moneda[]>([])
+    const [isSubmitting, setIsSubmitting] = useState(false)
+    const [isLoadingCuentas, setIsLoadingCuentas] = useState(true)
 
-  const { data:cuentas = {cuentas:[]} } = useGetCuentasBancariasQuery()
-  const cuentasBancarias: CuentaBancaria[] = cuentas.cuentas || []
-
-  const { data:monedasData = {data:[]} } = useGetMonedasQuery()
-  const monedas: Moneda[] = monedasData.data || []
-
-  const [createAjuste, { isLoading }] = useCreateAjusteBancarioMutation()
+    useEffect(() => {
+      Promise.all([
+        getCuentasBancariasAction(),
+        getMonedasAction(),
+      ]).then(([c, m]) => {
+        if (c.success) setCuentasBancarias(c.data?.cuentas ?? [])
+        if (m.success) {
+          const monedasArr = Array.isArray(m.data) ? m.data : (m.data as any)?.data ?? []
+          setMonedas(monedasArr)
+        }
+        setIsLoadingCuentas(false)
+      })
+    }, [])
   
   const monedaPrincipal = 'CUP'
 
@@ -140,22 +151,26 @@ export function AjusteBancarioForm({ onSuccess, onCancel }: AjusteBancarioFormPr
 
   const submitAjuste = async (data: AjusteBancarioFormData) => {
     try {
+      setIsSubmitting(true)
       const monto = Number(data.monto)
 
-      await createAjuste({
+      const result = await createAjusteBancarioAction({
         cuentaId: data.cuentaId,
         tipo: data.tipo,
         monto,
         moneda: data.moneda,
         descripcion: data.descripcion,
         motivo: data.motivo
-      }).unwrap()
+      })
+
+      if (!result.success) throw new Error(result.error?.message || 'Error al crear ajuste')
 
       sileo.success({ title: 'Ajuste bancario creado exitosamente.' })
       reset()
       setShowWarning(false)
       onSuccess?.()
     } catch (error: unknown) {
+      setIsSubmitting(false)
       const err = error as { data?: { error?: string } }
       sileo.error({ title: err?.data?.error || 'Error al crear el ajuste bancario.' })
     }
@@ -356,17 +371,17 @@ export function AjusteBancarioForm({ onSuccess, onCancel }: AjusteBancarioFormPr
             <div className="flex gap-3 pt-4">
               <Button
                 type="submit"
-                disabled={isLoading}
+                disabled={isSubmitting}
                 className="flex-1"
               >
-                {isLoading ? 'Procesando...' : 'Crear Ajuste'}
+                {isSubmitting ? 'Procesando...' : 'Crear Ajuste'}
               </Button>
               {onCancel && (
                 <Button
                   type="button"
                   variant="outline"
                   onClick={onCancel}
-                  disabled={isLoading}
+                  disabled={isSubmitting}
                 >
                   Cancelar
                 </Button>
@@ -396,7 +411,7 @@ export function AjusteBancarioForm({ onSuccess, onCancel }: AjusteBancarioFormPr
                   onClick={confirmWithNegativeBalance}
                   variant="destructive"
                   className="flex-1"
-                  disabled={isLoading}
+                  disabled={isSubmitting}
                 >
                   Continuar
                 </Button>
@@ -404,7 +419,7 @@ export function AjusteBancarioForm({ onSuccess, onCancel }: AjusteBancarioFormPr
                   onClick={() => setShowWarning(false)}
                   variant="outline"
                   className="flex-1"
-                  disabled={isLoading}
+                  disabled={isSubmitting}
                 >
                   Cancelar
                 </Button>

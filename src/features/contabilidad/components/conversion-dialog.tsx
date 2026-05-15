@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -32,8 +32,8 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { ArrowRightLeft, Calculator } from "lucide-react"
-import { useGetMonedasQuery, useConvertirMonedaMutation } from "@/features/contabilidad/api/contabilidadApi"
-import type { Moneda as MonedaModel } from "../../app/models/model"
+import { getMonedasAction, convertMoneyAction } from "@/features/contabilidad/actions-exchange"
+import type { Moneda as MonedaModel } from "@/app/models/model"
 import { sileo } from '@/lib/sileo-shim'
 
 const conversionSchema = z.object({
@@ -68,22 +68,13 @@ export function ConversionDialog({ onClose }: ConversionDialogProps) {
     monedaDestino: string
   } | null>(null)
   const [isConverting, setIsConverting] = useState(false)
+  const [monedasData, setMonedasData] = useState<any[]>([])
 
-  const { data: monedasData = [] } = useGetMonedasQuery()
-  const [convertirMoneda] = useConvertirMonedaMutation()
+  useEffect(() => {
+    getMonedasAction().then(r => { if (r.success) setMonedasData(r.data ?? []) })
+  }, [])
 
-  const normalizeArray = <T,>(input: unknown): T[] => {
-    if (Array.isArray(input)) return input as T[]
-    if (input && typeof input === "object") {
-      const maybeRecord = input as Record<string, unknown>
-      const candidate = maybeRecord.data
-      if (Array.isArray(candidate)) return candidate as T[]
-      return Object.values(maybeRecord) as T[]
-    }
-    return []
-  }
-
-  const monedas = normalizeArray<MonedaModel>(monedasData)
+  const monedas = Array.isArray(monedasData) ? monedasData : []
   
 
   const monedasActivas: MonedaModel[] = monedas.filter((m: MonedaModel) => m.isActive)
@@ -103,17 +94,18 @@ export function ConversionDialog({ onClose }: ConversionDialogProps) {
   const onSubmit = async (data: ConversionData) => {
     setIsConverting(true)
     try {
-      const response = await convertirMoneda({
+      const response = await convertMoneyAction({
         monedaOrigen: data.monedaOrigen,
         monedaDestino: data.monedaDestino,
         monto: parseFloat(data.monto),
-        tasa: parseFloat(data.tasaUtilizada),
-      }).unwrap()
+      })
+
+      if (!response.success) throw new Error(response.error?.message || 'Error al convertir')
 
       setResultado({
         montoOriginal: parseFloat(data.monto),
-        montoConvertido: Number(response?.montoConvertido ?? 0),
-        tasa: Number(response?.tasaUtilizada ?? parseFloat(data.tasaUtilizada)),
+        montoConvertido: Number(response.data?.montoConvertido ?? 0),
+        tasa: Number(response.data?.tasaUsada ?? parseFloat(data.tasaUtilizada)),
         monedaOrigen: data.monedaOrigen,
         monedaDestino: data.monedaDestino,
       })

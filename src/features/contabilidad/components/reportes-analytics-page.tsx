@@ -1,21 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { BarChart3, FileText, FilterX, LineChart, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
 
-import { AccountTransactionHistory } from '@/components/contabilidad/account-transaction-history';
-import { DateRangePicker } from '@/components/contabilidad/date-range-picker';
-import { MovimientosTable } from '@/components/contabilidad/movimientos-table';
-import { ResumenFinanciero } from '@/components/contabilidad/resumen-financiero';
-import { Badge } from '@/components/ui/badge';
+import { AccountTransactionHistory } from './account-transaction-history';
+import { DateRangePicker } from './date-range-picker';
+import { MovimientosTable } from './movimientos-table';
+import { ResumenFinanciero } from './resumen-financiero';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useGetCuentasBancariasQuery } from '@/features/contabilidad/api/contabilidadApi';
-import { useGetPrestamosCashStatsQuery } from '@/lib/redux/services/prestamosCashApi';
+import { getCuentasBancariasAction } from '@/features/contabilidad/actions-cuentas-bancarias';
 import { getAuthToken } from '@/lib/token';
 import { cn } from '@/lib/utils';
 
@@ -27,7 +25,7 @@ interface FiltrosGlobales {
 
 const surfaceCardClass = cn(
   'relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl',
-  'dark:border-slate-800/60 dark:bg-slate-900/10',
+  'dark:border-slate-800/60 dark:bg-slate-800/10',
 );
 
 /**
@@ -43,14 +41,18 @@ export function ReportesAnalyticsPage() {
     cuentaId: '',
   });
 
-  const { data: cuentasData = { cuentas: [] } } = useGetCuentasBancariasQuery();
+  const [cuentasData, setCuentasData] = useState<{ cuentas: any[] }>({ cuentas: [] });
+  const [cuentasLoading, setCuentasLoading] = useState(true);
+
+  useEffect(() => {
+    getCuentasBancariasAction().then(r => {
+      if (r.success) setCuentasData({ cuentas: r.data?.cuentas ?? [] });
+      setCuentasLoading(false);
+    })
+  }, [])
+
   const cuentas = cuentasData.cuentas ?? [];
   const cuentaSeleccionada = cuentas.find((cuenta) => cuenta.cuentaId === filtrosGlobales.cuentaId);
-  const { data: prestamosStats } = useGetPrestamosCashStatsQuery();
-  const saldoPendientePrestamos = Object.values(prestamosStats?.montoPendienteCobro ?? {}).reduce(
-    (acc, value) => acc + value,
-    0,
-  );
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -137,21 +139,6 @@ export function ReportesAnalyticsPage() {
 
   return (
     <motion.div className="space-y-6 p-6" variants={containerVariants} initial="hidden" animate="show">
-      <motion.div variants={itemVariants} className={cn(surfaceCardClass, 'flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between')}>
-        <div className="space-y-1">
-          <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-            Explorador de Reportes
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Use filtros globales para mantener consistencia entre resumen, movimientos y detalle por cuenta.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Badge variant="outline">Tab activa: {tabActiva}</Badge>
-          <Badge variant="outline">{cuentas.length} cuentas disponibles</Badge>
-          <Badge variant="outline">Préstamos pendientes: {saldoPendientePrestamos.toFixed(2)}</Badge>
-        </div>
-      </motion.div>
 
       <motion.div variants={itemVariants}>
         <Card className={surfaceCardClass}>

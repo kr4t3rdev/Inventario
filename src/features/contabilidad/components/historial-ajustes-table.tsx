@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import {
@@ -24,9 +24,11 @@ import {
   FileText,
   DollarSign
 } from 'lucide-react'
-import { useGetAjustesByCuentaQuery, useGetCuentasBancariasQuery, useGetMonedasQuery } from '@/features/contabilidad/api/contabilidadApi'
+import { getCuentasBancariasAction } from '@/features/contabilidad/actions-cuentas-bancarias'
+import { getMonedasAction } from '@/features/contabilidad/actions-exchange'
+import { getAjustesByCuentaAction } from '@/features/contabilidad/actions-ajustes-bancarios'
 import { useAppSelector } from '@/lib/redux/hooks'
-import type { AjusteBancario, CuentaBancaria } from '../../app/models/model'
+import type { AjusteBancario, CuentaBancaria } from '@/app/models/model'
 
 interface HistorialAjustesTableProps {
   cuentaId?: string
@@ -34,27 +36,36 @@ interface HistorialAjustesTableProps {
 }
 
 export function HistorialAjustesTable({ cuentaId, showAllAccounts = false }: HistorialAjustesTableProps) {
-  // Get cuentasBancarias from Redux
-  const { data:cuentas = { cuentas: []} } = useGetCuentasBancariasQuery()
-  const cuentasBancarias: CuentaBancaria[] = cuentas.cuentas || []
-  
+  const [cuentasBancarias, setCuentasBancarias] = useState<any[]>([])
+  const [monedas, setMonedas] = useState<any[]>([])
+  const [ajustes, setAjustes] = useState<AjusteBancario[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<any>(null)
+
   const [searchTerm, setSearchTerm] = useState('')
   const [filterTipo, setFilterTipo] = useState<string>('all')
   const [filterMoneda, setFilterMoneda] = useState<string>('all')
   const [selectedCuentaId, setSelectedCuentaId] = useState(cuentaId || 'all')
 
-  const { data: monedasResponse } = useGetMonedasQuery()
-  const monedas = monedasResponse?.data || []
-  
-  const { 
-    data: ajustesData = {data:{ ajustes:[], cuentas:[]}}, 
-    isLoading, 
-    error 
-  } = useGetAjustesByCuentaQuery(
-    showAllAccounts ? 'all' : selectedCuentaId,
-    { skip: !selectedCuentaId && !showAllAccounts }
-  )
-  const ajustes: AjusteBancario[] = ajustesData?.data.ajustes || []
+  useEffect(() => {
+    getCuentasBancariasAction().then(r => {
+      if (r.success) setCuentasBancarias(r.data?.cuentas ?? [])
+    })
+    getMonedasAction().then(r => {
+      if (r.success) setMonedas(Array.isArray(r.data) ? r.data : [])
+    })
+  }, [])
+
+  useEffect(() => {
+    if (!selectedCuentaId && !showAllAccounts) return
+    setIsLoading(true); setError(null)
+    getAjustesByCuentaAction({
+      cuentaId: showAllAccounts ? 'all' : selectedCuentaId,
+    }).then(r => {
+      if (r.success) { setAjustes(r.data?.ajustes ?? []); setIsLoading(false) }
+      else { setError(r.error); setIsLoading(false) }
+    }).catch(e => { setError(e); setIsLoading(false) })
+  }, [selectedCuentaId, showAllAccounts])
  
   // Filtrar ajustes según los criterios
   const filteredAjustes = ajustes.filter((ajuste: AjusteBancario) => {

@@ -13,10 +13,10 @@ import { Search, Filter, Download, ArrowUpDown, TrendingUp, TrendingDown, Wallet
 import { getCuentasBancariasAction } from "@/features/contabilidad/actions-cuentas-bancarias"
 import { getPrestamoCashHistorialAction } from "@/features/contabilidad/actions-prestamos-cash"
 import { getDeudaCashByIdAction } from "@/features/contabilidad/actions-deudas-cash"
+import { getMovimientosReportAction } from "@/features/contabilidad/actions"
 import { formatCurrencySimple, formatDate } from "@/lib/redux/utils/contabilidadUtils"
 import { DateRangePicker } from "./date-range-picker"
 import { cn } from "@/lib/utils"
-import { getAuthToken } from '@/lib/token'
 import {
   PageTransition,
   StaggerContainer,
@@ -84,28 +84,19 @@ export function MovimientosTable({
   useEffect(() => {
     setIsLoading(true)
     setError(null)
-    const p = new URLSearchParams()
-    if (filtros.busqueda) p.set('busqueda', filtros.busqueda)
-    if (filtros.cuentaId && filtros.cuentaId !== 'all') p.set('cuentaId', filtros.cuentaId)
-    if (filtros.tipoMovimiento && filtros.tipoMovimiento !== 'all') p.set('tipoMovimiento', filtros.tipoMovimiento)
-    if (filtros.fechaInicio) p.set('fechaInicio', filtros.fechaInicio)
-    if (filtros.fechaFin) p.set('fechaFin', filtros.fechaFin)
-    if (filtros.moneda && filtros.moneda !== 'all') p.set('moneda', filtros.moneda)
-    p.set('page', String(filtros.page))
-    p.set('limit', String(filtros.limit))
-
-    fetch(`/api/contabilidad/reportes/movimientos?${p.toString()}`, {
-      headers: { Authorization: getAuthToken() },
-    })
-      .then(r => r.json())
-      .then(data => {
-        setMovimientos(data)
-        setIsLoading(false)
-      })
-      .catch(err => {
-        setError(err)
-        setIsLoading(false)
-      })
+    getMovimientosReportAction({
+      busqueda: filtros.busqueda || undefined,
+      cuentaId: filtros.cuentaId !== 'all' ? filtros.cuentaId : undefined,
+      tipoMovimiento: filtros.tipoMovimiento !== 'all' ? filtros.tipoMovimiento : undefined,
+      fechaInicio: filtros.fechaInicio || undefined,
+      fechaFin: filtros.fechaFin || undefined,
+      moneda: filtros.moneda !== 'all' ? filtros.moneda : undefined,
+      page: filtros.page,
+      limit: filtros.limit
+    }).then(r => {
+      if (r.success) { setMovimientos(r.data); setIsLoading(false) }
+      else { setError(r.error); setIsLoading(false) }
+    }).catch(err => { setError(err); setIsLoading(false) })
   }, [
     filtros.busqueda,
     filtros.cuentaId,

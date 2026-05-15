@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -31,7 +31,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { useGetMonedasQuery, useUpdateTasaCambioMutation } from "@/features/contabilidad/api/contabilidadApi"
+import { getMonedasAction, updateTasaCambioAction } from "@/features/contabilidad/actions-exchange"
 import { sileo } from '@/lib/sileo-shim'
 
 const tasaCambioSchema = z.object({
@@ -57,11 +57,13 @@ export function TasaCambioForm({ onClose, onSuccess }: TasaCambioFormProps) {
     origen: number
     destino: number
   } | null>(null)
+  const [monedasDatas, setMonedasDatas] = useState<any[]>([])
 
-  const { data: monedasDatas = [] } = useGetMonedasQuery()
-  const [updateTasaCambio] = useUpdateTasaCambioMutation()
+  useEffect(() => {
+    getMonedasAction().then(r => { if (r.success) setMonedasDatas(r.data ?? []) })
+  }, [])
 
-  const monedas = Array.isArray(monedasDatas) ? (monedasDatas) :  Array.isArray((monedasDatas as any)?.data) ? (monedasDatas as any)?.data : Object.values(monedasDatas ?? [])
+  const monedas = Array.isArray(monedasDatas) ? monedasDatas : []
 
   const monedaPrincipal = monedas.find((m: any) => m.esPrincipal)
   const monedasSecundarias = monedas.filter((m: any) => !m.esPrincipal && m.isActive)
@@ -92,17 +94,17 @@ export function TasaCambioForm({ onClose, onSuccess }: TasaCambioFormProps) {
   const onSubmit = async (data: TasaCambioFormData) => {
     setIsSubmitting(true)
     try {
-      await updateTasaCambio({
+      const r = await updateTasaCambioAction({
         monedaOrigenId: data.monedaOrigenId,
         monedaDestino: monedaPrincipal?.codigo || "",
         tasa: parseFloat(data.tasa),
-      }).unwrap()
-
+      })
+      if (!r.success) throw new Error(r.error?.message || 'Error al actualizar tasa')
       sileo.success({ title: 'Tasa de cambio actualizada correctamente' })
       onSuccess()
     } catch (error: any) {
       console.error("Error al actualizar tasa:", error)
-      sileo.error({ title: error?.data?.error || 'Error al actualizar la tasa de cambio' })
+      sileo.error({ title: error?.message || 'Error al actualizar la tasa de cambio' })
     } finally {
       setIsSubmitting(false)
     }

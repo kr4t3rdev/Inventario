@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -43,13 +43,13 @@ const TiposPagoTable = dynamic(() => import("./tipos-pago-table").then(mod => ({
   )
 })
 
-import { 
-  useGetTiposPagoQuery, 
-  useCreateTipoPagoMutation, 
-  useUpdateTipoPagoMutation, 
-  useDeleteTipoPagoMutation 
-} from "@/features/contabilidad/api/contabilidadApi"
-import { CreateTipoPagoRequest, UpdateTipoPagoRequest, TipoPagoWithDetails } from "../../app/models/model"
+import {
+  getTiposPagoAction,
+  createTipoPagoAction,
+  updateTipoPagoAction,
+  deleteTipoPagoAction
+} from '@/features/contabilidad/actions-tipos-pago'
+import { CreateTipoPagoRequest, UpdateTipoPagoRequest, TipoPagoWithDetails } from "@/app/models/model"
 
 const surfaceCardClass = cn(
   'relative overflow-hidden border-slate-200/60 bg-white/70 shadow-sm backdrop-blur-xl',
@@ -69,13 +69,32 @@ export function TiposPagoConfigPage() {
   })
 
   // Queries y mutations
-  const { data: tiposPagoData = { data: [], pagination: {}}, isLoading: loadingTiposPago, error: errorTiposPago } = useGetTiposPagoQuery({ includeInactive: true })
+  const [tiposPagoData, setTiposPagoData] = useState<{ data: TipoPagoWithDetails[] }>({ data: [] });
+  const [loadingTiposPago, setLoadingTiposPago] = useState(true);
+  const [errorTiposPago, setErrorTiposPago] = useState<any>(null);
+  const [creatingTipoPago, setCreatingTipoPago] = useState(false);
+  const [updatingTipoPago, setUpdatingTipoPago] = useState(false);
+  const [deletingTipoPago, setDeletingTipoPago] = useState(false);
+
+  const fetchTiposPago = useCallback(async () => {
+    setLoadingTiposPago(true);
+    setErrorTiposPago(null);
+    try {
+      const r = await getTiposPagoAction({ includeInactive: true });
+      if (r.success) setTiposPagoData({ data: r.data?.data ?? [] });
+      else setErrorTiposPago(r.error);
+    } catch (e) {
+      setErrorTiposPago(e);
+    } finally {
+      setLoadingTiposPago(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTiposPago();
+  }, [fetchTiposPago]);
 
   const tiposPago = tiposPagoData.data
-  
-  const [createTipoPago, { isLoading: creatingTipoPago }] = useCreateTipoPagoMutation()
-  const [updateTipoPago, { isLoading: updatingTipoPago }] = useUpdateTipoPagoMutation()
-  const [deleteTipoPago] = useDeleteTipoPagoMutation()
 
   const handleCreate = () => {
     setDialogState({
@@ -95,13 +114,17 @@ export function TiposPagoConfigPage() {
   const handleSubmit = async (data: CreateTipoPagoRequest | UpdateTipoPagoRequest) => {
     try {
       if (dialogState.mode === "create") {
-        await createTipoPago(data as CreateTipoPagoRequest).unwrap()
+        setCreatingTipoPago(true);
+        const r = await createTipoPagoAction(data as any);
+        if (!r.success) throw new Error(r.error?.message || 'Error al crear');
         toast.success("Tipo de pago creado exitosamente")
       } else if (dialogState.tipoPago) {
-        await updateTipoPago({
+        setUpdatingTipoPago(true);
+        const r = await updateTipoPagoAction({
           id: dialogState.tipoPago.tipoId,
-          ...data as UpdateTipoPagoRequest
-        }).unwrap()
+          ...data as any
+        });
+        if (!r.success) throw new Error(r.error?.message || 'Error al actualizar');
         toast.success("Tipo de pago actualizado exitosamente")
       }
       // Cerrar el diálogo y limpiar el estado
@@ -110,32 +133,43 @@ export function TiposPagoConfigPage() {
         mode: "create",
         tipoPago: undefined 
       })
+      fetchTiposPago()
     } catch (error: any) {
       // El error se maneja en el componente TipoPagoForm
       throw error
+    } finally {
+      setCreatingTipoPago(false);
+      setUpdatingTipoPago(false);
     }
   }
 
   const handleDelete = async (tipoPagoId: string) => {
     try {
-      await deleteTipoPago(tipoPagoId).unwrap()
+      setDeletingTipoPago(true);
+      const r = await deleteTipoPagoAction(tipoPagoId);
+      if (!r.success) throw new Error(r.error?.message || 'Error al eliminar');
       toast.success("Tipo de pago eliminado correctamente")
+      fetchTiposPago()
     } catch (error) {
       console.error("Error deleting payment type:", error)
       toast.error("No se pudo eliminar el tipo de pago")
+    } finally {
+      setDeletingTipoPago(false);
     }
   }
 
   const handleToggleActive = async (tipoPagoId: string, isActive: boolean) => {
     try {
-      await updateTipoPago({
-        id: tipoPagoId,
-        isActive
-      }).unwrap()
+      setUpdatingTipoPago(true);
+      const r = await updateTipoPagoAction({ id: tipoPagoId, isActive });
+      if (!r.success) throw new Error(r.error?.message || 'Error al cambiar estado');
       toast.success(isActive ? "Tipo de pago activado" : "Tipo de pago desactivado")
+      fetchTiposPago()
     } catch (error) {
       console.error("Error toggling payment type status:", error)
       toast.error("Error al cambiar el estado")
+    } finally {
+      setUpdatingTipoPago(false);
     }
   }
 

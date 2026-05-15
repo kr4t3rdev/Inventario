@@ -18,14 +18,14 @@ import { AnimatedNumber } from '@/components/ui/animated-number'
 import { Skeleton } from '@/components/ui/skeleton';
 
 const TransferenciasTable = dynamic(() =>
-  import('@/components/contabilidad/transferencias-table').then((mod) => ({
+  import('@/features/transferencias/components/transferencias-table').then((mod) => ({
     default: mod.TransferenciasTable,
   })),
   { loading: () => <Skeleton className="w-full h-100" /> }
 );
 
 const TransferenciaBancariaForm = dynamic(() =>
-  import('@/components/contabilidad/transferencia-bancaria-form').then((mod) => ({
+  import('@/features/contabilidad/components/transferencia-bancaria-form').then((mod) => ({
     default: mod.TransferenciaBancariaForm,
   })),
   { loading: () => <Skeleton className="w-full h-100" /> }

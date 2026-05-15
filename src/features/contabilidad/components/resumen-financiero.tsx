@@ -29,10 +29,14 @@ import {
   getHistorialReconciliacionVentasAction,
   getServiciosPendientesAction,
   getGastosPendientesAction,
+  getHistorialReconciliacionServiciosAction,
+  getHistorialReconciliacionGastosAction,
 } from '@/features/contabilidad/actions-reconciliacion';
 import { getPrestamosCashStatsAction } from '@/features/contabilidad/actions-prestamos-cash';
+import { getMonedasAction, getTasasActualesAction } from '@/features/contabilidad/actions-exchange';
+import { getResumenFinancieroAction } from '@/features/contabilidad/actions';
+import { getResumenAnticiposAction } from '@/features/contabilidad/actions-anticipos';
 import { formatCurrency } from '@/lib/redux/utils/contabilidadUtils';
-import { getAuthToken } from '@/lib/token';
 import { cn } from '@/lib/utils';
 
 import type {
@@ -254,32 +258,20 @@ export function ResumenFinanciero({
 
   useEffect(() => {
     setIsLoading(true); setError(null)
-    const params = new URLSearchParams()
-    if (fechaInicio) params.set('fechaInicio', fechaInicio)
-    if (fechaFin) params.set('fechaFin', fechaFin)
-    if (cuentaId) params.set('cuentaId', cuentaId)
-    fetch(`/api/contabilidad/reportes/resumen?${params.toString()}`, {
-      headers: { Authorization: getAuthToken() },
-    })
-      .then(r => r.json())
-      .then(d => { setResumen(d); setIsLoading(false) })
-      .catch(e => { setError(e); setIsLoading(false) })
+    getResumenFinancieroAction({
+      fechaInicio, fechaFin, cuentaId
+    }).then(r => {
+      if (r.success) { setResumen(r.data); setIsLoading(false) }
+      else { setError(r.error); setIsLoading(false) }
+    }).catch(e => { setError(e); setIsLoading(false) })
   }, [fechaInicio, fechaFin, cuentaId, refreshKey])
 
   useEffect(() => {
-    fetch('/api/contabilidad/exchange/monedas', {
-      headers: { Authorization: getAuthToken() },
-    })
-      .then(r => r.json())
-      .then(setMonedasData)
+    getMonedasAction().then(r => { if (r.success) setMonedasData(r.data) })
   }, [refreshKey])
 
   useEffect(() => {
-    fetch('/api/contabilidad/exchange/tasas', {
-      headers: { Authorization: getAuthToken() },
-    })
-      .then(r => r.json())
-      .then(setTasasActualesData)
+    getTasasActualesAction().then(r => { if (r.success) setTasasActualesData(r.data) })
   }, [refreshKey])
 
   // --- Helper Data Fetching for Metrics ---
@@ -294,15 +286,8 @@ export function ResumenFinanciero({
   }, [fechaInicio, fechaFin, page, limit, refreshKey])
 
   useEffect(() => {
-    const params = new URLSearchParams()
-    if (fechaInicio) params.set('fechaDesde', fechaInicio)
-    if (fechaFin) params.set('fechaHasta', fechaFin)
-    if (cuentaId) params.set('cuentaId', cuentaId)
-    fetch(`/api/contabilidad/reconciliacion/servicios/historial?${params.toString()}`, {
-      headers: { Authorization: getAuthToken() },
-    })
-      .then(r => r.json())
-      .then(setServiciosHistoryData)
+    getHistorialReconciliacionServiciosAction({ fechaDesde: fechaInicio, fechaHasta: fechaFin, cuentaId })
+      .then(r => { if (r.success) setServiciosHistoryData(r.data) })
   }, [fechaInicio, fechaFin, cuentaId, refreshKey])
 
   useEffect(() => {
@@ -316,16 +301,8 @@ export function ResumenFinanciero({
   }, [fechaFin, tipoGasto, soloNoReconciliados, page, limit, refreshKey])
 
   useEffect(() => {
-    const params = new URLSearchParams()
-    if (fechaInicio) params.set('fechaInicio', fechaInicio)
-    if (fechaFin) params.set('fechaFin', fechaFin)
-    if (cuentaId) params.set('cuentaId', cuentaId)
-    if (tipoGasto) params.set('tipoGasto', tipoGasto)
-    fetch(`/api/contabilidad/reconciliacion/gastos/historial?${params.toString()}`, {
-      headers: { Authorization: getAuthToken() },
-    })
-      .then(r => r.json())
-      .then(setGastosHistoryData)
+    getHistorialReconciliacionGastosAction({ fechaInicio, fechaFin, cuentaId, tipoGasto })
+      .then(r => { if (r.success) setGastosHistoryData(r.data) })
   }, [fechaInicio, fechaFin, cuentaId, tipoGasto, refreshKey])
 
   const [prestamosStats, setPrestamosStats] = useState<any>(null);
@@ -334,18 +311,12 @@ export function ResumenFinanciero({
   }, [refreshKey]);
 
   useEffect(() => {
-    const params = new URLSearchParams()
-    if (fechaInicio) params.set('fechaInicio', fechaInicio)
-    if (fechaFin) params.set('fechaFin', fechaFin)
-    fetch(`/api/contabilidad/anticipos/reportes/resumen?${params.toString()}`, {
-      headers: { Authorization: getAuthToken() },
-    })
-      .then(r => r.json())
-      .then(setResumenAnticiposData)
+    getResumenAnticiposAction({ fechaInicio, fechaFin })
+      .then(r => { if (r.success) setResumenAnticiposData(r.data) })
   }, [fechaInicio, fechaFin, refreshKey])
 
-  const monedas = monedasData?.data || [];
-  const tasasActuales = tasasActualesData?.data?.tasas || [];
+  const monedas = Array.isArray(monedasData) ? monedasData : [];
+  const tasasActuales = tasasActualesData?.tasas || [];
 
   // --- Calculations ---
   const ventasPend = ventasData?.ventas?.length || 0;

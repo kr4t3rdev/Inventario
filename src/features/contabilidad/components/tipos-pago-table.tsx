@@ -40,7 +40,7 @@ import {
 import { toast } from "sonner"
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import { cn } from "@/lib/utils"
-import { TipoPagoWithDetails } from "../../app/models/model"
+import { TipoPagoWithDetails } from "@/app/models/model"
 
 interface TiposPagoTableProps {
   tiposPago: TipoPagoWithDetails[]

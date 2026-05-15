@@ -34,7 +34,7 @@ function ExchangePageLoader() {
 }
 
 const ExchangeManager = dynamic(
-  () => import('@/components/contabilidad/exchange-manager').then((mod) => ({ default: mod.ExchangeManager })),
+  () => import('@/features/contabilidad/components/exchange-manager').then((mod) => ({ default: mod.ExchangeManager })),
   {
     loading: () => <ExchangePageLoader />,
   }

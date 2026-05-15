@@ -201,23 +201,19 @@ export const getGastosPendientesAction = withAction(async (params: {
   const tenantId = requireTenant(user);
   const where: any = { tenantId };
   if (params.fechaDesde || params.fechaHasta) {
-    where.fechaGasto = {};
-    if (params.fechaDesde) where.fechaGasto.gte = new Date(params.fechaDesde);
-    if (params.fechaHasta) where.fechaGasto.lte = new Date(params.fechaHasta);
+    where.createdAt = {};
+    if (params.fechaDesde) where.createdAt.gte = new Date(params.fechaDesde);
+    if (params.fechaHasta) where.createdAt.lte = new Date(params.fechaHasta);
   }
-  if (params.tipoGasto) where.tipoGasto = params.tipoGasto;
+  if (params.tipoGasto) where.tipo = params.tipoGasto;
   const page = params.page || 1; const limit = params.limit || 50;
   const [gastos, total] = await Promise.all([
-  // @ts-expect-error
-    prisma.gasto.findMany({
-      where, orderBy: { fechaGasto: 'desc' },
+    prisma.gastosDE.findMany({
+      where, orderBy: { createdAt: 'desc' },
       skip: (page-1)*limit, take: limit,
-      include: { empleado: { select: { nombre: true } }, concepto: { select: { nombre: true } } },
+      include: { reconciliaciones: { select: { reconciliacionId: true } } },
     }),
-  // @ts-expect-error
-    prisma.gasto.count({
-    where
-    }),
+    prisma.gastosDE.count({ where }),
   ]);
   return { gastos, pagination: { page, limit, total, totalPages: Math.ceil(total/limit) } };
 });

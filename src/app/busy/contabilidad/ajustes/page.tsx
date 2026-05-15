@@ -29,7 +29,7 @@ function AjustesPageLoader() {
 }
 
 const AjustesBancariosPage = dynamic(
-  () => import('@/components/contabilidad/ajustes-bancarios-page').then((mod) => ({ default: mod.AjustesBancariosPage })),
+  () => import('@/features/contabilidad/components/ajustes-bancarios-page').then((mod) => ({ default: mod.AjustesBancariosPage })),
   {
     loading: () => <AjustesPageLoader />,
   }

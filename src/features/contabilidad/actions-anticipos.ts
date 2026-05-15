@@ -143,3 +143,34 @@ export const reverseAnticipoAction = withAction(async (input: z.infer<typeof rev
   revalidatePath('/busy/contabilidad/anticipos');
   return { anticipo: updated };
 });
+
+export const getResumenAnticiposAction = withAction(async (params: { fechaInicio?: string; fechaFin?: string; tipo?: string } = {}, _user: AuthenticatedUser) => {
+  const where: any = {};
+  if (params.tipo) where.tipo = params.tipo;
+  if (params.fechaInicio || params.fechaFin) {
+    where.fechaReserva = {};
+    if (params.fechaInicio) where.fechaReserva.gte = new Date(params.fechaInicio);
+    if (params.fechaFin) where.fechaReserva.lte = new Date(params.fechaFin);
+  }
+
+  const anticipos = await prisma.anticipo.findMany({
+    where, select: { tipo: true, estado: true, moneda: true, montoOriginal: true, saldoDisponible: true }
+  });
+
+  const porTipo = anticipos.reduce((acc: Record<string, number>, a) => { const k = a.tipo || 'UNKNOWN'; acc[k] = (acc[k]||0) + Number(a.montoOriginal||0); return acc; }, {});
+  const porEstado = anticipos.reduce((acc: Record<string, number>, a) => { const k = a.estado || 'UNKNOWN'; acc[k] = (acc[k]||0) + 1; return acc; }, {});
+  const porMoneda = anticipos.reduce((acc: Record<string, { total: number; pendiente: number }>, a) => {
+    const k = a.moneda || 'CUP';
+    if (!acc[k]) acc[k] = { total: 0, pendiente: 0 };
+    acc[k].total += Number(a.montoOriginal||0);
+    acc[k].pendiente += Number(a.saldoDisponible||0);
+    return acc;
+  }, {});
+
+  const totalAnticipos = anticipos.reduce((s, a) => s + Number(a.montoOriginal||0), 0);
+  const totalPendiente = anticipos.reduce((s, a) => s + Number(a.saldoDisponible||0), 0);
+
+  return {
+    resumen: { porTipo, porEstado, porMoneda, totalesGenerales: { totalAnticipos, totalEjecutado: totalAnticipos - totalPendiente, totalPendiente } }
+  };
+});

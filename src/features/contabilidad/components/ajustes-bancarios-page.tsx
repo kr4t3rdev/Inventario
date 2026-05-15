@@ -1,17 +1,27 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import {
   AlertTriangle,
+  ArrowDownUp,
+  Calendar,
+  ChevronDown,
+  ChevronUp,
   DollarSign,
+  Filter,
   History,
+  Info,
+  Lightbulb,
+  Loader2,
   Plus,
+  RefreshCw,
   Settings,
   TrendingDown,
   TrendingUp,
+  Wallet,
 } from 'lucide-react';
-
+import { toast } from 'sonner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,7 +29,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
-import { CuentaBancaria, useGetCuentasBancariasQuery } from '@/lib/redux/contabilidad';
+import { getCuentasBancariasAction } from '@/features/contabilidad/actions-cuentas-bancarias';
 
 import { AjusteBancarioForm } from './ajuste-bancario-form';
 import { HistorialAjustesTable } from './historial-ajustes-table';
@@ -38,9 +48,14 @@ export function AjustesBancariosPage() {
   const [activeTab, setActiveTab] = useState('nuevo');
   const [selectedCuentaId, setSelectedCuentaId] = useState('all');
 
-  const { data: cuentas = { cuentas: [] } } = useGetCuentasBancariasQuery();
-  const cuentasBancarias: CuentaBancaria[] = cuentas.cuentas || [];
+  const [cuentasBancarias, setCuentasBancarias] = useState<any[]>([]);
   const activeCuentas = cuentasBancarias.filter((cuenta) => cuenta.isActive);
+
+  useEffect(() => {
+    getCuentasBancariasAction().then(r => {
+      if (r.success) setCuentasBancarias(r.data?.cuentas ?? [])
+    })
+  }, [])
 
   const containerVariants = {
     hidden: { opacity: 0 },

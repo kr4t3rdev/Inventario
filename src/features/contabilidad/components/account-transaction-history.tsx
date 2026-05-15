@@ -12,8 +12,10 @@ import { TrendingUp, TrendingDown, ArrowUpDown, Calendar, DollarSign, Info, Wall
 import { formatCurrency, formatDate, convertCurrency } from "@/lib/redux/utils/contabilidadUtils"
 import { getMonedasAction } from "@/features/contabilidad/actions-exchange"
 import { getPrestamoCashHistorialAction } from "@/features/contabilidad/actions-prestamos-cash"
+import { getCuentaHistorialAction } from "@/features/contabilidad/actions-cuentas-bancarias"
+import { getTasasActualesAction } from "@/features/contabilidad/actions-exchange"
 import { DateRangePicker } from "./date-range-picker"
-import { ExportDialog } from "@/components/contabilidad/export-dialog"
+import { ExportDialog } from "./export-dialog"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { cn } from "@/lib/utils"
 import { getAuthToken } from "@/lib/token"
@@ -28,23 +30,6 @@ interface AccountTransactionHistoryProps {
   nombreCuenta: string
   numeroCuenta: string
   monedaCuenta: string
-}
-
-interface TasaCambio {
-  monedaOrigenId: string
-  monedaDestino: string
-  tasa: number
-}
-
-interface ExchangeRatesResponse {
-  success: boolean
-  data?: {
-    monedaPrincipal: {
-      codigo: string
-    }
-    tasas: TasaCambio[]
-  }
-  error?: string
 }
 
 const surfaceCardClass = cn(
@@ -83,30 +68,15 @@ export function AccountTransactionHistory({
   const [exchangeRates, setExchangeRates] = useState<{ [key: string]: number }>({})
 
   useEffect(() => {
-    const fetchExchangeRates = async () => {
-      try {
-        const token = getAuthToken()
-        const response = await fetch('/api/contabilidad/exchange/tasas', {
-          headers: token ? { Authorization: token } : {},
-          credentials: 'include'
+    getTasasActualesAction().then(r => {
+      if (r.success && r.data) {
+        const rates: { [key: string]: number } = {}
+        r.data.tasas.forEach((tasa: any) => {
+          rates[`${tasa.monedaOrigenId}_${tasa.monedaDestino}`] = tasa.tasa
         })
-
-        if (response.ok) {
-          const data: ExchangeRatesResponse = await response.json()
-          if (data.success && data.data) {
-            const rates: { [key: string]: number } = {}
-            data.data.tasas.forEach((tasa) => {
-              rates[`${tasa.monedaOrigenId}_${tasa.monedaDestino}`] = tasa.tasa
-            })
-            setExchangeRates(rates)
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching exchange rates:', error)
+        setExchangeRates(rates)
       }
-    }
-
-    fetchExchangeRates()
+    }).catch(error => console.error('Error fetching exchange rates:', error))
   }, [])
 
   const [historial, setHistorial] = useState<any>(null)
@@ -116,25 +86,17 @@ export function AccountTransactionHistory({
   useEffect(() => {
     setIsLoading(true)
     setError(null)
-    const p = new URLSearchParams()
-    if (filtros.fechaInicio) p.set('fechaInicio', filtros.fechaInicio)
-    if (filtros.fechaFin) p.set('fechaFin', filtros.fechaFin)
-    if (filtros.tipoMovimiento) p.set('tipoMovimiento', filtros.tipoMovimiento)
-    p.set('page', String(filtros.page))
-    p.set('limit', String(filtros.limit))
-
-    fetch(`/api/contabilidad/cuentas/${cuentaId}/historial?${p.toString()}`, {
-      headers: { Authorization: getAuthToken() },
-    })
-      .then(r => r.json())
-      .then(data => {
-        setHistorial(data)
-        setIsLoading(false)
-      })
-      .catch(err => {
-        setError(err)
-        setIsLoading(false)
-      })
+    getCuentaHistorialAction({
+      cuentaId,
+      fechaInicio: filtros.fechaInicio || undefined,
+      fechaFin: filtros.fechaFin || undefined,
+      tipoMovimiento: filtros.tipoMovimiento || undefined,
+      page: filtros.page,
+      limit: filtros.limit
+    }).then(r => {
+      if (r.success) { setHistorial(r.data); setIsLoading(false) }
+      else { setError(r.error); setIsLoading(false) }
+    }).catch(err => { setError(err); setIsLoading(false) })
   }, [cuentaId, filtros.fechaInicio, filtros.fechaFin, filtros.tipoMovimiento, filtros.page, filtros.limit])
   const prestamoCashId = useMemo(() => {
     const prestamo = historial?.transacciones?.find((tx: any) => tx.tipoMovimiento === 'prestamo_cash')

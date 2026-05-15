@@ -24,7 +24,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Switch } from "@/components/ui/switch"
-import { useCreateMonedaMutation, useUpdateMonedaMutation } from "@/features/contabilidad/api/contabilidadApi"
+import { createMonedaAction, updateMonedaAction } from "@/features/contabilidad/actions-exchange"
 import { sileo } from '@/lib/sileo-shim'
 
 const monedaSchema = z.object({
@@ -54,9 +54,6 @@ export function MonedaForm({ moneda, onClose, onSuccess }: MonedaFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const isEditing = !!moneda
 
-  const [createMoneda] = useCreateMonedaMutation()
-  const [updateMoneda] = useUpdateMonedaMutation()
-
   const form = useForm<MonedaFormData>({
     resolver: zodResolver(monedaSchema),
     defaultValues: {
@@ -73,13 +70,15 @@ export function MonedaForm({ moneda, onClose, onSuccess }: MonedaFormProps) {
     try {
       if (isEditing) {
         const { codigo, ...updateData } = data
-        await updateMoneda({
-          codigo: moneda.codigo, // Keep original codigo, don't allow changes
+        const r = await updateMonedaAction({
+          codigo: moneda.codigo,
           ...updateData,
-        }).unwrap()
+        })
+        if (!r.success) throw new Error(r.error?.message || 'Error al actualizar')
         sileo.success({ title: 'Moneda actualizada correctamente' })
       } else {
-        await createMoneda(data).unwrap()
+        const r = await createMonedaAction(data)
+        if (!r.success) throw new Error(r.error?.message || 'Error al crear')
         sileo.success({ title: 'Moneda creada correctamente' })
       }
       onSuccess()

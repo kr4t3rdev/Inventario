@@ -43,7 +43,7 @@ import { DeudasCashStatsWidget } from '@/features/contabilidad/components/deudas
 import type { Moneda } from '../../models/model';
 
 const ResumenFinanciero = dynamic(() =>
-  import('@/components/contabilidad/resumen-financiero').then((mod) => ({
+  import('@/features/contabilidad/components/resumen-financiero').then((mod) => ({
     default: mod.ResumenFinanciero,
   })),
   { 

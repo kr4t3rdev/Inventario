@@ -37,7 +37,7 @@ function ReportesPageLoader() {
 
 const ReportesAnalyticsPage = dynamic(
   () =>
-    import('@/components/contabilidad/reportes-analytics-page').then((mod) => ({
+    import('@/features/contabilidad/components/reportes-analytics-page').then((mod) => ({
       default: mod.ReportesAnalyticsPage,
     })),
   {

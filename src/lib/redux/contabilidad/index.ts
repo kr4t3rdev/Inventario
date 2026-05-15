@@ -49,5 +49,3 @@ export type {
 
 // Export state interface
 export type { ContabilidadState } from "../slices/contabilidadSlice"
-// Re-export RTK Query hooks from contabilidadApi
-export * from '../../../features/contabilidad/api/contabilidadApi'

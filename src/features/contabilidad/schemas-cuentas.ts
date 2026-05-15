@@ -11,7 +11,7 @@ export const getCuentasPorCobrarSchema = z.object({
   estado: z.enum(['PENDIENTE', 'PAGADA', 'PARCIAL']).optional(),
   clienteId: z.string().optional(),
   page: z.number().int().positive().default(1),
-  limit: z.number().int().positive().max(100).default(20),
+  limit: z.number().int().positive().max(1000).default(20),
 });
 
 export const createCuentaPorCobrarSchema = z.object({

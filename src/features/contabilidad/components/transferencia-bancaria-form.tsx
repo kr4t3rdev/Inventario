@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -25,12 +25,11 @@ import {
 } from "@/components/ui/form"
 import { ArrowRightLeft, Loader2, Info } from "lucide-react"
 import { sileo } from '@/lib/sileo-shim'
-import { useAppDispatch } from "@/lib/redux/hooks"
-import { contabilidadApi, useGetCuentasBancariasQuery } from "@/features/contabilidad/api/contabilidadApi"
-import { TasaCambioDialog } from "./tasa-cambio-dialog"
-import { ValidacionTransferenciaDialog } from "./validacion-transferencia-dialog"
+import { getCuentasBancariasAction } from "@/features/contabilidad/actions-cuentas-bancarias"
+import { validarTransferenciaAction, createTransferenciaBancariaAction } from "@/features/contabilidad/actions"
+import { TasaCambioDialog } from "@/features/contabilidad/components/tasa-cambio-dialog"
 import { cn } from "@/lib/utils"
-import type { CuentaBancaria } from "../../app/models/model"
+import type { CuentaBancaria } from "@/app/models/model"
 
 const transferenciaBancariaSchema = z.object({
   cuentaOrigenId: z.string().min(1, "Debe seleccionar una cuenta origen"),
@@ -74,12 +73,16 @@ const outlineButtonClass = cn(
 );
 
 export function TransferenciaBancariaForm({ onSuccess, onCancel }: TransferenciaBancariaFormProps) {
-  const dispatch = useAppDispatch()
-  const { data: cuentasBancariasData = []  } = useGetCuentasBancariasQuery() 
+  const [cuentasBancarias, setCuentasBancarias] = useState<any[]>([])
   const [showTasaDialog, setShowTasaDialog] = useState(false)
-  const [showValidacionDialog, setShowValidacionDialog] = useState(false)
   const [validacionData, setValidacionData] = useState<any>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  useEffect(() => {
+    getCuentasBancariasAction().then(r => {
+      if (r.success) setCuentasBancarias(r.data?.cuentas ?? [])
+    })
+  }, [])
 
   const shouldReduceMotion = useReducedMotion()
 
@@ -114,8 +117,6 @@ export function TransferenciaBancariaForm({ onSuccess, onCancel }: Transferencia
       descripcion: "",
     },
   })
-  
-  const cuentasBancarias: CuentaBancaria[] = (cuentasBancariasData as any)?.cuentas || (cuentasBancariasData as CuentaBancaria[]) || []
 
   const cuentaOrigen = cuentasBancarias.find(c => c.cuentaId === form.watch("cuentaOrigenId"))
   const cuentaDestino = cuentasBancarias.find(c => c.cuentaId === form.watch("cuentaDestinoId"))
@@ -135,9 +136,15 @@ export function TransferenciaBancariaForm({ onSuccess, onCancel }: Transferencia
         descripcion: data.descripcion,
       }
 
-      const response = await dispatch(
-        contabilidadApi.endpoints.validarTransferencia.initiate(validacionRequest)
-      ).unwrap()
+      const response = await validarTransferenciaAction({
+        cuentaOrigenId: data.cuentaOrigenId,
+        cuentaDestinoId: data.cuentaDestinoId,
+        monto: Number(data.monto),
+        motivo: data.motivo,
+        descripcion: data.descripcion,
+      })
+
+      if (!response.success) throw new Error(response.error?.message || 'Error al validar')
 
       setValidacionData({
         ...validacionRequest,
@@ -149,40 +156,38 @@ export function TransferenciaBancariaForm({ onSuccess, onCancel }: Transferencia
       if (requiereConversion) {
         setShowTasaDialog(true)
       } else {
-        setShowValidacionDialog(true)
+        await ejecutarTransferencia(validacionData)
       }
     } catch (error: any) {
       sileo.error({ title: error?.data?.error || 'Error al validar la transferencia' })
     }
   }
 
-  const handleConfirmarTasa = (tasaCambio: number) => {
-    setShowTasaDialog(false)
-    setValidacionData((prev: any) => ({ ...prev, tasaCambio }))
-    setShowValidacionDialog(true)
-  }
-
-  const handleConfirmarTransferencia = async () => {
+  const ejecutarTransferencia = async (data: any) => {
     setIsSubmitting(true)
     try {
-      // Map to API expected payload
       const payload = {
-        cuentaOrigenId: validacionData.cuentaOrigenId,
-        cuentaDestinoId: validacionData.cuentaDestinoId,
-        montoOrigen: Number(validacionData.monto),
-        motivo: validacionData.motivo,
-        descripcion: validacionData.descripcion,
-        ...(validacionData.tasaCambio ? { tasaCambio: Number(validacionData.tasaCambio) } : {}),
-        monedaPrincipal: validacionData.monedaPrincipal
+        cuentaOrigenId: data.cuentaOrigenId,
+        cuentaDestinoId: data.cuentaDestinoId,
+        montoOrigen: Number(data.monto),
+        motivo: data.motivo,
+        descripcion: data.descripcion,
+        ...(data.tasaCambio ? { tasaCambio: Number(data.tasaCambio) } : {}),
+        monedaPrincipal: data.monedaPrincipal
       }
 
-      await dispatch(
-        contabilidadApi.endpoints.crearTransferencia.initiate(payload as any)
-      ).unwrap()
+      await createTransferenciaBancariaAction({
+        cuentaOrigenId: data.cuentaOrigenId,
+        cuentaDestinoId: data.cuentaDestinoId,
+        montoOrigen: Number(data.monto),
+        motivo: data.motivo,
+        descripcion: data.descripcion,
+        ...(data.tasaCambio ? { tasaCambio: Number(data.tasaCambio) } : {}),
+        monedaPrincipal: data.monedaPrincipal
+      })
 
       sileo.success({ title: 'Transferencia realizada exitosamente' })
       form.reset()
-      setShowValidacionDialog(false)
       setValidacionData(null)
       onSuccess?.()
     } catch (error: any) {
@@ -190,6 +195,13 @@ export function TransferenciaBancariaForm({ onSuccess, onCancel }: Transferencia
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  const handleConfirmarTasa = (tasaCambio: number) => {
+    setShowTasaDialog(false)
+    const data = { ...validacionData, tasaCambio }
+    setValidacionData(data)
+    ejecutarTransferencia(data)
   }
 
   const cuentasDisponibles = cuentasBancarias.filter(cuenta => cuenta.isActive)
@@ -413,20 +425,6 @@ export function TransferenciaBancariaForm({ onSuccess, onCancel }: Transferencia
           monedaDestino={cuentaDestino.moneda}
           monto={monto}
           onConfirm={handleConfirmarTasa}
-        />
-      )}
-
-      {/* Diálogo de validación de transferencia */}
-      {showValidacionDialog && validacionData && (
-        <ValidacionTransferenciaDialog
-          isOpen={showValidacionDialog}
-          onClose={() => {
-            setShowValidacionDialog(false)
-            setValidacionData(null)
-          }}
-          data={validacionData}
-          onConfirm={handleConfirmarTransferencia}
-          isLoading={isSubmitting}
         />
       )}
     </>

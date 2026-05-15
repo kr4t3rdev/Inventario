@@ -30,7 +30,7 @@ function LogsPageLoader() {
 }
 
 const AuditLogsTable = dynamic(
-  () => import('@/components/contabilidad/audit-logs-table').then((mod) => ({ default: mod.AuditLogsTable })),
+  () => import('@/features/contabilidad/components/audit-logs-table').then((mod) => ({ default: mod.AuditLogsTable })),
   {
     loading: () => <LogsPageLoader />,
   }

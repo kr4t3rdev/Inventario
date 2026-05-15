@@ -14,8 +14,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Loader2, AlertTriangle, CheckCircle, Save, X, CreditCard, AlignLeft, Power, Building2 } from "lucide-react"
 import { sileo } from '@/lib/sileo-shim'
-import { useGetCuentasBancariasQuery } from "@/features/contabilidad/api/contabilidadApi"
-import { CreateTipoPagoRequest, UpdateTipoPagoRequest, TipoPagoWithDetails, CuentaBancaria } from "../../app/models/model"
+import { getCuentasBancariasAction } from "@/features/contabilidad/actions-cuentas-bancarias"
+import { CreateTipoPagoRequest, UpdateTipoPagoRequest, TipoPagoWithDetails, CuentaBancaria } from "@/app/models/model"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 
@@ -48,11 +48,15 @@ interface TipoPagoFormProps {
 
 export function TipoPagoForm({ tipoPago, onSubmit, onCancel, isLoading = false, mode}: TipoPagoFormProps) {
   const [showAccountWarning, setShowAccountWarning] = useState(false)
-  
-  const { data: cuentasBancariasData, isLoading: loadingCuentas } = useGetCuentasBancariasQuery()
+  const [cuentasBancarias, setCuentasBancarias] = useState<any[]>([]);
+  const [loadingCuentas, setLoadingCuentas] = useState(true);
 
-  // El endpoint devuelve { cuentas } pero el tipo del query es CuentaBancaria[]
-  const cuentasBancarias = ((cuentasBancariasData as any)?.cuentas as CuentaBancaria[]) || []
+  useEffect(() => {
+    getCuentasBancariasAction().then(r => {
+      if (r.success) setCuentasBancarias(r.data?.cuentas ?? []);
+      setLoadingCuentas(false);
+    })
+  }, [])
 
 
   const form = useForm<TipoPagoFormData>({

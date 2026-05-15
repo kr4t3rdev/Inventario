@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Table,
   TableBody,
@@ -21,7 +21,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { CalendarIcon, Download, Filter } from "lucide-react"
-import { useGetHistorialTasasQuery, useGetMonedasQuery } from "@/features/contabilidad/api/contabilidadApi"
+import { getMonedasAction, getHistorialTasasAction } from "@/features/contabilidad/actions-exchange"
 import { format, isValid } from "date-fns"
 import { toast } from "sonner"
 
@@ -44,44 +44,38 @@ export function HistorialTasasTable() {
   const [paginaActual, setPaginaActual] = useState(1)
   const [mostrarFiltros, setMostrarFiltros] = useState(false)
 
-  const { data: monedasData = [] } = useGetMonedasQuery()
-  const {
-    data: historialData,
-    isLoading,
-    error
-  } = useGetHistorialTasasQuery({
-    ...filtros,
-    pagina: paginaActual,
-    limite: 20,
-  })
+  const [monedasData, setMonedasData] = useState<any[]>([])
+  const [historialData, setHistorialData] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<any>(null)
 
- const monedas = Array.isArray(monedasData) ? monedasData : Array.isArray((monedasData as any)?.data) ? (monedasData as any)?.data : Object.values(monedasData ?? [])
-  const historial = Array.isArray(historialData) ? historialData : Array.isArray((historialData as any)?.data) ? (historialData as any)?.data : Object.values(historialData ?? [])
+  useEffect(() => {
+    getMonedasAction().then(r => { if (r.success) setMonedasData(r.data ?? []) })
+  }, [])
 
-  const historialArray = Array.isArray(historial)
-    ? historial
-    : Array.isArray((historial as any)?.data)
-    ? (historial as any).data
-    : (typeof historial === "object" ? Object.values(historial) : [])
+  useEffect(() => {
+    setIsLoading(true); setError(null)
+    getHistorialTasasAction({
+      monedaOrigen: filtros.monedaOrigen,
+      fechaDesde: filtros.fechaDesde,
+      fechaHasta: filtros.fechaHasta,
+      busqueda: filtros.busqueda,
+      pagina: paginaActual,
+      limite: 20,
+    }).then(r => {
+      if (r.success) { setHistorialData(r.data); setIsLoading(false) }
+      else { setError(r.error); setIsLoading(false) }
+    }).catch(e => { setError(e); setIsLoading(false) })
+  }, [filtros, paginaActual])
 
-  // Construir una lista plana de registros desde posibles formas de respuesta
-  const registros: any[] = (Array.isArray(historialArray) ? historialArray : [])
-    .flatMap((entrada: any) => {
-      if (!entrada) return []
-      if (Array.isArray(entrada)) return entrada
-      if (entrada?.historial) return entrada.historial
-      return [entrada]
-    })
-    .filter(Boolean)
+  const monedas = Array.isArray(monedasData) ? monedasData : []
+  const registros: any[] = Array.isArray(historialData?.tasas) ? historialData.tasas : []
+  const historialArray = historialData?.tasas ?? []
 
-  // Filtro por moneda origen (por código o id) si está seleccionado
   const registrosFiltrados = filtros.monedaOrigen && filtros.monedaOrigen !== "all"
-    ? historialArray[1]?.historial?.filter((r: any) =>
-        String(r?.monedaOrigenId) === String(filtros.monedaOrigen) ||
-        String(r?.monedaOrigen) === String(filtros.monedaOrigen) ||
-        String(r?.monedaOrigenCodigo) === String(filtros.monedaOrigen)
-      )
-    : historialArray[1]?.historial || []
+    ? registros.filter((r: any) =>
+        String(r?.monedaOrigenId) === String(filtros.monedaOrigen))
+    : registros
 
   const totalPaginas = Math.ceil((historialData?.total || 0) / 20)
 

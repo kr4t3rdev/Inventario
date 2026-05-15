@@ -12,7 +12,7 @@ import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 
 // Dynamic imports with skeleton loaders
 const TiposPagoConfigPage = dynamic(
-  () => import('@/components/contabilidad/tipos-pago-config-page').then((mod) => ({ default: mod.TiposPagoConfigPage })),
+  () => import('@/features/contabilidad/components/tipos-pago-config-page').then((mod) => ({ default: mod.TiposPagoConfigPage })),
   {
     loading: () => (
       <div className="w-full space-y-4 rounded-xl border border-slate-200/60 bg-white/40 p-6 backdrop-blur-sm dark:border-slate-800/60 dark:bg-slate-950/40">
