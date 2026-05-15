@@ -39,8 +39,8 @@ export function CapitalPageClient() {
             <TabsTrigger value="new" className="data-[state=active]:bg-white dark:data-[state=active]:bg-slate-950 data-[state=active]:shadow-sm"><Plus className="h-4 w-4 mr-2" />Nueva Inyección</TabsTrigger>
           </TabsList>
           <AnimatePresence mode="wait">
-            <TabsContent value="list" className="mt-0"><CapitalTable /></TabsContent>
-            <TabsContent value="new" className="mt-0">
+            <TabsContent key="list" value="list" className="mt-0"><CapitalTable /></TabsContent>
+            <TabsContent key="new" value="new" className="mt-0">
               <CapitalForm onSuccess={() => setActiveTab("list")} />
             </TabsContent>
           </AnimatePresence>

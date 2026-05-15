@@ -431,7 +431,7 @@ export default function AnalisisCuentaClientePage() {
                               <TableRow>
                                 <TableCell colSpan={6} className="text-center py-4">Cargando facturas...</TableCell>
                               </TableRow>
-                            ) : facturasData?.facturas.map((factura: any) => (
+                            ) : facturasData?.facturas?.map((factura: any) => (
                               <TableRow key={factura.idFactura}>
                                 <TableCell className="font-medium">{factura.numeroFactura}</TableCell>
                                 <TableCell>{format(new Date(factura.fechaEmision), 'dd/MM/yyyy')}</TableCell>

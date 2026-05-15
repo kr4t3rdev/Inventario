@@ -187,7 +187,7 @@ export function TenantUsersPage() {
             </div>
             <div>
               {/* Breadcrumb */}
-              <nav className="mb-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+              {/* <nav className="mb-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
                 <Link href="/busy/dashboard" className="hover:text-foreground transition-colors">
                   Dashboard
                 </Link>
@@ -197,7 +197,7 @@ export function TenantUsersPage() {
                 </Link>
                 <ChevronRight className="h-3 w-3" />
                 <span className="text-foreground font-medium">Usuarios</span>
-              </nav>
+              </nav> */}
               <h1 className="text-2xl font-bold bg-linear-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-300 bg-clip-text text-transparent">
                 Gestión de Usuarios
               </h1>

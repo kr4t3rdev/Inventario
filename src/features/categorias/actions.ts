@@ -128,8 +128,10 @@ export const getCategoriaByIdAction = withAction(async (catId: string, user: Aut
   return categoria;
 });
 
-export const getCategoriaHierarchyAction = withAction(async (_input: void, _user: AuthenticatedUser) => {
+export const getCategoriaHierarchyAction = withAction(async (_input: void, user: AuthenticatedUser) => {
+  const tenantId = requireTenant(user);
   const categorias = await prisma.categoria.findMany({
+    where: { tenantId },
     select: HIERARCHY_SELECT,
   });
   const rootCategories = categorias.filter((cat) => !cat.parentId);

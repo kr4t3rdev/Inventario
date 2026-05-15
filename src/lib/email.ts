@@ -59,7 +59,7 @@ export async function sendEmailVerificationLink(
   verificationUrl: string,
   userName: string,
 ): Promise<void> {
-  const appName = process.env.NEXT_PUBLIC_APP_NAME || 'Sistema de Inventario'
+  const appName = process.env.NEXT_PUBLIC_APP_NAME || 'Sistema de Gestion FinanceMDM'
 
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; padding: 24px; color: #0f172a;">

@@ -159,6 +159,11 @@ describe('Categorias Server Actions', () => {
 
       expect(result.success).toBe(true);
       expect(result.data).toBeDefined();
+      expect(prisma.categoria.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { tenantId: 'tenant-test' },
+        })
+      );
     });
   });
 
