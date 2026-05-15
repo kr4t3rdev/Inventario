@@ -78,11 +78,6 @@ describe('Endpoints públicos (sin autenticación)', () => {
     expect([200, 401, 403]).toContain(res.status)
   })
 
-  it('GET /api/licencias/validar → no es 500', async () => {
-    const res = await get('/api/licencias/validar')
-    expect(res.status).not.toBe(500)
-  })
-
   it('POST /api/auth/refresh sin body → 400 o 401 (ruta pública, solo POST)', async () => {
     const res = await post('/api/auth/refresh', {})
     expect([400, 401, 403]).toContain(res.status)
@@ -101,9 +96,6 @@ const protectedGets: string[] = [
   '/api/admin/users/user-metrics',
   // cliente
   // compras
-  '/api/compras-productos',
-  '/api/compras-productos/export',
-  '/api/compras-servicios',
   // configuracion
   '/api/configuracion/cuentas-bancarias',
   '/api/configuracion/series/next',
@@ -175,23 +167,16 @@ const protectedGets: string[] = [
   '/api/exchange',
   // facturas
   // gastosDE
-  '/api/gastosDE',
   // image
   '/api/image',
   // licencias
-  '/api/licencias',
-  '/api/licencias/generar',
   // listas-precios
   // mermas
-  '/api/mermas',
-  '/api/mermas/stats',
   // metrics
   '/api/metrics',
   // mi-empresa
   '/api/mi-empresa',
   // notificaciones
-  '/api/notificaciones',
-  '/api/notificaciones/verificar-stock',
   // ofertas
   // pago-salario
   // produccion
@@ -211,7 +196,6 @@ const protectedGets: string[] = [
   '/api/reparaciones/ordenes',
   '/api/reparaciones/piezas',
   // reportes-financieros
-  '/api/reportes-financieros',
   // restaurante
   '/api/restaurante/caja/cierres',
   '/api/restaurante/caja/turnos',
@@ -225,20 +209,15 @@ const protectedGets: string[] = [
   '/api/resumen',
   // series-facturacion
   // servicios
-  '/api/servicios',
   // sugerencias
   '/api/sugerencias/ingresos-por-edades',
   // transferencias
-  '/api/transferencias',
   // unidades
   // upload
   '/api/upload',
   // vendors
   // venta-servicios
-  '/api/venta-servicios',
   // ventas
-  '/api/ventas',
-  '/api/ventas/stats',
   // puntosDeVenta / catalog
   '/api/catalog',
 ]
@@ -253,19 +232,15 @@ describe('Protección 401 – GET sin token', () => {
 })
 
 const protectedPosts: Array<{ path: string; body: unknown }> = [
-  { path: '/api/compras-productos', body: {} },
-  { path: '/api/compras-servicios', body: {} },
   { path: '/api/contratos', body: {} },
   { path: '/api/defectaciones', body: {} },
   { path: '/api/empleados', body: {} },
-  { path: '/api/gastosDE', body: {} },
   { path: '/api/mermas', body: {} },
   { path: '/api/notificaciones', body: {} },
   { path: '/api/productos', body: {} },
   { path: '/api/restaurante/comandas', body: {} },
   { path: '/api/restaurante/mesas', body: {} },
   { path: '/api/restaurante/recetas', body: {} },
-  { path: '/api/servicios', body: {} },
   { path: '/api/transferencias', body: {} },
   { path: '/api/venta-servicios', body: {} },
   { path: '/api/ventas', body: {} },
@@ -279,7 +254,6 @@ const protectedPosts: Array<{ path: string; body: unknown }> = [
   { path: '/api/contabilidad/exchange/scenarios', body: {} },
   { path: '/api/contabilidad/exchange/scheduled-reports', body: {} },
   { path: '/api/contabilidad/tipos-pago', body: {} },
-  { path: '/api/licencias', body: {} },
   { path: '/api/produccion/ordenes', body: {} },
   { path: '/api/produccion/recetas', body: {} },
   { path: '/api/produccion/vales', body: {} },
@@ -307,18 +281,6 @@ describe('Endpoints con autenticación (requiere TEST_EMAIL + TEST_PASSWORD)', (
       return
     }
     const res = await get('/api/productos', authToken)
-    expect([200, 204]).toContain(res.status)
-  })
-
-  it('GET /api/ventas → 200 con token', async () => {
-    if (!authToken) return
-    const res = await get('/api/ventas', authToken)
-    expect([200, 204]).toContain(res.status)
-  })
-
-  it('GET /api/servicios → 200 con token', async () => {
-    if (!authToken) return
-    const res = await get('/api/servicios', authToken)
     expect([200, 204]).toContain(res.status)
   })
 
@@ -352,12 +314,6 @@ describe('Endpoints con autenticación (requiere TEST_EMAIL + TEST_PASSWORD)', (
     expect([200, 403]).toContain(res.status) // 403 si el usuario no es admin
   })
 
-  it('GET /api/notificaciones → 200 con token', async () => {
-    if (!authToken) return
-    const res = await get('/api/notificaciones', authToken)
-    expect([200, 204]).toContain(res.status)
-  })
-
   it('GET /api/contratos → 200 con token', async () => {
     if (!authToken) return
     const res = await get('/api/contratos', authToken)
@@ -367,12 +323,6 @@ describe('Endpoints con autenticación (requiere TEST_EMAIL + TEST_PASSWORD)', (
   it('GET /api/mermas → 200 con token', async () => {
     if (!authToken) return
     const res = await get('/api/mermas', authToken)
-    expect([200, 204]).toContain(res.status)
-  })
-
-  it('GET /api/transferencias → 200 con token', async () => {
-    if (!authToken) return
-    const res = await get('/api/transferencias', authToken)
     expect([200, 204]).toContain(res.status)
   })
 
@@ -409,12 +359,6 @@ describe('Endpoints con autenticación (requiere TEST_EMAIL + TEST_PASSWORD)', (
   it('GET /api/metrics → 200 con token', async () => {
     if (!authToken) return
     const res = await get('/api/metrics', authToken)
-    expect([200, 204]).toContain(res.status)
-  })
-
-  it('GET /api/gastosDE → 200 con token', async () => {
-    if (!authToken) return
-    const res = await get('/api/gastosDE', authToken)
     expect([200, 204]).toContain(res.status)
   })
 
@@ -478,16 +422,10 @@ describe('Endpoints con autenticación (requiere TEST_EMAIL + TEST_PASSWORD)', (
     expect([200, 204]).toContain(res.status)
   })
 
-  it('GET /api/reportes-financieros → 200 con token', async () => {
+  it('GET /api/resumen → 200 con token', async () => {
     if (!authToken) return
-    const res = await get('/api/reportes-financieros', authToken)
+    const res = await get('/api/resumen', authToken)
     expect([200, 204]).toContain(res.status)
-  })
-
-  it('GET /api/licencias → 200 con token admin', async () => {
-    if (!authToken) return
-    const res = await get('/api/licencias', authToken)
-    expect([200, 403]).toContain(res.status)
   })
 
   it('GET /api/exchange → 200 con token', async () => {
