@@ -4,17 +4,13 @@ import { MoonIcon, SunIcon } from "lucide-react"
 import { useTheme } from "next-themes"
 
 import { Button } from "@/components/ui/button"
-import { useDispatch } from "react-redux"
-import { setThemeMode } from "@/lib/redux/slices/themeSlice"
 
 export function ThemeToggle() {
   const { setTheme, resolvedTheme } = useTheme()
-  const dispatch = useDispatch()
 
   const toggleTheme = () => {
     const newTheme = resolvedTheme === 'dark' ? 'light' : 'dark'
     setTheme(newTheme)
-    dispatch(setThemeMode(newTheme))
   }
 
   return (

@@ -29,8 +29,6 @@ import { usePuntosDeVenta } from "@/features/puntos-venta/hooks/use-puntos-de-ve
 import { useAlmacenes } from "@/features/almacenes/hooks/use-almacenes"
 import { getProductosAction } from "@/features/productos"
 import { getStockPorUbicacionAction } from "@/features/productos/actions"
-import { useDispatch } from "react-redux"
-import { apiSlice } from "@/lib/redux/services/apiSlice"
 
 const productoTransferenciaSchema = z.object({
   productoId: z.string({
@@ -355,7 +353,6 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
   const [productoSearch, setProductoSearch] = useState("")
   const [showOutOfStock, setShowOutOfStock] = useState(false)
   const [minStockAlert, setMinStockAlert] = useState<string | null>(null)
-  const dispatch = useDispatch()
   const isEdit = Boolean(initialData)
 
   const debouncedSearch = useDebounce(productoSearch, 300)
@@ -486,9 +483,6 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
         const errorData = await response.json()
         throw new Error(errorData.message || errorData.error || "Error al guardar la transferencia")
       }
-
-      dispatch(apiSlice.util.invalidateTags(['Notificaciones']))
-      dispatch(apiSlice.util.invalidateTags(['Productos']))
 
       sileo.success({ title: `La transferencia de ${data.productos.length} producto(s) ha sido ${initialData ? "actualizada" : "registrada"} exitosamente.` })
 

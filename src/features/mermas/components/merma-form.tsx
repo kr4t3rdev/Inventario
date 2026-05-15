@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import { useDispatch } from "react-redux"
 import { motion } from "framer-motion"
 import { AlertTriangle, Sparkles, Loader2 } from "lucide-react"
 
@@ -48,7 +47,6 @@ interface MermaFormProps {
 export function MermaForm({ initialData }: MermaFormProps) {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
-  const dispatch = useDispatch()
   const { productos, isLoading: isLoadingProductos } = useProductos()
 
 
@@ -78,8 +76,6 @@ export function MermaForm({ initialData }: MermaFormProps) {
         if (!result.success) throw new Error(result.error)
         sileo.success({ title: 'La merma ha sido registrada exitosamente.' })
       }
-
-      dispatch(apiSlice.util.invalidateTags(['Notificaciones'])) 
 
       router.push("/busy/mermas")
       router.refresh()
