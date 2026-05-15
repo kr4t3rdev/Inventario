@@ -101,10 +101,6 @@ const protectedGets: string[] = [
   '/api/admin/users/user-metrics',
   // almacenes
   '/api/almacenes',
-  // catalog / categorias
-  '/api/categorias',
-  '/api/categorias/hierarchy',
-  '/api/categorias/validate',
   // cliente
   '/api/cliente',
   // compras
@@ -270,7 +266,6 @@ describe('Protección 401 – GET sin token', () => {
 
 const protectedPosts: Array<{ path: string; body: unknown }> = [
   { path: '/api/almacenes', body: {} },
-  { path: '/api/categorias', body: {} },
   { path: '/api/cliente', body: {} },
   { path: '/api/compras-productos', body: {} },
   { path: '/api/compras-servicios', body: {} },
@@ -339,12 +334,6 @@ describe('Endpoints con autenticación (requiere TEST_EMAIL + TEST_PASSWORD)', (
   it('GET /api/ventas → 200 con token', async () => {
     if (!authToken) return
     const res = await get('/api/ventas', authToken)
-    expect([200, 204]).toContain(res.status)
-  })
-
-  it('GET /api/categorias → 200 con token', async () => {
-    if (!authToken) return
-    const res = await get('/api/categorias', authToken)
     expect([200, 204]).toContain(res.status)
   })
 
