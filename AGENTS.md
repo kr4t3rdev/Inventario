@@ -16,8 +16,8 @@ Características principales:
 Stack tecnológico:
 
 - **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS, Radix UI, Shadcn/ui
-- **Backend**: Next.js API Routes, Prisma ORM, PostgreSQL
-- **Estado**: Redux Toolkit, React Query
+- **Backend**: Next.js Server Actions, Next.js API Routes (legacy), Prisma ORM, PostgreSQL
+- **Estado**: React `useState`/`useReducer` (server actions reemplazan Redux/RTK Query)
 - **Validación**: Zod
 - **Testing**: Vitest
 
@@ -68,7 +68,8 @@ Stack tecnológico:
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { useGetVentasQuery } from "@/lib/redux/services/ventasApi"
+import { getVentasAction } from "@/features/ventas/actions"
+import { Venta } from "@/app/models/model"
 ```
 
 ### Formatting
@@ -111,7 +112,113 @@ interface Venta {
 - Registra errores con `console.error` incluyendo contexto.
 - Devuelve códigos HTTP apropiados: 400 (bad request), 401 (unauthorized), 403 (forbidden), 404 (not found), 500 (server error).
 - Usa Zod para validación de esquemas de entrada.
-- En React, usa estados de error con React Query o Toast notifications.
+- En React, usa estados de error con Toast notifications.
+
+## Server Action Pattern (Recomendado)
+
+Para nuevas features o migraciones de RTK Query, usar Server Actions con el wrapper `withAction`:
+
+### Definir una Server Action
+
+```typescript
+'use server';
+
+import { withAction, ActionError } from '@/lib/server-actions';
+import { prisma } from '@/lib/prisma';
+import { requireTenant } from '@/lib/services/tenant-scope';
+import type { AuthenticatedUser } from '@/lib/auth-middleware';
+
+// Query
+export const getItemsAction = withAction(async (params: { page?: number; limit?: number } = {}, user: AuthenticatedUser) => {
+  const tenantId = requireTenant(user);
+  const items = await prisma.item.findMany({
+    where: { tenantId },
+    orderBy: { createdAt: 'desc' },
+  });
+  return { items, total: items.length };
+});
+
+// Mutation con validación Zod
+const createSchema = z.object({
+  nombre: z.string().min(1),
+  monto: z.number().positive(),
+});
+
+export const createItemAction = withAction(async (input: z.infer<typeof createSchema>, user: AuthenticatedUser) => {
+  const parsed = createSchema.parse(input);
+  const tenantId = requireTenant(user);
+  // Lógica de negocio (validaciones, etc.)
+  const existing = await prisma.item.findFirst({ where: { nombre: parsed.nombre, tenantId } });
+  if (existing) throw new ActionError('Ya existe un ítem con ese nombre', 'DUPLICATE');
+  // Crear
+  const item = await prisma.item.create({ data: { ...parsed, tenantId } });
+  revalidatePath('/busy/ruta');
+  return { item };
+});
+
+// Mutation sin body (solo id)
+export const deleteItemAction = withAction(async (id: string, user: AuthenticatedUser) => {
+  const tenantId = requireTenant(user);
+  const item = await prisma.item.findFirst({ where: { id, tenantId } });
+  if (!item) throw new ActionError('Ítem no encontrado', 'NOT_FOUND');
+  await prisma.item.delete({ where: { id } });
+  revalidatePath('/busy/ruta');
+  return { success: true };
+});
+```
+
+### Usar en un Componente Cliente
+
+```typescript
+'use client';
+import { useState, useEffect } from 'react';
+import { getItemsAction } from '@/features/<feature>/actions';
+
+export function ItemsList() {
+  const [items, setItems] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    getItemsAction({ page: 1, limit: 50 })
+      .then(r => {
+        if (r.success) { setItems(r.data?.items ?? []); setIsLoading(false); }
+        else { setError(r.error); setIsLoading(false); }
+      })
+      .catch(e => { setError(e); setIsLoading(false); });
+  }, []);
+  // ...
+}
+```
+
+### Para mutations con feedback
+
+```typescript
+const handleSubmit = async (data: FormData) => {
+  setIsSubmitting(true);
+  try {
+    const r = await createItemAction(data);
+    if (!r.success) throw new Error(r.error?.message || 'Error');
+    toast.success('Creado exitosamente');
+    refetch(); // o setRefreshKey(k => k + 1)
+  } catch (err) {
+    toast.error(err.message);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+```
+
+### Reglas
+
+- Las Server Actions se definen con `'use server'` al inicio del archivo.
+- Usar `withAction` wrapper (no raw `'use server'` functions).
+- `withAction` maneja auth automáticamente, requiere `requireTenant()` para multi-tenant.
+- El wrapper retorna `{ success: true, data: T }` o `{ success: false, error: { message, code? } }`.
+- Para auditoría, usar `AuditLogService.log()`.
+- `revalidatePath()` después de mutations para refrescar caché de Next.js.
+- Archivos de actions van en `src/features/<feature>/actions*.ts`.
+- NO usar Redux/RTK Query para nuevas features.
 
 ### General Best Practices
 
@@ -139,10 +246,28 @@ export function LoginForm({ onSubmit }: LoginFormProps): JSX.Element {
 ## Architecture
 
 - **Patrón**: MVC con separación clara entre componentes, servicios y utilidades.
-- **API Routes**: Siguen patrón RESTful, usan `withAuthGet`/`withAuthPost` wrappers.
+- **Server Actions**: Preferir Server Actions (`withAction` wrapper en `src/lib/server-actions/`) sobre API Routes para operaciones CRUD y queries. Las Server Actions se ejecutan en el servidor, manejan autenticación automáticamente y retornan `{ success, data?, error? }`.
+- **API Routes**: Solo para exportación de archivos (CSV/PDF) o integraciones externas que necesiten endpoints HTTP públicos.
 - **Prisma**: Usar `prisma.model.findMany/unique/create/update/delete`.
-- **Redux Toolkit**: API slices en `src/lib/redux/services/`.
-- **Consultas server-side**: Usar React Query para data fetching.
+- **Redux Toolkit**: NO usar para nuevos features. Reemplazar progresivamente donde exista. El estado del servidor se maneja con Server Actions + `useState`/`useEffect` en el cliente.
+- **Data Fetching en cliente**: Llamar Server Actions directamente desde `useEffect` o event handlers. No usar RTK Query ni React Query.
+
+### Estructura de Feature
+
+Cada feature sigue esta estructura dentro de `src/features/<feature>/`:
+
+```
+src/features/<feature>/
+├── actions.ts              # Server Actions (withAction)
+├── actions-<subfeature>.ts # Server Actions agrupadas por subdominio
+├── components/             # Componentes React del feature
+│   ├── <Componente>.tsx
+│   └── ...
+├── hooks/                  # Custom hooks (opcional)
+├── api/                    # API Handlers (solo si es necesario, legacy)
+│   └── handlers.ts
+└── index.ts                # Barrel export
+```
 
 ## Testing
 
@@ -153,7 +278,9 @@ export function LoginForm({ onSubmit }: LoginFormProps): JSX.Element {
 - Usa `@testing-library/react` para componentes.
 - Implementa accessibility testing con `vitest-axe`.
 
-## API Development
+## API Development (Legacy)
+
+Para nuevas features, usar Server Actions. Solo usar API Routes cuando sea estrictamente necesario (exportación de archivos, webhooks, integraciones externas).
 
 - API routes en `src/app/api/<recurso>/route.ts`.
 - Usa los middlewares de autenticación: `withAuthGet`, `withAuthPost`, `withAuth`.

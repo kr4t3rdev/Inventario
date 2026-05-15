@@ -17,18 +17,10 @@ export const getReconciliacionStatsAction = withAction(async (_input: void, user
   const manana = new Date(hoy); manana.setDate(manana.getDate() + 1);
 
   const [vp, sp, gp, vh, sh, gh, montoHoy, act] = await Promise.all([
-    prisma.reconciliacionVenta.count({
-  // @ts-expect-error
-    where: { cuentaId: null, tenantId }
-    }),
-    prisma.reconciliacionServicio.count({
-  // @ts-expect-error
-    where: { cuentaId: null, tenantId }
-    }),
-    prisma.reconciliacionGasto.count({
-  // @ts-expect-error
-    where: { cuentaId: null, tenantId }
-    }),
+    // Pendientes: registros fuente sin reconciliación asignada
+    prisma.venta.count({ where: { tenantId, reconciliaciones: { none: {} } } }),
+    prisma.ventaServicios.count({ where: { tenantId, NOT: { reconciliado: true } } }),
+    prisma.gastosDE.count({ where: { tenantId, reconciliaciones: { none: {} } } }),
     prisma.reconciliacionVenta.count({ where: { fechaReconciliacion: { gte: hoy, lt: manana }, tenantId } }),
     prisma.reconciliacionServicio.count({ where: { fechaReconciliacion: { gte: hoy, lt: manana }, tenantId } }),
     prisma.reconciliacionGasto.count({ where: { fechaReconciliacion: { gte: hoy, lt: manana }, tenantId } }),

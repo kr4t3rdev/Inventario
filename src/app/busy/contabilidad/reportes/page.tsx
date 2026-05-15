@@ -116,14 +116,14 @@ export default function ReportesPage() {
       <SidebarInset className="bg-background">
         <motion.div className="space-y-8 p-8" variants={fadeIn} initial="hidden" animate="show">
           <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-            <div className="absolute inset-0 bg-linear-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950" />
+            <div className="absolute inset-0 bg-linear-to-b from-slate-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-900" />
             <div className="absolute -top-24 right-[-8%] h-72 w-72 rounded-full bg-blue-500/10 blur-3xl" />
             <div className="absolute bottom-0 left-[-8%] h-72 w-72 rounded-full bg-emerald-500/10 blur-3xl" />
           </div>
 
-          <motion.div variants={fadeInUp}>
+          {/* <motion.div variants={fadeInUp}>
             <ContabilidadBreadcrumb />
-          </motion.div>
+          </motion.div> */}
 
           <motion.div
             variants={fadeInUp}
