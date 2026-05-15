@@ -99,10 +99,7 @@ const protectedGets: string[] = [
   '/api/admin/users/expiring-soon',
   '/api/admin/users/export',
   '/api/admin/users/user-metrics',
-  // almacenes
-  '/api/almacenes',
   // cliente
-  '/api/cliente',
   // compras
   '/api/compras-productos',
   '/api/compras-productos/export',
@@ -162,7 +159,6 @@ const protectedGets: string[] = [
   // contratos
   '/api/contratos',
   // cuadre-diario
-  '/api/cuadre-diario',
   // dashboard
   '/api/dashboard/stats',
   '/api/dashboard/wanda',
@@ -178,7 +174,6 @@ const protectedGets: string[] = [
   // exchange
   '/api/exchange',
   // facturas
-  '/api/facturas',
   // gastosDE
   '/api/gastosDE',
   // image
@@ -187,7 +182,6 @@ const protectedGets: string[] = [
   '/api/licencias',
   '/api/licencias/generar',
   // listas-precios
-  '/api/listas-precios',
   // mermas
   '/api/mermas',
   '/api/mermas/stats',
@@ -199,9 +193,7 @@ const protectedGets: string[] = [
   '/api/notificaciones',
   '/api/notificaciones/verificar-stock',
   // ofertas
-  '/api/ofertas',
   // pago-salario
-  '/api/pago-salario',
   // produccion
   '/api/produccion/conceptos',
   '/api/produccion/ordenes',
@@ -212,7 +204,6 @@ const protectedGets: string[] = [
   '/api/productos/restock',
   '/api/productos/stock-ubicacion',
   // profile
-  '/api/profile',
   // reparaciones
   '/api/reparaciones/catalogo/config',
   '/api/reparaciones/defectaciones',
@@ -233,7 +224,6 @@ const protectedGets: string[] = [
   // resumen
   '/api/resumen',
   // series-facturacion
-  '/api/series-facturacion',
   // servicios
   '/api/servicios',
   // sugerencias
@@ -241,11 +231,9 @@ const protectedGets: string[] = [
   // transferencias
   '/api/transferencias',
   // unidades
-  '/api/unidades',
   // upload
   '/api/upload',
   // vendors
-  '/api/vendors',
   // venta-servicios
   '/api/venta-servicios',
   // ventas
@@ -265,29 +253,20 @@ describe('Protección 401 – GET sin token', () => {
 })
 
 const protectedPosts: Array<{ path: string; body: unknown }> = [
-  { path: '/api/almacenes', body: {} },
-  { path: '/api/cliente', body: {} },
   { path: '/api/compras-productos', body: {} },
   { path: '/api/compras-servicios', body: {} },
   { path: '/api/contratos', body: {} },
   { path: '/api/defectaciones', body: {} },
   { path: '/api/empleados', body: {} },
-  { path: '/api/facturas', body: {} },
   { path: '/api/gastosDE', body: {} },
-  { path: '/api/listas-precios', body: {} },
   { path: '/api/mermas', body: {} },
   { path: '/api/notificaciones', body: {} },
-  { path: '/api/ofertas', body: {} },
-  { path: '/api/pago-salario', body: {} },
   { path: '/api/productos', body: {} },
   { path: '/api/restaurante/comandas', body: {} },
   { path: '/api/restaurante/mesas', body: {} },
   { path: '/api/restaurante/recetas', body: {} },
-  { path: '/api/series-facturacion', body: {} },
   { path: '/api/servicios', body: {} },
   { path: '/api/transferencias', body: {} },
-  { path: '/api/unidades', body: {} },
-  { path: '/api/vendors', body: {} },
   { path: '/api/venta-servicios', body: {} },
   { path: '/api/ventas', body: {} },
   { path: '/api/contabilidad/transferencias', body: {} },
@@ -337,51 +316,15 @@ describe('Endpoints con autenticación (requiere TEST_EMAIL + TEST_PASSWORD)', (
     expect([200, 204]).toContain(res.status)
   })
 
-  it('GET /api/clientes → 200 con token', async () => {
-    if (!authToken) return
-    const res = await get('/api/cliente', authToken)
-    expect([200, 204]).toContain(res.status)
-  })
-
-  it('GET /api/almacenes → 200 con token', async () => {
-    if (!authToken) return
-    const res = await get('/api/almacenes', authToken)
-    expect([200, 204]).toContain(res.status)
-  })
-
-  it('GET /api/unidades → 200 con token', async () => {
-    if (!authToken) return
-    const res = await get('/api/unidades', authToken)
-    expect([200, 204]).toContain(res.status)
-  })
-
   it('GET /api/servicios → 200 con token', async () => {
     if (!authToken) return
     const res = await get('/api/servicios', authToken)
     expect([200, 204]).toContain(res.status)
   })
 
-  it('GET /api/vendors → 200 con token', async () => {
-    if (!authToken) return
-    const res = await get('/api/vendors', authToken)
-    expect([200, 204]).toContain(res.status)
-  })
-
   it('GET /api/empleados → 200 con token', async () => {
     if (!authToken) return
     const res = await get('/api/empleados', authToken)
-    expect([200, 204]).toContain(res.status)
-  })
-
-  it('GET /api/facturas → 200 con token', async () => {
-    if (!authToken) return
-    const res = await get('/api/facturas', authToken)
-    expect([200, 204]).toContain(res.status)
-  })
-
-  it('GET /api/ofertas → 200 con token', async () => {
-    if (!authToken) return
-    const res = await get('/api/ofertas', authToken)
     expect([200, 204]).toContain(res.status)
   })
 
@@ -421,12 +364,6 @@ describe('Endpoints con autenticación (requiere TEST_EMAIL + TEST_PASSWORD)', (
     expect([200, 204]).toContain(res.status)
   })
 
-  it('GET /api/listas-precios → 200 con token', async () => {
-    if (!authToken) return
-    const res = await get('/api/listas-precios', authToken)
-    expect([200, 204]).toContain(res.status)
-  })
-
   it('GET /api/mermas → 200 con token', async () => {
     if (!authToken) return
     const res = await get('/api/mermas', authToken)
@@ -436,12 +373,6 @@ describe('Endpoints con autenticación (requiere TEST_EMAIL + TEST_PASSWORD)', (
   it('GET /api/transferencias → 200 con token', async () => {
     if (!authToken) return
     const res = await get('/api/transferencias', authToken)
-    expect([200, 204]).toContain(res.status)
-  })
-
-  it('GET /api/series-facturacion → 200 con token', async () => {
-    if (!authToken) return
-    const res = await get('/api/series-facturacion', authToken)
     expect([200, 204]).toContain(res.status)
   })
 
@@ -475,12 +406,6 @@ describe('Endpoints con autenticación (requiere TEST_EMAIL + TEST_PASSWORD)', (
     expect([200, 204]).toContain(res.status)
   })
 
-  it('GET /api/profile → 200 con token', async () => {
-    if (!authToken) return
-    const res = await get('/api/profile', authToken)
-    expect([200, 204]).toContain(res.status)
-  })
-
   it('GET /api/metrics → 200 con token', async () => {
     if (!authToken) return
     const res = await get('/api/metrics', authToken)
@@ -496,12 +421,6 @@ describe('Endpoints con autenticación (requiere TEST_EMAIL + TEST_PASSWORD)', (
   it('GET /api/defectaciones → 200 con token', async () => {
     if (!authToken) return
     const res = await get('/api/defectaciones', authToken)
-    expect([200, 204]).toContain(res.status)
-  })
-
-  it('GET /api/pago-salario → 200 con token', async () => {
-    if (!authToken) return
-    const res = await get('/api/pago-salario', authToken)
     expect([200, 204]).toContain(res.status)
   })
 
@@ -556,12 +475,6 @@ describe('Endpoints con autenticación (requiere TEST_EMAIL + TEST_PASSWORD)', (
   it('GET /api/resumen → 200 con token', async () => {
     if (!authToken) return
     const res = await get('/api/resumen', authToken)
-    expect([200, 204]).toContain(res.status)
-  })
-
-  it('GET /api/cuadre-diario → 200 con token', async () => {
-    if (!authToken) return
-    const res = await get('/api/cuadre-diario', authToken)
     expect([200, 204]).toContain(res.status)
   })
 

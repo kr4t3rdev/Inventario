@@ -7,9 +7,6 @@ export {
   deleteClienteAction,
 } from './actions';
 
-// API Handlers (legacy)
-export { getClientesHandler, createClienteHandler, getClienteByIdHandler, updateClienteHandler, deleteClienteHandler } from './api/handlers';
-
 // Hooks
 export { useClientes } from './hooks/use-clientes';
 

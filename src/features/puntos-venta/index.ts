@@ -9,7 +9,6 @@ export {
 
 // Hooks
 export { usePuntosDeVenta } from './hooks/use-puntos-de-venta';
-// Handlers legacy
-export { createPuntoDeVentaHandler, getPuntoDeVentaByIdHandler, updatePuntoDeVentaHandler, deletePuntoDeVentaHandler } from './api/handlers';
+// Components
 export { PtoVentaForm } from './components/pvtoVenta-form';
 export type { PuntoDeVenta } from './types';
