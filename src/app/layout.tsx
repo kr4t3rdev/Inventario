@@ -2,7 +2,6 @@ import '@/app/globals.css';
 import type { Metadata } from 'next';
 import { ThemeProvider } from 'next-themes';
 
-import ReduxProvider from '@/lib/redux/provider';
 import { AuthProvider } from '@/contexts/auth-context';
 
 export const metadata: Metadata = {
@@ -23,14 +22,11 @@ export default function RootLayout({
       <body
         className="antialiased"
       >
-          
-        <ReduxProvider>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-            <AuthProvider>
-              {children}
-            </AuthProvider>
-          </ThemeProvider>
-        </ReduxProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import { useAppSelector } from "@/lib/redux/hooks"
 import { useForm, useFieldArray, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -48,7 +47,7 @@ import { reconciliarGastoAction } from "@/features/contabilidad/actions-reconcil
 import { getCuentasBancariasAction } from "@/features/contabilidad/actions-cuentas-bancarias"
 import { getTiposPagoAction } from "@/features/contabilidad/actions-tipos-pago"
 import { TasaCambioDialog } from "../tasa-cambio-dialog"
-import { selectMonedasActivas } from "@/lib/redux/selectors/contabilidadSelectors"
+import { getMonedasAction } from "@/features/contabilidad/actions-exchange"
 
 interface GastoPendiente {
   tipo: 'salario' | 'gastoDE' | 'compra'
@@ -127,8 +126,7 @@ export function ReconciliacionGastosForm({
   isCuentaPorPagar = false,
   cuentaPorPagarId
 }: ReconciliacionGastosFormProps) {
-  const monedas = useAppSelector(selectMonedasActivas) || []
-
+  const [monedas, setMonedas] = useState<any[]>([])
   const [showTasaCambioDialog, setShowTasaCambioDialog] = useState(false)
 
   const [isLoading, setIsLoading] = useState(false)
@@ -138,6 +136,7 @@ export function ReconciliacionGastosForm({
   useEffect(() => {
     getCuentasBancariasAction().then(r => { if (r.success) setCuentas(r.data?.cuentas ?? []) })
     getTiposPagoAction().then(r => { if (r.success) setTiposPago(r.data?.data ?? []) })
+    getMonedasAction().then(r => { if (r.success) setMonedas((r.data as any[])?.filter((m: any) => m.isActive) ?? []) })
   }, [])
 
   const form = useForm<ReconciliacionGastoFormData>({

@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Skeleton } from "@/components/ui/skeleton"
 import { TrendingUp, TrendingDown, ArrowUpDown, Calendar, DollarSign, Info, Wallet, CreditCard, FileText, Filter, Download } from "lucide-react"
-import { formatCurrency, formatDate, convertCurrency } from "@/lib/redux/utils/contabilidadUtils"
+import { formatCurrency, formatDate, convertCurrency } from "@/features/contabilidad/utils/contabilidadUtils"
 import { getMonedasAction } from "@/features/contabilidad/actions-exchange"
 import { getPrestamoCashHistorialAction } from "@/features/contabilidad/actions-prestamos-cash"
 import { getCuentaHistorialAction } from "@/features/contabilidad/actions-cuentas-bancarias"

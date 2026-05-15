@@ -27,7 +27,6 @@ import {
 import { getCuentasBancariasAction } from '@/features/contabilidad/actions-cuentas-bancarias'
 import { getMonedasAction } from '@/features/contabilidad/actions-exchange'
 import { getAjustesByCuentaAction } from '@/features/contabilidad/actions-ajustes-bancarios'
-import { useAppSelector } from '@/lib/redux/hooks'
 import type { AjusteBancario, CuentaBancaria } from '@/app/models/model'
 
 interface HistorialAjustesTableProps {

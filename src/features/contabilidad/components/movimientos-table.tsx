@@ -14,7 +14,7 @@ import { getCuentasBancariasAction } from "@/features/contabilidad/actions-cuent
 import { getPrestamoCashHistorialAction } from "@/features/contabilidad/actions-prestamos-cash"
 import { getDeudaCashByIdAction } from "@/features/contabilidad/actions-deudas-cash"
 import { getMovimientosReportAction } from "@/features/contabilidad/actions"
-import { formatCurrencySimple, formatDate } from "@/lib/redux/utils/contabilidadUtils"
+import { formatCurrencySimple, formatDate } from "@/features/contabilidad/utils/contabilidadUtils"
 import { DateRangePicker } from "./date-range-picker"
 import { cn } from "@/lib/utils"
 import {

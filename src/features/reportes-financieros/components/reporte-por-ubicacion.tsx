@@ -1,10 +1,6 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import {
-useGetStockPorUbicacionQuery
-  // @ts-expect-error
-} from "@/lib/redux/services/stockUbicacionApi"
 import { useAlmacenes } from "@/features/almacenes/hooks/use-almacenes"
 import { usePuntosDeVenta } from "@/features/puntos-venta/hooks/use-puntos-de-venta"
 import { Button } from "@/components/ui/button"

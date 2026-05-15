@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { useAppSelector } from "@/lib/redux/hooks"
 import { useForm, useFieldArray, useWatch } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
@@ -44,8 +43,8 @@ import { toast } from "sonner"
 import { reconciliarVentaAction } from "@/features/contabilidad/actions-reconciliacion"
 import { getCuentasBancariasAction } from "@/features/contabilidad/actions-cuentas-bancarias"
 import { getTiposPagoAction } from "@/features/contabilidad/actions-tipos-pago"
+import { getMonedasAction } from "@/features/contabilidad/actions-exchange"
 import type { VentaPendiente } from "@/app/models/model"
-import { selectMonedasActivas } from "@/lib/redux/selectors/contabilidadSelectors"
 
 // Validation schema for individual distribution
 const distribucionSchema = z.object({
@@ -94,20 +93,19 @@ export function ReconciliacionVentasForm({
   allowPartial = true,
   saldoRestante
 }: ReconciliacionVentasFormProps) {
-  const monedas = useAppSelector(selectMonedasActivas) || []
-
+  const [monedas, setMonedas] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [cuentas, setCuentas] = useState<any[]>([])
+  const [tiposPago, setTiposPago] = useState<any[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [totalDistribuido, setTotalDistribuido] = useState(0)
   const [montoRestante, setMontoRestante] = useState(0)
   const [forceUpdate, setForceUpdate] = useState(0)
 
-  const [isLoading, setIsLoading] = useState(false)
-  const [cuentas, setCuentas] = useState<any[]>([])
-  const [tiposPago, setTiposPago] = useState<any[]>([])
-
   useEffect(() => {
     getCuentasBancariasAction().then(r => { if (r.success) setCuentas(r.data?.cuentas ?? []) })
     getTiposPagoAction().then(r => { if (r.success) setTiposPago(r.data?.data ?? []) })
+    getMonedasAction().then(r => { if (r.success) setMonedas(r.data?.filter((m: any) => m.isActive) ?? []) })
   }, [])
 
   const form = useForm<ReconciliacionVentaFormData>({

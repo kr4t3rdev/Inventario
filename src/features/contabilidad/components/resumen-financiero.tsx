@@ -36,7 +36,7 @@ import { getPrestamosCashStatsAction } from '@/features/contabilidad/actions-pre
 import { getMonedasAction, getTasasActualesAction } from '@/features/contabilidad/actions-exchange';
 import { getResumenFinancieroAction } from '@/features/contabilidad/actions';
 import { getResumenAnticiposAction } from '@/features/contabilidad/actions-anticipos';
-import { formatCurrency } from '@/lib/redux/utils/contabilidadUtils';
+import { formatCurrency } from '@/features/contabilidad/utils/contabilidadUtils';
 import { cn } from '@/lib/utils';
 
 import type {
