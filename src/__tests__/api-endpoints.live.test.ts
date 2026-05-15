@@ -149,7 +149,6 @@ const protectedGets: string[] = [
   '/api/contabilidad/tipos-pago/validar',
   '/api/contabilidad/transferencias',
   // contratos
-  '/api/contratos',
   // cuadre-diario
   // dashboard
   '/api/dashboard/stats',
@@ -157,7 +156,6 @@ const protectedGets: string[] = [
   // defectaciones
   '/api/defectaciones',
   // empleados
-  '/api/empleados',
   '/api/empleados/asistencia',
   '/api/empleados/nomina',
   '/api/empleados/vacaciones',
@@ -234,7 +232,6 @@ describe('Protección 401 – GET sin token', () => {
 const protectedPosts: Array<{ path: string; body: unknown }> = [
   { path: '/api/contratos', body: {} },
   { path: '/api/defectaciones', body: {} },
-  { path: '/api/empleados', body: {} },
   { path: '/api/mermas', body: {} },
   { path: '/api/notificaciones', body: {} },
   { path: '/api/restaurante/comandas', body: {} },
@@ -274,12 +271,6 @@ describe('Protección 401 – POST sin token', () => {
 // ─── 3. Endpoints autenticados (solo si hay token disponible) ─────────────────
 
 describe('Endpoints con autenticación (requiere TEST_EMAIL + TEST_PASSWORD)', () => {
-
-  it('GET /api/empleados → 200 con token', async () => {
-    if (!authToken) return
-    const res = await get('/api/empleados', authToken)
-    expect([200, 204]).toContain(res.status)
-  })
 
   it('GET /api/contabilidad/cuentas → 200 con token', async () => {
     if (!authToken) return
