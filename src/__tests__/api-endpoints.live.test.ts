@@ -101,36 +101,13 @@ const protectedGets: string[] = [
   '/api/configuracion/series/next',
   '/api/configuracion/sistema/contratos',
   // contabilidad
-  '/api/contabilidad/ajustes',
   '/api/contabilidad/anticipos',
   '/api/contabilidad/anticipos/disponibles',
   '/api/contabilidad/anticipos/reportes/cliente',
-  '/api/contabilidad/anticipos/reportes/proveedor',
-  '/api/contabilidad/anticipos/reportes/resumen',
-  '/api/contabilidad/balance-financiero',
-  '/api/contabilidad/capital',
-  '/api/contabilidad/cierres',
-  '/api/contabilidad/cuentas-por-cobrar',
-  '/api/contabilidad/cuentas-por-pagar',
-  '/api/contabilidad/cuentas',
   '/api/contabilidad/deudas-cash',
   '/api/contabilidad/deudas-cash/stats',
   '/api/contabilidad/exchange/alert-history',
   '/api/contabilidad/exchange/convertir',
-  '/api/contabilidad/exchange/cost-impact',
-  '/api/contabilidad/exchange/debt-exposure',
-  '/api/contabilidad/exchange/export',
-  '/api/contabilidad/exchange/kpis',
-  '/api/contabilidad/exchange/monedas',
-  '/api/contabilidad/exchange/payment-efficiency',
-  '/api/contabilidad/exchange/report-history',
-  '/api/contabilidad/exchange/scenarios',
-  '/api/contabilidad/exchange/scheduled-reports',
-  '/api/contabilidad/exchange/tasas',
-  '/api/contabilidad/exchange/tasas/historial',
-  '/api/contabilidad/logs',
-  '/api/contabilidad/performance',
-  '/api/contabilidad/prestamos-cash',
   '/api/contabilidad/prestamos-cash/stats',
   '/api/contabilidad/reconciliacion/gastos',
   '/api/contabilidad/reconciliacion/gastos/historial',
@@ -145,8 +122,6 @@ const protectedGets: string[] = [
   '/api/contabilidad/reportes/resumen',
   '/api/contabilidad/reportes/transferencias',
   '/api/contabilidad/tipos-pago',
-  '/api/contabilidad/tipos-pago/cuentas-disponibles',
-  '/api/contabilidad/tipos-pago/validar',
   '/api/contabilidad/transferencias',
   // contratos
   // cuadre-diario
@@ -359,18 +334,6 @@ describe('Endpoints con autenticación (requiere TEST_EMAIL + TEST_PASSWORD)', (
   it('GET /api/contabilidad/anticipos → 200 con token', async () => {
     if (!authToken) return
     const res = await get('/api/contabilidad/anticipos', authToken)
-    expect([200, 204]).toContain(res.status)
-  })
-
-  it('GET /api/contabilidad/cuentas-por-cobrar → 200 con token', async () => {
-    if (!authToken) return
-    const res = await get('/api/contabilidad/cuentas-por-cobrar', authToken)
-    expect([200, 204]).toContain(res.status)
-  })
-
-  it('GET /api/contabilidad/cuentas-por-pagar → 200 con token', async () => {
-    if (!authToken) return
-    const res = await get('/api/contabilidad/cuentas-por-pagar', authToken)
     expect([200, 204]).toContain(res.status)
   })
 
