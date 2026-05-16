@@ -473,6 +473,19 @@ export function NominaView() {
                   </>
                 )}
               </Button>
+
+              <Button
+                onClick={() => {
+                  const url = new URL('/api/empleados/nomina/pdf', window.location.origin)
+                  if (periodo) url.searchParams.set('periodo', periodo)
+                  window.open(url.toString(), '_blank')
+                }}
+                variant="outline"
+                className="h-11 w-full sm:w-auto border-orange-200 dark:border-orange-900 text-orange-700 dark:text-orange-300 hover:bg-orange-50 dark:hover:bg-orange-950/30 hover:border-orange-300 transition-all"
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Exportar PDF
+              </Button>
             </div>
           </div>
         </CardContent>

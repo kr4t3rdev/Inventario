@@ -54,11 +54,11 @@ export default function AsistenciaPage() {
             variants={itemVariants}
             className="flex gap-3"
           >
-            <div className="flex items-center gap-2 px-4 py-2 bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-300 rounded-lg border border-orange-100 dark:border-orange-900">
+            <div className="flex items-center gap-2 px-4 py-2 bg-orange-50 dark:bg-orange-900/10 text-orange-700 dark:text-orange-300 rounded-lg border border-orange-100 dark:border-orange-900">
               <Clock className="w-5 h-5" />
               <span className="font-medium">Tiempo Real</span>
             </div>
-            <div className="flex items-center gap-2 px-4 py-2 bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-300 rounded-lg border border-orange-100 dark:border-orange-900">
+            <div className="flex items-center gap-2 px-4 py-2 bg-orange-50 dark:bg-orange-900/10 text-orange-700 dark:text-orange-300 rounded-lg border border-orange-100 dark:border-orange-900">
               <CalendarCheck className="w-5 h-5" />
               <span className="font-medium">Historial</span>
             </div>
@@ -67,7 +67,7 @@ export default function AsistenciaPage() {
 
         <motion.div 
           variants={itemVariants}
-          className="bg-card rounded-xl shadow-sm border border-border/50"
+          className="rounded-xl shadow-sm "
         >
           <EnhancedAsistenciaForm />
         </motion.div>

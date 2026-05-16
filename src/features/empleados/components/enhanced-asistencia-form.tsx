@@ -306,11 +306,11 @@ export function EnhancedAsistenciaForm() {
       <Card className="w-full border-none shadow-none bg-transparent">
         <CardContent className="p-0 space-y-6">
           {/* Selector de empleado con diseño mejorado */}
-          <div className="bg-card border rounded-xl p-6 shadow-sm">
+          <div className="border rounded-xl p-6 shadow-sm">
             <div className="space-y-4">
               <div className="flex items-center gap-3 mb-2">
-                <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                  <User className="h-5 w-5" />
+                <div className="p-2 rounded-lg text-primary">
+                  <User className="h-5 w-5 text-orange-500" />
                 </div>
                 <div>
                   <Label htmlFor="empleado-select" className="text-base font-semibold">Seleccionar Empleado</Label>
@@ -325,11 +325,11 @@ export function EnhancedAsistenciaForm() {
                   {empleados.map((empleado) => (
                     <SelectItem key={empleado.empleadoId} value={empleado.empleadoId} className="py-3">
                       <div className="flex items-center gap-3">
-                        <div className="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-xs font-bold">
+                        <div className="h-10 w-10 rounded-full bg-slate-100 dark:bg-slate-800/10 flex items-center justify-center text-xs font-bold">
                           {empleado.nombre.charAt(0)}{empleado.apellido.charAt(0)}
                         </div>
                         <div className="flex flex-col text-left">
-                          <span className="font-medium">{empleado.nombre} {empleado.apellido}</span>
+                          <span className="font-light text-sm from-orange-500 to-red-600">{empleado.nombre} {empleado.apellido}</span>
                           <span className="text-xs text-muted-foreground">{empleado.cargo}</span>
                         </div>
                       </div>
@@ -353,7 +353,7 @@ export function EnhancedAsistenciaForm() {
                 <Card className="border shadow-sm overflow-hidden md:col-span-2 lg:col-span-1 bg-linear-to-br from-card to-secondary/10">
                   <CardHeader className="pb-2">
                     <CardTitle className="flex items-center gap-2 text-xl">
-                      <Clock className="h-5 w-5 text-primary" />
+                      <Clock className="h-5 w-5 text-orange-500" />
                       Registro de Hoy
                     </CardTitle>
                     <CardDescription>
@@ -431,7 +431,7 @@ export function EnhancedAsistenciaForm() {
                         <Button
                           onClick={() => handleAttendanceAction('checkin')}
                           disabled={loading}
-                          className="mt-4"
+                          className="mt-4 from-orange-500 bg-linear-30 to-red-600"
                         >
                           <LogIn className="h-4 w-4 mr-2" />
                           Iniciar Jornada
@@ -446,7 +446,7 @@ export function EnhancedAsistenciaForm() {
                   <Card className="border shadow-sm">
                     <CardHeader className="pb-2">
                       <CardTitle className="text-lg flex items-center gap-2">
-                        <Timer className="h-5 w-5 text-indigo-500" />
+                        <Timer className="h-5 w-5 text-orange-500" />
                         Métricas del Día
                       </CardTitle>
                     </CardHeader>
@@ -501,7 +501,7 @@ export function EnhancedAsistenciaForm() {
                 <div className="md:col-span-2">
                   <div className="flex items-center justify-between mb-4 mt-2">
                     <h3 className="text-xl font-bold flex items-center gap-2">
-                      <History className="h-5 w-5 text-primary" />
+                      <History className="h-5 w-5 text-orange-500" />
                       Historial Reciente
                     </h3>
                     <Badge variant="outline" className="font-normal">Últimos 30 días</Badge>
