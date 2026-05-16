@@ -171,7 +171,7 @@ export function TiposContratosForm({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <motion.div
-              className="w-6 h-6 bg-linear-to-br from-primary to-purple-600 rounded-lg flex items-center justify-center"
+              className="w-6 h-6 bg-linear-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center"
               whileHover={{ scale: 1.1 }}
               transition={{ type: 'spring', stiffness: 400, damping: 10 }}
             >
@@ -275,7 +275,7 @@ export function TiposContratosForm({
                       <Button
                         type="submit"
                         disabled={isLoading}
-                        className="gap-2 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                        className="gap-2 bg-linear-to-r from-orange-500 to-red-600 hover:from-orange-500/90 hover:to-red-600/90"
                       >
                         {isLoading ? (
                           <>

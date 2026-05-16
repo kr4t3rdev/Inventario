@@ -244,11 +244,11 @@ export function FacturasContent({ initialData }: FacturasContentProps) {
             animate={{ opacity: 1, y: 0 }}
           >
             <motion.div className="flex items-center gap-3" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
-              <motion.div className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center" whileHover={{ scale: 1.05 }}>
+              <motion.div className="w-10 h-10 bg-linear-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center" whileHover={{ scale: 1.05 }}>
                 <FileSpreadsheet className="h-5 w-5 text-white" />
               </motion.div>
               <div>
-                <h1 className="text-2xl font-bold bg-linear-to-r from-primary to-purple-600 bg-clip-text text-transparent">Facturas</h1>
+                <h1 className="text-2xl font-bold bg-linear-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">Facturas</h1>
                 <motion.div animate={{ rotate: 360, scale: [1, 1.2, 1] }} transition={{ rotate: { duration: 20, repeat: Infinity }, scale: { duration: 2, repeat: Infinity } }}>
                   <Sparkles className="h-4 w-4 text-yellow-500 inline ml-1" />
                 </motion.div>

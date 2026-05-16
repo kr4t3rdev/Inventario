@@ -64,7 +64,7 @@ export function GastoConceptoForm({ initialData }: GastoConceptoFormProps) {
       <Card className="overflow-hidden border-dashed">
         <CardContent className="pt-6">
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="flex items-center gap-3 mb-6">
-            <motion.div className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg relative" whileHover={{ scale: 1.05, rotate: 5 }} transition={{ duration: 0.2 }}>
+            <motion.div className="w-10 h-10 bg-linear-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg relative" whileHover={{ scale: 1.05, rotate: 5 }} transition={{ duration: 0.2 }}>
               <FolderOpen className="h-5 w-5 text-white" />
               <motion.div animate={{ rotate: 360, scale: [1, 1.2, 1] }} transition={{ rotate: { duration: 20, repeat: Infinity, ease: "linear" }, scale: { duration: 2, repeat: Infinity, ease: "easeInOut" } }} className="absolute -top-1 -right-1">
                 <Sparkles className="h-4 w-4 text-yellow-400" />
@@ -98,7 +98,7 @@ export function GastoConceptoForm({ initialData }: GastoConceptoFormProps) {
               <motion.div className="flex flex-col sm:flex-row justify-end gap-4 pt-4 border-t" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
                 <Button type="button" variant="destructive" onClick={() => startTransition(() => router.push("/busy/gastosDE/conceptos"))} disabled={isLoading || isPending} className="gap-2"><ArrowLeft className="h-4 w-4" /> Cancelar</Button>
                 <motion.div whileHover={{ scale: isLoading || isPending ? 1 : 1.02 }}>
-                  <Button type="submit" disabled={isLoading || isPending} className="min-w-35 gap-2 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90">
+                  <Button type="submit" disabled={isLoading || isPending} className="min-w-35 gap-2 bg-linear-to-r from-orange-500 to-red-600 hover:from-orange-500/90 hover:to-red-600/90">
                     {isLoading || isPending ? (<><motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}><Loader2 className="h-4 w-4" /></motion.div>{initialData ? "Actualizando..." : "Creando..."}</>) : initialData ? "Actualizar concepto" : "Crear concepto"}
                   </Button>
                 </motion.div>

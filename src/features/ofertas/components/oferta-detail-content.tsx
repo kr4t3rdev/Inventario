@@ -250,7 +250,7 @@ export function OfertaDetailContent({ initialOferta }: OfertaDetailContentProps)
             </Button>
 
             <div className="flex items-center gap-3 flex-1">
-              <div className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+              <div className="w-10 h-10 bg-linear-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
                 <Receipt className="h-5 w-5 text-white" />
               </div>
               <div>
@@ -365,7 +365,7 @@ export function OfertaDetailContent({ initialOferta }: OfertaDetailContentProps)
                 <Button
                   onClick={() => handleUpdateStatus('ACEPTADA')}
                   disabled={isPending}
-                  className="bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                  className="bg-linear-to-r from-orange-500 to-red-600 hover:from-orange-500/90 hover:to-red-600/90"
                 >
                   {isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Check className="mr-2 h-4 w-4" />}
                   Aceptar
@@ -383,7 +383,7 @@ export function OfertaDetailContent({ initialOferta }: OfertaDetailContentProps)
               <Button
                 onClick={() => setIsFacturarDialogOpen(true)}
                 disabled={isPending}
-                className="bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+                className="bg-linear-to-r from-orange-500 to-red-600 hover:from-orange-500/90 hover:to-red-600/90"
               >
                 <ShoppingCart className="mr-2 h-4 w-4" /> Facturar
               </Button>
@@ -402,7 +402,7 @@ export function OfertaDetailContent({ initialOferta }: OfertaDetailContentProps)
             <DialogContent className="sm:max-w-125">
               <DialogHeader>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <div className="w-10 h-10 bg-linear-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
                     <ShoppingCart className="h-5 w-5 text-white" />
                   </div>
                   <DialogTitle>Facturar Oferta</DialogTitle>

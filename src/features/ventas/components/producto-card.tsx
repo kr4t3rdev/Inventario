@@ -67,7 +67,7 @@ export function ProductoCard({ producto, onAddToCart, searchTerm }: ProductoCard
                 </motion.div>
               ) : (
                 <motion.div
-                  className="w-8 h-8 bg-linear-to-br from-primary to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0"
+                  className="w-8 h-8 bg-linear-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center flex-shrink-0"
                   whileHover={{ scale: 1.05, rotate: 5 }}
                 >
                   <Package className="h-4 w-4 text-white" />
@@ -103,7 +103,7 @@ export function ProductoCard({ producto, onAddToCart, searchTerm }: ProductoCard
             <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{producto.descripcion}</p>
           )}
           <motion.p 
-            className="text-lg font-bold bg-linear-to-r from-primary to-purple-600 bg-clip-text text-transparent"
+            className="text-lg font-bold bg-linear-to-r from-orange-500 to-red-600 bg-clip-text text-transparent"
             key={producto.precioVenta}
             initial={{ scale: 1.1 }}
             animate={{ scale: 1 }}
@@ -119,7 +119,7 @@ export function ProductoCard({ producto, onAddToCart, searchTerm }: ProductoCard
                 <motion.div className="w-full" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                   <Button 
                     onClick={onAddToCart} 
-                    className="w-full bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 text-white" 
+                    className="w-full bg-linear-to-r from-orange-500 to-red-600 hover:from-orange-500/90 hover:to-red-600/90 text-white" 
                     disabled={producto.stock === 0}
                   >
                     <PlusCircle className="mr-2 h-4 w-4" />

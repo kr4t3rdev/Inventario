@@ -120,7 +120,7 @@ export function NewVersionDialog({ contratoId, onSuccess }: NewVersionDialogProp
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-          <Button className="gap-2 bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90">
+          <Button className="gap-2 bg-linear-to-r from-orange-500 to-red-600 hover:from-orange-500/90 hover:to-red-600/90">
             <FileUp className="h-4 w-4" />
             Nueva Versión
           </Button>
@@ -135,7 +135,7 @@ export function NewVersionDialog({ contratoId, onSuccess }: NewVersionDialogProp
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <motion.div
-                className="w-8 h-8 bg-linear-to-br from-primary to-purple-600 rounded-lg flex items-center justify-center"
+                className="w-8 h-8 bg-linear-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center"
                 whileHover={{ scale: 1.05 }}
               >
                 <FileText className="h-4 w-4 text-white" />
@@ -272,7 +272,7 @@ export function NewVersionDialog({ contratoId, onSuccess }: NewVersionDialogProp
             <Button 
               onClick={handleSubmit} 
               disabled={!file || isChecking || isSubmitting || (!!diffResult && !diffResult.hasChanges)}
-              className="bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+              className="bg-linear-to-r from-orange-500 to-red-600 hover:from-orange-500/90 hover:to-red-600/90"
             >
               {isSubmitting ? (
                 <>

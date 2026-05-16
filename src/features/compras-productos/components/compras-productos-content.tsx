@@ -201,11 +201,11 @@ export function ComprasProductosContent({ initialCompras, initialPagination }: C
     <div className="container mx-auto py-4">
       <div className="flex justify-between items-center mb-6">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+          <div className="w-10 h-10 bg-linear-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
             <ShoppingCart className="h-5 w-5 text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold bg-linear-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+            <h1 className="text-2xl font-bold bg-linear-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
               Compras de Productos
             </h1>
           </div>
@@ -213,7 +213,7 @@ export function ComprasProductosContent({ initialCompras, initialPagination }: C
         </div>
         <Button
           asChild
-          className="bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+          className="bg-linear-to-r from-orange-500 to-red-600 hover:from-orange-500/90 hover:to-red-600/90"
         >
           <Link href="/busy/compras-productos/new">
             <Plus className="mr-2 h-4 w-4" /> Nueva compra

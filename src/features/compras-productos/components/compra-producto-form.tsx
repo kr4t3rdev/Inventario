@@ -295,10 +295,10 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
       <Card className='border-dashed overflow-hidden'>
-        <div className='h-1 bg-linear-to-r from-primary via-purple-500 to-primary' />
+        <div className='h-1 bg-linear-to-r from-orange-500 via-red-500 to-orange-500' />
         <CardContent className='pt-6'>
           <motion.div className='flex items-center gap-3 mb-6' initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}>
-            <motion.div className='w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg'>
+            <motion.div className='w-10 h-10 bg-linear-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg'>
               <ShoppingCart className='h-5 w-5 text-white' />
             </motion.div>
             <div className='relative'>
@@ -634,7 +634,7 @@ export function CompraProductoForm({ onSuccess }: CompraProductoFormProps) {
                 <Button type='button' variant='destructive' className='cursor-pointer' onClick={() => router.push('/busy/compras-productos')}>
                   Cancelar
                 </Button>
-                <Button type='submit' disabled={isLoading} className='cursor-pointer bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90'>
+                <Button type='submit' disabled={isLoading} className='cursor-pointer bg-linear-to-r from-orange-500 to-red-600 hover:from-orange-500/90 hover:to-red-600/90'>
                   {isLoading ? (
                     <>
                       <Loader2 className='mr-2 h-4 w-4 animate-spin' />

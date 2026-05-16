@@ -160,7 +160,7 @@ export function EmpleadoForm({ initialData }: EmpleadoFormProps) {
     return (
       <Card className="border-dashed dark:border-slate-700 dark:bg-slate-900/50">
         <CardHeader>
-          <div className="h-1 bg-linear-to-r from-primary via-purple-500 to-primary rounded-t-lg" />
+          <div className="h-1 bg-linear-to-r from-orange-500 via-red-500 to-orange-500 rounded-t-lg" />
         </CardHeader>
         <CardContent className="pt-6">
           <div className="space-y-6">
@@ -186,7 +186,7 @@ export function EmpleadoForm({ initialData }: EmpleadoFormProps) {
 
   return (
     <Card className="border-dashed dark:border-slate-700 dark:bg-slate-900/50 overflow-hidden">
-      <div className="h-1 bg-linear-to-r from-primary via-purple-500 to-primary" />
+      <div className="h-1 bg-linear-to-r from-orange-500 via-red-500 to-orange-500" />
       <CardHeader>
         <motion.div
           className="flex items-center gap-3"
@@ -195,7 +195,7 @@ export function EmpleadoForm({ initialData }: EmpleadoFormProps) {
           transition={{ delay: 0.1 }}
         >
           <motion.div
-            className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
+            className="w-10 h-10 bg-linear-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg"
             whileHover={{ scale: 1.05, rotate: 5 }}
             transition={{ type: "spring", stiffness: 400, damping: 10 }}
           >
@@ -432,7 +432,7 @@ export function EmpleadoForm({ initialData }: EmpleadoFormProps) {
                 <Button
                   type="submit"
                   disabled={isLoading}
-                  className="bg-linear-to-r from-primary to-purple-600 text-white shadow-lg hover:shadow-xl transition-shadow"
+                  className="bg-linear-to-r from-orange-500 to-red-600 text-white shadow-lg hover:shadow-xl transition-shadow"
                 >
                   {isLoading ? (
                     <>

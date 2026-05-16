@@ -138,14 +138,14 @@ export default function EditarVentaPage() {
                 transition={{ delay: 0.1 }}
               >
                 <motion.div 
-                  className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
+                  className="w-10 h-10 bg-linear-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg"
                   whileHover={{ scale: 1.05, rotate: 5 }}
                   transition={{ type: "spring", stiffness: 400, damping: 10 }}
                 >
                   <TrendingUp className="h-5 w-5 text-white" />
                 </motion.div>
                 <div className="relative">
-                  <h1 className="text-2xl font-bold bg-linear-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+                  <h1 className="text-2xl font-bold bg-linear-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
                     Editar Venta
                   </h1>
                   <motion.div
@@ -178,7 +178,7 @@ export default function EditarVentaPage() {
               transition={{ duration: 0.5, delay: 0.3 }}
             >
               <Card className="border-dashed">
-                <div className="h-1 bg-linear-to-r from-primary via-purple-500 to-primary" />
+                <div className="h-1 bg-linear-to-r from-orange-500 via-red-500 to-orange-500" />
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <ShoppingBag className="h-5 w-5 text-muted-foreground" />

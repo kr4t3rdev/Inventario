@@ -119,7 +119,7 @@ export function GastoDEForm({ initialData, initialVendors }: GastosDEFormProps) 
         <div className="h-1 bg-linear-to-r from-primary via-purple-500 to-primary" />
         <CardContent className="pt-6">
           <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} className="flex items-center gap-3 mb-6">
-            <motion.div className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg" whileHover={{ scale: 1.05, rotate: 5 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
+            <motion.div className="w-10 h-10 bg-linear-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg" whileHover={{ scale: 1.05, rotate: 5 }} transition={{ type: "spring", stiffness: 400, damping: 10 }}>
               <Receipt className="h-5 w-5 text-white" />
             </motion.div>
             <div className="relative">
@@ -175,7 +175,7 @@ export function GastoDEForm({ initialData, initialVendors }: GastosDEFormProps) 
                   <Button type="button" variant="outline" onClick={() => router.push("/busy/gastosDE")}>Cancelar</Button>
                 </motion.div>
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Button type="submit" disabled={isLoading} className="bg-linear-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90">
+                  <Button type="submit" disabled={isLoading} className="bg-linear-to-r from-orange-500 to-red-600 hover:from-orange-500/90 hover:to-red-600/90">
                     {isLoading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Guardando...</>) : initialData ? "Actualizar Gasto" : "Registrar Gasto"}
                   </Button>
                 </motion.div>
