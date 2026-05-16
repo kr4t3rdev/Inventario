@@ -1,3 +1,4 @@
+"use client"
 /**
  * @description Página de lista de ofertas - Server Component
  * @module app/busy/ofertas/page
