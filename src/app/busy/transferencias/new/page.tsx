@@ -1,7 +1,9 @@
+'use client'
+
 /**
- * @description Página de nueva Transferencia (Server Component).
- *
- * El formulario (TransferenciaForm) es un Client Component.
+ * @description Página de nueva Transferencia.
+ * Es Client Component porque usa motion (framer-motion) para animaciones de entrada.
+ * El formulario (TransferenciaForm) también es un Client Component.
  */
 import { TransferenciaForm } from "@/features/transferencias"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
@@ -26,7 +28,7 @@ export default function NuevaTransferenciaPage() {
           >
             <div className="flex items-center gap-3">
               <motion.div 
-                className="w-10 h-10 bg-linear-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg relative"
+                className="w-10 h-10 bg-linear-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg relative"
                 whileHover={{ scale: 1.05, rotate: 5 }}
                 transition={{ duration: 0.2 }}
               >

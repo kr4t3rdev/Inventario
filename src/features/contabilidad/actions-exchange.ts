@@ -16,10 +16,11 @@ export const getTasasActualesAction = withAction(async (_input: void, user: Auth
   // TasaCambio is a global system table, not tenant-scoped
   const monedas = await prisma.moneda.findMany();
   const monedaPrincipal = monedas.find(m => m.esPrincipal) || monedas[0];
-  const tasas = await prisma.tasaCambio.findMany({
+  const tasasRaw = await prisma.tasaCambio.findMany({
     orderBy: { fechaVigencia: 'desc' },
     take: 50,
   });
+  const tasas = JSON.parse(JSON.stringify(tasasRaw));
   return { monedaPrincipal, tasas };
 });
 
@@ -62,16 +63,16 @@ export const updateTasaCambioAction = withAction(async (input: { monedaOrigenId:
   const monedaExiste = await prisma.moneda.findUnique({ where: { codigo: monedaOrigenId } });
   if (!monedaExiste) throw new Error('Moneda origen no encontrada');
 
-  const tasaExistente = await prisma.tasaCambio.findFirst({
+  const tasaExistenteRaw = await prisma.tasaCambio.findFirst({
     where: { monedaOrigenId, monedaDestino },
     orderBy: { fechaVigencia: 'desc' },
   });
 
-  if (tasaExistente && Number(tasaExistente.tasa) === tasa) {
-    return tasaExistente;
+  if (tasaExistenteRaw && Number(tasaExistenteRaw.tasa) === tasa) {
+    return JSON.parse(JSON.stringify(tasaExistenteRaw));
   }
 
-  return prisma.tasaCambio.create({
+  const nuevo = await prisma.tasaCambio.create({
     data: {
       monedaOrigenId,
       monedaDestino,
@@ -79,6 +80,7 @@ export const updateTasaCambioAction = withAction(async (input: { monedaOrigenId:
       fechaVigencia: new Date(),
     }
   });
+  return JSON.parse(JSON.stringify(nuevo));
 });
 
 export const getHistorialTasasAction = withAction(async (params: { monedaOrigen?: string; fechaDesde?: string; fechaHasta?: string; busqueda?: string; pagina?: number; limite?: number } = {}, user: AuthenticatedUser) => {
@@ -94,7 +96,7 @@ export const getHistorialTasasAction = withAction(async (params: { monedaOrigen?
   const limit = params.limite || 20;
   const skip = (page - 1) * limit;
 
-  const [tasas, total] = await Promise.all([
+  const [tasasRaw, total] = await Promise.all([
     prisma.tasaCambio.findMany({
       where,
       orderBy: { fechaVigencia: 'desc' },
@@ -104,5 +106,6 @@ export const getHistorialTasasAction = withAction(async (params: { monedaOrigen?
     prisma.tasaCambio.count({ where }),
   ]);
 
+  const tasas = JSON.parse(JSON.stringify(tasasRaw));
   return { tasas, total };
 });

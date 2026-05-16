@@ -344,6 +344,7 @@ export const reconciliarGastoAction = withAction(async (input: {
         // Registrar el pago en PagoCuentaPorPagar para que se vea en el detalle
         await tx.pagoCuentaPorPagar.create({
           data: {
+            tenantId,
             cuentaPorPagarId: input.cuentaPorPagarId,
             monto: input.monto,
             numeroTransaccion: input.descripcion?.slice(0, 50) || `Pago ${fechaPago.toISOString().slice(0, 10)}`,

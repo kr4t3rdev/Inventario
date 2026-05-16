@@ -199,6 +199,43 @@ export const createTransferenciaAction = withAction(async (input: CreateTransfer
   return { message: `${result.length} transferencias creadas`, transferencias: result, totalProductos: result.length };
 });
 
+export const updateTransferenciaAction = withAction(async (input: UpdateTransferenciaInput, user: AuthenticatedUser) => {
+  const parsed = updateTransferenciaSchema.parse(input);
+  const tenantId = requireTenant(user);
+  const { transferenciaId, productoId, cantidad, tipoOrigen, origenId, tipoDestino, destinoId } = parsed;
+
+  const existing = await prisma.transferencia.findFirst({
+    where: { transferenciaId, tenantId, deletedAt: null },
+  });
+  if (!existing) throw new ActionError('Transferencia no encontrada', 'NOT_FOUND');
+
+  const cantidadAnterior = existing.cantidad;
+
+  const result = await prisma.$transaction(async (tx: any) => {
+    const updated = await tx.transferencia.update({
+      where: { transferenciaId },
+      data: { productoId, cantidad, origenId, destinoId, puntoDeVentaOrigenId: null, puntoDeVentaDestinoId: null },
+    });
+
+    // Ajustar stock general si cambió la cantidad
+    const delta = cantidad - cantidadAnterior;
+    if (delta !== 0) {
+      // Si sale de almacén, ajustar stock del producto
+      if (tipoOrigen === 'almacen') {
+        await tx.producto.update({ where: { id: productoId }, data: { stock: { increment: -delta } } });
+      }
+      if (tipoDestino === 'almacen') {
+        await tx.producto.update({ where: { id: productoId }, data: { stock: { increment: delta } } });
+      }
+    }
+
+    return updated;
+  });
+
+  revalidatePath('/busy/transferencias');
+  return { message: 'Transferencia actualizada', transferencia: result };
+});
+
 export const deleteTransferenciaAction = withAction(async (id: string, user: AuthenticatedUser) => {
   const tenantId = requireTenant(user);
   const transferencia = await prisma.transferencia.findFirst({

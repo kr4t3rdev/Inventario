@@ -29,6 +29,7 @@ import { usePuntosDeVenta } from "@/features/puntos-venta/hooks/use-puntos-de-ve
 import { useAlmacenes } from "@/features/almacenes/hooks/use-almacenes"
 import { getProductosAction } from "@/features/productos"
 import { getStockPorUbicacionAction } from "@/features/productos/actions"
+import { createTransferenciaAction, updateTransferenciaAction } from "@/features/transferencias/actions"
 
 const productoTransferenciaSchema = z.object({
   productoId: z.string({
@@ -447,41 +448,33 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
   async function onSubmit(data: TransferenciaFormValues) {
     setIsLoading(true)
     try {
-      const token = sessionStorage.getItem('token');
-      const url = initialData ? `/api/transferencias/${initialData.transferenciaId}` : "/api/transferencias"
-      const method = initialData ? "PATCH" : "POST"
-      const firstProducto = data.productos[0]
-      const cantidad = Number(firstProducto?.cantidad)
-      const payload = initialData
-        ? {
-            productoId: firstProducto?.productoId,
-            cantidad,
-            tipoOrigen: data.tipoOrigen,
-            origenId: data.origenId,
-            tipoDestino: data.tipoDestino,
-            destinoId: data.destinoId,
-            descripcion: data.descripcion,
-          }
-        : data
+      let result
 
-      if (initialData && (!firstProducto?.productoId || !Number.isFinite(cantidad) || cantidad <= 0)) {
-        sileo.error({ title: 'Debe seleccionar un producto y una cantidad válida.' })
-        setIsLoading(false)
-        return
+      if (initialData) {
+        const firstProducto = data.productos[0]
+        const cantidad = Number(firstProducto?.cantidad)
+
+        if (!firstProducto?.productoId || !Number.isFinite(cantidad) || cantidad <= 0) {
+          sileo.error({ title: 'Debe seleccionar un producto y una cantidad válida.' })
+          setIsLoading(false)
+          return
+        }
+
+        result = await updateTransferenciaAction({
+          transferenciaId: initialData.transferenciaId,
+          productoId: firstProducto.productoId,
+          cantidad,
+          tipoOrigen: data.tipoOrigen,
+          origenId: data.origenId,
+          tipoDestino: data.tipoDestino,
+          destinoId: data.destinoId,
+        })
+      } else {
+        result = await createTransferenciaAction(data)
       }
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-        body: JSON.stringify(payload),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || errorData.error || "Error al guardar la transferencia")
+      if (!result.success) {
+        throw new Error(result.error?.message || "Error al guardar la transferencia")
       }
 
       sileo.success({ title: `La transferencia de ${data.productos.length} producto(s) ha sido ${initialData ? "actualizada" : "registrada"} exitosamente.` })
@@ -531,8 +524,8 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
         <div className="flex items-center justify-between gap-4">
           <div className="space-y-1">
             <CardTitle className="flex items-center gap-3 text-2xl">
-              <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg shadow-sm">
-                <Package className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+              <div className="p-2 bg-linear-to-br from-orange-500 to-red-600 rounded-lg shadow-sm">
+                <Package className="h-6 w-6 text-white" />
               </div>
               {initialData ? "Editar Transferencia" : "Nueva Transferencia Múltiple"}
             </CardTitle>
