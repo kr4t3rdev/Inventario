@@ -31,7 +31,7 @@ export interface SurtidoLookupClient {
       select: {
         surtidoCodigo: true
       }
-    }) => Promise<Array<{ surtidoCodigo: string }>>
+    }) => Promise<Array<{ surtidoCodigo: string | null }>>
   }
 }
 
