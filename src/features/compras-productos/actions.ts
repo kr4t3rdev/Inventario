@@ -10,7 +10,6 @@ import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
 import { requireTenant } from '@/lib/services/tenant-scope';
 import { calcularPrecioCostoCompra } from '@/lib/inventory-cost-utils';
-import { applyPagoGastoWorkflow } from '@/lib/services/pago-gastos-workflow';
 import { applyAnticipoAllocations } from '@/lib/services/anticipos-workflow';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import { hasUnrevertedAnticipoExecution } from '@/lib/services/anticipos-guards';
@@ -96,8 +95,12 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
     const producto = await prisma.producto.findFirst({ where: { id: item.productoId, tenantId } });
     if (!producto) throw new ActionError(`Producto ${item.productoId} no encontrado`, 'NOT_FOUND');
 
-  // @ts-expect-error
-    const nuevoPrecioCosto = calcularPrecioCostoCompra(producto, item.cantidad, item.precioCosto);
+    const nuevoPrecioCosto = calcularPrecioCostoCompra({
+      stockAntes: producto.stock,
+      precioCostoActual: producto.precioCosto,
+      cantidadCompra: item.cantidad,
+      costoUnitario: item.precioCosto,
+    });
 
     items.push({ producto, cantidad: item.cantidad, precioCosto: item.precioCosto, nuevoPrecioCosto });
   }
@@ -110,12 +113,11 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
         tenantId, proveedorId: parsed.proveedorId, numeroFactura: parsed.numeroFactura || '',
         facturaUrl: parsed.facturaUrl || '', formaPago: parsed.formaPago,
         estado: parsed.estado, total, descripcion: parsed.descripcionCompra || null,
-        fechaCompra: new Date(), fechaVencimiento: parsed.fechaVencimiento ? new Date(parsed.fechaVencimiento) : null,
+        fechaCompra: new Date(),
         tipoOperacion: 'REGULAR',
         items: {
-  // @ts-expect-error
           create: items.map((i) => ({
-          productoId: i.producto.id, cantidad: i.cantidad, precioCosto: i.precioCosto, total: i.precioCosto * i.cantidad
+          tenantId, productoId: i.producto.id, cantidad: i.cantidad, precioUnitario: i.precioCosto, totalLinea: i.precioCosto * i.cantidad
           })),
         },
       },
@@ -129,23 +131,66 @@ export const createCompraProductoAction = withAction(async (input: CreateCompraP
         where: { id: item.producto.id },
         data: {
           stock: { increment: item.cantidad },
-          precioCosto: item.nuevoPrecioCosto,
+          precioCosto: item.nuevoPrecioCosto.precioCostoNuevo,
         },
       });
 
       await upsertStockUbicacion(tx, {
-        productoId: item.producto.id, tipoUbicacion: 'almacen',
+        tenantId, productoId: item.producto.id, tipoUbicacion: 'almacen',
         ubicacionId: item.producto.almacenId, modo: 'increment', delta: item.cantidad,
       });
     }
 
-    // Pago workflow
-    if (parsed.formaPago === 'PAGO_COMPLETO') {
-      await applyPagoGastoWorkflow(tx, {
-  // @ts-expect-error
-        tenantId, compraDocumentoId: compra.compraDocumentoId, total,
-        proveedorId: parsed.proveedorId, usuarioId: user.userId,
+    // ── Crear GastoCompra (registro contable del gasto) ──
+    // Se crea para PAGO_COMPLETO y PAGO_PARCIAL.
+    // La reconciliación (ReconciliacionGasto) se hace desde Contabilidad.
+    if (parsed.formaPago === 'PAGO_COMPLETO' || parsed.formaPago === 'PAGO_PARCIAL') {
+      const now = new Date();
+      const periodo = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+      const gastoCompra = await tx.gastoCompra.create({
+        data: {
+          tenantId,
+          productoId: items[0].producto.id,
+          vendorId: parsed.proveedorId,
+          cantidad: items.reduce((s, i) => s + i.cantidad, 0),
+          precioUnitario: Math.round(total / items.reduce((s, i) => s + i.cantidad, 0)),
+          total,
+          fechaCompra: now,
+          descripcion: `Compra #${compra.compraDocumentoId}`,
+          periodo,
+          numeroFactura: parsed.numeroFactura || undefined,
+        },
       });
+
+      // Vincular el GastoCompra al CompraDocumento
+      await tx.compraDocumento.update({
+        where: { compraDocumentoId: compra.compraDocumentoId },
+        data: { gastoCompraId: gastoCompra.gastoCompraId },
+      });
+
+      // ── PAGO_PARCIAL: Crear CuentaPorPagar (con gastoCompraId linkeado) ──
+      if (parsed.formaPago === 'PAGO_PARCIAL') {
+        const cxp = await tx.cuentaPorPagar.create({
+          data: {
+            tenantId,
+            numeroFactura: parsed.numeroFactura || '',
+            gastoCompraId: gastoCompra.gastoCompraId,
+            montoDeuda: total,
+            saldoPendiente: total,
+            moneda: 'CUP',
+            estado: 'PENDIENTE',
+            tipo: 'compra',
+            proveedorId: parsed.proveedorId,
+            proveedorNombre: proveedor.nombre,
+          },
+        });
+
+        await tx.compraDocumento.update({
+          where: { compraDocumentoId: compra.compraDocumentoId },
+          data: { cuentaPorPagarId: cxp.cuentaPorPagarId },
+        });
+      }
     }
 
     // Anticipo

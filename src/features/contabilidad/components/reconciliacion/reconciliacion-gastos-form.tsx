@@ -401,13 +401,13 @@ export function ReconciliacionGastosForm({
       }
 
       const result = await reconciliarGastoAction({
-  // @ts-expect-error
-        gastoId: gasto.gastoId,
-        cuentaId: baseData.cuentaId,
+        gastoCompraId: baseData.gastoCompraId,
+        cuentaId: data.distribuciones[0].cuentaId,
         tipoPagoId: baseData.tipoPagoId,
         monto: baseData.monto,
         moneda: baseData.moneda,
         descripcion: baseData.descripcion,
+        cuentaPorPagarId: baseData.cuentaPorPagarId,
       })
       if (!result.success) throw new Error(result.error?.message || 'Error al reconciliar')
 

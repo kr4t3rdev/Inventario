@@ -2,6 +2,7 @@ type TipoUbicacion = 'almacen' | 'punto_venta'
 
 type UpsertStockOpts =
   | {
+      tenantId?: string
       productoId: string
       tipoUbicacion: TipoUbicacion
       ubicacionId: string
@@ -9,6 +10,7 @@ type UpsertStockOpts =
       delta: number
     }
   | {
+      tenantId?: string
       productoId: string
       tipoUbicacion: TipoUbicacion
       ubicacionId: string
@@ -28,7 +30,16 @@ export async function upsertStockUbicacion(
   tx: any,
   opts: UpsertStockOpts
 ): Promise<void> {
-  const { productoId, tipoUbicacion, ubicacionId } = opts
+  const { tenantId: explicitTenantId, productoId, tipoUbicacion, ubicacionId } = opts
+
+  // tenantId es requerido por Prisma para el create del upsert.
+  // Si no se pasa, se obtiene del producto (backward-compatible).
+  const tenantId = explicitTenantId ?? (
+    await tx.producto.findUniqueOrThrow({
+      where: { id: productoId },
+      select: { tenantId: true },
+    })
+  ).tenantId
 
   if (opts.modo === 'increment') {
     const { delta } = opts
@@ -45,6 +56,7 @@ export async function upsertStockUbicacion(
         cantidadDisponible: { increment: delta },
       },
       create: {
+        tenantId,
         productoId,
         tipoUbicacion,
         ubicacionId,
@@ -68,6 +80,7 @@ export async function upsertStockUbicacion(
         cantidadDisponible: valor,
       },
       create: {
+        tenantId,
         productoId,
         tipoUbicacion,
         ubicacionId,

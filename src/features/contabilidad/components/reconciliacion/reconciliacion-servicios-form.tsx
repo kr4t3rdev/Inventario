@@ -90,8 +90,6 @@ export function ReconciliacionServiciosForm({
 }: ReconciliacionServiciosFormProps) {
   const [monedas, setMonedas] = useState<any[]>([])
   const [showTasaCambioDialog, setShowTasaCambioDialog] = useState(false)
-
-  const [showTasaCambioDialog, setShowTasaCambioDialog] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
   const [isLoading, setIsLoading] = useState(false)

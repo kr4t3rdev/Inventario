@@ -2,8 +2,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { upsertStockUbicacion } from '../stock-ubicacion-service'
 
 const txMock = {
-  stockUbicacion: {
-    upsert: vi.fn(),
+  stockUbicacion: { upsert: vi.fn() },
+  producto: {
+    findUniqueOrThrow: vi.fn().mockResolvedValue({ tenantId: 'tenant-1' }),
   },
 }
 
@@ -34,6 +35,7 @@ describe('upsertStockUbicacion', () => {
         cantidadDisponible: { increment: 5 },
       },
       create: {
+        tenantId: 'tenant-1',
         productoId: 'prod-1',
         tipoUbicacion: 'almacen',
         ubicacionId: 'alm-1',
@@ -68,6 +70,7 @@ describe('upsertStockUbicacion', () => {
         cantidadDisponible: 20,
       },
       create: {
+        tenantId: 'tenant-1',
         productoId: 'prod-1',
         tipoUbicacion: 'almacen',
         ubicacionId: 'alm-1',
