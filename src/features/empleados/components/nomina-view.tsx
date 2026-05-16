@@ -169,7 +169,7 @@ function EditPayrollDialog({
             <Label htmlFor="neto" className="text-right font-bold">
               Total Neto
             </Label>
-            <div className="col-span-3 font-mono text-lg font-bold text-emerald-600">
+            <div className="col-span-3 font-mono text-lg font-bold text-orange-600">
                {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'CUP' }).format(netSalary)}
             </div>
           </div>
@@ -362,11 +362,11 @@ export function NominaView() {
               <div className="flex justify-between items-start">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground mb-1">Total Nómina</p>
-                  <h3 className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+                  <h3 className="text-3xl font-bold text-orange-600 dark:text-orange-400">
                     {formatCurrency(calculateTotal())}
                   </h3>
                 </div>
-                <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg text-emerald-600 dark:text-emerald-400">
+                <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg text-orange-600 dark:text-orange-400">
                   <Wallet className="w-6 h-6" />
                 </div>
               </div>
@@ -459,7 +459,7 @@ export function NominaView() {
               <Button
                 onClick={handleCalculatePayroll}
                 disabled={calculating}
-                className="h-11 w-full sm:w-auto bg-linear-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white shadow-md hover:shadow-lg transition-all"
+                className="h-11 w-full sm:w-auto bg-linear-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 text-white shadow-md hover:shadow-lg transition-all"
               >
                 {calculating ? (
                   <>
@@ -486,7 +486,7 @@ export function NominaView() {
               <TableRow className="hover:bg-transparent">
                 <TableHead className="w-[250px] py-4">Empleado</TableHead>
                 <TableHead className="py-4">Salario Base</TableHead>
-                <TableHead className="py-4 text-green-600 dark:text-green-400">Bonificaciones</TableHead>
+                <TableHead className="py-4 text-orange-600 dark:text-orange-400">Bonificaciones</TableHead>
                 <TableHead className="py-4 text-red-600 dark:text-red-400">Deducciones</TableHead>
                 <TableHead className="py-4">Horas Extras</TableHead>
                 <TableHead className="py-4 text-right">Total Neto</TableHead>
@@ -530,7 +530,7 @@ export function NominaView() {
                     >
                       <TableCell className="py-4 font-medium">
                         <div className="flex items-center gap-3">
-                          <div className="h-9 w-9 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-xs font-bold text-emerald-700 dark:text-emerald-400">
+                          <div className="h-9 w-9 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-xs font-bold text-orange-700 dark:text-orange-400">
                             {record.empleado.nombre.charAt(0)}{record.empleado.apellido.charAt(0)}
                           </div>
                           <div className="flex flex-col">
@@ -542,7 +542,7 @@ export function NominaView() {
                       <TableCell className="py-4 text-muted-foreground font-mono">
                         {formatCurrency(record.empleado.salarioBases)}
                       </TableCell>
-                      <TableCell className="py-4 text-green-600 dark:text-green-400 font-mono">
+                      <TableCell className="py-4 text-orange-600 dark:text-orange-400 font-mono">
                         +{formatCurrency(record.bonificaciones)}
                       </TableCell>
                       <TableCell className="py-4 text-red-600 dark:text-red-400 font-mono">
@@ -568,7 +568,7 @@ export function NominaView() {
                           >
                             <Pencil className="h-4 w-4 text-muted-foreground" />
                           </Button>
-                          <Badge variant="secondary" className="bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400 border-transparent">
+                          <Badge variant="secondary" className="bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 border-transparent">
                             Procesado
                           </Badge>
                         </div>

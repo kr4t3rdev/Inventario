@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Clock, LogIn, LogOut, Edit, Save, Calendar } from "lucide-react";
-import { sileo } from '@/lib/sileo-shim';
+import { toast } from 'sonner';
 
 interface Empleado {
   empleadoId: string;
@@ -119,7 +119,7 @@ export function AsistenciaForm() {
    */
   const handleAttendanceAction = async (action: 'checkin' | 'checkout') => {
     if (!selectedEmpleado) {
-      sileo.error({ title: 'Seleccioná un empleado primero' });
+      toast.error('Seleccioná un empleado primero');
       return;
     }
 
@@ -142,15 +142,15 @@ export function AsistenciaForm() {
 
       if (response.ok) {
         setAsistenciaHoy(data);
-        sileo.success({ title: action === 'checkin'
+        toast.success(action === 'checkin'
           ? "Entrada registrada correctamente"
-          : "Salida registrada correctamente" });
+          : "Salida registrada correctamente");
       } else {
-        sileo.error({ title: data.error || 'Error al registrar asistencia' });
+        toast.error(data.error || 'Error al registrar asistencia');
       }
     } catch (error) {
       console.error("Error registrando asistencia:", error);
-      sileo.error({ title: 'Error interno del servidor' });
+      toast.error('Error interno del servidor');
     } finally {
       setLoading(false);
     }
@@ -208,13 +208,13 @@ export function AsistenciaForm() {
         }
 
         setEditingRecord(null);
-        sileo.success({ title: 'Registro actualizado correctamente' });
+        toast.success('Registro actualizado correctamente');
       } else {
-        sileo.error({ title: data.error || 'Error al actualizar registro' });
+        toast.error(data.error || 'Error al actualizar registro');
       }
     } catch (error) {
       console.error("Error actualizando asistencia:", error);
-      sileo.error({ title: 'Error interno del servidor' });
+      toast.error('Error interno del servidor');
     } finally {
       setLoading(false);
     }

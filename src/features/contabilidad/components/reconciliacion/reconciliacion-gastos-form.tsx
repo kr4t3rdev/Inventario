@@ -401,6 +401,7 @@ export function ReconciliacionGastosForm({
       }
 
       const result = await reconciliarGastoAction({
+        pgId: baseData.pgId,
         gastoCompraId: baseData.gastoCompraId,
         cuentaId: data.distribuciones[0].cuentaId,
         tipoPagoId: baseData.tipoPagoId,

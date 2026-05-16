@@ -192,7 +192,6 @@ export function EmpleadosNominaContent({ initialEmpleados, initialPagos }: Emple
                     scale: { duration: 2, repeat: Infinity, ease: 'easeInOut' },
                   }}
                 >
-                  <Sparkles className="h-4 w-4 text-yellow-500" />
                 </motion.div>
               </div>
             </motion.div>
@@ -216,8 +215,8 @@ export function EmpleadosNominaContent({ initialEmpleados, initialPagos }: Emple
                 variants={itemVariants}
                 whileHover={{ y: -4, transition: { duration: 0.2 } }}
               >
-                <Card className="border-dashed dark:border-slate-700 dark:bg-slate-900/50 overflow-hidden group">
-                  <div className="h-1 bg-linear-to-r from-primary via-purple-500 to-primary" />
+                <Card className="border-dashed dark:border-slate-700/10 dark:bg-slate-900/10 overflow-hidden group">
+                  <div className="h-1 bg-linear-to-r from-orange-500 to-red-600" />
                   <CardHeader>
                     <div className="flex justify-between items-start">
                       <div>
@@ -232,8 +231,8 @@ export function EmpleadosNominaContent({ initialEmpleados, initialPagos }: Emple
                         whileHover={{ scale: 1.1 }}
                         transition={{ type: 'spring', stiffness: 400, damping: 10 }}
                       >
-                        <Avatar className="h-12 w-12 ring-2 ring-primary/20">
-                          <AvatarFallback className="bg-linear-to-br from-primary/20 to-purple-600/20 text-primary font-semibold">
+                        <Avatar className="h-12 w-12 ring-2 ring-orange-500/20">
+                          <AvatarFallback className="bg-linear-to-br from-orange-500/20 to-red-600/20 text-orange-500 font-semibold">
                             {empleado.nombre.charAt(0)}{empleado.apellido?.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
@@ -247,7 +246,7 @@ export function EmpleadosNominaContent({ initialEmpleados, initialPagos }: Emple
                   </CardContent>
                   <CardFooter className="flex flex-wrap gap-2">
                     <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} className="flex-1 min-w-25">
-                      <Button asChild variant="outline" size="sm" className="w-full dark:border-slate-700 dark:hover:bg-slate-800">
+                      <Button asChild variant="outline" size="sm" className="w-full dark:border-slate-700/10 dark:hover:bg-slate-800/10">
                         <Link href={`/busy/empleados/update/${empleado.empleadoId}`}>
                           <Pencil className="h-4 w-4 mr-2" /> Editar
                         </Link>
@@ -258,7 +257,7 @@ export function EmpleadosNominaContent({ initialEmpleados, initialPagos }: Emple
                         onClick={() => handleOpenPagoDialog(empleado)}
                         variant="outline"
                         size="sm"
-                        className="w-full dark:border-slate-700 dark:hover:bg-slate-800"
+                        className="w-full dark:border-slate-700/10 dark:hover:bg-slate-800/10"
                       >
                         <CreditCard className="h-4 w-4 mr-2" /> Realizar Pago
                       </Button>
@@ -268,7 +267,7 @@ export function EmpleadosNominaContent({ initialEmpleados, initialPagos }: Emple
                         onClick={() => setEmpleadoToDelete(empleado.empleadoId)}
                         variant="outline"
                         size="sm"
-                        className="w-full hover:bg-destructive/10 hover:text-destructive hover:border-destructive dark:border-slate-700"
+                        className="w-full hover:bg-destructive/10 hover:text-destructive hover:border-destructive dark:border-slate-700/10"
                       >
                         <Trash2 className="h-4 w-4 mr-2" /> Eliminar
                       </Button>
@@ -282,12 +281,12 @@ export function EmpleadosNominaContent({ initialEmpleados, initialPagos }: Emple
           <motion.div className="mt-8" variants={itemVariants}>
             <motion.div className="flex items-center gap-3 mb-4">
               <motion.div
-                className="w-8 h-8 bg-linear-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center"
+                className="w-8 h-8 bg-linear-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center"
                 whileHover={{ scale: 1.1, rotate: 5 }}
               >
                 <CreditCard className="h-4 w-4 text-white" />
               </motion.div>
-              <h2 className="text-xl font-bold bg-linear-to-r from-emerald-500 to-teal-600 bg-clip-text text-transparent">
+              <h2 className="text-xl font-bold bg-linear-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
                 Historial de Pagos de Salario
               </h2>
             </motion.div>
@@ -298,14 +297,14 @@ export function EmpleadosNominaContent({ initialEmpleados, initialPagos }: Emple
               transition={{ delay: 0.3 }}
             >
               <Tabs defaultValue="historial" className="w-full">
-                <TabsList className="grid w-full max-w-md grid-cols-2 dark:bg-slate-900">
+                <TabsList className="grid w-full max-w-md grid-cols-2 dark:bg-slate-900/10">
                   <TabsTrigger value="historial">Historial Detallado</TabsTrigger>
                   <TabsTrigger value="resumen">Resumen por Período</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="historial" className="mt-4">
-                  <Card className="border-dashed dark:border-slate-700 dark:bg-slate-900/50">
-                    <div className="h-1 bg-linear-to-r from-emerald-500 via-teal-500 to-emerald-500" />
+                  <Card className="border-dashed dark:border-slate-700/10 dark:bg-slate-900/10">
+                    <div className="h-1 bg-linear-to-r from-orange-500 via-red-500 to-orange-500" />
                     <CardContent className="pt-6">
                       <Table>
                         <TableHeader>
@@ -330,7 +329,7 @@ export function EmpleadosNominaContent({ initialEmpleados, initialPagos }: Emple
                                 initial={{ opacity: 0, x: -20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: index * 0.05 }}
-                                className="border-b dark:border-slate-700 dark:hover:bg-slate-800/50 transition-colors"
+                                className="border-b dark:border-slate-700/10 dark:hover:bg-slate-800/10 transition-colors"
                               >
                                 <TableCell className="font-medium dark:text-slate-200">
                                   {pago.empleado?.nombre} {pago.empleado?.apellido}
@@ -339,7 +338,7 @@ export function EmpleadosNominaContent({ initialEmpleados, initialPagos }: Emple
                                 <TableCell className="dark:text-slate-300">${(pago.bonificaciones || 0).toLocaleString()}</TableCell>
                                 <TableCell className="dark:text-slate-300">${(pago.deducciones || 0).toLocaleString()}</TableCell>
                                 <TableCell className="dark:text-slate-300">{(pago.horasExtras || 0).toLocaleString()}</TableCell>
-                                <TableCell className="font-semibold text-emerald-600 dark:text-emerald-400">
+                                <TableCell className="font-semibold from-orange-400 to-red-500">
                                   ${totalPagado.toLocaleString()}
                                 </TableCell>
                                 <TableCell className="text-muted-foreground dark:text-slate-400">{pago.observaciones || '-'}</TableCell>
@@ -356,12 +355,12 @@ export function EmpleadosNominaContent({ initialEmpleados, initialPagos }: Emple
                 </TabsContent>
 
                 <TabsContent value="resumen" className="mt-4">
-                  <Card className="border-dashed dark:border-slate-700 dark:bg-slate-900/50">
-                    <div className="h-1 bg-linear-to-r from-emerald-500 via-teal-500 to-emerald-500" />
+                  <Card className="border-dashed dark:border-slate-700/10 dark:bg-slate-900/10">
+                    <div className="h-1 bg-linear-to-r from-orange-500 to-red-600" />
                     <CardContent className="pt-6">
                       <Table>
                         <TableHeader>
-                          <TableRow className="dark:border-slate-700">
+                          <TableRow className="dark:border-slate-700/10">
                             <TableHead className="dark:text-slate-400">Empleado</TableHead>
                             <TableHead className="dark:text-slate-400">Período</TableHead>
                             <TableHead className="dark:text-slate-400">Total Pagado</TableHead>
@@ -394,13 +393,13 @@ export function EmpleadosNominaContent({ initialEmpleados, initialPagos }: Emple
                                 initial={{ opacity: 0, x: -20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: index * 0.05 }}
-                                className="border-b dark:border-slate-700 dark:hover:bg-slate-800/50 transition-colors"
+                                className="border-b dark:border-slate-700/10 dark:hover:bg-slate-800/10 transition-colors"
                               >
                                 <TableCell className="font-medium dark:text-slate-200">
                                   {group.empleado?.nombre} {group.empleado?.apellido}
                                 </TableCell>
                                 <TableCell className="dark:text-slate-300">{group.periodo}</TableCell>
-                                <TableCell className="font-semibold text-emerald-600 dark:text-emerald-400">
+                                <TableCell className="font-semibold from-orange-400 to-red-500">
                                   ${group.total.toLocaleString()}
                                 </TableCell>
                                 <TableCell className="dark:text-slate-300">{group.count}</TableCell>
@@ -417,7 +416,7 @@ export function EmpleadosNominaContent({ initialEmpleados, initialPagos }: Emple
           </motion.div>
 
           <AlertDialog open={!!empleadoToDelete} onOpenChange={(open) => !open && setEmpleadoToDelete(null)}>
-            <AlertDialogContent className="dark:bg-slate-900 dark:border-slate-700">
+            <AlertDialogContent className="dark:bg-slate-900/10 dark:border-slate-700/10">
               <AlertDialogHeader>
                 <AlertDialogTitle className="dark:text-slate-100">¿Está seguro?</AlertDialogTitle>
                 <AlertDialogDescription className="dark:text-slate-400">
@@ -425,7 +424,7 @@ export function EmpleadosNominaContent({ initialEmpleados, initialPagos }: Emple
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogCancel className="dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700">
+                <AlertDialogCancel className="dark:bg-slate-800/10 dark:text-slate-200 dark:border-slate-700/10">
                   Cancelar
                 </AlertDialogCancel>
                 <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
@@ -454,7 +453,7 @@ export function EmpleadosNominaContent({ initialEmpleados, initialPagos }: Emple
                   <Input
                     id="salario"
                     type="number"
-                    className="col-span-3 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
+                    className="col-span-3 dark:bg-slate-800/10 dark:border-slate-700/10 dark:text-slate-100"
                     {...register('salario', { required: true, valueAsNumber: true })}
                   />
                 </div>
@@ -465,7 +464,7 @@ export function EmpleadosNominaContent({ initialEmpleados, initialPagos }: Emple
                   <Input
                     id="bonificaciones"
                     type="number"
-                    className="col-span-3 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
+                    className="col-span-3 dark:bg-slate-800/10 dark:border-slate-700/10 dark:text-slate-100"
                     {...register('bonificaciones', { valueAsNumber: true })}
                   />
                 </div>
@@ -476,7 +475,7 @@ export function EmpleadosNominaContent({ initialEmpleados, initialPagos }: Emple
                   <Input
                     id="deducciones"
                     type="number"
-                    className="col-span-3 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
+                    className="col-span-3 dark:bg-slate-800/10 dark:border-slate-700/10 dark:text-slate-100"
                     {...register('deducciones', { valueAsNumber: true })}
                   />
                 </div>
@@ -487,7 +486,7 @@ export function EmpleadosNominaContent({ initialEmpleados, initialPagos }: Emple
                   <Input
                     id="horasExtras"
                     type="number"
-                    className="col-span-3 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
+                    className="col-span-3 dark:bg-slate-800/10 dark:border-slate-700/10 dark:text-slate-100"
                     {...register('horasExtras', { valueAsNumber: true })}
                   />
                 </div>
@@ -497,7 +496,7 @@ export function EmpleadosNominaContent({ initialEmpleados, initialPagos }: Emple
                   </Label>
                   <Textarea
                     id="observaciones"
-                    className="col-span-3 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100"
+                    className="col-span-3 dark:bg-slate-800/10 dark:border-slate-700/10 dark:text-slate-100"
                     {...register('observaciones')}
                   />
                 </div>
@@ -505,7 +504,7 @@ export function EmpleadosNominaContent({ initialEmpleados, initialPagos }: Emple
                   <Button type="button" variant="outline" onClick={handleClosePagoDialog} className="dark:border-slate-700 dark:hover:bg-slate-800">
                     Cancelar
                   </Button>
-                  <Button type="submit" className="bg-linear-to-r from-emerald-500 to-teal-600 text-white">
+                  <Button type="submit" className="bg-linear-to-r from-orange-500 to-red-600 text-white">
                     Registrar Pago
                   </Button>
                 </DialogFooter>

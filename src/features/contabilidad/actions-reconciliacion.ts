@@ -16,11 +16,12 @@ export const getReconciliacionStatsAction = withAction(async (_input: void, user
   const hoy = new Date(); hoy.setHours(0,0,0,0);
   const manana = new Date(hoy); manana.setDate(manana.getDate() + 1);
 
-  const [vp, sp, gp, vh, sh, gh, montoHoy, act] = await Promise.all([
+  const [vp, sp, gp, gs, vh, sh, gh, montoHoy, act] = await Promise.all([
     // Pendientes: registros fuente sin reconciliación asignada
     prisma.venta.count({ where: { tenantId, reconciliaciones: { none: {} } } }),
     prisma.ventaServicios.count({ where: { tenantId, NOT: { reconciliado: true } } }),
     prisma.gastosDE.count({ where: { tenantId, reconciliaciones: { none: {} } } }),
+    prisma.pagosalario.count({ where: { tenantId, ReconciliacionGasto: { none: {} } } }),
     prisma.reconciliacionVenta.count({ where: { fechaReconciliacion: { gte: hoy, lt: manana }, tenantId } }),
     prisma.reconciliacionServicio.count({ where: { fechaReconciliacion: { gte: hoy, lt: manana }, tenantId } }),
     prisma.reconciliacionGasto.count({ where: { fechaReconciliacion: { gte: hoy, lt: manana }, tenantId } }),
@@ -28,14 +29,16 @@ export const getReconciliacionStatsAction = withAction(async (_input: void, user
     prisma.reconciliacionVenta.findMany({ where: { tenantId }, orderBy: { fechaReconciliacion: 'desc' }, take: 10, select: { reconciliacionId: true, monto: true, moneda: true, fechaReconciliacion: true, observaciones: true, cuentaBancaria: { select: { nombreBanco: true } } } }),
   ]);
 
-  const totalHoy = Math.max(vh+vp, sh+sp, gh+gp, 1);
+  const gastosPendientes = gp + gs;
+
+  const totalHoy = Math.max(vh+vp, sh+sp, gh+gastosPendientes, 1);
   return {
     modules: {
       ventas: { pending: vp, completedToday: vh, totalToday: vh+vp },
       servicios: { pending: sp, completedToday: sh, totalToday: sh+sp },
-      gastos: { pending: gp, completedToday: gh, totalToday: gh+gp },
+      gastos: { pending: gastosPendientes, completedToday: gh, totalToday: gh+gastosPendientes },
     },
-    stats: { totalPending: vp+sp+gp, completedToday: vh+sh+gh, reconciledAmount: Number(montoHoy._sum.monto??0), efficiency: Math.round(((vh+sh+gh)/totalHoy)*100) },
+    stats: { totalPending: vp+sp+gastosPendientes, completedToday: vh+sh+gh, reconciledAmount: Number(montoHoy._sum.monto??0), efficiency: Math.round(((vh+sh+gh)/totalHoy)*100) },
     recentActivity: act.map((a:any) => ({ id: a.reconciliacionId, type: 'venta', reference: a.reconciliacionId.slice(0,8), description: a.observaciones||'Venta reconciliada', accountName: a.cuentaBancaria?.nombreBanco||'Sin cuenta', amount: Number(a.monto), date: a.fechaReconciliacion.toISOString() })),
   };
 });
@@ -207,10 +210,19 @@ export const getGastosPendientesAction = withAction(async (params: {
     if (params.fechaHasta) whereGC.fechaCompra.lte = new Date(params.fechaHasta);
   }
 
+  // ── Query PagoSalario (salarios de empleados) ──
+  const wherePS: any = { tenantId };
+  if (params.soloNoReconciliados) wherePS.ReconciliacionGasto = { none: {} };
+  if (params.fechaDesde || params.fechaHasta) {
+    wherePS.createdAt = {};
+    if (params.fechaDesde) wherePS.createdAt.gte = new Date(params.fechaDesde);
+    if (params.fechaHasta) wherePS.createdAt.lte = new Date(params.fechaHasta);
+  }
+
   const page = params.page || 1; const limit = params.limit || 50;
 
-  // Traer ambos tipos y unificarlos
-  const [gastosDE, gastosCompra] = await Promise.all([
+  // Traer todos los tipos y unificarlos
+  const [gastosDE, gastosCompra, pagosSalario] = await Promise.all([
     prisma.gastosDE.findMany({
       where: whereDE, orderBy: { createdAt: 'desc' },
       include: { reconciliaciones: { select: { reconciliacionId: true } } },
@@ -221,6 +233,13 @@ export const getGastosPendientesAction = withAction(async (params: {
         reconciliaciones: { select: { reconciliacionId: true } },
         vendor: { select: { nombre: true } },
         producto: { select: { nombre: true } },
+      },
+    }),
+    prisma.pagosalario.findMany({
+      where: wherePS, orderBy: { createdAt: 'desc' },
+      include: {
+        ReconciliacionGasto: { select: { reconciliacionId: true } },
+        empleado: { select: { nombre: true, apellido: true, cargo: true } },
       },
     }),
   ]);
@@ -257,6 +276,26 @@ export const getGastosPendientesAction = withAction(async (params: {
       createdAt: g.createdAt.toISOString(),
       updatedAt: g.updatedAt.toISOString(),
     })),
+    ...pagosSalario.map((g: any) => ({
+      tipo: 'salario' as const,
+      referenciaId: g.pgId,
+      descripcion: `Salario de ${g.empleado?.nombre || ''} ${g.empleado?.apellido || ''}`.trim() || `Pago #${g.pgId.slice(0, 8)}`,
+      monto: Number(g.salario || 0),
+      periodo: g.periodo || undefined,
+      detalles: {
+        empleado: g.empleado ? {
+          nombre: g.empleado.nombre,
+          apellido: g.empleado.apellido,
+          cargo: g.empleado.cargo,
+        } : undefined,
+        salarioBases: g.salario || undefined,
+        bonificaciones: g.bonificaciones || undefined,
+        deducciones: g.deducciones || undefined,
+        horasExtras: g.horasExtras || undefined,
+      },
+      createdAt: g.createdAt.toISOString(),
+      updatedAt: g.updatedAt.toISOString(),
+    })),
   ];
 
   // Ordenar por createdAt desc
@@ -288,31 +327,40 @@ export const getHistorialReconciliacionGastosAction = withAction(async (params: 
 });
 
 export const reconciliarGastoAction = withAction(async (input: {
-  gastoCompraId: string; cuentaId: string; tipoPagoId: string; monto: number; moneda?: string;
+  gastoCompraId?: string; pgId?: string; cuentaId: string; tipoPagoId: string; monto: number; moneda?: string;
   fechaReconciliacion?: string; descripcion?: string; cuentaPorPagarId?: string;
 }, user: AuthenticatedUser) => {
   const tenantId = requireTenant(user);
   const fechaPago = input.fechaReconciliacion ? new Date(input.fechaReconciliacion) : new Date();
 
+  const esSalario = !!input.pgId;
+  const referenciaId = input.pgId || input.gastoCompraId;
+  if (!referenciaId) throw new Error('Se requiere gastoCompraId o pgId');
+
   const result = await prisma.$transaction(async (tx: any) => {
     // 1. Crear la reconciliación
-    const reconciliacion = await tx.reconciliacionGasto.create({
-      data: {
-        tipoGasto: 'compra',
-        referenciaId: input.gastoCompraId,
-        gastoCompraId: input.gastoCompraId,
-        cuentaId: input.cuentaId,
-        tipoPagoId: input.tipoPagoId,
-        monto: input.monto,
-        moneda: input.moneda || 'CUP',
-        descripcion: input.descripcion || '',
-        fechaReconciliacion: fechaPago,
-        reconciliadoPor: user.userId,
-        estado: 'PAGADA',
-        cuentaPorPagarId: input.cuentaPorPagarId || null,
-        tenantId,
-      },
-    });
+    const reconciliacionData: any = {
+      tipoGasto: esSalario ? 'salario' : 'compra',
+      referenciaId,
+      cuentaId: input.cuentaId,
+      tipoPagoId: input.tipoPagoId,
+      monto: input.monto,
+      moneda: input.moneda || 'CUP',
+      descripcion: input.descripcion || '',
+      fechaReconciliacion: fechaPago,
+      reconciliadoPor: user.userId,
+      estado: 'PAGADA',
+      cuentaPorPagarId: input.cuentaPorPagarId || null,
+      tenantId,
+    };
+
+    if (esSalario) {
+      reconciliacionData.pgId = input.pgId;
+    } else {
+      reconciliacionData.gastoCompraId = input.gastoCompraId;
+    }
+
+    const reconciliacion = await tx.reconciliacionGasto.create({ data: reconciliacionData });
 
     // 2. Descontar de la cuenta bancaria
     await tx.cuentaBancaria.update({

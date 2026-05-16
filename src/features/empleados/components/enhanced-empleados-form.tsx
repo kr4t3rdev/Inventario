@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input"
 import { CurrencyInput } from "@/components/ui/currency-input"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { sileo } from '@/lib/sileo-shim'
+import { toast } from 'sonner'
 import { Skeleton } from "@/components/ui/skeleton"
 import { DollarSign, User } from "lucide-react"
 import { createEmpleadoAction, updateEmpleadoAction } from "@/features/empleados/actions"
@@ -120,10 +120,10 @@ export function EnhancedEmpleadoForm({ initialData }: EnhancedEmpleadoFormProps)
           ...empleadoData,
         })
         if (!result.success) {
-          sileo.error({ title: result.error?.message || 'Hubo un error al guardar el empleado.' })
+          toast.error(result.error?.message || 'Hubo un error al guardar el empleado.')
           return
         }
-        sileo.success({ title: 'El empleado ha sido actualizado exitosamente.' })
+        toast.success('El empleado ha sido actualizado exitosamente.')
       } else {
         const result = await createEmpleadoAction({
   // @ts-expect-error
@@ -131,15 +131,15 @@ export function EnhancedEmpleadoForm({ initialData }: EnhancedEmpleadoFormProps)
           ...empleadoData
         })
         if (!result.success) {
-          sileo.error({ title: result.error?.message || 'Hubo un error al guardar el empleado.' })
+          toast.error(result.error?.message || 'Hubo un error al guardar el empleado.')
           return
         }
-        sileo.success({ title: 'El empleado ha sido registrado exitosamente.' })
+        toast.success('El empleado ha sido registrado exitosamente.')
       }
       router.back()
     } catch (error) {
       console.error("Error al guardar el empleado:", error)
-      sileo.error({ title: 'Hubo un error al guardar el empleado.' })
+      toast.error('Hubo un error al guardar el empleado.')
     } finally {
       setIsLoading(false)
       setPendingSubmission(null)
@@ -185,7 +185,7 @@ export function EnhancedEmpleadoForm({ initialData }: EnhancedEmpleadoFormProps)
       <Card>
         <CardContent className="pt-6">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit, () => { toast.error('Completá los campos requeridos antes de continuar.') })} className="space-y-6">
               <FormField
                 control={form.control}
                 name="nombre"

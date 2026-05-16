@@ -56,7 +56,7 @@ export default function VacacionesPage() {
             variants={itemVariants}
             className="flex gap-3"
           >
-            <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 rounded-lg border border-amber-100 dark:border-amber-900">
+            <div className="flex items-center gap-2 px-4 py-2 bg-amber-50 dark:bg-slate-900/10 text-amber-700 dark:text-amber-300 rounded-lg border border-amber-100 dark:border-amber-900">
               <Sun className="w-5 h-5" />
               <span className="font-medium">Planificación</span>
             </div>
@@ -65,7 +65,7 @@ export default function VacacionesPage() {
 
         <motion.div 
           variants={itemVariants}
-          className="bg-card rounded-xl shadow-sm border border-border/50"
+          className="rounded-xl shadow-sm border border-border/10 "
         >
           <VacacionesForm />
         </motion.div>

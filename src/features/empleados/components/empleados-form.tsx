@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { sileo } from '@/lib/sileo-shim'
+import { toast } from 'sonner'
 import { Skeleton } from "@/components/ui/skeleton"
 import { createEmpleadoAction, updateEmpleadoAction } from "@/features/empleados/actions"
 import { Users, Loader2 } from "lucide-react"
@@ -129,10 +129,10 @@ export function EmpleadoForm({ initialData }: EmpleadoFormProps) {
           ...submitData,
         })
         if (!result.success) {
-          sileo.error({ title: result.error?.message || 'Hubo un error al guardar el empleado.' })
+          toast.error(result.error?.message || 'Hubo un error al guardar el empleado.')
           return
         }
-        sileo.success({ title: 'Los empleados han sido actualizados exitosamente.' })
+        toast.success('Los empleados han sido actualizados exitosamente.')
         router.push("/busy/empleados")
       } else {
         const result = await createEmpleadoAction({
@@ -141,16 +141,16 @@ export function EmpleadoForm({ initialData }: EmpleadoFormProps) {
           ...submitData
         })
         if (!result.success) {
-          sileo.error({ title: result.error?.message || 'Hubo un error al guardar el empleado.' })
+          toast.error(result.error?.message || 'Hubo un error al guardar el empleado.')
           return
         }
-        sileo.success({ title: 'El empleado ha sido registrado exitosamente.' })
+        toast.success('El empleado ha sido registrado exitosamente.')
       }
 
       router.back()
     } catch (error) {
       console.error("Error al guardar el empleado:", error)
-      sileo.error({ title: 'Hubo un error al guardar el empleado.' })
+      toast.error('Hubo un error al guardar el empleado.')
     } finally {
       setIsLoading(false)
     }
@@ -158,7 +158,7 @@ export function EmpleadoForm({ initialData }: EmpleadoFormProps) {
 
   if (isLoadingEmpleados) {
     return (
-      <Card className="border-dashed dark:border-slate-700 dark:bg-slate-900/50">
+      <Card className="border-dashed dark:border-slate-700/10 dark:bg-slate-900/10">
         <CardHeader>
           <div className="h-1 bg-linear-to-r from-orange-500 via-red-500 to-orange-500 rounded-t-lg" />
         </CardHeader>
@@ -185,8 +185,7 @@ export function EmpleadoForm({ initialData }: EmpleadoFormProps) {
   }
 
   return (
-    <Card className="border-dashed dark:border-slate-700 dark:bg-slate-900/50 overflow-hidden">
-      <div className="h-1 bg-linear-to-r from-orange-500 via-red-500 to-orange-500" />
+    <Card className="border-dashed dark:border-slate-700/10 dark:bg-slate-900/10 overflow-hidden">
       <CardHeader>
         <motion.div
           className="flex items-center gap-3"
@@ -206,9 +205,10 @@ export function EmpleadoForm({ initialData }: EmpleadoFormProps) {
           </CardTitle>
         </motion.div>
       </CardHeader>
+      <div className="h-1 bg-linear-to-r from-orange-500 via-red-500 to-orange-500" />
       <CardContent className="pt-6">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-6">
+          <form onSubmit={form.handleSubmit(onSubmit, () => { toast.error('Completa los campos requeridos antes de continuar.') })} className="space-y-6">
             <motion.div
               custom={0}
               variants={formFieldVariants}
@@ -225,7 +225,7 @@ export function EmpleadoForm({ initialData }: EmpleadoFormProps) {
                       <Input
                         type="text"
                         {...field}
-                        className="dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500"
+                        className="dark:bg-slate-800/10 dark:border-slate-700/10 dark:text-slate-100 dark:placeholder:text-slate-500"
                       />
                     </FormControl>
                     <FormDescription className="dark:text-slate-400">
@@ -253,7 +253,7 @@ export function EmpleadoForm({ initialData }: EmpleadoFormProps) {
                       <Input
                         type="text"
                         {...field}
-                        className="dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500"
+                        className="dark:bg-slate-800/10 dark:border-slate-700/10 dark:text-slate-100 dark:placeholder:text-slate-500"
                       />
                     </FormControl>
                     <FormDescription className="dark:text-slate-400">
@@ -281,7 +281,7 @@ export function EmpleadoForm({ initialData }: EmpleadoFormProps) {
                       <Input
                         type="text"
                         {...field}
-                        className="dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500"
+                        className="dark:bg-slate-800/10 dark:border-slate-700/10 dark:text-slate-100 dark:placeholder:text-slate-500"
                       />
                     </FormControl>
                     <FormDescription className="dark:text-slate-400">
@@ -309,7 +309,7 @@ export function EmpleadoForm({ initialData }: EmpleadoFormProps) {
                       <Input
                         type="text"
                         {...field}
-                        className="dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500"
+                        className="dark:bg-slate-800/10 dark:border-slate-700/10 dark:text-slate-100 dark:placeholder:text-slate-500"
                       />
                     </FormControl>
                     <FormDescription className="dark:text-slate-400">
@@ -337,7 +337,7 @@ export function EmpleadoForm({ initialData }: EmpleadoFormProps) {
                       <Input
                         type="text"
                         {...field}
-                        className="dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500"
+                        className="dark:bg-slate-800/10 dark:border-slate-700/10 dark:text-slate-100 dark:placeholder:text-slate-500"
                       />
                     </FormControl>
                     <FormDescription className="dark:text-slate-400">
@@ -369,7 +369,7 @@ export function EmpleadoForm({ initialData }: EmpleadoFormProps) {
                             <Input
                               type="date"
                               {...field}
-                              className="dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500"
+                              className="dark:bg-slate-800/10 dark:border-slate-700/10 dark:text-slate-100 dark:placeholder:text-slate-500"
                             />
                           </FormControl>
                           <FormDescription className="dark:text-slate-400">
@@ -397,7 +397,7 @@ export function EmpleadoForm({ initialData }: EmpleadoFormProps) {
                             <Input
                               type="text"
                               {...field}
-                              className="dark:bg-slate-800 dark:border-slate-700 dark:text-slate-100 dark:placeholder:text-slate-500"
+                              className="dark:bg-slate-800/10 dark:border-slate-700/10 dark:text-slate-100 dark:placeholder:text-slate-500"
                             />
                           </FormControl>
                           <FormDescription className="dark:text-slate-400">
@@ -421,9 +421,8 @@ export function EmpleadoForm({ initialData }: EmpleadoFormProps) {
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="destructive"
                   onClick={() => router.push("/busy/empleados")}
-                  className="dark:border-slate-700 dark:hover:bg-slate-800"
                 >
                   Cancelar
                 </Button>

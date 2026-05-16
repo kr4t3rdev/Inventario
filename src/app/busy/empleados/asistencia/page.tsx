@@ -38,7 +38,7 @@ export default function AsistenciaPage() {
           <div>
             <motion.h1 
               variants={itemVariants}
-              className="text-4xl font-extrabold tracking-tight bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent"
+              className="text-4xl font-extrabold tracking-tight bg-linear-to-r from-orange-500 to-red-600 bg-clip-text text-transparent"
             >
               Control de Asistencia
             </motion.h1>
@@ -54,11 +54,11 @@ export default function AsistenciaPage() {
             variants={itemVariants}
             className="flex gap-3"
           >
-            <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 rounded-lg border border-blue-100 dark:border-blue-900">
+            <div className="flex items-center gap-2 px-4 py-2 bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-300 rounded-lg border border-orange-100 dark:border-orange-900">
               <Clock className="w-5 h-5" />
               <span className="font-medium">Tiempo Real</span>
             </div>
-            <div className="flex items-center gap-2 px-4 py-2 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 rounded-lg border border-indigo-100 dark:border-indigo-900">
+            <div className="flex items-center gap-2 px-4 py-2 bg-orange-50 dark:bg-orange-950/30 text-orange-700 dark:text-orange-300 rounded-lg border border-orange-100 dark:border-orange-900">
               <CalendarCheck className="w-5 h-5" />
               <span className="font-medium">Historial</span>
             </div>

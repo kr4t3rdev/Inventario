@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Clock, LogIn, LogOut, Edit, Save, Calendar, User, History, CheckCircle2, AlertCircle, Timer } from "lucide-react";
-import { sileo } from '@/lib/sileo-shim';
+import { toast } from 'sonner';
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Empleado {
@@ -132,7 +132,7 @@ export function EnhancedAsistenciaForm() {
    */
   const handleAttendanceAction = async (action: 'checkin' | 'checkout') => {
     if (!selectedEmpleado) {
-      sileo.error({ title: 'Seleccioná un empleado primero' });
+      toast.error('Seleccioná un empleado primero');
       return;
     }
 
@@ -155,9 +155,9 @@ export function EnhancedAsistenciaForm() {
 
       if (response.ok) {
         setAsistenciaHoy(data);
-        sileo.success({ title: action === 'checkin'
+        toast.success(action === 'checkin'
           ? "Entrada registrada correctamente"
-          : "Salida registrada correctamente" });
+          : "Salida registrada correctamente");
         
         // Refresh history
         const thirtyDaysAgo = new Date();
@@ -173,11 +173,11 @@ export function EnhancedAsistenciaForm() {
         }
 
       } else {
-        sileo.error({ title: data.error || 'Error al registrar asistencia' });
+        toast.error(data.error || 'Error al registrar asistencia');
       }
     } catch (error) {
       console.error("Error registrando asistencia:", error);
-      sileo.error({ title: 'Error interno del servidor' });
+      toast.error('Error interno del servidor');
     } finally {
       setLoading(false);
     }
@@ -237,13 +237,13 @@ export function EnhancedAsistenciaForm() {
 
         setIsEditDialogOpen(false);
         setEditingRecord(null);
-        sileo.success({ title: 'Registro actualizado correctamente' });
+        toast.success('Registro actualizado correctamente');
       } else {
-        sileo.error({ title: data.error || 'Error al actualizar registro' });
+        toast.error(data.error || 'Error al actualizar registro');
       }
     } catch (error) {
       console.error("Error actualizando asistencia:", error);
-      sileo.error({ title: 'Error interno del servidor' });
+      toast.error('Error interno del servidor');
     } finally {
       setLoading(false);
     }
@@ -258,7 +258,7 @@ export function EnhancedAsistenciaForm() {
     };
     
     const colors = {
-      present: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800",
+      present: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400 border-orange-200 dark:border-orange-800",
       absent: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800",
       late: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800",
       "half-day": "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800",
@@ -369,8 +369,8 @@ export function EnhancedAsistenciaForm() {
                         </div>
                         
                         <div className="grid grid-cols-2 gap-4">
-                          <div className={`p-4 rounded-xl border flex flex-col items-center justify-center text-center space-y-2 transition-colors ${asistenciaHoy.checkIn || asistenciaHoy.manualCheckIn ? 'bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900' : 'bg-muted/30 border-dashed'}`}>
-                            <div className={`p-2 rounded-full ${asistenciaHoy.checkIn || asistenciaHoy.manualCheckIn ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' : 'bg-muted text-muted-foreground'}`}>
+                          <div className={`p-4 rounded-xl border flex flex-col items-center justify-center text-center space-y-2 transition-colors ${asistenciaHoy.checkIn || asistenciaHoy.manualCheckIn ? 'bg-orange-50 dark:bg-orange-950/20 border-orange-200 dark:border-orange-900' : 'bg-muted/30 border-dashed'}`}>
+                            <div className={`p-2 rounded-full ${asistenciaHoy.checkIn || asistenciaHoy.manualCheckIn ? 'bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300' : 'bg-muted text-muted-foreground'}`}>
                               <LogIn className="h-5 w-5" />
                             </div>
                             <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Entrada</span>
@@ -394,7 +394,7 @@ export function EnhancedAsistenciaForm() {
                           <Button
                             onClick={() => handleAttendanceAction('checkin')}
                             disabled={loading || !!(asistenciaHoy && (asistenciaHoy.checkIn || asistenciaHoy.manualCheckIn))}
-                            className="w-full bg-green-600 hover:bg-green-700 text-white shadow-md hover:shadow-lg transition-all"
+                            className="w-full bg-orange-500 hover:bg-orange-600 text-white shadow-md hover:shadow-lg transition-all"
                             size="lg"
                           >
                             <LogIn className="h-5 w-5 mr-2" />
@@ -467,9 +467,9 @@ export function EnhancedAsistenciaForm() {
                             </span>
                           </div>
                           
-                          <div className="flex justify-between items-center p-3 rounded-lg bg-green-50 dark:bg-green-950/20 border border-green-100 dark:border-green-900">
-                            <span className="text-sm font-medium text-green-700 dark:text-green-400">Horas Extras</span>
-                            <span className="text-lg font-bold font-mono text-green-700 dark:text-green-400">
+                          <div className="flex justify-between items-center p-3 rounded-lg bg-orange-50 dark:bg-orange-950/20 border border-orange-100 dark:border-orange-900">
+                            <span className="text-sm font-medium text-orange-700 dark:text-orange-400">Horas Extras</span>
+                            <span className="text-lg font-bold font-mono text-orange-700 dark:text-orange-400">
                               +{asistenciaHoy.overtimeHours ? Number(asistenciaHoy.overtimeHours).toFixed(2) : '0.00'}h
                             </span>
                           </div>

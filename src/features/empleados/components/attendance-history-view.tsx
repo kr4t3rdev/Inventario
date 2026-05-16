@@ -356,7 +356,7 @@ export function AttendanceHistoryView() {
                 <div className="text-sm text-muted-foreground">Días totales</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">{stats.presentDays}</div>
+                <div className="text-2xl font-bold text-orange-600">{stats.presentDays}</div>
                 <div className="text-sm text-muted-foreground">Presentes</div>
               </div>
               <div className="text-center">
@@ -432,7 +432,7 @@ export function AttendanceHistoryView() {
                             {record.overtimeHours && Number(record.overtimeHours) > 0 && (
                               <div className="text-center">
                                 <div className="text-muted-foreground">Extras</div>
-                                <div className="font-medium text-green-600">
+                                <div className="font-medium text-orange-600">
                                   +{Number(record.overtimeHours).toFixed(2)}h
                                 </div>
                               </div>

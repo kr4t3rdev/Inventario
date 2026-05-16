@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Plus, Palmtree, Clock, CheckCircle2, XCircle, Search, User, FileText, CalendarDays } from "lucide-react";
-import { sileo } from '@/lib/sileo-shim';
+import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -151,13 +151,13 @@ export function VacacionesForm() {
     e.preventDefault();
 
     if (!selectedEmpleado || !startDate || !endDate) {
-      sileo.error({ title: 'Completá todos los campos requeridos' });
+      toast.error('Completá todos los campos requeridos');
       return;
     }
 
     const empleado = empleados.find(e => e.empleadoId === selectedEmpleado);
     if (!empleado) {
-      sileo.error({ title: 'Empleado no encontrado' });
+      toast.error('Empleado no encontrado');
       return;
     }
 
@@ -165,12 +165,12 @@ export function VacacionesForm() {
     const availableDays = getAvailableDays(empleado);
 
     if (daysRequested <= 0) {
-      sileo.error({ title: 'La fecha de fin debe ser posterior a la fecha de inicio' });
+      toast.error('La fecha de fin debe ser posterior a la fecha de inicio');
       return;
     }
 
     if (daysRequested > availableDays) {
-      sileo.error({ title: `Días insuficientes. Disponibles: ${availableDays}, Solicitados: ${daysRequested}` });
+      toast.error(`Días insuficientes. Disponibles: ${availableDays}, Solicitados: ${daysRequested}`);
       return;
     }
 
@@ -200,13 +200,13 @@ export function VacacionesForm() {
         setEndDate("");
         setReason("");
         setSelectedEmpleado("");
-        sileo.success({ title: 'Solicitud de vacaciones enviada correctamente' });
+        toast.success('Solicitud de vacaciones enviada correctamente');
       } else {
-        sileo.error({ title: data.error || 'Error al enviar solicitud' });
+        toast.error(data.error || 'Error al enviar solicitud');
       }
     } catch (error) {
       console.error("Error enviando solicitud:", error);
-      sileo.error({ title: 'Error interno del servidor' });
+      toast.error('Error interno del servidor');
     } finally {
       setLoading(false);
     }
@@ -251,12 +251,12 @@ export function VacacionesForm() {
   return (
     <div className="space-y-8">
       {/* Header Actions */}
-      <div className="flex flex-col sm:flex-row justify-between gap-4 items-center bg-card p-4 rounded-xl border shadow-sm">
+      <div className="flex flex-col sm:flex-row justify-between gap-4 items-center p-4 rounded-xl border shadow-sm bg-slate-900/10">
         <div className="relative w-full sm:w-72">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input 
             placeholder="Buscar solicitud..." 
-            className="pl-10 bg-background/50"
+            className="pl-10 bg-background/10"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
@@ -292,7 +292,7 @@ export function VacacionesForm() {
                       {empleados.map((empleado) => (
                         <SelectItem key={empleado.empleadoId} value={empleado.empleadoId} className="py-3">
                           <div className="flex items-center gap-3">
-                            <div className="h-8 w-8 rounded-full bg-orange-100 dark:bg-orange-900/30 flex items-center justify-center text-xs font-bold text-orange-700 dark:text-orange-400">
+                            <div className="h-8 w-8 rounded-full bg-orange-100 dark:bg-orange-900/10 flex items-center justify-center text-xs font-bold text-orange-700 dark:text-orange-400">
                               {empleado.nombre.charAt(0)}{empleado.apellido.charAt(0)}
                             </div>
                             <div className="flex flex-col">

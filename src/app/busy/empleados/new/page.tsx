@@ -29,25 +29,25 @@ export default function NuevaEmpleadoPage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.2 }}
             >
-              <motion.div
+              {/* <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <Button variant="outline" size="icon" asChild className="dark:border-slate-700 dark:hover:bg-slate-800">
+                <Button variant="outline" size="icon" asChild className="dark:border-slate-700/10 dark:hover:bg-slate-800/10">
                   <Link href="/busy/empleados">
                     <ArrowLeft className="h-4 w-4" />
                   </Link>
                 </Button>
-              </motion.div>
-              <motion.div
-                className="w-10 h-10 bg-linear-to-br from-primary to-purple-600 rounded-xl flex items-center justify-center shadow-lg"
+              </motion.div> */}
+              {/* <motion.div
+                className="w-10 h-10 bg-linear-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg"
                 whileHover={{ scale: 1.05, rotate: 5 }}
                 transition={{ type: "spring", stiffness: 400, damping: 10 }}
               >
                 <Users className="h-5 w-5 text-white" />
-              </motion.div>
-              <div className="relative">
-                <h1 className="text-2xl font-bold bg-linear-to-r from-primary to-purple-600 bg-clip-text text-transparent">
+              </motion.div> */}
+              {/* <div className="relative">
+                <h1 className="text-2xl font-bold bg-linear-to-r from-orange-500 to-red-600 bg-clip-text text-transparent">
                   Nuevo Empleado
                 </h1>
                 <motion.div
@@ -60,16 +60,16 @@ export default function NuevaEmpleadoPage() {
                 >
                   <Sparkles className="h-4 w-4 text-yellow-500" />
                 </motion.div>
-              </div>
+              </div> */}
             </motion.div>
-            <motion.p
+            {/* <motion.p
               className="text-muted-foreground dark:text-slate-400 ml-14"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
             >
               Ingrese los datos para registrar un nuevo empleado
-            </motion.p>
+            </motion.p> */}
           </motion.div>
 
           <motion.div
