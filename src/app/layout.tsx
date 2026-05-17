@@ -1,6 +1,7 @@
 import '@/app/globals.css';
 import type { Metadata } from 'next';
 import { ThemeProvider } from 'next-themes';
+import { LazyMotion, domAnimation } from "framer-motion";
 
 import { AuthProvider } from '@/contexts/auth-context';
 
@@ -23,9 +24,11 @@ export default function RootLayout({
         className="antialiased"
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <AuthProvider>
-            {children}
-          </AuthProvider>
+          <LazyMotion features={domAnimation}>
+            <AuthProvider>
+              {children}
+            </AuthProvider>
+          </LazyMotion>
         </ThemeProvider>
       </body>
     </html>
