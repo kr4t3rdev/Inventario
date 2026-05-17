@@ -1,5 +1,6 @@
 'use client'
 
+import { useRef } from "react"
 import { Building2, Sparkles, Users, Package, Archive, RefreshCw, Loader2 } from "lucide-react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
@@ -12,10 +13,10 @@ export const dynamic = 'force-dynamic'
 
 export default function TenantsPage() {
   const [tenants, setTenants] = useState<any[]>([])
-  const [system, setSystem] = useState<any>(null)
+  const system = useRef<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const refetch = () => { getAdminTenantsAction().then(r => { if(r.success) setTenants(r.data??[]) }) }
-  useEffect(() => { setIsLoading(true); getAdminTenantsAction().then(r => { if(r.success) setTenants(r.data??[]) }); getAdminSystemHealthAction().then(r => { if(r.success) setSystem(r.data) }); setIsLoading(false) }, [])
+  useEffect(() => { setIsLoading(true); getAdminTenantsAction().then(r => { if(r.success) setTenants(r.data??[]) }); getAdminSystemHealthAction().then(r => { if(r.success) system.current = r.data) }); setIsLoading(false) }, [])
 
   const safeTenants = tenants ?? []
 

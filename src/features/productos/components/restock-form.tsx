@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState , useRef} from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -116,7 +116,7 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
   const [pendingSubmission, setPendingSubmission] = useState<RestockFormValues | null>(null)
   // Estado para el diálogo de selección de tipo de restock
   const [showTipoRestockDialog, setShowTipoRestockDialog] = useState(false)
-  const [preciosCambiados, setPreciosCambiados] = useState(false)
+  const preciosCambiados = useRef(false)
 
   const { monedas: monedasData } = useMonedas()
   const { cuentas: cuentasData } = useCuentasBancarias()
@@ -195,7 +195,7 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
     const precioVentaChanged = data.precioVenta && Number(data.precioVenta) !== producto.precioVenta
     const hasPriceChanges = Boolean(precioCostoChanged || precioVentaChanged)
     
-    setPreciosCambiados(hasPriceChanges)
+    preciosCambiados.current = hasPriceChanges)
     
     // If prices changed and no tipoRestock selected yet, show selection dialog
     if (hasPriceChanges && !data.tipoRestock) {
@@ -813,5 +813,5 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
       )}
     </Card>
     </motion.div>
-  )
+  
 }

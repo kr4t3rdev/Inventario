@@ -1,7 +1,7 @@
 'use client'
 import { getProductosAction } from "@/features/productos"
 import { usePuntosDeVenta } from "@/features/puntos-venta/hooks/use-puntos-de-venta";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback , useRef} from "react";
 import { Producto } from "@/app/models/model";
 import { createVentaAction } from "@/features/ventas/actions";
 import { z } from "zod";
@@ -37,13 +37,13 @@ interface VentaFormProps extends Producto{
 export default function VentaInter() {
 
     const [productos, setProductos] = useState<any[]>([])
-    const [isLoadingProductos, setIsLoadingProductos] = useState(true)
+    const isLoadingProductos = useRef(true)
     const { puntosDeVenta: puntoDeVenta } = usePuntosDeVenta()
 
     useEffect(() => {
       getProductosAction().then(r => {
         if (r.success) setProductos(r.data ?? [])
-        setIsLoadingProductos(false)
+        isLoadingProductos.current = false)
       })
     }, [])
 

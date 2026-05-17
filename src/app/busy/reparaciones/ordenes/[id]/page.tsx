@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, use } from "react"
+import { useState, useEffect, use , useRef} from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { getAuthToken } from "@/lib/token"
@@ -164,14 +164,14 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
   const [isFacturing, setIsFacturing] = useState(false)
   const { productos } = useProductos() // Para materiales
   const [cuentasBancariasData, setCuentasBancariasData] = useState<any>(null)
-  const [isLoadingCuentas, setIsLoadingCuentas] = useState(true)
-  const [errorCuentas, setErrorCuentas] = useState<any>(null)
+  const isLoadingCuentas = useRef(true)
+  const errorCuentas = useRef<any>(null)
 
   useEffect(() => {
     getCuentasBancariasAction().then(r => {
       if (r.success) setCuentasBancariasData(r.data)
-      else setErrorCuentas(r.error)
-      setIsLoadingCuentas(false)
+      else errorCuentas.current = r.error)
+      isLoadingCuentas.current = false)
     })
   }, [])
 
@@ -184,7 +184,7 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
   const [complejidad, setComplejidad] = useState<ComplejidadReparacion | null>(null)
   const [diagnostico, setDiagnostico] = useState("")
   const [fotos, setFotos] = useState<string[]>([])
-  const [isUploading, setIsUploading] = useState(false)
+  const isUploading = useRef(false)
   
   // Items (Mano de obra / Piezas de reparación)
   const [items, setItems] = useState<ItemTemp[]>([])
@@ -200,7 +200,7 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
   const [isFacturarDialogOpen, setIsFacturarDialogOpen] = useState(false)
   const [isTasaDialogOpen, setIsTasaDialogOpen] = useState(false)
   const [exchangeRate, setExchangeRate] = useState<number | null>(null)
-  const [customTasa, setCustomTasa] = useState<number>(1)
+  const customTasa = useRef<number>(1)
   const usdToCupRate = exchangeRate ?? 1
   const [selectedCuentaMoneda, setSelectedCuentaMoneda] = useState<string>("USD")
   const [facturaParams, setFacturaParams] = useState<{
@@ -351,12 +351,12 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
   const handleUploadPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return
     
-    setIsUploading(true)
+    isUploading.current = true)
     const formData = new FormData()
     formData.append('file', e.target.files[0])
 
       try {
-      const token = sessionStorage.getItem('token');
+      const token = sessionStorage.getItem('token';
       const res = await fetch('/api/upload', {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -372,7 +372,7 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
       console.error(error)
       toast.error("Error al subir la foto")
     } finally {
-      setIsUploading(false)
+      isUploading.current = false)
       // Limpiar input
       e.target.value = ''
     }
@@ -1410,11 +1410,11 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
                                     const data = await res.json()
                                     const rate = Number(data?.rate) || 1
                                     setExchangeRate(rate)
-                                    setCustomTasa(rate)
+                                    customTasa.current = rate)
                                   }
                                 } catch {
                                   // Si falla, usar 1 como default
-                                  setCustomTasa(1)
+                                  customTasa.current = 1)
                                 }
                               }
                               loadExchangeRate()
@@ -1508,5 +1508,5 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
       
       
     </motion.div>
-  )
+  
 }

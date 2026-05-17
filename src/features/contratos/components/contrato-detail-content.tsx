@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from "react"
+import { useEffect, useState , useRef} from "react"
 import { useParams, useRouter } from "next/navigation"
 import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
@@ -111,7 +111,7 @@ export function ContratoDetailContent({ initialData, contratoId }: ContratoDetai
   const id = params?.id as string || contratoId
   const [contrato, setContrato] = useState<ContratoDetail | null>(initialData || null)
   const [isLoading, setIsLoading] = useState(!initialData)
-  const [partyImageError, setPartyImageError] = useState(false)
+  const partyImageError = useRef(false)
 
   useEffect(() => {
     if (initialData) {
@@ -153,7 +153,7 @@ export function ContratoDetailContent({ initialData, contratoId }: ContratoDetai
   }
 
   useEffect(() => {
-    setPartyImageError(false)
+    partyImageError.current = false)
   }, [contrato?.contratoId, contrato?.cliente?.logoUrl, contrato?.vendor?.logo])
 
   const getEstadoBadge = (estado: string) => {

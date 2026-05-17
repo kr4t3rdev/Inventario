@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect , useRef} from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { BarChart3, FileText, FilterX, LineChart, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
@@ -42,12 +42,12 @@ export function ReportesAnalyticsPage() {
   });
 
   const [cuentasData, setCuentasData] = useState<{ cuentas: any[] }>({ cuentas: [] });
-  const [cuentasLoading, setCuentasLoading] = useState(true);
+  const cuentasLoading = useRef(true);
 
   useEffect(() => {
     getCuentasBancariasAction().then(r => {
       if (r.success) setCuentasData({ cuentas: r.data?.cuentas ?? [] });
-      setCuentasLoading(false);
+      cuentasLoading.current = false);
     })
   }, [])
 

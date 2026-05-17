@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect , useRef} from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -48,7 +48,7 @@ export function AjusteBancarioForm({ onSuccess, onCancel }: AjusteBancarioFormPr
     const [cuentasBancarias, setCuentasBancarias] = useState<any[]>([])
     const [monedas, setMonedas] = useState<Moneda[]>([])
     const [isSubmitting, setIsSubmitting] = useState(false)
-    const [isLoadingCuentas, setIsLoadingCuentas] = useState(true)
+    const isLoadingCuentas = useRef(true)
 
     useEffect(() => {
       Promise.all([
@@ -60,7 +60,7 @@ export function AjusteBancarioForm({ onSuccess, onCancel }: AjusteBancarioFormPr
           const monedasArr = Array.isArray(m.data) ? m.data : (m.data as any)?.data ?? []
           setMonedas(monedasArr)
         }
-        setIsLoadingCuentas(false)
+        isLoadingCuentas.current = false)
       })
     }, [])
   

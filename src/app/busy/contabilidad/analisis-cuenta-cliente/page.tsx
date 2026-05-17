@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect , useRef} from "react"
 import { format } from "date-fns"
 import { 
   Users, 
@@ -51,13 +51,13 @@ export default function AnalisisCuentaClientePage() {
   // Queries
   const { clientes, isLoading: isLoadingClientes } = useClientes()
   const [cuentas, setCuentas] = useState<any[]>([])
-  const [isLoadingCuentas, setIsLoadingCuentas] = useState(true)
+  const isLoadingCuentas = useRef(true)
 
   useEffect(() => {
     getCuentasPorCobrarAction({ page: 1, limit: 1000 }).then(r => {
       if (r.success) setCuentas((r.data?.cuentas ?? []) as any)
-      setIsLoadingCuentas(false)
-    }).catch(() => setIsLoadingCuentas(false))
+      isLoadingCuentas.current = false)
+    }).catch(() => isLoadingCuentas.current = false))
   }, [])
   
   // Filter invoices by client if one is selected

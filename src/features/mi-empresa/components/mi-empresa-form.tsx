@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useState } from "react"
+import React, { useState , useRef} from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
@@ -122,7 +122,7 @@ export function MiEmpresaForm({ initialData, cuentas = [] }: MiEmpresaFormProps)
   const [saving, setSaving] = useState(false)
   const [showEan13Confirmation, setShowEan13Confirmation] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [savedUsaEan13, setSavedUsaEan13] = useState(initialData?.usaCodigoEan13 ?? false)
+  const savedUsaEan13 = useRef(initialData?.usaCodigoEan13 ?? false)
 
   const defaultValues = initialData ?? {
     nombre: "Mi Empresa",
@@ -172,7 +172,7 @@ export function MiEmpresaForm({ initialData, cuentas = [] }: MiEmpresaFormProps)
           shouldTouch: false,
           shouldValidate: false,
         })
-        setSavedUsaEan13(false)
+        savedUsaEan13.current = false)
       } catch (error) {
         sileo.error({
           title: error instanceof Error ? error.message : 'Error al actualizar',
@@ -218,7 +218,7 @@ export function MiEmpresaForm({ initialData, cuentas = [] }: MiEmpresaFormProps)
         shouldTouch: false,
         shouldValidate: false,
       })
-      setSavedUsaEan13(responseData?.usaCodigoEan13 ?? true)
+      savedUsaEan13.current = responseData?.usaCodigoEan13 ?? true)
     } catch (error) {
       sileo.error({
         title: error instanceof Error ? error.message : 'Error al activar EAN-13',

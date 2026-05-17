@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback , useRef} from "react"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -74,7 +74,7 @@ export function TiposPagoConfigPage() {
   const [errorTiposPago, setErrorTiposPago] = useState<any>(null);
   const [creatingTipoPago, setCreatingTipoPago] = useState(false);
   const [updatingTipoPago, setUpdatingTipoPago] = useState(false);
-  const [deletingTipoPago, setDeletingTipoPago] = useState(false);
+  const deletingTipoPago = useRef(false);
 
   const fetchTiposPago = useCallback(async () => {
     setLoadingTiposPago(true);
@@ -145,7 +145,7 @@ export function TiposPagoConfigPage() {
 
   const handleDelete = async (tipoPagoId: string) => {
     try {
-      setDeletingTipoPago(true);
+      deletingTipoPago.current = true);
       const r = await deleteTipoPagoAction(tipoPagoId);
       if (!r.success) throw new Error(r.error?.message || 'Error al eliminar');
       toast.success("Tipo de pago eliminado correctamente")
@@ -154,7 +154,7 @@ export function TiposPagoConfigPage() {
       console.error("Error deleting payment type:", error)
       toast.error("No se pudo eliminar el tipo de pago")
     } finally {
-      setDeletingTipoPago(false);
+      deletingTipoPago.current = false);
     }
   }
 

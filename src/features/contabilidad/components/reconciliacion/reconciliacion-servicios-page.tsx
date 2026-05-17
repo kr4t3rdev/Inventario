@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect , useRef} from "react"
 import { motion, useReducedMotion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -69,10 +69,10 @@ export function ReconciliacionServiciosPage() {
   const [pageSize, setPageSize] = useState(50)
 
   const [serviciosPendientesData, setServiciosPendientesData] = useState<any>(null)
-  const [loadingServicios, setLoadingServicios] = useState(false)
+  const loadingServicios = useRef(false)
 
   const refetchServicios = () => {
-    setLoadingServicios(true)
+    loadingServicios.current = true;
     getServiciosPendientesAction({
       fechaDesde: fechaInicio || undefined,
       fechaHasta: fechaFin || undefined,
@@ -80,7 +80,7 @@ export function ReconciliacionServiciosPage() {
       limit: pageSize,
     }).then((r) => {
       if (r.success) setServiciosPendientesData(r.data)
-      setLoadingServicios(false)
+      loadingServicios.current = false)
     })
   }
 
@@ -107,16 +107,16 @@ export function ReconciliacionServiciosPage() {
   }
 
   const [historialReconciliacionData, setHistorialReconciliacionData] = useState<any[]>([])
-  const [loadingHistorial, setLoadingHistorial] = useState(false)
+  const loadingHistorial = useRef(false)
 
   useEffect(() => {
-    setLoadingHistorial(true)
+    loadingHistorial.current = true)
     getHistorialReconciliacionServiciosAction({
       fechaDesde: fechaInicio || undefined,
       fechaHasta: fechaFin || undefined,
     }).then((r) => {
       if (r.success) setHistorialReconciliacionData(r.data?.reconciliaciones ?? [])
-      setLoadingHistorial(false)
+      loadingHistorial.current = false)
     })
   }, [fechaInicio, fechaFin])
 
