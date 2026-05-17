@@ -5,7 +5,6 @@ import { useEffect, useState, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { getAuthToken } from "@/lib/token"
 import { getMiEmpresaAction } from '@/features/mi-empresa/actions'
 import { numeroALetras } from "@/lib/number-to-words"
 // import { useTheme } from "next-themes"
@@ -211,7 +210,6 @@ function InvoicePrintContent() {
 
   useEffect(() => {
     const loadInvoice = async () => {
-      const token = getAuthToken()
 
       if (invoiceId) {
         try {
@@ -264,14 +262,9 @@ function InvoicePrintContent() {
   }, [isLoadingInvoice, invoiceData, router])
 
   useEffect(() => {
-    const token = getAuthToken()
-    fetch("/api/mi-empresa", {
-      headers: token ? { Authorization: token } : undefined,
-      cache: "no-store",
-    })
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
-        if (data) setMiEmpresa(data as MiEmpresaData)
+    getMiEmpresaAction()
+      .then((r) => {
+        if (r.success) setMiEmpresa(r.data as MiEmpresaData)
       })
       .catch(() => {})
   }, [])

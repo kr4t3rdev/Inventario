@@ -18,7 +18,7 @@ import { getCategoriasAction } from "@/features/categorias/actions";
 import { getMiEmpresaAction } from '@/features/mi-empresa/actions'
 import { useCategoryForm } from "@/features/categorias/hooks/use-category-form";
 import { ClasificadorInfoNote } from "@/features/productos/components/clasificador-info-note";
-import { getAuthToken } from "@/lib/token";
+
 import type { Categoria } from "@/app/models/model";
 import {
   CLASClassifierData,
@@ -217,13 +217,10 @@ export function SubcategoryForm({ initialData, onSuccess }: SubcategoryFormProps
   }, [clasSectionId]);
 
   useEffect(() => {
-    const token = getAuthToken();
-    fetch('/api/mi-empresa', {
-      headers: token ? { Authorization: token } : undefined,
-      cache: 'no-store',
-    })
-      .then((response) => response.json())
-      .then((data) => setUsaEan13(data?.usaCodigoEan13 ?? false))
+    getMiEmpresaAction()
+      .then((r) => {
+        if (r.success) setUsaEan13(r.data?.usaCodigoEan13 ?? false)
+      })
       .catch(() => setUsaEan13(false));
   }, []);
 

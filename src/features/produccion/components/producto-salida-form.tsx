@@ -18,7 +18,6 @@ import { useCategorias } from '@/features/categorias/hooks/use-categorias';
 import { useUnidades } from '@/features/unidades/hooks/use-unidades';
 import { useAlmacenes } from '@/features/almacenes/hooks/use-almacenes';
 import { useVendors } from '@/features/vendors/hooks/use-vendors';
-import { getAuthToken } from '@/lib/token';
 import { getMiEmpresaAction } from '@/features/mi-empresa/actions'
 
 interface ProductoSalidaFormValues {
@@ -102,13 +101,10 @@ export function ProductoSalidaForm({
   const { vendors } = useVendors();
 
   useEffect(() => {
-    const token = getAuthToken();
-    fetch('/api/mi-empresa', {
-      headers: token ? { Authorization: token } : undefined,
-      cache: 'no-store',
-    })
-      .then((response) => response.json())
-      .then((data) => setUsaEan13(data?.usaCodigoEan13 ?? false))
+    getMiEmpresaAction()
+      .then((r) => {
+        if (r.success) setUsaEan13(r.data?.usaCodigoEan13 ?? false)
+      })
       .catch(() => setUsaEan13(false));
   }, []);
 
