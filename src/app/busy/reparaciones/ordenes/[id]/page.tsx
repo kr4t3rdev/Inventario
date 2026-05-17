@@ -1109,7 +1109,7 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
                                 : null
                               
                               return (
-                                <TableRow key={idx}>
+                                <TableRow key={item.defectacionId || item.piezaId || `item-${idx}`}>
                                   <TableCell className="font-mono text-xs">{code.slice(-8)}</TableCell>
                                   <TableCell>
                                     <div className="flex flex-col">
@@ -1223,7 +1223,7 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
                               const totalValue = mat.total * usdToCupRate
 
                               return (
-                                <TableRow key={idx}>
+                                <TableRow key={`${mat.nombreProducto}-${mat.cantidad}-${idx}`}>
                                     <TableCell className="font-medium">{mat.nombreProducto}</TableCell>
                                     <TableCell className="text-right">{mat.cantidad}</TableCell>
                                     <TableCell className="text-right">{formatCurrency(unitValue)}</TableCell>

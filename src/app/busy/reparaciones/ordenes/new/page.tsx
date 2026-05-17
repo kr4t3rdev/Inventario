@@ -600,11 +600,11 @@ export default function NewOrdenPage() {
                     <div className="border-t pt-4">
                       <h3 className="font-semibold mb-2">Fotos del Equipo:</h3>
                       <div className="grid grid-cols-3 gap-2">
-                        {equipos[0].fotos.map((foto, idx) => (
-                          <div key={idx} className="relative aspect-square rounded-lg overflow-hidden border">
+                        {equipos[0].fotos.map((foto) => (
+                          <div key={foto} className="relative aspect-square rounded-lg overflow-hidden border">
                             <Image
                               src={foto}
-                              alt={`Foto ${idx + 1}`}
+                              alt={`Foto`}
                               fill
                               className="object-cover"
                             />

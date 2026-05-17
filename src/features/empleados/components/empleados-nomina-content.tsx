@@ -387,9 +387,9 @@ export function EmpleadosNominaContent({ initialEmpleados, initialPagos }: Emple
                               return acc
                             }, {} as Record<string, { empleado: Empleado; periodo: string; total: number; count: number }>)
 
-                            return Object.values(grouped || {}).map((group, index) => (
+                            return Object.values(grouped || {}).map((group) => (
                               <motion.tr
-                                key={`${group.empleado.empleadoId}-${group.periodo}-${index}`}
+                                key={`${group.empleado.empleadoId}-${group.periodo}`}
                                 initial={{ opacity: 0, x: -20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: index * 0.05 }}

@@ -326,7 +326,7 @@ export function CategoryMoveDialog({ open, onClose, categoryId }: CategoryMoveDi
                           <AlertDescription>
                             <ul className="list-disc list-inside space-y-1">
                               {validation.errors.map((error, index) => (
-                                <li key={index}>{error}</li>
+                                <li key={`${error}-${index}`}>{error}</li>
                               ))}
                             </ul>
                           </AlertDescription>

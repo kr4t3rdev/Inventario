@@ -193,8 +193,8 @@ export function MigrateCuentasPorPagarButton() {
                 <div className="max-h-32 overflow-y-auto text-xs space-y-1">
                   {resultado.detalles
                     .filter((d: any) => d.estado === 'ERROR')
-                    .map((detalle: any, idx: number) => (
-                      <div key={idx} className="p-1 bg-red-50 rounded text-red-700">
+                    .map((detalle: any) => (
+                      <div key={detalle.numeroFactura} className="p-1 bg-red-50 rounded text-red-700">
                         {detalle.numeroFactura}: {detalle.error}
                       </div>
                     ))}

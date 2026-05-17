@@ -324,9 +324,9 @@ export default function WandaDashboardPage() {
                     <Coins className="h-4 w-4 text-amber-500" aria-hidden="true" />
                   </div>
                   <div className="flex-1 grid grid-cols-3 gap-2">
-                    {canalesGauge.map((canal, index) => (
+                    {canalesGauge.map((canal) => (
                       <GaugeChart 
-                        key={index}
+                        key={canal.label}
                         value={canal.value} 
                         label={canal.label} 
                         color={canal.color}
