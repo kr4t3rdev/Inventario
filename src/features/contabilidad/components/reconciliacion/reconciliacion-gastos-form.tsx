@@ -50,7 +50,7 @@ import { TasaCambioDialog } from "../tasa-cambio-dialog"
 import { getMonedasAction } from "@/features/contabilidad/actions-exchange"
 
 interface GastoPendiente {
-  tipo: 'salario' | 'gastoDE' | 'compra'
+  tipo: 'salario' | 'gastoDE' | 'compra' | 'servicio' | 'venta_servicio'
   referenciaId: string
   descripcion: string
   monto: number
@@ -74,6 +74,11 @@ interface GastoPendiente {
     cantidad?: number
     precioUnitario?: number
     fechaCompra?: string
+    servicio?: string
+    proveedorNombre?: string
+    costoUnitario?: number
+    numeroFactura?: string
+    clienteNombre?: string
   }
   createdAt: string
   updatedAt: string
@@ -115,7 +120,9 @@ const MONEDA_SIMBOLOS: Record<string, string> = {
 const TIPO_GASTO_LABELS: Record<string, { label: string; icon: any; color: string }> = {
   salario: { label: "Salario", icon: Receipt, color: "bg-blue-100 text-blue-800" },
   gastoDE: { label: "Gasto DE", icon: Building2, color: "bg-orange-100 text-orange-800" },
-  compra: { label: "Compra", icon: Receipt, color: "bg-green-100 text-green-800" }
+  compra: { label: "Compra", icon: Receipt, color: "bg-green-100 text-green-800" },
+  servicio: { label: "Servicio", icon: Receipt, color: "bg-purple-100 text-purple-800" },
+  venta_servicio: { label: "Costo Serv. Vendido", icon: DollarSign, color: "bg-pink-100 text-pink-800" }
 }
 
 export function ReconciliacionGastosForm({
@@ -255,6 +262,26 @@ export function ReconciliacionGastosForm({
             { label: "Total", value: gasto.monto }
           ]
         }
+      case 'servicio':
+        return {
+          primary: gasto.detalles.servicio || gasto.descripcion,
+          secondary: gasto.detalles.proveedorNombre,
+          breakdown: [
+            { label: "Cantidad", value: gasto.detalles.cantidad || 0 },
+            { label: "Costo Unitario", value: gasto.detalles.costoUnitario || 0 },
+            { label: "Total", value: gasto.monto }
+          ]
+        }
+      case 'venta_servicio':
+        return {
+          primary: gasto.detalles.servicio || gasto.descripcion,
+          secondary: gasto.detalles.clienteNombre,
+          breakdown: [
+            { label: "Cantidad", value: gasto.detalles.cantidad || 0 },
+            { label: "Costo Unitario", value: gasto.detalles.costoUnitario || 0 },
+            { label: "Costo Total", value: gasto.monto }
+          ]
+        }
       default:
         return {
           primary: gasto.descripcion,
@@ -392,6 +419,10 @@ export function ReconciliacionGastosForm({
         baseData.gastosDEId = gasto.referenciaId
       } else if (gasto.tipo === 'compra') {
         baseData.gastoCompraId = gasto.referenciaId
+      } else if (gasto.tipo === 'servicio') {
+        baseData.compraServicioId = gasto.referenciaId
+      } else if (gasto.tipo === 'venta_servicio') {
+        baseData.ventaServicioId = gasto.referenciaId
       }
 
       // Si es cuenta por pagar, agregar el ID y el estado
@@ -403,6 +434,8 @@ export function ReconciliacionGastosForm({
       const result = await reconciliarGastoAction({
         pgId: baseData.pgId,
         gastoCompraId: baseData.gastoCompraId,
+        compraServicioId: baseData.compraServicioId,
+        ventaServicioId: baseData.ventaServicioId,
         cuentaId: data.distribuciones[0].cuentaId,
         tipoPagoId: baseData.tipoPagoId,
         monto: baseData.monto,

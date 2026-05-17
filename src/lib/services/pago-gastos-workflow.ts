@@ -21,7 +21,7 @@ export interface GastoWorkflowDistribucion {
  * @description Entrada del workflow unificado de pago de gastos/CxP.
  */
 export interface ApplyPagoGastoWorkflowParams {
-  tipoGasto: 'salario' | 'gastoDE' | 'compra'
+  tipoGasto: 'salario' | 'gastoDE' | 'compra' | 'servicio' | 'venta_servicio'
   referenciaId: string
   reconciliadoPor: string
   descripcion: string

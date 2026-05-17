@@ -11,7 +11,7 @@ import {
 export { isGastoWorkflowError }
 
 export const reconciliacionGastoSchema = z.object({
-  tipoGasto: z.enum(['salario', 'gastoDE', 'compra'], { errorMap: () => ({ message: 'Tipo de gasto debe ser: salario, gastoDE o compra' }) }),
+  tipoGasto: z.enum(['salario', 'gastoDE', 'compra', 'servicio', 'venta_servicio'], { errorMap: () => ({ message: 'Tipo de gasto debe ser: salario, gastoDE, compra, servicio o venta_servicio' }) }),
   pgId: z.string().optional(),
   gastosDEId: z.string().optional(),
   gastoCompraId: z.string().optional(),
@@ -32,6 +32,8 @@ export const reconciliacionGastoSchema = z.object({
   if (d.tipoGasto === 'salario' && !(d.pgId || d.referenciaId)) return false
   if (d.tipoGasto === 'gastoDE' && !(d.gastosDEId || d.referenciaId)) return false
   if (d.tipoGasto === 'compra' && !(d.gastoCompraId || d.referenciaId)) return false
+  if (d.tipoGasto === 'servicio' && !d.referenciaId) return false
+  if (d.tipoGasto === 'venta_servicio' && !d.referenciaId) return false
   return true
 }, { message: "Debe proporcionar el ID correspondiente al tipo de gasto" }).refine((d) => {
   if (d.estado === 'PAGADA') return (Array.isArray(d.distribucion) && d.distribucion.length > 0) || !!d.cuentaId
@@ -133,6 +135,20 @@ export async function handlePostReconciliacionGastos(request: NextRequest, user:
       if (compra) { referenciaExiste = true; referenciaId = id; gastoCompraIdResolved = id }
       break
     }
+    case 'servicio': {
+      const id = validatedData.referenciaId
+      if (!id) return NextResponse.json({ error: 'referenciaId es requerido para gastos de servicio', code: 'SERVICIO_ID_REQUERIDO' }, { status: 400 })
+      const servicio = await prisma.compraServicio.findUnique({ where: { compraServicioId: id } })
+      if (servicio) { referenciaExiste = true; referenciaId = id }
+      break
+    }
+    case 'venta_servicio': {
+      const id = validatedData.referenciaId
+      if (!id) return NextResponse.json({ error: 'referenciaId es requerido para gastos de venta_servicio', code: 'VENTA_SERVICIO_ID_REQUERIDO' }, { status: 400 })
+      const ventaServicio = await prisma.ventaServicios.findUnique({ where: { ventaServicioId: id } })
+      if (ventaServicio) { referenciaExiste = true; referenciaId = id }
+      break
+    }
   }
 
   if (!referenciaExiste) return NextResponse.json({ error: `${validatedData.tipoGasto} no encontrado`, code: 'REFERENCIA_NO_ENCONTRADA' }, { status: 404 })
@@ -204,6 +220,8 @@ export async function handleGetReconciliacionGastosHistorial(request: NextReques
         case 'salario': if (rec.pagoSalario?.empleado) { const emp = await prisma.empleado.findUnique({ where: { empleadoId: rec.pagoSalario.empleado.empleadoId }, select: { empleadoId: true, nombre: true, apellido: true, cargo: true, salarioBases: true } }); detallesReferencia = { ...emp, pago: rec.pagoSalario } }; break
         case 'gastoDE': if (rec.gastosDEId) detallesReferencia = await prisma.gastosDE.findUnique({ where: { gastosDEId: rec.gastosDEId }, select: { gastosDEId: true, tipo: true, proveedor: true, monto: true, periodo: true, descripcion: true, isPagado: true } }); break
         case 'compra': if (rec.gastoCompraId) detallesReferencia = await prisma.gastoCompra.findUnique({ where: { gastoCompraId: rec.gastoCompraId }, include: { producto: { select: { nombre: true } }, vendor: { select: { nombre: true } } } }); break
+        case 'servicio': if (rec.referenciaId) detallesReferencia = await prisma.compraServicio.findUnique({ where: { compraServicioId: rec.referenciaId }, include: { servicio: { select: { nombre: true } }, proveedor: { select: { nombre: true } } } }); break
+        case 'venta_servicio': if (rec.referenciaId) detallesReferencia = await prisma.ventaServicios.findUnique({ where: { ventaServicioId: rec.referenciaId }, include: { servicio: { select: { nombre: true } }, cliente: { select: { nombre: true } } } }); break
       }
     } catch (e) { console.warn(`Error fetching reference details for ${rec.tipoGasto} ${rec.referenciaId}:`, e) }
     return { ...rec, detallesReferencia }

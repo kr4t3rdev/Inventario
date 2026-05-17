@@ -857,6 +857,7 @@ model Servicios {
   tenantId        String
   nombre          String
   precio          Int
+  moneda          String           @default("CUP")
   descripcion     String
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt

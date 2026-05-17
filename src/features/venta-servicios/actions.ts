@@ -60,7 +60,7 @@ export const createVentaServicioAction = withAction(async (input: VentaServicioI
             tenantId,
             servicioId: linea.servicioId!,
             cantidad: linea.cantidad,
-            costo: 0,
+            costo: linea.costo ?? 0,
             total: linea.cantidad * linea.precioUnitario,
             observaciones: linea.observaciones ?? payload.observaciones ?? null,
             clienteId: payload.clienteId ?? null,

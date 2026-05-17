@@ -670,6 +670,7 @@ exports.Prisma.ServiciosScalarFieldEnum = {
   tenantId: 'tenantId',
   nombre: 'nombre',
   precio: 'precio',
+  moneda: 'moneda',
   descripcion: 'descripcion',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'

@@ -17,6 +17,7 @@ import {
   RefreshCw,
   TrendingUp,
   Filter,
+  FileText,
 } from "lucide-react"
 import { DateRange } from "react-day-picker"
 import { format } from "date-fns"
@@ -176,7 +177,7 @@ export function ReconciliacionGastosPage() {
                   <div>
                     <h1 className="text-2xl font-bold">Reconciliación de Gastos</h1>
                     <p className="text-muted-foreground text-sm">
-                      Reconcilie salarios, gastos DE y compras con sus cuentas bancarias
+                       Reconcilie salarios, gastos DE, compras, servicios y costos de servicios vendidos con sus cuentas bancarias
                     </p>
                   </div>
                 </div>
@@ -258,8 +259,8 @@ export function ReconciliacionGastosPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Otros Gastos</p>
-                    <p className="text-2xl font-bold">{(gastosPorTipo?.gastoDE || 0) + (gastosPorTipo?.compra || 0)}</p>
-                    <p className="text-xs text-muted-foreground">{formatCurrency((montosPorTipo?.gastoDE || 0) + (montosPorTipo?.compra || 0))}</p>
+                    <p className="text-2xl font-bold">{(gastosPorTipo?.gastoDE || 0) + (gastosPorTipo?.compra || 0) + (gastosPorTipo?.servicio || 0)}</p>
+                    <p className="text-xs text-muted-foreground">{formatCurrency((montosPorTipo?.gastoDE || 0) + (montosPorTipo?.compra || 0) + (montosPorTipo?.servicio || 0))}</p>
                   </div>
                   <div className="p-3 rounded-lg bg-orange-100 dark:bg-orange-900/30">
                     <TrendingDown className="h-6 w-6 text-orange-600 dark:text-orange-300" />
@@ -340,6 +341,46 @@ export function ReconciliacionGastosPage() {
                       <p className="font-semibold">{formatCurrency(montosPorTipo?.compra || 0)}</p>
                       <Badge variant="secondary" className="text-xs">
                         {(totalMonto ?? 0) > 0 ? Math.round(((montosPorTipo?.compra || 0) / (totalMonto ?? 0)) * 100) : 0}%
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 border rounded-lg bg-slate-50 dark:bg-slate-900/30">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                        <FileText className="h-5 w-5 text-purple-600 dark:text-purple-300" />
+                      </div>
+                      <div>
+                        <p className="font-medium">Servicios Recibidos</p>
+                        <p className="text-sm text-muted-foreground">
+                          {gastosPorTipo?.servicio || 0} servicios
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold">{formatCurrency(montosPorTipo?.servicio || 0)}</p>
+                      <Badge variant="secondary" className="text-xs">
+                        {(totalMonto ?? 0) > 0 ? Math.round(((montosPorTipo?.servicio || 0) / (totalMonto ?? 0)) * 100) : 0}%
+                      </Badge>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 border rounded-lg bg-slate-50 dark:bg-slate-900/10">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-pink-100 dark:bg-pink-900/30 rounded-lg">
+                        <DollarSign className="h-5 w-5 text-pink-600 dark:text-pink-300" />
+                      </div>
+                      <div>
+                        <p className="font-medium">Costos Serv. Vendidos</p>
+                        <p className="text-sm text-muted-foreground">
+                          {gastosPorTipo?.venta_servicio || 0} servicios
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold">{formatCurrency(montosPorTipo?.venta_servicio || 0)}</p>
+                      <Badge variant="secondary" className="text-xs">
+                        {(totalMonto ?? 0) > 0 ? Math.round(((montosPorTipo?.venta_servicio || 0) / (totalMonto ?? 0)) * 100) : 0}%
                       </Badge>
                     </div>
                   </div>

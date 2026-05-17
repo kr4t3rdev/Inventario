@@ -30,6 +30,7 @@ const schema = z.object({
   clienteId: z.string().optional(),
   cantidad: z.coerce.number().int().positive(),
   precioUnitario: z.coerce.number().int().positive(),
+  costo: z.coerce.number().int().optional().default(0),
   formaCobro: z.enum(['COBRO_DIRECTO', FORMA_COBRO_ANTICIPO]),
   observaciones: z.string().optional(),
 })
@@ -60,6 +61,7 @@ export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosF
       clienteId: '',
       cantidad: 1,
       precioUnitario: 0,
+      costo: 0,
       formaCobro: 'COBRO_DIRECTO',
       observaciones: '',
     },
@@ -84,7 +86,7 @@ export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosF
         servicioId: values.servicioId,
         clienteId: values.clienteId || undefined,
         cantidad: values.cantidad,
-        costo: values.precioUnitario,
+        costo: values.costo ?? 0,
         total: values.cantidad * values.precioUnitario,
         observaciones: values.observaciones,
         anticipos: values.formaCobro === FORMA_COBRO_ANTICIPO ? anticipoAllocations : undefined,
@@ -296,14 +298,46 @@ export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosF
                   </motion.div>
                 </div>
 
-                <motion.div
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.38 }}
-                >
-                  <FormField
-                    control={form.control}
-                    name='formaCobro'
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.38 }}
+                  >
+                    <FormField
+                      control={form.control}
+                      name='costo'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className='text-slate-700 dark:text-slate-300 text-base'>Costo unitario (opcional)</FormLabel>
+                          <FormControl>
+                            <div className='relative'>
+                              <span className='absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 dark:text-slate-500 text-lg'>$</span>
+                              <Input
+                                min={0}
+                                type='number'
+                                {...field}
+                                className={`${servicioInputClassName} pl-8`}
+                              />
+                            </div>
+                          </FormControl>
+                          <FormDescription className='text-slate-500 dark:text-slate-500'>
+                            Cuánto te costó prestar este servicio (por unidad).
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.4 }}
+                  >
+                    <FormField
+                      control={form.control}
+                      name='formaCobro'
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel className='text-slate-700 dark:text-slate-300 text-base'>Forma de cobro</FormLabel>
@@ -326,6 +360,7 @@ export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosF
                     )}
                   />
                 </motion.div>
+                </div>
 
                 {formaCobro === FORMA_COBRO_ANTICIPO && (
                   <AnticipoSelector
@@ -341,7 +376,7 @@ export function ServiciosPrestadosForm({ initialServicios }: ServiciosPrestadosF
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.4 }}
+                  transition={{ delay: 0.45 }}
                 >
                   <FormField
                     control={form.control}

@@ -113,7 +113,7 @@ export const createCompraServicioAction = withAction(async (input: CreateCompraS
         await tx.reconciliacionGasto.create({
           data: {
             tenantId,
-            tipoGasto: 'COMPRA_SERVICIO',
+            tipoGasto: 'servicio',
             referenciaId: compraServicio.compraServicioId,
             cuentaId: anticipo?.cuentaOrigenId || cuentaDefault?.cuentaId || '',
             tipoPagoId: anticipo?.tipoPagoOrigenId || tipoPagoDefault?.tipoId || '',

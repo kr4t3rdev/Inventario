@@ -106,7 +106,7 @@ export function GastoDEForm({ initialData, initialVendors }: GastosDEFormProps) 
             {[0.1, 0.2, 0.3, 0.4].map((d, i) => (
               <motion.div key={i} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: d }}><Skeleton className="h-10 w-full" /></motion.div>
             ))}
-            <div className="flex justify-end space-x-4"><Skeleton className="h-10 w-24" /><Skeleton className="h-10 w-24" /></div>
+            <div className="flex justify-end space-x-4"><Skeleton className="h-10 w-24" /><Skeleton className="h-10 w-24" /></div>CCZXXZ
           </div>
         </CardContent></Card>
       </motion.div>

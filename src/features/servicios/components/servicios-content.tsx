@@ -125,11 +125,15 @@ export function ServiciosContent({ initialServicios, initialVentaServicios }: Se
       )
     },
     {
-      accessorKey: 'cliente.nombre',
+      accessorFn: (row: unknown) => {
+        const v = row as VentaServicio
+        return v.cliente?.nombre ?? 'Sin cliente'
+      },
+      id: 'cliente',
       header: 'Cliente',
       cell: ({ row }) => (
         <span className='text-muted-foreground'>
-          {row.getValue('cliente.nombre') || 'Sin cliente'}
+          {row.getValue<string>('cliente')}
         </span>
       )
     },
@@ -255,7 +259,7 @@ export function ServiciosContent({ initialServicios, initialVentaServicios }: Se
                 </TabsTrigger>
                 <TabsTrigger value='vendidos'>
                   <CheckCircle className='mr-2 h-4 w-4' />
-                  Servicios Utilizados
+                  Servicios Vendidos
                 </TabsTrigger>
                 <TabsTrigger value='recibidos'>
                   <Truck className='mr-2 h-4 w-4' />

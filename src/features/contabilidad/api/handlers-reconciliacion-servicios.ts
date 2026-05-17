@@ -95,7 +95,7 @@ export async function handleGetReconciliacionServiciosHistorial(request: NextReq
   const [reconciliaciones, total] = await Promise.all([
     prisma.reconciliacionServicio.findMany({
       where: whereClause,
-      include: { ventasServicio: { include: { servicio: { select: { servicioId: true, nombre: true, precio: true, descripcion: true } } } }, cuentaBancaria: { select: { nombreBanco: true, numeroCuenta: true, moneda: true } }, tipoPago: { select: { nombre: true, descripcion: true } } },
+      include: { ventasServicio: { include: { servicio: { select: { servicioId: true, nombre: true, precio: true, descripcion: true, moneda: true } } } }, cuentaBancaria: { select: { nombreBanco: true, numeroCuenta: true, moneda: true } }, tipoPago: { select: { nombre: true, descripcion: true } } },
       orderBy: { fechaReconciliacion: 'desc' }, skip, take: limit
     }),
     prisma.reconciliacionServicio.count({ where: whereClause })

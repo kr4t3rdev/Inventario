@@ -78,8 +78,8 @@ export function ReconciliacionServiciosPage() {
       fechaHasta: fechaFin || undefined,
       page: currentPage,
       limit: pageSize,
-    }).then((data) => {
-      setServiciosPendientesData(data)
+    }).then((r) => {
+      if (r.success) setServiciosPendientesData(r.data)
       setLoadingServicios(false)
     })
   }
@@ -114,9 +114,8 @@ export function ReconciliacionServiciosPage() {
     getHistorialReconciliacionServiciosAction({
       fechaDesde: fechaInicio || undefined,
       fechaHasta: fechaFin || undefined,
-    }).then((data) => {
-  // @ts-expect-error
-      setHistorialReconciliacionData(data?.reconciliaciones ?? [])
+    }).then((r) => {
+      if (r.success) setHistorialReconciliacionData(r.data?.reconciliaciones ?? [])
       setLoadingHistorial(false)
     })
   }, [fechaInicio, fechaFin])

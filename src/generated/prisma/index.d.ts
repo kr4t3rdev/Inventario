@@ -59146,6 +59146,7 @@ export namespace Prisma {
     tenantId: string | null
     nombre: string | null
     precio: number | null
+    moneda: string | null
     descripcion: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -59156,6 +59157,7 @@ export namespace Prisma {
     tenantId: string | null
     nombre: string | null
     precio: number | null
+    moneda: string | null
     descripcion: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -59166,6 +59168,7 @@ export namespace Prisma {
     tenantId: number
     nombre: number
     precio: number
+    moneda: number
     descripcion: number
     createdAt: number
     updatedAt: number
@@ -59186,6 +59189,7 @@ export namespace Prisma {
     tenantId?: true
     nombre?: true
     precio?: true
+    moneda?: true
     descripcion?: true
     createdAt?: true
     updatedAt?: true
@@ -59196,6 +59200,7 @@ export namespace Prisma {
     tenantId?: true
     nombre?: true
     precio?: true
+    moneda?: true
     descripcion?: true
     createdAt?: true
     updatedAt?: true
@@ -59206,6 +59211,7 @@ export namespace Prisma {
     tenantId?: true
     nombre?: true
     precio?: true
+    moneda?: true
     descripcion?: true
     createdAt?: true
     updatedAt?: true
@@ -59303,6 +59309,7 @@ export namespace Prisma {
     tenantId: string
     nombre: string
     precio: number
+    moneda: string
     descripcion: string
     createdAt: Date
     updatedAt: Date
@@ -59332,6 +59339,7 @@ export namespace Prisma {
     tenantId?: boolean
     nombre?: boolean
     precio?: boolean
+    moneda?: boolean
     descripcion?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -59347,6 +59355,7 @@ export namespace Prisma {
     tenantId?: boolean
     nombre?: boolean
     precio?: boolean
+    moneda?: boolean
     descripcion?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -59358,6 +59367,7 @@ export namespace Prisma {
     tenantId?: boolean
     nombre?: boolean
     precio?: boolean
+    moneda?: boolean
     descripcion?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -59369,12 +59379,13 @@ export namespace Prisma {
     tenantId?: boolean
     nombre?: boolean
     precio?: boolean
+    moneda?: boolean
     descripcion?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type ServiciosOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"servicioId" | "tenantId" | "nombre" | "precio" | "descripcion" | "createdAt" | "updatedAt", ExtArgs["result"]["servicios"]>
+  export type ServiciosOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"servicioId" | "tenantId" | "nombre" | "precio" | "moneda" | "descripcion" | "createdAt" | "updatedAt", ExtArgs["result"]["servicios"]>
   export type ServiciosInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     ofertaItems?: boolean | Servicios$ofertaItemsArgs<ExtArgs>
     ventasServicios?: boolean | Servicios$ventasServiciosArgs<ExtArgs>
@@ -59402,6 +59413,7 @@ export namespace Prisma {
       tenantId: string
       nombre: string
       precio: number
+      moneda: string
       descripcion: string
       createdAt: Date
       updatedAt: Date
@@ -59836,6 +59848,7 @@ export namespace Prisma {
     readonly tenantId: FieldRef<"Servicios", 'String'>
     readonly nombre: FieldRef<"Servicios", 'String'>
     readonly precio: FieldRef<"Servicios", 'Int'>
+    readonly moneda: FieldRef<"Servicios", 'String'>
     readonly descripcion: FieldRef<"Servicios", 'String'>
     readonly createdAt: FieldRef<"Servicios", 'DateTime'>
     readonly updatedAt: FieldRef<"Servicios", 'DateTime'>
@@ -130278,6 +130291,7 @@ export namespace Prisma {
     tenantId: 'tenantId',
     nombre: 'nombre',
     precio: 'precio',
+    moneda: 'moneda',
     descripcion: 'descripcion',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -135525,6 +135539,7 @@ export namespace Prisma {
     tenantId?: StringFilter<"Servicios"> | string
     nombre?: StringFilter<"Servicios"> | string
     precio?: IntFilter<"Servicios"> | number
+    moneda?: StringFilter<"Servicios"> | string
     descripcion?: StringFilter<"Servicios"> | string
     createdAt?: DateTimeFilter<"Servicios"> | Date | string
     updatedAt?: DateTimeFilter<"Servicios"> | Date | string
@@ -135539,6 +135554,7 @@ export namespace Prisma {
     tenantId?: SortOrder
     nombre?: SortOrder
     precio?: SortOrder
+    moneda?: SortOrder
     descripcion?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -135556,6 +135572,7 @@ export namespace Prisma {
     tenantId?: StringFilter<"Servicios"> | string
     nombre?: StringFilter<"Servicios"> | string
     precio?: IntFilter<"Servicios"> | number
+    moneda?: StringFilter<"Servicios"> | string
     descripcion?: StringFilter<"Servicios"> | string
     createdAt?: DateTimeFilter<"Servicios"> | Date | string
     updatedAt?: DateTimeFilter<"Servicios"> | Date | string
@@ -135570,6 +135587,7 @@ export namespace Prisma {
     tenantId?: SortOrder
     nombre?: SortOrder
     precio?: SortOrder
+    moneda?: SortOrder
     descripcion?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -135588,6 +135606,7 @@ export namespace Prisma {
     tenantId?: StringWithAggregatesFilter<"Servicios"> | string
     nombre?: StringWithAggregatesFilter<"Servicios"> | string
     precio?: IntWithAggregatesFilter<"Servicios"> | number
+    moneda?: StringWithAggregatesFilter<"Servicios"> | string
     descripcion?: StringWithAggregatesFilter<"Servicios"> | string
     createdAt?: DateTimeWithAggregatesFilter<"Servicios"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Servicios"> | Date | string
@@ -145390,6 +145409,7 @@ export namespace Prisma {
     servicioId?: string
     nombre: string
     precio: number
+    moneda?: string
     descripcion: string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -145404,6 +145424,7 @@ export namespace Prisma {
     tenantId: string
     nombre: string
     precio: number
+    moneda?: string
     descripcion: string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -145416,6 +145437,7 @@ export namespace Prisma {
     servicioId?: StringFieldUpdateOperationsInput | string
     nombre?: StringFieldUpdateOperationsInput | string
     precio?: IntFieldUpdateOperationsInput | number
+    moneda?: StringFieldUpdateOperationsInput | string
     descripcion?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -145430,6 +145452,7 @@ export namespace Prisma {
     tenantId?: StringFieldUpdateOperationsInput | string
     nombre?: StringFieldUpdateOperationsInput | string
     precio?: IntFieldUpdateOperationsInput | number
+    moneda?: StringFieldUpdateOperationsInput | string
     descripcion?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -145443,6 +145466,7 @@ export namespace Prisma {
     tenantId: string
     nombre: string
     precio: number
+    moneda?: string
     descripcion: string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -145452,6 +145476,7 @@ export namespace Prisma {
     servicioId?: StringFieldUpdateOperationsInput | string
     nombre?: StringFieldUpdateOperationsInput | string
     precio?: IntFieldUpdateOperationsInput | number
+    moneda?: StringFieldUpdateOperationsInput | string
     descripcion?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -145462,6 +145487,7 @@ export namespace Prisma {
     tenantId?: StringFieldUpdateOperationsInput | string
     nombre?: StringFieldUpdateOperationsInput | string
     precio?: IntFieldUpdateOperationsInput | number
+    moneda?: StringFieldUpdateOperationsInput | string
     descripcion?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -154633,6 +154659,7 @@ export namespace Prisma {
     tenantId?: SortOrder
     nombre?: SortOrder
     precio?: SortOrder
+    moneda?: SortOrder
     descripcion?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -154647,6 +154674,7 @@ export namespace Prisma {
     tenantId?: SortOrder
     nombre?: SortOrder
     precio?: SortOrder
+    moneda?: SortOrder
     descripcion?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -154657,6 +154685,7 @@ export namespace Prisma {
     tenantId?: SortOrder
     nombre?: SortOrder
     precio?: SortOrder
+    moneda?: SortOrder
     descripcion?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -174258,6 +174287,7 @@ export namespace Prisma {
     servicioId?: string
     nombre: string
     precio: number
+    moneda?: string
     descripcion: string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -174270,6 +174300,7 @@ export namespace Prisma {
     servicioId?: string
     nombre: string
     precio: number
+    moneda?: string
     descripcion: string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -176318,6 +176349,7 @@ export namespace Prisma {
     tenantId?: StringFilter<"Servicios"> | string
     nombre?: StringFilter<"Servicios"> | string
     precio?: IntFilter<"Servicios"> | number
+    moneda?: StringFilter<"Servicios"> | string
     descripcion?: StringFilter<"Servicios"> | string
     createdAt?: DateTimeFilter<"Servicios"> | Date | string
     updatedAt?: DateTimeFilter<"Servicios"> | Date | string
@@ -192566,6 +192598,7 @@ export namespace Prisma {
     servicioId?: string
     nombre: string
     precio: number
+    moneda?: string
     descripcion: string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -192579,6 +192612,7 @@ export namespace Prisma {
     tenantId: string
     nombre: string
     precio: number
+    moneda?: string
     descripcion: string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -192804,6 +192838,7 @@ export namespace Prisma {
     servicioId?: StringFieldUpdateOperationsInput | string
     nombre?: StringFieldUpdateOperationsInput | string
     precio?: IntFieldUpdateOperationsInput | number
+    moneda?: StringFieldUpdateOperationsInput | string
     descripcion?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -192817,6 +192852,7 @@ export namespace Prisma {
     tenantId?: StringFieldUpdateOperationsInput | string
     nombre?: StringFieldUpdateOperationsInput | string
     precio?: IntFieldUpdateOperationsInput | number
+    moneda?: StringFieldUpdateOperationsInput | string
     descripcion?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -192961,6 +192997,7 @@ export namespace Prisma {
     servicioId?: string
     nombre: string
     precio: number
+    moneda?: string
     descripcion: string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -192974,6 +193011,7 @@ export namespace Prisma {
     tenantId: string
     nombre: string
     precio: number
+    moneda?: string
     descripcion: string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -193181,6 +193219,7 @@ export namespace Prisma {
     servicioId?: StringFieldUpdateOperationsInput | string
     nombre?: StringFieldUpdateOperationsInput | string
     precio?: IntFieldUpdateOperationsInput | number
+    moneda?: StringFieldUpdateOperationsInput | string
     descripcion?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -193194,6 +193233,7 @@ export namespace Prisma {
     tenantId?: StringFieldUpdateOperationsInput | string
     nombre?: StringFieldUpdateOperationsInput | string
     precio?: IntFieldUpdateOperationsInput | number
+    moneda?: StringFieldUpdateOperationsInput | string
     descripcion?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -203142,6 +203182,7 @@ export namespace Prisma {
     servicioId?: string
     nombre: string
     precio: number
+    moneda?: string
     descripcion: string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -203155,6 +203196,7 @@ export namespace Prisma {
     tenantId: string
     nombre: string
     precio: number
+    moneda?: string
     descripcion: string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -203328,6 +203370,7 @@ export namespace Prisma {
     servicioId?: StringFieldUpdateOperationsInput | string
     nombre?: StringFieldUpdateOperationsInput | string
     precio?: IntFieldUpdateOperationsInput | number
+    moneda?: StringFieldUpdateOperationsInput | string
     descripcion?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -203341,6 +203384,7 @@ export namespace Prisma {
     tenantId?: StringFieldUpdateOperationsInput | string
     nombre?: StringFieldUpdateOperationsInput | string
     precio?: IntFieldUpdateOperationsInput | number
+    moneda?: StringFieldUpdateOperationsInput | string
     descripcion?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -217067,6 +217111,7 @@ export namespace Prisma {
     servicioId?: string
     nombre: string
     precio: number
+    moneda?: string
     descripcion: string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -218461,6 +218506,7 @@ export namespace Prisma {
     servicioId?: StringFieldUpdateOperationsInput | string
     nombre?: StringFieldUpdateOperationsInput | string
     precio?: IntFieldUpdateOperationsInput | number
+    moneda?: StringFieldUpdateOperationsInput | string
     descripcion?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -218473,6 +218519,7 @@ export namespace Prisma {
     servicioId?: StringFieldUpdateOperationsInput | string
     nombre?: StringFieldUpdateOperationsInput | string
     precio?: IntFieldUpdateOperationsInput | number
+    moneda?: StringFieldUpdateOperationsInput | string
     descripcion?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -218485,6 +218532,7 @@ export namespace Prisma {
     servicioId?: StringFieldUpdateOperationsInput | string
     nombre?: StringFieldUpdateOperationsInput | string
     precio?: IntFieldUpdateOperationsInput | number
+    moneda?: StringFieldUpdateOperationsInput | string
     descripcion?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string

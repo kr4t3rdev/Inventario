@@ -14,6 +14,7 @@ export const lineaMixtaSchema = z.object({
   productoId: z.string().optional(),
   cantidad: z.coerce.number().int().positive(),
   precioUnitario: z.coerce.number().int().positive(),
+  costo: z.coerce.number().int().optional().default(0),
   observaciones: z.string().optional().nullable(),
 }).superRefine((linea, ctx) => {
   if (linea.tipoLinea === 'SERVICIO' && !linea.servicioId) {

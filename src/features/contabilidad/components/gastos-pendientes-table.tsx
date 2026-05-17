@@ -82,7 +82,9 @@ const surfaceCardClass = cn(
 const TIPO_GASTO_LABELS: Record<string, { label: string; icon: React.ComponentType<{ className?: string }>; color: string }> = {
   salario: { label: "Salario", icon: User, color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200/80" },
   gastoDE: { label: "Gasto DE", icon: Building2, color: "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300 border-orange-200/80" },
-  compra: { label: "Compra", icon: ShoppingCart, color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-200/80" }
+  compra: { label: "Compra", icon: ShoppingCart, color: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300 border-green-200/80" },
+  servicio: { label: "Servicio", icon: FileText, color: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300 border-purple-200/80" },
+  venta_servicio: { label: "Costo Serv. Vendido", icon: DollarSign, color: "bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300 border-pink-200/80" }
 }
 
 export function GastosPendientesTable({
@@ -138,7 +140,10 @@ export function GastosPendientesTable({
       (gasto.detalles?.empleado?.nombre?.toLowerCase().includes(searchLower)) ||
       (gasto.detalles?.empleado?.apellido?.toLowerCase().includes(searchLower)) ||
       (gasto.detalles?.proveedor?.toLowerCase().includes(searchLower)) ||
-      (gasto.detalles?.producto?.toLowerCase().includes(searchLower))
+      (gasto.detalles?.producto?.toLowerCase().includes(searchLower)) ||
+      (gasto.detalles?.servicio?.toLowerCase().includes(searchLower)) ||
+      (gasto.detalles?.proveedorNombre?.toLowerCase().includes(searchLower)) ||
+      (gasto.detalles?.clienteNombre?.toLowerCase().includes(searchLower))
     )
 
     const matchesPeriodo = periodoFiltro === "all" || gasto.periodo === periodoFiltro
@@ -223,6 +228,18 @@ export function GastosPendientesTable({
         return {
           primary: gasto?.detalles?.producto,
           secondary: vendorToString(gasto?.detalles?.vendor),
+          extra: `Cant: ${gasto.detalles?.cantidad || 0}`
+        }
+      case 'servicio':
+        return {
+          primary: gasto?.detalles?.servicio || gasto?.descripcion,
+          secondary: gasto?.detalles?.proveedorNombre,
+          extra: gasto?.detalles?.numeroFactura ? `Fact: ${gasto.detalles.numeroFactura}` : undefined
+        }
+      case 'venta_servicio':
+        return {
+          primary: gasto?.detalles?.servicio || gasto?.descripcion,
+          secondary: gasto?.detalles?.clienteNombre,
           extra: `Cant: ${gasto.detalles?.cantidad || 0}`
         }
       default:

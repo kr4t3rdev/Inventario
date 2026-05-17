@@ -1439,7 +1439,7 @@ export interface VentaServicio {
 }
 
 export interface GastoPendiente {
-  tipo: 'salario' | 'gastoDE' | 'compra'
+  tipo: 'salario' | 'gastoDE' | 'compra' | 'servicio' | 'venta_servicio'
   referenciaId: string
   descripcion: string
   monto: number
@@ -1464,6 +1464,10 @@ export interface GastoPendiente {
     cantidad?: number
     precioUnitario?: number
     fechaCompra?: string
+    servicio?: string
+    proveedorNombre?: string
+    costoUnitario?: number
+    numeroFactura?: string
   }
   createdAt: string
   updatedAt: string
