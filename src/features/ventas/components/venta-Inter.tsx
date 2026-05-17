@@ -1,7 +1,7 @@
 'use client'
 import { getProductosAction } from "@/features/productos"
 import { usePuntosDeVenta } from "@/features/puntos-venta/hooks/use-puntos-de-venta";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Producto } from "@/app/models/model";
 import { createVentaAction } from "@/features/ventas/actions";
 import { z } from "zod";
@@ -66,7 +66,7 @@ export default function VentaInter() {
     const removeFromCart = (productId: string) => {
         setCarrito((prevCart) => prevCart.filter((item) => item.id !== productId))
     }
-    const StockChange = (productId: string, stock:number) => {
+    const StockChange = useCallback((productId: string, stock:number) => {
         setCarrito((prevCart) => 
         prevCart.map((item) =>
             item.id === productId
@@ -74,7 +74,7 @@ export default function VentaInter() {
             : item
         )
       )
-    }
+    }, [setCarrito])
     const getTotalPrice = () => {
       return carrito.reduce((sum, c) => sum + (c.precioVenta * c.cantidad), 0)
     }
