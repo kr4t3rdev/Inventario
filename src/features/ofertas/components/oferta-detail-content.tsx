@@ -432,7 +432,7 @@ export function OfertaDetailContent({ initialOferta }: OfertaDetailContentProps)
                 </div>
 
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <label className="text-right text-sm font-medium">Serie</label>
+                  <span className="text-right text-sm font-medium">Serie</span>
                   <div className="col-span-3">
                     {series.length === 0 ? (
                       <div className="flex items-center gap-2 text-sm text-muted-foreground p-2 border rounded-md bg-muted/50">

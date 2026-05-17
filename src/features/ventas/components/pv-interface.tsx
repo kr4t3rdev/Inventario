@@ -1507,7 +1507,7 @@ export function VentaInvoiceDialog({
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.3 }}
             >
-              <label className="text-sm font-medium">Serie de Facturación</label>
+              <span className="text-sm font-medium">Serie de Facturación</span>
               {series.length === 0 ? (
                 <div className="flex items-center gap-2 p-2 border rounded-md dark:border-gray-700 bg-muted/50">
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -1535,10 +1535,10 @@ export function VentaInvoiceDialog({
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4 }}
             >
-              <label className="text-sm font-medium flex items-center gap-2">
+              <span className="text-sm font-medium flex items-center gap-2">
                 <Truck className="h-4 w-4" />
                 Cargo por Transporte (MN)
-              </label>
+              </span>
               <Input 
                 type="number" 
                 min="0"

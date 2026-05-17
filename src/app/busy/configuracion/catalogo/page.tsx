@@ -79,7 +79,7 @@ export default function CatalogoConfiguracionPage(): React.JSX.Element {
           <h3 className="text-lg font-semibold mb-2">Moneda de Catálogo</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
             <div>
-              <label className="text-sm text-muted-foreground block mb-1">Moneda</label>
+              <span className="text-sm text-muted-foreground block mb-1">Moneda</span>
               <div className="text-sm font-medium">{currencyCode} (fija)</div>
             </div>
             <div>

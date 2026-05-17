@@ -282,22 +282,22 @@ export function ContratoDetailContent({ initialData, contratoId }: ContratoDetai
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground">Tipo</label>
+                        <span className="text-sm font-medium text-muted-foreground">Tipo</label>
                         <p className="font-medium">{contrato.tipo}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground">Estado</label>
+                        <span className="text-sm font-medium text-muted-foreground">Estado</label>
                         <p className="font-medium">{getEstadoBadge(contrato.estado)}</p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground">Fecha Inicio</label>
+                        <span className="text-sm font-medium text-muted-foreground">Fecha Inicio</label>
                         <p className="font-medium flex items-center gap-2">
                           <Calendar className="h-4 w-4" />
                           {formatDate(contrato.fechaInicio)}
                         </p>
                       </div>
                       <div>
-                        <label className="text-sm font-medium text-muted-foreground">Fecha Fin</label>
+                        <span className="text-sm font-medium text-muted-foreground">Fecha Fin</label>
                         <p className="font-medium flex items-center gap-2">
                           <Calendar className="h-4 w-4" />
                           {formatDate(contrato.fechaFin)}
@@ -305,7 +305,7 @@ export function ContratoDetailContent({ initialData, contratoId }: ContratoDetai
                       </div>
                       {contrato.monto && (
                         <div className="col-span-2">
-                          <label className="text-sm font-medium text-muted-foreground">Monto</label>
+                          <span className="text-sm font-medium text-muted-foreground">Monto</label>
                           <p className="font-medium text-lg">
                             {formatCurrency(contrato.monto, contrato.moneda)}
                           </p>

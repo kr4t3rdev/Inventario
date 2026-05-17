@@ -481,7 +481,7 @@ function GenerarLicenciasDialog({
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <label className="text-sm font-medium">Usuario</label>
+            <span className="text-sm font-medium">Usuario</span>
             <Select value={usuarioId} onValueChange={setUsuarioId}>
               <SelectTrigger>
                 <SelectValue placeholder="Seleccionar usuario" />
@@ -496,7 +496,7 @@ function GenerarLicenciasDialog({
             </Select>
           </div>
           <div className="grid gap-2">
-            <label className="text-sm font-medium">Plan</label>
+            <span className="text-sm font-medium">Plan</span>
             <Select value={planId} onValueChange={setPlanId}>
               <SelectTrigger>
                 <SelectValue placeholder="Seleccionar plan" />
@@ -511,7 +511,7 @@ function GenerarLicenciasDialog({
             </Select>
           </div>
           <div className="grid gap-2">
-            <label className="text-sm font-medium">Cantidad</label>
+            <span className="text-sm font-medium">Cantidad</span>
             <Input
               type="number"
               min={1}
@@ -521,7 +521,7 @@ function GenerarLicenciasDialog({
             />
           </div>
           <div className="grid gap-2">
-            <label className="text-sm font-medium">Duración (días, opcional)</label>
+            <span className="text-sm font-medium">Duración (días, opcional)</span>
             <Input
               type="number"
               value={duracionDias}

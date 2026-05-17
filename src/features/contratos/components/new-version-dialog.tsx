@@ -252,7 +252,7 @@ export function NewVersionDialog({ contratoId, onSuccess }: NewVersionDialogProp
                          animate={{ opacity: 1, height: "auto" }}
                          exit={{ opacity: 0, height: 0 }}
                        >
-                         <label className="text-sm font-medium">Descripción de Cambios</label>
+                         <span className="text-sm font-medium">Descripción de Cambios</span>
                          <Textarea 
                            value={cambios}
                            onChange={(e) => setCambios(e.target.value)}

@@ -449,7 +449,7 @@ export function AdminUsersPageClient({ initialData }: { initialData: AdminUsersP
 
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Plan de licencia (opcional)</label>
+              <span className="text-sm font-medium">Plan de licencia (opcional)</span>
               <Select value={selectedPlanId} onValueChange={setSelectedPlanId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccionar plan" />

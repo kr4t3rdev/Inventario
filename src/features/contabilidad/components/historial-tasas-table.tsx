@@ -209,7 +209,7 @@ export function HistorialTasasTable() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <label className="text-sm font-medium mb-2 block">Moneda</label>
+                <span className="text-sm font-medium mb-2 block">Moneda</span>
                 <Select
                   value={filtros.monedaOrigen ?? "all"}
                   onValueChange={(value) => handleFiltroChange("monedaOrigen", value)}
@@ -229,7 +229,7 @@ export function HistorialTasasTable() {
               </div>
 
               <div>
-                <label className="text-sm font-medium mb-2 block">Fecha Desde</label>
+                <span className="text-sm font-medium mb-2 block">Fecha Desde</span>
                 <Input
                   type="date"
                   value={filtros.fechaDesde || ""}
@@ -238,7 +238,7 @@ export function HistorialTasasTable() {
               </div>
 
               <div>
-                <label className="text-sm font-medium mb-2 block">Fecha Hasta</label>
+                <span className="text-sm font-medium mb-2 block">Fecha Hasta</span>
                 <Input
                   type="date"
                   value={filtros.fechaHasta || ""}

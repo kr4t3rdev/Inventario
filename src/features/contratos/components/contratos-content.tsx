@@ -566,7 +566,7 @@ export function ContratosContent({ initialData = [], initialMeta, configuracion 
               transition={{ duration: 0.5, delay: 0.2 }}
             >
               <div>
-                <label className="text-sm font-medium mb-1 block">Estado</label>
+                <span className="text-sm font-medium mb-1 block">Estado</span>
                 <Select
                   value={filters.estado}
                   onValueChange={(val) => setFilters(prev => ({ ...prev, estado: val }))}
@@ -586,7 +586,7 @@ export function ContratosContent({ initialData = [], initialMeta, configuracion 
               </div>
 
               <div>
-                <label className="text-sm font-medium mb-1 block">Tipo</label>
+                <span className="text-sm font-medium mb-1 block">Tipo</span>
                 <Select
                   value={filters.tipo}
                   onValueChange={(val) => setFilters(prev => ({ ...prev, tipo: val }))}
@@ -604,7 +604,7 @@ export function ContratosContent({ initialData = [], initialMeta, configuracion 
               </div>
 
               <div>
-                <label className="text-sm font-medium mb-1 block">Desde</label>
+                <span className="text-sm font-medium mb-1 block">Desde</span>
                 <Input
                   type="date"
                   value={filters.fechaInicio}
@@ -614,7 +614,7 @@ export function ContratosContent({ initialData = [], initialMeta, configuracion 
               </div>
 
               <div>
-                <label className="text-sm font-medium mb-1 block">Hasta</label>
+                <span className="text-sm font-medium mb-1 block">Hasta</span>
                 <Input
                   type="date"
                   value={filters.fechaFin}
