@@ -51,24 +51,11 @@ export function AsistenciaForm() {
 
   // Cargar lista de empleados
   useEffect(() => {
-    const fetchEmpleados = async () => {
-      try {
-        const token = sessionStorage.getItem('token');
-        const response = await fetch("/api/empleados", {
-          headers: {
-            ...(token && { Authorization: `Bearer ${token}` }),
-          },
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setEmpleados(data);
-        }
-      } catch (error) {
-        console.error("Error cargando empleados:", error);
-      }
-    };
-
-    fetchEmpleados();
+    getEmpleadosAction()
+      .then((r) => {
+        if (r.success) setEmpleados(r.data ?? [])
+      })
+      .catch((error) => console.error("Error cargando empleados:", error));
   }, []);
 
   // Verificar asistencia de hoy y cargar historial para el empleado seleccionado
