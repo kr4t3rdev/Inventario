@@ -273,14 +273,18 @@ export function ProductosContent({
       ),
       cell: ({ row }) => {
         const p = row.original
-        const codigo = p.codigoNegocio || p.codigoInterno
         if (usaEan13) {
-          const segmentos = [p.idSeccionCodigo, p.especificoCodigo, p.surtidoCodigo].filter(Boolean)
-          if (segmentos.length >= 2) {
+          const segmentos = [p.proveedorCodigo, p.idSeccionCodigo, p.especificoCodigo, p.surtidoCodigo, p.dcCodigo]
+          if (segmentos.every(Boolean)) {
             return <div className="font-mono text-xs tracking-wider text-center">{segmentos.join("-")}</div>
           }
+          const negocio = p.codigoNegocio
+          if (negocio?.length === 13) {
+            return <div className="font-mono text-xs tracking-wider text-center">{`${negocio.slice(0,2)}-${negocio.slice(2,4)}-${negocio.slice(4,8)}-${negocio.slice(8,12)}-${negocio.slice(12)}`}</div>
+          }
+          return <div className="text-center font-medium">{negocio || "-"}</div>
         }
-        return <div className="text-center font-medium">{codigo || "-"}</div>
+        return <div className="text-center font-medium">{p.codigoInterno || "-"}</div>
       },
     },
     {
