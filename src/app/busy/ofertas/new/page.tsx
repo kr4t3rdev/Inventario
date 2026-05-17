@@ -10,6 +10,11 @@ import { NewOfertaPageContent } from "./page-client"
  * @description Página de nueva oferta
  * @returns {Promise<JSX.Element>} Página de nueva oferta
  */
+
+export const metadata = {
+  title: "Nueva Oferta - FinanceTCP",
+}
+
 export default async function NewOfertaPage() {
   const clientes = await getClientesAction()
 

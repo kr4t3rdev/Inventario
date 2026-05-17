@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { DefectacionesEditorPanel } from '@/features/configuracion/components/defectaciones-editor-panel'
 
 // Configuración de catálogo para reparaciones
+
 export default function CatalogoConfiguracionPage(): React.JSX.Element {
   // Moneda de Catálogo (fija en USD) y tasa de conversión -> CUP
   const [currencyCode, setCurrencyCode] = useState<string>('USD')

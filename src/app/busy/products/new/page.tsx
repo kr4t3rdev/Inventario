@@ -10,6 +10,11 @@ import { getUnidadesAction } from '@/features/unidades'
 import { getVendorsAction } from '@/features/vendors'
 import { ProductoFormPageClient } from '@/features/productos/components/producto-form-page-client'
 
+
+export const metadata = {
+  title: "Nuevo Producto - FinanceTCP",
+}
+
 export default async function NuevoProductosPage(): Promise<React.JSX.Element> {
   const [unidadesResult, almacenesResult, listasPreciosResult, vendorsResult, categoriasResult] =
     await Promise.all([

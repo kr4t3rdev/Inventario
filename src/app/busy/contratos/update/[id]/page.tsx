@@ -11,6 +11,11 @@ import { ContratoForm } from '@/features/contratos'
 import { unwrapActionResponseWithDefault } from '@/lib/server-actions/helpers'
 import prisma from '@/lib/prisma'
 
+
+export const metadata = {
+  title: "Editar Contrato - FinanceTCP",
+}
+
 interface PageProps {
   params: Promise<{ id: string }>
 }

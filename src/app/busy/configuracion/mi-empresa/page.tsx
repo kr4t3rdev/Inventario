@@ -12,6 +12,11 @@ import {
  *
  * @returns {Promise<JSX.Element>} Página de Mi Empresa
  */
+
+export const metadata = {
+  title: "Mi Empresa - FinanceTCP",
+}
+
 export default async function MiEmpresaConfigPage() {
   const { miEmpresa, cuentas } = await getMiEmpresaPageData()
 

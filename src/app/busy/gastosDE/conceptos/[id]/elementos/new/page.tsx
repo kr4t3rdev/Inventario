@@ -11,6 +11,11 @@ import { GastoElementoForm } from "@/features/gastosDE"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { notFound } from "next/navigation"
 
+
+export const metadata = {
+  title: "Nuevo Elemento - FinanceTCP",
+}
+
 interface Props {
   params: Promise<{ id: string }>
 }

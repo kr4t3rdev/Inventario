@@ -6,6 +6,11 @@ import { EmpleadosNominaContent } from '@/features/empleados/components'
  * @description Página principal de empleados y nómina en Server Component.
  * @returns {Promise<JSX.Element>} Página de empleados con datos precargados.
  */
+
+export const metadata = {
+  title: "Empleados - FinanceTCP",
+}
+
 export const dynamic = 'force-dynamic'
 
 export default async function EmpleadosPage() {

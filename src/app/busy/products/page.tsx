@@ -17,6 +17,11 @@ import type { Producto } from "@/features/productos/types"
  * La interactividad (filtros, tabla, modales) se delega a ProductosContent
  * como Client Component (island).
  */
+
+export const metadata = {
+  title: "Productos - FinanceTCP",
+}
+
 export default async function ProductosPage() {
   // ── Resolver datos en paralelo en el servidor ──
   const [productosResult, almacenesResult, puntosVentaResult] = await Promise.all([

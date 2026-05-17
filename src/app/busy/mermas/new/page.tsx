@@ -10,6 +10,11 @@ import { AlertTriangle, Sparkles, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
+
+export const metadata = {
+  title: "Nueva Merma - FinanceTCP",
+}
+
 export default function NuevaMermaPage() {
   return (
     <SidebarProvider>

@@ -7,6 +7,11 @@ import { notFound } from 'next/navigation'
 import { getContratoByIdAction } from '@/features/contratos'
 import { ContratoDetailContent } from '@/features/contratos'
 
+
+export const metadata = {
+  title: "Detalle de Contrato - FinanceTCP",
+}
+
 interface PageProps {
   params: Promise<{ id: string }>
 }

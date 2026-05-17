@@ -8,6 +8,11 @@
 import { getVendorsAction } from "@/features/vendors"
 import { VendorPageClient } from "@/features/vendors/components/vendor-page-client"
 
+
+export const metadata = {
+  title: "Proveedores - FinanceTCP",
+}
+
 export default async function VendorPage() {
   const result = await getVendorsAction()
   const vendors = result.success ? (result.data ?? []) : []

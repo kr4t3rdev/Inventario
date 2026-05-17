@@ -6,6 +6,11 @@
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { GastoConceptoForm } from "@/features/gastosDE"
 
+
+export const metadata = {
+  title: "Nuevo Concepto - FinanceTCP",
+}
+
 export default function NewGastoConceptoPage() {
   return (
     <SidebarProvider>

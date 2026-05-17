@@ -3,6 +3,11 @@ import { notFound } from "next/navigation";
 import { getCierreByIdAction } from "@/features/contabilidad/actions-cierres";
 import { CierreDetailsPageClient } from "@/features/contabilidad/components/cierres/CierreDetailsPageClient";
 
+
+export const metadata = {
+  title: "Detalle de Cierre - FinanceTCP",
+}
+
 interface Props {
   params: Promise<{ id: string }>;
 }

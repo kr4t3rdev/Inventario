@@ -6,6 +6,11 @@
  */
 import { NuevoPvPageClient } from "@/features/puntos-venta/components/pv-new-page-client"
 
+
+export const metadata = {
+  title: "Nuevo Punto de Venta - FinanceTCP",
+}
+
 export default function NuevoPuntoVentaPage() {
   return <NuevoPvPageClient />
 }

@@ -13,6 +13,11 @@ import prisma from '@/lib/prisma'
  * @description Página de nuevo contrato
  * @returns {Promise<JSX.Element>} Página de nuevo contrato
  */
+
+export const metadata = {
+  title: "Nuevo Contrato - FinanceTCP",
+}
+
 export default async function NewContratoPage() {
   // Obtener datos del servidor
   const [clientesResponse, vendorsResponse, tiposCustom] = await Promise.all([

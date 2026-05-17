@@ -12,6 +12,11 @@ import { ServicioForm } from "@/features/servicios/components/servicios-form"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { notFound } from "next/navigation"
 
+
+export const metadata = {
+  title: "Editar Servicio - FinanceTCP",
+}
+
 interface Props {
   params: Promise<{ id: string }>
 }

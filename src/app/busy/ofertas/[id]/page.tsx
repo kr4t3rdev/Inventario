@@ -7,6 +7,11 @@ import type { ReactElement } from 'react'
 import { getOfertaByIdAction } from '@/features/ofertas'
 import { OfertaDetailContent } from '@/features/ofertas/components/oferta-detail-content'
 
+
+export const metadata = {
+  title: "Detalle de Oferta - FinanceTCP",
+}
+
 interface OfertaDetailPageProps {
   params: Promise<{ id: string }>
 }

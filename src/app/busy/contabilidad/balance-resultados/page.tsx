@@ -15,6 +15,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 
 // Types (match API response)
+
 interface BalanceData {
   activos: { efectivo: number; inventario: number; cuentasPorCobrar: number; total: number }
   pasivos: { deudaExterna: number; total: number }

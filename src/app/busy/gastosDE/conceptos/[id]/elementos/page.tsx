@@ -12,6 +12,11 @@ import { getGastoConceptoByIdAction, getGastoElementosAction } from "@/features/
 import { GastoElementosContent } from "@/features/gastosDE"
 import { notFound } from "next/navigation"
 
+
+export const metadata = {
+  title: "Elementos del Concepto - FinanceTCP",
+}
+
 interface Props {
   params: Promise<{ id: string }>
 }

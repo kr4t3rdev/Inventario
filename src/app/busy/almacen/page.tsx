@@ -13,6 +13,11 @@ import { getAlmacenesAction } from "@/features/almacenes"
 import { AlmacenPageClient } from "@/features/almacenes/components/almacen-page-client"
 import type { Almacen } from "@/features/almacenes"
 
+
+export const metadata = {
+  title: "Almacenes - FinanceTCP",
+}
+
 export const dynamic = 'force-dynamic'
 
 export default async function AlmacenPage() {

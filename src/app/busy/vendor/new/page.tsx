@@ -6,6 +6,11 @@
  */
 import { NuevoVendorPageClient } from "@/features/vendors/components/vendor-new-page-client"
 
+
+export const metadata = {
+  title: "Nuevo Proveedor - FinanceTCP",
+}
+
 export default function NewVendor() {
   return <NuevoVendorPageClient />
 }

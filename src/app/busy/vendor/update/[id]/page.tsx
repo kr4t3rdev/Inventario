@@ -9,6 +9,11 @@
 import { getVendorByIdAction } from "@/features/vendors"
 import { EditarVendorPageClient } from "@/features/vendors/components/vendor-edit-page-client"
 
+
+export const metadata = {
+  title: "Editar Proveedor - FinanceTCP",
+}
+
 export default async function UpdateVendorPage({
   params,
 }: {

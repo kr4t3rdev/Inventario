@@ -13,6 +13,11 @@ import { getCategoriasAction, getCategoriaHierarchyAction } from "@/features/cat
 import { CategoriaPageClient } from "@/features/categorias/components/categoria-page-client"
 import type { Categoria, CategoriaHierarchy } from "@/app/models/model"
 
+
+export const metadata = {
+  title: "Categorías - FinanceTCP",
+}
+
 export default async function CategoriaPage() {
   const [catResult, hierResult] = await Promise.all([
     getCategoriasAction(),

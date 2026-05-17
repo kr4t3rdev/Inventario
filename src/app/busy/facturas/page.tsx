@@ -6,6 +6,11 @@
 import { getFacturasAction } from "@/features/facturas"
 import { FacturasContent } from "@/features/facturas"
 
+
+export const metadata = {
+  title: "Facturas - FinanceTCP",
+}
+
 interface PageProps {
   searchParams: Promise<{
     page?: string

@@ -9,6 +9,11 @@
 import { getUnidadByIdAction } from "@/features/unidades"
 import { EditarUnidadPageClient } from "@/features/unidades/components/unidad-edit-page-client"
 
+
+export const metadata = {
+  title: "Editar Unidad - FinanceTCP",
+}
+
 export default async function UpdateUnidadPage({
   params,
 }: {

@@ -14,6 +14,11 @@ import { ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { notFound } from "next/navigation"
 
+
+export const metadata = {
+  title: "Editar Concepto - FinanceTCP",
+}
+
 interface Props {
   params: Promise<{ id: string }>
 }

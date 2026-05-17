@@ -9,6 +9,11 @@ import { getUnidadesAction } from "@/features/unidades"
 import { UnidadPageClient } from "@/features/unidades/components/unidad-page-client"
 import type { Unidad } from "@/features/unidades"
 
+
+export const metadata = {
+  title: "Unidades - FinanceTCP",
+}
+
 export default async function UnidadPage() {
   const result = await getUnidadesAction()
   // @ts-expect-error

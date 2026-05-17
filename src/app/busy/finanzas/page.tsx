@@ -4,6 +4,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 //lazy loading components
+
 const ResumeFinanciero = dynamic(() => import('@/components/economia/resume-financiero').then(mod => ({default:mod.ResumeFinanciero})))
 const GraficosEconomicos = dynamic(() => import('@/components/economia/graficos-economicos').then(mod => ({default:mod.GraficosEconomicos})))
 const TablaIngresos = dynamic(() => import('@/components/economia/tabla-ingresos').then(mod => ({default:mod.TablaIngresos})))

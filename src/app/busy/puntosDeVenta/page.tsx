@@ -8,6 +8,11 @@
 import { getPuntosDeVentaAction } from "@/features/puntos-venta"
 import { PvPageClient } from "@/features/puntos-venta/components/pv-page-client"
 
+
+export const metadata = {
+  title: "Puntos de Venta - FinanceTCP",
+}
+
 export default async function PuntosDeVentaPage() {
   const result = await getPuntosDeVentaAction()
   const puntosDeVenta = result.success ? (result.data ?? []) : []

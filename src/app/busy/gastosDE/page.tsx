@@ -13,6 +13,11 @@ import { getVendorsAction } from "@/features/vendors/actions"
 import { GastosDEContent } from "@/features/gastosDE"
 import type { Vendor } from "@/app/models/model"
 
+
+export const metadata = {
+  title: "Gastos D/E - FinanceTCP",
+}
+
 export default async function GastosDEPage() {
   // ── Resolver datos en paralelo en el servidor ──
   const [gastosDEResult, vendorsResult] = await Promise.all([

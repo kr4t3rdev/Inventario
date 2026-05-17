@@ -4,6 +4,11 @@ import SeriesFacturacionTable from "@/features/series-facturacion"
  * @description Página de gestión de series de facturación
  * @returns {JSX.Element} Página de series de facturación
  */
+
+export const metadata = {
+  title: "Series de Facturación - FinanceTCP",
+}
+
 export default function SeriesFacturacionPage() {
   return (
     <div className="container mx-auto p-6 space-y-6">

@@ -7,6 +7,11 @@
 import { getReconciliacionStatsAction } from "@/features/contabilidad/actions-reconciliacion"
 import { ReconciliacionHubClient } from "@/features/contabilidad/components/reconciliacion/reconciliacion-hub-client"
 
+
+export const metadata = {
+  title: "Reconciliación - FinanceTCP",
+}
+
 export default async function ReconciliacionHubPage() {
   const result = await getReconciliacionStatsAction()
   const initialStats = result.success ? result.data : null

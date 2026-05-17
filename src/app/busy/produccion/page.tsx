@@ -10,6 +10,11 @@
 import { getRecetasProduccionAction, getOrdenesProduccionAction } from "@/features/produccion"
 import { ProduccionContent } from "@/features/produccion"
 
+
+export const metadata = {
+  title: "Producción - FinanceTCP",
+}
+
 export default async function ProduccionPage() {
   // ── Resolver datos en paralelo en el servidor ──
   const [recetasResult, ordenesResult] = await Promise.all([

@@ -9,6 +9,11 @@ import { unwrapActionResponseWithDefault } from '@/lib/server-actions/helpers'
 import prisma from '@/lib/prisma'
 import { authenticateUser } from '@/lib/auth-middleware'
 
+
+export const metadata = {
+  title: "Contratos - FinanceTCP",
+}
+
 interface PageProps {
   searchParams: Promise<{
     page?: string

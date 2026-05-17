@@ -10,6 +10,11 @@
 import { getTransferenciasAction } from "@/features/transferencias"
 import { TransferenciasContent } from "@/features/transferencias"
 
+
+export const metadata = {
+  title: "Transferencias - FinanceTCP",
+}
+
 export default async function TransferenciasPage() {
   const result = await getTransferenciasAction({})
   

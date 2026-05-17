@@ -7,6 +7,11 @@
 import { getCierresAction } from "@/features/contabilidad/actions-cierres";
 import { CierresManager } from "@/features/contabilidad/components/cierres/CierresManager";
 
+
+export const metadata = {
+  title: "Cierres - FinanceTCP",
+}
+
 export default async function CierresPage() {
   const result = await getCierresAction();
   // @ts-expect-error

@@ -9,6 +9,11 @@
 import { getAlmacenByIdAction } from "@/features/almacenes"
 import { EditarAlmacenPageClient } from "@/features/almacenes/components/almacen-edit-page-client"
 
+
+export const metadata = {
+  title: "Editar Almacén - FinanceTCP",
+}
+
 export default async function EditarAlmacenPage({
   params,
 }: {

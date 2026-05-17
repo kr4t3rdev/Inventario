@@ -13,6 +13,7 @@ import { Clock, Calendar, Settings, BarChart3 } from "lucide-react";
  * Página principal del Sistema Mejorado de Asistencia de Empleados
  * @returns Página con todas las funcionalidades del sistema de asistencia
  */
+
 export default function SistemaAsistenciaEmpleados() {
   const [activeTab, setActiveTab] = useState("attendance");
 

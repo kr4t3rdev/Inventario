@@ -17,6 +17,11 @@ import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { notFound } from "next/navigation"
 
+
+export const metadata = {
+  title: "Editar Merma - FinanceTCP",
+}
+
 interface Props {
   params: Promise<{ id: string }>
 }

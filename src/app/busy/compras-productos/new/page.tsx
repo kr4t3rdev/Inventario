@@ -6,6 +6,11 @@
 import { Suspense } from 'react'
 import { CompraProductoForm } from '@/features/compras-productos/components/compra-producto-form'
 
+
+export const metadata = {
+  title: "Nueva Compra - FinanceTCP",
+}
+
 function NuevaCompraFallback() {
   return (
     <div className="container mx-auto py-4">

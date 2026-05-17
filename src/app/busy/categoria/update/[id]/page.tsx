@@ -9,6 +9,11 @@
 import { getCategoriaByIdAction } from "@/features/categorias"
 import { CategoriaEditPageClient } from "@/features/categorias/components/categoria-edit-page-client"
 
+
+export const metadata = {
+  title: "Editar Categoría - FinanceTCP",
+}
+
 export default async function EditarCategoryPage({
   params,
 }: {

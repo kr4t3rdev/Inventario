@@ -7,6 +7,11 @@
  */
 import { SubcategoriaNewPageClient } from "@/features/categorias/components/subcategoria-new-page-client";
 
+
+export const metadata = {
+  title: "Nueva Subcategoría - FinanceTCP",
+}
+
 export default function NuevaSubcategoriaPage() {
   return <SubcategoriaNewPageClient />;
 }

@@ -8,6 +8,7 @@ import { Calendar, Palmtree, Sun } from "lucide-react";
  * Página de gestión de vacaciones de empleados con UI/UX mejorada
  * @returns Componente de página
  */
+
 export default function VacacionesPage() {
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },

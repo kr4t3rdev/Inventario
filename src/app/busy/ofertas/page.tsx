@@ -10,6 +10,11 @@ import { OfertasPageContent } from "./page-client"
  * @description Página principal de ofertas
  * @returns {Promise<JSX.Element>} Página de ofertas
  */
+
+export const metadata = {
+  title: "Ofertas - FinanceTCP",
+}
+
 export default async function OfertasPage() {
   const result = await getOfertasAction()
   const ofertas = result.success ? result.data ?? [] : []

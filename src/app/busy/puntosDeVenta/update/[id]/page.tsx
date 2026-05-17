@@ -9,6 +9,11 @@
 import { getPuntoDeVentaByIdAction } from "@/features/puntos-venta"
 import { EditarPvPageClient } from "@/features/puntos-venta/components/pv-edit-page-client"
 
+
+export const metadata = {
+  title: "Editar Punto de Venta - FinanceTCP",
+}
+
 export default async function EditarPuntoVentaPage({
   params,
 }: {

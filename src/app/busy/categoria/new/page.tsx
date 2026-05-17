@@ -6,6 +6,11 @@
 import { Suspense } from 'react'
 import { CategoryForm } from '@/features/categorias/components/category-form'
 
+
+export const metadata = {
+  title: "Nueva Categoría - FinanceTCP",
+}
+
 function NuevaCategoriaFallback() {
   return (
     <div className="container mx-auto py-4">

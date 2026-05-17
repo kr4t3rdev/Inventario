@@ -7,6 +7,11 @@ import { AuthCallbackClient } from './auth-callback-client'
  * Toma los tokens de los query params y los guarda, luego redirige al onboarding o dashboard
  * @returns {JSX.Element} Página con fallback de carga
  */
+
+export const metadata = {
+  title: "Autenticación - FinanceTCP",
+}
+
 export default function AuthCallbackPage(): JSX.Element {
   return (
     <Suspense

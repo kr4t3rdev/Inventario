@@ -10,6 +10,11 @@
 import { getMermasAction } from "@/features/mermas"
 import { MermasContent } from "@/features/mermas"
 
+
+export const metadata = {
+  title: "Mermas - FinanceTCP",
+}
+
 export default async function MermasPage() {
   const result = await getMermasAction()
   

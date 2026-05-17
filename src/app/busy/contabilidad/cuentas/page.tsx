@@ -8,6 +8,11 @@
 import { getCuentasBancariasAction } from "@/features/contabilidad/actions-cuentas-bancarias"
 import { CuentasPageClient } from "@/features/contabilidad/components/cuentas-page-client"
 
+
+export const metadata = {
+  title: "Cuentas - FinanceTCP",
+}
+
 export default async function CuentasBancariasPage() {
   const result = await getCuentasBancariasAction()
   const cuentas = result.success ? (result.data?.cuentas ?? []) : []

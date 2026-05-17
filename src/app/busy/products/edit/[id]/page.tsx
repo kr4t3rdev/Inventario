@@ -13,6 +13,11 @@ import type { Producto } from '@/features/productos/types'
 import { getVendorsAction } from '@/features/vendors'
 import { ProductoFormPageClient } from '@/features/productos/components/producto-form-page-client'
 
+
+export const metadata = {
+  title: "Editar Producto - FinanceTCP",
+}
+
 interface EditPageProps {
   params: Promise<{ id: string }>
 }

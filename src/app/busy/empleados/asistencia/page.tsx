@@ -8,6 +8,7 @@ import { CalendarCheck, Clock, Users } from "lucide-react";
  * Página de registro de asistencia de empleados con UI/UX mejorada
  * @returns Componente de página
  */
+
 export default function AsistenciaPage() {
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },

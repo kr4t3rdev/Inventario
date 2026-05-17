@@ -6,6 +6,11 @@
  */
 import { ReconciliacionGastosPage } from "@/features/contabilidad/components/reconciliacion/reconciliacion-gastos-page"
 
+
+export const metadata = {
+  title: "Reconciliar Gastos - FinanceTCP",
+}
+
 export default function GastosReconciliacionPage() {
   return <ReconciliacionGastosPage />
 }

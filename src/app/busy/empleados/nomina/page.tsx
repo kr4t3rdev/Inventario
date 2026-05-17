@@ -8,6 +8,7 @@ import { Banknote, Calculator, Wallet } from "lucide-react";
  * Página de gestión de nómina de empleados con UI/UX mejorada
  * @returns Componente de página
  */
+
 export default function NominaPage() {
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },

@@ -14,6 +14,11 @@ import { motion } from "framer-motion"
 import { ArrowLeftRight, Sparkles } from "lucide-react"
 import { notFound } from "next/navigation"
 
+
+export const metadata = {
+  title: "Editar Transferencia - FinanceTCP",
+}
+
 interface Props {
   params: Promise<{ id: string }>
 }

@@ -6,6 +6,11 @@
  */
 import { NuevaUnidadPageClient } from "@/features/unidades/components/unidad-new-page-client"
 
+
+export const metadata = {
+  title: "Nueva Unidad - FinanceTCP",
+}
+
 export default function NewUnidad() {
   return <NuevaUnidadPageClient />
 }

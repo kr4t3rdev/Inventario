@@ -12,6 +12,11 @@ import { getServiciosAction } from "@/features/servicios/actions"
 import { getVentaServiciosAction } from "@/features/venta-servicios/actions"
 import { ServiciosContent } from "@/features/servicios"
 
+
+export const metadata = {
+  title: "Servicios - FinanceTCP",
+}
+
 export default async function ServiciosPage() {
   // ── Resolver datos en paralelo en el servidor ──
   const [serviciosResult, ventaServiciosResult] = await Promise.all([

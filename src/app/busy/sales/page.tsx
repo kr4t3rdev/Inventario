@@ -16,6 +16,11 @@ import { VentasPageClient } from "@/features/ventas/components/ventas-page-clien
  * @description Página principal de ventas
  * @returns {Promise<JSX.Element>} Página de ventas
  */
+
+export const metadata = {
+  title: "Sales - FinanceTCP",
+}
+
 export default async function VentasPage() {
   // Obtener datos del servidor
   const result = await getVentasAction()

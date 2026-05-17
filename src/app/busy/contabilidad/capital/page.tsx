@@ -6,6 +6,11 @@
  */
 import { CapitalPageClient } from "@/features/contabilidad/components/capital/capital-page-client"
 
+
+export const metadata = {
+  title: "Capital - FinanceTCP",
+}
+
 export default function InyeccionCapitalPage() {
   return <CapitalPageClient />
 }
