@@ -368,8 +368,8 @@ export function BulkStockMinimoManager(): React.JSX.Element {
                     Errores detectados en {updateProgress.errors.length} producto(s):
                   </p>
                   <div className="text-sm">
-                    {updateProgress.errors.slice(0, 3).map((error, index) => (
-                      <p key={`${error.productoId}-${index}`}>
+                    {updateProgress.errors.slice(0, 3).map((error) => (
+                      <p key={error.productoId}>
                         • {error.productoNombre}: {error.error}
                       </p>
                     ))}

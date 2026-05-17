@@ -157,7 +157,7 @@ export function VendorPageClient({ vendors: initialVendors }: VendorPageClientPr
           <div className="flex flex-col gap-1">
             {contratos.map((contrato, index) => (
               <motion.span 
-                key={index} 
+                key={contrato.numeroContrato || index} 
                 className="text-sm font-medium"
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}

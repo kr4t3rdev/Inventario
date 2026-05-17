@@ -34,7 +34,7 @@ const highlightText = (text: string, term?: string) => {
   const regex = new RegExp(`(${term})`, 'gi')
   const parts = text.split(regex)
   return parts.map((part, idx) =>
-    regex.test(part) ? <span key={idx} className="bg-yellow-200 dark:bg-yellow-800/50 rounded px-0.5">{part}</span> : part
+    regex.test(part) ? <span key={`${part}-${idx}`} className="bg-yellow-200 dark:bg-yellow-800/50 rounded px-0.5">{part}</span> : part
   )
 }
 

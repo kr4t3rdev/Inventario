@@ -536,8 +536,8 @@ export function ReconciliacionGastosForm({
                     <div>
                       <h4 className="font-medium text-sm mb-2">Desglose:</h4>
                       <div className="space-y-1">
-                        {gastoDetails.breakdown.map((item, index) => (
-                          <div key={index} className="flex justify-between text-xs">
+                         {gastoDetails.breakdown.map((item) => (
+                           <div key={item.label} className="flex justify-between text-xs">
                             <span className="text-muted-foreground">{item.label}:</span>
                             <span className={item.value < 0 ? "text-red-600" : ""}>
                               {typeof item.value === 'number' && item.label !== "Cantidad"

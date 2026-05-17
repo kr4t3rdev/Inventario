@@ -178,7 +178,7 @@ export function ReportesAnticipos({
                 <div className="space-y-4">
                   {Array.isArray(dataReporteCliente.clientes) ? (
                     dataReporteCliente.clientes.map((item: any, idx: number) => (
-                      <Card key={idx}>
+                      <Card key={item.cliente?.clienteId || item.cliente?.nombre || idx}>
                         <CardHeader className="pb-2">
                           <CardTitle className="text-lg flex items-center justify-between">
                             {item.cliente?.nombre || "Sin cliente"}
@@ -286,7 +286,7 @@ export function ReportesAnticipos({
                 <div className="space-y-4">
                   {Array.isArray(dataReporteProveedor.proveedores) ? (
                     dataReporteProveedor.proveedores.map((item: any, idx: number) => (
-                      <Card key={idx}>
+                      <Card key={item.proveedor?.vendorId || item.proveedor?.nombre || idx}>
                         <CardHeader className="pb-2">
                           <CardTitle className="text-lg flex items-center justify-between">
                             {item.proveedor?.nombre || "Sin proveedor"}
