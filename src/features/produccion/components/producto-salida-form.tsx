@@ -19,6 +19,7 @@ import { useUnidades } from '@/features/unidades/hooks/use-unidades';
 import { useAlmacenes } from '@/features/almacenes/hooks/use-almacenes';
 import { useVendors } from '@/features/vendors/hooks/use-vendors';
 import { getAuthToken } from '@/lib/token';
+import { getMiEmpresaAction } from '@/features/mi-empresa/actions'
 
 interface ProductoSalidaFormValues {
   nombre: string;
