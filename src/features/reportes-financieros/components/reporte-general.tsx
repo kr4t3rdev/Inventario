@@ -221,7 +221,7 @@ export function ReporteGeneral() {
                       dataKey="value"
                     >
                       {valorPorCategoria.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                        <Cell key={entry.name || `cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
                     <Tooltip formatter={(value: number) => `$${value.toLocaleString()}`} />

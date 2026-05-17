@@ -848,8 +848,8 @@ export function ReporteVentaDiaria() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    detallesDia.map((item, index) => (
-                      <TableRow key={index}>
+                    detallesDia.map((item) => (
+                      <TableRow key={`${item.hora}-${item.tipo}-${item.descripcion}`}>
                         <TableCell className="font-medium">{item.hora}</TableCell>
                         <TableCell>
                           <Badge variant={item.tipo === 'Producto' ? 'outline' : 'secondary'}>

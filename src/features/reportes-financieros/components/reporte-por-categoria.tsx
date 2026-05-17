@@ -68,8 +68,8 @@ export function ReportePorCategoria() {
   const renderCustomLegend = ({ payload }: any) => {
     return (
       <ul className="space-y-2 mt-4">
-        {payload.map((entry: any, index: number) => (
-          <li key={`legend-${index}`} className="flex items-center gap-2 text-sm">
+        {payload.map((entry: any) => (
+          <li key={entry.value} className="flex items-center gap-2 text-sm">
             <span
               className="w-4 h-4 rounded flex-shrink-0"
               style={{ backgroundColor: entry.color }}
@@ -133,7 +133,7 @@ export function ReportePorCategoria() {
                     dataKey="value"
                   >
                     {chartData?.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      <Cell key={entry.name || `cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip formatter={(value) => `$${Number(value).toLocaleString('es-DO', { minimumFractionDigits: 2 })}`} />

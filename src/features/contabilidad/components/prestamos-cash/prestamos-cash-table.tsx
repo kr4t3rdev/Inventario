@@ -227,8 +227,8 @@ function PagosExpandidos({ row }: { row: Row<PrestamoCash> }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {pagosAgrupados.map((pago, idx) => (
-              <TableRow key={idx} className="hover:bg-muted/30">
+            {pagosAgrupados.map((pago) => (
+              <TableRow key={pago.id} className="hover:bg-muted/30">
                 <TableCell className="text-xs font-mono font-medium">{pago.id}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">{pago.fecha.toLocaleDateString()}</TableCell>
                 <TableCell className="text-xs">{pago.tipo}</TableCell>
