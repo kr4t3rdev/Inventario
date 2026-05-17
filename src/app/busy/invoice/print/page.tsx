@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { getMiEmpresaAction } from '@/features/mi-empresa/actions'
+import { getAuthToken } from "@/lib/token"
 import { numeroALetras } from "@/lib/number-to-words"
 // import { useTheme } from "next-themes"
 
