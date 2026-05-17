@@ -172,7 +172,7 @@ export function MiEmpresaForm({ initialData, cuentas = [] }: MiEmpresaFormProps)
           shouldTouch: false,
           shouldValidate: false,
         })
-        savedUsaEan13.current = false)
+        savedUsaEan13.current = false
       } catch (error) {
         sileo.error({
           title: error instanceof Error ? error.message : 'Error al actualizar',
@@ -218,7 +218,7 @@ export function MiEmpresaForm({ initialData, cuentas = [] }: MiEmpresaFormProps)
         shouldTouch: false,
         shouldValidate: false,
       })
-      savedUsaEan13.current = responseData?.usaCodigoEan13 ?? true)
+      savedUsaEan13.current = responseData?.usaCodigoEan13 ?? true
     } catch (error) {
       sileo.error({
         title: error instanceof Error ? error.message : 'Error al activar EAN-13',

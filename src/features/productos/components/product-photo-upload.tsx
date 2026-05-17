@@ -103,7 +103,7 @@ export function ProductPhotoUpload({
       {/* Photo Grid */}
       {photos.length > 0 && (
         <div className="grid grid-cols-3 gap-4">
-          {photos.map((photo) => (
+          {photos.map((photo, index) => (
             <div key={photo} className="relative group aspect-square">
               <img
                 src={photo}
