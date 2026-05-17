@@ -201,6 +201,7 @@ export default function AnalisisCuentaClientePage() {
                           variant="outline"
                           role="combobox"
                           aria-expanded={open}
+                          aria-controls="cliente-combobox-listbox"
                           className="w-full justify-between"
                         >
                           {selectedClientId
@@ -209,7 +210,7 @@ export default function AnalisisCuentaClientePage() {
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-[300px] p-0">
+                      <PopoverContent id="cliente-combobox-listbox" className="w-[300px] p-0">
                         <div className="p-2 border-b">
                            <div className="flex items-center px-3 border rounded-md">
                             <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />

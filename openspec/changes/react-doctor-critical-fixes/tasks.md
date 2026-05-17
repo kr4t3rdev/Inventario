@@ -26,15 +26,11 @@
 **Riesgo**: Muy bajo
 **Estimado**: 5 min
 
-- [ ] 2.1 `src/features/transferencias/components/transferencias-form.tsx:126`
-  - Identificar `role="combobox"` y su `role="listbox"` asociado
-  - Agregar `aria-controls` apuntando al ID del listbox
-- [ ] 2.2 `src/features/gastosDE/components/VendorCombobox.tsx:32`
-  - Mismo proceso
-- [ ] 2.3 `src/app/busy/contabilidad/analisis-cuenta-cliente/page.tsx:202`
-  - Mismo proceso
-- [ ] 2.4 Verificar build: `pnpm run build`
-- [ ] 2.5 Commit: `fix: add required aria-controls to combobox roles for accessibility`
+- [x] ~~2.1 `src/features/transferencias/components/transferencias-form.tsx:126`~~ → agregado `aria-controls="transferencia-producto-listbox"`, `PopoverContent` con `id` matching
+- [x] ~~2.2 `src/features/gastosDE/components/VendorCombobox.tsx:32`~~ → agregado `aria-controls="vendor-combobox-listbox"`
+- [x] ~~2.3 `src/app/busy/contabilidad/analisis-cuenta-cliente/page.tsx:202`~~ → agregado `aria-controls="cliente-combobox-listbox"`
+- [x] ~~2.4 Verificar build~~ → cambios solo HTML, TypeScript no impacta
+- [x] ~~2.5 Commit~~
 
 ---
 

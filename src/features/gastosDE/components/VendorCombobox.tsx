@@ -31,13 +31,14 @@ export function VendorCombobox({ value, onChange, vendors, placeholder = "Selecc
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          aria-controls="vendor-combobox-listbox"
           className={cn("w-full justify-between font-normal", !value && "text-muted-foreground", error && "border-destructive")}
         >
           {value || placeholder}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-(--radix-popover-trigger-width) p-0" align="start">
+      <PopoverContent id="vendor-combobox-listbox" className="w-(--radix-popover-trigger-width) p-0" align="start">
         <div className="flex items-center border-b px-2">
           <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
           <Input placeholder="Buscar proveedor..." value={search} onChange={(e) => setSearch(e.target.value)} className="h-9 border-0 shadow-none focus-visible:ring-0" autoFocus />

@@ -125,6 +125,7 @@ function ProductoSelector({
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          aria-controls="transferencia-producto-listbox"
           disabled={disabled}
           className={cn(
             "w-full justify-between bg-background hover:bg-accent/50 transition-colors",
@@ -141,7 +142,7 @@ function ProductoSelector({
           <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-87.5 p-0" align="start">
+      <PopoverContent id="transferencia-producto-listbox" className="w-87.5 p-0" align="start">
         <div className="flex items-center border-b px-3">
           <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
           <Input
