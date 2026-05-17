@@ -46,12 +46,12 @@ export default async function UpdateContratoPage(props: PageProps) {
     notFound()
   }
 
-  // Map contract data to form format
+  // Map contract data to form format — convertir Date a string ISO
   const initialData = {
     contratoId: contrato.contratoId,
     tipo: contrato.tipo,
-    fechaInicio: contrato.fechaInicio,
-    fechaFin: contrato.fechaFin,
+    fechaInicio: contrato.fechaInicio instanceof Date ? contrato.fechaInicio.toISOString() : contrato.fechaInicio,
+    fechaFin: contrato.fechaFin instanceof Date ? contrato.fechaFin.toISOString() : contrato.fechaFin,
     monto: contrato.monto,
     moneda: contrato.moneda,
     esMultiMoneda: contrato.esMultiMoneda,

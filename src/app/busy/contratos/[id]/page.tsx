@@ -19,8 +19,9 @@ interface PageProps {
 export default async function ContratoDetailPage(props: PageProps) {
   const params = await props.params
 
-  // Obtener datos del servidor
-  const contrato = await getContratoByIdAction(params.id)
+  // Obtener datos del servidor y desempaquetar ActionResponse
+  const contratoResponse = await getContratoByIdAction(params.id)
+  const contrato = contratoResponse?.success ? contratoResponse.data : null
 
   if (!contrato) {
     notFound()

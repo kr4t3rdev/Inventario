@@ -124,14 +124,15 @@ export function ContratoForm({
     setIsLoading(true)
 
     try {
+      let result;
+
       if (isUpdate && initialData) {
-        // Usar update action
         const { updateContratoAction } = await import('@/features/contratos')
-        await updateContratoAction({
+        result = await updateContratoAction({
           contratoId: initialData.contratoId,
           tipo: formData.tipo,
-          fechaInicio: formData.fechaInicio,
-          fechaFin: formData.fechaFin || undefined,
+          fechaInicio: new Date(formData.fechaInicio).toISOString(),
+          fechaFin: formData.fechaFin ? new Date(formData.fechaFin).toISOString() : undefined,
   // @ts-expect-error - El tipo de monto se normaliza antes de enviar la acción.
           monto: formData.monto ? parseFloat(formData.monto) : undefined,
           moneda: formData.moneda,
@@ -141,14 +142,22 @@ export function ContratoForm({
           numeroContratoClienteProveedor: formData.numeroContratoClienteProveedor || undefined,
           observaciones: formData.observaciones || undefined,
         })
+
+        if (!result.success) {
+          const errorMsg = result.error?.details
+            ? Object.values(result.error.details).flat().join('. ')
+            : result.error?.message || 'Error al actualizar contrato'
+          toast.error(errorMsg)
+          return
+        }
+
         toast.success('El contrato ha sido actualizado exitosamente.')
         router.push(`/busy/contratos/${initialData.contratoId}`)
       } else {
-        // Usar create action
-        await createContratoAction({
+        result = await createContratoAction({
           tipo: formData.tipo,
-          fechaInicio: formData.fechaInicio,
-          fechaFin: formData.fechaFin || null,
+          fechaInicio: new Date(formData.fechaInicio).toISOString(),
+          fechaFin: formData.fechaFin ? new Date(formData.fechaFin).toISOString() : null,
   // @ts-expect-error - El tipo de monto se normaliza antes de enviar la acción.
           monto: formData.monto ? parseFloat(formData.monto) : null,
           moneda: formData.moneda,
@@ -158,6 +167,15 @@ export function ContratoForm({
           numeroContratoClienteProveedor: formData.numeroContratoClienteProveedor || null,
           observaciones: formData.observaciones || null,
         })
+
+        if (!result.success) {
+          const errorMsg = result.error?.details
+            ? Object.values(result.error.details).flat().join('. ')
+            : result.error?.message || 'Error al crear contrato'
+          toast.error(errorMsg)
+          return
+        }
+
         toast.success('El contrato ha sido creado exitosamente.')
         router.push('/busy/contratos')
       }
