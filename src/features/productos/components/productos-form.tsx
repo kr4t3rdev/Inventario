@@ -32,6 +32,7 @@ import {
   createProductoAction,
   updateProductoAction,
 } from '@/features/productos/actions'
+import { getMiEmpresaAction } from '@/features/mi-empresa/actions'
 import { SubcategorySelector } from '@/features/categorias/components/subcategory-selector'
 import {
   buildProductBusinessCodePreview,
@@ -41,7 +42,6 @@ import {
 import { buildPreciosPayload } from './precios-payload'
 import { ProductPhotoUpload } from './product-photo-upload'
 import { ClasificadorInfoNote } from './clasificador-info-note'
-import { getAuthToken } from '@/lib/token'
 import { mapCategoryToSection, mapSubcategoryToSpecific } from '@/lib/category-mapping'
 
 export function buildProductosSchema(usaEan13: boolean) {
@@ -237,13 +237,10 @@ export function ProductoForm({
   const isTaxonomyLocked = usaEan13 && isEditing
 
   useEffect(() => {
-    const token = getAuthToken()
-    fetch('/api/mi-empresa', {
-      headers: token ? { Authorization: token } : undefined,
-      cache: 'no-store',
-    })
-      .then((r) => r.json())
-      .then((data) => setUsaEan13(data?.usaCodigoEan13 ?? false))
+    getMiEmpresaAction()
+      .then((r) => {
+        if (r.success) setUsaEan13(r.data?.usaCodigoEan13 ?? false)
+      })
       .catch(() => {})
   }, [])
 
