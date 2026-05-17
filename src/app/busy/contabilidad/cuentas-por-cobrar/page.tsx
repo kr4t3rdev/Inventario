@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState, useEffect, useCallback } from "react"
+import { useMemo, useState, useEffect, useCallback, useRef } from "react"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { ReconciliacionVentasForm } from "@/features/contabilidad/components/reconciliacion/reconciliacion-ventas-form"
 import { CuentasPorCobrarTable } from "@/features/contabilidad/components/cuentas-por-cobrar-table"
@@ -72,7 +72,7 @@ export default function CuentasPorCobrarPage() {
   const facturaId = cuentaSeleccionada?.facturaId
   const numeroFactura = cuentaSeleccionada?.numeroFactura
 
-  const [facturaData, setFacturaData] = useState<any>(null)
+  const facturaData = useRef<any>(null)
   const [isResolvingFactura, setIsResolvingFactura] = useState(false)
   const [ventaData, setVentaData] = useState<any>(null)
   const [isResolvingVenta, setIsResolvingVenta] = useState(false)
@@ -86,7 +86,7 @@ export default function CuentasPorCobrarPage() {
 
     async function resolve() {
       setIsResolvingFactura(true)
-      setFacturaData(null)
+      facturaData.current = null
       setVentaData(null)
 
       try {
@@ -108,7 +108,7 @@ export default function CuentasPorCobrarPage() {
         }
 
         if (cancelled) return
-        setFacturaData(factura)
+        facturaData.current = factura
 
         // Resolver venta vinculada
         const vtaId = factura?.ventaId
