@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Folder, ArrowLeft, Sparkles, Layers } from "lucide-react";
 import { LazyMotion, m as motion } from "framer-motion";
 import { ClasificadorInfoNote } from "@/features/productos/components/clasificador-info-note";
-import { getAuthToken } from "@/lib/token";
+import { getMiEmpresaAction } from "@/features/mi-empresa/actions";
 import { 
   CLASClassifierData,
   parseClasClassifierMarkdown,
@@ -89,13 +89,10 @@ export function CategoryForm({ initialData, onSuccess }: CategoryFormProps) {
   });
 
   useEffect(() => {
-    const token = getAuthToken()
-    fetch('/api/mi-empresa', {
-      headers: token ? { Authorization: token } : undefined,
-      cache: 'no-store',
-    })
-      .then((r) => r.json())
-      .then((data) => setUsaEan13(data?.usaCodigoEan13 ?? false))
+    getMiEmpresaAction()
+      .then((r) => {
+        if (r.success) setUsaEan13(r.data?.usaCodigoEan13 ?? false)
+      })
       .catch(() => {})
   }, [])
 
