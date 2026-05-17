@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useState, useEffect, useCallback } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { LazyMotion, m as motion, useReducedMotion } from 'framer-motion';
 import { ArrowLeft, BadgeDollarSign, Plus, RefreshCw, ArrowRightLeft } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';

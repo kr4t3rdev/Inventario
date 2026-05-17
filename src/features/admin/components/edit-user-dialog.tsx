@@ -2,7 +2,7 @@
 
 import type React from 'react';
 import { useEffect, useState, useCallback } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { LazyMotion, m as motion, useReducedMotion } from 'framer-motion';
 import { Loader2, Save, UserPen } from 'lucide-react';
 import { toast } from 'sonner';
 

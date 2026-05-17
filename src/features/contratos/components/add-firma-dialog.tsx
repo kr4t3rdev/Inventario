@@ -33,7 +33,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { sileo } from '@/lib/sileo-shim'
 import { getAuthToken } from "@/lib/token"
 import { Plus, UserPlus, Sparkles, Loader2, PenTool } from "lucide-react"
-import { motion } from "framer-motion"
+import { LazyMotion, m as motion } from "framer-motion"
 
 // Schema para el formulario
 const firmaSchema = z.object({

@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { motion } from 'framer-motion'
+import { LazyMotion, m as motion } from 'framer-motion'
 import { ArrowLeft, Boxes, Sparkles } from 'lucide-react'
 
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'

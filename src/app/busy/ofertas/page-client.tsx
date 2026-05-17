@@ -10,7 +10,7 @@ import { OfertasTable } from "@/features/ofertas/components/ofertas-table"
 import { Button } from "@/components/ui/button"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { PlusCircle, Tag, Sparkles } from "lucide-react"
-import { motion } from "framer-motion"
+import { LazyMotion, m as motion } from "framer-motion"
 import type { Oferta } from "@/app/models/model"
 
 /**

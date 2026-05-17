@@ -3,7 +3,7 @@
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { CategoryForm } from "@/features/categorias/components/category-form"
 import { SubcategoryForm } from "@/features/categorias/components/subcategory-form"
-import { motion } from "framer-motion"
+import { LazyMotion, m as motion } from "framer-motion"
 import { FolderEdit, AlertCircle, Sparkles } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"

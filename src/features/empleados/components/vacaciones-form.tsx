@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar, Plus, Palmtree, Clock, CheckCircle2, XCircle, Search, User, FileText, CalendarDays } from "lucide-react";
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { motion, AnimatePresence } from "framer-motion";
+import { LazyMotion, m as motion, AnimatePresence } from "framer-motion";
 
 interface Empleado {
   empleadoId: string;

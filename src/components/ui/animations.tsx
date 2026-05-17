@@ -1,6 +1,6 @@
 'use client';
 
-import { motion, AnimatePresence, useReducedMotion, type HTMLMotionProps, type Variants } from 'framer-motion';
+import { LazyMotion, m as motion, AnimatePresence, useReducedMotion, type HTMLMotionProps, type Variants } from 'framer-motion';
 import { ReactNode, useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import { motionTokens } from '@/lib/design-system/tokens/motion-tokens';

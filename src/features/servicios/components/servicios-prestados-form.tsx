@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import type { ReactElement } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
+import { LazyMotion, m as motion } from 'framer-motion'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'

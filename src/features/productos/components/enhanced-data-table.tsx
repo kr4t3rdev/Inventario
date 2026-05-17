@@ -15,7 +15,7 @@ import {
   type Row,
 } from "@tanstack/react-table"
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Package } from "lucide-react"
-import { motion, AnimatePresence } from 'framer-motion'
+import { LazyMotion, m as motion, AnimatePresence } from 'framer-motion'
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"

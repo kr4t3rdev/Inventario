@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState, useEffect, useCallback } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { LazyMotion, m as motion, useReducedMotion } from 'framer-motion';
 import { ArrowRightLeft, Plus, RefreshCw, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 

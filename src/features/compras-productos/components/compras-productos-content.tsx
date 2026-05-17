@@ -4,7 +4,7 @@ import { useMemo, useState, useTransition, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { Plus, ShoppingCart, Sparkles, Eye, Pencil, Trash2, Package, Loader2, Search } from 'lucide-react'
 import type { ColumnDef, PaginationState } from '@tanstack/react-table'
-import { motion } from 'framer-motion'
+import { LazyMotion, m as motion } from 'framer-motion'
 
 import { DataTable } from '@/components/data-table'
 import { Badge } from '@/components/ui/badge'

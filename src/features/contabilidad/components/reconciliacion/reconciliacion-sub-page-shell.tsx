@@ -2,7 +2,7 @@
 
 import type { ReactNode } from "react"
 import Link from "next/link"
-import { motion, useReducedMotion } from "framer-motion"
+import { LazyMotion, m as motion, useReducedMotion } from "framer-motion"
 import { ArrowLeft } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"

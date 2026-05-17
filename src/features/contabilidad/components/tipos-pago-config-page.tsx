@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Loader2, Settings, Info, CreditCard, ShieldCheck, AlertCircle } from "lucide-react"
 import { toast } from "sonner"
-import { motion, useReducedMotion } from "framer-motion"
+import { LazyMotion, m as motion, useReducedMotion } from "framer-motion"
 import dynamic from "next/dynamic"
 import { cn } from "@/lib/utils"
 import { AnimatedNumber } from "@/components/ui/animated-number"

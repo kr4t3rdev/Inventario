@@ -15,7 +15,7 @@ import { getInyeccionesCapitalAction } from "@/features/contabilidad/actions-cap
 import { InyeccionCapital } from "@/app/models/model"
 import { PagoDeudaDialog } from "./pago-deuda-dialog"
 import { Loader2, TrendingUp, TrendingDown, DollarSign, CreditCard } from "lucide-react"
-import { motion } from "framer-motion"
+import { LazyMotion, m as motion } from "framer-motion"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 

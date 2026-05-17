@@ -26,7 +26,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Loader2, Trash2, Check } from 'lucide-react'
 import { toast } from 'sonner'
-import { motion } from 'framer-motion'
+import { LazyMotion, m as motion } from 'framer-motion'
 import { TiposContratosForm } from './tipos-contratos-form'
 
 interface TipoContrato {

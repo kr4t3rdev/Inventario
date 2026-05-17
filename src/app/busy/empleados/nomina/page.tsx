@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { LazyMotion, m as motion } from "framer-motion";
 import { NominaView } from "@/features/empleados";
 import { Banknote, Calculator, Wallet } from "lucide-react";
 

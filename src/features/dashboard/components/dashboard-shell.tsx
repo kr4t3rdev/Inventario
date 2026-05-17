@@ -1,7 +1,7 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import { motion, type Variants } from 'framer-motion'
+import { LazyMotion, m as motion, type Variants } from 'framer-motion'
 import { LayoutDashboard, Sparkles, Activity } from 'lucide-react'
 
 import {

@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { motion } from "framer-motion";
+import { LazyMotion, m as motion } from "framer-motion";
 import { Building2, Loader2, Sparkles, Copy, Check } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";

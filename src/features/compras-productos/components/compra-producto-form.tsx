@@ -6,7 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useFieldArray, useForm, useWatch } from 'react-hook-form'
 import { z } from 'zod'
 import { sileo } from '@/lib/sileo-shim'
-import { motion, AnimatePresence } from 'framer-motion'
+import { LazyMotion, m as motion, AnimatePresence } from 'framer-motion'
 import { ShoppingCart, Sparkles, Loader2, Plus, Trash2, Package } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'

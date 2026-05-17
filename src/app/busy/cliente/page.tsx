@@ -10,7 +10,7 @@ import { ArrowUp, ArrowUpDown, Pencil, Plus, Trash2, Users, Sparkles, UserCircle
 import Link from "next/link"
 import { useState, useEffect, useTransition } from "react"
 import { toast } from "sonner"
-import { motion, AnimatePresence } from "framer-motion"
+import { LazyMotion, m as motion, AnimatePresence } from "framer-motion"
 
 const Cliente = () => {
 

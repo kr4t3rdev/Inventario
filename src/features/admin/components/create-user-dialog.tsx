@@ -2,7 +2,7 @@
 
 import type React from 'react';
 import { useState } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { LazyMotion, m as motion, useReducedMotion } from 'framer-motion';
 import { Loader2, PlusCircle, UserPlus } from 'lucide-react';
 import { toast } from 'sonner';
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { RefreshCw, Loader2, Coins, Sparkles } from "lucide-react"
-import { motion, useReducedMotion } from "framer-motion"
+import { LazyMotion, m as motion, useReducedMotion } from "framer-motion"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { GaugeChart } from "@/components/sugerencias/wanda/gauge-chart"

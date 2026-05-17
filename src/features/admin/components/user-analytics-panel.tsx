@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, LazyMotion, m as motion, useReducedMotion } from 'framer-motion';
 import {
   Activity,
   BarChart3,

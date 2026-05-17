@@ -58,5 +58,15 @@ export async function GET(
     return NextResponse.json({ error: 'Factura no encontrada' }, { status: 404 });
   }
 
-  return NextResponse.json(factura);
+  const serialized = {
+    ...factura,
+    subtotal: Number(factura.subtotal),
+    total: Number(factura.total),
+    descuento: Number(factura.descuento ?? 0),
+    impuestos: Number(factura.impuestos ?? 0),
+    cargoTransporte: Number(factura.cargoTransporte ?? 0),
+    tasaCambio: factura.tasaCambio ? Number(factura.tasaCambio) : null,
+  };
+
+  return NextResponse.json(serialized);
 }

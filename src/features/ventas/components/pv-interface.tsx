@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/navigation"
-import { motion, AnimatePresence } from "framer-motion"
+import { LazyMotion, m as motion, AnimatePresence } from "framer-motion"
 import { ShoppingCart, Store, Package, Search, Loader2, Sparkles, TrendingUp, Filter, CreditCard, Truck, Calendar, LayoutGrid, List, Table as TableIcon, X, Minus, Plus, ImageIcon } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@/components/ui/button"

@@ -22,7 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner';
 import { cn, formatCurrency } from '@/lib/utils';
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { motion } from "framer-motion"
+import { LazyMotion, m as motion } from "framer-motion"
 import {
   createCuentaBancariaAction,
   updateCuentaBancariaAction,

@@ -10,7 +10,7 @@ import { getTransferenciaByIdAction } from "@/features/transferencias"
 import { TransferenciaForm } from "@/features/transferencias/components/transferencias-form"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
-import { motion } from "framer-motion"
+import { LazyMotion, m as motion } from "framer-motion"
 import { ArrowLeftRight, Sparkles } from "lucide-react"
 import { notFound } from "next/navigation"
 

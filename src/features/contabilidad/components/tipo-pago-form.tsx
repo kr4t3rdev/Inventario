@@ -16,7 +16,7 @@ import { Loader2, AlertTriangle, CheckCircle, Save, X, CreditCard, AlignLeft, Po
 import { sileo } from '@/lib/sileo-shim'
 import { getCuentasBancariasAction } from "@/features/contabilidad/actions-cuentas-bancarias"
 import { CreateTipoPagoRequest, UpdateTipoPagoRequest, TipoPagoWithDetails, CuentaBancaria } from "@/app/models/model"
-import { motion, AnimatePresence } from "framer-motion"
+import { LazyMotion, m as motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 
 const tipoPagoSchema = z.object({

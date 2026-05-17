@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { AlertCircle, Loader2, AlertTriangle, Trash2 } from "lucide-react"
-import { motion } from "framer-motion"
+import { LazyMotion, m as motion } from "framer-motion"
 
 interface DeleteCategoryDialogProps {
   category: {

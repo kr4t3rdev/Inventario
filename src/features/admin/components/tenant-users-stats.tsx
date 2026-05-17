@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
+import { LazyMotion, m as motion, useReducedMotion } from 'framer-motion'
 import { Users, UserCheck, Shield, Clock, TrendingUp, TrendingDown } from 'lucide-react'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'

@@ -19,7 +19,7 @@ import { AlertTriangle, Move, Folder, ArrowRight, Loader2 } from "lucide-react"
 import { getCategoriasAction, updateCategoriaAction } from "@/features/categorias/actions"
 import type { Categoria } from "@/app/models/model"
 import { toast } from "sonner"
-import { motion, AnimatePresence } from "framer-motion"
+import { LazyMotion, m as motion, AnimatePresence } from "framer-motion"
 
 interface CategoryMoveDialogProps {
   open: boolean

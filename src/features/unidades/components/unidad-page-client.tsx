@@ -30,7 +30,7 @@ import {
   AlertDialogHeader, 
   AlertDialogTitle 
 } from '@/components/ui/alert-dialog'
-import { motion } from 'framer-motion'
+import { LazyMotion, m as motion } from 'framer-motion'
 import type { Unidad } from '@/features/unidades'
 
 interface UnidadPageClientProps {

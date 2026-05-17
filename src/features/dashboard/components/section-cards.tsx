@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
+import { LazyMotion, m as motion, useReducedMotion } from 'framer-motion'
 import {
   DollarSign, Package, ShoppingCart, BarChart3,
   TrendingUp, ArrowUpRight, ArrowDownRight,

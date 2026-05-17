@@ -2,7 +2,7 @@
 
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { VendorForm } from "@/features/vendors/components/vendor-form"
-import { motion } from "framer-motion"
+import { LazyMotion, m as motion } from "framer-motion"
 import { Building2, Sparkles, ArrowLeft, AlertCircle } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"

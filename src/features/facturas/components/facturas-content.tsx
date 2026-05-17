@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react"
 import Link from "next/link"
-import { motion, AnimatePresence } from "framer-motion"
+import { LazyMotion, m as motion, AnimatePresence } from "framer-motion"
 import {
   type ColumnDef,
   type ColumnFiltersState,

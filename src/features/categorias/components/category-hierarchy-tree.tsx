@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { getCategoriaHierarchyAction } from "@/features/categorias/actions"
 import type { CategoriaHierarchy } from "@/app/models/model"
 import { cn } from "@/lib/utils"
-import { motion, AnimatePresence } from "framer-motion"
+import { LazyMotion, m as motion, AnimatePresence } from "framer-motion"
 
 interface CategoryHierarchyTreeProps {
   onCategorySelect?: (category: CategoriaHierarchy) => void

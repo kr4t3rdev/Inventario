@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, useReducedMotion, AnimatePresence, useSpring, useTransform } from 'framer-motion';
+import { LazyMotion, m as motion, useReducedMotion, AnimatePresence, useSpring, useTransform } from 'framer-motion';
 import {
   AlertCircle,
   ArrowUpDown,

@@ -3,7 +3,7 @@
 export const dynamic = 'force-dynamic'
 
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { LazyMotion, m as motion } from 'framer-motion'
 import {
   Key,
   Plus,

@@ -19,7 +19,7 @@ import { formatCurrency } from '@/lib/utils'
 import Link from 'next/link'
 import React from 'react'
 import { toast } from 'sonner'
-import { motion, AnimatePresence, useSpring, useTransform, useReducedMotion } from 'framer-motion'
+import { LazyMotion, m as motion, AnimatePresence, useSpring, useTransform, useReducedMotion } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import { AnimatedNumber } from '@/components/ui/animated-number'
 import {

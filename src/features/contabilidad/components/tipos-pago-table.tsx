@@ -38,7 +38,7 @@ import {
   AlertCircle
 } from "lucide-react"
 import { toast } from "sonner"
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
+import { LazyMotion, m as motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { TipoPagoWithDetails } from "@/app/models/model"
 

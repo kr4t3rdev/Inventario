@@ -2,7 +2,7 @@
 
 import dynamic from 'next/dynamic';
 import { useState } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { LazyMotion, m as motion, useReducedMotion } from 'framer-motion';
 import { BarChart3, Layers3, MapPinned, PackageSearch, Repeat2 } from 'lucide-react';
 
 import { Badge } from '@/components/ui/badge';

@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { LazyMotion, m as motion } from "framer-motion";
 import { EnhancedAsistenciaForm } from "@/features/empleados";
 import { CalendarCheck, Clock, Users } from "lucide-react";
 

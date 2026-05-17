@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect , useRef} from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { LazyMotion, m as motion, useReducedMotion } from 'framer-motion';
 import { BarChart3, FileText, FilterX, LineChart, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
 

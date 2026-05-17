@@ -4,7 +4,7 @@ import { useEffect, useState , useRef} from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-import { motion } from "framer-motion"
+import { LazyMotion, m as motion } from "framer-motion"
 import { Package, Calculator, DollarSign, Sparkles, Loader2, ArrowLeft } from "lucide-react"
 import { sileo } from '@/lib/sileo-shim'
 
@@ -195,7 +195,7 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
     const precioVentaChanged = data.precioVenta && Number(data.precioVenta) !== producto.precioVenta
     const hasPriceChanges = Boolean(precioCostoChanged || precioVentaChanged)
     
-    preciosCambiados.current = hasPriceChanges)
+    preciosCambiados.current = hasPriceChanges;
     
     // If prices changed and no tipoRestock selected yet, show selection dialog
     if (hasPriceChanges && !data.tipoRestock) {
@@ -813,5 +813,5 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
       )}
     </Card>
     </motion.div>
-  
+  );
 }

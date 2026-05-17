@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from "framer-motion"
+import { LazyMotion, m as motion } from "framer-motion"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { EmpleadoForm } from "@/features/empleados"
 import { Button } from "@/components/ui/button"

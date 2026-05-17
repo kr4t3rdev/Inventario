@@ -45,7 +45,7 @@ import {
 } from "@/components/ui/animations"
 import { useAuth } from "@/contexts/auth-context"
 import { getGlobalUsersAction, getAdminPlanesAction } from "@/features/admin"
-import { motion, type Variants } from "framer-motion"
+import { LazyMotion, m as motion, type Variants } from "framer-motion"
 import type { AdminUsersPageData } from "../server/data"
 import { getAuthToken } from "@/lib/token"
 

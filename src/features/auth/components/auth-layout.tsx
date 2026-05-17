@@ -1,6 +1,6 @@
 'use client'
 
-import { motion, AnimatePresence, useReducedMotion, Variants } from 'framer-motion'
+import { LazyMotion, m as motion, AnimatePresence, useReducedMotion, Variants } from 'framer-motion'
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeftIcon } from 'lucide-react'

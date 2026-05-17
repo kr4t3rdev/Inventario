@@ -22,7 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { differenceInDays } from "date-fns"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
-import { motion, AnimatePresence } from "framer-motion"
+import { LazyMotion, m as motion, AnimatePresence } from "framer-motion"
 import { getAuthToken } from '@/lib/token'
 
 interface Contrato {

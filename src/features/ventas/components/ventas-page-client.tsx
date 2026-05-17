@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { LazyMotion, m as motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { TrendingUp, PlusCircle, Sparkles } from 'lucide-react';
 import { VentasTable } from './ventas-table';

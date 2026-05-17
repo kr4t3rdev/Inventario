@@ -34,7 +34,7 @@ import { useState, useEffect, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import type { Categoria, CategoriaHierarchy } from "@/app/models/model"
-import { motion, AnimatePresence } from "framer-motion"
+import { LazyMotion, m as motion, AnimatePresence } from "framer-motion"
 
 interface CategoriaPageClientProps {
   categorias: Categoria[]

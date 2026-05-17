@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { LazyMotion, m as motion } from "framer-motion";
 import { VacacionesForm } from "@/features/empleados";
 import { Calendar, Palmtree, Sun } from "lucide-react";
 

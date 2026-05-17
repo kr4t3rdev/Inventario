@@ -9,7 +9,7 @@
  * @returns {JSX.Element} Interfaz de gestión de Servicios
  */
 import { useEffect, useState, useTransition } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { LazyMotion, m as motion, AnimatePresence } from 'framer-motion'
 import { Button } from '@/components/ui/button'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'

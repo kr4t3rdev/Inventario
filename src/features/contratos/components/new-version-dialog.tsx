@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { toast } from "sonner"
 import { getAuthToken } from "@/lib/token"
 import { Upload, FileUp, Loader2, AlertTriangle, FileCheck, Sparkles, FileText } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
+import { LazyMotion, m as motion, AnimatePresence } from "framer-motion"
 
 interface NewVersionDialogProps {
   contratoId: string

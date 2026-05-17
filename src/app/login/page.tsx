@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { EyeIcon, EyeOffIcon, LogInIcon, AlertCircleIcon, Loader2Icon, SparklesIcon } from 'lucide-react'
 import Link from 'next/link'
-import { motion, AnimatePresence } from 'framer-motion'
+import { LazyMotion, m as motion, AnimatePresence } from 'framer-motion'
 import { AuthLayout } from '@/components/auth/auth-layout'
 
 interface LoginFormBodyProps {

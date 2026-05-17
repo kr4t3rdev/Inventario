@@ -1,6 +1,6 @@
 "use client"
 
-import { motion } from "framer-motion"
+import { LazyMotion, m as motion } from "framer-motion"
 import { Badge } from "@/components/ui/badge"
 import { Factura } from "@/app/models/model"
 import { Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react"

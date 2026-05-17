@@ -1,6 +1,6 @@
 "use client"
 
-import { motion } from "framer-motion"
+import { LazyMotion, m as motion } from "framer-motion"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"

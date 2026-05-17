@@ -32,7 +32,7 @@ import {
   AlertDialogTitle 
 } from "@/components/ui/alert-dialog"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { motion } from "framer-motion"
+import { LazyMotion, m as motion } from "framer-motion"
 import { Badge } from "@/components/ui/badge"
 
 interface VendorPageClientProps {

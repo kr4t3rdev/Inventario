@@ -2,7 +2,7 @@
 
 import { useState, useEffect, use , useRef} from "react"
 import { useRouter } from "next/navigation"
-import { motion } from "framer-motion"
+import { LazyMotion, m as motion } from "framer-motion"
 import { getAuthToken } from "@/lib/token"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"

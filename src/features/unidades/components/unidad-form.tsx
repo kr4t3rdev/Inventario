@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { sileo } from '@/lib/sileo-shim'
 import { createUnidadAction, updateUnidadAction } from "@/features/unidades/actions"
-import { motion } from "framer-motion"
+import { LazyMotion, m as motion } from "framer-motion"
 import { Scale, Sparkles, ArrowLeft, Loader2 } from "lucide-react"
 
 const unidadSchema = z.object({

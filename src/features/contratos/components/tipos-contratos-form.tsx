@@ -31,7 +31,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Plus, Loader2, CheckCircle2 } from 'lucide-react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { LazyMotion, m as motion, AnimatePresence } from 'framer-motion'
 import { getAuthToken } from '@/lib/token'
 
 const tipoContratoSchema = z.object({

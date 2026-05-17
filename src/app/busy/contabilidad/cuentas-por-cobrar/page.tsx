@@ -14,7 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import { getAuthToken } from "@/lib/token"
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
+import { LazyMotion, m as motion, AnimatePresence, useReducedMotion } from "framer-motion"
 import { AnimatedNumber } from "@/components/ui/animated-number"
 import Link from "next/link"
 

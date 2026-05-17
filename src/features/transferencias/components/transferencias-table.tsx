@@ -39,7 +39,7 @@ import {
 import { Transferencia, EstadoTransferencia } from "@/app/models/model"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
-import { motion } from "framer-motion"
+import { LazyMotion, m as motion } from "framer-motion"
 import {
   DropdownMenu,
   DropdownMenuContent,

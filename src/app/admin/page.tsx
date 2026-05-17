@@ -19,7 +19,7 @@ import {
   Globe,
   Loader2,
 } from "lucide-react"
-import { motion, type Variants } from "framer-motion"
+import { LazyMotion, m as motion, type Variants } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { PageTransition, StaggerContainer, StaggerItem, AnimatedCard } from "@/components/ui/animations"

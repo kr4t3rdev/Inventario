@@ -14,7 +14,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { sileo } from '@/lib/sileo-shim'
 import { createPuntoDeVentaAction, updatePuntoDeVentaAction } from "@/features/puntos-venta/actions"
 import { getListasPreciosAction } from "@/features/listas-precios"
-import { motion } from "framer-motion"
+import { LazyMotion, m as motion } from "framer-motion"
 import { Store, MapPin, Sparkles, ArrowLeft, Loader2 } from "lucide-react"
 
 const ptoVentaSchema = z.object({

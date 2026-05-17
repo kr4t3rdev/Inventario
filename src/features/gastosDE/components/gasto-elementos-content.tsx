@@ -19,7 +19,7 @@ import type { ColumnDef } from "@tanstack/react-table"
 import { ArrowUp, ArrowLeft, Layers, Plus, Trash2, Pencil, Sparkles, AlertCircle } from "lucide-react"
 import { useState, useTransition } from "react"
 import { toast } from "sonner"
-import { motion } from "framer-motion"
+import { LazyMotion, m as motion } from "framer-motion"
 import Link from "next/link"
 
 const DataTable = dynamic(() => import('@/components/data-table').then(mod => ({ default: mod.DataTable })))

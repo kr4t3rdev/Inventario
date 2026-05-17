@@ -17,7 +17,7 @@ import { ServerActionError } from "@/lib/api/errors"
 import { toast } from "sonner"
 import { getAuthToken } from "@/lib/token"
 import Loader2 from "@/components/Loaders/hoja/loader"
-import { motion, AnimatePresence, useReducedMotion, Variants } from "framer-motion"
+import { LazyMotion, m as motion, AnimatePresence, useReducedMotion, Variants } from "framer-motion"
 import { cn } from "@/lib/utils"
 
 const shouldReduceMotion = typeof window !== 'undefined' 

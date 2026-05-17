@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { ReactElement } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { LazyMotion, m as motion } from "framer-motion";
 import { AlertCircle, ArrowLeft, ChevronDown, Folder, Layers, Loader2, Search, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";

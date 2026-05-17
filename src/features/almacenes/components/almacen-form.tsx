@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
 import { sileo } from '@/lib/sileo-shim'
 import { createAlmacenAction, updateAlmacenAction } from "@/features/almacenes/actions"
-import { motion } from "framer-motion"
+import { LazyMotion, m as motion } from "framer-motion"
 import { Warehouse, Sparkles, ArrowLeft, Loader2 } from "lucide-react"
 
 const almacenSchema = z.object({

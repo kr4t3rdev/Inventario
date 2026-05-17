@@ -1,7 +1,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { motion, useReducedMotion, type Variants } from 'framer-motion';
+import { LazyMotion, m as motion, useReducedMotion, type Variants } from 'framer-motion';
 
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/lib/utils';

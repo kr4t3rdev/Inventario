@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { LazyMotion, m as motion, useReducedMotion } from 'framer-motion';
 import { ArrowLeft, BarChart3, Sparkles } from 'lucide-react';
 
 import { ContabilidadBreadcrumb } from '@/features/contabilidad/components/contabilidad-breadcrumb';

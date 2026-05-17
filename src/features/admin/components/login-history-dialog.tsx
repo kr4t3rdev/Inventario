@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, useReducedMotion } from 'framer-motion';
+import { LazyMotion, m as motion, useReducedMotion } from 'framer-motion';
 import { format } from 'date-fns';
 import { Lock, Sparkles, Unlock, XCircle } from 'lucide-react';
 

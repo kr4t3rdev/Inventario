@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft, Loader2, ShoppingCart, Package } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { LazyMotion, m as motion } from 'framer-motion'
 
 import { Button } from '@/components/ui/button'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'

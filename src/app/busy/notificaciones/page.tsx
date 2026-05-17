@@ -23,7 +23,7 @@ import type { Notification } from "@/app/models/model"
 import { format } from "date-fns"
 import { useState, useEffect } from "react"
 import { toast } from "sonner"
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
+import { LazyMotion, m as motion, AnimatePresence, useReducedMotion } from "framer-motion"
 
 const iconos = {
   stock_bajo: Package,

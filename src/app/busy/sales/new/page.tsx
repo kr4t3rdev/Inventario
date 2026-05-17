@@ -2,7 +2,7 @@
 
 import { VentaInterface } from "@/features/ventas"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
-import { motion } from "framer-motion"
+import { LazyMotion, m as motion } from "framer-motion"
 import { TrendingUp, Sparkles, ArrowLeft, ShoppingBag } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"

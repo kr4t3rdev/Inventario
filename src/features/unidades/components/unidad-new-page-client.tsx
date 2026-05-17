@@ -2,7 +2,7 @@
 
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { UnidadForm } from "@/features/unidades/components/unidad-form"
-import { motion } from "framer-motion"
+import { LazyMotion, m as motion } from "framer-motion"
 import { Scale, Sparkles } from "lucide-react"
 
 /**

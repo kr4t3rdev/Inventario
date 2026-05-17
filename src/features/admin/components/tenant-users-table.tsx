@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useDeferredValue, useMemo, useState } from 'react'
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
+import { LazyMotion, m as motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Loader2, RefreshCw, Search, Users, X } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { es } from 'date-fns/locale'

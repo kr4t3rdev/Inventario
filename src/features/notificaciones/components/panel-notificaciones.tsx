@@ -11,7 +11,7 @@ import { getNotificacionesAction, marcarNotificacionLeidaAction } from "@/featur
 import type { Notification } from "@/app/models/model"
 import {formatDistanceToNow} from "date-fns/formatDistanceToNow"
 import { es } from "date-fns/locale"
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion"
+import { LazyMotion, m as motion, AnimatePresence, useReducedMotion } from "framer-motion"
 
 const iconos = {
   stock_bajo: Package,

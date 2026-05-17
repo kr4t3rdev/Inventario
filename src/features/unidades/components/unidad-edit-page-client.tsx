@@ -2,7 +2,7 @@
 
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { UnidadForm } from "@/features/unidades/components/unidad-form"
-import { motion } from "framer-motion"
+import { LazyMotion, m as motion } from "framer-motion"
 import { Scale, AlertCircle, Sparkles, ArrowLeft } from "lucide-react"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"

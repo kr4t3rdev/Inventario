@@ -1,7 +1,7 @@
 'use client'
 
 import { useDeferredValue, useEffect, useMemo, useState } from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
+import { LazyMotion, m as motion, useReducedMotion } from 'framer-motion'
 import {
   ArrowDown, ArrowUp, ArrowUpDown, CheckCircle, Clock, Download, Edit,
   Loader2, Search, Shield, ShieldCheck, Trash2, User, XCircle,

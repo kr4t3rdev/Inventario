@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, type ReactNode } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { LazyMotion, m as motion, AnimatePresence } from "framer-motion"
 import { Loader2, Tag, Sparkles, Receipt, Package } from "lucide-react"
 
 import { Button } from "@/components/ui/button"

@@ -14,7 +14,7 @@ import { toast } from "sonner"
 import { getAuthToken } from "@/lib/token"
 import { FileUpload } from "@/components/file-upload"
 import { NewVersionDialog } from "@/features/contratos"
-import { motion } from "framer-motion"
+import { LazyMotion, m as motion } from "framer-motion"
 
 interface Usuario {
   userId: string

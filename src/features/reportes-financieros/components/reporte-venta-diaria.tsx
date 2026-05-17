@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { motion, useReducedMotion } from "framer-motion"
+import { LazyMotion, m as motion, useReducedMotion } from "framer-motion"
 import { useVentas } from "@/features/ventas/hooks/use-ventas"
 import { useVentaServicios } from "@/features/venta-servicios/hooks/use-venta-servicios"
 import { Button } from "@/components/ui/button"

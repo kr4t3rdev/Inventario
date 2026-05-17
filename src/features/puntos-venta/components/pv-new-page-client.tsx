@@ -2,7 +2,7 @@
 
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { PtoVentaForm } from "@/features/puntos-venta/components/pvtoVenta-form"
-import { motion } from "framer-motion"
+import { LazyMotion, m as motion } from "framer-motion"
 import { Store, Sparkles } from "lucide-react"
 
 /**

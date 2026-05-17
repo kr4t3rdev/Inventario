@@ -5,7 +5,7 @@ import { CapitalForm } from "./capital-form"
 import { CapitalTable } from "./capital-table"
 import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { motion, AnimatePresence } from "framer-motion"
+import { LazyMotion, m as motion, AnimatePresence } from "framer-motion"
 import { Wallet, History, Plus } from "lucide-react"
 
 export function CapitalPageClient() {

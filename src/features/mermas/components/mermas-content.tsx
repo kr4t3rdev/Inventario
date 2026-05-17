@@ -10,7 +10,7 @@
  */
 import { useState, useTransition } from "react"
 import Link from "next/link"
-import { motion } from "framer-motion"
+import { LazyMotion, m as motion } from "framer-motion"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { PlusCircle, AlertTriangle, Sparkles } from "lucide-react"

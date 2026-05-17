@@ -5,7 +5,7 @@
  */
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { MermaForm } from "@/features/mermas"
-import { motion } from "framer-motion"
+import { LazyMotion, m as motion } from "framer-motion"
 import { AlertTriangle, Sparkles, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"

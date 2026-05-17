@@ -8,7 +8,7 @@ import { useClientes } from "@/features/clientes/hooks/use-clientes"
 import { useVendors } from '@/features/vendors/hooks/use-vendors'
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
-import { motion, AnimatePresence } from "framer-motion"
+import { LazyMotion, m as motion, AnimatePresence } from "framer-motion"
 import { FileText, Sparkles, ArrowLeft, Loader2, Receipt, Building2, UserCircle, Calendar } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select"

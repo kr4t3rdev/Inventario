@@ -28,7 +28,7 @@ import { showErrorToast } from "../toast-notifications"
 import { createInyeccionCapitalAction } from "@/features/contabilidad/actions-capital"
 import { getCuentasBancariasAction } from "@/features/contabilidad/actions-cuentas-bancarias"
 import { Textarea } from "@/components/ui/textarea"
-import { motion, AnimatePresence } from "framer-motion"
+import { LazyMotion, m as motion, AnimatePresence } from "framer-motion"
 
 // Validation schema
 const capitalSchema = z.object({

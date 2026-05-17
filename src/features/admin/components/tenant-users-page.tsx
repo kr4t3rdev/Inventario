@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { ShieldCheck, Sparkles, Users, UserPlus, ChevronRight } from 'lucide-react'
 import { toast } from 'sonner'
-import { motion } from 'framer-motion'
+import { LazyMotion, m as motion } from 'framer-motion'
 import Link from 'next/link'
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'

@@ -11,7 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Clock, LogIn, LogOut, Edit, Save, Calendar, User, History, CheckCircle2, AlertCircle, Timer } from "lucide-react";
 import { toast } from 'sonner';
-import { motion, AnimatePresence } from "framer-motion";
+import { LazyMotion, m as motion, AnimatePresence } from "framer-motion";
 
 interface Empleado {
   empleadoId: string;

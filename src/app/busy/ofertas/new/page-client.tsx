@@ -10,7 +10,7 @@ import { OfertaForm } from "@/features/ofertas/components/oferta-form"
 import { Button } from "@/components/ui/button"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Tag, Sparkles, ArrowLeft } from "lucide-react"
-import { motion } from "framer-motion"
+import { LazyMotion, m as motion } from "framer-motion"
 
 /**
  * @description Props del componente NewOfertaPageContent

@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Calculator, DollarSign, Download, Calendar, Filter, RefreshCw, TrendingUp, Users, Wallet, Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { getPagoSalariosAction } from "@/features/pago-salario/actions";
-import { motion, AnimatePresence } from "framer-motion";
+import { LazyMotion, m as motion, AnimatePresence } from "framer-motion";
 import { Switch } from "@/components/ui/switch";
 import {
   Dialog,

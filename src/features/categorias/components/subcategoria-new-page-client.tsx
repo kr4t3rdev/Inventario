@@ -2,7 +2,7 @@
 
 import type { ReactElement } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { LazyMotion, m as motion } from "framer-motion";
 import { ArrowLeft, Sparkles } from "lucide-react";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
