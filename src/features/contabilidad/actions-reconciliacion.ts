@@ -6,6 +6,7 @@
 import { revalidatePath } from 'next/cache';
 import { withAction } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
+import { Prisma } from '@/generated/prisma';
 import { requireTenant } from '@/lib/services/tenant-scope';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
@@ -77,32 +78,108 @@ export const getReconciliacionStatsAction = withAction(async (_input: void, user
 // ─── Ventas ────────────────────────────────────────────────
 
 export const getVentasPendientesAction = withAction(async (params: {
-  fechaInicio?: string; fechaFin?: string; page?: number; limit?: number;
+  fechaInicio?: string; fechaFin?: string; puntoDeVentaId?: string;
+  page?: number; limit?: number;
 } = {}, user: AuthenticatedUser) => {
   const tenantId = requireTenant(user);
-  const where: any = { tenantId };
-  if (params.fechaInicio || params.fechaFin) {
-    where.fechaVenta = {};
-    if (params.fechaInicio) where.fechaVenta.gte = new Date(params.fechaInicio);
-    if (params.fechaFin) where.fechaVenta.lte = new Date(params.fechaFin);
-  }
   const page = params.page || 1;
-  const limit = params.limit || 50;
-  const [ventas, total] = await Promise.all([
-    prisma.venta.findMany({
-      where, orderBy: {
-  // @ts-expect-error
-      fechaVenta: 'desc'
-      },
-      skip: (page-1)*limit, take: limit,
-      include: {
-  // @ts-expect-error
-      cliente: { select: { nombre: true } }, puntoDeVenta: { select: { nombre: true } }, moneda: true
-      },
-    }),
-    prisma.venta.count({ where }),
-  ]);
-  return { ventas, pagination: { page, limit, total, totalPages: Math.ceil(total/limit) } };
+  const limit = Math.min(200, params.limit || 50);
+  const skip = (page - 1) * limit;
+
+  // Build WHERE clause for raw SQL
+  const whereParts: Prisma.Sql[] = [Prisma.sql`v."tenantId" = ${tenantId}`];
+  if (params.fechaInicio) whereParts.push(Prisma.sql`v."fechaVenta" >= ${new Date(params.fechaInicio)}`);
+  if (params.fechaFin) {
+    const fechaFinDate = new Date(params.fechaFin);
+    fechaFinDate.setUTCHours(23, 59, 59, 999);
+    whereParts.push(Prisma.sql`v."fechaVenta" <= ${fechaFinDate}`);
+  }
+  if (params.puntoDeVentaId) whereParts.push(Prisma.sql`v."puntoDeVentaId" = ${params.puntoDeVentaId}`);
+
+  const whereSql = whereParts.length > 0
+    ? Prisma.sql`WHERE ${Prisma.join(whereParts, ' AND ')}`
+    : Prisma.sql``;
+
+  // Step 1: Get ventaIds that still have pending balance using raw SQL
+  // (LEFT JOIN with ReconciliacionVenta, HAVING total - totalPagado > 0.1)
+  const pendingRows = await prisma.$queryRaw<Array<{ ventaId: string; totalPagado: number }>>(Prisma.sql`
+    SELECT v."ventaId",
+      COALESCE(SUM(
+        CASE
+          WHEN rv."moneda" = 'CUP' THEN rv."monto"
+          WHEN rv."tasaCambio" IS NOT NULL AND rv."tasaCambio" > 0 THEN rv."monto" * rv."tasaCambio"
+          ELSE rv."monto"
+        END
+      ), 0)::double precision AS "totalPagado"
+    FROM "Venta" v
+    LEFT JOIN "ReconciliacionVenta" rv ON rv."ventaId" = v."ventaId"
+    ${whereSql}
+    GROUP BY v."ventaId", v."total", v."fechaVenta"
+    HAVING (COALESCE(v."total", 0) - COALESCE(SUM(
+      CASE
+        WHEN rv."moneda" = 'CUP' THEN rv."monto"
+        WHEN rv."tasaCambio" IS NOT NULL AND rv."tasaCambio" > 0 THEN rv."monto" * rv."tasaCambio"
+        ELSE rv."monto"
+      END
+    ), 0)) > 0.1
+    ORDER BY v."fechaVenta" DESC
+    OFFSET ${skip} LIMIT ${limit}
+  `);
+
+  // Count total pending for pagination
+  const totalRows = await prisma.$queryRaw<Array<{ total: bigint }>>(Prisma.sql`
+    SELECT COUNT(*)::bigint AS total FROM (
+      SELECT v."ventaId"
+      FROM "Venta" v
+      LEFT JOIN "ReconciliacionVenta" rv ON rv."ventaId" = v."ventaId"
+      ${whereSql}
+      GROUP BY v."ventaId", v."total"
+      HAVING (COALESCE(v."total", 0) - COALESCE(SUM(
+        CASE
+          WHEN rv."moneda" = 'CUP' THEN rv."monto"
+          WHEN rv."tasaCambio" IS NOT NULL AND rv."tasaCambio" > 0 THEN rv."monto" * rv."tasaCambio"
+          ELSE rv."monto"
+        END
+      ), 0)) > 0.1
+    ) AS pendientes
+  `);
+
+  const total = Number(totalRows[0]?.total || 0);
+  const ventaIds = pendingRows.map(r => r.ventaId);
+
+  if (ventaIds.length === 0) {
+    return { ventas: [], pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
+  }
+
+  // Step 2: Fetch full venta records with includes
+  const ventasRaw = await prisma.venta.findMany({
+    where: { ventaId: { in: ventaIds } },
+    include: {
+      cliente: { select: { nombre: true } },
+      puntoDeVenta: { select: { nombre: true } },
+      moneda: true,
+    },
+  });
+
+  // Step 3: Merge pending balance into each venta
+  const pagosMap = new Map(pendingRows.map(r => [r.ventaId, Number(r.totalPagado || 0)]));
+  const ventasMap = new Map(ventasRaw.map(v => [v.ventaId, v]));
+
+  const ventas = ventaIds
+    .map(ventaId => {
+      const venta = ventasMap.get(ventaId);
+      if (!venta) return null;
+      const totalVenta = Number(venta.total || 0);
+      const totalPagado = pagosMap.get(ventaId) || 0;
+      return {
+        ...venta,
+        totalPagado,
+        saldoPendiente: Math.max(0, totalVenta - totalPagado),
+      };
+    })
+    .filter(Boolean);
+
+  return { ventas, pagination: { page, limit, total, totalPages: Math.ceil(total / limit) } };
 });
 
 export const getHistorialReconciliacionVentasAction = withAction(async (params: {

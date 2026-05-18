@@ -106,7 +106,7 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
    
   const allVentasMerged = useMemo(() => {
     const apiVentas = Array.isArray(allVentasData?.ventas) ? allVentasData.ventas : [];
-  // @ts-expect-error
+    // API now returns saldoPendiente calculated server-side
     const apiVentaKeys = new Set(apiVentas.map(v => v.ordenId || v.ventaId));
 
     const arVentas = cuentasPorCobrar
@@ -115,16 +115,22 @@ export function ReconciliacionVentasPage({cuentaId}: RecoProps) {
         const key = cuenta.numeroFactura || cuenta.facturaId || cuenta.id;
         return !apiVentaKeys.has(key);
       })
-      .map(cuenta => ({
-        ventaId: cuenta.factura?.ventaId || cuenta.facturaId || cuenta.id,
-        ordenId: cuenta.numeroFactura || cuenta.facturaId,
-        cliente: cuenta.cliente,
-        createdAt: cuenta.createdAt,
-        total: cuenta.totalFactura ?? cuenta.totalVenta ?? cuenta.montoDeuda,
-        montoTotal: cuenta.totalFactura ?? cuenta.totalVenta ?? cuenta.montoDeuda,
-        reconciliada: false,
-        saldoPendiente: Number.isFinite(Number(cuenta.saldoFactura)) ? Number(cuenta.saldoFactura) : (cuenta.montoDeuda - cuenta.montoPagado),
-      } as VentaPendiente));
+      .map(cuenta => {
+        const totalCuenta = cuenta.totalFactura ?? cuenta.totalVenta ?? cuenta.montoDeuda;
+        const saldoPendiente = Number.isFinite(Number(cuenta.saldoFactura))
+          ? Number(cuenta.saldoFactura)
+          : (cuenta.montoDeuda - cuenta.montoPagado);
+        return {
+          ventaId: cuenta.factura?.ventaId || cuenta.facturaId || cuenta.id,
+          ordenId: cuenta.numeroFactura || cuenta.facturaId,
+          cliente: cuenta.cliente,
+          createdAt: cuenta.createdAt,
+          total: totalCuenta,
+          montoTotal: totalCuenta,
+          reconciliada: false,
+          saldoPendiente,
+        } as VentaPendiente;
+      });
 
     return [...apiVentas, ...arVentas];
   }, [allVentasData, cuentasPorCobrar]);
