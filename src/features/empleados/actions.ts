@@ -292,3 +292,124 @@ export const updateAsistenciaAction = withAction(async (
 
   return updated;
 });
+
+// ── Vacaciones ─────────────────────────────────────────
+
+/**
+ * @description Obtiene solicitudes de vacaciones con filtros opcionales.
+ * Reemplaza GET /api/empleados/vacaciones.
+ */
+export const getVacacionesAction = withAction(async (
+  input: { employeeId?: string; status?: string },
+  user: AuthenticatedUser,
+) => {
+  const tenantId = requireTenant(user);
+  const where: any = { employee: { tenantId } };
+  if (input.employeeId) where.employeeId = input.employeeId;
+  if (input.status) where.status = input.status;
+
+  return prisma.vacationRequest.findMany({
+    where,
+    include: {
+      employee: {
+        select: {
+          nombre: true,
+          apellido: true,
+          cargo: true,
+          vacationDaysAccrued: true,
+          vacationDaysUsed: true,
+          fechaContratacion: true,
+          diasVacacionesAnuales: true,
+        },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  });
+});
+
+const createVacacionSchema = z.object({
+  employeeId: z.string().min(1),
+  startDate: z.string().min(1),
+  endDate: z.string().min(1),
+  reason: z.string().optional(),
+});
+
+/**
+ * @description Crea una solicitud de vacaciones.
+ * Reemplaza POST /api/empleados/vacaciones.
+ */
+export const createVacacionAction = withAction(async (
+  input: z.infer<typeof createVacacionSchema>,
+  user: AuthenticatedUser,
+) => {
+  const tenantId = requireTenant(user);
+  const parsed = createVacacionSchema.parse(input);
+
+  const empleado = await prisma.empleado.findFirst({
+    where: { empleadoId: parsed.employeeId, tenantId },
+    select: {
+      vacationDaysAccrued: true,
+      vacationDaysUsed: true,
+      fechaContratacion: true,
+      diasVacacionesAnuales: true,
+      nombre: true,
+      apellido: true,
+    },
+  });
+
+  if (!empleado) throw new ActionError('Empleado no encontrado', 'NOT_FOUND');
+  if (!empleado.fechaContratacion) {
+    throw new ActionError(
+      'El empleado debe tener fecha de contratación configurada',
+      'BAD_REQUEST',
+    );
+  }
+
+  const start = new Date(parsed.startDate);
+  const end = new Date(parsed.endDate);
+  const daysRequested = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+  const daysAvailable = empleado.vacationDaysAccrued - empleado.vacationDaysUsed;
+
+  if (daysRequested > daysAvailable) {
+    throw new ActionError(
+      `Días solicitados (${daysRequested}) exceden días disponibles (${daysAvailable})`,
+      'BAD_REQUEST',
+    );
+  }
+
+  return prisma.vacationRequest.create({
+    data: {
+      employeeId: parsed.employeeId,
+      startDate: start,
+      endDate: end,
+      daysRequested,
+      reason: parsed.reason ?? null,
+      status: 'PENDING',
+    },
+    include: {
+      employee: {
+        select: {
+          nombre: true,
+          apellido: true,
+          cargo: true,
+          vacationDaysAccrued: true,
+          vacationDaysUsed: true,
+        },
+      },
+    },
+  });
+});
+
+/**
+ * @description Obtiene el resumen de acumulación de vacaciones para un empleado.
+ * Reemplaza GET /api/empleados/vacaciones/acumulacion.
+ */
+export const getVacacionAccumulacionAction = withAction(async (
+  input: { employeeId: string },
+  user: AuthenticatedUser,
+) => {
+  const tenantId = requireTenant(user);
+  const { VacationAccrualService } = await import('@/lib/vacation-accrual-service');
+  const service = new VacationAccrualService();
+  return service.getAccrualSummary(input.employeeId);
+});

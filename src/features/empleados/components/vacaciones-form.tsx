@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Plus, Palmtree, Clock, CheckCircle2, XCircle, Search, User, FileText, CalendarDays } from "lucide-react";
+import { getEmpleadosAction, getVacacionesAction, getVacacionAccumulacionAction, createVacacionAction } from '@/features/empleados/actions';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { LazyMotion, m as motion, AnimatePresence } from "framer-motion";
@@ -55,67 +56,27 @@ export function VacacionesForm() {
 
   // Cargar lista de empleados
   useEffect(() => {
-    const fetchEmpleados = async () => {
-      try {
-        const token = sessionStorage.getItem('token');
-        const response = await fetch("/api/empleados", {
-          headers: token ? { Authorization: `Bearer ${token}` } : {}
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setEmpleados(data);
-        }
-      } catch (error) {
-        console.error("Error cargando empleados:", error);
-      }
-    };
-
-    fetchEmpleados();
+    getEmpleadosAction()
+      .then((r) => { if (r.success) setEmpleados(r.data ?? []); })
+      .catch((error) => console.error("Error cargando empleados:", error));
   }, []);
 
   // Cargar solicitudes de vacaciones
   useEffect(() => {
-    const fetchVacationRequests = async () => {
-      try {
-        const token = sessionStorage.getItem('token');
-        const response = await fetch("/api/empleados/vacaciones", {
-          headers: token ? { Authorization: `Bearer ${token}` } : {}
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setVacationRequests(data);
-        }
-      } catch (error) {
-        console.error("Error cargando solicitudes de vacaciones:", error);
-      }
-    };
-
-    fetchVacationRequests();
+    getVacacionesAction({})
+      .then((r) => { if (r.success) setVacationRequests(r.data ?? []); })
+      .catch((error) => console.error("Error cargando solicitudes de vacaciones:", error));
   }, []);
 
   // Cargar resumen de vacaciones del empleado seleccionado
   useEffect(() => {
-    const fetchEmployeeSummary = async () => {
-      if (!selectedEmpleado) {
-        setEmployeeSummary(null);
-        return;
-      }
-
-      try {
-        const token = sessionStorage.getItem('token');
-        const response = await fetch(`/api/empleados/vacaciones/acumulacion?employeeId=${selectedEmpleado}`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {}
-        });
-        if (response.ok) {
-          const data = await response.json();
-          setEmployeeSummary(data);
-        }
-      } catch (error) {
-        console.error("Error cargando resumen de vacaciones:", error);
-      }
-    };
-
-    fetchEmployeeSummary();
+    if (!selectedEmpleado) {
+      setEmployeeSummary(null);
+      return;
+    }
+    getVacacionAccumulacionAction({ employeeId: selectedEmpleado })
+      .then((r) => { if (r.success) setEmployeeSummary(r.data ?? null); })
+      .catch((error) => console.error("Error cargando resumen de vacaciones:", error));
   }, [selectedEmpleado]);
 
   /**
@@ -176,25 +137,15 @@ export function VacacionesForm() {
 
     setLoading(true);
     try {
-      const token = sessionStorage.getItem('token');
-      const response = await fetch("/api/empleados/vacaciones", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` })
-        },
-        body: JSON.stringify({
-          employeeId: selectedEmpleado,
-          startDate,
-          endDate,
-          reason: reason || null
-        }),
+      const r = await createVacacionAction({
+        employeeId: selectedEmpleado,
+        startDate,
+        endDate,
+        reason: reason || undefined,
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setVacationRequests(prev => [data, ...prev]);
+      if (r.success) {
+        setVacationRequests(prev => [r.data, ...prev]);
         setIsDialogOpen(false);
         setStartDate("");
         setEndDate("");
@@ -202,7 +153,7 @@ export function VacacionesForm() {
         setSelectedEmpleado("");
         toast.success('Solicitud de vacaciones enviada correctamente');
       } else {
-        toast.error(data.error || 'Error al enviar solicitud');
+        toast.error(r.error?.message || 'Error al enviar solicitud');
       }
     } catch (error) {
       console.error("Error enviando solicitud:", error);
