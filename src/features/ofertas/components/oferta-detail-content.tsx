@@ -27,6 +27,7 @@ import { usePuntosDeVenta } from '@/features/puntos-venta/hooks/use-puntos-de-ve
 import { facturarOfertaAction, updateOfertaAction } from '@/features/ofertas/actions'
 import { formatCurrency } from '@/lib/utils'
 import { getAuthToken } from '@/lib/token'
+import { getSeriesFacturacionAction } from '@/features/series-facturacion/actions'
 import type { Oferta } from '@/app/models/model'
 
 interface OfertaDetailContentProps {
@@ -101,31 +102,11 @@ export function OfertaDetailContent({ initialOferta }: OfertaDetailContentProps)
   }, [searchParams, anticiposFeatureEnabled])
 
   useEffect(() => {
-    const fetchSeries = async () => {
-      try {
-        const token = getAuthToken()
-        const response = await fetch('/api/series-facturacion', {
-          headers: token ? { Authorization: token } : undefined,
-          cache: 'no-store',
-        })
-
-        if (!response.ok) {
-          throw new Error('Error al cargar series')
-        }
-
-        const data = await response.json()
-        setSeries(data)
-
-        const defaultSerie = data.find((serie: any) => serie.esPorDefecto && serie.activa)
-        if (defaultSerie) {
-          setSelectedSerieId(defaultSerie.serieId)
-        }
-      } catch (error) {
-        console.error('Error fetching series:', error)
-      }
-    }
-
-    fetchSeries()
+    getSeriesFacturacionAction()
+      .then((r) => {
+        if (r.success) setSeries(r.data ?? []);
+      })
+      .catch((error) => console.error('Error cargando series:', error));
   }, [])
 
   const handleUpdateStatus = (estado: 'ACEPTADA' | 'RECHAZADA') => {
