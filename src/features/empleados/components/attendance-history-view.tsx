@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Calendar, Edit, Save, Filter, Download, User } from "lucide-react";
+import { getEmpleadosAction, getAsistenciaAction, updateAsistenciaAction } from '@/features/empleados/actions';
 import { toast } from "sonner";
 
 interface Empleado {
@@ -76,21 +77,14 @@ export function AttendanceHistoryView() {
 
     setLoading(true);
     try {
-      const token = sessionStorage.getItem('token');
-      const params = new URLSearchParams({
+      const r = await getAsistenciaAction({
         employeeId: selectedEmpleado,
-        ...(filters.startDate && { startDate: filters.startDate }),
-        ...(filters.endDate && { endDate: filters.endDate })
+        startDate: filters.startDate || undefined,
+        endDate: filters.endDate || undefined,
       });
 
-      const response = await fetch(`/api/empleados/asistencia?${params}`, {
-        headers: {
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-      });
-
-      if (response.ok) {
-        let data = await response.json();
+      if (r.success) {
+        let data = r.data ?? [];
 
         // Aplicar filtro de estado si está seleccionado
         if (filters.status && filters.status !== "all") {
@@ -129,25 +123,16 @@ export function AttendanceHistoryView() {
 
     setLoading(true);
     try {
-      const token = sessionStorage.getItem('token');
-      const response = await fetch("/api/empleados/asistencia", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-        body: JSON.stringify({
-          attendanceId: editingRecord.attendanceId,
-          manualCheckIn: editForm.manualCheckIn || null,
-          manualCheckOut: editForm.manualCheckOut || null,
-          notes: editForm.notes || null,
-          approvedBy: "admin" // TODO: Get from current user context
-        }),
+      const r = await updateAsistenciaAction({
+        attendanceId: editingRecord.attendanceId,
+        manualCheckIn: editForm.manualCheckIn || undefined,
+        manualCheckOut: editForm.manualCheckOut || undefined,
+        notes: editForm.notes || undefined,
+        approvedBy: "admin", // TODO: Get from current user context
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
+      if (r.success) {
+        const data = r.data;
         // Update the record in the history
         setHistorialAsistencia(prev =>
           prev.map(record =>
@@ -155,11 +140,22 @@ export function AttendanceHistoryView() {
           )
         );
 
+        // Update today's record if it's the same
+        if (asistenciaHoy?.attendanceId === editingRecord.attendanceId) {
+          setAsistenciaHoy(data as any);
+        }
+
         setEditingRecord(null);
-        toast.success("Registro actualizado correctamente");
+        toast.success('Registro actualizado correctamente');
       } else {
-        toast.error(data.error || "Error al actualizar registro");
+        toast.error(r.error?.message || 'Error al actualizar registro');
       }
+    } catch (error) {
+      console.error("Error actualizando asistencia:", error);
+      toast.error('Error interno del servidor');
+    } finally {
+      setLoading(false);
+    }
     } catch (error) {
       console.error("Error actualizando asistencia:", error);
       toast.error("Error interno del servidor");
