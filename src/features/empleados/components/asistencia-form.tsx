@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Clock, LogIn, LogOut, Edit, Save, Calendar } from "lucide-react";
 import { toast } from 'sonner';
+import { getEmpleadosAction, getAsistenciaAction, registerAsistenciaAction, updateAsistenciaAction } from '@/features/empleados/actions';
 
 interface Empleado {
   empleadoId: string;
@@ -61,42 +62,29 @@ export function AsistenciaForm() {
   // Verificar asistencia de hoy y cargar historial para el empleado seleccionado
   useEffect(() => {
     if (selectedEmpleado) {
-      const fetchAsistenciaData = async () => {
-        try {
-          const token = sessionStorage.getItem('token');
-          const today = new Date().toISOString().split('T')[0];
+      const today = new Date().toISOString().split('T')[0];
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-          // Fetch today's attendance
-          const todayResponse = await fetch(`/api/empleados/asistencia?employeeId=${selectedEmpleado}&date=${today}`, {
-            headers: {
-              ...(token && { Authorization: `Bearer ${token}` }),
-            },
-          });
-
-          if (todayResponse.ok) {
-            const todayData = await todayResponse.json();
-            setAsistenciaHoy(todayData.length > 0 ? todayData[0] : null);
+      // Fetch today's attendance
+      getAsistenciaAction({ employeeId: selectedEmpleado, date: today })
+        .then((r) => {
+          if (r.success && r.data) {
+            setAsistenciaHoy(r.data.length > 0 ? r.data[0] : null);
           }
+        })
+        .catch((error) => console.error("Error cargando asistencia de hoy:", error));
 
-          // Fetch attendance history (last 30 days)
-          const thirtyDaysAgo = new Date();
-          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-          const historyResponse = await fetch(`/api/empleados/asistencia?employeeId=${selectedEmpleado}&startDate=${thirtyDaysAgo.toISOString().split('T')[0]}`, {
-            headers: {
-              ...(token && { Authorization: `Bearer ${token}` }),
-            },
-          });
-
-          if (historyResponse.ok) {
-            const historyData = await historyResponse.json();
-            setHistorialAsistencia(historyData);
-          }
-        } catch (error) {
-          console.error("Error cargando datos de asistencia:", error);
-        }
-      };
-
-      fetchAsistenciaData();
+      // Fetch attendance history (last 30 days)
+      getAsistenciaAction({
+        employeeId: selectedEmpleado,
+        startDate: thirtyDaysAgo.toISOString().split('T')[0],
+        endDate: today,
+      })
+        .then((r) => {
+          if (r.success) setHistorialAsistencia(r.data ?? []);
+        })
+        .catch((error) => console.error("Error cargando historial de asistencia:", error));
     }
   }, [selectedEmpleado]);
 
@@ -112,28 +100,15 @@ export function AsistenciaForm() {
 
     setLoading(true);
     try {
-      const token = sessionStorage.getItem('token');
-      const response = await fetch("/api/empleados/asistencia", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-        body: JSON.stringify({
-          employeeId: selectedEmpleado,
-          action
-        }),
-      });
+      const r = await registerAsistenciaAction({ employeeId: selectedEmpleado, action });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        setAsistenciaHoy(data);
+      if (r.success) {
+        setAsistenciaHoy(r.data as any);
         toast.success(action === 'checkin'
           ? "Entrada registrada correctamente"
           : "Salida registrada correctamente");
       } else {
-        toast.error(data.error || 'Error al registrar asistencia');
+        toast.error(r.error?.message || 'Error al registrar asistencia');
       }
     } catch (error) {
       console.error("Error registrando asistencia:", error);
@@ -163,25 +138,16 @@ export function AsistenciaForm() {
 
     setLoading(true);
     try {
-      const token = sessionStorage.getItem('token');
-      const response = await fetch("/api/empleados/asistencia", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }),
-        },
-        body: JSON.stringify({
-          attendanceId: editingRecord.attendanceId,
-          manualCheckIn: editForm.manualCheckIn || null,
-          manualCheckOut: editForm.manualCheckOut || null,
-          notes: editForm.notes || null,
-          approvedBy: "admin" // TODO: Get from current user context
-        }),
+      const r = await updateAsistenciaAction({
+        attendanceId: editingRecord.attendanceId,
+        manualCheckIn: editForm.manualCheckIn || undefined,
+        manualCheckOut: editForm.manualCheckOut || undefined,
+        notes: editForm.notes || undefined,
+        approvedBy: "admin", // TODO: Get from current user context
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
+      if (r.success) {
+        const data = r.data;
         // Update the record in the history
         setHistorialAsistencia(prev =>
           prev.map(record =>
@@ -191,13 +157,13 @@ export function AsistenciaForm() {
 
         // Update today's record if it's the same
         if (asistenciaHoy?.attendanceId === editingRecord.attendanceId) {
-          setAsistenciaHoy(data);
+          setAsistenciaHoy(data as any);
         }
 
         setEditingRecord(null);
         toast.success('Registro actualizado correctamente');
       } else {
-        toast.error(data.error || 'Error al actualizar registro');
+        toast.error(r.error?.message || 'Error al actualizar registro');
       }
     } catch (error) {
       console.error("Error actualizando asistencia:", error);
