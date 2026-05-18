@@ -1,16 +1,14 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { authenticateUser } from '@/lib/auth-middleware';
+import { withAuth } from '@/lib/auth-middleware';
+import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
-export async function GET(
-  _request: Request,
+async function handler(
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
+  user: AuthenticatedUser,
 ) {
   const { id } = await params;
-  const user = await authenticateUser();
-  if (!user) {
-    return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
-  }
 
   const factura = await prisma.factura.findFirst({
     where: {
@@ -38,7 +36,7 @@ export async function GET(
               items: {
                 include: {
                   producto: { select: { id: true, nombre: true } },
-                  servicio: { select: { id: true, nombre: true } },
+                  servicio: { select: { servicioId: true, nombre: true, precio: true, moneda: true, descripcion: true } },
                 },
               },
             },
@@ -70,3 +68,5 @@ export async function GET(
 
   return NextResponse.json(serialized);
 }
+
+export const GET = withAuth(handler);

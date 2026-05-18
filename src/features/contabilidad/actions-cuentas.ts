@@ -211,7 +211,18 @@ function enriquecerCuentaPorCobrar(cuenta: Record<string, unknown>): CuentaPorCo
     saldoFactura,
     moneda: cuenta.moneda as string,
     cliente: cuenta.cliente as { clienteId: string; nombre: string } | null,
-    factura: facturaRecord,
+    factura: facturaRecord
+      ? {
+          ...facturaRecord,
+          total: Number(facturaRecord.total),
+          venta: (facturaRecord.venta as Record<string, unknown> | null)
+            ? {
+                ...(facturaRecord.venta as Record<string, unknown>),
+                total: Number((facturaRecord.venta as Record<string, unknown>).total),
+              }
+            : null,
+        }
+      : null,
     prestamoCash: cuenta.prestamoCash as Record<string, unknown> | null,
     _reconciliaciones: recs as Record<string, unknown>[],
     createdAt: cuenta.createdAt as Date,

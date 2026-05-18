@@ -43,7 +43,7 @@ export default function VentaInter() {
     useEffect(() => {
       getProductosAction().then(r => {
         if (r.success) setProductos(r.data ?? [])
-        isLoadingProductos.current = false)
+        isLoadingProductos.current = false;
       })
     }, [])
 

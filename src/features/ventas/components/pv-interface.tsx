@@ -203,11 +203,9 @@ export function VentaInterface() {
 
           setSeries(data);
         }
-        setLoadingSeries(false);
       })
       .catch((error) => {
         console.error("Error cargando series:", error);
-        setLoadingSeries(false);
       });
   }, []);
 
@@ -377,6 +375,9 @@ export function VentaInterface() {
         descuento: Math.round(descuento),
         observaciones,
         items,
+        tipoVencimiento,
+        fechaVencimiento: tipoVencimiento === 'fecha' ? fechaVencimiento : undefined,
+        cuentaBancariaId: tipoVencimiento === 'contra_pago' ? selectedSerieId : undefined,
       })
 
       if (!result.success) {

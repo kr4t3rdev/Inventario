@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo } from 'react'
-import { LazyMotion, m as motion, useReducedMotion } from 'framer-motion'
+import { m as motion } from 'framer-motion'
 import {
   DollarSign, Package, ShoppingCart, BarChart3,
   TrendingUp, ArrowUpRight, ArrowDownRight,
@@ -40,8 +40,6 @@ interface SectionCardsProps {
  * @returns {JSX.Element} Grid de 4 tarjetas animadas
  */
 export function SectionCards({ dashboardStats }: SectionCardsProps): React.JSX.Element {
-  const shouldReduceMotion = useReducedMotion()
-
   const cards = useMemo(() => {
     const { totalIngresos, totalBeneficio, valorTotalInventario, totalProductos, ventasDiarias } = dashboardStats
     const margen = totalIngresos > 0 ? (totalBeneficio / totalIngresos) * 100 : 0
@@ -102,63 +100,27 @@ export function SectionCards({ dashboardStats }: SectionCardsProps): React.JSX.E
     ]
   }, [dashboardStats])
 
-  const containerVariants = shouldReduceMotion ? {} : {
-    hidden: { opacity: 0 },
-    show: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.15 } },
-  }
-
-  const itemVariants = shouldReduceMotion ? {} : {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 60, damping: 15 } },
-  }
-
-  if (shouldReduceMotion) {
-    return (
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {cards.map((card) => {
-          const Icon = card.icon
-          return (
-            <div key={card.title}>
-              <Card className="group relative overflow-hidden border-0 bg-card/50 shadow-sm backdrop-blur-sm transition-all duration-300 hover:shadow-md">
-                <div className={cn('absolute -top-10 -right-10 h-32 w-32 rounded-full blur-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100', card.iconBg)} />
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">{card.title}</CardTitle>
-                  <div className={cn('rounded-xl bg-linear-to-br p-2.5 shadow-lg', card.gradient)}>
-                    <Icon className="h-4 w-4 text-white" />
-                  </div>
-                </CardHeader>
-                <div className="px-5 pb-2">
-                  <div className="text-2xl font-bold tracking-tight">{card.value}</div>
-                  <div className="mt-1">{card.badge}</div>
-                </div>
-                <CardFooter>
-                  <CardDescription>{card.description}</CardDescription>
-                </CardFooter>
-              </Card>
-            </div>
-          )
-        })}
-      </div>
-    )
-  }
-
   return (
     <motion.div
       className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4"
-  // @ts-expect-error
-      variants={
-      containerVariants
-      }
+      variants={{
+        hidden: { opacity: 0 },
+        show: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.15 } },
+      }}
       initial="hidden"
       animate="show"
     >
       {cards.map((card) => {
         const Icon = card.icon
         return (
-          <motion.div key={
-  // @ts-expect-error
-          card.title} variants={itemVariants} whileHover={{ y: -4, transition: { duration: 0.2 } }
-          }>
+          <motion.div
+            key={card.title}
+            variants={{
+              hidden: { opacity: 0, y: 20 },
+              show: { opacity: 1, y: 0, transition: { type: 'spring' as const, stiffness: 60, damping: 15 } },
+            }}
+            whileHover={{ y: -4, transition: { duration: 0.2 } }}
+          >
             <Card className="group relative overflow-hidden border-0 bg-card/50 shadow-sm backdrop-blur-sm transition-all duration-300 hover:shadow-md">
               <div className={cn('absolute -top-10 -right-10 h-32 w-32 rounded-full blur-3xl opacity-0 transition-opacity duration-500 group-hover:opacity-100', card.iconBg)} />
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

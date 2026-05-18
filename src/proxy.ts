@@ -22,6 +22,13 @@ export async function proxy(request: NextRequest) {
     console.log('[Proxy]', method, path)
   }
 
+  // Marcar rutas de impresión para que el layout oculte el SiteHeader
+  if (path === '/busy/invoice/print') {
+    const requestHeaders = new Headers(request.headers)
+    requestHeaders.set('x-print-route', 'true')
+    return NextResponse.next({ request: { headers: requestHeaders } })
+  }
+
   // Rutas públicas que no requieren token
   const publicPathsExact = [
     '/api/auth/login',

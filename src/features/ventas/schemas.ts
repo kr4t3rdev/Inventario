@@ -18,6 +18,10 @@ export const createVentaSchema = z.object({
   descuento: z.coerce.number().int().min(0).optional().default(0),
   observaciones: z.string().max(500).optional().nullable(),
   items: z.array(ventaItemSchema).min(1, 'Debe tener al menos un producto'),
+  // Parámetros de facturación y cobro
+  tipoVencimiento: z.enum(['contra_pago', 'fecha', 'plazo']).optional().nullable(),
+  fechaVencimiento: z.string().optional().nullable(),
+  cuentaBancariaId: z.string().optional().nullable(),
 });
 
 /** Schema para anular una venta */

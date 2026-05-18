@@ -208,6 +208,7 @@ function InvoicePrintContent() {
   const [miEmpresa, setMiEmpresa] = useState<MiEmpresaData | null>(null)
   const [invoiceData, setInvoiceData] = useState<InvoiceData | null>(null)
   const [isLoadingInvoice, setIsLoadingInvoice] = useState(true)
+  const token = getAuthToken()
 
   useEffect(() => {
     const loadInvoice = async () => {
@@ -219,7 +220,7 @@ function InvoicePrintContent() {
             cache: "no-store",
           })
           if (!res.ok) {
-            throw new Error("No se pudo cargar la factura")
+            throw new Error(`No se pudo cargar la factura (${res.status})`)
           }
           const factura = await res.json()
           setInvoiceData(buildInvoiceDataFromFactura(factura))
@@ -312,8 +313,8 @@ function InvoicePrintContent() {
   const getLightBorderClass = () => 'border-blue-200'
 
   return (
-    <div className="min-h-screen p-4 print:p-0 text-sm font-sans bg-white text-black">
-      <div className={`max-w-[210mm] mx-auto print:max-w-none ${getBgClass()} ${getTextClass()}`}>
+    <div className="min-h-screen text-sm font-sans bg-white text-black">
+      <div className={`max-w-[210mm] mx-auto p-4 print:p-6 print:max-w-none ${getBgClass()} ${getTextClass()}`}>
         
         {/* HEADER */}
         <div className={`flex mb-1 ${getBorderClass()} border`}>
@@ -462,7 +463,7 @@ function InvoicePrintContent() {
         </div>
 
         {/* OBSERVACIONES Y TOTALES */}
-        <div className={`flex mb-1 border-t-0 ${getBorderClass()} border`}>
+        <div className={`flex mb-1 border-t-0 ${getBorderClass()} border`} style={{ pageBreakInside: 'avoid' }}>
             <div className={`w-2/3 p-2 flex flex-col justify-between border-r ${getBorderClass()}`}>
                 <div>
                     <span className="font-bold uppercase block text-xs mb-1">OBSERVACIONES:</span>
@@ -490,7 +491,7 @@ function InvoicePrintContent() {
         </div>
 
         {/* FIRMAS Y FORMULARIO TRANSPORTE */}
-        <div className={`p-2 text-xs mb-1 border-t-0 ${getBorderClass()} border`}>
+        <div className={`p-2 text-xs mb-1 border-t-0 ${getBorderClass()} border`} style={{ pageBreakInside: 'avoid' }}>
             <div className="grid grid-cols-3 gap-6 mb-4">
                 {/* Recibido por */}
                 <div className="flex flex-col justify-between">
@@ -561,7 +562,7 @@ function InvoicePrintContent() {
         </div>
 
         {/* FOOTER */}
-        <div className={`p-2 text-xs flex justify-between items-end border-t-0 ${getBorderClass()} border`}>
+        <div className={`p-2 text-xs flex justify-between items-end border-t-0 ${getBorderClass()} border`} style={{ pageBreakInside: 'avoid' }}>
             <div>
                 <p className="font-medium">Dirija sus pagos en Moneda Nacional a:</p>
                 <div className="flex gap-4 mt-1">
@@ -593,13 +594,30 @@ function InvoicePrintContent() {
       </div>
 
       <style jsx global>{`
+        /* Force white background on all parent containers for invoice page */
+        body, main, [data-sidebar="inset"], .sidebar-inset {
+          background: white !important;
+        }
+
+        /* Hide breadcrumb navigation in screen + print on invoice page */
+        nav[aria-label="breadcrumb"] {
+          display: none !important;
+        }
+
         @media print {
-          @page { margin: 10mm; }
+          @page {
+            margin: 0mm !important;
+          }
           body {
+            margin: 0 !important;
+            padding: 0 !important;
             background: white !important;
             color: black !important;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
+          }
+          header, nav, aside, [data-sidebar] {
+            display: none !important;
           }
           .print\\:hidden { display: none; }
         }

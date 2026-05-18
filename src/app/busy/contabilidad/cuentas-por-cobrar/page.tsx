@@ -4,10 +4,11 @@ import { useMemo, useState, useEffect, useCallback, useRef } from "react"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { ReconciliacionVentasForm } from "@/features/contabilidad/components/reconciliacion/reconciliacion-ventas-form"
 import { CuentasPorCobrarTable } from "@/features/contabilidad/components/cuentas-por-cobrar-table"
-import { getCuentasPorCobrarAction } from "@/features/contabilidad"
+import { getCuentasPorCobrarAction, getVentasPendientesAction } from "@/features/contabilidad"
+import { getVentaByIdAction } from "@/features/ventas"
 import type { GetCuentasPorCobrarResult } from "@/features/contabilidad"
 import type { CuentaPorCobrar, VentaPendiente } from "@/app/models/model"
-import { Dialog, DialogContent } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog"
 import { Loader2, AlertCircle, TrendingUp, TrendingDown, DollarSign, Receipt, ArrowLeft, CreditCard } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -114,12 +115,13 @@ export default function CuentasPorCobrarPage() {
         const vtaId = factura?.ventaId
         if (vtaId) {
           setIsResolvingVenta(true)
-          const vtaRes = await fetch(`/api/ventas/${vtaId}`, {
-            headers: token ? { Authorization: token } : {},
-          })
-          if (vtaRes.ok && !cancelled) {
-            const vtaJson = await vtaRes.json()
-            setVentaData(vtaJson.venta ?? vtaJson)
+          try {
+            const vtaResult = await getVentaByIdAction(vtaId)
+            if (vtaResult.success && vtaResult.data && !cancelled) {
+              setVentaData(vtaResult.data)
+            }
+          } catch {
+            // venta no encontrada o error de auth — continuar sin venta
           }
         }
       } catch (e) {
@@ -356,6 +358,9 @@ export default function CuentasPorCobrarPage() {
             {showReconciliacion && (
               <Dialog open={showReconciliacion} onOpenChange={(open) => !open && handleCloseReconciliacion()}>
                 <DialogContent className={cn(surfaceCardClass, "max-w-4xl max-h-[90vh] overflow-y-auto")}>
+                  <DialogTitle className="sr-only">
+                    Reconciliar {cuentaSeleccionada?.cliente?.nombre || cuentaSeleccionada?.numeroFactura || 'cuenta por cobrar'}
+                  </DialogTitle>
                   {isLoadingData ? (
                     <div className="flex flex-col items-center justify-center p-12 space-y-4">
                       <Loader2 className="h-12 w-12 animate-spin text-primary" />
