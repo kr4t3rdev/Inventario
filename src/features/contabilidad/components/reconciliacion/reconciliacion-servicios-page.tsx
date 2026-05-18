@@ -80,7 +80,7 @@ export function ReconciliacionServiciosPage() {
       limit: pageSize,
     }).then((r) => {
       if (r.success) setServiciosPendientesData(r.data)
-      loadingServicios.current = false)
+      loadingServicios.current = false;
     })
   }
 
@@ -110,13 +110,13 @@ export function ReconciliacionServiciosPage() {
   const loadingHistorial = useRef(false)
 
   useEffect(() => {
-    loadingHistorial.current = true)
+    loadingHistorial.current = true;
     getHistorialReconciliacionServiciosAction({
       fechaDesde: fechaInicio || undefined,
       fechaHasta: fechaFin || undefined,
     }).then((r) => {
       if (r.success) setHistorialReconciliacionData(r.data?.reconciliaciones ?? [])
-      loadingHistorial.current = false)
+      loadingHistorial.current = false;
     })
   }, [fechaInicio, fechaFin])
 

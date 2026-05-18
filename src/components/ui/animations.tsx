@@ -104,6 +104,7 @@ interface StaggerItemProps extends HTMLMotionProps<'div'> {
 
 export function StaggerItem({ children, className, ...props }: StaggerItemProps) {
   const shouldReduceMotion = useReducedMotion();
+  const hasMounted = useHasMounted();
 
   const item: Variants = shouldReduceMotion
     ? { hidden: { opacity: 1, y: 0 }, show: { opacity: 1, y: 0 } }
@@ -122,6 +123,8 @@ export function StaggerItem({ children, className, ...props }: StaggerItemProps)
   return (
     <motion.div
       variants={item}
+      initial={hasMounted ? "hidden" : false}
+      animate="show"
       className={className}
       {...props}
     >
