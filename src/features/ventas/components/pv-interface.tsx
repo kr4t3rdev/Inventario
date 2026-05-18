@@ -26,8 +26,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Checkbox } from "@/components/ui/checkbox"
-import { getAuthToken } from "@/lib/token"
 import { getPrecioEfectivo } from "@/lib/types/pricing"
+import { getSeriesFacturacionAction, createSerieFacturacionAction } from "@/features/series-facturacion/actions"
 import { ProductoCard } from "./producto-card"
 import { CartItem } from "./cart-item"
 import { useDebounce } from "@/hooks/use-debounce"
@@ -184,54 +184,32 @@ export function VentaInterface() {
 
   // Cargar series de facturación activas
   useEffect(() => {
-    const fetchSeries = async () => {
-      try {
-        const token = getAuthToken()
-        const res = await fetch("/api/series-facturacion", {
-          headers: token ? { Authorization: token } : undefined,
-          cache: "no-store",
-        })
-        if (!res.ok) throw new Error("Error al cargar series")
-        let data = await res.json()
-        
-        // Si no hay series, crear una por defecto
-        if (data.length === 0) {
-          try {
-            const createRes = await fetch("/api/series-facturacion", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                ...(token ? { Authorization: token } : {}),
-              },
-              body: JSON.stringify({
-                prefijo: "SD",
-                descripcion: "Serie por defecto para ventas",
-                activa: true,
-                esPorDefecto: true,
-              }),
-            })
-            if (createRes.ok) {
-              const nuevaSerie = await createRes.json()
-              data = [nuevaSerie]
-              toast.success("Serie de facturación por defecto creada")
-            }
-          } catch (createError) {
-            console.error("Error al crear serie por defecto:", createError)
+    getSeriesFacturacionAction()
+      .then((r) => {
+        if (r.success) {
+          let data = r.data ?? [];
+
+          // Si no hay series, crear una por defecto
+          if (data.length === 0) {
+            createSerieFacturacionAction({
+              prefijo: "SR-",
+              descripcion: "Serie por defecto",
+              activa: true,
+              esPorDefecto: true,
+            }).then((cr) => {
+              if (cr.success) data = [cr.data];
+            });
           }
+
+          setSeries(data);
         }
-        
-        setSeries(data)
-        const defaultSerie = data.find((s: any) => s.esPorDefecto && s.activa)
-        if (defaultSerie) {
-          setSelectedSerieId(defaultSerie.serieId)
-        }
-      } catch (error) {
-        console.error("Error fetching series:", error)
-        toast.error("No se pudieron cargar las series de facturación")
-      }
-    }
-    fetchSeries()
-  }, [])
+        setLoadingSeries(false);
+      })
+      .catch((error) => {
+        console.error("Error cargando series:", error);
+        setLoadingSeries(false);
+      });
+  }, []);
 
   // Filtrar productos
   const filteredProducts = productos?.filter(
