@@ -1015,7 +1015,7 @@ model CuentaBancaria {
   tipoCuenta               String
   saldo                    Float                    @default(0)
   moneda                   String                   @default("CUP")
-  isActive                 Boolean
+  isActive                 Boolean                  @default(true)
   createdAt                DateTime                 @default(now())
   updatedAt                DateTime                 @updatedAt
   ajustes                  AjusteBancario[]

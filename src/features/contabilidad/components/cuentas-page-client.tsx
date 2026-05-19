@@ -98,10 +98,6 @@ export function CuentasPageClient({ cuentas: initialCuentas }: CuentasPageClient
     const result = await updateCuentaBancariaAction({
       cuentaId: cuenta.cuentaId,
       isActive: !cuenta.isActive,
-      nombreBanco: cuenta.nombreBanco,
-      numeroCuenta: cuenta.numeroCuenta,
-      tipoCuenta: cuenta.tipoCuenta,
-      moneda: cuenta.moneda,
     });
     if (result.success) {
       toast.success(`Cuenta ${cuenta.isActive ? 'desactivada' : 'activada'} exitosamente`);
