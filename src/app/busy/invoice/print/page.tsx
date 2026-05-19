@@ -320,33 +320,11 @@ function InvoicePrintContent() {
         <div className={`flex mb-1 ${getBorderClass()} border`}>
           {/* Logo Section */}
           <div className={`w-1/3 p-2 flex flex-col items-center justify-center border-r ${getBorderClass()} relative`}>
-             {/* Logo: Try DB URL first, then local file, then placeholder */}
               {miEmpresa?.logoUrl ? (
                 <Image src={miEmpresa.logoUrl} alt="Logo" width={80} height={80} className="h-20 w-auto object-contain" unoptimized />
               ) : (
-                // Fallback to local logo.png if exists (we assume it might be there based on project structure)
-                // If the user wants their specific logo, they should ensure /images/logo.png exists or set URL in DB.
-                // Since we saw logo.png in public/images via ls, we can try to use it.
-                <div className="flex flex-col items-center">
-                    <Image 
-                        src="/images/logo.png" 
-                        alt="Logo Empresa" 
-                        width={100} 
-                        height={100} 
-                        className="h-24 w-auto object-contain mb-2" 
-                        unoptimized
-                        onError={(e) => {
-                            // If image fails to load, hide it or show placeholder logic (handled by React usually by not rendering or showing broken img)
-                            // Ideally we would swap to the letter S here, but for now let's assume logo.png is the intended one as per user request
-                            e.currentTarget.style.display = 'none';
-                            // Show S placeholder logic via CSS sibling or similar? Hard in React without state.
-                            // Simplified: Just render the image, if it breaks, it breaks (or user fixes the file).
-                        }}
-                    />
-                    {/* Fallback Text if image is missing/broken visually covered by image usually */}
-                    <span className="font-bold italic font-serif text-lg text-blue-800">{empresaNombre}</span>
-                </div>
-             )}
+                <span className="font-bold italic font-serif text-lg text-blue-800">{empresaNombre}</span>
+              )}
           </div>
           
           {/* Title and Address Section */}
