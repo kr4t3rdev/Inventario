@@ -216,12 +216,11 @@ export const reconciliarVentaAction = withAction(async (input: {
 }, user: AuthenticatedUser) => {
   const tenantId = requireTenant(user);
   const reconciliacion = await prisma.reconciliacionVenta.create({
-  // @ts-expect-error
     data: {
       ventaId: input.ventaId, cuentaId: input.cuentaId, tipoPagoId: input.tipoPagoId,
       monto: input.monto, moneda: input.moneda||'CUP',
       fechaReconciliacion: input.fechaReconciliacion ? new Date(input.fechaReconciliacion) : new Date(),
-      observaciones: input.observaciones, tenantId,
+      observaciones: input.observaciones, tenantId, reconciliadoPor: user.userId,
     },
   });
   revalidatePath('/busy/contabilidad/reconciliacion');

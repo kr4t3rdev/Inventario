@@ -385,6 +385,7 @@ export default function CuentasPorCobrarPage() {
                       venta={ventaParaReconciliar}
                       open={true}
                       onClose={handleCloseReconciliacion}
+                      onSuccess={loadCuentas}
                     />
                   ) : null}
                 </DialogContent>
