@@ -4,6 +4,7 @@ import { ThemeProvider } from 'next-themes';
 import { LazyMotion, domAnimation } from "framer-motion";
 
 import { AuthProvider } from '@/contexts/auth-context';
+import { chivoMono, inter } from './fonts';
 
 export const metadata: Metadata = {
   title: "FinanceTCP",
@@ -21,7 +22,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className="antialiased"
+        className={`${chivoMono.variable} ${inter.variable} antialiased`}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <LazyMotion features={domAnimation}>

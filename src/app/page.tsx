@@ -1,12 +1,22 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  AnimatePresence,
+  motion,
+  useInView,
+  useReducedMotion,
+  useSpring,
+  useTransform,
+  type SpringOptions,
+  type Transition,
+} from 'framer-motion';
 import {
   ArrowRight,
   BarChart3,
   Building2,
   CheckCircle2,
+  ChevronDown,
   CreditCard,
   DollarSign,
   Mail,
@@ -20,9 +30,36 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ThemeToggle } from '@/components/theme-toggle';
+
+/* ─── Shared Spring Configuration ─── */
+
+const SPRING_UP: Transition = {
+  type: 'spring',
+  bounce: 0.3,
+  duration: 1.1,
+};
+
+const SPRING_STIFF: Transition = {
+  type: 'spring',
+  stiffness: 300,
+  damping: 15,
+};
+
+const SPRING_BOUNCE: SpringOptions = {
+  stiffness: 50,
+  damping: 20,
+};
+
+/* ─── Types ─── */
 
 interface FeatureItem {
   title: string;
@@ -52,10 +89,25 @@ interface ContactItem {
   icon: LucideIcon;
 }
 
+interface TestimonialItem {
+  quote: string;
+  author: string;
+  role: string;
+}
+
+interface FaqItem {
+  question: string;
+  answer: string;
+}
+
+/* ─── Data ─── */
+
 const NAV_ITEMS = [
   { href: '#caracteristicas', label: 'Características' },
   { href: '#beneficios', label: 'Beneficios' },
+  { href: '#testimonios', label: 'Testimonios' },
   { href: '#precios', label: 'Planes' },
+  { href: '#faq', label: 'FAQ' },
   { href: '#contacto', label: 'Contacto' },
 ];
 
@@ -64,45 +116,30 @@ const FEATURE_ITEMS: FeatureItem[] = [
     title: 'Gestión Financiera',
     description:
       'Control centralizado de ingresos, gastos y conciliaciones con múltiples monedas.',
-    bullets: [
-      'Panel financiero unificado',
-      'Tasas automáticas por moneda',
-      'Flujo de caja en tiempo real',
-    ],
+    bullets: ['Panel financiero unificado', 'Tasas automáticas por moneda', 'Flujo de caja en tiempo real'],
     icon: DollarSign,
   },
   {
     title: 'Gestión de Inventario',
     description: 'Stock inteligente con alertas, trazabilidad y reposición basada en demanda.',
-    bullets: [
-      'Alertas de stock mínimo',
-      'Control por categoría y lote',
-      'Sugerencias de reposición',
-    ],
+    bullets: ['Alertas de stock mínimo', 'Control por categoría y lote', 'Sugerencias de reposición'],
     icon: Package,
   },
   {
     title: 'Puntos de Venta',
-    description:
-      'Administra múltiples sucursales con transferencias y visibilidad consolidada.',
-    bullets: [
-      'Multi-sucursal en un panel',
-      'Transferencias auditables',
-      'Métricas por ubicación',
-    ],
+    description: 'Administra múltiples sucursales con transferencias y visibilidad consolidada.',
+    bullets: ['Multi-sucursal en un panel', 'Transferencias auditables', 'Métricas por ubicación'],
     icon: Building2,
   },
   {
     title: 'Ventas y Servicios',
-    description:
-      'Flujo comercial completo: cotización, venta, facturación y seguimiento al cliente.',
+    description: 'Flujo comercial completo: cotización, venta, facturación y seguimiento al cliente.',
     bullets: ['POS integrado', 'Historial de servicios', 'Facturación automatizada'],
     icon: CreditCard,
   },
   {
     title: 'Contabilidad Avanzada',
-    description:
-      'Registros contables robustos con asientos automáticos y reportes para decisiones.',
+    description: 'Registros contables robustos con asientos automáticos y reportes para decisiones.',
     bullets: ['Plan contable configurable', 'Asientos automáticos', 'Indicadores de rentabilidad'],
     icon: BarChart3,
   },
@@ -189,10 +226,89 @@ const CONTACT_ITEMS: ContactItem[] = [
   },
 ];
 
+const TESTIMONIAL_ITEMS: TestimonialItem[] = [
+  {
+    quote: 'FinanceMDM transformó nuestra operación. Pasamos de 3 sistemas a uno solo. La implementación fue rápida y el soporte excepcional.',
+    author: 'María García',
+    role: 'CFO, TechCorp LATAM',
+  },
+  {
+    quote: 'El control de inventario en tiempo real nos ahorró miles de dólares en pérdidas. Y la contabilidad automatizada nos devolvió horas todos los días.',
+    author: 'Carlos Mendoza',
+    role: 'Director de Operaciones, Distribuidora RM',
+  },
+  {
+    quote: 'Tener ventas, inventario y contabilidad en un solo lugar nos dio una visibilidad que nunca tuvimos. Las decisiones ahora son mucho más rápidas.',
+    author: 'Ana Lucía Pérez',
+    role: 'CEO, Grupo Nova',
+  },
+];
+
+const FAQ_ITEMS: FaqItem[] = [
+  {
+    question: '¿Qué incluye cada plan?',
+    answer: 'Cada plan incluye acceso completo a los módulos detallados en la sección de precios. Todos incluyen soporte técnico, actualizaciones y respaldo de datos. Podés escalar de plan en cualquier momento sin perder información.',
+  },
+  {
+    question: '¿Cuánto tiempo toma la implementación?',
+    answer: 'La implementación básica toma entre 1 y 3 días hábiles. Para operaciones complejas con integraciones personalizadas, puede extenderse hasta 2 semanas. Nuestro equipo te acompaña durante todo el proceso.',
+  },
+  {
+    question: '¿Ofrecen soporte después de la implementación?',
+    answer: 'Sí, todos los planes incluyen soporte técnico continuo. Los planes Profesional y Empresarial cuentan con soporte prioritario y acompañamiento dedicado para garantizar que tu operación nunca se detenga.',
+  },
+  {
+    question: '¿Puedo integrar FinanceMDM con otros sistemas?',
+    answer: 'Sí, ofrecemos integraciones vía API REST para conectar con tus sistemas existentes. El plan Empresarial incluye integraciones personalizadas desarrolladas específicamente para tu operación.',
+  },
+  {
+    question: '¿Cómo funciona el multi-sucursal?',
+    answer: 'Podés gestionar todas tus sucursales desde un panel centralizado. Cada sucursal opera con su propio inventario y puntos de venta, pero vos tenés visibilidad consolidada de todo el negocio en tiempo real.',
+  },
+  {
+    question: '¿Los datos están seguros?',
+    answer: 'Absolutamente. Usamos encriptación TLS en tránsito y AES-256 en reposo. Los respaldos son automáticos y diarios. Cumplimos con estándares de seguridad de datos financieros. Además, cada tenant tiene sus datos aislados.',
+  },
+];
+
+/* ─── Animated Counter ─── */
+
+/**
+ * @description Contador numérico animado con spring que se activa al entrar en viewport.
+ * @param {{ value: number; suffix?: string; prefix?: string; className?: string }} props
+ * @returns {JSX.Element} Span con el número animado
+ */
+function AnimatedCounter({
+  value,
+  suffix = '',
+  prefix = '',
+  className = '',
+}: {
+  value: number;
+  suffix?: string;
+  prefix?: string;
+  className?: string;
+}): React.JSX.Element {
+  const ref = useRef<HTMLSpanElement>(null);
+  const isInView = useInView(ref, { once: true, margin: '-100px' });
+  const spring = useSpring(0, SPRING_BOUNCE);
+  const display = useTransform(spring, (current) => `${prefix}${Math.round(current).toLocaleString()}${suffix}`);
+
+  useEffect(() => {
+    if (isInView) {
+      spring.set(value);
+    }
+  }, [isInView, spring, value]);
+
+  return <span ref={ref} className={className}>{display}</span>;
+}
+
+/* ─── Preloader ─── */
+
 /**
  * @description Loader de precarga con animaciones para suavizar la entrada del landing.
- * @param {{ reduceMotion: boolean }} props - Define si se deben reducir animaciones por accesibilidad.
- * @returns {JSX.Element} Capa de precarga animada en pantalla completa.
+ * @param {{ reduceMotion: boolean }} props
+ * @returns {JSX.Element} Capa de precarga animada
  */
 function LandingPreloader({ reduceMotion }: { reduceMotion: boolean }): React.JSX.Element {
   return (
@@ -225,7 +341,7 @@ function LandingPreloader({ reduceMotion }: { reduceMotion: boolean }): React.JS
             <DollarSign className="h-6 w-6 text-primary" />
           </motion.div>
         </div>
-        <p className="text-sm font-medium tracking-[0.2em] text-muted-foreground">
+        <p className="text-sm font-medium tracking-[0.2em] text-muted-foreground font-mono">
           CARGANDO FINANCEMDM
         </p>
       </div>
@@ -233,12 +349,47 @@ function LandingPreloader({ reduceMotion }: { reduceMotion: boolean }): React.JS
   );
 }
 
+/* ─── Spring wrapper components ─── */
+
 /**
- * @description Página principal del producto con narrativa visual animada y enfoque comercial.
- * @param {Record<string, never>} _props - Este componente no recibe props externas.
- * @returns {JSX.Element} Landing page animada con secciones de producto, planes y contacto.
+ * @description Wrapper que aplica animación spring slide-up al entrar en viewport.
  */
-export default function Home(_props: Record<string, never>): React.JSX.Element {
+function SpringSection({
+  children,
+  delay = 0,
+  className,
+}: {
+  children: React.ReactNode;
+  delay?: number;
+  className?: string;
+}): React.JSX.Element {
+  const reduceMotion = useReducedMotion();
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: reduceMotion ? 0 : 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={
+        reduceMotion
+          ? { duration: 0 }
+          : { type: 'spring', bounce: 0.3, duration: 1.1, delay }
+      }
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+/* ─── Main Page ─── */
+
+/**
+ * @description Página principal del producto con narrativa visual animada
+ *              y enfoque Bungee-inspired (dark industrial + animaciones spring).
+ * @returns {JSX.Element} Landing page con spring animations y tipografía Chivo Mono.
+ */
+export default function Home(): React.JSX.Element {
   const reduceMotion = useReducedMotion();
   const [isLoading, setIsLoading] = useState(true);
 
@@ -256,29 +407,24 @@ export default function Home(_props: Record<string, never>): React.JSX.Element {
     <div className="relative min-h-screen overflow-x-hidden bg-background text-foreground">
       <AnimatePresence>{isLoading ? <LandingPreloader reduceMotion={!!reduceMotion} /> : null}</AnimatePresence>
 
+      {/* Background blobs */}
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
         <motion.div
           aria-hidden="true"
-          className="absolute -top-24 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-primary/20 blur-3xl"
-          animate={
-            reduceMotion
-              ? undefined
-              : {
-                  scale: [1, 1.06, 1],
-                  x: ['-50%', '-46%', '-50%'],
-                }
-          }
-          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute -top-24 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-primary/10 blur-3xl"
+          animate={reduceMotion ? undefined : { scale: [1, 1.08, 1], x: ['-50%', '-44%', '-50%'] }}
+          transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
           style={{ transform: 'translateX(-50%)' }}
         />
         <motion.div
           aria-hidden="true"
-          className="absolute bottom-20 right-[-7rem] h-72 w-72 rounded-full bg-cyan-400/20 blur-3xl"
+          className="absolute bottom-20 right-[-7rem] h-72 w-72 rounded-full bg-cyan-400/10 blur-3xl"
           animate={reduceMotion ? undefined : { y: [0, -28, 0], x: [0, -18, 0] }}
-          transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
+          transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
         />
       </div>
 
+      {/* ─── Header ─── */}
       <header className="sticky top-0 z-40 border-b border-border/50 bg-background/80 backdrop-blur-xl">
         <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between px-4 md:px-6">
           <Link href="/" className="group flex items-center gap-2 text-lg font-bold">
@@ -289,7 +435,7 @@ export default function Home(_props: Record<string, never>): React.JSX.Element {
             >
               <DollarSign className="h-4 w-4 text-primary" />
             </motion.span>
-            <span>
+            <span className="font-mono tracking-tight">
               Fina<span className="text-primary">nce</span>MDM
             </span>
           </Link>
@@ -327,20 +473,23 @@ export default function Home(_props: Record<string, never>): React.JSX.Element {
         </div>
       </header>
 
+      {/* ─── Main Content ─── */}
       <main className="mx-auto flex w-full max-w-7xl flex-col gap-24 px-4 pb-20 pt-10 md:px-6 md:pt-14">
+
+        {/* ═══ HERO ═══ */}
         <section className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
           <motion.div
-            initial={{ opacity: 0, y: reduceMotion ? 0 : 24 }}
+            initial={{ opacity: 0, y: reduceMotion ? 0 : 40 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: reduceMotion ? 0 : 0.6, ease: 'easeOut' as const }}
+            transition={reduceMotion ? { duration: 0 } : SPRING_UP}
             className="space-y-8"
           >
             <div className="space-y-4">
-              <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+              <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary font-mono">
                 <Sparkles className="h-3.5 w-3.5" />
                 Plataforma integral
               </span>
-              <h1 className="max-w-2xl text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
+              <h1 className="max-w-2xl text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl font-mono leading-[1.05]">
                 Gestión financiera e inventario con experiencia premium.
               </h1>
               <p className="max-w-2xl text-base text-muted-foreground sm:text-lg">
@@ -348,10 +497,12 @@ export default function Home(_props: Record<string, never>): React.JSX.Element {
                 plataforma para que tu empresa tome mejores decisiones en menos tiempo.
               </p>
             </div>
+
             <div className="flex flex-wrap items-center gap-3">
               <motion.div
                 whileHover={reduceMotion ? undefined : { scale: 1.03 }}
                 whileTap={reduceMotion ? undefined : { scale: 0.98 }}
+                transition={SPRING_STIFF}
               >
                 <Link href="/register">
                   <Button size="lg" className="group cursor-pointer gap-2">
@@ -363,6 +514,7 @@ export default function Home(_props: Record<string, never>): React.JSX.Element {
               <motion.div
                 whileHover={reduceMotion ? undefined : { scale: 1.03 }}
                 whileTap={reduceMotion ? undefined : { scale: 0.98 }}
+                transition={SPRING_STIFF}
               >
                 <Link href="#precios">
                   <Button size="lg" variant="outline" className="cursor-pointer">
@@ -371,29 +523,19 @@ export default function Home(_props: Record<string, never>): React.JSX.Element {
                 </Link>
               </motion.div>
             </div>
-            <div className="grid grid-cols-2 gap-3 sm:max-w-xl sm:grid-cols-4">
-              {['+127% productividad', '6 módulos clave', 'Multi-sucursal', 'Tiempo real'].map((stat) => (
-                <motion.div
-                  key={stat}
-                  className="rounded-xl border border-border/60 bg-background/60 p-3 text-center text-xs font-medium text-muted-foreground backdrop-blur"
-                  whileHover={reduceMotion ? undefined : { y: -3 }}
-                >
-                  {stat}
-                </motion.div>
-              ))}
-            </div>
           </motion.div>
 
+          {/* Hero Image */}
           <motion.div
-            initial={{ opacity: 0, y: reduceMotion ? 0 : 24 }}
+            initial={{ opacity: 0, y: reduceMotion ? 0 : 40 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: reduceMotion ? 0 : 0.7, delay: reduceMotion ? 0 : 0.1 }}
+            transition={reduceMotion ? { duration: 0 } : { type: 'spring', bounce: 0.3, duration: 1.1, delay: 0.15 }}
             className="relative"
           >
             <motion.div
               className="overflow-hidden rounded-3xl border border-primary/20 bg-card p-2 shadow-xl shadow-primary/10"
               whileHover={reduceMotion ? undefined : { y: -6 }}
-              transition={{ duration: 0.3 }}
+              transition={{ type: 'spring', stiffness: 200, damping: 15 }}
             >
               <Image
                 src="/images/Finanzas3.jpeg"
@@ -405,43 +547,69 @@ export default function Home(_props: Record<string, never>): React.JSX.Element {
               />
             </motion.div>
 
+            {/* Floating stat badge */}
             <motion.div
               className="absolute -bottom-7 -left-4 rounded-2xl border border-primary/20 bg-background/95 p-4 shadow-lg backdrop-blur md:-left-8"
               animate={reduceMotion ? undefined : { y: [0, -6, 0] }}
-              transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+              transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
             >
               <div className="flex items-center gap-3">
                 <div className="rounded-full bg-primary/10 p-2">
                   <TrendingUp className="h-5 w-5 text-primary" />
                 </div>
                 <div>
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Crecimiento</p>
-                  <p className="text-xl font-bold">+127%</p>
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground font-mono">Crecimiento</p>
+                  <p className="text-xl font-bold font-mono">+127%</p>
                 </div>
               </div>
             </motion.div>
           </motion.div>
         </section>
 
+        {/* ═══ STATS ═══ */}
+        <SpringSection>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {[
+              { value: 127, suffix: '%', label: 'Productividad operativa' },
+              { value: 6, suffix: '', label: 'Módulos clave integrados' },
+              { value: 3, suffix: '', label: 'Sucursales simultáneas' },
+              { value: 99, suffix: '%', label: 'Disponibilidad garantizada' },
+            ].map((stat, index) => (
+              <motion.div
+                key={stat.label}
+                initial={{ opacity: 0, y: reduceMotion ? 0 : 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={
+                  reduceMotion
+                    ? { duration: 0 }
+                    : { type: 'spring', bounce: 0.4, duration: 1, delay: index * 0.08 }
+                }
+                className="group rounded-2xl border border-border/60 bg-card/50 p-5 text-center transition-colors hover:border-primary/30"
+              >
+                <p className="text-4xl font-bold tracking-tight text-primary sm:text-5xl font-mono">
+                  <AnimatedCounter value={stat.value} suffix={stat.suffix} />
+                </p>
+                <p className="mt-2 text-sm text-muted-foreground">{stat.label}</p>
+              </motion.div>
+            ))}
+          </div>
+        </SpringSection>
+
+        {/* ═══ FEATURES ═══ */}
         <section id="caracteristicas" className="space-y-10 scroll-mt-24">
-          <motion.div
-            initial={{ opacity: 0, y: reduceMotion ? 0 : 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: reduceMotion ? 0 : 0.45 }}
-            className="mx-auto max-w-3xl space-y-3 text-center"
-          >
-            <span className="inline-flex rounded-full border border-primary/25 bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+          <SpringSection className="mx-auto max-w-3xl space-y-3 text-center">
+            <span className="inline-flex rounded-full border border-primary/25 bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary font-mono">
               Características
             </span>
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-mono leading-[1.1]">
               Todo lo que tu operación necesita en un solo lugar
             </h2>
             <p className="text-muted-foreground sm:text-lg">
               Cada módulo está diseñado para reducir fricción operativa y acelerar la toma de
               decisiones estratégicas.
             </p>
-          </motion.div>
+          </SpringSection>
 
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {FEATURE_ITEMS.map((feature, index) => {
@@ -450,17 +618,19 @@ export default function Home(_props: Record<string, never>): React.JSX.Element {
               return (
                 <motion.article
                   key={feature.title}
-                  initial={{ opacity: 0, y: reduceMotion ? 0 : 20 }}
+                  initial={{ opacity: 0, y: reduceMotion ? 0 : 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.2 }}
-                  transition={{
-                    duration: reduceMotion ? 0 : 0.38,
-                    delay: reduceMotion ? 0 : index * 0.06,
-                  }}
+                  viewport={{ once: true, amount: 0.15 }}
+                  transition={
+                    reduceMotion
+                      ? { duration: 0 }
+                      : { type: 'spring', bounce: 0.3, duration: 1, delay: index * 0.06 }
+                  }
                   whileHover={reduceMotion ? undefined : { y: -8 }}
+                  transition={{ type: 'spring', stiffness: 250, damping: 14 }}
                   className="group"
                 >
-                  <Card className="h-full border-border/70 bg-card/80 shadow-md shadow-black/[0.03] transition-colors group-hover:border-primary/30">
+                  <Card className="h-full border-border/60 bg-card/80 shadow-md shadow-black/[0.03] transition-colors group-hover:border-primary/25">
                     <CardHeader>
                       <motion.div
                         className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10"
@@ -469,7 +639,7 @@ export default function Home(_props: Record<string, never>): React.JSX.Element {
                       >
                         <Icon className="h-6 w-6 text-primary" />
                       </motion.div>
-                      <CardTitle className="text-xl">{feature.title}</CardTitle>
+                      <CardTitle className="text-xl font-mono">{feature.title}</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <p className="text-sm text-muted-foreground">{feature.description}</p>
@@ -489,21 +659,22 @@ export default function Home(_props: Record<string, never>): React.JSX.Element {
           </div>
         </section>
 
+        {/* ═══ BENEFITS ═══ */}
         <section
           id="beneficios"
           className="grid items-start gap-8 rounded-3xl border border-border/60 bg-muted/20 p-6 md:p-10 lg:grid-cols-[1fr_1.05fr]"
         >
           <motion.div
-            initial={{ opacity: 0, x: reduceMotion ? 0 : -20 }}
+            initial={{ opacity: 0, x: reduceMotion ? 0 : -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: reduceMotion ? 0 : 0.45 }}
+            transition={reduceMotion ? { duration: 0 } : { type: 'spring', bounce: 0.3, duration: 1.1 }}
             className="space-y-4"
           >
-            <span className="inline-flex rounded-full border border-primary/25 bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+            <span className="inline-flex rounded-full border border-primary/25 bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary font-mono">
               Beneficios
             </span>
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-mono leading-[1.1]">
               Menos tareas manuales, más control del negocio
             </h2>
             <p className="text-muted-foreground sm:text-lg">
@@ -531,25 +702,28 @@ export default function Home(_props: Record<string, never>): React.JSX.Element {
               return (
                 <motion.div
                   key={benefit.title}
-                  initial={{ opacity: 0, y: reduceMotion ? 0 : 20 }}
+                  initial={{ opacity: 0, y: reduceMotion ? 0 : 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0.3 }}
-                  transition={{
-                    duration: reduceMotion ? 0 : 0.36,
-                    delay: reduceMotion ? 0 : index * 0.06,
-                  }}
+                  transition={
+                    reduceMotion
+                      ? { duration: 0 }
+                      : { type: 'spring', bounce: 0.3, duration: 1, delay: index * 0.08 }
+                  }
                   whileHover={reduceMotion ? undefined : { y: -6 }}
                 >
-                  <Card className="h-full border-border/70 bg-card/85 shadow-sm">
+                  <Card className="h-full border-border/60 bg-card/85 shadow-sm">
                     <CardContent className="space-y-3 p-5">
                       <motion.div
                         className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10"
-                        animate={reduceMotion ? undefined : { y: [0, -4, 0] }}
-                        transition={{ duration: 2.5 + index * 0.2, repeat: Infinity }}
+                        animate={
+                          reduceMotion ? undefined : { y: [0, -4, 0] }
+                        }
+                        transition={{ duration: 2.5 + index * 0.2, repeat: Infinity, ease: 'easeInOut' }}
                       >
                         <Icon className="h-5 w-5 text-primary" />
                       </motion.div>
-                      <h3 className="text-lg font-semibold">{benefit.title}</h3>
+                      <h3 className="text-lg font-semibold font-mono">{benefit.title}</h3>
                       <p className="text-sm text-muted-foreground">{benefit.description}</p>
                     </CardContent>
                   </Card>
@@ -559,52 +733,105 @@ export default function Home(_props: Record<string, never>): React.JSX.Element {
           </div>
         </section>
 
-        <section id="precios" className="space-y-10 scroll-mt-24">
-          <motion.div
-            initial={{ opacity: 0, y: reduceMotion ? 0 : 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: reduceMotion ? 0 : 0.45 }}
-            className="mx-auto max-w-3xl space-y-3 text-center"
-          >
-            <span className="inline-flex rounded-full border border-primary/25 bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-              Planes
+        {/* ═══ TESTIMONIALS ═══ */}
+        <section id="testimonios" className="space-y-10 scroll-mt-24">
+          <SpringSection className="mx-auto max-w-3xl space-y-3 text-center">
+            <span className="inline-flex rounded-full border border-primary/25 bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary font-mono">
+              Testimonios
             </span>
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Escala con un plan alineado a tu operación
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-mono leading-[1.1]">
+              Lo que dicen nuestros clientes
             </h2>
             <p className="text-muted-foreground sm:text-lg">
-              Elige una base sólida para tu negocio y evoluciona sin migraciones complejas.
+              Empresas que ya confían en FinanceMDM para operar con más precisión y velocidad.
             </p>
-          </motion.div>
+          </SpringSection>
+
+          <div className="grid gap-5 md:grid-cols-3">
+            {TESTIMONIAL_ITEMS.map((item, index) => (
+              <motion.div
+                key={item.author}
+                initial={{ opacity: 0, y: reduceMotion ? 0 : 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.2 }}
+                transition={
+                  reduceMotion
+                    ? { duration: 0 }
+                    : { type: 'spring', bounce: 0.3, duration: 1, delay: index * 0.08 }
+                }
+                whileHover={reduceMotion ? undefined : { y: -6 }}
+              >
+                <Card className="h-full border-border/60 bg-card/80 shadow-sm">
+                  <CardContent className="flex flex-col gap-4 p-6">
+                    <svg
+                      className="h-8 w-8 text-primary/40"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                    >
+                      <path d="M10 11h-4v-4h4v4zm8 0h-4v-4h4v4z" />
+                      <path d="M10 13l-4 5h4l-4-5zm8 0l-4 5h4l-4-5z" />
+                    </svg>
+                    <p className="text-sm leading-relaxed text-muted-foreground">&ldquo;{item.quote}&rdquo;</p>
+                    <div className="mt-auto flex items-center gap-3 pt-2">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/15 text-sm font-bold text-primary font-mono">
+                        {item.author.split(' ').map((n) => n[0]).join('').slice(0, 2)}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold font-mono">{item.author}</p>
+                        <p className="text-xs text-muted-foreground">{item.role}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+
+        {/* ═══ PRICING ═══ */}
+        <section id="precios" className="space-y-10 scroll-mt-24">
+          <SpringSection className="mx-auto max-w-3xl space-y-3 text-center">
+            <span className="inline-flex rounded-full border border-primary/25 bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary font-mono">
+              Planes
+            </span>
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-mono leading-[1.1]">
+              Escalá con un plan alineado a tu operación
+            </h2>
+            <p className="text-muted-foreground sm:text-lg">
+              Elegí una base sólida para tu negocio y evolucioná sin migraciones complejas.
+            </p>
+          </SpringSection>
 
           <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
             {PLAN_ITEMS.map((plan, index) => (
               <motion.div
                 key={plan.name}
-                initial={{ opacity: 0, y: reduceMotion ? 0 : 20 }}
+                initial={{ opacity: 0, y: reduceMotion ? 0 : 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.25 }}
-                transition={{
-                  duration: reduceMotion ? 0 : 0.38,
-                  delay: reduceMotion ? 0 : index * 0.07,
-                }}
+                viewport={{ once: true, amount: 0.2 }}
+                transition={
+                  reduceMotion
+                    ? { duration: 0 }
+                    : { type: 'spring', bounce: 0.3, duration: 1, delay: index * 0.08 }
+                }
                 whileHover={reduceMotion ? undefined : { y: -8 }}
               >
                 <Card
-                  className={`h-full border-border/70 bg-card/85 shadow-md ${
+                  className={`h-full border-border/60 bg-card/85 shadow-md ${
                     plan.featured
-                      ? 'border-primary/45 bg-primary/[0.06] shadow-primary/10'
+                      ? 'border-primary/35 bg-primary/[0.05] shadow-primary/10'
                       : 'shadow-black/[0.03]'
                   }`}
                 >
                   <CardHeader className="space-y-3">
                     {plan.featured ? (
-                      <span className="w-fit rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary">
+                      <span className="w-fit rounded-full bg-primary/15 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-primary font-mono">
                         Recomendado
                       </span>
                     ) : null}
-                    <CardTitle className="text-2xl">{plan.name}</CardTitle>
+                    <CardTitle className="text-2xl font-mono">{plan.name}</CardTitle>
                     <p className="text-sm text-muted-foreground">{plan.description}</p>
                   </CardHeader>
                   <CardContent className="space-y-5">
@@ -632,22 +859,68 @@ export default function Home(_props: Record<string, never>): React.JSX.Element {
           </div>
         </section>
 
+        {/* ═══ FAQ ═══ */}
+        <section id="faq" className="space-y-10 scroll-mt-24">
+          <SpringSection className="mx-auto max-w-3xl space-y-3 text-center">
+            <span className="inline-flex rounded-full border border-primary/25 bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary font-mono">
+              FAQ
+            </span>
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-mono leading-[1.1]">
+              Preguntas frecuentes
+            </h2>
+            <p className="text-muted-foreground sm:text-lg">
+              Todo lo que necesitás saber antes de dar el próximo paso.
+            </p>
+          </SpringSection>
+
+          <motion.div
+            initial={{ opacity: 0, y: reduceMotion ? 0 : 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={reduceMotion ? { duration: 0 } : { type: 'spring', bounce: 0.3, duration: 1 }}
+            className="mx-auto max-w-3xl"
+          >
+            <Accordion type="single" collapsible className="space-y-3">
+              {FAQ_ITEMS.map((item, index) => (
+                <motion.div
+                  key={item.question}
+                  initial={{ opacity: 0, y: reduceMotion ? 0 : 15 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.2 }}
+                  transition={
+                    reduceMotion
+                      ? { duration: 0 }
+                      : { type: 'spring', bounce: 0.2, duration: 0.8, delay: index * 0.04 }
+                  }
+                >
+                  <AccordionItem
+                    value={`item-${index}`}
+                    className="rounded-xl border border-border/60 bg-card/60 px-5"
+                  >
+                    <AccordionTrigger className="text-left font-medium font-mono text-sm hover:no-underline">
+                      {item.question}
+                    </AccordionTrigger>
+                    <AccordionContent className="text-sm text-muted-foreground">
+                      {item.answer}
+                    </AccordionContent>
+                  </AccordionItem>
+                </motion.div>
+              ))}
+            </Accordion>
+          </motion.div>
+        </section>
+
+        {/* ═══ CONTACT ═══ */}
         <section
           id="contacto"
           className="scroll-mt-24 rounded-3xl border border-border/60 bg-muted/20 p-6 md:p-10"
         >
-          <motion.div
-            initial={{ opacity: 0, y: reduceMotion ? 0 : 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.25 }}
-            transition={{ duration: reduceMotion ? 0 : 0.45 }}
-            className="mx-auto max-w-4xl space-y-8 text-center"
-          >
+          <SpringSection className="mx-auto max-w-4xl space-y-8 text-center">
             <div className="space-y-3">
-              <span className="inline-flex rounded-full border border-primary/25 bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+              <span className="inline-flex rounded-full border border-primary/25 bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary font-mono">
                 Contacto
               </span>
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-mono leading-[1.1]">
                 ¿Listo para optimizar tu operación financiera?
               </h2>
               <p className="text-muted-foreground sm:text-lg">
@@ -655,7 +928,7 @@ export default function Home(_props: Record<string, never>): React.JSX.Element {
               </p>
             </div>
 
-            <Card className="border-border/70 bg-card/90 shadow-lg shadow-black/[0.03]">
+            <Card className="border-border/60 bg-card/90 shadow-lg shadow-black/[0.03]">
               <CardContent className="grid gap-4 p-6 text-left sm:grid-cols-2">
                 {CONTACT_ITEMS.map((item, index) => {
                   const Icon = item.icon;
@@ -668,17 +941,17 @@ export default function Home(_props: Record<string, never>): React.JSX.Element {
                       rel={item.href.startsWith('https') ? 'noreferrer' : undefined}
                       className="group flex items-center gap-3 rounded-xl border border-border/70 bg-background/80 px-4 py-3 transition-colors hover:border-primary/40"
                       whileHover={reduceMotion ? undefined : { y: -4 }}
-                      transition={{ duration: 0.2 }}
+                      transition={{ type: 'spring', stiffness: 250, damping: 15 }}
                     >
                       <motion.div
                         className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10"
                         animate={reduceMotion ? undefined : { rotate: [0, -8, 8, 0] }}
-                        transition={{ duration: 2.4 + index * 0.3, repeat: Infinity }}
+                        transition={{ duration: 2.4 + index * 0.3, repeat: Infinity, ease: 'easeInOut' }}
                       >
                         <Icon className="h-5 w-5 text-primary" />
                       </motion.div>
                       <div className="space-y-0.5">
-                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground font-mono">
                           {item.label}
                         </p>
                         <p className="text-sm font-semibold group-hover:text-primary">{item.value}</p>
@@ -688,14 +961,15 @@ export default function Home(_props: Record<string, never>): React.JSX.Element {
                 })}
               </CardContent>
             </Card>
-          </motion.div>
+          </SpringSection>
         </section>
       </main>
 
+      {/* ─── Footer ─── */}
       <footer className="border-t border-border/50 bg-muted/35">
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8 md:px-6 lg:flex-row lg:items-start lg:justify-between">
           <div className="max-w-md space-y-2">
-            <p className="text-lg font-bold">
+            <p className="text-lg font-bold font-mono tracking-tight">
               Fina<span className="text-primary">nce</span>MDM
             </p>
             <p className="text-sm text-muted-foreground">
@@ -706,7 +980,7 @@ export default function Home(_props: Record<string, never>): React.JSX.Element {
 
           <div className="grid gap-5 sm:grid-cols-2">
             <div className="space-y-2">
-              <p className="text-sm font-semibold">Producto</p>
+              <p className="text-sm font-semibold font-mono">Producto</p>
               <div className="flex flex-col gap-1.5 text-sm text-muted-foreground">
                 <Link href="#caracteristicas" className="hover:text-foreground hover:underline">
                   Características
@@ -720,7 +994,7 @@ export default function Home(_props: Record<string, never>): React.JSX.Element {
               </div>
             </div>
             <div className="space-y-2">
-              <p className="text-sm font-semibold">Acceso</p>
+              <p className="text-sm font-semibold font-mono">Acceso</p>
               <div className="flex flex-col gap-1.5 text-sm text-muted-foreground">
                 <Link href="/login" className="hover:text-foreground hover:underline">
                   Login
@@ -737,7 +1011,7 @@ export default function Home(_props: Record<string, never>): React.JSX.Element {
         </div>
 
         <div className="border-t border-border/50 py-4">
-          <p className="text-center text-sm text-muted-foreground">
+          <p className="text-center text-sm text-muted-foreground font-mono">
             © {new Date().getFullYear()} migadev. Todos los derechos reservados.
           </p>
         </div>
