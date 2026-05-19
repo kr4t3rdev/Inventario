@@ -211,15 +211,9 @@ export default function CuentasPorCobrarPage() {
   // ── Métricas ──────────────────────────────────────────
   const metricas = useMemo(() => {
     const list = cuentasParaMostrar
-    const totalPorCobrar = list.reduce((acc, c) => {
-       const saldo = Number.isFinite(Number(c.saldoFactura))
-        ? Number(c.saldoFactura)
-        : Number(c.montoDeuda) - Number(c.montoPagado)
-       return acc + Math.max(0, saldo)
-    }, 0)
-
-    const totalFacturado = list.reduce((acc, c) => acc + Number(c.montoDeuda || 0), 0)
-    const totalCobrado = list.reduce((acc, c) => acc + Number(c.montoPagado || 0), 0)
+    const totalFacturado = list.reduce((acc, c) => acc + Number(c.totalFactura ?? c.montoDeuda ?? 0), 0)
+    const totalCobrado = list.reduce((acc, c) => acc + Number(c.totalPagadoFactura ?? c.montoPagado ?? 0), 0)
+    const totalPorCobrar = list.reduce((acc, c) => acc + Math.max(0, Number(c.saldoFactura ?? 0)), 0)
     const porcentajeCobrado = totalFacturado > 0 ? (totalCobrado / totalFacturado) * 100 : 0
 
     const pendientesCount = list.filter(c => c.estado !== 'PAGADA').length
