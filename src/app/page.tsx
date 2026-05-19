@@ -39,7 +39,6 @@ import {
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { CustomCursor } from '@/components/ui/custom-cursor';
 import { MarqueeText } from '@/components/ui/marquee-text';
 import { WordReveal } from '@/components/ui/word-reveal';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -457,8 +456,7 @@ export default function Home(): React.JSX.Element {
   }, [reduceMotion]);
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-background text-foreground cursor-none">
-      <CustomCursor />
+    <div className="relative min-h-screen overflow-x-hidden bg-background text-foreground">
       <AnimatePresence>{isLoading ? <LandingPreloader reduceMotion={!!reduceMotion} /> : null}</AnimatePresence>
 
       {/* Background blobs — parallax + floating */}
