@@ -31,6 +31,10 @@ export function PageTransition({ children, className, ...props }: PageTransition
   const shouldReduceMotion = useReducedMotion();
   const hasMounted = useHasMounted();
 
+  if (!hasMounted) {
+    return <div className={cn("w-full", className)} {...props}>{children}</div>;
+  }
+
   const variants: Variants = {
     initial: { opacity: 0, y: shouldReduceMotion ? 0 : motionTokens.distance.medium },
     animate: { opacity: 1, y: 0 },
@@ -39,7 +43,7 @@ export function PageTransition({ children, className, ...props }: PageTransition
 
   return (
     <motion.div
-      initial={hasMounted ? "initial" : false}
+      initial="initial"
       animate="animate"
       exit="exit"
       variants={variants}
@@ -70,6 +74,10 @@ export function StaggerContainer({
   const shouldReduceMotion = useReducedMotion();
   const hasMounted = useHasMounted();
 
+  if (!hasMounted) {
+    return <div className={className} {...props}>{children}</div>;
+  }
+
   const container: Variants = shouldReduceMotion
     ? { hidden: { opacity: 1 }, show: { opacity: 1 } }
     : {
@@ -86,7 +94,7 @@ export function StaggerContainer({
   return (
     <motion.div
       variants={container}
-      initial={hasMounted ? "hidden" : false}
+      initial="hidden"
       animate="show"
       className={className}
       {...props}
@@ -106,6 +114,10 @@ export function StaggerItem({ children, className, ...props }: StaggerItemProps)
   const shouldReduceMotion = useReducedMotion();
   const hasMounted = useHasMounted();
 
+  if (!hasMounted) {
+    return <div className={className} {...props}>{children}</div>;
+  }
+
   const item: Variants = shouldReduceMotion
     ? { hidden: { opacity: 1, y: 0 }, show: { opacity: 1, y: 0 } }
     : {
@@ -123,7 +135,7 @@ export function StaggerItem({ children, className, ...props }: StaggerItemProps)
   return (
     <motion.div
       variants={item}
-      initial={hasMounted ? "hidden" : false}
+      initial="hidden"
       animate="show"
       className={className}
       {...props}
@@ -144,10 +156,14 @@ export function AnimatedCard({ children, className, hoverEffect = true, ...props
   const shouldReduceMotion = useReducedMotion();
   const hasMounted = useHasMounted();
 
+  if (!hasMounted) {
+    return <div className={className} {...props}>{children}</div>;
+  }
+
   return (
     <motion.div
       variants={shouldReduceMotion ? undefined : cardVariants}
-      initial={hasMounted ? (shouldReduceMotion ? undefined : "hidden") : false}
+      initial={shouldReduceMotion ? undefined : "hidden"}
       animate={shouldReduceMotion ? undefined : "visible"}
       whileHover={!shouldReduceMotion && hoverEffect ? { y: -4, transition: { duration: motionTokens.duration.fast } } : undefined}
       className={className}
@@ -169,9 +185,13 @@ export function FadeIn({ children, className, delay = 0, duration = motionTokens
   const shouldReduceMotion = useReducedMotion();
   const hasMounted = useHasMounted();
 
+  if (!hasMounted) {
+    return <div className={className} {...props}>{children}</div>;
+  }
+
   return (
     <motion.div
-      initial={hasMounted ? (shouldReduceMotion ? undefined : { opacity: 0 }) : false}
+      initial={shouldReduceMotion ? undefined : { opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: shouldReduceMotion ? 0 : duration, delay: shouldReduceMotion ? 0 : delay }}
       className={className}
@@ -193,6 +213,10 @@ export function SlideIn({ children, className, direction = 'up', delay = 0, ...p
   const shouldReduceMotion = useReducedMotion();
   const hasMounted = useHasMounted();
 
+  if (!hasMounted) {
+    return <div className={className} {...props}>{children}</div>;
+  }
+
   const directions = {
     up: { y: motionTokens.distance.medium },
     down: { y: -motionTokens.distance.medium },
@@ -202,7 +226,7 @@ export function SlideIn({ children, className, direction = 'up', delay = 0, ...p
 
   return (
     <motion.div
-      initial={hasMounted ? (shouldReduceMotion ? undefined : directions[direction]) : false}
+      initial={shouldReduceMotion ? undefined : directions[direction]}
       animate={shouldReduceMotion ? undefined : { opacity: 1, x: 0, y: 0 }}
       transition={{ duration: motionTokens.duration.normal, delay: shouldReduceMotion ? 0 : delay }}
       className={className}
@@ -272,10 +296,14 @@ export function AnimatedTableRow({ children, className, index = 0, ...props }: T
   const shouldReduceMotion = useReducedMotion();
   const hasMounted = useHasMounted();
 
+  if (!hasMounted) {
+    return <tr className={className} {...props}>{children}</tr>;
+  }
+
   return (
     <motion.tr
       variants={shouldReduceMotion ? undefined : tableRowVariants(index)}
-      initial={hasMounted ? (shouldReduceMotion ? undefined : "hidden") : false}
+      initial={shouldReduceMotion ? undefined : "hidden"}
       animate={shouldReduceMotion ? undefined : "visible"}
       className={className}
       {...props}

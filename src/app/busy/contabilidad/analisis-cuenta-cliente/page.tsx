@@ -56,8 +56,8 @@ export default function AnalisisCuentaClientePage() {
   useEffect(() => {
     getCuentasPorCobrarAction({ page: 1, limit: 1000 }).then(r => {
       if (r.success) setCuentas((r.data?.cuentas ?? []) as any)
-      isLoadingCuentas.current = false)
-    }).catch(() => isLoadingCuentas.current = false))
+      isLoadingCuentas.current = false;
+    }).catch(() => isLoadingCuentas.current = false)
   }, [])
   
   // Filter invoices by client if one is selected

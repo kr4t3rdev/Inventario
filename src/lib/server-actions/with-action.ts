@@ -14,6 +14,7 @@ import { Prisma } from '@/generated/prisma';
 import { getCurrentUser } from './get-current-user';
 import { ActionError, type ActionResponse, type ServerAction } from './types';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
+import { serializePrismaData } from '@/lib/prisma-utils';
 
 /** @description Códigos de error de Prisma mapeados a mensajes en español */
 const PRISMA_ERROR_MESSAGES: Record<string, string> = {
@@ -50,7 +51,7 @@ export function withAction<TInput, TOutput>(
       }
 
       const data = await action(input, user);
-      return { success: true, data };
+      return { success: true, data: serializePrismaData(data) };
     } catch (error) {
       if (error instanceof ZodError) {
         return {

@@ -65,6 +65,21 @@ const skeletonVariants = {
   end: { opacity: 0.7 },
 }
 
+/**
+ * @description Formatea una fecha para mostrar en el panel de notificaciones.
+ * Maneja fechas inválidas sin lanzar error.
+ */
+function formatNotificacionDate(dateValue: unknown): string {
+  try {
+    if (!dateValue) return 'Fecha inválida'
+    const d = new Date(dateValue as string)
+    if (isNaN(d.getTime())) return 'Fecha inválida'
+    return formatDistanceToNow(d, { addSuffix: true, locale: es })
+  } catch {
+    return 'Fecha inválida'
+  }
+}
+
 export function PanelNotificaciones() {
   const [open, setOpen] = useState(false)
   const [notificacionesEliminadas, setNotificacionesEliminadas] = useState<Set<string>>(() => {
@@ -309,10 +324,7 @@ export function PanelNotificaciones() {
                           <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">{notificacion.message}</p>
                           <div className="flex items-center justify-between">
                             <span className="text-xs text-gray-500">
-                              {formatDistanceToNow(new Date(notificacion.createdAt), {
-                                addSuffix: true,
-                                locale: es,
-                              })}
+                              {formatNotificacionDate(notificacion.createdAt)}
                             </span>
                             {!notificacion.isRead && (
                               <motion.div

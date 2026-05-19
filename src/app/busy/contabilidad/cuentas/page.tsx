@@ -7,6 +7,7 @@
  */
 import { getCuentasBancariasAction } from "@/features/contabilidad/actions-cuentas-bancarias"
 import { CuentasPageClient } from "@/features/contabilidad/components/cuentas-page-client"
+import { serializePrismaData } from "@/lib/prisma-utils"
 
 
 export const metadata = {
@@ -17,5 +18,5 @@ export default async function CuentasBancariasPage() {
   const result = await getCuentasBancariasAction()
   const cuentas = result.success ? (result.data?.cuentas ?? []) : []
 
-  return <CuentasPageClient cuentas={cuentas} />
+  return <CuentasPageClient cuentas={serializePrismaData(cuentas)} />
 }
