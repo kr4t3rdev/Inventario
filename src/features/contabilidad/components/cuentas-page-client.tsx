@@ -112,7 +112,6 @@ export function CuentasPageClient({ cuentas: initialCuentas }: CuentasPageClient
       nombreBanco: cuenta.nombreBanco,
       numeroCuenta: cuenta.numeroCuenta,
       tipoCuenta: cuenta.tipoCuenta,
-      saldo: cuenta.saldo,
       moneda: cuenta.moneda,
       isActive: cuenta.isActive,
     });
@@ -336,7 +335,7 @@ export function CuentasPageClient({ cuentas: initialCuentas }: CuentasPageClient
                     <Input value={editForm.numeroCuenta} onChange={e => setEditForm({...editForm, numeroCuenta: e.target.value})} />
                   </div>
                 </div>
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Tipo</Label>
                     <Select value={editForm.tipoCuenta} onValueChange={v => setEditForm({...editForm, tipoCuenta: v})}>
@@ -358,10 +357,6 @@ export function CuentasPageClient({ cuentas: initialCuentas }: CuentasPageClient
                         <SelectItem value="MLC">MLC</SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Saldo</Label>
-                    <Input type="number" value={editForm.saldo} onChange={e => setEditForm({...editForm, saldo: Number(e.target.value)})} />
                   </div>
                 </div>
                 <div className="flex justify-end gap-3 pt-4">
