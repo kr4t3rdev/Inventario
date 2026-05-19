@@ -567,11 +567,11 @@ export function ReconciliacionGastosForm({
                   <form onSubmit={form.handleSubmit(onSubmit, () => { toast.error('Completá los campos requeridos antes de continuar.') })} className="h-full flex flex-col gap-4">
                      {/* Totales */}
                      <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-muted/50 rounded-lg p-3">
+                      <div className="bg-muted/50 dark:bg-black rounded-lg p-3">
                           <div className="text-xs text-muted-foreground">Total a Pagar</div>
                           <div className="text-lg font-semibold text-foreground">{formatCurrency(totalDistribuido)}</div>
                         </div>
-                        <div className="bg-muted/50 rounded-lg p-3">
+                        <div className="bg-muted/50 dark:bg-black rounded-lg p-3">
                           <div className={`text-xs ${!isCuentaPorPagar && montoRestante !== 0 ? 'text-red-600' : 'text-muted-foreground'}`}>
                             {isCuentaPorPagar ? 'Saldo después del pago' : 'Monto Restante'}
                           </div>

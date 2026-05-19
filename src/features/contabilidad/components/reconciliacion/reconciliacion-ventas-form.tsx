@@ -611,7 +611,7 @@ export function ReconciliacionVentasForm({
                                           }
                                         }
                                       }}
-                                      className={`pr-12 h-9 ${field.value > 0 ? 'border-blue-300 bg-blue-50' : ''}`}
+                                      className={`pr-12 h-9 ${field.value > 0 ? 'border-blue-300' : ''}`}
                                     />
                                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-500">
                                       CUP

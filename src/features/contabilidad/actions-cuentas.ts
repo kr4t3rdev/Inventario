@@ -333,12 +333,20 @@ export const createCuentaPorCobrarAction = withAction(
 
     const venta = await prisma.venta.findFirst({
       where: { ventaId: p.ventaId, tenantId },
-      select: { ventaId: true },
+      select: { ventaId: true, factura: { select: { idFactura: true } } },
     });
     if (!venta) throw new ActionError('Venta no encontrada o no pertenece al tenant', 'NOT_FOUND');
 
+    const facturaIdReal = venta.factura?.idFactura;
+
     const existente = await prisma.cuentaPorCobrar.findFirst({
-      where: { facturaId: p.ventaId, tenantId },
+      where: {
+        OR: [
+          { facturaId: p.ventaId },
+          ...(facturaIdReal ? [{ facturaId: facturaIdReal }] : []),
+        ],
+        tenantId,
+      },
     });
     if (existente) throw new ActionError('Ya existe una cuenta por cobrar para esta venta', 'DUPLICATE');
 
@@ -351,7 +359,7 @@ export const createCuentaPorCobrarAction = withAction(
   // @ts-expect-error
         moneda: p.moneda,
         estado: 'PENDIENTE',
-        facturaId: p.ventaId,
+        facturaId: facturaIdReal || p.ventaId,
         numeroFactura: p.numeroFactura ?? null,
         fechaVencimiento: p.fechaVencimiento ? new Date(p.fechaVencimiento) : null,
       },

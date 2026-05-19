@@ -26,6 +26,13 @@ const surfaceCardClass = cn(
   'dark:border-slate-800/6 dark:bg-slate-900/15',
 );
 
+/** @description Hook que evita hydration mismatch: retorna false en SSR, true tras mount. */
+function useHasMounted() {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  return mounted;
+}
+
 /**
  * @description Página de Cuentas por Cobrar con dashboard de métricas y tabla de gestión.
  * Usa Server Actions para data fetching en lugar de RTK Query.
@@ -39,6 +46,7 @@ export default function CuentasPorCobrarPage() {
   const [cuentaSeleccionada, setCuentaSeleccionada] = useState<CuentaPorCobrar | null>(null)
   const [showReconciliacion, setShowReconciliacion] = useState(false)
   const shouldReduceMotion = useReducedMotion()
+  const hasMounted = useHasMounted()
 
   // ── Data Fetching via Server Action ────────────────────
 
@@ -254,7 +262,7 @@ export default function CuentasPorCobrarPage() {
         <motion.div
           className="container mx-auto py-6 px-4 space-y-8"
           variants={containerVariants}
-          initial="hidden"
+          initial={hasMounted ? "hidden" : false}
           animate="show"
         >
           {/* Header */}

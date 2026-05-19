@@ -18,7 +18,15 @@ export const getTransferenciasBancariasAction = withAction(async (
     prisma.transferenciaBancaria.findMany({ where, orderBy: { createdAt: 'desc' }, take: 50 }),
     prisma.transferenciaBancaria.count({ where }),
   ]);
-  return { transferencias, pagination: { page: 1, limit: 50, total, totalPages: Math.ceil(total / 50) } };
+  return {
+    transferencias: transferencias.map(t => ({
+      ...t,
+      montoOrigen: Number(t.montoOrigen),
+      montoDestino: Number(t.montoDestino),
+      tasaCambio: t.tasaCambio ? Number(t.tasaCambio) : null,
+    })),
+    pagination: { page: 1, limit: 50, total, totalPages: Math.ceil(total / 50) },
+  };
 });
 
 function bdf(fi: string | null, ff: string | null): Record<string, Date> { const r: Record<string, Date> = {}; if (fi) r.gte = new Date(fi); if (ff) r.lte = new Date(ff); return r; }
@@ -59,7 +67,8 @@ export const getResumenFinancieroAction = withAction(async (f: { fechaInicio?: s
   }));
 
   return {
-    resumenPorMoneda, cuentasBancarias: cuentas,
+    resumenPorMoneda,
+    cuentasBancarias: cuentas.map(c => ({ ...c, saldo: Number(c.saldo) })),
     estadisticas: { totalCuentas: cuentas.length, totalReconciliaciones: rV.length + rS.length + rG.length, totalTransferencias: tfs.length, totalAjustes: ajs.length, totalInyecciones: iC.length, periodo: { fechaInicio: f.fechaInicio || 'Sin límite', fechaFin: f.fechaFin || 'Sin límite' } },
     filtros: { fechaInicio: f.fechaInicio || null, fechaFin: f.fechaFin || null, cuentaId: f.cuentaId || null, moneda: f.moneda || 'CUP' }
   };
@@ -183,5 +192,13 @@ export const createTransferenciaBancariaAction = withAction(async (input: { cuen
     });
   });
 
-  return { transferencia, numeroComprobante };
+  return {
+    transferencia: {
+      ...transferencia,
+      montoOrigen: Number(transferencia.montoOrigen),
+      montoDestino: Number(transferencia.montoDestino),
+      tasaCambio: transferencia.tasaCambio ? Number(transferencia.tasaCambio) : null,
+    },
+    numeroComprobante,
+  };
 });

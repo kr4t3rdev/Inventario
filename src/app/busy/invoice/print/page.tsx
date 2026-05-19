@@ -354,7 +354,7 @@ function InvoicePrintContent() {
 
         {/* INFO CLIENTE / PROVEEDOR */}
         <div className={`flex mb-1 p-2 border-t-0 ${getBorderClass()} border`}>
-            <div className="w-1/2 pr-4 space-y-1">
+            <div className="w-1/2 pr-4 space-y-0.5">
                 <div className="grid grid-cols-[100px_1fr]">
                     <span className="font-medium">Cliente:</span>
                     <span className={`border-b border-dotted ${getDottedBorderClass()}`}>{invoiceData.cliente?.nombre || ""}</span>
@@ -380,7 +380,7 @@ function InvoicePrintContent() {
                     <span className={`border-b border-dotted ${getDottedBorderClass()}`}>{fechaStr}</span>
                 </div>
             </div>
-            <div className={`w-1/2 pl-4 text-right space-y-1 ${getTextClass()}`}>
+            <div className={`w-1/2 pl-4 text-right space-y-0.5 ${getTextClass()}`}>
                 <div className="grid grid-cols-[1fr_auto] gap-2">
                     <span className="font-medium">Proveedor:</span>
                     <span className="font-bold">{empresaPropietario}</span>
@@ -405,33 +405,33 @@ function InvoicePrintContent() {
             <table className="w-full text-xs">
                 <thead className={`font-bold uppercase border-b ${getBorderClass()} ${getTableHeaderClass()}`}>
                     <tr>
-                        <th className={`w-[10%] border-r py-2 px-3 text-center ${getBorderClass()}`}>CÓDIGO</th>
-                        <th className={`w-[50%] border-r py-2 px-3 text-left ${getBorderClass()}`}>DESCRIPCIÓN</th>
-                        <th className={`w-[10%] border-r py-2 px-3 text-center ${getBorderClass()}`}>CANTIDAD</th>
-                        <th className={`w-[15%] border-r py-2 px-3 text-center ${getBorderClass()}`}>P. UNITARIO MN</th>
-                        <th className={`w-[15%] py-2 px-3 text-center ${getTextClass()}`}>IMPORTE MN</th>
+                        <th className={`w-[10%] border-r py-1 px-3 text-center ${getBorderClass()}`}>CÓDIGO</th>
+                        <th className={`w-[50%] border-r py-1 px-3 text-left ${getBorderClass()}`}>DESCRIPCIÓN</th>
+                        <th className={`w-[10%] border-r py-1 px-3 text-center ${getBorderClass()}`}>CANTIDAD</th>
+                        <th className={`w-[15%] border-r py-1 px-3 text-center ${getBorderClass()}`}>P. UNITARIO MN</th>
+                        <th className={`w-[15%] py-1 px-3 text-center ${getTextClass()}`}>IMPORTE MN</th>
                     </tr>
                 </thead>
                 <tbody className={getTextClass()}>
                     {invoiceData.items.map((item) => (
                         <tr key={item.id} className="border-b border-gray-200 last:border-b-0">
-                            <td className={`border-r py-2 px-3 text-center align-middle ${getBorderClass()} break-all`}>
+                            <td className={`border-r py-1 px-3 text-center align-middle ${getBorderClass()} break-all`}>
                                 {item.codigo || item.id}
                             </td>
-                            <td className={`border-r py-2 px-3 text-left align-middle ${getBorderClass()}`}>{item.nombre}</td>
-                            <td className={`border-r py-2 px-3 text-center align-middle ${getBorderClass()}`}>{item.cantidad}</td>
-                            <td className={`border-r py-2 px-3 text-right align-middle ${getBorderClass()}`}>{item.precioUnitario.toFixed(2)}</td>
-                            <td className={`py-2 px-3 text-right align-middle ${getTextClass()}`}>{item.total.toFixed(2)}</td>
+                            <td className={`border-r py-1 px-3 text-left align-middle ${getBorderClass()}`}>{item.nombre}</td>
+                            <td className={`border-r py-1 px-3 text-center align-middle ${getBorderClass()}`}>{item.cantidad}</td>
+                            <td className={`border-r py-1 px-3 text-right align-middle ${getBorderClass()}`}>{item.precioUnitario.toFixed(2)}</td>
+                            <td className={`py-1 px-3 text-right align-middle ${getTextClass()}`}>{item.total.toFixed(2)}</td>
                         </tr>
                     ))}
-                    {/* Empty rows to fill space if needed */}
-                    {Array.from({ length: Math.max(0, 12 - invoiceData.items.length) }).map((_, i) => (
+                    {/* Empty rows to fill space - limited to avoid overflow */}
+                    {Array.from({ length: Math.max(0, Math.min(6, 8 - invoiceData.items.length)) }).map((_, i) => (
                          <tr key={`empty-${i}`}>
-                            <td className={`border-r py-2 px-3 ${getBorderClass()}`}>&nbsp;</td>
-                            <td className={`border-r py-2 px-3 ${getBorderClass()}`}>&nbsp;</td>
-                            <td className={`border-r py-2 px-3 ${getBorderClass()}`}>&nbsp;</td>
-                            <td className={`border-r py-2 px-3 ${getBorderClass()}`}>&nbsp;</td>
-                            <td className={`py-2 px-3 ${getTextClass()}`}>&nbsp;</td>
+                            <td className={`border-r py-1 px-3 ${getBorderClass()}`}>&nbsp;</td>
+                            <td className={`border-r py-1 px-3 ${getBorderClass()}`}>&nbsp;</td>
+                            <td className={`border-r py-1 px-3 ${getBorderClass()}`}>&nbsp;</td>
+                            <td className={`border-r py-1 px-3 ${getBorderClass()}`}>&nbsp;</td>
+                            <td className={`py-1 px-3 ${getTextClass()}`}>&nbsp;</td>
                         </tr>
                     ))}
                 </tbody>
@@ -447,7 +447,7 @@ function InvoicePrintContent() {
                     <span className="font-bold uppercase block text-xs mb-1">OBSERVACIONES:</span>
                     <p className="text-xs">{invoiceData.observaciones}</p>
                 </div>
-                <div className="mt-4 text-xs">
+                <div className="mt-2 text-xs">
                     <span className="font-bold uppercase mr-2">IMPORTE EN LETRAS:</span>
                     <span className="uppercase">{importeLetras}</span>
                 </div>
@@ -470,7 +470,7 @@ function InvoicePrintContent() {
 
         {/* FIRMAS Y FORMULARIO TRANSPORTE */}
         <div className={`p-2 text-xs mb-1 border-t-0 ${getBorderClass()} border`} style={{ pageBreakInside: 'avoid' }}>
-            <div className="grid grid-cols-3 gap-6 mb-4">
+            <div className="grid grid-cols-3 gap-4">
                 {/* Recibido por */}
                 <div className="flex flex-col justify-between">
                     <div>
@@ -484,7 +484,7 @@ function InvoicePrintContent() {
                             <div className={`h-4 border-b ${getBorderClass()}`}></div>
                         </div>
                     </div>
-                    <div className="grid grid-cols-[80px_1fr] gap-2 mt-2">
+                    <div className="grid grid-cols-[80px_1fr] gap-2 mt-1">
                         <span>Firma:</span>
                         <div className={`h-4 border-b ${getBorderClass()}`}></div>
                     </div>
@@ -514,7 +514,7 @@ function InvoicePrintContent() {
                             <div className={`h-4 border-b ${getBorderClass()}`}></div>
                         </div>
                     </div>
-                    <div className="grid grid-cols-[80px_1fr] gap-2 mt-2">
+                    <div className="grid grid-cols-[80px_1fr] gap-2 mt-1">
                         <span>Firma:</span>
                         <div className={`h-4 border-b ${getBorderClass()}`}></div>
                     </div>
@@ -531,7 +531,7 @@ function InvoicePrintContent() {
                             </div>
                         </div>
                     </div>
-                    <div className="grid grid-cols-[50px_1fr] gap-2 mt-auto">
+                    <div className="grid grid-cols-[50px_1fr] gap-2 mt-1">
                         <span>Firma:</span>
                         <div className={`h-4 border-b ${getBorderClass()}`}></div>
                     </div>
@@ -547,7 +547,7 @@ function InvoicePrintContent() {
                     <span className="font-medium">No. Cuenta CUP:</span>
                     <span className={`font-bold ${getBlueColorClass()}`}>{empresaCuenta}</span>
                 </div>
-                <div className="mt-2">
+                <div className="mt-1">
                      <span className="">Mi dirección electrónica: {empresaEmail}</span>
                 </div>
             </div>
@@ -585,6 +585,7 @@ function InvoicePrintContent() {
         @media print {
           @page {
             margin: 0mm !important;
+            size: A4 portrait;
           }
           body {
             margin: 0 !important;
@@ -598,6 +599,12 @@ function InvoicePrintContent() {
             display: none !important;
           }
           .print\\:hidden { display: none; }
+          
+          /* Ensure invoice content fits on one page */
+          .min-h-screen {
+            min-height: auto !important;
+            height: auto !important;
+          }
         }
       `}</style>
     </div>

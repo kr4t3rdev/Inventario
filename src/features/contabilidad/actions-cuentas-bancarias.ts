@@ -56,7 +56,7 @@ export const getCuentasBancariasAction = withAction(async (_input: void, user: A
     select: CUENTA_SELECT,
     orderBy: { createdAt: 'desc' },
   });
-  return { cuentas };
+  return { cuentas: cuentas.map(c => ({ ...c, saldo: Number(c.saldo) })) };
 });
 
 export const getCuentaBancariaByIdAction = withAction(async (cuentaId: string, user: AuthenticatedUser) => {
@@ -66,7 +66,7 @@ export const getCuentaBancariaByIdAction = withAction(async (cuentaId: string, u
     select: CUENTA_SELECT,
   });
   if (!cuenta) throw new ActionError('Cuenta bancaria no encontrada', 'NOT_FOUND');
-  return cuenta;
+  return { ...cuenta, saldo: Number(cuenta.saldo) };
 });
 
 export const createCuentaBancariaAction = withAction(async (input: z.infer<typeof createSchema>, user: AuthenticatedUser) => {

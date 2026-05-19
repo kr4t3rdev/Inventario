@@ -173,6 +173,7 @@ export const getVentasPendientesAction = withAction(async (params: {
       const totalPagado = pagosMap.get(ventaId) || 0;
       return {
         ...venta,
+        total: totalVenta,
         totalPagado,
         saldoPendiente: Math.max(0, totalVenta - totalPagado),
       };
@@ -200,7 +201,13 @@ export const getHistorialReconciliacionVentasAction = withAction(async (params: 
   const porMoneda = await prisma.reconciliacionVenta.groupBy({ by: ['moneda'], where, _sum: { monto: true } });
   const porTipoDePago = await prisma.reconciliacionVenta.groupBy({ by: ['tipoPagoId'], where, _sum: { monto: true } });
   return {
-    reconciliaciones,
+    reconciliaciones: reconciliaciones.map(r => ({
+      ...r,
+      monto: Number(r.monto),
+      tasaCambio: r.tasaCambio ? Number(r.tasaCambio) : null,
+      montoConvertido: r.montoConvertido ? Number(r.montoConvertido) : null,
+      venta: r.venta ? { ...r.venta, total: Number(r.venta.total) } : undefined,
+    })),
     estadisticas: {
       montoTotal: reconciliaciones.reduce((s:number, r:any) => s+Number(r.monto), 0),
       montoConvertidoTotal: reconciliaciones.reduce((s:number, r:any) => s+Number(r.montoConvertido??0), 0),
@@ -215,16 +222,71 @@ export const reconciliarVentaAction = withAction(async (input: {
   fechaReconciliacion?: string; observaciones?: string;
 }, user: AuthenticatedUser) => {
   const tenantId = requireTenant(user);
-  const reconciliacion = await prisma.reconciliacionVenta.create({
-    data: {
-      ventaId: input.ventaId, cuentaId: input.cuentaId, tipoPagoId: input.tipoPagoId,
-      monto: input.monto, moneda: input.moneda||'CUP',
-      fechaReconciliacion: input.fechaReconciliacion ? new Date(input.fechaReconciliacion) : new Date(),
-      observaciones: input.observaciones, tenantId, reconciliadoPor: user.userId,
-    },
+
+  const result = await prisma.$transaction(async (tx) => {
+    const reconciliacion = await tx.reconciliacionVenta.create({
+      data: {
+        ventaId: input.ventaId, cuentaId: input.cuentaId, tipoPagoId: input.tipoPagoId,
+        monto: input.monto, moneda: input.moneda||'CUP',
+        fechaReconciliacion: input.fechaReconciliacion ? new Date(input.fechaReconciliacion) : new Date(),
+        observaciones: input.observaciones, tenantId, reconciliadoPor: user.userId,
+      },
+    });
+
+    // Actualizar estado de CuentaPorCobrar asociada
+    // Resolver Venta → Factura para buscar CxC por facturaId correcto
+    const ventaWithFactura = await tx.venta.findUnique({
+      where: { ventaId: input.ventaId },
+      select: { factura: { select: { idFactura: true } } },
+    });
+    const facturaIdReal = ventaWithFactura?.factura?.idFactura;
+    const cuentaPorCobrar = await tx.cuentaPorCobrar.findFirst({
+      where: {
+        OR: [
+          { facturaId: input.ventaId },    // legacy: algunas CxC tienen ventaId en facturaId
+          ...(facturaIdReal ? [{ facturaId: facturaIdReal }] : []), // correcto: Factura.idFactura
+        ],
+        tenantId,
+      },
+      select: { idCC: true, montoDeuda: true, montoPagado: true, estado: true },
+    });
+
+    if (cuentaPorCobrar) {
+      // Sumar todas las reconciliaciones de esta venta para calcular el total pagado
+      const reconciliaciones = await tx.reconciliacionVenta.findMany({
+        where: { ventaId: input.ventaId, tenantId },
+        select: { monto: true, moneda: true, tasaCambio: true },
+      });
+
+      const totalPagado = reconciliaciones.reduce((sum, rec) => {
+        const tasa = rec.tasaCambio ? Number(rec.tasaCambio) : 1;
+        return sum + Number(rec.monto) * tasa;
+      }, 0);
+
+      const montoDeuda = Number(cuentaPorCobrar.montoDeuda);
+      const nuevoEstado = totalPagado >= montoDeuda - 0.01
+        ? 'PAGADA'
+        : totalPagado > 0
+          ? 'PARCIAL'
+          : 'PENDIENTE';
+
+      if (nuevoEstado !== cuentaPorCobrar.estado) {
+        await tx.cuentaPorCobrar.updateMany({
+          where: { idCC: cuentaPorCobrar.idCC },
+          data: {
+            estado: nuevoEstado,
+            montoPagado: totalPagado,
+          },
+        });
+      }
+    }
+
+    return reconciliacion;
   });
+
   revalidatePath('/busy/contabilidad/reconciliacion');
-  return reconciliacion;
+  revalidatePath('/busy/contabilidad/cuentas-por-cobrar');
+  return result;
 });
 
 // ─── Servicios ─────────────────────────────────────────────
@@ -250,7 +312,13 @@ export const getServiciosPendientesAction = withAction(async (params: {
     where
     }),
   ]);
-  return { ventaServicios, pagination: { page, limit, total, totalPages: Math.ceil(total/limit) } };
+  return {
+    ventaServicios: ventaServicios.map(vs => ({
+      ...vs,
+      servicio: vs.servicio ? { ...vs.servicio, precio: Number(vs.servicio.precio) } : undefined,
+    })),
+    pagination: { page, limit, total, totalPages: Math.ceil(total/limit) },
+  };
 });
 
 export const getHistorialReconciliacionServiciosAction = withAction(async (params: {
@@ -270,7 +338,16 @@ export const getHistorialReconciliacionServiciosAction = withAction(async (param
     ventasServicio: { select: { ventaServicioId: true } }, cuentaBancaria: { select: { nombreBanco: true } }, tipoPago: { select: { nombre: true } }
     },
   });
-  return { reconciliaciones, estadisticas: {}, pagination: {} };
+  return {
+    reconciliaciones: reconciliaciones.map(r => ({
+      ...r,
+      monto: Number(r.monto),
+      tasaCambio: r.tasaCambio ? Number(r.tasaCambio) : null,
+      montoConvertido: r.montoConvertido ? Number(r.montoConvertido) : null,
+    })),
+    estadisticas: {},
+    pagination: {},
+  };
 });
 
 export const reconciliarServicioAction = withAction(async (input: {
@@ -514,7 +591,16 @@ export const getHistorialReconciliacionGastosAction = withAction(async (params: 
     where, orderBy: { fechaReconciliacion: 'desc' }, take: 100,
     include: { cuentaBancaria: { select: { nombreBanco: true } }, tipoPago: { select: { nombre: true } } },
   });
-  return { reconciliaciones, estadisticas: {}, pagination: {} };
+  return {
+    reconciliaciones: reconciliaciones.map(r => ({
+      ...r,
+      monto: Number(r.monto),
+      tasaCambio: r.tasaCambio ? Number(r.tasaCambio) : null,
+      montoConvertido: r.montoConvertido ? Number(r.montoConvertido) : null,
+    })),
+    estadisticas: {},
+    pagination: {},
+  };
 });
 
 export const reconciliarGastoAction = withAction(async (input: {
