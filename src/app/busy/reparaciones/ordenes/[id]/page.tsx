@@ -170,8 +170,8 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
   useEffect(() => {
     getCuentasBancariasAction().then(r => {
       if (r.success) setCuentasBancariasData(r.data)
-      else errorCuentas.current = r.error)
-      isLoadingCuentas.current = false)
+      else errorCuentas.current = r.error;
+      isLoadingCuentas.current = false;
     })
   }, [])
 
@@ -372,7 +372,7 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
       console.error(error)
       toast.error("Error al subir la foto")
     } finally {
-      isUploading.current = false)
+      isUploading.current = false;
       // Limpiar input
       e.target.value = ''
     }

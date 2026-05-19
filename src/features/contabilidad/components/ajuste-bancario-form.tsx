@@ -60,7 +60,7 @@ export function AjusteBancarioForm({ onSuccess, onCancel }: AjusteBancarioFormPr
           const monedasArr = Array.isArray(m.data) ? m.data : (m.data as any)?.data ?? []
           setMonedas(monedasArr)
         }
-        isLoadingCuentas.current = false)
+        isLoadingCuentas.current = false;
       })
     }, [])
   

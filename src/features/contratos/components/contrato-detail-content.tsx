@@ -153,7 +153,7 @@ export function ContratoDetailContent({ initialData, contratoId }: ContratoDetai
   }
 
   useEffect(() => {
-    partyImageError.current = false)
+    partyImageError.current = false;
   }, [contrato?.contratoId, contrato?.cliente?.logoUrl, contrato?.vendor?.logo])
 
   const getEstadoBadge = (estado: string) => {
@@ -282,22 +282,22 @@ export function ContratoDetailContent({ initialData, contratoId }: ContratoDetai
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <span className="text-sm font-medium text-muted-foreground">Tipo</label>
+                        <span className="text-sm font-medium text-muted-foreground">Tipo</span>
                         <p className="font-medium">{contrato.tipo}</p>
                       </div>
                       <div>
-                        <span className="text-sm font-medium text-muted-foreground">Estado</label>
+                        <span className="text-sm font-medium text-muted-foreground">Estado</span>
                         <p className="font-medium">{getEstadoBadge(contrato.estado)}</p>
                       </div>
                       <div>
-                        <span className="text-sm font-medium text-muted-foreground">Fecha Inicio</label>
+                        <span className="text-sm font-medium text-muted-foreground">Fecha Inicio</span>
                         <p className="font-medium flex items-center gap-2">
                           <Calendar className="h-4 w-4" />
                           {formatDate(contrato.fechaInicio)}
                         </p>
                       </div>
                       <div>
-                        <span className="text-sm font-medium text-muted-foreground">Fecha Fin</label>
+                        <span className="text-sm font-medium text-muted-foreground">Fecha Fin</span>
                         <p className="font-medium flex items-center gap-2">
                           <Calendar className="h-4 w-4" />
                           {formatDate(contrato.fechaFin)}
@@ -305,7 +305,7 @@ export function ContratoDetailContent({ initialData, contratoId }: ContratoDetai
                       </div>
                       {contrato.monto && (
                         <div className="col-span-2">
-                          <span className="text-sm font-medium text-muted-foreground">Monto</label>
+                          <span className="text-sm font-medium text-muted-foreground">Monto</span>
                           <p className="font-medium text-lg">
                             {formatCurrency(contrato.monto, contrato.moneda)}
                           </p>
