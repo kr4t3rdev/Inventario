@@ -541,7 +541,7 @@ export default function Home(): React.JSX.Element {
             className="space-y-8"
           >
             <div className="space-y-4">
-              <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary font-mono">
+              <span className="inline-flex items-center gap-2 rounded-full border border-cyan-accent bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-accent font-mono">
                 <Sparkles className="h-3.5 w-3.5" />
                 Plataforma integral
               </span>
@@ -644,7 +644,7 @@ export default function Home(): React.JSX.Element {
                 }
                 className="group rounded-2xl border border-border/60 bg-card/50 p-5 text-center transition-colors hover:border-primary/30"
               >
-                <p className="text-4xl font-bold tracking-tight text-primary sm:text-5xl font-mono">
+                <p className="text-4xl font-bold tracking-tight text-cyan-accent sm:text-5xl font-mono">
                   <AnimatedCounter value={stat.value} suffix={stat.suffix} reduceMotion={!!reduceMotion} />
                 </p>
                 <p className="mt-2 text-sm text-muted-foreground">{stat.label}</p>
@@ -656,7 +656,7 @@ export default function Home(): React.JSX.Element {
         {/* ═══ FEATURES ═══ */}
         <section id="caracteristicas" className="space-y-10 scroll-mt-24">
           <SpringSection className="mx-auto max-w-3xl space-y-3 text-center">
-            <span className="inline-flex rounded-full border border-primary/25 bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary font-mono">
+            <span className="inline-flex rounded-full border border-cyan-accent bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-accent font-mono">
               Características
             </span>
             <h2 className="text-4xl font-bold tracking-tight sm:text-5xl font-mono leading-[1.05] tracking-display">
@@ -731,7 +731,7 @@ export default function Home(): React.JSX.Element {
             transition={reduceMotion ? { duration: 0 } : { type: 'spring', bounce: 0.3, duration: 1.1 }}
             className="space-y-4"
           >
-            <span className="inline-flex rounded-full border border-primary/25 bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary font-mono">
+            <span className="inline-flex rounded-full border border-cyan-accent bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-accent font-mono">
               Beneficios
             </span>
             <h2 className="text-4xl font-bold tracking-tight sm:text-5xl font-mono leading-[1.05] tracking-display">
@@ -803,7 +803,7 @@ export default function Home(): React.JSX.Element {
         {/* ═══ TESTIMONIALS ═══ */}
         <section id="testimonios" className="space-y-10 scroll-mt-24">
           <SpringSection className="mx-auto max-w-3xl space-y-3 text-center">
-            <span className="inline-flex rounded-full border border-primary/25 bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary font-mono">
+            <span className="inline-flex rounded-full border border-cyan-accent bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-accent font-mono">
               Testimonios
             </span>
             <h2 className="text-4xl font-bold tracking-tight sm:text-5xl font-mono leading-[1.05] tracking-display">
@@ -864,7 +864,7 @@ export default function Home(): React.JSX.Element {
         {/* ═══ PRICING ═══ */}
         <section id="precios" className="space-y-10 scroll-mt-24">
           <SpringSection className="mx-auto max-w-3xl space-y-3 text-center">
-            <span className="inline-flex rounded-full border border-primary/25 bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary font-mono">
+            <span className="inline-flex rounded-full border border-cyan-accent bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-accent font-mono">
               Planes
             </span>
             <h2 className="text-4xl font-bold tracking-tight sm:text-5xl font-mono leading-[1.05] tracking-display">
@@ -937,7 +937,7 @@ export default function Home(): React.JSX.Element {
         {/* ═══ FAQ ═══ */}
         <section id="faq" className="space-y-10 scroll-mt-24">
           <SpringSection className="mx-auto max-w-3xl space-y-3 text-center">
-            <span className="inline-flex rounded-full border border-primary/25 bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary font-mono">
+            <span className="inline-flex rounded-full border border-cyan-accent bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-accent font-mono">
               FAQ
             </span>
             <h2 className="text-4xl font-bold tracking-tight sm:text-5xl font-mono leading-[1.05] tracking-display">
@@ -988,11 +988,11 @@ export default function Home(): React.JSX.Element {
         {/* ═══ CONTACT ═══ */}
         <section
           id="contacto"
-          className="scroll-mt-24 rounded-3xl border border-border/60 bg-muted/20 p-6 md:p-10"
+          className="scroll-mt-24 rounded-asymmetric-tl-br border border-border/60 bg-muted/20 p-6 md:p-10 glow-primary"
         >
           <SpringSection className="mx-auto max-w-4xl space-y-8 text-center">
             <div className="space-y-3">
-              <span className="inline-flex rounded-full border border-primary/25 bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary font-mono">
+              <span className="inline-flex rounded-full border border-cyan-accent bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-accent font-mono">
                 Contacto
               </span>
               <h2 className="text-4xl font-bold tracking-tight sm:text-5xl font-mono leading-[1.05] tracking-display">
