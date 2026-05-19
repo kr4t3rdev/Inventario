@@ -39,6 +39,9 @@ import {
 } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { CustomCursor } from '@/components/ui/custom-cursor';
+import { MarqueeText } from '@/components/ui/marquee-text';
+import { WordReveal } from '@/components/ui/word-reveal';
 import { ThemeToggle } from '@/components/theme-toggle';
 
 /* ─── Shared Spring Configuration ─── */
@@ -454,7 +457,8 @@ export default function Home(): React.JSX.Element {
   }, [reduceMotion]);
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-background text-foreground">
+    <div className="relative min-h-screen overflow-x-hidden bg-background text-foreground cursor-none">
+      <CustomCursor />
       <AnimatePresence>{isLoading ? <LandingPreloader reduceMotion={!!reduceMotion} /> : null}</AnimatePresence>
 
       {/* Background blobs — parallax + floating */}
@@ -546,7 +550,7 @@ export default function Home(): React.JSX.Element {
                 Plataforma integral
               </span>
               <h1 className="max-w-2xl text-5xl font-bold tracking-tight sm:text-6xl lg:text-7xl font-mono leading-[1.05] tracking-display">
-                Gestión financiera e inventario con experiencia premium.
+                <WordReveal text="Gestión financiera e inventario con experiencia premium." />
               </h1>
               <p className="max-w-2xl text-base text-muted-foreground sm:text-lg">
                 FinanceMDM conecta ventas, contabilidad, inventario y capital humano en una sola
@@ -652,6 +656,9 @@ export default function Home(): React.JSX.Element {
             ))}
           </div>
         </SpringSection>
+
+        {/* ═══ MARQUEE ═══ */}
+        <MarqueeText text="Ventas · Inventario · Contabilidad · Capital Humano · Reportes · Automatización" speed={25} />
 
         {/* ═══ FEATURES ═══ */}
         <section id="caracteristicas" className="space-y-10 scroll-mt-24">
@@ -800,6 +807,9 @@ export default function Home(): React.JSX.Element {
           </div>
         </section>
 
+        {/* ═══ MARQUEE 2 ═══ */}
+        <MarqueeText text="Control total · Decisiones inteligentes · Operación fluida · Escalabilidad garantizada" speed={30} direction="right" />
+
         {/* ═══ TESTIMONIALS ═══ */}
         <section id="testimonios" className="space-y-10 scroll-mt-24">
           <SpringSection className="mx-auto max-w-3xl space-y-3 text-center">
@@ -933,6 +943,9 @@ export default function Home(): React.JSX.Element {
             ))}
           </div>
         </section>
+
+        {/* ═══ MARQUEE 3 ═══ */}
+        <MarqueeText text="Soporte dedicado · Integraciones · Analytics · Crecimiento sin límites" speed={35} />
 
         {/* ═══ FAQ ═══ */}
         <section id="faq" className="space-y-10 scroll-mt-24">
