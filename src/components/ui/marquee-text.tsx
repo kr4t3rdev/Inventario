@@ -21,16 +21,7 @@ export function MarqueeText({
 }): React.JSX.Element {
   const reduceMotion = useReducedMotion();
   const content = `${text}  •  ${text}  •  ${text}  •  ${text}  •  `;
-
-  if (reduceMotion) {
-    return (
-      <div className={`overflow-hidden whitespace-nowrap ${className}`}>
-        <span className="text-muted-foreground/50 font-mono text-sm tracking-widest uppercase">
-          {text}
-        </span>
-      </div>
-    );
-  }
+  const effectiveSpeed = reduceMotion ? speed * 3 : speed;
 
   return (
     <div className={`overflow-hidden whitespace-nowrap ${className}`}>
@@ -41,7 +32,7 @@ export function MarqueeText({
           x: {
             repeat: Infinity,
             repeatType: 'loop',
-            duration: speed,
+            duration: effectiveSpeed,
             ease: 'linear',
           },
         }}

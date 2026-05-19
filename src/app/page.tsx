@@ -364,7 +364,8 @@ function LandingPreloader({ reduceMotion }: { reduceMotion: boolean }): React.JS
 /* ─── Spring wrapper components ─── */
 
 /**
- * @description Wrapper que aplica animación spring slide-up al entrar en viewport.
+ * @description Wrapper que aplica animación fade-in + slide-up suave al entrar en viewport.
+ *              Siempre se anima — no depende de reduced motion.
  */
 function SpringSection({
   children,
@@ -375,18 +376,12 @@ function SpringSection({
   delay?: number;
   className?: string;
 }): React.JSX.Element {
-  const reduceMotion = useReducedMotion();
-
   return (
     <motion.div
-      initial={{ opacity: 0, y: reduceMotion ? 0 : 40 }}
+      initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.2 }}
-      transition={
-        reduceMotion
-          ? { duration: 0 }
-          : { type: 'spring', bounce: 0.3, duration: 1.1, delay }
-      }
+      viewport={{ once: true, amount: 0.15 }}
+      transition={{ type: 'spring', stiffness: 120, damping: 20, delay }}
       className={className}
     >
       {children}
@@ -411,21 +406,12 @@ function ParallaxLayer({
   className?: string;
   style?: React.CSSProperties;
 }): React.JSX.Element {
-  const reduceMotion = useReducedMotion();
   const ref = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ['start end', 'end start'],
   });
-  const y = useTransform(scrollYProgress, [0, 1], [speed * 80, speed * -80]);
-
-  if (reduceMotion) {
-    return (
-      <div ref={ref} className={className} style={style}>
-        {children}
-      </div>
-    );
-  }
+  const y = useTransform(scrollYProgress, [0, 1], [speed * 60, speed * -60]);
 
   return (
     <div ref={ref} className={className} style={{ ...style, willChange: 'transform' }}>
@@ -502,8 +488,7 @@ export default function Home(): React.JSX.Element {
             {NAV_ITEMS.map((item) => (
               <motion.div
                 key={item.href}
-                whileHover={reduceMotion ? undefined : { y: -2 }}
-                transition={{ duration: 0.2 }}
+                whileHover={{ y: -2, transition: { duration: 0.2 } }}
               >
                 <Link
                   href={item.href}
@@ -537,9 +522,9 @@ export default function Home(): React.JSX.Element {
         {/* ═══ HERO ═══ */}
         <section className="grid items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
           <motion.div
-            initial={{ opacity: 0, y: reduceMotion ? 0 : 40 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={reduceMotion ? { duration: 0 } : SPRING_UP}
+            transition={{ type: 'spring', stiffness: 120, damping: 20 }}
             className="space-y-8"
           >
             <div className="space-y-4">
@@ -558,9 +543,8 @@ export default function Home(): React.JSX.Element {
 
             <div className="flex flex-wrap items-center gap-3">
               <motion.div
-                whileHover={reduceMotion ? undefined : { scale: 1.03 }}
-                whileTap={reduceMotion ? undefined : { scale: 0.98 }}
-                transition={SPRING_STIFF}
+                whileHover={{ scale: 1.03, transition: SPRING_STIFF }}
+                whileTap={{ scale: 0.98, transition: SPRING_STIFF }}
               >
                 <Link href="/register">
                   <Button size="lg" className="group cursor-pointer gap-2">
@@ -570,9 +554,8 @@ export default function Home(): React.JSX.Element {
                 </Link>
               </motion.div>
               <motion.div
-                whileHover={reduceMotion ? undefined : { scale: 1.03 }}
-                whileTap={reduceMotion ? undefined : { scale: 0.98 }}
-                transition={SPRING_STIFF}
+                whileHover={{ scale: 1.03, transition: SPRING_STIFF }}
+                whileTap={{ scale: 0.98, transition: SPRING_STIFF }}
               >
                 <Link href="#precios">
                   <Button size="lg" variant="outline" className="cursor-pointer">
@@ -586,14 +569,13 @@ export default function Home(): React.JSX.Element {
           {/* Hero Image with Parallax */}
           <ParallaxLayer speed={0.2} className="relative">
             <motion.div
-              initial={{ opacity: 0, y: reduceMotion ? 0 : 40 }}
+              initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={reduceMotion ? { duration: 0 } : { type: 'spring', bounce: 0.3, duration: 1.1, delay: 0.15 }}
+              transition={{ type: 'spring', stiffness: 120, damping: 20, delay: 0.15 }}
             >
               <motion.div
                 className="overflow-hidden rounded-asymmetric-tl-br border border-primary/20 bg-card p-2 shadow-xl shadow-primary/10 glow-primary"
-                whileHover={reduceMotion ? undefined : { y: -8, scale: 1.015 }}
-                transition={{ type: 'spring', stiffness: 200, damping: 12 }}
+                whileHover={{ y: -8, scale: 1.015, transition: { type: 'spring', stiffness: 200, damping: 12 } }}
               >
                 <Image
                   src="/images/Finanzas3.jpeg"
@@ -636,14 +618,11 @@ export default function Home(): React.JSX.Element {
             ].map((stat, index) => (
               <motion.div
                 key={stat.label}
-                initial={{ opacity: 0, y: reduceMotion ? 0 : 30 }}
+                initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.3 }}
-                transition={
-                  reduceMotion
-                    ? { duration: 0 }
-                    : { type: 'spring', bounce: 0.4, duration: 1, delay: index * 0.08 }
-                }
+                transition={{ type: 'spring', stiffness: 120, damping: 20, delay: index * 0.1 }}
+                whileHover={{ y: -6, scale: 1.03, transition: { type: 'spring', stiffness: 200, damping: 15 } }}
                 className="group rounded-2xl border border-border/60 bg-card/50 p-5 text-center transition-colors hover:border-primary/30"
               >
                 <p className="text-4xl font-bold tracking-tight text-cyan-accent sm:text-5xl font-mono">
@@ -680,27 +659,18 @@ export default function Home(): React.JSX.Element {
               return (
                 <motion.article
                   key={feature.title}
-                  initial={{ opacity: 0, y: reduceMotion ? 0 : 30 }}
+                  initial={{ opacity: 0, y: 25 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.15 }}
-                  transition={
-                    reduceMotion
-                      ? { duration: 0 }
-                      : { type: 'spring', bounce: 0.35, duration: 1.2, delay: index * 0.08 }
-                  }
-                  whileHover={
-                    reduceMotion
-                      ? undefined
-                      : { y: -10, scale: 1.02, transition: { type: 'spring', stiffness: 200, damping: 12 } }
-                  }
+                  viewport={{ once: true, amount: 0.1 }}
+                  transition={{ type: 'spring', stiffness: 120, damping: 20, delay: index * 0.08 }}
+                  whileHover={{ y: -8, scale: 1.02, transition: { type: 'spring', stiffness: 200, damping: 12 } }}
                   className="group"
                 >
                   <Card className="h-full border-border/60 bg-card/80 shadow-md shadow-black/[0.03] transition-all duration-300 group-hover:border-primary/30 group-hover:shadow-xl group-hover:shadow-primary/5">
                     <CardHeader>
                       <motion.div
                         className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 group-hover:bg-primary/15"
-                        whileHover={reduceMotion ? undefined : { rotate: -10, scale: 1.12 }}
-                        transition={{ type: 'spring', stiffness: 200, damping: 10 }}
+                        whileHover={{ rotate: -10, scale: 1.12, transition: { type: 'spring', stiffness: 200, damping: 10 } }}
                       >
                         <Icon className="h-6 w-6 text-primary transition-transform duration-300 group-hover:scale-110" />
                       </motion.div>
@@ -730,10 +700,10 @@ export default function Home(): React.JSX.Element {
           className="grid items-start gap-8 rounded-3xl border border-border/60 bg-muted/20 p-6 md:p-10 lg:grid-cols-[1fr_1.05fr]"
         >
           <motion.div
-            initial={{ opacity: 0, x: reduceMotion ? 0 : -30 }}
+            initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={reduceMotion ? { duration: 0 } : { type: 'spring', bounce: 0.3, duration: 1.1 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ type: 'spring', stiffness: 120, damping: 20 }}
             className="space-y-4"
           >
             <span className="inline-flex rounded-full border border-cyan-accent bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-cyan-accent font-mono">
@@ -770,28 +740,18 @@ export default function Home(): React.JSX.Element {
               return (
                 <motion.div
                   key={benefit.title}
-                  initial={{ opacity: 0, y: reduceMotion ? 0 : 30 }}
+                  initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.3 }}
-                  transition={
-                    reduceMotion
-                      ? { duration: 0 }
-                      : { type: 'spring', bounce: 0.3, duration: 1, delay: index * 0.08 }
-                  }
-                  whileHover={
-                    reduceMotion
-                      ? undefined
-                      : { y: -8, scale: 1.01, transition: { type: 'spring', stiffness: 200, damping: 12 } }
-                  }
+                  viewport={{ once: true, amount: 0.2 }}
+                  transition={{ type: 'spring', stiffness: 120, damping: 20, delay: index * 0.1 }}
+                  whileHover={{ y: -6, scale: 1.02, transition: { type: 'spring', stiffness: 200, damping: 15 } }}
                 >
-                  <Card className="h-full border-border/60 bg-card/85 shadow-sm transition-all duration-300 group-hover:shadow-lg group-hover:border-primary/25">
+                  <Card className="h-full border-border/60 bg-card/85 shadow-sm transition-all duration-300 hover:shadow-lg hover:border-primary/25">
                     <CardContent className="space-y-3 p-5">
                       <motion.div
                         className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10"
-                        animate={
-                          reduceMotion ? undefined : { y: [0, -5, 0] }
-                        }
-                        transition={{ duration: 2.5 + index * 0.2, repeat: Infinity, ease: 'easeInOut' }}
+                        animate={{ y: [0, -4, 0] }}
+                        transition={{ duration: 3 + index * 0.3, repeat: Infinity, ease: 'easeInOut' }}
                       >
                         <Icon className="h-5 w-5 text-primary" />
                       </motion.div>
@@ -826,19 +786,11 @@ export default function Home(): React.JSX.Element {
             {TESTIMONIAL_ITEMS.map((item, index) => (
               <motion.div
                 key={item.author}
-                initial={{ opacity: 0, y: reduceMotion ? 0 : 30 }}
+                initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.2 }}
-                transition={
-                  reduceMotion
-                    ? { duration: 0 }
-                    : { type: 'spring', bounce: 0.3, duration: 1, delay: index * 0.08 }
-                }
-                whileHover={
-                  reduceMotion
-                    ? undefined
-                    : { y: -8, scale: 1.015, transition: { type: 'spring', stiffness: 200, damping: 12 } }
-                }
+                viewport={{ once: true, amount: 0.15 }}
+                transition={{ type: 'spring', stiffness: 120, damping: 20, delay: index * 0.1 }}
+                whileHover={{ y: -6, scale: 1.02, transition: { type: 'spring', stiffness: 200, damping: 15 } }}
               >
                 <Card className="h-full border-border/60 bg-card/80 shadow-sm transition-all duration-300 hover:border-primary/25 hover:shadow-lg">
                   <CardContent className="flex flex-col gap-4 p-6">
@@ -887,19 +839,11 @@ export default function Home(): React.JSX.Element {
             {PLAN_ITEMS.map((plan, index) => (
               <motion.div
                 key={plan.name}
-                initial={{ opacity: 0, y: reduceMotion ? 0 : 30 }}
+                initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.2 }}
-                transition={
-                  reduceMotion
-                    ? { duration: 0 }
-                    : { type: 'spring', bounce: 0.3, duration: 1, delay: index * 0.08 }
-                }
-                whileHover={
-                  reduceMotion
-                    ? undefined
-                    : { y: -10, scale: plan.featured ? 1.025 : 1.015, transition: { type: 'spring', stiffness: 200, damping: 12 } }
-                }
+                viewport={{ once: true, amount: 0.15 }}
+                transition={{ type: 'spring', stiffness: 120, damping: 20, delay: index * 0.1 }}
+                whileHover={{ y: -8, scale: plan.featured ? 1.025 : 1.015, transition: { type: 'spring', stiffness: 200, damping: 12 } }}
               >
                 <Card
                   className={`h-full border-border/60 bg-card/85 shadow-md transition-all duration-300 ${
@@ -960,24 +904,20 @@ export default function Home(): React.JSX.Element {
           </SpringSection>
 
           <motion.div
-            initial={{ opacity: 0, y: reduceMotion ? 0 : 20 }}
+            initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true, amount: 0.2 }}
-            transition={reduceMotion ? { duration: 0 } : { type: 'spring', bounce: 0.3, duration: 1 }}
+            viewport={{ once: true, amount: 0.15 }}
+            transition={{ type: 'spring', stiffness: 120, damping: 20 }}
             className="mx-auto max-w-3xl"
           >
             <Accordion type="single" collapsible className="space-y-3">
               {FAQ_ITEMS.map((item, index) => (
                 <motion.div
                   key={item.question}
-                  initial={{ opacity: 0, y: reduceMotion ? 0 : 15 }}
+                  initial={{ opacity: 0, y: 12 }}
                   whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.2 }}
-                  transition={
-                    reduceMotion
-                      ? { duration: 0 }
-                      : { type: 'spring', bounce: 0.2, duration: 0.8, delay: index * 0.04 }
-                  }
+                  viewport={{ once: true, amount: 0.1 }}
+                  transition={{ type: 'spring', stiffness: 120, damping: 20, delay: index * 0.05 }}
                 >
                   <AccordionItem
                     value={`item-${index}`}

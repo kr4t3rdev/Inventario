@@ -17,12 +17,7 @@ export function WordReveal({
   className?: string;
   delayPerWord?: number;
 }): React.JSX.Element {
-  const reduceMotion = useReducedMotion();
   const words = text.split(' ');
-
-  if (reduceMotion) {
-    return <span className={className}>{text}</span>;
-  }
 
   return (
     <span className={className}>
@@ -30,12 +25,12 @@ export function WordReveal({
         <motion.span
           key={index}
           className="inline-block"
-          initial={{ opacity: 0, y: 30, rotateX: -40 }}
-          animate={{ opacity: 1, y: 0, rotateX: 0 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{
             type: 'spring',
-            bounce: 0.35,
-            duration: 1.2,
+            stiffness: 120,
+            damping: 20,
             delay: 0.3 + index * delayPerWord,
           }}
           style={{ marginRight: word.endsWith('.') || word.endsWith(',') ? 0 : '0.3em' }}
