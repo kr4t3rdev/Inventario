@@ -47,7 +47,7 @@ export function ReportesAnalyticsPage() {
   useEffect(() => {
     getCuentasBancariasAction().then(r => {
       if (r.success) setCuentasData({ cuentas: r.data?.cuentas ?? [] });
-      cuentasLoading.current = false);
+      cuentasLoading.current = false;
     })
   }, [])
 

@@ -260,42 +260,42 @@ export function ComprasProductosContent({ initialCompras, initialPagination }: C
             <div className="space-y-4 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <span className="text-sm font-medium text-muted-foreground">Proveedor</label>
+                  <span className="text-sm font-medium text-muted-foreground">Proveedor</span>
                   <p className="font-medium">{selectedCompra.proveedor?.nombre || 'N/A'}</p>
                 </div>
                 <div>
-                  <span className="text-sm font-medium text-muted-foreground">Fecha</label>
+                  <span className="text-sm font-medium text-muted-foreground">Fecha</span>
                   <p>{new Date(selectedCompra.fechaCompra).toLocaleDateString()}</p>
                 </div>
                 <div>
-                  <span className="text-sm font-medium text-muted-foreground">Número de Factura</label>
+                  <span className="text-sm font-medium text-muted-foreground">Número de Factura</span>
                   <p>{selectedCompra.numeroFactura || 'S/N'}</p>
                 </div>
                 <div>
-                  <span className="text-sm font-medium text-muted-foreground">Tipo</label>
+                  <span className="text-sm font-medium text-muted-foreground">Tipo</span>
                   <Badge variant={selectedCompra.tipoOperacion === 'RESTOCK' ? 'default' : 'secondary'}>
                     {selectedCompra.tipoOperacion === 'RESTOCK' ? 'Restock' : 'Regular'}
                   </Badge>
                 </div>
                 <div>
-                  <span className="text-sm font-medium text-muted-foreground">Estado</label>
+                  <span className="text-sm font-medium text-muted-foreground">Estado</span>
                   <Badge variant={selectedCompra.estado === 'PAGADA' ? 'default' : 'secondary'}>
                     {selectedCompra.estado === 'PAGADA' ? 'Pagada' : 'Pendiente'}
                   </Badge>
                 </div>
                 <div>
-                  <span className="text-sm font-medium text-muted-foreground">Forma de Pago</label>
+                  <span className="text-sm font-medium text-muted-foreground">Forma de Pago</span>
                   <p>{selectedCompra.formaPago === 'PAGO_COMPLETO' ? 'Completo' : selectedCompra.formaPago === 'PAGO_PARCIAL' ? 'Parcial' : 'Anticipo'}</p>
                 </div>
                 <div>
-                  <span className="text-sm font-medium text-muted-foreground">Total</label>
+                  <span className="text-sm font-medium text-muted-foreground">Total</span>
                   <p className="font-bold text-lg">${selectedCompra.total.toLocaleString()}</p>
                 </div>
               </div>
 
               {selectedCompra.descripcion && (
                 <div>
-                  <span className="text-sm font-medium text-muted-foreground">Descripción</label>
+                  <span className="text-sm font-medium text-muted-foreground">Descripción</span>
                   <p className="text-sm mt-1">{selectedCompra.descripcion}</p>
                 </div>
               )}
