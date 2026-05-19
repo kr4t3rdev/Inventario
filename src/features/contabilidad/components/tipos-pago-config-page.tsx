@@ -145,7 +145,7 @@ export function TiposPagoConfigPage() {
 
   const handleDelete = async (tipoPagoId: string) => {
     try {
-      deletingTipoPago.current = true);
+      deletingTipoPago.current = true;
       const r = await deleteTipoPagoAction(tipoPagoId);
       if (!r.success) throw new Error(r.error?.message || 'Error al eliminar');
       toast.success("Tipo de pago eliminado correctamente")
@@ -154,7 +154,7 @@ export function TiposPagoConfigPage() {
       console.error("Error deleting payment type:", error)
       toast.error("No se pudo eliminar el tipo de pago")
     } finally {
-      deletingTipoPago.current = false);
+      deletingTipoPago.current = false;
     }
   }
 

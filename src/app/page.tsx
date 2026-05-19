@@ -545,7 +545,7 @@ export default function Home(): React.JSX.Element {
                 <Sparkles className="h-3.5 w-3.5" />
                 Plataforma integral
               </span>
-              <h1 className="max-w-2xl text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl font-mono leading-[1.05]">
+              <h1 className="max-w-2xl text-5xl font-bold tracking-tight sm:text-6xl lg:text-7xl font-mono leading-[1.05] tracking-display">
                 Gestión financiera e inventario con experiencia premium.
               </h1>
               <p className="max-w-2xl text-base text-muted-foreground sm:text-lg">
@@ -589,7 +589,7 @@ export default function Home(): React.JSX.Element {
               transition={reduceMotion ? { duration: 0 } : { type: 'spring', bounce: 0.3, duration: 1.1, delay: 0.15 }}
             >
               <motion.div
-                className="overflow-hidden rounded-3xl border border-primary/20 bg-card p-2 shadow-xl shadow-primary/10"
+                className="overflow-hidden rounded-asymmetric-tl-br border border-primary/20 bg-card p-2 shadow-xl shadow-primary/10 glow-primary"
                 whileHover={reduceMotion ? undefined : { y: -8, scale: 1.015 }}
                 transition={{ type: 'spring', stiffness: 200, damping: 12 }}
               >
@@ -605,17 +605,17 @@ export default function Home(): React.JSX.Element {
 
               {/* Floating stat badge */}
               <motion.div
-                className="absolute -bottom-7 -left-4 rounded-2xl border border-primary/20 bg-background/95 p-4 shadow-lg backdrop-blur md:-left-8"
+                className="absolute -bottom-7 -left-4 rounded-asymmetric-tr-bl border border-cyan-accent bg-background/95 p-4 shadow-lg backdrop-blur md:-left-8 glow-cyan"
                 animate={reduceMotion ? undefined : { y: [0, -8, 0] }}
                 transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
               >
                 <div className="flex items-center gap-3">
                   <div className="rounded-full bg-primary/10 p-2">
-                    <TrendingUp className="h-5 w-5 text-primary" />
+                    <TrendingUp className="h-5 w-5 text-cyan-accent" />
                   </div>
                   <div>
                     <p className="text-xs uppercase tracking-wide text-muted-foreground font-mono">Crecimiento</p>
-                    <p className="text-xl font-bold font-mono">+127%</p>
+                    <p className="text-xl font-bold font-mono text-cyan-accent">+127%</p>
                   </div>
                 </div>
               </motion.div>
@@ -659,7 +659,7 @@ export default function Home(): React.JSX.Element {
             <span className="inline-flex rounded-full border border-primary/25 bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary font-mono">
               Características
             </span>
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-mono leading-[1.1]">
+            <h2 className="text-4xl font-bold tracking-tight sm:text-5xl font-mono leading-[1.05] tracking-display">
               Todo lo que tu operación necesita en un solo lugar
             </h2>
             <p className="text-muted-foreground sm:text-lg">
@@ -734,7 +734,7 @@ export default function Home(): React.JSX.Element {
             <span className="inline-flex rounded-full border border-primary/25 bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary font-mono">
               Beneficios
             </span>
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-mono leading-[1.1]">
+            <h2 className="text-4xl font-bold tracking-tight sm:text-5xl font-mono leading-[1.05] tracking-display">
               Menos tareas manuales, más control del negocio
             </h2>
             <p className="text-muted-foreground sm:text-lg">
@@ -743,7 +743,7 @@ export default function Home(): React.JSX.Element {
             </p>
             <ParallaxLayer speed={0.15}>
               <motion.div
-                className="overflow-hidden rounded-2xl border border-primary/20 bg-card p-2"
+                className="overflow-hidden rounded-asymmetric-tr-bl border border-primary/20 bg-card p-2"
                 whileHover={reduceMotion ? undefined : { scale: 1.015 }}
                 transition={{ type: 'spring', stiffness: 200, damping: 12 }}
               >
@@ -806,7 +806,7 @@ export default function Home(): React.JSX.Element {
             <span className="inline-flex rounded-full border border-primary/25 bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary font-mono">
               Testimonios
             </span>
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-mono leading-[1.1]">
+            <h2 className="text-4xl font-bold tracking-tight sm:text-5xl font-mono leading-[1.05] tracking-display">
               Lo que dicen nuestros clientes
             </h2>
             <p className="text-muted-foreground sm:text-lg">
@@ -867,7 +867,7 @@ export default function Home(): React.JSX.Element {
             <span className="inline-flex rounded-full border border-primary/25 bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary font-mono">
               Planes
             </span>
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-mono leading-[1.1]">
+            <h2 className="text-4xl font-bold tracking-tight sm:text-5xl font-mono leading-[1.05] tracking-display">
               Escalá con un plan alineado a tu operación
             </h2>
             <p className="text-muted-foreground sm:text-lg">
@@ -940,7 +940,7 @@ export default function Home(): React.JSX.Element {
             <span className="inline-flex rounded-full border border-primary/25 bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary font-mono">
               FAQ
             </span>
-            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-mono leading-[1.1]">
+            <h2 className="text-4xl font-bold tracking-tight sm:text-5xl font-mono leading-[1.05] tracking-display">
               Preguntas frecuentes
             </h2>
             <p className="text-muted-foreground sm:text-lg">
@@ -995,7 +995,7 @@ export default function Home(): React.JSX.Element {
               <span className="inline-flex rounded-full border border-primary/25 bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-primary font-mono">
                 Contacto
               </span>
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl font-mono leading-[1.1]">
+              <h2 className="text-4xl font-bold tracking-tight sm:text-5xl font-mono leading-[1.05] tracking-display">
                 ¿Listo para optimizar tu operación financiera?
               </h2>
               <p className="text-muted-foreground sm:text-lg">
