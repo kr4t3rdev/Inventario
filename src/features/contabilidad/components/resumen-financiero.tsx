@@ -458,6 +458,7 @@ export function ResumenFinanciero({
 
   // @ts-expect-error - El resumen por moneda puede venir con forma parcial desde la API.
   const resumenPrincipal = resumen.resumenPorMoneda?.find((m) => m.moneda === monedaPrincipal);
+
   const ingresosTotales = resumenPrincipal?.totalIngresos ?? 0;
   const egresosTotales = resumenPrincipal?.totalEgresos ?? 0;
   const totalAnticipos = calculateAnticiposTotal(

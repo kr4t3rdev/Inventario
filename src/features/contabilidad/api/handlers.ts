@@ -91,7 +91,7 @@ export async function getResumenFinanciero(request: NextRequest) {
   const spm = ctas.reduce((a: any, c: any) => { const m = c.moneda || 'CUP'; a[m] = (a[m] || 0) + Number(c.saldo || 0); return a }, {})
   const rv = await prisma.reconciliacionVenta.findMany({ where: { ...af, ...(Object.keys(df).length ? { fechaReconciliacion: df } : {}) }, select: { monto: true, moneda: true, tipoReconciliacion: true } })
   const rg = await prisma.reconciliacionGasto.findMany({ where: { ...af, ...(Object.keys(df).length ? { fechaReconciliacion: df } : {}) }, select: { monto: true, moneda: true } })
-  const iV = rv.filter((r: any) => !r.tipoReconciliacion?.startsWith('PRESTAMO_CASH')).reduce((a: any, r: any) => { const m = r.moneda || 'CUP'; a[m] = (a[m] || 0) + Number(r.monto); return a }, {})
+  const iV = rv.filter((r: any) => !r.tipoReconciliacion?.startsWith('PRESTAMO_CASH') && !r.tipoReconciliacion?.startsWith('DEUDA_CASH')).reduce((a: any, r: any) => { const m = r.moneda || 'CUP'; a[m] = (a[m] || 0) + Number(r.monto); return a }, {})
   const eG = rg.reduce((a: any, r: any) => { const m = r.moneda || 'CUP'; a[m] = (a[m] || 0) + Number(r.monto); return a }, {})
   const monedas = [...new Set([...Object.keys(spm), ...Object.keys(iV), ...Object.keys(eG)])]
   const rpm = monedas.map((c: string) => ({ moneda: c, saldoActual: spm[c] || 0, totalIngresos: iV[c] || 0, totalEgresos: eG[c] || 0, flujoNeto: (iV[c] || 0) - (eG[c] || 0) }))

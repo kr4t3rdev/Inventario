@@ -6,6 +6,7 @@ import {
   motion,
   useInView,
   useReducedMotion,
+  useScroll,
   useSpring,
   useTransform,
   type SpringOptions,
@@ -391,6 +392,46 @@ function SpringSection({
   );
 }
 
+/**
+ * @description Wrapper que aplica parallax scroll — el contenido se mueve a una velocidad
+ *              distinta que el scroll normal, creando profundidad.
+ * @param {{ children: React.ReactNode; speed?: number; className?: string; style?: React.CSSProperties }} props
+ * @returns {JSX.Element} Elemento con parallax vertical
+ */
+function ParallaxLayer({
+  children,
+  speed = 0.3,
+  className,
+  style,
+}: {
+  children: React.ReactNode;
+  speed?: number;
+  className?: string;
+  style?: React.CSSProperties;
+}): React.JSX.Element {
+  const reduceMotion = useReducedMotion();
+  const ref = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ['start end', 'end start'],
+  });
+  const y = useTransform(scrollYProgress, [0, 1], [speed * 80, speed * -80]);
+
+  if (reduceMotion) {
+    return (
+      <div ref={ref} className={className} style={style}>
+        {children}
+      </div>
+    );
+  }
+
+  return (
+    <div ref={ref} className={className} style={{ ...style, willChange: 'transform' }}>
+      <motion.div style={{ y }}>{children}</motion.div>
+    </div>
+  );
+}
+
 /* ─── Main Page ─── */
 
 /**
@@ -416,20 +457,26 @@ export default function Home(): React.JSX.Element {
     <div className="relative min-h-screen overflow-x-hidden bg-background text-foreground">
       <AnimatePresence>{isLoading ? <LandingPreloader reduceMotion={!!reduceMotion} /> : null}</AnimatePresence>
 
-      {/* Background blobs */}
+      {/* Background blobs — parallax + floating */}
       <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
         <motion.div
           aria-hidden="true"
           className="absolute -top-24 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-primary/10 blur-3xl"
-          animate={reduceMotion ? undefined : { scale: [1, 1.08, 1], x: ['-50%', '-44%', '-50%'] }}
-          transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
+          animate={reduceMotion ? undefined : { scale: [1, 1.1, 1], x: ['-50%', '-42%', '-50%'] }}
+          transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
           style={{ transform: 'translateX(-50%)' }}
         />
         <motion.div
           aria-hidden="true"
-          className="absolute bottom-20 right-[-7rem] h-72 w-72 rounded-full bg-cyan-400/10 blur-3xl"
-          animate={reduceMotion ? undefined : { y: [0, -28, 0], x: [0, -18, 0] }}
-          transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
+          className="absolute bottom-32 right-[-7rem] h-72 w-72 rounded-full bg-cyan-400/10 blur-3xl"
+          animate={reduceMotion ? undefined : { y: [0, -32, 0], x: [0, -22, 0] }}
+          transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <motion.div
+          aria-hidden="true"
+          className="absolute left-[-5rem] top-1/3 h-56 w-56 rounded-full bg-primary/5 blur-3xl"
+          animate={reduceMotion ? undefined : { y: [0, 24, 0], x: [0, 16, 0] }}
+          transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
         />
       </div>
 
@@ -534,45 +581,46 @@ export default function Home(): React.JSX.Element {
             </div>
           </motion.div>
 
-          {/* Hero Image */}
-          <motion.div
-            initial={{ opacity: 0, y: reduceMotion ? 0 : 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={reduceMotion ? { duration: 0 } : { type: 'spring', bounce: 0.3, duration: 1.1, delay: 0.15 }}
-            className="relative"
-          >
+          {/* Hero Image with Parallax */}
+          <ParallaxLayer speed={0.2} className="relative">
             <motion.div
-              className="overflow-hidden rounded-3xl border border-primary/20 bg-card p-2 shadow-xl shadow-primary/10"
-              whileHover={reduceMotion ? undefined : { y: -6 }}
-              transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+              initial={{ opacity: 0, y: reduceMotion ? 0 : 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={reduceMotion ? { duration: 0 } : { type: 'spring', bounce: 0.3, duration: 1.1, delay: 0.15 }}
             >
-              <Image
-                src="/images/Finanzas3.jpeg"
-                width={760}
-                height={620}
-                alt="Dashboard de FinanceMDM"
-                className="h-auto w-full rounded-2xl object-cover"
-                priority
-              />
-            </motion.div>
+              <motion.div
+                className="overflow-hidden rounded-3xl border border-primary/20 bg-card p-2 shadow-xl shadow-primary/10"
+                whileHover={reduceMotion ? undefined : { y: -8, scale: 1.015 }}
+                transition={{ type: 'spring', stiffness: 200, damping: 12 }}
+              >
+                <Image
+                  src="/images/Finanzas3.jpeg"
+                  width={760}
+                  height={620}
+                  alt="Dashboard de FinanceMDM"
+                  className="h-auto w-full rounded-2xl object-cover transition-transform duration-700 group-hover:scale-105"
+                  priority
+                />
+              </motion.div>
 
-            {/* Floating stat badge */}
-            <motion.div
-              className="absolute -bottom-7 -left-4 rounded-2xl border border-primary/20 bg-background/95 p-4 shadow-lg backdrop-blur md:-left-8"
-              animate={reduceMotion ? undefined : { y: [0, -6, 0] }}
-              transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
-            >
-              <div className="flex items-center gap-3">
-                <div className="rounded-full bg-primary/10 p-2">
-                  <TrendingUp className="h-5 w-5 text-primary" />
+              {/* Floating stat badge */}
+              <motion.div
+                className="absolute -bottom-7 -left-4 rounded-2xl border border-primary/20 bg-background/95 p-4 shadow-lg backdrop-blur md:-left-8"
+                animate={reduceMotion ? undefined : { y: [0, -8, 0] }}
+                transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="rounded-full bg-primary/10 p-2">
+                    <TrendingUp className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground font-mono">Crecimiento</p>
+                    <p className="text-xl font-bold font-mono">+127%</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground font-mono">Crecimiento</p>
-                  <p className="text-xl font-bold font-mono">+127%</p>
-                </div>
-              </div>
+              </motion.div>
             </motion.div>
-          </motion.div>
+          </ParallaxLayer>
         </section>
 
         {/* ═══ STATS ═══ */}
@@ -633,20 +681,23 @@ export default function Home(): React.JSX.Element {
                   transition={
                     reduceMotion
                       ? { duration: 0 }
-                      : { type: 'spring', bounce: 0.3, duration: 1, delay: index * 0.06 }
+                      : { type: 'spring', bounce: 0.35, duration: 1.2, delay: index * 0.08 }
                   }
-                  whileHover={reduceMotion ? undefined : { y: -8 }}
-                  transition={{ type: 'spring', stiffness: 250, damping: 14 }}
+                  whileHover={
+                    reduceMotion
+                      ? undefined
+                      : { y: -10, scale: 1.02, transition: { type: 'spring', stiffness: 200, damping: 12 } }
+                  }
                   className="group"
                 >
-                  <Card className="h-full border-border/60 bg-card/80 shadow-md shadow-black/[0.03] transition-colors group-hover:border-primary/25">
+                  <Card className="h-full border-border/60 bg-card/80 shadow-md shadow-black/[0.03] transition-all duration-300 group-hover:border-primary/30 group-hover:shadow-xl group-hover:shadow-primary/5">
                     <CardHeader>
                       <motion.div
-                        className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10"
-                        whileHover={reduceMotion ? undefined : { rotate: -8, scale: 1.08 }}
-                        transition={{ type: 'spring', stiffness: 260, damping: 15 }}
+                        className="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 group-hover:bg-primary/15"
+                        whileHover={reduceMotion ? undefined : { rotate: -10, scale: 1.12 }}
+                        transition={{ type: 'spring', stiffness: 200, damping: 10 }}
                       >
-                        <Icon className="h-6 w-6 text-primary" />
+                        <Icon className="h-6 w-6 text-primary transition-transform duration-300 group-hover:scale-110" />
                       </motion.div>
                       <CardTitle className="text-xl font-mono">{feature.title}</CardTitle>
                     </CardHeader>
@@ -690,18 +741,21 @@ export default function Home(): React.JSX.Element {
               FinanceMDM te permite operar con velocidad y precisión desde cualquier área:
               administración, ventas, inventario y finanzas.
             </p>
-            <motion.div
-              className="overflow-hidden rounded-2xl border border-primary/20 bg-card p-2"
-              whileHover={reduceMotion ? undefined : { scale: 1.01 }}
-            >
-              <Image
-                src="/images/Beneficios.jpg"
-                alt="Dashboard de análisis financiero"
-                width={760}
-                height={560}
-                className="h-auto w-full rounded-xl object-cover"
-              />
-            </motion.div>
+            <ParallaxLayer speed={0.15}>
+              <motion.div
+                className="overflow-hidden rounded-2xl border border-primary/20 bg-card p-2"
+                whileHover={reduceMotion ? undefined : { scale: 1.015 }}
+                transition={{ type: 'spring', stiffness: 200, damping: 12 }}
+              >
+                <Image
+                  src="/images/Beneficios.jpg"
+                  alt="Dashboard de análisis financiero"
+                  width={760}
+                  height={560}
+                  className="h-auto w-full rounded-xl object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+              </motion.div>
+            </ParallaxLayer>
           </motion.div>
 
           <div className="grid gap-4 sm:grid-cols-2">
@@ -719,14 +773,18 @@ export default function Home(): React.JSX.Element {
                       ? { duration: 0 }
                       : { type: 'spring', bounce: 0.3, duration: 1, delay: index * 0.08 }
                   }
-                  whileHover={reduceMotion ? undefined : { y: -6 }}
+                  whileHover={
+                    reduceMotion
+                      ? undefined
+                      : { y: -8, scale: 1.01, transition: { type: 'spring', stiffness: 200, damping: 12 } }
+                  }
                 >
-                  <Card className="h-full border-border/60 bg-card/85 shadow-sm">
+                  <Card className="h-full border-border/60 bg-card/85 shadow-sm transition-all duration-300 group-hover:shadow-lg group-hover:border-primary/25">
                     <CardContent className="space-y-3 p-5">
                       <motion.div
                         className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10"
                         animate={
-                          reduceMotion ? undefined : { y: [0, -4, 0] }
+                          reduceMotion ? undefined : { y: [0, -5, 0] }
                         }
                         transition={{ duration: 2.5 + index * 0.2, repeat: Infinity, ease: 'easeInOut' }}
                       >
@@ -768,9 +826,13 @@ export default function Home(): React.JSX.Element {
                     ? { duration: 0 }
                     : { type: 'spring', bounce: 0.3, duration: 1, delay: index * 0.08 }
                 }
-                whileHover={reduceMotion ? undefined : { y: -6 }}
+                whileHover={
+                  reduceMotion
+                    ? undefined
+                    : { y: -8, scale: 1.015, transition: { type: 'spring', stiffness: 200, damping: 12 } }
+                }
               >
-                <Card className="h-full border-border/60 bg-card/80 shadow-sm">
+                <Card className="h-full border-border/60 bg-card/80 shadow-sm transition-all duration-300 hover:border-primary/25 hover:shadow-lg">
                   <CardContent className="flex flex-col gap-4 p-6">
                     <svg
                       className="h-8 w-8 text-primary/40"
@@ -825,13 +887,17 @@ export default function Home(): React.JSX.Element {
                     ? { duration: 0 }
                     : { type: 'spring', bounce: 0.3, duration: 1, delay: index * 0.08 }
                 }
-                whileHover={reduceMotion ? undefined : { y: -8 }}
+                whileHover={
+                  reduceMotion
+                    ? undefined
+                    : { y: -10, scale: plan.featured ? 1.025 : 1.015, transition: { type: 'spring', stiffness: 200, damping: 12 } }
+                }
               >
                 <Card
-                  className={`h-full border-border/60 bg-card/85 shadow-md ${
+                  className={`h-full border-border/60 bg-card/85 shadow-md transition-all duration-300 ${
                     plan.featured
-                      ? 'border-primary/35 bg-primary/[0.05] shadow-primary/10'
-                      : 'shadow-black/[0.03]'
+                      ? 'border-primary/35 bg-primary/[0.05] shadow-primary/10 hover:shadow-primary/20'
+                      : 'shadow-black/[0.03] hover:shadow-lg hover:border-primary/20'
                   }`}
                 >
                   <CardHeader className="space-y-3">

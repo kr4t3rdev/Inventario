@@ -35,16 +35,20 @@ export const getResumenFinancieroAction = withAction(async (f: { fechaInicio?: s
   const df = bdf(f.fechaInicio || null, f.fechaFin || null), sf = Object.keys(df).length ? { gte: df.gte, lte: df.lte } : {}, af = f.cuentaId ? { cuentaId: f.cuentaId } : {};
   const wf = Object.keys(sf).length ? { fechaReconciliacion: sf } : {};
 
-  const [cuentas, rV, rS, rG, tfs, ajs, iC, pD, mPC] = await Promise.all([
+  const [cuentas, rV, rS, rG, tfs, ajs, iC, pD, mPC, dC] = await Promise.all([
     prisma.cuentaBancaria.findMany({ where: { isActive: true, ...af }, select: { cuentaId: true, nombreBanco: true, numeroCuenta: true, saldo: true, moneda: true, tipoCuenta: true } }),
-    prisma.reconciliacionVenta.findMany({ where: { ...af, ...wf, tipoReconciliacion: { notIn: ['PRESTAMO_CASH_DESEMBOLSO'] } }, select: { monto: true, moneda: true, tipoReconciliacion: true } }),
+    // rV: exclude ALL debt-related tipoReconciliacion — solo ingreso real (ventas, cobros de préstamos)
+    prisma.reconciliacionVenta.findMany({ where: { ...af, ...wf, tipoReconciliacion: { notIn: ['PRESTAMO_CASH_DESEMBOLSO', 'DEUDA_CASH_DESEMBOLSO', 'DEUDA_CASH'] } }, select: { monto: true, moneda: true, tipoReconciliacion: true } }),
     prisma.reconciliacionServicio.findMany({ where: { ...af, ...wf }, select: { monto: true, moneda: true } }),
     prisma.reconciliacionGasto.findMany({ where: { ...af, ...wf }, select: { monto: true, moneda: true, tipoGasto: true } }),
     prisma.transferenciaBancaria.findMany({ where: { ...(Object.keys(sf).length ? { fechaTransferencia: sf } : {}), ...(f.cuentaId ? { OR: [{ cuentaOrigenId: f.cuentaId }, { cuentaDestinoId: f.cuentaId }] } : {}) }, select: { montoOrigen: true, monedaOrigen: true, montoDestino: true, monedaDestino: true } }),
     prisma.ajusteBancario.findMany({ where: { ...af, ...(Object.keys(sf).length ? { createdAt: sf } : {}) }, select: { tipo: true, monto: true, moneda: true } }),
     prisma.inyeccionCapital.findMany({ where: { ...af, ...(Object.keys(sf).length ? { createdAt: sf } : {}) }, select: { montoRecibido: true, moneda: true } }),
     prisma.pagoDeuda.findMany({ where: { ...af, ...(Object.keys(sf).length ? { fechaPago: sf } : {}) }, select: { montoPagado: true, cuentaBancaria: { select: { moneda: true } } } }),
+    // Desembolsos de préstamos (dinero que sale) → egreso
     prisma.reconciliacionVenta.findMany({ where: { ...af, ...wf, tipoReconciliacion: { in: ['PRESTAMO_CASH_DESEMBOLSO'] } }, select: { monto: true, moneda: true, cuentaBancaria: { select: { moneda: true } } } }),
+    // Pagos de deudas cash (dinero que sale para pagar deuda con vendor) → egreso
+    prisma.reconciliacionVenta.findMany({ where: { ...af, ...wf, tipoReconciliacion: { in: ['DEUDA_CASH'] } }, select: { monto: true, moneda: true } }),
   ]);
 
   const sumBy = (items: any[], key: string, val: string) => items.reduce((acc: any, i: any) => { const m = i[key] || 'CUP'; acc[m] = (acc[m] || 0) + Number(i[val]); return acc; }, {} as Record<string, number>);
@@ -54,16 +58,16 @@ export const getResumenFinancieroAction = withAction(async (f: { fechaInicio?: s
   const iV = sumBy(rV, 'moneda', 'monto'), iS = sumBy(rS, 'moneda', 'monto'), iI = sumBy(iC, 'moneda', 'montoRecibido');
   const eG = sumBy(rG, 'moneda', 'monto'), eA = ajs.filter((a: any) => a.tipo === 'egreso').reduce((acc: any, a: any) => { const m = a.moneda || 'CUP'; acc[m] = (acc[m] || 0) + Number(a.monto); return acc; }, {} as Record<string, number>);
   const iA = ajs.filter((a: any) => a.tipo === 'ingreso').reduce((acc: any, a: any) => { const m = a.moneda || 'CUP'; acc[m] = (acc[m] || 0) + Number(a.monto); return acc; }, {} as Record<string, number>);
-  const ePD = sPD(pD), ePC = sPC(mPC);
+  const ePD = sPD(pD), ePC = sPC(mPC), eDC = sumBy(dC, 'moneda', 'monto');
 
-  const todas = new Set([...Object.keys(cuentas.reduce((acc: any, c: any) => { acc[c.moneda || 'CUP'] = 0; return acc; }, {} as Record<string, number>)), ...Object.keys(iV), ...Object.keys(iS), ...Object.keys(iI), ...Object.keys(eG), ...Object.keys(ePD), ...Object.keys(ePC), ...Object.keys(eA), ...Object.keys(iA)]);
+  const todas = new Set([...Object.keys(cuentas.reduce((acc: any, c: any) => { acc[c.moneda || 'CUP'] = 0; return acc; }, {} as Record<string, number>)), ...Object.keys(iV), ...Object.keys(iS), ...Object.keys(iI), ...Object.keys(eG), ...Object.keys(ePD), ...Object.keys(ePC), ...Object.keys(eDC), ...Object.keys(eA), ...Object.keys(iA)]);
 
   const resumenPorMoneda = Array.from(todas).map((m: string) => ({
     moneda: m, saldoActual: cuentas.filter((c: any) => (c.moneda || 'CUP') === m).reduce((s: number, c: any) => s + Number(c.saldo || 0), 0),
     totalIngresos: (iV[m]||0) + (iS[m]||0) + (iA[m]||0) + (iI[m]||0),
-    totalEgresos: (eG[m]||0) + (eA[m]||0) + (ePD[m]||0) + (ePC[m]||0),
-    flujoNeto: ((iV[m]||0)+(iS[m]||0)+(iA[m]||0)+(iI[m]||0)) - ((eG[m]||0)+(eA[m]||0)+(ePD[m]||0)+(ePC[m]||0)),
-    desglose: { ingresos: { ventas: iV[m]||0, servicios: iS[m]||0, ajustes: iA[m]||0, inyecciones: iI[m]||0 }, egresos: { gastos: eG[m]||0, ajustes: eA[m]||0, pagosDeuda: ePD[m]||0, prestamosCash: ePC[m]||0 } }
+    totalEgresos: (eG[m]||0) + (eA[m]||0) + (ePD[m]||0) + (ePC[m]||0) + (eDC[m]||0),
+    flujoNeto: ((iV[m]||0)+(iS[m]||0)+(iA[m]||0)+(iI[m]||0)) - ((eG[m]||0)+(eA[m]||0)+(ePD[m]||0)+(ePC[m]||0)+(eDC[m]||0)),
+    desglose: { ingresos: { ventas: iV[m]||0, servicios: iS[m]||0, ajustes: iA[m]||0, inyecciones: iI[m]||0 }, egresos: { gastos: eG[m]||0, ajustes: eA[m]||0, pagosDeuda: ePD[m]||0, prestamosCash: ePC[m]||0, deudasCash: eDC[m]||0 } }
   }));
 
   return {
