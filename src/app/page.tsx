@@ -283,11 +283,13 @@ function AnimatedCounter({
   suffix = '',
   prefix = '',
   className = '',
+  reduceMotion = false,
 }: {
   value: number;
   suffix?: string;
   prefix?: string;
   className?: string;
+  reduceMotion?: boolean;
 }): React.JSX.Element {
   const ref = useRef<HTMLSpanElement>(null);
   const isInView = useInView(ref, { once: true, margin: '-100px' });
@@ -295,12 +297,19 @@ function AnimatedCounter({
   const display = useTransform(spring, (current) => `${prefix}${Math.round(current).toLocaleString()}${suffix}`);
 
   useEffect(() => {
-    if (isInView) {
+    if (reduceMotion) {
+      spring.set(value);
+      spring.stop();
+    } else if (isInView) {
       spring.set(value);
     }
-  }, [isInView, spring, value]);
+  }, [isInView, spring, value, reduceMotion]);
 
-  return <span ref={ref} className={className}>{display}</span>;
+  return (
+    <motion.span ref={ref} className={className}>
+      {display}
+    </motion.span>
+  );
 }
 
 /* ─── Preloader ─── */
@@ -588,7 +597,7 @@ export default function Home(): React.JSX.Element {
                 className="group rounded-2xl border border-border/60 bg-card/50 p-5 text-center transition-colors hover:border-primary/30"
               >
                 <p className="text-4xl font-bold tracking-tight text-primary sm:text-5xl font-mono">
-                  <AnimatedCounter value={stat.value} suffix={stat.suffix} />
+                  <AnimatedCounter value={stat.value} suffix={stat.suffix} reduceMotion={!!reduceMotion} />
                 </p>
                 <p className="mt-2 text-sm text-muted-foreground">{stat.label}</p>
               </motion.div>
