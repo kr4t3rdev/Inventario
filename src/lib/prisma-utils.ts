@@ -20,6 +20,10 @@ export function serializePrismaData<T>(data: T): T {
     return Number(data) as unknown as T;
   }
 
+  if (data instanceof Date) {
+    return data.toISOString() as unknown as T;
+  }
+
   if (Array.isArray(data)) {
     return data.map(serializePrismaData) as unknown as T;
   }

@@ -44,9 +44,9 @@ interface FacturasContentProps {
 }
 
 const formatDate = (value?: string) => {
-  if (!value) return "-"
+  if (!value || typeof value !== 'string') return "-"
   const parsed = new Date(value)
-  if (Number.isNaN(parsed.getTime())) return value
+  if (Number.isNaN(parsed.getTime())) return "-"
   return new Intl.DateTimeFormat("es-ES", { dateStyle: "medium", timeStyle: "short" }).format(parsed)
 }
 
