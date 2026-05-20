@@ -156,12 +156,6 @@ export function AttendanceHistoryView() {
     } finally {
       setLoading(false);
     }
-    } catch (error) {
-      console.error("Error actualizando asistencia:", error);
-      toast.error("Error interno del servidor");
-    } finally {
-      setLoading(false);
-    }
   };
 
   const exportToCSV = () => {

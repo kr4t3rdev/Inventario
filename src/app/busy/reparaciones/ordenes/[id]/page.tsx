@@ -351,12 +351,12 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
   const handleUploadPhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return
     
-    isUploading.current = true)
+    isUploading.current = true
     const formData = new FormData()
     formData.append('file', e.target.files[0])
 
-      try {
-      const token = sessionStorage.getItem('token';
+    try {
+      const token = sessionStorage.getItem('token')
       const res = await fetch('/api/upload', {
         method: 'POST',
         headers: token ? { Authorization: `Bearer ${token}` } : {},
@@ -1410,11 +1410,11 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
                                     const data = await res.json()
                                     const rate = Number(data?.rate) || 1
                                     setExchangeRate(rate)
-                                    customTasa.current = rate)
+                                    customTasa.current = rate
                                   }
                                 } catch {
                                   // Si falla, usar 1 como default
-                                  customTasa.current = 1)
+                                  customTasa.current = 1
                                 }
                               }
                               loadExchangeRate()
@@ -1508,5 +1508,5 @@ export default function OrdenDetail({ params }: { params: Promise<{ id: string }
       
       
     </motion.div>
-  
+  )
 }

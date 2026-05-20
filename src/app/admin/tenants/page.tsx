@@ -16,7 +16,7 @@ export default function TenantsPage() {
   const system = useRef<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const refetch = () => { getAdminTenantsAction().then(r => { if(r.success) setTenants(r.data??[]) }) }
-  useEffect(() => { setIsLoading(true); getAdminTenantsAction().then(r => { if(r.success) setTenants(r.data??[]) }); getAdminSystemHealthAction().then(r => { if(r.success) system.current = r.data) }); setIsLoading(false) }, [])
+  useEffect(() => { setIsLoading(true); getAdminTenantsAction().then(r => { if(r.success) setTenants(r.data??[]) }); getAdminSystemHealthAction().then(r => { if(r.success) system.current = r.data }); setIsLoading(false) }, [])
 
   const safeTenants = tenants ?? []
 

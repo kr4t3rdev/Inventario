@@ -2,13 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import fs from 'fs'
 import path from 'path'
 import formidable from 'formidable'
-
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-}
-
 import { Readable } from 'stream'
 
 export async function POST(req: NextRequest): Promise<NextResponse> {
