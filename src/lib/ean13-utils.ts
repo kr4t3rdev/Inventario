@@ -26,9 +26,7 @@ export interface SurtidoLookupClient {
     findMany: (args: {
       where: {
         tenantId: string
-        idSeccionCodigo: string
-        especificoCodigo: string
-        proveedorCodigo?: string
+        proveedorCodigo: string
       }
       select: {
         surtidoCodigo: true
@@ -203,46 +201,34 @@ export function ValidateAssembledCode(code: unknown): boolean {
 }
 
 /**
- * @description Encuentra el siguiente número de surtido disponible para un par section/specific,
- * dentro de un tenant y opcionalmente por proveedor.
- * Busca en la base de datos todos los productos del mismo tenant con la misma sección y específico,
- * encuentra el máximo surtido existente, y retorna el siguiente (incrementado en 1).
+ * @description Encuentra el siguiente número de surtido disponible para un proveedor.
+ * El consecutivo es por proveedor: cuando cambia el código de proveedor,
+ * el surtido arranca de nuevo en 0000.
+ * Busca todos los productos del mismo tenant y proveedor, encuentra el máximo
+ * surtido existente, y retorna el siguiente (incrementado en 1).
  *
  * @param prismaClient - Cliente de Prisma para consultar productos
  * @param tenantId - ID del tenant para filtrar por inquilino
- * @param sectionCode - Código de sección (2 dígitos)
- * @param specificCode - Código específico (4 dígitos)
- * @param proveedorCodigo - Código de proveedor opcional (2 dígitos) para surtido independiente por proveedor
+ * @param proveedorCodigo - Código de proveedor (2 dígitos) — el consecutivo es por proveedor
  * @returns Promise que resuelve al siguiente número de surtido disponible (4 dígitos con padding)
  * @throws Error si se alcanza el máximo de surtido (9999)
  *
  * @example
- * FindNextAvailableSurtido(prisma, 'tenant-1', '14', '0285') → '0000' (si no existen productos)
- * FindNextAvailableSurtido(prisma, 'tenant-1', '14', '0285') → '0002' (si existen 0000 y 0001)
+ * FindNextAvailableSurtido(prisma, 'tenant-1', '01') → '0000' (primer producto del proveedor 01)
+ * FindNextAvailableSurtido(prisma, 'tenant-1', '01') → '0002' (tercer producto del proveedor 01)
+ * FindNextAvailableSurtido(prisma, 'tenant-1', '02') → '0000' (proveedor diferente, arranca de nuevo)
  */
 export async function FindNextAvailableSurtido(
   prismaClient: SurtidoLookupClient,
   tenantId: string,
-  sectionCode: string,
-  specificCode: string,
-  proveedorCodigo?: string
+  proveedorCodigo: string
 ): Promise<string> {
-  // Validar inputs
-  if (!/^\d{1,2}$/.test(sectionCode)) {
-    throw new Error('Código de sección inválido')
-  }
-  if (!/^\d{1,4}$/.test(specificCode)) {
-    throw new Error('Código específico inválido')
-  }
-
   try {
-    // Buscar todos los productos del tenant con esta sección/específico
+    // Buscar todos los productos del tenant para este proveedor
     const existingProducts = await prismaClient.producto.findMany({
       where: {
         tenantId,
-        idSeccionCodigo: sectionCode.padStart(2, '0'),
-        especificoCodigo: specificCode.padStart(4, '0'),
-        ...(proveedorCodigo ? { proveedorCodigo } : {}),
+        proveedorCodigo,
       },
       select: {
         surtidoCodigo: true,
@@ -265,7 +251,7 @@ export async function FindNextAvailableSurtido(
     // Validar no desbordamiento
     if (nextSurtido > 9999) {
       throw new Error(
-        `Desbordamiento de surtido: no hay más variantes disponibles para sección ${sectionCode}/específico ${specificCode} (máximo: 9999)`
+        `Desbordamiento de surtido: no hay más variantes disponibles para el proveedor ${proveedorCodigo} (máximo: 9999)`
       )
     }
 

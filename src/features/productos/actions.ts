@@ -207,8 +207,6 @@ export const createProductoAction = withAction(async (input: ProductoInput, user
       const surtido = await FindNextAvailableSurtido(
         tx,
         tenantId,
-        resolvedSegments.idSeccionCodigo,
-        resolvedSegments.especificoCodigo,
         proveedorCodigo
       );
 
