@@ -40,6 +40,18 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MarqueeText } from '@/components/ui/marquee-text';
+import {
+  NextjsIcon,
+  ReactIcon,
+  TypeScriptIcon,
+  TailwindIcon,
+  PrismaIcon,
+  PostgresIcon,
+  RadixIcon,
+  ZodIcon,
+  FramerIcon,
+  VitestIcon,
+} from '@/components/ui/icons/tech';
 import { WordReveal } from '@/components/ui/word-reveal';
 import { ThemeToggle } from '@/components/theme-toggle';
 
@@ -417,100 +429,6 @@ function ParallaxLayer({
     <div ref={ref} className={className} style={{ ...style, willChange: 'transform' }}>
       <motion.div style={{ y }}>{children}</motion.div>
     </div>
-  );
-}
-
-/* ─── Tech Stack SVG Icons ─── */
-
-function NextjsIcon(): React.JSX.Element {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="2" y="2" width="20" height="20" rx="4" className="fill-foreground" />
-      <text x="12" y="16" textAnchor="middle" className="fill-background text-[13px] font-[700]" fontFamily="system-ui">N</text>
-    </svg>
-  );
-}
-
-function ReactIcon(): React.JSX.Element {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="12" cy="12" r="2.5" className="fill-cyan-500" />
-      <ellipse cx="12" cy="12" rx="9" ry="3.5" className="stroke-cyan-500" strokeWidth="1.5" transform="rotate(0 12 12)" fill="none" />
-      <ellipse cx="12" cy="12" rx="9" ry="3.5" className="stroke-cyan-500" strokeWidth="1.5" transform="rotate(60 12 12)" fill="none" />
-      <ellipse cx="12" cy="12" rx="9" ry="3.5" className="stroke-cyan-500" strokeWidth="1.5" transform="rotate(120 12 12)" fill="none" />
-    </svg>
-  );
-}
-
-function TypeScriptIcon(): React.JSX.Element {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="2" y="2" width="20" height="20" rx="4" className="fill-[#3178C6]" />
-      <text x="12" y="16" textAnchor="middle" className="fill-white text-[11px] font-[700]" fontFamily="system-ui">TS</text>
-    </svg>
-  );
-}
-
-function TailwindIcon(): React.JSX.Element {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="2" y="2" width="20" height="20" rx="4" className="fill-[#06B6D4]" />
-      <text x="12" y="15" textAnchor="middle" className="fill-white text-[11px] font-[700]" fontFamily="system-ui">TW</text>
-    </svg>
-  );
-}
-
-function PrismaIcon(): React.JSX.Element {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="2" y="2" width="20" height="20" rx="4" className="fill-[#2D3748]" />
-      <text x="12" y="16" textAnchor="middle" className="fill-white text-[13px] font-[700]" fontFamily="system-ui">P</text>
-    </svg>
-  );
-}
-
-function PostgresIcon(): React.JSX.Element {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="2" y="2" width="20" height="20" rx="4" className="fill-[#336791]" />
-      <text x="12" y="15" textAnchor="middle" className="fill-white text-[10px] font-[700]" fontFamily="system-ui">PG</text>
-    </svg>
-  );
-}
-
-function RadixIcon(): React.JSX.Element {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="2" y="2" width="20" height="20" rx="4" className="fill-[#8B5CF6]" />
-      <text x="12" y="16" textAnchor="middle" className="fill-white text-[13px] font-[700]" fontFamily="system-ui">R</text>
-    </svg>
-  );
-}
-
-function ZodIcon(): React.JSX.Element {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="2" y="2" width="20" height="20" rx="4" className="fill-[#3069FF]" />
-      <text x="12" y="16" textAnchor="middle" className="fill-white text-[13px] font-[700]" fontFamily="system-ui">Z</text>
-    </svg>
-  );
-}
-
-function FramerIcon(): React.JSX.Element {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="2" y="2" width="20" height="20" rx="4" className="fill-[#DB2777]" />
-      <text x="12" y="15" textAnchor="middle" className="fill-white text-[11px] font-[700]" fontFamily="system-ui">FM</text>
-    </svg>
-  );
-}
-
-function VitestIcon(): React.JSX.Element {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="2" y="2" width="20" height="20" rx="4" className="fill-[#10B981]" />
-      <text x="12" y="16" textAnchor="middle" className="fill-white text-[13px] font-[700]" fontFamily="system-ui">V</text>
-    </svg>
   );
 }
 
