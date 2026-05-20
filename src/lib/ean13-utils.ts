@@ -25,8 +25,10 @@ export interface SurtidoLookupClient {
   producto: {
     findMany: (args: {
       where: {
+        tenantId: string
         idSeccionCodigo: string
         especificoCodigo: string
+        proveedorCodigo?: string
       }
       select: {
         surtidoCodigo: true
@@ -201,25 +203,29 @@ export function ValidateAssembledCode(code: unknown): boolean {
 }
 
 /**
- * @description Encuentra el siguiente número de surtido disponible para un par section/specific.
- * Busca en la base de datos todos los productos con la misma sección y específico,
+ * @description Encuentra el siguiente número de surtido disponible para un par section/specific,
+ * dentro de un tenant y opcionalmente por proveedor.
+ * Busca en la base de datos todos los productos del mismo tenant con la misma sección y específico,
  * encuentra el máximo surtido existente, y retorna el siguiente (incrementado en 1).
- * Respeта soft-deletes (busca solo WHERE deletedAt IS NULL).
  *
  * @param prismaClient - Cliente de Prisma para consultar productos
+ * @param tenantId - ID del tenant para filtrar por inquilino
  * @param sectionCode - Código de sección (2 dígitos)
  * @param specificCode - Código específico (4 dígitos)
+ * @param proveedorCodigo - Código de proveedor opcional (2 dígitos) para surtido independiente por proveedor
  * @returns Promise que resuelve al siguiente número de surtido disponible (4 dígitos con padding)
  * @throws Error si se alcanza el máximo de surtido (9999)
  *
  * @example
- * FindNextAvailableSurtido(prisma, '14', '0285') → '0000' (si no existen productos)
- * FindNextAvailableSurtido(prisma, '14', '0285') → '0002' (si existen 0000 y 0001)
+ * FindNextAvailableSurtido(prisma, 'tenant-1', '14', '0285') → '0000' (si no existen productos)
+ * FindNextAvailableSurtido(prisma, 'tenant-1', '14', '0285') → '0002' (si existen 0000 y 0001)
  */
 export async function FindNextAvailableSurtido(
   prismaClient: SurtidoLookupClient,
+  tenantId: string,
   sectionCode: string,
-  specificCode: string
+  specificCode: string,
+  proveedorCodigo?: string
 ): Promise<string> {
   // Validar inputs
   if (!/^\d{1,2}$/.test(sectionCode)) {
@@ -230,11 +236,13 @@ export async function FindNextAvailableSurtido(
   }
 
   try {
-    // Buscar todos los productos con esta sección/específico
+    // Buscar todos los productos del tenant con esta sección/específico
     const existingProducts = await prismaClient.producto.findMany({
       where: {
+        tenantId,
         idSeccionCodigo: sectionCode.padStart(2, '0'),
         especificoCodigo: specificCode.padStart(4, '0'),
+        ...(proveedorCodigo ? { proveedorCodigo } : {}),
       },
       select: {
         surtidoCodigo: true,

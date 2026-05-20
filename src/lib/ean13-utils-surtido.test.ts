@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { FindNextAvailableSurtido } from './ean13-utils'
 
+const TEST_TENANT_ID = 'tenant-test-1'
+
 // Mock Prisma
 vi.mock('@prisma/client', () => {
   const mockPrismaClient = {
@@ -32,7 +34,7 @@ describe('FindNextAvailableSurtido()', () => {
     // Mock: no existing products
     mockPrisma.producto.findMany.mockResolvedValue([])
 
-    const result = await FindNextAvailableSurtido(mockPrisma, '14', '0285')
+    const result = await FindNextAvailableSurtido(mockPrisma, TEST_TENANT_ID, '14', '0285')
     expect(result).toBe('0000')
   })
 
@@ -43,7 +45,7 @@ describe('FindNextAvailableSurtido()', () => {
       { surtidoCodigo: '0001' },
     ])
 
-    const result = await FindNextAvailableSurtido(mockPrisma, '14', '0285')
+    const result = await FindNextAvailableSurtido(mockPrisma, TEST_TENANT_ID, '14', '0285')
     expect(result).toBe('0002')
   })
 
@@ -55,7 +57,7 @@ describe('FindNextAvailableSurtido()', () => {
     ])
 
     // Should find max (0005) and increment to 0006
-    const result = await FindNextAvailableSurtido(mockPrisma, '14', '0285')
+    const result = await FindNextAvailableSurtido(mockPrisma, TEST_TENANT_ID, '14', '0285')
     expect(result).toBe('0006')
   })
 
@@ -66,8 +68,22 @@ describe('FindNextAvailableSurtido()', () => {
     )
     mockPrisma.producto.findMany.mockResolvedValue(existing)
 
-    const result = await FindNextAvailableSurtido(mockPrisma, '14', '0285')
+    const result = await FindNextAvailableSurtido(mockPrisma, TEST_TENANT_ID, '14', '0285')
     expect(result).toBe('0100')
+  })
+
+  it('should filter by tenantId', async () => {
+    mockPrisma.producto.findMany.mockResolvedValue([])
+
+    await FindNextAvailableSurtido(mockPrisma, TEST_TENANT_ID, '14', '0285')
+
+    expect(mockPrisma.producto.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          tenantId: TEST_TENANT_ID,
+        }),
+      })
+    )
   })
 
   it('should not depend on deletedAt because Producto has no soft delete field', async () => {
@@ -76,13 +92,14 @@ describe('FindNextAvailableSurtido()', () => {
       { surtidoCodigo: '0003' },
     ])
 
-    const result = await FindNextAvailableSurtido(mockPrisma, '14', '0285')
+    const result = await FindNextAvailableSurtido(mockPrisma, TEST_TENANT_ID, '14', '0285')
     expect(result).toBe('0004')
 
-    // Verify the query only uses fields present in the current Producto schema.
+    // Verify the query scopes by tenant and section/specific
     expect(mockPrisma.producto.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
+          tenantId: TEST_TENANT_ID,
           idSeccionCodigo: '14',
           especificoCodigo: '0285',
         }),
@@ -105,7 +122,7 @@ describe('FindNextAvailableSurtido()', () => {
     ])
 
     await expect(() =>
-      FindNextAvailableSurtido(mockPrisma, '14', '0285')
+      FindNextAvailableSurtido(mockPrisma, TEST_TENANT_ID, '14', '0285')
     ).rejects.toThrow(/desbordamiento|overflow/i)
   })
 
@@ -118,19 +135,20 @@ describe('FindNextAvailableSurtido()', () => {
     ])
 
     // Should ignore invalid and find max valid = 0003, return 0004
-    const result = await FindNextAvailableSurtido(mockPrisma, '14', '0285')
+    const result = await FindNextAvailableSurtido(mockPrisma, TEST_TENANT_ID, '14', '0285')
     expect(result).toBe('0004')
   })
 
-  it('should query for the specific section/specific pair', async () => {
+  it('should query for tenant, section and specific', async () => {
     mockPrisma.producto.findMany.mockResolvedValue([])
 
-    await FindNextAvailableSurtido(mockPrisma, '14', '0285')
+    await FindNextAvailableSurtido(mockPrisma, TEST_TENANT_ID, '14', '0285')
 
-    // Verify it queries for the correct section + specific
+    // Verify it queries for the correct tenant + section + specific
     expect(mockPrisma.producto.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: expect.objectContaining({
+          tenantId: TEST_TENANT_ID,
           idSeccionCodigo: '14',
           especificoCodigo: '0285',
         }),
@@ -138,21 +156,57 @@ describe('FindNextAvailableSurtido()', () => {
     )
   })
 
-  it('should return different values for different section/specific pairs', async () => {
+  it('should return different values for different section/specific pairs within same tenant', async () => {
     // First pair: section 14, specific 0285
     mockPrisma.producto.findMany.mockResolvedValueOnce([
       { surtidoCodigo: '0001' },
     ])
-    const result1 = await FindNextAvailableSurtido(mockPrisma, '14', '0285')
+    const result1 = await FindNextAvailableSurtido(mockPrisma, TEST_TENANT_ID, '14', '0285')
 
     // Second pair: section 15, specific 0301
     mockPrisma.producto.findMany.mockResolvedValueOnce([
       { surtidoCodigo: '0001' },
       { surtidoCodigo: '0002' },
     ])
-    const result2 = await FindNextAvailableSurtido(mockPrisma, '15', '0301')
+    const result2 = await FindNextAvailableSurtido(mockPrisma, TEST_TENANT_ID, '15', '0301')
 
     expect(result1).toBe('0002')
     expect(result2).toBe('0003')
+  })
+
+  it('should return independent surtidos for different tenants with same section/specific', async () => {
+    // Tenant A has 3 products (surtidos 0000, 0001, 0002)
+    mockPrisma.producto.findMany.mockResolvedValueOnce([
+      { surtidoCodigo: '0000' },
+      { surtidoCodigo: '0001' },
+      { surtidoCodigo: '0002' },
+    ])
+    const resultA = await FindNextAvailableSurtido(mockPrisma, 'tenant-a', '14', '0285')
+
+    // Tenant B has no products yet
+    mockPrisma.producto.findMany.mockResolvedValueOnce([])
+    const resultB = await FindNextAvailableSurtido(mockPrisma, 'tenant-b', '14', '0285')
+
+    expect(resultA).toBe('0003')
+    expect(resultB).toBe('0000')
+  })
+
+  it('should filter by proveedorCodigo when provided', async () => {
+    mockPrisma.producto.findMany.mockResolvedValue([
+      { surtidoCodigo: '0000' },
+    ])
+
+    const result = await FindNextAvailableSurtido(mockPrisma, TEST_TENANT_ID, '14', '0285', '01')
+
+    expect(result).toBe('0001')
+
+    // Verify it queries with proveedorCodigo
+    expect(mockPrisma.producto.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          proveedorCodigo: '01',
+        }),
+      })
+    )
   })
 })

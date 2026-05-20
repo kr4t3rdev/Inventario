@@ -206,8 +206,10 @@ export const createProductoAction = withAction(async (input: ProductoInput, user
     const resultado = await prisma.$transaction(async (tx) => {
       const surtido = await FindNextAvailableSurtido(
         tx,
+        tenantId,
         resolvedSegments.idSeccionCodigo,
-        resolvedSegments.especificoCodigo
+        resolvedSegments.especificoCodigo,
+        proveedorCodigo
       );
 
       const generatedCode = await generateProductCodeWithRetry(
