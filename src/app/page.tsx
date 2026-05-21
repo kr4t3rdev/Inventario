@@ -51,6 +51,8 @@ import {
   ZodIcon,
   FramerIcon,
   VitestIcon,
+  AwsIcon,
+  OpenaiIcon,
 } from '@/components/ui/icons/tech';
 import { WordReveal } from '@/components/ui/word-reveal';
 import { ThemeToggle } from '@/components/theme-toggle';
@@ -792,6 +794,8 @@ export default function Home(): React.JSX.Element {
             { icon: <ZodIcon /> },
             { icon: <FramerIcon /> },
             { icon: <VitestIcon /> },
+            { icon: <AwsIcon /> },
+            { icon: <OpenaiIcon /> },
           ]}
           direction="right"
         />

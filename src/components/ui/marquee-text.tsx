@@ -43,10 +43,10 @@ export function MarqueeText({
 
     content = (
       <span
-        className={`inline-flex items-center gap-1 ${
+        className={`inline-flex items-center ${
           hasLabels
-            ? 'text-muted-foreground/40 font-mono text-sm tracking-[0.2em] uppercase'
-            : ''
+            ? 'gap-1 text-muted-foreground/40 font-mono text-sm tracking-[0.2em] uppercase'
+            : 'gap-8'
         }`}
       >
         {repeated.map((item, i) => (
