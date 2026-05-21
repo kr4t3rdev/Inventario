@@ -1,6 +1,7 @@
 'use server';
 import { withAction } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
+import { withPeriodValidation } from '@/lib/services/with-period-validation';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 export const getTransferenciasBancariasAction = withAction(async (
@@ -137,72 +138,76 @@ export const validarTransferenciaAction = withAction(async (input: { cuentaOrige
   return { saldoSuficiente, advertencias };
 });
 
-export const createTransferenciaBancariaAction = withAction(async (input: { cuentaOrigenId: string; cuentaDestinoId: string; montoOrigen: number; montoDestino?: number; motivo: string; descripcion?: string; tasaCambio?: number; monedaPrincipal?: string }, user: AuthenticatedUser) => {
-  if (input.cuentaOrigenId === input.cuentaDestinoId) {
-    throw new Error('La cuenta origen y destino deben ser diferentes');
-  }
+export const createTransferenciaBancariaAction = withAction(withPeriodValidation(
+  // Transferencias usan la fecha actual como fecha de negocio
+  () => new Date(),
+  async (input: { cuentaOrigenId: string; cuentaDestinoId: string; montoOrigen: number; montoDestino?: number; motivo: string; descripcion?: string; tasaCambio?: number; monedaPrincipal?: string }, user: AuthenticatedUser) => {
+    if (input.cuentaOrigenId === input.cuentaDestinoId) {
+      throw new Error('La cuenta origen y destino deben ser diferentes');
+    }
 
-  const [cuentaOrigen, cuentaDestino] = await Promise.all([
-    prisma.cuentaBancaria.findUnique({ where: { cuentaId: input.cuentaOrigenId } }),
-    prisma.cuentaBancaria.findUnique({ where: { cuentaId: input.cuentaDestinoId } }),
-  ]);
+    const [cuentaOrigen, cuentaDestino] = await Promise.all([
+      prisma.cuentaBancaria.findUnique({ where: { cuentaId: input.cuentaOrigenId } }),
+      prisma.cuentaBancaria.findUnique({ where: { cuentaId: input.cuentaDestinoId } }),
+    ]);
 
-  if (!cuentaOrigen) throw new Error('Cuenta origen no encontrada');
-  if (!cuentaDestino) throw new Error('Cuenta destino no encontrada');
-  if (!cuentaOrigen.isActive) throw new Error('La cuenta origen no está activa');
-  if (!cuentaDestino.isActive) throw new Error('La cuenta destino no está activa');
-  if (Number(cuentaOrigen.saldo) < input.montoOrigen) throw new Error('Saldo insuficiente en la cuenta origen');
+    if (!cuentaOrigen) throw new Error('Cuenta origen no encontrada');
+    if (!cuentaDestino) throw new Error('Cuenta destino no encontrada');
+    if (!cuentaOrigen.isActive) throw new Error('La cuenta origen no está activa');
+    if (!cuentaDestino.isActive) throw new Error('La cuenta destino no está activa');
+    if (Number(cuentaOrigen.saldo) < input.montoOrigen) throw new Error('Saldo insuficiente en la cuenta origen');
 
-  let montoDestino = input.montoDestino || input.montoOrigen;
-  let tasaCambioFinal = input.tasaCambio;
+    let montoDestino = input.montoDestino || input.montoOrigen;
+    let tasaCambioFinal = input.tasaCambio;
 
-  if (cuentaOrigen.moneda !== cuentaDestino.moneda || cuentaDestino.moneda !== 'CUP') {
-    if (!input.tasaCambio) throw new Error('Tasa de cambio requerida para transferencias entre diferentes monedas');
-    montoDestino = input.montoOrigen * input.tasaCambio;
-    tasaCambioFinal = input.tasaCambio;
-  }
+    if (cuentaOrigen.moneda !== cuentaDestino.moneda || cuentaDestino.moneda !== 'CUP') {
+      if (!input.tasaCambio) throw new Error('Tasa de cambio requerida para transferencias entre diferentes monedas');
+      montoDestino = input.montoOrigen * input.tasaCambio;
+      tasaCambioFinal = input.tasaCambio;
+    }
 
-  const lastTransferencia = await prisma.transferenciaBancaria.findFirst({
-    orderBy: { numeroComprobante: 'desc' },
-    select: { numeroComprobante: true }
-  });
-
-  let nextNumber = 1;
-  if (lastTransferencia?.numeroComprobante) {
-    const lastNumber = parseInt(lastTransferencia.numeroComprobante.replace(/\D/g, ''));
-    nextNumber = lastNumber + 1;
-  }
-  const numeroComprobante = `TRF-${nextNumber.toString().padStart(6, '0')}`;
-
-  const transferencia = await prisma.$transaction(async (tx: any) => {
-    await tx.cuentaBancaria.update({ where: { cuentaId: input.cuentaOrigenId }, data: { saldo: { decrement: input.montoOrigen } } });
-    await tx.cuentaBancaria.update({ where: { cuentaId: input.cuentaDestinoId }, data: { saldo: { increment: montoDestino } } });
-
-    return tx.transferenciaBancaria.create({
-      data: {
-        numeroComprobante,
-        cuentaOrigenId: input.cuentaOrigenId,
-        cuentaDestinoId: input.cuentaDestinoId,
-        montoOrigen: input.montoOrigen,
-        monedaOrigen: cuentaOrigen.moneda,
-        montoDestino,
-        monedaDestino: cuentaDestino.moneda,
-        tasaCambio: tasaCambioFinal,
-        motivo: input.motivo,
-        descripcion: input.descripcion,
-        comprobanteGenerado: true,
-      } as any,
-      include: { cuentaOrigen: { select: { nombreBanco: true, numeroCuenta: true, moneda: true } }, cuentaDestino: { select: { nombreBanco: true, numeroCuenta: true, moneda: true } } }
+    const lastTransferencia = await prisma.transferenciaBancaria.findFirst({
+      orderBy: { numeroComprobante: 'desc' },
+      select: { numeroComprobante: true }
     });
-  });
 
-  return {
-    transferencia: {
-      ...transferencia,
-      montoOrigen: Number(transferencia.montoOrigen),
-      montoDestino: Number(transferencia.montoDestino),
-      tasaCambio: transferencia.tasaCambio ? Number(transferencia.tasaCambio) : null,
-    },
-    numeroComprobante,
-  };
-});
+    let nextNumber = 1;
+    if (lastTransferencia?.numeroComprobante) {
+      const lastNumber = parseInt(lastTransferencia.numeroComprobante.replace(/\D/g, ''));
+      nextNumber = lastNumber + 1;
+    }
+    const numeroComprobante = `TRF-${nextNumber.toString().padStart(6, '0')}`;
+
+    const transferencia = await prisma.$transaction(async (tx: any) => {
+      await tx.cuentaBancaria.update({ where: { cuentaId: input.cuentaOrigenId }, data: { saldo: { decrement: input.montoOrigen } } });
+      await tx.cuentaBancaria.update({ where: { cuentaId: input.cuentaDestinoId }, data: { saldo: { increment: montoDestino } } });
+
+      return tx.transferenciaBancaria.create({
+        data: {
+          numeroComprobante,
+          cuentaOrigenId: input.cuentaOrigenId,
+          cuentaDestinoId: input.cuentaDestinoId,
+          montoOrigen: input.montoOrigen,
+          monedaOrigen: cuentaOrigen.moneda,
+          montoDestino,
+          monedaDestino: cuentaDestino.moneda,
+          tasaCambio: tasaCambioFinal,
+          motivo: input.motivo,
+          descripcion: input.descripcion,
+          comprobanteGenerado: true,
+        } as any,
+        include: { cuentaOrigen: { select: { nombreBanco: true, numeroCuenta: true, moneda: true } }, cuentaDestino: { select: { nombreBanco: true, numeroCuenta: true, moneda: true } } }
+      });
+    });
+
+    return {
+      transferencia: {
+        ...transferencia,
+        montoOrigen: Number(transferencia.montoOrigen),
+        montoDestino: Number(transferencia.montoDestino),
+        tasaCambio: transferencia.tasaCambio ? Number(transferencia.tasaCambio) : null,
+      },
+      numeroComprobante,
+    };
+  }
+));

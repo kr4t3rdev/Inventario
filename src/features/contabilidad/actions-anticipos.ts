@@ -11,6 +11,7 @@ import { z } from 'zod';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
 import { requireTenant } from '@/lib/services/tenant-scope';
+import { withPeriodValidation } from '@/lib/services/with-period-validation';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 // ─── Schemas ───────────────────────────────────────────────
@@ -82,31 +83,34 @@ export const getAnticipoByIdAction = withAction(async (id: string, user: Authent
   return { anticipo };
 });
 
-export const createAnticipoAction = withAction(async (input: z.infer<typeof createSchema>, user: AuthenticatedUser) => {
-  const parsed = createSchema.parse(input);
-  const tenantId = requireTenant(user);
+export const createAnticipoAction = withAction(withPeriodValidation(
+  (input) => input.fechaAnticipo ? new Date(input.fechaAnticipo) : new Date(),
+  async (input: z.infer<typeof createSchema>, user: AuthenticatedUser) => {
+    const parsed = createSchema.parse(input);
+    const tenantId = requireTenant(user);
 
-  const anticipo = await prisma.anticipo.create({
-    data: {
-      tipo: parsed.tipo,
-      monto: parsed.monto,
-      moneda: parsed.moneda,
-      proveedorId: parsed.proveedorId,
-      clienteId: parsed.clienteId,
-  // @ts-expect-error
-      contratoId: parsed.contratoId,
-      concepto: parsed.concepto,
-      observaciones: parsed.observaciones,
-      fechaAnticipo: parsed.fechaAnticipo ? new Date(parsed.fechaAnticipo) : new Date(),
-      cuentaBancariaId: parsed.cuentaBancariaId,
-      tenantId,
-      estado: 'RESERVADO',
-    },
-  });
+    const anticipo = await prisma.anticipo.create({
+      data: {
+        tipo: parsed.tipo,
+        monto: parsed.monto,
+        moneda: parsed.moneda,
+        proveedorId: parsed.proveedorId,
+        clienteId: parsed.clienteId,
+    // @ts-expect-error
+        contratoId: parsed.contratoId,
+        concepto: parsed.concepto,
+        observaciones: parsed.observaciones,
+        fechaAnticipo: parsed.fechaAnticipo ? new Date(parsed.fechaAnticipo) : new Date(),
+        cuentaBancariaId: parsed.cuentaBancariaId,
+        tenantId,
+        estado: 'RESERVADO',
+      },
+    });
 
-  revalidatePath('/busy/contabilidad/anticipos');
-  return { anticipo };
-});
+    revalidatePath('/busy/contabilidad/anticipos');
+    return { anticipo };
+  }
+));
 
 export const executeAnticipoAction = withAction(async (input: z.infer<typeof executeSchema>, user: AuthenticatedUser) => {
   const parsed = executeSchema.parse(input);

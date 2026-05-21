@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
 import { AuditLogService } from '@/lib/services/audit-log-service';
+import { withPeriodValidation } from '@/lib/services/with-period-validation';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 const createSchema = z.object({
@@ -66,43 +67,47 @@ export const getAjustesByCuentaAction = withAction(async (params: { cuentaId: st
   };
 });
 
-export const createAjusteBancarioAction = withAction(async (input: z.infer<typeof createSchema>, user: AuthenticatedUser) => {
-  const parsed = createSchema.parse(input);
+export const createAjusteBancarioAction = withAction(withPeriodValidation(
+  // Ajustes bancarios usan la fecha actual como fecha de negocio
+  () => new Date(),
+  async (input: z.infer<typeof createSchema>, user: AuthenticatedUser) => {
+    const parsed = createSchema.parse(input);
 
-  const cuenta = await prisma.cuentaBancaria.findUnique({ where: { cuentaId: parsed.cuentaId } });
-  if (!cuenta) throw new ActionError('Cuenta bancaria no encontrada', 'CUENTA_NO_ENCONTRADA');
-  if (!cuenta.isActive) throw new ActionError('La cuenta bancaria está inactiva', 'CUENTA_INACTIVA');
+    const cuenta = await prisma.cuentaBancaria.findUnique({ where: { cuentaId: parsed.cuentaId } });
+    if (!cuenta) throw new ActionError('Cuenta bancaria no encontrada', 'CUENTA_NO_ENCONTRADA');
+    if (!cuenta.isActive) throw new ActionError('La cuenta bancaria está inactiva', 'CUENTA_INACTIVA');
 
-  const montoAjuste = parsed.tipo === 'ingreso' ? parsed.monto : -parsed.monto;
-  const nuevoSaldo = Number(cuenta.saldo) + montoAjuste;
-  const saldoNegativo = nuevoSaldo < 0;
+    const montoAjuste = parsed.tipo === 'ingreso' ? parsed.monto : -parsed.monto;
+    const nuevoSaldo = Number(cuenta.saldo) + montoAjuste;
+    const saldoNegativo = nuevoSaldo < 0;
 
-  const resultado = await prisma.$transaction(async (tx: any) => {
-    const ajuste = await tx.ajusteBancario.create({
-      data: {
-        cuentaId: parsed.cuentaId,
-        tipo: parsed.tipo,
-        monto: parsed.monto,
-        moneda: parsed.moneda,
-        descripcion: parsed.descripcion,
-        motivo: parsed.motivo,
-        realizadoPor: user.userId
-      }
+    const resultado = await prisma.$transaction(async (tx: any) => {
+      const ajuste = await tx.ajusteBancario.create({
+        data: {
+          cuentaId: parsed.cuentaId,
+          tipo: parsed.tipo,
+          monto: parsed.monto,
+          moneda: parsed.moneda,
+          descripcion: parsed.descripcion,
+          motivo: parsed.motivo,
+          realizadoPor: user.userId
+        }
+      });
+
+      await tx.cuentaBancaria.update({
+        where: { cuentaId: parsed.cuentaId },
+        data: { saldo: nuevoSaldo }
+      });
+
+      return ajuste;
     });
 
-    await tx.cuentaBancaria.update({
-      where: { cuentaId: parsed.cuentaId },
-      data: { saldo: nuevoSaldo }
+    await AuditLogService.log({
+      accion: 'CREATE', entidad: 'AJUSTE_BANCARIO', entidadId: resultado.ajusteId, usuarioId: user.userId,
+      detalles: { tipo: parsed.tipo, monto: parsed.monto, moneda: parsed.moneda, cuenta: cuenta.nombreBanco, motivo: parsed.motivo, saldoAnterior: Number(cuenta.saldo), saldoNuevo: nuevoSaldo }
     });
 
-    return ajuste;
-  });
-
-  await AuditLogService.log({
-    accion: 'CREATE', entidad: 'AJUSTE_BANCARIO', entidadId: resultado.ajusteId, usuarioId: user.userId,
-    detalles: { tipo: parsed.tipo, monto: parsed.monto, moneda: parsed.moneda, cuenta: cuenta.nombreBanco, motivo: parsed.motivo, saldoAnterior: Number(cuenta.saldo), saldoNuevo: nuevoSaldo }
-  });
-
-  revalidatePath('/busy/contabilidad/ajustes');
-  return { ajuste: resultado, saldoAnterior: Number(cuenta.saldo), saldoNuevo: nuevoSaldo, advertenciaSaldoNegativo: saldoNegativo, message: saldoNegativo ? 'Ajuste creado exitosamente. ADVERTENCIA: El saldo de la cuenta es negativo.' : 'Ajuste bancario creado exitosamente' };
-});
+    revalidatePath('/busy/contabilidad/ajustes');
+    return { ajuste: resultado, saldoAnterior: Number(cuenta.saldo), saldoNuevo: nuevoSaldo, advertenciaSaldoNegativo: saldoNegativo, message: saldoNegativo ? 'Ajuste creado exitosamente. ADVERTENCIA: El saldo de la cuenta es negativo.' : 'Ajuste bancario creado exitosamente' };
+  }
+));

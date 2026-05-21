@@ -9,6 +9,7 @@ import { prisma } from '@/lib/prisma'
 import { withAction, ActionError } from '@/lib/server-actions'
 import { requireTenant } from '@/lib/services/tenant-scope'
 import { AuditLogService } from '@/lib/services/audit-log-service'
+import { withPeriodValidation } from '@/lib/services/with-period-validation'
 import { calcularSaldoPendientePrestamo, normalizarEstadoPrestamoCash } from '@/lib/utils/prestamo-cash'
 import type { AuthenticatedUser } from '@/lib/auth-middleware'
 
@@ -144,79 +145,83 @@ export const getPrestamoCashHistorialAction = withAction(async (id: string, user
   }
 })
 
-export const createPrestamoCashAction = withAction(async (input: z.infer<typeof createSchema>, user: AuthenticatedUser) => {
-  if (!prestamosCashEnabled()) throw new ActionError('Módulo de préstamos cash deshabilitado', 'DISABLED')
-  const body = createSchema.parse(input)
-  const tenantId = requireTenant(user)
+export const createPrestamoCashAction = withAction(withPeriodValidation(
+  // Usa fecha actual para el desembolso
+  () => new Date(),
+  async (input: z.infer<typeof createSchema>, user: AuthenticatedUser) => {
+    if (!prestamosCashEnabled()) throw new ActionError('Módulo de préstamos cash deshabilitado', 'DISABLED')
+    const body = createSchema.parse(input)
+    const tenantId = requireTenant(user)
 
-  const cuentaOrigen = await prisma.cuentaBancaria.findUnique({
-    where: { cuentaId: body.cuentaBancariaId },
-    select: { cuentaId: true, saldo: true, isActive: true },
-  })
-  if (!cuentaOrigen || !cuentaOrigen.isActive) {
-    throw new ActionError('Cuenta bancaria no encontrada o inactiva', 'VALIDATION_ERROR')
-  }
-  if (cuentaOrigen.saldo < body.montoCapital) {
-    throw new ActionError(`Saldo insuficiente en la cuenta. Disponible: ${cuentaOrigen.saldo}`, 'VALIDATION_ERROR')
-  }
-
-  const tp = (await prisma.tipoPago.findFirst({ where: { nombre: 'Transferencia', isActive: true } }))
-    || (await prisma.tipoPago.findFirst({ where: { nombre: 'Efectivo', isActive: true } }))
-  if (!tp) throw new ActionError('No existe un tipo de pago válido para registrar el desembolso', 'VALIDATION_ERROR')
-
-  const prestamo = await prisma.$transaction(async (tx: any) => {
-    await tx.cuentaBancaria.update({
+    const cuentaOrigen = await prisma.cuentaBancaria.findUnique({
       where: { cuentaId: body.cuentaBancariaId },
-      data: { saldo: { decrement: body.montoCapital } },
+      select: { cuentaId: true, saldo: true, isActive: true },
+    })
+    if (!cuentaOrigen || !cuentaOrigen.isActive) {
+      throw new ActionError('Cuenta bancaria no encontrada o inactiva', 'VALIDATION_ERROR')
+    }
+    if (cuentaOrigen.saldo < body.montoCapital) {
+      throw new ActionError(`Saldo insuficiente en la cuenta. Disponible: ${cuentaOrigen.saldo}`, 'VALIDATION_ERROR')
+    }
+
+    const tp = (await prisma.tipoPago.findFirst({ where: { nombre: 'Transferencia', isActive: true } }))
+      || (await prisma.tipoPago.findFirst({ where: { nombre: 'Efectivo', isActive: true } }))
+    if (!tp) throw new ActionError('No existe un tipo de pago válido para registrar el desembolso', 'VALIDATION_ERROR')
+
+    const prestamo = await prisma.$transaction(async (tx: any) => {
+      await tx.cuentaBancaria.update({
+        where: { cuentaId: body.cuentaBancariaId },
+        data: { saldo: { decrement: body.montoCapital } },
+      })
+
+      const montoDeuda = body.tasaInteres
+        ? Number((body.montoCapital * (1 + body.tasaInteres / 100)).toFixed(2))
+        : body.montoCapital
+
+      const cxc = await tx.cuentaPorCobrar.create({
+        data: {
+          tenantId, clienteId: body.clienteId, montoDeuda, montoPagado: 0,
+          tipoCuenta: 'PRESTAMO_CASH', estado: 'PENDIENTE',
+          fechaVencimiento: body.fechaVencimiento ? new Date(body.fechaVencimiento) : undefined,
+        },
+      })
+
+      await tx.reconciliacionVenta.create({
+        data: {
+          cuentaId: body.cuentaBancariaId, tipoPagoId: tp.tipoId, monto: body.montoCapital,
+          moneda: body.moneda,
+          montoConvertido: body.tasaCambioAlCrear
+            ? body.montoCapital * body.tasaCambioAlCrear : body.montoCapital,
+          tasaCambio: body.tasaCambioAlCrear,
+          fechaReconciliacion: new Date(),
+          observaciones: body.observaciones || `Desembolso de préstamo cash para cliente ${body.clienteId}`,
+          reconciliadoPor: user.userId, prestamoCashId: null,
+          tipoReconciliacion: 'PRESTAMO_CASH_DESEMBOLSO',
+        },
+      })
+
+      return tx.prestamoCash.create({
+        data: {
+          tenantId, clienteId: body.clienteId, cuentaPorCobrarId: cxc.id,
+          montoCapital: body.montoCapital, moneda: body.moneda,
+          tasaInteres: body.tasaInteres, tasaCambioAlCrear: body.tasaCambioAlCrear,
+          fechaVencimiento: body.fechaVencimiento ? new Date(body.fechaVencimiento) : undefined,
+          observaciones: body.observaciones, cuentaBancariaId: body.cuentaBancariaId,
+          createdById: user.userId,
+        },
+        include: { cliente: { select: { clienteId: true, nombre: true } }, cuentaPorCobrar: true },
+      })
     })
 
-    const montoDeuda = body.tasaInteres
-      ? Number((body.montoCapital * (1 + body.tasaInteres / 100)).toFixed(2))
-      : body.montoCapital
-
-    const cxc = await tx.cuentaPorCobrar.create({
-      data: {
-        tenantId, clienteId: body.clienteId, montoDeuda, montoPagado: 0,
-        tipoCuenta: 'PRESTAMO_CASH', estado: 'PENDIENTE',
-        fechaVencimiento: body.fechaVencimiento ? new Date(body.fechaVencimiento) : undefined,
-      },
+    await AuditLogService.log({
+      accion: 'CREATE', entidad: 'PRESTAMO_CASH', entidadId: prestamo.id, usuarioId: user.userId,
+      detalles: { clienteId: body.clienteId, montoCapital: body.montoCapital, moneda: body.moneda },
     })
 
-    await tx.reconciliacionVenta.create({
-      data: {
-        cuentaId: body.cuentaBancariaId, tipoPagoId: tp.tipoId, monto: body.montoCapital,
-        moneda: body.moneda,
-        montoConvertido: body.tasaCambioAlCrear
-          ? body.montoCapital * body.tasaCambioAlCrear : body.montoCapital,
-        tasaCambio: body.tasaCambioAlCrear,
-        fechaReconciliacion: new Date(),
-        observaciones: body.observaciones || `Desembolso de préstamo cash para cliente ${body.clienteId}`,
-        reconciliadoPor: user.userId, prestamoCashId: null,
-        tipoReconciliacion: 'PRESTAMO_CASH_DESEMBOLSO',
-      },
-    })
-
-    return tx.prestamoCash.create({
-      data: {
-        tenantId, clienteId: body.clienteId, cuentaPorCobrarId: cxc.id,
-        montoCapital: body.montoCapital, moneda: body.moneda,
-        tasaInteres: body.tasaInteres, tasaCambioAlCrear: body.tasaCambioAlCrear,
-        fechaVencimiento: body.fechaVencimiento ? new Date(body.fechaVencimiento) : undefined,
-        observaciones: body.observaciones, cuentaBancariaId: body.cuentaBancariaId,
-        createdById: user.userId,
-      },
-      include: { cliente: { select: { clienteId: true, nombre: true } }, cuentaPorCobrar: true },
-    })
-  })
-
-  await AuditLogService.log({
-    accion: 'CREATE', entidad: 'PRESTAMO_CASH', entidadId: prestamo.id, usuarioId: user.userId,
-    detalles: { clienteId: body.clienteId, montoCapital: body.montoCapital, moneda: body.moneda },
-  })
-
-  revalidatePath('/busy/contabilidad/prestamos-cash')
-  return prestamo
-})
+    revalidatePath('/busy/contabilidad/prestamos-cash')
+    return prestamo
+  }
+));
 
 export const updatePrestamoCashAction = withAction(async (
   input: { id: string } & z.infer<typeof updateSchema>,
@@ -247,68 +252,72 @@ export const updatePrestamoCashAction = withAction(async (
   return prestamo
 })
 
-export const registrarPagoPrestamoAction = withAction(async (
-  input: { id: string } & z.infer<typeof pagoSchema>,
-  user: AuthenticatedUser
-) => {
-  if (!prestamosCashEnabled()) throw new ActionError('Módulo de préstamos cash deshabilitado', 'DISABLED')
-  const {
-  // @ts-expect-error
-  id, ...body
-  } = pagoSchema.parse(input)
-  const prestamo = await prisma.prestamoCash.findFirst({
-    where: { id, deletedAt: null },
-    include: { cuentaPorCobrar: true },
-  })
-  if (!prestamo) throw new ActionError('Préstamo no encontrado', 'NOT_FOUND')
-  if (prestamo.estado === 'PAGADO' || prestamo.estado === 'CANCELADO') {
-    throw new ActionError('El préstamo no admite más pagos', 'VALIDATION_ERROR')
-  }
-  const sp = calcularSaldoPendientePrestamo(
-    Number(prestamo.cuentaPorCobrar.montoDeuda),
-    Number(prestamo.cuentaPorCobrar.montoPagado)
-  )
-  if (body.monto > sp) {
-    throw new ActionError(`El monto excede el saldo pendiente de ${sp}`, 'VALIDATION_ERROR')
-  }
-
-  const resultado = await prisma.$transaction(async (tx: any) => {
-    const r = await tx.reconciliacionVenta.create({
-      data: {
-        cuentaId: body.cuentaId, tipoPagoId: body.tipoPagoId, monto: body.monto,
-        moneda: body.moneda || prestamo.moneda,
-        ...(body.tasaCambio != null && { tasaCambio: body.tasaCambio }),
-        ...(body.observaciones != null && { observaciones: body.observaciones }),
-        reconciliadoPor: user.userId, prestamoCashId: prestamo.id,
-        tipoReconciliacion: 'PRESTAMO_CASH',
-      },
+export const registrarPagoPrestamoAction = withAction(withPeriodValidation(
+  // Usa fecha actual para el pago
+  () => new Date(),
+  async (
+    input: { id: string } & z.infer<typeof pagoSchema>,
+    user: AuthenticatedUser
+  ) => {
+    if (!prestamosCashEnabled()) throw new ActionError('Módulo de préstamos cash deshabilitado', 'DISABLED')
+    const {
+    // @ts-expect-error
+    id, ...body
+    } = pagoSchema.parse(input)
+    const prestamo = await prisma.prestamoCash.findFirst({
+      where: { id, deletedAt: null },
+      include: { cuentaPorCobrar: true },
     })
-    await tx.cuentaBancaria.update({
-      where: { cuentaId: body.cuentaId },
-      data: { saldo: { increment: body.monto } },
-    })
-    const nmp = Number((Number(prestamo.cuentaPorCobrar.montoPagado) + body.monto).toFixed(2))
-    const td = Number(prestamo.cuentaPorCobrar.montoDeuda)
-    const ns = calcularSaldoPendientePrestamo(td, nmp)
-    const nec = ns <= 0.01 ? 'PAGADA' : 'PARCIAL'
-    await tx.cuentaPorCobrar.update({
-      where: { id: prestamo.cuentaPorCobrarId },
-      data: { montoPagado: nmp, estado: nec },
-    })
-    if (nec === 'PAGADA') {
-      await tx.prestamoCash.update({ where: { id: prestamo.id }, data: { estado: 'PAGADO' } })
+    if (!prestamo) throw new ActionError('Préstamo no encontrado', 'NOT_FOUND')
+    if (prestamo.estado === 'PAGADO' || prestamo.estado === 'CANCELADO') {
+      throw new ActionError('El préstamo no admite más pagos', 'VALIDATION_ERROR')
     }
-    return r
-  })
+    const sp = calcularSaldoPendientePrestamo(
+      Number(prestamo.cuentaPorCobrar.montoDeuda),
+      Number(prestamo.cuentaPorCobrar.montoPagado)
+    )
+    if (body.monto > sp) {
+      throw new ActionError(`El monto excede el saldo pendiente de ${sp}`, 'VALIDATION_ERROR')
+    }
 
-  await AuditLogService.log({
-    accion: 'CREATE', entidad: 'PAGO_PRESTAMO', entidadId: resultado.reconciliacionId, usuarioId: user.userId,
-    detalles: { prestamoId: prestamo.id, monto: body.monto, moneda: body.moneda || prestamo.moneda },
-  })
+    const resultado = await prisma.$transaction(async (tx: any) => {
+      const r = await tx.reconciliacionVenta.create({
+        data: {
+          cuentaId: body.cuentaId, tipoPagoId: body.tipoPagoId, monto: body.monto,
+          moneda: body.moneda || prestamo.moneda,
+          ...(body.tasaCambio != null && { tasaCambio: body.tasaCambio }),
+          ...(body.observaciones != null && { observaciones: body.observaciones }),
+          reconciliadoPor: user.userId, prestamoCashId: prestamo.id,
+          tipoReconciliacion: 'PRESTAMO_CASH',
+        },
+      })
+      await tx.cuentaBancaria.update({
+        where: { cuentaId: body.cuentaId },
+        data: { saldo: { increment: body.monto } },
+      })
+      const nmp = Number((Number(prestamo.cuentaPorCobrar.montoPagado) + body.monto).toFixed(2))
+      const td = Number(prestamo.cuentaPorCobrar.montoDeuda)
+      const ns = calcularSaldoPendientePrestamo(td, nmp)
+      const nec = ns <= 0.01 ? 'PAGADA' : 'PARCIAL'
+      await tx.cuentaPorCobrar.update({
+        where: { id: prestamo.cuentaPorCobrarId },
+        data: { montoPagado: nmp, estado: nec },
+      })
+      if (nec === 'PAGADA') {
+        await tx.prestamoCash.update({ where: { id: prestamo.id }, data: { estado: 'PAGADO' } })
+      }
+      return r
+    })
 
-  revalidatePath('/busy/contabilidad/prestamos-cash')
-  return { reconciliacion: resultado }
-})
+    await AuditLogService.log({
+      accion: 'CREATE', entidad: 'PAGO_PRESTAMO', entidadId: resultado.reconciliacionId, usuarioId: user.userId,
+      detalles: { prestamoId: prestamo.id, monto: body.monto, moneda: body.moneda || prestamo.moneda },
+    })
+
+    revalidatePath('/busy/contabilidad/prestamos-cash')
+    return { reconciliacion: resultado }
+  }
+));
 
 export const getPrestamosCashStatsAction = withAction(async (_input: void, user: AuthenticatedUser) => {
   if (!prestamosCashEnabled()) throw new ActionError('Módulo de préstamos cash deshabilitado', 'DISABLED')

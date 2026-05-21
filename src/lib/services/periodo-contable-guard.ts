@@ -433,6 +433,8 @@ export function extraerFechaNegocio(input: unknown): Date | null {
     'fechaReconciliacion',
     'fechaTransferencia',
     'fechaPago',
+    'fechaAnticipo',
+    'fechaVencimiento',
   ];
 
   for (const field of fechaFields) {

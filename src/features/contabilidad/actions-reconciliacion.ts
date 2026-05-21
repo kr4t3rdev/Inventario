@@ -8,6 +8,7 @@ import { withAction } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
 import { Prisma } from '@/generated/prisma';
 import { requireTenant } from '@/lib/services/tenant-scope';
+import { withPeriodValidation } from '@/lib/services/with-period-validation';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 // ─── Stats Hub ────────────────────────────────────────────
@@ -217,77 +218,80 @@ export const getHistorialReconciliacionVentasAction = withAction(async (params: 
   };
 });
 
-export const reconciliarVentaAction = withAction(async (input: {
-  ventaId: string; cuentaId: string; tipoPagoId: string; monto: number; moneda?: string;
-  fechaReconciliacion?: string; observaciones?: string;
-}, user: AuthenticatedUser) => {
-  const tenantId = requireTenant(user);
+export const reconciliarVentaAction = withAction(withPeriodValidation(
+  (input) => input.fechaReconciliacion ? new Date(input.fechaReconciliacion) : new Date(),
+  async (input: {
+    ventaId: string; cuentaId: string; tipoPagoId: string; monto: number; moneda?: string;
+    fechaReconciliacion?: string; observaciones?: string;
+  }, user: AuthenticatedUser) => {
+    const tenantId = requireTenant(user);
 
-  const result = await prisma.$transaction(async (tx) => {
-    const reconciliacion = await tx.reconciliacionVenta.create({
-      data: {
-        ventaId: input.ventaId, cuentaId: input.cuentaId, tipoPagoId: input.tipoPagoId,
-        monto: input.monto, moneda: input.moneda||'CUP',
-        fechaReconciliacion: input.fechaReconciliacion ? new Date(input.fechaReconciliacion) : new Date(),
-        observaciones: input.observaciones, tenantId, reconciliadoPor: user.userId,
-      },
-    });
-
-    // Actualizar estado de CuentaPorCobrar asociada
-    // Resolver Venta → Factura para buscar CxC por facturaId correcto
-    const ventaWithFactura = await tx.venta.findUnique({
-      where: { ventaId: input.ventaId },
-      select: { factura: { select: { idFactura: true } } },
-    });
-    const facturaIdReal = ventaWithFactura?.factura?.idFactura;
-    const cuentaPorCobrar = await tx.cuentaPorCobrar.findFirst({
-      where: {
-        OR: [
-          { facturaId: input.ventaId },    // legacy: algunas CxC tienen ventaId en facturaId
-          ...(facturaIdReal ? [{ facturaId: facturaIdReal }] : []), // correcto: Factura.idFactura
-        ],
-        tenantId,
-      },
-      select: { idCC: true, montoDeuda: true, montoPagado: true, estado: true },
-    });
-
-    if (cuentaPorCobrar) {
-      // Sumar todas las reconciliaciones de esta venta para calcular el total pagado
-      const reconciliaciones = await tx.reconciliacionVenta.findMany({
-        where: { ventaId: input.ventaId, tenantId },
-        select: { monto: true, moneda: true, tasaCambio: true },
+    const result = await prisma.$transaction(async (tx) => {
+      const reconciliacion = await tx.reconciliacionVenta.create({
+        data: {
+          ventaId: input.ventaId, cuentaId: input.cuentaId, tipoPagoId: input.tipoPagoId,
+          monto: input.monto, moneda: input.moneda||'CUP',
+          fechaReconciliacion: input.fechaReconciliacion ? new Date(input.fechaReconciliacion) : new Date(),
+          observaciones: input.observaciones, tenantId, reconciliadoPor: user.userId,
+        },
       });
 
-      const totalPagado = reconciliaciones.reduce((sum, rec) => {
-        const tasa = rec.tasaCambio ? Number(rec.tasaCambio) : 1;
-        return sum + Number(rec.monto) * tasa;
-      }, 0);
+      // Actualizar estado de CuentaPorCobrar asociada
+      // Resolver Venta → Factura para buscar CxC por facturaId correcto
+      const ventaWithFactura = await tx.venta.findUnique({
+        where: { ventaId: input.ventaId },
+        select: { factura: { select: { idFactura: true } } },
+      });
+      const facturaIdReal = ventaWithFactura?.factura?.idFactura;
+      const cuentaPorCobrar = await tx.cuentaPorCobrar.findFirst({
+        where: {
+          OR: [
+            { facturaId: input.ventaId },    // legacy: algunas CxC tienen ventaId en facturaId
+            ...(facturaIdReal ? [{ facturaId: facturaIdReal }] : []), // correcto: Factura.idFactura
+          ],
+          tenantId,
+        },
+        select: { idCC: true, montoDeuda: true, montoPagado: true, estado: true },
+      });
 
-      const montoDeuda = Number(cuentaPorCobrar.montoDeuda);
-      const nuevoEstado = totalPagado >= montoDeuda - 0.01
-        ? 'PAGADA'
-        : totalPagado > 0
-          ? 'PARCIAL'
-          : 'PENDIENTE';
-
-      if (nuevoEstado !== cuentaPorCobrar.estado) {
-        await tx.cuentaPorCobrar.updateMany({
-          where: { idCC: cuentaPorCobrar.idCC },
-          data: {
-            estado: nuevoEstado,
-            montoPagado: totalPagado,
-          },
+      if (cuentaPorCobrar) {
+        // Sumar todas las reconciliaciones de esta venta para calcular el total pagado
+        const reconciliaciones = await tx.reconciliacionVenta.findMany({
+          where: { ventaId: input.ventaId, tenantId },
+          select: { monto: true, moneda: true, tasaCambio: true },
         });
+
+        const totalPagado = reconciliaciones.reduce((sum, rec) => {
+          const tasa = rec.tasaCambio ? Number(rec.tasaCambio) : 1;
+          return sum + Number(rec.monto) * tasa;
+        }, 0);
+
+        const montoDeuda = Number(cuentaPorCobrar.montoDeuda);
+        const nuevoEstado = totalPagado >= montoDeuda - 0.01
+          ? 'PAGADA'
+          : totalPagado > 0
+            ? 'PARCIAL'
+            : 'PENDIENTE';
+
+        if (nuevoEstado !== cuentaPorCobrar.estado) {
+          await tx.cuentaPorCobrar.updateMany({
+            where: { idCC: cuentaPorCobrar.idCC },
+            data: {
+              estado: nuevoEstado,
+              montoPagado: totalPagado,
+            },
+          });
+        }
       }
-    }
 
-    return reconciliacion;
-  });
+      return reconciliacion;
+    });
 
-  revalidatePath('/busy/contabilidad/reconciliacion');
-  revalidatePath('/busy/contabilidad/cuentas-por-cobrar');
-  return result;
-});
+    revalidatePath('/busy/contabilidad/reconciliacion');
+    revalidatePath('/busy/contabilidad/cuentas-por-cobrar');
+    return result;
+  }
+));
 
 // ─── Servicios ─────────────────────────────────────────────
 
@@ -350,23 +354,26 @@ export const getHistorialReconciliacionServiciosAction = withAction(async (param
   };
 });
 
-export const reconciliarServicioAction = withAction(async (input: {
-  ventaServicioId: string; cuentaId: string; tipoPagoId: string; monto: number; moneda?: string;
-  fechaReconciliacion?: string; observaciones?: string;
-}, user: AuthenticatedUser) => {
-  const tenantId = requireTenant(user);
-  const reconciliacion = await prisma.reconciliacionServicio.create({
-  // @ts-expect-error
-    data: {
-      ventaServicioId: input.ventaServicioId, cuentaId: input.cuentaId, tipoPagoId: input.tipoPagoId,
-      monto: input.monto, moneda: input.moneda||'CUP',
-      fechaReconciliacion: input.fechaReconciliacion ? new Date(input.fechaReconciliacion) : new Date(),
-      observaciones: input.observaciones, tenantId,
-    },
-  });
-  revalidatePath('/busy/contabilidad/reconciliacion');
-  return reconciliacion;
-});
+export const reconciliarServicioAction = withAction(withPeriodValidation(
+  (input) => input.fechaReconciliacion ? new Date(input.fechaReconciliacion) : new Date(),
+  async (input: {
+    ventaServicioId: string; cuentaId: string; tipoPagoId: string; monto: number; moneda?: string;
+    fechaReconciliacion?: string; observaciones?: string;
+  }, user: AuthenticatedUser) => {
+    const tenantId = requireTenant(user);
+    const reconciliacion = await prisma.reconciliacionServicio.create({
+    // @ts-expect-error
+      data: {
+        ventaServicioId: input.ventaServicioId, cuentaId: input.cuentaId, tipoPagoId: input.tipoPagoId,
+        monto: input.monto, moneda: input.moneda||'CUP',
+        fechaReconciliacion: input.fechaReconciliacion ? new Date(input.fechaReconciliacion) : new Date(),
+        observaciones: input.observaciones, tenantId,
+      },
+    });
+    revalidatePath('/busy/contabilidad/reconciliacion');
+    return reconciliacion;
+  }
+));
 
 // ─── Gastos ────────────────────────────────────────────────
 
@@ -603,108 +610,111 @@ export const getHistorialReconciliacionGastosAction = withAction(async (params: 
   };
 });
 
-export const reconciliarGastoAction = withAction(async (input: {
-  gastoCompraId?: string; pgId?: string; compraServicioId?: string; ventaServicioId?: string;
-  cuentaId: string; tipoPagoId: string; monto: number; moneda?: string;
-  fechaReconciliacion?: string; descripcion?: string; cuentaPorPagarId?: string;
-}, user: AuthenticatedUser) => {
-  const tenantId = requireTenant(user);
-  const fechaPago = input.fechaReconciliacion ? new Date(input.fechaReconciliacion) : new Date();
+export const reconciliarGastoAction = withAction(withPeriodValidation(
+  (input) => input.fechaReconciliacion ? new Date(input.fechaReconciliacion) : new Date(),
+  async (input: {
+    gastoCompraId?: string; pgId?: string; compraServicioId?: string; ventaServicioId?: string;
+    cuentaId: string; tipoPagoId: string; monto: number; moneda?: string;
+    fechaReconciliacion?: string; descripcion?: string; cuentaPorPagarId?: string;
+  }, user: AuthenticatedUser) => {
+    const tenantId = requireTenant(user);
+    const fechaPago = input.fechaReconciliacion ? new Date(input.fechaReconciliacion) : new Date();
 
-  const esSalario = !!input.pgId;
-  const esServicio = !!input.compraServicioId;
-  const esVentaServicio = !!input.ventaServicioId;
-  const referenciaId = input.pgId || input.gastoCompraId || input.compraServicioId || input.ventaServicioId;
-  if (!referenciaId) throw new Error('Se requiere gastoCompraId, pgId, compraServicioId o ventaServicioId');
+    const esSalario = !!input.pgId;
+    const esServicio = !!input.compraServicioId;
+    const esVentaServicio = !!input.ventaServicioId;
+    const referenciaId = input.pgId || input.gastoCompraId || input.compraServicioId || input.ventaServicioId;
+    if (!referenciaId) throw new Error('Se requiere gastoCompraId, pgId, compraServicioId o ventaServicioId');
 
-  const result = await prisma.$transaction(async (tx: any) => {
-    // 1. Crear la reconciliación
-    const reconciliacionData: any = {
-      tipoGasto: esVentaServicio ? 'venta_servicio' : esServicio ? 'servicio' : esSalario ? 'salario' : 'compra',
-      referenciaId,
-      cuentaId: input.cuentaId,
-      tipoPagoId: input.tipoPagoId,
-      monto: input.monto,
-      moneda: input.moneda || 'CUP',
-      descripcion: input.descripcion || '',
-      fechaReconciliacion: fechaPago,
-      reconciliadoPor: user.userId,
-      estado: 'PAGADA',
-      cuentaPorPagarId: input.cuentaPorPagarId || null,
-      tenantId,
-    };
+    const result = await prisma.$transaction(async (tx: any) => {
+      // 1. Crear la reconciliación
+      const reconciliacionData: any = {
+        tipoGasto: esVentaServicio ? 'venta_servicio' : esServicio ? 'servicio' : esSalario ? 'salario' : 'compra',
+        referenciaId,
+        cuentaId: input.cuentaId,
+        tipoPagoId: input.tipoPagoId,
+        monto: input.monto,
+        moneda: input.moneda || 'CUP',
+        descripcion: input.descripcion || '',
+        fechaReconciliacion: fechaPago,
+        reconciliadoPor: user.userId,
+        estado: 'PAGADA',
+        cuentaPorPagarId: input.cuentaPorPagarId || null,
+        tenantId,
+      };
 
-    if (esSalario) {
-      reconciliacionData.pgId = input.pgId;
-    } else if (esServicio) {
-      reconciliacionData.referenciaId = input.compraServicioId;
-    } else {
-      reconciliacionData.gastoCompraId = input.gastoCompraId;
-    }
+      if (esSalario) {
+        reconciliacionData.pgId = input.pgId;
+      } else if (esServicio) {
+        reconciliacionData.referenciaId = input.compraServicioId;
+      } else {
+        reconciliacionData.gastoCompraId = input.gastoCompraId;
+      }
 
-    const reconciliacion = await tx.reconciliacionGasto.create({ data: reconciliacionData });
+      const reconciliacion = await tx.reconciliacionGasto.create({ data: reconciliacionData });
 
-    // 2. Descontar de la cuenta bancaria
-    await tx.cuentaBancaria.update({
-      where: { cuentaId: input.cuentaId },
-      data: { saldo: { decrement: input.monto } },
-    });
-
-    // 3. Si viene de una CuentaPorPagar, actualizarla
-    if (input.cuentaPorPagarId) {
-      const cxp = await tx.cuentaPorPagar.findUnique({
-        where: { cuentaPorPagarId: input.cuentaPorPagarId },
-        select: { saldoPendiente: true, montoPagado: true },
+      // 2. Descontar de la cuenta bancaria
+      await tx.cuentaBancaria.update({
+        where: { cuentaId: input.cuentaId },
+        data: { saldo: { decrement: input.monto } },
       });
 
-      if (cxp) {
-        const nuevoPagado = (cxp.montoPagado || 0) + input.monto;
-        const nuevoSaldo = Math.max(0, (cxp.saldoPendiente || 0) - input.monto);
-        const nuevoEstado = nuevoSaldo <= 0 ? 'PAGADA' : 'PARCIAL';
-
-        await tx.cuentaPorPagar.update({
+      // 3. Si viene de una CuentaPorPagar, actualizarla
+      if (input.cuentaPorPagarId) {
+        const cxp = await tx.cuentaPorPagar.findUnique({
           where: { cuentaPorPagarId: input.cuentaPorPagarId },
-          data: {
-            montoPagado: nuevoPagado,
-            saldoPendiente: nuevoSaldo,
-            estado: nuevoEstado,
-          },
+          select: { saldoPendiente: true, montoPagado: true },
         });
 
-        // Registrar el pago en PagoCuentaPorPagar para que se vea en el detalle
-        await tx.pagoCuentaPorPagar.create({
-          data: {
-            tenantId,
-            cuentaPorPagarId: input.cuentaPorPagarId,
-            monto: input.monto,
-            numeroTransaccion: input.descripcion?.slice(0, 50) || `Pago ${fechaPago.toISOString().slice(0, 10)}`,
-            cuentaProveedor: 'N/A',
-            fechaPago,
-            observaciones: input.descripcion || null,
-          },
-        });
+        if (cxp) {
+          const nuevoPagado = (cxp.montoPagado || 0) + input.monto;
+          const nuevoSaldo = Math.max(0, (cxp.saldoPendiente || 0) - input.monto);
+          const nuevoEstado = nuevoSaldo <= 0 ? 'PAGADA' : 'PARCIAL';
 
-        // Si quedó pagada totalmente, actualizar el CompraDocumento vinculado
-        if (nuevoEstado === 'PAGADA') {
-          const doc = await tx.compraDocumento.findFirst({
+          await tx.cuentaPorPagar.update({
             where: { cuentaPorPagarId: input.cuentaPorPagarId },
-            select: { compraDocumentoId: true },
+            data: {
+              montoPagado: nuevoPagado,
+              saldoPendiente: nuevoSaldo,
+              estado: nuevoEstado,
+            },
           });
-          if (doc) {
-            await tx.compraDocumento.update({
-              where: { compraDocumentoId: doc.compraDocumentoId },
-              data: { estado: 'PAGADA' },
+
+          // Registrar el pago en PagoCuentaPorPagar para que se vea en el detalle
+          await tx.pagoCuentaPorPagar.create({
+            data: {
+              tenantId,
+              cuentaPorPagarId: input.cuentaPorPagarId,
+              monto: input.monto,
+              numeroTransaccion: input.descripcion?.slice(0, 50) || `Pago ${fechaPago.toISOString().slice(0, 10)}`,
+              cuentaProveedor: 'N/A',
+              fechaPago,
+              observaciones: input.descripcion || null,
+            },
+          });
+
+          // Si quedó pagada totalmente, actualizar el CompraDocumento vinculado
+          if (nuevoEstado === 'PAGADA') {
+            const doc = await tx.compraDocumento.findFirst({
+              where: { cuentaPorPagarId: input.cuentaPorPagarId },
+              select: { compraDocumentoId: true },
             });
+            if (doc) {
+              await tx.compraDocumento.update({
+                where: { compraDocumentoId: doc.compraDocumentoId },
+                data: { estado: 'PAGADA' },
+              });
+            }
           }
         }
       }
-    }
 
-    // Serializar Decimal → number para cliente
-    return JSON.parse(JSON.stringify(reconciliacion));
-  });
+      // Serializar Decimal → number para cliente
+      return JSON.parse(JSON.stringify(reconciliacion));
+    });
 
-  revalidatePath('/busy/contabilidad/reconciliacion');
-  revalidatePath('/busy/contabilidad/cuentas-por-pagar');
-  return result;
-});
+    revalidatePath('/busy/contabilidad/reconciliacion');
+    revalidatePath('/busy/contabilidad/cuentas-por-pagar');
+    return result;
+  }
+));
