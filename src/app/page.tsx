@@ -777,7 +777,24 @@ export default function Home(): React.JSX.Element {
           </div>
         </section>
 
-        {/* ═══ MARQUEE 2 ═══ */}
+        {/* ═══ TECH STACK MARQUEE ═══ */}
+        <MarqueeText
+          speed={30}
+          iconSize={14}
+          items={[
+            { icon: <NextjsIcon /> },
+            { icon: <ReactIcon /> },
+            { icon: <TypeScriptIcon /> },
+            { icon: <TailwindIcon /> },
+            { icon: <PrismaIcon /> },
+            { icon: <PostgresIcon /> },
+            { icon: <RadixIcon /> },
+            { icon: <ZodIcon /> },
+            { icon: <FramerIcon /> },
+            { icon: <VitestIcon /> },
+          ]}
+          direction="right"
+        />
         <MarqueeText text="Control total · Decisiones inteligentes · Operación fluida · Escalabilidad garantizada" speed={30} direction="right" />
 
         {/* ═══ TESTIMONIALS ═══ */}
@@ -1002,22 +1019,7 @@ export default function Home(): React.JSX.Element {
           </SpringSection>
         </section>
 
-        {/* ═══ TECH STACK MARQUEE ═══ */}
-        <MarqueeText
-          speed={30}
-          items={[
-            { icon: <NextjsIcon />, label: 'Next.js' },
-            { icon: <ReactIcon />, label: 'React' },
-            { icon: <TypeScriptIcon />, label: 'TypeScript' },
-            { icon: <TailwindIcon />, label: 'Tailwind CSS' },
-            { icon: <PrismaIcon />, label: 'Prisma' },
-            { icon: <PostgresIcon />, label: 'PostgreSQL' },
-            { icon: <RadixIcon />, label: 'Radix UI' },
-            { icon: <ZodIcon />, label: 'Zod' },
-            { icon: <FramerIcon />, label: 'Framer Motion' },
-            { icon: <VitestIcon />, label: 'Vitest' },
-          ]}
-        />
+        
       </main>
 
       {/* ─── Footer ─── */}
