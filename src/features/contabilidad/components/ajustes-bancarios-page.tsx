@@ -182,7 +182,7 @@ export function AjustesBancariosPage() {
           </TabsList>
 
           <AnimatePresence mode="wait">
-            <TabsContent value="nuevo" className="mt-6">
+            <TabsContent key="tab-nuevo" value="nuevo" className="mt-6">
               <motion.div
                 key="tab-nuevo"
                 initial={{ opacity: 0, x: shouldReduceMotion ? 0 : -16 }}
@@ -204,7 +204,7 @@ export function AjustesBancariosPage() {
               </motion.div>
             </TabsContent>
 
-            <TabsContent value="historial" className="mt-6">
+            <TabsContent key="tab-historial" value="historial" className="mt-6">
               <motion.div
                 key="tab-historial"
                 initial={{ opacity: 0, x: shouldReduceMotion ? 0 : 16 }}

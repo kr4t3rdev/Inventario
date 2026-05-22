@@ -84,13 +84,14 @@ export const createAjusteBancarioAction = withAction(withPeriodValidation(
     const resultado = await prisma.$transaction(async (tx: any) => {
       const ajuste = await tx.ajusteBancario.create({
         data: {
-          cuentaId: parsed.cuentaId,
+          cuentaBancaria: { connect: { cuentaId: parsed.cuentaId } },
           tipo: parsed.tipo,
           monto: parsed.monto,
           moneda: parsed.moneda,
           descripcion: parsed.descripcion,
           motivo: parsed.motivo,
-          realizadoPor: user.userId
+          realizadoPor: user.userId,
+          tenant: { connect: { tenantId: user.tenantId } },
         }
       });
 
