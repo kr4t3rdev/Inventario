@@ -451,6 +451,11 @@ export function AppSidebar2({
             icon: Option,
           },
           {
+            title: "Períodos Contables",
+            url: "/busy/contabilidad/periodos",
+            icon: Calendar,
+          },
+          {
             title: "Logs",
             url: "/busy/contabilidad/logs",
             icon: Logs,
