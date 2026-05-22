@@ -151,8 +151,13 @@ export function DeudaCashForm({ open, onOpenChange, proveedores = [], cuentasBan
   const form = useForm<DeudaFormValues>({
     resolver: zodResolver(deudaSchema),
     defaultValues: {
+      proveedorId: "",
       montoCapital: 0,
       moneda: "CUP",
+      tasaInteres: 0,
+      fechaVencimiento: "",
+      observaciones: "",
+      cuentaBancariaId: "",
     },
   })
 

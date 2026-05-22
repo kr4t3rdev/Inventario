@@ -138,11 +138,14 @@ export const createDeudaCashAction = withAction(withPeriodValidation(
 
       await tx.reconciliacionVenta.create({
         data: {
-          cuentaId: body.cuentaBancariaId, tipoPagoId: tp.tipoId, monto: body.montoCapital,
+          tenant: { connect: { tenantId } },
+          cuentaBancaria: { connect: { cuentaId: body.cuentaBancariaId } },
+          tipoPago: { connect: { tipoId: tp.tipoId } },
+          monto: body.montoCapital,
           moneda: body.moneda, montoConvertido: body.montoCapital,
           fechaReconciliacion: new Date(),
           observaciones: body.observaciones || `Desembolso de deuda cash para proveedor ${body.proveedorId}`,
-          reconciliadoPor: user.userId, deudaCashId: null,
+          reconciliadoPor: user.userId,
           tipoReconciliacion: 'DEUDA_CASH_DESEMBOLSO',
         },
       })
@@ -207,6 +210,7 @@ export const registrarPagoDeudaAction = withAction(withPeriodValidation(
     user: AuthenticatedUser
   ) => {
     if (!deudasCashEnabled()) throw new ActionError('Módulo de deudas cash deshabilitado', 'DISABLED')
+    const tenantId = requireTenant(user)
     const {
     // @ts-expect-error
     id, ...body
@@ -230,11 +234,14 @@ export const registrarPagoDeudaAction = withAction(withPeriodValidation(
     const resultado = await prisma.$transaction(async (tx: any) => {
       const r = await tx.reconciliacionVenta.create({
         data: {
-          cuentaId: body.cuentaId, tipoPagoId: body.tipoPagoId, monto: body.monto,
+          tenant: { connect: { tenantId } },
+          cuentaBancaria: { connect: { cuentaId: body.cuentaId } },
+          tipoPago: { connect: { tipoId: body.tipoPagoId } },
+          monto: body.monto,
           moneda: body.moneda || deuda.moneda,
           ...(body.tasaCambio != null && { tasaCambio: body.tasaCambio }),
           ...(body.observaciones != null && { observaciones: body.observaciones }),
-          reconciliadoPor: user.userId, deudaCashId: deuda.id,
+          reconciliadoPor: user.userId, deudaCash: { connect: { id: deuda.id } },
           tipoReconciliacion: 'DEUDA_CASH',
         },
       })
