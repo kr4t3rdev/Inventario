@@ -16,7 +16,15 @@ export const getTransferenciasBancariasAction = withAction(async (
   }
   if (params.cuentaId) where.cuentaId = params.cuentaId;
   const [transferencias, total] = await Promise.all([
-    prisma.transferenciaBancaria.findMany({ where, orderBy: { createdAt: 'desc' }, take: 50 }),
+    prisma.transferenciaBancaria.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+      include: {
+        cuentaOrigen: { select: { nombreBanco: true, numeroCuenta: true, moneda: true } },
+        cuentaDestino: { select: { nombreBanco: true, numeroCuenta: true, moneda: true } },
+      },
+    }),
     prisma.transferenciaBancaria.count({ where }),
   ]);
   return {
@@ -185,8 +193,9 @@ export const createTransferenciaBancariaAction = withAction(withPeriodValidation
       return tx.transferenciaBancaria.create({
         data: {
           numeroComprobante,
-          cuentaOrigenId: input.cuentaOrigenId,
-          cuentaDestinoId: input.cuentaDestinoId,
+          cuentaOrigen: { connect: { cuentaId: input.cuentaOrigenId } },
+          cuentaDestino: { connect: { cuentaId: input.cuentaDestinoId } },
+          tenant: { connect: { tenantId: user.tenantId! } },
           montoOrigen: input.montoOrigen,
           monedaOrigen: cuentaOrigen.moneda,
           montoDestino,
@@ -195,7 +204,7 @@ export const createTransferenciaBancariaAction = withAction(withPeriodValidation
           motivo: input.motivo,
           descripcion: input.descripcion,
           comprobanteGenerado: true,
-        } as any,
+        },
         include: { cuentaOrigen: { select: { nombreBanco: true, numeroCuenta: true, moneda: true } }, cuentaDestino: { select: { nombreBanco: true, numeroCuenta: true, moneda: true } } }
       });
     });

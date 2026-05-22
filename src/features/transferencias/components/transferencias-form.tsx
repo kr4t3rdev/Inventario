@@ -447,6 +447,10 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
   }
 
   async function onSubmit(data: TransferenciaFormValues) {
+    console.log('=== TransferenciaForm :: onSubmit ===', {
+      data: JSON.parse(JSON.stringify(data)),
+      initialData: !!initialData,
+    })
     setIsLoading(true)
     try {
       let result
@@ -474,25 +478,37 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
         result = await createTransferenciaAction(data)
       }
 
+      console.log('=== TransferenciaForm :: action result ===', JSON.parse(JSON.stringify(result)))
+
       if (!result.success) {
-        throw new Error(result.error?.message || "Error al guardar la transferencia")
+        const errorMsg = result.error?.message || 'Error al guardar la transferencia'
+        const errorCode = result.error?.code || ''
+        const errorDetails = result.error?.details
+          ? '\n' + JSON.stringify(result.error.details, null, 2)
+          : ''
+        console.error('=== TransferenciaForm :: action FAILED ===', {
+          message: errorMsg,
+          code: errorCode,
+          details: result.error?.details,
+        })
+        throw new Error(`${errorMsg}${errorCode ? ` (${errorCode})` : ''}${errorDetails}`)
       }
 
-      sileo.success({ title: `La transferencia de ${data.productos.length} producto(s) ha sido ${initialData ? "actualizada" : "registrada"} exitosamente.` })
+      sileo.success({ title: `La transferencia de ${data.productos.length} producto(s) ha sido ${initialData ? 'actualizada' : 'registrada'} exitosamente.` })
 
       if (!initialData) {
         form.reset({
-          productos: [{ productoId: "", cantidad: 1 }],
-          tipoOrigen: "almacen",
-          origenId: "",
-          tipoDestino: "punto_venta",
-          destinoId: "",
-          descripcion: "",
+          productos: [{ productoId: '', cantidad: 1 }],
+          tipoOrigen: 'almacen',
+          origenId: '',
+          tipoDestino: 'punto_venta',
+          destinoId: '',
+          descripcion: '',
         })
-        setProductoSearch("")
+        setProductoSearch('')
       }
     } catch (error) {
-      console.error("Error al guardar la transferencia:", error)
+      console.error('=== TransferenciaForm :: error catch ===', error)
       sileo.error({ title: error instanceof Error ? error.message : 'Hubo un error al guardar la transferencia.' })
     } finally {
       setIsLoading(false)
@@ -540,7 +556,10 @@ export function TransferenciaForm({ initialData }: TransferenciaFormProps) {
       </CardHeader>
       <CardContent className="p-6">
         <Form {...form}>
-          <form id="transferencia-form" onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-8">
+          <form id="transferencia-form" onSubmit={form.handleSubmit(onSubmit, (errors) => {
+    console.error('=== TransferenciaForm :: Zod validation errors ===', JSON.parse(JSON.stringify(errors)))
+    sileo.error({ title: 'Completá los campos requeridos antes de continuar.' })
+})} className="space-y-8">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start relative">
               <motion.div 
                 className="space-y-6 p-6 rounded-xl border bg-card shadow-sm ring-1 ring-border/50 relative overflow-hidden group"

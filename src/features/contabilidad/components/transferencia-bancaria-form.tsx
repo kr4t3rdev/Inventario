@@ -146,17 +146,19 @@ export function TransferenciaBancariaForm({ onSuccess, onCancel }: Transferencia
 
       if (!response.success) throw new Error(response.error?.message || 'Error al validar')
 
-      setValidacionData({
+      const validacionDataOk = {
         ...validacionRequest,
         ...response,
         cuentaOrigen,
         cuentaDestino,
-      })
+      }
+
+      setValidacionData(validacionDataOk)
 
       if (requiereConversion) {
         setShowTasaDialog(true)
       } else {
-        await ejecutarTransferencia(validacionData)
+        await ejecutarTransferencia(validacionDataOk)
       }
     } catch (error: any) {
       sileo.error({ title: error?.data?.error || 'Error al validar la transferencia' })

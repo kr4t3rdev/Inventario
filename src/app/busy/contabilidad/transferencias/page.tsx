@@ -17,9 +17,9 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { AnimatedNumber } from '@/components/ui/animated-number'
 import { Skeleton } from '@/components/ui/skeleton';
 
-const TransferenciasTable = dynamic(() =>
-  import('@/features/transferencias/components/transferencias-table').then((mod) => ({
-    default: mod.TransferenciasTable,
+const TransferenciasBancariasTable = dynamic(() =>
+  import('@/features/contabilidad/components/transferencias-bancarias-table').then((mod) => ({
+    default: mod.TransferenciasBancariasTable,
   })),
   { loading: () => <Skeleton className="w-full h-100" /> }
 );
@@ -33,6 +33,8 @@ const TransferenciaBancariaForm = dynamic(() =>
 
 export default function TransferenciasBancariasPage(): React.JSX.Element {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => { setIsClient(true) }, []);
   const shouldReduceMotion = useReducedMotion();
   const [transferenciasList, setTransferenciasList] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -51,8 +53,11 @@ export default function TransferenciasBancariasPage(): React.JSX.Element {
     fetchTransferencias()
   }, [fetchTransferencias])
 
+  const hiddenOpacity = isClient && !shouldReduceMotion ? 0 : 1;
+  const hiddenY = isClient && !shouldReduceMotion ? 20 : 0;
+
   const fadeIn = {
-    hidden: { opacity: 0 },
+    hidden: { opacity: hiddenOpacity },
     show: {
       opacity: 1,
       transition: {
@@ -63,7 +68,7 @@ export default function TransferenciasBancariasPage(): React.JSX.Element {
   };
 
   const fadeInUp = {
-    hidden: { opacity: 0, y: shouldReduceMotion ? 0 : 20 },
+    hidden: { opacity: hiddenOpacity, y: hiddenY },
     show: {
       opacity: 1,
       y: 0,
@@ -167,7 +172,6 @@ export default function TransferenciasBancariasPage(): React.JSX.Element {
                 </DialogHeader>
                 <TransferenciaBancariaForm
                   onSuccess={handleCreateSuccess}
-  // @ts-expect-error
                   onCancel={
                   () => setIsCreateDialogOpen(false)
                   }
@@ -256,13 +260,9 @@ export default function TransferenciasBancariasPage(): React.JSX.Element {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                  <TransferenciasTable
+                  <TransferenciasBancariasTable
                     transferencias={transferenciasList}
                     isLoading={isLoading}
-  // @ts-expect-error
-                    onRefresh={
-                    () => fetchTransferencias()
-                    }
                   />
               </CardContent>
             </Card>

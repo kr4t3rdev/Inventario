@@ -121,52 +121,97 @@ export const getTransferenciaByIdAction = withAction(async (id: string, user: Au
 });
 
 export const createTransferenciaAction = withAction(async (input: CreateTransferenciaInput, user: AuthenticatedUser) => {
+  console.log('=== createTransferenciaAction :: input ===', JSON.parse(JSON.stringify(input)));
+
   const parsed = createTransferenciaSchema.parse(input);
   const tenantId = requireTenant(user);
   const { productos, tipoOrigen, origenId, tipoDestino, destinoId, descripcion } = parsed;
 
+  console.log('=== createTransferenciaAction :: parsed ===', {
+    tenantId, tipoOrigen, origenId, tipoDestino, destinoId,
+    productosCount: productos.length,
+  });
+
   if (tipoOrigen === tipoDestino && origenId === destinoId) {
+    console.error('=== createTransferenciaAction :: origen === destino ===');
     throw new ActionError('El origen y destino no pueden ser iguales', 'VALIDATION_ERROR');
   }
 
   // Validar productos
   const productosValidados: any[] = [];
   for (const item of productos) {
+    console.log('=== createTransferenciaAction :: validando producto ===', item);
+
     const producto = await prisma.producto.findUnique({
       where: { id: item.productoId },
       select: { id: true, nombre: true, stock: true, precioCosto: true, tenantId: true },
     });
-    if (!producto || producto.tenantId !== tenantId) throw new ActionError(`Producto con ID ${item.productoId} no encontrado`, 'NOT_FOUND');
+    if (!producto || producto.tenantId !== tenantId) {
+      console.error('=== createTransferenciaAction :: producto no encontrado ===', {
+        productoId: item.productoId,
+        encontrado: !!producto,
+        tenantMatch: producto?.tenantId === tenantId,
+      });
+      throw new ActionError(`Producto con ID ${item.productoId} no encontrado`, 'NOT_FOUND');
+    }
 
     if (tipoOrigen === 'punto_venta') {
       const stockDisponible = await getStockDisponibleEnPuntoVenta(item.productoId, origenId);
+      console.log('=== createTransferenciaAction :: stock punto_venta ===', {
+        producto: producto.nombre,
+        solicitado: item.cantidad,
+        disponible: stockDisponible,
+      });
       if (stockDisponible < item.cantidad) throw new ActionError(`Stock insuficiente para ${producto.nombre} en el punto de venta`, 'STOCK_INSUFICIENTE');
     } else if (producto.stock < item.cantidad) {
+      console.error('=== createTransferenciaAction :: stock insuficiente ===', {
+        producto: producto.nombre,
+        solicitado: item.cantidad,
+        disponible: producto.stock,
+      });
       throw new ActionError(`Stock insuficiente para ${producto.nombre}. Disponible: ${producto.stock}`, 'STOCK_INSUFICIENTE');
     }
     productosValidados.push({ producto, cantidad: item.cantidad });
   }
 
   // Validar origen/destino
+  console.log('=== createTransferenciaAction :: validando origen ===', { tipoOrigen, origenId });
   const origenValido = tipoOrigen === 'almacen'
     ? await prisma.almacen.findUnique({ where: { almacenId: origenId } })
     : await prisma.puntoDeVenta.findUnique({ where: { pvId: origenId } });
-  if (!origenValido) throw new ActionError('Origen no encontrado', 'NOT_FOUND');
+  if (!origenValido) {
+    console.error('=== createTransferenciaAction :: origen no encontrado ===', { tipoOrigen, origenId });
+    throw new ActionError('Origen no encontrado', 'NOT_FOUND');
+  }
 
+  console.log('=== createTransferenciaAction :: validando destino ===', { tipoDestino, destinoId });
   const destinoValido = tipoDestino === 'almacen'
     ? await prisma.almacen.findUnique({ where: { almacenId: destinoId } })
     : await prisma.puntoDeVenta.findUnique({ where: { pvId: destinoId } });
-  if (!destinoValido) throw new ActionError('Destino no encontrado', 'NOT_FOUND');
+  if (!destinoValido) {
+    console.error('=== createTransferenciaAction :: destino no encontrado ===', { tipoDestino, destinoId });
+    throw new ActionError('Destino no encontrado', 'NOT_FOUND');
+  }
 
   // Crear en transacción
+  console.log('=== createTransferenciaAction :: iniciando transacción ===', {
+    productosCount: productosValidados.length,
+    numeroTransferencia: '',
+  });
+
   const result = await prisma.$transaction(async (tx: any) => {
     const transferenciasCreadas = [];
     const numeroTransferencia = await generarNumeroTransferencia(tx);
 
-    for (const { producto, cantidad } of productosValidados) {
+    console.log('=== createTransferenciaAction :: numero generado ===', { numeroTransferencia });
+
+    for (const [idx, { producto, cantidad }] of productosValidados.entries()) {
       const costoTotal = cantidad * producto.precioCosto;
       const data: any = {
-        productoId: producto.id, cantidad, tenantId, costoUnitario: producto.precioCosto,
+        producto: { connect: { id: producto.id } },
+        cantidad,
+        tenant: { connect: { tenantId } },
+        costoUnitario: producto.precioCosto,
         costoTotal, descripcion: descripcion || `Transferencia - ${producto.nombre}`,
         estado: 'COMPLETADA', creadoPorId: user.userId,
         numeroTransferencia: `${numeroTransferencia}-${String(transferenciasCreadas.length + 1).padStart(3, '0')}`,
@@ -176,9 +221,12 @@ export const createTransferenciaAction = withAction(async (input: CreateTransfer
       if (tipoDestino === 'almacen') data.destinoId = destinoId;
       else data.puntoDeVentaDestinoId = destinoId;
 
+      console.log(`=== createTransferenciaAction :: create[${idx}] data ===`, JSON.parse(JSON.stringify(data)));
+
       const transferencia = await tx.transferencia.create({ data });
 
       const stockDelta = (tipoOrigen === 'almacen' ? -cantidad : 0) + (tipoDestino === 'almacen' ? cantidad : 0);
+      console.log(`=== createTransferenciaAction :: stockDelta[${idx}] ===`, { stockDelta });
       if (stockDelta !== 0) {
         await tx.producto.update({ where: { id: producto.id }, data: { stock: { increment: stockDelta } } });
       }
@@ -191,8 +239,18 @@ export const createTransferenciaAction = withAction(async (input: CreateTransfer
     return transferenciasCreadas;
   });
 
+  console.log('=== createTransferenciaAction :: transacción OK ===', {
+    creadas: result.length,
+    ids: result.map((t: any) => t.transferenciaId),
+  });
+
   for (const t of result) {
-    try { await notificarTransferencia(t.transferenciaId); } catch {}
+    try {
+      console.log('=== createTransferenciaAction :: notificando ===', t.transferenciaId);
+      await notificarTransferencia(t.transferenciaId);
+    } catch (e) {
+      console.error('=== createTransferenciaAction :: notificación falló ===', e);
+    }
   }
 
   revalidatePath('/busy/transferencias');
