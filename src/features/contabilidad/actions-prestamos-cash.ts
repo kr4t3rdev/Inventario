@@ -178,37 +178,45 @@ export const createPrestamoCashAction = withAction(withPeriodValidation(
         ? Number((body.montoCapital * (1 + body.tasaInteres / 100)).toFixed(2))
         : body.montoCapital
 
-      const cxc = await tx.cuentaPorCobrar.create({
-        data: {
-          tenantId, clienteId: body.clienteId, montoDeuda, montoPagado: 0,
-          tipoCuenta: 'PRESTAMO_CASH', estado: 'PENDIENTE',
-          fechaVencimiento: body.fechaVencimiento ? new Date(body.fechaVencimiento) : undefined,
-        },
-      })
+      const cxcData: Record<string, unknown> = {
+        tenant: { connect: { tenantId } }, cliente: { connect: { clienteId: body.clienteId } },
+        montoDeuda, montoPagado: 0, tipoCuenta: 'PRESTAMO_CASH', estado: 'PENDIENTE',
+      }
+      if (body.fechaVencimiento) cxcData.fechaVencimiento = new Date(body.fechaVencimiento)
 
-      await tx.reconciliacionVenta.create({
-        data: {
-          cuentaId: body.cuentaBancariaId, tipoPagoId: tp.tipoId, monto: body.montoCapital,
-          moneda: body.moneda,
-          montoConvertido: body.tasaCambioAlCrear
-            ? body.montoCapital * body.tasaCambioAlCrear : body.montoCapital,
-          tasaCambio: body.tasaCambioAlCrear,
-          fechaReconciliacion: new Date(),
-          observaciones: body.observaciones || `Desembolso de préstamo cash para cliente ${body.clienteId}`,
-          reconciliadoPor: user.userId, prestamoCashId: null,
-          tipoReconciliacion: 'PRESTAMO_CASH_DESEMBOLSO',
-        },
-      })
+      const cxc = await tx.cuentaPorCobrar.create({ data: cxcData })
+
+      const reconciliacionData: Record<string, unknown> = {
+        tenant: { connect: { tenantId } },
+        cuentaBancaria: { connect: { cuentaId: body.cuentaBancariaId } },
+        tipoPago: { connect: { tipoId: tp.tipoId } }, monto: body.montoCapital,
+        moneda: body.moneda,
+        montoConvertido: body.tasaCambioAlCrear
+          ? body.montoCapital * body.tasaCambioAlCrear : body.montoCapital,
+        fechaReconciliacion: new Date(),
+        observaciones: body.observaciones || `Desembolso de préstamo cash para cliente ${body.clienteId}`,
+        reconciliadoPor: user.userId,
+        tipoReconciliacion: 'PRESTAMO_CASH_DESEMBOLSO',
+      }
+      if (body.tasaCambioAlCrear !== undefined) reconciliacionData.tasaCambio = body.tasaCambioAlCrear
+
+      await tx.reconciliacionVenta.create({ data: reconciliacionData })
+
+      const prestamoData: Record<string, unknown> = {
+        tenant: { connect: { tenantId } },
+        cliente: { connect: { clienteId: body.clienteId } },
+        cuentaPorCobrar: { connect: { id: cxc.id } },
+        montoCapital: body.montoCapital, moneda: body.moneda,
+        createdById: user.userId,
+      }
+      if (body.cuentaBancariaId) prestamoData.cuentaBancariaId = body.cuentaBancariaId
+      if (body.tasaInteres !== undefined) prestamoData.tasaInteres = body.tasaInteres
+      if (body.tasaCambioAlCrear !== undefined) prestamoData.tasaCambioAlCrear = body.tasaCambioAlCrear
+      if (body.fechaVencimiento) prestamoData.fechaVencimiento = new Date(body.fechaVencimiento)
+      if (body.observaciones) prestamoData.observaciones = body.observaciones
 
       return tx.prestamoCash.create({
-        data: {
-          tenantId, clienteId: body.clienteId, cuentaPorCobrarId: cxc.id,
-          montoCapital: body.montoCapital, moneda: body.moneda,
-          tasaInteres: body.tasaInteres, tasaCambioAlCrear: body.tasaCambioAlCrear,
-          fechaVencimiento: body.fechaVencimiento ? new Date(body.fechaVencimiento) : undefined,
-          observaciones: body.observaciones, cuentaBancariaId: body.cuentaBancariaId,
-          createdById: user.userId,
-        },
+        data: prestamoData,
         include: { cliente: { select: { clienteId: true, nombre: true } }, cuentaPorCobrar: true },
       })
     })
@@ -280,17 +288,22 @@ export const registrarPagoPrestamoAction = withAction(withPeriodValidation(
       throw new ActionError(`El monto excede el saldo pendiente de ${sp}`, 'VALIDATION_ERROR')
     }
 
+    const tenantId = requireTenant(user)
     const resultado = await prisma.$transaction(async (tx: any) => {
-      const r = await tx.reconciliacionVenta.create({
-        data: {
-          cuentaId: body.cuentaId, tipoPagoId: body.tipoPagoId, monto: body.monto,
-          moneda: body.moneda || prestamo.moneda,
-          ...(body.tasaCambio != null && { tasaCambio: body.tasaCambio }),
-          ...(body.observaciones != null && { observaciones: body.observaciones }),
-          reconciliadoPor: user.userId, prestamoCashId: prestamo.id,
-          tipoReconciliacion: 'PRESTAMO_CASH',
-        },
-      })
+      const pagoData: Record<string, unknown> = {
+        tenant: { connect: { tenantId } },
+        cuentaBancaria: { connect: { cuentaId: body.cuentaId } },
+        tipoPago: { connect: { tipoId: body.tipoPagoId } },
+        prestamoCash: { connect: { id: prestamo.id } },
+        monto: body.monto,
+        moneda: body.moneda || prestamo.moneda,
+        reconciliadoPor: user.userId,
+        tipoReconciliacion: 'PRESTAMO_CASH',
+      }
+      if (body.tasaCambio != null) pagoData.tasaCambio = body.tasaCambio
+      if (body.observaciones != null) pagoData.observaciones = body.observaciones
+
+      const r = await tx.reconciliacionVenta.create({ data: pagoData })
       await tx.cuentaBancaria.update({
         where: { cuentaId: body.cuentaId },
         data: { saldo: { increment: body.monto } },

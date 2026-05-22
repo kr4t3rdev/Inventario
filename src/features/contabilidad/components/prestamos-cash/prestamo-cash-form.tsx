@@ -144,6 +144,11 @@ export function PrestamoCashForm({
     defaultValues: {
       montoCapital: 0,
       moneda: "CUP",
+      clienteId: "",
+      cuentaBancariaId: "",
+      tasaInteres: 0,
+      fechaVencimiento: "",
+      observaciones: "",
     },
   })
 
