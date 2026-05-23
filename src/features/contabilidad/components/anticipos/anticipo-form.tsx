@@ -90,8 +90,15 @@ export function AnticipoForm({
     resolver: zodResolver(anticipoSchema),
     defaultValues: {
       tipo: "PAGO",
+      contratoId: "",
+      proveedorId: "",
+      clienteId: "",
       monto: 0,
       moneda: "CUP",
+      cuentaOrigenId: "",
+      tipoPagoOrigenId: "",
+      referenciaExterna: "",
+      vigenciaHasta: "",
     },
   })
 

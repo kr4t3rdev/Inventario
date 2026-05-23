@@ -26,7 +26,7 @@ const createSchema = z.object({
   concepto: z.string().optional(),
   observaciones: z.string().optional(),
   fechaAnticipo: z.string().optional(),
-  cuentaBancariaId: z.string().optional().nullable(),
+  cuentaOrigenId: z.string().optional().nullable(),
 });
 
 const executeSchema = z.object({
@@ -92,17 +92,15 @@ export const createAnticipoAction = withAction(withPeriodValidation(
     const anticipo = await prisma.anticipo.create({
       data: {
         tipo: parsed.tipo,
-        monto: parsed.monto,
+        montoOriginal: parsed.monto,
+        saldoDisponible: parsed.monto,
         moneda: parsed.moneda,
-        proveedorId: parsed.proveedorId,
-        clienteId: parsed.clienteId,
-    // @ts-expect-error
-        contratoId: parsed.contratoId,
-        concepto: parsed.concepto,
-        observaciones: parsed.observaciones,
-        fechaAnticipo: parsed.fechaAnticipo ? new Date(parsed.fechaAnticipo) : new Date(),
-        cuentaBancariaId: parsed.cuentaBancariaId,
-        tenantId,
+        proveedor: parsed.proveedorId ? { connect: { vendorId: parsed.proveedorId } } : undefined,
+        cliente: parsed.clienteId ? { connect: { clienteId: parsed.clienteId } } : undefined,
+        contrato: { connect: { contratoId: parsed.contratoId! } },
+        cuentaOrigenId: parsed.cuentaOrigenId,
+        tenant: { connect: { tenantId } },
+        creador: { connect: { userId: user.userId } },
         estado: 'RESERVADO',
       },
     });
