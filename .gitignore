@@ -95,3 +95,5 @@ query_engine-windows.dll.node.tmp14584
 worktrees
 
 .env
+# Local Pi runtime state
+.atl/

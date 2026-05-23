@@ -27,10 +27,7 @@ export async function SiteHeader() {
         </div>
         
         {/* Currency Indicator */}
-        <CurrencyIndicator monedas={
-  // @ts-expect-error
-        monedas} tasas={tasas
-        } />
+        <CurrencyIndicator monedas={monedas} tasas={tasas} />
         
         <div className="flex items-center gap-2">
           <ThemeToggle/>

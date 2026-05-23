@@ -50,7 +50,7 @@ export default function SistemaPage() {
               <p className="text-3xl font-bold">{safeSystem.users.total}</p>
             )}
             <p className="text-xs text-muted-foreground mt-1">
-              {safeSystem.users.byRole.find((r) => r.role === "admin")?.count ?? 0} admins
+              {safeSystem.users.byRole.find((r: { role: string; count: number }) => r.role === "admin")?.count ?? 0} admins
             </p>
           </CardContent>
         </Card>

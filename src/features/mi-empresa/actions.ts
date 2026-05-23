@@ -33,6 +33,15 @@ export const getMiEmpresaAction = withAction(async (_input: void, user: Authenti
       logoUrl: true,
       cuentaBancariaId: true,
       usaCodigoEan13: true,
+      cuentaBancaria: {
+        select: {
+          nombreBanco: true,
+          numeroCuenta: true,
+          moneda: true,
+          tipoCuenta: true,
+          isActive: true,
+        },
+      },
     },
   });
 

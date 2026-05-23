@@ -12,7 +12,7 @@ export const metadata = {
   title: "Autenticación - FinanceTCP",
 }
 
-export default function AuthCallbackPage(): JSX.Element {
+export default function AuthCallbackPage() {
   return (
     <Suspense
       fallback={

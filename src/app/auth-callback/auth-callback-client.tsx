@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
  * @description Procesa el callback de autenticación leyendo query params y redirigiendo.
  * @returns {JSX.Element} Vista de espera mientras se guarda la sesión.
  */
-export function AuthCallbackClient(): JSX.Element {
+export function AuthCallbackClient() {
   const router = useRouter()
   const searchParams = useSearchParams()
 

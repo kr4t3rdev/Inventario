@@ -46,7 +46,7 @@ function DeudasCashContent() {
 
   useEffect(() => {
     getCuentasBancariasAction().then(r => { if (r.success) setCuentasBancarias(r.data?.cuentas ?? []) })
-    getTiposPagoAction().then(r => { if (r.success) setTiposPago(r.data?.data ?? []) })
+    getTiposPagoAction({}).then(r => { if (r.success) setTiposPago(r.data?.data ?? []) })
   }, [])
 
   const proveedores = dataProveedores || []

@@ -49,7 +49,7 @@ function PrestamosCashContent() {
   useEffect(() => {
     getClientesAction().then(r => { if (r.success) setClientes(r.data ?? []) })
     getCuentasBancariasAction().then(r => { if (r.success) setCuentasBancarias(r.data?.cuentas ?? []) })
-    getTiposPagoAction().then(r => { if (r.success) setTiposPago(r.data?.data ?? []) })
+    getTiposPagoAction({}).then(r => { if (r.success) setTiposPago(r.data?.data ?? []) })
     getTasasActualesAction().then(r => {
       if (r.success) {
         const payload = r.data as unknown as { monedaPrincipal?: { codigo?: string }; tasas?: Array<{ monedaOrigenId: string; tasa: number }> } | undefined

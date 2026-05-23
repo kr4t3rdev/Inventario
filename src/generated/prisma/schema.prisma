@@ -195,6 +195,9 @@ model Tenant {
   stockUbicaciones           StockUbicacion[]
   pagosSalario               Pagosalario[]
   cierresContables           CierreContable[]
+  periodosContables          PeriodoContable[]
+  auditoriaPeriodos          AuditoriaPeriodo[]
+  contabilidadTimezone       String                     @default("America/Argentina/Buenos_Aires")
 
   @@index([slug])
   @@map("tenants")
@@ -1015,7 +1018,7 @@ model CuentaBancaria {
   tipoCuenta               String
   saldo                    Float                    @default(0)
   moneda                   String                   @default("CUP")
-  isActive                 Boolean
+  isActive                 Boolean                  @default(true)
   createdAt                DateTime                 @default(now())
   updatedAt                DateTime                 @updatedAt
   ajustes                  AjusteBancario[]
@@ -2113,4 +2116,95 @@ enum CostChangeReason {
   IMPORT
   MANUAL_EDIT
   SYSTEM_SYNC
+}
+
+// ── Períodos Contables ──────────────────────────────────────────────────
+
+enum TipoPeriodo {
+  DIARIO
+  MENSUAL
+  ANUAL
+}
+
+enum EstadoPeriodo {
+  BORRADOR
+  ABIERTO
+  EN_CIERRE
+  CERRADO
+  APROBADO
+  REABIERTO
+}
+
+enum EventoAuditoria {
+  APERTURA
+  CIERRE
+  REAPERTURA
+  APROBACION
+  BLOQUEO
+  ERROR
+  INTENTO_BYPASS
+}
+
+model PeriodoContable {
+  periodoId        String        @id @default(cuid())
+  tenantId         String
+  tipo             TipoPeriodo
+  fechaInicio      DateTime
+  fechaFin         DateTime
+  estado           EstadoPeriodo @default(BORRADOR)
+  motivoReapertura String?
+  cerradoPor       String?
+  cerradoAt        DateTime?
+  aprobadoPor      String?
+  aprobadoAt       DateTime?
+  observaciones    String?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  tenant    Tenant             @relation(fields: [tenantId], references: [tenantId])
+  snapshots SaldoSnapshot[]
+  auditoria AuditoriaPeriodo[]
+
+  @@unique([tenantId, tipo, fechaInicio, fechaFin])
+  @@index([tenantId, estado])
+  @@index([tenantId, fechaInicio, fechaFin])
+  @@index([tenantId, tipo, fechaInicio, fechaFin])
+  @@map("periodos_contables")
+}
+
+model SaldoSnapshot {
+  snapshotId       String   @id @default(cuid())
+  periodoId        String
+  cuentaBancariaId String
+  saldo            Float
+  moneda           String
+  metadata         Json?
+  createdAt        DateTime @default(now())
+
+  periodo PeriodoContable @relation(fields: [periodoId], references: [periodoId], onDelete: Cascade)
+
+  @@index([periodoId])
+  @@index([cuentaBancariaId])
+  @@map("saldos_snapshot")
+}
+
+model AuditoriaPeriodo {
+  auditoriaId     String          @id @default(cuid())
+  tenantId        String
+  periodoId       String
+  evento          EventoAuditoria
+  actor           String
+  timestamp       DateTime        @default(now())
+  entidadAfectada String?
+  motivo          String?
+  payload         Json?
+  createdAt       DateTime        @default(now())
+
+  periodo PeriodoContable @relation(fields: [periodoId], references: [periodoId], onDelete: Cascade)
+  tenant  Tenant          @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([periodoId])
+  @@index([tenantId, timestamp])
+  @@index([evento])
+  @@map("auditoria_periodos")
 }

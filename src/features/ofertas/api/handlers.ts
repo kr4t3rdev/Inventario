@@ -165,7 +165,7 @@ export async function getOfertaPdfHandler(
     return new NextResponse(Buffer.from(pdfBytes), {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="oferta-${oferta.numeroOferta}.pdf"`,
+        'Content-Disposition': `inline; filename="oferta-${oferta.numeroOferta}.pdf"`,
         'Content-Length': pdfBytes.length.toString(),
       },
     })

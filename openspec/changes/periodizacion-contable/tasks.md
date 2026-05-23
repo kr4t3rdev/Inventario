@@ -12,6 +12,8 @@ Implementación de un sistema de períodos contables jerárquicos (diario → me
 
 ## T1: Schema + Tipos + Dominio Puro
 
+**Estado**: ✅ Completado
+
 **Dependencias**: Ninguna
 
 **Archivos**:
@@ -23,15 +25,15 @@ Implementación de un sistema de períodos contables jerárquicos (diario → me
 | `src/lib/services/__tests__/periodo-contable-service.test.ts` | Create | ~400 |
 
 **Criterios de aceptación**:
-- [ ] Enums `TipoPeriodo`, `EstadoPeriodo`, `EventoAuditoria` definidos en Prisma y TypeScript
-- [ ] Modelos `PeriodoContable`, `SaldoSnapshot`, `AuditoriaPeriodo` en schema con índices y relaciones
-- [ ] Campo `contabilidadTimezone` agregado a `Tenant` con default `America/Argentina/Buenos_Aires`
-- [ ] `PeriodoContableService.verificarSolapamiento()` detecta solapamientos correctamente (mismo día, adyacente, parcial, distinto tenant/tipo)
-- [ ] `PeriodoContableService.validarTransicion()` acepta solo transiciones válidas según la matriz definida
-- [ ] `PeriodoContableService.abrirPeriodo()` crea período con validación de solapamiento
-- [ ] `PeriodoContableService.resolverPeriodoActivo()` resuelve por jerarquía (DIARIO → MENSUAL → ANUAL)
+- [x] Enums `TipoPeriodo`, `EstadoPeriodo`, `EventoAuditoria` definidos en Prisma y TypeScript
+- [x] Modelos `PeriodoContable`, `SaldoSnapshot`, `AuditoriaPeriodo` en schema con índices y relaciones
+- [x] Campo `contabilidadTimezone` agregado a `Tenant` con default `America/Argentina/Buenos_Aires`
+- [x] `PeriodoContableService.verificarSolapamiento()` detecta solapamientos correctamente (mismo día, adyacente, parcial, distinto tenant/tipo)
+- [x] `PeriodoContableService.validarTransicion()` acepta solo transiciones válidas según la matriz definida
+- [x] `PeriodoContableService.abrirPeriodo()` crea período con validación de solapamiento
+- [x] `PeriodoContableService.resolverPeriodoActivo()` resuelve por jerarquía (DIARIO → MENSUAL → ANUAL)
 - [ ] Migración Prisma ejecutada exitosamente (`pnpm prisma migrate dev`)
-- [ ] Tests: todas las transiciones válidas e inválidas cubiertas, solapamiento con edge cases, resolución jerárquica
+- [x] Tests: todas las transiciones válidas e inválidas cubiertas, solapamiento con edge cases, resolución jerárquica
 
 **Riesgos**:
 - Conflicto con schema existente si hay modelos con nombres similares → verificar que los nombres son únicos
@@ -84,15 +86,15 @@ Implementación de un sistema de períodos contables jerárquicos (diario → me
 | `src/lib/services/__tests__/periodo-audit-service.test.ts` | Create | ~150 |
 
 **Criterios de aceptación**:
-- [ ] `SnapshotService.generarSnapshot()` itera todas las `CuentaBancaria` del tenant y crea `SaldoSnapshot` por cada una
-- [ ] Snapshots capturan saldo, moneda y metadata en el momento exacto
-- [ ] Cuentas con saldo 0 también generan snapshot (no se omiten)
-- [ ] Múltiples monedas (ARS, USD) capturadas correctamente
-- [ ] `SnapshotService.verificarIntegridad()` detecta inconsistencias
-- [ ] `PeriodoAuditService.registrar()` crea entrada de auditoría con evento, actor, motivo, payload
-- [ ] `PeriodoAuditService.obtenerHistorial()` retorna timeline ordenado cronológicamente
+- [x] `SnapshotService.generarSnapshot()` itera todas las `CuentaBancaria` del tenant y crea `SaldoSnapshot` por cada una
+- [x] Snapshots capturan saldo, moneda y metadata en el momento exacto
+- [x] Cuentas con saldo 0 también generan snapshot (no se omiten)
+- [x] Múltiples monedas (ARS, USD) capturadas correctamente
+- [x] `SnapshotService.verificarIntegridad()` detecta inconsistencias
+- [x] `PeriodoAuditService.registrar()` crea entrada de auditoría con evento, actor, motivo, payload
+- [x] `PeriodoAuditService.obtenerTimeline()` retorna timeline ordenado cronológicamente
 - [ ] Toda transición de estado genera registro de auditoría (integrado en T1/T4)
-- [ ] Tests: múltiples cuentas, múltiples monedas, saldo 0, integridad, registro de auditoría, timeline
+- [x] Tests: múltiples cuentas, múltiples monedas, saldo 0, integridad, registro de auditoría, timeline
 
 **Riesgos**:
 - Si no hay cuentas bancarias, el snapshot se genera vacío → comportamiento correcto, pero debe testearse
@@ -135,19 +137,37 @@ Implementación de un sistema de períodos contables jerárquicos (diario → me
 
 **Dependencias**: T2 (guard central)
 
+**Estado**: ✅ Completado
+
 **Archivos**:
 | Archivo | Acción | Líneas aprox |
 |---------|--------|-------------|
-| `src/lib/server-actions/with-action.ts` | Modify | +40 |
-| `src/lib/server-actions/__tests__/with-action-periodo.test.ts` | Create | ~150 |
+| `src/lib/services/with-period-validation.ts` | Create | ~80 |
+| `src/lib/services/__tests__/with-period-validation.test.ts` | Create | ~200 |
+| `src/lib/services/periodo-contable-guard.ts` | Modify | +2 (extraerFechaNegocio) |
+| `src/features/contabilidad/actions-reconciliacion.ts` | Modify | ~15 |
+| `src/features/contabilidad/actions-ajustes-bancarios.ts` | Modify | ~10 |
+| `src/features/contabilidad/actions.ts` | Modify | ~10 |
+| `src/features/contabilidad/actions-anticipos.ts` | Modify | ~10 |
+| `src/features/contabilidad/actions-deudas-cash.ts` | Modify | ~10 |
+| `src/features/contabilidad/actions-prestamos-cash.ts` | Modify | ~10 |
 
 **Criterios de aceptación**:
-- [ ] `withAction` inyecta `PeriodoGuard.assertWritable()` antes de ejecutar la lógica de negocio
-- [ ] La fecha se extrae automáticamente del input via `extraerFechaNegocio()`
-- [ ] Si no hay fecha en el input, el guard no se aplica (solo actions con fecha)
-- [ ] Si el guard rechaza, retorna `{ success: false, error: { code, message } }` sin ejecutar la action
-- [ ] El guard se aplica solo si hay `tenantId` del usuario autenticado
-- [ ] Tests: action con fecha en período abierto (pasa), período cerrado (rechaza), sin fecha (no aplica guard)
+- [x] `withPeriodValidation` wrapper creado en `src/lib/services/with-period-validation.ts`
+- [x] Wrapper se compone con `withAction` sin modificar su firma
+- [x] La fecha se extrae del input via función `extraerFecha` configurable
+- [x] Si no hay fecha en el input, el guard no se aplica
+- [x] Si el guard rechaza, lanza `ActionError` sin ejecutar la lógica
+- [x] El guard respeta el feature flag (disabled/audit-only/enforce)
+- [x] Aplicado a 3 acciones de reconciliación (ventas, servicios, gastos)
+- [x] Aplicado a createAjusteBancarioAction
+- [x] Aplicado a createTransferenciaBancariaAction
+- [x] Aplicado a createAnticipoAction
+- [x] Aplicado a createDeudaCashAction y registrarPagoDeudaAction
+- [x] Aplicado a createPrestamoCashAction y registrarPagoPrestamoAction
+- [x] `extraerFechaNegocio` actualizado con `fechaAnticipo` y `fechaVencimiento`
+- [x] Tests: wrapper pasa validación, bloquea con enforce, permite con audit-only, saltea sin fecha
+- [x] Todos los tests existentes siguen pasando (112 tests periodo-related)
 
 **Riesgos**:
 - Si `extraerFechaNegocio` no encuentra la fecha correcta, el guard no se aplica → mitigar con auditoría de los 36+ puntos

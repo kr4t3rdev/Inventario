@@ -39,8 +39,5 @@ export default async function FacturasPage(props: PageProps) {
 
   const initialData = result.success ? result.data : undefined
 
-  // @ts-expect-error
-  return <FacturasContent initialData={
-  initialData
-  } />
+  return <FacturasContent initialData={initialData} />
 }

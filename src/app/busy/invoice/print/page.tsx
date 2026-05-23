@@ -266,7 +266,7 @@ function InvoicePrintContent() {
   useEffect(() => {
     getMiEmpresaAction()
       .then((r) => {
-        if (r.success) setMiEmpresa(r.data as MiEmpresaData)
+        if (r.success) setMiEmpresa(r.data as unknown as MiEmpresaData)
       })
       .catch(() => {})
   }, [])

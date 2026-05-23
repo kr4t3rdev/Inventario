@@ -210,7 +210,8 @@ exports.Prisma.TenantScalarFieldEnum = {
   nombre: 'nombre',
   slug: 'slug',
   createdAt: 'createdAt',
-  updatedAt: 'updatedAt'
+  updatedAt: 'updatedAt',
+  contabilidadTimezone: 'contabilidadTimezone'
 };
 
 exports.Prisma.TenantMembershipScalarFieldEnum = {
@@ -1514,6 +1515,46 @@ exports.Prisma.AnticipoMovimientoScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.PeriodoContableScalarFieldEnum = {
+  periodoId: 'periodoId',
+  tenantId: 'tenantId',
+  tipo: 'tipo',
+  fechaInicio: 'fechaInicio',
+  fechaFin: 'fechaFin',
+  estado: 'estado',
+  motivoReapertura: 'motivoReapertura',
+  cerradoPor: 'cerradoPor',
+  cerradoAt: 'cerradoAt',
+  aprobadoPor: 'aprobadoPor',
+  aprobadoAt: 'aprobadoAt',
+  observaciones: 'observaciones',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.SaldoSnapshotScalarFieldEnum = {
+  snapshotId: 'snapshotId',
+  periodoId: 'periodoId',
+  cuentaBancariaId: 'cuentaBancariaId',
+  saldo: 'saldo',
+  moneda: 'moneda',
+  metadata: 'metadata',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.AuditoriaPeriodoScalarFieldEnum = {
+  auditoriaId: 'auditoriaId',
+  tenantId: 'tenantId',
+  periodoId: 'periodoId',
+  evento: 'evento',
+  actor: 'actor',
+  timestamp: 'timestamp',
+  entidadAfectada: 'entidadAfectada',
+  motivo: 'motivo',
+  payload: 'payload',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1660,6 +1701,31 @@ exports.ContextoAnticipo = exports.$Enums.ContextoAnticipo = {
   FACTURA_DIRECTA: 'FACTURA_DIRECTA'
 };
 
+exports.TipoPeriodo = exports.$Enums.TipoPeriodo = {
+  DIARIO: 'DIARIO',
+  MENSUAL: 'MENSUAL',
+  ANUAL: 'ANUAL'
+};
+
+exports.EstadoPeriodo = exports.$Enums.EstadoPeriodo = {
+  BORRADOR: 'BORRADOR',
+  ABIERTO: 'ABIERTO',
+  EN_CIERRE: 'EN_CIERRE',
+  CERRADO: 'CERRADO',
+  APROBADO: 'APROBADO',
+  REABIERTO: 'REABIERTO'
+};
+
+exports.EventoAuditoria = exports.$Enums.EventoAuditoria = {
+  APERTURA: 'APERTURA',
+  CIERRE: 'CIERRE',
+  REAPERTURA: 'REAPERTURA',
+  APROBACION: 'APROBACION',
+  BLOQUEO: 'BLOQUEO',
+  ERROR: 'ERROR',
+  INTENTO_BYPASS: 'INTENTO_BYPASS'
+};
+
 exports.Prisma.ModelName = {
   Categoria: 'Categoria',
   Unidad: 'Unidad',
@@ -1754,7 +1820,10 @@ exports.Prisma.ModelName = {
   ProductoCostHistory: 'ProductoCostHistory',
   VendorCodeSequence: 'VendorCodeSequence',
   Anticipo: 'Anticipo',
-  AnticipoMovimiento: 'AnticipoMovimiento'
+  AnticipoMovimiento: 'AnticipoMovimiento',
+  PeriodoContable: 'PeriodoContable',
+  SaldoSnapshot: 'SaldoSnapshot',
+  AuditoriaPeriodo: 'AuditoriaPeriodo'
 };
 
 /**

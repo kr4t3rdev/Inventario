@@ -799,7 +799,7 @@ export default function Home(): React.JSX.Element {
           ]}
           direction="right"
         />
-        <MarqueeText text="Control total · Decisiones inteligentes · Operación fluida · Escalabilidad garantizada" speed={30} direction="right" />
+        {/* <MarqueeText text="Control total · Decisiones inteligentes · Operación fluida · Escalabilidad garantizada" speed={30} direction="right" /> */}
 
         {/* ═══ TESTIMONIALS ═══ */}
         <section id="testimonios" className="space-y-10 scroll-mt-24">

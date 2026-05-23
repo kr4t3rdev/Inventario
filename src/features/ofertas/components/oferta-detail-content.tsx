@@ -8,7 +8,7 @@
 import { useEffect, useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { ArrowLeft, Check, X, FileText, ShoppingCart, Loader2, User, Calendar, Receipt } from 'lucide-react'
+import { ArrowLeft, Check, X, FileText, ShoppingCart, Loader2, User, Calendar, Receipt, Printer } from 'lucide-react'
 import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
@@ -353,6 +353,12 @@ export function OfertaDetailContent({ initialOferta }: OfertaDetailContentProps)
                 </Button>
               </>
             )}
+
+            <Button variant="outline" asChild disabled={isPending}>
+              <Link href={`/busy/oferta/print?id=${oferta.id}`}>
+                <Printer className="mr-2 h-4 w-4" /> Imprimir
+              </Link>
+            </Button>
 
             {(oferta.estado === 'ACEPTADA' || oferta.estado === 'FACTURADA' || oferta.estado === 'RECHAZADA') && (
               <Button variant="outline" onClick={generatePDF} disabled={isPending}>

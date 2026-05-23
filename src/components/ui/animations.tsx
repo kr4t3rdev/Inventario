@@ -32,7 +32,7 @@ export function PageTransition({ children, className, ...props }: PageTransition
   const hasMounted = useHasMounted();
 
   if (!hasMounted) {
-    return <div className={cn("w-full", className)} {...props}>{children}</div>;
+    return <div className={cn("w-full", className)} {...(props as React.ComponentPropsWithoutRef<'div'>)}>{children}</div>;
   }
 
   const variants: Variants = {
@@ -75,7 +75,7 @@ export function StaggerContainer({
   const hasMounted = useHasMounted();
 
   if (!hasMounted) {
-    return <div className={className} {...props}>{children}</div>;
+    return <div className={className} {...(props as React.ComponentPropsWithoutRef<'div'>)}>{children}</div>;
   }
 
   const container: Variants = shouldReduceMotion
