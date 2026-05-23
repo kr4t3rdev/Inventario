@@ -31,7 +31,7 @@ export function NavMain({
 }) {
   return (
     <SidebarGroupContent className="flex flex-col gap-2 group-data-[collapsible=icon]:gap-1">
-      <SidebarMenu>
+      <SidebarMenu className="group-data-[collapsible=icon]:items-center">
         {items.map((item) => (
           item.subItems ? (
             <Collapsible key={item.title}>
@@ -52,7 +52,7 @@ export function NavMain({
                 </CollapsibleTrigger>
               </SidebarMenuItem>
               <CollapsibleContent className="group-data-[collapsible=icon]:hidden">
-                <SidebarMenu>
+      <SidebarMenu className="group-data-[collapsible=icon]:items-center">
                   {item.subItems.map((subItem) => (
                     <SidebarMenuItem key={subItem.title}>
                       <Link href={subItem.url} className="min-w-0">

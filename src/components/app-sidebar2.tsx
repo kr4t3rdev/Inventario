@@ -599,7 +599,7 @@ export function AppSidebar2({
 
         <SidebarContent className="px-2 pb-2 group-data-[collapsible=icon]:overflow-y-auto group-data-[collapsible=icon]:px-0">
           <motion.div
-            className="flex flex-col gap-2 group-data-[collapsible=icon]:gap-1"
+            className="flex flex-col gap-2 group-data-[collapsible=icon]:gap-2"
             variants={groupListVariants}
             initial={isMounted && !shouldReduceMotion ? "hidden" : "visible"}
             animate="visible"
@@ -616,7 +616,7 @@ export function AppSidebar2({
                     "rounded-xl border border-sidebar-border/70 bg-linear-to-br p-2 shadow-sm transition-colors duration-200 hover:border-sidebar-border",
                     groupToneByTitle[group.title] ??
                       "from-sidebar-accent/55 via-sidebar-accent/30 to-transparent",
-                    "group-data-[collapsible=icon]:border-transparent group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:p-0 group-data-[collapsible=icon]:shadow-none"
+                    "group-data-[collapsible=icon]:border-transparent group-data-[collapsible=icon]:bg-transparent group-data-[collapsible=icon]:px-0 group-data-[collapsible=icon]:py-1.5 group-data-[collapsible=icon]:shadow-none"
                   )}
                 >
                   <SidebarGroupLabel className="h-auto px-2 py-1 text-[0.67rem] font-semibold uppercase tracking-widest text-sidebar-foreground/70">
