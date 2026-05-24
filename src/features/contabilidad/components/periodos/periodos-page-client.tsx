@@ -35,7 +35,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Loader2, Plus, Calendar, Lock, CheckCircle } from "lucide-react";
+import { Loader2, Plus, Calendar, Lock, CheckCircle, ShieldCheck, ShieldAlert, AlertCircle, Info } from "lucide-react";
 import { format } from "date-fns";
 import { PeriodoTimeline } from "./periodo-timeline";
 import { AbrirPeriodoDialog } from "./abrir-periodo-dialog";
@@ -269,9 +269,10 @@ export function PeriodosPageClient({
               <TableHeader>
                 <TableRow>
                   <TableHead>Tipo</TableHead>
-                  <TableHead>Código</TableHead>
                   <TableHead>Período</TableHead>
                   <TableHead>Estado</TableHead>
+                  <TableHead>Integridad</TableHead>
+                  <TableHead>Última Acción</TableHead>
                   <TableHead>Acciones</TableHead>
                 </TableRow>
               </TableHeader>
@@ -284,9 +285,6 @@ export function PeriodosPageClient({
                           {TIPO_LABELS[periodo.tipo] ?? periodo.tipo}
                         </Badge>
                       </TableCell>
-                      <TableCell className="font-mono text-sm">
-                        {periodo.codigoPeriodo ?? "-"}
-                      </TableCell>
                       <TableCell>
                         <div className="text-sm">
                           {format(new Date(periodo.fechaInicio), "dd/MM/yyyy")}
@@ -295,9 +293,41 @@ export function PeriodosPageClient({
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={ESTADO_COLORS[periodo.estado] ?? "secondary"}>
-                          {ESTADO_LABELS[periodo.estado] ?? periodo.estado}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={ESTADO_COLORS[periodo.estado] ?? "secondary"}>
+                            {ESTADO_LABELS[periodo.estado] ?? periodo.estado}
+                          </Badge>
+                          {periodo.blockers?.length > 0 && (
+                            <span title={periodo.blockers.join("; ")}>
+                              <AlertCircle className="h-4 w-4 text-destructive" />
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {periodo.tieneHash ? (
+                          <span title="Hash de integridad presente" className="text-green-600 flex items-center gap-1">
+                            <ShieldCheck className="h-4 w-4" />
+                            <span className="text-xs">Verificado</span>
+                          </span>
+                        ) : (
+                          <span title="Sin hash de integridad" className="text-muted-foreground flex items-center gap-1">
+                            <ShieldAlert className="h-4 w-4" />
+                            <span className="text-xs">Pendiente</span>
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-xs text-muted-foreground">
+                          {periodo.ultimaAuditoria ? (
+                            <span className="flex items-center gap-1">
+                              <Info className="h-3 w-3" />
+                              {periodo.ultimaAuditoria.evento}
+                            </span>
+                          ) : (
+                            "-"
+                          )}
+                        </span>
                       </TableCell>
                       <TableCell>
                         <div className="flex gap-2 items-center">
@@ -323,7 +353,7 @@ export function PeriodosPageClient({
                     </TableRow>
                     {timelinePeriodoId === periodo.periodoId && (
                       <TableRow key={`${periodo.periodoId}-timeline`}>
-                        <TableCell colSpan={5} className="p-0">
+                        <TableCell colSpan={7} className="p-0">
                           <div className="px-4 pb-4">
                             <PeriodoTimeline
                               eventos={periodoTimeline}

@@ -134,8 +134,8 @@ describe('listarPeriodosAction', () => {
 
   it('retorna períodos del tenant con paginación', async () => {
     const periodos = [
-      makePeriodo({ periodoId: 'p-1', tipo: TipoPeriodo.MENSUAL, estado: EstadoPeriodo.ABIERTO }),
-      makePeriodo({ periodoId: 'p-2', tipo: TipoPeriodo.DIARIO, estado: EstadoPeriodo.CERRADO }),
+      makePeriodo({ periodoId: 'p-1', tipo: TipoPeriodo.MENSUAL, estado: EstadoPeriodo.ABIERTO, auditoria: [] }),
+      makePeriodo({ periodoId: 'p-2', tipo: TipoPeriodo.DIARIO, estado: EstadoPeriodo.CERRADO, auditoria: [] }),
     ];
     mockPrisma.periodoContable.findMany.mockResolvedValue(periodos);
     mockPrisma.periodoContable.count.mockResolvedValue(2);
@@ -144,6 +144,9 @@ describe('listarPeriodosAction', () => {
 
     expect(result.success).toBe(true);
     expect(result.data?.periodos).toHaveLength(2);
+    expect(result.data?.periodos[0]).toHaveProperty('tieneHash');
+    expect(result.data?.periodos[0]).toHaveProperty('ultimaAuditoria');
+    expect(result.data?.periodos[0]).toHaveProperty('blockers');
     expect(result.data?.pagination).toEqual({
       page: 1,
       limit: 10,
@@ -434,6 +437,10 @@ describe('cerrarPeriodoAction', () => {
     });
     mockPrisma.auditoriaPeriodo.create.mockResolvedValue({});
     mockPrisma.cuentaBancaria.findMany.mockResolvedValue([]); // sin cuentas → 0 snapshots
+    // Mocks para generarResumenSnapshot (sin cuentas, sin movimientos)
+    mockPrisma.reconciliacionVenta.aggregate.mockResolvedValue({ _sum: { montoConvertido: null } });
+    mockPrisma.reconciliacionServicio.aggregate.mockResolvedValue({ _sum: { montoConvertido: null } });
+    mockPrisma.reconciliacionGasto.aggregate.mockResolvedValue({ _sum: { montoConvertido: null } });
 
     const result = await cerrarPeriodoAction({ periodoId: 'p-1' });
 
@@ -465,6 +472,11 @@ describe('cerrarPeriodoAction', () => {
     const periodo = makePeriodo({ estado: EstadoPeriodo.CERRADO });
     mockPrisma.periodoContable.findFirst.mockResolvedValue(periodo);
     mockPrisma.periodoContable.findUnique.mockResolvedValue(periodo);
+    // Mocks para generarResumenSnapshot (se llama antes de validar transición)
+    mockPrisma.cuentaBancaria.findMany.mockResolvedValue([]);
+    mockPrisma.reconciliacionVenta.aggregate.mockResolvedValue({ _sum: { montoConvertido: null } });
+    mockPrisma.reconciliacionServicio.aggregate.mockResolvedValue({ _sum: { montoConvertido: null } });
+    mockPrisma.reconciliacionGasto.aggregate.mockResolvedValue({ _sum: { montoConvertido: null } });
 
     const result = await cerrarPeriodoAction({ periodoId: 'p-1' });
 
@@ -480,6 +492,11 @@ describe('cerrarPeriodoAction', () => {
     mockPrisma.periodoContable.findFirst.mockResolvedValue(periodo);
     mockPrisma.periodoContable.findUnique.mockResolvedValue(periodo);
     mockPrisma.periodoContable.count.mockResolvedValue(2); // 2 hijos abiertos
+    // Mocks para generarResumenSnapshot (se llama antes de validar hijos)
+    mockPrisma.cuentaBancaria.findMany.mockResolvedValue([]);
+    mockPrisma.reconciliacionVenta.aggregate.mockResolvedValue({ _sum: { montoConvertido: null } });
+    mockPrisma.reconciliacionServicio.aggregate.mockResolvedValue({ _sum: { montoConvertido: null } });
+    mockPrisma.reconciliacionGasto.aggregate.mockResolvedValue({ _sum: { montoConvertido: null } });
 
     const result = await cerrarPeriodoAction({ periodoId: 'p-1' });
 

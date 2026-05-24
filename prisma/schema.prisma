@@ -2158,6 +2158,8 @@ model PeriodoContable {
   aprobadoPor      String?
   aprobadoAt       DateTime?
   observaciones    String?
+  resumenJson      Json?              /// Resumen de saldos agregados al cierre
+  hashIntegridad   String?            /// SHA256 del resumenJson para verificación de integridad
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
 

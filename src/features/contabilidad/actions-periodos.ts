@@ -92,14 +92,51 @@ export const listarPeriodosAction = withAction(async (
       orderBy: [{ fechaInicio: 'desc' }],
       skip: (page - 1) * limit,
       take: limit,
+      include: {
+        auditoria: {
+          orderBy: { timestamp: 'desc' },
+          take: 1,
+          select: { evento: true, timestamp: true, actor: true },
+        },
+      },
     }),
     prisma.periodoContable.count({ where }),
   ]);
 
+  // Enriquecer cada período con stats y blockers
+  const periodosConStats = await Promise.all(
+    periodos.map(async (p) => {
+      const blockers: string[] = [];
+
+      // Verificar si tiene hash de integridad cuando está cerrado
+      if (
+        (p.estado === EstadoPeriodo.CERRADO || p.estado === EstadoPeriodo.APROBADO) &&
+        !p.hashIntegridad
+      ) {
+        blockers.push('El período no tiene hash de integridad');
+      }
+
+      const ultimaAuditoria = p.auditoria[0] ?? null;
+
+      return {
+        ...p,
+        resumenJson: undefined, // no enviar datos pesados al cliente
+        hashIntegridad: p.hashIntegridad ?? null,
+        tieneHash: Boolean(p.hashIntegridad),
+        ultimaAuditoria: ultimaAuditoria
+          ? {
+              evento: ultimaAuditoria.evento,
+              timestamp: ultimaAuditoria.timestamp.toISOString(),
+              actor: ultimaAuditoria.actor,
+            }
+          : null,
+        blockers,
+      };
+    }),
+  );
+
   return {
-    periodos: periodos.map((p) => ({
-      ...p,
-    })),
+    periodos: periodosConStats,
     pagination: {
       page,
       limit,
@@ -255,11 +292,24 @@ export const cerrarPeriodoAction = withAction(async (
     user.userId,
   );
 
-  // Cerrar período (validaciones ya hechas en el service)
+  // Generar resumen agregado con hash de integridad
+  const { resumenJson, hashIntegridad } = await snapshotService.generarResumenSnapshot(
+    tenantId,
+    periodo.fechaInicio,
+    periodo.fechaFin,
+  );
+
+  // Cerrar período (valida transición e hijos)
   const cerrado = await PeriodoContableService.cerrarPeriodo(
     parsed.periodoId,
     user.userId,
   );
+
+  // Persistir resumen y hash en el período (después del close exitoso)
+  await prisma.periodoContable.update({
+    where: { periodoId: parsed.periodoId },
+    data: { resumenJson, hashIntegridad },
+  });
 
   // Invalidar caché del guard
   invalidateCache(tenantId);
