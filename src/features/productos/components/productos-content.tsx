@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Badge } from "@/components/ui/badge"
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"
 import { useState, useMemo, useEffect, useTransition } from "react"
 import { toast } from "sonner"
 import Link from "next/link"
@@ -508,9 +509,14 @@ export function ProductosContent({
                   productoId={producto.id}
                   productoNombre={producto.nombre}
                   trigger={
-                    <Button variant='outline' className='h-8 w-8 p-0 cursor-pointer' title="Ver historial de restock">
-                      <History className='h-4 w-4' />
-                    </Button>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button variant='outline' className='h-8 w-8 p-0 cursor-pointer' title="Ver historial de restock">
+                          <History className='h-4 w-4' />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="top">Ver historial de restock</TooltipContent>
+                    </Tooltip>
                   }
                 />
 

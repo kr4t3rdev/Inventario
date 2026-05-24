@@ -32,7 +32,7 @@ export function RestockHistoryDialog({
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<any>(undefined)
 
-  // Fetch when dialog opens
+  // Fetch cuando se abre el dialog
   useEffect(() => {
     if (!open) return
     let cancelled = false
