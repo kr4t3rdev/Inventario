@@ -48,6 +48,20 @@ const { mockPrisma } = vi.hoisted(() => ({
     transferenciaBancaria: {
       aggregate: vi.fn(),
     },
+    aperturaPeriodo: {
+      findUnique: vi.fn(),
+      create: vi.fn(),
+    },
+    snapshotPeriodo: {
+      findFirst: vi.fn(),
+      create: vi.fn(),
+    },
+    cuentaPorCobrar: {
+      aggregate: vi.fn(),
+    },
+    cuentaPorPagar: {
+      aggregate: vi.fn(),
+    },
   },
 }));
 
@@ -92,19 +106,45 @@ function makePeriodo(overrides: Record<string, unknown> = {}) {
     periodoId: 'p-1',
     tenantId: TENANT,
     tipo: TipoPeriodo.MENSUAL,
+    codigo: null,
     fechaInicio: new Date('2026-03-01T00:00:00Z'),
     fechaFin: new Date('2026-03-31T23:59:59Z'),
     estado: EstadoPeriodo.BORRADOR,
+    periodoPadreId: null,
+    aperturaAutomatica: false,
+    categoria: 'ORDINARIO',
+    abiertoPorId: null,
+    fechaApertura: null,
     motivoReapertura: null,
     cerradoPor: null,
     cerradoAt: null,
     aprobadoPor: null,
     aprobadoAt: null,
+    reabiertoPorId: null,
+    fechaReapertura: null,
+    segundoAprobadorId: null,
     observaciones: null,
+    resumenJson: null,
+    hashIntegridad: null,
     createdAt: new Date(),
     updatedAt: new Date(),
+    _count: { subperiodos: 0 },
     ...overrides,
   };
+}
+
+function mockAperturaService() {
+  // Mocks mínimos para que AperturaPeriodoService.createAperturaPeriodo funcione
+  mockPrisma.periodoContable.findUnique.mockResolvedValue(
+    makePeriodo({ estado: EstadoPeriodo.ABIERTO }),
+  );
+  mockPrisma.aperturaPeriodo.findUnique.mockResolvedValue(null);
+  mockPrisma.aperturaPeriodo.create.mockResolvedValue({ aperturaId: 'ap-1' });
+  mockPrisma.cuentaBancaria.findMany.mockResolvedValue([]);
+  mockPrisma.cuentaPorCobrar.aggregate.mockResolvedValue({ _sum: { saldoPendiente: null } });
+  mockPrisma.cuentaPorPagar.aggregate.mockResolvedValue({ _sum: { saldoPendiente: null } });
+  // DeriveOpeningBalances busca periodo anterior
+  mockPrisma.periodoContable.findFirst.mockResolvedValue(null);
 }
 
 function resetMocks() {
@@ -294,6 +334,7 @@ describe('abrirPeriodoAction', () => {
       }),
     );
     mockPrisma.auditoriaPeriodo.create.mockResolvedValue({});
+    mockAperturaService();
 
     const result = await abrirPeriodoAction({
       tipo: TipoPeriodo.MENSUAL,
@@ -318,6 +359,7 @@ describe('abrirPeriodoAction', () => {
       }),
     );
     mockPrisma.auditoriaPeriodo.create.mockResolvedValue({});
+    mockAperturaService();
 
     const result = await abrirPeriodoAction({
       tipo: TipoPeriodo.DIARIO,
@@ -340,6 +382,7 @@ describe('abrirPeriodoAction', () => {
       }),
     );
     mockPrisma.auditoriaPeriodo.create.mockResolvedValue({});
+    mockAperturaService();
 
     const result = await abrirPeriodoAction({
       tipo: TipoPeriodo.ANUAL,
@@ -405,6 +448,7 @@ describe('abrirPeriodoAction', () => {
       makePeriodo({ estado: EstadoPeriodo.ABIERTO }),
     );
     mockPrisma.auditoriaPeriodo.create.mockResolvedValue({});
+    mockAperturaService();
 
     await abrirPeriodoAction({
       tipo: TipoPeriodo.MENSUAL,
@@ -441,6 +485,13 @@ describe('cerrarPeriodoAction', () => {
     mockPrisma.reconciliacionVenta.aggregate.mockResolvedValue({ _sum: { montoConvertido: null } });
     mockPrisma.reconciliacionServicio.aggregate.mockResolvedValue({ _sum: { montoConvertido: null } });
     mockPrisma.reconciliacionGasto.aggregate.mockResolvedValue({ _sum: { montoConvertido: null } });
+    // Mocks para crearVersionSnapshot
+    mockPrisma.snapshotPeriodo.findFirst.mockResolvedValue(null);
+    mockPrisma.snapshotPeriodo.create.mockResolvedValue({
+      snapshotId: 'sp-1', periodoId: 'p-1', version: 1, baseCajaJson: null,
+      baseDevengoJson: null, resumenJson: null, hashIntegridad: null, createdAt: new Date(),
+    });
+    mockPrisma.saldoSnapshot.findMany.mockResolvedValue([]);
 
     const result = await cerrarPeriodoAction({ periodoId: 'p-1' });
 

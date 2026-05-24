@@ -9,7 +9,7 @@
  */
 
 import { prisma } from '@/lib/prisma';
-import type { SaldoSnapshot } from '@/generated/prisma';
+import type { SaldoSnapshot, SnapshotPeriodo } from '@/generated/prisma';
 import { SnapshotTotales } from './periodo-contable-types';
 import { ENTIDADES_CAJA, ENTIDADES_DEVENGO } from './fecha-operacion-registry';
 
@@ -510,6 +510,63 @@ export class SnapshotService {
     const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
 
     return { resumenJson: resumen as unknown as Record<string, unknown>, hashIntegridad: hashHex };
+  }
+
+  /**
+   * @description Crea una versión historificada de SnapshotPeriodo.
+   *
+   * Determina la próxima versión disponible y persiste los datos de snapshot
+   * en un registro versionado. Cada cierre o re-cierre incrementa la versión.
+   *
+   * @param {string} periodoId - ID del período.
+   * @param {Object} params - Datos del snapshot versionado.
+   * @param {Record<string, unknown>} [params.resumenJson] - Resumen agregado.
+   * @param {string} [params.hashIntegridad] - Hash de integridad.
+   * @returns {Promise<SnapshotPeriodo>} SnapshotPeriodo creado.
+   */
+  async crearVersionSnapshot(
+    periodoId: string,
+    params: {
+      resumenJson?: Record<string, unknown>;
+      hashIntegridad?: string;
+    },
+  ): Promise<SnapshotPeriodo> {
+    // Determinar próxima versión
+    const ultimaVersion = await prisma.snapshotPeriodo.findFirst({
+      where: { periodoId },
+      orderBy: { version: 'desc' },
+      select: { version: true },
+    });
+
+    const proximaVersion = (ultimaVersion?.version ?? 0) + 1;
+
+    // Obtener snapshots actuales de SaldoSnapshot para serializar
+    const snapshotsActuales = await prisma.saldoSnapshot.findMany({
+      where: { periodoId },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const baseCaja = snapshotsActuales.length > 0
+      ? snapshotsActuales.map((s) => ({
+          cuentaBancariaId: s.cuentaBancariaId,
+          saldo: s.saldo,
+          moneda: s.moneda,
+          createdAt: s.createdAt.toISOString(),
+        }))
+      : null;
+
+    // Crear SnapshotPeriodo versionado
+    const snapshotPeriodo = await prisma.snapshotPeriodo.create({
+      data: {
+        periodoId,
+        version: proximaVersion,
+        baseCajaJson: baseCaja as Record<string, unknown>[] | null,
+        resumenJson: params.resumenJson,
+        hashIntegridad: params.hashIntegridad,
+      },
+    });
+
+    return snapshotPeriodo;
   }
 }
 

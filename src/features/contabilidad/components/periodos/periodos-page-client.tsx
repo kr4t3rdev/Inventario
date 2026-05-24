@@ -38,6 +38,7 @@ import {
 import { Loader2, Plus, Calendar, Lock, CheckCircle, ShieldCheck, ShieldAlert, AlertCircle, Info } from "lucide-react";
 import { format } from "date-fns";
 import { PeriodoTimeline } from "./periodo-timeline";
+import { PeriodosDashboard } from "./periodos-dashboard";
 import { AbrirPeriodoDialog } from "./abrir-periodo-dialog";
 import { CerrarPeriodoDialog } from "./cerrar-periodo-dialog";
 import { ReabrirPeriodoDialog } from "./reabrir-periodo-dialog";
@@ -67,6 +68,18 @@ const TIPO_LABELS: Record<string, string> = {
   ANUAL: "Anual",
 };
 
+const CATEGORIA_LABELS: Record<string, string> = {
+  ORDINARIO: "Ordinario",
+  EXTRAORDINARIO: "Extraordinario",
+  RECTIFICATIVO: "Rectificativo",
+};
+
+const CATEGORIA_VARIANTS: Record<string, "default" | "secondary" | "outline" | "destructive" | null> = {
+  ORDINARIO: "secondary",
+  EXTRAORDINARIO: "outline",
+  RECTIFICATIVO: "destructive",
+};
+
 export function PeriodosPageClient({
   initialPeriodos = [],
   initialPagination = null,
@@ -79,6 +92,9 @@ export function PeriodosPageClient({
   const [pagination] = useState(initialPagination);
   const [isLoading, setIsLoading] = useState(false);
   const [timelineData, setTimelineData] = useState<Record<string, any[]>>({});
+
+  // View mode
+  const [viewMode, setViewMode] = useState<'list' | 'dashboard'>('list');
 
   // Filters
   const [filtroTipo, setFiltroTipo] = useState<string>("todos");
@@ -203,48 +219,79 @@ export function PeriodosPageClient({
             Gestión de períodos diarios, mensuales y anuales con control de cierres y auditoría.
           </p>
         </div>
-        <Button onClick={() => setShowAbrirDialog(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Nuevo Período
-        </Button>
+        <div className="flex items-center gap-2">
+          <div className="flex rounded-md border overflow-hidden">
+            <button
+              type="button"
+              className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                viewMode === 'list'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-background text-muted-foreground hover:bg-muted'
+              }`}
+              onClick={() => setViewMode('list')}
+            >
+              Listado
+            </button>
+            <button
+              type="button"
+              className={`px-3 py-1.5 text-xs font-medium transition-colors ${
+                viewMode === 'dashboard'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-background text-muted-foreground hover:bg-muted'
+              }`}
+              onClick={() => setViewMode('dashboard')}
+            >
+              Dashboard
+            </button>
+          </div>
+          <Button onClick={() => setShowAbrirDialog(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nuevo Período
+          </Button>
+        </div>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex gap-4 flex-wrap">
-            <div className="space-y-1">
-              <label className="text-xs text-muted-foreground">Tipo</label>
-              <Select value={filtroTipo} onValueChange={setFiltroTipo}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos</SelectItem>
-                  <SelectItem value="DIARIO">Diario</SelectItem>
-                  <SelectItem value="MENSUAL">Mensual</SelectItem>
-                  <SelectItem value="ANUAL">Anual</SelectItem>
-                </SelectContent>
-              </Select>
+      {/* Dashboard View */}
+      {viewMode === 'dashboard' && <PeriodosDashboard />}
+
+      {/* List View */}
+      {viewMode === 'list' && (<>
+        {/* Filters */}
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex gap-4 flex-wrap">
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">Tipo</label>
+                <Select value={filtroTipo} onValueChange={setFiltroTipo}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos</SelectItem>
+                    <SelectItem value="DIARIO">Diario</SelectItem>
+                    <SelectItem value="MENSUAL">Mensual</SelectItem>
+                    <SelectItem value="ANUAL">Anual</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs text-muted-foreground">Estado</label>
+                <Select value={filtroEstado} onValueChange={setFiltroEstado}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos</SelectItem>
+                    <SelectItem value="ABIERTO">Abierto</SelectItem>
+                    <SelectItem value="CERRADO">Cerrado</SelectItem>
+                    <SelectItem value="APROBADO">Aprobado</SelectItem>
+                    <SelectItem value="REABIERTO">Reabierto</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-            <div className="space-y-1">
-              <label className="text-xs text-muted-foreground">Estado</label>
-              <Select value={filtroEstado} onValueChange={setFiltroEstado}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos</SelectItem>
-                  <SelectItem value="ABIERTO">Abierto</SelectItem>
-                  <SelectItem value="CERRADO">Cerrado</SelectItem>
-                  <SelectItem value="APROBADO">Aprobado</SelectItem>
-                  <SelectItem value="REABIERTO">Reabierto</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
       {/* Table */}
       <Card>
@@ -262,12 +309,13 @@ export function PeriodosPageClient({
           ) : periodosFiltrados.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Calendar className="mx-auto h-12 w-12 mb-4" />
-              <p>No hay períodos{periodosFiltrados.length !== 1 ? "" : ""} registrados</p>
+              <p>No hay períodos registrados</p>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>Código</TableHead>
                   <TableHead>Tipo</TableHead>
                   <TableHead>Período</TableHead>
                   <TableHead>Estado</TableHead>
@@ -281,9 +329,21 @@ export function PeriodosPageClient({
                   <>
                     <TableRow key={periodo.periodoId}>
                       <TableCell>
-                        <Badge variant="outline">
-                          {TIPO_LABELS[periodo.tipo] ?? periodo.tipo}
-                        </Badge>
+                        <span className="font-mono text-sm font-medium">
+                          {periodo.codigo ?? '—'}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1.5">
+                          <Badge variant="outline">
+                            {TIPO_LABELS[periodo.tipo] ?? periodo.tipo}
+                          </Badge>
+                          {periodo.categoria && periodo.categoria !== 'ORDINARIO' && (
+                            <Badge variant={CATEGORIA_VARIANTS[periodo.categoria] ?? "outline"}>
+                              {CATEGORIA_LABELS[periodo.categoria] ?? periodo.categoria}
+                            </Badge>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
@@ -297,6 +357,11 @@ export function PeriodosPageClient({
                           <Badge variant={ESTADO_COLORS[periodo.estado] ?? "secondary"}>
                             {ESTADO_LABELS[periodo.estado] ?? periodo.estado}
                           </Badge>
+                          {periodo.subperiodosCount > 0 && (
+                            <span className="text-xs text-muted-foreground" title="Tiene subperíodos">
+                              {periodo.subperiodosCount} sub
+                            </span>
+                          )}
                           {periodo.blockers?.length > 0 && (
                             <span title={periodo.blockers.join("; ")}>
                               <AlertCircle className="h-4 w-4 text-destructive" />
@@ -320,7 +385,7 @@ export function PeriodosPageClient({
                       <TableCell>
                         <span className="text-xs text-muted-foreground">
                           {periodo.ultimaAuditoria ? (
-                            <span className="flex items-center gap-1">
+                            <span className="flex items-center gap-1" title={`Por ${periodo.ultimaAuditoria.actor}`}>
                               <Info className="h-3 w-3" />
                               {periodo.ultimaAuditoria.evento}
                             </span>
@@ -353,7 +418,70 @@ export function PeriodosPageClient({
                     </TableRow>
                     {timelinePeriodoId === periodo.periodoId && (
                       <TableRow key={`${periodo.periodoId}-timeline`}>
-                        <TableCell colSpan={7} className="p-0">
+                        <TableCell colSpan={8} className="p-0">
+                          <div className="px-4 pb-2 pt-2 grid grid-cols-3 gap-4 text-xs text-muted-foreground border-b">
+                            <div>
+                              <span className="font-medium">Código:</span>{' '}
+                              <span className="font-mono">{periodo.codigo ?? '—'}</span>
+                            </div>
+                            {periodo.abiertoPorId && (
+                              <div>
+                                <span className="font-medium">Abierto por:</span>{' '}
+                                {periodo.abiertoPorId}
+                                {periodo.fechaApertura && (
+                                  <span className="ml-1">
+                                    ({new Date(periodo.fechaApertura).toLocaleDateString()})
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                            {periodo.cerradoPor && (
+                              <div>
+                                <span className="font-medium">Cerrado por:</span>{' '}
+                                {periodo.cerradoPor}
+                                {periodo.cerradoAt && (
+                                  <span className="ml-1">
+                                    ({new Date(periodo.cerradoAt).toLocaleDateString()})
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                            {periodo.aprobadoPor && (
+                              <div>
+                                <span className="font-medium">Aprobado por:</span>{' '}
+                                {periodo.aprobadoPor}
+                                {periodo.aprobadoAt && (
+                                  <span className="ml-1">
+                                    ({new Date(periodo.aprobadoAt).toLocaleDateString()})
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                            {periodo.segundoAprobadorId && (
+                              <div>
+                                <span className="font-medium">2da Aprobación:</span>{' '}
+                                {periodo.segundoAprobadorId}
+                              </div>
+                            )}
+                            {periodo.reabiertoPorId && (
+                              <div>
+                                <span className="font-medium">Reabierto por:</span>{' '}
+                                {periodo.reabiertoPorId}
+                              </div>
+                            )}
+                            {periodo.subperiodosCount > 0 && (
+                              <div>
+                                <span className="font-medium">Subperíodos:</span>{' '}
+                                {periodo.subperiodosCount}
+                              </div>
+                            )}
+                            {periodo.tieneHash && (
+                              <div>
+                                <span className="font-medium">Hash:</span>{' '}
+                                <span className="font-mono">{periodo.hashIntegridad?.slice(0, 16)}...</span>
+                              </div>
+                            )}
+                          </div>
                           <div className="px-4 pb-4">
                             <PeriodoTimeline
                               eventos={periodoTimeline}
@@ -370,6 +498,7 @@ export function PeriodosPageClient({
           )}
         </CardContent>
       </Card>
+      </>)}
 
       {/* Dialogs */}
       <AbrirPeriodoDialog

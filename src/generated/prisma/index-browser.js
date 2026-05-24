@@ -1519,15 +1519,54 @@ exports.Prisma.PeriodoContableScalarFieldEnum = {
   periodoId: 'periodoId',
   tenantId: 'tenantId',
   tipo: 'tipo',
+  codigo: 'codigo',
   fechaInicio: 'fechaInicio',
   fechaFin: 'fechaFin',
   estado: 'estado',
-  motivoReapertura: 'motivoReapertura',
+  periodoPadreId: 'periodoPadreId',
+  aperturaAutomatica: 'aperturaAutomatica',
+  categoria: 'categoria',
+  abiertoPorId: 'abiertoPorId',
+  fechaApertura: 'fechaApertura',
   cerradoPor: 'cerradoPor',
   cerradoAt: 'cerradoAt',
   aprobadoPor: 'aprobadoPor',
   aprobadoAt: 'aprobadoAt',
+  reabiertoPorId: 'reabiertoPorId',
+  fechaReapertura: 'fechaReapertura',
+  segundoAprobadorId: 'segundoAprobadorId',
+  motivoReapertura: 'motivoReapertura',
   observaciones: 'observaciones',
+  resumenJson: 'resumenJson',
+  hashIntegridad: 'hashIntegridad',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
+exports.Prisma.SnapshotPeriodoScalarFieldEnum = {
+  snapshotId: 'snapshotId',
+  periodoId: 'periodoId',
+  version: 'version',
+  baseCajaJson: 'baseCajaJson',
+  baseDevengoJson: 'baseDevengoJson',
+  resumenJson: 'resumenJson',
+  hashIntegridad: 'hashIntegridad',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.AperturaPeriodoScalarFieldEnum = {
+  aperturaId: 'aperturaId',
+  periodoId: 'periodoId',
+  tenantId: 'tenantId',
+  origenPeriodoId: 'origenPeriodoId',
+  saldoCajaInicial: 'saldoCajaInicial',
+  saldoBancoInicial: 'saldoBancoInicial',
+  saldoCuentasCobrarInicial: 'saldoCuentasCobrarInicial',
+  saldoCuentasPagarInicial: 'saldoCuentasPagarInicial',
+  saldoInventarioInicial: 'saldoInventarioInicial',
+  saldoCapitalInicial: 'saldoCapitalInicial',
+  saldoResultadoAcumInicial: 'saldoResultadoAcumInicial',
+  detalleJson: 'detalleJson',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 };
@@ -1716,6 +1755,12 @@ exports.EstadoPeriodo = exports.$Enums.EstadoPeriodo = {
   REABIERTO: 'REABIERTO'
 };
 
+exports.CategoriaPeriodo = exports.$Enums.CategoriaPeriodo = {
+  ORDINARIO: 'ORDINARIO',
+  EXTRAORDINARIO: 'EXTRAORDINARIO',
+  RECTIFICATIVO: 'RECTIFICATIVO'
+};
+
 exports.EventoAuditoria = exports.$Enums.EventoAuditoria = {
   APERTURA: 'APERTURA',
   CIERRE: 'CIERRE',
@@ -1822,6 +1867,8 @@ exports.Prisma.ModelName = {
   Anticipo: 'Anticipo',
   AnticipoMovimiento: 'AnticipoMovimiento',
   PeriodoContable: 'PeriodoContable',
+  SnapshotPeriodo: 'SnapshotPeriodo',
+  AperturaPeriodo: 'AperturaPeriodo',
   SaldoSnapshot: 'SaldoSnapshot',
   AuditoriaPeriodo: 'AuditoriaPeriodo'
 };

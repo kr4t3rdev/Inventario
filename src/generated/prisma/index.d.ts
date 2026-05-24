@@ -490,6 +490,16 @@ export type AnticipoMovimiento = $Result.DefaultSelection<Prisma.$AnticipoMovimi
  */
 export type PeriodoContable = $Result.DefaultSelection<Prisma.$PeriodoContablePayload>
 /**
+ * Model SnapshotPeriodo
+ * 
+ */
+export type SnapshotPeriodo = $Result.DefaultSelection<Prisma.$SnapshotPeriodoPayload>
+/**
+ * Model AperturaPeriodo
+ * 
+ */
+export type AperturaPeriodo = $Result.DefaultSelection<Prisma.$AperturaPeriodoPayload>
+/**
  * Model SaldoSnapshot
  * 
  */
@@ -705,6 +715,15 @@ export const EventoAuditoria: {
 
 export type EventoAuditoria = (typeof EventoAuditoria)[keyof typeof EventoAuditoria]
 
+
+export const CategoriaPeriodo: {
+  ORDINARIO: 'ORDINARIO',
+  EXTRAORDINARIO: 'EXTRAORDINARIO',
+  RECTIFICATIVO: 'RECTIFICATIVO'
+};
+
+export type CategoriaPeriodo = (typeof CategoriaPeriodo)[keyof typeof CategoriaPeriodo]
+
 }
 
 export type TipoAnticipo = $Enums.TipoAnticipo
@@ -786,6 +805,10 @@ export const EstadoPeriodo: typeof $Enums.EstadoPeriodo
 export type EventoAuditoria = $Enums.EventoAuditoria
 
 export const EventoAuditoria: typeof $Enums.EventoAuditoria
+
+export type CategoriaPeriodo = $Enums.CategoriaPeriodo
+
+export const CategoriaPeriodo: typeof $Enums.CategoriaPeriodo
 
 /**
  * ##  Prisma Client ʲˢ
@@ -1856,6 +1879,26 @@ export class PrismaClient<
   get periodoContable(): Prisma.PeriodoContableDelegate<ExtArgs, ClientOptions>;
 
   /**
+   * `prisma.snapshotPeriodo`: Exposes CRUD operations for the **SnapshotPeriodo** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more SnapshotPeriodos
+    * const snapshotPeriodos = await prisma.snapshotPeriodo.findMany()
+    * ```
+    */
+  get snapshotPeriodo(): Prisma.SnapshotPeriodoDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.aperturaPeriodo`: Exposes CRUD operations for the **AperturaPeriodo** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more AperturaPeriodos
+    * const aperturaPeriodos = await prisma.aperturaPeriodo.findMany()
+    * ```
+    */
+  get aperturaPeriodo(): Prisma.AperturaPeriodoDelegate<ExtArgs, ClientOptions>;
+
+  /**
    * `prisma.saldoSnapshot`: Exposes CRUD operations for the **SaldoSnapshot** model.
     * Example usage:
     * ```ts
@@ -2410,6 +2453,8 @@ export namespace Prisma {
     Anticipo: 'Anticipo',
     AnticipoMovimiento: 'AnticipoMovimiento',
     PeriodoContable: 'PeriodoContable',
+    SnapshotPeriodo: 'SnapshotPeriodo',
+    AperturaPeriodo: 'AperturaPeriodo',
     SaldoSnapshot: 'SaldoSnapshot',
     AuditoriaPeriodo: 'AuditoriaPeriodo'
   };
@@ -2430,7 +2475,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "categoria" | "unidad" | "vendor" | "inyeccionCapital" | "pagoDeuda" | "cliente" | "tenant" | "tenantMembership" | "tenantLicense" | "miEmpresa" | "almacen" | "puntoDeVenta" | "producto" | "stockUbicacion" | "venta" | "ventaItem" | "merma" | "transferencia" | "user" | "plan" | "licencia" | "licenciaAudit" | "notification" | "userActivityLog" | "userSession" | "attendance" | "employeeWorkSchedule" | "vacationRequest" | "vacationAccrual" | "empleado" | "pagosalario" | "cierreContable" | "gastoCompra" | "compraProducto" | "compraDocumento" | "compraDocumentoItem" | "servicios" | "ventaServicios" | "compraServicio" | "gastoConcepto" | "gastoElemento" | "gastosDE" | "moneda" | "catalogoReparacionConfig" | "tasaCambio" | "transaccionMoneda" | "cuentaBancaria" | "tipoPago" | "reconciliacionVenta" | "reconciliacionServicio" | "reconciliacionGasto" | "ajusteBancario" | "transferenciaBancaria" | "alertHistory" | "auditLog" | "reportHistory" | "scheduledReport" | "scenarioSimulation" | "contrato" | "contratoVersion" | "contratoFirma" | "contratoAprobacion" | "contratoArchivo" | "contratoAlerta" | "tipoContratoCustom" | "factura" | "serieFacturacion" | "oferta" | "ofertaItem" | "cuentaPorCobrar" | "cuentaPorPagar" | "deudaCash" | "prestamoCash" | "pagoCuentaPorPagar" | "equipoReparacion" | "piezaReparacion" | "ordenReparacion" | "ordenReparacionEquipo" | "ordenReparacionItem" | "ordenReparacionMaterial" | "defectacionCatalogo" | "configuracionSistema" | "ordenProduccion" | "ordenProduccionHistorial" | "receta" | "recetaIngrediente" | "valeSalida" | "valeSalidaItem" | "listaPrecio" | "precioProducto" | "productoCostHistory" | "vendorCodeSequence" | "anticipo" | "anticipoMovimiento" | "periodoContable" | "saldoSnapshot" | "auditoriaPeriodo"
+      modelProps: "categoria" | "unidad" | "vendor" | "inyeccionCapital" | "pagoDeuda" | "cliente" | "tenant" | "tenantMembership" | "tenantLicense" | "miEmpresa" | "almacen" | "puntoDeVenta" | "producto" | "stockUbicacion" | "venta" | "ventaItem" | "merma" | "transferencia" | "user" | "plan" | "licencia" | "licenciaAudit" | "notification" | "userActivityLog" | "userSession" | "attendance" | "employeeWorkSchedule" | "vacationRequest" | "vacationAccrual" | "empleado" | "pagosalario" | "cierreContable" | "gastoCompra" | "compraProducto" | "compraDocumento" | "compraDocumentoItem" | "servicios" | "ventaServicios" | "compraServicio" | "gastoConcepto" | "gastoElemento" | "gastosDE" | "moneda" | "catalogoReparacionConfig" | "tasaCambio" | "transaccionMoneda" | "cuentaBancaria" | "tipoPago" | "reconciliacionVenta" | "reconciliacionServicio" | "reconciliacionGasto" | "ajusteBancario" | "transferenciaBancaria" | "alertHistory" | "auditLog" | "reportHistory" | "scheduledReport" | "scenarioSimulation" | "contrato" | "contratoVersion" | "contratoFirma" | "contratoAprobacion" | "contratoArchivo" | "contratoAlerta" | "tipoContratoCustom" | "factura" | "serieFacturacion" | "oferta" | "ofertaItem" | "cuentaPorCobrar" | "cuentaPorPagar" | "deudaCash" | "prestamoCash" | "pagoCuentaPorPagar" | "equipoReparacion" | "piezaReparacion" | "ordenReparacion" | "ordenReparacionEquipo" | "ordenReparacionItem" | "ordenReparacionMaterial" | "defectacionCatalogo" | "configuracionSistema" | "ordenProduccion" | "ordenProduccionHistorial" | "receta" | "recetaIngrediente" | "valeSalida" | "valeSalidaItem" | "listaPrecio" | "precioProducto" | "productoCostHistory" | "vendorCodeSequence" | "anticipo" | "anticipoMovimiento" | "periodoContable" | "snapshotPeriodo" | "aperturaPeriodo" | "saldoSnapshot" | "auditoriaPeriodo"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -9464,6 +9509,154 @@ export namespace Prisma {
           }
         }
       }
+      SnapshotPeriodo: {
+        payload: Prisma.$SnapshotPeriodoPayload<ExtArgs>
+        fields: Prisma.SnapshotPeriodoFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.SnapshotPeriodoFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SnapshotPeriodoPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.SnapshotPeriodoFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SnapshotPeriodoPayload>
+          }
+          findFirst: {
+            args: Prisma.SnapshotPeriodoFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SnapshotPeriodoPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.SnapshotPeriodoFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SnapshotPeriodoPayload>
+          }
+          findMany: {
+            args: Prisma.SnapshotPeriodoFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SnapshotPeriodoPayload>[]
+          }
+          create: {
+            args: Prisma.SnapshotPeriodoCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SnapshotPeriodoPayload>
+          }
+          createMany: {
+            args: Prisma.SnapshotPeriodoCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.SnapshotPeriodoCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SnapshotPeriodoPayload>[]
+          }
+          delete: {
+            args: Prisma.SnapshotPeriodoDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SnapshotPeriodoPayload>
+          }
+          update: {
+            args: Prisma.SnapshotPeriodoUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SnapshotPeriodoPayload>
+          }
+          deleteMany: {
+            args: Prisma.SnapshotPeriodoDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.SnapshotPeriodoUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.SnapshotPeriodoUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SnapshotPeriodoPayload>[]
+          }
+          upsert: {
+            args: Prisma.SnapshotPeriodoUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$SnapshotPeriodoPayload>
+          }
+          aggregate: {
+            args: Prisma.SnapshotPeriodoAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateSnapshotPeriodo>
+          }
+          groupBy: {
+            args: Prisma.SnapshotPeriodoGroupByArgs<ExtArgs>
+            result: $Utils.Optional<SnapshotPeriodoGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.SnapshotPeriodoCountArgs<ExtArgs>
+            result: $Utils.Optional<SnapshotPeriodoCountAggregateOutputType> | number
+          }
+        }
+      }
+      AperturaPeriodo: {
+        payload: Prisma.$AperturaPeriodoPayload<ExtArgs>
+        fields: Prisma.AperturaPeriodoFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.AperturaPeriodoFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AperturaPeriodoPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.AperturaPeriodoFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AperturaPeriodoPayload>
+          }
+          findFirst: {
+            args: Prisma.AperturaPeriodoFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AperturaPeriodoPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.AperturaPeriodoFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AperturaPeriodoPayload>
+          }
+          findMany: {
+            args: Prisma.AperturaPeriodoFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AperturaPeriodoPayload>[]
+          }
+          create: {
+            args: Prisma.AperturaPeriodoCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AperturaPeriodoPayload>
+          }
+          createMany: {
+            args: Prisma.AperturaPeriodoCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.AperturaPeriodoCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AperturaPeriodoPayload>[]
+          }
+          delete: {
+            args: Prisma.AperturaPeriodoDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AperturaPeriodoPayload>
+          }
+          update: {
+            args: Prisma.AperturaPeriodoUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AperturaPeriodoPayload>
+          }
+          deleteMany: {
+            args: Prisma.AperturaPeriodoDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.AperturaPeriodoUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.AperturaPeriodoUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AperturaPeriodoPayload>[]
+          }
+          upsert: {
+            args: Prisma.AperturaPeriodoUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$AperturaPeriodoPayload>
+          }
+          aggregate: {
+            args: Prisma.AperturaPeriodoAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateAperturaPeriodo>
+          }
+          groupBy: {
+            args: Prisma.AperturaPeriodoGroupByArgs<ExtArgs>
+            result: $Utils.Optional<AperturaPeriodoGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.AperturaPeriodoCountArgs<ExtArgs>
+            result: $Utils.Optional<AperturaPeriodoCountAggregateOutputType> | number
+          }
+        }
+      }
       SaldoSnapshot: {
         payload: Prisma.$SaldoSnapshotPayload<ExtArgs>
         fields: Prisma.SaldoSnapshotFieldRefs
@@ -9803,6 +9996,8 @@ export namespace Prisma {
     anticipo?: AnticipoOmit
     anticipoMovimiento?: AnticipoMovimientoOmit
     periodoContable?: PeriodoContableOmit
+    snapshotPeriodo?: SnapshotPeriodoOmit
+    aperturaPeriodo?: AperturaPeriodoOmit
     saldoSnapshot?: SaldoSnapshotOmit
     auditoriaPeriodo?: AuditoriaPeriodoOmit
   }
@@ -10256,6 +10451,7 @@ export namespace Prisma {
     pagosSalario: number
     cierresContables: number
     periodosContables: number
+    aperturaPeriodos: number
     auditoriaPeriodos: number
   }
 
@@ -10314,6 +10510,7 @@ export namespace Prisma {
     pagosSalario?: boolean | TenantCountOutputTypeCountPagosSalarioArgs
     cierresContables?: boolean | TenantCountOutputTypeCountCierresContablesArgs
     periodosContables?: boolean | TenantCountOutputTypeCountPeriodosContablesArgs
+    aperturaPeriodos?: boolean | TenantCountOutputTypeCountAperturaPeriodosArgs
     auditoriaPeriodos?: boolean | TenantCountOutputTypeCountAuditoriaPeriodosArgs
   }
 
@@ -10704,6 +10901,13 @@ export namespace Prisma {
    */
   export type TenantCountOutputTypeCountPeriodosContablesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: PeriodoContableWhereInput
+  }
+
+  /**
+   * TenantCountOutputType without action
+   */
+  export type TenantCountOutputTypeCountAperturaPeriodosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AperturaPeriodoWhereInput
   }
 
   /**
@@ -12457,12 +12661,16 @@ export namespace Prisma {
 
   export type PeriodoContableCountOutputType = {
     snapshots: number
+    snapshotPeriodos: number
     auditoria: number
+    subperiodos: number
   }
 
   export type PeriodoContableCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     snapshots?: boolean | PeriodoContableCountOutputTypeCountSnapshotsArgs
+    snapshotPeriodos?: boolean | PeriodoContableCountOutputTypeCountSnapshotPeriodosArgs
     auditoria?: boolean | PeriodoContableCountOutputTypeCountAuditoriaArgs
+    subperiodos?: boolean | PeriodoContableCountOutputTypeCountSubperiodosArgs
   }
 
   // Custom InputTypes
@@ -12486,8 +12694,22 @@ export namespace Prisma {
   /**
    * PeriodoContableCountOutputType without action
    */
+  export type PeriodoContableCountOutputTypeCountSnapshotPeriodosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SnapshotPeriodoWhereInput
+  }
+
+  /**
+   * PeriodoContableCountOutputType without action
+   */
   export type PeriodoContableCountOutputTypeCountAuditoriaArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: AuditoriaPeriodoWhereInput
+  }
+
+  /**
+   * PeriodoContableCountOutputType without action
+   */
+  export type PeriodoContableCountOutputTypeCountSubperiodosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: PeriodoContableWhereInput
   }
 
 
@@ -20301,6 +20523,7 @@ export namespace Prisma {
     pagosSalario?: boolean | Tenant$pagosSalarioArgs<ExtArgs>
     cierresContables?: boolean | Tenant$cierresContablesArgs<ExtArgs>
     periodosContables?: boolean | Tenant$periodosContablesArgs<ExtArgs>
+    aperturaPeriodos?: boolean | Tenant$aperturaPeriodosArgs<ExtArgs>
     auditoriaPeriodos?: boolean | Tenant$auditoriaPeriodosArgs<ExtArgs>
     _count?: boolean | TenantCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["tenant"]>
@@ -20389,6 +20612,7 @@ export namespace Prisma {
     pagosSalario?: boolean | Tenant$pagosSalarioArgs<ExtArgs>
     cierresContables?: boolean | Tenant$cierresContablesArgs<ExtArgs>
     periodosContables?: boolean | Tenant$periodosContablesArgs<ExtArgs>
+    aperturaPeriodos?: boolean | Tenant$aperturaPeriodosArgs<ExtArgs>
     auditoriaPeriodos?: boolean | Tenant$auditoriaPeriodosArgs<ExtArgs>
     _count?: boolean | TenantCountOutputTypeDefaultArgs<ExtArgs>
   }
@@ -20453,6 +20677,7 @@ export namespace Prisma {
       pagosSalario: Prisma.$PagosalarioPayload<ExtArgs>[]
       cierresContables: Prisma.$CierreContablePayload<ExtArgs>[]
       periodosContables: Prisma.$PeriodoContablePayload<ExtArgs>[]
+      aperturaPeriodos: Prisma.$AperturaPeriodoPayload<ExtArgs>[]
       auditoriaPeriodos: Prisma.$AuditoriaPeriodoPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
@@ -20911,6 +21136,7 @@ export namespace Prisma {
     pagosSalario<T extends Tenant$pagosSalarioArgs<ExtArgs> = {}>(args?: Subset<T, Tenant$pagosSalarioArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PagosalarioPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     cierresContables<T extends Tenant$cierresContablesArgs<ExtArgs> = {}>(args?: Subset<T, Tenant$cierresContablesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CierreContablePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     periodosContables<T extends Tenant$periodosContablesArgs<ExtArgs> = {}>(args?: Subset<T, Tenant$periodosContablesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PeriodoContablePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    aperturaPeriodos<T extends Tenant$aperturaPeriodosArgs<ExtArgs> = {}>(args?: Subset<T, Tenant$aperturaPeriodosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AperturaPeriodoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     auditoriaPeriodos<T extends Tenant$auditoriaPeriodosArgs<ExtArgs> = {}>(args?: Subset<T, Tenant$auditoriaPeriodosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuditoriaPeriodoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
@@ -22647,6 +22873,30 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: PeriodoContableScalarFieldEnum | PeriodoContableScalarFieldEnum[]
+  }
+
+  /**
+   * Tenant.aperturaPeriodos
+   */
+  export type Tenant$aperturaPeriodosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AperturaPeriodo
+     */
+    select?: AperturaPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AperturaPeriodo
+     */
+    omit?: AperturaPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AperturaPeriodoInclude<ExtArgs> | null
+    where?: AperturaPeriodoWhereInput
+    orderBy?: AperturaPeriodoOrderByWithRelationInput | AperturaPeriodoOrderByWithRelationInput[]
+    cursor?: AperturaPeriodoWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: AperturaPeriodoScalarFieldEnum | AperturaPeriodoScalarFieldEnum[]
   }
 
   /**
@@ -130080,15 +130330,25 @@ export namespace Prisma {
     periodoId: string | null
     tenantId: string | null
     tipo: $Enums.TipoPeriodo | null
+    codigo: string | null
     fechaInicio: Date | null
     fechaFin: Date | null
     estado: $Enums.EstadoPeriodo | null
-    motivoReapertura: string | null
+    periodoPadreId: string | null
+    aperturaAutomatica: boolean | null
+    categoria: $Enums.CategoriaPeriodo | null
+    abiertoPorId: string | null
+    fechaApertura: Date | null
     cerradoPor: string | null
     cerradoAt: Date | null
     aprobadoPor: string | null
     aprobadoAt: Date | null
+    reabiertoPorId: string | null
+    fechaReapertura: Date | null
+    segundoAprobadorId: string | null
+    motivoReapertura: string | null
     observaciones: string | null
+    hashIntegridad: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -130097,15 +130357,25 @@ export namespace Prisma {
     periodoId: string | null
     tenantId: string | null
     tipo: $Enums.TipoPeriodo | null
+    codigo: string | null
     fechaInicio: Date | null
     fechaFin: Date | null
     estado: $Enums.EstadoPeriodo | null
-    motivoReapertura: string | null
+    periodoPadreId: string | null
+    aperturaAutomatica: boolean | null
+    categoria: $Enums.CategoriaPeriodo | null
+    abiertoPorId: string | null
+    fechaApertura: Date | null
     cerradoPor: string | null
     cerradoAt: Date | null
     aprobadoPor: string | null
     aprobadoAt: Date | null
+    reabiertoPorId: string | null
+    fechaReapertura: Date | null
+    segundoAprobadorId: string | null
+    motivoReapertura: string | null
     observaciones: string | null
+    hashIntegridad: string | null
     createdAt: Date | null
     updatedAt: Date | null
   }
@@ -130114,15 +130384,26 @@ export namespace Prisma {
     periodoId: number
     tenantId: number
     tipo: number
+    codigo: number
     fechaInicio: number
     fechaFin: number
     estado: number
-    motivoReapertura: number
+    periodoPadreId: number
+    aperturaAutomatica: number
+    categoria: number
+    abiertoPorId: number
+    fechaApertura: number
     cerradoPor: number
     cerradoAt: number
     aprobadoPor: number
     aprobadoAt: number
+    reabiertoPorId: number
+    fechaReapertura: number
+    segundoAprobadorId: number
+    motivoReapertura: number
     observaciones: number
+    resumenJson: number
+    hashIntegridad: number
     createdAt: number
     updatedAt: number
     _all: number
@@ -130133,15 +130414,25 @@ export namespace Prisma {
     periodoId?: true
     tenantId?: true
     tipo?: true
+    codigo?: true
     fechaInicio?: true
     fechaFin?: true
     estado?: true
-    motivoReapertura?: true
+    periodoPadreId?: true
+    aperturaAutomatica?: true
+    categoria?: true
+    abiertoPorId?: true
+    fechaApertura?: true
     cerradoPor?: true
     cerradoAt?: true
     aprobadoPor?: true
     aprobadoAt?: true
+    reabiertoPorId?: true
+    fechaReapertura?: true
+    segundoAprobadorId?: true
+    motivoReapertura?: true
     observaciones?: true
+    hashIntegridad?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -130150,15 +130441,25 @@ export namespace Prisma {
     periodoId?: true
     tenantId?: true
     tipo?: true
+    codigo?: true
     fechaInicio?: true
     fechaFin?: true
     estado?: true
-    motivoReapertura?: true
+    periodoPadreId?: true
+    aperturaAutomatica?: true
+    categoria?: true
+    abiertoPorId?: true
+    fechaApertura?: true
     cerradoPor?: true
     cerradoAt?: true
     aprobadoPor?: true
     aprobadoAt?: true
+    reabiertoPorId?: true
+    fechaReapertura?: true
+    segundoAprobadorId?: true
+    motivoReapertura?: true
     observaciones?: true
+    hashIntegridad?: true
     createdAt?: true
     updatedAt?: true
   }
@@ -130167,15 +130468,26 @@ export namespace Prisma {
     periodoId?: true
     tenantId?: true
     tipo?: true
+    codigo?: true
     fechaInicio?: true
     fechaFin?: true
     estado?: true
-    motivoReapertura?: true
+    periodoPadreId?: true
+    aperturaAutomatica?: true
+    categoria?: true
+    abiertoPorId?: true
+    fechaApertura?: true
     cerradoPor?: true
     cerradoAt?: true
     aprobadoPor?: true
     aprobadoAt?: true
+    reabiertoPorId?: true
+    fechaReapertura?: true
+    segundoAprobadorId?: true
+    motivoReapertura?: true
     observaciones?: true
+    resumenJson?: true
+    hashIntegridad?: true
     createdAt?: true
     updatedAt?: true
     _all?: true
@@ -130257,15 +130569,26 @@ export namespace Prisma {
     periodoId: string
     tenantId: string
     tipo: $Enums.TipoPeriodo
+    codigo: string | null
     fechaInicio: Date
     fechaFin: Date
     estado: $Enums.EstadoPeriodo
-    motivoReapertura: string | null
+    periodoPadreId: string | null
+    aperturaAutomatica: boolean
+    categoria: $Enums.CategoriaPeriodo
+    abiertoPorId: string | null
+    fechaApertura: Date | null
     cerradoPor: string | null
     cerradoAt: Date | null
     aprobadoPor: string | null
     aprobadoAt: Date | null
+    reabiertoPorId: string | null
+    fechaReapertura: Date | null
+    segundoAprobadorId: string | null
+    motivoReapertura: string | null
     observaciones: string | null
+    resumenJson: JsonValue | null
+    hashIntegridad: string | null
     createdAt: Date
     updatedAt: Date
     _count: PeriodoContableCountAggregateOutputType | null
@@ -130291,20 +130614,35 @@ export namespace Prisma {
     periodoId?: boolean
     tenantId?: boolean
     tipo?: boolean
+    codigo?: boolean
     fechaInicio?: boolean
     fechaFin?: boolean
     estado?: boolean
-    motivoReapertura?: boolean
+    periodoPadreId?: boolean
+    aperturaAutomatica?: boolean
+    categoria?: boolean
+    abiertoPorId?: boolean
+    fechaApertura?: boolean
     cerradoPor?: boolean
     cerradoAt?: boolean
     aprobadoPor?: boolean
     aprobadoAt?: boolean
+    reabiertoPorId?: boolean
+    fechaReapertura?: boolean
+    segundoAprobadorId?: boolean
+    motivoReapertura?: boolean
     observaciones?: boolean
+    resumenJson?: boolean
+    hashIntegridad?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     tenant?: boolean | TenantDefaultArgs<ExtArgs>
     snapshots?: boolean | PeriodoContable$snapshotsArgs<ExtArgs>
+    snapshotPeriodos?: boolean | PeriodoContable$snapshotPeriodosArgs<ExtArgs>
     auditoria?: boolean | PeriodoContable$auditoriaArgs<ExtArgs>
+    periodoPadre?: boolean | PeriodoContable$periodoPadreArgs<ExtArgs>
+    subperiodos?: boolean | PeriodoContable$subperiodosArgs<ExtArgs>
+    apertura?: boolean | PeriodoContable$aperturaArgs<ExtArgs>
     _count?: boolean | PeriodoContableCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["periodoContable"]>
 
@@ -130312,67 +130650,108 @@ export namespace Prisma {
     periodoId?: boolean
     tenantId?: boolean
     tipo?: boolean
+    codigo?: boolean
     fechaInicio?: boolean
     fechaFin?: boolean
     estado?: boolean
-    motivoReapertura?: boolean
+    periodoPadreId?: boolean
+    aperturaAutomatica?: boolean
+    categoria?: boolean
+    abiertoPorId?: boolean
+    fechaApertura?: boolean
     cerradoPor?: boolean
     cerradoAt?: boolean
     aprobadoPor?: boolean
     aprobadoAt?: boolean
+    reabiertoPorId?: boolean
+    fechaReapertura?: boolean
+    segundoAprobadorId?: boolean
+    motivoReapertura?: boolean
     observaciones?: boolean
+    resumenJson?: boolean
+    hashIntegridad?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     tenant?: boolean | TenantDefaultArgs<ExtArgs>
+    periodoPadre?: boolean | PeriodoContable$periodoPadreArgs<ExtArgs>
   }, ExtArgs["result"]["periodoContable"]>
 
   export type PeriodoContableSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     periodoId?: boolean
     tenantId?: boolean
     tipo?: boolean
+    codigo?: boolean
     fechaInicio?: boolean
     fechaFin?: boolean
     estado?: boolean
-    motivoReapertura?: boolean
+    periodoPadreId?: boolean
+    aperturaAutomatica?: boolean
+    categoria?: boolean
+    abiertoPorId?: boolean
+    fechaApertura?: boolean
     cerradoPor?: boolean
     cerradoAt?: boolean
     aprobadoPor?: boolean
     aprobadoAt?: boolean
+    reabiertoPorId?: boolean
+    fechaReapertura?: boolean
+    segundoAprobadorId?: boolean
+    motivoReapertura?: boolean
     observaciones?: boolean
+    resumenJson?: boolean
+    hashIntegridad?: boolean
     createdAt?: boolean
     updatedAt?: boolean
     tenant?: boolean | TenantDefaultArgs<ExtArgs>
+    periodoPadre?: boolean | PeriodoContable$periodoPadreArgs<ExtArgs>
   }, ExtArgs["result"]["periodoContable"]>
 
   export type PeriodoContableSelectScalar = {
     periodoId?: boolean
     tenantId?: boolean
     tipo?: boolean
+    codigo?: boolean
     fechaInicio?: boolean
     fechaFin?: boolean
     estado?: boolean
-    motivoReapertura?: boolean
+    periodoPadreId?: boolean
+    aperturaAutomatica?: boolean
+    categoria?: boolean
+    abiertoPorId?: boolean
+    fechaApertura?: boolean
     cerradoPor?: boolean
     cerradoAt?: boolean
     aprobadoPor?: boolean
     aprobadoAt?: boolean
+    reabiertoPorId?: boolean
+    fechaReapertura?: boolean
+    segundoAprobadorId?: boolean
+    motivoReapertura?: boolean
     observaciones?: boolean
+    resumenJson?: boolean
+    hashIntegridad?: boolean
     createdAt?: boolean
     updatedAt?: boolean
   }
 
-  export type PeriodoContableOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"periodoId" | "tenantId" | "tipo" | "fechaInicio" | "fechaFin" | "estado" | "motivoReapertura" | "cerradoPor" | "cerradoAt" | "aprobadoPor" | "aprobadoAt" | "observaciones" | "createdAt" | "updatedAt", ExtArgs["result"]["periodoContable"]>
+  export type PeriodoContableOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"periodoId" | "tenantId" | "tipo" | "codigo" | "fechaInicio" | "fechaFin" | "estado" | "periodoPadreId" | "aperturaAutomatica" | "categoria" | "abiertoPorId" | "fechaApertura" | "cerradoPor" | "cerradoAt" | "aprobadoPor" | "aprobadoAt" | "reabiertoPorId" | "fechaReapertura" | "segundoAprobadorId" | "motivoReapertura" | "observaciones" | "resumenJson" | "hashIntegridad" | "createdAt" | "updatedAt", ExtArgs["result"]["periodoContable"]>
   export type PeriodoContableInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     tenant?: boolean | TenantDefaultArgs<ExtArgs>
     snapshots?: boolean | PeriodoContable$snapshotsArgs<ExtArgs>
+    snapshotPeriodos?: boolean | PeriodoContable$snapshotPeriodosArgs<ExtArgs>
     auditoria?: boolean | PeriodoContable$auditoriaArgs<ExtArgs>
+    periodoPadre?: boolean | PeriodoContable$periodoPadreArgs<ExtArgs>
+    subperiodos?: boolean | PeriodoContable$subperiodosArgs<ExtArgs>
+    apertura?: boolean | PeriodoContable$aperturaArgs<ExtArgs>
     _count?: boolean | PeriodoContableCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type PeriodoContableIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     tenant?: boolean | TenantDefaultArgs<ExtArgs>
+    periodoPadre?: boolean | PeriodoContable$periodoPadreArgs<ExtArgs>
   }
   export type PeriodoContableIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     tenant?: boolean | TenantDefaultArgs<ExtArgs>
+    periodoPadre?: boolean | PeriodoContable$periodoPadreArgs<ExtArgs>
   }
 
   export type $PeriodoContablePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -130380,21 +130759,51 @@ export namespace Prisma {
     objects: {
       tenant: Prisma.$TenantPayload<ExtArgs>
       snapshots: Prisma.$SaldoSnapshotPayload<ExtArgs>[]
+      snapshotPeriodos: Prisma.$SnapshotPeriodoPayload<ExtArgs>[]
       auditoria: Prisma.$AuditoriaPeriodoPayload<ExtArgs>[]
+      periodoPadre: Prisma.$PeriodoContablePayload<ExtArgs> | null
+      subperiodos: Prisma.$PeriodoContablePayload<ExtArgs>[]
+      apertura: Prisma.$AperturaPeriodoPayload<ExtArgs> | null
     }
     scalars: $Extensions.GetPayloadResult<{
       periodoId: string
       tenantId: string
       tipo: $Enums.TipoPeriodo
+      /**
+       * Código legible: "M-2026-03", "D-2026-03-15" — nullable para compatibilidad con datos existentes
+       */
+      codigo: string | null
       fechaInicio: Date
       fechaFin: Date
       estado: $Enums.EstadoPeriodo
-      motivoReapertura: string | null
+      /**
+       * Jerarquía: DIARIO→MENSUAL→ANUAL
+       */
+      periodoPadreId: string | null
+      aperturaAutomatica: boolean
+      categoria: $Enums.CategoriaPeriodo
+      abiertoPorId: string | null
+      fechaApertura: Date | null
       cerradoPor: string | null
       cerradoAt: Date | null
       aprobadoPor: string | null
       aprobadoAt: Date | null
+      reabiertoPorId: string | null
+      fechaReapertura: Date | null
+      /**
+       * Segunda aprobación multinivel
+       */
+      segundoAprobadorId: string | null
+      motivoReapertura: string | null
       observaciones: string | null
+      /**
+       * Resumen de saldos agregados al cierre
+       */
+      resumenJson: Prisma.JsonValue | null
+      /**
+       * SHA256 del resumenJson
+       */
+      hashIntegridad: string | null
       createdAt: Date
       updatedAt: Date
     }, ExtArgs["result"]["periodoContable"]>
@@ -130793,7 +131202,11 @@ export namespace Prisma {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     tenant<T extends TenantDefaultArgs<ExtArgs> = {}>(args?: Subset<T, TenantDefaultArgs<ExtArgs>>): Prisma__TenantClient<$Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     snapshots<T extends PeriodoContable$snapshotsArgs<ExtArgs> = {}>(args?: Subset<T, PeriodoContable$snapshotsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SaldoSnapshotPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    snapshotPeriodos<T extends PeriodoContable$snapshotPeriodosArgs<ExtArgs> = {}>(args?: Subset<T, PeriodoContable$snapshotPeriodosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SnapshotPeriodoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     auditoria<T extends PeriodoContable$auditoriaArgs<ExtArgs> = {}>(args?: Subset<T, PeriodoContable$auditoriaArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuditoriaPeriodoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    periodoPadre<T extends PeriodoContable$periodoPadreArgs<ExtArgs> = {}>(args?: Subset<T, PeriodoContable$periodoPadreArgs<ExtArgs>>): Prisma__PeriodoContableClient<$Result.GetResult<Prisma.$PeriodoContablePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    subperiodos<T extends PeriodoContable$subperiodosArgs<ExtArgs> = {}>(args?: Subset<T, PeriodoContable$subperiodosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PeriodoContablePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    apertura<T extends PeriodoContable$aperturaArgs<ExtArgs> = {}>(args?: Subset<T, PeriodoContable$aperturaArgs<ExtArgs>>): Prisma__AperturaPeriodoClient<$Result.GetResult<Prisma.$AperturaPeriodoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -130826,15 +131239,26 @@ export namespace Prisma {
     readonly periodoId: FieldRef<"PeriodoContable", 'String'>
     readonly tenantId: FieldRef<"PeriodoContable", 'String'>
     readonly tipo: FieldRef<"PeriodoContable", 'TipoPeriodo'>
+    readonly codigo: FieldRef<"PeriodoContable", 'String'>
     readonly fechaInicio: FieldRef<"PeriodoContable", 'DateTime'>
     readonly fechaFin: FieldRef<"PeriodoContable", 'DateTime'>
     readonly estado: FieldRef<"PeriodoContable", 'EstadoPeriodo'>
-    readonly motivoReapertura: FieldRef<"PeriodoContable", 'String'>
+    readonly periodoPadreId: FieldRef<"PeriodoContable", 'String'>
+    readonly aperturaAutomatica: FieldRef<"PeriodoContable", 'Boolean'>
+    readonly categoria: FieldRef<"PeriodoContable", 'CategoriaPeriodo'>
+    readonly abiertoPorId: FieldRef<"PeriodoContable", 'String'>
+    readonly fechaApertura: FieldRef<"PeriodoContable", 'DateTime'>
     readonly cerradoPor: FieldRef<"PeriodoContable", 'String'>
     readonly cerradoAt: FieldRef<"PeriodoContable", 'DateTime'>
     readonly aprobadoPor: FieldRef<"PeriodoContable", 'String'>
     readonly aprobadoAt: FieldRef<"PeriodoContable", 'DateTime'>
+    readonly reabiertoPorId: FieldRef<"PeriodoContable", 'String'>
+    readonly fechaReapertura: FieldRef<"PeriodoContable", 'DateTime'>
+    readonly segundoAprobadorId: FieldRef<"PeriodoContable", 'String'>
+    readonly motivoReapertura: FieldRef<"PeriodoContable", 'String'>
     readonly observaciones: FieldRef<"PeriodoContable", 'String'>
+    readonly resumenJson: FieldRef<"PeriodoContable", 'Json'>
+    readonly hashIntegridad: FieldRef<"PeriodoContable", 'String'>
     readonly createdAt: FieldRef<"PeriodoContable", 'DateTime'>
     readonly updatedAt: FieldRef<"PeriodoContable", 'DateTime'>
   }
@@ -131257,6 +131681,30 @@ export namespace Prisma {
   }
 
   /**
+   * PeriodoContable.snapshotPeriodos
+   */
+  export type PeriodoContable$snapshotPeriodosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SnapshotPeriodo
+     */
+    select?: SnapshotPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SnapshotPeriodo
+     */
+    omit?: SnapshotPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SnapshotPeriodoInclude<ExtArgs> | null
+    where?: SnapshotPeriodoWhereInput
+    orderBy?: SnapshotPeriodoOrderByWithRelationInput | SnapshotPeriodoOrderByWithRelationInput[]
+    cursor?: SnapshotPeriodoWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: SnapshotPeriodoScalarFieldEnum | SnapshotPeriodoScalarFieldEnum[]
+  }
+
+  /**
    * PeriodoContable.auditoria
    */
   export type PeriodoContable$auditoriaArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -131281,6 +131729,68 @@ export namespace Prisma {
   }
 
   /**
+   * PeriodoContable.periodoPadre
+   */
+  export type PeriodoContable$periodoPadreArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PeriodoContable
+     */
+    select?: PeriodoContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PeriodoContable
+     */
+    omit?: PeriodoContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PeriodoContableInclude<ExtArgs> | null
+    where?: PeriodoContableWhereInput
+  }
+
+  /**
+   * PeriodoContable.subperiodos
+   */
+  export type PeriodoContable$subperiodosArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the PeriodoContable
+     */
+    select?: PeriodoContableSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the PeriodoContable
+     */
+    omit?: PeriodoContableOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: PeriodoContableInclude<ExtArgs> | null
+    where?: PeriodoContableWhereInput
+    orderBy?: PeriodoContableOrderByWithRelationInput | PeriodoContableOrderByWithRelationInput[]
+    cursor?: PeriodoContableWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: PeriodoContableScalarFieldEnum | PeriodoContableScalarFieldEnum[]
+  }
+
+  /**
+   * PeriodoContable.apertura
+   */
+  export type PeriodoContable$aperturaArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AperturaPeriodo
+     */
+    select?: AperturaPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AperturaPeriodo
+     */
+    omit?: AperturaPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AperturaPeriodoInclude<ExtArgs> | null
+    where?: AperturaPeriodoWhereInput
+  }
+
+  /**
    * PeriodoContable without action
    */
   export type PeriodoContableDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -131296,6 +131806,2374 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: PeriodoContableInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model SnapshotPeriodo
+   */
+
+  export type AggregateSnapshotPeriodo = {
+    _count: SnapshotPeriodoCountAggregateOutputType | null
+    _avg: SnapshotPeriodoAvgAggregateOutputType | null
+    _sum: SnapshotPeriodoSumAggregateOutputType | null
+    _min: SnapshotPeriodoMinAggregateOutputType | null
+    _max: SnapshotPeriodoMaxAggregateOutputType | null
+  }
+
+  export type SnapshotPeriodoAvgAggregateOutputType = {
+    version: number | null
+  }
+
+  export type SnapshotPeriodoSumAggregateOutputType = {
+    version: number | null
+  }
+
+  export type SnapshotPeriodoMinAggregateOutputType = {
+    snapshotId: string | null
+    periodoId: string | null
+    version: number | null
+    hashIntegridad: string | null
+    createdAt: Date | null
+  }
+
+  export type SnapshotPeriodoMaxAggregateOutputType = {
+    snapshotId: string | null
+    periodoId: string | null
+    version: number | null
+    hashIntegridad: string | null
+    createdAt: Date | null
+  }
+
+  export type SnapshotPeriodoCountAggregateOutputType = {
+    snapshotId: number
+    periodoId: number
+    version: number
+    baseCajaJson: number
+    baseDevengoJson: number
+    resumenJson: number
+    hashIntegridad: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type SnapshotPeriodoAvgAggregateInputType = {
+    version?: true
+  }
+
+  export type SnapshotPeriodoSumAggregateInputType = {
+    version?: true
+  }
+
+  export type SnapshotPeriodoMinAggregateInputType = {
+    snapshotId?: true
+    periodoId?: true
+    version?: true
+    hashIntegridad?: true
+    createdAt?: true
+  }
+
+  export type SnapshotPeriodoMaxAggregateInputType = {
+    snapshotId?: true
+    periodoId?: true
+    version?: true
+    hashIntegridad?: true
+    createdAt?: true
+  }
+
+  export type SnapshotPeriodoCountAggregateInputType = {
+    snapshotId?: true
+    periodoId?: true
+    version?: true
+    baseCajaJson?: true
+    baseDevengoJson?: true
+    resumenJson?: true
+    hashIntegridad?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type SnapshotPeriodoAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SnapshotPeriodo to aggregate.
+     */
+    where?: SnapshotPeriodoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SnapshotPeriodos to fetch.
+     */
+    orderBy?: SnapshotPeriodoOrderByWithRelationInput | SnapshotPeriodoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: SnapshotPeriodoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SnapshotPeriodos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SnapshotPeriodos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned SnapshotPeriodos
+    **/
+    _count?: true | SnapshotPeriodoCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: SnapshotPeriodoAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: SnapshotPeriodoSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: SnapshotPeriodoMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: SnapshotPeriodoMaxAggregateInputType
+  }
+
+  export type GetSnapshotPeriodoAggregateType<T extends SnapshotPeriodoAggregateArgs> = {
+        [P in keyof T & keyof AggregateSnapshotPeriodo]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateSnapshotPeriodo[P]>
+      : GetScalarType<T[P], AggregateSnapshotPeriodo[P]>
+  }
+
+
+
+
+  export type SnapshotPeriodoGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: SnapshotPeriodoWhereInput
+    orderBy?: SnapshotPeriodoOrderByWithAggregationInput | SnapshotPeriodoOrderByWithAggregationInput[]
+    by: SnapshotPeriodoScalarFieldEnum[] | SnapshotPeriodoScalarFieldEnum
+    having?: SnapshotPeriodoScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: SnapshotPeriodoCountAggregateInputType | true
+    _avg?: SnapshotPeriodoAvgAggregateInputType
+    _sum?: SnapshotPeriodoSumAggregateInputType
+    _min?: SnapshotPeriodoMinAggregateInputType
+    _max?: SnapshotPeriodoMaxAggregateInputType
+  }
+
+  export type SnapshotPeriodoGroupByOutputType = {
+    snapshotId: string
+    periodoId: string
+    version: number
+    baseCajaJson: JsonValue | null
+    baseDevengoJson: JsonValue | null
+    resumenJson: JsonValue | null
+    hashIntegridad: string | null
+    createdAt: Date
+    _count: SnapshotPeriodoCountAggregateOutputType | null
+    _avg: SnapshotPeriodoAvgAggregateOutputType | null
+    _sum: SnapshotPeriodoSumAggregateOutputType | null
+    _min: SnapshotPeriodoMinAggregateOutputType | null
+    _max: SnapshotPeriodoMaxAggregateOutputType | null
+  }
+
+  type GetSnapshotPeriodoGroupByPayload<T extends SnapshotPeriodoGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<SnapshotPeriodoGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof SnapshotPeriodoGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], SnapshotPeriodoGroupByOutputType[P]>
+            : GetScalarType<T[P], SnapshotPeriodoGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type SnapshotPeriodoSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    snapshotId?: boolean
+    periodoId?: boolean
+    version?: boolean
+    baseCajaJson?: boolean
+    baseDevengoJson?: boolean
+    resumenJson?: boolean
+    hashIntegridad?: boolean
+    createdAt?: boolean
+    periodo?: boolean | PeriodoContableDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["snapshotPeriodo"]>
+
+  export type SnapshotPeriodoSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    snapshotId?: boolean
+    periodoId?: boolean
+    version?: boolean
+    baseCajaJson?: boolean
+    baseDevengoJson?: boolean
+    resumenJson?: boolean
+    hashIntegridad?: boolean
+    createdAt?: boolean
+    periodo?: boolean | PeriodoContableDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["snapshotPeriodo"]>
+
+  export type SnapshotPeriodoSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    snapshotId?: boolean
+    periodoId?: boolean
+    version?: boolean
+    baseCajaJson?: boolean
+    baseDevengoJson?: boolean
+    resumenJson?: boolean
+    hashIntegridad?: boolean
+    createdAt?: boolean
+    periodo?: boolean | PeriodoContableDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["snapshotPeriodo"]>
+
+  export type SnapshotPeriodoSelectScalar = {
+    snapshotId?: boolean
+    periodoId?: boolean
+    version?: boolean
+    baseCajaJson?: boolean
+    baseDevengoJson?: boolean
+    resumenJson?: boolean
+    hashIntegridad?: boolean
+    createdAt?: boolean
+  }
+
+  export type SnapshotPeriodoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"snapshotId" | "periodoId" | "version" | "baseCajaJson" | "baseDevengoJson" | "resumenJson" | "hashIntegridad" | "createdAt", ExtArgs["result"]["snapshotPeriodo"]>
+  export type SnapshotPeriodoInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    periodo?: boolean | PeriodoContableDefaultArgs<ExtArgs>
+  }
+  export type SnapshotPeriodoIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    periodo?: boolean | PeriodoContableDefaultArgs<ExtArgs>
+  }
+  export type SnapshotPeriodoIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    periodo?: boolean | PeriodoContableDefaultArgs<ExtArgs>
+  }
+
+  export type $SnapshotPeriodoPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "SnapshotPeriodo"
+    objects: {
+      periodo: Prisma.$PeriodoContablePayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      snapshotId: string
+      periodoId: string
+      version: number
+      /**
+       * Datos crudos del snapshot en base caja
+       */
+      baseCajaJson: Prisma.JsonValue | null
+      /**
+       * Datos crudos del snapshot en base devengo
+       */
+      baseDevengoJson: Prisma.JsonValue | null
+      /**
+       * Resumen agregado (mismo que PeriodoContable.resumenJson)
+       */
+      resumenJson: Prisma.JsonValue | null
+      /**
+       * SHA256 del resumenJson
+       */
+      hashIntegridad: string | null
+      createdAt: Date
+    }, ExtArgs["result"]["snapshotPeriodo"]>
+    composites: {}
+  }
+
+  type SnapshotPeriodoGetPayload<S extends boolean | null | undefined | SnapshotPeriodoDefaultArgs> = $Result.GetResult<Prisma.$SnapshotPeriodoPayload, S>
+
+  type SnapshotPeriodoCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<SnapshotPeriodoFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: SnapshotPeriodoCountAggregateInputType | true
+    }
+
+  export interface SnapshotPeriodoDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['SnapshotPeriodo'], meta: { name: 'SnapshotPeriodo' } }
+    /**
+     * Find zero or one SnapshotPeriodo that matches the filter.
+     * @param {SnapshotPeriodoFindUniqueArgs} args - Arguments to find a SnapshotPeriodo
+     * @example
+     * // Get one SnapshotPeriodo
+     * const snapshotPeriodo = await prisma.snapshotPeriodo.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends SnapshotPeriodoFindUniqueArgs>(args: SelectSubset<T, SnapshotPeriodoFindUniqueArgs<ExtArgs>>): Prisma__SnapshotPeriodoClient<$Result.GetResult<Prisma.$SnapshotPeriodoPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one SnapshotPeriodo that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {SnapshotPeriodoFindUniqueOrThrowArgs} args - Arguments to find a SnapshotPeriodo
+     * @example
+     * // Get one SnapshotPeriodo
+     * const snapshotPeriodo = await prisma.snapshotPeriodo.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends SnapshotPeriodoFindUniqueOrThrowArgs>(args: SelectSubset<T, SnapshotPeriodoFindUniqueOrThrowArgs<ExtArgs>>): Prisma__SnapshotPeriodoClient<$Result.GetResult<Prisma.$SnapshotPeriodoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SnapshotPeriodo that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SnapshotPeriodoFindFirstArgs} args - Arguments to find a SnapshotPeriodo
+     * @example
+     * // Get one SnapshotPeriodo
+     * const snapshotPeriodo = await prisma.snapshotPeriodo.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends SnapshotPeriodoFindFirstArgs>(args?: SelectSubset<T, SnapshotPeriodoFindFirstArgs<ExtArgs>>): Prisma__SnapshotPeriodoClient<$Result.GetResult<Prisma.$SnapshotPeriodoPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first SnapshotPeriodo that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SnapshotPeriodoFindFirstOrThrowArgs} args - Arguments to find a SnapshotPeriodo
+     * @example
+     * // Get one SnapshotPeriodo
+     * const snapshotPeriodo = await prisma.snapshotPeriodo.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends SnapshotPeriodoFindFirstOrThrowArgs>(args?: SelectSubset<T, SnapshotPeriodoFindFirstOrThrowArgs<ExtArgs>>): Prisma__SnapshotPeriodoClient<$Result.GetResult<Prisma.$SnapshotPeriodoPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more SnapshotPeriodos that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SnapshotPeriodoFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all SnapshotPeriodos
+     * const snapshotPeriodos = await prisma.snapshotPeriodo.findMany()
+     * 
+     * // Get first 10 SnapshotPeriodos
+     * const snapshotPeriodos = await prisma.snapshotPeriodo.findMany({ take: 10 })
+     * 
+     * // Only select the `snapshotId`
+     * const snapshotPeriodoWithSnapshotIdOnly = await prisma.snapshotPeriodo.findMany({ select: { snapshotId: true } })
+     * 
+     */
+    findMany<T extends SnapshotPeriodoFindManyArgs>(args?: SelectSubset<T, SnapshotPeriodoFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SnapshotPeriodoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a SnapshotPeriodo.
+     * @param {SnapshotPeriodoCreateArgs} args - Arguments to create a SnapshotPeriodo.
+     * @example
+     * // Create one SnapshotPeriodo
+     * const SnapshotPeriodo = await prisma.snapshotPeriodo.create({
+     *   data: {
+     *     // ... data to create a SnapshotPeriodo
+     *   }
+     * })
+     * 
+     */
+    create<T extends SnapshotPeriodoCreateArgs>(args: SelectSubset<T, SnapshotPeriodoCreateArgs<ExtArgs>>): Prisma__SnapshotPeriodoClient<$Result.GetResult<Prisma.$SnapshotPeriodoPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many SnapshotPeriodos.
+     * @param {SnapshotPeriodoCreateManyArgs} args - Arguments to create many SnapshotPeriodos.
+     * @example
+     * // Create many SnapshotPeriodos
+     * const snapshotPeriodo = await prisma.snapshotPeriodo.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends SnapshotPeriodoCreateManyArgs>(args?: SelectSubset<T, SnapshotPeriodoCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many SnapshotPeriodos and returns the data saved in the database.
+     * @param {SnapshotPeriodoCreateManyAndReturnArgs} args - Arguments to create many SnapshotPeriodos.
+     * @example
+     * // Create many SnapshotPeriodos
+     * const snapshotPeriodo = await prisma.snapshotPeriodo.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many SnapshotPeriodos and only return the `snapshotId`
+     * const snapshotPeriodoWithSnapshotIdOnly = await prisma.snapshotPeriodo.createManyAndReturn({
+     *   select: { snapshotId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends SnapshotPeriodoCreateManyAndReturnArgs>(args?: SelectSubset<T, SnapshotPeriodoCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SnapshotPeriodoPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a SnapshotPeriodo.
+     * @param {SnapshotPeriodoDeleteArgs} args - Arguments to delete one SnapshotPeriodo.
+     * @example
+     * // Delete one SnapshotPeriodo
+     * const SnapshotPeriodo = await prisma.snapshotPeriodo.delete({
+     *   where: {
+     *     // ... filter to delete one SnapshotPeriodo
+     *   }
+     * })
+     * 
+     */
+    delete<T extends SnapshotPeriodoDeleteArgs>(args: SelectSubset<T, SnapshotPeriodoDeleteArgs<ExtArgs>>): Prisma__SnapshotPeriodoClient<$Result.GetResult<Prisma.$SnapshotPeriodoPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one SnapshotPeriodo.
+     * @param {SnapshotPeriodoUpdateArgs} args - Arguments to update one SnapshotPeriodo.
+     * @example
+     * // Update one SnapshotPeriodo
+     * const snapshotPeriodo = await prisma.snapshotPeriodo.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends SnapshotPeriodoUpdateArgs>(args: SelectSubset<T, SnapshotPeriodoUpdateArgs<ExtArgs>>): Prisma__SnapshotPeriodoClient<$Result.GetResult<Prisma.$SnapshotPeriodoPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more SnapshotPeriodos.
+     * @param {SnapshotPeriodoDeleteManyArgs} args - Arguments to filter SnapshotPeriodos to delete.
+     * @example
+     * // Delete a few SnapshotPeriodos
+     * const { count } = await prisma.snapshotPeriodo.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends SnapshotPeriodoDeleteManyArgs>(args?: SelectSubset<T, SnapshotPeriodoDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SnapshotPeriodos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SnapshotPeriodoUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many SnapshotPeriodos
+     * const snapshotPeriodo = await prisma.snapshotPeriodo.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends SnapshotPeriodoUpdateManyArgs>(args: SelectSubset<T, SnapshotPeriodoUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more SnapshotPeriodos and returns the data updated in the database.
+     * @param {SnapshotPeriodoUpdateManyAndReturnArgs} args - Arguments to update many SnapshotPeriodos.
+     * @example
+     * // Update many SnapshotPeriodos
+     * const snapshotPeriodo = await prisma.snapshotPeriodo.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more SnapshotPeriodos and only return the `snapshotId`
+     * const snapshotPeriodoWithSnapshotIdOnly = await prisma.snapshotPeriodo.updateManyAndReturn({
+     *   select: { snapshotId: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends SnapshotPeriodoUpdateManyAndReturnArgs>(args: SelectSubset<T, SnapshotPeriodoUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$SnapshotPeriodoPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one SnapshotPeriodo.
+     * @param {SnapshotPeriodoUpsertArgs} args - Arguments to update or create a SnapshotPeriodo.
+     * @example
+     * // Update or create a SnapshotPeriodo
+     * const snapshotPeriodo = await prisma.snapshotPeriodo.upsert({
+     *   create: {
+     *     // ... data to create a SnapshotPeriodo
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the SnapshotPeriodo we want to update
+     *   }
+     * })
+     */
+    upsert<T extends SnapshotPeriodoUpsertArgs>(args: SelectSubset<T, SnapshotPeriodoUpsertArgs<ExtArgs>>): Prisma__SnapshotPeriodoClient<$Result.GetResult<Prisma.$SnapshotPeriodoPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of SnapshotPeriodos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SnapshotPeriodoCountArgs} args - Arguments to filter SnapshotPeriodos to count.
+     * @example
+     * // Count the number of SnapshotPeriodos
+     * const count = await prisma.snapshotPeriodo.count({
+     *   where: {
+     *     // ... the filter for the SnapshotPeriodos we want to count
+     *   }
+     * })
+    **/
+    count<T extends SnapshotPeriodoCountArgs>(
+      args?: Subset<T, SnapshotPeriodoCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], SnapshotPeriodoCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a SnapshotPeriodo.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SnapshotPeriodoAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends SnapshotPeriodoAggregateArgs>(args: Subset<T, SnapshotPeriodoAggregateArgs>): Prisma.PrismaPromise<GetSnapshotPeriodoAggregateType<T>>
+
+    /**
+     * Group by SnapshotPeriodo.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {SnapshotPeriodoGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends SnapshotPeriodoGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: SnapshotPeriodoGroupByArgs['orderBy'] }
+        : { orderBy?: SnapshotPeriodoGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, SnapshotPeriodoGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetSnapshotPeriodoGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the SnapshotPeriodo model
+   */
+  readonly fields: SnapshotPeriodoFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for SnapshotPeriodo.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__SnapshotPeriodoClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    periodo<T extends PeriodoContableDefaultArgs<ExtArgs> = {}>(args?: Subset<T, PeriodoContableDefaultArgs<ExtArgs>>): Prisma__PeriodoContableClient<$Result.GetResult<Prisma.$PeriodoContablePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the SnapshotPeriodo model
+   */
+  interface SnapshotPeriodoFieldRefs {
+    readonly snapshotId: FieldRef<"SnapshotPeriodo", 'String'>
+    readonly periodoId: FieldRef<"SnapshotPeriodo", 'String'>
+    readonly version: FieldRef<"SnapshotPeriodo", 'Int'>
+    readonly baseCajaJson: FieldRef<"SnapshotPeriodo", 'Json'>
+    readonly baseDevengoJson: FieldRef<"SnapshotPeriodo", 'Json'>
+    readonly resumenJson: FieldRef<"SnapshotPeriodo", 'Json'>
+    readonly hashIntegridad: FieldRef<"SnapshotPeriodo", 'String'>
+    readonly createdAt: FieldRef<"SnapshotPeriodo", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * SnapshotPeriodo findUnique
+   */
+  export type SnapshotPeriodoFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SnapshotPeriodo
+     */
+    select?: SnapshotPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SnapshotPeriodo
+     */
+    omit?: SnapshotPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SnapshotPeriodoInclude<ExtArgs> | null
+    /**
+     * Filter, which SnapshotPeriodo to fetch.
+     */
+    where: SnapshotPeriodoWhereUniqueInput
+  }
+
+  /**
+   * SnapshotPeriodo findUniqueOrThrow
+   */
+  export type SnapshotPeriodoFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SnapshotPeriodo
+     */
+    select?: SnapshotPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SnapshotPeriodo
+     */
+    omit?: SnapshotPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SnapshotPeriodoInclude<ExtArgs> | null
+    /**
+     * Filter, which SnapshotPeriodo to fetch.
+     */
+    where: SnapshotPeriodoWhereUniqueInput
+  }
+
+  /**
+   * SnapshotPeriodo findFirst
+   */
+  export type SnapshotPeriodoFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SnapshotPeriodo
+     */
+    select?: SnapshotPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SnapshotPeriodo
+     */
+    omit?: SnapshotPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SnapshotPeriodoInclude<ExtArgs> | null
+    /**
+     * Filter, which SnapshotPeriodo to fetch.
+     */
+    where?: SnapshotPeriodoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SnapshotPeriodos to fetch.
+     */
+    orderBy?: SnapshotPeriodoOrderByWithRelationInput | SnapshotPeriodoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SnapshotPeriodos.
+     */
+    cursor?: SnapshotPeriodoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SnapshotPeriodos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SnapshotPeriodos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SnapshotPeriodos.
+     */
+    distinct?: SnapshotPeriodoScalarFieldEnum | SnapshotPeriodoScalarFieldEnum[]
+  }
+
+  /**
+   * SnapshotPeriodo findFirstOrThrow
+   */
+  export type SnapshotPeriodoFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SnapshotPeriodo
+     */
+    select?: SnapshotPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SnapshotPeriodo
+     */
+    omit?: SnapshotPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SnapshotPeriodoInclude<ExtArgs> | null
+    /**
+     * Filter, which SnapshotPeriodo to fetch.
+     */
+    where?: SnapshotPeriodoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SnapshotPeriodos to fetch.
+     */
+    orderBy?: SnapshotPeriodoOrderByWithRelationInput | SnapshotPeriodoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for SnapshotPeriodos.
+     */
+    cursor?: SnapshotPeriodoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SnapshotPeriodos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SnapshotPeriodos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of SnapshotPeriodos.
+     */
+    distinct?: SnapshotPeriodoScalarFieldEnum | SnapshotPeriodoScalarFieldEnum[]
+  }
+
+  /**
+   * SnapshotPeriodo findMany
+   */
+  export type SnapshotPeriodoFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SnapshotPeriodo
+     */
+    select?: SnapshotPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SnapshotPeriodo
+     */
+    omit?: SnapshotPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SnapshotPeriodoInclude<ExtArgs> | null
+    /**
+     * Filter, which SnapshotPeriodos to fetch.
+     */
+    where?: SnapshotPeriodoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of SnapshotPeriodos to fetch.
+     */
+    orderBy?: SnapshotPeriodoOrderByWithRelationInput | SnapshotPeriodoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing SnapshotPeriodos.
+     */
+    cursor?: SnapshotPeriodoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` SnapshotPeriodos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` SnapshotPeriodos.
+     */
+    skip?: number
+    distinct?: SnapshotPeriodoScalarFieldEnum | SnapshotPeriodoScalarFieldEnum[]
+  }
+
+  /**
+   * SnapshotPeriodo create
+   */
+  export type SnapshotPeriodoCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SnapshotPeriodo
+     */
+    select?: SnapshotPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SnapshotPeriodo
+     */
+    omit?: SnapshotPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SnapshotPeriodoInclude<ExtArgs> | null
+    /**
+     * The data needed to create a SnapshotPeriodo.
+     */
+    data: XOR<SnapshotPeriodoCreateInput, SnapshotPeriodoUncheckedCreateInput>
+  }
+
+  /**
+   * SnapshotPeriodo createMany
+   */
+  export type SnapshotPeriodoCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many SnapshotPeriodos.
+     */
+    data: SnapshotPeriodoCreateManyInput | SnapshotPeriodoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * SnapshotPeriodo createManyAndReturn
+   */
+  export type SnapshotPeriodoCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SnapshotPeriodo
+     */
+    select?: SnapshotPeriodoSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SnapshotPeriodo
+     */
+    omit?: SnapshotPeriodoOmit<ExtArgs> | null
+    /**
+     * The data used to create many SnapshotPeriodos.
+     */
+    data: SnapshotPeriodoCreateManyInput | SnapshotPeriodoCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SnapshotPeriodoIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * SnapshotPeriodo update
+   */
+  export type SnapshotPeriodoUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SnapshotPeriodo
+     */
+    select?: SnapshotPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SnapshotPeriodo
+     */
+    omit?: SnapshotPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SnapshotPeriodoInclude<ExtArgs> | null
+    /**
+     * The data needed to update a SnapshotPeriodo.
+     */
+    data: XOR<SnapshotPeriodoUpdateInput, SnapshotPeriodoUncheckedUpdateInput>
+    /**
+     * Choose, which SnapshotPeriodo to update.
+     */
+    where: SnapshotPeriodoWhereUniqueInput
+  }
+
+  /**
+   * SnapshotPeriodo updateMany
+   */
+  export type SnapshotPeriodoUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update SnapshotPeriodos.
+     */
+    data: XOR<SnapshotPeriodoUpdateManyMutationInput, SnapshotPeriodoUncheckedUpdateManyInput>
+    /**
+     * Filter which SnapshotPeriodos to update
+     */
+    where?: SnapshotPeriodoWhereInput
+    /**
+     * Limit how many SnapshotPeriodos to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * SnapshotPeriodo updateManyAndReturn
+   */
+  export type SnapshotPeriodoUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SnapshotPeriodo
+     */
+    select?: SnapshotPeriodoSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the SnapshotPeriodo
+     */
+    omit?: SnapshotPeriodoOmit<ExtArgs> | null
+    /**
+     * The data used to update SnapshotPeriodos.
+     */
+    data: XOR<SnapshotPeriodoUpdateManyMutationInput, SnapshotPeriodoUncheckedUpdateManyInput>
+    /**
+     * Filter which SnapshotPeriodos to update
+     */
+    where?: SnapshotPeriodoWhereInput
+    /**
+     * Limit how many SnapshotPeriodos to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SnapshotPeriodoIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * SnapshotPeriodo upsert
+   */
+  export type SnapshotPeriodoUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SnapshotPeriodo
+     */
+    select?: SnapshotPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SnapshotPeriodo
+     */
+    omit?: SnapshotPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SnapshotPeriodoInclude<ExtArgs> | null
+    /**
+     * The filter to search for the SnapshotPeriodo to update in case it exists.
+     */
+    where: SnapshotPeriodoWhereUniqueInput
+    /**
+     * In case the SnapshotPeriodo found by the `where` argument doesn't exist, create a new SnapshotPeriodo with this data.
+     */
+    create: XOR<SnapshotPeriodoCreateInput, SnapshotPeriodoUncheckedCreateInput>
+    /**
+     * In case the SnapshotPeriodo was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<SnapshotPeriodoUpdateInput, SnapshotPeriodoUncheckedUpdateInput>
+  }
+
+  /**
+   * SnapshotPeriodo delete
+   */
+  export type SnapshotPeriodoDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SnapshotPeriodo
+     */
+    select?: SnapshotPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SnapshotPeriodo
+     */
+    omit?: SnapshotPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SnapshotPeriodoInclude<ExtArgs> | null
+    /**
+     * Filter which SnapshotPeriodo to delete.
+     */
+    where: SnapshotPeriodoWhereUniqueInput
+  }
+
+  /**
+   * SnapshotPeriodo deleteMany
+   */
+  export type SnapshotPeriodoDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which SnapshotPeriodos to delete
+     */
+    where?: SnapshotPeriodoWhereInput
+    /**
+     * Limit how many SnapshotPeriodos to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * SnapshotPeriodo without action
+   */
+  export type SnapshotPeriodoDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the SnapshotPeriodo
+     */
+    select?: SnapshotPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the SnapshotPeriodo
+     */
+    omit?: SnapshotPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: SnapshotPeriodoInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model AperturaPeriodo
+   */
+
+  export type AggregateAperturaPeriodo = {
+    _count: AperturaPeriodoCountAggregateOutputType | null
+    _avg: AperturaPeriodoAvgAggregateOutputType | null
+    _sum: AperturaPeriodoSumAggregateOutputType | null
+    _min: AperturaPeriodoMinAggregateOutputType | null
+    _max: AperturaPeriodoMaxAggregateOutputType | null
+  }
+
+  export type AperturaPeriodoAvgAggregateOutputType = {
+    saldoCajaInicial: Decimal | null
+    saldoBancoInicial: Decimal | null
+    saldoCuentasCobrarInicial: Decimal | null
+    saldoCuentasPagarInicial: Decimal | null
+    saldoInventarioInicial: Decimal | null
+    saldoCapitalInicial: Decimal | null
+    saldoResultadoAcumInicial: Decimal | null
+  }
+
+  export type AperturaPeriodoSumAggregateOutputType = {
+    saldoCajaInicial: Decimal | null
+    saldoBancoInicial: Decimal | null
+    saldoCuentasCobrarInicial: Decimal | null
+    saldoCuentasPagarInicial: Decimal | null
+    saldoInventarioInicial: Decimal | null
+    saldoCapitalInicial: Decimal | null
+    saldoResultadoAcumInicial: Decimal | null
+  }
+
+  export type AperturaPeriodoMinAggregateOutputType = {
+    aperturaId: string | null
+    periodoId: string | null
+    tenantId: string | null
+    origenPeriodoId: string | null
+    saldoCajaInicial: Decimal | null
+    saldoBancoInicial: Decimal | null
+    saldoCuentasCobrarInicial: Decimal | null
+    saldoCuentasPagarInicial: Decimal | null
+    saldoInventarioInicial: Decimal | null
+    saldoCapitalInicial: Decimal | null
+    saldoResultadoAcumInicial: Decimal | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type AperturaPeriodoMaxAggregateOutputType = {
+    aperturaId: string | null
+    periodoId: string | null
+    tenantId: string | null
+    origenPeriodoId: string | null
+    saldoCajaInicial: Decimal | null
+    saldoBancoInicial: Decimal | null
+    saldoCuentasCobrarInicial: Decimal | null
+    saldoCuentasPagarInicial: Decimal | null
+    saldoInventarioInicial: Decimal | null
+    saldoCapitalInicial: Decimal | null
+    saldoResultadoAcumInicial: Decimal | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type AperturaPeriodoCountAggregateOutputType = {
+    aperturaId: number
+    periodoId: number
+    tenantId: number
+    origenPeriodoId: number
+    saldoCajaInicial: number
+    saldoBancoInicial: number
+    saldoCuentasCobrarInicial: number
+    saldoCuentasPagarInicial: number
+    saldoInventarioInicial: number
+    saldoCapitalInicial: number
+    saldoResultadoAcumInicial: number
+    detalleJson: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type AperturaPeriodoAvgAggregateInputType = {
+    saldoCajaInicial?: true
+    saldoBancoInicial?: true
+    saldoCuentasCobrarInicial?: true
+    saldoCuentasPagarInicial?: true
+    saldoInventarioInicial?: true
+    saldoCapitalInicial?: true
+    saldoResultadoAcumInicial?: true
+  }
+
+  export type AperturaPeriodoSumAggregateInputType = {
+    saldoCajaInicial?: true
+    saldoBancoInicial?: true
+    saldoCuentasCobrarInicial?: true
+    saldoCuentasPagarInicial?: true
+    saldoInventarioInicial?: true
+    saldoCapitalInicial?: true
+    saldoResultadoAcumInicial?: true
+  }
+
+  export type AperturaPeriodoMinAggregateInputType = {
+    aperturaId?: true
+    periodoId?: true
+    tenantId?: true
+    origenPeriodoId?: true
+    saldoCajaInicial?: true
+    saldoBancoInicial?: true
+    saldoCuentasCobrarInicial?: true
+    saldoCuentasPagarInicial?: true
+    saldoInventarioInicial?: true
+    saldoCapitalInicial?: true
+    saldoResultadoAcumInicial?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type AperturaPeriodoMaxAggregateInputType = {
+    aperturaId?: true
+    periodoId?: true
+    tenantId?: true
+    origenPeriodoId?: true
+    saldoCajaInicial?: true
+    saldoBancoInicial?: true
+    saldoCuentasCobrarInicial?: true
+    saldoCuentasPagarInicial?: true
+    saldoInventarioInicial?: true
+    saldoCapitalInicial?: true
+    saldoResultadoAcumInicial?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type AperturaPeriodoCountAggregateInputType = {
+    aperturaId?: true
+    periodoId?: true
+    tenantId?: true
+    origenPeriodoId?: true
+    saldoCajaInicial?: true
+    saldoBancoInicial?: true
+    saldoCuentasCobrarInicial?: true
+    saldoCuentasPagarInicial?: true
+    saldoInventarioInicial?: true
+    saldoCapitalInicial?: true
+    saldoResultadoAcumInicial?: true
+    detalleJson?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type AperturaPeriodoAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AperturaPeriodo to aggregate.
+     */
+    where?: AperturaPeriodoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AperturaPeriodos to fetch.
+     */
+    orderBy?: AperturaPeriodoOrderByWithRelationInput | AperturaPeriodoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: AperturaPeriodoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AperturaPeriodos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AperturaPeriodos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned AperturaPeriodos
+    **/
+    _count?: true | AperturaPeriodoCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: AperturaPeriodoAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: AperturaPeriodoSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: AperturaPeriodoMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: AperturaPeriodoMaxAggregateInputType
+  }
+
+  export type GetAperturaPeriodoAggregateType<T extends AperturaPeriodoAggregateArgs> = {
+        [P in keyof T & keyof AggregateAperturaPeriodo]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateAperturaPeriodo[P]>
+      : GetScalarType<T[P], AggregateAperturaPeriodo[P]>
+  }
+
+
+
+
+  export type AperturaPeriodoGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: AperturaPeriodoWhereInput
+    orderBy?: AperturaPeriodoOrderByWithAggregationInput | AperturaPeriodoOrderByWithAggregationInput[]
+    by: AperturaPeriodoScalarFieldEnum[] | AperturaPeriodoScalarFieldEnum
+    having?: AperturaPeriodoScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: AperturaPeriodoCountAggregateInputType | true
+    _avg?: AperturaPeriodoAvgAggregateInputType
+    _sum?: AperturaPeriodoSumAggregateInputType
+    _min?: AperturaPeriodoMinAggregateInputType
+    _max?: AperturaPeriodoMaxAggregateInputType
+  }
+
+  export type AperturaPeriodoGroupByOutputType = {
+    aperturaId: string
+    periodoId: string
+    tenantId: string
+    origenPeriodoId: string | null
+    saldoCajaInicial: Decimal
+    saldoBancoInicial: Decimal
+    saldoCuentasCobrarInicial: Decimal
+    saldoCuentasPagarInicial: Decimal
+    saldoInventarioInicial: Decimal
+    saldoCapitalInicial: Decimal
+    saldoResultadoAcumInicial: Decimal
+    detalleJson: JsonValue | null
+    createdAt: Date
+    updatedAt: Date
+    _count: AperturaPeriodoCountAggregateOutputType | null
+    _avg: AperturaPeriodoAvgAggregateOutputType | null
+    _sum: AperturaPeriodoSumAggregateOutputType | null
+    _min: AperturaPeriodoMinAggregateOutputType | null
+    _max: AperturaPeriodoMaxAggregateOutputType | null
+  }
+
+  type GetAperturaPeriodoGroupByPayload<T extends AperturaPeriodoGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<AperturaPeriodoGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof AperturaPeriodoGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], AperturaPeriodoGroupByOutputType[P]>
+            : GetScalarType<T[P], AperturaPeriodoGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type AperturaPeriodoSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    aperturaId?: boolean
+    periodoId?: boolean
+    tenantId?: boolean
+    origenPeriodoId?: boolean
+    saldoCajaInicial?: boolean
+    saldoBancoInicial?: boolean
+    saldoCuentasCobrarInicial?: boolean
+    saldoCuentasPagarInicial?: boolean
+    saldoInventarioInicial?: boolean
+    saldoCapitalInicial?: boolean
+    saldoResultadoAcumInicial?: boolean
+    detalleJson?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    periodo?: boolean | PeriodoContableDefaultArgs<ExtArgs>
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["aperturaPeriodo"]>
+
+  export type AperturaPeriodoSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    aperturaId?: boolean
+    periodoId?: boolean
+    tenantId?: boolean
+    origenPeriodoId?: boolean
+    saldoCajaInicial?: boolean
+    saldoBancoInicial?: boolean
+    saldoCuentasCobrarInicial?: boolean
+    saldoCuentasPagarInicial?: boolean
+    saldoInventarioInicial?: boolean
+    saldoCapitalInicial?: boolean
+    saldoResultadoAcumInicial?: boolean
+    detalleJson?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    periodo?: boolean | PeriodoContableDefaultArgs<ExtArgs>
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["aperturaPeriodo"]>
+
+  export type AperturaPeriodoSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    aperturaId?: boolean
+    periodoId?: boolean
+    tenantId?: boolean
+    origenPeriodoId?: boolean
+    saldoCajaInicial?: boolean
+    saldoBancoInicial?: boolean
+    saldoCuentasCobrarInicial?: boolean
+    saldoCuentasPagarInicial?: boolean
+    saldoInventarioInicial?: boolean
+    saldoCapitalInicial?: boolean
+    saldoResultadoAcumInicial?: boolean
+    detalleJson?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    periodo?: boolean | PeriodoContableDefaultArgs<ExtArgs>
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["aperturaPeriodo"]>
+
+  export type AperturaPeriodoSelectScalar = {
+    aperturaId?: boolean
+    periodoId?: boolean
+    tenantId?: boolean
+    origenPeriodoId?: boolean
+    saldoCajaInicial?: boolean
+    saldoBancoInicial?: boolean
+    saldoCuentasCobrarInicial?: boolean
+    saldoCuentasPagarInicial?: boolean
+    saldoInventarioInicial?: boolean
+    saldoCapitalInicial?: boolean
+    saldoResultadoAcumInicial?: boolean
+    detalleJson?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type AperturaPeriodoOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"aperturaId" | "periodoId" | "tenantId" | "origenPeriodoId" | "saldoCajaInicial" | "saldoBancoInicial" | "saldoCuentasCobrarInicial" | "saldoCuentasPagarInicial" | "saldoInventarioInicial" | "saldoCapitalInicial" | "saldoResultadoAcumInicial" | "detalleJson" | "createdAt" | "updatedAt", ExtArgs["result"]["aperturaPeriodo"]>
+  export type AperturaPeriodoInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    periodo?: boolean | PeriodoContableDefaultArgs<ExtArgs>
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+  }
+  export type AperturaPeriodoIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    periodo?: boolean | PeriodoContableDefaultArgs<ExtArgs>
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+  }
+  export type AperturaPeriodoIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    periodo?: boolean | PeriodoContableDefaultArgs<ExtArgs>
+    tenant?: boolean | TenantDefaultArgs<ExtArgs>
+  }
+
+  export type $AperturaPeriodoPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "AperturaPeriodo"
+    objects: {
+      periodo: Prisma.$PeriodoContablePayload<ExtArgs>
+      tenant: Prisma.$TenantPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      aperturaId: string
+      periodoId: string
+      tenantId: string
+      origenPeriodoId: string | null
+      saldoCajaInicial: Prisma.Decimal
+      saldoBancoInicial: Prisma.Decimal
+      saldoCuentasCobrarInicial: Prisma.Decimal
+      saldoCuentasPagarInicial: Prisma.Decimal
+      saldoInventarioInicial: Prisma.Decimal
+      saldoCapitalInicial: Prisma.Decimal
+      saldoResultadoAcumInicial: Prisma.Decimal
+      detalleJson: Prisma.JsonValue | null
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["aperturaPeriodo"]>
+    composites: {}
+  }
+
+  type AperturaPeriodoGetPayload<S extends boolean | null | undefined | AperturaPeriodoDefaultArgs> = $Result.GetResult<Prisma.$AperturaPeriodoPayload, S>
+
+  type AperturaPeriodoCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<AperturaPeriodoFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: AperturaPeriodoCountAggregateInputType | true
+    }
+
+  export interface AperturaPeriodoDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['AperturaPeriodo'], meta: { name: 'AperturaPeriodo' } }
+    /**
+     * Find zero or one AperturaPeriodo that matches the filter.
+     * @param {AperturaPeriodoFindUniqueArgs} args - Arguments to find a AperturaPeriodo
+     * @example
+     * // Get one AperturaPeriodo
+     * const aperturaPeriodo = await prisma.aperturaPeriodo.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends AperturaPeriodoFindUniqueArgs>(args: SelectSubset<T, AperturaPeriodoFindUniqueArgs<ExtArgs>>): Prisma__AperturaPeriodoClient<$Result.GetResult<Prisma.$AperturaPeriodoPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one AperturaPeriodo that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {AperturaPeriodoFindUniqueOrThrowArgs} args - Arguments to find a AperturaPeriodo
+     * @example
+     * // Get one AperturaPeriodo
+     * const aperturaPeriodo = await prisma.aperturaPeriodo.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends AperturaPeriodoFindUniqueOrThrowArgs>(args: SelectSubset<T, AperturaPeriodoFindUniqueOrThrowArgs<ExtArgs>>): Prisma__AperturaPeriodoClient<$Result.GetResult<Prisma.$AperturaPeriodoPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AperturaPeriodo that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AperturaPeriodoFindFirstArgs} args - Arguments to find a AperturaPeriodo
+     * @example
+     * // Get one AperturaPeriodo
+     * const aperturaPeriodo = await prisma.aperturaPeriodo.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends AperturaPeriodoFindFirstArgs>(args?: SelectSubset<T, AperturaPeriodoFindFirstArgs<ExtArgs>>): Prisma__AperturaPeriodoClient<$Result.GetResult<Prisma.$AperturaPeriodoPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first AperturaPeriodo that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AperturaPeriodoFindFirstOrThrowArgs} args - Arguments to find a AperturaPeriodo
+     * @example
+     * // Get one AperturaPeriodo
+     * const aperturaPeriodo = await prisma.aperturaPeriodo.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends AperturaPeriodoFindFirstOrThrowArgs>(args?: SelectSubset<T, AperturaPeriodoFindFirstOrThrowArgs<ExtArgs>>): Prisma__AperturaPeriodoClient<$Result.GetResult<Prisma.$AperturaPeriodoPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more AperturaPeriodos that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AperturaPeriodoFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all AperturaPeriodos
+     * const aperturaPeriodos = await prisma.aperturaPeriodo.findMany()
+     * 
+     * // Get first 10 AperturaPeriodos
+     * const aperturaPeriodos = await prisma.aperturaPeriodo.findMany({ take: 10 })
+     * 
+     * // Only select the `aperturaId`
+     * const aperturaPeriodoWithAperturaIdOnly = await prisma.aperturaPeriodo.findMany({ select: { aperturaId: true } })
+     * 
+     */
+    findMany<T extends AperturaPeriodoFindManyArgs>(args?: SelectSubset<T, AperturaPeriodoFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AperturaPeriodoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a AperturaPeriodo.
+     * @param {AperturaPeriodoCreateArgs} args - Arguments to create a AperturaPeriodo.
+     * @example
+     * // Create one AperturaPeriodo
+     * const AperturaPeriodo = await prisma.aperturaPeriodo.create({
+     *   data: {
+     *     // ... data to create a AperturaPeriodo
+     *   }
+     * })
+     * 
+     */
+    create<T extends AperturaPeriodoCreateArgs>(args: SelectSubset<T, AperturaPeriodoCreateArgs<ExtArgs>>): Prisma__AperturaPeriodoClient<$Result.GetResult<Prisma.$AperturaPeriodoPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many AperturaPeriodos.
+     * @param {AperturaPeriodoCreateManyArgs} args - Arguments to create many AperturaPeriodos.
+     * @example
+     * // Create many AperturaPeriodos
+     * const aperturaPeriodo = await prisma.aperturaPeriodo.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends AperturaPeriodoCreateManyArgs>(args?: SelectSubset<T, AperturaPeriodoCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many AperturaPeriodos and returns the data saved in the database.
+     * @param {AperturaPeriodoCreateManyAndReturnArgs} args - Arguments to create many AperturaPeriodos.
+     * @example
+     * // Create many AperturaPeriodos
+     * const aperturaPeriodo = await prisma.aperturaPeriodo.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many AperturaPeriodos and only return the `aperturaId`
+     * const aperturaPeriodoWithAperturaIdOnly = await prisma.aperturaPeriodo.createManyAndReturn({
+     *   select: { aperturaId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends AperturaPeriodoCreateManyAndReturnArgs>(args?: SelectSubset<T, AperturaPeriodoCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AperturaPeriodoPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a AperturaPeriodo.
+     * @param {AperturaPeriodoDeleteArgs} args - Arguments to delete one AperturaPeriodo.
+     * @example
+     * // Delete one AperturaPeriodo
+     * const AperturaPeriodo = await prisma.aperturaPeriodo.delete({
+     *   where: {
+     *     // ... filter to delete one AperturaPeriodo
+     *   }
+     * })
+     * 
+     */
+    delete<T extends AperturaPeriodoDeleteArgs>(args: SelectSubset<T, AperturaPeriodoDeleteArgs<ExtArgs>>): Prisma__AperturaPeriodoClient<$Result.GetResult<Prisma.$AperturaPeriodoPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one AperturaPeriodo.
+     * @param {AperturaPeriodoUpdateArgs} args - Arguments to update one AperturaPeriodo.
+     * @example
+     * // Update one AperturaPeriodo
+     * const aperturaPeriodo = await prisma.aperturaPeriodo.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends AperturaPeriodoUpdateArgs>(args: SelectSubset<T, AperturaPeriodoUpdateArgs<ExtArgs>>): Prisma__AperturaPeriodoClient<$Result.GetResult<Prisma.$AperturaPeriodoPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more AperturaPeriodos.
+     * @param {AperturaPeriodoDeleteManyArgs} args - Arguments to filter AperturaPeriodos to delete.
+     * @example
+     * // Delete a few AperturaPeriodos
+     * const { count } = await prisma.aperturaPeriodo.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends AperturaPeriodoDeleteManyArgs>(args?: SelectSubset<T, AperturaPeriodoDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AperturaPeriodos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AperturaPeriodoUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many AperturaPeriodos
+     * const aperturaPeriodo = await prisma.aperturaPeriodo.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends AperturaPeriodoUpdateManyArgs>(args: SelectSubset<T, AperturaPeriodoUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more AperturaPeriodos and returns the data updated in the database.
+     * @param {AperturaPeriodoUpdateManyAndReturnArgs} args - Arguments to update many AperturaPeriodos.
+     * @example
+     * // Update many AperturaPeriodos
+     * const aperturaPeriodo = await prisma.aperturaPeriodo.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more AperturaPeriodos and only return the `aperturaId`
+     * const aperturaPeriodoWithAperturaIdOnly = await prisma.aperturaPeriodo.updateManyAndReturn({
+     *   select: { aperturaId: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends AperturaPeriodoUpdateManyAndReturnArgs>(args: SelectSubset<T, AperturaPeriodoUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AperturaPeriodoPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one AperturaPeriodo.
+     * @param {AperturaPeriodoUpsertArgs} args - Arguments to update or create a AperturaPeriodo.
+     * @example
+     * // Update or create a AperturaPeriodo
+     * const aperturaPeriodo = await prisma.aperturaPeriodo.upsert({
+     *   create: {
+     *     // ... data to create a AperturaPeriodo
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the AperturaPeriodo we want to update
+     *   }
+     * })
+     */
+    upsert<T extends AperturaPeriodoUpsertArgs>(args: SelectSubset<T, AperturaPeriodoUpsertArgs<ExtArgs>>): Prisma__AperturaPeriodoClient<$Result.GetResult<Prisma.$AperturaPeriodoPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of AperturaPeriodos.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AperturaPeriodoCountArgs} args - Arguments to filter AperturaPeriodos to count.
+     * @example
+     * // Count the number of AperturaPeriodos
+     * const count = await prisma.aperturaPeriodo.count({
+     *   where: {
+     *     // ... the filter for the AperturaPeriodos we want to count
+     *   }
+     * })
+    **/
+    count<T extends AperturaPeriodoCountArgs>(
+      args?: Subset<T, AperturaPeriodoCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], AperturaPeriodoCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a AperturaPeriodo.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AperturaPeriodoAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends AperturaPeriodoAggregateArgs>(args: Subset<T, AperturaPeriodoAggregateArgs>): Prisma.PrismaPromise<GetAperturaPeriodoAggregateType<T>>
+
+    /**
+     * Group by AperturaPeriodo.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {AperturaPeriodoGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends AperturaPeriodoGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: AperturaPeriodoGroupByArgs['orderBy'] }
+        : { orderBy?: AperturaPeriodoGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, AperturaPeriodoGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetAperturaPeriodoGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the AperturaPeriodo model
+   */
+  readonly fields: AperturaPeriodoFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for AperturaPeriodo.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__AperturaPeriodoClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    periodo<T extends PeriodoContableDefaultArgs<ExtArgs> = {}>(args?: Subset<T, PeriodoContableDefaultArgs<ExtArgs>>): Prisma__PeriodoContableClient<$Result.GetResult<Prisma.$PeriodoContablePayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    tenant<T extends TenantDefaultArgs<ExtArgs> = {}>(args?: Subset<T, TenantDefaultArgs<ExtArgs>>): Prisma__TenantClient<$Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the AperturaPeriodo model
+   */
+  interface AperturaPeriodoFieldRefs {
+    readonly aperturaId: FieldRef<"AperturaPeriodo", 'String'>
+    readonly periodoId: FieldRef<"AperturaPeriodo", 'String'>
+    readonly tenantId: FieldRef<"AperturaPeriodo", 'String'>
+    readonly origenPeriodoId: FieldRef<"AperturaPeriodo", 'String'>
+    readonly saldoCajaInicial: FieldRef<"AperturaPeriodo", 'Decimal'>
+    readonly saldoBancoInicial: FieldRef<"AperturaPeriodo", 'Decimal'>
+    readonly saldoCuentasCobrarInicial: FieldRef<"AperturaPeriodo", 'Decimal'>
+    readonly saldoCuentasPagarInicial: FieldRef<"AperturaPeriodo", 'Decimal'>
+    readonly saldoInventarioInicial: FieldRef<"AperturaPeriodo", 'Decimal'>
+    readonly saldoCapitalInicial: FieldRef<"AperturaPeriodo", 'Decimal'>
+    readonly saldoResultadoAcumInicial: FieldRef<"AperturaPeriodo", 'Decimal'>
+    readonly detalleJson: FieldRef<"AperturaPeriodo", 'Json'>
+    readonly createdAt: FieldRef<"AperturaPeriodo", 'DateTime'>
+    readonly updatedAt: FieldRef<"AperturaPeriodo", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * AperturaPeriodo findUnique
+   */
+  export type AperturaPeriodoFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AperturaPeriodo
+     */
+    select?: AperturaPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AperturaPeriodo
+     */
+    omit?: AperturaPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AperturaPeriodoInclude<ExtArgs> | null
+    /**
+     * Filter, which AperturaPeriodo to fetch.
+     */
+    where: AperturaPeriodoWhereUniqueInput
+  }
+
+  /**
+   * AperturaPeriodo findUniqueOrThrow
+   */
+  export type AperturaPeriodoFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AperturaPeriodo
+     */
+    select?: AperturaPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AperturaPeriodo
+     */
+    omit?: AperturaPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AperturaPeriodoInclude<ExtArgs> | null
+    /**
+     * Filter, which AperturaPeriodo to fetch.
+     */
+    where: AperturaPeriodoWhereUniqueInput
+  }
+
+  /**
+   * AperturaPeriodo findFirst
+   */
+  export type AperturaPeriodoFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AperturaPeriodo
+     */
+    select?: AperturaPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AperturaPeriodo
+     */
+    omit?: AperturaPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AperturaPeriodoInclude<ExtArgs> | null
+    /**
+     * Filter, which AperturaPeriodo to fetch.
+     */
+    where?: AperturaPeriodoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AperturaPeriodos to fetch.
+     */
+    orderBy?: AperturaPeriodoOrderByWithRelationInput | AperturaPeriodoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AperturaPeriodos.
+     */
+    cursor?: AperturaPeriodoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AperturaPeriodos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AperturaPeriodos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AperturaPeriodos.
+     */
+    distinct?: AperturaPeriodoScalarFieldEnum | AperturaPeriodoScalarFieldEnum[]
+  }
+
+  /**
+   * AperturaPeriodo findFirstOrThrow
+   */
+  export type AperturaPeriodoFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AperturaPeriodo
+     */
+    select?: AperturaPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AperturaPeriodo
+     */
+    omit?: AperturaPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AperturaPeriodoInclude<ExtArgs> | null
+    /**
+     * Filter, which AperturaPeriodo to fetch.
+     */
+    where?: AperturaPeriodoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AperturaPeriodos to fetch.
+     */
+    orderBy?: AperturaPeriodoOrderByWithRelationInput | AperturaPeriodoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for AperturaPeriodos.
+     */
+    cursor?: AperturaPeriodoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AperturaPeriodos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AperturaPeriodos.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of AperturaPeriodos.
+     */
+    distinct?: AperturaPeriodoScalarFieldEnum | AperturaPeriodoScalarFieldEnum[]
+  }
+
+  /**
+   * AperturaPeriodo findMany
+   */
+  export type AperturaPeriodoFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AperturaPeriodo
+     */
+    select?: AperturaPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AperturaPeriodo
+     */
+    omit?: AperturaPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AperturaPeriodoInclude<ExtArgs> | null
+    /**
+     * Filter, which AperturaPeriodos to fetch.
+     */
+    where?: AperturaPeriodoWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of AperturaPeriodos to fetch.
+     */
+    orderBy?: AperturaPeriodoOrderByWithRelationInput | AperturaPeriodoOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing AperturaPeriodos.
+     */
+    cursor?: AperturaPeriodoWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` AperturaPeriodos from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` AperturaPeriodos.
+     */
+    skip?: number
+    distinct?: AperturaPeriodoScalarFieldEnum | AperturaPeriodoScalarFieldEnum[]
+  }
+
+  /**
+   * AperturaPeriodo create
+   */
+  export type AperturaPeriodoCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AperturaPeriodo
+     */
+    select?: AperturaPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AperturaPeriodo
+     */
+    omit?: AperturaPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AperturaPeriodoInclude<ExtArgs> | null
+    /**
+     * The data needed to create a AperturaPeriodo.
+     */
+    data: XOR<AperturaPeriodoCreateInput, AperturaPeriodoUncheckedCreateInput>
+  }
+
+  /**
+   * AperturaPeriodo createMany
+   */
+  export type AperturaPeriodoCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many AperturaPeriodos.
+     */
+    data: AperturaPeriodoCreateManyInput | AperturaPeriodoCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * AperturaPeriodo createManyAndReturn
+   */
+  export type AperturaPeriodoCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AperturaPeriodo
+     */
+    select?: AperturaPeriodoSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AperturaPeriodo
+     */
+    omit?: AperturaPeriodoOmit<ExtArgs> | null
+    /**
+     * The data used to create many AperturaPeriodos.
+     */
+    data: AperturaPeriodoCreateManyInput | AperturaPeriodoCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AperturaPeriodoIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AperturaPeriodo update
+   */
+  export type AperturaPeriodoUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AperturaPeriodo
+     */
+    select?: AperturaPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AperturaPeriodo
+     */
+    omit?: AperturaPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AperturaPeriodoInclude<ExtArgs> | null
+    /**
+     * The data needed to update a AperturaPeriodo.
+     */
+    data: XOR<AperturaPeriodoUpdateInput, AperturaPeriodoUncheckedUpdateInput>
+    /**
+     * Choose, which AperturaPeriodo to update.
+     */
+    where: AperturaPeriodoWhereUniqueInput
+  }
+
+  /**
+   * AperturaPeriodo updateMany
+   */
+  export type AperturaPeriodoUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update AperturaPeriodos.
+     */
+    data: XOR<AperturaPeriodoUpdateManyMutationInput, AperturaPeriodoUncheckedUpdateManyInput>
+    /**
+     * Filter which AperturaPeriodos to update
+     */
+    where?: AperturaPeriodoWhereInput
+    /**
+     * Limit how many AperturaPeriodos to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * AperturaPeriodo updateManyAndReturn
+   */
+  export type AperturaPeriodoUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AperturaPeriodo
+     */
+    select?: AperturaPeriodoSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the AperturaPeriodo
+     */
+    omit?: AperturaPeriodoOmit<ExtArgs> | null
+    /**
+     * The data used to update AperturaPeriodos.
+     */
+    data: XOR<AperturaPeriodoUpdateManyMutationInput, AperturaPeriodoUncheckedUpdateManyInput>
+    /**
+     * Filter which AperturaPeriodos to update
+     */
+    where?: AperturaPeriodoWhereInput
+    /**
+     * Limit how many AperturaPeriodos to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AperturaPeriodoIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * AperturaPeriodo upsert
+   */
+  export type AperturaPeriodoUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AperturaPeriodo
+     */
+    select?: AperturaPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AperturaPeriodo
+     */
+    omit?: AperturaPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AperturaPeriodoInclude<ExtArgs> | null
+    /**
+     * The filter to search for the AperturaPeriodo to update in case it exists.
+     */
+    where: AperturaPeriodoWhereUniqueInput
+    /**
+     * In case the AperturaPeriodo found by the `where` argument doesn't exist, create a new AperturaPeriodo with this data.
+     */
+    create: XOR<AperturaPeriodoCreateInput, AperturaPeriodoUncheckedCreateInput>
+    /**
+     * In case the AperturaPeriodo was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<AperturaPeriodoUpdateInput, AperturaPeriodoUncheckedUpdateInput>
+  }
+
+  /**
+   * AperturaPeriodo delete
+   */
+  export type AperturaPeriodoDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AperturaPeriodo
+     */
+    select?: AperturaPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AperturaPeriodo
+     */
+    omit?: AperturaPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AperturaPeriodoInclude<ExtArgs> | null
+    /**
+     * Filter which AperturaPeriodo to delete.
+     */
+    where: AperturaPeriodoWhereUniqueInput
+  }
+
+  /**
+   * AperturaPeriodo deleteMany
+   */
+  export type AperturaPeriodoDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which AperturaPeriodos to delete
+     */
+    where?: AperturaPeriodoWhereInput
+    /**
+     * Limit how many AperturaPeriodos to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * AperturaPeriodo without action
+   */
+  export type AperturaPeriodoDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the AperturaPeriodo
+     */
+    select?: AperturaPeriodoSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the AperturaPeriodo
+     */
+    omit?: AperturaPeriodoOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: AperturaPeriodoInclude<ExtArgs> | null
   }
 
 
@@ -135234,20 +138112,65 @@ export namespace Prisma {
     periodoId: 'periodoId',
     tenantId: 'tenantId',
     tipo: 'tipo',
+    codigo: 'codigo',
     fechaInicio: 'fechaInicio',
     fechaFin: 'fechaFin',
     estado: 'estado',
-    motivoReapertura: 'motivoReapertura',
+    periodoPadreId: 'periodoPadreId',
+    aperturaAutomatica: 'aperturaAutomatica',
+    categoria: 'categoria',
+    abiertoPorId: 'abiertoPorId',
+    fechaApertura: 'fechaApertura',
     cerradoPor: 'cerradoPor',
     cerradoAt: 'cerradoAt',
     aprobadoPor: 'aprobadoPor',
     aprobadoAt: 'aprobadoAt',
+    reabiertoPorId: 'reabiertoPorId',
+    fechaReapertura: 'fechaReapertura',
+    segundoAprobadorId: 'segundoAprobadorId',
+    motivoReapertura: 'motivoReapertura',
     observaciones: 'observaciones',
+    resumenJson: 'resumenJson',
+    hashIntegridad: 'hashIntegridad',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
   };
 
   export type PeriodoContableScalarFieldEnum = (typeof PeriodoContableScalarFieldEnum)[keyof typeof PeriodoContableScalarFieldEnum]
+
+
+  export const SnapshotPeriodoScalarFieldEnum: {
+    snapshotId: 'snapshotId',
+    periodoId: 'periodoId',
+    version: 'version',
+    baseCajaJson: 'baseCajaJson',
+    baseDevengoJson: 'baseDevengoJson',
+    resumenJson: 'resumenJson',
+    hashIntegridad: 'hashIntegridad',
+    createdAt: 'createdAt'
+  };
+
+  export type SnapshotPeriodoScalarFieldEnum = (typeof SnapshotPeriodoScalarFieldEnum)[keyof typeof SnapshotPeriodoScalarFieldEnum]
+
+
+  export const AperturaPeriodoScalarFieldEnum: {
+    aperturaId: 'aperturaId',
+    periodoId: 'periodoId',
+    tenantId: 'tenantId',
+    origenPeriodoId: 'origenPeriodoId',
+    saldoCajaInicial: 'saldoCajaInicial',
+    saldoBancoInicial: 'saldoBancoInicial',
+    saldoCuentasCobrarInicial: 'saldoCuentasCobrarInicial',
+    saldoCuentasPagarInicial: 'saldoCuentasPagarInicial',
+    saldoInventarioInicial: 'saldoInventarioInicial',
+    saldoCapitalInicial: 'saldoCapitalInicial',
+    saldoResultadoAcumInicial: 'saldoResultadoAcumInicial',
+    detalleJson: 'detalleJson',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type AperturaPeriodoScalarFieldEnum = (typeof AperturaPeriodoScalarFieldEnum)[keyof typeof AperturaPeriodoScalarFieldEnum]
 
 
   export const SaldoSnapshotScalarFieldEnum: {
@@ -135686,6 +138609,20 @@ export namespace Prisma {
    * Reference to a field of type 'EstadoPeriodo[]'
    */
   export type ListEnumEstadoPeriodoFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EstadoPeriodo[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'CategoriaPeriodo'
+   */
+  export type EnumCategoriaPeriodoFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CategoriaPeriodo'>
+    
+
+
+  /**
+   * Reference to a field of type 'CategoriaPeriodo[]'
+   */
+  export type ListEnumCategoriaPeriodoFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'CategoriaPeriodo[]'>
     
 
 
@@ -136358,6 +139295,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioListRelationFilter
     cierresContables?: CierreContableListRelationFilter
     periodosContables?: PeriodoContableListRelationFilter
+    aperturaPeriodos?: AperturaPeriodoListRelationFilter
     auditoriaPeriodos?: AuditoriaPeriodoListRelationFilter
   }
 
@@ -136423,6 +139361,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioOrderByRelationAggregateInput
     cierresContables?: CierreContableOrderByRelationAggregateInput
     periodosContables?: PeriodoContableOrderByRelationAggregateInput
+    aperturaPeriodos?: AperturaPeriodoOrderByRelationAggregateInput
     auditoriaPeriodos?: AuditoriaPeriodoOrderByRelationAggregateInput
   }
 
@@ -136491,6 +139430,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioListRelationFilter
     cierresContables?: CierreContableListRelationFilter
     periodosContables?: PeriodoContableListRelationFilter
+    aperturaPeriodos?: AperturaPeriodoListRelationFilter
     auditoriaPeriodos?: AuditoriaPeriodoListRelationFilter
   }, "tenantId" | "slug">
 
@@ -145153,79 +148093,135 @@ export namespace Prisma {
     periodoId?: StringFilter<"PeriodoContable"> | string
     tenantId?: StringFilter<"PeriodoContable"> | string
     tipo?: EnumTipoPeriodoFilter<"PeriodoContable"> | $Enums.TipoPeriodo
+    codigo?: StringNullableFilter<"PeriodoContable"> | string | null
     fechaInicio?: DateTimeFilter<"PeriodoContable"> | Date | string
     fechaFin?: DateTimeFilter<"PeriodoContable"> | Date | string
     estado?: EnumEstadoPeriodoFilter<"PeriodoContable"> | $Enums.EstadoPeriodo
-    motivoReapertura?: StringNullableFilter<"PeriodoContable"> | string | null
+    periodoPadreId?: StringNullableFilter<"PeriodoContable"> | string | null
+    aperturaAutomatica?: BoolFilter<"PeriodoContable"> | boolean
+    categoria?: EnumCategoriaPeriodoFilter<"PeriodoContable"> | $Enums.CategoriaPeriodo
+    abiertoPorId?: StringNullableFilter<"PeriodoContable"> | string | null
+    fechaApertura?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
     cerradoPor?: StringNullableFilter<"PeriodoContable"> | string | null
     cerradoAt?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
     aprobadoPor?: StringNullableFilter<"PeriodoContable"> | string | null
     aprobadoAt?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
+    reabiertoPorId?: StringNullableFilter<"PeriodoContable"> | string | null
+    fechaReapertura?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
+    segundoAprobadorId?: StringNullableFilter<"PeriodoContable"> | string | null
+    motivoReapertura?: StringNullableFilter<"PeriodoContable"> | string | null
     observaciones?: StringNullableFilter<"PeriodoContable"> | string | null
+    resumenJson?: JsonNullableFilter<"PeriodoContable">
+    hashIntegridad?: StringNullableFilter<"PeriodoContable"> | string | null
     createdAt?: DateTimeFilter<"PeriodoContable"> | Date | string
     updatedAt?: DateTimeFilter<"PeriodoContable"> | Date | string
     tenant?: XOR<TenantScalarRelationFilter, TenantWhereInput>
     snapshots?: SaldoSnapshotListRelationFilter
+    snapshotPeriodos?: SnapshotPeriodoListRelationFilter
     auditoria?: AuditoriaPeriodoListRelationFilter
+    periodoPadre?: XOR<PeriodoContableNullableScalarRelationFilter, PeriodoContableWhereInput> | null
+    subperiodos?: PeriodoContableListRelationFilter
+    apertura?: XOR<AperturaPeriodoNullableScalarRelationFilter, AperturaPeriodoWhereInput> | null
   }
 
   export type PeriodoContableOrderByWithRelationInput = {
     periodoId?: SortOrder
     tenantId?: SortOrder
     tipo?: SortOrder
+    codigo?: SortOrderInput | SortOrder
     fechaInicio?: SortOrder
     fechaFin?: SortOrder
     estado?: SortOrder
-    motivoReapertura?: SortOrderInput | SortOrder
+    periodoPadreId?: SortOrderInput | SortOrder
+    aperturaAutomatica?: SortOrder
+    categoria?: SortOrder
+    abiertoPorId?: SortOrderInput | SortOrder
+    fechaApertura?: SortOrderInput | SortOrder
     cerradoPor?: SortOrderInput | SortOrder
     cerradoAt?: SortOrderInput | SortOrder
     aprobadoPor?: SortOrderInput | SortOrder
     aprobadoAt?: SortOrderInput | SortOrder
+    reabiertoPorId?: SortOrderInput | SortOrder
+    fechaReapertura?: SortOrderInput | SortOrder
+    segundoAprobadorId?: SortOrderInput | SortOrder
+    motivoReapertura?: SortOrderInput | SortOrder
     observaciones?: SortOrderInput | SortOrder
+    resumenJson?: SortOrderInput | SortOrder
+    hashIntegridad?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     tenant?: TenantOrderByWithRelationInput
     snapshots?: SaldoSnapshotOrderByRelationAggregateInput
+    snapshotPeriodos?: SnapshotPeriodoOrderByRelationAggregateInput
     auditoria?: AuditoriaPeriodoOrderByRelationAggregateInput
+    periodoPadre?: PeriodoContableOrderByWithRelationInput
+    subperiodos?: PeriodoContableOrderByRelationAggregateInput
+    apertura?: AperturaPeriodoOrderByWithRelationInput
   }
 
   export type PeriodoContableWhereUniqueInput = Prisma.AtLeast<{
     periodoId?: string
-    tenantId_tipo_fechaInicio_fechaFin?: PeriodoContableTenantIdTipoFechaInicioFechaFinCompoundUniqueInput
+    tenantId_codigo?: PeriodoContableTenantIdCodigoCompoundUniqueInput
     AND?: PeriodoContableWhereInput | PeriodoContableWhereInput[]
     OR?: PeriodoContableWhereInput[]
     NOT?: PeriodoContableWhereInput | PeriodoContableWhereInput[]
     tenantId?: StringFilter<"PeriodoContable"> | string
     tipo?: EnumTipoPeriodoFilter<"PeriodoContable"> | $Enums.TipoPeriodo
+    codigo?: StringNullableFilter<"PeriodoContable"> | string | null
     fechaInicio?: DateTimeFilter<"PeriodoContable"> | Date | string
     fechaFin?: DateTimeFilter<"PeriodoContable"> | Date | string
     estado?: EnumEstadoPeriodoFilter<"PeriodoContable"> | $Enums.EstadoPeriodo
-    motivoReapertura?: StringNullableFilter<"PeriodoContable"> | string | null
+    periodoPadreId?: StringNullableFilter<"PeriodoContable"> | string | null
+    aperturaAutomatica?: BoolFilter<"PeriodoContable"> | boolean
+    categoria?: EnumCategoriaPeriodoFilter<"PeriodoContable"> | $Enums.CategoriaPeriodo
+    abiertoPorId?: StringNullableFilter<"PeriodoContable"> | string | null
+    fechaApertura?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
     cerradoPor?: StringNullableFilter<"PeriodoContable"> | string | null
     cerradoAt?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
     aprobadoPor?: StringNullableFilter<"PeriodoContable"> | string | null
     aprobadoAt?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
+    reabiertoPorId?: StringNullableFilter<"PeriodoContable"> | string | null
+    fechaReapertura?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
+    segundoAprobadorId?: StringNullableFilter<"PeriodoContable"> | string | null
+    motivoReapertura?: StringNullableFilter<"PeriodoContable"> | string | null
     observaciones?: StringNullableFilter<"PeriodoContable"> | string | null
+    resumenJson?: JsonNullableFilter<"PeriodoContable">
+    hashIntegridad?: StringNullableFilter<"PeriodoContable"> | string | null
     createdAt?: DateTimeFilter<"PeriodoContable"> | Date | string
     updatedAt?: DateTimeFilter<"PeriodoContable"> | Date | string
     tenant?: XOR<TenantScalarRelationFilter, TenantWhereInput>
     snapshots?: SaldoSnapshotListRelationFilter
+    snapshotPeriodos?: SnapshotPeriodoListRelationFilter
     auditoria?: AuditoriaPeriodoListRelationFilter
-  }, "periodoId" | "tenantId_tipo_fechaInicio_fechaFin">
+    periodoPadre?: XOR<PeriodoContableNullableScalarRelationFilter, PeriodoContableWhereInput> | null
+    subperiodos?: PeriodoContableListRelationFilter
+    apertura?: XOR<AperturaPeriodoNullableScalarRelationFilter, AperturaPeriodoWhereInput> | null
+  }, "periodoId" | "tenantId_codigo">
 
   export type PeriodoContableOrderByWithAggregationInput = {
     periodoId?: SortOrder
     tenantId?: SortOrder
     tipo?: SortOrder
+    codigo?: SortOrderInput | SortOrder
     fechaInicio?: SortOrder
     fechaFin?: SortOrder
     estado?: SortOrder
-    motivoReapertura?: SortOrderInput | SortOrder
+    periodoPadreId?: SortOrderInput | SortOrder
+    aperturaAutomatica?: SortOrder
+    categoria?: SortOrder
+    abiertoPorId?: SortOrderInput | SortOrder
+    fechaApertura?: SortOrderInput | SortOrder
     cerradoPor?: SortOrderInput | SortOrder
     cerradoAt?: SortOrderInput | SortOrder
     aprobadoPor?: SortOrderInput | SortOrder
     aprobadoAt?: SortOrderInput | SortOrder
+    reabiertoPorId?: SortOrderInput | SortOrder
+    fechaReapertura?: SortOrderInput | SortOrder
+    segundoAprobadorId?: SortOrderInput | SortOrder
+    motivoReapertura?: SortOrderInput | SortOrder
     observaciones?: SortOrderInput | SortOrder
+    resumenJson?: SortOrderInput | SortOrder
+    hashIntegridad?: SortOrderInput | SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: PeriodoContableCountOrderByAggregateInput
@@ -145240,17 +148236,206 @@ export namespace Prisma {
     periodoId?: StringWithAggregatesFilter<"PeriodoContable"> | string
     tenantId?: StringWithAggregatesFilter<"PeriodoContable"> | string
     tipo?: EnumTipoPeriodoWithAggregatesFilter<"PeriodoContable"> | $Enums.TipoPeriodo
+    codigo?: StringNullableWithAggregatesFilter<"PeriodoContable"> | string | null
     fechaInicio?: DateTimeWithAggregatesFilter<"PeriodoContable"> | Date | string
     fechaFin?: DateTimeWithAggregatesFilter<"PeriodoContable"> | Date | string
     estado?: EnumEstadoPeriodoWithAggregatesFilter<"PeriodoContable"> | $Enums.EstadoPeriodo
-    motivoReapertura?: StringNullableWithAggregatesFilter<"PeriodoContable"> | string | null
+    periodoPadreId?: StringNullableWithAggregatesFilter<"PeriodoContable"> | string | null
+    aperturaAutomatica?: BoolWithAggregatesFilter<"PeriodoContable"> | boolean
+    categoria?: EnumCategoriaPeriodoWithAggregatesFilter<"PeriodoContable"> | $Enums.CategoriaPeriodo
+    abiertoPorId?: StringNullableWithAggregatesFilter<"PeriodoContable"> | string | null
+    fechaApertura?: DateTimeNullableWithAggregatesFilter<"PeriodoContable"> | Date | string | null
     cerradoPor?: StringNullableWithAggregatesFilter<"PeriodoContable"> | string | null
     cerradoAt?: DateTimeNullableWithAggregatesFilter<"PeriodoContable"> | Date | string | null
     aprobadoPor?: StringNullableWithAggregatesFilter<"PeriodoContable"> | string | null
     aprobadoAt?: DateTimeNullableWithAggregatesFilter<"PeriodoContable"> | Date | string | null
+    reabiertoPorId?: StringNullableWithAggregatesFilter<"PeriodoContable"> | string | null
+    fechaReapertura?: DateTimeNullableWithAggregatesFilter<"PeriodoContable"> | Date | string | null
+    segundoAprobadorId?: StringNullableWithAggregatesFilter<"PeriodoContable"> | string | null
+    motivoReapertura?: StringNullableWithAggregatesFilter<"PeriodoContable"> | string | null
     observaciones?: StringNullableWithAggregatesFilter<"PeriodoContable"> | string | null
+    resumenJson?: JsonNullableWithAggregatesFilter<"PeriodoContable">
+    hashIntegridad?: StringNullableWithAggregatesFilter<"PeriodoContable"> | string | null
     createdAt?: DateTimeWithAggregatesFilter<"PeriodoContable"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"PeriodoContable"> | Date | string
+  }
+
+  export type SnapshotPeriodoWhereInput = {
+    AND?: SnapshotPeriodoWhereInput | SnapshotPeriodoWhereInput[]
+    OR?: SnapshotPeriodoWhereInput[]
+    NOT?: SnapshotPeriodoWhereInput | SnapshotPeriodoWhereInput[]
+    snapshotId?: StringFilter<"SnapshotPeriodo"> | string
+    periodoId?: StringFilter<"SnapshotPeriodo"> | string
+    version?: IntFilter<"SnapshotPeriodo"> | number
+    baseCajaJson?: JsonNullableFilter<"SnapshotPeriodo">
+    baseDevengoJson?: JsonNullableFilter<"SnapshotPeriodo">
+    resumenJson?: JsonNullableFilter<"SnapshotPeriodo">
+    hashIntegridad?: StringNullableFilter<"SnapshotPeriodo"> | string | null
+    createdAt?: DateTimeFilter<"SnapshotPeriodo"> | Date | string
+    periodo?: XOR<PeriodoContableScalarRelationFilter, PeriodoContableWhereInput>
+  }
+
+  export type SnapshotPeriodoOrderByWithRelationInput = {
+    snapshotId?: SortOrder
+    periodoId?: SortOrder
+    version?: SortOrder
+    baseCajaJson?: SortOrderInput | SortOrder
+    baseDevengoJson?: SortOrderInput | SortOrder
+    resumenJson?: SortOrderInput | SortOrder
+    hashIntegridad?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    periodo?: PeriodoContableOrderByWithRelationInput
+  }
+
+  export type SnapshotPeriodoWhereUniqueInput = Prisma.AtLeast<{
+    snapshotId?: string
+    periodoId_version?: SnapshotPeriodoPeriodoIdVersionCompoundUniqueInput
+    AND?: SnapshotPeriodoWhereInput | SnapshotPeriodoWhereInput[]
+    OR?: SnapshotPeriodoWhereInput[]
+    NOT?: SnapshotPeriodoWhereInput | SnapshotPeriodoWhereInput[]
+    periodoId?: StringFilter<"SnapshotPeriodo"> | string
+    version?: IntFilter<"SnapshotPeriodo"> | number
+    baseCajaJson?: JsonNullableFilter<"SnapshotPeriodo">
+    baseDevengoJson?: JsonNullableFilter<"SnapshotPeriodo">
+    resumenJson?: JsonNullableFilter<"SnapshotPeriodo">
+    hashIntegridad?: StringNullableFilter<"SnapshotPeriodo"> | string | null
+    createdAt?: DateTimeFilter<"SnapshotPeriodo"> | Date | string
+    periodo?: XOR<PeriodoContableScalarRelationFilter, PeriodoContableWhereInput>
+  }, "snapshotId" | "periodoId_version">
+
+  export type SnapshotPeriodoOrderByWithAggregationInput = {
+    snapshotId?: SortOrder
+    periodoId?: SortOrder
+    version?: SortOrder
+    baseCajaJson?: SortOrderInput | SortOrder
+    baseDevengoJson?: SortOrderInput | SortOrder
+    resumenJson?: SortOrderInput | SortOrder
+    hashIntegridad?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    _count?: SnapshotPeriodoCountOrderByAggregateInput
+    _avg?: SnapshotPeriodoAvgOrderByAggregateInput
+    _max?: SnapshotPeriodoMaxOrderByAggregateInput
+    _min?: SnapshotPeriodoMinOrderByAggregateInput
+    _sum?: SnapshotPeriodoSumOrderByAggregateInput
+  }
+
+  export type SnapshotPeriodoScalarWhereWithAggregatesInput = {
+    AND?: SnapshotPeriodoScalarWhereWithAggregatesInput | SnapshotPeriodoScalarWhereWithAggregatesInput[]
+    OR?: SnapshotPeriodoScalarWhereWithAggregatesInput[]
+    NOT?: SnapshotPeriodoScalarWhereWithAggregatesInput | SnapshotPeriodoScalarWhereWithAggregatesInput[]
+    snapshotId?: StringWithAggregatesFilter<"SnapshotPeriodo"> | string
+    periodoId?: StringWithAggregatesFilter<"SnapshotPeriodo"> | string
+    version?: IntWithAggregatesFilter<"SnapshotPeriodo"> | number
+    baseCajaJson?: JsonNullableWithAggregatesFilter<"SnapshotPeriodo">
+    baseDevengoJson?: JsonNullableWithAggregatesFilter<"SnapshotPeriodo">
+    resumenJson?: JsonNullableWithAggregatesFilter<"SnapshotPeriodo">
+    hashIntegridad?: StringNullableWithAggregatesFilter<"SnapshotPeriodo"> | string | null
+    createdAt?: DateTimeWithAggregatesFilter<"SnapshotPeriodo"> | Date | string
+  }
+
+  export type AperturaPeriodoWhereInput = {
+    AND?: AperturaPeriodoWhereInput | AperturaPeriodoWhereInput[]
+    OR?: AperturaPeriodoWhereInput[]
+    NOT?: AperturaPeriodoWhereInput | AperturaPeriodoWhereInput[]
+    aperturaId?: StringFilter<"AperturaPeriodo"> | string
+    periodoId?: StringFilter<"AperturaPeriodo"> | string
+    tenantId?: StringFilter<"AperturaPeriodo"> | string
+    origenPeriodoId?: StringNullableFilter<"AperturaPeriodo"> | string | null
+    saldoCajaInicial?: DecimalFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoBancoInicial?: DecimalFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoCuentasCobrarInicial?: DecimalFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoCuentasPagarInicial?: DecimalFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoInventarioInicial?: DecimalFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoCapitalInicial?: DecimalFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoResultadoAcumInicial?: DecimalFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    detalleJson?: JsonNullableFilter<"AperturaPeriodo">
+    createdAt?: DateTimeFilter<"AperturaPeriodo"> | Date | string
+    updatedAt?: DateTimeFilter<"AperturaPeriodo"> | Date | string
+    periodo?: XOR<PeriodoContableScalarRelationFilter, PeriodoContableWhereInput>
+    tenant?: XOR<TenantScalarRelationFilter, TenantWhereInput>
+  }
+
+  export type AperturaPeriodoOrderByWithRelationInput = {
+    aperturaId?: SortOrder
+    periodoId?: SortOrder
+    tenantId?: SortOrder
+    origenPeriodoId?: SortOrderInput | SortOrder
+    saldoCajaInicial?: SortOrder
+    saldoBancoInicial?: SortOrder
+    saldoCuentasCobrarInicial?: SortOrder
+    saldoCuentasPagarInicial?: SortOrder
+    saldoInventarioInicial?: SortOrder
+    saldoCapitalInicial?: SortOrder
+    saldoResultadoAcumInicial?: SortOrder
+    detalleJson?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    periodo?: PeriodoContableOrderByWithRelationInput
+    tenant?: TenantOrderByWithRelationInput
+  }
+
+  export type AperturaPeriodoWhereUniqueInput = Prisma.AtLeast<{
+    aperturaId?: string
+    periodoId?: string
+    AND?: AperturaPeriodoWhereInput | AperturaPeriodoWhereInput[]
+    OR?: AperturaPeriodoWhereInput[]
+    NOT?: AperturaPeriodoWhereInput | AperturaPeriodoWhereInput[]
+    tenantId?: StringFilter<"AperturaPeriodo"> | string
+    origenPeriodoId?: StringNullableFilter<"AperturaPeriodo"> | string | null
+    saldoCajaInicial?: DecimalFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoBancoInicial?: DecimalFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoCuentasCobrarInicial?: DecimalFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoCuentasPagarInicial?: DecimalFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoInventarioInicial?: DecimalFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoCapitalInicial?: DecimalFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoResultadoAcumInicial?: DecimalFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    detalleJson?: JsonNullableFilter<"AperturaPeriodo">
+    createdAt?: DateTimeFilter<"AperturaPeriodo"> | Date | string
+    updatedAt?: DateTimeFilter<"AperturaPeriodo"> | Date | string
+    periodo?: XOR<PeriodoContableScalarRelationFilter, PeriodoContableWhereInput>
+    tenant?: XOR<TenantScalarRelationFilter, TenantWhereInput>
+  }, "aperturaId" | "periodoId">
+
+  export type AperturaPeriodoOrderByWithAggregationInput = {
+    aperturaId?: SortOrder
+    periodoId?: SortOrder
+    tenantId?: SortOrder
+    origenPeriodoId?: SortOrderInput | SortOrder
+    saldoCajaInicial?: SortOrder
+    saldoBancoInicial?: SortOrder
+    saldoCuentasCobrarInicial?: SortOrder
+    saldoCuentasPagarInicial?: SortOrder
+    saldoInventarioInicial?: SortOrder
+    saldoCapitalInicial?: SortOrder
+    saldoResultadoAcumInicial?: SortOrder
+    detalleJson?: SortOrderInput | SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: AperturaPeriodoCountOrderByAggregateInput
+    _avg?: AperturaPeriodoAvgOrderByAggregateInput
+    _max?: AperturaPeriodoMaxOrderByAggregateInput
+    _min?: AperturaPeriodoMinOrderByAggregateInput
+    _sum?: AperturaPeriodoSumOrderByAggregateInput
+  }
+
+  export type AperturaPeriodoScalarWhereWithAggregatesInput = {
+    AND?: AperturaPeriodoScalarWhereWithAggregatesInput | AperturaPeriodoScalarWhereWithAggregatesInput[]
+    OR?: AperturaPeriodoScalarWhereWithAggregatesInput[]
+    NOT?: AperturaPeriodoScalarWhereWithAggregatesInput | AperturaPeriodoScalarWhereWithAggregatesInput[]
+    aperturaId?: StringWithAggregatesFilter<"AperturaPeriodo"> | string
+    periodoId?: StringWithAggregatesFilter<"AperturaPeriodo"> | string
+    tenantId?: StringWithAggregatesFilter<"AperturaPeriodo"> | string
+    origenPeriodoId?: StringNullableWithAggregatesFilter<"AperturaPeriodo"> | string | null
+    saldoCajaInicial?: DecimalWithAggregatesFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoBancoInicial?: DecimalWithAggregatesFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoCuentasCobrarInicial?: DecimalWithAggregatesFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoCuentasPagarInicial?: DecimalWithAggregatesFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoInventarioInicial?: DecimalWithAggregatesFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoCapitalInicial?: DecimalWithAggregatesFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoResultadoAcumInicial?: DecimalWithAggregatesFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    detalleJson?: JsonNullableWithAggregatesFilter<"AperturaPeriodo">
+    createdAt?: DateTimeWithAggregatesFilter<"AperturaPeriodo"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"AperturaPeriodo"> | Date | string
   }
 
   export type SaldoSnapshotWhereInput = {
@@ -146138,6 +149323,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -146203,6 +149389,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -146268,6 +149455,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -146333,6 +149521,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -155766,92 +158955,159 @@ export namespace Prisma {
   export type PeriodoContableCreateInput = {
     periodoId?: string
     tipo: $Enums.TipoPeriodo
+    codigo?: string | null
     fechaInicio: Date | string
     fechaFin: Date | string
     estado?: $Enums.EstadoPeriodo
-    motivoReapertura?: string | null
+    aperturaAutomatica?: boolean
+    categoria?: $Enums.CategoriaPeriodo
+    abiertoPorId?: string | null
+    fechaApertura?: Date | string | null
     cerradoPor?: string | null
     cerradoAt?: Date | string | null
     aprobadoPor?: string | null
     aprobadoAt?: Date | string | null
+    reabiertoPorId?: string | null
+    fechaReapertura?: Date | string | null
+    segundoAprobadorId?: string | null
+    motivoReapertura?: string | null
     observaciones?: string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     tenant: TenantCreateNestedOneWithoutPeriodosContablesInput
     snapshots?: SaldoSnapshotCreateNestedManyWithoutPeriodoInput
+    snapshotPeriodos?: SnapshotPeriodoCreateNestedManyWithoutPeriodoInput
     auditoria?: AuditoriaPeriodoCreateNestedManyWithoutPeriodoInput
+    periodoPadre?: PeriodoContableCreateNestedOneWithoutSubperiodosInput
+    subperiodos?: PeriodoContableCreateNestedManyWithoutPeriodoPadreInput
+    apertura?: AperturaPeriodoCreateNestedOneWithoutPeriodoInput
   }
 
   export type PeriodoContableUncheckedCreateInput = {
     periodoId?: string
     tenantId: string
     tipo: $Enums.TipoPeriodo
+    codigo?: string | null
     fechaInicio: Date | string
     fechaFin: Date | string
     estado?: $Enums.EstadoPeriodo
-    motivoReapertura?: string | null
+    periodoPadreId?: string | null
+    aperturaAutomatica?: boolean
+    categoria?: $Enums.CategoriaPeriodo
+    abiertoPorId?: string | null
+    fechaApertura?: Date | string | null
     cerradoPor?: string | null
     cerradoAt?: Date | string | null
     aprobadoPor?: string | null
     aprobadoAt?: Date | string | null
+    reabiertoPorId?: string | null
+    fechaReapertura?: Date | string | null
+    segundoAprobadorId?: string | null
+    motivoReapertura?: string | null
     observaciones?: string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     snapshots?: SaldoSnapshotUncheckedCreateNestedManyWithoutPeriodoInput
+    snapshotPeriodos?: SnapshotPeriodoUncheckedCreateNestedManyWithoutPeriodoInput
     auditoria?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutPeriodoInput
+    subperiodos?: PeriodoContableUncheckedCreateNestedManyWithoutPeriodoPadreInput
+    apertura?: AperturaPeriodoUncheckedCreateNestedOneWithoutPeriodoInput
   }
 
   export type PeriodoContableUpdateInput = {
     periodoId?: StringFieldUpdateOperationsInput | string
     tipo?: EnumTipoPeriodoFieldUpdateOperationsInput | $Enums.TipoPeriodo
+    codigo?: NullableStringFieldUpdateOperationsInput | string | null
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: DateTimeFieldUpdateOperationsInput | Date | string
     estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
-    motivoReapertura?: NullableStringFieldUpdateOperationsInput | string | null
+    aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
+    categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
     cerradoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     aprobadoPor?: NullableStringFieldUpdateOperationsInput | string | null
     aprobadoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaReapertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    segundoAprobadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    motivoReapertura?: NullableStringFieldUpdateOperationsInput | string | null
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     tenant?: TenantUpdateOneRequiredWithoutPeriodosContablesNestedInput
     snapshots?: SaldoSnapshotUpdateManyWithoutPeriodoNestedInput
+    snapshotPeriodos?: SnapshotPeriodoUpdateManyWithoutPeriodoNestedInput
     auditoria?: AuditoriaPeriodoUpdateManyWithoutPeriodoNestedInput
+    periodoPadre?: PeriodoContableUpdateOneWithoutSubperiodosNestedInput
+    subperiodos?: PeriodoContableUpdateManyWithoutPeriodoPadreNestedInput
+    apertura?: AperturaPeriodoUpdateOneWithoutPeriodoNestedInput
   }
 
   export type PeriodoContableUncheckedUpdateInput = {
     periodoId?: StringFieldUpdateOperationsInput | string
     tenantId?: StringFieldUpdateOperationsInput | string
     tipo?: EnumTipoPeriodoFieldUpdateOperationsInput | $Enums.TipoPeriodo
+    codigo?: NullableStringFieldUpdateOperationsInput | string | null
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: DateTimeFieldUpdateOperationsInput | Date | string
     estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
-    motivoReapertura?: NullableStringFieldUpdateOperationsInput | string | null
+    periodoPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
+    categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
     cerradoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     aprobadoPor?: NullableStringFieldUpdateOperationsInput | string | null
     aprobadoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaReapertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    segundoAprobadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    motivoReapertura?: NullableStringFieldUpdateOperationsInput | string | null
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     snapshots?: SaldoSnapshotUncheckedUpdateManyWithoutPeriodoNestedInput
+    snapshotPeriodos?: SnapshotPeriodoUncheckedUpdateManyWithoutPeriodoNestedInput
     auditoria?: AuditoriaPeriodoUncheckedUpdateManyWithoutPeriodoNestedInput
+    subperiodos?: PeriodoContableUncheckedUpdateManyWithoutPeriodoPadreNestedInput
+    apertura?: AperturaPeriodoUncheckedUpdateOneWithoutPeriodoNestedInput
   }
 
   export type PeriodoContableCreateManyInput = {
     periodoId?: string
     tenantId: string
     tipo: $Enums.TipoPeriodo
+    codigo?: string | null
     fechaInicio: Date | string
     fechaFin: Date | string
     estado?: $Enums.EstadoPeriodo
-    motivoReapertura?: string | null
+    periodoPadreId?: string | null
+    aperturaAutomatica?: boolean
+    categoria?: $Enums.CategoriaPeriodo
+    abiertoPorId?: string | null
+    fechaApertura?: Date | string | null
     cerradoPor?: string | null
     cerradoAt?: Date | string | null
     aprobadoPor?: string | null
     aprobadoAt?: Date | string | null
+    reabiertoPorId?: string | null
+    fechaReapertura?: Date | string | null
+    segundoAprobadorId?: string | null
+    motivoReapertura?: string | null
     observaciones?: string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -155859,15 +159115,25 @@ export namespace Prisma {
   export type PeriodoContableUpdateManyMutationInput = {
     periodoId?: StringFieldUpdateOperationsInput | string
     tipo?: EnumTipoPeriodoFieldUpdateOperationsInput | $Enums.TipoPeriodo
+    codigo?: NullableStringFieldUpdateOperationsInput | string | null
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: DateTimeFieldUpdateOperationsInput | Date | string
     estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
-    motivoReapertura?: NullableStringFieldUpdateOperationsInput | string | null
+    aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
+    categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
     cerradoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     aprobadoPor?: NullableStringFieldUpdateOperationsInput | string | null
     aprobadoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaReapertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    segundoAprobadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    motivoReapertura?: NullableStringFieldUpdateOperationsInput | string | null
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -155876,15 +159142,219 @@ export namespace Prisma {
     periodoId?: StringFieldUpdateOperationsInput | string
     tenantId?: StringFieldUpdateOperationsInput | string
     tipo?: EnumTipoPeriodoFieldUpdateOperationsInput | $Enums.TipoPeriodo
+    codigo?: NullableStringFieldUpdateOperationsInput | string | null
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: DateTimeFieldUpdateOperationsInput | Date | string
     estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
-    motivoReapertura?: NullableStringFieldUpdateOperationsInput | string | null
+    periodoPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
+    categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
     cerradoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     aprobadoPor?: NullableStringFieldUpdateOperationsInput | string | null
     aprobadoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaReapertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    segundoAprobadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    motivoReapertura?: NullableStringFieldUpdateOperationsInput | string | null
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SnapshotPeriodoCreateInput = {
+    snapshotId?: string
+    version?: number
+    baseCajaJson?: NullableJsonNullValueInput | InputJsonValue
+    baseDevengoJson?: NullableJsonNullValueInput | InputJsonValue
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: string | null
+    createdAt?: Date | string
+    periodo: PeriodoContableCreateNestedOneWithoutSnapshotPeriodosInput
+  }
+
+  export type SnapshotPeriodoUncheckedCreateInput = {
+    snapshotId?: string
+    periodoId: string
+    version?: number
+    baseCajaJson?: NullableJsonNullValueInput | InputJsonValue
+    baseDevengoJson?: NullableJsonNullValueInput | InputJsonValue
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: string | null
+    createdAt?: Date | string
+  }
+
+  export type SnapshotPeriodoUpdateInput = {
+    snapshotId?: StringFieldUpdateOperationsInput | string
+    version?: IntFieldUpdateOperationsInput | number
+    baseCajaJson?: NullableJsonNullValueInput | InputJsonValue
+    baseDevengoJson?: NullableJsonNullValueInput | InputJsonValue
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    periodo?: PeriodoContableUpdateOneRequiredWithoutSnapshotPeriodosNestedInput
+  }
+
+  export type SnapshotPeriodoUncheckedUpdateInput = {
+    snapshotId?: StringFieldUpdateOperationsInput | string
+    periodoId?: StringFieldUpdateOperationsInput | string
+    version?: IntFieldUpdateOperationsInput | number
+    baseCajaJson?: NullableJsonNullValueInput | InputJsonValue
+    baseDevengoJson?: NullableJsonNullValueInput | InputJsonValue
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SnapshotPeriodoCreateManyInput = {
+    snapshotId?: string
+    periodoId: string
+    version?: number
+    baseCajaJson?: NullableJsonNullValueInput | InputJsonValue
+    baseDevengoJson?: NullableJsonNullValueInput | InputJsonValue
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: string | null
+    createdAt?: Date | string
+  }
+
+  export type SnapshotPeriodoUpdateManyMutationInput = {
+    snapshotId?: StringFieldUpdateOperationsInput | string
+    version?: IntFieldUpdateOperationsInput | number
+    baseCajaJson?: NullableJsonNullValueInput | InputJsonValue
+    baseDevengoJson?: NullableJsonNullValueInput | InputJsonValue
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SnapshotPeriodoUncheckedUpdateManyInput = {
+    snapshotId?: StringFieldUpdateOperationsInput | string
+    periodoId?: StringFieldUpdateOperationsInput | string
+    version?: IntFieldUpdateOperationsInput | number
+    baseCajaJson?: NullableJsonNullValueInput | InputJsonValue
+    baseDevengoJson?: NullableJsonNullValueInput | InputJsonValue
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AperturaPeriodoCreateInput = {
+    aperturaId?: string
+    origenPeriodoId?: string | null
+    saldoCajaInicial?: Decimal | DecimalJsLike | number | string
+    saldoBancoInicial?: Decimal | DecimalJsLike | number | string
+    saldoCuentasCobrarInicial?: Decimal | DecimalJsLike | number | string
+    saldoCuentasPagarInicial?: Decimal | DecimalJsLike | number | string
+    saldoInventarioInicial?: Decimal | DecimalJsLike | number | string
+    saldoCapitalInicial?: Decimal | DecimalJsLike | number | string
+    saldoResultadoAcumInicial?: Decimal | DecimalJsLike | number | string
+    detalleJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    periodo: PeriodoContableCreateNestedOneWithoutAperturaInput
+    tenant: TenantCreateNestedOneWithoutAperturaPeriodosInput
+  }
+
+  export type AperturaPeriodoUncheckedCreateInput = {
+    aperturaId?: string
+    periodoId: string
+    tenantId: string
+    origenPeriodoId?: string | null
+    saldoCajaInicial?: Decimal | DecimalJsLike | number | string
+    saldoBancoInicial?: Decimal | DecimalJsLike | number | string
+    saldoCuentasCobrarInicial?: Decimal | DecimalJsLike | number | string
+    saldoCuentasPagarInicial?: Decimal | DecimalJsLike | number | string
+    saldoInventarioInicial?: Decimal | DecimalJsLike | number | string
+    saldoCapitalInicial?: Decimal | DecimalJsLike | number | string
+    saldoResultadoAcumInicial?: Decimal | DecimalJsLike | number | string
+    detalleJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AperturaPeriodoUpdateInput = {
+    aperturaId?: StringFieldUpdateOperationsInput | string
+    origenPeriodoId?: NullableStringFieldUpdateOperationsInput | string | null
+    saldoCajaInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoBancoInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCuentasCobrarInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCuentasPagarInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoInventarioInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCapitalInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoResultadoAcumInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    detalleJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    periodo?: PeriodoContableUpdateOneRequiredWithoutAperturaNestedInput
+    tenant?: TenantUpdateOneRequiredWithoutAperturaPeriodosNestedInput
+  }
+
+  export type AperturaPeriodoUncheckedUpdateInput = {
+    aperturaId?: StringFieldUpdateOperationsInput | string
+    periodoId?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    origenPeriodoId?: NullableStringFieldUpdateOperationsInput | string | null
+    saldoCajaInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoBancoInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCuentasCobrarInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCuentasPagarInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoInventarioInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCapitalInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoResultadoAcumInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    detalleJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AperturaPeriodoCreateManyInput = {
+    aperturaId?: string
+    periodoId: string
+    tenantId: string
+    origenPeriodoId?: string | null
+    saldoCajaInicial?: Decimal | DecimalJsLike | number | string
+    saldoBancoInicial?: Decimal | DecimalJsLike | number | string
+    saldoCuentasCobrarInicial?: Decimal | DecimalJsLike | number | string
+    saldoCuentasPagarInicial?: Decimal | DecimalJsLike | number | string
+    saldoInventarioInicial?: Decimal | DecimalJsLike | number | string
+    saldoCapitalInicial?: Decimal | DecimalJsLike | number | string
+    saldoResultadoAcumInicial?: Decimal | DecimalJsLike | number | string
+    detalleJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AperturaPeriodoUpdateManyMutationInput = {
+    aperturaId?: StringFieldUpdateOperationsInput | string
+    origenPeriodoId?: NullableStringFieldUpdateOperationsInput | string | null
+    saldoCajaInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoBancoInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCuentasCobrarInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCuentasPagarInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoInventarioInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCapitalInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoResultadoAcumInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    detalleJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AperturaPeriodoUncheckedUpdateManyInput = {
+    aperturaId?: StringFieldUpdateOperationsInput | string
+    periodoId?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    origenPeriodoId?: NullableStringFieldUpdateOperationsInput | string | null
+    saldoCajaInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoBancoInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCuentasCobrarInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCuentasPagarInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoInventarioInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCapitalInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoResultadoAcumInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    detalleJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -156995,6 +160465,12 @@ export namespace Prisma {
     none?: PeriodoContableWhereInput
   }
 
+  export type AperturaPeriodoListRelationFilter = {
+    every?: AperturaPeriodoWhereInput
+    some?: AperturaPeriodoWhereInput
+    none?: AperturaPeriodoWhereInput
+  }
+
   export type AuditoriaPeriodoListRelationFilter = {
     every?: AuditoriaPeriodoWhereInput
     some?: AuditoriaPeriodoWhereInput
@@ -157146,6 +160622,10 @@ export namespace Prisma {
   }
 
   export type PeriodoContableOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type AperturaPeriodoOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -162913,36 +166393,72 @@ export namespace Prisma {
     not?: NestedEnumEstadoPeriodoFilter<$PrismaModel> | $Enums.EstadoPeriodo
   }
 
+  export type EnumCategoriaPeriodoFilter<$PrismaModel = never> = {
+    equals?: $Enums.CategoriaPeriodo | EnumCategoriaPeriodoFieldRefInput<$PrismaModel>
+    in?: $Enums.CategoriaPeriodo[] | ListEnumCategoriaPeriodoFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CategoriaPeriodo[] | ListEnumCategoriaPeriodoFieldRefInput<$PrismaModel>
+    not?: NestedEnumCategoriaPeriodoFilter<$PrismaModel> | $Enums.CategoriaPeriodo
+  }
+
   export type SaldoSnapshotListRelationFilter = {
     every?: SaldoSnapshotWhereInput
     some?: SaldoSnapshotWhereInput
     none?: SaldoSnapshotWhereInput
   }
 
+  export type SnapshotPeriodoListRelationFilter = {
+    every?: SnapshotPeriodoWhereInput
+    some?: SnapshotPeriodoWhereInput
+    none?: SnapshotPeriodoWhereInput
+  }
+
+  export type PeriodoContableNullableScalarRelationFilter = {
+    is?: PeriodoContableWhereInput | null
+    isNot?: PeriodoContableWhereInput | null
+  }
+
+  export type AperturaPeriodoNullableScalarRelationFilter = {
+    is?: AperturaPeriodoWhereInput | null
+    isNot?: AperturaPeriodoWhereInput | null
+  }
+
   export type SaldoSnapshotOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
-  export type PeriodoContableTenantIdTipoFechaInicioFechaFinCompoundUniqueInput = {
+  export type SnapshotPeriodoOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type PeriodoContableTenantIdCodigoCompoundUniqueInput = {
     tenantId: string
-    tipo: $Enums.TipoPeriodo
-    fechaInicio: Date | string
-    fechaFin: Date | string
+    codigo: string
   }
 
   export type PeriodoContableCountOrderByAggregateInput = {
     periodoId?: SortOrder
     tenantId?: SortOrder
     tipo?: SortOrder
+    codigo?: SortOrder
     fechaInicio?: SortOrder
     fechaFin?: SortOrder
     estado?: SortOrder
-    motivoReapertura?: SortOrder
+    periodoPadreId?: SortOrder
+    aperturaAutomatica?: SortOrder
+    categoria?: SortOrder
+    abiertoPorId?: SortOrder
+    fechaApertura?: SortOrder
     cerradoPor?: SortOrder
     cerradoAt?: SortOrder
     aprobadoPor?: SortOrder
     aprobadoAt?: SortOrder
+    reabiertoPorId?: SortOrder
+    fechaReapertura?: SortOrder
+    segundoAprobadorId?: SortOrder
+    motivoReapertura?: SortOrder
     observaciones?: SortOrder
+    resumenJson?: SortOrder
+    hashIntegridad?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -162951,15 +166467,25 @@ export namespace Prisma {
     periodoId?: SortOrder
     tenantId?: SortOrder
     tipo?: SortOrder
+    codigo?: SortOrder
     fechaInicio?: SortOrder
     fechaFin?: SortOrder
     estado?: SortOrder
-    motivoReapertura?: SortOrder
+    periodoPadreId?: SortOrder
+    aperturaAutomatica?: SortOrder
+    categoria?: SortOrder
+    abiertoPorId?: SortOrder
+    fechaApertura?: SortOrder
     cerradoPor?: SortOrder
     cerradoAt?: SortOrder
     aprobadoPor?: SortOrder
     aprobadoAt?: SortOrder
+    reabiertoPorId?: SortOrder
+    fechaReapertura?: SortOrder
+    segundoAprobadorId?: SortOrder
+    motivoReapertura?: SortOrder
     observaciones?: SortOrder
+    hashIntegridad?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -162968,15 +166494,25 @@ export namespace Prisma {
     periodoId?: SortOrder
     tenantId?: SortOrder
     tipo?: SortOrder
+    codigo?: SortOrder
     fechaInicio?: SortOrder
     fechaFin?: SortOrder
     estado?: SortOrder
-    motivoReapertura?: SortOrder
+    periodoPadreId?: SortOrder
+    aperturaAutomatica?: SortOrder
+    categoria?: SortOrder
+    abiertoPorId?: SortOrder
+    fechaApertura?: SortOrder
     cerradoPor?: SortOrder
     cerradoAt?: SortOrder
     aprobadoPor?: SortOrder
     aprobadoAt?: SortOrder
+    reabiertoPorId?: SortOrder
+    fechaReapertura?: SortOrder
+    segundoAprobadorId?: SortOrder
+    motivoReapertura?: SortOrder
     observaciones?: SortOrder
+    hashIntegridad?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
@@ -163001,9 +166537,128 @@ export namespace Prisma {
     _max?: NestedEnumEstadoPeriodoFilter<$PrismaModel>
   }
 
+  export type EnumCategoriaPeriodoWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.CategoriaPeriodo | EnumCategoriaPeriodoFieldRefInput<$PrismaModel>
+    in?: $Enums.CategoriaPeriodo[] | ListEnumCategoriaPeriodoFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CategoriaPeriodo[] | ListEnumCategoriaPeriodoFieldRefInput<$PrismaModel>
+    not?: NestedEnumCategoriaPeriodoWithAggregatesFilter<$PrismaModel> | $Enums.CategoriaPeriodo
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumCategoriaPeriodoFilter<$PrismaModel>
+    _max?: NestedEnumCategoriaPeriodoFilter<$PrismaModel>
+  }
+
   export type PeriodoContableScalarRelationFilter = {
     is?: PeriodoContableWhereInput
     isNot?: PeriodoContableWhereInput
+  }
+
+  export type SnapshotPeriodoPeriodoIdVersionCompoundUniqueInput = {
+    periodoId: string
+    version: number
+  }
+
+  export type SnapshotPeriodoCountOrderByAggregateInput = {
+    snapshotId?: SortOrder
+    periodoId?: SortOrder
+    version?: SortOrder
+    baseCajaJson?: SortOrder
+    baseDevengoJson?: SortOrder
+    resumenJson?: SortOrder
+    hashIntegridad?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type SnapshotPeriodoAvgOrderByAggregateInput = {
+    version?: SortOrder
+  }
+
+  export type SnapshotPeriodoMaxOrderByAggregateInput = {
+    snapshotId?: SortOrder
+    periodoId?: SortOrder
+    version?: SortOrder
+    hashIntegridad?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type SnapshotPeriodoMinOrderByAggregateInput = {
+    snapshotId?: SortOrder
+    periodoId?: SortOrder
+    version?: SortOrder
+    hashIntegridad?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type SnapshotPeriodoSumOrderByAggregateInput = {
+    version?: SortOrder
+  }
+
+  export type AperturaPeriodoCountOrderByAggregateInput = {
+    aperturaId?: SortOrder
+    periodoId?: SortOrder
+    tenantId?: SortOrder
+    origenPeriodoId?: SortOrder
+    saldoCajaInicial?: SortOrder
+    saldoBancoInicial?: SortOrder
+    saldoCuentasCobrarInicial?: SortOrder
+    saldoCuentasPagarInicial?: SortOrder
+    saldoInventarioInicial?: SortOrder
+    saldoCapitalInicial?: SortOrder
+    saldoResultadoAcumInicial?: SortOrder
+    detalleJson?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AperturaPeriodoAvgOrderByAggregateInput = {
+    saldoCajaInicial?: SortOrder
+    saldoBancoInicial?: SortOrder
+    saldoCuentasCobrarInicial?: SortOrder
+    saldoCuentasPagarInicial?: SortOrder
+    saldoInventarioInicial?: SortOrder
+    saldoCapitalInicial?: SortOrder
+    saldoResultadoAcumInicial?: SortOrder
+  }
+
+  export type AperturaPeriodoMaxOrderByAggregateInput = {
+    aperturaId?: SortOrder
+    periodoId?: SortOrder
+    tenantId?: SortOrder
+    origenPeriodoId?: SortOrder
+    saldoCajaInicial?: SortOrder
+    saldoBancoInicial?: SortOrder
+    saldoCuentasCobrarInicial?: SortOrder
+    saldoCuentasPagarInicial?: SortOrder
+    saldoInventarioInicial?: SortOrder
+    saldoCapitalInicial?: SortOrder
+    saldoResultadoAcumInicial?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AperturaPeriodoMinOrderByAggregateInput = {
+    aperturaId?: SortOrder
+    periodoId?: SortOrder
+    tenantId?: SortOrder
+    origenPeriodoId?: SortOrder
+    saldoCajaInicial?: SortOrder
+    saldoBancoInicial?: SortOrder
+    saldoCuentasCobrarInicial?: SortOrder
+    saldoCuentasPagarInicial?: SortOrder
+    saldoInventarioInicial?: SortOrder
+    saldoCapitalInicial?: SortOrder
+    saldoResultadoAcumInicial?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type AperturaPeriodoSumOrderByAggregateInput = {
+    saldoCajaInicial?: SortOrder
+    saldoBancoInicial?: SortOrder
+    saldoCuentasCobrarInicial?: SortOrder
+    saldoCuentasPagarInicial?: SortOrder
+    saldoInventarioInicial?: SortOrder
+    saldoCapitalInicial?: SortOrder
+    saldoResultadoAcumInicial?: SortOrder
   }
 
   export type SaldoSnapshotCountOrderByAggregateInput = {
@@ -164594,6 +168249,13 @@ export namespace Prisma {
     connect?: PeriodoContableWhereUniqueInput | PeriodoContableWhereUniqueInput[]
   }
 
+  export type AperturaPeriodoCreateNestedManyWithoutTenantInput = {
+    create?: XOR<AperturaPeriodoCreateWithoutTenantInput, AperturaPeriodoUncheckedCreateWithoutTenantInput> | AperturaPeriodoCreateWithoutTenantInput[] | AperturaPeriodoUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: AperturaPeriodoCreateOrConnectWithoutTenantInput | AperturaPeriodoCreateOrConnectWithoutTenantInput[]
+    createMany?: AperturaPeriodoCreateManyTenantInputEnvelope
+    connect?: AperturaPeriodoWhereUniqueInput | AperturaPeriodoWhereUniqueInput[]
+  }
+
   export type AuditoriaPeriodoCreateNestedManyWithoutTenantInput = {
     create?: XOR<AuditoriaPeriodoCreateWithoutTenantInput, AuditoriaPeriodoUncheckedCreateWithoutTenantInput> | AuditoriaPeriodoCreateWithoutTenantInput[] | AuditoriaPeriodoUncheckedCreateWithoutTenantInput[]
     connectOrCreate?: AuditoriaPeriodoCreateOrConnectWithoutTenantInput | AuditoriaPeriodoCreateOrConnectWithoutTenantInput[]
@@ -164983,6 +168645,13 @@ export namespace Prisma {
     connectOrCreate?: PeriodoContableCreateOrConnectWithoutTenantInput | PeriodoContableCreateOrConnectWithoutTenantInput[]
     createMany?: PeriodoContableCreateManyTenantInputEnvelope
     connect?: PeriodoContableWhereUniqueInput | PeriodoContableWhereUniqueInput[]
+  }
+
+  export type AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput = {
+    create?: XOR<AperturaPeriodoCreateWithoutTenantInput, AperturaPeriodoUncheckedCreateWithoutTenantInput> | AperturaPeriodoCreateWithoutTenantInput[] | AperturaPeriodoUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: AperturaPeriodoCreateOrConnectWithoutTenantInput | AperturaPeriodoCreateOrConnectWithoutTenantInput[]
+    createMany?: AperturaPeriodoCreateManyTenantInputEnvelope
+    connect?: AperturaPeriodoWhereUniqueInput | AperturaPeriodoWhereUniqueInput[]
   }
 
   export type AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput = {
@@ -165756,6 +169425,20 @@ export namespace Prisma {
     update?: PeriodoContableUpdateWithWhereUniqueWithoutTenantInput | PeriodoContableUpdateWithWhereUniqueWithoutTenantInput[]
     updateMany?: PeriodoContableUpdateManyWithWhereWithoutTenantInput | PeriodoContableUpdateManyWithWhereWithoutTenantInput[]
     deleteMany?: PeriodoContableScalarWhereInput | PeriodoContableScalarWhereInput[]
+  }
+
+  export type AperturaPeriodoUpdateManyWithoutTenantNestedInput = {
+    create?: XOR<AperturaPeriodoCreateWithoutTenantInput, AperturaPeriodoUncheckedCreateWithoutTenantInput> | AperturaPeriodoCreateWithoutTenantInput[] | AperturaPeriodoUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: AperturaPeriodoCreateOrConnectWithoutTenantInput | AperturaPeriodoCreateOrConnectWithoutTenantInput[]
+    upsert?: AperturaPeriodoUpsertWithWhereUniqueWithoutTenantInput | AperturaPeriodoUpsertWithWhereUniqueWithoutTenantInput[]
+    createMany?: AperturaPeriodoCreateManyTenantInputEnvelope
+    set?: AperturaPeriodoWhereUniqueInput | AperturaPeriodoWhereUniqueInput[]
+    disconnect?: AperturaPeriodoWhereUniqueInput | AperturaPeriodoWhereUniqueInput[]
+    delete?: AperturaPeriodoWhereUniqueInput | AperturaPeriodoWhereUniqueInput[]
+    connect?: AperturaPeriodoWhereUniqueInput | AperturaPeriodoWhereUniqueInput[]
+    update?: AperturaPeriodoUpdateWithWhereUniqueWithoutTenantInput | AperturaPeriodoUpdateWithWhereUniqueWithoutTenantInput[]
+    updateMany?: AperturaPeriodoUpdateManyWithWhereWithoutTenantInput | AperturaPeriodoUpdateManyWithWhereWithoutTenantInput[]
+    deleteMany?: AperturaPeriodoScalarWhereInput | AperturaPeriodoScalarWhereInput[]
   }
 
   export type AuditoriaPeriodoUpdateManyWithoutTenantNestedInput = {
@@ -166536,6 +170219,20 @@ export namespace Prisma {
     update?: PeriodoContableUpdateWithWhereUniqueWithoutTenantInput | PeriodoContableUpdateWithWhereUniqueWithoutTenantInput[]
     updateMany?: PeriodoContableUpdateManyWithWhereWithoutTenantInput | PeriodoContableUpdateManyWithWhereWithoutTenantInput[]
     deleteMany?: PeriodoContableScalarWhereInput | PeriodoContableScalarWhereInput[]
+  }
+
+  export type AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput = {
+    create?: XOR<AperturaPeriodoCreateWithoutTenantInput, AperturaPeriodoUncheckedCreateWithoutTenantInput> | AperturaPeriodoCreateWithoutTenantInput[] | AperturaPeriodoUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: AperturaPeriodoCreateOrConnectWithoutTenantInput | AperturaPeriodoCreateOrConnectWithoutTenantInput[]
+    upsert?: AperturaPeriodoUpsertWithWhereUniqueWithoutTenantInput | AperturaPeriodoUpsertWithWhereUniqueWithoutTenantInput[]
+    createMany?: AperturaPeriodoCreateManyTenantInputEnvelope
+    set?: AperturaPeriodoWhereUniqueInput | AperturaPeriodoWhereUniqueInput[]
+    disconnect?: AperturaPeriodoWhereUniqueInput | AperturaPeriodoWhereUniqueInput[]
+    delete?: AperturaPeriodoWhereUniqueInput | AperturaPeriodoWhereUniqueInput[]
+    connect?: AperturaPeriodoWhereUniqueInput | AperturaPeriodoWhereUniqueInput[]
+    update?: AperturaPeriodoUpdateWithWhereUniqueWithoutTenantInput | AperturaPeriodoUpdateWithWhereUniqueWithoutTenantInput[]
+    updateMany?: AperturaPeriodoUpdateManyWithWhereWithoutTenantInput | AperturaPeriodoUpdateManyWithWhereWithoutTenantInput[]
+    deleteMany?: AperturaPeriodoScalarWhereInput | AperturaPeriodoScalarWhereInput[]
   }
 
   export type AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput = {
@@ -174396,11 +178093,37 @@ export namespace Prisma {
     connect?: SaldoSnapshotWhereUniqueInput | SaldoSnapshotWhereUniqueInput[]
   }
 
+  export type SnapshotPeriodoCreateNestedManyWithoutPeriodoInput = {
+    create?: XOR<SnapshotPeriodoCreateWithoutPeriodoInput, SnapshotPeriodoUncheckedCreateWithoutPeriodoInput> | SnapshotPeriodoCreateWithoutPeriodoInput[] | SnapshotPeriodoUncheckedCreateWithoutPeriodoInput[]
+    connectOrCreate?: SnapshotPeriodoCreateOrConnectWithoutPeriodoInput | SnapshotPeriodoCreateOrConnectWithoutPeriodoInput[]
+    createMany?: SnapshotPeriodoCreateManyPeriodoInputEnvelope
+    connect?: SnapshotPeriodoWhereUniqueInput | SnapshotPeriodoWhereUniqueInput[]
+  }
+
   export type AuditoriaPeriodoCreateNestedManyWithoutPeriodoInput = {
     create?: XOR<AuditoriaPeriodoCreateWithoutPeriodoInput, AuditoriaPeriodoUncheckedCreateWithoutPeriodoInput> | AuditoriaPeriodoCreateWithoutPeriodoInput[] | AuditoriaPeriodoUncheckedCreateWithoutPeriodoInput[]
     connectOrCreate?: AuditoriaPeriodoCreateOrConnectWithoutPeriodoInput | AuditoriaPeriodoCreateOrConnectWithoutPeriodoInput[]
     createMany?: AuditoriaPeriodoCreateManyPeriodoInputEnvelope
     connect?: AuditoriaPeriodoWhereUniqueInput | AuditoriaPeriodoWhereUniqueInput[]
+  }
+
+  export type PeriodoContableCreateNestedOneWithoutSubperiodosInput = {
+    create?: XOR<PeriodoContableCreateWithoutSubperiodosInput, PeriodoContableUncheckedCreateWithoutSubperiodosInput>
+    connectOrCreate?: PeriodoContableCreateOrConnectWithoutSubperiodosInput
+    connect?: PeriodoContableWhereUniqueInput
+  }
+
+  export type PeriodoContableCreateNestedManyWithoutPeriodoPadreInput = {
+    create?: XOR<PeriodoContableCreateWithoutPeriodoPadreInput, PeriodoContableUncheckedCreateWithoutPeriodoPadreInput> | PeriodoContableCreateWithoutPeriodoPadreInput[] | PeriodoContableUncheckedCreateWithoutPeriodoPadreInput[]
+    connectOrCreate?: PeriodoContableCreateOrConnectWithoutPeriodoPadreInput | PeriodoContableCreateOrConnectWithoutPeriodoPadreInput[]
+    createMany?: PeriodoContableCreateManyPeriodoPadreInputEnvelope
+    connect?: PeriodoContableWhereUniqueInput | PeriodoContableWhereUniqueInput[]
+  }
+
+  export type AperturaPeriodoCreateNestedOneWithoutPeriodoInput = {
+    create?: XOR<AperturaPeriodoCreateWithoutPeriodoInput, AperturaPeriodoUncheckedCreateWithoutPeriodoInput>
+    connectOrCreate?: AperturaPeriodoCreateOrConnectWithoutPeriodoInput
+    connect?: AperturaPeriodoWhereUniqueInput
   }
 
   export type SaldoSnapshotUncheckedCreateNestedManyWithoutPeriodoInput = {
@@ -174410,11 +178133,31 @@ export namespace Prisma {
     connect?: SaldoSnapshotWhereUniqueInput | SaldoSnapshotWhereUniqueInput[]
   }
 
+  export type SnapshotPeriodoUncheckedCreateNestedManyWithoutPeriodoInput = {
+    create?: XOR<SnapshotPeriodoCreateWithoutPeriodoInput, SnapshotPeriodoUncheckedCreateWithoutPeriodoInput> | SnapshotPeriodoCreateWithoutPeriodoInput[] | SnapshotPeriodoUncheckedCreateWithoutPeriodoInput[]
+    connectOrCreate?: SnapshotPeriodoCreateOrConnectWithoutPeriodoInput | SnapshotPeriodoCreateOrConnectWithoutPeriodoInput[]
+    createMany?: SnapshotPeriodoCreateManyPeriodoInputEnvelope
+    connect?: SnapshotPeriodoWhereUniqueInput | SnapshotPeriodoWhereUniqueInput[]
+  }
+
   export type AuditoriaPeriodoUncheckedCreateNestedManyWithoutPeriodoInput = {
     create?: XOR<AuditoriaPeriodoCreateWithoutPeriodoInput, AuditoriaPeriodoUncheckedCreateWithoutPeriodoInput> | AuditoriaPeriodoCreateWithoutPeriodoInput[] | AuditoriaPeriodoUncheckedCreateWithoutPeriodoInput[]
     connectOrCreate?: AuditoriaPeriodoCreateOrConnectWithoutPeriodoInput | AuditoriaPeriodoCreateOrConnectWithoutPeriodoInput[]
     createMany?: AuditoriaPeriodoCreateManyPeriodoInputEnvelope
     connect?: AuditoriaPeriodoWhereUniqueInput | AuditoriaPeriodoWhereUniqueInput[]
+  }
+
+  export type PeriodoContableUncheckedCreateNestedManyWithoutPeriodoPadreInput = {
+    create?: XOR<PeriodoContableCreateWithoutPeriodoPadreInput, PeriodoContableUncheckedCreateWithoutPeriodoPadreInput> | PeriodoContableCreateWithoutPeriodoPadreInput[] | PeriodoContableUncheckedCreateWithoutPeriodoPadreInput[]
+    connectOrCreate?: PeriodoContableCreateOrConnectWithoutPeriodoPadreInput | PeriodoContableCreateOrConnectWithoutPeriodoPadreInput[]
+    createMany?: PeriodoContableCreateManyPeriodoPadreInputEnvelope
+    connect?: PeriodoContableWhereUniqueInput | PeriodoContableWhereUniqueInput[]
+  }
+
+  export type AperturaPeriodoUncheckedCreateNestedOneWithoutPeriodoInput = {
+    create?: XOR<AperturaPeriodoCreateWithoutPeriodoInput, AperturaPeriodoUncheckedCreateWithoutPeriodoInput>
+    connectOrCreate?: AperturaPeriodoCreateOrConnectWithoutPeriodoInput
+    connect?: AperturaPeriodoWhereUniqueInput
   }
 
   export type EnumTipoPeriodoFieldUpdateOperationsInput = {
@@ -174423,6 +178166,10 @@ export namespace Prisma {
 
   export type EnumEstadoPeriodoFieldUpdateOperationsInput = {
     set?: $Enums.EstadoPeriodo
+  }
+
+  export type EnumCategoriaPeriodoFieldUpdateOperationsInput = {
+    set?: $Enums.CategoriaPeriodo
   }
 
   export type TenantUpdateOneRequiredWithoutPeriodosContablesNestedInput = {
@@ -174447,6 +178194,20 @@ export namespace Prisma {
     deleteMany?: SaldoSnapshotScalarWhereInput | SaldoSnapshotScalarWhereInput[]
   }
 
+  export type SnapshotPeriodoUpdateManyWithoutPeriodoNestedInput = {
+    create?: XOR<SnapshotPeriodoCreateWithoutPeriodoInput, SnapshotPeriodoUncheckedCreateWithoutPeriodoInput> | SnapshotPeriodoCreateWithoutPeriodoInput[] | SnapshotPeriodoUncheckedCreateWithoutPeriodoInput[]
+    connectOrCreate?: SnapshotPeriodoCreateOrConnectWithoutPeriodoInput | SnapshotPeriodoCreateOrConnectWithoutPeriodoInput[]
+    upsert?: SnapshotPeriodoUpsertWithWhereUniqueWithoutPeriodoInput | SnapshotPeriodoUpsertWithWhereUniqueWithoutPeriodoInput[]
+    createMany?: SnapshotPeriodoCreateManyPeriodoInputEnvelope
+    set?: SnapshotPeriodoWhereUniqueInput | SnapshotPeriodoWhereUniqueInput[]
+    disconnect?: SnapshotPeriodoWhereUniqueInput | SnapshotPeriodoWhereUniqueInput[]
+    delete?: SnapshotPeriodoWhereUniqueInput | SnapshotPeriodoWhereUniqueInput[]
+    connect?: SnapshotPeriodoWhereUniqueInput | SnapshotPeriodoWhereUniqueInput[]
+    update?: SnapshotPeriodoUpdateWithWhereUniqueWithoutPeriodoInput | SnapshotPeriodoUpdateWithWhereUniqueWithoutPeriodoInput[]
+    updateMany?: SnapshotPeriodoUpdateManyWithWhereWithoutPeriodoInput | SnapshotPeriodoUpdateManyWithWhereWithoutPeriodoInput[]
+    deleteMany?: SnapshotPeriodoScalarWhereInput | SnapshotPeriodoScalarWhereInput[]
+  }
+
   export type AuditoriaPeriodoUpdateManyWithoutPeriodoNestedInput = {
     create?: XOR<AuditoriaPeriodoCreateWithoutPeriodoInput, AuditoriaPeriodoUncheckedCreateWithoutPeriodoInput> | AuditoriaPeriodoCreateWithoutPeriodoInput[] | AuditoriaPeriodoUncheckedCreateWithoutPeriodoInput[]
     connectOrCreate?: AuditoriaPeriodoCreateOrConnectWithoutPeriodoInput | AuditoriaPeriodoCreateOrConnectWithoutPeriodoInput[]
@@ -174459,6 +178220,40 @@ export namespace Prisma {
     update?: AuditoriaPeriodoUpdateWithWhereUniqueWithoutPeriodoInput | AuditoriaPeriodoUpdateWithWhereUniqueWithoutPeriodoInput[]
     updateMany?: AuditoriaPeriodoUpdateManyWithWhereWithoutPeriodoInput | AuditoriaPeriodoUpdateManyWithWhereWithoutPeriodoInput[]
     deleteMany?: AuditoriaPeriodoScalarWhereInput | AuditoriaPeriodoScalarWhereInput[]
+  }
+
+  export type PeriodoContableUpdateOneWithoutSubperiodosNestedInput = {
+    create?: XOR<PeriodoContableCreateWithoutSubperiodosInput, PeriodoContableUncheckedCreateWithoutSubperiodosInput>
+    connectOrCreate?: PeriodoContableCreateOrConnectWithoutSubperiodosInput
+    upsert?: PeriodoContableUpsertWithoutSubperiodosInput
+    disconnect?: PeriodoContableWhereInput | boolean
+    delete?: PeriodoContableWhereInput | boolean
+    connect?: PeriodoContableWhereUniqueInput
+    update?: XOR<XOR<PeriodoContableUpdateToOneWithWhereWithoutSubperiodosInput, PeriodoContableUpdateWithoutSubperiodosInput>, PeriodoContableUncheckedUpdateWithoutSubperiodosInput>
+  }
+
+  export type PeriodoContableUpdateManyWithoutPeriodoPadreNestedInput = {
+    create?: XOR<PeriodoContableCreateWithoutPeriodoPadreInput, PeriodoContableUncheckedCreateWithoutPeriodoPadreInput> | PeriodoContableCreateWithoutPeriodoPadreInput[] | PeriodoContableUncheckedCreateWithoutPeriodoPadreInput[]
+    connectOrCreate?: PeriodoContableCreateOrConnectWithoutPeriodoPadreInput | PeriodoContableCreateOrConnectWithoutPeriodoPadreInput[]
+    upsert?: PeriodoContableUpsertWithWhereUniqueWithoutPeriodoPadreInput | PeriodoContableUpsertWithWhereUniqueWithoutPeriodoPadreInput[]
+    createMany?: PeriodoContableCreateManyPeriodoPadreInputEnvelope
+    set?: PeriodoContableWhereUniqueInput | PeriodoContableWhereUniqueInput[]
+    disconnect?: PeriodoContableWhereUniqueInput | PeriodoContableWhereUniqueInput[]
+    delete?: PeriodoContableWhereUniqueInput | PeriodoContableWhereUniqueInput[]
+    connect?: PeriodoContableWhereUniqueInput | PeriodoContableWhereUniqueInput[]
+    update?: PeriodoContableUpdateWithWhereUniqueWithoutPeriodoPadreInput | PeriodoContableUpdateWithWhereUniqueWithoutPeriodoPadreInput[]
+    updateMany?: PeriodoContableUpdateManyWithWhereWithoutPeriodoPadreInput | PeriodoContableUpdateManyWithWhereWithoutPeriodoPadreInput[]
+    deleteMany?: PeriodoContableScalarWhereInput | PeriodoContableScalarWhereInput[]
+  }
+
+  export type AperturaPeriodoUpdateOneWithoutPeriodoNestedInput = {
+    create?: XOR<AperturaPeriodoCreateWithoutPeriodoInput, AperturaPeriodoUncheckedCreateWithoutPeriodoInput>
+    connectOrCreate?: AperturaPeriodoCreateOrConnectWithoutPeriodoInput
+    upsert?: AperturaPeriodoUpsertWithoutPeriodoInput
+    disconnect?: AperturaPeriodoWhereInput | boolean
+    delete?: AperturaPeriodoWhereInput | boolean
+    connect?: AperturaPeriodoWhereUniqueInput
+    update?: XOR<XOR<AperturaPeriodoUpdateToOneWithWhereWithoutPeriodoInput, AperturaPeriodoUpdateWithoutPeriodoInput>, AperturaPeriodoUncheckedUpdateWithoutPeriodoInput>
   }
 
   export type SaldoSnapshotUncheckedUpdateManyWithoutPeriodoNestedInput = {
@@ -174475,6 +178270,20 @@ export namespace Prisma {
     deleteMany?: SaldoSnapshotScalarWhereInput | SaldoSnapshotScalarWhereInput[]
   }
 
+  export type SnapshotPeriodoUncheckedUpdateManyWithoutPeriodoNestedInput = {
+    create?: XOR<SnapshotPeriodoCreateWithoutPeriodoInput, SnapshotPeriodoUncheckedCreateWithoutPeriodoInput> | SnapshotPeriodoCreateWithoutPeriodoInput[] | SnapshotPeriodoUncheckedCreateWithoutPeriodoInput[]
+    connectOrCreate?: SnapshotPeriodoCreateOrConnectWithoutPeriodoInput | SnapshotPeriodoCreateOrConnectWithoutPeriodoInput[]
+    upsert?: SnapshotPeriodoUpsertWithWhereUniqueWithoutPeriodoInput | SnapshotPeriodoUpsertWithWhereUniqueWithoutPeriodoInput[]
+    createMany?: SnapshotPeriodoCreateManyPeriodoInputEnvelope
+    set?: SnapshotPeriodoWhereUniqueInput | SnapshotPeriodoWhereUniqueInput[]
+    disconnect?: SnapshotPeriodoWhereUniqueInput | SnapshotPeriodoWhereUniqueInput[]
+    delete?: SnapshotPeriodoWhereUniqueInput | SnapshotPeriodoWhereUniqueInput[]
+    connect?: SnapshotPeriodoWhereUniqueInput | SnapshotPeriodoWhereUniqueInput[]
+    update?: SnapshotPeriodoUpdateWithWhereUniqueWithoutPeriodoInput | SnapshotPeriodoUpdateWithWhereUniqueWithoutPeriodoInput[]
+    updateMany?: SnapshotPeriodoUpdateManyWithWhereWithoutPeriodoInput | SnapshotPeriodoUpdateManyWithWhereWithoutPeriodoInput[]
+    deleteMany?: SnapshotPeriodoScalarWhereInput | SnapshotPeriodoScalarWhereInput[]
+  }
+
   export type AuditoriaPeriodoUncheckedUpdateManyWithoutPeriodoNestedInput = {
     create?: XOR<AuditoriaPeriodoCreateWithoutPeriodoInput, AuditoriaPeriodoUncheckedCreateWithoutPeriodoInput> | AuditoriaPeriodoCreateWithoutPeriodoInput[] | AuditoriaPeriodoUncheckedCreateWithoutPeriodoInput[]
     connectOrCreate?: AuditoriaPeriodoCreateOrConnectWithoutPeriodoInput | AuditoriaPeriodoCreateOrConnectWithoutPeriodoInput[]
@@ -174487,6 +178296,72 @@ export namespace Prisma {
     update?: AuditoriaPeriodoUpdateWithWhereUniqueWithoutPeriodoInput | AuditoriaPeriodoUpdateWithWhereUniqueWithoutPeriodoInput[]
     updateMany?: AuditoriaPeriodoUpdateManyWithWhereWithoutPeriodoInput | AuditoriaPeriodoUpdateManyWithWhereWithoutPeriodoInput[]
     deleteMany?: AuditoriaPeriodoScalarWhereInput | AuditoriaPeriodoScalarWhereInput[]
+  }
+
+  export type PeriodoContableUncheckedUpdateManyWithoutPeriodoPadreNestedInput = {
+    create?: XOR<PeriodoContableCreateWithoutPeriodoPadreInput, PeriodoContableUncheckedCreateWithoutPeriodoPadreInput> | PeriodoContableCreateWithoutPeriodoPadreInput[] | PeriodoContableUncheckedCreateWithoutPeriodoPadreInput[]
+    connectOrCreate?: PeriodoContableCreateOrConnectWithoutPeriodoPadreInput | PeriodoContableCreateOrConnectWithoutPeriodoPadreInput[]
+    upsert?: PeriodoContableUpsertWithWhereUniqueWithoutPeriodoPadreInput | PeriodoContableUpsertWithWhereUniqueWithoutPeriodoPadreInput[]
+    createMany?: PeriodoContableCreateManyPeriodoPadreInputEnvelope
+    set?: PeriodoContableWhereUniqueInput | PeriodoContableWhereUniqueInput[]
+    disconnect?: PeriodoContableWhereUniqueInput | PeriodoContableWhereUniqueInput[]
+    delete?: PeriodoContableWhereUniqueInput | PeriodoContableWhereUniqueInput[]
+    connect?: PeriodoContableWhereUniqueInput | PeriodoContableWhereUniqueInput[]
+    update?: PeriodoContableUpdateWithWhereUniqueWithoutPeriodoPadreInput | PeriodoContableUpdateWithWhereUniqueWithoutPeriodoPadreInput[]
+    updateMany?: PeriodoContableUpdateManyWithWhereWithoutPeriodoPadreInput | PeriodoContableUpdateManyWithWhereWithoutPeriodoPadreInput[]
+    deleteMany?: PeriodoContableScalarWhereInput | PeriodoContableScalarWhereInput[]
+  }
+
+  export type AperturaPeriodoUncheckedUpdateOneWithoutPeriodoNestedInput = {
+    create?: XOR<AperturaPeriodoCreateWithoutPeriodoInput, AperturaPeriodoUncheckedCreateWithoutPeriodoInput>
+    connectOrCreate?: AperturaPeriodoCreateOrConnectWithoutPeriodoInput
+    upsert?: AperturaPeriodoUpsertWithoutPeriodoInput
+    disconnect?: AperturaPeriodoWhereInput | boolean
+    delete?: AperturaPeriodoWhereInput | boolean
+    connect?: AperturaPeriodoWhereUniqueInput
+    update?: XOR<XOR<AperturaPeriodoUpdateToOneWithWhereWithoutPeriodoInput, AperturaPeriodoUpdateWithoutPeriodoInput>, AperturaPeriodoUncheckedUpdateWithoutPeriodoInput>
+  }
+
+  export type PeriodoContableCreateNestedOneWithoutSnapshotPeriodosInput = {
+    create?: XOR<PeriodoContableCreateWithoutSnapshotPeriodosInput, PeriodoContableUncheckedCreateWithoutSnapshotPeriodosInput>
+    connectOrCreate?: PeriodoContableCreateOrConnectWithoutSnapshotPeriodosInput
+    connect?: PeriodoContableWhereUniqueInput
+  }
+
+  export type PeriodoContableUpdateOneRequiredWithoutSnapshotPeriodosNestedInput = {
+    create?: XOR<PeriodoContableCreateWithoutSnapshotPeriodosInput, PeriodoContableUncheckedCreateWithoutSnapshotPeriodosInput>
+    connectOrCreate?: PeriodoContableCreateOrConnectWithoutSnapshotPeriodosInput
+    upsert?: PeriodoContableUpsertWithoutSnapshotPeriodosInput
+    connect?: PeriodoContableWhereUniqueInput
+    update?: XOR<XOR<PeriodoContableUpdateToOneWithWhereWithoutSnapshotPeriodosInput, PeriodoContableUpdateWithoutSnapshotPeriodosInput>, PeriodoContableUncheckedUpdateWithoutSnapshotPeriodosInput>
+  }
+
+  export type PeriodoContableCreateNestedOneWithoutAperturaInput = {
+    create?: XOR<PeriodoContableCreateWithoutAperturaInput, PeriodoContableUncheckedCreateWithoutAperturaInput>
+    connectOrCreate?: PeriodoContableCreateOrConnectWithoutAperturaInput
+    connect?: PeriodoContableWhereUniqueInput
+  }
+
+  export type TenantCreateNestedOneWithoutAperturaPeriodosInput = {
+    create?: XOR<TenantCreateWithoutAperturaPeriodosInput, TenantUncheckedCreateWithoutAperturaPeriodosInput>
+    connectOrCreate?: TenantCreateOrConnectWithoutAperturaPeriodosInput
+    connect?: TenantWhereUniqueInput
+  }
+
+  export type PeriodoContableUpdateOneRequiredWithoutAperturaNestedInput = {
+    create?: XOR<PeriodoContableCreateWithoutAperturaInput, PeriodoContableUncheckedCreateWithoutAperturaInput>
+    connectOrCreate?: PeriodoContableCreateOrConnectWithoutAperturaInput
+    upsert?: PeriodoContableUpsertWithoutAperturaInput
+    connect?: PeriodoContableWhereUniqueInput
+    update?: XOR<XOR<PeriodoContableUpdateToOneWithWhereWithoutAperturaInput, PeriodoContableUpdateWithoutAperturaInput>, PeriodoContableUncheckedUpdateWithoutAperturaInput>
+  }
+
+  export type TenantUpdateOneRequiredWithoutAperturaPeriodosNestedInput = {
+    create?: XOR<TenantCreateWithoutAperturaPeriodosInput, TenantUncheckedCreateWithoutAperturaPeriodosInput>
+    connectOrCreate?: TenantCreateOrConnectWithoutAperturaPeriodosInput
+    upsert?: TenantUpsertWithoutAperturaPeriodosInput
+    connect?: TenantWhereUniqueInput
+    update?: XOR<XOR<TenantUpdateToOneWithWhereWithoutAperturaPeriodosInput, TenantUpdateWithoutAperturaPeriodosInput>, TenantUncheckedUpdateWithoutAperturaPeriodosInput>
   }
 
   export type PeriodoContableCreateNestedOneWithoutSnapshotsInput = {
@@ -175184,6 +179059,13 @@ export namespace Prisma {
     not?: NestedEnumEstadoPeriodoFilter<$PrismaModel> | $Enums.EstadoPeriodo
   }
 
+  export type NestedEnumCategoriaPeriodoFilter<$PrismaModel = never> = {
+    equals?: $Enums.CategoriaPeriodo | EnumCategoriaPeriodoFieldRefInput<$PrismaModel>
+    in?: $Enums.CategoriaPeriodo[] | ListEnumCategoriaPeriodoFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CategoriaPeriodo[] | ListEnumCategoriaPeriodoFieldRefInput<$PrismaModel>
+    not?: NestedEnumCategoriaPeriodoFilter<$PrismaModel> | $Enums.CategoriaPeriodo
+  }
+
   export type NestedEnumTipoPeriodoWithAggregatesFilter<$PrismaModel = never> = {
     equals?: $Enums.TipoPeriodo | EnumTipoPeriodoFieldRefInput<$PrismaModel>
     in?: $Enums.TipoPeriodo[] | ListEnumTipoPeriodoFieldRefInput<$PrismaModel>
@@ -175202,6 +179084,16 @@ export namespace Prisma {
     _count?: NestedIntFilter<$PrismaModel>
     _min?: NestedEnumEstadoPeriodoFilter<$PrismaModel>
     _max?: NestedEnumEstadoPeriodoFilter<$PrismaModel>
+  }
+
+  export type NestedEnumCategoriaPeriodoWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.CategoriaPeriodo | EnumCategoriaPeriodoFieldRefInput<$PrismaModel>
+    in?: $Enums.CategoriaPeriodo[] | ListEnumCategoriaPeriodoFieldRefInput<$PrismaModel>
+    notIn?: $Enums.CategoriaPeriodo[] | ListEnumCategoriaPeriodoFieldRefInput<$PrismaModel>
+    not?: NestedEnumCategoriaPeriodoWithAggregatesFilter<$PrismaModel> | $Enums.CategoriaPeriodo
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumCategoriaPeriodoFilter<$PrismaModel>
+    _max?: NestedEnumCategoriaPeriodoFilter<$PrismaModel>
   }
 
   export type NestedEnumEventoAuditoriaFilter<$PrismaModel = never> = {
@@ -175553,6 +179445,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -175617,6 +179510,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -175832,6 +179726,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -175896,6 +179791,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -176616,6 +180512,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -176680,6 +180577,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -177097,6 +180995,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -177161,6 +181060,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -178105,6 +182005,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -178169,6 +182070,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -178561,6 +182463,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -178625,6 +182528,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -181040,37 +184944,65 @@ export namespace Prisma {
   export type PeriodoContableCreateWithoutTenantInput = {
     periodoId?: string
     tipo: $Enums.TipoPeriodo
+    codigo?: string | null
     fechaInicio: Date | string
     fechaFin: Date | string
     estado?: $Enums.EstadoPeriodo
-    motivoReapertura?: string | null
+    aperturaAutomatica?: boolean
+    categoria?: $Enums.CategoriaPeriodo
+    abiertoPorId?: string | null
+    fechaApertura?: Date | string | null
     cerradoPor?: string | null
     cerradoAt?: Date | string | null
     aprobadoPor?: string | null
     aprobadoAt?: Date | string | null
+    reabiertoPorId?: string | null
+    fechaReapertura?: Date | string | null
+    segundoAprobadorId?: string | null
+    motivoReapertura?: string | null
     observaciones?: string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     snapshots?: SaldoSnapshotCreateNestedManyWithoutPeriodoInput
+    snapshotPeriodos?: SnapshotPeriodoCreateNestedManyWithoutPeriodoInput
     auditoria?: AuditoriaPeriodoCreateNestedManyWithoutPeriodoInput
+    periodoPadre?: PeriodoContableCreateNestedOneWithoutSubperiodosInput
+    subperiodos?: PeriodoContableCreateNestedManyWithoutPeriodoPadreInput
+    apertura?: AperturaPeriodoCreateNestedOneWithoutPeriodoInput
   }
 
   export type PeriodoContableUncheckedCreateWithoutTenantInput = {
     periodoId?: string
     tipo: $Enums.TipoPeriodo
+    codigo?: string | null
     fechaInicio: Date | string
     fechaFin: Date | string
     estado?: $Enums.EstadoPeriodo
-    motivoReapertura?: string | null
+    periodoPadreId?: string | null
+    aperturaAutomatica?: boolean
+    categoria?: $Enums.CategoriaPeriodo
+    abiertoPorId?: string | null
+    fechaApertura?: Date | string | null
     cerradoPor?: string | null
     cerradoAt?: Date | string | null
     aprobadoPor?: string | null
     aprobadoAt?: Date | string | null
+    reabiertoPorId?: string | null
+    fechaReapertura?: Date | string | null
+    segundoAprobadorId?: string | null
+    motivoReapertura?: string | null
     observaciones?: string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     snapshots?: SaldoSnapshotUncheckedCreateNestedManyWithoutPeriodoInput
+    snapshotPeriodos?: SnapshotPeriodoUncheckedCreateNestedManyWithoutPeriodoInput
     auditoria?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutPeriodoInput
+    subperiodos?: PeriodoContableUncheckedCreateNestedManyWithoutPeriodoPadreInput
+    apertura?: AperturaPeriodoUncheckedCreateNestedOneWithoutPeriodoInput
   }
 
   export type PeriodoContableCreateOrConnectWithoutTenantInput = {
@@ -181080,6 +185012,48 @@ export namespace Prisma {
 
   export type PeriodoContableCreateManyTenantInputEnvelope = {
     data: PeriodoContableCreateManyTenantInput | PeriodoContableCreateManyTenantInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type AperturaPeriodoCreateWithoutTenantInput = {
+    aperturaId?: string
+    origenPeriodoId?: string | null
+    saldoCajaInicial?: Decimal | DecimalJsLike | number | string
+    saldoBancoInicial?: Decimal | DecimalJsLike | number | string
+    saldoCuentasCobrarInicial?: Decimal | DecimalJsLike | number | string
+    saldoCuentasPagarInicial?: Decimal | DecimalJsLike | number | string
+    saldoInventarioInicial?: Decimal | DecimalJsLike | number | string
+    saldoCapitalInicial?: Decimal | DecimalJsLike | number | string
+    saldoResultadoAcumInicial?: Decimal | DecimalJsLike | number | string
+    detalleJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    periodo: PeriodoContableCreateNestedOneWithoutAperturaInput
+  }
+
+  export type AperturaPeriodoUncheckedCreateWithoutTenantInput = {
+    aperturaId?: string
+    periodoId: string
+    origenPeriodoId?: string | null
+    saldoCajaInicial?: Decimal | DecimalJsLike | number | string
+    saldoBancoInicial?: Decimal | DecimalJsLike | number | string
+    saldoCuentasCobrarInicial?: Decimal | DecimalJsLike | number | string
+    saldoCuentasPagarInicial?: Decimal | DecimalJsLike | number | string
+    saldoInventarioInicial?: Decimal | DecimalJsLike | number | string
+    saldoCapitalInicial?: Decimal | DecimalJsLike | number | string
+    saldoResultadoAcumInicial?: Decimal | DecimalJsLike | number | string
+    detalleJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AperturaPeriodoCreateOrConnectWithoutTenantInput = {
+    where: AperturaPeriodoWhereUniqueInput
+    create: XOR<AperturaPeriodoCreateWithoutTenantInput, AperturaPeriodoUncheckedCreateWithoutTenantInput>
+  }
+
+  export type AperturaPeriodoCreateManyTenantInputEnvelope = {
+    data: AperturaPeriodoCreateManyTenantInput | AperturaPeriodoCreateManyTenantInput[]
     skipDuplicates?: boolean
   }
 
@@ -182643,17 +186617,64 @@ export namespace Prisma {
     periodoId?: StringFilter<"PeriodoContable"> | string
     tenantId?: StringFilter<"PeriodoContable"> | string
     tipo?: EnumTipoPeriodoFilter<"PeriodoContable"> | $Enums.TipoPeriodo
+    codigo?: StringNullableFilter<"PeriodoContable"> | string | null
     fechaInicio?: DateTimeFilter<"PeriodoContable"> | Date | string
     fechaFin?: DateTimeFilter<"PeriodoContable"> | Date | string
     estado?: EnumEstadoPeriodoFilter<"PeriodoContable"> | $Enums.EstadoPeriodo
-    motivoReapertura?: StringNullableFilter<"PeriodoContable"> | string | null
+    periodoPadreId?: StringNullableFilter<"PeriodoContable"> | string | null
+    aperturaAutomatica?: BoolFilter<"PeriodoContable"> | boolean
+    categoria?: EnumCategoriaPeriodoFilter<"PeriodoContable"> | $Enums.CategoriaPeriodo
+    abiertoPorId?: StringNullableFilter<"PeriodoContable"> | string | null
+    fechaApertura?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
     cerradoPor?: StringNullableFilter<"PeriodoContable"> | string | null
     cerradoAt?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
     aprobadoPor?: StringNullableFilter<"PeriodoContable"> | string | null
     aprobadoAt?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
+    reabiertoPorId?: StringNullableFilter<"PeriodoContable"> | string | null
+    fechaReapertura?: DateTimeNullableFilter<"PeriodoContable"> | Date | string | null
+    segundoAprobadorId?: StringNullableFilter<"PeriodoContable"> | string | null
+    motivoReapertura?: StringNullableFilter<"PeriodoContable"> | string | null
     observaciones?: StringNullableFilter<"PeriodoContable"> | string | null
+    resumenJson?: JsonNullableFilter<"PeriodoContable">
+    hashIntegridad?: StringNullableFilter<"PeriodoContable"> | string | null
     createdAt?: DateTimeFilter<"PeriodoContable"> | Date | string
     updatedAt?: DateTimeFilter<"PeriodoContable"> | Date | string
+  }
+
+  export type AperturaPeriodoUpsertWithWhereUniqueWithoutTenantInput = {
+    where: AperturaPeriodoWhereUniqueInput
+    update: XOR<AperturaPeriodoUpdateWithoutTenantInput, AperturaPeriodoUncheckedUpdateWithoutTenantInput>
+    create: XOR<AperturaPeriodoCreateWithoutTenantInput, AperturaPeriodoUncheckedCreateWithoutTenantInput>
+  }
+
+  export type AperturaPeriodoUpdateWithWhereUniqueWithoutTenantInput = {
+    where: AperturaPeriodoWhereUniqueInput
+    data: XOR<AperturaPeriodoUpdateWithoutTenantInput, AperturaPeriodoUncheckedUpdateWithoutTenantInput>
+  }
+
+  export type AperturaPeriodoUpdateManyWithWhereWithoutTenantInput = {
+    where: AperturaPeriodoScalarWhereInput
+    data: XOR<AperturaPeriodoUpdateManyMutationInput, AperturaPeriodoUncheckedUpdateManyWithoutTenantInput>
+  }
+
+  export type AperturaPeriodoScalarWhereInput = {
+    AND?: AperturaPeriodoScalarWhereInput | AperturaPeriodoScalarWhereInput[]
+    OR?: AperturaPeriodoScalarWhereInput[]
+    NOT?: AperturaPeriodoScalarWhereInput | AperturaPeriodoScalarWhereInput[]
+    aperturaId?: StringFilter<"AperturaPeriodo"> | string
+    periodoId?: StringFilter<"AperturaPeriodo"> | string
+    tenantId?: StringFilter<"AperturaPeriodo"> | string
+    origenPeriodoId?: StringNullableFilter<"AperturaPeriodo"> | string | null
+    saldoCajaInicial?: DecimalFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoBancoInicial?: DecimalFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoCuentasCobrarInicial?: DecimalFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoCuentasPagarInicial?: DecimalFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoInventarioInicial?: DecimalFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoCapitalInicial?: DecimalFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    saldoResultadoAcumInicial?: DecimalFilter<"AperturaPeriodo"> | Decimal | DecimalJsLike | number | string
+    detalleJson?: JsonNullableFilter<"AperturaPeriodo">
+    createdAt?: DateTimeFilter<"AperturaPeriodo"> | Date | string
+    updatedAt?: DateTimeFilter<"AperturaPeriodo"> | Date | string
   }
 
   export type AuditoriaPeriodoUpsertWithWhereUniqueWithoutTenantInput = {
@@ -182749,6 +186770,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -182813,6 +186835,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -182972,6 +186995,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -183036,6 +187060,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -183185,6 +187210,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -183249,6 +187275,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -183362,6 +187389,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -183426,6 +187454,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -183529,6 +187558,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -183593,6 +187623,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -183722,6 +187753,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -183786,6 +187818,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -184101,6 +188134,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -184165,6 +188199,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -184293,6 +188328,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -184357,6 +188393,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -184698,6 +188735,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -184762,6 +188800,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -184939,6 +188978,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -185003,6 +189043,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -185708,6 +189749,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -185772,6 +189814,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -186636,6 +190679,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -186700,6 +190744,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -187018,6 +191063,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -187082,6 +191128,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -187263,6 +191310,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -187327,6 +191375,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -187874,6 +191923,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -187938,6 +191988,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -188493,6 +192544,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -188557,6 +192609,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -189016,6 +193069,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -189080,6 +193134,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -189261,6 +193316,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -189325,6 +193381,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -189675,6 +193732,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -189739,6 +193797,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -190141,6 +194200,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -190205,6 +194265,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -193169,6 +197230,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -193233,6 +197295,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -193500,6 +197563,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -193564,6 +197628,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -193739,6 +197804,7 @@ export namespace Prisma {
     stockUbicaciones?: StockUbicacionCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -193803,6 +197869,7 @@ export namespace Prisma {
     stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -193956,6 +198023,7 @@ export namespace Prisma {
     stockUbicaciones?: StockUbicacionUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -194020,6 +198088,7 @@ export namespace Prisma {
     stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -194084,6 +198153,7 @@ export namespace Prisma {
     stockUbicaciones?: StockUbicacionCreateNestedManyWithoutTenantInput
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -194148,6 +198218,7 @@ export namespace Prisma {
     stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutTenantInput
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -194228,6 +198299,7 @@ export namespace Prisma {
     stockUbicaciones?: StockUbicacionUpdateManyWithoutTenantNestedInput
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -194292,6 +198364,7 @@ export namespace Prisma {
     stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutTenantNestedInput
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -194717,6 +198790,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -194781,6 +198855,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -195208,6 +199283,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -195272,6 +199348,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -195639,6 +199716,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -195703,6 +199781,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -196116,6 +200195,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -196180,6 +200260,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -196510,6 +200591,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -196574,6 +200656,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -196928,6 +201011,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -196992,6 +201076,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -197196,6 +201281,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -197260,6 +201346,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -197492,6 +201579,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -197556,6 +201644,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -197730,6 +201819,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -197794,6 +201884,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -197922,6 +202013,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -197986,6 +202078,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -198172,6 +202265,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -198236,6 +202330,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -198424,6 +202519,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -198488,6 +202584,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -198636,6 +202733,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -198700,6 +202798,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -198876,6 +202975,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -198940,6 +203040,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -199406,6 +203507,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -199470,6 +203572,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -199691,6 +203794,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -199755,6 +203859,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -200660,6 +204765,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -200724,6 +204830,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -201017,6 +205124,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -201081,6 +205189,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -201568,6 +205677,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -201632,6 +205742,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -201963,6 +206074,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -202027,6 +206139,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -202204,6 +206317,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -202268,6 +206382,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -202479,6 +206594,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -202543,6 +206659,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -202861,6 +206978,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -202925,6 +207043,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -203295,6 +207414,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -203359,6 +207479,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -203472,6 +207593,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -203536,6 +207658,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -203671,6 +207794,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -203735,6 +207859,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -203897,6 +208022,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -203961,6 +208087,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -204151,6 +208278,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -204215,6 +208343,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -204753,6 +208882,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -204817,6 +208947,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -205291,6 +209422,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -205355,6 +209487,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -207289,6 +211422,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -207353,6 +211487,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -207737,6 +211872,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -207801,6 +211937,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -207935,6 +212072,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -207999,6 +212137,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -208095,6 +212234,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -208159,6 +212299,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -208349,6 +212490,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -208413,6 +212555,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -208619,6 +212762,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -208683,6 +212827,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -209256,6 +213401,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -209320,6 +213466,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -209579,6 +213726,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -209643,6 +213791,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -210079,6 +214228,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -210143,6 +214293,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -210569,6 +214720,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -210633,6 +214785,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -210859,6 +215012,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -210923,6 +215077,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -211141,6 +215296,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -211205,6 +215361,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -211409,6 +215566,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -211473,6 +215631,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -211669,6 +215828,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -211733,6 +215893,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -211854,6 +216015,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -211918,6 +216080,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -212061,6 +216224,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -212125,6 +216289,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -212341,6 +216506,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -212405,6 +216571,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -212533,6 +216700,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -212597,6 +216765,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -212722,6 +216891,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -212786,6 +216956,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -212915,6 +217086,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -212979,6 +217151,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -213323,6 +217496,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -213387,6 +217561,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -213715,6 +217890,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -213779,6 +217955,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -213975,6 +218152,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -214039,6 +218217,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -214245,6 +218424,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -214309,6 +218489,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -214533,6 +218714,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -214597,6 +218779,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -214861,6 +219044,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -214925,6 +219109,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -215155,6 +219340,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -215219,6 +219405,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -215477,6 +219664,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -215541,6 +219729,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -215639,6 +219828,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -215703,6 +219893,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -215799,6 +219990,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -215863,6 +220055,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -215990,6 +220183,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -216054,6 +220248,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -216189,6 +220384,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -216253,6 +220449,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -216348,6 +220545,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -216412,6 +220610,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -216529,6 +220728,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -216593,6 +220793,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -216820,6 +221021,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -216884,6 +221086,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -217097,6 +221300,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -217161,6 +221365,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -217353,6 +221558,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -217417,6 +221623,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -217637,6 +221844,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -217701,6 +221909,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -217791,6 +222000,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -217855,6 +222065,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -217951,6 +222162,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -218015,6 +222227,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -218199,6 +222412,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -218263,6 +222477,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -218475,6 +222690,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -218539,6 +222755,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -218665,6 +222882,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -218729,6 +222947,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -218841,6 +223060,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -218905,6 +223125,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -219831,6 +224052,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -219895,6 +224117,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -220412,6 +224635,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -220476,6 +224700,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -220652,6 +224877,7 @@ export namespace Prisma {
     stockUbicaciones?: StockUbicacionCreateNestedManyWithoutTenantInput
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
   }
 
@@ -220716,6 +224942,7 @@ export namespace Prisma {
     stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutTenantInput
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
@@ -220752,6 +224979,36 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type SnapshotPeriodoCreateWithoutPeriodoInput = {
+    snapshotId?: string
+    version?: number
+    baseCajaJson?: NullableJsonNullValueInput | InputJsonValue
+    baseDevengoJson?: NullableJsonNullValueInput | InputJsonValue
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: string | null
+    createdAt?: Date | string
+  }
+
+  export type SnapshotPeriodoUncheckedCreateWithoutPeriodoInput = {
+    snapshotId?: string
+    version?: number
+    baseCajaJson?: NullableJsonNullValueInput | InputJsonValue
+    baseDevengoJson?: NullableJsonNullValueInput | InputJsonValue
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: string | null
+    createdAt?: Date | string
+  }
+
+  export type SnapshotPeriodoCreateOrConnectWithoutPeriodoInput = {
+    where: SnapshotPeriodoWhereUniqueInput
+    create: XOR<SnapshotPeriodoCreateWithoutPeriodoInput, SnapshotPeriodoUncheckedCreateWithoutPeriodoInput>
+  }
+
+  export type SnapshotPeriodoCreateManyPeriodoInputEnvelope = {
+    data: SnapshotPeriodoCreateManyPeriodoInput | SnapshotPeriodoCreateManyPeriodoInput[]
+    skipDuplicates?: boolean
+  }
+
   export type AuditoriaPeriodoCreateWithoutPeriodoInput = {
     auditoriaId?: string
     evento: $Enums.EventoAuditoria
@@ -220784,6 +225041,186 @@ export namespace Prisma {
   export type AuditoriaPeriodoCreateManyPeriodoInputEnvelope = {
     data: AuditoriaPeriodoCreateManyPeriodoInput | AuditoriaPeriodoCreateManyPeriodoInput[]
     skipDuplicates?: boolean
+  }
+
+  export type PeriodoContableCreateWithoutSubperiodosInput = {
+    periodoId?: string
+    tipo: $Enums.TipoPeriodo
+    codigo?: string | null
+    fechaInicio: Date | string
+    fechaFin: Date | string
+    estado?: $Enums.EstadoPeriodo
+    aperturaAutomatica?: boolean
+    categoria?: $Enums.CategoriaPeriodo
+    abiertoPorId?: string | null
+    fechaApertura?: Date | string | null
+    cerradoPor?: string | null
+    cerradoAt?: Date | string | null
+    aprobadoPor?: string | null
+    aprobadoAt?: Date | string | null
+    reabiertoPorId?: string | null
+    fechaReapertura?: Date | string | null
+    segundoAprobadorId?: string | null
+    motivoReapertura?: string | null
+    observaciones?: string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    tenant: TenantCreateNestedOneWithoutPeriodosContablesInput
+    snapshots?: SaldoSnapshotCreateNestedManyWithoutPeriodoInput
+    snapshotPeriodos?: SnapshotPeriodoCreateNestedManyWithoutPeriodoInput
+    auditoria?: AuditoriaPeriodoCreateNestedManyWithoutPeriodoInput
+    periodoPadre?: PeriodoContableCreateNestedOneWithoutSubperiodosInput
+    apertura?: AperturaPeriodoCreateNestedOneWithoutPeriodoInput
+  }
+
+  export type PeriodoContableUncheckedCreateWithoutSubperiodosInput = {
+    periodoId?: string
+    tenantId: string
+    tipo: $Enums.TipoPeriodo
+    codigo?: string | null
+    fechaInicio: Date | string
+    fechaFin: Date | string
+    estado?: $Enums.EstadoPeriodo
+    periodoPadreId?: string | null
+    aperturaAutomatica?: boolean
+    categoria?: $Enums.CategoriaPeriodo
+    abiertoPorId?: string | null
+    fechaApertura?: Date | string | null
+    cerradoPor?: string | null
+    cerradoAt?: Date | string | null
+    aprobadoPor?: string | null
+    aprobadoAt?: Date | string | null
+    reabiertoPorId?: string | null
+    fechaReapertura?: Date | string | null
+    segundoAprobadorId?: string | null
+    motivoReapertura?: string | null
+    observaciones?: string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    snapshots?: SaldoSnapshotUncheckedCreateNestedManyWithoutPeriodoInput
+    snapshotPeriodos?: SnapshotPeriodoUncheckedCreateNestedManyWithoutPeriodoInput
+    auditoria?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutPeriodoInput
+    apertura?: AperturaPeriodoUncheckedCreateNestedOneWithoutPeriodoInput
+  }
+
+  export type PeriodoContableCreateOrConnectWithoutSubperiodosInput = {
+    where: PeriodoContableWhereUniqueInput
+    create: XOR<PeriodoContableCreateWithoutSubperiodosInput, PeriodoContableUncheckedCreateWithoutSubperiodosInput>
+  }
+
+  export type PeriodoContableCreateWithoutPeriodoPadreInput = {
+    periodoId?: string
+    tipo: $Enums.TipoPeriodo
+    codigo?: string | null
+    fechaInicio: Date | string
+    fechaFin: Date | string
+    estado?: $Enums.EstadoPeriodo
+    aperturaAutomatica?: boolean
+    categoria?: $Enums.CategoriaPeriodo
+    abiertoPorId?: string | null
+    fechaApertura?: Date | string | null
+    cerradoPor?: string | null
+    cerradoAt?: Date | string | null
+    aprobadoPor?: string | null
+    aprobadoAt?: Date | string | null
+    reabiertoPorId?: string | null
+    fechaReapertura?: Date | string | null
+    segundoAprobadorId?: string | null
+    motivoReapertura?: string | null
+    observaciones?: string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    tenant: TenantCreateNestedOneWithoutPeriodosContablesInput
+    snapshots?: SaldoSnapshotCreateNestedManyWithoutPeriodoInput
+    snapshotPeriodos?: SnapshotPeriodoCreateNestedManyWithoutPeriodoInput
+    auditoria?: AuditoriaPeriodoCreateNestedManyWithoutPeriodoInput
+    subperiodos?: PeriodoContableCreateNestedManyWithoutPeriodoPadreInput
+    apertura?: AperturaPeriodoCreateNestedOneWithoutPeriodoInput
+  }
+
+  export type PeriodoContableUncheckedCreateWithoutPeriodoPadreInput = {
+    periodoId?: string
+    tenantId: string
+    tipo: $Enums.TipoPeriodo
+    codigo?: string | null
+    fechaInicio: Date | string
+    fechaFin: Date | string
+    estado?: $Enums.EstadoPeriodo
+    aperturaAutomatica?: boolean
+    categoria?: $Enums.CategoriaPeriodo
+    abiertoPorId?: string | null
+    fechaApertura?: Date | string | null
+    cerradoPor?: string | null
+    cerradoAt?: Date | string | null
+    aprobadoPor?: string | null
+    aprobadoAt?: Date | string | null
+    reabiertoPorId?: string | null
+    fechaReapertura?: Date | string | null
+    segundoAprobadorId?: string | null
+    motivoReapertura?: string | null
+    observaciones?: string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    snapshots?: SaldoSnapshotUncheckedCreateNestedManyWithoutPeriodoInput
+    snapshotPeriodos?: SnapshotPeriodoUncheckedCreateNestedManyWithoutPeriodoInput
+    auditoria?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutPeriodoInput
+    subperiodos?: PeriodoContableUncheckedCreateNestedManyWithoutPeriodoPadreInput
+    apertura?: AperturaPeriodoUncheckedCreateNestedOneWithoutPeriodoInput
+  }
+
+  export type PeriodoContableCreateOrConnectWithoutPeriodoPadreInput = {
+    where: PeriodoContableWhereUniqueInput
+    create: XOR<PeriodoContableCreateWithoutPeriodoPadreInput, PeriodoContableUncheckedCreateWithoutPeriodoPadreInput>
+  }
+
+  export type PeriodoContableCreateManyPeriodoPadreInputEnvelope = {
+    data: PeriodoContableCreateManyPeriodoPadreInput | PeriodoContableCreateManyPeriodoPadreInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type AperturaPeriodoCreateWithoutPeriodoInput = {
+    aperturaId?: string
+    origenPeriodoId?: string | null
+    saldoCajaInicial?: Decimal | DecimalJsLike | number | string
+    saldoBancoInicial?: Decimal | DecimalJsLike | number | string
+    saldoCuentasCobrarInicial?: Decimal | DecimalJsLike | number | string
+    saldoCuentasPagarInicial?: Decimal | DecimalJsLike | number | string
+    saldoInventarioInicial?: Decimal | DecimalJsLike | number | string
+    saldoCapitalInicial?: Decimal | DecimalJsLike | number | string
+    saldoResultadoAcumInicial?: Decimal | DecimalJsLike | number | string
+    detalleJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    tenant: TenantCreateNestedOneWithoutAperturaPeriodosInput
+  }
+
+  export type AperturaPeriodoUncheckedCreateWithoutPeriodoInput = {
+    aperturaId?: string
+    tenantId: string
+    origenPeriodoId?: string | null
+    saldoCajaInicial?: Decimal | DecimalJsLike | number | string
+    saldoBancoInicial?: Decimal | DecimalJsLike | number | string
+    saldoCuentasCobrarInicial?: Decimal | DecimalJsLike | number | string
+    saldoCuentasPagarInicial?: Decimal | DecimalJsLike | number | string
+    saldoInventarioInicial?: Decimal | DecimalJsLike | number | string
+    saldoCapitalInicial?: Decimal | DecimalJsLike | number | string
+    saldoResultadoAcumInicial?: Decimal | DecimalJsLike | number | string
+    detalleJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AperturaPeriodoCreateOrConnectWithoutPeriodoInput = {
+    where: AperturaPeriodoWhereUniqueInput
+    create: XOR<AperturaPeriodoCreateWithoutPeriodoInput, AperturaPeriodoUncheckedCreateWithoutPeriodoInput>
   }
 
   export type TenantUpsertWithoutPeriodosContablesInput = {
@@ -220858,6 +225295,7 @@ export namespace Prisma {
     stockUbicaciones?: StockUbicacionUpdateManyWithoutTenantNestedInput
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
@@ -220922,6 +225360,7 @@ export namespace Prisma {
     stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutTenantNestedInput
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
@@ -220954,6 +225393,36 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"SaldoSnapshot"> | Date | string
   }
 
+  export type SnapshotPeriodoUpsertWithWhereUniqueWithoutPeriodoInput = {
+    where: SnapshotPeriodoWhereUniqueInput
+    update: XOR<SnapshotPeriodoUpdateWithoutPeriodoInput, SnapshotPeriodoUncheckedUpdateWithoutPeriodoInput>
+    create: XOR<SnapshotPeriodoCreateWithoutPeriodoInput, SnapshotPeriodoUncheckedCreateWithoutPeriodoInput>
+  }
+
+  export type SnapshotPeriodoUpdateWithWhereUniqueWithoutPeriodoInput = {
+    where: SnapshotPeriodoWhereUniqueInput
+    data: XOR<SnapshotPeriodoUpdateWithoutPeriodoInput, SnapshotPeriodoUncheckedUpdateWithoutPeriodoInput>
+  }
+
+  export type SnapshotPeriodoUpdateManyWithWhereWithoutPeriodoInput = {
+    where: SnapshotPeriodoScalarWhereInput
+    data: XOR<SnapshotPeriodoUpdateManyMutationInput, SnapshotPeriodoUncheckedUpdateManyWithoutPeriodoInput>
+  }
+
+  export type SnapshotPeriodoScalarWhereInput = {
+    AND?: SnapshotPeriodoScalarWhereInput | SnapshotPeriodoScalarWhereInput[]
+    OR?: SnapshotPeriodoScalarWhereInput[]
+    NOT?: SnapshotPeriodoScalarWhereInput | SnapshotPeriodoScalarWhereInput[]
+    snapshotId?: StringFilter<"SnapshotPeriodo"> | string
+    periodoId?: StringFilter<"SnapshotPeriodo"> | string
+    version?: IntFilter<"SnapshotPeriodo"> | number
+    baseCajaJson?: JsonNullableFilter<"SnapshotPeriodo">
+    baseDevengoJson?: JsonNullableFilter<"SnapshotPeriodo">
+    resumenJson?: JsonNullableFilter<"SnapshotPeriodo">
+    hashIntegridad?: StringNullableFilter<"SnapshotPeriodo"> | string | null
+    createdAt?: DateTimeFilter<"SnapshotPeriodo"> | Date | string
+  }
+
   export type AuditoriaPeriodoUpsertWithWhereUniqueWithoutPeriodoInput = {
     where: AuditoriaPeriodoWhereUniqueInput
     update: XOR<AuditoriaPeriodoUpdateWithoutPeriodoInput, AuditoriaPeriodoUncheckedUpdateWithoutPeriodoInput>
@@ -220970,40 +225439,766 @@ export namespace Prisma {
     data: XOR<AuditoriaPeriodoUpdateManyMutationInput, AuditoriaPeriodoUncheckedUpdateManyWithoutPeriodoInput>
   }
 
-  export type PeriodoContableCreateWithoutSnapshotsInput = {
+  export type PeriodoContableUpsertWithoutSubperiodosInput = {
+    update: XOR<PeriodoContableUpdateWithoutSubperiodosInput, PeriodoContableUncheckedUpdateWithoutSubperiodosInput>
+    create: XOR<PeriodoContableCreateWithoutSubperiodosInput, PeriodoContableUncheckedCreateWithoutSubperiodosInput>
+    where?: PeriodoContableWhereInput
+  }
+
+  export type PeriodoContableUpdateToOneWithWhereWithoutSubperiodosInput = {
+    where?: PeriodoContableWhereInput
+    data: XOR<PeriodoContableUpdateWithoutSubperiodosInput, PeriodoContableUncheckedUpdateWithoutSubperiodosInput>
+  }
+
+  export type PeriodoContableUpdateWithoutSubperiodosInput = {
+    periodoId?: StringFieldUpdateOperationsInput | string
+    tipo?: EnumTipoPeriodoFieldUpdateOperationsInput | $Enums.TipoPeriodo
+    codigo?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaFin?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
+    aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
+    categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
+    cerradoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    aprobadoPor?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobadoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaReapertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    segundoAprobadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    motivoReapertura?: NullableStringFieldUpdateOperationsInput | string | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tenant?: TenantUpdateOneRequiredWithoutPeriodosContablesNestedInput
+    snapshots?: SaldoSnapshotUpdateManyWithoutPeriodoNestedInput
+    snapshotPeriodos?: SnapshotPeriodoUpdateManyWithoutPeriodoNestedInput
+    auditoria?: AuditoriaPeriodoUpdateManyWithoutPeriodoNestedInput
+    periodoPadre?: PeriodoContableUpdateOneWithoutSubperiodosNestedInput
+    apertura?: AperturaPeriodoUpdateOneWithoutPeriodoNestedInput
+  }
+
+  export type PeriodoContableUncheckedUpdateWithoutSubperiodosInput = {
+    periodoId?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    tipo?: EnumTipoPeriodoFieldUpdateOperationsInput | $Enums.TipoPeriodo
+    codigo?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaFin?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
+    periodoPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
+    categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
+    cerradoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    aprobadoPor?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobadoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaReapertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    segundoAprobadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    motivoReapertura?: NullableStringFieldUpdateOperationsInput | string | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    snapshots?: SaldoSnapshotUncheckedUpdateManyWithoutPeriodoNestedInput
+    snapshotPeriodos?: SnapshotPeriodoUncheckedUpdateManyWithoutPeriodoNestedInput
+    auditoria?: AuditoriaPeriodoUncheckedUpdateManyWithoutPeriodoNestedInput
+    apertura?: AperturaPeriodoUncheckedUpdateOneWithoutPeriodoNestedInput
+  }
+
+  export type PeriodoContableUpsertWithWhereUniqueWithoutPeriodoPadreInput = {
+    where: PeriodoContableWhereUniqueInput
+    update: XOR<PeriodoContableUpdateWithoutPeriodoPadreInput, PeriodoContableUncheckedUpdateWithoutPeriodoPadreInput>
+    create: XOR<PeriodoContableCreateWithoutPeriodoPadreInput, PeriodoContableUncheckedCreateWithoutPeriodoPadreInput>
+  }
+
+  export type PeriodoContableUpdateWithWhereUniqueWithoutPeriodoPadreInput = {
+    where: PeriodoContableWhereUniqueInput
+    data: XOR<PeriodoContableUpdateWithoutPeriodoPadreInput, PeriodoContableUncheckedUpdateWithoutPeriodoPadreInput>
+  }
+
+  export type PeriodoContableUpdateManyWithWhereWithoutPeriodoPadreInput = {
+    where: PeriodoContableScalarWhereInput
+    data: XOR<PeriodoContableUpdateManyMutationInput, PeriodoContableUncheckedUpdateManyWithoutPeriodoPadreInput>
+  }
+
+  export type AperturaPeriodoUpsertWithoutPeriodoInput = {
+    update: XOR<AperturaPeriodoUpdateWithoutPeriodoInput, AperturaPeriodoUncheckedUpdateWithoutPeriodoInput>
+    create: XOR<AperturaPeriodoCreateWithoutPeriodoInput, AperturaPeriodoUncheckedCreateWithoutPeriodoInput>
+    where?: AperturaPeriodoWhereInput
+  }
+
+  export type AperturaPeriodoUpdateToOneWithWhereWithoutPeriodoInput = {
+    where?: AperturaPeriodoWhereInput
+    data: XOR<AperturaPeriodoUpdateWithoutPeriodoInput, AperturaPeriodoUncheckedUpdateWithoutPeriodoInput>
+  }
+
+  export type AperturaPeriodoUpdateWithoutPeriodoInput = {
+    aperturaId?: StringFieldUpdateOperationsInput | string
+    origenPeriodoId?: NullableStringFieldUpdateOperationsInput | string | null
+    saldoCajaInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoBancoInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCuentasCobrarInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCuentasPagarInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoInventarioInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCapitalInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoResultadoAcumInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    detalleJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tenant?: TenantUpdateOneRequiredWithoutAperturaPeriodosNestedInput
+  }
+
+  export type AperturaPeriodoUncheckedUpdateWithoutPeriodoInput = {
+    aperturaId?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    origenPeriodoId?: NullableStringFieldUpdateOperationsInput | string | null
+    saldoCajaInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoBancoInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCuentasCobrarInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCuentasPagarInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoInventarioInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCapitalInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoResultadoAcumInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    detalleJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PeriodoContableCreateWithoutSnapshotPeriodosInput = {
     periodoId?: string
     tipo: $Enums.TipoPeriodo
+    codigo?: string | null
     fechaInicio: Date | string
     fechaFin: Date | string
     estado?: $Enums.EstadoPeriodo
-    motivoReapertura?: string | null
+    aperturaAutomatica?: boolean
+    categoria?: $Enums.CategoriaPeriodo
+    abiertoPorId?: string | null
+    fechaApertura?: Date | string | null
     cerradoPor?: string | null
     cerradoAt?: Date | string | null
     aprobadoPor?: string | null
     aprobadoAt?: Date | string | null
+    reabiertoPorId?: string | null
+    fechaReapertura?: Date | string | null
+    segundoAprobadorId?: string | null
+    motivoReapertura?: string | null
     observaciones?: string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     tenant: TenantCreateNestedOneWithoutPeriodosContablesInput
+    snapshots?: SaldoSnapshotCreateNestedManyWithoutPeriodoInput
     auditoria?: AuditoriaPeriodoCreateNestedManyWithoutPeriodoInput
+    periodoPadre?: PeriodoContableCreateNestedOneWithoutSubperiodosInput
+    subperiodos?: PeriodoContableCreateNestedManyWithoutPeriodoPadreInput
+    apertura?: AperturaPeriodoCreateNestedOneWithoutPeriodoInput
+  }
+
+  export type PeriodoContableUncheckedCreateWithoutSnapshotPeriodosInput = {
+    periodoId?: string
+    tenantId: string
+    tipo: $Enums.TipoPeriodo
+    codigo?: string | null
+    fechaInicio: Date | string
+    fechaFin: Date | string
+    estado?: $Enums.EstadoPeriodo
+    periodoPadreId?: string | null
+    aperturaAutomatica?: boolean
+    categoria?: $Enums.CategoriaPeriodo
+    abiertoPorId?: string | null
+    fechaApertura?: Date | string | null
+    cerradoPor?: string | null
+    cerradoAt?: Date | string | null
+    aprobadoPor?: string | null
+    aprobadoAt?: Date | string | null
+    reabiertoPorId?: string | null
+    fechaReapertura?: Date | string | null
+    segundoAprobadorId?: string | null
+    motivoReapertura?: string | null
+    observaciones?: string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    snapshots?: SaldoSnapshotUncheckedCreateNestedManyWithoutPeriodoInput
+    auditoria?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutPeriodoInput
+    subperiodos?: PeriodoContableUncheckedCreateNestedManyWithoutPeriodoPadreInput
+    apertura?: AperturaPeriodoUncheckedCreateNestedOneWithoutPeriodoInput
+  }
+
+  export type PeriodoContableCreateOrConnectWithoutSnapshotPeriodosInput = {
+    where: PeriodoContableWhereUniqueInput
+    create: XOR<PeriodoContableCreateWithoutSnapshotPeriodosInput, PeriodoContableUncheckedCreateWithoutSnapshotPeriodosInput>
+  }
+
+  export type PeriodoContableUpsertWithoutSnapshotPeriodosInput = {
+    update: XOR<PeriodoContableUpdateWithoutSnapshotPeriodosInput, PeriodoContableUncheckedUpdateWithoutSnapshotPeriodosInput>
+    create: XOR<PeriodoContableCreateWithoutSnapshotPeriodosInput, PeriodoContableUncheckedCreateWithoutSnapshotPeriodosInput>
+    where?: PeriodoContableWhereInput
+  }
+
+  export type PeriodoContableUpdateToOneWithWhereWithoutSnapshotPeriodosInput = {
+    where?: PeriodoContableWhereInput
+    data: XOR<PeriodoContableUpdateWithoutSnapshotPeriodosInput, PeriodoContableUncheckedUpdateWithoutSnapshotPeriodosInput>
+  }
+
+  export type PeriodoContableUpdateWithoutSnapshotPeriodosInput = {
+    periodoId?: StringFieldUpdateOperationsInput | string
+    tipo?: EnumTipoPeriodoFieldUpdateOperationsInput | $Enums.TipoPeriodo
+    codigo?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaFin?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
+    aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
+    categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
+    cerradoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    aprobadoPor?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobadoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaReapertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    segundoAprobadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    motivoReapertura?: NullableStringFieldUpdateOperationsInput | string | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tenant?: TenantUpdateOneRequiredWithoutPeriodosContablesNestedInput
+    snapshots?: SaldoSnapshotUpdateManyWithoutPeriodoNestedInput
+    auditoria?: AuditoriaPeriodoUpdateManyWithoutPeriodoNestedInput
+    periodoPadre?: PeriodoContableUpdateOneWithoutSubperiodosNestedInput
+    subperiodos?: PeriodoContableUpdateManyWithoutPeriodoPadreNestedInput
+    apertura?: AperturaPeriodoUpdateOneWithoutPeriodoNestedInput
+  }
+
+  export type PeriodoContableUncheckedUpdateWithoutSnapshotPeriodosInput = {
+    periodoId?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    tipo?: EnumTipoPeriodoFieldUpdateOperationsInput | $Enums.TipoPeriodo
+    codigo?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaFin?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
+    periodoPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
+    categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
+    cerradoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    aprobadoPor?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobadoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaReapertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    segundoAprobadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    motivoReapertura?: NullableStringFieldUpdateOperationsInput | string | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    snapshots?: SaldoSnapshotUncheckedUpdateManyWithoutPeriodoNestedInput
+    auditoria?: AuditoriaPeriodoUncheckedUpdateManyWithoutPeriodoNestedInput
+    subperiodos?: PeriodoContableUncheckedUpdateManyWithoutPeriodoPadreNestedInput
+    apertura?: AperturaPeriodoUncheckedUpdateOneWithoutPeriodoNestedInput
+  }
+
+  export type PeriodoContableCreateWithoutAperturaInput = {
+    periodoId?: string
+    tipo: $Enums.TipoPeriodo
+    codigo?: string | null
+    fechaInicio: Date | string
+    fechaFin: Date | string
+    estado?: $Enums.EstadoPeriodo
+    aperturaAutomatica?: boolean
+    categoria?: $Enums.CategoriaPeriodo
+    abiertoPorId?: string | null
+    fechaApertura?: Date | string | null
+    cerradoPor?: string | null
+    cerradoAt?: Date | string | null
+    aprobadoPor?: string | null
+    aprobadoAt?: Date | string | null
+    reabiertoPorId?: string | null
+    fechaReapertura?: Date | string | null
+    segundoAprobadorId?: string | null
+    motivoReapertura?: string | null
+    observaciones?: string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    tenant: TenantCreateNestedOneWithoutPeriodosContablesInput
+    snapshots?: SaldoSnapshotCreateNestedManyWithoutPeriodoInput
+    snapshotPeriodos?: SnapshotPeriodoCreateNestedManyWithoutPeriodoInput
+    auditoria?: AuditoriaPeriodoCreateNestedManyWithoutPeriodoInput
+    periodoPadre?: PeriodoContableCreateNestedOneWithoutSubperiodosInput
+    subperiodos?: PeriodoContableCreateNestedManyWithoutPeriodoPadreInput
+  }
+
+  export type PeriodoContableUncheckedCreateWithoutAperturaInput = {
+    periodoId?: string
+    tenantId: string
+    tipo: $Enums.TipoPeriodo
+    codigo?: string | null
+    fechaInicio: Date | string
+    fechaFin: Date | string
+    estado?: $Enums.EstadoPeriodo
+    periodoPadreId?: string | null
+    aperturaAutomatica?: boolean
+    categoria?: $Enums.CategoriaPeriodo
+    abiertoPorId?: string | null
+    fechaApertura?: Date | string | null
+    cerradoPor?: string | null
+    cerradoAt?: Date | string | null
+    aprobadoPor?: string | null
+    aprobadoAt?: Date | string | null
+    reabiertoPorId?: string | null
+    fechaReapertura?: Date | string | null
+    segundoAprobadorId?: string | null
+    motivoReapertura?: string | null
+    observaciones?: string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    snapshots?: SaldoSnapshotUncheckedCreateNestedManyWithoutPeriodoInput
+    snapshotPeriodos?: SnapshotPeriodoUncheckedCreateNestedManyWithoutPeriodoInput
+    auditoria?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutPeriodoInput
+    subperiodos?: PeriodoContableUncheckedCreateNestedManyWithoutPeriodoPadreInput
+  }
+
+  export type PeriodoContableCreateOrConnectWithoutAperturaInput = {
+    where: PeriodoContableWhereUniqueInput
+    create: XOR<PeriodoContableCreateWithoutAperturaInput, PeriodoContableUncheckedCreateWithoutAperturaInput>
+  }
+
+  export type TenantCreateWithoutAperturaPeriodosInput = {
+    tenantId?: string
+    nombre: string
+    slug?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    contabilidadTimezone?: string
+    empresa?: MiEmpresaCreateNestedOneWithoutTenantInput
+    memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
+    licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
+    categorias?: CategoriaCreateNestedManyWithoutTenantInput
+    vendors?: VendorCreateNestedManyWithoutTenantInput
+    clientes?: ClienteCreateNestedManyWithoutTenantInput
+    almacenes?: AlmacenCreateNestedManyWithoutTenantInput
+    puntosDeVenta?: PuntoDeVentaCreateNestedManyWithoutTenantInput
+    productos?: ProductoCreateNestedManyWithoutTenantInput
+    ventas?: VentaCreateNestedManyWithoutTenantInput
+    facturas?: FacturaCreateNestedManyWithoutTenantInput
+    gastosDE?: GastosDECreateNestedManyWithoutTenantInput
+    gastosCompra?: GastoCompraCreateNestedManyWithoutTenantInput
+    comprasProducto?: CompraProductoCreateNestedManyWithoutTenantInput
+    comprasDocumento?: CompraDocumentoCreateNestedManyWithoutTenantInput
+    comprasDocumentoItem?: CompraDocumentoItemCreateNestedManyWithoutTenantInput
+    servicios?: ServiciosCreateNestedManyWithoutTenantInput
+    ventasServicios?: VentaServiciosCreateNestedManyWithoutTenantInput
+    comprasServicio?: CompraServicioCreateNestedManyWithoutTenantInput
+    cuentasBancarias?: CuentaBancariaCreateNestedManyWithoutTenantInput
+    reconciliacionesVenta?: ReconciliacionVentaCreateNestedManyWithoutTenantInput
+    reconciliacionesServicio?: ReconciliacionServicioCreateNestedManyWithoutTenantInput
+    reconciliacionesGasto?: ReconciliacionGastoCreateNestedManyWithoutTenantInput
+    ajustesBancarios?: AjusteBancarioCreateNestedManyWithoutTenantInput
+    transferenciasBancarias?: TransferenciaBancariaCreateNestedManyWithoutTenantInput
+    contratos?: ContratoCreateNestedManyWithoutTenantInput
+    seriesFacturacion?: SerieFacturacionCreateNestedManyWithoutTenantInput
+    ofertas?: OfertaCreateNestedManyWithoutTenantInput
+    cuentasPorCobrar?: CuentaPorCobrarCreateNestedManyWithoutTenantInput
+    cuentasPorPagar?: CuentaPorPagarCreateNestedManyWithoutTenantInput
+    deudasCash?: DeudaCashCreateNestedManyWithoutTenantInput
+    prestamosCash?: PrestamoCashCreateNestedManyWithoutTenantInput
+    pagosCuentaPorPagar?: PagoCuentaPorPagarCreateNestedManyWithoutTenantInput
+    empleados?: EmpleadoCreateNestedManyWithoutTenantInput
+    ordenesProduccion?: OrdenProduccionCreateNestedManyWithoutTenantInput
+    ordenesProduccionHistorial?: OrdenProduccionHistorialCreateNestedManyWithoutTenantInput
+    recetas?: RecetaCreateNestedManyWithoutTenantInput
+    recetasIngredientes?: RecetaIngredienteCreateNestedManyWithoutTenantInput
+    valesSalida?: ValeSalidaCreateNestedManyWithoutTenantInput
+    valesSalidaItem?: ValeSalidaItemCreateNestedManyWithoutTenantInput
+    listasPrecio?: ListaPrecioCreateNestedManyWithoutTenantInput
+    equiposReparacion?: EquipoReparacionCreateNestedManyWithoutTenantInput
+    piezasReparacion?: PiezaReparacionCreateNestedManyWithoutTenantInput
+    ordenesReparacion?: OrdenReparacionCreateNestedManyWithoutTenantInput
+    ordenesReparacionEquipo?: OrdenReparacionEquipoCreateNestedManyWithoutTenantInput
+    ordenesReparacionItem?: OrdenReparacionItemCreateNestedManyWithoutTenantInput
+    ordenesReparacionMaterial?: OrdenReparacionMaterialCreateNestedManyWithoutTenantInput
+    defectacionesCatalogo?: DefectacionCatalogoCreateNestedManyWithoutTenantInput
+    anticipos?: AnticipoCreateNestedManyWithoutTenantInput
+    transferencias?: TransferenciaCreateNestedManyWithoutTenantInput
+    mermas?: MermaCreateNestedManyWithoutTenantInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutTenantInput
+    pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
+    cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
+    periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+  }
+
+  export type TenantUncheckedCreateWithoutAperturaPeriodosInput = {
+    tenantId?: string
+    nombre: string
+    slug?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    contabilidadTimezone?: string
+    empresa?: MiEmpresaUncheckedCreateNestedOneWithoutTenantInput
+    memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
+    licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
+    categorias?: CategoriaUncheckedCreateNestedManyWithoutTenantInput
+    vendors?: VendorUncheckedCreateNestedManyWithoutTenantInput
+    clientes?: ClienteUncheckedCreateNestedManyWithoutTenantInput
+    almacenes?: AlmacenUncheckedCreateNestedManyWithoutTenantInput
+    puntosDeVenta?: PuntoDeVentaUncheckedCreateNestedManyWithoutTenantInput
+    productos?: ProductoUncheckedCreateNestedManyWithoutTenantInput
+    ventas?: VentaUncheckedCreateNestedManyWithoutTenantInput
+    facturas?: FacturaUncheckedCreateNestedManyWithoutTenantInput
+    gastosDE?: GastosDEUncheckedCreateNestedManyWithoutTenantInput
+    gastosCompra?: GastoCompraUncheckedCreateNestedManyWithoutTenantInput
+    comprasProducto?: CompraProductoUncheckedCreateNestedManyWithoutTenantInput
+    comprasDocumento?: CompraDocumentoUncheckedCreateNestedManyWithoutTenantInput
+    comprasDocumentoItem?: CompraDocumentoItemUncheckedCreateNestedManyWithoutTenantInput
+    servicios?: ServiciosUncheckedCreateNestedManyWithoutTenantInput
+    ventasServicios?: VentaServiciosUncheckedCreateNestedManyWithoutTenantInput
+    comprasServicio?: CompraServicioUncheckedCreateNestedManyWithoutTenantInput
+    cuentasBancarias?: CuentaBancariaUncheckedCreateNestedManyWithoutTenantInput
+    reconciliacionesVenta?: ReconciliacionVentaUncheckedCreateNestedManyWithoutTenantInput
+    reconciliacionesServicio?: ReconciliacionServicioUncheckedCreateNestedManyWithoutTenantInput
+    reconciliacionesGasto?: ReconciliacionGastoUncheckedCreateNestedManyWithoutTenantInput
+    ajustesBancarios?: AjusteBancarioUncheckedCreateNestedManyWithoutTenantInput
+    transferenciasBancarias?: TransferenciaBancariaUncheckedCreateNestedManyWithoutTenantInput
+    contratos?: ContratoUncheckedCreateNestedManyWithoutTenantInput
+    seriesFacturacion?: SerieFacturacionUncheckedCreateNestedManyWithoutTenantInput
+    ofertas?: OfertaUncheckedCreateNestedManyWithoutTenantInput
+    cuentasPorCobrar?: CuentaPorCobrarUncheckedCreateNestedManyWithoutTenantInput
+    cuentasPorPagar?: CuentaPorPagarUncheckedCreateNestedManyWithoutTenantInput
+    deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutTenantInput
+    prestamosCash?: PrestamoCashUncheckedCreateNestedManyWithoutTenantInput
+    pagosCuentaPorPagar?: PagoCuentaPorPagarUncheckedCreateNestedManyWithoutTenantInput
+    empleados?: EmpleadoUncheckedCreateNestedManyWithoutTenantInput
+    ordenesProduccion?: OrdenProduccionUncheckedCreateNestedManyWithoutTenantInput
+    ordenesProduccionHistorial?: OrdenProduccionHistorialUncheckedCreateNestedManyWithoutTenantInput
+    recetas?: RecetaUncheckedCreateNestedManyWithoutTenantInput
+    recetasIngredientes?: RecetaIngredienteUncheckedCreateNestedManyWithoutTenantInput
+    valesSalida?: ValeSalidaUncheckedCreateNestedManyWithoutTenantInput
+    valesSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutTenantInput
+    listasPrecio?: ListaPrecioUncheckedCreateNestedManyWithoutTenantInput
+    equiposReparacion?: EquipoReparacionUncheckedCreateNestedManyWithoutTenantInput
+    piezasReparacion?: PiezaReparacionUncheckedCreateNestedManyWithoutTenantInput
+    ordenesReparacion?: OrdenReparacionUncheckedCreateNestedManyWithoutTenantInput
+    ordenesReparacionEquipo?: OrdenReparacionEquipoUncheckedCreateNestedManyWithoutTenantInput
+    ordenesReparacionItem?: OrdenReparacionItemUncheckedCreateNestedManyWithoutTenantInput
+    ordenesReparacionMaterial?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutTenantInput
+    defectacionesCatalogo?: DefectacionCatalogoUncheckedCreateNestedManyWithoutTenantInput
+    anticipos?: AnticipoUncheckedCreateNestedManyWithoutTenantInput
+    transferencias?: TransferenciaUncheckedCreateNestedManyWithoutTenantInput
+    mermas?: MermaUncheckedCreateNestedManyWithoutTenantInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutTenantInput
+    pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
+    cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
+    periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+  }
+
+  export type TenantCreateOrConnectWithoutAperturaPeriodosInput = {
+    where: TenantWhereUniqueInput
+    create: XOR<TenantCreateWithoutAperturaPeriodosInput, TenantUncheckedCreateWithoutAperturaPeriodosInput>
+  }
+
+  export type PeriodoContableUpsertWithoutAperturaInput = {
+    update: XOR<PeriodoContableUpdateWithoutAperturaInput, PeriodoContableUncheckedUpdateWithoutAperturaInput>
+    create: XOR<PeriodoContableCreateWithoutAperturaInput, PeriodoContableUncheckedCreateWithoutAperturaInput>
+    where?: PeriodoContableWhereInput
+  }
+
+  export type PeriodoContableUpdateToOneWithWhereWithoutAperturaInput = {
+    where?: PeriodoContableWhereInput
+    data: XOR<PeriodoContableUpdateWithoutAperturaInput, PeriodoContableUncheckedUpdateWithoutAperturaInput>
+  }
+
+  export type PeriodoContableUpdateWithoutAperturaInput = {
+    periodoId?: StringFieldUpdateOperationsInput | string
+    tipo?: EnumTipoPeriodoFieldUpdateOperationsInput | $Enums.TipoPeriodo
+    codigo?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaFin?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
+    aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
+    categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
+    cerradoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    aprobadoPor?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobadoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaReapertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    segundoAprobadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    motivoReapertura?: NullableStringFieldUpdateOperationsInput | string | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tenant?: TenantUpdateOneRequiredWithoutPeriodosContablesNestedInput
+    snapshots?: SaldoSnapshotUpdateManyWithoutPeriodoNestedInput
+    snapshotPeriodos?: SnapshotPeriodoUpdateManyWithoutPeriodoNestedInput
+    auditoria?: AuditoriaPeriodoUpdateManyWithoutPeriodoNestedInput
+    periodoPadre?: PeriodoContableUpdateOneWithoutSubperiodosNestedInput
+    subperiodos?: PeriodoContableUpdateManyWithoutPeriodoPadreNestedInput
+  }
+
+  export type PeriodoContableUncheckedUpdateWithoutAperturaInput = {
+    periodoId?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    tipo?: EnumTipoPeriodoFieldUpdateOperationsInput | $Enums.TipoPeriodo
+    codigo?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaFin?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
+    periodoPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
+    categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
+    cerradoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    aprobadoPor?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobadoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaReapertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    segundoAprobadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    motivoReapertura?: NullableStringFieldUpdateOperationsInput | string | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    snapshots?: SaldoSnapshotUncheckedUpdateManyWithoutPeriodoNestedInput
+    snapshotPeriodos?: SnapshotPeriodoUncheckedUpdateManyWithoutPeriodoNestedInput
+    auditoria?: AuditoriaPeriodoUncheckedUpdateManyWithoutPeriodoNestedInput
+    subperiodos?: PeriodoContableUncheckedUpdateManyWithoutPeriodoPadreNestedInput
+  }
+
+  export type TenantUpsertWithoutAperturaPeriodosInput = {
+    update: XOR<TenantUpdateWithoutAperturaPeriodosInput, TenantUncheckedUpdateWithoutAperturaPeriodosInput>
+    create: XOR<TenantCreateWithoutAperturaPeriodosInput, TenantUncheckedCreateWithoutAperturaPeriodosInput>
+    where?: TenantWhereInput
+  }
+
+  export type TenantUpdateToOneWithWhereWithoutAperturaPeriodosInput = {
+    where?: TenantWhereInput
+    data: XOR<TenantUpdateWithoutAperturaPeriodosInput, TenantUncheckedUpdateWithoutAperturaPeriodosInput>
+  }
+
+  export type TenantUpdateWithoutAperturaPeriodosInput = {
+    tenantId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    slug?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    contabilidadTimezone?: StringFieldUpdateOperationsInput | string
+    empresa?: MiEmpresaUpdateOneWithoutTenantNestedInput
+    memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
+    licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
+    categorias?: CategoriaUpdateManyWithoutTenantNestedInput
+    vendors?: VendorUpdateManyWithoutTenantNestedInput
+    clientes?: ClienteUpdateManyWithoutTenantNestedInput
+    almacenes?: AlmacenUpdateManyWithoutTenantNestedInput
+    puntosDeVenta?: PuntoDeVentaUpdateManyWithoutTenantNestedInput
+    productos?: ProductoUpdateManyWithoutTenantNestedInput
+    ventas?: VentaUpdateManyWithoutTenantNestedInput
+    facturas?: FacturaUpdateManyWithoutTenantNestedInput
+    gastosDE?: GastosDEUpdateManyWithoutTenantNestedInput
+    gastosCompra?: GastoCompraUpdateManyWithoutTenantNestedInput
+    comprasProducto?: CompraProductoUpdateManyWithoutTenantNestedInput
+    comprasDocumento?: CompraDocumentoUpdateManyWithoutTenantNestedInput
+    comprasDocumentoItem?: CompraDocumentoItemUpdateManyWithoutTenantNestedInput
+    servicios?: ServiciosUpdateManyWithoutTenantNestedInput
+    ventasServicios?: VentaServiciosUpdateManyWithoutTenantNestedInput
+    comprasServicio?: CompraServicioUpdateManyWithoutTenantNestedInput
+    cuentasBancarias?: CuentaBancariaUpdateManyWithoutTenantNestedInput
+    reconciliacionesVenta?: ReconciliacionVentaUpdateManyWithoutTenantNestedInput
+    reconciliacionesServicio?: ReconciliacionServicioUpdateManyWithoutTenantNestedInput
+    reconciliacionesGasto?: ReconciliacionGastoUpdateManyWithoutTenantNestedInput
+    ajustesBancarios?: AjusteBancarioUpdateManyWithoutTenantNestedInput
+    transferenciasBancarias?: TransferenciaBancariaUpdateManyWithoutTenantNestedInput
+    contratos?: ContratoUpdateManyWithoutTenantNestedInput
+    seriesFacturacion?: SerieFacturacionUpdateManyWithoutTenantNestedInput
+    ofertas?: OfertaUpdateManyWithoutTenantNestedInput
+    cuentasPorCobrar?: CuentaPorCobrarUpdateManyWithoutTenantNestedInput
+    cuentasPorPagar?: CuentaPorPagarUpdateManyWithoutTenantNestedInput
+    deudasCash?: DeudaCashUpdateManyWithoutTenantNestedInput
+    prestamosCash?: PrestamoCashUpdateManyWithoutTenantNestedInput
+    pagosCuentaPorPagar?: PagoCuentaPorPagarUpdateManyWithoutTenantNestedInput
+    empleados?: EmpleadoUpdateManyWithoutTenantNestedInput
+    ordenesProduccion?: OrdenProduccionUpdateManyWithoutTenantNestedInput
+    ordenesProduccionHistorial?: OrdenProduccionHistorialUpdateManyWithoutTenantNestedInput
+    recetas?: RecetaUpdateManyWithoutTenantNestedInput
+    recetasIngredientes?: RecetaIngredienteUpdateManyWithoutTenantNestedInput
+    valesSalida?: ValeSalidaUpdateManyWithoutTenantNestedInput
+    valesSalidaItem?: ValeSalidaItemUpdateManyWithoutTenantNestedInput
+    listasPrecio?: ListaPrecioUpdateManyWithoutTenantNestedInput
+    equiposReparacion?: EquipoReparacionUpdateManyWithoutTenantNestedInput
+    piezasReparacion?: PiezaReparacionUpdateManyWithoutTenantNestedInput
+    ordenesReparacion?: OrdenReparacionUpdateManyWithoutTenantNestedInput
+    ordenesReparacionEquipo?: OrdenReparacionEquipoUpdateManyWithoutTenantNestedInput
+    ordenesReparacionItem?: OrdenReparacionItemUpdateManyWithoutTenantNestedInput
+    ordenesReparacionMaterial?: OrdenReparacionMaterialUpdateManyWithoutTenantNestedInput
+    defectacionesCatalogo?: DefectacionCatalogoUpdateManyWithoutTenantNestedInput
+    anticipos?: AnticipoUpdateManyWithoutTenantNestedInput
+    transferencias?: TransferenciaUpdateManyWithoutTenantNestedInput
+    mermas?: MermaUpdateManyWithoutTenantNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutTenantNestedInput
+    pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
+    cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
+    periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+  }
+
+  export type TenantUncheckedUpdateWithoutAperturaPeriodosInput = {
+    tenantId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    slug?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    contabilidadTimezone?: StringFieldUpdateOperationsInput | string
+    empresa?: MiEmpresaUncheckedUpdateOneWithoutTenantNestedInput
+    memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
+    licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
+    categorias?: CategoriaUncheckedUpdateManyWithoutTenantNestedInput
+    vendors?: VendorUncheckedUpdateManyWithoutTenantNestedInput
+    clientes?: ClienteUncheckedUpdateManyWithoutTenantNestedInput
+    almacenes?: AlmacenUncheckedUpdateManyWithoutTenantNestedInput
+    puntosDeVenta?: PuntoDeVentaUncheckedUpdateManyWithoutTenantNestedInput
+    productos?: ProductoUncheckedUpdateManyWithoutTenantNestedInput
+    ventas?: VentaUncheckedUpdateManyWithoutTenantNestedInput
+    facturas?: FacturaUncheckedUpdateManyWithoutTenantNestedInput
+    gastosDE?: GastosDEUncheckedUpdateManyWithoutTenantNestedInput
+    gastosCompra?: GastoCompraUncheckedUpdateManyWithoutTenantNestedInput
+    comprasProducto?: CompraProductoUncheckedUpdateManyWithoutTenantNestedInput
+    comprasDocumento?: CompraDocumentoUncheckedUpdateManyWithoutTenantNestedInput
+    comprasDocumentoItem?: CompraDocumentoItemUncheckedUpdateManyWithoutTenantNestedInput
+    servicios?: ServiciosUncheckedUpdateManyWithoutTenantNestedInput
+    ventasServicios?: VentaServiciosUncheckedUpdateManyWithoutTenantNestedInput
+    comprasServicio?: CompraServicioUncheckedUpdateManyWithoutTenantNestedInput
+    cuentasBancarias?: CuentaBancariaUncheckedUpdateManyWithoutTenantNestedInput
+    reconciliacionesVenta?: ReconciliacionVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reconciliacionesServicio?: ReconciliacionServicioUncheckedUpdateManyWithoutTenantNestedInput
+    reconciliacionesGasto?: ReconciliacionGastoUncheckedUpdateManyWithoutTenantNestedInput
+    ajustesBancarios?: AjusteBancarioUncheckedUpdateManyWithoutTenantNestedInput
+    transferenciasBancarias?: TransferenciaBancariaUncheckedUpdateManyWithoutTenantNestedInput
+    contratos?: ContratoUncheckedUpdateManyWithoutTenantNestedInput
+    seriesFacturacion?: SerieFacturacionUncheckedUpdateManyWithoutTenantNestedInput
+    ofertas?: OfertaUncheckedUpdateManyWithoutTenantNestedInput
+    cuentasPorCobrar?: CuentaPorCobrarUncheckedUpdateManyWithoutTenantNestedInput
+    cuentasPorPagar?: CuentaPorPagarUncheckedUpdateManyWithoutTenantNestedInput
+    deudasCash?: DeudaCashUncheckedUpdateManyWithoutTenantNestedInput
+    prestamosCash?: PrestamoCashUncheckedUpdateManyWithoutTenantNestedInput
+    pagosCuentaPorPagar?: PagoCuentaPorPagarUncheckedUpdateManyWithoutTenantNestedInput
+    empleados?: EmpleadoUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesProduccion?: OrdenProduccionUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesProduccionHistorial?: OrdenProduccionHistorialUncheckedUpdateManyWithoutTenantNestedInput
+    recetas?: RecetaUncheckedUpdateManyWithoutTenantNestedInput
+    recetasIngredientes?: RecetaIngredienteUncheckedUpdateManyWithoutTenantNestedInput
+    valesSalida?: ValeSalidaUncheckedUpdateManyWithoutTenantNestedInput
+    valesSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutTenantNestedInput
+    listasPrecio?: ListaPrecioUncheckedUpdateManyWithoutTenantNestedInput
+    equiposReparacion?: EquipoReparacionUncheckedUpdateManyWithoutTenantNestedInput
+    piezasReparacion?: PiezaReparacionUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesReparacion?: OrdenReparacionUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesReparacionEquipo?: OrdenReparacionEquipoUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesReparacionItem?: OrdenReparacionItemUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesReparacionMaterial?: OrdenReparacionMaterialUncheckedUpdateManyWithoutTenantNestedInput
+    defectacionesCatalogo?: DefectacionCatalogoUncheckedUpdateManyWithoutTenantNestedInput
+    anticipos?: AnticipoUncheckedUpdateManyWithoutTenantNestedInput
+    transferencias?: TransferenciaUncheckedUpdateManyWithoutTenantNestedInput
+    mermas?: MermaUncheckedUpdateManyWithoutTenantNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutTenantNestedInput
+    pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
+    cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
+    periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+  }
+
+  export type PeriodoContableCreateWithoutSnapshotsInput = {
+    periodoId?: string
+    tipo: $Enums.TipoPeriodo
+    codigo?: string | null
+    fechaInicio: Date | string
+    fechaFin: Date | string
+    estado?: $Enums.EstadoPeriodo
+    aperturaAutomatica?: boolean
+    categoria?: $Enums.CategoriaPeriodo
+    abiertoPorId?: string | null
+    fechaApertura?: Date | string | null
+    cerradoPor?: string | null
+    cerradoAt?: Date | string | null
+    aprobadoPor?: string | null
+    aprobadoAt?: Date | string | null
+    reabiertoPorId?: string | null
+    fechaReapertura?: Date | string | null
+    segundoAprobadorId?: string | null
+    motivoReapertura?: string | null
+    observaciones?: string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    tenant: TenantCreateNestedOneWithoutPeriodosContablesInput
+    snapshotPeriodos?: SnapshotPeriodoCreateNestedManyWithoutPeriodoInput
+    auditoria?: AuditoriaPeriodoCreateNestedManyWithoutPeriodoInput
+    periodoPadre?: PeriodoContableCreateNestedOneWithoutSubperiodosInput
+    subperiodos?: PeriodoContableCreateNestedManyWithoutPeriodoPadreInput
+    apertura?: AperturaPeriodoCreateNestedOneWithoutPeriodoInput
   }
 
   export type PeriodoContableUncheckedCreateWithoutSnapshotsInput = {
     periodoId?: string
     tenantId: string
     tipo: $Enums.TipoPeriodo
+    codigo?: string | null
     fechaInicio: Date | string
     fechaFin: Date | string
     estado?: $Enums.EstadoPeriodo
-    motivoReapertura?: string | null
+    periodoPadreId?: string | null
+    aperturaAutomatica?: boolean
+    categoria?: $Enums.CategoriaPeriodo
+    abiertoPorId?: string | null
+    fechaApertura?: Date | string | null
     cerradoPor?: string | null
     cerradoAt?: Date | string | null
     aprobadoPor?: string | null
     aprobadoAt?: Date | string | null
+    reabiertoPorId?: string | null
+    fechaReapertura?: Date | string | null
+    segundoAprobadorId?: string | null
+    motivoReapertura?: string | null
     observaciones?: string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
+    snapshotPeriodos?: SnapshotPeriodoUncheckedCreateNestedManyWithoutPeriodoInput
     auditoria?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutPeriodoInput
+    subperiodos?: PeriodoContableUncheckedCreateNestedManyWithoutPeriodoPadreInput
+    apertura?: AperturaPeriodoUncheckedCreateNestedOneWithoutPeriodoInput
   }
 
   export type PeriodoContableCreateOrConnectWithoutSnapshotsInput = {
@@ -221025,73 +226220,129 @@ export namespace Prisma {
   export type PeriodoContableUpdateWithoutSnapshotsInput = {
     periodoId?: StringFieldUpdateOperationsInput | string
     tipo?: EnumTipoPeriodoFieldUpdateOperationsInput | $Enums.TipoPeriodo
+    codigo?: NullableStringFieldUpdateOperationsInput | string | null
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: DateTimeFieldUpdateOperationsInput | Date | string
     estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
-    motivoReapertura?: NullableStringFieldUpdateOperationsInput | string | null
+    aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
+    categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
     cerradoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     aprobadoPor?: NullableStringFieldUpdateOperationsInput | string | null
     aprobadoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaReapertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    segundoAprobadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    motivoReapertura?: NullableStringFieldUpdateOperationsInput | string | null
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     tenant?: TenantUpdateOneRequiredWithoutPeriodosContablesNestedInput
+    snapshotPeriodos?: SnapshotPeriodoUpdateManyWithoutPeriodoNestedInput
     auditoria?: AuditoriaPeriodoUpdateManyWithoutPeriodoNestedInput
+    periodoPadre?: PeriodoContableUpdateOneWithoutSubperiodosNestedInput
+    subperiodos?: PeriodoContableUpdateManyWithoutPeriodoPadreNestedInput
+    apertura?: AperturaPeriodoUpdateOneWithoutPeriodoNestedInput
   }
 
   export type PeriodoContableUncheckedUpdateWithoutSnapshotsInput = {
     periodoId?: StringFieldUpdateOperationsInput | string
     tenantId?: StringFieldUpdateOperationsInput | string
     tipo?: EnumTipoPeriodoFieldUpdateOperationsInput | $Enums.TipoPeriodo
+    codigo?: NullableStringFieldUpdateOperationsInput | string | null
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: DateTimeFieldUpdateOperationsInput | Date | string
     estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
-    motivoReapertura?: NullableStringFieldUpdateOperationsInput | string | null
+    periodoPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
+    categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
     cerradoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     aprobadoPor?: NullableStringFieldUpdateOperationsInput | string | null
     aprobadoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaReapertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    segundoAprobadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    motivoReapertura?: NullableStringFieldUpdateOperationsInput | string | null
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    snapshotPeriodos?: SnapshotPeriodoUncheckedUpdateManyWithoutPeriodoNestedInput
     auditoria?: AuditoriaPeriodoUncheckedUpdateManyWithoutPeriodoNestedInput
+    subperiodos?: PeriodoContableUncheckedUpdateManyWithoutPeriodoPadreNestedInput
+    apertura?: AperturaPeriodoUncheckedUpdateOneWithoutPeriodoNestedInput
   }
 
   export type PeriodoContableCreateWithoutAuditoriaInput = {
     periodoId?: string
     tipo: $Enums.TipoPeriodo
+    codigo?: string | null
     fechaInicio: Date | string
     fechaFin: Date | string
     estado?: $Enums.EstadoPeriodo
-    motivoReapertura?: string | null
+    aperturaAutomatica?: boolean
+    categoria?: $Enums.CategoriaPeriodo
+    abiertoPorId?: string | null
+    fechaApertura?: Date | string | null
     cerradoPor?: string | null
     cerradoAt?: Date | string | null
     aprobadoPor?: string | null
     aprobadoAt?: Date | string | null
+    reabiertoPorId?: string | null
+    fechaReapertura?: Date | string | null
+    segundoAprobadorId?: string | null
+    motivoReapertura?: string | null
     observaciones?: string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     tenant: TenantCreateNestedOneWithoutPeriodosContablesInput
     snapshots?: SaldoSnapshotCreateNestedManyWithoutPeriodoInput
+    snapshotPeriodos?: SnapshotPeriodoCreateNestedManyWithoutPeriodoInput
+    periodoPadre?: PeriodoContableCreateNestedOneWithoutSubperiodosInput
+    subperiodos?: PeriodoContableCreateNestedManyWithoutPeriodoPadreInput
+    apertura?: AperturaPeriodoCreateNestedOneWithoutPeriodoInput
   }
 
   export type PeriodoContableUncheckedCreateWithoutAuditoriaInput = {
     periodoId?: string
     tenantId: string
     tipo: $Enums.TipoPeriodo
+    codigo?: string | null
     fechaInicio: Date | string
     fechaFin: Date | string
     estado?: $Enums.EstadoPeriodo
-    motivoReapertura?: string | null
+    periodoPadreId?: string | null
+    aperturaAutomatica?: boolean
+    categoria?: $Enums.CategoriaPeriodo
+    abiertoPorId?: string | null
+    fechaApertura?: Date | string | null
     cerradoPor?: string | null
     cerradoAt?: Date | string | null
     aprobadoPor?: string | null
     aprobadoAt?: Date | string | null
+    reabiertoPorId?: string | null
+    fechaReapertura?: Date | string | null
+    segundoAprobadorId?: string | null
+    motivoReapertura?: string | null
     observaciones?: string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: string | null
     createdAt?: Date | string
     updatedAt?: Date | string
     snapshots?: SaldoSnapshotUncheckedCreateNestedManyWithoutPeriodoInput
+    snapshotPeriodos?: SnapshotPeriodoUncheckedCreateNestedManyWithoutPeriodoInput
+    subperiodos?: PeriodoContableUncheckedCreateNestedManyWithoutPeriodoPadreInput
+    apertura?: AperturaPeriodoUncheckedCreateNestedOneWithoutPeriodoInput
   }
 
   export type PeriodoContableCreateOrConnectWithoutAuditoriaInput = {
@@ -221161,6 +226412,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutAuditoriaPeriodosInput = {
@@ -221225,6 +226477,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutAuditoriaPeriodosInput = {
@@ -221246,37 +226499,65 @@ export namespace Prisma {
   export type PeriodoContableUpdateWithoutAuditoriaInput = {
     periodoId?: StringFieldUpdateOperationsInput | string
     tipo?: EnumTipoPeriodoFieldUpdateOperationsInput | $Enums.TipoPeriodo
+    codigo?: NullableStringFieldUpdateOperationsInput | string | null
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: DateTimeFieldUpdateOperationsInput | Date | string
     estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
-    motivoReapertura?: NullableStringFieldUpdateOperationsInput | string | null
+    aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
+    categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
     cerradoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     aprobadoPor?: NullableStringFieldUpdateOperationsInput | string | null
     aprobadoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaReapertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    segundoAprobadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    motivoReapertura?: NullableStringFieldUpdateOperationsInput | string | null
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     tenant?: TenantUpdateOneRequiredWithoutPeriodosContablesNestedInput
     snapshots?: SaldoSnapshotUpdateManyWithoutPeriodoNestedInput
+    snapshotPeriodos?: SnapshotPeriodoUpdateManyWithoutPeriodoNestedInput
+    periodoPadre?: PeriodoContableUpdateOneWithoutSubperiodosNestedInput
+    subperiodos?: PeriodoContableUpdateManyWithoutPeriodoPadreNestedInput
+    apertura?: AperturaPeriodoUpdateOneWithoutPeriodoNestedInput
   }
 
   export type PeriodoContableUncheckedUpdateWithoutAuditoriaInput = {
     periodoId?: StringFieldUpdateOperationsInput | string
     tenantId?: StringFieldUpdateOperationsInput | string
     tipo?: EnumTipoPeriodoFieldUpdateOperationsInput | $Enums.TipoPeriodo
+    codigo?: NullableStringFieldUpdateOperationsInput | string | null
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: DateTimeFieldUpdateOperationsInput | Date | string
     estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
-    motivoReapertura?: NullableStringFieldUpdateOperationsInput | string | null
+    periodoPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
+    categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
     cerradoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     aprobadoPor?: NullableStringFieldUpdateOperationsInput | string | null
     aprobadoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaReapertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    segundoAprobadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    motivoReapertura?: NullableStringFieldUpdateOperationsInput | string | null
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     snapshots?: SaldoSnapshotUncheckedUpdateManyWithoutPeriodoNestedInput
+    snapshotPeriodos?: SnapshotPeriodoUncheckedUpdateManyWithoutPeriodoNestedInput
+    subperiodos?: PeriodoContableUncheckedUpdateManyWithoutPeriodoPadreNestedInput
+    apertura?: AperturaPeriodoUncheckedUpdateOneWithoutPeriodoNestedInput
   }
 
   export type TenantUpsertWithoutAuditoriaPeriodosInput = {
@@ -221352,6 +226633,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutAuditoriaPeriodosInput = {
@@ -221416,6 +226698,7 @@ export namespace Prisma {
     pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type CategoriaCreateManyParentInput = {
@@ -224390,15 +229673,42 @@ export namespace Prisma {
   export type PeriodoContableCreateManyTenantInput = {
     periodoId?: string
     tipo: $Enums.TipoPeriodo
+    codigo?: string | null
     fechaInicio: Date | string
     fechaFin: Date | string
     estado?: $Enums.EstadoPeriodo
-    motivoReapertura?: string | null
+    periodoPadreId?: string | null
+    aperturaAutomatica?: boolean
+    categoria?: $Enums.CategoriaPeriodo
+    abiertoPorId?: string | null
+    fechaApertura?: Date | string | null
     cerradoPor?: string | null
     cerradoAt?: Date | string | null
     aprobadoPor?: string | null
     aprobadoAt?: Date | string | null
+    reabiertoPorId?: string | null
+    fechaReapertura?: Date | string | null
+    segundoAprobadorId?: string | null
+    motivoReapertura?: string | null
     observaciones?: string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type AperturaPeriodoCreateManyTenantInput = {
+    aperturaId?: string
+    periodoId: string
+    origenPeriodoId?: string | null
+    saldoCajaInicial?: Decimal | DecimalJsLike | number | string
+    saldoBancoInicial?: Decimal | DecimalJsLike | number | string
+    saldoCuentasCobrarInicial?: Decimal | DecimalJsLike | number | string
+    saldoCuentasPagarInicial?: Decimal | DecimalJsLike | number | string
+    saldoInventarioInicial?: Decimal | DecimalJsLike | number | string
+    saldoCapitalInicial?: Decimal | DecimalJsLike | number | string
+    saldoResultadoAcumInicial?: Decimal | DecimalJsLike | number | string
+    detalleJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -227065,51 +232375,138 @@ export namespace Prisma {
   export type PeriodoContableUpdateWithoutTenantInput = {
     periodoId?: StringFieldUpdateOperationsInput | string
     tipo?: EnumTipoPeriodoFieldUpdateOperationsInput | $Enums.TipoPeriodo
+    codigo?: NullableStringFieldUpdateOperationsInput | string | null
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: DateTimeFieldUpdateOperationsInput | Date | string
     estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
-    motivoReapertura?: NullableStringFieldUpdateOperationsInput | string | null
+    aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
+    categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
     cerradoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     aprobadoPor?: NullableStringFieldUpdateOperationsInput | string | null
     aprobadoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaReapertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    segundoAprobadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    motivoReapertura?: NullableStringFieldUpdateOperationsInput | string | null
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     snapshots?: SaldoSnapshotUpdateManyWithoutPeriodoNestedInput
+    snapshotPeriodos?: SnapshotPeriodoUpdateManyWithoutPeriodoNestedInput
     auditoria?: AuditoriaPeriodoUpdateManyWithoutPeriodoNestedInput
+    periodoPadre?: PeriodoContableUpdateOneWithoutSubperiodosNestedInput
+    subperiodos?: PeriodoContableUpdateManyWithoutPeriodoPadreNestedInput
+    apertura?: AperturaPeriodoUpdateOneWithoutPeriodoNestedInput
   }
 
   export type PeriodoContableUncheckedUpdateWithoutTenantInput = {
     periodoId?: StringFieldUpdateOperationsInput | string
     tipo?: EnumTipoPeriodoFieldUpdateOperationsInput | $Enums.TipoPeriodo
+    codigo?: NullableStringFieldUpdateOperationsInput | string | null
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: DateTimeFieldUpdateOperationsInput | Date | string
     estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
-    motivoReapertura?: NullableStringFieldUpdateOperationsInput | string | null
+    periodoPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
+    categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
     cerradoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     aprobadoPor?: NullableStringFieldUpdateOperationsInput | string | null
     aprobadoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaReapertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    segundoAprobadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    motivoReapertura?: NullableStringFieldUpdateOperationsInput | string | null
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     snapshots?: SaldoSnapshotUncheckedUpdateManyWithoutPeriodoNestedInput
+    snapshotPeriodos?: SnapshotPeriodoUncheckedUpdateManyWithoutPeriodoNestedInput
     auditoria?: AuditoriaPeriodoUncheckedUpdateManyWithoutPeriodoNestedInput
+    subperiodos?: PeriodoContableUncheckedUpdateManyWithoutPeriodoPadreNestedInput
+    apertura?: AperturaPeriodoUncheckedUpdateOneWithoutPeriodoNestedInput
   }
 
   export type PeriodoContableUncheckedUpdateManyWithoutTenantInput = {
     periodoId?: StringFieldUpdateOperationsInput | string
     tipo?: EnumTipoPeriodoFieldUpdateOperationsInput | $Enums.TipoPeriodo
+    codigo?: NullableStringFieldUpdateOperationsInput | string | null
     fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
     fechaFin?: DateTimeFieldUpdateOperationsInput | Date | string
     estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
-    motivoReapertura?: NullableStringFieldUpdateOperationsInput | string | null
+    periodoPadreId?: NullableStringFieldUpdateOperationsInput | string | null
+    aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
+    categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
     cerradoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     aprobadoPor?: NullableStringFieldUpdateOperationsInput | string | null
     aprobadoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaReapertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    segundoAprobadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    motivoReapertura?: NullableStringFieldUpdateOperationsInput | string | null
     observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AperturaPeriodoUpdateWithoutTenantInput = {
+    aperturaId?: StringFieldUpdateOperationsInput | string
+    origenPeriodoId?: NullableStringFieldUpdateOperationsInput | string | null
+    saldoCajaInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoBancoInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCuentasCobrarInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCuentasPagarInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoInventarioInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCapitalInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoResultadoAcumInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    detalleJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    periodo?: PeriodoContableUpdateOneRequiredWithoutAperturaNestedInput
+  }
+
+  export type AperturaPeriodoUncheckedUpdateWithoutTenantInput = {
+    aperturaId?: StringFieldUpdateOperationsInput | string
+    periodoId?: StringFieldUpdateOperationsInput | string
+    origenPeriodoId?: NullableStringFieldUpdateOperationsInput | string | null
+    saldoCajaInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoBancoInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCuentasCobrarInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCuentasPagarInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoInventarioInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCapitalInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoResultadoAcumInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    detalleJson?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type AperturaPeriodoUncheckedUpdateManyWithoutTenantInput = {
+    aperturaId?: StringFieldUpdateOperationsInput | string
+    periodoId?: StringFieldUpdateOperationsInput | string
+    origenPeriodoId?: NullableStringFieldUpdateOperationsInput | string | null
+    saldoCajaInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoBancoInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCuentasCobrarInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCuentasPagarInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoInventarioInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoCapitalInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    saldoResultadoAcumInicial?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    detalleJson?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -233871,6 +239268,16 @@ export namespace Prisma {
     createdAt?: Date | string
   }
 
+  export type SnapshotPeriodoCreateManyPeriodoInput = {
+    snapshotId?: string
+    version?: number
+    baseCajaJson?: NullableJsonNullValueInput | InputJsonValue
+    baseDevengoJson?: NullableJsonNullValueInput | InputJsonValue
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: string | null
+    createdAt?: Date | string
+  }
+
   export type AuditoriaPeriodoCreateManyPeriodoInput = {
     auditoriaId?: string
     tenantId: string
@@ -233881,6 +239288,33 @@ export namespace Prisma {
     motivo?: string | null
     payload?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: Date | string
+  }
+
+  export type PeriodoContableCreateManyPeriodoPadreInput = {
+    periodoId?: string
+    tenantId: string
+    tipo: $Enums.TipoPeriodo
+    codigo?: string | null
+    fechaInicio: Date | string
+    fechaFin: Date | string
+    estado?: $Enums.EstadoPeriodo
+    aperturaAutomatica?: boolean
+    categoria?: $Enums.CategoriaPeriodo
+    abiertoPorId?: string | null
+    fechaApertura?: Date | string | null
+    cerradoPor?: string | null
+    cerradoAt?: Date | string | null
+    aprobadoPor?: string | null
+    aprobadoAt?: Date | string | null
+    reabiertoPorId?: string | null
+    fechaReapertura?: Date | string | null
+    segundoAprobadorId?: string | null
+    motivoReapertura?: string | null
+    observaciones?: string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type SaldoSnapshotUpdateWithoutPeriodoInput = {
@@ -233907,6 +239341,36 @@ export namespace Prisma {
     saldo?: FloatFieldUpdateOperationsInput | number
     moneda?: StringFieldUpdateOperationsInput | string
     metadata?: NullableJsonNullValueInput | InputJsonValue
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SnapshotPeriodoUpdateWithoutPeriodoInput = {
+    snapshotId?: StringFieldUpdateOperationsInput | string
+    version?: IntFieldUpdateOperationsInput | number
+    baseCajaJson?: NullableJsonNullValueInput | InputJsonValue
+    baseDevengoJson?: NullableJsonNullValueInput | InputJsonValue
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SnapshotPeriodoUncheckedUpdateWithoutPeriodoInput = {
+    snapshotId?: StringFieldUpdateOperationsInput | string
+    version?: IntFieldUpdateOperationsInput | number
+    baseCajaJson?: NullableJsonNullValueInput | InputJsonValue
+    baseDevengoJson?: NullableJsonNullValueInput | InputJsonValue
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type SnapshotPeriodoUncheckedUpdateManyWithoutPeriodoInput = {
+    snapshotId?: StringFieldUpdateOperationsInput | string
+    version?: IntFieldUpdateOperationsInput | number
+    baseCajaJson?: NullableJsonNullValueInput | InputJsonValue
+    baseDevengoJson?: NullableJsonNullValueInput | InputJsonValue
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: NullableStringFieldUpdateOperationsInput | string | null
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -233944,6 +239408,97 @@ export namespace Prisma {
     motivo?: NullableStringFieldUpdateOperationsInput | string | null
     payload?: NullableJsonNullValueInput | InputJsonValue
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type PeriodoContableUpdateWithoutPeriodoPadreInput = {
+    periodoId?: StringFieldUpdateOperationsInput | string
+    tipo?: EnumTipoPeriodoFieldUpdateOperationsInput | $Enums.TipoPeriodo
+    codigo?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaFin?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
+    aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
+    categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
+    cerradoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    aprobadoPor?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobadoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaReapertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    segundoAprobadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    motivoReapertura?: NullableStringFieldUpdateOperationsInput | string | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tenant?: TenantUpdateOneRequiredWithoutPeriodosContablesNestedInput
+    snapshots?: SaldoSnapshotUpdateManyWithoutPeriodoNestedInput
+    snapshotPeriodos?: SnapshotPeriodoUpdateManyWithoutPeriodoNestedInput
+    auditoria?: AuditoriaPeriodoUpdateManyWithoutPeriodoNestedInput
+    subperiodos?: PeriodoContableUpdateManyWithoutPeriodoPadreNestedInput
+    apertura?: AperturaPeriodoUpdateOneWithoutPeriodoNestedInput
+  }
+
+  export type PeriodoContableUncheckedUpdateWithoutPeriodoPadreInput = {
+    periodoId?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    tipo?: EnumTipoPeriodoFieldUpdateOperationsInput | $Enums.TipoPeriodo
+    codigo?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaFin?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
+    aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
+    categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
+    cerradoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    aprobadoPor?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobadoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaReapertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    segundoAprobadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    motivoReapertura?: NullableStringFieldUpdateOperationsInput | string | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    snapshots?: SaldoSnapshotUncheckedUpdateManyWithoutPeriodoNestedInput
+    snapshotPeriodos?: SnapshotPeriodoUncheckedUpdateManyWithoutPeriodoNestedInput
+    auditoria?: AuditoriaPeriodoUncheckedUpdateManyWithoutPeriodoNestedInput
+    subperiodos?: PeriodoContableUncheckedUpdateManyWithoutPeriodoPadreNestedInput
+    apertura?: AperturaPeriodoUncheckedUpdateOneWithoutPeriodoNestedInput
+  }
+
+  export type PeriodoContableUncheckedUpdateManyWithoutPeriodoPadreInput = {
+    periodoId?: StringFieldUpdateOperationsInput | string
+    tenantId?: StringFieldUpdateOperationsInput | string
+    tipo?: EnumTipoPeriodoFieldUpdateOperationsInput | $Enums.TipoPeriodo
+    codigo?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaInicio?: DateTimeFieldUpdateOperationsInput | Date | string
+    fechaFin?: DateTimeFieldUpdateOperationsInput | Date | string
+    estado?: EnumEstadoPeriodoFieldUpdateOperationsInput | $Enums.EstadoPeriodo
+    aperturaAutomatica?: BoolFieldUpdateOperationsInput | boolean
+    categoria?: EnumCategoriaPeriodoFieldUpdateOperationsInput | $Enums.CategoriaPeriodo
+    abiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaApertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    cerradoPor?: NullableStringFieldUpdateOperationsInput | string | null
+    cerradoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    aprobadoPor?: NullableStringFieldUpdateOperationsInput | string | null
+    aprobadoAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    reabiertoPorId?: NullableStringFieldUpdateOperationsInput | string | null
+    fechaReapertura?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    segundoAprobadorId?: NullableStringFieldUpdateOperationsInput | string | null
+    motivoReapertura?: NullableStringFieldUpdateOperationsInput | string | null
+    observaciones?: NullableStringFieldUpdateOperationsInput | string | null
+    resumenJson?: NullableJsonNullValueInput | InputJsonValue
+    hashIntegridad?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
 

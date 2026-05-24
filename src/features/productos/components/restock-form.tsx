@@ -314,7 +314,7 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
       <Card className="overflow-hidden border-dashed bg-linear-to-br from-primary/[0.05] via-background to-purple-500/[0.08] dark:from-primary/10 dark:to-purple-500/10">
         <CardHeader className="border-b bg-linear-to-r from-primary/[0.04] to-purple-500/[0.08] dark:from-primary/10 dark:to-purple-500/10">
           <CardTitle className="flex items-center gap-3">
-            <motion.div
+            {/* <motion.div
               className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-primary to-purple-600 text-white shadow-lg"
               whileHover={{ scale: 1.05, rotate: 4 }}
               transition={{ duration: 0.2 }}
@@ -330,13 +330,13 @@ export function RestockForm({ producto, onSuccess, onCancel }: RestockFormProps)
               >
                 <Sparkles className="h-3.5 w-3.5 text-yellow-400" />
               </motion.span>
-            </motion.div>
-            <div>
+            </motion.div> */}
+            {/* <div>
               <p className="text-lg font-semibold">Restock de Producto</p>
               <p className="text-xs font-normal text-muted-foreground">
                 Ajusta stock y precios con cálculo automático de promedio ponderado.
               </p>
-            </div>
+            </div> */}
           </CardTitle>
           <div className="grid grid-cols-1 gap-2 text-sm text-muted-foreground sm:grid-cols-2">
             <p><strong className="text-foreground">{producto.nombre}</strong></p>

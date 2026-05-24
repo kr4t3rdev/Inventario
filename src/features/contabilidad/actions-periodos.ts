@@ -16,9 +16,10 @@ import { withAction, ActionError } from '@/lib/server-actions';
 import { requireTenant } from '@/lib/services/tenant-scope';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { PeriodoContableService } from '@/lib/services/periodo-contable-service';
+import { AperturaPeriodoService } from '@/lib/services/apertura-periodo-service';
 import { SnapshotService } from '@/lib/services/periodo-snapshot-service';
 import { invalidateCache } from '@/lib/services/periodo-contable-guard';
-import { TipoPeriodo, EstadoPeriodo } from '@/lib/services/periodo-contable-types';
+import { TipoPeriodo, EstadoPeriodo, CategoriaPeriodo } from '@/lib/services/periodo-contable-types';
 import { prisma } from '@/lib/prisma';
 
 // ── Schemas de validación ─────────────────────────────────────────────────
@@ -32,6 +33,7 @@ const abrirPeriodoSchema = z.object({
   fechaInicio: z.string().datetime({ message: 'La fecha de inicio debe ser una fecha válida' }),
   fechaFin: z.string().datetime({ message: 'La fecha de fin debe ser una fecha válida' }),
   observaciones: z.string().max(500).optional(),
+  categoria: z.nativeEnum(CategoriaPeriodo).optional(),
 });
 
 /**
@@ -98,6 +100,9 @@ export const listarPeriodosAction = withAction(async (
           take: 1,
           select: { evento: true, timestamp: true, actor: true },
         },
+        _count: {
+          select: { subperiodos: true },
+        },
       },
     }),
     prisma.periodoContable.count({ where }),
@@ -120,9 +125,22 @@ export const listarPeriodosAction = withAction(async (
 
       return {
         ...p,
+        codigo: p.codigo ?? undefined,
+        categoria: p.categoria,
         resumenJson: undefined, // no enviar datos pesados al cliente
         hashIntegridad: p.hashIntegridad ?? null,
         tieneHash: Boolean(p.hashIntegridad),
+        subperiodosCount: p._count.subperiodos,
+        periodoPadreId: p.periodoPadreId,
+        abiertoPorId: p.abiertoPorId,
+        fechaApertura: p.fechaApertura?.toISOString() ?? null,
+        cerradoPor: p.cerradoPor,
+        cerradoAt: p.cerradoAt?.toISOString() ?? null,
+        aprobadoPor: p.aprobadoPor,
+        aprobadoAt: p.aprobadoAt?.toISOString() ?? null,
+        reabiertoPorId: p.reabiertoPorId,
+        fechaReapertura: p.fechaReapertura?.toISOString() ?? null,
+        segundoAprobadorId: p.segundoAprobadorId,
         ultimaAuditoria: ultimaAuditoria
           ? {
               evento: ultimaAuditoria.evento,
@@ -164,6 +182,26 @@ export const obtenerPeriodoAction = withAction(async (
     include: {
       snapshots: { orderBy: { createdAt: 'desc' } },
       auditoria: { orderBy: { timestamp: 'desc' } },
+      apertura: true,
+      subperiodos: {
+        select: {
+          periodoId: true,
+          codigo: true,
+          tipo: true,
+          estado: true,
+          fechaInicio: true,
+          fechaFin: true,
+        },
+        orderBy: { fechaInicio: 'asc' },
+      },
+      periodoPadre: {
+        select: {
+          periodoId: true,
+          codigo: true,
+          tipo: true,
+          estado: true,
+        },
+      },
     },
   });
 
@@ -245,7 +283,15 @@ export const abrirPeriodoAction = withAction(async (
       fechaInicio,
       fechaFin,
       observaciones: parsed.observaciones,
+      categoria: parsed.categoria,
     },
+    user.userId,
+  );
+
+  // Crear asiento de apertura formal con saldos iniciales
+  await AperturaPeriodoService.createAperturaPeriodo(
+    periodo.periodoId,
+    tenantId,
     user.userId,
   );
 
@@ -309,6 +355,12 @@ export const cerrarPeriodoAction = withAction(async (
   await prisma.periodoContable.update({
     where: { periodoId: parsed.periodoId },
     data: { resumenJson, hashIntegridad },
+  });
+
+  // Crear versión historificada de SnapshotPeriodo
+  await snapshotService.crearVersionSnapshot(parsed.periodoId, {
+    resumenJson: resumenJson as Record<string, unknown>,
+    hashIntegridad,
   });
 
   // Invalidar caché del guard
@@ -399,4 +451,99 @@ export const aprobarPeriodoAction = withAction(async (
   revalidatePath('/busy/contabilidad/periodos');
 
   return { periodo: aprobado };
+});
+
+// ── Dashboard ──────────────────────────────────────────────────────────────
+
+/**
+ * @description Retorna estadísticas agregadas para el dashboard de períodos.
+ *
+ * Incluye: conteo por estado, períodos listos para cerrar, períodos con issues,
+ * y timeline de eventos recientes.
+ *
+ * @param {AuthenticatedUser} user - Usuario autenticado.
+ * @returns {Object} Dashboard stats.
+ */
+export const obtenerDashboardPeriodosAction = withAction(async (
+  _input: Record<string, never> = {},
+  user: AuthenticatedUser,
+) => {
+  const tenantId = requireTenant(user);
+
+  // 1. Conteo por estado
+  const periodos = await prisma.periodoContable.findMany({
+    where: { tenantId },
+    select: {
+      periodoId: true,
+      tipo: true,
+      codigo: true,
+      estado: true,
+      fechaInicio: true,
+      fechaFin: true,
+      hashIntegridad: true,
+      periodoPadreId: true,
+      cerradoPor: true,
+      aprobadoPor: true,
+      createdAt: true,
+      _count: { select: { subperiodos: true } },
+    },
+    orderBy: { fechaInicio: 'desc' },
+  });
+
+  const conteoPorEstado: Record<string, number> = {};
+  for (const p of periodos) {
+    const estado = p.estado as string;
+    conteoPorEstado[estado] = (conteoPorEstado[estado] ?? 0) + 1;
+  }
+
+  // 2. Períodos listos para cerrar (ABIERTO/REABIERTO sin blockers)
+  const listosParaCerrar = periodos.filter((p) => {
+    const estado = p.estado as string;
+    if (estado !== 'ABIERTO' && estado !== 'REABIERTO') return false;
+
+    // Sin blockers: tiene hash si está listo para cerrar
+    const blockers: string[] = [];
+    if (!p.hashIntegridad) blockers.push('Sin hash de integridad');
+
+    return blockers.length === 0;
+  });
+
+  // 3. Períodos con issues (sin hash estando CERRADO/APROBADO)
+  const periodosConIssues = periodos.filter((p) => {
+    const estado = p.estado as string;
+    if (estado !== 'CERRADO' && estado !== 'APROBADO') return false;
+    return !p.hashIntegridad;
+  });
+
+  // 4. Timeline de eventos recientes (últimos 10 cierres/aprobaciones)
+  const eventosRecientes = await prisma.auditoriaPeriodo.findMany({
+    where: {
+      tenantId,
+      evento: { in: ['CIERRE', 'APROBACION', 'APERTURA', 'REAPERTURA'] as never[] },
+    },
+    orderBy: { timestamp: 'desc' },
+    take: 10,
+    select: {
+      auditoriaId: true,
+      evento: true,
+      actor: true,
+      timestamp: true,
+      motivo: true,
+      periodoId: true,
+    },
+  });
+
+  return {
+    stats: {
+      total: periodos.length,
+      porEstado: conteoPorEstado,
+      listosParaCerrar: listosParaCerrar.length,
+      conIssues: periodosConIssues.length,
+    },
+    periodos,
+    eventosRecientes: eventosRecientes.map((e) => ({
+      ...e,
+      timestamp: e.timestamp.toISOString(),
+    })),
+  };
 });

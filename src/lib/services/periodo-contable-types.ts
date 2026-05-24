@@ -5,12 +5,12 @@
  * que usan el servicio de dominio, el guard y las Server Actions.
  */
 
-import { EstadoPeriodo, TipoPeriodo, EventoAuditoria } from '@/generated/prisma';
+import { EstadoPeriodo, TipoPeriodo, EventoAuditoria, CategoriaPeriodo } from '@/generated/prisma';
 import type { PeriodoContable } from '@/generated/prisma';
 
 // ── Re-export de enums de Prisma para uso en TypeScript puro ─────────────
 
-export { EstadoPeriodo, TipoPeriodo, EventoAuditoria };
+export { EstadoPeriodo, TipoPeriodo, EventoAuditoria, CategoriaPeriodo };
 
 // ── Estados que permiten escritura contable ──────────────────────────────
 
@@ -49,7 +49,8 @@ export type PeriodoErrorCode =
   | 'TRANSICION_INVALIDA'
   | 'MOTIVO_REAPERTURA_REQUERIDO'
   | 'HIJOS_ABIERTOS'
-  | 'GUARD_DISABLED';
+  | 'GUARD_DISABLED'
+  | 'MISMO_ACTOR_CIERRE_APROBACION';
 
 /**
  * Resumen ligero de un período contable (sin campos internos).
@@ -120,6 +121,7 @@ export interface CreatePeriodoInput {
   fechaInicio: Date;
   fechaFin: Date;
   observaciones?: string;
+  categoria?: CategoriaPeriodo;
 }
 
 // ── Snapshot totales ─────────────────────────────────────────────────────

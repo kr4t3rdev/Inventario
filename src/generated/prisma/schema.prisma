@@ -196,6 +196,7 @@ model Tenant {
   pagosSalario               Pagosalario[]
   cierresContables           CierreContable[]
   periodosContables          PeriodoContable[]
+  aperturaPeriodos           AperturaPeriodo[]
   auditoriaPeriodos          AuditoriaPeriodo[]
   contabilidadTimezone       String                     @default("America/Argentina/Buenos_Aires")
 
@@ -2145,31 +2146,92 @@ enum EventoAuditoria {
   INTENTO_BYPASS
 }
 
+enum CategoriaPeriodo {
+  ORDINARIO
+  EXTRAORDINARIO
+  RECTIFICATIVO
+}
+
 model PeriodoContable {
-  periodoId        String        @id @default(cuid())
-  tenantId         String
-  tipo             TipoPeriodo
-  fechaInicio      DateTime
-  fechaFin         DateTime
-  estado           EstadoPeriodo @default(BORRADOR)
-  motivoReapertura String?
-  cerradoPor       String?
-  cerradoAt        DateTime?
-  aprobadoPor      String?
-  aprobadoAt       DateTime?
-  observaciones    String?
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  periodoId          String           @id @default(cuid())
+  tenantId           String
+  tipo               TipoPeriodo
+  codigo             String? /// Código legible: "M-2026-03", "D-2026-03-15" — nullable para compatibilidad con datos existentes
+  fechaInicio        DateTime
+  fechaFin           DateTime
+  estado             EstadoPeriodo    @default(BORRADOR)
+  periodoPadreId     String? /// Jerarquía: DIARIO→MENSUAL→ANUAL
+  aperturaAutomatica Boolean          @default(false)
+  categoria          CategoriaPeriodo @default(ORDINARIO)
+  abiertoPorId       String?
+  fechaApertura      DateTime?
+  cerradoPor         String?
+  cerradoAt          DateTime?
+  aprobadoPor        String?
+  aprobadoAt         DateTime?
+  reabiertoPorId     String?
+  fechaReapertura    DateTime?
+  segundoAprobadorId String? /// Segunda aprobación multinivel
+  motivoReapertura   String?
+  observaciones      String?
+  resumenJson        Json? /// Resumen de saldos agregados al cierre
+  hashIntegridad     String? /// SHA256 del resumenJson
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
 
-  tenant    Tenant             @relation(fields: [tenantId], references: [tenantId])
-  snapshots SaldoSnapshot[]
-  auditoria AuditoriaPeriodo[]
+  tenant           Tenant             @relation(fields: [tenantId], references: [tenantId])
+  snapshots        SaldoSnapshot[]
+  snapshotPeriodos SnapshotPeriodo[]
+  auditoria        AuditoriaPeriodo[]
+  periodoPadre     PeriodoContable?   @relation("PeriodoHierarchy", fields: [periodoPadreId], references: [periodoId], onDelete: SetNull)
+  subperiodos      PeriodoContable[]  @relation("PeriodoHierarchy")
+  apertura         AperturaPeriodo?
 
-  @@unique([tenantId, tipo, fechaInicio, fechaFin])
+  @@unique([tenantId, codigo])
   @@index([tenantId, estado])
-  @@index([tenantId, fechaInicio, fechaFin])
-  @@index([tenantId, tipo, fechaInicio, fechaFin])
+  @@index([tenantId, periodoPadreId])
   @@map("periodos_contables")
+}
+
+model SnapshotPeriodo {
+  snapshotId      String   @id @default(cuid())
+  periodoId       String
+  version         Int      @default(1)
+  baseCajaJson    Json? /// Datos crudos del snapshot en base caja
+  baseDevengoJson Json? /// Datos crudos del snapshot en base devengo
+  resumenJson     Json? /// Resumen agregado (mismo que PeriodoContable.resumenJson)
+  hashIntegridad  String? /// SHA256 del resumenJson
+  createdAt       DateTime @default(now())
+
+  periodo PeriodoContable @relation(fields: [periodoId], references: [periodoId], onDelete: Cascade)
+
+  @@unique([periodoId, version])
+  @@index([periodoId, createdAt])
+  @@map("snapshot_periodos")
+}
+
+model AperturaPeriodo {
+  aperturaId                String   @id @default(cuid())
+  periodoId                 String   @unique
+  tenantId                  String
+  origenPeriodoId           String?
+  saldoCajaInicial          Decimal  @default(0)
+  saldoBancoInicial         Decimal  @default(0)
+  saldoCuentasCobrarInicial Decimal  @default(0)
+  saldoCuentasPagarInicial  Decimal  @default(0)
+  saldoInventarioInicial    Decimal  @default(0)
+  saldoCapitalInicial       Decimal  @default(0)
+  saldoResultadoAcumInicial Decimal  @default(0)
+  detalleJson               Json?
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  periodo PeriodoContable @relation(fields: [periodoId], references: [periodoId], onDelete: Cascade)
+  tenant  Tenant          @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
+  @@index([origenPeriodoId])
+  @@map("apertura_periodos")
 }
 
 model SaldoSnapshot {

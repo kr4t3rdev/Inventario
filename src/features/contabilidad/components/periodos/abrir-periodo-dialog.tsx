@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
-import type { TipoPeriodo } from "@/lib/services/periodo-contable-types";
+import type { TipoPeriodo, CategoriaPeriodo } from "@/lib/services/periodo-contable-types";
 
 interface AbrirPeriodoDialogProps {
   open: boolean;
@@ -28,6 +28,7 @@ interface AbrirPeriodoDialogProps {
 export function AbrirPeriodoDialog({ open, onOpenChange, onSuccess }: AbrirPeriodoDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [tipo, setTipo] = useState<TipoPeriodo>('MENSUAL');
+  const [categoria, setCategoria] = useState<string>('ORDINARIO');
   const [fechaInicio, setFechaInicio] = useState('');
   const [fechaFin, setFechaFin] = useState('');
   const [observaciones, setObservaciones] = useState('');
@@ -45,6 +46,7 @@ export function AbrirPeriodoDialog({ open, onOpenChange, onSuccess }: AbrirPerio
         fechaInicio: new Date(fechaInicio).toISOString(),
         fechaFin: new Date(fechaFin).toISOString(),
         observaciones: observaciones || undefined,
+        categoria: categoria !== 'ORDINARIO' ? (categoria as CategoriaPeriodo) : undefined,
       });
 
       if (!result.success) {
@@ -64,6 +66,7 @@ export function AbrirPeriodoDialog({ open, onOpenChange, onSuccess }: AbrirPerio
 
   const resetForm = () => {
     setTipo('MENSUAL');
+    setCategoria('ORDINARIO');
     setFechaInicio('');
     setFechaFin('');
     setObservaciones('');
@@ -92,6 +95,20 @@ export function AbrirPeriodoDialog({ open, onOpenChange, onSuccess }: AbrirPerio
                 <SelectItem value="DIARIO">Diario</SelectItem>
                 <SelectItem value="MENSUAL">Mensual</SelectItem>
                 <SelectItem value="ANUAL">Anual</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="categoria">Categoría Fiscal</Label>
+            <Select value={categoria} onValueChange={setCategoria}>
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar categoría" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ORDINARIO">Ordinario</SelectItem>
+                <SelectItem value="EXTRAORDINARIO">Extraordinario</SelectItem>
+                <SelectItem value="RECTIFICATIVO">Rectificativo</SelectItem>
               </SelectContent>
             </Select>
           </div>

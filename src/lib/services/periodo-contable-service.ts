@@ -13,6 +13,7 @@ import {
   EstadoPeriodo,
   TipoPeriodo,
   EventoAuditoria,
+  CategoriaPeriodo,
   WRITABLE_STATES,
   VALID_TRANSITIONS,
   generarLabelPeriodo,
@@ -144,11 +145,80 @@ export class PeriodoContableService {
     }));
   }
 
+  // ── Helpers de codificación ──────────────────────────────────────────────
+
+  /**
+   * Genera un código legible para un período según su tipo y fecha de inicio.
+   *
+   * - ANUAL: "A-2026"
+   * - MENSUAL: "M-2026-03"
+   * - DIARIO: "D-2026-03-15"
+   *
+   * @param {TipoPeriodo} tipo - Tipo de período.
+   * @param {Date} fechaInicio - Fecha de inicio del período (se usan métodos UTC).
+   * @returns {string} Código del período.
+   */
+  static generarCodigoPeriodo(tipo: TipoPeriodo, fechaInicio: Date): string {
+    const year = fechaInicio.getUTCFullYear();
+    switch (tipo) {
+      case TipoPeriodo.ANUAL:
+        return `A-${year}`;
+      case TipoPeriodo.MENSUAL: {
+        const month = String(fechaInicio.getUTCMonth() + 1).padStart(2, '0');
+        return `M-${year}-${month}`;
+      }
+      case TipoPeriodo.DIARIO: {
+        const month = String(fechaInicio.getUTCMonth() + 1).padStart(2, '0');
+        const day = String(fechaInicio.getUTCDate()).padStart(2, '0');
+        return `D-${year}-${month}-${day}`;
+      }
+      default:
+        return `P-${year}`;
+    }
+  }
+
+  /**
+   * Resuelve el período padre en la jerarquía según tipo y fechas.
+   *
+   * - ANUAL → sin padre
+   * - MENSUAL → busca ANUAL que contenga las fechas
+   * - DIARIO → busca MENSUAL que contenga las fechas
+   *
+   * @param {string} tenantId - ID del tenant.
+   * @param {TipoPeriodo} tipo - Tipo del período hijo.
+   * @param {Date} fechaInicio - Fecha de inicio del hijo.
+   * @param {Date} fechaFin - Fecha de fin del hijo.
+   * @returns {Promise<string | null>} ID del período padre o null.
+   */
+  static async resolverPeriodoPadre(
+    tenantId: string,
+    tipo: TipoPeriodo,
+    fechaInicio: Date,
+    fechaFin: Date,
+  ): Promise<string | null> {
+    // ANUAL no tiene padre en la jerarquía
+    if (tipo === TipoPeriodo.ANUAL) return null;
+
+    const padreTipo = tipo === TipoPeriodo.MENSUAL ? TipoPeriodo.ANUAL : TipoPeriodo.MENSUAL;
+
+    const padre = await prisma.periodoContable.findFirst({
+      where: {
+        tenantId,
+        tipo: padreTipo,
+        fechaInicio: { lte: fechaInicio },
+        fechaFin: { gte: fechaFin },
+      },
+      orderBy: { fechaInicio: 'desc' },
+    });
+
+    return padre?.periodoId ?? null;
+  }
+
   // ── Mutations ───────────────────────────────────────────────────────────
 
   /**
-   * Crea un nuevo período con validación de solapamiento.
-   * El período se crea en estado BORRADOR.
+   * Crea y abre un nuevo período contable.
+   * Genera codigo, resuelve la jerarquía (periodoPadreId) y registra la apertura.
    *
    * @param {CreatePeriodoInput} input - Datos del período.
    * @param {string} actor - ID del usuario que crea.
@@ -173,13 +243,27 @@ export class PeriodoContableService {
       );
     }
 
+    // Generar codigo y resolver jerarquía
+    const codigo = this.generarCodigoPeriodo(input.tipo, input.fechaInicio);
+    const periodoPadreId = await this.resolverPeriodoPadre(
+      input.tenantId,
+      input.tipo,
+      input.fechaInicio,
+      input.fechaFin,
+    );
+
     const periodo = await prisma.periodoContable.create({
       data: {
         tenantId: input.tenantId,
         tipo: input.tipo,
+        codigo,
         fechaInicio: input.fechaInicio,
         fechaFin: input.fechaFin,
         estado: EstadoPeriodo.ABIERTO,
+        periodoPadreId,
+        categoria: input.categoria ?? CategoriaPeriodo.ORDINARIO,
+        abiertoPorId: actor,
+        fechaApertura: new Date(),
         observaciones: input.observaciones,
       },
     });
@@ -221,11 +305,29 @@ export class PeriodoContableService {
       );
     }
 
-    // Si es mensual o anual, validar que no tenga hijos abiertos o en cierre
+    // Validar que no tenga subperíodos abiertos o en cierre
+    // Primero por relación explícita (jerarquía), luego por fechas (legacy compat)
+    const hijosPorRelacion = await prisma.periodoContable.count({
+      where: {
+        periodoPadreId: periodoId,
+        estado: { in: [EstadoPeriodo.ABIERTO, EstadoPeriodo.EN_CIERRE] },
+      },
+    });
+
+    if (hijosPorRelacion > 0) {
+      throw new PeriodoError(
+        `No se puede cerrar el período porque tiene ${hijosPorRelacion} subperíodo(s) abiertos o en cierre.`,
+        'HIJOS_ABIERTOS',
+        toResumen(periodo),
+      );
+    }
+
+    // Fallback: para períodos existentes sin jerarquía explícita, validar por fechas
     if (periodo.tipo !== TipoPeriodo.DIARIO) {
-      const hijosActivos = await prisma.periodoContable.count({
+      const hijosLegacy = await prisma.periodoContable.count({
         where: {
           tenantId: periodo.tenantId,
+          periodoPadreId: null,  // Solo períodos sin padre explícito (legacy)
           tipo: this._hijoTipo(periodo.tipo as TipoPeriodo),
           fechaInicio: { gte: periodo.fechaInicio },
           fechaFin: { lte: periodo.fechaFin },
@@ -233,9 +335,9 @@ export class PeriodoContableService {
         },
       });
 
-      if (hijosActivos > 0) {
+      if (hijosLegacy > 0) {
         throw new PeriodoError(
-          `No se puede cerrar el período porque tiene ${hijosActivos} período(s) hijo(s) abiertos o en cierre.`,
+          `No se puede cerrar el período porque tiene ${hijosLegacy} período(s) legacy(s) abiertos o en cierre.`,
           'HIJOS_ABIERTOS',
           toResumen(periodo),
         );
@@ -303,6 +405,8 @@ export class PeriodoContableService {
       data: {
         estado: EstadoPeriodo.REABIERTO,
         motivoReapertura: motivo,
+        reabiertoPorId: actor,
+        fechaReapertura: new Date(),
       },
     });
 
@@ -344,12 +448,26 @@ export class PeriodoContableService {
       );
     }
 
+    // Validar segregación de funciones: quien cerró no puede aprobar
+    if (periodo.cerradoPor === actor) {
+      throw new PeriodoError(
+        'La misma persona que cerró el período no puede aprobarlo. Se requiere otro usuario con permisos de aprobación.',
+        'MISMO_ACTOR_CIERRE_APROBACION',
+        toResumen(periodo),
+      );
+    }
+
+    // Si ya está aprobado una vez, es segunda aprobación
+    const esSegundaAprobacion = periodo.aprobadoPor !== null && periodo.aprobadoPor !== undefined;
+
     const aprobado = await prisma.periodoContable.update({
       where: { periodoId },
       data: {
         estado: EstadoPeriodo.APROBADO,
-        aprobadoPor: actor,
         aprobadoAt: new Date(),
+        ...(esSegundaAprobacion
+          ? { segundoAprobadorId: actor }
+          : { aprobadoPor: actor }),
       },
     });
 
@@ -359,6 +477,11 @@ export class PeriodoContableService {
       tenantId: periodo.tenantId,
       evento: EventoAuditoria.APROBACION,
       actor,
+      payload: {
+        tipo: esSegundaAprobacion ? 'segunda_aprobacion' : 'primera_aprobacion',
+        cerradoPor: periodo.cerradoPor,
+        primeraAprobacionPor: periodo.aprobadoPor,
+      },
     });
 
     return aprobado;
