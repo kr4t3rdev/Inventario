@@ -110,7 +110,9 @@ export const createAnticipoAction = withAction(withPeriodValidation(
   }
 ));
 
-export const executeAnticipoAction = withAction(async (input: z.infer<typeof executeSchema>, user: AuthenticatedUser) => {
+export const executeAnticipoAction = withAction(withPeriodValidation(
+  () => new Date(),
+  async (input: z.infer<typeof executeSchema>, user: AuthenticatedUser) => {
   const parsed = executeSchema.parse(input);
   const tenantId = requireTenant(user);
 
@@ -126,9 +128,11 @@ export const executeAnticipoAction = withAction(async (input: z.infer<typeof exe
 
   revalidatePath('/busy/contabilidad/anticipos');
   return { anticipo: updated };
-});
+}));
 
-export const reverseAnticipoAction = withAction(async (input: z.infer<typeof reverseSchema>, user: AuthenticatedUser) => {
+export const reverseAnticipoAction = withAction(withPeriodValidation(
+  () => new Date(),
+  async (input: z.infer<typeof reverseSchema>, user: AuthenticatedUser) => {
   const parsed = reverseSchema.parse(input);
   const tenantId = requireTenant(user);
 
@@ -144,7 +148,7 @@ export const reverseAnticipoAction = withAction(async (input: z.infer<typeof rev
 
   revalidatePath('/busy/contabilidad/anticipos');
   return { anticipo: updated };
-});
+}));
 
 export const getResumenAnticiposAction = withAction(async (params: { fechaInicio?: string; fechaFin?: string; tipo?: string } = {}, _user: AuthenticatedUser) => {
   const where: any = {};

@@ -9,6 +9,7 @@ import { revalidatePath } from 'next/cache';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
 import { requireTenant } from '@/lib/services/tenant-scope';
+import { withPeriodValidation } from '@/lib/services/with-period-validation';
 import { applyAnticipoAllocations } from '@/lib/services/anticipos-workflow';
 import { createCompraServicioSchema, updateCompraServicioSchema } from './schemas';
 import type { CreateCompraServicioInput, UpdateCompraServicioInput } from './schemas';
@@ -38,7 +39,9 @@ export const getCompraServicioByIdAction = withAction(async (id: string, user: A
   return compra;
 });
 
-export const createCompraServicioAction = withAction(async (input: CreateCompraServicioInput, user: AuthenticatedUser) => {
+export const createCompraServicioAction = withAction(withPeriodValidation(
+  (input) => (input as any).fechaServicio ? new Date((input as any).fechaServicio) : new Date(),
+  async (input: CreateCompraServicioInput, user: AuthenticatedUser) => {
   const parsed = createCompraServicioSchema.parse(input);
   const tenantId = requireTenant(user);
 
@@ -131,7 +134,7 @@ export const createCompraServicioAction = withAction(async (input: CreateCompraS
 
   revalidatePath('/busy/compras-servicios');
   return resultado;
-});
+}));
 
 export const updateCompraServicioAction = withAction(async (input: UpdateCompraServicioInput, user: AuthenticatedUser) => {
   const parsed = updateCompraServicioSchema.parse(input);

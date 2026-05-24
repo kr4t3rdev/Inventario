@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
 import { requireTenant } from '@/lib/services/tenant-scope';
+import { withPeriodValidation } from '@/lib/services/with-period-validation';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 const createSchema = z.object({
@@ -37,7 +38,9 @@ export const getCierreByIdAction = withAction(async (id: string, user: Authentic
   return cierre;
 });
 
-export const createCierreAction = withAction(async (input: z.infer<typeof createSchema>, user: AuthenticatedUser) => {
+export const createCierreAction = withAction(withPeriodValidation(
+  (input) => input.fechaInicio ? new Date(input.fechaInicio) : new Date(),
+  async (input: z.infer<typeof createSchema>, user: AuthenticatedUser) => {
   const parsed = createSchema.parse(input);
   const tenantId = requireTenant(user);
   const cierre = await prisma.cierreContable.create({
@@ -45,7 +48,7 @@ export const createCierreAction = withAction(async (input: z.infer<typeof create
   });
   revalidatePath('/busy/contabilidad/cierres');
   return cierre;
-});
+}));
 
 export const updateCierreAction = withAction(async (input: z.infer<typeof updateSchema>, user: AuthenticatedUser) => {
   const parsed = updateSchema.parse(input);

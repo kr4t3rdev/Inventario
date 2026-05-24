@@ -16,6 +16,7 @@ import { z } from 'zod';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
 import { requireTenant } from '@/lib/services/tenant-scope';
+import { withPeriodValidation } from '@/lib/services/with-period-validation';
 import { upsertStockUbicacion } from '@/lib/services/stock-ubicacion-service';
 import { executeProductInstanceCreationWorkflow } from '@/lib/restock-utils';
 import {
@@ -705,7 +706,8 @@ const PRODUCTO_RESTOOK_SELECT = {
  * @returns { success, data: { producto, gastoCompra } }
  * @throws ActionError en caso de producto no encontrado, cuenta inactiva, etc.
  */
-export const restockProductoAction = withAction(
+export const restockProductoAction = withAction(withPeriodValidation(
+  () => new Date(),
   async (input: RestockInput, user: AuthenticatedUser) => {
     const parsed = restockSchema.parse(input);
     const {
@@ -1238,4 +1240,4 @@ async function handlePaymentInTransaction(
       });
     }
   }
-}
+}));

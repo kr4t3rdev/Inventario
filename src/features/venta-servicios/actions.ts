@@ -9,6 +9,7 @@ import { revalidatePath } from 'next/cache';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
 import { requireTenant } from '@/lib/services/tenant-scope';
+import { withPeriodValidation } from '@/lib/services/with-period-validation';
 import { applyAnticipoAllocations } from '@/lib/services/anticipos-workflow';
 import { ventaServicioLegacySchema, ventaMixtaSchema, updateVentaServicioSchema } from './schemas';
 import type { VentaServicioInput, VentaMixtaInput, VentaServicioUpdateInput } from './schemas';
@@ -38,7 +39,9 @@ export const getVentaServicioByIdAction = withAction(async (id: string, user: Au
   return venta;
 });
 
-export const createVentaServicioAction = withAction(async (input: VentaServicioInput | VentaMixtaInput, user: AuthenticatedUser) => {
+export const createVentaServicioAction = withAction(withPeriodValidation(
+  () => new Date(),
+  async (input: VentaServicioInput | VentaMixtaInput, user: AuthenticatedUser) => {
   const tenantId = requireTenant(user);
 
   // Detectar modo: mixto (con lineas) vs legacy (single servicio)
@@ -138,7 +141,7 @@ export const createVentaServicioAction = withAction(async (input: VentaServicioI
 
   revalidatePath('/busy/venta-servicios');
   return resultado;
-});
+}));
 
 export const updateVentaServicioAction = withAction(async (input: VentaServicioUpdateInput, user: AuthenticatedUser) => {
   const parsed = updateVentaServicioSchema.parse(input);

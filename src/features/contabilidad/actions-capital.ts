@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { withAction, ActionError } from '@/lib/server-actions';
 import { prisma } from '@/lib/prisma';
 import { requireTenant } from '@/lib/services/tenant-scope';
+import { withPeriodValidation } from '@/lib/services/with-period-validation';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 
 const createSchema = z.object({
@@ -38,7 +39,9 @@ export const getInyeccionesCapitalAction = withAction(async (_input: { tipo?: st
   return { inyecciones };
 });
 
-export const createInyeccionCapitalAction = withAction(async (input: z.infer<typeof createSchema>, user: AuthenticatedUser) => {
+export const createInyeccionCapitalAction = withAction(withPeriodValidation(
+  () => new Date(),
+  async (input: z.infer<typeof createSchema>, user: AuthenticatedUser) => {
   const parsed = createSchema.parse(input);
   const tenantId = requireTenant(user);
   const inyeccion = await prisma.inyeccionCapital.create({
@@ -49,9 +52,11 @@ export const createInyeccionCapitalAction = withAction(async (input: z.infer<typ
   });
   revalidatePath('/busy/contabilidad/capital');
   return inyeccion;
-});
+}));
 
-export const registrarPagoCapitalAction = withAction(async (input: z.infer<typeof pagoSchema>, user: AuthenticatedUser) => {
+export const registrarPagoCapitalAction = withAction(withPeriodValidation(
+  () => new Date(),
+  async (input: z.infer<typeof pagoSchema>, user: AuthenticatedUser) => {
   const parsed = pagoSchema.parse(input);
   const tenantId = requireTenant(user);
   const pago = await prisma.pagoDeuda.create({
@@ -62,4 +67,4 @@ export const registrarPagoCapitalAction = withAction(async (input: z.infer<typeo
   });
   revalidatePath('/busy/contabilidad/capital');
   return pago;
-});
+}));
