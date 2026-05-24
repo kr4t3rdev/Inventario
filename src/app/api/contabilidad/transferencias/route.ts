@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma'
 import { z } from 'zod'
 import { authenticateUser } from '@/lib/auth-middleware'
 import { AuditLogService } from '@/lib/services/audit-log-service'
+import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
 
 // Schema for creating a bank transfer
 const createTransferenciaSchema = z.object({
@@ -122,8 +123,27 @@ export async function GET(request: NextRequest) {
 // POST /api/contabilidad/transferencias - Execute bank transfer
 export async function POST(request: NextRequest) {
   try {
+    const authResultUser = await authenticateUser(request)
+    if ('status' in authResultUser) return authResultUser as Response
+    const user = authResultUser.user
+
     const body = await request.json()
     const validatedData = createTransferenciaSchema.parse(body)
+
+    // Validar período contable antes de ejecutar la transferencia
+    const fechaOperacion = extraerFechaDeBody(body) ?? new Date()
+    const validacionPeriodo = await validarEscrituraPeriodo({
+      fecha: fechaOperacion,
+      tenantId: user.tenantId ?? '',
+      tipoOperacion: 'transferencia',
+      actor: user.userId,
+    })
+    if (!validacionPeriodo.permitido) {
+      return NextResponse.json(
+        { error: validacionPeriodo.error?.message ?? 'Período contable cerrado', code: validacionPeriodo.error?.code ?? 'PERIODO_CERRADO' },
+        { status: 400 }
+      )
+    }
 
     const {
       cuentaOrigenId,
@@ -279,26 +299,22 @@ export async function POST(request: NextRequest) {
       return nuevaTransferencia
     })
 
-    const authResultOpt = await authenticateUser(request)
-    const user = 'status' in authResultOpt ? null : authResultOpt.user
-    if (user) {
-      await AuditLogService.log({
-        accion: "CREATE",
-        entidad: "TRANSFERENCIA",
-        entidadId: transferencia.transferenciaId,
-        usuarioId: user.userId,
-        detalles: {
-          numeroComprobante: transferencia.numeroComprobante,
-          cuentaOrigen: transferencia.cuentaOrigen.nombreBanco,
-          cuentaDestino: transferencia.cuentaDestino.nombreBanco,
-          montoOrigen: transferencia.montoOrigen,
-          monedaOrigen: transferencia.monedaOrigen,
-          montoDestino: transferencia.montoDestino,
-          monedaDestino: transferencia.monedaDestino,
-          motivo: transferencia.motivo
-        }
-      });
-    }
+    await AuditLogService.log({
+      accion: "CREATE",
+      entidad: "TRANSFERENCIA",
+      entidadId: transferencia.transferenciaId,
+      usuarioId: user.userId,
+      detalles: {
+        numeroComprobante: transferencia.numeroComprobante,
+        cuentaOrigen: transferencia.cuentaOrigen.nombreBanco,
+        cuentaDestino: transferencia.cuentaDestino.nombreBanco,
+        montoOrigen: transferencia.montoOrigen,
+        monedaOrigen: transferencia.monedaOrigen,
+        montoDestino: transferencia.montoDestino,
+        monedaDestino: transferencia.monedaDestino,
+        motivo: transferencia.motivo
+      }
+    });
 
     return NextResponse.json({
       message: 'Transferencia ejecutada exitosamente',

@@ -5,6 +5,7 @@ import prisma from '@/lib/prisma'
 import { withAuthGet, withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware'
 import { requireTenant } from '@/lib/services/tenant-scope'
 import { AuditLogService } from '@/lib/services/audit-log-service'
+import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
 import { calcularSaldoPendienteDeuda, calcularTotalDeudaConInteres, normalizarEstadoDeudaCash } from '@/lib/utils/deuda-cash'
 
 const querySchema = z.object({
@@ -139,6 +140,22 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
     const rawBody = await request.json()
     console.log('[DeudaCash POST] body recibido:', JSON.stringify(rawBody))
     const body = createSchema.parse(rawBody)
+
+    // Validar período contable antes de crear la deuda
+    const fechaOperacion = extraerFechaDeBody(rawBody) ?? new Date()
+    const validacionPeriodo = await validarEscrituraPeriodo({
+      fecha: fechaOperacion,
+      tenantId,
+      tipoOperacion: 'deuda_cash',
+      actor: user.userId,
+    })
+    if (!validacionPeriodo.permitido) {
+      return NextResponse.json(
+        { error: validacionPeriodo.error?.message ?? 'Período contable cerrado', code: validacionPeriodo.error?.code ?? 'PERIODO_CERRADO' },
+        { status: 400 }
+      )
+    }
+
     const totalDeuda = calcularTotalDeudaConInteres(body.montoCapital, body.tasaInteres)
 
     const proveedor = await prisma.vendor.findUnique({

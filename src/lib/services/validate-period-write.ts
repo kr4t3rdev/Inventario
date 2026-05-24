@@ -130,10 +130,12 @@ export async function validarEscrituraPeriodo(
  */
 export function extraerFechaDeBody(body: Record<string, unknown>): Date | null {
   // Campos comunes de fecha en operaciones contables
+  // fechaOperacion es el campo canónico (prioritario)
   const camposFecha = [
+    'fechaOperacion',
     'fechaReconciliacion',
-    'fecha',
     'fechaTransferencia',
+    'fecha',
     'fechaPago',
     'fechaCompra',
     'fechaServicio',

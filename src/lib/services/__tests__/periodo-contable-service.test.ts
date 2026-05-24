@@ -112,8 +112,8 @@ describe('validarTransicion', () => {
     expect(PeriodoContableService.validarTransicion(EstadoPeriodo.BORRADOR, EstadoPeriodo.CERRADO)).toBe(false);
   });
 
-  it('rechaza ABIERTO → CERRADO directo (debe pasar por EN_CIERRE)', () => {
-    expect(PeriodoContableService.validarTransicion(EstadoPeriodo.ABIERTO, EstadoPeriodo.CERRADO)).toBe(false);
+  it('acepta ABIERTO → CERRADO directo (simplificación V1)', () => {
+    expect(PeriodoContableService.validarTransicion(EstadoPeriodo.ABIERTO, EstadoPeriodo.CERRADO)).toBe(true);
   });
 
   it('rechaza CERRADO → ABIERTO (debe pasar por REABIERTO)', () => {

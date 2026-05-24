@@ -247,17 +247,17 @@ export const cerrarPeriodoAction = withAction(async (
     throw new ActionError('Período no encontrado', 'NOT_FOUND');
   }
 
-  // Cerrar período (incluye validación de transición e hijos)
-  const cerrado = await PeriodoContableService.cerrarPeriodo(
-    parsed.periodoId,
-    user.userId,
-  );
-
-  // Generar snapshot automático del período cerrado
+  // Generar snapshot ANTES de cerrar (captura el estado mientras está ABIERTO)
   const snapshotService = new SnapshotService();
   const snapshots = await snapshotService.generarSnapshot(
     parsed.periodoId,
     'caja',
+    user.userId,
+  );
+
+  // Cerrar período (validaciones ya hechas en el service)
+  const cerrado = await PeriodoContableService.cerrarPeriodo(
+    parsed.periodoId,
     user.userId,
   );
 

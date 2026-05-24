@@ -4,6 +4,7 @@ import { z } from 'zod'
 import prisma from '@/lib/prisma'
 import { withAuthPost } from '@/lib/auth-middleware'
 import { AuditLogService } from '@/lib/services/audit-log-service'
+import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
 import { calcularSaldoPendienteDeuda } from '@/lib/utils/deuda-cash'
 
 const pagoSchema = z.object({
@@ -45,6 +46,21 @@ export const POST = withAuthPost(async (request: NextRequest, context: unknown, 
 
     if (!deuda) {
       return NextResponse.json({ error: 'Deuda no encontrada' }, { status: 404 })
+    }
+
+    // Validar período contable antes de registrar el pago
+    const fechaOperacion = extraerFechaDeBody(body as unknown as Record<string, unknown>) ?? new Date()
+    const validacionPeriodo = await validarEscrituraPeriodo({
+      fecha: fechaOperacion,
+      tenantId: deuda.tenantId,
+      tipoOperacion: 'pago_deuda_cash',
+      actor: user.userId,
+    })
+    if (!validacionPeriodo.permitido) {
+      return NextResponse.json(
+        { error: validacionPeriodo.error?.message ?? 'Período contable cerrado', code: validacionPeriodo.error?.code ?? 'PERIODO_CERRADO' },
+        { status: 400 }
+      )
     }
 
     if (deuda.estado === 'PAGADO' || deuda.estado === 'CANCELADO') {

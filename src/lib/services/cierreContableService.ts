@@ -4,11 +4,12 @@ const prisma = new PrismaClient();
 
 /**
  * Calcula estadísticas para un cierre contable
+ * @param tenantId - ID del tenant (obligatorio para multi-tenant)
  * @param fechaInicio - Fecha de inicio del período
  * @param fechaFin - Fecha de fin del período
  * @returns Estadísticas calculadas
  */
-export async function calcularEstadisticasCierre(fechaInicio: Date, fechaFin: Date) {
+export async function calcularEstadisticasCierre(tenantId: string, fechaInicio: Date, fechaFin: Date) {
   // --- FLUJO DE CAJA (CASH BASIS) ---
   // Basado en reconciliaciones (dinero que realmente entró o salió)
 
@@ -16,6 +17,7 @@ export async function calcularEstadisticasCierre(fechaInicio: Date, fechaFin: Da
   const totalVentasRec = await prisma.reconciliacionVenta.aggregate({
     _sum: { montoConvertido: true },
     where: {
+      tenantId,
       fechaReconciliacion: { gte: fechaInicio, lte: fechaFin },
     },
   });
@@ -24,6 +26,7 @@ export async function calcularEstadisticasCierre(fechaInicio: Date, fechaFin: Da
   const totalServiciosRec = await prisma.reconciliacionServicio.aggregate({
     _sum: { montoConvertido: true },
     where: {
+      tenantId,
       fechaReconciliacion: { gte: fechaInicio, lte: fechaFin },
     },
   });
@@ -34,6 +37,7 @@ export async function calcularEstadisticasCierre(fechaInicio: Date, fechaFin: Da
   const totalGastosPagados = await prisma.reconciliacionGasto.aggregate({
     _sum: { montoConvertido: true },
     where: {
+      tenantId,
       fechaReconciliacion: { gte: fechaInicio, lte: fechaFin },
     },
   });
@@ -47,6 +51,7 @@ export async function calcularEstadisticasCierre(fechaInicio: Date, fechaFin: Da
   const ventasTotalesAccrual = await prisma.venta.aggregate({
     _sum: { total: true },
     where: {
+      tenantId,
       createdAt: { gte: fechaInicio, lte: fechaFin },
     },
   });
@@ -55,6 +60,7 @@ export async function calcularEstadisticasCierre(fechaInicio: Date, fechaFin: Da
   const serviciosTotalesAccrual = await prisma.ventaServicios.aggregate({
     _sum: { total: true },
     where: {
+      tenantId,
       createdAt: { gte: fechaInicio, lte: fechaFin },
     },
   });
@@ -65,6 +71,7 @@ export async function calcularEstadisticasCierre(fechaInicio: Date, fechaFin: Da
   const total_merma = await prisma.merma.aggregate({
     _sum: { costoTotal: true },
     where: {
+      tenantId,
       createdAt: { gte: fechaInicio, lte: fechaFin },
     },
   });
@@ -72,6 +79,7 @@ export async function calcularEstadisticasCierre(fechaInicio: Date, fechaFin: Da
   const total_salario = await prisma.pagosalario.aggregate({
     _sum: { salario: true },
     where: {
+      tenantId,
       createdAt: { gte: fechaInicio, lte: fechaFin },
     }
   });
@@ -79,6 +87,7 @@ export async function calcularEstadisticasCierre(fechaInicio: Date, fechaFin: Da
   const total_gastos_operacion = await prisma.gastosDE.aggregate({
     _sum: { monto: true },
     where: {
+      tenantId,
       createdAt: { gte: fechaInicio, lte: fechaFin },
     }
   });
@@ -86,6 +95,7 @@ export async function calcularEstadisticasCierre(fechaInicio: Date, fechaFin: Da
   const total_compras = await prisma.gastoCompra.aggregate({
     _sum: { total: true },
     where: {
+      tenantId,
       fechaCompra: { gte: fechaInicio, lte: fechaFin },
     }
   });
@@ -104,6 +114,7 @@ export async function calcularEstadisticasCierre(fechaInicio: Date, fechaFin: Da
   const deudasClientes = await prisma.venta.aggregate({
     _sum: { total: true },
     where: {
+      tenantId,
       createdAt: { gte: fechaInicio, lte: fechaFin },
       reconciliaciones: { none: {} },
     },
@@ -113,6 +124,7 @@ export async function calcularEstadisticasCierre(fechaInicio: Date, fechaFin: Da
   const deudasProveedores = await prisma.gastoCompra.aggregate({
     _sum: { total: true },
     where: {
+      tenantId,
       fechaCompra: { gte: fechaInicio, lte: fechaFin },
       reconciliaciones: { none: {} },
     },
@@ -124,6 +136,7 @@ export async function calcularEstadisticasCierre(fechaInicio: Date, fechaFin: Da
       cantidad: true,
     },
     where: {
+      tenantId,
       createdAt: {
         gte: fechaInicio,
         lte: fechaFin,
@@ -137,6 +150,7 @@ export async function calcularEstadisticasCierre(fechaInicio: Date, fechaFin: Da
       cantidad: true,
     },
     where: {
+      tenantId,
       createdAt: {
         gte: fechaInicio,
         lte: fechaFin,
@@ -144,11 +158,12 @@ export async function calcularEstadisticasCierre(fechaInicio: Date, fechaFin: Da
     },
   });
 
-  // Stock Final: suma de stock actual de productos
+  // Stock Final: suma de stock actual de productos del tenant
   const stockFinal = await prisma.producto.aggregate({
     _sum: {
       stock: true,
     },
+    where: { tenantId },
   });
 
   // Márgenes
@@ -194,7 +209,7 @@ export async function crearCierreContable(
   creadoPor: string,
   observaciones?: string
 ) {
-  const estadisticas = await calcularEstadisticasCierre(fechaInicio, fechaFin);
+  const estadisticas = await calcularEstadisticasCierre(tenantId, fechaInicio, fechaFin);
 
   const cierre = await prisma.cierreContable.create({
     data: {

@@ -11,6 +11,7 @@
 import { prisma } from '@/lib/prisma';
 import type { SaldoSnapshot } from '@/generated/prisma';
 import { SnapshotTotales } from './periodo-contable-types';
+import { ENTIDADES_CAJA, ENTIDADES_DEVENGO } from './fecha-operacion-registry';
 
 /**
  * @description Servicio de snapshot de saldos bancarios.
@@ -161,23 +162,185 @@ export class SnapshotService {
   // ── Helpers internos ────────────────────────────────────────────────────
 
   /**
+   * Calcula el saldo histórico de una cuenta bancaria a una fecha dada.
+   *
+   * Usa la fórmula: saldo al día X = saldo actual − transacciones ocurridas DESPUÉS de X.
+   *
+   * Esto evita depender de un "saldo inicial" y funciona aunque la cuenta
+   * se haya creado con un saldo que no corresponda a una transacción real.
+   *
+   * @param {string} cuentaId - ID de la cuenta bancaria
+   * @param {string} tenantId - ID del tenant
+   * @param {Date} fecha - Fecha objetivo (inclusive, fin del día)
+   * @returns {Promise<number>} Saldo calculado a la fecha
+   */
+  async calcularSaldoHistorico(
+    cuentaId: string,
+    tenantId: string,
+    fecha: Date,
+  ): Promise<number> {
+    const finDelDia = new Date(fecha);
+    finDelDia.setHours(23, 59, 59, 999);
+
+    // 1. Obtener saldo actual
+    const cuenta = await prisma.cuentaBancaria.findUnique({
+      where: { cuentaId },
+      select: { saldo: true },
+    });
+
+    if (!cuenta) {
+      throw new Error(`Cuenta bancaria no encontrada: ${cuentaId}`);
+    }
+
+    // 2. Calcular transacciones ocurridas DESPUÉS de la fecha objetivo
+    const transaccionesDespues = await this._calcularTransaccionesNetas(
+      cuentaId,
+      tenantId,
+      { gte: new Date(finDelDia.getTime() + 1) }, // desde el día siguiente
+    );
+
+    // 3. Saldo histórico = saldo actual - transacciones después de la fecha
+    return Number(cuenta.saldo) - transaccionesDespues;
+  }
+
+  /**
+   * Calcula el saldo histórico usando un snapshot como punto de partida.
+   *
+   * Más preciso que {@link calcularSaldoHistorico} porque arranca de un
+   * saldo congelado en el tiempo y solo suma transacciones posteriores.
+   *
+   * @param {string} snapshotId - ID del snapshot base
+   * @param {Date} fecha - Fecha objetivo (debe ser posterior al snapshot)
+   * @returns {Promise<{saldo: number, snapshotBase: string, transaccionesNetas: number}>}
+   */
+  async calcularSaldoDesdeSnapshot(
+    snapshotId: string,
+    fecha: Date,
+  ): Promise<{ saldo: number; snapshotBase: string; transaccionesNetas: number }> {
+    const snapshot = await prisma.saldoSnapshot.findUnique({
+      where: { snapshotId },
+      include: {
+        periodo: { select: { tenantId: true } },
+      },
+    });
+
+    if (!snapshot) {
+      throw new Error(`Snapshot no encontrado: ${snapshotId}`);
+    }
+
+    const finDelDia = new Date(fecha);
+    finDelDia.setHours(23, 59, 59, 999);
+
+    // Calcular transacciones entre el fin del período del snapshot y la fecha objetivo
+    const transaccionesNetas = await this._calcularTransaccionesNetas(
+      snapshot.cuentaBancariaId,
+      snapshot.periodo.tenantId,
+      {
+        gte: snapshot.periodo.fechaFin,
+        lte: finDelDia,
+      },
+    );
+
+    return {
+      saldo: Number(snapshot.saldo) + transaccionesNetas,
+      snapshotBase: snapshotId,
+      transaccionesNetas,
+    };
+  }
+
+  // ── Helpers internos ────────────────────────────────────────────────────
+
+  /**
+   * Calcula el neto de transacciones de una cuenta en un rango de fechas.
+   *
+   * Fórmula: ingresos (ventas + servicios) - egresos (gastos) + ajustes - transferencias salientes + transferencias entrantes
+   *
+   * @private
+   */
+  private async _calcularTransaccionesNetas(
+    cuentaId: string,
+    tenantId: string,
+    dateRange: { gte?: Date; lte?: Date },
+  ): Promise<number> {
+    const ventas = await prisma.reconciliacionVenta.aggregate({
+      _sum: { montoConvertido: true },
+      where: { tenantId, cuentaId, fechaReconciliacion: dateRange },
+    });
+
+    const servicios = await prisma.reconciliacionServicio.aggregate({
+      _sum: { montoConvertido: true },
+      where: { tenantId, cuentaId, fechaReconciliacion: dateRange },
+    });
+
+    const gastos = await prisma.reconciliacionGasto.aggregate({
+      _sum: { montoConvertido: true },
+      where: { tenantId, cuentaId, fechaReconciliacion: dateRange },
+    });
+
+    const ajustes = await prisma.ajusteBancario.aggregate({
+      _sum: { montoConvertido: true },
+      where: { tenantId, cuentaId, createdAt: dateRange },
+    });
+
+    const transSalientes = await prisma.transferenciaBancaria.aggregate({
+      _sum: { montoOrigen: true },
+      where: { tenantId, cuentaOrigenId: cuentaId, fechaTransferencia: dateRange },
+    });
+
+    const transEntrantes = await prisma.transferenciaBancaria.aggregate({
+      _sum: { montoDestino: true },
+      where: { tenantId, cuentaDestinoId: cuentaId, fechaTransferencia: dateRange },
+    });
+
+    return (
+      Number(ventas._sum.montoConvertido ?? 0) +
+      Number(servicios._sum.montoConvertido ?? 0) -
+      Number(gastos._sum.montoConvertido ?? 0) +
+      Number(ajustes._sum.montoConvertido ?? 0) -
+      Number(transSalientes._sum.montoOrigen ?? 0) +
+      Number(transEntrantes._sum.montoDestino ?? 0)
+    );
+  }
+
+  /**
    * Calcula el saldo neto de una cuenta bancaria en un rango de fechas.
    *
    * Saldo = ingresos (ventas + servicios) - egresos (gastos) + ajustes + transferencias netas
+   *
+   * Usa el registro canónico {@link fecha-operacion-registry} para determinar
+   * el campo de fecha correcto para cada tipo de entidad.
    */
   private async _calcularSaldoCuenta(
     cuentaId: string,
     tenantId: string,
-    dateFilter: Record<string, unknown>,
+    _dateFilter: Record<string, unknown>,
     field: string,
   ): Promise<number> {
+    const usarCaja = field === 'fechaReconciliacion';
+
+    // Extraer rango de fechas del dateFilter (viene armado desde generarSnapshot)
+    const rangoFechas = (
+      _dateFilter.fechaReconciliacion ??
+      _dateFilter.createdAt ??
+      {}
+    ) as { gte?: Date; lte?: Date };
+
+    // En modo caja las reconciliaciones filtran por fechaReconciliacion;
+    // en modo devengo filtran por createdAt (fecha de registro).
+    const filtroReconciliacion = usarCaja
+      ? { fechaReconciliacion: rangoFechas }
+      : { createdAt: rangoFechas };
+
+    // Ajustes siempre usan createdAt (no tienen fechaOperacion aún)
+    // Transferencias siempre usan fechaTransferencia
+
     // 1. Ingresos por reconciliaciones de venta
     const ventasResult = await prisma.reconciliacionVenta.aggregate({
       _sum: { montoConvertido: true },
       where: {
         tenantId,
         cuentaId,
-        ...dateFilter,
+        ...filtroReconciliacion,
       },
     });
 
@@ -187,7 +350,7 @@ export class SnapshotService {
       where: {
         tenantId,
         cuentaId,
-        ...dateFilter,
+        ...filtroReconciliacion,
       },
     });
 
@@ -197,27 +360,27 @@ export class SnapshotService {
       where: {
         tenantId,
         cuentaId,
-        ...dateFilter,
+        ...filtroReconciliacion,
       },
     });
 
-    // 4. Ajustes bancarios
+    // 4. Ajustes bancarios — usan createdAt
     const ajustesResult = await prisma.ajusteBancario.aggregate({
       _sum: { montoConvertido: true },
       where: {
         tenantId,
         cuentaId,
-        createdAt: dateFilter.createdAt as Record<string, unknown> | undefined,
+        createdAt: rangoFechas,
       },
     });
 
-    // 5. Transferencias: salientes (origen) y entrantes (destino)
+    // 5. Transferencias — filtran por fechaTransferencia
     const transferenciasOrigen = await prisma.transferenciaBancaria.aggregate({
       _sum: { montoOrigen: true },
       where: {
         tenantId,
         cuentaOrigenId: cuentaId,
-        fechaTransferencia: { gte: (dateFilter.createdAt as Record<string, unknown> | undefined)?.gte, lte: (dateFilter.createdAt as Record<string, unknown> | undefined)?.lte } as Record<string, unknown> | undefined,
+        fechaTransferencia: rangoFechas,
       },
     });
 
@@ -226,7 +389,7 @@ export class SnapshotService {
       where: {
         tenantId,
         cuentaDestinoId: cuentaId,
-        fechaTransferencia: { gte: (dateFilter.createdAt as Record<string, unknown> | undefined)?.gte, lte: (dateFilter.createdAt as Record<string, unknown> | undefined)?.lte } as Record<string, unknown> | undefined,
+        fechaTransferencia: rangoFechas,
       },
     });
 
@@ -252,4 +415,136 @@ export class SnapshotService {
 
     return ingresos - egresos + ajustes - transSalientes + transEntrantes;
   }
+
+  /**
+   * Calcula el saldo histórico de una cuenta bancaria a una fecha dada.
+   *
+   * Usa la fórmula: saldo al día X = saldo actual − transacciones ocurridas DESPUÉS de X.
+   *
+   * @param {string} cuentaId - ID de la cuenta bancaria
+   * @param {string} tenantId - ID del tenant
+   * @param {Date} fecha - Fecha objetivo (inclusive)
+   * @returns {Promise<number>} Saldo calculado a la fecha
+   */
+  async calcularSaldoHistorico(
+    cuentaId: string,
+    tenantId: string,
+    fecha: Date,
+  ): Promise<number> {
+    const finDelDia = new Date(fecha);
+    finDelDia.setHours(23, 59, 59, 999);
+
+    const cuenta = await prisma.cuentaBancaria.findUnique({
+      where: { cuentaId },
+      select: { saldo: true },
+    });
+
+    if (!cuenta) {
+      throw new Error(`Cuenta bancaria no encontrada: ${cuentaId}`);
+    }
+
+    // Calcular transacciones DESPUÉS de la fecha objetivo
+    const transaccionesDespues = await this._calcularTransaccionesNetas(
+      cuentaId,
+      tenantId,
+      { gte: new Date(finDelDia.getTime() + 1) },
+    );
+
+    return Number(cuenta.saldo) - transaccionesDespues;
+  }
+
+  /**
+   * Calcula el saldo histórico desde un snapshot como punto de partida.
+   *
+   * Más preciso que {@link calcularSaldoHistorico} porque arranca de un
+   * saldo congelado en el tiempo.
+   *
+   * @param {string} snapshotId - ID del snapshot base
+   * @param {Date} fecha - Fecha objetivo (debe ser posterior al snapshot)
+   * @returns {Promise<{saldo: number, snapshotBase: string, transaccionesNetas: number}>}
+   */
+  async calcularSaldoDesdeSnapshot(
+    snapshotId: string,
+    fecha: Date,
+  ): Promise<{ saldo: number; snapshotBase: string; transaccionesNetas: number }> {
+    const snapshot = await prisma.saldoSnapshot.findUnique({
+      where: { snapshotId },
+      include: {
+        periodo: { select: { tenantId: true } },
+      },
+    });
+
+    if (!snapshot) {
+      throw new Error(`Snapshot no encontrado: ${snapshotId}`);
+    }
+
+    const finDelDia = new Date(fecha);
+    finDelDia.setHours(23, 59, 59, 999);
+
+    const transaccionesNetas = await this._calcularTransaccionesNetas(
+      snapshot.cuentaBancariaId,
+      snapshot.periodo.tenantId,
+      {
+        gte: snapshot.periodo.fechaFin,
+        lte: finDelDia,
+      },
+    );
+
+    return {
+      saldo: Number(snapshot.saldo) + transaccionesNetas,
+      snapshotBase: snapshotId,
+      transaccionesNetas,
+    };
+  }
+
+  /**
+   * Calcula el neto de transacciones de una cuenta en un rango de fechas.
+   *
+   * @private
+   */
+  private async _calcularTransaccionesNetas(
+    cuentaId: string,
+    tenantId: string,
+    dateRange: { gte?: Date; lte?: Date },
+  ): Promise<number> {
+    const ventas = await prisma.reconciliacionVenta.aggregate({
+      _sum: { montoConvertido: true },
+      where: { tenantId, cuentaId, fechaReconciliacion: dateRange },
+    });
+
+    const servicios = await prisma.reconciliacionServicio.aggregate({
+      _sum: { montoConvertido: true },
+      where: { tenantId, cuentaId, fechaReconciliacion: dateRange },
+    });
+
+    const gastos = await prisma.reconciliacionGasto.aggregate({
+      _sum: { montoConvertido: true },
+      where: { tenantId, cuentaId, fechaReconciliacion: dateRange },
+    });
+
+    const ajustes = await prisma.ajusteBancario.aggregate({
+      _sum: { montoConvertido: true },
+      where: { tenantId, cuentaId, createdAt: dateRange },
+    });
+
+    const transSalientes = await prisma.transferenciaBancaria.aggregate({
+      _sum: { montoOrigen: true },
+      where: { tenantId, cuentaOrigenId: cuentaId, fechaTransferencia: dateRange },
+    });
+
+    const transEntrantes = await prisma.transferenciaBancaria.aggregate({
+      _sum: { montoDestino: true },
+      where: { tenantId, cuentaDestinoId: cuentaId, fechaTransferencia: dateRange },
+    });
+
+    return (
+      Number(ventas._sum.montoConvertido ?? 0) +
+      Number(servicios._sum.montoConvertido ?? 0) -
+      Number(gastos._sum.montoConvertido ?? 0) +
+      Number(ajustes._sum.montoConvertido ?? 0) -
+      Number(transSalientes._sum.montoOrigen ?? 0) +
+      Number(transEntrantes._sum.montoDestino ?? 0)
+    );
+  }
 }
+

@@ -3,6 +3,7 @@ import { z } from 'zod'
 import prisma from '@/lib/prisma'
 import { withAuthPost } from '@/lib/auth-middleware'
 import { executeAnticipo, isAnticipoWorkflowError } from '@/lib/services/anticipos-workflow'
+import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
 
 const ExecuteAnticipoSchema = z.object({
   contexto: z.enum(['COMPRA_PRODUCTO', 'COMPRA_SERVICIO', 'FACTURA_OFERTA', 'FACTURA_DIRECTA']),
@@ -37,13 +38,28 @@ export const POST = withAuthPost(
       // Validar que el monto objetivo sea exactamente el saldo disponible
       const anticipo = await prisma.anticipo.findUnique({
         where: { anticipoId },
-        select: { saldoDisponible: true },
+        select: { saldoDisponible: true, tenantId: true },
       })
 
       if (!anticipo) {
         return NextResponse.json(
           { error: 'Anticipo no encontrado', code: 'ANTICIPO_NO_ENCONTRADO' },
           { status: 404 }
+        )
+      }
+
+      // Validar período contable antes de ejecutar
+      const fechaOperacion = extraerFechaDeBody(body) ?? new Date()
+      const validacionPeriodo = await validarEscrituraPeriodo({
+        fecha: fechaOperacion,
+        tenantId: anticipo.tenantId,
+        tipoOperacion: 'ejecutar_anticipo',
+        actor: user.userId,
+      })
+      if (!validacionPeriodo.permitido) {
+        return NextResponse.json(
+          { error: validacionPeriodo.error?.message ?? 'Período contable cerrado', code: validacionPeriodo.error?.code ?? 'PERIODO_CERRADO' },
+          { status: 400 }
         )
       }
 

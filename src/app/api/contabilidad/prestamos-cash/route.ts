@@ -2,9 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import prisma from '@/lib/prisma'
-import { withAuthGet, withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware'
+import { withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware'
 import { requireTenant } from '@/lib/services/tenant-scope'
 import { AuditLogService } from '@/lib/services/audit-log-service'
+import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
 import { calcularSaldoPendientePrestamo, normalizarEstadoPrestamoCash } from '@/lib/utils/prestamo-cash'
 
 const querySchema = z.object({
@@ -133,6 +134,21 @@ export const POST = withAuthPost(async (request: NextRequest, _context: unknown,
     }
 
     const body = createSchema.parse(await request.json())
+
+    // Validar período contable antes de crear el préstamo
+    const fechaOperacion = extraerFechaDeBody(body as unknown as Record<string, unknown>) ?? new Date()
+    const validacionPeriodo = await validarEscrituraPeriodo({
+      fecha: fechaOperacion,
+      tenantId,
+      tipoOperacion: 'prestamo_cash',
+      actor: user.userId,
+    })
+    if (!validacionPeriodo.permitido) {
+      return NextResponse.json(
+        { error: validacionPeriodo.error?.message ?? 'Período contable cerrado', code: validacionPeriodo.error?.code ?? 'PERIODO_CERRADO' },
+        { status: 400 }
+      )
+    }
 
     const cuentaOrigen = await prisma.cuentaBancaria.findUnique({
       where: { cuentaId: body.cuentaBancariaId },

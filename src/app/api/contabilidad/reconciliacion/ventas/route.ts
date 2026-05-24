@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { Prisma } from '@/generated/prisma'
 import { authenticateUser } from "@/lib/auth-middleware"
 import { AuditLogService } from "@/lib/services/audit-log-service"
+import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
 
 // Schema para validar la reconciliación de ventas
 const reconciliacionVentaSchema = z.object({
@@ -305,6 +306,22 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json()
     const validatedData = reconciliacionVentaSchema.parse(body)
+
+    // Validar período contable antes de escribir
+    const fechaOperacion = extraerFechaDeBody(body) ?? new Date()
+    const validacionPeriodo = await validarEscrituraPeriodo({
+      fecha: fechaOperacion,
+      tenantId: user.tenantId ?? '',
+      tipoOperacion: 'reconciliacion_ventas',
+      actor: user.userId,
+    })
+    if (!validacionPeriodo.permitido) {
+      return NextResponse.json(
+        { error: validacionPeriodo.error?.message ?? 'Período contable cerrado', code: validacionPeriodo.error?.code ?? 'PERIODO_CERRADO' },
+        { status: 400 }
+      )
+    }
+
     const referenciaTransferenciaRaw =
       validatedData.verificacionTransferenciaId || validatedData.idTransferencia
     const referenciaTransferencia = referenciaTransferenciaRaw?.trim() || undefined

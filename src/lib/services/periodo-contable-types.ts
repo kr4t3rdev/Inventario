@@ -30,7 +30,7 @@ export const WRITABLE_STATES: EstadoPeriodo[] = [
  */
 export const VALID_TRANSITIONS: Record<EstadoPeriodo, EstadoPeriodo[]> = {
   BORRADOR: [EstadoPeriodo.ABIERTO],
-  ABIERTO: [EstadoPeriodo.EN_CIERRE],
+  ABIERTO: [EstadoPeriodo.EN_CIERRE, EstadoPeriodo.CERRADO], // CERRADO directo para V1
   EN_CIERRE: [EstadoPeriodo.CERRADO],
   CERRADO: [EstadoPeriodo.APROBADO],
   APROBADO: [EstadoPeriodo.REABIERTO],
