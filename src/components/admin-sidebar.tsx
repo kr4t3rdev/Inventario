@@ -22,6 +22,7 @@ import {
   Sparkles,
   Key,
   CreditCard,
+  HardDrive,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -133,6 +134,11 @@ export function AdminSidebar({
             title: "Migraciones",
             url: "/admin/migraciones",
             icon: Database,
+          },
+          {
+            title: "Backups",
+            url: "/admin/backups",
+            icon: HardDrive,
           },
         ],
       },
