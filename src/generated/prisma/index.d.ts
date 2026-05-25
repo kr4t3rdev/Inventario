@@ -509,6 +509,16 @@ export type SaldoSnapshot = $Result.DefaultSelection<Prisma.$SaldoSnapshotPayloa
  * 
  */
 export type AuditoriaPeriodo = $Result.DefaultSelection<Prisma.$AuditoriaPeriodoPayload>
+/**
+ * Model BackupLog
+ * Registro de cada operación de backup o restore.
+ */
+export type BackupLog = $Result.DefaultSelection<Prisma.$BackupLogPayload>
+/**
+ * Model BackupPlan
+ * Plan de backup programado.
+ */
+export type BackupPlan = $Result.DefaultSelection<Prisma.$BackupPlanPayload>
 
 /**
  * Enums
@@ -724,6 +734,26 @@ export const CategoriaPeriodo: {
 
 export type CategoriaPeriodo = (typeof CategoriaPeriodo)[keyof typeof CategoriaPeriodo]
 
+
+export const BackupType: {
+  full: 'full',
+  tenant: 'tenant',
+  config: 'config'
+};
+
+export type BackupType = (typeof BackupType)[keyof typeof BackupType]
+
+
+export const BackupStatus: {
+  running: 'running',
+  completed: 'completed',
+  failed: 'failed',
+  pruned: 'pruned',
+  deleted: 'deleted'
+};
+
+export type BackupStatus = (typeof BackupStatus)[keyof typeof BackupStatus]
+
 }
 
 export type TipoAnticipo = $Enums.TipoAnticipo
@@ -809,6 +839,14 @@ export const EventoAuditoria: typeof $Enums.EventoAuditoria
 export type CategoriaPeriodo = $Enums.CategoriaPeriodo
 
 export const CategoriaPeriodo: typeof $Enums.CategoriaPeriodo
+
+export type BackupType = $Enums.BackupType
+
+export const BackupType: typeof $Enums.BackupType
+
+export type BackupStatus = $Enums.BackupStatus
+
+export const BackupStatus: typeof $Enums.BackupStatus
 
 /**
  * ##  Prisma Client ʲˢ
@@ -1917,6 +1955,26 @@ export class PrismaClient<
     * ```
     */
   get auditoriaPeriodo(): Prisma.AuditoriaPeriodoDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.backupLog`: Exposes CRUD operations for the **BackupLog** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more BackupLogs
+    * const backupLogs = await prisma.backupLog.findMany()
+    * ```
+    */
+  get backupLog(): Prisma.BackupLogDelegate<ExtArgs, ClientOptions>;
+
+  /**
+   * `prisma.backupPlan`: Exposes CRUD operations for the **BackupPlan** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more BackupPlans
+    * const backupPlans = await prisma.backupPlan.findMany()
+    * ```
+    */
+  get backupPlan(): Prisma.BackupPlanDelegate<ExtArgs, ClientOptions>;
 }
 
 export namespace Prisma {
@@ -2456,7 +2514,9 @@ export namespace Prisma {
     SnapshotPeriodo: 'SnapshotPeriodo',
     AperturaPeriodo: 'AperturaPeriodo',
     SaldoSnapshot: 'SaldoSnapshot',
-    AuditoriaPeriodo: 'AuditoriaPeriodo'
+    AuditoriaPeriodo: 'AuditoriaPeriodo',
+    BackupLog: 'BackupLog',
+    BackupPlan: 'BackupPlan'
   };
 
   export type ModelName = (typeof ModelName)[keyof typeof ModelName]
@@ -2475,7 +2535,7 @@ export namespace Prisma {
       omit: GlobalOmitOptions
     }
     meta: {
-      modelProps: "categoria" | "unidad" | "vendor" | "inyeccionCapital" | "pagoDeuda" | "cliente" | "tenant" | "tenantMembership" | "tenantLicense" | "miEmpresa" | "almacen" | "puntoDeVenta" | "producto" | "stockUbicacion" | "venta" | "ventaItem" | "merma" | "transferencia" | "user" | "plan" | "licencia" | "licenciaAudit" | "notification" | "userActivityLog" | "userSession" | "attendance" | "employeeWorkSchedule" | "vacationRequest" | "vacationAccrual" | "empleado" | "pagosalario" | "cierreContable" | "gastoCompra" | "compraProducto" | "compraDocumento" | "compraDocumentoItem" | "servicios" | "ventaServicios" | "compraServicio" | "gastoConcepto" | "gastoElemento" | "gastosDE" | "moneda" | "catalogoReparacionConfig" | "tasaCambio" | "transaccionMoneda" | "cuentaBancaria" | "tipoPago" | "reconciliacionVenta" | "reconciliacionServicio" | "reconciliacionGasto" | "ajusteBancario" | "transferenciaBancaria" | "alertHistory" | "auditLog" | "reportHistory" | "scheduledReport" | "scenarioSimulation" | "contrato" | "contratoVersion" | "contratoFirma" | "contratoAprobacion" | "contratoArchivo" | "contratoAlerta" | "tipoContratoCustom" | "factura" | "serieFacturacion" | "oferta" | "ofertaItem" | "cuentaPorCobrar" | "cuentaPorPagar" | "deudaCash" | "prestamoCash" | "pagoCuentaPorPagar" | "equipoReparacion" | "piezaReparacion" | "ordenReparacion" | "ordenReparacionEquipo" | "ordenReparacionItem" | "ordenReparacionMaterial" | "defectacionCatalogo" | "configuracionSistema" | "ordenProduccion" | "ordenProduccionHistorial" | "receta" | "recetaIngrediente" | "valeSalida" | "valeSalidaItem" | "listaPrecio" | "precioProducto" | "productoCostHistory" | "vendorCodeSequence" | "anticipo" | "anticipoMovimiento" | "periodoContable" | "snapshotPeriodo" | "aperturaPeriodo" | "saldoSnapshot" | "auditoriaPeriodo"
+      modelProps: "categoria" | "unidad" | "vendor" | "inyeccionCapital" | "pagoDeuda" | "cliente" | "tenant" | "tenantMembership" | "tenantLicense" | "miEmpresa" | "almacen" | "puntoDeVenta" | "producto" | "stockUbicacion" | "venta" | "ventaItem" | "merma" | "transferencia" | "user" | "plan" | "licencia" | "licenciaAudit" | "notification" | "userActivityLog" | "userSession" | "attendance" | "employeeWorkSchedule" | "vacationRequest" | "vacationAccrual" | "empleado" | "pagosalario" | "cierreContable" | "gastoCompra" | "compraProducto" | "compraDocumento" | "compraDocumentoItem" | "servicios" | "ventaServicios" | "compraServicio" | "gastoConcepto" | "gastoElemento" | "gastosDE" | "moneda" | "catalogoReparacionConfig" | "tasaCambio" | "transaccionMoneda" | "cuentaBancaria" | "tipoPago" | "reconciliacionVenta" | "reconciliacionServicio" | "reconciliacionGasto" | "ajusteBancario" | "transferenciaBancaria" | "alertHistory" | "auditLog" | "reportHistory" | "scheduledReport" | "scenarioSimulation" | "contrato" | "contratoVersion" | "contratoFirma" | "contratoAprobacion" | "contratoArchivo" | "contratoAlerta" | "tipoContratoCustom" | "factura" | "serieFacturacion" | "oferta" | "ofertaItem" | "cuentaPorCobrar" | "cuentaPorPagar" | "deudaCash" | "prestamoCash" | "pagoCuentaPorPagar" | "equipoReparacion" | "piezaReparacion" | "ordenReparacion" | "ordenReparacionEquipo" | "ordenReparacionItem" | "ordenReparacionMaterial" | "defectacionCatalogo" | "configuracionSistema" | "ordenProduccion" | "ordenProduccionHistorial" | "receta" | "recetaIngrediente" | "valeSalida" | "valeSalidaItem" | "listaPrecio" | "precioProducto" | "productoCostHistory" | "vendorCodeSequence" | "anticipo" | "anticipoMovimiento" | "periodoContable" | "snapshotPeriodo" | "aperturaPeriodo" | "saldoSnapshot" | "auditoriaPeriodo" | "backupLog" | "backupPlan"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -9805,6 +9865,154 @@ export namespace Prisma {
           }
         }
       }
+      BackupLog: {
+        payload: Prisma.$BackupLogPayload<ExtArgs>
+        fields: Prisma.BackupLogFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.BackupLogFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BackupLogPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.BackupLogFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BackupLogPayload>
+          }
+          findFirst: {
+            args: Prisma.BackupLogFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BackupLogPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.BackupLogFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BackupLogPayload>
+          }
+          findMany: {
+            args: Prisma.BackupLogFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BackupLogPayload>[]
+          }
+          create: {
+            args: Prisma.BackupLogCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BackupLogPayload>
+          }
+          createMany: {
+            args: Prisma.BackupLogCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.BackupLogCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BackupLogPayload>[]
+          }
+          delete: {
+            args: Prisma.BackupLogDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BackupLogPayload>
+          }
+          update: {
+            args: Prisma.BackupLogUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BackupLogPayload>
+          }
+          deleteMany: {
+            args: Prisma.BackupLogDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.BackupLogUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.BackupLogUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BackupLogPayload>[]
+          }
+          upsert: {
+            args: Prisma.BackupLogUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BackupLogPayload>
+          }
+          aggregate: {
+            args: Prisma.BackupLogAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateBackupLog>
+          }
+          groupBy: {
+            args: Prisma.BackupLogGroupByArgs<ExtArgs>
+            result: $Utils.Optional<BackupLogGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.BackupLogCountArgs<ExtArgs>
+            result: $Utils.Optional<BackupLogCountAggregateOutputType> | number
+          }
+        }
+      }
+      BackupPlan: {
+        payload: Prisma.$BackupPlanPayload<ExtArgs>
+        fields: Prisma.BackupPlanFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.BackupPlanFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BackupPlanPayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.BackupPlanFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BackupPlanPayload>
+          }
+          findFirst: {
+            args: Prisma.BackupPlanFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BackupPlanPayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.BackupPlanFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BackupPlanPayload>
+          }
+          findMany: {
+            args: Prisma.BackupPlanFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BackupPlanPayload>[]
+          }
+          create: {
+            args: Prisma.BackupPlanCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BackupPlanPayload>
+          }
+          createMany: {
+            args: Prisma.BackupPlanCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.BackupPlanCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BackupPlanPayload>[]
+          }
+          delete: {
+            args: Prisma.BackupPlanDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BackupPlanPayload>
+          }
+          update: {
+            args: Prisma.BackupPlanUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BackupPlanPayload>
+          }
+          deleteMany: {
+            args: Prisma.BackupPlanDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.BackupPlanUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateManyAndReturn: {
+            args: Prisma.BackupPlanUpdateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BackupPlanPayload>[]
+          }
+          upsert: {
+            args: Prisma.BackupPlanUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$BackupPlanPayload>
+          }
+          aggregate: {
+            args: Prisma.BackupPlanAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateBackupPlan>
+          }
+          groupBy: {
+            args: Prisma.BackupPlanGroupByArgs<ExtArgs>
+            result: $Utils.Optional<BackupPlanGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.BackupPlanCountArgs<ExtArgs>
+            result: $Utils.Optional<BackupPlanCountAggregateOutputType> | number
+          }
+        }
+      }
     }
   } & {
     other: {
@@ -10000,6 +10208,8 @@ export namespace Prisma {
     aperturaPeriodo?: AperturaPeriodoOmit
     saldoSnapshot?: SaldoSnapshotOmit
     auditoriaPeriodo?: AuditoriaPeriodoOmit
+    backupLog?: BackupLogOmit
+    backupPlan?: BackupPlanOmit
   }
 
   /* Types for Logging */
@@ -10453,6 +10663,8 @@ export namespace Prisma {
     periodosContables: number
     aperturaPeriodos: number
     auditoriaPeriodos: number
+    backupLogs: number
+    backupPlans: number
   }
 
   export type TenantCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -10512,6 +10724,8 @@ export namespace Prisma {
     periodosContables?: boolean | TenantCountOutputTypeCountPeriodosContablesArgs
     aperturaPeriodos?: boolean | TenantCountOutputTypeCountAperturaPeriodosArgs
     auditoriaPeriodos?: boolean | TenantCountOutputTypeCountAuditoriaPeriodosArgs
+    backupLogs?: boolean | TenantCountOutputTypeCountBackupLogsArgs
+    backupPlans?: boolean | TenantCountOutputTypeCountBackupPlansArgs
   }
 
   // Custom InputTypes
@@ -10917,6 +11131,20 @@ export namespace Prisma {
     where?: AuditoriaPeriodoWhereInput
   }
 
+  /**
+   * TenantCountOutputType without action
+   */
+  export type TenantCountOutputTypeCountBackupLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BackupLogWhereInput
+  }
+
+  /**
+   * TenantCountOutputType without action
+   */
+  export type TenantCountOutputTypeCountBackupPlansArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BackupPlanWhereInput
+  }
+
 
   /**
    * Count Type AlmacenCountOutputType
@@ -11252,6 +11480,8 @@ export namespace Prisma {
     anticiposCreados: number
     compraDocumentosEditados: number
     transferenciasCreadas: number
+    backupLogs: number
+    backupPlans: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -11271,6 +11501,8 @@ export namespace Prisma {
     anticiposCreados?: boolean | UserCountOutputTypeCountAnticiposCreadosArgs
     compraDocumentosEditados?: boolean | UserCountOutputTypeCountCompraDocumentosEditadosArgs
     transferenciasCreadas?: boolean | UserCountOutputTypeCountTransferenciasCreadasArgs
+    backupLogs?: boolean | UserCountOutputTypeCountBackupLogsArgs
+    backupPlans?: boolean | UserCountOutputTypeCountBackupPlansArgs
   }
 
   // Custom InputTypes
@@ -11394,6 +11626,20 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountTransferenciasCreadasArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: TransferenciaWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountBackupLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BackupLogWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountBackupPlansArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BackupPlanWhereInput
   }
 
 
@@ -20525,6 +20771,8 @@ export namespace Prisma {
     periodosContables?: boolean | Tenant$periodosContablesArgs<ExtArgs>
     aperturaPeriodos?: boolean | Tenant$aperturaPeriodosArgs<ExtArgs>
     auditoriaPeriodos?: boolean | Tenant$auditoriaPeriodosArgs<ExtArgs>
+    backupLogs?: boolean | Tenant$backupLogsArgs<ExtArgs>
+    backupPlans?: boolean | Tenant$backupPlansArgs<ExtArgs>
     _count?: boolean | TenantCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["tenant"]>
 
@@ -20614,6 +20862,8 @@ export namespace Prisma {
     periodosContables?: boolean | Tenant$periodosContablesArgs<ExtArgs>
     aperturaPeriodos?: boolean | Tenant$aperturaPeriodosArgs<ExtArgs>
     auditoriaPeriodos?: boolean | Tenant$auditoriaPeriodosArgs<ExtArgs>
+    backupLogs?: boolean | Tenant$backupLogsArgs<ExtArgs>
+    backupPlans?: boolean | Tenant$backupPlansArgs<ExtArgs>
     _count?: boolean | TenantCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type TenantIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -20679,6 +20929,8 @@ export namespace Prisma {
       periodosContables: Prisma.$PeriodoContablePayload<ExtArgs>[]
       aperturaPeriodos: Prisma.$AperturaPeriodoPayload<ExtArgs>[]
       auditoriaPeriodos: Prisma.$AuditoriaPeriodoPayload<ExtArgs>[]
+      backupLogs: Prisma.$BackupLogPayload<ExtArgs>[]
+      backupPlans: Prisma.$BackupPlanPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       tenantId: string
@@ -21138,6 +21390,8 @@ export namespace Prisma {
     periodosContables<T extends Tenant$periodosContablesArgs<ExtArgs> = {}>(args?: Subset<T, Tenant$periodosContablesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$PeriodoContablePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     aperturaPeriodos<T extends Tenant$aperturaPeriodosArgs<ExtArgs> = {}>(args?: Subset<T, Tenant$aperturaPeriodosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AperturaPeriodoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     auditoriaPeriodos<T extends Tenant$auditoriaPeriodosArgs<ExtArgs> = {}>(args?: Subset<T, Tenant$auditoriaPeriodosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AuditoriaPeriodoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    backupLogs<T extends Tenant$backupLogsArgs<ExtArgs> = {}>(args?: Subset<T, Tenant$backupLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BackupLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    backupPlans<T extends Tenant$backupPlansArgs<ExtArgs> = {}>(args?: Subset<T, Tenant$backupPlansArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BackupPlanPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -22921,6 +23175,54 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: AuditoriaPeriodoScalarFieldEnum | AuditoriaPeriodoScalarFieldEnum[]
+  }
+
+  /**
+   * Tenant.backupLogs
+   */
+  export type Tenant$backupLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BackupLog
+     */
+    select?: BackupLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BackupLog
+     */
+    omit?: BackupLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BackupLogInclude<ExtArgs> | null
+    where?: BackupLogWhereInput
+    orderBy?: BackupLogOrderByWithRelationInput | BackupLogOrderByWithRelationInput[]
+    cursor?: BackupLogWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: BackupLogScalarFieldEnum | BackupLogScalarFieldEnum[]
+  }
+
+  /**
+   * Tenant.backupPlans
+   */
+  export type Tenant$backupPlansArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BackupPlan
+     */
+    select?: BackupPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BackupPlan
+     */
+    omit?: BackupPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BackupPlanInclude<ExtArgs> | null
+    where?: BackupPlanWhereInput
+    orderBy?: BackupPlanOrderByWithRelationInput | BackupPlanOrderByWithRelationInput[]
+    cursor?: BackupPlanWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: BackupPlanScalarFieldEnum | BackupPlanScalarFieldEnum[]
   }
 
   /**
@@ -37527,6 +37829,8 @@ export namespace Prisma {
     anticiposCreados?: boolean | User$anticiposCreadosArgs<ExtArgs>
     compraDocumentosEditados?: boolean | User$compraDocumentosEditadosArgs<ExtArgs>
     transferenciasCreadas?: boolean | User$transferenciasCreadasArgs<ExtArgs>
+    backupLogs?: boolean | User$backupLogsArgs<ExtArgs>
+    backupPlans?: boolean | User$backupPlansArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
@@ -37614,6 +37918,8 @@ export namespace Prisma {
     anticiposCreados?: boolean | User$anticiposCreadosArgs<ExtArgs>
     compraDocumentosEditados?: boolean | User$compraDocumentosEditadosArgs<ExtArgs>
     transferenciasCreadas?: boolean | User$transferenciasCreadasArgs<ExtArgs>
+    backupLogs?: boolean | User$backupLogsArgs<ExtArgs>
+    backupPlans?: boolean | User$backupPlansArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {}
@@ -37638,6 +37944,8 @@ export namespace Prisma {
       anticiposCreados: Prisma.$AnticipoPayload<ExtArgs>[]
       compraDocumentosEditados: Prisma.$CompraDocumentoPayload<ExtArgs>[]
       transferenciasCreadas: Prisma.$TransferenciaPayload<ExtArgs>[]
+      backupLogs: Prisma.$BackupLogPayload<ExtArgs>[]
+      backupPlans: Prisma.$BackupPlanPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       userId: string
@@ -38069,6 +38377,8 @@ export namespace Prisma {
     anticiposCreados<T extends User$anticiposCreadosArgs<ExtArgs> = {}>(args?: Subset<T, User$anticiposCreadosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AnticipoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     compraDocumentosEditados<T extends User$compraDocumentosEditadosArgs<ExtArgs> = {}>(args?: Subset<T, User$compraDocumentosEditadosArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CompraDocumentoPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     transferenciasCreadas<T extends User$transferenciasCreadasArgs<ExtArgs> = {}>(args?: Subset<T, User$transferenciasCreadasArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TransferenciaPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    backupLogs<T extends User$backupLogsArgs<ExtArgs> = {}>(args?: Subset<T, User$backupLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BackupLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+    backupPlans<T extends User$backupPlansArgs<ExtArgs> = {}>(args?: Subset<T, User$backupPlansArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BackupPlanPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -38886,6 +39196,54 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: TransferenciaScalarFieldEnum | TransferenciaScalarFieldEnum[]
+  }
+
+  /**
+   * User.backupLogs
+   */
+  export type User$backupLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BackupLog
+     */
+    select?: BackupLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BackupLog
+     */
+    omit?: BackupLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BackupLogInclude<ExtArgs> | null
+    where?: BackupLogWhereInput
+    orderBy?: BackupLogOrderByWithRelationInput | BackupLogOrderByWithRelationInput[]
+    cursor?: BackupLogWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: BackupLogScalarFieldEnum | BackupLogScalarFieldEnum[]
+  }
+
+  /**
+   * User.backupPlans
+   */
+  export type User$backupPlansArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BackupPlan
+     */
+    select?: BackupPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BackupPlan
+     */
+    omit?: BackupPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BackupPlanInclude<ExtArgs> | null
+    where?: BackupPlanWhereInput
+    orderBy?: BackupPlanOrderByWithRelationInput | BackupPlanOrderByWithRelationInput[]
+    cursor?: BackupPlanWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: BackupPlanScalarFieldEnum | BackupPlanScalarFieldEnum[]
   }
 
   /**
@@ -136419,6 +136777,2413 @@ export namespace Prisma {
 
 
   /**
+   * Model BackupLog
+   */
+
+  export type AggregateBackupLog = {
+    _count: BackupLogCountAggregateOutputType | null
+    _avg: BackupLogAvgAggregateOutputType | null
+    _sum: BackupLogSumAggregateOutputType | null
+    _min: BackupLogMinAggregateOutputType | null
+    _max: BackupLogMaxAggregateOutputType | null
+  }
+
+  export type BackupLogAvgAggregateOutputType = {
+    fileSize: number | null
+  }
+
+  export type BackupLogSumAggregateOutputType = {
+    fileSize: number | null
+  }
+
+  export type BackupLogMinAggregateOutputType = {
+    backupLogId: string | null
+    type: $Enums.BackupType | null
+    tenantId: string | null
+    status: $Enums.BackupStatus | null
+    fileUrl: string | null
+    fileName: string | null
+    fileSize: number | null
+    startedAt: Date | null
+    completedAt: Date | null
+    errorMessage: string | null
+    createdBy: string | null
+    createdAt: Date | null
+  }
+
+  export type BackupLogMaxAggregateOutputType = {
+    backupLogId: string | null
+    type: $Enums.BackupType | null
+    tenantId: string | null
+    status: $Enums.BackupStatus | null
+    fileUrl: string | null
+    fileName: string | null
+    fileSize: number | null
+    startedAt: Date | null
+    completedAt: Date | null
+    errorMessage: string | null
+    createdBy: string | null
+    createdAt: Date | null
+  }
+
+  export type BackupLogCountAggregateOutputType = {
+    backupLogId: number
+    type: number
+    tenantId: number
+    status: number
+    fileUrl: number
+    fileName: number
+    fileSize: number
+    startedAt: number
+    completedAt: number
+    errorMessage: number
+    createdBy: number
+    createdAt: number
+    _all: number
+  }
+
+
+  export type BackupLogAvgAggregateInputType = {
+    fileSize?: true
+  }
+
+  export type BackupLogSumAggregateInputType = {
+    fileSize?: true
+  }
+
+  export type BackupLogMinAggregateInputType = {
+    backupLogId?: true
+    type?: true
+    tenantId?: true
+    status?: true
+    fileUrl?: true
+    fileName?: true
+    fileSize?: true
+    startedAt?: true
+    completedAt?: true
+    errorMessage?: true
+    createdBy?: true
+    createdAt?: true
+  }
+
+  export type BackupLogMaxAggregateInputType = {
+    backupLogId?: true
+    type?: true
+    tenantId?: true
+    status?: true
+    fileUrl?: true
+    fileName?: true
+    fileSize?: true
+    startedAt?: true
+    completedAt?: true
+    errorMessage?: true
+    createdBy?: true
+    createdAt?: true
+  }
+
+  export type BackupLogCountAggregateInputType = {
+    backupLogId?: true
+    type?: true
+    tenantId?: true
+    status?: true
+    fileUrl?: true
+    fileName?: true
+    fileSize?: true
+    startedAt?: true
+    completedAt?: true
+    errorMessage?: true
+    createdBy?: true
+    createdAt?: true
+    _all?: true
+  }
+
+  export type BackupLogAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BackupLog to aggregate.
+     */
+    where?: BackupLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BackupLogs to fetch.
+     */
+    orderBy?: BackupLogOrderByWithRelationInput | BackupLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: BackupLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BackupLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BackupLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned BackupLogs
+    **/
+    _count?: true | BackupLogCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: BackupLogAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: BackupLogSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: BackupLogMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: BackupLogMaxAggregateInputType
+  }
+
+  export type GetBackupLogAggregateType<T extends BackupLogAggregateArgs> = {
+        [P in keyof T & keyof AggregateBackupLog]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateBackupLog[P]>
+      : GetScalarType<T[P], AggregateBackupLog[P]>
+  }
+
+
+
+
+  export type BackupLogGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BackupLogWhereInput
+    orderBy?: BackupLogOrderByWithAggregationInput | BackupLogOrderByWithAggregationInput[]
+    by: BackupLogScalarFieldEnum[] | BackupLogScalarFieldEnum
+    having?: BackupLogScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: BackupLogCountAggregateInputType | true
+    _avg?: BackupLogAvgAggregateInputType
+    _sum?: BackupLogSumAggregateInputType
+    _min?: BackupLogMinAggregateInputType
+    _max?: BackupLogMaxAggregateInputType
+  }
+
+  export type BackupLogGroupByOutputType = {
+    backupLogId: string
+    type: $Enums.BackupType
+    tenantId: string | null
+    status: $Enums.BackupStatus
+    fileUrl: string | null
+    fileName: string | null
+    fileSize: number | null
+    startedAt: Date
+    completedAt: Date | null
+    errorMessage: string | null
+    createdBy: string
+    createdAt: Date
+    _count: BackupLogCountAggregateOutputType | null
+    _avg: BackupLogAvgAggregateOutputType | null
+    _sum: BackupLogSumAggregateOutputType | null
+    _min: BackupLogMinAggregateOutputType | null
+    _max: BackupLogMaxAggregateOutputType | null
+  }
+
+  type GetBackupLogGroupByPayload<T extends BackupLogGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<BackupLogGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof BackupLogGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], BackupLogGroupByOutputType[P]>
+            : GetScalarType<T[P], BackupLogGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type BackupLogSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    backupLogId?: boolean
+    type?: boolean
+    tenantId?: boolean
+    status?: boolean
+    fileUrl?: boolean
+    fileName?: boolean
+    fileSize?: boolean
+    startedAt?: boolean
+    completedAt?: boolean
+    errorMessage?: boolean
+    createdBy?: boolean
+    createdAt?: boolean
+    tenant?: boolean | BackupLog$tenantArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["backupLog"]>
+
+  export type BackupLogSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    backupLogId?: boolean
+    type?: boolean
+    tenantId?: boolean
+    status?: boolean
+    fileUrl?: boolean
+    fileName?: boolean
+    fileSize?: boolean
+    startedAt?: boolean
+    completedAt?: boolean
+    errorMessage?: boolean
+    createdBy?: boolean
+    createdAt?: boolean
+    tenant?: boolean | BackupLog$tenantArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["backupLog"]>
+
+  export type BackupLogSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    backupLogId?: boolean
+    type?: boolean
+    tenantId?: boolean
+    status?: boolean
+    fileUrl?: boolean
+    fileName?: boolean
+    fileSize?: boolean
+    startedAt?: boolean
+    completedAt?: boolean
+    errorMessage?: boolean
+    createdBy?: boolean
+    createdAt?: boolean
+    tenant?: boolean | BackupLog$tenantArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["backupLog"]>
+
+  export type BackupLogSelectScalar = {
+    backupLogId?: boolean
+    type?: boolean
+    tenantId?: boolean
+    status?: boolean
+    fileUrl?: boolean
+    fileName?: boolean
+    fileSize?: boolean
+    startedAt?: boolean
+    completedAt?: boolean
+    errorMessage?: boolean
+    createdBy?: boolean
+    createdAt?: boolean
+  }
+
+  export type BackupLogOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"backupLogId" | "type" | "tenantId" | "status" | "fileUrl" | "fileName" | "fileSize" | "startedAt" | "completedAt" | "errorMessage" | "createdBy" | "createdAt", ExtArgs["result"]["backupLog"]>
+  export type BackupLogInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    tenant?: boolean | BackupLog$tenantArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type BackupLogIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    tenant?: boolean | BackupLog$tenantArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type BackupLogIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    tenant?: boolean | BackupLog$tenantArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $BackupLogPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "BackupLog"
+    objects: {
+      tenant: Prisma.$TenantPayload<ExtArgs> | null
+      user: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      backupLogId: string
+      type: $Enums.BackupType
+      tenantId: string | null
+      status: $Enums.BackupStatus
+      fileUrl: string | null
+      fileName: string | null
+      fileSize: number | null
+      startedAt: Date
+      completedAt: Date | null
+      errorMessage: string | null
+      createdBy: string
+      createdAt: Date
+    }, ExtArgs["result"]["backupLog"]>
+    composites: {}
+  }
+
+  type BackupLogGetPayload<S extends boolean | null | undefined | BackupLogDefaultArgs> = $Result.GetResult<Prisma.$BackupLogPayload, S>
+
+  type BackupLogCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<BackupLogFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: BackupLogCountAggregateInputType | true
+    }
+
+  export interface BackupLogDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['BackupLog'], meta: { name: 'BackupLog' } }
+    /**
+     * Find zero or one BackupLog that matches the filter.
+     * @param {BackupLogFindUniqueArgs} args - Arguments to find a BackupLog
+     * @example
+     * // Get one BackupLog
+     * const backupLog = await prisma.backupLog.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends BackupLogFindUniqueArgs>(args: SelectSubset<T, BackupLogFindUniqueArgs<ExtArgs>>): Prisma__BackupLogClient<$Result.GetResult<Prisma.$BackupLogPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one BackupLog that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {BackupLogFindUniqueOrThrowArgs} args - Arguments to find a BackupLog
+     * @example
+     * // Get one BackupLog
+     * const backupLog = await prisma.backupLog.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends BackupLogFindUniqueOrThrowArgs>(args: SelectSubset<T, BackupLogFindUniqueOrThrowArgs<ExtArgs>>): Prisma__BackupLogClient<$Result.GetResult<Prisma.$BackupLogPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BackupLog that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BackupLogFindFirstArgs} args - Arguments to find a BackupLog
+     * @example
+     * // Get one BackupLog
+     * const backupLog = await prisma.backupLog.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends BackupLogFindFirstArgs>(args?: SelectSubset<T, BackupLogFindFirstArgs<ExtArgs>>): Prisma__BackupLogClient<$Result.GetResult<Prisma.$BackupLogPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BackupLog that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BackupLogFindFirstOrThrowArgs} args - Arguments to find a BackupLog
+     * @example
+     * // Get one BackupLog
+     * const backupLog = await prisma.backupLog.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends BackupLogFindFirstOrThrowArgs>(args?: SelectSubset<T, BackupLogFindFirstOrThrowArgs<ExtArgs>>): Prisma__BackupLogClient<$Result.GetResult<Prisma.$BackupLogPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more BackupLogs that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BackupLogFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all BackupLogs
+     * const backupLogs = await prisma.backupLog.findMany()
+     * 
+     * // Get first 10 BackupLogs
+     * const backupLogs = await prisma.backupLog.findMany({ take: 10 })
+     * 
+     * // Only select the `backupLogId`
+     * const backupLogWithBackupLogIdOnly = await prisma.backupLog.findMany({ select: { backupLogId: true } })
+     * 
+     */
+    findMany<T extends BackupLogFindManyArgs>(args?: SelectSubset<T, BackupLogFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BackupLogPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a BackupLog.
+     * @param {BackupLogCreateArgs} args - Arguments to create a BackupLog.
+     * @example
+     * // Create one BackupLog
+     * const BackupLog = await prisma.backupLog.create({
+     *   data: {
+     *     // ... data to create a BackupLog
+     *   }
+     * })
+     * 
+     */
+    create<T extends BackupLogCreateArgs>(args: SelectSubset<T, BackupLogCreateArgs<ExtArgs>>): Prisma__BackupLogClient<$Result.GetResult<Prisma.$BackupLogPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many BackupLogs.
+     * @param {BackupLogCreateManyArgs} args - Arguments to create many BackupLogs.
+     * @example
+     * // Create many BackupLogs
+     * const backupLog = await prisma.backupLog.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends BackupLogCreateManyArgs>(args?: SelectSubset<T, BackupLogCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many BackupLogs and returns the data saved in the database.
+     * @param {BackupLogCreateManyAndReturnArgs} args - Arguments to create many BackupLogs.
+     * @example
+     * // Create many BackupLogs
+     * const backupLog = await prisma.backupLog.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many BackupLogs and only return the `backupLogId`
+     * const backupLogWithBackupLogIdOnly = await prisma.backupLog.createManyAndReturn({
+     *   select: { backupLogId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends BackupLogCreateManyAndReturnArgs>(args?: SelectSubset<T, BackupLogCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BackupLogPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a BackupLog.
+     * @param {BackupLogDeleteArgs} args - Arguments to delete one BackupLog.
+     * @example
+     * // Delete one BackupLog
+     * const BackupLog = await prisma.backupLog.delete({
+     *   where: {
+     *     // ... filter to delete one BackupLog
+     *   }
+     * })
+     * 
+     */
+    delete<T extends BackupLogDeleteArgs>(args: SelectSubset<T, BackupLogDeleteArgs<ExtArgs>>): Prisma__BackupLogClient<$Result.GetResult<Prisma.$BackupLogPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one BackupLog.
+     * @param {BackupLogUpdateArgs} args - Arguments to update one BackupLog.
+     * @example
+     * // Update one BackupLog
+     * const backupLog = await prisma.backupLog.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends BackupLogUpdateArgs>(args: SelectSubset<T, BackupLogUpdateArgs<ExtArgs>>): Prisma__BackupLogClient<$Result.GetResult<Prisma.$BackupLogPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more BackupLogs.
+     * @param {BackupLogDeleteManyArgs} args - Arguments to filter BackupLogs to delete.
+     * @example
+     * // Delete a few BackupLogs
+     * const { count } = await prisma.backupLog.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends BackupLogDeleteManyArgs>(args?: SelectSubset<T, BackupLogDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BackupLogs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BackupLogUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many BackupLogs
+     * const backupLog = await prisma.backupLog.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends BackupLogUpdateManyArgs>(args: SelectSubset<T, BackupLogUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BackupLogs and returns the data updated in the database.
+     * @param {BackupLogUpdateManyAndReturnArgs} args - Arguments to update many BackupLogs.
+     * @example
+     * // Update many BackupLogs
+     * const backupLog = await prisma.backupLog.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more BackupLogs and only return the `backupLogId`
+     * const backupLogWithBackupLogIdOnly = await prisma.backupLog.updateManyAndReturn({
+     *   select: { backupLogId: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends BackupLogUpdateManyAndReturnArgs>(args: SelectSubset<T, BackupLogUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BackupLogPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one BackupLog.
+     * @param {BackupLogUpsertArgs} args - Arguments to update or create a BackupLog.
+     * @example
+     * // Update or create a BackupLog
+     * const backupLog = await prisma.backupLog.upsert({
+     *   create: {
+     *     // ... data to create a BackupLog
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the BackupLog we want to update
+     *   }
+     * })
+     */
+    upsert<T extends BackupLogUpsertArgs>(args: SelectSubset<T, BackupLogUpsertArgs<ExtArgs>>): Prisma__BackupLogClient<$Result.GetResult<Prisma.$BackupLogPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of BackupLogs.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BackupLogCountArgs} args - Arguments to filter BackupLogs to count.
+     * @example
+     * // Count the number of BackupLogs
+     * const count = await prisma.backupLog.count({
+     *   where: {
+     *     // ... the filter for the BackupLogs we want to count
+     *   }
+     * })
+    **/
+    count<T extends BackupLogCountArgs>(
+      args?: Subset<T, BackupLogCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], BackupLogCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a BackupLog.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BackupLogAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends BackupLogAggregateArgs>(args: Subset<T, BackupLogAggregateArgs>): Prisma.PrismaPromise<GetBackupLogAggregateType<T>>
+
+    /**
+     * Group by BackupLog.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BackupLogGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends BackupLogGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: BackupLogGroupByArgs['orderBy'] }
+        : { orderBy?: BackupLogGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, BackupLogGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetBackupLogGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the BackupLog model
+   */
+  readonly fields: BackupLogFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for BackupLog.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__BackupLogClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    tenant<T extends BackupLog$tenantArgs<ExtArgs> = {}>(args?: Subset<T, BackupLog$tenantArgs<ExtArgs>>): Prisma__TenantClient<$Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the BackupLog model
+   */
+  interface BackupLogFieldRefs {
+    readonly backupLogId: FieldRef<"BackupLog", 'String'>
+    readonly type: FieldRef<"BackupLog", 'BackupType'>
+    readonly tenantId: FieldRef<"BackupLog", 'String'>
+    readonly status: FieldRef<"BackupLog", 'BackupStatus'>
+    readonly fileUrl: FieldRef<"BackupLog", 'String'>
+    readonly fileName: FieldRef<"BackupLog", 'String'>
+    readonly fileSize: FieldRef<"BackupLog", 'Int'>
+    readonly startedAt: FieldRef<"BackupLog", 'DateTime'>
+    readonly completedAt: FieldRef<"BackupLog", 'DateTime'>
+    readonly errorMessage: FieldRef<"BackupLog", 'String'>
+    readonly createdBy: FieldRef<"BackupLog", 'String'>
+    readonly createdAt: FieldRef<"BackupLog", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * BackupLog findUnique
+   */
+  export type BackupLogFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BackupLog
+     */
+    select?: BackupLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BackupLog
+     */
+    omit?: BackupLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BackupLogInclude<ExtArgs> | null
+    /**
+     * Filter, which BackupLog to fetch.
+     */
+    where: BackupLogWhereUniqueInput
+  }
+
+  /**
+   * BackupLog findUniqueOrThrow
+   */
+  export type BackupLogFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BackupLog
+     */
+    select?: BackupLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BackupLog
+     */
+    omit?: BackupLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BackupLogInclude<ExtArgs> | null
+    /**
+     * Filter, which BackupLog to fetch.
+     */
+    where: BackupLogWhereUniqueInput
+  }
+
+  /**
+   * BackupLog findFirst
+   */
+  export type BackupLogFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BackupLog
+     */
+    select?: BackupLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BackupLog
+     */
+    omit?: BackupLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BackupLogInclude<ExtArgs> | null
+    /**
+     * Filter, which BackupLog to fetch.
+     */
+    where?: BackupLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BackupLogs to fetch.
+     */
+    orderBy?: BackupLogOrderByWithRelationInput | BackupLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BackupLogs.
+     */
+    cursor?: BackupLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BackupLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BackupLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BackupLogs.
+     */
+    distinct?: BackupLogScalarFieldEnum | BackupLogScalarFieldEnum[]
+  }
+
+  /**
+   * BackupLog findFirstOrThrow
+   */
+  export type BackupLogFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BackupLog
+     */
+    select?: BackupLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BackupLog
+     */
+    omit?: BackupLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BackupLogInclude<ExtArgs> | null
+    /**
+     * Filter, which BackupLog to fetch.
+     */
+    where?: BackupLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BackupLogs to fetch.
+     */
+    orderBy?: BackupLogOrderByWithRelationInput | BackupLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BackupLogs.
+     */
+    cursor?: BackupLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BackupLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BackupLogs.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BackupLogs.
+     */
+    distinct?: BackupLogScalarFieldEnum | BackupLogScalarFieldEnum[]
+  }
+
+  /**
+   * BackupLog findMany
+   */
+  export type BackupLogFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BackupLog
+     */
+    select?: BackupLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BackupLog
+     */
+    omit?: BackupLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BackupLogInclude<ExtArgs> | null
+    /**
+     * Filter, which BackupLogs to fetch.
+     */
+    where?: BackupLogWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BackupLogs to fetch.
+     */
+    orderBy?: BackupLogOrderByWithRelationInput | BackupLogOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing BackupLogs.
+     */
+    cursor?: BackupLogWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BackupLogs from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BackupLogs.
+     */
+    skip?: number
+    distinct?: BackupLogScalarFieldEnum | BackupLogScalarFieldEnum[]
+  }
+
+  /**
+   * BackupLog create
+   */
+  export type BackupLogCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BackupLog
+     */
+    select?: BackupLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BackupLog
+     */
+    omit?: BackupLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BackupLogInclude<ExtArgs> | null
+    /**
+     * The data needed to create a BackupLog.
+     */
+    data: XOR<BackupLogCreateInput, BackupLogUncheckedCreateInput>
+  }
+
+  /**
+   * BackupLog createMany
+   */
+  export type BackupLogCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many BackupLogs.
+     */
+    data: BackupLogCreateManyInput | BackupLogCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BackupLog createManyAndReturn
+   */
+  export type BackupLogCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BackupLog
+     */
+    select?: BackupLogSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BackupLog
+     */
+    omit?: BackupLogOmit<ExtArgs> | null
+    /**
+     * The data used to create many BackupLogs.
+     */
+    data: BackupLogCreateManyInput | BackupLogCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BackupLogIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * BackupLog update
+   */
+  export type BackupLogUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BackupLog
+     */
+    select?: BackupLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BackupLog
+     */
+    omit?: BackupLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BackupLogInclude<ExtArgs> | null
+    /**
+     * The data needed to update a BackupLog.
+     */
+    data: XOR<BackupLogUpdateInput, BackupLogUncheckedUpdateInput>
+    /**
+     * Choose, which BackupLog to update.
+     */
+    where: BackupLogWhereUniqueInput
+  }
+
+  /**
+   * BackupLog updateMany
+   */
+  export type BackupLogUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update BackupLogs.
+     */
+    data: XOR<BackupLogUpdateManyMutationInput, BackupLogUncheckedUpdateManyInput>
+    /**
+     * Filter which BackupLogs to update
+     */
+    where?: BackupLogWhereInput
+    /**
+     * Limit how many BackupLogs to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * BackupLog updateManyAndReturn
+   */
+  export type BackupLogUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BackupLog
+     */
+    select?: BackupLogSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BackupLog
+     */
+    omit?: BackupLogOmit<ExtArgs> | null
+    /**
+     * The data used to update BackupLogs.
+     */
+    data: XOR<BackupLogUpdateManyMutationInput, BackupLogUncheckedUpdateManyInput>
+    /**
+     * Filter which BackupLogs to update
+     */
+    where?: BackupLogWhereInput
+    /**
+     * Limit how many BackupLogs to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BackupLogIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * BackupLog upsert
+   */
+  export type BackupLogUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BackupLog
+     */
+    select?: BackupLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BackupLog
+     */
+    omit?: BackupLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BackupLogInclude<ExtArgs> | null
+    /**
+     * The filter to search for the BackupLog to update in case it exists.
+     */
+    where: BackupLogWhereUniqueInput
+    /**
+     * In case the BackupLog found by the `where` argument doesn't exist, create a new BackupLog with this data.
+     */
+    create: XOR<BackupLogCreateInput, BackupLogUncheckedCreateInput>
+    /**
+     * In case the BackupLog was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<BackupLogUpdateInput, BackupLogUncheckedUpdateInput>
+  }
+
+  /**
+   * BackupLog delete
+   */
+  export type BackupLogDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BackupLog
+     */
+    select?: BackupLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BackupLog
+     */
+    omit?: BackupLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BackupLogInclude<ExtArgs> | null
+    /**
+     * Filter which BackupLog to delete.
+     */
+    where: BackupLogWhereUniqueInput
+  }
+
+  /**
+   * BackupLog deleteMany
+   */
+  export type BackupLogDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BackupLogs to delete
+     */
+    where?: BackupLogWhereInput
+    /**
+     * Limit how many BackupLogs to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * BackupLog.tenant
+   */
+  export type BackupLog$tenantArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Tenant
+     */
+    select?: TenantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Tenant
+     */
+    omit?: TenantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenantInclude<ExtArgs> | null
+    where?: TenantWhereInput
+  }
+
+  /**
+   * BackupLog without action
+   */
+  export type BackupLogDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BackupLog
+     */
+    select?: BackupLogSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BackupLog
+     */
+    omit?: BackupLogOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BackupLogInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model BackupPlan
+   */
+
+  export type AggregateBackupPlan = {
+    _count: BackupPlanCountAggregateOutputType | null
+    _avg: BackupPlanAvgAggregateOutputType | null
+    _sum: BackupPlanSumAggregateOutputType | null
+    _min: BackupPlanMinAggregateOutputType | null
+    _max: BackupPlanMaxAggregateOutputType | null
+  }
+
+  export type BackupPlanAvgAggregateOutputType = {
+    retention: number | null
+  }
+
+  export type BackupPlanSumAggregateOutputType = {
+    retention: number | null
+  }
+
+  export type BackupPlanMinAggregateOutputType = {
+    backupPlanId: string | null
+    type: $Enums.BackupType | null
+    tenantId: string | null
+    schedule: string | null
+    enabled: boolean | null
+    retention: number | null
+    lastRunAt: Date | null
+    nextRunAt: Date | null
+    createdBy: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type BackupPlanMaxAggregateOutputType = {
+    backupPlanId: string | null
+    type: $Enums.BackupType | null
+    tenantId: string | null
+    schedule: string | null
+    enabled: boolean | null
+    retention: number | null
+    lastRunAt: Date | null
+    nextRunAt: Date | null
+    createdBy: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type BackupPlanCountAggregateOutputType = {
+    backupPlanId: number
+    type: number
+    tenantId: number
+    schedule: number
+    enabled: number
+    retention: number
+    lastRunAt: number
+    nextRunAt: number
+    createdBy: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type BackupPlanAvgAggregateInputType = {
+    retention?: true
+  }
+
+  export type BackupPlanSumAggregateInputType = {
+    retention?: true
+  }
+
+  export type BackupPlanMinAggregateInputType = {
+    backupPlanId?: true
+    type?: true
+    tenantId?: true
+    schedule?: true
+    enabled?: true
+    retention?: true
+    lastRunAt?: true
+    nextRunAt?: true
+    createdBy?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type BackupPlanMaxAggregateInputType = {
+    backupPlanId?: true
+    type?: true
+    tenantId?: true
+    schedule?: true
+    enabled?: true
+    retention?: true
+    lastRunAt?: true
+    nextRunAt?: true
+    createdBy?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type BackupPlanCountAggregateInputType = {
+    backupPlanId?: true
+    type?: true
+    tenantId?: true
+    schedule?: true
+    enabled?: true
+    retention?: true
+    lastRunAt?: true
+    nextRunAt?: true
+    createdBy?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type BackupPlanAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BackupPlan to aggregate.
+     */
+    where?: BackupPlanWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BackupPlans to fetch.
+     */
+    orderBy?: BackupPlanOrderByWithRelationInput | BackupPlanOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: BackupPlanWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BackupPlans from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BackupPlans.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned BackupPlans
+    **/
+    _count?: true | BackupPlanCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to average
+    **/
+    _avg?: BackupPlanAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: BackupPlanSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: BackupPlanMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: BackupPlanMaxAggregateInputType
+  }
+
+  export type GetBackupPlanAggregateType<T extends BackupPlanAggregateArgs> = {
+        [P in keyof T & keyof AggregateBackupPlan]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateBackupPlan[P]>
+      : GetScalarType<T[P], AggregateBackupPlan[P]>
+  }
+
+
+
+
+  export type BackupPlanGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: BackupPlanWhereInput
+    orderBy?: BackupPlanOrderByWithAggregationInput | BackupPlanOrderByWithAggregationInput[]
+    by: BackupPlanScalarFieldEnum[] | BackupPlanScalarFieldEnum
+    having?: BackupPlanScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: BackupPlanCountAggregateInputType | true
+    _avg?: BackupPlanAvgAggregateInputType
+    _sum?: BackupPlanSumAggregateInputType
+    _min?: BackupPlanMinAggregateInputType
+    _max?: BackupPlanMaxAggregateInputType
+  }
+
+  export type BackupPlanGroupByOutputType = {
+    backupPlanId: string
+    type: $Enums.BackupType
+    tenantId: string | null
+    schedule: string
+    enabled: boolean
+    retention: number
+    lastRunAt: Date | null
+    nextRunAt: Date | null
+    createdBy: string
+    createdAt: Date
+    updatedAt: Date
+    _count: BackupPlanCountAggregateOutputType | null
+    _avg: BackupPlanAvgAggregateOutputType | null
+    _sum: BackupPlanSumAggregateOutputType | null
+    _min: BackupPlanMinAggregateOutputType | null
+    _max: BackupPlanMaxAggregateOutputType | null
+  }
+
+  type GetBackupPlanGroupByPayload<T extends BackupPlanGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<BackupPlanGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof BackupPlanGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], BackupPlanGroupByOutputType[P]>
+            : GetScalarType<T[P], BackupPlanGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type BackupPlanSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    backupPlanId?: boolean
+    type?: boolean
+    tenantId?: boolean
+    schedule?: boolean
+    enabled?: boolean
+    retention?: boolean
+    lastRunAt?: boolean
+    nextRunAt?: boolean
+    createdBy?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    tenant?: boolean | BackupPlan$tenantArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["backupPlan"]>
+
+  export type BackupPlanSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    backupPlanId?: boolean
+    type?: boolean
+    tenantId?: boolean
+    schedule?: boolean
+    enabled?: boolean
+    retention?: boolean
+    lastRunAt?: boolean
+    nextRunAt?: boolean
+    createdBy?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    tenant?: boolean | BackupPlan$tenantArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["backupPlan"]>
+
+  export type BackupPlanSelectUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    backupPlanId?: boolean
+    type?: boolean
+    tenantId?: boolean
+    schedule?: boolean
+    enabled?: boolean
+    retention?: boolean
+    lastRunAt?: boolean
+    nextRunAt?: boolean
+    createdBy?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    tenant?: boolean | BackupPlan$tenantArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["backupPlan"]>
+
+  export type BackupPlanSelectScalar = {
+    backupPlanId?: boolean
+    type?: boolean
+    tenantId?: boolean
+    schedule?: boolean
+    enabled?: boolean
+    retention?: boolean
+    lastRunAt?: boolean
+    nextRunAt?: boolean
+    createdBy?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type BackupPlanOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"backupPlanId" | "type" | "tenantId" | "schedule" | "enabled" | "retention" | "lastRunAt" | "nextRunAt" | "createdBy" | "createdAt" | "updatedAt", ExtArgs["result"]["backupPlan"]>
+  export type BackupPlanInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    tenant?: boolean | BackupPlan$tenantArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type BackupPlanIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    tenant?: boolean | BackupPlan$tenantArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type BackupPlanIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    tenant?: boolean | BackupPlan$tenantArgs<ExtArgs>
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $BackupPlanPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "BackupPlan"
+    objects: {
+      tenant: Prisma.$TenantPayload<ExtArgs> | null
+      user: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      backupPlanId: string
+      type: $Enums.BackupType
+      tenantId: string | null
+      schedule: string
+      enabled: boolean
+      retention: number
+      lastRunAt: Date | null
+      nextRunAt: Date | null
+      createdBy: string
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["backupPlan"]>
+    composites: {}
+  }
+
+  type BackupPlanGetPayload<S extends boolean | null | undefined | BackupPlanDefaultArgs> = $Result.GetResult<Prisma.$BackupPlanPayload, S>
+
+  type BackupPlanCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> =
+    Omit<BackupPlanFindManyArgs, 'select' | 'include' | 'distinct' | 'omit'> & {
+      select?: BackupPlanCountAggregateInputType | true
+    }
+
+  export interface BackupPlanDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['BackupPlan'], meta: { name: 'BackupPlan' } }
+    /**
+     * Find zero or one BackupPlan that matches the filter.
+     * @param {BackupPlanFindUniqueArgs} args - Arguments to find a BackupPlan
+     * @example
+     * // Get one BackupPlan
+     * const backupPlan = await prisma.backupPlan.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends BackupPlanFindUniqueArgs>(args: SelectSubset<T, BackupPlanFindUniqueArgs<ExtArgs>>): Prisma__BackupPlanClient<$Result.GetResult<Prisma.$BackupPlanPayload<ExtArgs>, T, "findUnique", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find one BackupPlan that matches the filter or throw an error with `error.code='P2025'`
+     * if no matches were found.
+     * @param {BackupPlanFindUniqueOrThrowArgs} args - Arguments to find a BackupPlan
+     * @example
+     * // Get one BackupPlan
+     * const backupPlan = await prisma.backupPlan.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends BackupPlanFindUniqueOrThrowArgs>(args: SelectSubset<T, BackupPlanFindUniqueOrThrowArgs<ExtArgs>>): Prisma__BackupPlanClient<$Result.GetResult<Prisma.$BackupPlanPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BackupPlan that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BackupPlanFindFirstArgs} args - Arguments to find a BackupPlan
+     * @example
+     * // Get one BackupPlan
+     * const backupPlan = await prisma.backupPlan.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends BackupPlanFindFirstArgs>(args?: SelectSubset<T, BackupPlanFindFirstArgs<ExtArgs>>): Prisma__BackupPlanClient<$Result.GetResult<Prisma.$BackupPlanPayload<ExtArgs>, T, "findFirst", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find the first BackupPlan that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BackupPlanFindFirstOrThrowArgs} args - Arguments to find a BackupPlan
+     * @example
+     * // Get one BackupPlan
+     * const backupPlan = await prisma.backupPlan.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends BackupPlanFindFirstOrThrowArgs>(args?: SelectSubset<T, BackupPlanFindFirstOrThrowArgs<ExtArgs>>): Prisma__BackupPlanClient<$Result.GetResult<Prisma.$BackupPlanPayload<ExtArgs>, T, "findFirstOrThrow", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Find zero or more BackupPlans that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BackupPlanFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all BackupPlans
+     * const backupPlans = await prisma.backupPlan.findMany()
+     * 
+     * // Get first 10 BackupPlans
+     * const backupPlans = await prisma.backupPlan.findMany({ take: 10 })
+     * 
+     * // Only select the `backupPlanId`
+     * const backupPlanWithBackupPlanIdOnly = await prisma.backupPlan.findMany({ select: { backupPlanId: true } })
+     * 
+     */
+    findMany<T extends BackupPlanFindManyArgs>(args?: SelectSubset<T, BackupPlanFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BackupPlanPayload<ExtArgs>, T, "findMany", GlobalOmitOptions>>
+
+    /**
+     * Create a BackupPlan.
+     * @param {BackupPlanCreateArgs} args - Arguments to create a BackupPlan.
+     * @example
+     * // Create one BackupPlan
+     * const BackupPlan = await prisma.backupPlan.create({
+     *   data: {
+     *     // ... data to create a BackupPlan
+     *   }
+     * })
+     * 
+     */
+    create<T extends BackupPlanCreateArgs>(args: SelectSubset<T, BackupPlanCreateArgs<ExtArgs>>): Prisma__BackupPlanClient<$Result.GetResult<Prisma.$BackupPlanPayload<ExtArgs>, T, "create", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Create many BackupPlans.
+     * @param {BackupPlanCreateManyArgs} args - Arguments to create many BackupPlans.
+     * @example
+     * // Create many BackupPlans
+     * const backupPlan = await prisma.backupPlan.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends BackupPlanCreateManyArgs>(args?: SelectSubset<T, BackupPlanCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many BackupPlans and returns the data saved in the database.
+     * @param {BackupPlanCreateManyAndReturnArgs} args - Arguments to create many BackupPlans.
+     * @example
+     * // Create many BackupPlans
+     * const backupPlan = await prisma.backupPlan.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many BackupPlans and only return the `backupPlanId`
+     * const backupPlanWithBackupPlanIdOnly = await prisma.backupPlan.createManyAndReturn({
+     *   select: { backupPlanId: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends BackupPlanCreateManyAndReturnArgs>(args?: SelectSubset<T, BackupPlanCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BackupPlanPayload<ExtArgs>, T, "createManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Delete a BackupPlan.
+     * @param {BackupPlanDeleteArgs} args - Arguments to delete one BackupPlan.
+     * @example
+     * // Delete one BackupPlan
+     * const BackupPlan = await prisma.backupPlan.delete({
+     *   where: {
+     *     // ... filter to delete one BackupPlan
+     *   }
+     * })
+     * 
+     */
+    delete<T extends BackupPlanDeleteArgs>(args: SelectSubset<T, BackupPlanDeleteArgs<ExtArgs>>): Prisma__BackupPlanClient<$Result.GetResult<Prisma.$BackupPlanPayload<ExtArgs>, T, "delete", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Update one BackupPlan.
+     * @param {BackupPlanUpdateArgs} args - Arguments to update one BackupPlan.
+     * @example
+     * // Update one BackupPlan
+     * const backupPlan = await prisma.backupPlan.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends BackupPlanUpdateArgs>(args: SelectSubset<T, BackupPlanUpdateArgs<ExtArgs>>): Prisma__BackupPlanClient<$Result.GetResult<Prisma.$BackupPlanPayload<ExtArgs>, T, "update", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+    /**
+     * Delete zero or more BackupPlans.
+     * @param {BackupPlanDeleteManyArgs} args - Arguments to filter BackupPlans to delete.
+     * @example
+     * // Delete a few BackupPlans
+     * const { count } = await prisma.backupPlan.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends BackupPlanDeleteManyArgs>(args?: SelectSubset<T, BackupPlanDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BackupPlans.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BackupPlanUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many BackupPlans
+     * const backupPlan = await prisma.backupPlan.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends BackupPlanUpdateManyArgs>(args: SelectSubset<T, BackupPlanUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more BackupPlans and returns the data updated in the database.
+     * @param {BackupPlanUpdateManyAndReturnArgs} args - Arguments to update many BackupPlans.
+     * @example
+     * // Update many BackupPlans
+     * const backupPlan = await prisma.backupPlan.updateManyAndReturn({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Update zero or more BackupPlans and only return the `backupPlanId`
+     * const backupPlanWithBackupPlanIdOnly = await prisma.backupPlan.updateManyAndReturn({
+     *   select: { backupPlanId: true },
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    updateManyAndReturn<T extends BackupPlanUpdateManyAndReturnArgs>(args: SelectSubset<T, BackupPlanUpdateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$BackupPlanPayload<ExtArgs>, T, "updateManyAndReturn", GlobalOmitOptions>>
+
+    /**
+     * Create or update one BackupPlan.
+     * @param {BackupPlanUpsertArgs} args - Arguments to update or create a BackupPlan.
+     * @example
+     * // Update or create a BackupPlan
+     * const backupPlan = await prisma.backupPlan.upsert({
+     *   create: {
+     *     // ... data to create a BackupPlan
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the BackupPlan we want to update
+     *   }
+     * })
+     */
+    upsert<T extends BackupPlanUpsertArgs>(args: SelectSubset<T, BackupPlanUpsertArgs<ExtArgs>>): Prisma__BackupPlanClient<$Result.GetResult<Prisma.$BackupPlanPayload<ExtArgs>, T, "upsert", GlobalOmitOptions>, never, ExtArgs, GlobalOmitOptions>
+
+
+    /**
+     * Count the number of BackupPlans.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BackupPlanCountArgs} args - Arguments to filter BackupPlans to count.
+     * @example
+     * // Count the number of BackupPlans
+     * const count = await prisma.backupPlan.count({
+     *   where: {
+     *     // ... the filter for the BackupPlans we want to count
+     *   }
+     * })
+    **/
+    count<T extends BackupPlanCountArgs>(
+      args?: Subset<T, BackupPlanCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], BackupPlanCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a BackupPlan.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BackupPlanAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends BackupPlanAggregateArgs>(args: Subset<T, BackupPlanAggregateArgs>): Prisma.PrismaPromise<GetBackupPlanAggregateType<T>>
+
+    /**
+     * Group by BackupPlan.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {BackupPlanGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends BackupPlanGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: BackupPlanGroupByArgs['orderBy'] }
+        : { orderBy?: BackupPlanGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, BackupPlanGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetBackupPlanGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the BackupPlan model
+   */
+  readonly fields: BackupPlanFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for BackupPlan.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__BackupPlanClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    tenant<T extends BackupPlan$tenantArgs<ExtArgs> = {}>(args?: Subset<T, BackupPlan$tenantArgs<ExtArgs>>): Prisma__TenantClient<$Result.GetResult<Prisma.$TenantPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the BackupPlan model
+   */
+  interface BackupPlanFieldRefs {
+    readonly backupPlanId: FieldRef<"BackupPlan", 'String'>
+    readonly type: FieldRef<"BackupPlan", 'BackupType'>
+    readonly tenantId: FieldRef<"BackupPlan", 'String'>
+    readonly schedule: FieldRef<"BackupPlan", 'String'>
+    readonly enabled: FieldRef<"BackupPlan", 'Boolean'>
+    readonly retention: FieldRef<"BackupPlan", 'Int'>
+    readonly lastRunAt: FieldRef<"BackupPlan", 'DateTime'>
+    readonly nextRunAt: FieldRef<"BackupPlan", 'DateTime'>
+    readonly createdBy: FieldRef<"BackupPlan", 'String'>
+    readonly createdAt: FieldRef<"BackupPlan", 'DateTime'>
+    readonly updatedAt: FieldRef<"BackupPlan", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * BackupPlan findUnique
+   */
+  export type BackupPlanFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BackupPlan
+     */
+    select?: BackupPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BackupPlan
+     */
+    omit?: BackupPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BackupPlanInclude<ExtArgs> | null
+    /**
+     * Filter, which BackupPlan to fetch.
+     */
+    where: BackupPlanWhereUniqueInput
+  }
+
+  /**
+   * BackupPlan findUniqueOrThrow
+   */
+  export type BackupPlanFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BackupPlan
+     */
+    select?: BackupPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BackupPlan
+     */
+    omit?: BackupPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BackupPlanInclude<ExtArgs> | null
+    /**
+     * Filter, which BackupPlan to fetch.
+     */
+    where: BackupPlanWhereUniqueInput
+  }
+
+  /**
+   * BackupPlan findFirst
+   */
+  export type BackupPlanFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BackupPlan
+     */
+    select?: BackupPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BackupPlan
+     */
+    omit?: BackupPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BackupPlanInclude<ExtArgs> | null
+    /**
+     * Filter, which BackupPlan to fetch.
+     */
+    where?: BackupPlanWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BackupPlans to fetch.
+     */
+    orderBy?: BackupPlanOrderByWithRelationInput | BackupPlanOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BackupPlans.
+     */
+    cursor?: BackupPlanWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BackupPlans from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BackupPlans.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BackupPlans.
+     */
+    distinct?: BackupPlanScalarFieldEnum | BackupPlanScalarFieldEnum[]
+  }
+
+  /**
+   * BackupPlan findFirstOrThrow
+   */
+  export type BackupPlanFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BackupPlan
+     */
+    select?: BackupPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BackupPlan
+     */
+    omit?: BackupPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BackupPlanInclude<ExtArgs> | null
+    /**
+     * Filter, which BackupPlan to fetch.
+     */
+    where?: BackupPlanWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BackupPlans to fetch.
+     */
+    orderBy?: BackupPlanOrderByWithRelationInput | BackupPlanOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for BackupPlans.
+     */
+    cursor?: BackupPlanWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BackupPlans from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BackupPlans.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of BackupPlans.
+     */
+    distinct?: BackupPlanScalarFieldEnum | BackupPlanScalarFieldEnum[]
+  }
+
+  /**
+   * BackupPlan findMany
+   */
+  export type BackupPlanFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BackupPlan
+     */
+    select?: BackupPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BackupPlan
+     */
+    omit?: BackupPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BackupPlanInclude<ExtArgs> | null
+    /**
+     * Filter, which BackupPlans to fetch.
+     */
+    where?: BackupPlanWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of BackupPlans to fetch.
+     */
+    orderBy?: BackupPlanOrderByWithRelationInput | BackupPlanOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing BackupPlans.
+     */
+    cursor?: BackupPlanWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` BackupPlans from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` BackupPlans.
+     */
+    skip?: number
+    distinct?: BackupPlanScalarFieldEnum | BackupPlanScalarFieldEnum[]
+  }
+
+  /**
+   * BackupPlan create
+   */
+  export type BackupPlanCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BackupPlan
+     */
+    select?: BackupPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BackupPlan
+     */
+    omit?: BackupPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BackupPlanInclude<ExtArgs> | null
+    /**
+     * The data needed to create a BackupPlan.
+     */
+    data: XOR<BackupPlanCreateInput, BackupPlanUncheckedCreateInput>
+  }
+
+  /**
+   * BackupPlan createMany
+   */
+  export type BackupPlanCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many BackupPlans.
+     */
+    data: BackupPlanCreateManyInput | BackupPlanCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * BackupPlan createManyAndReturn
+   */
+  export type BackupPlanCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BackupPlan
+     */
+    select?: BackupPlanSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BackupPlan
+     */
+    omit?: BackupPlanOmit<ExtArgs> | null
+    /**
+     * The data used to create many BackupPlans.
+     */
+    data: BackupPlanCreateManyInput | BackupPlanCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BackupPlanIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * BackupPlan update
+   */
+  export type BackupPlanUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BackupPlan
+     */
+    select?: BackupPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BackupPlan
+     */
+    omit?: BackupPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BackupPlanInclude<ExtArgs> | null
+    /**
+     * The data needed to update a BackupPlan.
+     */
+    data: XOR<BackupPlanUpdateInput, BackupPlanUncheckedUpdateInput>
+    /**
+     * Choose, which BackupPlan to update.
+     */
+    where: BackupPlanWhereUniqueInput
+  }
+
+  /**
+   * BackupPlan updateMany
+   */
+  export type BackupPlanUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update BackupPlans.
+     */
+    data: XOR<BackupPlanUpdateManyMutationInput, BackupPlanUncheckedUpdateManyInput>
+    /**
+     * Filter which BackupPlans to update
+     */
+    where?: BackupPlanWhereInput
+    /**
+     * Limit how many BackupPlans to update.
+     */
+    limit?: number
+  }
+
+  /**
+   * BackupPlan updateManyAndReturn
+   */
+  export type BackupPlanUpdateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BackupPlan
+     */
+    select?: BackupPlanSelectUpdateManyAndReturn<ExtArgs> | null
+    /**
+     * Omit specific fields from the BackupPlan
+     */
+    omit?: BackupPlanOmit<ExtArgs> | null
+    /**
+     * The data used to update BackupPlans.
+     */
+    data: XOR<BackupPlanUpdateManyMutationInput, BackupPlanUncheckedUpdateManyInput>
+    /**
+     * Filter which BackupPlans to update
+     */
+    where?: BackupPlanWhereInput
+    /**
+     * Limit how many BackupPlans to update.
+     */
+    limit?: number
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BackupPlanIncludeUpdateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * BackupPlan upsert
+   */
+  export type BackupPlanUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BackupPlan
+     */
+    select?: BackupPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BackupPlan
+     */
+    omit?: BackupPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BackupPlanInclude<ExtArgs> | null
+    /**
+     * The filter to search for the BackupPlan to update in case it exists.
+     */
+    where: BackupPlanWhereUniqueInput
+    /**
+     * In case the BackupPlan found by the `where` argument doesn't exist, create a new BackupPlan with this data.
+     */
+    create: XOR<BackupPlanCreateInput, BackupPlanUncheckedCreateInput>
+    /**
+     * In case the BackupPlan was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<BackupPlanUpdateInput, BackupPlanUncheckedUpdateInput>
+  }
+
+  /**
+   * BackupPlan delete
+   */
+  export type BackupPlanDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BackupPlan
+     */
+    select?: BackupPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BackupPlan
+     */
+    omit?: BackupPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BackupPlanInclude<ExtArgs> | null
+    /**
+     * Filter which BackupPlan to delete.
+     */
+    where: BackupPlanWhereUniqueInput
+  }
+
+  /**
+   * BackupPlan deleteMany
+   */
+  export type BackupPlanDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which BackupPlans to delete
+     */
+    where?: BackupPlanWhereInput
+    /**
+     * Limit how many BackupPlans to delete.
+     */
+    limit?: number
+  }
+
+  /**
+   * BackupPlan.tenant
+   */
+  export type BackupPlan$tenantArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Tenant
+     */
+    select?: TenantSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Tenant
+     */
+    omit?: TenantOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TenantInclude<ExtArgs> | null
+    where?: TenantWhereInput
+  }
+
+  /**
+   * BackupPlan without action
+   */
+  export type BackupPlanDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the BackupPlan
+     */
+    select?: BackupPlanSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the BackupPlan
+     */
+    omit?: BackupPlanOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: BackupPlanInclude<ExtArgs> | null
+  }
+
+
+  /**
    * Enums
    */
 
@@ -138202,6 +140967,41 @@ export namespace Prisma {
   export type AuditoriaPeriodoScalarFieldEnum = (typeof AuditoriaPeriodoScalarFieldEnum)[keyof typeof AuditoriaPeriodoScalarFieldEnum]
 
 
+  export const BackupLogScalarFieldEnum: {
+    backupLogId: 'backupLogId',
+    type: 'type',
+    tenantId: 'tenantId',
+    status: 'status',
+    fileUrl: 'fileUrl',
+    fileName: 'fileName',
+    fileSize: 'fileSize',
+    startedAt: 'startedAt',
+    completedAt: 'completedAt',
+    errorMessage: 'errorMessage',
+    createdBy: 'createdBy',
+    createdAt: 'createdAt'
+  };
+
+  export type BackupLogScalarFieldEnum = (typeof BackupLogScalarFieldEnum)[keyof typeof BackupLogScalarFieldEnum]
+
+
+  export const BackupPlanScalarFieldEnum: {
+    backupPlanId: 'backupPlanId',
+    type: 'type',
+    tenantId: 'tenantId',
+    schedule: 'schedule',
+    enabled: 'enabled',
+    retention: 'retention',
+    lastRunAt: 'lastRunAt',
+    nextRunAt: 'nextRunAt',
+    createdBy: 'createdBy',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type BackupPlanScalarFieldEnum = (typeof BackupPlanScalarFieldEnum)[keyof typeof BackupPlanScalarFieldEnum]
+
+
   export const SortOrder: {
     asc: 'asc',
     desc: 'desc'
@@ -138637,6 +141437,34 @@ export namespace Prisma {
    * Reference to a field of type 'EventoAuditoria[]'
    */
   export type ListEnumEventoAuditoriaFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'EventoAuditoria[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'BackupType'
+   */
+  export type EnumBackupTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BackupType'>
+    
+
+
+  /**
+   * Reference to a field of type 'BackupType[]'
+   */
+  export type ListEnumBackupTypeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BackupType[]'>
+    
+
+
+  /**
+   * Reference to a field of type 'BackupStatus'
+   */
+  export type EnumBackupStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BackupStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'BackupStatus[]'
+   */
+  export type ListEnumBackupStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'BackupStatus[]'>
     
   /**
    * Deep Input Types
@@ -139297,6 +142125,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableListRelationFilter
     aperturaPeriodos?: AperturaPeriodoListRelationFilter
     auditoriaPeriodos?: AuditoriaPeriodoListRelationFilter
+    backupLogs?: BackupLogListRelationFilter
+    backupPlans?: BackupPlanListRelationFilter
   }
 
   export type TenantOrderByWithRelationInput = {
@@ -139363,6 +142193,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableOrderByRelationAggregateInput
     aperturaPeriodos?: AperturaPeriodoOrderByRelationAggregateInput
     auditoriaPeriodos?: AuditoriaPeriodoOrderByRelationAggregateInput
+    backupLogs?: BackupLogOrderByRelationAggregateInput
+    backupPlans?: BackupPlanOrderByRelationAggregateInput
   }
 
   export type TenantWhereUniqueInput = Prisma.AtLeast<{
@@ -139432,6 +142264,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableListRelationFilter
     aperturaPeriodos?: AperturaPeriodoListRelationFilter
     auditoriaPeriodos?: AuditoriaPeriodoListRelationFilter
+    backupLogs?: BackupLogListRelationFilter
+    backupPlans?: BackupPlanListRelationFilter
   }, "tenantId" | "slug">
 
   export type TenantOrderByWithAggregationInput = {
@@ -140663,6 +143497,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoListRelationFilter
     compraDocumentosEditados?: CompraDocumentoListRelationFilter
     transferenciasCreadas?: TransferenciaListRelationFilter
+    backupLogs?: BackupLogListRelationFilter
+    backupPlans?: BackupPlanListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
@@ -140701,6 +143537,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoOrderByRelationAggregateInput
     compraDocumentosEditados?: CompraDocumentoOrderByRelationAggregateInput
     transferenciasCreadas?: TransferenciaOrderByRelationAggregateInput
+    backupLogs?: BackupLogOrderByRelationAggregateInput
+    backupPlans?: BackupPlanOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -140742,6 +143580,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoListRelationFilter
     compraDocumentosEditados?: CompraDocumentoListRelationFilter
     transferenciasCreadas?: TransferenciaListRelationFilter
+    backupLogs?: BackupLogListRelationFilter
+    backupPlans?: BackupPlanListRelationFilter
   }, "userId" | "email" | "googleId">
 
   export type UserOrderByWithAggregationInput = {
@@ -148588,6 +151428,191 @@ export namespace Prisma {
     createdAt?: DateTimeWithAggregatesFilter<"AuditoriaPeriodo"> | Date | string
   }
 
+  export type BackupLogWhereInput = {
+    AND?: BackupLogWhereInput | BackupLogWhereInput[]
+    OR?: BackupLogWhereInput[]
+    NOT?: BackupLogWhereInput | BackupLogWhereInput[]
+    backupLogId?: StringFilter<"BackupLog"> | string
+    type?: EnumBackupTypeFilter<"BackupLog"> | $Enums.BackupType
+    tenantId?: StringNullableFilter<"BackupLog"> | string | null
+    status?: EnumBackupStatusFilter<"BackupLog"> | $Enums.BackupStatus
+    fileUrl?: StringNullableFilter<"BackupLog"> | string | null
+    fileName?: StringNullableFilter<"BackupLog"> | string | null
+    fileSize?: IntNullableFilter<"BackupLog"> | number | null
+    startedAt?: DateTimeFilter<"BackupLog"> | Date | string
+    completedAt?: DateTimeNullableFilter<"BackupLog"> | Date | string | null
+    errorMessage?: StringNullableFilter<"BackupLog"> | string | null
+    createdBy?: StringFilter<"BackupLog"> | string
+    createdAt?: DateTimeFilter<"BackupLog"> | Date | string
+    tenant?: XOR<TenantNullableScalarRelationFilter, TenantWhereInput> | null
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }
+
+  export type BackupLogOrderByWithRelationInput = {
+    backupLogId?: SortOrder
+    type?: SortOrder
+    tenantId?: SortOrderInput | SortOrder
+    status?: SortOrder
+    fileUrl?: SortOrderInput | SortOrder
+    fileName?: SortOrderInput | SortOrder
+    fileSize?: SortOrderInput | SortOrder
+    startedAt?: SortOrder
+    completedAt?: SortOrderInput | SortOrder
+    errorMessage?: SortOrderInput | SortOrder
+    createdBy?: SortOrder
+    createdAt?: SortOrder
+    tenant?: TenantOrderByWithRelationInput
+    user?: UserOrderByWithRelationInput
+  }
+
+  export type BackupLogWhereUniqueInput = Prisma.AtLeast<{
+    backupLogId?: string
+    AND?: BackupLogWhereInput | BackupLogWhereInput[]
+    OR?: BackupLogWhereInput[]
+    NOT?: BackupLogWhereInput | BackupLogWhereInput[]
+    type?: EnumBackupTypeFilter<"BackupLog"> | $Enums.BackupType
+    tenantId?: StringNullableFilter<"BackupLog"> | string | null
+    status?: EnumBackupStatusFilter<"BackupLog"> | $Enums.BackupStatus
+    fileUrl?: StringNullableFilter<"BackupLog"> | string | null
+    fileName?: StringNullableFilter<"BackupLog"> | string | null
+    fileSize?: IntNullableFilter<"BackupLog"> | number | null
+    startedAt?: DateTimeFilter<"BackupLog"> | Date | string
+    completedAt?: DateTimeNullableFilter<"BackupLog"> | Date | string | null
+    errorMessage?: StringNullableFilter<"BackupLog"> | string | null
+    createdBy?: StringFilter<"BackupLog"> | string
+    createdAt?: DateTimeFilter<"BackupLog"> | Date | string
+    tenant?: XOR<TenantNullableScalarRelationFilter, TenantWhereInput> | null
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }, "backupLogId">
+
+  export type BackupLogOrderByWithAggregationInput = {
+    backupLogId?: SortOrder
+    type?: SortOrder
+    tenantId?: SortOrderInput | SortOrder
+    status?: SortOrder
+    fileUrl?: SortOrderInput | SortOrder
+    fileName?: SortOrderInput | SortOrder
+    fileSize?: SortOrderInput | SortOrder
+    startedAt?: SortOrder
+    completedAt?: SortOrderInput | SortOrder
+    errorMessage?: SortOrderInput | SortOrder
+    createdBy?: SortOrder
+    createdAt?: SortOrder
+    _count?: BackupLogCountOrderByAggregateInput
+    _avg?: BackupLogAvgOrderByAggregateInput
+    _max?: BackupLogMaxOrderByAggregateInput
+    _min?: BackupLogMinOrderByAggregateInput
+    _sum?: BackupLogSumOrderByAggregateInput
+  }
+
+  export type BackupLogScalarWhereWithAggregatesInput = {
+    AND?: BackupLogScalarWhereWithAggregatesInput | BackupLogScalarWhereWithAggregatesInput[]
+    OR?: BackupLogScalarWhereWithAggregatesInput[]
+    NOT?: BackupLogScalarWhereWithAggregatesInput | BackupLogScalarWhereWithAggregatesInput[]
+    backupLogId?: StringWithAggregatesFilter<"BackupLog"> | string
+    type?: EnumBackupTypeWithAggregatesFilter<"BackupLog"> | $Enums.BackupType
+    tenantId?: StringNullableWithAggregatesFilter<"BackupLog"> | string | null
+    status?: EnumBackupStatusWithAggregatesFilter<"BackupLog"> | $Enums.BackupStatus
+    fileUrl?: StringNullableWithAggregatesFilter<"BackupLog"> | string | null
+    fileName?: StringNullableWithAggregatesFilter<"BackupLog"> | string | null
+    fileSize?: IntNullableWithAggregatesFilter<"BackupLog"> | number | null
+    startedAt?: DateTimeWithAggregatesFilter<"BackupLog"> | Date | string
+    completedAt?: DateTimeNullableWithAggregatesFilter<"BackupLog"> | Date | string | null
+    errorMessage?: StringNullableWithAggregatesFilter<"BackupLog"> | string | null
+    createdBy?: StringWithAggregatesFilter<"BackupLog"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"BackupLog"> | Date | string
+  }
+
+  export type BackupPlanWhereInput = {
+    AND?: BackupPlanWhereInput | BackupPlanWhereInput[]
+    OR?: BackupPlanWhereInput[]
+    NOT?: BackupPlanWhereInput | BackupPlanWhereInput[]
+    backupPlanId?: StringFilter<"BackupPlan"> | string
+    type?: EnumBackupTypeFilter<"BackupPlan"> | $Enums.BackupType
+    tenantId?: StringNullableFilter<"BackupPlan"> | string | null
+    schedule?: StringFilter<"BackupPlan"> | string
+    enabled?: BoolFilter<"BackupPlan"> | boolean
+    retention?: IntFilter<"BackupPlan"> | number
+    lastRunAt?: DateTimeNullableFilter<"BackupPlan"> | Date | string | null
+    nextRunAt?: DateTimeNullableFilter<"BackupPlan"> | Date | string | null
+    createdBy?: StringFilter<"BackupPlan"> | string
+    createdAt?: DateTimeFilter<"BackupPlan"> | Date | string
+    updatedAt?: DateTimeFilter<"BackupPlan"> | Date | string
+    tenant?: XOR<TenantNullableScalarRelationFilter, TenantWhereInput> | null
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }
+
+  export type BackupPlanOrderByWithRelationInput = {
+    backupPlanId?: SortOrder
+    type?: SortOrder
+    tenantId?: SortOrderInput | SortOrder
+    schedule?: SortOrder
+    enabled?: SortOrder
+    retention?: SortOrder
+    lastRunAt?: SortOrderInput | SortOrder
+    nextRunAt?: SortOrderInput | SortOrder
+    createdBy?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    tenant?: TenantOrderByWithRelationInput
+    user?: UserOrderByWithRelationInput
+  }
+
+  export type BackupPlanWhereUniqueInput = Prisma.AtLeast<{
+    backupPlanId?: string
+    AND?: BackupPlanWhereInput | BackupPlanWhereInput[]
+    OR?: BackupPlanWhereInput[]
+    NOT?: BackupPlanWhereInput | BackupPlanWhereInput[]
+    type?: EnumBackupTypeFilter<"BackupPlan"> | $Enums.BackupType
+    tenantId?: StringNullableFilter<"BackupPlan"> | string | null
+    schedule?: StringFilter<"BackupPlan"> | string
+    enabled?: BoolFilter<"BackupPlan"> | boolean
+    retention?: IntFilter<"BackupPlan"> | number
+    lastRunAt?: DateTimeNullableFilter<"BackupPlan"> | Date | string | null
+    nextRunAt?: DateTimeNullableFilter<"BackupPlan"> | Date | string | null
+    createdBy?: StringFilter<"BackupPlan"> | string
+    createdAt?: DateTimeFilter<"BackupPlan"> | Date | string
+    updatedAt?: DateTimeFilter<"BackupPlan"> | Date | string
+    tenant?: XOR<TenantNullableScalarRelationFilter, TenantWhereInput> | null
+    user?: XOR<UserScalarRelationFilter, UserWhereInput>
+  }, "backupPlanId">
+
+  export type BackupPlanOrderByWithAggregationInput = {
+    backupPlanId?: SortOrder
+    type?: SortOrder
+    tenantId?: SortOrderInput | SortOrder
+    schedule?: SortOrder
+    enabled?: SortOrder
+    retention?: SortOrder
+    lastRunAt?: SortOrderInput | SortOrder
+    nextRunAt?: SortOrderInput | SortOrder
+    createdBy?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: BackupPlanCountOrderByAggregateInput
+    _avg?: BackupPlanAvgOrderByAggregateInput
+    _max?: BackupPlanMaxOrderByAggregateInput
+    _min?: BackupPlanMinOrderByAggregateInput
+    _sum?: BackupPlanSumOrderByAggregateInput
+  }
+
+  export type BackupPlanScalarWhereWithAggregatesInput = {
+    AND?: BackupPlanScalarWhereWithAggregatesInput | BackupPlanScalarWhereWithAggregatesInput[]
+    OR?: BackupPlanScalarWhereWithAggregatesInput[]
+    NOT?: BackupPlanScalarWhereWithAggregatesInput | BackupPlanScalarWhereWithAggregatesInput[]
+    backupPlanId?: StringWithAggregatesFilter<"BackupPlan"> | string
+    type?: EnumBackupTypeWithAggregatesFilter<"BackupPlan"> | $Enums.BackupType
+    tenantId?: StringNullableWithAggregatesFilter<"BackupPlan"> | string | null
+    schedule?: StringWithAggregatesFilter<"BackupPlan"> | string
+    enabled?: BoolWithAggregatesFilter<"BackupPlan"> | boolean
+    retention?: IntWithAggregatesFilter<"BackupPlan"> | number
+    lastRunAt?: DateTimeNullableWithAggregatesFilter<"BackupPlan"> | Date | string | null
+    nextRunAt?: DateTimeNullableWithAggregatesFilter<"BackupPlan"> | Date | string | null
+    createdBy?: StringWithAggregatesFilter<"BackupPlan"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"BackupPlan"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"BackupPlan"> | Date | string
+  }
+
   export type CategoriaCreateInput = {
     catId?: string
     nombre: string
@@ -149325,6 +152350,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateInput = {
@@ -149391,6 +152418,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUpdateInput = {
@@ -149457,6 +152486,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateInput = {
@@ -149523,6 +152554,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantCreateManyInput = {
@@ -150815,6 +153848,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoCreateNestedManyWithoutCreadorInput
     compraDocumentosEditados?: CompraDocumentoCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaCreateNestedManyWithoutCreadoPorInput
+    backupLogs?: BackupLogCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -150853,6 +153888,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUncheckedCreateNestedManyWithoutCreadorInput
     compraDocumentosEditados?: CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserUpdateInput = {
@@ -150891,6 +153928,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUpdateManyWithoutCreadorNestedInput
     compraDocumentosEditados?: CompraDocumentoUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUpdateManyWithoutCreadoPorNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -150929,6 +153968,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUncheckedUpdateManyWithoutCreadorNestedInput
     compraDocumentosEditados?: CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -159517,6 +162558,205 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type BackupLogCreateInput = {
+    backupLogId?: string
+    type: $Enums.BackupType
+    status: $Enums.BackupStatus
+    fileUrl?: string | null
+    fileName?: string | null
+    fileSize?: number | null
+    startedAt?: Date | string
+    completedAt?: Date | string | null
+    errorMessage?: string | null
+    createdAt?: Date | string
+    tenant?: TenantCreateNestedOneWithoutBackupLogsInput
+    user: UserCreateNestedOneWithoutBackupLogsInput
+  }
+
+  export type BackupLogUncheckedCreateInput = {
+    backupLogId?: string
+    type: $Enums.BackupType
+    tenantId?: string | null
+    status: $Enums.BackupStatus
+    fileUrl?: string | null
+    fileName?: string | null
+    fileSize?: number | null
+    startedAt?: Date | string
+    completedAt?: Date | string | null
+    errorMessage?: string | null
+    createdBy: string
+    createdAt?: Date | string
+  }
+
+  export type BackupLogUpdateInput = {
+    backupLogId?: StringFieldUpdateOperationsInput | string
+    type?: EnumBackupTypeFieldUpdateOperationsInput | $Enums.BackupType
+    status?: EnumBackupStatusFieldUpdateOperationsInput | $Enums.BackupStatus
+    fileUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    fileName?: NullableStringFieldUpdateOperationsInput | string | null
+    fileSize?: NullableIntFieldUpdateOperationsInput | number | null
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tenant?: TenantUpdateOneWithoutBackupLogsNestedInput
+    user?: UserUpdateOneRequiredWithoutBackupLogsNestedInput
+  }
+
+  export type BackupLogUncheckedUpdateInput = {
+    backupLogId?: StringFieldUpdateOperationsInput | string
+    type?: EnumBackupTypeFieldUpdateOperationsInput | $Enums.BackupType
+    tenantId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumBackupStatusFieldUpdateOperationsInput | $Enums.BackupStatus
+    fileUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    fileName?: NullableStringFieldUpdateOperationsInput | string | null
+    fileSize?: NullableIntFieldUpdateOperationsInput | number | null
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdBy?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BackupLogCreateManyInput = {
+    backupLogId?: string
+    type: $Enums.BackupType
+    tenantId?: string | null
+    status: $Enums.BackupStatus
+    fileUrl?: string | null
+    fileName?: string | null
+    fileSize?: number | null
+    startedAt?: Date | string
+    completedAt?: Date | string | null
+    errorMessage?: string | null
+    createdBy: string
+    createdAt?: Date | string
+  }
+
+  export type BackupLogUpdateManyMutationInput = {
+    backupLogId?: StringFieldUpdateOperationsInput | string
+    type?: EnumBackupTypeFieldUpdateOperationsInput | $Enums.BackupType
+    status?: EnumBackupStatusFieldUpdateOperationsInput | $Enums.BackupStatus
+    fileUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    fileName?: NullableStringFieldUpdateOperationsInput | string | null
+    fileSize?: NullableIntFieldUpdateOperationsInput | number | null
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BackupLogUncheckedUpdateManyInput = {
+    backupLogId?: StringFieldUpdateOperationsInput | string
+    type?: EnumBackupTypeFieldUpdateOperationsInput | $Enums.BackupType
+    tenantId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumBackupStatusFieldUpdateOperationsInput | $Enums.BackupStatus
+    fileUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    fileName?: NullableStringFieldUpdateOperationsInput | string | null
+    fileSize?: NullableIntFieldUpdateOperationsInput | number | null
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdBy?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BackupPlanCreateInput = {
+    backupPlanId?: string
+    type: $Enums.BackupType
+    schedule: string
+    enabled?: boolean
+    retention?: number
+    lastRunAt?: Date | string | null
+    nextRunAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    tenant?: TenantCreateNestedOneWithoutBackupPlansInput
+    user: UserCreateNestedOneWithoutBackupPlansInput
+  }
+
+  export type BackupPlanUncheckedCreateInput = {
+    backupPlanId?: string
+    type: $Enums.BackupType
+    tenantId?: string | null
+    schedule: string
+    enabled?: boolean
+    retention?: number
+    lastRunAt?: Date | string | null
+    nextRunAt?: Date | string | null
+    createdBy: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type BackupPlanUpdateInput = {
+    backupPlanId?: StringFieldUpdateOperationsInput | string
+    type?: EnumBackupTypeFieldUpdateOperationsInput | $Enums.BackupType
+    schedule?: StringFieldUpdateOperationsInput | string
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    retention?: IntFieldUpdateOperationsInput | number
+    lastRunAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextRunAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tenant?: TenantUpdateOneWithoutBackupPlansNestedInput
+    user?: UserUpdateOneRequiredWithoutBackupPlansNestedInput
+  }
+
+  export type BackupPlanUncheckedUpdateInput = {
+    backupPlanId?: StringFieldUpdateOperationsInput | string
+    type?: EnumBackupTypeFieldUpdateOperationsInput | $Enums.BackupType
+    tenantId?: NullableStringFieldUpdateOperationsInput | string | null
+    schedule?: StringFieldUpdateOperationsInput | string
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    retention?: IntFieldUpdateOperationsInput | number
+    lastRunAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextRunAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdBy?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BackupPlanCreateManyInput = {
+    backupPlanId?: string
+    type: $Enums.BackupType
+    tenantId?: string | null
+    schedule: string
+    enabled?: boolean
+    retention?: number
+    lastRunAt?: Date | string | null
+    nextRunAt?: Date | string | null
+    createdBy: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type BackupPlanUpdateManyMutationInput = {
+    backupPlanId?: StringFieldUpdateOperationsInput | string
+    type?: EnumBackupTypeFieldUpdateOperationsInput | $Enums.BackupType
+    schedule?: StringFieldUpdateOperationsInput | string
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    retention?: IntFieldUpdateOperationsInput | number
+    lastRunAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextRunAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BackupPlanUncheckedUpdateManyInput = {
+    backupPlanId?: StringFieldUpdateOperationsInput | string
+    type?: EnumBackupTypeFieldUpdateOperationsInput | $Enums.BackupType
+    tenantId?: NullableStringFieldUpdateOperationsInput | string | null
+    schedule?: StringFieldUpdateOperationsInput | string
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    retention?: IntFieldUpdateOperationsInput | number
+    lastRunAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextRunAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdBy?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type StringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -160477,6 +163717,18 @@ export namespace Prisma {
     none?: AuditoriaPeriodoWhereInput
   }
 
+  export type BackupLogListRelationFilter = {
+    every?: BackupLogWhereInput
+    some?: BackupLogWhereInput
+    none?: BackupLogWhereInput
+  }
+
+  export type BackupPlanListRelationFilter = {
+    every?: BackupPlanWhereInput
+    some?: BackupPlanWhereInput
+    none?: BackupPlanWhereInput
+  }
+
   export type TenantMembershipOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
@@ -160630,6 +163882,14 @@ export namespace Prisma {
   }
 
   export type AuditoriaPeriodoOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type BackupLogOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type BackupPlanOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -166751,6 +170011,143 @@ export namespace Prisma {
     _max?: NestedEnumEventoAuditoriaFilter<$PrismaModel>
   }
 
+  export type EnumBackupTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.BackupType | EnumBackupTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.BackupType[] | ListEnumBackupTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.BackupType[] | ListEnumBackupTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumBackupTypeFilter<$PrismaModel> | $Enums.BackupType
+  }
+
+  export type EnumBackupStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.BackupStatus | EnumBackupStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.BackupStatus[] | ListEnumBackupStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.BackupStatus[] | ListEnumBackupStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumBackupStatusFilter<$PrismaModel> | $Enums.BackupStatus
+  }
+
+  export type BackupLogCountOrderByAggregateInput = {
+    backupLogId?: SortOrder
+    type?: SortOrder
+    tenantId?: SortOrder
+    status?: SortOrder
+    fileUrl?: SortOrder
+    fileName?: SortOrder
+    fileSize?: SortOrder
+    startedAt?: SortOrder
+    completedAt?: SortOrder
+    errorMessage?: SortOrder
+    createdBy?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type BackupLogAvgOrderByAggregateInput = {
+    fileSize?: SortOrder
+  }
+
+  export type BackupLogMaxOrderByAggregateInput = {
+    backupLogId?: SortOrder
+    type?: SortOrder
+    tenantId?: SortOrder
+    status?: SortOrder
+    fileUrl?: SortOrder
+    fileName?: SortOrder
+    fileSize?: SortOrder
+    startedAt?: SortOrder
+    completedAt?: SortOrder
+    errorMessage?: SortOrder
+    createdBy?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type BackupLogMinOrderByAggregateInput = {
+    backupLogId?: SortOrder
+    type?: SortOrder
+    tenantId?: SortOrder
+    status?: SortOrder
+    fileUrl?: SortOrder
+    fileName?: SortOrder
+    fileSize?: SortOrder
+    startedAt?: SortOrder
+    completedAt?: SortOrder
+    errorMessage?: SortOrder
+    createdBy?: SortOrder
+    createdAt?: SortOrder
+  }
+
+  export type BackupLogSumOrderByAggregateInput = {
+    fileSize?: SortOrder
+  }
+
+  export type EnumBackupTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.BackupType | EnumBackupTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.BackupType[] | ListEnumBackupTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.BackupType[] | ListEnumBackupTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumBackupTypeWithAggregatesFilter<$PrismaModel> | $Enums.BackupType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumBackupTypeFilter<$PrismaModel>
+    _max?: NestedEnumBackupTypeFilter<$PrismaModel>
+  }
+
+  export type EnumBackupStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.BackupStatus | EnumBackupStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.BackupStatus[] | ListEnumBackupStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.BackupStatus[] | ListEnumBackupStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumBackupStatusWithAggregatesFilter<$PrismaModel> | $Enums.BackupStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumBackupStatusFilter<$PrismaModel>
+    _max?: NestedEnumBackupStatusFilter<$PrismaModel>
+  }
+
+  export type BackupPlanCountOrderByAggregateInput = {
+    backupPlanId?: SortOrder
+    type?: SortOrder
+    tenantId?: SortOrder
+    schedule?: SortOrder
+    enabled?: SortOrder
+    retention?: SortOrder
+    lastRunAt?: SortOrder
+    nextRunAt?: SortOrder
+    createdBy?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type BackupPlanAvgOrderByAggregateInput = {
+    retention?: SortOrder
+  }
+
+  export type BackupPlanMaxOrderByAggregateInput = {
+    backupPlanId?: SortOrder
+    type?: SortOrder
+    tenantId?: SortOrder
+    schedule?: SortOrder
+    enabled?: SortOrder
+    retention?: SortOrder
+    lastRunAt?: SortOrder
+    nextRunAt?: SortOrder
+    createdBy?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type BackupPlanMinOrderByAggregateInput = {
+    backupPlanId?: SortOrder
+    type?: SortOrder
+    tenantId?: SortOrder
+    schedule?: SortOrder
+    enabled?: SortOrder
+    retention?: SortOrder
+    lastRunAt?: SortOrder
+    nextRunAt?: SortOrder
+    createdBy?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type BackupPlanSumOrderByAggregateInput = {
+    retention?: SortOrder
+  }
+
   export type CategoriaCreateNestedOneWithoutSubcategoriasInput = {
     create?: XOR<CategoriaCreateWithoutSubcategoriasInput, CategoriaUncheckedCreateWithoutSubcategoriasInput>
     connectOrCreate?: CategoriaCreateOrConnectWithoutSubcategoriasInput
@@ -168263,6 +171660,20 @@ export namespace Prisma {
     connect?: AuditoriaPeriodoWhereUniqueInput | AuditoriaPeriodoWhereUniqueInput[]
   }
 
+  export type BackupLogCreateNestedManyWithoutTenantInput = {
+    create?: XOR<BackupLogCreateWithoutTenantInput, BackupLogUncheckedCreateWithoutTenantInput> | BackupLogCreateWithoutTenantInput[] | BackupLogUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: BackupLogCreateOrConnectWithoutTenantInput | BackupLogCreateOrConnectWithoutTenantInput[]
+    createMany?: BackupLogCreateManyTenantInputEnvelope
+    connect?: BackupLogWhereUniqueInput | BackupLogWhereUniqueInput[]
+  }
+
+  export type BackupPlanCreateNestedManyWithoutTenantInput = {
+    create?: XOR<BackupPlanCreateWithoutTenantInput, BackupPlanUncheckedCreateWithoutTenantInput> | BackupPlanCreateWithoutTenantInput[] | BackupPlanUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: BackupPlanCreateOrConnectWithoutTenantInput | BackupPlanCreateOrConnectWithoutTenantInput[]
+    createMany?: BackupPlanCreateManyTenantInputEnvelope
+    connect?: BackupPlanWhereUniqueInput | BackupPlanWhereUniqueInput[]
+  }
+
   export type MiEmpresaUncheckedCreateNestedOneWithoutTenantInput = {
     create?: XOR<MiEmpresaCreateWithoutTenantInput, MiEmpresaUncheckedCreateWithoutTenantInput>
     connectOrCreate?: MiEmpresaCreateOrConnectWithoutTenantInput
@@ -168659,6 +172070,20 @@ export namespace Prisma {
     connectOrCreate?: AuditoriaPeriodoCreateOrConnectWithoutTenantInput | AuditoriaPeriodoCreateOrConnectWithoutTenantInput[]
     createMany?: AuditoriaPeriodoCreateManyTenantInputEnvelope
     connect?: AuditoriaPeriodoWhereUniqueInput | AuditoriaPeriodoWhereUniqueInput[]
+  }
+
+  export type BackupLogUncheckedCreateNestedManyWithoutTenantInput = {
+    create?: XOR<BackupLogCreateWithoutTenantInput, BackupLogUncheckedCreateWithoutTenantInput> | BackupLogCreateWithoutTenantInput[] | BackupLogUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: BackupLogCreateOrConnectWithoutTenantInput | BackupLogCreateOrConnectWithoutTenantInput[]
+    createMany?: BackupLogCreateManyTenantInputEnvelope
+    connect?: BackupLogWhereUniqueInput | BackupLogWhereUniqueInput[]
+  }
+
+  export type BackupPlanUncheckedCreateNestedManyWithoutTenantInput = {
+    create?: XOR<BackupPlanCreateWithoutTenantInput, BackupPlanUncheckedCreateWithoutTenantInput> | BackupPlanCreateWithoutTenantInput[] | BackupPlanUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: BackupPlanCreateOrConnectWithoutTenantInput | BackupPlanCreateOrConnectWithoutTenantInput[]
+    createMany?: BackupPlanCreateManyTenantInputEnvelope
+    connect?: BackupPlanWhereUniqueInput | BackupPlanWhereUniqueInput[]
   }
 
   export type MiEmpresaUpdateOneWithoutTenantNestedInput = {
@@ -169455,6 +172880,34 @@ export namespace Prisma {
     deleteMany?: AuditoriaPeriodoScalarWhereInput | AuditoriaPeriodoScalarWhereInput[]
   }
 
+  export type BackupLogUpdateManyWithoutTenantNestedInput = {
+    create?: XOR<BackupLogCreateWithoutTenantInput, BackupLogUncheckedCreateWithoutTenantInput> | BackupLogCreateWithoutTenantInput[] | BackupLogUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: BackupLogCreateOrConnectWithoutTenantInput | BackupLogCreateOrConnectWithoutTenantInput[]
+    upsert?: BackupLogUpsertWithWhereUniqueWithoutTenantInput | BackupLogUpsertWithWhereUniqueWithoutTenantInput[]
+    createMany?: BackupLogCreateManyTenantInputEnvelope
+    set?: BackupLogWhereUniqueInput | BackupLogWhereUniqueInput[]
+    disconnect?: BackupLogWhereUniqueInput | BackupLogWhereUniqueInput[]
+    delete?: BackupLogWhereUniqueInput | BackupLogWhereUniqueInput[]
+    connect?: BackupLogWhereUniqueInput | BackupLogWhereUniqueInput[]
+    update?: BackupLogUpdateWithWhereUniqueWithoutTenantInput | BackupLogUpdateWithWhereUniqueWithoutTenantInput[]
+    updateMany?: BackupLogUpdateManyWithWhereWithoutTenantInput | BackupLogUpdateManyWithWhereWithoutTenantInput[]
+    deleteMany?: BackupLogScalarWhereInput | BackupLogScalarWhereInput[]
+  }
+
+  export type BackupPlanUpdateManyWithoutTenantNestedInput = {
+    create?: XOR<BackupPlanCreateWithoutTenantInput, BackupPlanUncheckedCreateWithoutTenantInput> | BackupPlanCreateWithoutTenantInput[] | BackupPlanUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: BackupPlanCreateOrConnectWithoutTenantInput | BackupPlanCreateOrConnectWithoutTenantInput[]
+    upsert?: BackupPlanUpsertWithWhereUniqueWithoutTenantInput | BackupPlanUpsertWithWhereUniqueWithoutTenantInput[]
+    createMany?: BackupPlanCreateManyTenantInputEnvelope
+    set?: BackupPlanWhereUniqueInput | BackupPlanWhereUniqueInput[]
+    disconnect?: BackupPlanWhereUniqueInput | BackupPlanWhereUniqueInput[]
+    delete?: BackupPlanWhereUniqueInput | BackupPlanWhereUniqueInput[]
+    connect?: BackupPlanWhereUniqueInput | BackupPlanWhereUniqueInput[]
+    update?: BackupPlanUpdateWithWhereUniqueWithoutTenantInput | BackupPlanUpdateWithWhereUniqueWithoutTenantInput[]
+    updateMany?: BackupPlanUpdateManyWithWhereWithoutTenantInput | BackupPlanUpdateManyWithWhereWithoutTenantInput[]
+    deleteMany?: BackupPlanScalarWhereInput | BackupPlanScalarWhereInput[]
+  }
+
   export type MiEmpresaUncheckedUpdateOneWithoutTenantNestedInput = {
     create?: XOR<MiEmpresaCreateWithoutTenantInput, MiEmpresaUncheckedCreateWithoutTenantInput>
     connectOrCreate?: MiEmpresaCreateOrConnectWithoutTenantInput
@@ -170247,6 +173700,34 @@ export namespace Prisma {
     update?: AuditoriaPeriodoUpdateWithWhereUniqueWithoutTenantInput | AuditoriaPeriodoUpdateWithWhereUniqueWithoutTenantInput[]
     updateMany?: AuditoriaPeriodoUpdateManyWithWhereWithoutTenantInput | AuditoriaPeriodoUpdateManyWithWhereWithoutTenantInput[]
     deleteMany?: AuditoriaPeriodoScalarWhereInput | AuditoriaPeriodoScalarWhereInput[]
+  }
+
+  export type BackupLogUncheckedUpdateManyWithoutTenantNestedInput = {
+    create?: XOR<BackupLogCreateWithoutTenantInput, BackupLogUncheckedCreateWithoutTenantInput> | BackupLogCreateWithoutTenantInput[] | BackupLogUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: BackupLogCreateOrConnectWithoutTenantInput | BackupLogCreateOrConnectWithoutTenantInput[]
+    upsert?: BackupLogUpsertWithWhereUniqueWithoutTenantInput | BackupLogUpsertWithWhereUniqueWithoutTenantInput[]
+    createMany?: BackupLogCreateManyTenantInputEnvelope
+    set?: BackupLogWhereUniqueInput | BackupLogWhereUniqueInput[]
+    disconnect?: BackupLogWhereUniqueInput | BackupLogWhereUniqueInput[]
+    delete?: BackupLogWhereUniqueInput | BackupLogWhereUniqueInput[]
+    connect?: BackupLogWhereUniqueInput | BackupLogWhereUniqueInput[]
+    update?: BackupLogUpdateWithWhereUniqueWithoutTenantInput | BackupLogUpdateWithWhereUniqueWithoutTenantInput[]
+    updateMany?: BackupLogUpdateManyWithWhereWithoutTenantInput | BackupLogUpdateManyWithWhereWithoutTenantInput[]
+    deleteMany?: BackupLogScalarWhereInput | BackupLogScalarWhereInput[]
+  }
+
+  export type BackupPlanUncheckedUpdateManyWithoutTenantNestedInput = {
+    create?: XOR<BackupPlanCreateWithoutTenantInput, BackupPlanUncheckedCreateWithoutTenantInput> | BackupPlanCreateWithoutTenantInput[] | BackupPlanUncheckedCreateWithoutTenantInput[]
+    connectOrCreate?: BackupPlanCreateOrConnectWithoutTenantInput | BackupPlanCreateOrConnectWithoutTenantInput[]
+    upsert?: BackupPlanUpsertWithWhereUniqueWithoutTenantInput | BackupPlanUpsertWithWhereUniqueWithoutTenantInput[]
+    createMany?: BackupPlanCreateManyTenantInputEnvelope
+    set?: BackupPlanWhereUniqueInput | BackupPlanWhereUniqueInput[]
+    disconnect?: BackupPlanWhereUniqueInput | BackupPlanWhereUniqueInput[]
+    delete?: BackupPlanWhereUniqueInput | BackupPlanWhereUniqueInput[]
+    connect?: BackupPlanWhereUniqueInput | BackupPlanWhereUniqueInput[]
+    update?: BackupPlanUpdateWithWhereUniqueWithoutTenantInput | BackupPlanUpdateWithWhereUniqueWithoutTenantInput[]
+    updateMany?: BackupPlanUpdateManyWithWhereWithoutTenantInput | BackupPlanUpdateManyWithWhereWithoutTenantInput[]
+    deleteMany?: BackupPlanScalarWhereInput | BackupPlanScalarWhereInput[]
   }
 
   export type TenantCreateNestedOneWithoutMembershipsInput = {
@@ -172036,6 +175517,20 @@ export namespace Prisma {
     connect?: TransferenciaWhereUniqueInput | TransferenciaWhereUniqueInput[]
   }
 
+  export type BackupLogCreateNestedManyWithoutUserInput = {
+    create?: XOR<BackupLogCreateWithoutUserInput, BackupLogUncheckedCreateWithoutUserInput> | BackupLogCreateWithoutUserInput[] | BackupLogUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: BackupLogCreateOrConnectWithoutUserInput | BackupLogCreateOrConnectWithoutUserInput[]
+    createMany?: BackupLogCreateManyUserInputEnvelope
+    connect?: BackupLogWhereUniqueInput | BackupLogWhereUniqueInput[]
+  }
+
+  export type BackupPlanCreateNestedManyWithoutUserInput = {
+    create?: XOR<BackupPlanCreateWithoutUserInput, BackupPlanUncheckedCreateWithoutUserInput> | BackupPlanCreateWithoutUserInput[] | BackupPlanUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: BackupPlanCreateOrConnectWithoutUserInput | BackupPlanCreateOrConnectWithoutUserInput[]
+    createMany?: BackupPlanCreateManyUserInputEnvelope
+    connect?: BackupPlanWhereUniqueInput | BackupPlanWhereUniqueInput[]
+  }
+
   export type ContratoUncheckedCreateNestedManyWithoutAprobadorInput = {
     create?: XOR<ContratoCreateWithoutAprobadorInput, ContratoUncheckedCreateWithoutAprobadorInput> | ContratoCreateWithoutAprobadorInput[] | ContratoUncheckedCreateWithoutAprobadorInput[]
     connectOrCreate?: ContratoCreateOrConnectWithoutAprobadorInput | ContratoCreateOrConnectWithoutAprobadorInput[]
@@ -172146,6 +175641,20 @@ export namespace Prisma {
     connectOrCreate?: TransferenciaCreateOrConnectWithoutCreadoPorInput | TransferenciaCreateOrConnectWithoutCreadoPorInput[]
     createMany?: TransferenciaCreateManyCreadoPorInputEnvelope
     connect?: TransferenciaWhereUniqueInput | TransferenciaWhereUniqueInput[]
+  }
+
+  export type BackupLogUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<BackupLogCreateWithoutUserInput, BackupLogUncheckedCreateWithoutUserInput> | BackupLogCreateWithoutUserInput[] | BackupLogUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: BackupLogCreateOrConnectWithoutUserInput | BackupLogCreateOrConnectWithoutUserInput[]
+    createMany?: BackupLogCreateManyUserInputEnvelope
+    connect?: BackupLogWhereUniqueInput | BackupLogWhereUniqueInput[]
+  }
+
+  export type BackupPlanUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<BackupPlanCreateWithoutUserInput, BackupPlanUncheckedCreateWithoutUserInput> | BackupPlanCreateWithoutUserInput[] | BackupPlanUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: BackupPlanCreateOrConnectWithoutUserInput | BackupPlanCreateOrConnectWithoutUserInput[]
+    createMany?: BackupPlanCreateManyUserInputEnvelope
+    connect?: BackupPlanWhereUniqueInput | BackupPlanWhereUniqueInput[]
   }
 
   export type ContratoUpdateManyWithoutAprobadorNestedInput = {
@@ -172372,6 +175881,34 @@ export namespace Prisma {
     deleteMany?: TransferenciaScalarWhereInput | TransferenciaScalarWhereInput[]
   }
 
+  export type BackupLogUpdateManyWithoutUserNestedInput = {
+    create?: XOR<BackupLogCreateWithoutUserInput, BackupLogUncheckedCreateWithoutUserInput> | BackupLogCreateWithoutUserInput[] | BackupLogUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: BackupLogCreateOrConnectWithoutUserInput | BackupLogCreateOrConnectWithoutUserInput[]
+    upsert?: BackupLogUpsertWithWhereUniqueWithoutUserInput | BackupLogUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: BackupLogCreateManyUserInputEnvelope
+    set?: BackupLogWhereUniqueInput | BackupLogWhereUniqueInput[]
+    disconnect?: BackupLogWhereUniqueInput | BackupLogWhereUniqueInput[]
+    delete?: BackupLogWhereUniqueInput | BackupLogWhereUniqueInput[]
+    connect?: BackupLogWhereUniqueInput | BackupLogWhereUniqueInput[]
+    update?: BackupLogUpdateWithWhereUniqueWithoutUserInput | BackupLogUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: BackupLogUpdateManyWithWhereWithoutUserInput | BackupLogUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: BackupLogScalarWhereInput | BackupLogScalarWhereInput[]
+  }
+
+  export type BackupPlanUpdateManyWithoutUserNestedInput = {
+    create?: XOR<BackupPlanCreateWithoutUserInput, BackupPlanUncheckedCreateWithoutUserInput> | BackupPlanCreateWithoutUserInput[] | BackupPlanUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: BackupPlanCreateOrConnectWithoutUserInput | BackupPlanCreateOrConnectWithoutUserInput[]
+    upsert?: BackupPlanUpsertWithWhereUniqueWithoutUserInput | BackupPlanUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: BackupPlanCreateManyUserInputEnvelope
+    set?: BackupPlanWhereUniqueInput | BackupPlanWhereUniqueInput[]
+    disconnect?: BackupPlanWhereUniqueInput | BackupPlanWhereUniqueInput[]
+    delete?: BackupPlanWhereUniqueInput | BackupPlanWhereUniqueInput[]
+    connect?: BackupPlanWhereUniqueInput | BackupPlanWhereUniqueInput[]
+    update?: BackupPlanUpdateWithWhereUniqueWithoutUserInput | BackupPlanUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: BackupPlanUpdateManyWithWhereWithoutUserInput | BackupPlanUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: BackupPlanScalarWhereInput | BackupPlanScalarWhereInput[]
+  }
+
   export type ContratoUncheckedUpdateManyWithoutAprobadorNestedInput = {
     create?: XOR<ContratoCreateWithoutAprobadorInput, ContratoUncheckedCreateWithoutAprobadorInput> | ContratoCreateWithoutAprobadorInput[] | ContratoUncheckedCreateWithoutAprobadorInput[]
     connectOrCreate?: ContratoCreateOrConnectWithoutAprobadorInput | ContratoCreateOrConnectWithoutAprobadorInput[]
@@ -172594,6 +176131,34 @@ export namespace Prisma {
     update?: TransferenciaUpdateWithWhereUniqueWithoutCreadoPorInput | TransferenciaUpdateWithWhereUniqueWithoutCreadoPorInput[]
     updateMany?: TransferenciaUpdateManyWithWhereWithoutCreadoPorInput | TransferenciaUpdateManyWithWhereWithoutCreadoPorInput[]
     deleteMany?: TransferenciaScalarWhereInput | TransferenciaScalarWhereInput[]
+  }
+
+  export type BackupLogUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<BackupLogCreateWithoutUserInput, BackupLogUncheckedCreateWithoutUserInput> | BackupLogCreateWithoutUserInput[] | BackupLogUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: BackupLogCreateOrConnectWithoutUserInput | BackupLogCreateOrConnectWithoutUserInput[]
+    upsert?: BackupLogUpsertWithWhereUniqueWithoutUserInput | BackupLogUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: BackupLogCreateManyUserInputEnvelope
+    set?: BackupLogWhereUniqueInput | BackupLogWhereUniqueInput[]
+    disconnect?: BackupLogWhereUniqueInput | BackupLogWhereUniqueInput[]
+    delete?: BackupLogWhereUniqueInput | BackupLogWhereUniqueInput[]
+    connect?: BackupLogWhereUniqueInput | BackupLogWhereUniqueInput[]
+    update?: BackupLogUpdateWithWhereUniqueWithoutUserInput | BackupLogUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: BackupLogUpdateManyWithWhereWithoutUserInput | BackupLogUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: BackupLogScalarWhereInput | BackupLogScalarWhereInput[]
+  }
+
+  export type BackupPlanUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<BackupPlanCreateWithoutUserInput, BackupPlanUncheckedCreateWithoutUserInput> | BackupPlanCreateWithoutUserInput[] | BackupPlanUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: BackupPlanCreateOrConnectWithoutUserInput | BackupPlanCreateOrConnectWithoutUserInput[]
+    upsert?: BackupPlanUpsertWithWhereUniqueWithoutUserInput | BackupPlanUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: BackupPlanCreateManyUserInputEnvelope
+    set?: BackupPlanWhereUniqueInput | BackupPlanWhereUniqueInput[]
+    disconnect?: BackupPlanWhereUniqueInput | BackupPlanWhereUniqueInput[]
+    delete?: BackupPlanWhereUniqueInput | BackupPlanWhereUniqueInput[]
+    connect?: BackupPlanWhereUniqueInput | BackupPlanWhereUniqueInput[]
+    update?: BackupPlanUpdateWithWhereUniqueWithoutUserInput | BackupPlanUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: BackupPlanUpdateManyWithWhereWithoutUserInput | BackupPlanUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: BackupPlanScalarWhereInput | BackupPlanScalarWhereInput[]
   }
 
   export type LicenciaCreateNestedManyWithoutPlanInput = {
@@ -178410,6 +181975,74 @@ export namespace Prisma {
     update?: XOR<XOR<TenantUpdateToOneWithWhereWithoutAuditoriaPeriodosInput, TenantUpdateWithoutAuditoriaPeriodosInput>, TenantUncheckedUpdateWithoutAuditoriaPeriodosInput>
   }
 
+  export type TenantCreateNestedOneWithoutBackupLogsInput = {
+    create?: XOR<TenantCreateWithoutBackupLogsInput, TenantUncheckedCreateWithoutBackupLogsInput>
+    connectOrCreate?: TenantCreateOrConnectWithoutBackupLogsInput
+    connect?: TenantWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutBackupLogsInput = {
+    create?: XOR<UserCreateWithoutBackupLogsInput, UserUncheckedCreateWithoutBackupLogsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutBackupLogsInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type EnumBackupTypeFieldUpdateOperationsInput = {
+    set?: $Enums.BackupType
+  }
+
+  export type EnumBackupStatusFieldUpdateOperationsInput = {
+    set?: $Enums.BackupStatus
+  }
+
+  export type TenantUpdateOneWithoutBackupLogsNestedInput = {
+    create?: XOR<TenantCreateWithoutBackupLogsInput, TenantUncheckedCreateWithoutBackupLogsInput>
+    connectOrCreate?: TenantCreateOrConnectWithoutBackupLogsInput
+    upsert?: TenantUpsertWithoutBackupLogsInput
+    disconnect?: TenantWhereInput | boolean
+    delete?: TenantWhereInput | boolean
+    connect?: TenantWhereUniqueInput
+    update?: XOR<XOR<TenantUpdateToOneWithWhereWithoutBackupLogsInput, TenantUpdateWithoutBackupLogsInput>, TenantUncheckedUpdateWithoutBackupLogsInput>
+  }
+
+  export type UserUpdateOneRequiredWithoutBackupLogsNestedInput = {
+    create?: XOR<UserCreateWithoutBackupLogsInput, UserUncheckedCreateWithoutBackupLogsInput>
+    connectOrCreate?: UserCreateOrConnectWithoutBackupLogsInput
+    upsert?: UserUpsertWithoutBackupLogsInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutBackupLogsInput, UserUpdateWithoutBackupLogsInput>, UserUncheckedUpdateWithoutBackupLogsInput>
+  }
+
+  export type TenantCreateNestedOneWithoutBackupPlansInput = {
+    create?: XOR<TenantCreateWithoutBackupPlansInput, TenantUncheckedCreateWithoutBackupPlansInput>
+    connectOrCreate?: TenantCreateOrConnectWithoutBackupPlansInput
+    connect?: TenantWhereUniqueInput
+  }
+
+  export type UserCreateNestedOneWithoutBackupPlansInput = {
+    create?: XOR<UserCreateWithoutBackupPlansInput, UserUncheckedCreateWithoutBackupPlansInput>
+    connectOrCreate?: UserCreateOrConnectWithoutBackupPlansInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type TenantUpdateOneWithoutBackupPlansNestedInput = {
+    create?: XOR<TenantCreateWithoutBackupPlansInput, TenantUncheckedCreateWithoutBackupPlansInput>
+    connectOrCreate?: TenantCreateOrConnectWithoutBackupPlansInput
+    upsert?: TenantUpsertWithoutBackupPlansInput
+    disconnect?: TenantWhereInput | boolean
+    delete?: TenantWhereInput | boolean
+    connect?: TenantWhereUniqueInput
+    update?: XOR<XOR<TenantUpdateToOneWithWhereWithoutBackupPlansInput, TenantUpdateWithoutBackupPlansInput>, TenantUncheckedUpdateWithoutBackupPlansInput>
+  }
+
+  export type UserUpdateOneRequiredWithoutBackupPlansNestedInput = {
+    create?: XOR<UserCreateWithoutBackupPlansInput, UserUncheckedCreateWithoutBackupPlansInput>
+    connectOrCreate?: UserCreateOrConnectWithoutBackupPlansInput
+    upsert?: UserUpsertWithoutBackupPlansInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutBackupPlansInput, UserUpdateWithoutBackupPlansInput>, UserUncheckedUpdateWithoutBackupPlansInput>
+  }
+
   export type NestedStringFilter<$PrismaModel = never> = {
     equals?: string | StringFieldRefInput<$PrismaModel>
     in?: string[] | ListStringFieldRefInput<$PrismaModel>
@@ -179113,6 +182746,40 @@ export namespace Prisma {
     _max?: NestedEnumEventoAuditoriaFilter<$PrismaModel>
   }
 
+  export type NestedEnumBackupTypeFilter<$PrismaModel = never> = {
+    equals?: $Enums.BackupType | EnumBackupTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.BackupType[] | ListEnumBackupTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.BackupType[] | ListEnumBackupTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumBackupTypeFilter<$PrismaModel> | $Enums.BackupType
+  }
+
+  export type NestedEnumBackupStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.BackupStatus | EnumBackupStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.BackupStatus[] | ListEnumBackupStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.BackupStatus[] | ListEnumBackupStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumBackupStatusFilter<$PrismaModel> | $Enums.BackupStatus
+  }
+
+  export type NestedEnumBackupTypeWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.BackupType | EnumBackupTypeFieldRefInput<$PrismaModel>
+    in?: $Enums.BackupType[] | ListEnumBackupTypeFieldRefInput<$PrismaModel>
+    notIn?: $Enums.BackupType[] | ListEnumBackupTypeFieldRefInput<$PrismaModel>
+    not?: NestedEnumBackupTypeWithAggregatesFilter<$PrismaModel> | $Enums.BackupType
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumBackupTypeFilter<$PrismaModel>
+    _max?: NestedEnumBackupTypeFilter<$PrismaModel>
+  }
+
+  export type NestedEnumBackupStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.BackupStatus | EnumBackupStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.BackupStatus[] | ListEnumBackupStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.BackupStatus[] | ListEnumBackupStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumBackupStatusWithAggregatesFilter<$PrismaModel> | $Enums.BackupStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumBackupStatusFilter<$PrismaModel>
+    _max?: NestedEnumBackupStatusFilter<$PrismaModel>
+  }
+
   export type CategoriaCreateWithoutSubcategoriasInput = {
     catId?: string
     nombre: string
@@ -179447,6 +183114,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutCategoriasInput = {
@@ -179512,6 +183181,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutCategoriasInput = {
@@ -179728,6 +183399,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutCategoriasInput = {
@@ -179793,6 +183466,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type ProductoCreateWithoutUnidadInput = {
@@ -180514,6 +184189,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutVendorsInput = {
@@ -180579,6 +184256,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutVendorsInput = {
@@ -180997,6 +184676,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutVendorsInput = {
@@ -181062,6 +184743,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type CuentaBancariaCreateWithoutInyeccionesCapitalInput = {
@@ -182007,6 +185690,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutClientesInput = {
@@ -182072,6 +185757,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutClientesInput = {
@@ -182465,6 +186152,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutClientesInput = {
@@ -182530,6 +186219,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type MiEmpresaCreateWithoutTenantInput = {
@@ -185091,6 +188782,80 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type BackupLogCreateWithoutTenantInput = {
+    backupLogId?: string
+    type: $Enums.BackupType
+    status: $Enums.BackupStatus
+    fileUrl?: string | null
+    fileName?: string | null
+    fileSize?: number | null
+    startedAt?: Date | string
+    completedAt?: Date | string | null
+    errorMessage?: string | null
+    createdAt?: Date | string
+    user: UserCreateNestedOneWithoutBackupLogsInput
+  }
+
+  export type BackupLogUncheckedCreateWithoutTenantInput = {
+    backupLogId?: string
+    type: $Enums.BackupType
+    status: $Enums.BackupStatus
+    fileUrl?: string | null
+    fileName?: string | null
+    fileSize?: number | null
+    startedAt?: Date | string
+    completedAt?: Date | string | null
+    errorMessage?: string | null
+    createdBy: string
+    createdAt?: Date | string
+  }
+
+  export type BackupLogCreateOrConnectWithoutTenantInput = {
+    where: BackupLogWhereUniqueInput
+    create: XOR<BackupLogCreateWithoutTenantInput, BackupLogUncheckedCreateWithoutTenantInput>
+  }
+
+  export type BackupLogCreateManyTenantInputEnvelope = {
+    data: BackupLogCreateManyTenantInput | BackupLogCreateManyTenantInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type BackupPlanCreateWithoutTenantInput = {
+    backupPlanId?: string
+    type: $Enums.BackupType
+    schedule: string
+    enabled?: boolean
+    retention?: number
+    lastRunAt?: Date | string | null
+    nextRunAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    user: UserCreateNestedOneWithoutBackupPlansInput
+  }
+
+  export type BackupPlanUncheckedCreateWithoutTenantInput = {
+    backupPlanId?: string
+    type: $Enums.BackupType
+    schedule: string
+    enabled?: boolean
+    retention?: number
+    lastRunAt?: Date | string | null
+    nextRunAt?: Date | string | null
+    createdBy: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type BackupPlanCreateOrConnectWithoutTenantInput = {
+    where: BackupPlanWhereUniqueInput
+    create: XOR<BackupPlanCreateWithoutTenantInput, BackupPlanUncheckedCreateWithoutTenantInput>
+  }
+
+  export type BackupPlanCreateManyTenantInputEnvelope = {
+    data: BackupPlanCreateManyTenantInput | BackupPlanCreateManyTenantInput[]
+    skipDuplicates?: boolean
+  }
+
   export type MiEmpresaUpsertWithoutTenantInput = {
     update: XOR<MiEmpresaUpdateWithoutTenantInput, MiEmpresaUncheckedUpdateWithoutTenantInput>
     create: XOR<MiEmpresaCreateWithoutTenantInput, MiEmpresaUncheckedCreateWithoutTenantInput>
@@ -186709,6 +190474,73 @@ export namespace Prisma {
     createdAt?: DateTimeFilter<"AuditoriaPeriodo"> | Date | string
   }
 
+  export type BackupLogUpsertWithWhereUniqueWithoutTenantInput = {
+    where: BackupLogWhereUniqueInput
+    update: XOR<BackupLogUpdateWithoutTenantInput, BackupLogUncheckedUpdateWithoutTenantInput>
+    create: XOR<BackupLogCreateWithoutTenantInput, BackupLogUncheckedCreateWithoutTenantInput>
+  }
+
+  export type BackupLogUpdateWithWhereUniqueWithoutTenantInput = {
+    where: BackupLogWhereUniqueInput
+    data: XOR<BackupLogUpdateWithoutTenantInput, BackupLogUncheckedUpdateWithoutTenantInput>
+  }
+
+  export type BackupLogUpdateManyWithWhereWithoutTenantInput = {
+    where: BackupLogScalarWhereInput
+    data: XOR<BackupLogUpdateManyMutationInput, BackupLogUncheckedUpdateManyWithoutTenantInput>
+  }
+
+  export type BackupLogScalarWhereInput = {
+    AND?: BackupLogScalarWhereInput | BackupLogScalarWhereInput[]
+    OR?: BackupLogScalarWhereInput[]
+    NOT?: BackupLogScalarWhereInput | BackupLogScalarWhereInput[]
+    backupLogId?: StringFilter<"BackupLog"> | string
+    type?: EnumBackupTypeFilter<"BackupLog"> | $Enums.BackupType
+    tenantId?: StringNullableFilter<"BackupLog"> | string | null
+    status?: EnumBackupStatusFilter<"BackupLog"> | $Enums.BackupStatus
+    fileUrl?: StringNullableFilter<"BackupLog"> | string | null
+    fileName?: StringNullableFilter<"BackupLog"> | string | null
+    fileSize?: IntNullableFilter<"BackupLog"> | number | null
+    startedAt?: DateTimeFilter<"BackupLog"> | Date | string
+    completedAt?: DateTimeNullableFilter<"BackupLog"> | Date | string | null
+    errorMessage?: StringNullableFilter<"BackupLog"> | string | null
+    createdBy?: StringFilter<"BackupLog"> | string
+    createdAt?: DateTimeFilter<"BackupLog"> | Date | string
+  }
+
+  export type BackupPlanUpsertWithWhereUniqueWithoutTenantInput = {
+    where: BackupPlanWhereUniqueInput
+    update: XOR<BackupPlanUpdateWithoutTenantInput, BackupPlanUncheckedUpdateWithoutTenantInput>
+    create: XOR<BackupPlanCreateWithoutTenantInput, BackupPlanUncheckedCreateWithoutTenantInput>
+  }
+
+  export type BackupPlanUpdateWithWhereUniqueWithoutTenantInput = {
+    where: BackupPlanWhereUniqueInput
+    data: XOR<BackupPlanUpdateWithoutTenantInput, BackupPlanUncheckedUpdateWithoutTenantInput>
+  }
+
+  export type BackupPlanUpdateManyWithWhereWithoutTenantInput = {
+    where: BackupPlanScalarWhereInput
+    data: XOR<BackupPlanUpdateManyMutationInput, BackupPlanUncheckedUpdateManyWithoutTenantInput>
+  }
+
+  export type BackupPlanScalarWhereInput = {
+    AND?: BackupPlanScalarWhereInput | BackupPlanScalarWhereInput[]
+    OR?: BackupPlanScalarWhereInput[]
+    NOT?: BackupPlanScalarWhereInput | BackupPlanScalarWhereInput[]
+    backupPlanId?: StringFilter<"BackupPlan"> | string
+    type?: EnumBackupTypeFilter<"BackupPlan"> | $Enums.BackupType
+    tenantId?: StringNullableFilter<"BackupPlan"> | string | null
+    schedule?: StringFilter<"BackupPlan"> | string
+    enabled?: BoolFilter<"BackupPlan"> | boolean
+    retention?: IntFilter<"BackupPlan"> | number
+    lastRunAt?: DateTimeNullableFilter<"BackupPlan"> | Date | string | null
+    nextRunAt?: DateTimeNullableFilter<"BackupPlan"> | Date | string | null
+    createdBy?: StringFilter<"BackupPlan"> | string
+    createdAt?: DateTimeFilter<"BackupPlan"> | Date | string
+    updatedAt?: DateTimeFilter<"BackupPlan"> | Date | string
+  }
+
   export type TenantCreateWithoutMembershipsInput = {
     tenantId?: string
     nombre: string
@@ -186772,6 +190604,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutMembershipsInput = {
@@ -186837,6 +190671,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutMembershipsInput = {
@@ -186879,6 +190715,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoCreateNestedManyWithoutCreadorInput
     compraDocumentosEditados?: CompraDocumentoCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaCreateNestedManyWithoutCreadoPorInput
+    backupLogs?: BackupLogCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutTenantMembershipsInput = {
@@ -186916,6 +190754,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUncheckedCreateNestedManyWithoutCreadorInput
     compraDocumentosEditados?: CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutTenantMembershipsInput = {
@@ -186997,6 +190837,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutMembershipsInput = {
@@ -187062,6 +190904,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type UserUpsertWithoutTenantMembershipsInput = {
@@ -187110,6 +190954,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUpdateManyWithoutCreadorNestedInput
     compraDocumentosEditados?: CompraDocumentoUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUpdateManyWithoutCreadoPorNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutTenantMembershipsInput = {
@@ -187147,6 +190993,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUncheckedUpdateManyWithoutCreadorNestedInput
     compraDocumentosEditados?: CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type TenantCreateWithoutLicenciasInput = {
@@ -187212,6 +191060,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutLicenciasInput = {
@@ -187277,6 +191127,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutLicenciasInput = {
@@ -187391,6 +191243,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutLicenciasInput = {
@@ -187456,6 +191310,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type PlanUpsertWithoutTenantLicensesInput = {
@@ -187560,6 +191416,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutEmpresaInput = {
@@ -187625,6 +191483,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutEmpresaInput = {
@@ -187755,6 +191615,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutEmpresaInput = {
@@ -187820,6 +191682,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type CuentaBancariaUpsertWithoutMiEmpresaInput = {
@@ -188136,6 +192000,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutAlmacenesInput = {
@@ -188201,6 +192067,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutAlmacenesInput = {
@@ -188330,6 +192198,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutAlmacenesInput = {
@@ -188395,6 +192265,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type ProductoCreateWithoutPuntoDeVentaInput = {
@@ -188737,6 +192609,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutPuntosDeVentaInput = {
@@ -188802,6 +192676,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutPuntosDeVentaInput = {
@@ -188980,6 +192856,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutPuntosDeVentaInput = {
@@ -189045,6 +192923,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type CompraProductoCreateWithoutProductoInput = {
@@ -189751,6 +193631,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutProductosInput = {
@@ -189816,6 +193698,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutProductosInput = {
@@ -190681,6 +194565,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutProductosInput = {
@@ -190746,6 +194632,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type ProductoCostHistoryUpsertWithWhereUniqueWithoutProductoInput = {
@@ -191065,6 +194953,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutStockUbicacionesInput = {
@@ -191130,6 +195020,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutStockUbicacionesInput = {
@@ -191312,6 +195204,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutStockUbicacionesInput = {
@@ -191377,6 +195271,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type OrdenReparacionCreateWithoutVentaInput = {
@@ -191925,6 +195821,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutVentasInput = {
@@ -191990,6 +195888,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutVentasInput = {
@@ -192546,6 +196446,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutVentasInput = {
@@ -192611,6 +196513,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type ProductoCreateWithoutVentaItemsInput = {
@@ -193071,6 +196975,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutMermasInput = {
@@ -193136,6 +197042,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutMermasInput = {
@@ -193318,6 +197226,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutMermasInput = {
@@ -193383,6 +197293,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type AlmacenCreateWithoutTransferenciasDestinoInput = {
@@ -193565,6 +197477,8 @@ export namespace Prisma {
     tenantMemberships?: TenantMembershipCreateNestedManyWithoutUserInput
     anticiposCreados?: AnticipoCreateNestedManyWithoutCreadorInput
     compraDocumentosEditados?: CompraDocumentoCreateNestedManyWithoutUpdatedByInput
+    backupLogs?: BackupLogCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutTransferenciasCreadasInput = {
@@ -193602,6 +197516,8 @@ export namespace Prisma {
     tenantMemberships?: TenantMembershipUncheckedCreateNestedManyWithoutUserInput
     anticiposCreados?: AnticipoUncheckedCreateNestedManyWithoutCreadorInput
     compraDocumentosEditados?: CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutTransferenciasCreadasInput = {
@@ -193734,6 +197650,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutTransferenciasInput = {
@@ -193799,6 +197717,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutTransferenciasInput = {
@@ -194015,6 +197935,8 @@ export namespace Prisma {
     tenantMemberships?: TenantMembershipUpdateManyWithoutUserNestedInput
     anticiposCreados?: AnticipoUpdateManyWithoutCreadorNestedInput
     compraDocumentosEditados?: CompraDocumentoUpdateManyWithoutUpdatedByNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutTransferenciasCreadasInput = {
@@ -194052,6 +197974,8 @@ export namespace Prisma {
     tenantMemberships?: TenantMembershipUncheckedUpdateManyWithoutUserNestedInput
     anticiposCreados?: AnticipoUncheckedUpdateManyWithoutCreadorNestedInput
     compraDocumentosEditados?: CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type PuntoDeVentaUpsertWithoutTransferenciasDestinoInput = {
@@ -194202,6 +198126,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutTransferenciasInput = {
@@ -194267,6 +198193,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type ContratoCreateWithoutAprobadorInput = {
@@ -194905,6 +198833,80 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type BackupLogCreateWithoutUserInput = {
+    backupLogId?: string
+    type: $Enums.BackupType
+    status: $Enums.BackupStatus
+    fileUrl?: string | null
+    fileName?: string | null
+    fileSize?: number | null
+    startedAt?: Date | string
+    completedAt?: Date | string | null
+    errorMessage?: string | null
+    createdAt?: Date | string
+    tenant?: TenantCreateNestedOneWithoutBackupLogsInput
+  }
+
+  export type BackupLogUncheckedCreateWithoutUserInput = {
+    backupLogId?: string
+    type: $Enums.BackupType
+    tenantId?: string | null
+    status: $Enums.BackupStatus
+    fileUrl?: string | null
+    fileName?: string | null
+    fileSize?: number | null
+    startedAt?: Date | string
+    completedAt?: Date | string | null
+    errorMessage?: string | null
+    createdAt?: Date | string
+  }
+
+  export type BackupLogCreateOrConnectWithoutUserInput = {
+    where: BackupLogWhereUniqueInput
+    create: XOR<BackupLogCreateWithoutUserInput, BackupLogUncheckedCreateWithoutUserInput>
+  }
+
+  export type BackupLogCreateManyUserInputEnvelope = {
+    data: BackupLogCreateManyUserInput | BackupLogCreateManyUserInput[]
+    skipDuplicates?: boolean
+  }
+
+  export type BackupPlanCreateWithoutUserInput = {
+    backupPlanId?: string
+    type: $Enums.BackupType
+    schedule: string
+    enabled?: boolean
+    retention?: number
+    lastRunAt?: Date | string | null
+    nextRunAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    tenant?: TenantCreateNestedOneWithoutBackupPlansInput
+  }
+
+  export type BackupPlanUncheckedCreateWithoutUserInput = {
+    backupPlanId?: string
+    type: $Enums.BackupType
+    tenantId?: string | null
+    schedule: string
+    enabled?: boolean
+    retention?: number
+    lastRunAt?: Date | string | null
+    nextRunAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type BackupPlanCreateOrConnectWithoutUserInput = {
+    where: BackupPlanWhereUniqueInput
+    create: XOR<BackupPlanCreateWithoutUserInput, BackupPlanUncheckedCreateWithoutUserInput>
+  }
+
+  export type BackupPlanCreateManyUserInputEnvelope = {
+    data: BackupPlanCreateManyUserInput | BackupPlanCreateManyUserInput[]
+    skipDuplicates?: boolean
+  }
+
   export type ContratoUpsertWithWhereUniqueWithoutAprobadorInput = {
     where: ContratoWhereUniqueInput
     update: XOR<ContratoUpdateWithoutAprobadorInput, ContratoUncheckedUpdateWithoutAprobadorInput>
@@ -195305,6 +199307,38 @@ export namespace Prisma {
     data: XOR<TransferenciaUpdateManyMutationInput, TransferenciaUncheckedUpdateManyWithoutCreadoPorInput>
   }
 
+  export type BackupLogUpsertWithWhereUniqueWithoutUserInput = {
+    where: BackupLogWhereUniqueInput
+    update: XOR<BackupLogUpdateWithoutUserInput, BackupLogUncheckedUpdateWithoutUserInput>
+    create: XOR<BackupLogCreateWithoutUserInput, BackupLogUncheckedCreateWithoutUserInput>
+  }
+
+  export type BackupLogUpdateWithWhereUniqueWithoutUserInput = {
+    where: BackupLogWhereUniqueInput
+    data: XOR<BackupLogUpdateWithoutUserInput, BackupLogUncheckedUpdateWithoutUserInput>
+  }
+
+  export type BackupLogUpdateManyWithWhereWithoutUserInput = {
+    where: BackupLogScalarWhereInput
+    data: XOR<BackupLogUpdateManyMutationInput, BackupLogUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type BackupPlanUpsertWithWhereUniqueWithoutUserInput = {
+    where: BackupPlanWhereUniqueInput
+    update: XOR<BackupPlanUpdateWithoutUserInput, BackupPlanUncheckedUpdateWithoutUserInput>
+    create: XOR<BackupPlanCreateWithoutUserInput, BackupPlanUncheckedCreateWithoutUserInput>
+  }
+
+  export type BackupPlanUpdateWithWhereUniqueWithoutUserInput = {
+    where: BackupPlanWhereUniqueInput
+    data: XOR<BackupPlanUpdateWithoutUserInput, BackupPlanUncheckedUpdateWithoutUserInput>
+  }
+
+  export type BackupPlanUpdateManyWithWhereWithoutUserInput = {
+    where: BackupPlanScalarWhereInput
+    data: XOR<BackupPlanUpdateManyMutationInput, BackupPlanUncheckedUpdateManyWithoutUserInput>
+  }
+
   export type LicenciaCreateWithoutPlanInput = {
     licenciaId?: string
     clave: string
@@ -195477,6 +199511,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoCreateNestedManyWithoutCreadorInput
     compraDocumentosEditados?: CompraDocumentoCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaCreateNestedManyWithoutCreadoPorInput
+    backupLogs?: BackupLogCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutLicenciasInput = {
@@ -195514,6 +199550,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUncheckedCreateNestedManyWithoutCreadorInput
     compraDocumentosEditados?: CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutLicenciasInput = {
@@ -195636,6 +199674,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUpdateManyWithoutCreadorNestedInput
     compraDocumentosEditados?: CompraDocumentoUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUpdateManyWithoutCreadoPorNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutLicenciasInput = {
@@ -195673,6 +199713,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUncheckedUpdateManyWithoutCreadorNestedInput
     compraDocumentosEditados?: CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type LicenciaAuditUpsertWithWhereUniqueWithoutLicenciaInput = {
@@ -195755,6 +199797,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoCreateNestedManyWithoutCreadorInput
     compraDocumentosEditados?: CompraDocumentoCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaCreateNestedManyWithoutCreadoPorInput
+    backupLogs?: BackupLogCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutLicenciasAuditInput = {
@@ -195792,6 +199836,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUncheckedCreateNestedManyWithoutCreadorInput
     compraDocumentosEditados?: CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutLicenciasAuditInput = {
@@ -195880,6 +199926,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUpdateManyWithoutCreadorNestedInput
     compraDocumentosEditados?: CompraDocumentoUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUpdateManyWithoutCreadoPorNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutLicenciasAuditInput = {
@@ -195917,6 +199965,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUncheckedUpdateManyWithoutCreadorNestedInput
     compraDocumentosEditados?: CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutNotificationsInput = {
@@ -195954,6 +200004,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoCreateNestedManyWithoutCreadorInput
     compraDocumentosEditados?: CompraDocumentoCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaCreateNestedManyWithoutCreadoPorInput
+    backupLogs?: BackupLogCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutNotificationsInput = {
@@ -195991,6 +200043,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUncheckedCreateNestedManyWithoutCreadorInput
     compraDocumentosEditados?: CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutNotificationsInput = {
@@ -196044,6 +200098,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUpdateManyWithoutCreadorNestedInput
     compraDocumentosEditados?: CompraDocumentoUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUpdateManyWithoutCreadoPorNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutNotificationsInput = {
@@ -196081,6 +200137,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUncheckedUpdateManyWithoutCreadorNestedInput
     compraDocumentosEditados?: CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutActivityLogsInput = {
@@ -196118,6 +200176,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoCreateNestedManyWithoutCreadorInput
     compraDocumentosEditados?: CompraDocumentoCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaCreateNestedManyWithoutCreadoPorInput
+    backupLogs?: BackupLogCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutActivityLogsInput = {
@@ -196155,6 +200215,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUncheckedCreateNestedManyWithoutCreadorInput
     compraDocumentosEditados?: CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutActivityLogsInput = {
@@ -196208,6 +200270,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUpdateManyWithoutCreadorNestedInput
     compraDocumentosEditados?: CompraDocumentoUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUpdateManyWithoutCreadoPorNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutActivityLogsInput = {
@@ -196245,6 +200309,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUncheckedUpdateManyWithoutCreadorNestedInput
     compraDocumentosEditados?: CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutSessionsInput = {
@@ -196282,6 +200348,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoCreateNestedManyWithoutCreadorInput
     compraDocumentosEditados?: CompraDocumentoCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaCreateNestedManyWithoutCreadoPorInput
+    backupLogs?: BackupLogCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutSessionsInput = {
@@ -196319,6 +200387,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUncheckedCreateNestedManyWithoutCreadorInput
     compraDocumentosEditados?: CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutSessionsInput = {
@@ -196372,6 +200442,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUpdateManyWithoutCreadorNestedInput
     compraDocumentosEditados?: CompraDocumentoUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUpdateManyWithoutCreadoPorNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutSessionsInput = {
@@ -196409,6 +200481,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUncheckedUpdateManyWithoutCreadorNestedInput
     compraDocumentosEditados?: CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type EmpleadoCreateWithoutAttendancesInput = {
@@ -197232,6 +201306,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutEmpleadosInput = {
@@ -197297,6 +201373,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutEmpleadosInput = {
@@ -197565,6 +201643,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutEmpleadosInput = {
@@ -197630,6 +201710,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type EmpleadoCreateWithoutPagoSalarioInput = {
@@ -197806,6 +201888,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutPagosSalarioInput = {
@@ -197871,6 +201955,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutPagosSalarioInput = {
@@ -198025,6 +202111,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutPagosSalarioInput = {
@@ -198090,6 +202178,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantCreateWithoutCierresContablesInput = {
@@ -198155,6 +202245,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutCierresContablesInput = {
@@ -198220,6 +202312,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutCierresContablesInput = {
@@ -198301,6 +202395,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutCierresContablesInput = {
@@ -198366,6 +202462,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type CompraProductoCreateWithoutGastoCompraInput = {
@@ -198792,6 +202890,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutGastosCompraInput = {
@@ -198857,6 +202957,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutGastosCompraInput = {
@@ -199285,6 +203387,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutGastosCompraInput = {
@@ -199350,6 +203454,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type CuentaPorPagarCreateWithoutCompraProductoInput = {
@@ -199718,6 +203824,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutComprasProductoInput = {
@@ -199783,6 +203891,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutComprasProductoInput = {
@@ -200197,6 +204307,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutComprasProductoInput = {
@@ -200262,6 +204374,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type CuentaPorPagarCreateWithoutCompraDocumentoInput = {
@@ -200454,6 +204568,8 @@ export namespace Prisma {
     tenantMemberships?: TenantMembershipCreateNestedManyWithoutUserInput
     anticiposCreados?: AnticipoCreateNestedManyWithoutCreadorInput
     transferenciasCreadas?: TransferenciaCreateNestedManyWithoutCreadoPorInput
+    backupLogs?: BackupLogCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutCompraDocumentosEditadosInput = {
@@ -200491,6 +204607,8 @@ export namespace Prisma {
     tenantMemberships?: TenantMembershipUncheckedCreateNestedManyWithoutUserInput
     anticiposCreados?: AnticipoUncheckedCreateNestedManyWithoutCreadorInput
     transferenciasCreadas?: TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutCompraDocumentosEditadosInput = {
@@ -200593,6 +204711,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutComprasDocumentoInput = {
@@ -200658,6 +204778,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutComprasDocumentoInput = {
@@ -200884,6 +205006,8 @@ export namespace Prisma {
     tenantMemberships?: TenantMembershipUpdateManyWithoutUserNestedInput
     anticiposCreados?: AnticipoUpdateManyWithoutCreadorNestedInput
     transferenciasCreadas?: TransferenciaUpdateManyWithoutCreadoPorNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutCompraDocumentosEditadosInput = {
@@ -200921,6 +205045,8 @@ export namespace Prisma {
     tenantMemberships?: TenantMembershipUncheckedUpdateManyWithoutUserNestedInput
     anticiposCreados?: AnticipoUncheckedUpdateManyWithoutCreadorNestedInput
     transferenciasCreadas?: TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type CompraDocumentoItemUpsertWithWhereUniqueWithoutCompraDocumentoInput = {
@@ -201013,6 +205139,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutComprasDocumentoInput = {
@@ -201078,6 +205206,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type CompraDocumentoCreateWithoutItemsInput = {
@@ -201283,6 +205413,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutComprasDocumentoItemInput = {
@@ -201348,6 +205480,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutComprasDocumentoItemInput = {
@@ -201581,6 +205715,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutComprasDocumentoItemInput = {
@@ -201646,6 +205782,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type OfertaItemCreateWithoutServicioInput = {
@@ -201821,6 +205959,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutServiciosInput = {
@@ -201886,6 +206026,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutServiciosInput = {
@@ -202015,6 +206157,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutServiciosInput = {
@@ -202080,6 +206224,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type ReconciliacionServicioCreateWithoutVentasServicioInput = {
@@ -202267,6 +206413,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutVentasServiciosInput = {
@@ -202332,6 +206480,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutVentasServiciosInput = {
@@ -202521,6 +206671,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutVentasServiciosInput = {
@@ -202586,6 +206738,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type ServiciosCreateWithoutCompraServiciosInput = {
@@ -202735,6 +206889,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutComprasServicioInput = {
@@ -202800,6 +206956,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutComprasServicioInput = {
@@ -202977,6 +207135,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutComprasServicioInput = {
@@ -203042,6 +207202,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type GastoElementoCreateWithoutConceptoInput = {
@@ -203509,6 +207671,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutGastosDEInput = {
@@ -203574,6 +207738,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutGastosDEInput = {
@@ -203796,6 +207962,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutGastosDEInput = {
@@ -203861,6 +208029,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type CatalogoReparacionConfigCreateWithoutMonedaInput = {
@@ -204767,6 +208937,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutCuentasBancariasInput = {
@@ -204832,6 +209004,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutCuentasBancariasInput = {
@@ -205126,6 +209300,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutCuentasBancariasInput = {
@@ -205191,6 +209367,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type ReconciliacionGastoCreateWithoutTipoPagoInput = {
@@ -205679,6 +209857,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutReconciliacionesVentaInput = {
@@ -205744,6 +209924,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutReconciliacionesVentaInput = {
@@ -206076,6 +210258,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutReconciliacionesVentaInput = {
@@ -206141,6 +210325,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type CuentaBancariaCreateWithoutReconciliacionesServicioInput = {
@@ -206319,6 +210505,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutReconciliacionesServicioInput = {
@@ -206384,6 +210572,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutReconciliacionesServicioInput = {
@@ -206596,6 +210786,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutReconciliacionesServicioInput = {
@@ -206661,6 +210853,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type CuentaBancariaCreateWithoutReconciliacionesGastoInput = {
@@ -206980,6 +211174,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutReconciliacionesGastoInput = {
@@ -207045,6 +211241,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutReconciliacionesGastoInput = {
@@ -207416,6 +211614,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutReconciliacionesGastoInput = {
@@ -207481,6 +211681,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type CuentaBancariaCreateWithoutAjustesInput = {
@@ -207595,6 +211797,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutAjustesBancariosInput = {
@@ -207660,6 +211864,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutAjustesBancariosInput = {
@@ -207796,6 +212002,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutAjustesBancariosInput = {
@@ -207861,6 +212069,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type CuentaBancariaCreateWithoutTransferenciasDestinoInput = {
@@ -208024,6 +212234,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutTransferenciasBancariasInput = {
@@ -208089,6 +212301,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutTransferenciasBancariasInput = {
@@ -208280,6 +212494,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutTransferenciasBancariasInput = {
@@ -208345,6 +212561,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type UserCreateWithoutContratosAprobadosInput = {
@@ -208382,6 +212600,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoCreateNestedManyWithoutCreadorInput
     compraDocumentosEditados?: CompraDocumentoCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaCreateNestedManyWithoutCreadoPorInput
+    backupLogs?: BackupLogCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutContratosAprobadosInput = {
@@ -208419,6 +212639,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUncheckedCreateNestedManyWithoutCreadorInput
     compraDocumentosEditados?: CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutContratosAprobadosInput = {
@@ -208510,6 +212732,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoCreateNestedManyWithoutCreadorInput
     compraDocumentosEditados?: CompraDocumentoCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaCreateNestedManyWithoutCreadoPorInput
+    backupLogs?: BackupLogCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutContratosCreadosInput = {
@@ -208547,6 +212771,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUncheckedCreateNestedManyWithoutCreadorInput
     compraDocumentosEditados?: CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutContratosCreadosInput = {
@@ -208884,6 +213110,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutContratosInput = {
@@ -208949,6 +213177,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutContratosInput = {
@@ -209002,6 +213232,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUpdateManyWithoutCreadorNestedInput
     compraDocumentosEditados?: CompraDocumentoUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUpdateManyWithoutCreadoPorNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutContratosAprobadosInput = {
@@ -209039,6 +213271,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUncheckedUpdateManyWithoutCreadorNestedInput
     compraDocumentosEditados?: CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type ClienteUpsertWithoutContratosInput = {
@@ -209142,6 +213376,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUpdateManyWithoutCreadorNestedInput
     compraDocumentosEditados?: CompraDocumentoUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUpdateManyWithoutCreadoPorNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutContratosCreadosInput = {
@@ -209179,6 +213415,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUncheckedUpdateManyWithoutCreadorNestedInput
     compraDocumentosEditados?: CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type VendorUpsertWithoutContratosInput = {
@@ -209424,6 +213662,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutContratosInput = {
@@ -209489,6 +213729,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type ContratoArchivoCreateWithoutVersionInput = {
@@ -209621,6 +213863,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoCreateNestedManyWithoutCreadorInput
     compraDocumentosEditados?: CompraDocumentoCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaCreateNestedManyWithoutCreadoPorInput
+    backupLogs?: BackupLogCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutContratoVersionesInput = {
@@ -209658,6 +213902,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUncheckedCreateNestedManyWithoutCreadorInput
     compraDocumentosEditados?: CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutContratoVersionesInput = {
@@ -209798,6 +214044,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUpdateManyWithoutCreadorNestedInput
     compraDocumentosEditados?: CompraDocumentoUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUpdateManyWithoutCreadoPorNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutContratoVersionesInput = {
@@ -209835,6 +214083,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUncheckedUpdateManyWithoutCreadorNestedInput
     compraDocumentosEditados?: CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type ContratoCreateWithoutFirmasInput = {
@@ -209937,6 +214187,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoCreateNestedManyWithoutCreadorInput
     compraDocumentosEditados?: CompraDocumentoCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaCreateNestedManyWithoutCreadoPorInput
+    backupLogs?: BackupLogCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutContratoFirmasInput = {
@@ -209974,6 +214226,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUncheckedCreateNestedManyWithoutCreadorInput
     compraDocumentosEditados?: CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutContratoFirmasInput = {
@@ -210098,6 +214352,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUpdateManyWithoutCreadorNestedInput
     compraDocumentosEditados?: CompraDocumentoUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUpdateManyWithoutCreadoPorNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutContratoFirmasInput = {
@@ -210135,6 +214391,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUncheckedUpdateManyWithoutCreadorNestedInput
     compraDocumentosEditados?: CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutContratoAprobacionesInput = {
@@ -210172,6 +214430,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoCreateNestedManyWithoutCreadorInput
     compraDocumentosEditados?: CompraDocumentoCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaCreateNestedManyWithoutCreadoPorInput
+    backupLogs?: BackupLogCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutContratoAprobacionesInput = {
@@ -210209,6 +214469,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUncheckedCreateNestedManyWithoutCreadorInput
     compraDocumentosEditados?: CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutContratoAprobacionesInput = {
@@ -210327,6 +214589,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUpdateManyWithoutCreadorNestedInput
     compraDocumentosEditados?: CompraDocumentoUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUpdateManyWithoutCreadoPorNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutContratoAprobacionesInput = {
@@ -210364,6 +214628,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUncheckedUpdateManyWithoutCreadorNestedInput
     compraDocumentosEditados?: CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type ContratoUpsertWithoutAprobacionesInput = {
@@ -210537,6 +214803,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoCreateNestedManyWithoutCreadorInput
     compraDocumentosEditados?: CompraDocumentoCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaCreateNestedManyWithoutCreadoPorInput
+    backupLogs?: BackupLogCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutContratoArchivosInput = {
@@ -210574,6 +214842,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUncheckedCreateNestedManyWithoutCreadorInput
     compraDocumentosEditados?: CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutContratoArchivosInput = {
@@ -210723,6 +214993,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUpdateManyWithoutCreadorNestedInput
     compraDocumentosEditados?: CompraDocumentoUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUpdateManyWithoutCreadoPorNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutContratoArchivosInput = {
@@ -210760,6 +215032,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUncheckedUpdateManyWithoutCreadorNestedInput
     compraDocumentosEditados?: CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type ContratoVersionUpsertWithoutArchivosInput = {
@@ -210964,6 +215238,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoCreateNestedManyWithoutCreadorInput
     compraDocumentosEditados?: CompraDocumentoCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaCreateNestedManyWithoutCreadoPorInput
+    backupLogs?: BackupLogCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutTiposContratosCustomInput = {
@@ -211001,6 +215277,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUncheckedCreateNestedManyWithoutCreadorInput
     compraDocumentosEditados?: CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutTiposContratosCustomInput = {
@@ -211054,6 +215332,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUpdateManyWithoutCreadorNestedInput
     compraDocumentosEditados?: CompraDocumentoUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUpdateManyWithoutCreadoPorNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutTiposContratosCustomInput = {
@@ -211091,6 +215371,8 @@ export namespace Prisma {
     anticiposCreados?: AnticipoUncheckedUpdateManyWithoutCreadorNestedInput
     compraDocumentosEditados?: CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type CuentaPorCobrarCreateWithoutFacturaInput = {
@@ -211424,6 +215706,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutFacturasInput = {
@@ -211489,6 +215773,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutFacturasInput = {
@@ -211874,6 +216160,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutFacturasInput = {
@@ -211939,6 +216227,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type FacturaCreateWithoutSerieInput = {
@@ -212074,6 +216364,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutSeriesFacturacionInput = {
@@ -212139,6 +216431,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutSeriesFacturacionInput = {
@@ -212236,6 +216530,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutSeriesFacturacionInput = {
@@ -212301,6 +216597,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type ClienteCreateWithoutOfertasInput = {
@@ -212492,6 +216790,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutOfertasInput = {
@@ -212557,6 +216857,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutOfertasInput = {
@@ -212764,6 +217066,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutOfertasInput = {
@@ -212829,6 +217133,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type OfertaCreateWithoutItemsInput = {
@@ -213403,6 +217709,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutCuentasPorCobrarInput = {
@@ -213468,6 +217776,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutCuentasPorCobrarInput = {
@@ -213728,6 +218038,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutCuentasPorCobrarInput = {
@@ -213793,6 +218105,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type CompraProductoCreateWithoutCuentaPorPagarInput = {
@@ -214230,6 +218544,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutCuentasPorPagarInput = {
@@ -214295,6 +218611,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutCuentasPorPagarInput = {
@@ -214722,6 +219040,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutCuentasPorPagarInput = {
@@ -214787,6 +219107,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type VendorCreateWithoutDeudasCashInput = {
@@ -215014,6 +219336,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutDeudasCashInput = {
@@ -215079,6 +219403,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutDeudasCashInput = {
@@ -215298,6 +219624,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutDeudasCashInput = {
@@ -215363,6 +219691,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type ClienteCreateWithoutPrestamosCashInput = {
@@ -215568,6 +219898,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutPrestamosCashInput = {
@@ -215633,6 +219965,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutPrestamosCashInput = {
@@ -215830,6 +220164,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutPrestamosCashInput = {
@@ -215895,6 +220231,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type CuentaPorPagarCreateWithoutPagosInput = {
@@ -216017,6 +220355,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutPagosCuentaPorPagarInput = {
@@ -216082,6 +220422,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutPagosCuentaPorPagarInput = {
@@ -216226,6 +220568,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutPagosCuentaPorPagarInput = {
@@ -216291,6 +220635,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type OrdenReparacionCreateWithoutEquipoTipoInput = {
@@ -216508,6 +220854,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutEquiposReparacionInput = {
@@ -216573,6 +220921,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutEquiposReparacionInput = {
@@ -216702,6 +221052,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutEquiposReparacionInput = {
@@ -216767,6 +221119,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type OrdenReparacionItemCreateWithoutPiezaInput = {
@@ -216893,6 +221247,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutPiezasReparacionInput = {
@@ -216958,6 +221314,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutPiezasReparacionInput = {
@@ -217088,6 +221446,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutPiezasReparacionInput = {
@@ -217153,6 +221513,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type ClienteCreateWithoutOrdenesReparacionInput = {
@@ -217498,6 +221860,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutOrdenesReparacionInput = {
@@ -217563,6 +221927,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutOrdenesReparacionInput = {
@@ -217892,6 +222258,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutOrdenesReparacionInput = {
@@ -217957,6 +222325,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type EquipoReparacionCreateWithoutOrdenReparacionEquiposInput = {
@@ -218154,6 +222524,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutOrdenesReparacionEquipoInput = {
@@ -218219,6 +222591,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutOrdenesReparacionEquipoInput = {
@@ -218426,6 +222800,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutOrdenesReparacionEquipoInput = {
@@ -218491,6 +222867,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type DefectacionCatalogoCreateWithoutItemsInput = {
@@ -218716,6 +223094,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutOrdenesReparacionItemInput = {
@@ -218781,6 +223161,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutOrdenesReparacionItemInput = {
@@ -219046,6 +223428,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutOrdenesReparacionItemInput = {
@@ -219111,6 +223495,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type OrdenReparacionCreateWithoutMaterialesInput = {
@@ -219342,6 +223728,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutOrdenesReparacionMaterialInput = {
@@ -219407,6 +223795,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutOrdenesReparacionMaterialInput = {
@@ -219666,6 +224056,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutOrdenesReparacionMaterialInput = {
@@ -219731,6 +224123,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type OrdenReparacionItemCreateWithoutDefectacionInput = {
@@ -219830,6 +224224,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutDefectacionesCatalogoInput = {
@@ -219895,6 +224291,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutDefectacionesCatalogoInput = {
@@ -219992,6 +224390,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutDefectacionesCatalogoInput = {
@@ -220057,6 +224457,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type RecetaCreateWithoutOrdenProduccionInput = {
@@ -220185,6 +224587,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutOrdenesProduccionInput = {
@@ -220250,6 +224654,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutOrdenesProduccionInput = {
@@ -220386,6 +224792,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutOrdenesProduccionInput = {
@@ -220451,6 +224859,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type OrdenProduccionCreateWithoutOrdenProduccionHistorialInput = {
@@ -220547,6 +224957,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutOrdenesProduccionHistorialInput = {
@@ -220612,6 +225024,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutOrdenesProduccionHistorialInput = {
@@ -220730,6 +225144,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutOrdenesProduccionHistorialInput = {
@@ -220795,6 +225211,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type OrdenProduccionCreateWithoutRecetaInput = {
@@ -221023,6 +225441,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutRecetasInput = {
@@ -221088,6 +225508,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutRecetasInput = {
@@ -221302,6 +225724,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutRecetasInput = {
@@ -221367,6 +225791,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type ProductoCreateWithoutRecetaIngredienteInput = {
@@ -221560,6 +225986,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutRecetasIngredientesInput = {
@@ -221625,6 +226053,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutRecetasIngredientesInput = {
@@ -221846,6 +226276,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutRecetasIngredientesInput = {
@@ -221911,6 +226343,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type ValeSalidaItemCreateWithoutValeSalidaInput = {
@@ -222002,6 +226436,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutValesSalidaInput = {
@@ -222067,6 +226503,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutValesSalidaInput = {
@@ -222164,6 +226602,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutValesSalidaInput = {
@@ -222229,6 +226669,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type ProductoCreateWithoutValeSalidaItemInput = {
@@ -222414,6 +226856,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutValesSalidaItemInput = {
@@ -222479,6 +226923,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutValesSalidaItemInput = {
@@ -222692,6 +227138,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutValesSalidaItemInput = {
@@ -222757,6 +227205,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type PrecioProductoCreateWithoutListaPrecioInput = {
@@ -222884,6 +227334,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutListasPrecioInput = {
@@ -222949,6 +227401,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutListasPrecioInput = {
@@ -223062,6 +227516,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutListasPrecioInput = {
@@ -223127,6 +227583,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type ListaPrecioCreateWithoutPreciosInput = {
@@ -223899,6 +228357,8 @@ export namespace Prisma {
     tenantMemberships?: TenantMembershipCreateNestedManyWithoutUserInput
     compraDocumentosEditados?: CompraDocumentoCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaCreateNestedManyWithoutCreadoPorInput
+    backupLogs?: BackupLogCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutAnticiposCreadosInput = {
@@ -223936,6 +228396,8 @@ export namespace Prisma {
     tenantMemberships?: TenantMembershipUncheckedCreateNestedManyWithoutUserInput
     compraDocumentosEditados?: CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput
     transferenciasCreadas?: TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutAnticiposCreadosInput = {
@@ -224054,6 +228516,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutAnticiposInput = {
@@ -224119,6 +228583,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutAnticiposInput = {
@@ -224485,6 +228951,8 @@ export namespace Prisma {
     tenantMemberships?: TenantMembershipUpdateManyWithoutUserNestedInput
     compraDocumentosEditados?: CompraDocumentoUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUpdateManyWithoutCreadoPorNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAnticiposCreadosInput = {
@@ -224522,6 +228990,8 @@ export namespace Prisma {
     tenantMemberships?: TenantMembershipUncheckedUpdateManyWithoutUserNestedInput
     compraDocumentosEditados?: CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput
     transferenciasCreadas?: TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type AnticipoMovimientoUpsertWithWhereUniqueWithoutAnticipoInput = {
@@ -224637,6 +229107,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutAnticiposInput = {
@@ -224702,6 +229174,8 @@ export namespace Prisma {
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type AnticipoCreateWithoutMovimientosInput = {
@@ -224879,6 +229353,8 @@ export namespace Prisma {
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutPeriodosContablesInput = {
@@ -224944,6 +229420,8 @@ export namespace Prisma {
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutPeriodosContablesInput = {
@@ -225297,6 +229775,8 @@ export namespace Prisma {
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutPeriodosContablesInput = {
@@ -225362,6 +229842,8 @@ export namespace Prisma {
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type SaldoSnapshotUpsertWithWhereUniqueWithoutPeriodoInput = {
@@ -225849,6 +230331,8 @@ export namespace Prisma {
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutAperturaPeriodosInput = {
@@ -225914,6 +230398,8 @@ export namespace Prisma {
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutAperturaPeriodosInput = {
@@ -226070,6 +230556,8 @@ export namespace Prisma {
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutAperturaPeriodosInput = {
@@ -226135,6 +230623,8 @@ export namespace Prisma {
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
   }
 
   export type PeriodoContableCreateWithoutSnapshotsInput = {
@@ -226413,6 +230903,8 @@ export namespace Prisma {
     cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
   }
 
   export type TenantUncheckedCreateWithoutAuditoriaPeriodosInput = {
@@ -226478,6 +230970,8 @@ export namespace Prisma {
     cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
     periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
     aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
   }
 
   export type TenantCreateOrConnectWithoutAuditoriaPeriodosInput = {
@@ -226634,6 +231128,8 @@ export namespace Prisma {
     cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
   }
 
   export type TenantUncheckedUpdateWithoutAuditoriaPeriodosInput = {
@@ -226699,6 +231195,920 @@ export namespace Prisma {
     cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
     periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
     aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
+  }
+
+  export type TenantCreateWithoutBackupLogsInput = {
+    tenantId?: string
+    nombre: string
+    slug?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    contabilidadTimezone?: string
+    empresa?: MiEmpresaCreateNestedOneWithoutTenantInput
+    memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
+    licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
+    categorias?: CategoriaCreateNestedManyWithoutTenantInput
+    vendors?: VendorCreateNestedManyWithoutTenantInput
+    clientes?: ClienteCreateNestedManyWithoutTenantInput
+    almacenes?: AlmacenCreateNestedManyWithoutTenantInput
+    puntosDeVenta?: PuntoDeVentaCreateNestedManyWithoutTenantInput
+    productos?: ProductoCreateNestedManyWithoutTenantInput
+    ventas?: VentaCreateNestedManyWithoutTenantInput
+    facturas?: FacturaCreateNestedManyWithoutTenantInput
+    gastosDE?: GastosDECreateNestedManyWithoutTenantInput
+    gastosCompra?: GastoCompraCreateNestedManyWithoutTenantInput
+    comprasProducto?: CompraProductoCreateNestedManyWithoutTenantInput
+    comprasDocumento?: CompraDocumentoCreateNestedManyWithoutTenantInput
+    comprasDocumentoItem?: CompraDocumentoItemCreateNestedManyWithoutTenantInput
+    servicios?: ServiciosCreateNestedManyWithoutTenantInput
+    ventasServicios?: VentaServiciosCreateNestedManyWithoutTenantInput
+    comprasServicio?: CompraServicioCreateNestedManyWithoutTenantInput
+    cuentasBancarias?: CuentaBancariaCreateNestedManyWithoutTenantInput
+    reconciliacionesVenta?: ReconciliacionVentaCreateNestedManyWithoutTenantInput
+    reconciliacionesServicio?: ReconciliacionServicioCreateNestedManyWithoutTenantInput
+    reconciliacionesGasto?: ReconciliacionGastoCreateNestedManyWithoutTenantInput
+    ajustesBancarios?: AjusteBancarioCreateNestedManyWithoutTenantInput
+    transferenciasBancarias?: TransferenciaBancariaCreateNestedManyWithoutTenantInput
+    contratos?: ContratoCreateNestedManyWithoutTenantInput
+    seriesFacturacion?: SerieFacturacionCreateNestedManyWithoutTenantInput
+    ofertas?: OfertaCreateNestedManyWithoutTenantInput
+    cuentasPorCobrar?: CuentaPorCobrarCreateNestedManyWithoutTenantInput
+    cuentasPorPagar?: CuentaPorPagarCreateNestedManyWithoutTenantInput
+    deudasCash?: DeudaCashCreateNestedManyWithoutTenantInput
+    prestamosCash?: PrestamoCashCreateNestedManyWithoutTenantInput
+    pagosCuentaPorPagar?: PagoCuentaPorPagarCreateNestedManyWithoutTenantInput
+    empleados?: EmpleadoCreateNestedManyWithoutTenantInput
+    ordenesProduccion?: OrdenProduccionCreateNestedManyWithoutTenantInput
+    ordenesProduccionHistorial?: OrdenProduccionHistorialCreateNestedManyWithoutTenantInput
+    recetas?: RecetaCreateNestedManyWithoutTenantInput
+    recetasIngredientes?: RecetaIngredienteCreateNestedManyWithoutTenantInput
+    valesSalida?: ValeSalidaCreateNestedManyWithoutTenantInput
+    valesSalidaItem?: ValeSalidaItemCreateNestedManyWithoutTenantInput
+    listasPrecio?: ListaPrecioCreateNestedManyWithoutTenantInput
+    equiposReparacion?: EquipoReparacionCreateNestedManyWithoutTenantInput
+    piezasReparacion?: PiezaReparacionCreateNestedManyWithoutTenantInput
+    ordenesReparacion?: OrdenReparacionCreateNestedManyWithoutTenantInput
+    ordenesReparacionEquipo?: OrdenReparacionEquipoCreateNestedManyWithoutTenantInput
+    ordenesReparacionItem?: OrdenReparacionItemCreateNestedManyWithoutTenantInput
+    ordenesReparacionMaterial?: OrdenReparacionMaterialCreateNestedManyWithoutTenantInput
+    defectacionesCatalogo?: DefectacionCatalogoCreateNestedManyWithoutTenantInput
+    anticipos?: AnticipoCreateNestedManyWithoutTenantInput
+    transferencias?: TransferenciaCreateNestedManyWithoutTenantInput
+    mermas?: MermaCreateNestedManyWithoutTenantInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutTenantInput
+    pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
+    cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
+    periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
+    auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutTenantInput
+  }
+
+  export type TenantUncheckedCreateWithoutBackupLogsInput = {
+    tenantId?: string
+    nombre: string
+    slug?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    contabilidadTimezone?: string
+    empresa?: MiEmpresaUncheckedCreateNestedOneWithoutTenantInput
+    memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
+    licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
+    categorias?: CategoriaUncheckedCreateNestedManyWithoutTenantInput
+    vendors?: VendorUncheckedCreateNestedManyWithoutTenantInput
+    clientes?: ClienteUncheckedCreateNestedManyWithoutTenantInput
+    almacenes?: AlmacenUncheckedCreateNestedManyWithoutTenantInput
+    puntosDeVenta?: PuntoDeVentaUncheckedCreateNestedManyWithoutTenantInput
+    productos?: ProductoUncheckedCreateNestedManyWithoutTenantInput
+    ventas?: VentaUncheckedCreateNestedManyWithoutTenantInput
+    facturas?: FacturaUncheckedCreateNestedManyWithoutTenantInput
+    gastosDE?: GastosDEUncheckedCreateNestedManyWithoutTenantInput
+    gastosCompra?: GastoCompraUncheckedCreateNestedManyWithoutTenantInput
+    comprasProducto?: CompraProductoUncheckedCreateNestedManyWithoutTenantInput
+    comprasDocumento?: CompraDocumentoUncheckedCreateNestedManyWithoutTenantInput
+    comprasDocumentoItem?: CompraDocumentoItemUncheckedCreateNestedManyWithoutTenantInput
+    servicios?: ServiciosUncheckedCreateNestedManyWithoutTenantInput
+    ventasServicios?: VentaServiciosUncheckedCreateNestedManyWithoutTenantInput
+    comprasServicio?: CompraServicioUncheckedCreateNestedManyWithoutTenantInput
+    cuentasBancarias?: CuentaBancariaUncheckedCreateNestedManyWithoutTenantInput
+    reconciliacionesVenta?: ReconciliacionVentaUncheckedCreateNestedManyWithoutTenantInput
+    reconciliacionesServicio?: ReconciliacionServicioUncheckedCreateNestedManyWithoutTenantInput
+    reconciliacionesGasto?: ReconciliacionGastoUncheckedCreateNestedManyWithoutTenantInput
+    ajustesBancarios?: AjusteBancarioUncheckedCreateNestedManyWithoutTenantInput
+    transferenciasBancarias?: TransferenciaBancariaUncheckedCreateNestedManyWithoutTenantInput
+    contratos?: ContratoUncheckedCreateNestedManyWithoutTenantInput
+    seriesFacturacion?: SerieFacturacionUncheckedCreateNestedManyWithoutTenantInput
+    ofertas?: OfertaUncheckedCreateNestedManyWithoutTenantInput
+    cuentasPorCobrar?: CuentaPorCobrarUncheckedCreateNestedManyWithoutTenantInput
+    cuentasPorPagar?: CuentaPorPagarUncheckedCreateNestedManyWithoutTenantInput
+    deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutTenantInput
+    prestamosCash?: PrestamoCashUncheckedCreateNestedManyWithoutTenantInput
+    pagosCuentaPorPagar?: PagoCuentaPorPagarUncheckedCreateNestedManyWithoutTenantInput
+    empleados?: EmpleadoUncheckedCreateNestedManyWithoutTenantInput
+    ordenesProduccion?: OrdenProduccionUncheckedCreateNestedManyWithoutTenantInput
+    ordenesProduccionHistorial?: OrdenProduccionHistorialUncheckedCreateNestedManyWithoutTenantInput
+    recetas?: RecetaUncheckedCreateNestedManyWithoutTenantInput
+    recetasIngredientes?: RecetaIngredienteUncheckedCreateNestedManyWithoutTenantInput
+    valesSalida?: ValeSalidaUncheckedCreateNestedManyWithoutTenantInput
+    valesSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutTenantInput
+    listasPrecio?: ListaPrecioUncheckedCreateNestedManyWithoutTenantInput
+    equiposReparacion?: EquipoReparacionUncheckedCreateNestedManyWithoutTenantInput
+    piezasReparacion?: PiezaReparacionUncheckedCreateNestedManyWithoutTenantInput
+    ordenesReparacion?: OrdenReparacionUncheckedCreateNestedManyWithoutTenantInput
+    ordenesReparacionEquipo?: OrdenReparacionEquipoUncheckedCreateNestedManyWithoutTenantInput
+    ordenesReparacionItem?: OrdenReparacionItemUncheckedCreateNestedManyWithoutTenantInput
+    ordenesReparacionMaterial?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutTenantInput
+    defectacionesCatalogo?: DefectacionCatalogoUncheckedCreateNestedManyWithoutTenantInput
+    anticipos?: AnticipoUncheckedCreateNestedManyWithoutTenantInput
+    transferencias?: TransferenciaUncheckedCreateNestedManyWithoutTenantInput
+    mermas?: MermaUncheckedCreateNestedManyWithoutTenantInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutTenantInput
+    pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
+    cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
+    periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutTenantInput
+  }
+
+  export type TenantCreateOrConnectWithoutBackupLogsInput = {
+    where: TenantWhereUniqueInput
+    create: XOR<TenantCreateWithoutBackupLogsInput, TenantUncheckedCreateWithoutBackupLogsInput>
+  }
+
+  export type UserCreateWithoutBackupLogsInput = {
+    userId?: string
+    name: string
+    email: string
+    password: string
+    googleId?: string | null
+    role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    activatedAt?: Date | string | null
+    avatar?: string | null
+    expiresAt?: Date | string | null
+    isActive?: boolean
+    lastFailedLogin?: Date | string | null
+    lastModifiedBy?: string | null
+    lockedUntil?: Date | string | null
+    loginAttempts?: number
+    contratosAprobados?: ContratoCreateNestedManyWithoutAprobadorInput
+    contratosCreados?: ContratoCreateNestedManyWithoutCreadorInput
+    contratoAprobaciones?: ContratoAprobacionCreateNestedManyWithoutAprobadorInput
+    contratoArchivos?: ContratoArchivoCreateNestedManyWithoutGeneradorInput
+    contratoFirmas?: ContratoFirmaCreateNestedManyWithoutFirmanteInput
+    contratoVersiones?: ContratoVersionCreateNestedManyWithoutCreadorInput
+    tiposContratosCustom?: TipoContratoCustomCreateNestedManyWithoutCreadorInput
+    licencias?: LicenciaCreateNestedManyWithoutUsuarioInput
+    licenciasAudit?: LicenciaAuditCreateNestedManyWithoutActorInput
+    notifications?: NotificationCreateNestedManyWithoutUserInput
+    activityLogs?: UserActivityLogCreateNestedManyWithoutUserInput
+    sessions?: UserSessionCreateNestedManyWithoutUserInput
+    tenantMemberships?: TenantMembershipCreateNestedManyWithoutUserInput
+    anticiposCreados?: AnticipoCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoCreateNestedManyWithoutUpdatedByInput
+    transferenciasCreadas?: TransferenciaCreateNestedManyWithoutCreadoPorInput
+    backupPlans?: BackupPlanCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutBackupLogsInput = {
+    userId?: string
+    name: string
+    email: string
+    password: string
+    googleId?: string | null
+    role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    activatedAt?: Date | string | null
+    avatar?: string | null
+    expiresAt?: Date | string | null
+    isActive?: boolean
+    lastFailedLogin?: Date | string | null
+    lastModifiedBy?: string | null
+    lockedUntil?: Date | string | null
+    loginAttempts?: number
+    contratosAprobados?: ContratoUncheckedCreateNestedManyWithoutAprobadorInput
+    contratosCreados?: ContratoUncheckedCreateNestedManyWithoutCreadorInput
+    contratoAprobaciones?: ContratoAprobacionUncheckedCreateNestedManyWithoutAprobadorInput
+    contratoArchivos?: ContratoArchivoUncheckedCreateNestedManyWithoutGeneradorInput
+    contratoFirmas?: ContratoFirmaUncheckedCreateNestedManyWithoutFirmanteInput
+    contratoVersiones?: ContratoVersionUncheckedCreateNestedManyWithoutCreadorInput
+    tiposContratosCustom?: TipoContratoCustomUncheckedCreateNestedManyWithoutCreadorInput
+    licencias?: LicenciaUncheckedCreateNestedManyWithoutUsuarioInput
+    licenciasAudit?: LicenciaAuditUncheckedCreateNestedManyWithoutActorInput
+    notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
+    activityLogs?: UserActivityLogUncheckedCreateNestedManyWithoutUserInput
+    sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
+    tenantMemberships?: TenantMembershipUncheckedCreateNestedManyWithoutUserInput
+    anticiposCreados?: AnticipoUncheckedCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput
+    transferenciasCreadas?: TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput
+    backupPlans?: BackupPlanUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutBackupLogsInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutBackupLogsInput, UserUncheckedCreateWithoutBackupLogsInput>
+  }
+
+  export type TenantUpsertWithoutBackupLogsInput = {
+    update: XOR<TenantUpdateWithoutBackupLogsInput, TenantUncheckedUpdateWithoutBackupLogsInput>
+    create: XOR<TenantCreateWithoutBackupLogsInput, TenantUncheckedCreateWithoutBackupLogsInput>
+    where?: TenantWhereInput
+  }
+
+  export type TenantUpdateToOneWithWhereWithoutBackupLogsInput = {
+    where?: TenantWhereInput
+    data: XOR<TenantUpdateWithoutBackupLogsInput, TenantUncheckedUpdateWithoutBackupLogsInput>
+  }
+
+  export type TenantUpdateWithoutBackupLogsInput = {
+    tenantId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    slug?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    contabilidadTimezone?: StringFieldUpdateOperationsInput | string
+    empresa?: MiEmpresaUpdateOneWithoutTenantNestedInput
+    memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
+    licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
+    categorias?: CategoriaUpdateManyWithoutTenantNestedInput
+    vendors?: VendorUpdateManyWithoutTenantNestedInput
+    clientes?: ClienteUpdateManyWithoutTenantNestedInput
+    almacenes?: AlmacenUpdateManyWithoutTenantNestedInput
+    puntosDeVenta?: PuntoDeVentaUpdateManyWithoutTenantNestedInput
+    productos?: ProductoUpdateManyWithoutTenantNestedInput
+    ventas?: VentaUpdateManyWithoutTenantNestedInput
+    facturas?: FacturaUpdateManyWithoutTenantNestedInput
+    gastosDE?: GastosDEUpdateManyWithoutTenantNestedInput
+    gastosCompra?: GastoCompraUpdateManyWithoutTenantNestedInput
+    comprasProducto?: CompraProductoUpdateManyWithoutTenantNestedInput
+    comprasDocumento?: CompraDocumentoUpdateManyWithoutTenantNestedInput
+    comprasDocumentoItem?: CompraDocumentoItemUpdateManyWithoutTenantNestedInput
+    servicios?: ServiciosUpdateManyWithoutTenantNestedInput
+    ventasServicios?: VentaServiciosUpdateManyWithoutTenantNestedInput
+    comprasServicio?: CompraServicioUpdateManyWithoutTenantNestedInput
+    cuentasBancarias?: CuentaBancariaUpdateManyWithoutTenantNestedInput
+    reconciliacionesVenta?: ReconciliacionVentaUpdateManyWithoutTenantNestedInput
+    reconciliacionesServicio?: ReconciliacionServicioUpdateManyWithoutTenantNestedInput
+    reconciliacionesGasto?: ReconciliacionGastoUpdateManyWithoutTenantNestedInput
+    ajustesBancarios?: AjusteBancarioUpdateManyWithoutTenantNestedInput
+    transferenciasBancarias?: TransferenciaBancariaUpdateManyWithoutTenantNestedInput
+    contratos?: ContratoUpdateManyWithoutTenantNestedInput
+    seriesFacturacion?: SerieFacturacionUpdateManyWithoutTenantNestedInput
+    ofertas?: OfertaUpdateManyWithoutTenantNestedInput
+    cuentasPorCobrar?: CuentaPorCobrarUpdateManyWithoutTenantNestedInput
+    cuentasPorPagar?: CuentaPorPagarUpdateManyWithoutTenantNestedInput
+    deudasCash?: DeudaCashUpdateManyWithoutTenantNestedInput
+    prestamosCash?: PrestamoCashUpdateManyWithoutTenantNestedInput
+    pagosCuentaPorPagar?: PagoCuentaPorPagarUpdateManyWithoutTenantNestedInput
+    empleados?: EmpleadoUpdateManyWithoutTenantNestedInput
+    ordenesProduccion?: OrdenProduccionUpdateManyWithoutTenantNestedInput
+    ordenesProduccionHistorial?: OrdenProduccionHistorialUpdateManyWithoutTenantNestedInput
+    recetas?: RecetaUpdateManyWithoutTenantNestedInput
+    recetasIngredientes?: RecetaIngredienteUpdateManyWithoutTenantNestedInput
+    valesSalida?: ValeSalidaUpdateManyWithoutTenantNestedInput
+    valesSalidaItem?: ValeSalidaItemUpdateManyWithoutTenantNestedInput
+    listasPrecio?: ListaPrecioUpdateManyWithoutTenantNestedInput
+    equiposReparacion?: EquipoReparacionUpdateManyWithoutTenantNestedInput
+    piezasReparacion?: PiezaReparacionUpdateManyWithoutTenantNestedInput
+    ordenesReparacion?: OrdenReparacionUpdateManyWithoutTenantNestedInput
+    ordenesReparacionEquipo?: OrdenReparacionEquipoUpdateManyWithoutTenantNestedInput
+    ordenesReparacionItem?: OrdenReparacionItemUpdateManyWithoutTenantNestedInput
+    ordenesReparacionMaterial?: OrdenReparacionMaterialUpdateManyWithoutTenantNestedInput
+    defectacionesCatalogo?: DefectacionCatalogoUpdateManyWithoutTenantNestedInput
+    anticipos?: AnticipoUpdateManyWithoutTenantNestedInput
+    transferencias?: TransferenciaUpdateManyWithoutTenantNestedInput
+    mermas?: MermaUpdateManyWithoutTenantNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutTenantNestedInput
+    pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
+    cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
+    periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
+    auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutTenantNestedInput
+  }
+
+  export type TenantUncheckedUpdateWithoutBackupLogsInput = {
+    tenantId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    slug?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    contabilidadTimezone?: StringFieldUpdateOperationsInput | string
+    empresa?: MiEmpresaUncheckedUpdateOneWithoutTenantNestedInput
+    memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
+    licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
+    categorias?: CategoriaUncheckedUpdateManyWithoutTenantNestedInput
+    vendors?: VendorUncheckedUpdateManyWithoutTenantNestedInput
+    clientes?: ClienteUncheckedUpdateManyWithoutTenantNestedInput
+    almacenes?: AlmacenUncheckedUpdateManyWithoutTenantNestedInput
+    puntosDeVenta?: PuntoDeVentaUncheckedUpdateManyWithoutTenantNestedInput
+    productos?: ProductoUncheckedUpdateManyWithoutTenantNestedInput
+    ventas?: VentaUncheckedUpdateManyWithoutTenantNestedInput
+    facturas?: FacturaUncheckedUpdateManyWithoutTenantNestedInput
+    gastosDE?: GastosDEUncheckedUpdateManyWithoutTenantNestedInput
+    gastosCompra?: GastoCompraUncheckedUpdateManyWithoutTenantNestedInput
+    comprasProducto?: CompraProductoUncheckedUpdateManyWithoutTenantNestedInput
+    comprasDocumento?: CompraDocumentoUncheckedUpdateManyWithoutTenantNestedInput
+    comprasDocumentoItem?: CompraDocumentoItemUncheckedUpdateManyWithoutTenantNestedInput
+    servicios?: ServiciosUncheckedUpdateManyWithoutTenantNestedInput
+    ventasServicios?: VentaServiciosUncheckedUpdateManyWithoutTenantNestedInput
+    comprasServicio?: CompraServicioUncheckedUpdateManyWithoutTenantNestedInput
+    cuentasBancarias?: CuentaBancariaUncheckedUpdateManyWithoutTenantNestedInput
+    reconciliacionesVenta?: ReconciliacionVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reconciliacionesServicio?: ReconciliacionServicioUncheckedUpdateManyWithoutTenantNestedInput
+    reconciliacionesGasto?: ReconciliacionGastoUncheckedUpdateManyWithoutTenantNestedInput
+    ajustesBancarios?: AjusteBancarioUncheckedUpdateManyWithoutTenantNestedInput
+    transferenciasBancarias?: TransferenciaBancariaUncheckedUpdateManyWithoutTenantNestedInput
+    contratos?: ContratoUncheckedUpdateManyWithoutTenantNestedInput
+    seriesFacturacion?: SerieFacturacionUncheckedUpdateManyWithoutTenantNestedInput
+    ofertas?: OfertaUncheckedUpdateManyWithoutTenantNestedInput
+    cuentasPorCobrar?: CuentaPorCobrarUncheckedUpdateManyWithoutTenantNestedInput
+    cuentasPorPagar?: CuentaPorPagarUncheckedUpdateManyWithoutTenantNestedInput
+    deudasCash?: DeudaCashUncheckedUpdateManyWithoutTenantNestedInput
+    prestamosCash?: PrestamoCashUncheckedUpdateManyWithoutTenantNestedInput
+    pagosCuentaPorPagar?: PagoCuentaPorPagarUncheckedUpdateManyWithoutTenantNestedInput
+    empleados?: EmpleadoUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesProduccion?: OrdenProduccionUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesProduccionHistorial?: OrdenProduccionHistorialUncheckedUpdateManyWithoutTenantNestedInput
+    recetas?: RecetaUncheckedUpdateManyWithoutTenantNestedInput
+    recetasIngredientes?: RecetaIngredienteUncheckedUpdateManyWithoutTenantNestedInput
+    valesSalida?: ValeSalidaUncheckedUpdateManyWithoutTenantNestedInput
+    valesSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutTenantNestedInput
+    listasPrecio?: ListaPrecioUncheckedUpdateManyWithoutTenantNestedInput
+    equiposReparacion?: EquipoReparacionUncheckedUpdateManyWithoutTenantNestedInput
+    piezasReparacion?: PiezaReparacionUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesReparacion?: OrdenReparacionUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesReparacionEquipo?: OrdenReparacionEquipoUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesReparacionItem?: OrdenReparacionItemUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesReparacionMaterial?: OrdenReparacionMaterialUncheckedUpdateManyWithoutTenantNestedInput
+    defectacionesCatalogo?: DefectacionCatalogoUncheckedUpdateManyWithoutTenantNestedInput
+    anticipos?: AnticipoUncheckedUpdateManyWithoutTenantNestedInput
+    transferencias?: TransferenciaUncheckedUpdateManyWithoutTenantNestedInput
+    mermas?: MermaUncheckedUpdateManyWithoutTenantNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutTenantNestedInput
+    pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
+    cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
+    periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutTenantNestedInput
+  }
+
+  export type UserUpsertWithoutBackupLogsInput = {
+    update: XOR<UserUpdateWithoutBackupLogsInput, UserUncheckedUpdateWithoutBackupLogsInput>
+    create: XOR<UserCreateWithoutBackupLogsInput, UserUncheckedCreateWithoutBackupLogsInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutBackupLogsInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutBackupLogsInput, UserUncheckedUpdateWithoutBackupLogsInput>
+  }
+
+  export type UserUpdateWithoutBackupLogsInput = {
+    userId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    googleId?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    avatar?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    lastFailedLogin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastModifiedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    lockedUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    loginAttempts?: IntFieldUpdateOperationsInput | number
+    contratosAprobados?: ContratoUpdateManyWithoutAprobadorNestedInput
+    contratosCreados?: ContratoUpdateManyWithoutCreadorNestedInput
+    contratoAprobaciones?: ContratoAprobacionUpdateManyWithoutAprobadorNestedInput
+    contratoArchivos?: ContratoArchivoUpdateManyWithoutGeneradorNestedInput
+    contratoFirmas?: ContratoFirmaUpdateManyWithoutFirmanteNestedInput
+    contratoVersiones?: ContratoVersionUpdateManyWithoutCreadorNestedInput
+    tiposContratosCustom?: TipoContratoCustomUpdateManyWithoutCreadorNestedInput
+    licencias?: LicenciaUpdateManyWithoutUsuarioNestedInput
+    licenciasAudit?: LicenciaAuditUpdateManyWithoutActorNestedInput
+    notifications?: NotificationUpdateManyWithoutUserNestedInput
+    activityLogs?: UserActivityLogUpdateManyWithoutUserNestedInput
+    sessions?: UserSessionUpdateManyWithoutUserNestedInput
+    tenantMemberships?: TenantMembershipUpdateManyWithoutUserNestedInput
+    anticiposCreados?: AnticipoUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUpdateManyWithoutUpdatedByNestedInput
+    transferenciasCreadas?: TransferenciaUpdateManyWithoutCreadoPorNestedInput
+    backupPlans?: BackupPlanUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutBackupLogsInput = {
+    userId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    googleId?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    avatar?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    lastFailedLogin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastModifiedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    lockedUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    loginAttempts?: IntFieldUpdateOperationsInput | number
+    contratosAprobados?: ContratoUncheckedUpdateManyWithoutAprobadorNestedInput
+    contratosCreados?: ContratoUncheckedUpdateManyWithoutCreadorNestedInput
+    contratoAprobaciones?: ContratoAprobacionUncheckedUpdateManyWithoutAprobadorNestedInput
+    contratoArchivos?: ContratoArchivoUncheckedUpdateManyWithoutGeneradorNestedInput
+    contratoFirmas?: ContratoFirmaUncheckedUpdateManyWithoutFirmanteNestedInput
+    contratoVersiones?: ContratoVersionUncheckedUpdateManyWithoutCreadorNestedInput
+    tiposContratosCustom?: TipoContratoCustomUncheckedUpdateManyWithoutCreadorNestedInput
+    licencias?: LicenciaUncheckedUpdateManyWithoutUsuarioNestedInput
+    licenciasAudit?: LicenciaAuditUncheckedUpdateManyWithoutActorNestedInput
+    notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
+    activityLogs?: UserActivityLogUncheckedUpdateManyWithoutUserNestedInput
+    sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
+    tenantMemberships?: TenantMembershipUncheckedUpdateManyWithoutUserNestedInput
+    anticiposCreados?: AnticipoUncheckedUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput
+    transferenciasCreadas?: TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput
+    backupPlans?: BackupPlanUncheckedUpdateManyWithoutUserNestedInput
+  }
+
+  export type TenantCreateWithoutBackupPlansInput = {
+    tenantId?: string
+    nombre: string
+    slug?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    contabilidadTimezone?: string
+    empresa?: MiEmpresaCreateNestedOneWithoutTenantInput
+    memberships?: TenantMembershipCreateNestedManyWithoutTenantInput
+    licencias?: TenantLicenseCreateNestedManyWithoutTenantInput
+    categorias?: CategoriaCreateNestedManyWithoutTenantInput
+    vendors?: VendorCreateNestedManyWithoutTenantInput
+    clientes?: ClienteCreateNestedManyWithoutTenantInput
+    almacenes?: AlmacenCreateNestedManyWithoutTenantInput
+    puntosDeVenta?: PuntoDeVentaCreateNestedManyWithoutTenantInput
+    productos?: ProductoCreateNestedManyWithoutTenantInput
+    ventas?: VentaCreateNestedManyWithoutTenantInput
+    facturas?: FacturaCreateNestedManyWithoutTenantInput
+    gastosDE?: GastosDECreateNestedManyWithoutTenantInput
+    gastosCompra?: GastoCompraCreateNestedManyWithoutTenantInput
+    comprasProducto?: CompraProductoCreateNestedManyWithoutTenantInput
+    comprasDocumento?: CompraDocumentoCreateNestedManyWithoutTenantInput
+    comprasDocumentoItem?: CompraDocumentoItemCreateNestedManyWithoutTenantInput
+    servicios?: ServiciosCreateNestedManyWithoutTenantInput
+    ventasServicios?: VentaServiciosCreateNestedManyWithoutTenantInput
+    comprasServicio?: CompraServicioCreateNestedManyWithoutTenantInput
+    cuentasBancarias?: CuentaBancariaCreateNestedManyWithoutTenantInput
+    reconciliacionesVenta?: ReconciliacionVentaCreateNestedManyWithoutTenantInput
+    reconciliacionesServicio?: ReconciliacionServicioCreateNestedManyWithoutTenantInput
+    reconciliacionesGasto?: ReconciliacionGastoCreateNestedManyWithoutTenantInput
+    ajustesBancarios?: AjusteBancarioCreateNestedManyWithoutTenantInput
+    transferenciasBancarias?: TransferenciaBancariaCreateNestedManyWithoutTenantInput
+    contratos?: ContratoCreateNestedManyWithoutTenantInput
+    seriesFacturacion?: SerieFacturacionCreateNestedManyWithoutTenantInput
+    ofertas?: OfertaCreateNestedManyWithoutTenantInput
+    cuentasPorCobrar?: CuentaPorCobrarCreateNestedManyWithoutTenantInput
+    cuentasPorPagar?: CuentaPorPagarCreateNestedManyWithoutTenantInput
+    deudasCash?: DeudaCashCreateNestedManyWithoutTenantInput
+    prestamosCash?: PrestamoCashCreateNestedManyWithoutTenantInput
+    pagosCuentaPorPagar?: PagoCuentaPorPagarCreateNestedManyWithoutTenantInput
+    empleados?: EmpleadoCreateNestedManyWithoutTenantInput
+    ordenesProduccion?: OrdenProduccionCreateNestedManyWithoutTenantInput
+    ordenesProduccionHistorial?: OrdenProduccionHistorialCreateNestedManyWithoutTenantInput
+    recetas?: RecetaCreateNestedManyWithoutTenantInput
+    recetasIngredientes?: RecetaIngredienteCreateNestedManyWithoutTenantInput
+    valesSalida?: ValeSalidaCreateNestedManyWithoutTenantInput
+    valesSalidaItem?: ValeSalidaItemCreateNestedManyWithoutTenantInput
+    listasPrecio?: ListaPrecioCreateNestedManyWithoutTenantInput
+    equiposReparacion?: EquipoReparacionCreateNestedManyWithoutTenantInput
+    piezasReparacion?: PiezaReparacionCreateNestedManyWithoutTenantInput
+    ordenesReparacion?: OrdenReparacionCreateNestedManyWithoutTenantInput
+    ordenesReparacionEquipo?: OrdenReparacionEquipoCreateNestedManyWithoutTenantInput
+    ordenesReparacionItem?: OrdenReparacionItemCreateNestedManyWithoutTenantInput
+    ordenesReparacionMaterial?: OrdenReparacionMaterialCreateNestedManyWithoutTenantInput
+    defectacionesCatalogo?: DefectacionCatalogoCreateNestedManyWithoutTenantInput
+    anticipos?: AnticipoCreateNestedManyWithoutTenantInput
+    transferencias?: TransferenciaCreateNestedManyWithoutTenantInput
+    mermas?: MermaCreateNestedManyWithoutTenantInput
+    stockUbicaciones?: StockUbicacionCreateNestedManyWithoutTenantInput
+    pagosSalario?: PagosalarioCreateNestedManyWithoutTenantInput
+    cierresContables?: CierreContableCreateNestedManyWithoutTenantInput
+    periodosContables?: PeriodoContableCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoCreateNestedManyWithoutTenantInput
+    auditoriaPeriodos?: AuditoriaPeriodoCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogCreateNestedManyWithoutTenantInput
+  }
+
+  export type TenantUncheckedCreateWithoutBackupPlansInput = {
+    tenantId?: string
+    nombre: string
+    slug?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    contabilidadTimezone?: string
+    empresa?: MiEmpresaUncheckedCreateNestedOneWithoutTenantInput
+    memberships?: TenantMembershipUncheckedCreateNestedManyWithoutTenantInput
+    licencias?: TenantLicenseUncheckedCreateNestedManyWithoutTenantInput
+    categorias?: CategoriaUncheckedCreateNestedManyWithoutTenantInput
+    vendors?: VendorUncheckedCreateNestedManyWithoutTenantInput
+    clientes?: ClienteUncheckedCreateNestedManyWithoutTenantInput
+    almacenes?: AlmacenUncheckedCreateNestedManyWithoutTenantInput
+    puntosDeVenta?: PuntoDeVentaUncheckedCreateNestedManyWithoutTenantInput
+    productos?: ProductoUncheckedCreateNestedManyWithoutTenantInput
+    ventas?: VentaUncheckedCreateNestedManyWithoutTenantInput
+    facturas?: FacturaUncheckedCreateNestedManyWithoutTenantInput
+    gastosDE?: GastosDEUncheckedCreateNestedManyWithoutTenantInput
+    gastosCompra?: GastoCompraUncheckedCreateNestedManyWithoutTenantInput
+    comprasProducto?: CompraProductoUncheckedCreateNestedManyWithoutTenantInput
+    comprasDocumento?: CompraDocumentoUncheckedCreateNestedManyWithoutTenantInput
+    comprasDocumentoItem?: CompraDocumentoItemUncheckedCreateNestedManyWithoutTenantInput
+    servicios?: ServiciosUncheckedCreateNestedManyWithoutTenantInput
+    ventasServicios?: VentaServiciosUncheckedCreateNestedManyWithoutTenantInput
+    comprasServicio?: CompraServicioUncheckedCreateNestedManyWithoutTenantInput
+    cuentasBancarias?: CuentaBancariaUncheckedCreateNestedManyWithoutTenantInput
+    reconciliacionesVenta?: ReconciliacionVentaUncheckedCreateNestedManyWithoutTenantInput
+    reconciliacionesServicio?: ReconciliacionServicioUncheckedCreateNestedManyWithoutTenantInput
+    reconciliacionesGasto?: ReconciliacionGastoUncheckedCreateNestedManyWithoutTenantInput
+    ajustesBancarios?: AjusteBancarioUncheckedCreateNestedManyWithoutTenantInput
+    transferenciasBancarias?: TransferenciaBancariaUncheckedCreateNestedManyWithoutTenantInput
+    contratos?: ContratoUncheckedCreateNestedManyWithoutTenantInput
+    seriesFacturacion?: SerieFacturacionUncheckedCreateNestedManyWithoutTenantInput
+    ofertas?: OfertaUncheckedCreateNestedManyWithoutTenantInput
+    cuentasPorCobrar?: CuentaPorCobrarUncheckedCreateNestedManyWithoutTenantInput
+    cuentasPorPagar?: CuentaPorPagarUncheckedCreateNestedManyWithoutTenantInput
+    deudasCash?: DeudaCashUncheckedCreateNestedManyWithoutTenantInput
+    prestamosCash?: PrestamoCashUncheckedCreateNestedManyWithoutTenantInput
+    pagosCuentaPorPagar?: PagoCuentaPorPagarUncheckedCreateNestedManyWithoutTenantInput
+    empleados?: EmpleadoUncheckedCreateNestedManyWithoutTenantInput
+    ordenesProduccion?: OrdenProduccionUncheckedCreateNestedManyWithoutTenantInput
+    ordenesProduccionHistorial?: OrdenProduccionHistorialUncheckedCreateNestedManyWithoutTenantInput
+    recetas?: RecetaUncheckedCreateNestedManyWithoutTenantInput
+    recetasIngredientes?: RecetaIngredienteUncheckedCreateNestedManyWithoutTenantInput
+    valesSalida?: ValeSalidaUncheckedCreateNestedManyWithoutTenantInput
+    valesSalidaItem?: ValeSalidaItemUncheckedCreateNestedManyWithoutTenantInput
+    listasPrecio?: ListaPrecioUncheckedCreateNestedManyWithoutTenantInput
+    equiposReparacion?: EquipoReparacionUncheckedCreateNestedManyWithoutTenantInput
+    piezasReparacion?: PiezaReparacionUncheckedCreateNestedManyWithoutTenantInput
+    ordenesReparacion?: OrdenReparacionUncheckedCreateNestedManyWithoutTenantInput
+    ordenesReparacionEquipo?: OrdenReparacionEquipoUncheckedCreateNestedManyWithoutTenantInput
+    ordenesReparacionItem?: OrdenReparacionItemUncheckedCreateNestedManyWithoutTenantInput
+    ordenesReparacionMaterial?: OrdenReparacionMaterialUncheckedCreateNestedManyWithoutTenantInput
+    defectacionesCatalogo?: DefectacionCatalogoUncheckedCreateNestedManyWithoutTenantInput
+    anticipos?: AnticipoUncheckedCreateNestedManyWithoutTenantInput
+    transferencias?: TransferenciaUncheckedCreateNestedManyWithoutTenantInput
+    mermas?: MermaUncheckedCreateNestedManyWithoutTenantInput
+    stockUbicaciones?: StockUbicacionUncheckedCreateNestedManyWithoutTenantInput
+    pagosSalario?: PagosalarioUncheckedCreateNestedManyWithoutTenantInput
+    cierresContables?: CierreContableUncheckedCreateNestedManyWithoutTenantInput
+    periodosContables?: PeriodoContableUncheckedCreateNestedManyWithoutTenantInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    auditoriaPeriodos?: AuditoriaPeriodoUncheckedCreateNestedManyWithoutTenantInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutTenantInput
+  }
+
+  export type TenantCreateOrConnectWithoutBackupPlansInput = {
+    where: TenantWhereUniqueInput
+    create: XOR<TenantCreateWithoutBackupPlansInput, TenantUncheckedCreateWithoutBackupPlansInput>
+  }
+
+  export type UserCreateWithoutBackupPlansInput = {
+    userId?: string
+    name: string
+    email: string
+    password: string
+    googleId?: string | null
+    role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    activatedAt?: Date | string | null
+    avatar?: string | null
+    expiresAt?: Date | string | null
+    isActive?: boolean
+    lastFailedLogin?: Date | string | null
+    lastModifiedBy?: string | null
+    lockedUntil?: Date | string | null
+    loginAttempts?: number
+    contratosAprobados?: ContratoCreateNestedManyWithoutAprobadorInput
+    contratosCreados?: ContratoCreateNestedManyWithoutCreadorInput
+    contratoAprobaciones?: ContratoAprobacionCreateNestedManyWithoutAprobadorInput
+    contratoArchivos?: ContratoArchivoCreateNestedManyWithoutGeneradorInput
+    contratoFirmas?: ContratoFirmaCreateNestedManyWithoutFirmanteInput
+    contratoVersiones?: ContratoVersionCreateNestedManyWithoutCreadorInput
+    tiposContratosCustom?: TipoContratoCustomCreateNestedManyWithoutCreadorInput
+    licencias?: LicenciaCreateNestedManyWithoutUsuarioInput
+    licenciasAudit?: LicenciaAuditCreateNestedManyWithoutActorInput
+    notifications?: NotificationCreateNestedManyWithoutUserInput
+    activityLogs?: UserActivityLogCreateNestedManyWithoutUserInput
+    sessions?: UserSessionCreateNestedManyWithoutUserInput
+    tenantMemberships?: TenantMembershipCreateNestedManyWithoutUserInput
+    anticiposCreados?: AnticipoCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoCreateNestedManyWithoutUpdatedByInput
+    transferenciasCreadas?: TransferenciaCreateNestedManyWithoutCreadoPorInput
+    backupLogs?: BackupLogCreateNestedManyWithoutUserInput
+  }
+
+  export type UserUncheckedCreateWithoutBackupPlansInput = {
+    userId?: string
+    name: string
+    email: string
+    password: string
+    googleId?: string | null
+    role?: string
+    onboardingType?: string | null
+    onboardingStatus?: string
+    emailVerifiedAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    activatedAt?: Date | string | null
+    avatar?: string | null
+    expiresAt?: Date | string | null
+    isActive?: boolean
+    lastFailedLogin?: Date | string | null
+    lastModifiedBy?: string | null
+    lockedUntil?: Date | string | null
+    loginAttempts?: number
+    contratosAprobados?: ContratoUncheckedCreateNestedManyWithoutAprobadorInput
+    contratosCreados?: ContratoUncheckedCreateNestedManyWithoutCreadorInput
+    contratoAprobaciones?: ContratoAprobacionUncheckedCreateNestedManyWithoutAprobadorInput
+    contratoArchivos?: ContratoArchivoUncheckedCreateNestedManyWithoutGeneradorInput
+    contratoFirmas?: ContratoFirmaUncheckedCreateNestedManyWithoutFirmanteInput
+    contratoVersiones?: ContratoVersionUncheckedCreateNestedManyWithoutCreadorInput
+    tiposContratosCustom?: TipoContratoCustomUncheckedCreateNestedManyWithoutCreadorInput
+    licencias?: LicenciaUncheckedCreateNestedManyWithoutUsuarioInput
+    licenciasAudit?: LicenciaAuditUncheckedCreateNestedManyWithoutActorInput
+    notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
+    activityLogs?: UserActivityLogUncheckedCreateNestedManyWithoutUserInput
+    sessions?: UserSessionUncheckedCreateNestedManyWithoutUserInput
+    tenantMemberships?: TenantMembershipUncheckedCreateNestedManyWithoutUserInput
+    anticiposCreados?: AnticipoUncheckedCreateNestedManyWithoutCreadorInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedCreateNestedManyWithoutUpdatedByInput
+    transferenciasCreadas?: TransferenciaUncheckedCreateNestedManyWithoutCreadoPorInput
+    backupLogs?: BackupLogUncheckedCreateNestedManyWithoutUserInput
+  }
+
+  export type UserCreateOrConnectWithoutBackupPlansInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutBackupPlansInput, UserUncheckedCreateWithoutBackupPlansInput>
+  }
+
+  export type TenantUpsertWithoutBackupPlansInput = {
+    update: XOR<TenantUpdateWithoutBackupPlansInput, TenantUncheckedUpdateWithoutBackupPlansInput>
+    create: XOR<TenantCreateWithoutBackupPlansInput, TenantUncheckedCreateWithoutBackupPlansInput>
+    where?: TenantWhereInput
+  }
+
+  export type TenantUpdateToOneWithWhereWithoutBackupPlansInput = {
+    where?: TenantWhereInput
+    data: XOR<TenantUpdateWithoutBackupPlansInput, TenantUncheckedUpdateWithoutBackupPlansInput>
+  }
+
+  export type TenantUpdateWithoutBackupPlansInput = {
+    tenantId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    slug?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    contabilidadTimezone?: StringFieldUpdateOperationsInput | string
+    empresa?: MiEmpresaUpdateOneWithoutTenantNestedInput
+    memberships?: TenantMembershipUpdateManyWithoutTenantNestedInput
+    licencias?: TenantLicenseUpdateManyWithoutTenantNestedInput
+    categorias?: CategoriaUpdateManyWithoutTenantNestedInput
+    vendors?: VendorUpdateManyWithoutTenantNestedInput
+    clientes?: ClienteUpdateManyWithoutTenantNestedInput
+    almacenes?: AlmacenUpdateManyWithoutTenantNestedInput
+    puntosDeVenta?: PuntoDeVentaUpdateManyWithoutTenantNestedInput
+    productos?: ProductoUpdateManyWithoutTenantNestedInput
+    ventas?: VentaUpdateManyWithoutTenantNestedInput
+    facturas?: FacturaUpdateManyWithoutTenantNestedInput
+    gastosDE?: GastosDEUpdateManyWithoutTenantNestedInput
+    gastosCompra?: GastoCompraUpdateManyWithoutTenantNestedInput
+    comprasProducto?: CompraProductoUpdateManyWithoutTenantNestedInput
+    comprasDocumento?: CompraDocumentoUpdateManyWithoutTenantNestedInput
+    comprasDocumentoItem?: CompraDocumentoItemUpdateManyWithoutTenantNestedInput
+    servicios?: ServiciosUpdateManyWithoutTenantNestedInput
+    ventasServicios?: VentaServiciosUpdateManyWithoutTenantNestedInput
+    comprasServicio?: CompraServicioUpdateManyWithoutTenantNestedInput
+    cuentasBancarias?: CuentaBancariaUpdateManyWithoutTenantNestedInput
+    reconciliacionesVenta?: ReconciliacionVentaUpdateManyWithoutTenantNestedInput
+    reconciliacionesServicio?: ReconciliacionServicioUpdateManyWithoutTenantNestedInput
+    reconciliacionesGasto?: ReconciliacionGastoUpdateManyWithoutTenantNestedInput
+    ajustesBancarios?: AjusteBancarioUpdateManyWithoutTenantNestedInput
+    transferenciasBancarias?: TransferenciaBancariaUpdateManyWithoutTenantNestedInput
+    contratos?: ContratoUpdateManyWithoutTenantNestedInput
+    seriesFacturacion?: SerieFacturacionUpdateManyWithoutTenantNestedInput
+    ofertas?: OfertaUpdateManyWithoutTenantNestedInput
+    cuentasPorCobrar?: CuentaPorCobrarUpdateManyWithoutTenantNestedInput
+    cuentasPorPagar?: CuentaPorPagarUpdateManyWithoutTenantNestedInput
+    deudasCash?: DeudaCashUpdateManyWithoutTenantNestedInput
+    prestamosCash?: PrestamoCashUpdateManyWithoutTenantNestedInput
+    pagosCuentaPorPagar?: PagoCuentaPorPagarUpdateManyWithoutTenantNestedInput
+    empleados?: EmpleadoUpdateManyWithoutTenantNestedInput
+    ordenesProduccion?: OrdenProduccionUpdateManyWithoutTenantNestedInput
+    ordenesProduccionHistorial?: OrdenProduccionHistorialUpdateManyWithoutTenantNestedInput
+    recetas?: RecetaUpdateManyWithoutTenantNestedInput
+    recetasIngredientes?: RecetaIngredienteUpdateManyWithoutTenantNestedInput
+    valesSalida?: ValeSalidaUpdateManyWithoutTenantNestedInput
+    valesSalidaItem?: ValeSalidaItemUpdateManyWithoutTenantNestedInput
+    listasPrecio?: ListaPrecioUpdateManyWithoutTenantNestedInput
+    equiposReparacion?: EquipoReparacionUpdateManyWithoutTenantNestedInput
+    piezasReparacion?: PiezaReparacionUpdateManyWithoutTenantNestedInput
+    ordenesReparacion?: OrdenReparacionUpdateManyWithoutTenantNestedInput
+    ordenesReparacionEquipo?: OrdenReparacionEquipoUpdateManyWithoutTenantNestedInput
+    ordenesReparacionItem?: OrdenReparacionItemUpdateManyWithoutTenantNestedInput
+    ordenesReparacionMaterial?: OrdenReparacionMaterialUpdateManyWithoutTenantNestedInput
+    defectacionesCatalogo?: DefectacionCatalogoUpdateManyWithoutTenantNestedInput
+    anticipos?: AnticipoUpdateManyWithoutTenantNestedInput
+    transferencias?: TransferenciaUpdateManyWithoutTenantNestedInput
+    mermas?: MermaUpdateManyWithoutTenantNestedInput
+    stockUbicaciones?: StockUbicacionUpdateManyWithoutTenantNestedInput
+    pagosSalario?: PagosalarioUpdateManyWithoutTenantNestedInput
+    cierresContables?: CierreContableUpdateManyWithoutTenantNestedInput
+    periodosContables?: PeriodoContableUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUpdateManyWithoutTenantNestedInput
+    auditoriaPeriodos?: AuditoriaPeriodoUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutTenantNestedInput
+  }
+
+  export type TenantUncheckedUpdateWithoutBackupPlansInput = {
+    tenantId?: StringFieldUpdateOperationsInput | string
+    nombre?: StringFieldUpdateOperationsInput | string
+    slug?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    contabilidadTimezone?: StringFieldUpdateOperationsInput | string
+    empresa?: MiEmpresaUncheckedUpdateOneWithoutTenantNestedInput
+    memberships?: TenantMembershipUncheckedUpdateManyWithoutTenantNestedInput
+    licencias?: TenantLicenseUncheckedUpdateManyWithoutTenantNestedInput
+    categorias?: CategoriaUncheckedUpdateManyWithoutTenantNestedInput
+    vendors?: VendorUncheckedUpdateManyWithoutTenantNestedInput
+    clientes?: ClienteUncheckedUpdateManyWithoutTenantNestedInput
+    almacenes?: AlmacenUncheckedUpdateManyWithoutTenantNestedInput
+    puntosDeVenta?: PuntoDeVentaUncheckedUpdateManyWithoutTenantNestedInput
+    productos?: ProductoUncheckedUpdateManyWithoutTenantNestedInput
+    ventas?: VentaUncheckedUpdateManyWithoutTenantNestedInput
+    facturas?: FacturaUncheckedUpdateManyWithoutTenantNestedInput
+    gastosDE?: GastosDEUncheckedUpdateManyWithoutTenantNestedInput
+    gastosCompra?: GastoCompraUncheckedUpdateManyWithoutTenantNestedInput
+    comprasProducto?: CompraProductoUncheckedUpdateManyWithoutTenantNestedInput
+    comprasDocumento?: CompraDocumentoUncheckedUpdateManyWithoutTenantNestedInput
+    comprasDocumentoItem?: CompraDocumentoItemUncheckedUpdateManyWithoutTenantNestedInput
+    servicios?: ServiciosUncheckedUpdateManyWithoutTenantNestedInput
+    ventasServicios?: VentaServiciosUncheckedUpdateManyWithoutTenantNestedInput
+    comprasServicio?: CompraServicioUncheckedUpdateManyWithoutTenantNestedInput
+    cuentasBancarias?: CuentaBancariaUncheckedUpdateManyWithoutTenantNestedInput
+    reconciliacionesVenta?: ReconciliacionVentaUncheckedUpdateManyWithoutTenantNestedInput
+    reconciliacionesServicio?: ReconciliacionServicioUncheckedUpdateManyWithoutTenantNestedInput
+    reconciliacionesGasto?: ReconciliacionGastoUncheckedUpdateManyWithoutTenantNestedInput
+    ajustesBancarios?: AjusteBancarioUncheckedUpdateManyWithoutTenantNestedInput
+    transferenciasBancarias?: TransferenciaBancariaUncheckedUpdateManyWithoutTenantNestedInput
+    contratos?: ContratoUncheckedUpdateManyWithoutTenantNestedInput
+    seriesFacturacion?: SerieFacturacionUncheckedUpdateManyWithoutTenantNestedInput
+    ofertas?: OfertaUncheckedUpdateManyWithoutTenantNestedInput
+    cuentasPorCobrar?: CuentaPorCobrarUncheckedUpdateManyWithoutTenantNestedInput
+    cuentasPorPagar?: CuentaPorPagarUncheckedUpdateManyWithoutTenantNestedInput
+    deudasCash?: DeudaCashUncheckedUpdateManyWithoutTenantNestedInput
+    prestamosCash?: PrestamoCashUncheckedUpdateManyWithoutTenantNestedInput
+    pagosCuentaPorPagar?: PagoCuentaPorPagarUncheckedUpdateManyWithoutTenantNestedInput
+    empleados?: EmpleadoUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesProduccion?: OrdenProduccionUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesProduccionHistorial?: OrdenProduccionHistorialUncheckedUpdateManyWithoutTenantNestedInput
+    recetas?: RecetaUncheckedUpdateManyWithoutTenantNestedInput
+    recetasIngredientes?: RecetaIngredienteUncheckedUpdateManyWithoutTenantNestedInput
+    valesSalida?: ValeSalidaUncheckedUpdateManyWithoutTenantNestedInput
+    valesSalidaItem?: ValeSalidaItemUncheckedUpdateManyWithoutTenantNestedInput
+    listasPrecio?: ListaPrecioUncheckedUpdateManyWithoutTenantNestedInput
+    equiposReparacion?: EquipoReparacionUncheckedUpdateManyWithoutTenantNestedInput
+    piezasReparacion?: PiezaReparacionUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesReparacion?: OrdenReparacionUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesReparacionEquipo?: OrdenReparacionEquipoUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesReparacionItem?: OrdenReparacionItemUncheckedUpdateManyWithoutTenantNestedInput
+    ordenesReparacionMaterial?: OrdenReparacionMaterialUncheckedUpdateManyWithoutTenantNestedInput
+    defectacionesCatalogo?: DefectacionCatalogoUncheckedUpdateManyWithoutTenantNestedInput
+    anticipos?: AnticipoUncheckedUpdateManyWithoutTenantNestedInput
+    transferencias?: TransferenciaUncheckedUpdateManyWithoutTenantNestedInput
+    mermas?: MermaUncheckedUpdateManyWithoutTenantNestedInput
+    stockUbicaciones?: StockUbicacionUncheckedUpdateManyWithoutTenantNestedInput
+    pagosSalario?: PagosalarioUncheckedUpdateManyWithoutTenantNestedInput
+    cierresContables?: CierreContableUncheckedUpdateManyWithoutTenantNestedInput
+    periodosContables?: PeriodoContableUncheckedUpdateManyWithoutTenantNestedInput
+    aperturaPeriodos?: AperturaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    auditoriaPeriodos?: AuditoriaPeriodoUncheckedUpdateManyWithoutTenantNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutTenantNestedInput
+  }
+
+  export type UserUpsertWithoutBackupPlansInput = {
+    update: XOR<UserUpdateWithoutBackupPlansInput, UserUncheckedUpdateWithoutBackupPlansInput>
+    create: XOR<UserCreateWithoutBackupPlansInput, UserUncheckedCreateWithoutBackupPlansInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutBackupPlansInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutBackupPlansInput, UserUncheckedUpdateWithoutBackupPlansInput>
+  }
+
+  export type UserUpdateWithoutBackupPlansInput = {
+    userId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    googleId?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    avatar?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    lastFailedLogin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastModifiedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    lockedUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    loginAttempts?: IntFieldUpdateOperationsInput | number
+    contratosAprobados?: ContratoUpdateManyWithoutAprobadorNestedInput
+    contratosCreados?: ContratoUpdateManyWithoutCreadorNestedInput
+    contratoAprobaciones?: ContratoAprobacionUpdateManyWithoutAprobadorNestedInput
+    contratoArchivos?: ContratoArchivoUpdateManyWithoutGeneradorNestedInput
+    contratoFirmas?: ContratoFirmaUpdateManyWithoutFirmanteNestedInput
+    contratoVersiones?: ContratoVersionUpdateManyWithoutCreadorNestedInput
+    tiposContratosCustom?: TipoContratoCustomUpdateManyWithoutCreadorNestedInput
+    licencias?: LicenciaUpdateManyWithoutUsuarioNestedInput
+    licenciasAudit?: LicenciaAuditUpdateManyWithoutActorNestedInput
+    notifications?: NotificationUpdateManyWithoutUserNestedInput
+    activityLogs?: UserActivityLogUpdateManyWithoutUserNestedInput
+    sessions?: UserSessionUpdateManyWithoutUserNestedInput
+    tenantMemberships?: TenantMembershipUpdateManyWithoutUserNestedInput
+    anticiposCreados?: AnticipoUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUpdateManyWithoutUpdatedByNestedInput
+    transferenciasCreadas?: TransferenciaUpdateManyWithoutCreadoPorNestedInput
+    backupLogs?: BackupLogUpdateManyWithoutUserNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutBackupPlansInput = {
+    userId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    password?: StringFieldUpdateOperationsInput | string
+    googleId?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: StringFieldUpdateOperationsInput | string
+    onboardingType?: NullableStringFieldUpdateOperationsInput | string | null
+    onboardingStatus?: StringFieldUpdateOperationsInput | string
+    emailVerifiedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    activatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    avatar?: NullableStringFieldUpdateOperationsInput | string | null
+    expiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    lastFailedLogin?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    lastModifiedBy?: NullableStringFieldUpdateOperationsInput | string | null
+    lockedUntil?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    loginAttempts?: IntFieldUpdateOperationsInput | number
+    contratosAprobados?: ContratoUncheckedUpdateManyWithoutAprobadorNestedInput
+    contratosCreados?: ContratoUncheckedUpdateManyWithoutCreadorNestedInput
+    contratoAprobaciones?: ContratoAprobacionUncheckedUpdateManyWithoutAprobadorNestedInput
+    contratoArchivos?: ContratoArchivoUncheckedUpdateManyWithoutGeneradorNestedInput
+    contratoFirmas?: ContratoFirmaUncheckedUpdateManyWithoutFirmanteNestedInput
+    contratoVersiones?: ContratoVersionUncheckedUpdateManyWithoutCreadorNestedInput
+    tiposContratosCustom?: TipoContratoCustomUncheckedUpdateManyWithoutCreadorNestedInput
+    licencias?: LicenciaUncheckedUpdateManyWithoutUsuarioNestedInput
+    licenciasAudit?: LicenciaAuditUncheckedUpdateManyWithoutActorNestedInput
+    notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
+    activityLogs?: UserActivityLogUncheckedUpdateManyWithoutUserNestedInput
+    sessions?: UserSessionUncheckedUpdateManyWithoutUserNestedInput
+    tenantMemberships?: TenantMembershipUncheckedUpdateManyWithoutUserNestedInput
+    anticiposCreados?: AnticipoUncheckedUpdateManyWithoutCreadorNestedInput
+    compraDocumentosEditados?: CompraDocumentoUncheckedUpdateManyWithoutUpdatedByNestedInput
+    transferenciasCreadas?: TransferenciaUncheckedUpdateManyWithoutCreadoPorNestedInput
+    backupLogs?: BackupLogUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type CategoriaCreateManyParentInput = {
@@ -229725,6 +235135,33 @@ export namespace Prisma {
     createdAt?: Date | string
   }
 
+  export type BackupLogCreateManyTenantInput = {
+    backupLogId?: string
+    type: $Enums.BackupType
+    status: $Enums.BackupStatus
+    fileUrl?: string | null
+    fileName?: string | null
+    fileSize?: number | null
+    startedAt?: Date | string
+    completedAt?: Date | string | null
+    errorMessage?: string | null
+    createdBy: string
+    createdAt?: Date | string
+  }
+
+  export type BackupPlanCreateManyTenantInput = {
+    backupPlanId?: string
+    type: $Enums.BackupType
+    schedule: string
+    enabled?: boolean
+    retention?: number
+    lastRunAt?: Date | string | null
+    nextRunAt?: Date | string | null
+    createdBy: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type TenantMembershipUpdateWithoutTenantInput = {
     membershipId?: StringFieldUpdateOperationsInput | string
     tenantRole?: StringFieldUpdateOperationsInput | string
@@ -232547,6 +237984,87 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
+  export type BackupLogUpdateWithoutTenantInput = {
+    backupLogId?: StringFieldUpdateOperationsInput | string
+    type?: EnumBackupTypeFieldUpdateOperationsInput | $Enums.BackupType
+    status?: EnumBackupStatusFieldUpdateOperationsInput | $Enums.BackupStatus
+    fileUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    fileName?: NullableStringFieldUpdateOperationsInput | string | null
+    fileSize?: NullableIntFieldUpdateOperationsInput | number | null
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutBackupLogsNestedInput
+  }
+
+  export type BackupLogUncheckedUpdateWithoutTenantInput = {
+    backupLogId?: StringFieldUpdateOperationsInput | string
+    type?: EnumBackupTypeFieldUpdateOperationsInput | $Enums.BackupType
+    status?: EnumBackupStatusFieldUpdateOperationsInput | $Enums.BackupStatus
+    fileUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    fileName?: NullableStringFieldUpdateOperationsInput | string | null
+    fileSize?: NullableIntFieldUpdateOperationsInput | number | null
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdBy?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BackupLogUncheckedUpdateManyWithoutTenantInput = {
+    backupLogId?: StringFieldUpdateOperationsInput | string
+    type?: EnumBackupTypeFieldUpdateOperationsInput | $Enums.BackupType
+    status?: EnumBackupStatusFieldUpdateOperationsInput | $Enums.BackupStatus
+    fileUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    fileName?: NullableStringFieldUpdateOperationsInput | string | null
+    fileSize?: NullableIntFieldUpdateOperationsInput | number | null
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdBy?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BackupPlanUpdateWithoutTenantInput = {
+    backupPlanId?: StringFieldUpdateOperationsInput | string
+    type?: EnumBackupTypeFieldUpdateOperationsInput | $Enums.BackupType
+    schedule?: StringFieldUpdateOperationsInput | string
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    retention?: IntFieldUpdateOperationsInput | number
+    lastRunAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextRunAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutBackupPlansNestedInput
+  }
+
+  export type BackupPlanUncheckedUpdateWithoutTenantInput = {
+    backupPlanId?: StringFieldUpdateOperationsInput | string
+    type?: EnumBackupTypeFieldUpdateOperationsInput | $Enums.BackupType
+    schedule?: StringFieldUpdateOperationsInput | string
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    retention?: IntFieldUpdateOperationsInput | number
+    lastRunAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextRunAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdBy?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BackupPlanUncheckedUpdateManyWithoutTenantInput = {
+    backupPlanId?: StringFieldUpdateOperationsInput | string
+    type?: EnumBackupTypeFieldUpdateOperationsInput | $Enums.BackupType
+    schedule?: StringFieldUpdateOperationsInput | string
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    retention?: IntFieldUpdateOperationsInput | number
+    lastRunAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextRunAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdBy?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
   export type ProductoCreateManyAlmacenInput = {
     nombre: string
     tenantId: string
@@ -234495,6 +240013,33 @@ export namespace Prisma {
     puntoDeVentaOrigenId?: string | null
   }
 
+  export type BackupLogCreateManyUserInput = {
+    backupLogId?: string
+    type: $Enums.BackupType
+    tenantId?: string | null
+    status: $Enums.BackupStatus
+    fileUrl?: string | null
+    fileName?: string | null
+    fileSize?: number | null
+    startedAt?: Date | string
+    completedAt?: Date | string | null
+    errorMessage?: string | null
+    createdAt?: Date | string
+  }
+
+  export type BackupPlanCreateManyUserInput = {
+    backupPlanId?: string
+    type: $Enums.BackupType
+    tenantId?: string | null
+    schedule: string
+    enabled?: boolean
+    retention?: number
+    lastRunAt?: Date | string | null
+    nextRunAt?: Date | string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
   export type ContratoUpdateWithoutAprobadorInput = {
     contratoId?: StringFieldUpdateOperationsInput | string
     numeroContrato?: StringFieldUpdateOperationsInput | string
@@ -235191,6 +240736,87 @@ export namespace Prisma {
     numeroTransferencia?: NullableStringFieldUpdateOperationsInput | string | null
     puntoDeVentaDestinoId?: NullableStringFieldUpdateOperationsInput | string | null
     puntoDeVentaOrigenId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type BackupLogUpdateWithoutUserInput = {
+    backupLogId?: StringFieldUpdateOperationsInput | string
+    type?: EnumBackupTypeFieldUpdateOperationsInput | $Enums.BackupType
+    status?: EnumBackupStatusFieldUpdateOperationsInput | $Enums.BackupStatus
+    fileUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    fileName?: NullableStringFieldUpdateOperationsInput | string | null
+    fileSize?: NullableIntFieldUpdateOperationsInput | number | null
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tenant?: TenantUpdateOneWithoutBackupLogsNestedInput
+  }
+
+  export type BackupLogUncheckedUpdateWithoutUserInput = {
+    backupLogId?: StringFieldUpdateOperationsInput | string
+    type?: EnumBackupTypeFieldUpdateOperationsInput | $Enums.BackupType
+    tenantId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumBackupStatusFieldUpdateOperationsInput | $Enums.BackupStatus
+    fileUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    fileName?: NullableStringFieldUpdateOperationsInput | string | null
+    fileSize?: NullableIntFieldUpdateOperationsInput | number | null
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BackupLogUncheckedUpdateManyWithoutUserInput = {
+    backupLogId?: StringFieldUpdateOperationsInput | string
+    type?: EnumBackupTypeFieldUpdateOperationsInput | $Enums.BackupType
+    tenantId?: NullableStringFieldUpdateOperationsInput | string | null
+    status?: EnumBackupStatusFieldUpdateOperationsInput | $Enums.BackupStatus
+    fileUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    fileName?: NullableStringFieldUpdateOperationsInput | string | null
+    fileSize?: NullableIntFieldUpdateOperationsInput | number | null
+    startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    errorMessage?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BackupPlanUpdateWithoutUserInput = {
+    backupPlanId?: StringFieldUpdateOperationsInput | string
+    type?: EnumBackupTypeFieldUpdateOperationsInput | $Enums.BackupType
+    schedule?: StringFieldUpdateOperationsInput | string
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    retention?: IntFieldUpdateOperationsInput | number
+    lastRunAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextRunAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    tenant?: TenantUpdateOneWithoutBackupPlansNestedInput
+  }
+
+  export type BackupPlanUncheckedUpdateWithoutUserInput = {
+    backupPlanId?: StringFieldUpdateOperationsInput | string
+    type?: EnumBackupTypeFieldUpdateOperationsInput | $Enums.BackupType
+    tenantId?: NullableStringFieldUpdateOperationsInput | string | null
+    schedule?: StringFieldUpdateOperationsInput | string
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    retention?: IntFieldUpdateOperationsInput | number
+    lastRunAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextRunAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type BackupPlanUncheckedUpdateManyWithoutUserInput = {
+    backupPlanId?: StringFieldUpdateOperationsInput | string
+    type?: EnumBackupTypeFieldUpdateOperationsInput | $Enums.BackupType
+    tenantId?: NullableStringFieldUpdateOperationsInput | string | null
+    schedule?: StringFieldUpdateOperationsInput | string
+    enabled?: BoolFieldUpdateOperationsInput | boolean
+    retention?: IntFieldUpdateOperationsInput | number
+    lastRunAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    nextRunAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type LicenciaCreateManyPlanInput = {

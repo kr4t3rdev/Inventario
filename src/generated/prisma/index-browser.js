@@ -1594,6 +1594,35 @@ exports.Prisma.AuditoriaPeriodoScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.BackupLogScalarFieldEnum = {
+  backupLogId: 'backupLogId',
+  type: 'type',
+  tenantId: 'tenantId',
+  status: 'status',
+  fileUrl: 'fileUrl',
+  fileName: 'fileName',
+  fileSize: 'fileSize',
+  startedAt: 'startedAt',
+  completedAt: 'completedAt',
+  errorMessage: 'errorMessage',
+  createdBy: 'createdBy',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.BackupPlanScalarFieldEnum = {
+  backupPlanId: 'backupPlanId',
+  type: 'type',
+  tenantId: 'tenantId',
+  schedule: 'schedule',
+  enabled: 'enabled',
+  retention: 'retention',
+  lastRunAt: 'lastRunAt',
+  nextRunAt: 'nextRunAt',
+  createdBy: 'createdBy',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.SortOrder = {
   asc: 'asc',
   desc: 'desc'
@@ -1771,6 +1800,20 @@ exports.EventoAuditoria = exports.$Enums.EventoAuditoria = {
   INTENTO_BYPASS: 'INTENTO_BYPASS'
 };
 
+exports.BackupType = exports.$Enums.BackupType = {
+  full: 'full',
+  tenant: 'tenant',
+  config: 'config'
+};
+
+exports.BackupStatus = exports.$Enums.BackupStatus = {
+  running: 'running',
+  completed: 'completed',
+  failed: 'failed',
+  pruned: 'pruned',
+  deleted: 'deleted'
+};
+
 exports.Prisma.ModelName = {
   Categoria: 'Categoria',
   Unidad: 'Unidad',
@@ -1870,7 +1913,9 @@ exports.Prisma.ModelName = {
   SnapshotPeriodo: 'SnapshotPeriodo',
   AperturaPeriodo: 'AperturaPeriodo',
   SaldoSnapshot: 'SaldoSnapshot',
-  AuditoriaPeriodo: 'AuditoriaPeriodo'
+  AuditoriaPeriodo: 'AuditoriaPeriodo',
+  BackupLog: 'BackupLog',
+  BackupPlan: 'BackupPlan'
 };
 
 /**

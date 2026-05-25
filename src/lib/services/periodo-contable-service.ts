@@ -606,7 +606,7 @@ export class PeriodoContableService {
         actor: params.actor,
         motivo: params.motivo,
         entidadAfectada: params.entidadAfectada,
-        payload: params.payload as Record<string, unknown> | undefined,
+        payload: params.payload as any,
       },
     });
   }
