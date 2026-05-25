@@ -198,6 +198,8 @@ model Tenant {
   periodosContables PeriodoContable[]
   aperturaPeriodos  AperturaPeriodo[]
   auditoriaPeriodos AuditoriaPeriodo[]
+  backupLogs        BackupLog[]
+  backupPlans       BackupPlan[]
   contabilidadTimezone String @default("America/Argentina/Buenos_Aires")
 
   @@index([slug])
@@ -505,6 +507,8 @@ model User {
   anticiposCreados        Anticipo[]
   compraDocumentosEditados CompraDocumento[] @relation("CompraDocumentoActualizado")
   transferenciasCreadas   Transferencia[]
+  backupLogs              BackupLog[]
+  backupPlans             BackupPlan[]
 }
 
 model Plan {
@@ -2269,4 +2273,66 @@ model AuditoriaPeriodo {
   @@index([tenantId, timestamp])
   @@index([evento])
   @@map("auditoria_periodos")
+}
+
+// ── Backups ─────────────────────────────────────────────────────────────────
+
+enum BackupType {
+  full
+  tenant
+  config
+}
+
+enum BackupStatus {
+  running
+  completed
+  failed
+  pruned
+  deleted
+}
+
+/// Registro de cada operación de backup o restore.
+model BackupLog {
+  backupLogId  String       @id @default(cuid())
+  type         BackupType
+  tenantId     String?
+  status       BackupStatus
+  fileUrl      String?
+  fileName     String?
+  fileSize     Int?
+  startedAt    DateTime     @default(now())
+  completedAt  DateTime?
+  errorMessage String?
+  createdBy    String
+  createdAt    DateTime     @default(now())
+
+  tenant Tenant? @relation(fields: [tenantId], references: [tenantId])
+  user   User    @relation(fields: [createdBy], references: [userId])
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("backup_logs")
+}
+
+/// Plan de backup programado.
+model BackupPlan {
+  backupPlanId String     @id @default(cuid())
+  type         BackupType
+  tenantId     String?
+  schedule     String
+  enabled      Boolean    @default(true)
+  retention    Int        @default(30)
+  lastRunAt    DateTime?
+  nextRunAt    DateTime?
+  createdBy    String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  tenant Tenant? @relation(fields: [tenantId], references: [tenantId])
+  user   User    @relation(fields: [createdBy], references: [userId])
+
+  @@index([enabled, nextRunAt])
+  @@index([tenantId])
+  @@map("backup_plans")
 }
