@@ -112,11 +112,11 @@ export function BackupDashboardPage() {
     async (backupLogId: string) => {
       try {
         const res = await downloadBackupAction({ backupLogId })
-        if (!res.success || !res.data?.url) {
+        if (!res.success || !res.data?.downloadUrl) {
           toast.error(res.error?.message ?? 'No se pudo descargar la copia')
           return
         }
-        window.open(res.data.url, '_blank', 'noopener,noreferrer')
+        window.open(res.data.downloadUrl, '_blank', 'noopener,noreferrer')
       } catch {
         toast.error('Error inesperado al descargar')
       }

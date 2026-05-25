@@ -105,6 +105,17 @@ export async function GET(request: Request): Promise<NextResponse> {
 
   for (const plan of plans) {
     try {
+      // Create BackupLog entry first, then pass it to the engine
+      const cronLog = await prisma.backupLog.create({
+        data: {
+          type: plan.type,
+          tenantId: plan.tenantId ?? undefined,
+          status: 'running',
+          createdBy: plan.createdBy,
+        },
+        select: { backupLogId: true },
+      })
+
       const engine = new BackupEngine({
         storage,
         prisma,
@@ -112,6 +123,7 @@ export async function GET(request: Request): Promise<NextResponse> {
 
       await engine.run(
         { type: plan.type, tenantId: plan.tenantId ?? undefined },
+        cronLog.backupLogId,
         undefined,
         plan.createdBy,
       )

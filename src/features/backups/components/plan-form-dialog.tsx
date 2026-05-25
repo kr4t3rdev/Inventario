@@ -24,7 +24,7 @@ interface PlanFormDialogProps {
   isSaving: boolean
   error: string | null
   initial?: CreatePlanInput
-  onSubmit: (input: CreatePlanInput | UpdatePlanInput) => Promise<void>
+  onSubmit: (input: CreatePlanInput) => Promise<void>
 }
 
 const SCHEDULE_OPTIONS = [

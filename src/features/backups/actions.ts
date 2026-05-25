@@ -56,16 +56,29 @@ export const createBackupAction = withAction(
       }
     }
 
+    // Create BackupLog synchronously (before fire-and-forget engine execution)
+    // so the action can return the backupLogId immediately without a race condition.
+    const log = await prisma.backupLog.create({
+      data: {
+        type: parsed.type,
+        tenantId: parsed.tenantId ?? null,
+        status: 'running',
+        createdBy: user.userId,
+      },
+      select: { backupLogId: true },
+    })
+
     // Instantiate engine and start backup in background
     const engine = new BackupEngine({
       storage: createStorage(),
     })
 
     // Fire-and-forget: the backup runs asynchronously.
-    // For production on Railway/Vercel, replace with a queue or waitUntil.
+    // The engine receives the existing backupLogId and updates it as it progresses.
     void engine
       .run(
         { type: parsed.type, tenantId: parsed.tenantId },
+        log.backupLogId,
         undefined,
         user.userId,
       )
@@ -73,18 +86,6 @@ export const createBackupAction = withAction(
       .catch((err) => {
         console.error('[createBackupAction] Backup failed:', err)
       })
-
-    // Return the BackupLog — the engine creates it synchronously at start.
-    // We query the most recent running log for this user.
-    const log = await prisma.backupLog.findFirst({
-      where: { createdBy: user.userId, status: 'running' },
-      orderBy: { createdAt: 'desc' },
-      select: { backupLogId: true },
-    })
-
-    if (!log) {
-      throw new ActionError('Error al iniciar la copia de seguridad', 'INTERNAL_ERROR')
-    }
 
     revalidatePath('/admin/backups')
     return { backupLogId: log.backupLogId }

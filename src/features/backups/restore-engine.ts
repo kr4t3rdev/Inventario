@@ -89,8 +89,13 @@ export class RestoreEngine {
     })
 
     // 2. Download & decompress
-    const compressed = await this.storage.get(fileName)
-    const sqlContent = gunzipSync(Buffer.from(compressed)).toString('utf-8')
+    const stream = await this.storage.get(fileName)
+    const chunks: Buffer[] = []
+    for await (const chunk of stream) {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+    }
+    const compressed = Buffer.concat(chunks)
+    const sqlContent = gunzipSync(compressed).toString('utf-8')
 
     // 3. Parse and classify statements
     const statements = this.parseSql(sqlContent)
@@ -446,7 +451,7 @@ export class RestoreEngine {
    * Count the value tuples.
    */
   private countInsertRows(sql: string): number {
-    const valuesMatch = sql.match(/VALUES\s*(.*)/is)
+    const valuesMatch = sql.match(/VALUES\s*([\s\S]*)/i)
     if (!valuesMatch) return 0
 
     let valuesPart = valuesMatch[1].trim()

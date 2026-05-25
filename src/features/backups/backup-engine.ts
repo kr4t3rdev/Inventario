@@ -56,21 +56,14 @@ export class BackupEngine {
    */
   async run(
     options: BackupOptions,
+    backupLogId: string,
     signal: AbortSignal | undefined,
     userId: string,
   ): Promise<BackupResult> {
     const startedAt = new Date()
 
-    // Create BackupLog entry
-    const log = await this.prisma.backupLog.create({
-      data: {
-        type: options.type,
-        tenantId: options.tenantId ?? null,
-        status: 'running',
-        startedAt,
-        createdBy: userId,
-      },
-    })
+    // BackupLog already created by the action layer — update its startedAt
+    const log = { backupLogId }
 
     let fileUrl: string | undefined
     let fileSize = 0
