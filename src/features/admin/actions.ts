@@ -147,7 +147,7 @@ export const getAdminTenantsAction = withAction(async (_input: void, user: Authe
   return prisma.tenant.findMany({
     orderBy: { createdAt: 'desc' },
     include: {
-      _count: { select: { memberships: true, productos: true, Almacen: true } }
+      _count: { select: { memberships: true, productos: true, almacenes: true } }
     },
   });
 });

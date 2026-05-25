@@ -8,7 +8,7 @@
  */
 'use client';
 
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -311,8 +311,8 @@ export function PeriodosPageClient({
               </TableHeader>
               <TableBody>
                 {periodosFiltrados.map((periodo) => (
-                  <>
-                    <TableRow key={periodo.periodoId}>
+                  <React.Fragment key={periodo.periodoId}>
+                    <TableRow>
                       <TableCell>
                         <span className="font-mono text-sm font-medium">
                           {periodo.codigo ?? '—'}
@@ -474,7 +474,7 @@ export function PeriodosPageClient({
                         </TableCell>
                       </TableRow>
                     )}
-                  </>
+                  </React.Fragment>
                 ))}
               </TableBody>
             </Table>
