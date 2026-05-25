@@ -22,6 +22,45 @@ import { invalidateCache } from '@/lib/services/periodo-contable-guard';
 import { TipoPeriodo, EstadoPeriodo, CategoriaPeriodo } from '@/lib/services/periodo-contable-types';
 import { prisma } from '@/lib/prisma';
 
+// ── Period Lock Check (para bloqueos visuales en UI) ─────────────────────
+
+const checkLockSchema = z.object({
+  fecha: z.string().min(1, 'Fecha requerida'),
+});
+
+/**
+ * @description Verifica si una fecha (ISO string) está bloqueada por un período contable cerrado.
+ * Útil para bloqueos visuales en formularios client-side.
+ *
+ * @param {Object} params - { fecha: string } — fecha ISO o "YYYY-MM".
+ * @param {AuthenticatedUser} user - Usuario autenticado (inyectado por withAction).
+ * @returns {Promise<{ isLocked: boolean; message: string | null; periodo: { nombre: string; estado: string } | null }>}
+ */
+export const checkPeriodLockAction = withAction(async (
+  params: z.infer<typeof checkLockSchema>,
+  user: AuthenticatedUser,
+) => {
+  const parsed = checkLockSchema.parse(params);
+  const tenantId = requireTenant(user);
+
+  // Si es formato YYYY-MM, usar el primer día del mes
+  const fecha = /^\d{4}-\d{2}$/.test(parsed.fecha)
+    ? new Date(`${parsed.fecha}-01`)
+    : new Date(parsed.fecha);
+
+  const result = await PeriodoContableService.validarEscritura(fecha, tenantId);
+
+  if (!result.permitido && result.periodo) {
+    return {
+      isLocked: true,
+      periodo: { nombre: result.periodo.label, estado: result.periodo.estado },
+      message: `El período ${result.periodo.label} está en estado ${result.periodo.estado === 'CERRADO' ? 'Cerrado' : result.periodo.estado === 'APROBADO' ? 'Aprobado' : result.periodo.estado}. No permite escrituras.`,
+    };
+  }
+
+  return { isLocked: false, message: null, periodo: null };
+});
+
 // ── Schemas de validación ─────────────────────────────────────────────────
 
 /**

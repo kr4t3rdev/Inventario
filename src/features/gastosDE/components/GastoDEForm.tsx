@@ -18,6 +18,8 @@ import { v4 } from "uuid"
 import { createGastosDEAction, updateGastosDEAction, getGastoConceptosAction, getGastoElementosAction } from "@/features/gastosDE/actions"
 import { useVendors } from "@/features/vendors/hooks/use-vendors"
 import { VendorCombobox } from "./VendorCombobox"
+import { usePeriodLock } from "@/features/contabilidad/hooks/use-period-lock"
+import { PeriodLockBanner } from "@/features/contabilidad/components/periodos/period-lock-banner"
 import type { Vendor } from "@/app/models/model"
 
 const gastosDESchema = z.object({
@@ -71,6 +73,10 @@ export function GastoDEForm({ initialData, initialVendors }: GastosDEFormProps) 
   })
 
   const watchedValues = form.watch()
+
+  // Verificar si el período está bloqueado (período contable cerrado)
+  const watchedPeriodo = form.watch('periodo')
+  const { isLocked, message, periodo, checking, error: lockError } = usePeriodLock(watchedPeriodo)
 
   async function onSubmit(data: GastosDEFormValues) {
     setIsLoading(true)
@@ -132,6 +138,14 @@ export function GastoDEForm({ initialData, initialVendors }: GastosDEFormProps) 
           </motion.div>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit, () => { sileo.error({ title: 'Completá los campos requeridos antes de continuar.' }) })} className="space-y-6">
+              {/* Bloqueo visual por período cerrado */}
+              {checking && <PeriodLockBanner.Skeleton />}
+              {lockError && (
+                <div className="px-4 py-3 border rounded-lg bg-yellow-50 border-yellow-200 text-yellow-800 text-sm" role="alert">
+                  {lockError}
+                </div>
+              )}
+              {isLocked && message && periodo && <PeriodLockBanner message={message} periodo={periodo} />}
               {[
                 { name: "conceptoId" as const, label: "Concepto de Gasto", desc: "Categoría principal del gasto.", delay: 0.2, render: (field: any) => (
                   <select value={field.value} onChange={(e) => { field.onChange(e.target.value); setSelectedConceptoId(e.target.value); form.setValue('elementoId', '') }} className="h-12 w-full rounded-md border border-slate-200 dark:border-orange-900/20 bg-slate-50 dark:bg-slate-900/10 px-3 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent transition-all duration-200">
@@ -175,7 +189,7 @@ export function GastoDEForm({ initialData, initialVendors }: GastosDEFormProps) 
                   <Button type="button" variant="destructive" onClick={() => router.push("/busy/gastosDE")}>Cancelar</Button>
                 </motion.div>
                 <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                  <Button type="submit" disabled={isLoading} className="bg-linear-to-r from-orange-500 to-red-600 hover:from-orange-500/90 hover:to-red-600/90">
+                  <Button type="submit" disabled={isLoading || isLocked} className="bg-linear-to-r from-orange-500 to-red-600 hover:from-orange-500/90 hover:to-red-600/90">
                     {isLoading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Guardando...</>) : initialData ? "Actualizar Gasto" : "Registrar Gasto"}
                   </Button>
                 </motion.div>
