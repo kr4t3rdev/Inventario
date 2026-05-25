@@ -36,32 +36,15 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Loader2, Plus, Calendar, Lock, CheckCircle, ShieldCheck, ShieldAlert, AlertCircle, Info, Shield, AlertTriangle } from "lucide-react";
+import { Loader2, Plus, Calendar, Lock, CheckCircle, ShieldCheck, ShieldAlert, AlertCircle, Info } from "lucide-react";
 import { format } from "date-fns";
 import { PeriodoTimeline } from "./periodo-timeline";
 import { PeriodosDashboard } from "./periodos-dashboard";
+import { PeriodoBadge } from "./periodo-badge";
 import { AbrirPeriodoDialog } from "./abrir-periodo-dialog";
 import { CerrarPeriodoDialog } from "./cerrar-periodo-dialog";
 import { ReabrirPeriodoDialog } from "./reabrir-periodo-dialog";
 import type { TipoPeriodo, EstadoPeriodo } from "@/lib/services/periodo-contable-types";
-
-const ESTADO_COLORS: Record<string, string> = {
-  ABIERTO:   "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-green-200 dark:border-green-800",
-  EN_CIERRE: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200 border-orange-200 dark:border-orange-800",
-  CERRADO:   "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 border-red-200 dark:border-red-800",
-  APROBADO:  "bg-red-200 text-red-900 dark:bg-red-950 dark:text-red-300 border-red-300 dark:border-red-800",
-  REABIERTO: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 border-blue-200 dark:border-blue-800",
-  BORRADOR:  "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-700",
-};
-
-const ESTADO_LABELS: Record<string, string> = {
-  ABIERTO: "Abierto",
-  EN_CIERRE: "En Cierre",
-  CERRADO: "Cerrado",
-  APROBADO: "Aprobado",
-  REABIERTO: "Reabierto",
-  BORRADOR: "Borrador",
-};
 
 const TIPO_LABELS: Record<string, string> = {
   DIARIO: "Diario",
@@ -356,13 +339,7 @@ export function PeriodosPageClient({
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Badge className={ESTADO_COLORS[periodo.estado] ?? ""}>
-                            <span className="flex items-center gap-1">
-                              {periodo.estado === 'APROBADO' && <Shield className="h-3 w-3" />}
-                              {periodo.estado === 'REABIERTO' && <AlertTriangle className="h-3 w-3" />}
-                              {ESTADO_LABELS[periodo.estado] ?? periodo.estado}
-                            </span>
-                          </Badge>
+                          <PeriodoBadge estado={periodo.estado} />
                           {periodo.subperiodosCount > 0 && (
                             <span className="text-xs text-muted-foreground" title="Tiene subperíodos">
                               {periodo.subperiodosCount} sub

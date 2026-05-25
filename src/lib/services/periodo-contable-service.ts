@@ -287,7 +287,11 @@ export class PeriodoContableService {
    * @param {string} actor - ID del usuario que cierra.
    * @returns {Promise<PeriodoContable>} El período cerrado.
    */
-  static async cerrarPeriodo(periodoId: string, actor: string) {
+  static async cerrarPeriodo(
+    periodoId: string,
+    actor: string,
+    metadata?: { snapshotsCount?: number; operacionesCount?: number },
+  ) {
     const periodo = await prisma.periodoContable.findUnique({
       where: { periodoId },
     });
@@ -355,12 +359,18 @@ export class PeriodoContableService {
       },
     });
 
-    // Registrar auditoría
+    // Registrar auditoría con metadatos del cierre
     await this._registrarAuditoria({
       periodoId,
       tenantId: periodo.tenantId,
       evento: EventoAuditoria.CIERRE,
       actor,
+      payload: metadata?.snapshotsCount !== undefined || metadata?.operacionesCount !== undefined
+        ? {
+            ...(metadata.snapshotsCount !== undefined && { snapshots: metadata.snapshotsCount }),
+            ...(metadata.operacionesCount !== undefined && { operaciones: metadata.operacionesCount }),
+          }
+        : undefined,
     });
 
     return cerrado;

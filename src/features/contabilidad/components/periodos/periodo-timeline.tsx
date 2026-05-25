@@ -130,6 +130,16 @@ export function PeriodoTimeline({
                     Entidad: {evento.entidadAfectada}
                   </p>
                 )}
+                {evento.evento === 'CIERRE' && evento.payload?.snapshots !== undefined && (
+                  <p className="text-xs text-muted-foreground">
+                    Snapshots generados: {evento.payload.snapshots}
+                  </p>
+                )}
+                {evento.evento === 'CIERRE' && evento.payload?.operaciones !== undefined && (
+                  <p className="text-xs text-muted-foreground">
+                    Operaciones en el período: {evento.payload.operaciones}
+                  </p>
+                )}
               </div>
             </div>
           ))}

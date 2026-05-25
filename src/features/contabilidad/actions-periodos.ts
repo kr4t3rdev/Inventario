@@ -349,6 +349,7 @@ export const cerrarPeriodoAction = withAction(async (
   const cerrado = await PeriodoContableService.cerrarPeriodo(
     parsed.periodoId,
     user.userId,
+    { snapshotsCount: snapshots.length },
   );
 
   // Persistir resumen y hash en el período (después del close exitoso)

@@ -14,7 +14,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import type { TipoPeriodo, EstadoPeriodo } from "@/lib/services/periodo-contable-types";
 
@@ -41,6 +41,7 @@ const TIPO_LABELS: Record<string, string> = {
 export function CerrarPeriodoDialog({ open, onOpenChange, onSuccess, periodo }: CerrarPeriodoDialogProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [resultData, setResultData] = useState<{ snapshots?: number } | null>(null);
 
   const handleSubmit = async () => {
     if (!periodo) return;
@@ -56,14 +57,47 @@ export function CerrarPeriodoDialog({ open, onOpenChange, onSuccess, periodo }: 
         return;
       }
 
-      onSuccess();
-      onOpenChange(false);
+      setResultData(result.data ?? null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error inesperado');
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Pantalla de éxito con metadatos del cierre
+  if (resultData && !isLoading) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Período Cerrado</DialogTitle>
+            <DialogDescription>
+              El período se cerró correctamente con snapshot contable.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <CheckCircle2 className="h-6 w-6 text-green-600 flex-shrink-0" />
+              <div className="text-sm text-green-800">
+                <p className="font-medium">Cierre exitoso</p>
+                {resultData.snapshots !== undefined && (
+                  <p className="mt-1">{resultData.snapshots} snapshot{resultData.snapshots !== 1 ? 's' : ''} generado{resultData.snapshots !== 1 ? 's' : ''}</p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button onClick={() => { onSuccess(); onOpenChange(false); setResultData(null); }}>
+              Continuar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   if (!periodo) return null;
 
