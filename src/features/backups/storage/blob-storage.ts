@@ -18,6 +18,7 @@ export class VercelBlobStorage implements BackupStorage {
 
   private async getClient() {
     // @vercel/blob is optional — error at runtime if not installed
+    // serverExternalPackages in next.config.ts prevents Turbopack from bundling it.
     // @ts-expect-error - optional peer dependency
     return (await import('@vercel/blob')) as {
       put(pathname: string, body: Buffer, opts?: { access: string; addRandomSuffix?: boolean }): Promise<{ url: string }>

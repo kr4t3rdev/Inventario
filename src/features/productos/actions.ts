@@ -1042,7 +1042,7 @@ export const restockProductoAction = withAction(withPeriodValidation(
       },
     };
   },
-);
+));
 
 // ─── Helpers para restock (no exportados) ──────────────────
 
@@ -1240,4 +1240,4 @@ async function handlePaymentInTransaction(
       });
     }
   }
-}));
+}

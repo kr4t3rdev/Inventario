@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import prisma from '@/lib/prisma'
-import { withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware'
+import { withAuthGet, withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware'
 import { requireTenant } from '@/lib/services/tenant-scope'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
