@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
-import { authenticateUser } from "@/lib/auth-middleware"
+import { authenticateUser, type AuthenticatedUser } from "@/lib/auth-middleware"
+import { requireTenant } from '@/lib/services/tenant-scope'
+import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
 import { AuditLogService } from "@/lib/services/audit-log-service"
 
 // Schema para actualizar tipo de pago
@@ -99,11 +101,27 @@ export async function PUT(
   try {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
-    const user = authResultUser.user
+    const user = authResultUser.user as AuthenticatedUser
+    const tenantId = requireTenant(user)
 
     const { id } = await params
     const body = await request.json()
     const validatedData = UpdateTipoPagoSchema.parse(body)
+
+    // Validar período contable
+    const fechaOperacion = extraerFechaDeBody(body) ?? new Date()
+    const validacionPeriodo = await validarEscrituraPeriodo({
+      fecha: fechaOperacion,
+      tenantId,
+      tipoOperacion: 'tipo_pago',
+      actor: user.userId,
+    })
+    if (!validacionPeriodo.permitido) {
+      return NextResponse.json(
+        { error: validacionPeriodo.error?.message ?? 'Período contable cerrado', code: validacionPeriodo.error?.code ?? 'PERIODO_CERRADO' },
+        { status: 400 }
+      )
+    }
 
     // Verificar que el tipo de pago existe
     const tipoPagoExistente = await prisma.tipoPago.findUnique({
@@ -306,9 +324,24 @@ export async function DELETE(
   try {
     const authResultUser = await authenticateUser(request)
     if ('status' in authResultUser) return authResultUser as Response
-    const user = authResultUser.user
+    const user = authResultUser.user as AuthenticatedUser
+    const tenantId = requireTenant(user)
 
     const { id } = await params
+
+    // Validar período contable
+    const validacionPeriodo = await validarEscrituraPeriodo({
+      fecha: new Date(),
+      tenantId,
+      tipoOperacion: 'tipo_pago',
+      actor: user.userId,
+    })
+    if (!validacionPeriodo.permitido) {
+      return NextResponse.json(
+        { error: validacionPeriodo.error?.message ?? 'Período contable cerrado', code: validacionPeriodo.error?.code ?? 'PERIODO_CERRADO' },
+        { status: 400 }
+      )
+    }
 
     // Verificar que el tipo de pago existe
     const tipoPagoExistente = await prisma.tipoPago.findUnique({

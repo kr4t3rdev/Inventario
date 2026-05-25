@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 
 import prisma from '@/lib/prisma'
-import { withAuthGet, withAuthPost } from '@/lib/auth-middleware'
+import { withAuthGet, withAuthPost, type AuthenticatedUser } from '@/lib/auth-middleware'
+import { requireTenant } from '@/lib/services/tenant-scope'
+import { validarEscrituraPeriodo, extraerFechaDeBody } from '@/lib/services/validate-period-write'
 import { AuditLogService } from '@/lib/services/audit-log-service'
 import { calcularSaldoPendientePrestamo, normalizarEstadoPrestamoCash } from '@/lib/utils/prestamo-cash'
 
@@ -80,16 +82,32 @@ export const GET = withAuthGet(async (request: NextRequest, context: unknown) =>
  * @param {NextRequest} request - Request con body de campos a actualizar
  * @returns {NextResponse} Préstamo actualizado
  */
-export const PUT = withAuthPost(async (request: NextRequest, context: unknown, user: { userId: string }) => {
+export const PUT = withAuthPost(async (request: NextRequest, context: unknown, user: AuthenticatedUser) => {
   try {
     if (!prestamosCashEnabled()) {
       return NextResponse.json({ error: 'Módulo de préstamos cash deshabilitado' }, { status: 404 })
     }
 
+    const tenantId = requireTenant(user)
     const { params } = context as { params: Promise<{ id: string }> }
     const { id } = await params
 
     const body = await request.json()
+
+    // Validar período contable
+    const fechaOperacion = extraerFechaDeBody(body) ?? new Date()
+    const validacionPeriodo = await validarEscrituraPeriodo({
+      fecha: fechaOperacion,
+      tenantId,
+      tipoOperacion: 'prestamo_cash',
+      actor: user.userId,
+    })
+    if (!validacionPeriodo.permitido) {
+      return NextResponse.json(
+        { error: validacionPeriodo.error?.message ?? 'Período contable cerrado', code: validacionPeriodo.error?.code ?? 'PERIODO_CERRADO' },
+        { status: 400 }
+      )
+    }
 
     if (body.montoCapital !== undefined || body.moneda !== undefined) {
       return NextResponse.json(
