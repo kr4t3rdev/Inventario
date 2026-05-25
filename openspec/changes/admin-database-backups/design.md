@@ -414,13 +414,23 @@ class SchemaReader {
 class DataExporter {
   async exportTableData(
     table: TableSchema,
-    tenantId?: string
+    tenantId?: string,
+    signal?: AbortSignal
   ): AsyncGenerator<string> {
+    // DB LARGE — optimizaciones para volumen alto:
+    //
     // 1. Build SELECT query
     //    - If tenant-scoped AND tenantId provided: WHERE "tenantId" = $1
     //    - ELSE: no filter
     //
-    // 2. Execute with cursor pagination (LIMIT 1000 OFFSET ?)
+    // 2. Use keyset/cursor pagination (NOT offset):
+    //    SELECT * FROM "table"
+    //    WHERE (tenantId = $1) AND (pk > $lastSeen)
+    //    ORDER BY pk ASC
+    //    LIMIT 1000
+    //
+    //    Keyset pagination es O(1) por página vs O(n) de offset.
+    //    Esencial para tablas con millones de filas.
     //
     // 3. For each batch, yield INSERT statements:
     //    INSERT INTO "table" ("col1", "col2") VALUES
@@ -428,12 +438,21 @@ class DataExporter {
     //    (val3, val4),
     //    ...;
     //
+    //    Batch INSERT = 1000 rows por statement (no 1 INSERT por fila).
+    //
     // 4. Handle special types:
     //    - JSON/JSONB → JSON.stringify + ::jsonb cast
-    //    - BYTEA → hex encode
-    //    - DECIMAL → string representation
+    //    - BYTEA → hex encode with \\x prefix
+    //    - DECIMAL → string representation (no pierde precisión)
     //    - UUID → single-quoted string
     //    - DateTime → ISO string with timezone
+    //
+    // 5. Check AbortSignal periodically (cada 10 batches)
+    //    to support cancellation of long-running backups
+    //
+    // 6. Memory: NUNCA acumular filas en memoria.
+    //    Cada batch de 1000 se convierte a SQL y se escribe al stream
+    //    inmediatamente. GC puede recolectar el buffer anterior.
   }
 }
 ```
@@ -571,8 +590,5 @@ No data migration required — new tables only.
 
 ## Open Questions
 
-- [x] ¿Vercel o Railway? → Ambos, engine es platform-agnostic
-- [x] ¿SQL o JSON? → SQL (recomendación aceptada)
-- [x] ¿Storage? → Pluggable (Vercel Blob + LocalFS)
-- [ ] Confirmar: ¿se va a usar Railway Volume o Vercel Blob en producción? (afecta qué adapter implementar primero, aunque ambos estarán disponibles)
-- [ ] Confirmar: ¿hay algún proof-of-concept de la DB en producción para saber el tamaño aproximado? (ayuda a dimensionar paginación)
+- [x] Host: Railway → LocalFS + Railway Volume como storage principal. Vercel Blob como opción secundaria para quien lo necesite.
+- [x] DB grande → Keyset pagination, batch INSERTs, streaming, AbortSignal, sin acumulación en RAM
