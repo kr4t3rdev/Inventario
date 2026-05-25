@@ -9,6 +9,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -35,7 +36,7 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Loader2, Plus, Calendar, Lock, CheckCircle, ShieldCheck, ShieldAlert, AlertCircle, Info } from "lucide-react";
+import { Loader2, Plus, Calendar, Lock, CheckCircle, ShieldCheck, ShieldAlert, AlertCircle, Info, Shield, AlertTriangle } from "lucide-react";
 import { format } from "date-fns";
 import { PeriodoTimeline } from "./periodo-timeline";
 import { PeriodosDashboard } from "./periodos-dashboard";
@@ -44,13 +45,13 @@ import { CerrarPeriodoDialog } from "./cerrar-periodo-dialog";
 import { ReabrirPeriodoDialog } from "./reabrir-periodo-dialog";
 import type { TipoPeriodo, EstadoPeriodo } from "@/lib/services/periodo-contable-types";
 
-const ESTADO_COLORS: Record<string, "default" | "secondary" | "outline" | "destructive" | null> = {
-  ABIERTO: "default",
-  EN_CIERRE: "destructive",
-  CERRADO: "secondary",
-  APROBADO: "default",
-  REABIERTO: "outline",
-  BORRADOR: "secondary",
+const ESTADO_COLORS: Record<string, string> = {
+  ABIERTO:   "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 border-green-200 dark:border-green-800",
+  EN_CIERRE: "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200 border-orange-200 dark:border-orange-800",
+  CERRADO:   "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 border-red-200 dark:border-red-800",
+  APROBADO:  "bg-red-200 text-red-900 dark:bg-red-950 dark:text-red-300 border-red-300 dark:border-red-800",
+  REABIERTO: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 border-blue-200 dark:border-blue-800",
+  BORRADOR:  "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-700",
 };
 
 const ESTADO_LABELS: Record<string, string> = {
@@ -173,12 +174,13 @@ export function PeriodosPageClient({
       const { aprobarPeriodoAction } = await import('@/features/contabilidad/actions-periodos');
       const result = await aprobarPeriodoAction({ periodoId: periodo.periodoId });
       if (!result.success) {
-        alert(result.error?.message ?? 'Error al aprobar');
+        toast.error(result.error?.message ?? 'Error al aprobar');
         return;
       }
+      toast.success('Período aprobado correctamente');
       refreshPeriodos();
     } catch (err) {
-      alert(err instanceof Error ? err.message : 'Error');
+      toast.error(err instanceof Error ? err.message : 'Error al aprobar');
     }
   };
 
@@ -354,8 +356,12 @@ export function PeriodosPageClient({
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          <Badge variant={ESTADO_COLORS[periodo.estado] ?? "secondary"}>
-                            {ESTADO_LABELS[periodo.estado] ?? periodo.estado}
+                          <Badge className={ESTADO_COLORS[periodo.estado] ?? ""}>
+                            <span className="flex items-center gap-1">
+                              {periodo.estado === 'APROBADO' && <Shield className="h-3 w-3" />}
+                              {periodo.estado === 'REABIERTO' && <AlertTriangle className="h-3 w-3" />}
+                              {ESTADO_LABELS[periodo.estado] ?? periodo.estado}
+                            </span>
                           </Badge>
                           {periodo.subperiodosCount > 0 && (
                             <span className="text-xs text-muted-foreground" title="Tiene subperíodos">
@@ -504,13 +510,17 @@ export function PeriodosPageClient({
       <AbrirPeriodoDialog
         open={showAbrirDialog}
         onOpenChange={setShowAbrirDialog}
-        onSuccess={refreshPeriodos}
+        onSuccess={() => {
+          toast.success('Período abierto correctamente');
+          refreshPeriodos();
+        }}
       />
 
       <CerrarPeriodoDialog
         open={showCerrarDialog}
         onOpenChange={setShowCerrarDialog}
         onSuccess={() => {
+          toast.success('Período cerrado correctamente');
           refreshPeriodos();
           setShowCerrarDialog(false);
         }}
@@ -521,6 +531,7 @@ export function PeriodosPageClient({
         open={showReabrirDialog}
         onOpenChange={setShowReabrirDialog}
         onSuccess={() => {
+          toast.success('Período reaperturado correctamente');
           refreshPeriodos();
           setShowReabrirDialog(false);
         }}
@@ -540,7 +551,12 @@ export function PeriodosPageClient({
             <Button variant="outline" onClick={() => setShowAprobarDialog(false)}>
               Cancelar
             </Button>
-            <Button onClick={() => periodoSeleccionado && handleAprobar(periodoSeleccionado)}>
+            <Button onClick={() => {
+              if (periodoSeleccionado) {
+                handleAprobar(periodoSeleccionado);
+                setShowAprobarDialog(false);
+              }
+            }}>
               Aprobar
             </Button>
           </DialogFooter>

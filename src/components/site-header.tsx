@@ -4,6 +4,7 @@ import { SidebarTrigger } from "@/components/ui/sidebar"
 import { ThemeToggle } from "./theme-toggle"
 import { PanelNotificaciones } from "@/features/notificaciones/components/panel-notificaciones"
 import { CurrencyIndicator } from "@/features/contabilidad/components/currency-indicator"
+import { PeriodoActivoIndicator } from "@/features/contabilidad/components/periodo-activo-indicator"
 import { ContabilidadBreadcrumb } from "@/features/contabilidad/components/contabilidad-breadcrumb"
 
 export async function SiteHeader() {
@@ -23,7 +24,10 @@ export async function SiteHeader() {
           <Separator
             orientation="vertical"
             className="mx-2 data-[orientation=vertical]:h-4"
-          />      
+          />
+          
+          {/* Período Activo */}
+          <PeriodoActivoIndicator />
         </div>
         
         {/* Currency Indicator */}
