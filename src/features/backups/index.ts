@@ -15,6 +15,8 @@ export type { BackupStorage } from './storage/types'
 
 // Engine
 export { BackupEngine } from './backup-engine'
+export { RestoreEngine } from './restore-engine'
+export type { RestoreResult, SqlStatement, SqlStatementType } from './restore-engine'
 export { SchemaReader, topologicalSort } from './schema-reader'
 export { DataExporter } from './data-exporter'
 export { SQLBuilder } from './sql-builder'

@@ -13,6 +13,7 @@ import { revalidatePath } from 'next/cache'
 import { withAction, ActionError } from '@/lib/server-actions'
 import { prisma } from '@/lib/prisma'
 import { BackupEngine } from './backup-engine'
+import { RestoreEngine } from './restore-engine'
 import { createStorage } from './storage'
 import {
   createBackupSchema,
@@ -347,13 +348,20 @@ export const restoreBackupAction = withAction(
       )
     }
 
-    // TODO: Phase 7 — implement actual restore engine
-    // const engine = new RestoreEngine({ storage: createStorage() })
-    // await engine.restore(parsed.backupLogId, log.fileName!, user.userId)
-
-    throw new ActionError(
-      'La restauración aún no está implementada',
-      'NOT_IMPLEMENTED',
+    // Execute restore (synchronous — no fire-and-forget)
+    const engine = new RestoreEngine({ storage: createStorage() })
+    const result = await engine.restore(
+      parsed.backupLogId,
+      log.fileName!,
+      user.userId,
     )
+
+    revalidatePath('/admin/backups')
+    return {
+      success: true,
+      backupLogId: result.backupLogId,
+      restoredTables: result.restoredTables,
+      restoredRows: result.restoredRows,
+    }
   },
 )
