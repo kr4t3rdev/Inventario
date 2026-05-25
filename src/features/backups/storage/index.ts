@@ -14,14 +14,11 @@ export function createStorage(): BackupStorage {
   const mode = process.env.BACKUP_STORAGE || 'localfs'
 
   if (mode === 'localfs') {
-    // Dynamic import to avoid circular dependencies
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { LocalFSStorage } = require('./localfs-storage')
     return new LocalFSStorage()
   }
 
   if (mode === 'blob') {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { VercelBlobStorage } = require('./blob-storage')
     return new VercelBlobStorage()
   }
