@@ -294,8 +294,16 @@ export const downloadBackupAction = withAction(
       )
     }
 
-    const storage = createStorage()
-    const downloadUrl = await storage.getDownloadUrl(log.fileName)
+    let downloadUrl: string
+
+    if (process.env.BACKUP_STORAGE === 'blob') {
+      // Vercel Blob provides actual signed HTTPS URLs
+      const storage = createStorage()
+      downloadUrl = await storage.getDownloadUrl(log.fileName)
+    } else {
+      // LocalFS: use the authenticated API route — the client will prepend origin
+      downloadUrl = `/api/backups/download?backupLogId=${input.backupLogId}`
+    }
 
     return { downloadUrl, fileName: log.fileName }
   },
