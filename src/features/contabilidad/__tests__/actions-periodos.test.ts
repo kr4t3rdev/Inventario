@@ -84,7 +84,8 @@ import {
   aprobarPeriodoAction,
 } from '@/features/contabilidad/actions-periodos';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
-import { EstadoPeriodo, TipoPeriodo, EventoAuditoria } from '@/lib/services/periodo-contable-types';
+import { EstadoPeriodo, TipoPeriodo, EventoAuditoria, generarLabelPeriodo } from '@/lib/services/periodo-contable-types';
+import { PeriodoContableService } from '@/lib/services/periodo-contable-service';
 
 // ── Helpers ───────────────────────────────────────────────────────────────
 
@@ -459,6 +460,52 @@ describe('abrirPeriodoAction', () => {
     // invalidateCache se llama internamente; verificamos revalidatePath
     expect(revalidatePath).toHaveBeenCalledWith('/busy/contabilidad/periodos');
   });
+
+  it('abre un período trimestral exitosamente', async () => {
+    mockPrisma.periodoContable.count.mockResolvedValue(0);
+    mockPrisma.periodoContable.create.mockResolvedValue(
+      makePeriodo({
+        tipo: TipoPeriodo.TRIMESTRAL,
+        estado: EstadoPeriodo.ABIERTO,
+        fechaInicio: new Date('2026-01-01'),
+        fechaFin: new Date('2026-03-31'),
+      }),
+    );
+    mockPrisma.auditoriaPeriodo.create.mockResolvedValue({});
+    mockAperturaService();
+
+    const result = await abrirPeriodoAction({
+      tipo: TipoPeriodo.TRIMESTRAL,
+      fechaInicio: '2026-01-01T00:00:00Z',
+      fechaFin: '2026-03-31T23:59:59Z',
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data?.periodo.tipo).toBe(TipoPeriodo.TRIMESTRAL);
+  });
+
+  it('abre un período semestral exitosamente', async () => {
+    mockPrisma.periodoContable.count.mockResolvedValue(0);
+    mockPrisma.periodoContable.create.mockResolvedValue(
+      makePeriodo({
+        tipo: TipoPeriodo.SEMESTRAL,
+        estado: EstadoPeriodo.ABIERTO,
+        fechaInicio: new Date('2026-01-01'),
+        fechaFin: new Date('2026-06-30'),
+      }),
+    );
+    mockPrisma.auditoriaPeriodo.create.mockResolvedValue({});
+    mockAperturaService();
+
+    const result = await abrirPeriodoAction({
+      tipo: TipoPeriodo.SEMESTRAL,
+      fechaInicio: '2026-01-01T00:00:00Z',
+      fechaFin: '2026-06-30T23:59:59Z',
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.data?.periodo.tipo).toBe(TipoPeriodo.SEMESTRAL);
+  });
 });
 
 // ── Tests: cerrarPeriodoAction ────────────────────────────────────────────
@@ -670,5 +717,118 @@ describe('aprobarPeriodoAction', () => {
 
     expect(result.success).toBe(false);
     expect(result.error?.code).toBe('TRANSICION_INVALIDA');
+  });
+});
+
+// ── Tests: Códigos y Jerarquía ────────────────────────────────────────────
+
+describe('generarCodigoPeriodo', () => {
+  it('genera código trimestral T1 para enero-marzo', () => {
+    const codigo = PeriodoContableService.generarCodigoPeriodo(
+      TipoPeriodo.TRIMESTRAL,
+      new Date('2026-01-15T00:00:00Z'),
+    );
+    expect(codigo).toBe('T-2026-T1');
+  });
+
+  it('genera código trimestral T4 para octubre-diciembre', () => {
+    const codigo = PeriodoContableService.generarCodigoPeriodo(
+      TipoPeriodo.TRIMESTRAL,
+      new Date('2026-10-15T00:00:00Z'),
+    );
+    expect(codigo).toBe('T-2026-T4');
+  });
+
+  it('genera código semestral S1 para primer semestre', () => {
+    const codigo = PeriodoContableService.generarCodigoPeriodo(
+      TipoPeriodo.SEMESTRAL,
+      new Date('2026-01-01T00:00:00Z'),
+    );
+    expect(codigo).toBe('S-2026-S1');
+  });
+
+  it('genera código semestral S2 para segundo semestre', () => {
+    const codigo = PeriodoContableService.generarCodigoPeriodo(
+      TipoPeriodo.SEMESTRAL,
+      new Date('2026-07-01T00:00:00Z'),
+    );
+    expect(codigo).toBe('S-2026-S2');
+  });
+});
+
+describe('jerarquía de períodos', () => {
+  it('hijoTipo retorna SEMESTRAL para ANUAL', () => {
+    const hijoTipo = (PeriodoContableService as any)._hijoTipo(TipoPeriodo.ANUAL);
+    expect(hijoTipo).toBe(TipoPeriodo.SEMESTRAL);
+  });
+
+  it('hijoTipo retorna TRIMESTRAL para SEMESTRAL', () => {
+    const hijoTipo = (PeriodoContableService as any)._hijoTipo(TipoPeriodo.SEMESTRAL);
+    expect(hijoTipo).toBe(TipoPeriodo.TRIMESTRAL);
+  });
+
+  it('hijoTipo retorna MENSUAL para TRIMESTRAL', () => {
+    const hijoTipo = (PeriodoContableService as any)._hijoTipo(TipoPeriodo.TRIMESTRAL);
+    expect(hijoTipo).toBe(TipoPeriodo.MENSUAL);
+  });
+
+  it('resuelve periodo padre de TRIMESTRAL como SEMESTRAL', async () => {
+    mockPrisma.periodoContable.findFirst.mockResolvedValue(
+      makePeriodo({ periodoId: 'sem-1', tipo: TipoPeriodo.SEMESTRAL }),
+    );
+
+    const padreId = await PeriodoContableService.resolverPeriodoPadre(
+      TENANT,
+      TipoPeriodo.TRIMESTRAL,
+      new Date('2026-01-01'),
+      new Date('2026-03-31'),
+    );
+
+    expect(padreId).toBe('sem-1');
+    expect(mockPrisma.periodoContable.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ tipo: TipoPeriodo.SEMESTRAL }),
+      }),
+    );
+  });
+
+  it('resuelve periodo padre de SEMESTRAL como ANUAL', async () => {
+    mockPrisma.periodoContable.findFirst.mockResolvedValue(
+      makePeriodo({ periodoId: 'anual-1', tipo: TipoPeriodo.ANUAL }),
+    );
+
+    const padreId = await PeriodoContableService.resolverPeriodoPadre(
+      TENANT,
+      TipoPeriodo.SEMESTRAL,
+      new Date('2026-01-01'),
+      new Date('2026-06-30'),
+    );
+
+    expect(padreId).toBe('anual-1');
+    expect(mockPrisma.periodoContable.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ tipo: TipoPeriodo.ANUAL }),
+      }),
+    );
+  });
+});
+
+describe('label de períodos', () => {
+  it('genera label trimestral T1 para enero', () => {
+    const label = generarLabelPeriodo(
+      TipoPeriodo.TRIMESTRAL,
+      new Date('2026-01-01'),
+      new Date('2026-03-31'),
+    );
+    expect(label).toBe('T1 2026');
+  });
+
+  it('genera label semestral S2 para julio', () => {
+    const label = generarLabelPeriodo(
+      TipoPeriodo.SEMESTRAL,
+      new Date('2026-07-01'),
+      new Date('2026-12-31'),
+    );
+    expect(label).toBe('S2 2026');
   });
 });
