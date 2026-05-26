@@ -525,7 +525,9 @@ describe('aprobarPeriodo', () => {
   });
 
   it('rechaza si la transición no es válida', async () => {
-    const periodo = makePeriodo({ estado: EstadoPeriodo.ABIERTO });
+    // APROBADO no permite APROBADO→APROBADO (solo →REABIERTO)
+    // ABIERTO sí permitía ABIERTO→APROBADO, por eso usamos APROBADO
+    const periodo = makePeriodo({ estado: EstadoPeriodo.APROBADO });
     mockPrisma.periodoContable.findUnique.mockResolvedValue(periodo);
 
     await expect(PeriodoContableService.aprobarPeriodo('p-1', ACTOR))

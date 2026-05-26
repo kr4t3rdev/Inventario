@@ -567,7 +567,9 @@ describe('cerrarPeriodoAction', () => {
   });
 
   it('falla si la transición no es válida', async () => {
-    const periodo = makePeriodo({ estado: EstadoPeriodo.CERRADO });
+    // APROBADO no permite transición a EN_CIERRE ni CERRADO (solo REABIERTO)
+    // CERRADO sí permitía CERRADO→APROBADO vía admin bypass, por eso usamos APROBADO
+    const periodo = makePeriodo({ estado: EstadoPeriodo.APROBADO });
     mockPrisma.periodoContable.findFirst.mockResolvedValue(periodo);
     mockPrisma.periodoContable.findUnique.mockResolvedValue(periodo);
     // Mocks para generarResumenSnapshot (se llama antes de validar transición)
@@ -708,8 +710,10 @@ describe('aprobarPeriodoAction', () => {
     expect(result.error?.code).toBe('NOT_FOUND');
   });
 
-  it('falla si la transición no es válida (período no CERRADO)', async () => {
-    const periodo = makePeriodo({ estado: EstadoPeriodo.ABIERTO });
+  it('falla si la transición no es válida (período APROBADO no se puede aprobar de nuevo)', async () => {
+    // APROBADO solo permite transición a REABIERTO
+    // ABIERTO sí permitía ABIERTO→APROBADO, por eso usamos APROBADO
+    const periodo = makePeriodo({ estado: EstadoPeriodo.APROBADO });
     mockPrisma.periodoContable.findFirst.mockResolvedValue(periodo);
     mockPrisma.periodoContable.findUnique.mockResolvedValue(periodo);
 
