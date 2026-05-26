@@ -49,7 +49,7 @@ export class PeriodoContableService {
     tenantId: string,
     tipo?: TipoPeriodo,
   ): Promise<ResolverPeriodoResult> {
-    const tiposBusqueda = tipo ? [tipo] : [TipoPeriodo.DIARIO, TipoPeriodo.MENSUAL, TipoPeriodo.ANUAL];
+    const tiposBusqueda = tipo ? [tipo] : [TipoPeriodo.DIARIO, TipoPeriodo.MENSUAL, TipoPeriodo.TRIMESTRAL, TipoPeriodo.SEMESTRAL, TipoPeriodo.ANUAL];
 
     for (const t of tiposBusqueda) {
       const periodo = await prisma.periodoContable.findFirst({
@@ -151,6 +151,8 @@ export class PeriodoContableService {
    * Genera un código legible para un período según su tipo y fecha de inicio.
    *
    * - ANUAL: "A-2026"
+   * - SEMESTRAL: "S-2026-S1"
+   * - TRIMESTRAL: "T-2026-T1"
    * - MENSUAL: "M-2026-03"
    * - DIARIO: "D-2026-03-15"
    *
@@ -163,6 +165,14 @@ export class PeriodoContableService {
     switch (tipo) {
       case TipoPeriodo.ANUAL:
         return `A-${year}`;
+      case TipoPeriodo.SEMESTRAL: {
+        const sem = fechaInicio.getUTCMonth() < 6 ? 1 : 2;
+        return `S-${year}-S${sem}`;
+      }
+      case TipoPeriodo.TRIMESTRAL: {
+        const trim = Math.ceil((fechaInicio.getUTCMonth() + 1) / 3);
+        return `T-${year}-T${trim}`;
+      }
       case TipoPeriodo.MENSUAL: {
         const month = String(fechaInicio.getUTCMonth() + 1).padStart(2, '0');
         return `M-${year}-${month}`;
@@ -199,7 +209,16 @@ export class PeriodoContableService {
     // ANUAL no tiene padre en la jerarquía
     if (tipo === TipoPeriodo.ANUAL) return null;
 
-    const padreTipo = tipo === TipoPeriodo.MENSUAL ? TipoPeriodo.ANUAL : TipoPeriodo.MENSUAL;
+    // Mapa de tipo hijo → tipo padre
+    const padreTipoMap: Partial<Record<TipoPeriodo, TipoPeriodo>> = {
+      [TipoPeriodo.DIARIO]: TipoPeriodo.MENSUAL,
+      [TipoPeriodo.MENSUAL]: TipoPeriodo.TRIMESTRAL,
+      [TipoPeriodo.TRIMESTRAL]: TipoPeriodo.SEMESTRAL,
+      [TipoPeriodo.SEMESTRAL]: TipoPeriodo.ANUAL,
+    };
+
+    const padreTipo = padreTipoMap[tipo];
+    if (!padreTipo) return null;
 
     const padre = await prisma.periodoContable.findFirst({
       where: {
@@ -571,6 +590,10 @@ export class PeriodoContableService {
   private static _hijoTipo(padreTipo: TipoPeriodo): TipoPeriodo {
     switch (padreTipo) {
       case TipoPeriodo.ANUAL:
+        return TipoPeriodo.SEMESTRAL;
+      case TipoPeriodo.SEMESTRAL:
+        return TipoPeriodo.TRIMESTRAL;
+      case TipoPeriodo.TRIMESTRAL:
         return TipoPeriodo.MENSUAL;
       case TipoPeriodo.MENSUAL:
         return TipoPeriodo.DIARIO;

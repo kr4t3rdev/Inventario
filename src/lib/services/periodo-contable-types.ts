@@ -173,6 +173,16 @@ export function generarLabelPeriodo(tipo: TipoPeriodo, fechaInicio: Date, fechaF
       const anio = fechaInicio.getUTCFullYear();
       return `${dia} ${mes} ${anio}`;
     }
+    case TipoPeriodo.TRIMESTRAL: {
+      const trim = Math.ceil((fechaInicio.getUTCMonth() + 1) / 3);
+      const anio = fechaInicio.getUTCFullYear();
+      return `T${trim} ${anio}`;
+    }
+    case TipoPeriodo.SEMESTRAL: {
+      const sem = fechaInicio.getUTCMonth() < 6 ? 'S1' : 'S2';
+      const anio = fechaInicio.getUTCFullYear();
+      return `${sem} ${anio}`;
+    }
     case TipoPeriodo.MENSUAL: {
       const mes = meses[fechaInicio.getUTCMonth()];
       const anio = fechaInicio.getUTCFullYear();
