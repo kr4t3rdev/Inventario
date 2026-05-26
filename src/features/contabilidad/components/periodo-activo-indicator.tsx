@@ -27,6 +27,14 @@ function formatPeriodoLabel(fechaInicio: Date, fechaFin: Date, tipo: string): st
   if (tipo === 'MENSUAL') {
     return `${MESES[fechaInicio.getMonth()]} ${fechaInicio.getFullYear()}`
   }
+  if (tipo === 'TRIMESTRAL') {
+    const trim = Math.ceil((fechaInicio.getMonth() + 1) / 3)
+    return `T${trim} ${fechaInicio.getFullYear()}`
+  }
+  if (tipo === 'SEMESTRAL') {
+    const sem = fechaInicio.getMonth() < 6 ? 'S1' : 'S2'
+    return `${sem} ${fechaInicio.getFullYear()}`
+  }
   return `${fechaInicio.getFullYear()}`
 }
 
@@ -36,7 +44,7 @@ function formatPeriodoLabel(fechaInicio: Date, fechaFin: Date, tipo: string): st
  *
  * @returns {Promise<JSX.Element | null>} Badge del período activo o null si no hay.
  */
-export async function PeriodoActivoIndicator(): Promise<JSX.Element | null> {
+async function getPeriodoActivoData() {
   try {
     const { getCurrentUser } = await import('@/lib/server-actions/get-current-user');
     const user = await getCurrentUser();
@@ -49,20 +57,35 @@ export async function PeriodoActivoIndicator(): Promise<JSX.Element | null> {
 
     const { periodo } = resultado
     const config = ESTADO_CONFIG[periodo.estado as string] ?? ESTADO_CONFIG.ABIERTO
-    const { Icon } = config
     const label = formatPeriodoLabel(periodo.fechaInicio, periodo.fechaFin, periodo.tipo)
 
-    return (
-      <Link href="/busy/contabilidad/periodos" className="hover:opacity-80 transition-opacity">
-        <Badge className={`gap-1.5 px-2.5 py-1 text-xs font-medium border-0 ${config.className}`}>
-          <Icon className="h-3 w-3" />
-          <span>{label}</span>
-          <span className="opacity-70">—</span>
-          <span>{config.label}</span>
-        </Badge>
-      </Link>
-    )
+    return { config, label }
   } catch {
     return null
   }
+}
+
+/**
+ * @description Server component que busca el período activo para el tenant
+ *              y renderiza un badge clickeable que lleva a /busy/contabilidad/periodos.
+ *
+ * @returns {Promise<JSX.Element | null>} Badge del período activo o null si no hay.
+ */
+export async function PeriodoActivoIndicator(): Promise<JSX.Element | null> {
+  const data = await getPeriodoActivoData()
+  if (!data) return null
+
+  const { config, label } = data
+  const { Icon } = config
+
+  return (
+    <Link href="/busy/contabilidad/periodos" className="hover:opacity-80 transition-opacity">
+      <Badge className={`gap-1.5 px-2.5 py-1 text-xs font-medium border-0 ${config.className}`}>
+        <Icon className="h-3 w-3" />
+        <span>{label}</span>
+        <span className="opacity-70">—</span>
+        <span>{config.label}</span>
+      </Badge>
+    </Link>
+  )
 }

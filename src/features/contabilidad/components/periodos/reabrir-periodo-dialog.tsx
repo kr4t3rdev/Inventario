@@ -37,6 +37,8 @@ interface ReabrirPeriodoDialogProps {
 const TIPO_LABELS: Record<string, string> = {
   DIARIO: "Diario",
   MENSUAL: "Mensual",
+  TRIMESTRAL: "Trimestral",
+  SEMESTRAL: "Semestral",
   ANUAL: "Anual",
 };
 

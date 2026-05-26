@@ -94,6 +94,8 @@ export function AbrirPeriodoDialog({ open, onOpenChange, onSuccess }: AbrirPerio
               <SelectContent>
                 <SelectItem value="DIARIO">Diario</SelectItem>
                 <SelectItem value="MENSUAL">Mensual</SelectItem>
+                <SelectItem value="TRIMESTRAL">Trimestral</SelectItem>
+                <SelectItem value="SEMESTRAL">Semestral</SelectItem>
                 <SelectItem value="ANUAL">Anual</SelectItem>
               </SelectContent>
             </Select>

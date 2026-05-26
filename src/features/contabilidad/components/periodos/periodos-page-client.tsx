@@ -49,6 +49,8 @@ import type { TipoPeriodo, EstadoPeriodo } from "@/lib/services/periodo-contable
 const TIPO_LABELS: Record<string, string> = {
   DIARIO: "Diario",
   MENSUAL: "Mensual",
+  TRIMESTRAL: "Trimestral",
+  SEMESTRAL: "Semestral",
   ANUAL: "Anual",
 };
 
@@ -255,6 +257,8 @@ export function PeriodosPageClient({
                     <SelectItem value="todos">Todos</SelectItem>
                     <SelectItem value="DIARIO">Diario</SelectItem>
                     <SelectItem value="MENSUAL">Mensual</SelectItem>
+                    <SelectItem value="TRIMESTRAL">Trimestral</SelectItem>
+                    <SelectItem value="SEMESTRAL">Semestral</SelectItem>
                     <SelectItem value="ANUAL">Anual</SelectItem>
                   </SelectContent>
                 </Select>
