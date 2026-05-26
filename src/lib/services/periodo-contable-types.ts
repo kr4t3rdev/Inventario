@@ -30,11 +30,11 @@ export const WRITABLE_STATES: EstadoPeriodo[] = [
  */
 export const VALID_TRANSITIONS: Record<EstadoPeriodo, EstadoPeriodo[]> = {
   BORRADOR: [EstadoPeriodo.ABIERTO],
-  ABIERTO: [EstadoPeriodo.EN_CIERRE, EstadoPeriodo.CERRADO], // CERRADO directo para V1
+  ABIERTO: [EstadoPeriodo.EN_CIERRE, EstadoPeriodo.CERRADO, EstadoPeriodo.APROBADO], // + APROBADO directo para managers
   EN_CIERRE: [EstadoPeriodo.CERRADO],
   CERRADO: [EstadoPeriodo.APROBADO],
   APROBADO: [EstadoPeriodo.REABIERTO],
-  REABIERTO: [EstadoPeriodo.EN_CIERRE, EstadoPeriodo.ABIERTO],
+  REABIERTO: [EstadoPeriodo.EN_CIERRE, EstadoPeriodo.ABIERTO, EstadoPeriodo.APROBADO],
 };
 
 // ── Error codes del guard y servicio ─────────────────────────────────────

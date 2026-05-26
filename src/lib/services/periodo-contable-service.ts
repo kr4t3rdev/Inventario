@@ -291,6 +291,7 @@ export class PeriodoContableService {
     periodoId: string,
     actor: string,
     metadata?: { snapshotsCount?: number; operacionesCount?: number },
+    esManager: boolean = false,
   ) {
     const periodo = await prisma.periodoContable.findUnique({
       where: { periodoId },
@@ -300,8 +301,13 @@ export class PeriodoContableService {
       throw new ActionError('Período no encontrado', 'NOT_FOUND');
     }
 
+    // Definir estado destino: managers saltan directo a APROBADO
+    const estadoActual = periodo.estado as EstadoPeriodo;
+    const estadoDestino = esManager ? EstadoPeriodo.APROBADO : EstadoPeriodo.CERRADO;
+    const estadoValidacion = esManager ? EstadoPeriodo.APROBADO : EstadoPeriodo.EN_CIERRE;
+
     // Validar transición
-    if (!this.validarTransicion(periodo.estado as EstadoPeriodo, EstadoPeriodo.EN_CIERRE)) {
+    if (!this.validarTransicion(estadoActual, estadoValidacion)) {
       throw new PeriodoError(
         `No se puede cerrar un período en estado ${periodo.estado}.`,
         'TRANSICION_INVALIDA',
@@ -348,15 +354,22 @@ export class PeriodoContableService {
       }
     }
 
-    // Transición: ABIERTO → EN_CIERRE → CERRADO
-    // Nota: En T3 se integrará SnapshotService.generarSnapshot() entre estos dos pasos.
-    const cerrado = await prisma.periodoContable.update({
+    // Transición: ABIERTO → CERRADO (o → APROBADO si es manager)
+    const updateData: Record<string, unknown> = {
+      estado: estadoDestino,
+      cerradoPor: actor,
+      cerradoAt: new Date(),
+    };
+
+    // Managers: auto-aprobación en el mismo paso
+    if (esManager && estadoDestino === EstadoPeriodo.APROBADO) {
+      updateData.aprobadoPor = actor;
+      updateData.aprobadoAt = new Date();
+    }
+
+    const resultado = await prisma.periodoContable.update({
       where: { periodoId },
-      data: {
-        estado: EstadoPeriodo.CERRADO,
-        cerradoPor: actor,
-        cerradoAt: new Date(),
-      },
+      data: updateData,
     });
 
     // Registrar auditoría con metadatos del cierre
@@ -365,15 +378,14 @@ export class PeriodoContableService {
       tenantId: periodo.tenantId,
       evento: EventoAuditoria.CIERRE,
       actor,
-      payload: metadata?.snapshotsCount !== undefined || metadata?.operacionesCount !== undefined
-        ? {
-            ...(metadata.snapshotsCount !== undefined && { snapshots: metadata.snapshotsCount }),
-            ...(metadata.operacionesCount !== undefined && { operaciones: metadata.operacionesCount }),
-          }
-        : undefined,
+      payload: {
+        ...(metadata?.snapshotsCount !== undefined && { snapshots: metadata.snapshotsCount }),
+        ...(metadata?.operacionesCount !== undefined && { operaciones: metadata.operacionesCount }),
+        ...(esManager && { autoAprobado: true }),
+      },
     });
 
-    return cerrado;
+    return resultado;
   }
 
   /**

@@ -20,6 +20,7 @@ import { AperturaPeriodoService } from '@/lib/services/apertura-periodo-service'
 import { SnapshotService } from '@/lib/services/periodo-snapshot-service';
 import { invalidateCache } from '@/lib/services/periodo-contable-guard';
 import { TipoPeriodo, EstadoPeriodo, CategoriaPeriodo } from '@/lib/services/periodo-contable-types';
+import { isTenantAdminRole } from '@/lib/auth/roles';
 import { prisma } from '@/lib/prisma';
 
 // ── Period Lock Check (para bloqueos visuales en UI) ─────────────────────
@@ -385,10 +386,13 @@ export const cerrarPeriodoAction = withAction(async (
   );
 
   // Cerrar período (valida transición e hijos)
+  // Managers y admins del tenant auto-aprueban al cerrar
+  const esAdminTenant = isTenantAdminRole(user.tenantRole);
   const cerrado = await PeriodoContableService.cerrarPeriodo(
     parsed.periodoId,
     user.userId,
     { snapshotsCount: snapshots.length },
+    esAdminTenant,
   );
 
   // Persistir resumen y hash en el período (después del close exitoso)
