@@ -20,6 +20,12 @@ vi.mock('@/lib/prisma', () => ({
     periodoContable: {
       findFirst: vi.fn(),
     },
+    periodoCache: {
+      findUnique: vi.fn(),
+      upsert: vi.fn().mockResolvedValue({}),
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+      delete: vi.fn().mockResolvedValue({}),
+    },
   },
 }));
 
@@ -36,9 +42,9 @@ const mockUser: AuthenticatedUser = {
 };
 
 describe('withPeriodValidation', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
-    clearCache();
+    await clearCache();
     // Default: guard enabled, enforce mode
     process.env.PERIODO_GUARD_ENABLED = 'true';
     process.env.PERIODO_CONTABLE_MODE = 'enforce';

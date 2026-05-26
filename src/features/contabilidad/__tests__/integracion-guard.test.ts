@@ -71,6 +71,12 @@ function mockPrisma(periodoMock: typeof mockPeriodoCerrado | typeof mockPeriodoA
       reconciliacionGasto: { create: vi.fn() },
       stockUbicacion: { findFirst: vi.fn(), upsert: vi.fn() },
       stockLog: { create: vi.fn() },
+      periodoCache: {
+        findUnique: vi.fn(),
+        upsert: vi.fn().mockResolvedValue({}),
+        deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+        delete: vi.fn().mockResolvedValue({}),
+      },
       $transaction: vi.fn((cb: any) => cb({
         compraServicio: { create: vi.fn().mockResolvedValue({ compraServicioId: 'cs-1' }) },
         reconciliacionGasto: { create: vi.fn() },
@@ -86,9 +92,9 @@ function mockPrisma(periodoMock: typeof mockPeriodoCerrado | typeof mockPeriodoA
 }
 
 describe('Integración guard — auto-reconciliaciones', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
-    clearCache();
+    await clearCache();
     process.env.PERIODO_GUARD_ENABLED = 'true';
     process.env.PERIODO_CONTABLE_MODE = 'enforce';
   });

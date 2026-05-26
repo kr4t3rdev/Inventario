@@ -2338,3 +2338,19 @@ model BackupPlan {
   @@index([tenantId])
   @@map("backup_plans")
 }
+
+/// Caché compartido de períodos contables activos (PostgreSQL-backed).
+/// Reemplaza el Map en memoria para que múltiples instancias compartan
+/// el mismo caché. Cada entrada tiene TTL definido por expiresAt.
+model PeriodoCache {
+  cacheKey      String   @id
+  tenantId      String
+  fecha         DateTime
+  resultadoJson Json
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+
+  @@index([tenantId, expiresAt])
+  @@index([expiresAt])
+  @@map("periodo_cache")
+}

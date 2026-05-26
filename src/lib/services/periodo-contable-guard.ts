@@ -7,15 +7,17 @@
  * - audit-only: valida, logea violaciones pero permite la operación
  * - enforce: valida, logea violaciones y bloquea la operación
  *
- * Incluye caché en memoria con TTL de 30 segundos para evitar queries repetidas.
+ * Usa un caché compartido en PostgreSQL (tabla periodo_cache) para que múltiples
+ * instancias de la aplicación compartan el mismo estado. Cada entrada tiene un
+ * TTL de 30 segundos definido por expiresAt.
  */
 
+import { prisma } from '@/lib/prisma';
 import { ActionError } from '@/lib/server-actions/types';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { PeriodoContableService } from './periodo-contable-service';
 import {
   EstadoPeriodo,
-  WRITABLE_STATES,
   getGuardConfig,
   type GuardConfig,
   type PeriodoContableResumen,
@@ -43,16 +45,9 @@ export interface VerificarEscrituraResult {
   modo: string;
 }
 
-// ── Cache de período activo ───────────────────────────────────────────────
+// ── Cache de período activo (PostgreSQL compartido) ──────────────────────
 
 const CACHE_TTL_MS = 30_000; // 30 segundos
-
-interface CacheEntry {
-  resultado: ResolverPeriodoResult;
-  expiresAt: number;
-}
-
-const periodoCache = new Map<string, CacheEntry>();
 
 /**
  * Genera la clave de caché para un tenant y fecha.
@@ -65,45 +60,60 @@ function cacheKey(tenantId: string, fecha: Date): string {
 
 /**
  * Cachea el resultado de resolución de período para un tenant y fecha.
+ * Usa upsert sobre la tabla PostgreSQL `periodo_cache` para que
+ * todas las instancias compartan el mismo estado.
  *
  * @param {string} tenantId - ID del tenant.
  * @param {Date} fecha - Fecha de negocio.
  * @param {ResolverPeriodoResult} resultado - Resultado a cachear.
  */
-export function cachearPeriodoActivo(
+export async function cachearPeriodoActivo(
   tenantId: string,
   fecha: Date,
   resultado: ResolverPeriodoResult,
-): void {
+): Promise<void> {
   const key = cacheKey(tenantId, fecha);
-  periodoCache.set(key, {
-    resultado,
-    expiresAt: Date.now() + CACHE_TTL_MS,
+  await prisma.periodoCache.upsert({
+    where: { cacheKey: key },
+    create: {
+      cacheKey: key,
+      tenantId,
+      fecha,
+      resultadoJson: resultado as Record<string, unknown>,
+      expiresAt: new Date(Date.now() + CACHE_TTL_MS),
+    },
+    update: {
+      resultadoJson: resultado as Record<string, unknown>,
+      expiresAt: new Date(Date.now() + CACHE_TTL_MS),
+    },
   });
 }
 
 /**
- * Obtiene el período cacheado para un tenant y fecha.
+ * Obtiene el período cacheado para un tenant y fecha desde PostgreSQL.
  *
  * @param {string} tenantId - ID del tenant.
  * @param {Date} fecha - Fecha de negocio.
- * @returns {ResolverPeriodoResult | null} Resultado cacheado o null si no existe o expiró.
+ * @returns {Promise<ResolverPeriodoResult | null>} Resultado cacheado o null si no existe o expiró.
  */
-export function obtenerPeriodoCache(
+export async function obtenerPeriodoCache(
   tenantId: string,
   fecha: Date,
-): ResolverPeriodoResult | null {
+): Promise<ResolverPeriodoResult | null> {
   const key = cacheKey(tenantId, fecha);
-  const entry = periodoCache.get(key);
+  const entry = await prisma.periodoCache.findUnique({
+    where: { cacheKey: key },
+  });
 
   if (!entry) return null;
 
-  if (Date.now() > entry.expiresAt) {
-    periodoCache.delete(key);
+  // Si expiró, borrar y retornar null
+  if (new Date() > entry.expiresAt) {
+    await prisma.periodoCache.delete({ where: { cacheKey: key } });
     return null;
   }
 
-  return entry.resultado;
+  return entry.resultadoJson as unknown as ResolverPeriodoResult;
 }
 
 /**
@@ -112,19 +122,30 @@ export function obtenerPeriodoCache(
  *
  * @param {string} tenantId - ID del tenant.
  */
-export function invalidateCache(tenantId: string): void {
-  for (const key of periodoCache.keys()) {
-    if (key.startsWith(`${tenantId}:`)) {
-      periodoCache.delete(key);
-    }
-  }
+export async function invalidateCache(tenantId: string): Promise<void> {
+  await prisma.periodoCache.deleteMany({
+    where: { tenantId },
+  });
 }
 
 /**
  * Invalida todo el caché (útil para tests).
  */
-export function clearCache(): void {
-  periodoCache.clear();
+export async function clearCache(): Promise<void> {
+  await prisma.periodoCache.deleteMany({});
+}
+
+/**
+ * Limpia las entradas expiradas del caché.
+ * Puede llamarse periódicamente desde un cron o al inicio del guard.
+ *
+ * @returns {Promise<number>} Cantidad de entradas eliminadas.
+ */
+export async function limpiarCacheExpirado(): Promise<number> {
+  const result = await prisma.periodoCache.deleteMany({
+    where: { expiresAt: { lt: new Date() } },
+  });
+  return result.count;
 }
 
 // ── PeriodoAuditService stub (se implementa en T3) ───────────────────────
@@ -313,8 +334,8 @@ export class PeriodoGuard {
    * Resuelve el período activo usando caché primero, DB como fallback.
    */
   private async _resolverConCache(fecha: Date, tenantId: string): Promise<ResolverPeriodoResult> {
-    // Intentar caché
-    const cached = obtenerPeriodoCache(tenantId, fecha);
+    // Intentar caché (PostgreSQL compartido)
+    const cached = await obtenerPeriodoCache(tenantId, fecha);
     if (cached) {
       return cached;
     }
@@ -323,7 +344,7 @@ export class PeriodoGuard {
     const resultado = await PeriodoContableService.resolverPeriodoActivo(fecha, tenantId);
 
     // Cachear resultado
-    cachearPeriodoActivo(tenantId, fecha, resultado);
+    await cachearPeriodoActivo(tenantId, fecha, resultado);
 
     return resultado;
   }

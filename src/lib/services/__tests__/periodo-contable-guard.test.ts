@@ -23,6 +23,12 @@ const { mockPrisma } = vi.hoisted(() => ({
       findMany: vi.fn(),
       create: vi.fn(),
     },
+    periodoCache: {
+      findUnique: vi.fn(),
+      upsert: vi.fn().mockResolvedValue({}),
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
+      delete: vi.fn().mockResolvedValue({}),
+    },
   },
 }));
 
@@ -86,8 +92,8 @@ function resetEnv() {
 // ── Tests: modo disabled ─────────────────────────────────────────────────
 
 describe('modo disabled', () => {
-  beforeEach(() => {
-    clearCache();
+  beforeEach(async () => {
+    await clearCache();
     resetEnv();
     vi.clearAllMocks();
   });
@@ -126,8 +132,8 @@ describe('modo disabled', () => {
 // ── Tests: modo audit-only ───────────────────────────────────────────────
 
 describe('modo audit-only', () => {
-  beforeEach(() => {
-    clearCache();
+  beforeEach(async () => {
+    await clearCache();
     resetEnv();
     vi.clearAllMocks();
   });
@@ -198,8 +204,8 @@ describe('modo audit-only', () => {
 // ── Tests: modo enforce ──────────────────────────────────────────────────
 
 describe('modo enforce', () => {
-  beforeEach(() => {
-    clearCache();
+  beforeEach(async () => {
+    await clearCache();
     resetEnv();
     vi.clearAllMocks();
   });
@@ -366,9 +372,8 @@ describe('modo enforce', () => {
 
 // ── Tests: Caché ─────────────────────────────────────────────────────────
 
-describe('caché de período activo', () => {
+describe('caché de período activo (PostgreSQL)', () => {
   beforeEach(() => {
-    clearCache();
     resetEnv();
     vi.clearAllMocks();
   });
@@ -377,10 +382,24 @@ describe('caché de período activo', () => {
     vi.useRealTimers();
   });
 
+  function cacheKey(tenantId: string, fecha: Date): string {
+    const dia = fecha.toISOString().split('T')[0];
+    return `${tenantId}:${dia}`;
+  }
+
+  function makeCacheEntry(tenantId: string, fecha: Date, ttlMs = 60_000) {
+    return {
+      cacheKey: cacheKey(tenantId, fecha),
+      tenantId,
+      fecha,
+      resultadoJson: makeResolverResult(),
+      expiresAt: new Date(Date.now() + ttlMs),
+    };
+  }
+
   it('cache hit evita query a DB', async () => {
     const fecha = new Date('2026-03-15');
-    const resultado = makeResolverResult();
-    cachearPeriodoActivo(TENANT, fecha, resultado);
+    mockPrisma.periodoCache.findUnique.mockResolvedValue(makeCacheEntry(TENANT, fecha));
 
     const guard = makeGuard({ mode: 'enforce' });
     const result = await guard.verificarEscritura({
@@ -396,6 +415,7 @@ describe('caché de período activo', () => {
   });
 
   it('cache miss hace query a DB', async () => {
+    mockPrisma.periodoCache.findUnique.mockResolvedValue(null);
     mockPrisma.periodoContable.findFirst.mockResolvedValue({
       periodoId: 'p-1',
       tenantId: TENANT,
@@ -420,48 +440,84 @@ describe('caché de período activo', () => {
     vi.useFakeTimers();
 
     const fecha = new Date('2026-03-15');
-    const resultado = makeResolverResult();
-    cachearPeriodoActivo(TENANT, fecha, resultado);
+    // Mock cache con expiresAt = ahora + 30s
+    mockPrisma.periodoCache.findUnique.mockResolvedValue(
+      makeCacheEntry(TENANT, fecha, 30_000),
+    );
 
     // Verificar que el caché funciona
-    const cached = obtenerPeriodoCache(TENANT, fecha);
+    const cached = await obtenerPeriodoCache(TENANT, fecha);
     expect(cached).not.toBeNull();
 
     // Avanzar 31 segundos
     vi.advanceTimersByTime(31_000);
 
-    // El caché debería haber expirado
-    const expired = obtenerPeriodoCache(TENANT, fecha);
+    // El caché debería haber expirado (findUnique no es llamado de nuevo
+    // porque delete ya fue llamado; mockeamos null para la próxima llamada)
+    const expired = await obtenerPeriodoCache(TENANT, fecha);
     expect(expired).toBeNull();
+
+    // Verificar que llamó delete por expiración
+    expect(mockPrisma.periodoCache.delete).toHaveBeenCalledWith({
+      where: { cacheKey: cacheKey(TENANT, fecha) },
+    });
   });
 
   it('invalidateCache borra entradas del tenant', async () => {
     const fecha1 = new Date('2026-03-15');
     const fecha2 = new Date('2026-03-20');
-    cachearPeriodoActivo(TENANT, fecha1, makeResolverResult());
-    cachearPeriodoActivo(TENANT, fecha2, makeResolverResult());
 
-    // Verificar que existen
-    expect(obtenerPeriodoCache(TENANT, fecha1)).not.toBeNull();
-    expect(obtenerPeriodoCache(TENANT, fecha2)).not.toBeNull();
+    // Mockear entradas en caché para ambos findUnique
+    mockPrisma.periodoCache.findUnique
+      .mockResolvedValueOnce(makeCacheEntry(TENANT, fecha1))
+      .mockResolvedValueOnce(makeCacheEntry(TENANT, fecha2));
 
-    // Invalidar
-    invalidateCache(TENANT);
+    // Verificar que existen (cada get llama a findUnique)
+    expect(await obtenerPeriodoCache(TENANT, fecha1)).not.toBeNull();
+    expect(await obtenerPeriodoCache(TENANT, fecha2)).not.toBeNull();
 
-    // Verificar que se borraron
-    expect(obtenerPeriodoCache(TENANT, fecha1)).toBeNull();
-    expect(obtenerPeriodoCache(TENANT, fecha2)).toBeNull();
+    // Invalidar vía deleteMany
+    await invalidateCache(TENANT);
+
+    // Después de invalidar, findUnique devuelve null
+    mockPrisma.periodoCache.findUnique.mockResolvedValue(null);
+
+    expect(await obtenerPeriodoCache(TENANT, fecha1)).toBeNull();
+    expect(await obtenerPeriodoCache(TENANT, fecha2)).toBeNull();
+
+    // Verificar que llamó deleteMany con el tenant correcto
+    expect(mockPrisma.periodoCache.deleteMany).toHaveBeenCalledWith({
+      where: { tenantId: TENANT },
+    });
   });
 
   it('invalidateCache no borra entradas de otro tenant', async () => {
     const fecha = new Date('2026-03-15');
-    cachearPeriodoActivo(TENANT, fecha, makeResolverResult());
-    cachearPeriodoActivo('tenant-2', fecha, makeResolverResult());
 
-    invalidateCache(TENANT);
+    // Caché para ambos tenants
+    mockPrisma.periodoCache.findUnique
+      .mockResolvedValueOnce(makeCacheEntry(TENANT, fecha))
+      .mockResolvedValueOnce(makeCacheEntry('tenant-2', fecha));
 
-    expect(obtenerPeriodoCache(TENANT, fecha)).toBeNull();
-    expect(obtenerPeriodoCache('tenant-2', fecha)).not.toBeNull();
+    expect(await obtenerPeriodoCache(TENANT, fecha)).not.toBeNull();
+    expect(await obtenerPeriodoCache('tenant-2', fecha)).not.toBeNull();
+
+    // Reset mocks and invalidate
+    mockPrisma.periodoCache.findUnique.mockReset();
+    await invalidateCache(TENANT);
+
+    // Después de invalidar, solo TENANT debe estar vacío
+    mockPrisma.periodoCache.findUnique
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(makeCacheEntry('tenant-2', fecha));
+
+    expect(await obtenerPeriodoCache(TENANT, fecha)).toBeNull();
+    expect(await obtenerPeriodoCache('tenant-2', fecha)).not.toBeNull();
+
+    // deleteMany solo llamado para TENANT
+    expect(mockPrisma.periodoCache.deleteMany).toHaveBeenCalledWith({
+      where: { tenantId: TENANT },
+    });
   });
 });
 
@@ -699,8 +755,8 @@ describe('withPeriodValidation wrapper', () => {
 // ── Tests: assertWritable estático ───────────────────────────────────────
 
 describe('assertWritable estático', () => {
-  beforeEach(() => {
-    clearCache();
+  beforeEach(async () => {
+    await clearCache();
     resetEnv();
     vi.clearAllMocks();
   });
