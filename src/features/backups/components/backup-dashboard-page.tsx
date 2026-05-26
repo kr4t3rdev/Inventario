@@ -116,7 +116,33 @@ export function BackupDashboardPage() {
           toast.error(res.error?.message ?? 'No se pudo descargar la copia')
           return
         }
-        window.open(res.data.downloadUrl, '_blank', 'noopener,noreferrer')
+
+        const url = res.data.downloadUrl
+        const fileName = res.data.fileName ?? `backup-${backupLogId}.sql.gz`
+
+        if (url.startsWith('/')) {
+          // LocalFS: fetch via API route with auth token, then download as blob
+          const token = sessionStorage.getItem('token')
+          const response = await fetch(url, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          })
+          if (!response.ok) {
+            const err = await response.json().catch(() => ({ error: 'Error al descargar' }))
+            throw new Error(err.error ?? 'Error al descargar')
+          }
+          const blob = await response.blob()
+          const blobUrl = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = blobUrl
+          a.download = fileName
+          document.body.appendChild(a)
+          a.click()
+          document.body.removeChild(a)
+          URL.revokeObjectURL(blobUrl)
+        } else {
+          // Vercel Blob: signed URL, open directly
+          window.open(url, '_blank', 'noopener,noreferrer')
+        }
       } catch {
         toast.error('Error inesperado al descargar')
       }

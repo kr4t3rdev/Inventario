@@ -305,7 +305,9 @@ export const downloadBackupAction = withAction(
       downloadUrl = `/api/backups/download?backupLogId=${input.backupLogId}`
     }
 
-    return { downloadUrl, fileName: log.fileName }
+    // Extract basename from storage path (e.g. 'backups/full_xxx.sql.gz' → 'full_xxx.sql.gz')
+    const fileName = log.fileName.split('/').pop() ?? log.fileName
+    return { downloadUrl, fileName }
   },
 )
 
