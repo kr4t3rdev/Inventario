@@ -294,7 +294,7 @@ export const obtenerTimelineAction = withAction(async (
  * Valida que no exista otro período del mismo tipo con fechas solapadas.
  *
  * @param {Object} input - Datos del período a crear.
- * @param {TipoPeriodo} input.tipo - Tipo de período (DIARIO, MENSUAL, ANUAL).
+ * @param {TipoPeriodo} input.tipo - Tipo de período (DIARIO, MENSUAL, TRIMESTRAL, SEMESTRAL, ANUAL).
  * @param {string} input.fechaInicio - Fecha de inicio (ISO string).
  * @param {string} input.fechaFin - Fecha de fin (ISO string).
  * @param {string} [input.observaciones] - Observaciones opcionales.

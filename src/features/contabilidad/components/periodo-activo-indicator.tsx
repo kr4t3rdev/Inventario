@@ -1,7 +1,7 @@
 /**
  * @description Indicador de período contable activo para el header global.
  *
- * Muestra el período activo actual (DIARIO → MENSUAL → ANUAL) con su estado
+ * Muestra el período activo actual (DIARIO → MENSUAL → TRIMESTRAL → SEMESTRAL → ANUAL) con su estado
  * y color correspondiente. Se actualiza al navegar.
  */
 import { PeriodoContableService } from '@/lib/services/periodo-contable-service'

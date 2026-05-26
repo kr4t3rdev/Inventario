@@ -46,7 +46,7 @@ export class AperturaPeriodoService {
    * 3. Si no hay período anterior, deriva de datos vivos (saldos bancarios actuales).
    *
    * @param {string} tenantId - ID del tenant.
-   * @param {string} tipo - Tipo de período (ANUAL, MENSUAL, DIARIO).
+   * @param {string} tipo - Tipo de período (ANUAL, SEMESTRAL, TRIMESTRAL, MENSUAL, DIARIO).
    * @param {Date} fechaInicio - Fecha de inicio del nuevo período.
    * @returns {Promise<SaldosApertura>} Saldos derivados para la apertura.
    */

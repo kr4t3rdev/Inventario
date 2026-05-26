@@ -191,7 +191,9 @@ export class PeriodoContableService {
    * Resuelve el período padre en la jerarquía según tipo y fechas.
    *
    * - ANUAL → sin padre
-   * - MENSUAL → busca ANUAL que contenga las fechas
+   * - SEMESTRAL → busca ANUAL que contenga las fechas
+   * - TRIMESTRAL → busca SEMESTRAL que contenga las fechas
+   * - MENSUAL → busca TRIMESTRAL que contenga las fechas
    * - DIARIO → busca MENSUAL que contenga las fechas
    *
    * @param {string} tenantId - ID del tenant.
