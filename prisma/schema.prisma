@@ -2152,6 +2152,11 @@ enum EventoAuditoria {
   INTENTO_BYPASS
 }
 
+enum ModoContable {
+  CAJA
+  DEVENGO
+}
+
 enum CategoriaPeriodo {
   ORDINARIO
   EXTRAORDINARIO
@@ -2169,6 +2174,7 @@ model PeriodoContable {
   periodoPadreId     String?            /// Jerarquía: DIARIO→MENSUAL→ANUAL
   aperturaAutomatica Boolean           @default(false)
   categoria          CategoriaPeriodo  @default(ORDINARIO)
+  modoContable       ModoContable       @default(CAJA)
   abiertoPorId       String?
   fechaApertura      DateTime?
   cerradoPor         String?

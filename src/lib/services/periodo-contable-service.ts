@@ -288,6 +288,7 @@ export class PeriodoContableService {
 				estado: EstadoPeriodo.ABIERTO,
 				periodoPadreId,
 				categoria: input.categoria ?? CategoriaPeriodo.ORDINARIO,
+				modoContable: input.modoContable ?? "CAJA",
 				abiertoPorId: actor,
 				fechaApertura: new Date(),
 				observaciones: input.observaciones,
@@ -647,7 +648,9 @@ export class PeriodoContableService {
 	 * @param {TipoPeriodo} padreTipo - Tipo del período padre.
 	 * @returns {TipoPeriodo[]} Lista de tipos descendientes.
 	 */
-	private static _obtenerTiposDescendientes(padreTipo: TipoPeriodo): TipoPeriodo[] {
+	private static _obtenerTiposDescendientes(
+		padreTipo: TipoPeriodo,
+	): TipoPeriodo[] {
 		const tipos: TipoPeriodo[] = [];
 		let current = padreTipo;
 		// Evitar bucle infinito: máximo 4 iteraciones (ANUAL→SEMESTRAL→TRIMESTRAL→MENSUAL→DIARIO)

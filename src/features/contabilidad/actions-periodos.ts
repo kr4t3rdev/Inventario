@@ -87,6 +87,7 @@ const abrirPeriodoSchema = z.object({
 		.datetime({ message: "La fecha de fin debe ser una fecha válida" }),
 	observaciones: z.string().max(500).optional(),
 	categoria: z.nativeEnum(CategoriaPeriodo).optional(),
+	modoContable: z.string().optional(),
 });
 
 /**
@@ -342,6 +343,7 @@ export const abrirPeriodoAction = withAction(
 				fechaFin,
 				observaciones: parsed.observaciones,
 				categoria: parsed.categoria,
+				modoContable: parsed.modoContable,
 			},
 			user.userId,
 		);
@@ -354,7 +356,7 @@ export const abrirPeriodoAction = withAction(
 		);
 
 		// Invalidar caché del guard para este tenant
-		invalidateCache(tenantId);
+		await invalidateCache(tenantId);
 
 		revalidatePath("/busy/contabilidad/periodos");
 
@@ -390,11 +392,15 @@ export const cerrarPeriodoAction = withAction(
 			throw new ActionError("Período no encontrado", "NOT_FOUND");
 		}
 
+		// Usar modo contable del período (CAJA | DEVENGO)
+		const modoContable = (periodo.modoContable ?? "CAJA") as "CAJA" | "DEVENGO";
+		const modoSnapshot = modoContable === "CAJA" ? "caja" : "devengo";
+
 		// Generar snapshot ANTES de cerrar (captura el estado mientras está ABIERTO)
 		const snapshotService = new SnapshotService();
 		const snapshots = await snapshotService.generarSnapshot(
 			parsed.periodoId,
-			"caja",
+			modoSnapshot,
 			user.userId,
 		);
 
@@ -404,6 +410,7 @@ export const cerrarPeriodoAction = withAction(
 				tenantId,
 				periodo.fechaInicio,
 				periodo.fechaFin,
+				modoContable,
 			);
 
 		// Cerrar período (valida transición e hijos)

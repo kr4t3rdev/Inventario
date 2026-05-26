@@ -426,18 +426,26 @@ export class SnapshotService {
    * @param {string} tenantId - ID del tenant.
    * @param {Date} fechaInicio - Inicio del período.
    * @param {Date} fechaFin - Fin del período.
+   * @param {'CAJA' | 'DEVENGO'} [modo='CAJA'] - Modo contable para el cálculo.
    * @returns {Promise<{ resumenJson: Record<string, unknown>; hashIntegridad: string }>}
    */
   async generarResumenSnapshot(
     tenantId: string,
     fechaInicio: Date,
     fechaFin: Date,
+    modo: 'CAJA' | 'DEVENGO' = 'CAJA',
   ): Promise<{ resumenJson: Record<string, unknown>; hashIntegridad: string }> {
     const cuentas = await prisma.cuentaBancaria.findMany({
       where: { tenantId, isActive: true },
     });
 
     const rango = { gte: fechaInicio, lte: fechaFin };
+    const usarCaja = modo === 'CAJA';
+    const field = usarCaja ? 'fechaReconciliacion' : 'createdAt';
+    const filtroReconciliacion = usarCaja
+      ? { fechaReconciliacion: rango }
+      : { createdAt: rango };
+
     const saldosPorMoneda: Record<string, number> = {};
     const cuentasDetalle: Array<{
       cuentaId: string;
@@ -450,8 +458,8 @@ export class SnapshotService {
       const saldo = await this._calcularSaldoCuenta(
         cuenta.cuentaId,
         tenantId,
-        { fechaReconciliacion: rango },
-        'fechaReconciliacion',
+        { [field]: rango },
+        field,
       );
 
       saldosPorMoneda[cuenta.moneda] = (saldosPorMoneda[cuenta.moneda] ?? 0) + saldo;
@@ -467,12 +475,12 @@ export class SnapshotService {
     // Total de ingresos en el período
     const ingresos = await prisma.reconciliacionVenta.aggregate({
       _sum: { montoConvertido: true },
-      where: { tenantId, fechaReconciliacion: rango },
+      where: { tenantId, ...filtroReconciliacion },
     });
 
     const ingresosServicios = await prisma.reconciliacionServicio.aggregate({
       _sum: { montoConvertido: true },
-      where: { tenantId, fechaReconciliacion: rango },
+      where: { tenantId, ...filtroReconciliacion },
     });
 
     const totalIngresos =
@@ -482,7 +490,7 @@ export class SnapshotService {
     // Total de egresos en el período
     const egresos = await prisma.reconciliacionGasto.aggregate({
       _sum: { montoConvertido: true },
-      where: { tenantId, fechaReconciliacion: rango },
+      where: { tenantId, ...filtroReconciliacion },
     });
 
     const totalEgresos = Number(egresos._sum.montoConvertido ?? 0);

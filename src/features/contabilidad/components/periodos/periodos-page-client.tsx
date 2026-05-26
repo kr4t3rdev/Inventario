@@ -66,6 +66,19 @@ const CATEGORIA_VARIANTS: Record<string, "default" | "secondary" | "outline" | "
   RECTIFICATIVO: "destructive",
 };
 
+const MODO_LABELS: Record<string, string> = {
+  CAJA: "Base Caja",
+  DEVENGO: "Base Devengo",
+};
+
+const MODO_VARIANTS: Record<
+  string,
+  "default" | "secondary" | "outline" | "destructive" | null
+> = {
+  CAJA: "default",
+  DEVENGO: "secondary",
+};
+
 export function PeriodosPageClient({
   initialPeriodos = [],
   initialPagination = null,
@@ -332,6 +345,18 @@ export function PeriodosPageClient({
                               {CATEGORIA_LABELS[periodo.categoria] ?? periodo.categoria}
                             </Badge>
                           )}
+                          {periodo.modoContable &&
+                            periodo.modoContable !== "CAJA" && (
+                              <Badge
+                                variant={
+                                  MODO_VARIANTS[periodo.modoContable] ??
+                                  "default"
+                                }
+                              >
+                                {MODO_LABELS[periodo.modoContable] ??
+                                  periodo.modoContable}
+                              </Badge>
+                            )}
                         </div>
                       </TableCell>
                       <TableCell>
