@@ -2128,6 +2128,8 @@ enum CostChangeReason {
 enum TipoPeriodo {
   DIARIO
   MENSUAL
+  TRIMESTRAL
+  SEMESTRAL
   ANUAL
 }
 
