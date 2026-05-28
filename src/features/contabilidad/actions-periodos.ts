@@ -625,3 +625,94 @@ export const obtenerDashboardPeriodosAction = withAction(
 		};
 	},
 );
+
+/**
+ * @description Integra todos los arqueos de caja de un período contable.
+ * Recorre los arqueos no contabilizados dentro del rango del período,
+ * los acumula y actualiza AperturaPeriodo.detalleJson.
+ *
+ * @param {string} periodoId - ID del período contable
+ * @param {AuthenticatedUser} user - Usuario autenticado
+ * @returns {Promise<{ arqueosIntegrados: number }>}
+ * @throws {ActionError} Si el período no existe o no pertenece al tenant
+ */
+export const integrarArqueosEnPeriodoAction = withAction(
+	async (periodoId: string, user: AuthenticatedUser) => {
+		const tenantId = requireTenant(user);
+
+		const periodo = await prisma.periodoContable.findFirst({
+			where: { periodoId, tenantId },
+			include: { apertura: true },
+		});
+		if (!periodo) {
+			throw new ActionError("Período no encontrado", "NOT_FOUND");
+		}
+
+		// Obtener arqueos del período no contabilizados
+		const arqueos = await prisma.arqueoCaja.findMany({
+			where: {
+				tenantId,
+				createdAt: { gte: periodo.fechaInicio, lte: periodo.fechaFin },
+				contabilizado: false,
+			},
+		});
+
+		if (arqueos.length === 0) {
+			return { arqueosIntegrados: 0 };
+		}
+
+		// Calcular agregados
+		const detalle = {
+			arqueos: arqueos.map((a) => ({
+				arqueoId: a.id,
+				puntoDeVentaId: a.puntoDeVentaId,
+				totalEfectivoCup: a.totalEfectivoCup,
+				totalEfectivoUsd: a.totalEfectivoUsd,
+				totalTarjeta: a.totalTarjeta,
+				totalTransferencia: a.totalTransferencia,
+				totalCredito: a.totalCredito,
+				diferenciaCup: a.diferenciaCup,
+				diferenciaUsd: a.diferenciaUsd,
+			})),
+			ventasPorMetodoPago: {} as Record<string, number>,
+		};
+
+		// Acumular ventas por metodoPago del período
+		const ventasPeriodo = await prisma.venta.findMany({
+			where: {
+				tenantId,
+				createdAt: { gte: periodo.fechaInicio, lte: periodo.fechaFin },
+				metodoPago: { not: null },
+			},
+			select: { metodoPago: true, total: true },
+		});
+
+		for (const v of ventasPeriodo) {
+			const mp = v.metodoPago?.toLowerCase() ?? "sin_dato";
+			detalle.ventasPorMetodoPago[mp] =
+				(detalle.ventasPorMetodoPago[mp] ?? 0) + (v.total ?? 0);
+		}
+
+		// Actualizar AperturaPeriodo.detalleJson
+		await prisma.aperturaPeriodo.upsert({
+			where: { periodoId },
+			create: {
+				periodoId,
+				tenantId,
+				saldoCajaInicial: 0,
+				detalleJson: detalle as Record<string, unknown>,
+			},
+			update: {
+				detalleJson: detalle as Record<string, unknown>,
+			},
+		});
+
+		// Marcar arqueos como contabilizados
+		await prisma.arqueoCaja.updateMany({
+			where: { id: { in: arqueos.map((a) => a.id) } },
+			data: { contabilizado: true },
+		});
+
+		return { arqueosIntegrados: arqueos.length };
+	},
+);

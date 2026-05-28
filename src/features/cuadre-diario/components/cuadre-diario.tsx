@@ -178,7 +178,7 @@ export function CuadreDiarioFinanciero({
     return null
   }
 
-  const { resumen, ventas, gastos, resumenMetodosPago } = data
+  const { resumen, ventas, gastos, resumenMetodosPago, totales, turnosDelDia } = data
 
   const ventasFiltradas = ventas.filter((venta: any) => {
     const coincideBusqueda =
@@ -226,7 +226,7 @@ export function CuadreDiarioFinanciero({
       },
     ]
 
-  // @ts-expect-error
+  // @ts-expect-error - ventas items have dynamic fields from Prisma
     const ventasData = ventas.map((v) => ({
       id: v.id.slice(-8),
       hora: v.horaFormateada,
@@ -238,7 +238,7 @@ export function CuadreDiarioFinanciero({
       total: formatCurrency(v.total),
     }))
 
-  // @ts-expect-error
+  // @ts-expect-error - gastos items have dynamic fields from Prisma
     const gastosData = gastos.map((g) => ({
       hora: g.horaFormateada,
       tipo: g.tipo,
@@ -258,14 +258,14 @@ export function CuadreDiarioFinanciero({
 
   const totalEntradas = gastos
     .filter(
-  // @ts-expect-error
+  // @ts-expect-error - tipo field may not be in type
       (g) => g.tipo === "entrada" || g.tipo === "venta" || g.tipo === "servicio",
     )
     .reduce((acc: any, g: any) => acc + g.monto, 0)
 
   const totalSalidas = gastos
     .filter(
-  // @ts-expect-error
+  // @ts-expect-error - tipo not in GastoFormateado type
       (g) => g.tipo !== "entrada" && g.tipo !== "venta" && g.tipo !== "servicio",
     )
     .reduce((acc: any, g: any) => acc + g.monto, 0)
@@ -414,11 +414,36 @@ export function CuadreDiarioFinanciero({
             </Badge>
           </CardContent>
         </Card>
+        {totales && (
+          <Card className={cn(surfaceCardClass, "border-l-4 border-l-chart-5")}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Saldos de Caja</CardTitle>
+              <Banknote className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-baseline gap-1">
+                <span className="text-2xl font-bold">
+                  {formatCurrency(totales.efectivoFinal)}
+                </span>
+                <span className="text-xs text-muted-foreground">final</span>
+              </div>
+              <Badge
+                className="mt-2.5 flex flex-col border-chart-5 text-xs"
+                variant="outline"
+              >
+                <p>Inicial: {formatCurrency(totales.efectivoInicial)}</p>
+                <p className={totales.efectivoFinal >= totales.efectivoInicial ? "text-green-600" : "text-red-600"}>
+                  Dif: {formatCurrency(totales.efectivoFinal - totales.efectivoInicial)}
+                </p>
+              </Badge>
+            </CardContent>
+          </Card>
+        )}
       </motion.div>
 
       <motion.div variants={itemVariants}>
         <Tabs defaultValue="ventas" className="space-y-4">
-          <TabsList className="grid h-auto w-full grid-cols-1 gap-2 rounded-xl bg-slate-100/80 p-1 md:grid-cols-3 dark:bg-slate-900/70">
+          <TabsList className="grid h-auto w-full grid-cols-1 gap-2 rounded-xl bg-slate-100/80 p-1 md:grid-cols-4 dark:bg-slate-900/70">
             <TabsTrigger value="ventas">
               Ventas y Servicios ({ventas.length})
             </TabsTrigger>
@@ -426,6 +451,11 @@ export function CuadreDiarioFinanciero({
               Movimientos de Caja ({gastos.length})
             </TabsTrigger>
             <TabsTrigger value="metodos">Métodos de Pago</TabsTrigger>
+            {turnosDelDia && turnosDelDia.length > 0 && (
+              <TabsTrigger value="turnos">
+                Turnos ({turnosDelDia.length})
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="ventas" className="space-y-4">
@@ -488,7 +518,7 @@ export function CuadreDiarioFinanciero({
                           </TableCell>
                         </TableRow>
                       ) : (
-  // @ts-expect-error
+  // @ts-expect-error - ventasFiltradas items typed loosely
                         ventasFiltradas.map((venta) => (
                           <TableRow key={venta.id}>
                             <TableCell className="font-mono text-xs">
@@ -575,7 +605,7 @@ export function CuadreDiarioFinanciero({
                           </TableCell>
                         </TableRow>
                       ) : (
-  // @ts-expect-error
+  // @ts-expect-error - gastos items typed loosely from action
                         gastos.map((movimiento) => (
                           <TableRow key={movimiento.id}>
                             <TableCell>{movimiento.horaFormateada}</TableCell>
@@ -659,7 +689,7 @@ export function CuadreDiarioFinanciero({
                           </TableCell>
                         </TableRow>
                       ) : (
-  // @ts-expect-error
+  // @ts-expect-error - resumenMetodosPago is Record not Array
                         resumenMetodosPago.map((metodo) => (
                           <TableRow key={metodo.metodo}>
                             <TableCell className="font-medium">
@@ -695,6 +725,72 @@ export function CuadreDiarioFinanciero({
               </CardContent>
             </Card>
           </TabsContent>
+          {turnosDelDia && turnosDelDia.length > 0 && (
+          <TabsContent value="turnos" className="space-y-4">
+            <Card className={surfaceCardClass}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Banknote className="h-5 w-5" />
+                  Turnos del Día
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader className="bg-slate-50/80 dark:bg-slate-900/50">
+                      <TableRow>
+                        <TableHead>PV</TableHead>
+                        <TableHead>Estado</TableHead>
+                        <TableHead className="text-right">Fondo Inicial</TableHead>
+                        <TableHead className="text-right">Ventas</TableHead>
+                        <TableHead className="text-right">Arqueo</TableHead>
+                        <TableHead className="text-right">Diferencia</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {turnosDelDia.map((t: any) => (
+                        <TableRow key={t.id}>
+                          <TableCell className="font-medium">{t.puntoDeVenta}</TableCell>
+                          <TableCell>
+                            <Badge variant={t.estado === 'ABIERTO' ? 'default' : 'secondary'}>
+                              {t.estado}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {formatCurrency(t.fondoInicialCup)}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {t.totalVentas}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {t.tieneArqueo
+                              ? formatCurrency(t.arqueo?.totalEfectivoCup ?? 0)
+                              : '—'}
+                          </TableCell>
+                          <TableCell className="text-right tabular-nums">
+                            {t.tieneArqueo ? (
+                              <span className={t.arqueo?.diferenciaCup >= 0 ? 'text-green-600' : 'text-red-600'}>
+                                {formatCurrency(t.arqueo?.diferenciaCup ?? 0)}
+                              </span>
+                            ) : '—'}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+                <div className="mt-4 rounded-lg bg-slate-50/80 p-4 dark:bg-slate-900/60">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">Total fondos iniciales</span>
+                    <span className="text-xl font-bold">
+                      {formatCurrency(turnosDelDia.reduce((s: number, t: any) => s + t.fondoInicialCup, 0))}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          )}
         </Tabs>
       </motion.div>
     </motion.div>

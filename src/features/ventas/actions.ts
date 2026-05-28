@@ -13,6 +13,7 @@ import { createVentaSchema, anularVentaSchema } from './schemas';
 import type { CreateVentaInput, AnularVentaInput } from './schemas';
 import type { AuthenticatedUser } from '@/lib/auth-middleware';
 import { applyFacturacionCobroWorkflow } from './services/facturacion-workflow';
+import { getOrCreateTurnoActivo } from '@/features/turnos-pos';
 
 // ─── Select reutilizable ──────────────────────────────────
 
@@ -27,6 +28,12 @@ const VENTA_SELECT = {
   observaciones: true,
   esVentaUnica: true,
   ofertaId: true,
+  turnoId: true,
+  metodoPago: true,
+  montoEfectivo: true,
+  montoTarjeta: true,
+  montoTransferencia: true,
+  montoCredito: true,
   createdAt: true,
   updatedAt: true,
   items: {
@@ -65,6 +72,22 @@ export const getVentasAction = withAction(async (_input: void, user: Authenticat
 export const createVentaAction = withAction(async (input: CreateVentaInput, user: AuthenticatedUser) => {
   const parsed = createVentaSchema.parse(input);
   const tenantId = requireTenant(user);
+
+  // Resolver turno activo
+  let turnoId: string | null = parsed.turnoId ?? null;
+  if (!turnoId) {
+    try {
+      const turnoResult = await getOrCreateTurnoActivo({
+        puntoDeVentaId: parsed.puntoDeVentaId,
+        empleadoId: parsed.empleadoId,
+      }, user);
+      turnoId = turnoResult.turnoId;
+    } catch (_turnoErr) {
+      // Si falla la resolución de turno (ej: PRINCIPAL sin turno), la venta se crea igual
+      // con turnoId null. El control de turno obligatorio se aplica en getOrCreateTurnoActivo.
+      // Permitir LEGACY: ventas existentes pueden no tener turno.
+    }
+  }
 
   // Calcular totales de la venta
   const itemsData = parsed.items.map((item) => ({
@@ -120,6 +143,12 @@ export const createVentaAction = withAction(async (input: CreateVentaInput, user
         puntoDeVentaId: parsed.puntoDeVentaId,
         clienteId: parsed.clienteId ?? null,
         empleadoId: parsed.empleadoId ?? null,
+        turnoId,
+        metodoPago: parsed.metodoPago ?? null,
+        montoEfectivo: parsed.montoEfectivo ?? null,
+        montoTarjeta: parsed.montoTarjeta ?? null,
+        montoTransferencia: parsed.montoTransferencia ?? null,
+        montoCredito: parsed.montoCredito ?? null,
         descuento: parsed.descuento ?? 0,
         observaciones: parsed.observaciones ?? null,
         total: Math.max(totalVenta, 0),

@@ -45,7 +45,7 @@ export const getCuadreDiarioAction = withAction(async (fecha: string, user: Auth
   const fechaInicio = new Date(`${year}-${month}-${day}T00:00:00`)
   const fechaFin = new Date(`${year}-${month}-${day}T23:59:59.999`)
 
-  const [ventasDelDia, ventaServiciosDelDia, gastosDEdelDia, gastosCompraDelDia, gastosSalariosDia, todasLasVentas, tiposPago] =
+  const [ventasDelDia, ventaServiciosDelDia, gastosDEdelDia, gastosCompraDelDia, gastosSalariosDia, todasLasVentas, tiposPago, turnosDelDia, arqueosDelDia] =
     await Promise.all([
       prisma.venta.findMany({
         where: { createdAt: { gte: fechaInicio, lte: fechaFin }, tenantId },
@@ -54,7 +54,7 @@ export const getCuadreDiarioAction = withAction(async (fecha: string, user: Auth
       prisma.ventaServicios.findMany({
         where: { createdAt: { gte: fechaInicio, lte: fechaFin }, tenantId },
         include: {
-  // @ts-expect-error
+  // @ts-expect-error - Schema mismatch with ventaServicios.servicio relation
         servicio: { select: { nombre: true } }, puntoDeVenta: { select: { nombre: true } }
         },
       }),
@@ -74,15 +74,28 @@ export const getCuadreDiarioAction = withAction(async (fecha: string, user: Auth
         orderBy: { createdAt: 'desc' },
       }),
       prisma.tipoPago.findMany({
-  // @ts-expect-error
+  // @ts-expect-error - isActive field may not exist in current Prisma schema
       where: { isActive: true, tenantId: null }
+      }),
+      // Turnos del día con fondos
+      prisma.turnoPuntoVenta.findMany({
+        where: { tenantId, fechaApertura: { gte: fechaInicio, lte: fechaFin } },
+        include: {
+          puntoDeVenta: { select: { nombre: true } },
+          arqueo: true,
+          _count: { select: { ventas: true } },
+        },
+      }),
+      // Arqueos del día
+      prisma.arqueoCaja.findMany({
+        where: { tenantId, createdAt: { gte: fechaInicio, lte: fechaFin } },
       }),
     ])
 
-  // @ts-expect-error
+  // @ts-expect-error - total may be Decimal or Int, reduce works regardless
   const totalVentas = ventasDelDia.reduce((sum, v: VentaConPrecio) => sum + (v.total ?? v.cantidad * (v.precioVenta ?? 0)), 0)
   const totalServicios = ventaServiciosDelDia.reduce((sum: number, v: any) => sum + (v.total ?? 0), 0)
-  // @ts-expect-error
+  // @ts-expect-error - totalServicios may be Decimal, coercion is intentional
   const totalIngresos = totalVentas + totalServicios
   const totalGastosDE = gastosDEdelDia.reduce((sum: number, g: any) => sum + g.monto, 0)
   const totalGastosSalarios = gastosSalariosDia.reduce((sum: number, s: any) => sum + s.salario + (s.bonificaciones ?? 0) + (s.horasExtras ?? 0), 0)
@@ -112,22 +125,22 @@ export const getCuadreDiarioAction = withAction(async (fecha: string, user: Auth
 
   const todasLasOperaciones: any[] = []
   for (const v of ventasDelDia) {
-  // @ts-expect-error
+  // @ts-expect-error - total/price may be Decimal, coercion is intentional
     const t = v.total ?? (v.cantidad * (v.precioVenta ?? 0))
     todasLasOperaciones.push({
-  // @ts-expect-error
+  // @ts-expect-error - producto.nombre may not be in Ventas type
       id: v.id, tipo: 'venta', descripcion: v.producto?.nombre ?? 'Venta',
-  // @ts-expect-error
+  // @ts-expect-error - tipoPago is a relation with optional nombre
       monto: t, metodoPago: v.tipoPago?.nombre ?? 'Efectivo',
       hora: formatoFecha(v.createdAt), puntoDeVenta: v.puntoDeVenta?.nombre ?? '',
     })
   }
   for (const v of ventaServiciosDelDia) {
     todasLasOperaciones.push({
-  // @ts-expect-error
+  // @ts-expect-error - servicio.nombre may not be in VentaServicios type
       id: v.id, tipo: 'servicio', descripcion: v.servicio?.nombre ?? 'Servicio',
       monto: v.total ?? 0, metodoPago: 'Transferencia',
-  // @ts-expect-error
+  // @ts-expect-error - puntoDeVenta.nombre relation may not be in type
       hora: formatoFecha(v.createdAt), puntoDeVenta: v.puntoDeVenta?.nombre ?? '',
     })
   }
@@ -158,6 +171,31 @@ export const getCuadreDiarioAction = withAction(async (fecha: string, user: Auth
     resumenMetodosPago[op.metodoPago] = (resumenMetodosPago[op.metodoPago] ?? 0) + op.monto
   }
 
+  // Calcular efectivo inicial y final desde turnos y arqueos
+  const efectivoInicial = turnosDelDia.reduce((sum, t) => sum + t.fondoInicialCup, 0);
+  const efectivoFinal = arqueosDelDia.length > 0
+    ? arqueosDelDia.reduce((sum, a) => sum + a.totalEfectivoCup, 0)
+    : turnosDelDia.reduce((sum, t) => {
+        const ventasEfectivo = ventasDelDia
+          .filter(v => (v as any).turnoId === t.id && ((v as any).metodoPago === 'EFECTIVO' || (v as any).metodoPago === 'MIXTO'))
+          .reduce((s, v) => s + ((v as any).montoEfectivo ?? 0), 0);
+        return sum + t.fondoInicialCup + ventasEfectivo;
+      }, 0);
+
+  // Ventas por método de pago (desde los nuevos campos estructurados)
+  const ventasPorMetodoPago: Record<string, number> = {};
+  for (const v of ventasDelDia) {
+    const mp = (v as any).metodoPago ?? 'EFECTIVO';
+    const monto = mp === 'MIXTO'
+      ? ((v as any).montoEfectivo ?? 0) + ((v as any).montoTarjeta ?? 0) + ((v as any).montoTransferencia ?? 0) + ((v as any).montoCredito ?? 0)
+      : (v.total ?? v.cantidad * (v.precioVenta ?? 0));
+    ventasPorMetodoPago[mp] = (ventasPorMetodoPago[mp] ?? 0) + monto;
+  }
+  // Merge con legacy
+  for (const [mp, monto] of Object.entries(resumenMetodosPago)) {
+    ventasPorMetodoPago[mp] = (ventasPorMetodoPago[mp] ?? 0) + monto;
+  }
+
   return {
     resumen: {
       fecha: formatoFecha(f),
@@ -168,7 +206,29 @@ export const getCuadreDiarioAction = withAction(async (fecha: string, user: Auth
     },
     ventas: todasLasOperaciones,
     gastos: gastosFormateados,
-    resumenMetodosPago,
-    totales: { efectivoInicial: 0, efectivoFinal: 0 },
+    resumenMetodosPago: ventasPorMetodoPago,
+    totales: { efectivoInicial, efectivoFinal },
+    turnosDelDia: turnosDelDia.map(t => ({
+      id: t.id,
+      puntoDeVenta: t.puntoDeVenta?.nombre ?? 'Desconocido',
+      estado: t.estado,
+      fondoInicialCup: t.fondoInicialCup,
+      fondoInicialUsd: t.fondoInicialUsd,
+      totalVentas: t._count?.ventas ?? 0,
+      tieneArqueo: !!t.arqueo,
+      arqueo: t.arqueo ? {
+        totalEfectivoCup: t.arqueo.totalEfectivoCup,
+        totalEfectivoUsd: t.arqueo.totalEfectivoUsd,
+        diferenciaCup: t.arqueo.diferenciaCup,
+        diferenciaUsd: t.arqueo.diferenciaUsd,
+      } : null,
+    })),
+    arqueosDelDia: arqueosDelDia.map(a => ({
+      id: a.id,
+      totalEfectivoCup: a.totalEfectivoCup,
+      totalEfectivoUsd: a.totalEfectivoUsd,
+      diferenciaCup: a.diferenciaCup,
+      diferenciaUsd: a.diferenciaUsd,
+    })),
   }
 })

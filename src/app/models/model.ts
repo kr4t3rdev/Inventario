@@ -221,6 +221,9 @@ export interface PuntoDeVenta {
   pvId: string
   nombre: string
   ubicacion: string | null
+  tipoCaja?: string | null
+  almacenId?: string | null
+  cuentaContableId?: string | null
   stockPuntoVenta: number
   listaPrecioId?: string | null
   listaPrecio?: {
@@ -492,6 +495,12 @@ export interface Venta {
     nombre: string
   }
   ordenId?: string
+  turnoId?: string | null
+  metodoPago?: string | null
+  montoEfectivo?: number | null
+  montoTarjeta?: number | null
+  montoTransferencia?: number | null
+  montoCredito?: number | null
   oferta?: Oferta
   factura?: Factura
   reconciliaciones?: ReconciliacionVenta[]

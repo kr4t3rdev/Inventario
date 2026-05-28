@@ -31,6 +31,9 @@ import { getSeriesFacturacionAction, createSerieFacturacionAction } from "@/feat
 import { ProductoCard } from "./producto-card"
 import { CartItem } from "./cart-item"
 import { useDebounce } from "@/hooks/use-debounce"
+import { CabeceraTurno, AperturaTurnoDialog, CierreTurnoDialog } from "@/features/turnos-pos"
+import { getTurnoActivoAction } from "@/features/turnos-pos/actions"
+import { ArqueoForm } from "@/features/arqueo-caja"
 
 interface CartProduct {
   cartId: string // Unique identifier for the cart item
@@ -72,6 +75,10 @@ export function VentaInterface() {
   const [productos, setProductos] = useState<ProductoConStock[]>([])
   const [isLoadingProductos, setIsLoadingProductos] = useState(false)
   const [isFetchingProductos, setIsFetchingProductos] = useState(false)
+  const [turnoActivo, setTurnoActivo] = useState<any>(null)
+  const [isAperturaDialogOpen, setIsAperturaDialogOpen] = useState(false)
+  const [isCierreDialogOpen, setIsCierreDialogOpen] = useState(false)
+  const [isArqueoDialogOpen, setIsArqueoDialogOpen] = useState(false)
 
   const { puntosDeVenta, isLoading: isLoadingPuntosVenta } = usePuntosDeVenta()
 
@@ -101,6 +108,27 @@ export function VentaInterface() {
 
     loadProductos()
   }, [selectedPuntoVenta])
+
+  // Cargar turno activo al seleccionar punto de venta
+  useEffect(() => {
+    if (!selectedPuntoVenta) {
+      setTurnoActivo(null)
+      return
+    }
+
+    const loadTurno = async () => {
+      try {
+        const result = await getTurnoActivoAction(selectedPuntoVenta)
+        if (result.success) {
+          setTurnoActivo(result.data)
+        }
+      } catch {
+        setTurnoActivo(null)
+      }
+    }
+
+    loadTurno()
+  }, [selectedPuntoVenta, isCierreDialogOpen])
 
   const { clientes, isLoading: isLoadingClientes } = useClientes()
   const { categorias, isLoading: isLoadingCategorias } = useCategorias()
@@ -677,6 +705,28 @@ export function VentaInterface() {
             <div className="h-1 bg-linear-to-r from-orange-500 to-red-600" />
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between gap-4 flex-wrap">
+                {/* Cabecera de turno activo */}
+                {turnoActivo && (
+                  <CabeceraTurno
+                    turno={turnoActivo}
+                    onCerrar={() => setIsCierreDialogOpen(true)}
+                  />
+                )}
+
+                {/* Botón abrir turno si no hay turno activo */}
+                {!turnoActivo && selectedPuntoVenta && (
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsAperturaDialogOpen(true)}
+                      className="gap-1.5"
+                    >
+                      Abrir Turno
+                    </Button>
+                  </div>
+                )}
+
                 <div className="flex items-center gap-3">
                   <motion.div 
                     className="w-8 h-8 bg-linear-to-br from-orange-500 to-red-600 rounded-lg flex items-center justify-center"
@@ -1260,6 +1310,49 @@ export function VentaInterface() {
         isProcessing={isProcessing}
         isLoadingClientes={isLoadingClientes}
       />
+
+      {/* Diálogo de apertura de turno */}
+      <AperturaTurnoDialog
+        open={isAperturaDialogOpen}
+        onOpenChange={setIsAperturaDialogOpen}
+        puntoDeVentaId={selectedPuntoVenta}
+        puntoDeVentaNombre={puntosDeVenta?.find((p) => p.pvId === selectedPuntoVenta)?.nombre ?? ''}
+        onSuccess={() => {
+          // Recargar turno activo
+          if (selectedPuntoVenta) {
+            getTurnoActivoAction(selectedPuntoVenta).then((r) => {
+              if (r.success) setTurnoActivo(r.data)
+            })
+          }
+        }}
+      />
+
+      {/* Diálogo de cierre de turno */}
+      {turnoActivo && (
+        <CierreTurnoDialog
+          open={isCierreDialogOpen}
+          onOpenChange={setIsCierreDialogOpen}
+          turnoId={turnoActivo.id}
+          totalVentas={turnoActivo.ventas?.reduce((s: number, v: any) => s + (v.total ?? 0), 0) ?? 0}
+          totalTickets={turnoActivo._count?.ventas ?? 0}
+          tieneArqueo={!!turnoActivo.arqueo}
+          onIrAArqueo={() => {
+            setIsCierreDialogOpen(false);
+            setIsArqueoDialogOpen(true);
+          }}
+          onSuccess={() => setTurnoActivo(null)}
+        />
+      )}
+
+      {/* Diálogo de arqueo de caja */}
+      {turnoActivo && (
+        <ArqueoForm
+          open={isArqueoDialogOpen}
+          onOpenChange={setIsArqueoDialogOpen}
+          turnoId={turnoActivo.id}
+          onSuccess={() => setTurnoActivo(null)}
+        />
+      )}
     </div>
   )
 }

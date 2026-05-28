@@ -198,6 +198,8 @@ model Tenant {
   periodosContables          PeriodoContable[]
   aperturaPeriodos           AperturaPeriodo[]
   auditoriaPeriodos          AuditoriaPeriodo[]
+  turnosPos                  TurnoPuntoVenta[]
+  arqueosCaja                ArqueoCaja[]
   backupLogs                 BackupLog[]
   backupPlans                BackupPlan[]
   contabilidadTimezone       String                     @default("America/Argentina/Buenos_Aires")
@@ -275,6 +277,7 @@ model Almacen {
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
   productos             Producto[]
+  puntosDeVenta         PuntoDeVenta[]
   transferenciasDestino Transferencia[] @relation("TransferenciasDestino")
   transferenciasOrigen  Transferencia[] @relation("TransferenciasOrigen")
   tenant                Tenant          @relation(fields: [tenantId], references: [tenantId])
@@ -283,21 +286,104 @@ model Almacen {
 }
 
 model PuntoDeVenta {
-  pvId                  String          @id @default(cuid())
+  pvId                  String            @id @default(cuid())
   tenantId              String
   nombre                String
   ubicacion             String?
-  createdAt             DateTime        @default(now())
-  updatedAt             DateTime        @updatedAt
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
   listaPrecioId         String?
+  tipoCaja              String?           @default("PRINCIPAL")
+  almacenId             String?
+  cuentaContableId      String?
   productos             Producto[]
-  listaPrecio           ListaPrecio?    @relation(fields: [listaPrecioId], references: [id])
-  transferenciasDestino Transferencia[] @relation("TransferenciasDestino")
-  transferenciasOrigen  Transferencia[] @relation("TransferenciasOrigen")
+  listaPrecio           ListaPrecio?      @relation(fields: [listaPrecioId], references: [id])
+  almacen               Almacen?          @relation(fields: [almacenId], references: [almacenId])
+  transferenciasDestino Transferencia[]   @relation("TransferenciasDestino")
+  transferenciasOrigen  Transferencia[]   @relation("TransferenciasOrigen")
   ventas                Venta[]
-  tenant                Tenant          @relation(fields: [tenantId], references: [tenantId])
+  turnos                TurnoPuntoVenta[]
+  arqueos               ArqueoCaja[]
+  tenant                Tenant            @relation(fields: [tenantId], references: [tenantId])
 
   @@index([tenantId])
+}
+
+model TurnoPuntoVenta {
+  id              String      @id @default(cuid())
+  tenantId        String
+  puntoDeVentaId  String
+  empleadoId      String?
+  tipo            String      @default("NORMAL")
+  fechaApertura   DateTime    @default(now())
+  fechaCierre     DateTime?
+  fondoInicialCup Int         @default(0)
+  fondoInicialUsd Int         @default(0)
+  estado          EstadoTurno @default(ABIERTO)
+  observaciones   String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  puntoDeVenta PuntoDeVenta @relation(fields: [puntoDeVentaId], references: [pvId])
+  empleado     Empleado?    @relation(fields: [empleadoId], references: [empleadoId])
+  ventas       Venta[]
+  arqueo       ArqueoCaja?
+  tenant       Tenant       @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
+  @@index([puntoDeVentaId, fechaApertura])
+  @@map("turnos_punto_venta")
+}
+
+model ArqueoCaja {
+  id             String @id @default(cuid())
+  turnoId        String @unique
+  tenantId       String
+  puntoDeVentaId String
+
+  billetes1000Cup Int @default(0)
+  billetes500Cup  Int @default(0)
+  billetes200Cup  Int @default(0)
+  billetes100Cup  Int @default(0)
+  billetes50Cup   Int @default(0)
+  billetes20Cup   Int @default(0)
+  monedasCup      Int @default(0)
+
+  billetes100Usd Int @default(0)
+  billetes50Usd  Int @default(0)
+  billetes20Usd  Int @default(0)
+  billetes10Usd  Int @default(0)
+  billetes5Usd   Int @default(0)
+  billetes1Usd   Int @default(0)
+  monedasUsd     Int @default(0)
+
+  totalEfectivoCup   Int @default(0)
+  totalEfectivoUsd   Int @default(0)
+  totalTarjeta       Int @default(0)
+  totalTransferencia Int @default(0)
+  totalCredito       Int @default(0)
+
+  esperadoEfectivoCup   Int @default(0)
+  esperadoEfectivoUsd   Int @default(0)
+  esperadoTarjeta       Int @default(0)
+  esperadoTransferencia Int @default(0)
+  esperadoCredito       Int @default(0)
+
+  diferenciaCup Int @default(0)
+  diferenciaUsd Int @default(0)
+
+  observaciones String?
+  contabilizado Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  turno        TurnoPuntoVenta @relation(fields: [turnoId], references: [id], onDelete: Cascade)
+  puntoDeVenta PuntoDeVenta    @relation(fields: [puntoDeVentaId], references: [pvId])
+  tenant       Tenant          @relation(fields: [tenantId], references: [tenantId])
+
+  @@index([tenantId])
+  @@index([puntoDeVentaId])
+  @@map("arqueos_caja")
 }
 
 model Producto {
@@ -381,35 +467,43 @@ model StockUbicacion {
 }
 
 model Venta {
-  ventaId          String                @id @default(cuid())
-  tenantId         String
-  productoId       String?
-  cantidad         Int
-  puntoDeVentaId   String
-  createdAt        DateTime              @default(now())
-  updatedAt        DateTime              @updatedAt
-  empleadoId       String?
-  total            Int?
-  clienteId        String?
-  ordenId          String?
-  descuento        Int?
-  observaciones    String?
-  esVentaUnica     Boolean               @default(false)
-  ofertaId         String?               @unique
-  ventaPadreId     String?
-  ordenReparacion  OrdenReparacion?      @relation("OrdenVenta")
-  reconciliaciones ReconciliacionVenta[]
-  cliente          Cliente?              @relation(fields: [clienteId], references: [clienteId], onDelete: Cascade)
-  empleado         Empleado?             @relation(fields: [empleadoId], references: [empleadoId])
-  oferta           Oferta?               @relation(fields: [ofertaId], references: [id])
-  producto         Producto?             @relation(fields: [productoId], references: [id], onDelete: Cascade)
-  puntoDeVenta     PuntoDeVenta          @relation(fields: [puntoDeVentaId], references: [pvId])
-  factura          Factura?
-  items            VentaItem[]
-  tenant           Tenant                @relation(fields: [tenantId], references: [tenantId])
+  ventaId            String                @id @default(cuid())
+  tenantId           String
+  productoId         String?
+  cantidad           Int
+  puntoDeVentaId     String
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+  empleadoId         String?
+  total              Int?
+  clienteId          String?
+  ordenId            String?
+  descuento          Int?
+  observaciones      String?
+  esVentaUnica       Boolean               @default(false)
+  ofertaId           String?               @unique
+  ventaPadreId       String?
+  turnoId            String?
+  metodoPago         MetodoPagoVenta?
+  montoEfectivo      Int?
+  montoTarjeta       Int?
+  montoTransferencia Int?
+  montoCredito       Int?
+  ordenReparacion    OrdenReparacion?      @relation("OrdenVenta")
+  reconciliaciones   ReconciliacionVenta[]
+  cliente            Cliente?              @relation(fields: [clienteId], references: [clienteId], onDelete: Cascade)
+  empleado           Empleado?             @relation(fields: [empleadoId], references: [empleadoId])
+  oferta             Oferta?               @relation(fields: [ofertaId], references: [id])
+  producto           Producto?             @relation(fields: [productoId], references: [id], onDelete: Cascade)
+  puntoDeVenta       PuntoDeVenta          @relation(fields: [puntoDeVentaId], references: [pvId])
+  turno              TurnoPuntoVenta?      @relation(fields: [turnoId], references: [id])
+  factura            Factura?
+  items              VentaItem[]
+  tenant             Tenant                @relation(fields: [tenantId], references: [tenantId])
 
   @@index([tenantId])
   @@index([tenantId, createdAt])
+  @@index([turnoId])
 }
 
 model VentaItem {
@@ -691,6 +785,7 @@ model Empleado {
   vacationAccruals      VacationAccrual[]
   vacationRequests      VacationRequest[]
   ventas                Venta[]
+  turnosPos             TurnoPuntoVenta[]
   tenant                Tenant                 @relation(fields: [tenantId], references: [tenantId])
 
   @@index([tenantId])
@@ -2128,6 +2223,8 @@ enum CostChangeReason {
 enum TipoPeriodo {
   DIARIO
   MENSUAL
+  TRIMESTRAL
+  SEMESTRAL
   ANUAL
 }
 
@@ -2150,6 +2247,11 @@ enum EventoAuditoria {
   INTENTO_BYPASS
 }
 
+enum ModoContable {
+  CAJA
+  DEVENGO
+}
+
 enum CategoriaPeriodo {
   ORDINARIO
   EXTRAORDINARIO
@@ -2167,6 +2269,7 @@ model PeriodoContable {
   periodoPadreId     String? /// Jerarquía: DIARIO→MENSUAL→ANUAL
   aperturaAutomatica Boolean          @default(false)
   categoria          CategoriaPeriodo @default(ORDINARIO)
+  modoContable       ModoContable     @default(CAJA)
   abiertoPorId       String?
   fechaApertura      DateTime?
   cerradoPor         String?
@@ -2291,6 +2394,19 @@ enum BackupStatus {
   deleted
 }
 
+enum EstadoTurno {
+  ABIERTO
+  CERRADO
+}
+
+enum MetodoPagoVenta {
+  EFECTIVO
+  TARJETA
+  TRANSFERENCIA
+  CREDITO
+  MIXTO
+}
+
 /// Registro de cada operación de backup o restore.
 model BackupLog {
   backupLogId  String       @id @default(cuid())
@@ -2335,4 +2451,20 @@ model BackupPlan {
   @@index([enabled, nextRunAt])
   @@index([tenantId])
   @@map("backup_plans")
+}
+
+/// Caché compartido de períodos contables activos (PostgreSQL-backed).
+/// Reemplaza el Map en memoria para que múltiples instancias compartan
+/// el mismo caché. Cada entrada tiene TTL definido por expiresAt.
+model PeriodoCache {
+  cacheKey      String   @id
+  tenantId      String
+  fecha         DateTime
+  resultadoJson Json
+  expiresAt     DateTime
+  createdAt     DateTime @default(now())
+
+  @@index([tenantId, expiresAt])
+  @@index([expiresAt])
+  @@map("periodo_cache")
 }
